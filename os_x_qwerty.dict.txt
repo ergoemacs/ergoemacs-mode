@@ -1,0 +1,80 @@
+/* 
+DATE: 2010-06-15
+VERSION: 1.0
+AUTHOR: Xah Lee
+DESCRIPTION: Mac OS X keybinding file for the ErgoEmacs keybinding for QWERTY layout.
+
+INSTALL:
+Rename this file to “DefaultKeyBinding.dict”
+Then, place the file in this dir:
+“~/Library/KeyBindings/DefaultKeyBinding.dict”
+Create the “KeyBindings” dir if you don't have it already.
+
+Go to your system preference, “Keyboard & Mouse” panel, and swap
+Control and Command key positions. So, Control is right under your
+thumb.
+
+Now, launch or re-launch any Cocoa application, such as TextEdit. The app should now use ErgoEmacs keybinding.
+
+If you are using emacs, you might want to put the following lines in your “.emacs”:
+(setq mac-control-modifier 'meta)
+(setq mac-command-modifier 'control)
+These lines works for Cocoa emacs, may not work for Carbon Emacs.
+
+Some references:
+
+• How To Create Keybinding In Mac OS X
+  http://xahlee.org/emacs/osx_keybinding.html
+
+• ErgoEmacs Keybinding
+  http://xahlee.org/emacs/ergonomic_emacs_keybinding.html
+
+• How to Swap Modifier Keys on OS X
+  http://xahlee.org/emacs/osx_swapping_modifier_keys.html
+
+If you like to use Option key instead of Control, you can change all ^
+to ~ in this file. However, due to some limitations of the OS X
+keybinding system, the following won't work:
+
+• Opt+n for move cursor right
+• Opt+e for deleting a char to the left
+• Opt+u for deleting a char to the right
+
+*/
+
+{
+"^i" = "moveUp:";
+"^k" = "moveDown:";
+"^j" = "moveLeft:";
+"^l" = "moveRight:";
+
+"^o" = "moveWordRight:";
+"^u" = "moveWordLeft:";
+"^h" = "moveToBeginningOfLine:";
+"^H" = "moveToEndOfLine:";
+
+"^I" = "pageUp:";
+"^K" = "pageDown:";
+
+"^U" = "moveToBeginningOfParagraph:";
+"^O" = "moveToEndOfParagraph:";
+
+"^J" = "moveToBeginningOfDocument:";
+"^L" = "moveToEndOfDocument:";
+
+"^d" = "deleteBackward:";
+"^f" = "deleteForward:";
+"^e" = "deleteWordBackward:";
+"^r" = "deleteWordForward:";
+
+"^Z" = "redo:";
+"^z" = "undo:";
+"^x" = "cut:";
+"^X" = ("selectAll:", "cut:");
+"^c" = "copy:";
+"^C" = ("selectAll:", "copy:");
+"^v" = "paste:";
+
+"^8" = "selectWord:";
+"^ " = "setMark:";
+}

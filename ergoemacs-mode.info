@@ -1,0 +1,689 @@
+This is ergoemacs-mode.info, produced by makeinfo version 4.13 from
+ergoemacs-mode.texi.
+
+INFO-DIR-SECTION Emacs lisp libraries
+START-INFO-DIR-ENTRY
+* ergoemacs-mode: (ergoemacs-mode).     ergoemacs-mode
+END-INFO-DIR-ENTRY
+
+
+File: ergoemacs-mode.info,  Node: Top,  Next: Ergoemacs Keybindings,  Up: (dir)
+
+Top
+***
+
+* Menu:
+
+* Ergoemacs Keybindings::
+
+
+File: ergoemacs-mode.info,  Node: Ergoemacs Keybindings,  Prev: Top,  Up: Top
+
+1 Ergoemacs Keybindings
+***********************
+
+Xah Lee, David Capello, and Matthew Fidler
+
+ErgoEmacs keybindings improves GNU Emacs for people who did not grew up
+with emacs. User interface is based on common modern software interface
+familiar to most people today, such as using 【Ctrl+C】 key for
+Copy,【Ctrl+Z】 for undo, 【Ctrl+O】 for Open file, and also bundles
+many elisp packages that are not in GNU Emacs.
+
+* Menu:
+
+* Standard Keyboard Shortcuts::
+* Window/Tab Switching::
+* Shrink-whitespaces compact/uncompact-block toggle-letter-case::
+* Banish Key Chords::
+* Changing key layouts or adding variants::
+* Ergoemacs Keys System wide::
+
+
+File: ergoemacs-mode.info,  Node: Standard Keyboard Shortcuts,  Next: Window/Tab Switching,  Up: Ergoemacs Keybindings
+
+1.1 Standard Keyboard Shortcuts
+===============================
+
+Common keyboard shortcut are supported, so you don't have to change
+your mindset when you switch in and out of emacs. The following are
+supported standard keys in Windows, Mac OS X, and Linux. (Mac uses Cmd
+instead of Ctrl.)
+
+Standard name    Key press       Emacs command name
+Copy Cut Paste   Ctrl+c Ctrl+x   kill-ring-save
+Undo Redo Redo   Ctrl+v Ctrl+z   kill-region yank undo
+Open New File    Ctrl+Shift+z    redo redo
+Open Close Save  Ctrl+y Ctrl+n   new-empty-buffer
+Save As Print    Ctrl+o Ctrl+w   find-file
+Select All Find  Ctrl+s          close-current-buffer
+                 Ctrl+Shift+s    save-buffer write-file
+                 Ctrl+p Ctrl+a   print-buffer
+                 Ctrl+f          mark-whole-buffer
+                                 search-forward
+
+Standard shortcuts for cursor navigation are also supported. Example:
+【Ctrl+Left】 ⇒ go to previous word, Home ⇒ beginning of line,
+【⇧ Shift+Down】 ⇒ selecting text downward
+
+
+File: ergoemacs-mode.info,  Node: Window/Tab Switching,  Next: Shrink-whitespaces compact/uncompact-block toggle-letter-case,  Prev: Standard Keyboard Shortcuts,  Up: Ergoemacs Keybindings
+
+1.2 Window/Tab Switching
+========================
+
+The following are new commands that lets you easily switch windows or buffers.
+
+Standard name       Key                    Emacs command name
+Next Window       【Alt+`】 【Alt+~】        switch-to-next-frame
+Previous Window   【Ctrl+⇟PageDown】        switch-to-previous-frame
+Next Tab          【Ctrl+⇞PageUp】          next-user-buffer
+Previous Tab NA   【Ctrl+⇧Shift+⇟PageDown】 previous-user-buffer
+NA                【Ctrl+⇧Shift+⇞PageUp】   next-emacs-buffer previous-emacs-buffer
+
+
+File: ergoemacs-mode.info,  Node: Shrink-whitespaces compact/uncompact-block toggle-letter-case,  Next: Banish Key Chords,  Prev: Window/Tab Switching,  Up: Ergoemacs Keybindings
+
+1.3 Shrink-whitespaces, compact/uncompact-block, toggle-letter-case
+===================================================================
+
+The following are new commands that combine the functionality of
+several similar commands into one. This way, you have one single
+command with one single shortcut to remember. They do what you want
+depending on context.
+
+Name                      Key       Description
+shrink-whitespaces       【Alt+w】  Takes out spaces/tabs around cursor
+compact-uncompact-block  【Alt+q】  Hard Wraps or unwraps text u Change
+toggle-letter-case       【Alt+/】  capitilzation (ALL, First,lower)
+
+
+File: ergoemacs-mode.info,  Node: Banish Key Chords,  Next: Changing key layouts or adding variants,  Prev: Shrink-whitespaces compact/uncompact-block toggle-letter-case,  Up: Ergoemacs Keybindings
+
+1.4 Banish Key Chords
+=====================
+
+* Menu:
+
+* Background::
+* Keyboard Shortcut Design::
+* Ergoemacs Key Chord Reduction::
+* Where Did My Command Go?::
+* Shortcut To Open Cheatsheet::
+
+
+File: ergoemacs-mode.info,  Node: Background,  Next: Keyboard Shortcut Design,  Up: Banish Key Chords
+
+1.4.1 Background
+----------------
+
+Key chords (like 【Ctrl+x】) is the bane of keyboarding. There are 3
+types of key shortcuts to invoke commands in software:
+
+  1. Single key. Examples include: 【F1】, 【⇞ Page △】.
+
+  2. Key chord: 【⇧ Shift+a】, 【Ctrl+c】, 【Ctrl+⇧ Shift+z】,
+     【Alt+F4】.
+
+  3. Key sequence of single keys or chords. For example on Microsoft
+     Windows, 【F10 e c】 for copy, or 【Alt+Space c】 to close
+     window.
+
+of these, in terms of efficiency and hand health (Repetitive Strain
+Injury), the single key is the best. Key sequence of single keys is
+second best. Key chord is the worst.
+
+Key chord is the most hard on hand health, but is also conceptually the
+most convoluted.
+
+I [Xah Lee] remember in around 1991, when i first learned about key
+chord on the Macintosh Classic. I thought, it's strange. You have to
+hold ⌘ Cmd first, then press the key c, then, release c, then,
+release ⌘ Cmd. It must be in that specific order.
+
+A more natural way is either key sequence, or real chords. That is,
+pressing several keys together but you don't have to worry about which
+to hold or release first. Stenograph machines are like that.
+
+* Menu:
+
+* Whence Did Key Chord Came From?::
+* What Should a Keyboard Nerd Do with Key Chords?::
+* Principles on Efficient Use of Key Chords::
+
+
+File: ergoemacs-mode.info,  Node: Whence Did Key Chord Came From?,  Next: What Should a Keyboard Nerd Do with Key Chords?,  Up: Background
+
+1.4.1.1 Whence Did Key Chord Came From?
+.......................................
+
+I suppose, when computer keyboard came, sans levels and gears, but
+habit stuck, and this evolved into “modifier” keys, with Bucky bits.
+
+Now, thinking about this, i think Microsoft must be a genius, when they
+invented the key system on Windows, where Alt is used to invoke menu,
+and all command can be called by a sequence of key strokes. This is
+probably the best system given the PC keyboard. This system, lets you
+invoke any command, yet has menu counter-part, so it's easy to see a
+list of them and also grouped by category. (emacs's system of course is
+much more extensive than that.)
+
+
+File: ergoemacs-mode.info,  Node: What Should a Keyboard Nerd Do with Key Chords?,  Next: Principles on Efficient Use of Key Chords,  Prev: Whence Did Key Chord Came From?,  Up: Background
+
+1.4.1.2 What Should a Keyboard Nerd Do with Key Chords?
+.......................................................
+
+BAN the them out of the universe.
+
+But, there isn't enough keys on keyboard. You only have 12 function
+keys, plus some others such as ↖ Home, ↓. But there are 10 times
+more commands in software. What to do?
+
+For majority of commands, you should use a key sequence of single keys,
+instead. For example, 【F10 e c】. But Function keys are further away.
+So, you could start with a easy key such as 【▤ Menu e c】, and
+reassign most of your keys to key sequence. (you can make Caps Lock as
+your start key, whichever key on YOUR keyboard is easy to press.)
+
+There are 26 letters in alphabet, plus 10 digits, so you have 36 key
+choices for the key. (ignore punctuation keys for the moment) If each
+of your command has 2 keys in a key sequence (not counting the starting
+key), then you have 36 × 36 = 1296 possible keys for commands. Quite
+enough!
+
+Still, some commands are not suitable for key sequence. For example,
+moving cursor by word. You want to be able to hold down a key and have
+the cursor keep moving. You can't do that with key sequences, because
+you need to release the key and press again to invoke the command
+again. Answer: use single key. Retort: But F keys are far away and
+arrow keys are already used. Answer: key chord then.
+
+
+File: ergoemacs-mode.info,  Node: Principles on Efficient Use of Key Chords,  Prev: What Should a Keyboard Nerd Do with Key Chords?,  Up: Background
+
+1.4.1.3 Principles on Efficient Use of Key Chords
+.................................................
+
+Key chord should be used only for commands that need to be repeated
+within a second (hold the key and let the command repeat). This
+includes moving cursor, paging, switching tab/window.
+
+Key chord should use no more than one modifier. This saves your hand.
+So, key chord such as emacs interactive replace 【Alt+⇧ Shift+%】 or
+Mac's redo 【⌘ Cmd+⇧ Shift+z】 should not be allowed.
+
+more detail at Keyboard Shortcut Design: Repeatable vs Non-Repeatable
+Commands and Keys
+
+If you survey commands in a editor, such as emacs, vast majority of
+commands are the non-repeating type. The repeating type are probably
+less than 5% of commands. Using 【Ctrl+‹letter/digit›】 key give
+you about 36 spots. Adding Alt, you have 72 spots. And that's more than
+enough for repeating commands. In practice, i estimate a programer uses
+less than 30 repeating commands per day on average. #### What About
+Sticky Keys? I do not advocate the Sticky Keys feature for the
+handicapped. It's not the same. Sticky Keys actually make things a
+worse, because it's a hack over key chords. When you press a sequence
+of keys, it has to guess whether you mean a sequence or chord (since
+emacs supports both). The end result is that it's confusing to use,
+imprecise, and slows you down.
+
+
+File: ergoemacs-mode.info,  Node: Keyboard Shortcut Design,  Next: Ergoemacs Key Chord Reduction,  Prev: Background,  Up: Banish Key Chords
+
+1.4.2 Keyboard Shortcut Design
+------------------------------
+
+This section discuss one criterion on the design of keyboard shortcut
+system: Repeatable vs Non-Repeatable Commands and Keys. This applicable
+in designing keybinding for emacs, vi, 3D modeling app, or any app that
+has hundreds commands that needs to map to keys. #### Repeatable and
+Non-Repeatable Commands In my keyboarding research, there's a important
+discovery. Commands can be classified into 2 types: 1. Repeatable
+commands. Commands that make sense to be repeated within a second. i.e.
+moving cursor by char, word, page. Page up/down. Delete by char, word.
+Expand selection, prev/next tab. You can hold down a key or a key-chord
+to repeat the command many times.
+
+  2. Non-repeat commands. This is vast majority. i.e. starting
+     find/replace, open file, close file, list buffers, call a shell
+     command or start shell, describe-function, keyword expansion or
+     completion, list-matching-lines, sort-lines, kill-buffer,
+     switch-to-buffer, ...
+
+* Menu:
+
+* Repeatable and Non-Repeatable Keys::
+
+
+File: ergoemacs-mode.info,  Node: Repeatable and Non-Repeatable Keys,  Up: Keyboard Shortcut Design
+
+1.4.2.1 Repeatable and Non-Repeatable Keys
+..........................................
+
+The Repeatable Commands must have keys that can be held down. Here's
+example of repeatable hotkeys: F8, t, ⇟ Page ▽, ↓, 【Ctrl+t】,
+【Ctrl+Alt+8】, ....
+
+Non-repeatable hotkeys are basically keys that involves a sequence:
+【Ctrl+x 2】, 【F8 F9】
+
+So, when designing a shortcut system, one of the principle is for
+repeatable commands be on repeatable keys, else it's a waste. (because
+you only have a few precious easy key spots, yet you have one hundred
+commands in common use.)
+
+In GNU Emacs's default keybinding, there are many such wastes. For
+example, all 【Ctrl+‹number›】 and 【Alt+‹number›】 are bound
+to digit-argument. The digit-argument is a non-repeat command, yet it
+sits on 20 EASY repeatable keys. (but most damaging is that
+digit-argument isn't a frequently needed command, with respect to all
+commands and the relatively few easy-key-spots.)
+
+Another bad example is forward-page 【Ctrl+x ]】. forward-page is a
+repeatable command, but it doesn't have a repeating key. Imagine, if
+every time you need to ⇟ Page ▽ that you have to press 【Ctrl+x】
+first. You couldn't just hold it down.
+
+But remember, this “Repeatable and Non-Repeatable key” is only a
+supporting criterion in keybinding design. It is not the most important
+criterion. The single most important criterion in designing a keyboard
+shortcut system is that most frequently used commands be mapped to the
+most easy-to-press keys.
+
+
+File: ergoemacs-mode.info,  Node: Ergoemacs Key Chord Reduction,  Next: Where Did My Command Go?,  Prev: Keyboard Shortcut Design,  Up: Banish Key Chords
+
+1.4.3 Ergoemacs Key Chord Reduction
+-----------------------------------
+
+* Menu:
+
+* [Control+x] and [Control-c] reduction::
+* Movement without key-chords::
+
+
+File: ergoemacs-mode.info,  Node: [Control+x] and [Control-c] reduction,  Next: Movement without key-chords,  Up: Ergoemacs Key Chord Reduction
+
+1.4.3.1 [Control+x] and [Control-c] reduction
+.............................................
+
+For emacs, the most common prefixes are [Control-x] or [Control-c].
+
+For QWERTY, an additional mapping of these keys have been made: - A
+modified Control-x map has been assigned to Menu f: - This map allows
+you to type the keys without a key chord requirement. For example to
+switch buffers instead of [Control+x] [b] you could type [Menu] [f]
+[b]. (Note that the [f] key changes based on layout; For example using
+the colemak layout you would type [Menu] [t] [b] to switch buffers).
+
+   * This modified keymap changes the control-chorded keys to
+     alt-chorded keys since they are easier to reach, there is another
+     keymap that removes the control-chorded keys. Therefore to get the
+     buffer list, instead of having to type [Control-x] [Control-b] you
+     can type [Menu] [f] [Alt-b].
+
+   * The [Alt-] keychords in this modified keymap are changed to
+     [Control-] keys. For example, `repeat-complex-command' is mapped
+     from [Control-x] [Alt+:] to [Menu] [f] [Control-:]. As far as I
+     can tell this is the only [Control-x] [Alt] combination.
+
+   * A modified unchorded Control-x map has assigned to QWERTY [Menu]
+     [r]. This map has changed the Control-x map as follows:
+
+   * Chorded control keys are subset. Therefore only keys that have the
+     combination [Control-x] [Control-] are used.
+
+   * Chorded key combinations are changed drop the chord. For example
+     the buffer list [Control-x] [Conrtol-b] is changed to [Menu] [r]
+     [b].
+
+   * Chorded key combinations that are single key are translated to
+     [Alt+] for example [Control+k] [a] is changed to [Menu] [r] [k]
+     [Alt+a]
+
+   * Chorded key combinations that work with [Alt+] are translated to
+     [Control+]. For example [Control+k] [Alt+a] is changed to [Menu]
+     [r] [k] [Control+a]. I don't think there are currently any keys
+     bound to these types of key combinations. They are quite difficult
+     to press and remember.
+
+
+Similarly The Control-c keymap is rebound to [Menu] [j] for the
+modified [Control-c] keymap and [Menu] [u] for the unchorded
+[Control-c] keymap. This is also true of the [Control-h] keymap. This
+is bound to [Menu] [h] for the normal Control-h keymap. It is also
+bound to [Menu] [y] for the unchorded Control-h keymap.
+
+
+File: ergoemacs-mode.info,  Node: Movement without key-chords,  Prev: [Control+x] and [Control-c] reduction,  Up: Ergoemacs Key Chord Reduction
+
+1.4.3.2 Movement without key-chords
+...................................
+
+One can enable movement without key-chords as follows: - On QWERTY,
+press [Menu] [k] and then the movement key. This key is repeatable.
+Therefore [Menu] [k] [k] [k] would move the cursor down two lines. If
+this is followed by [i] this would have the cursor move up a line. To
+exit the repeatable movement/delete keys press [Menu]. This is similar
+to VIM's edit mode, with a toggle of the [Menu] key. - Shifted keys
+still are allowed. For example, page up can be accomplished in QWERTY
+by [Shift+i]. - Any command that enters the minibuffer also exits the
+repeatable movement/deletion. - Any undefined key in the keymap (like
+1) would exit the mode and insert the character - To reduce the shifted
+key-chords, on QWERTY you can also press [Menu] [i]. Therefore [Menu]
+[i] [i] is equivalent to one page up. Followed by a [k] will be the
+page-down equivalent - Again, [Menu] stops the movement mode and
+anything that enters the minibuffer removes the movement mode. - Any
+undefined key in the keymap (like 1) would exit the mode and insert the
+character - Shift and the key is the unshifted command. Therefore
+[Menu] [i] [i] [Shift+k] would be Page Up followed by down one
+character. ## Layouts Supported ## Tips for adopting ErgoEmacs
+Keybindings If you are a long time emacs user, you may find it painful
+to adopt this setup.
+
+This difficulty is nothing special. It's the same difficulty when you
+switching to dvorak after years of qwerty. Basically, it's about
+changing muscle memory.
+
+
+File: ergoemacs-mode.info,  Node: Where Did My Command Go?,  Next: Shortcut To Open Cheatsheet,  Prev: Ergoemacs Key Chord Reduction,  Up: Banish Key Chords
+
+1.4.4 Where Did My Command Go?
+------------------------------
+
+The ergonomic-mode minor mode features the command
+where-is-old-binding, with shortcut “Ctrl+h o”. This command asks
+you to type a shortcut, and tells you which command it was bound in GNU
+Emacs, and the new shortcut for it under ErgoEmacs?.
+
+
+File: ergoemacs-mode.info,  Node: Shortcut To Open Cheatsheet,  Prev: Where Did My Command Go?,  Up: Banish Key Chords
+
+1.4.5 Shortcut To Open Cheatsheet
+---------------------------------
+
+You can open a cheatsheet by pressing [Control+h] [']. On the first
+run, this will create a svg and (possibly) create a png based on the
+svg (if `ergoemacs-inkscape' points to the inkscape executable). Once
+these are created, the cheatsheet will be opened displaying all the
+keys based on your layout. ### Gradual Adoption for an Emacs User
+Here's some tips that may help you adopt. #### Level 1 If you find it
+too painful to switch, don't use the whole package. Instead, start off
+with just the arrow key movements.
+
+(setq ergoemacs-variant "lvl1") (ergoemacs-mode 1)
+
+Either put the above in your emacs init file (usually at
+“~/.emacs”), or customize ergoemacs-mode to set the variant to lvl1.
+
+With only the above change, you will increase your emacs productivity,
+especially if you are a touch typist. These single char cursor moving
+commands are the top 4 most frequently used emacs commands by
+statistics, roughly accounting for 43% of commands that have a shortcut.
+
+Once you used the above for a couple of weeks, you may add more keys to
+adopt.
+
+* Menu:
+
+* Level 2::
+* Level 3::
+* Full Ergoemacs Keys::
+* Guru::
+* Master::
+
+
+File: ergoemacs-mode.info,  Node: Level 2,  Next: Level 3,  Up: Shortcut To Open Cheatsheet
+
+1.4.5.1 Level 2
+...............
+
+Adding keys for moving around words and deleting words.
+
+(setq ergoemacs-variant "lvl2") (ergoemacs-mode 1)
+
+
+File: ergoemacs-mode.info,  Node: Level 3,  Next: Full Ergoemacs Keys,  Prev: Level 2,  Up: Shortcut To Open Cheatsheet
+
+1.4.5.2 Level 3
+...............
+
+Full ergoemacs keyset without the unchorded keys.
+
+(setq ergoemacs-variant "lvl3") (ergoemacs-mode 1)
+
+
+File: ergoemacs-mode.info,  Node: Full Ergoemacs Keys,  Next: Guru,  Prev: Level 3,  Up: Shortcut To Open Cheatsheet
+
+1.4.5.3 Full Ergoemacs Keys
+...........................
+
+Try to use the full ergoemacs mode.
+
+(setq ergoemacs-variant nil) (ergoemacs-mode 1)
+
+
+File: ergoemacs-mode.info,  Node: Guru,  Next: Master,  Prev: Full Ergoemacs Keys,  Up: Shortcut To Open Cheatsheet
+
+1.4.5.4 Guru
+............
+
+The guru variant takes away the arrow keys and page up/page down keys.
+
+(setq ergoemacs-variant "guru") (ergoemacs-mode 1)
+
+
+File: ergoemacs-mode.info,  Node: Master,  Prev: Guru,  Up: Shortcut To Open Cheatsheet
+
+1.4.5.5 Master
+..............
+
+The Master variant takes away the backspace. This key is not
+particularly ergonomic, and can cause possible pinky issues. Changing
+this means that you may wish to try to get ergoemacs bindings
+everywhere.
+
+(setq ergoemacs-variant "master") (ergoemacs-mode 1)
+
+
+File: ergoemacs-mode.info,  Node: Changing key layouts or adding variants,  Next: Ergoemacs Keys System wide,  Prev: Banish Key Chords,  Up: Ergoemacs Keybindings
+
+1.5 Changing key layouts or adding variants
+===========================================
+
+* Menu:
+
+* Globally defined keys::
+
+
+File: ergoemacs-mode.info,  Node: Globally defined keys,  Up: Changing key layouts or adding variants
+
+1.5.1 Globally defined keys
+---------------------------
+
+These keys are defined on the global keymap and should be retained
+regardless of the variant or layout used. However, these keys will not
+show up on keyboard documentation generated by ergoemacs. Additionally,
+these keys may be masked or remapped by other programs. ### Ergoemacs
+defined keys These keys are defined in the ergoemacs-keymap. When the
+layout changes by changing options, these keys are lost. However, you
+may create your own variant to allow these keys to be saved. ####
+Adding a ergonomic key Ergonomic keys can be added by:
+
+(ergoemacs-key "M-a" 'execute-extended-command "Execute")
+
+This adds the Alt-a command to all keyboards based on the QWERTY
+layout. This only applies to the currently selected keyboard variant.
+
+Note the last parameter is optional and allows Ergoemacs to document
+that this is an "Execute" command when generating keyboard layout
+diagrams. #### Adding a fixed key Fixed keys can be added by:
+
+(ergoemacs-fixed-key "C-o" 'ido-find-file "Open File")
+
+This adds the fixed key to the currently selected emacs variant
+
+Note the last parameter is optional and allows Ergoemacs to document
+that this is an "Open" command when generating keyboard layout diagrams.
+
+* Menu:
+
+* Adding an ergonomic key map with fixed mappings::
+* Creating a keyboard variant::
+
+
+File: ergoemacs-mode.info,  Node: Adding an ergonomic key map with fixed mappings,  Next: Creating a keyboard variant,  Up: Globally defined keys
+
+1.5.1.1 Adding an ergonomic key map with fixed mappings
+.......................................................
+
+When you want to add an ergonomic keymap with fixed mappings such as
+the ergoprog variant you can add them as follows:
+
+(ergoemacs-key "M-m s" 'save-buffer "" t)
+
+This converts the QWERTY M-m keybinding and the fixed keybinding s to
+save buffer
+
+
+File: ergoemacs-mode.info,  Node: Creating a keyboard variant,  Prev: Adding an ergonomic key map with fixed mappings,  Up: Globally defined keys
+
+1.5.1.2 Creating a keyboard variant
+...................................
+
+
+File: ergoemacs-mode.info,  Node: Ergoemacs Keys System wide,  Prev: Changing key layouts or adding variants,  Up: Ergoemacs Keybindings
+
+1.6 Ergoemacs Keys System wide
+==============================
+
+* Menu:
+
+* Bash::
+* Windows::
+* Extras::
+* Updating Ergoemacs for the latest version of emacs::
+
+
+File: ergoemacs-mode.info,  Node: Bash,  Next: Windows,  Up: Ergoemacs Keys System wide
+
+1.6.1 Bash
+----------
+
+
+File: ergoemacs-mode.info,  Node: Windows,  Next: Extras,  Prev: Bash,  Up: Ergoemacs Keys System wide
+
+1.6.2 Windows
+-------------
+
+In windows some of the ergoemacs keys are implemented system wide by
+assuming apps follow the CUA-style keys like CTRL-f for find, CTRL-h
+for replace. This also optionally implements: - CapsLock as Menu in
+emacs ### Mac OS X ## Developer information ### Layouts All the layouts
+in ergoemacs are easy to generate. To add your own personal layout you
+just need to match the keybindings for your in a layout variable from
+`ergoemacs-layout-XXX'. For the US and UK layouts, the defining
+variable adds the layout:
+
+(defvar ergoemacs-layout-us '("" "`" "1" "2" "3" "4" "5" "6" "7" "8"
+"9" "0" "-" "=" "" "" "" "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "["
+"]" "\" "" "" "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" "'" "" "" "" ""
+"z" "x" "c" "v" "b" "n" "m" "," "." "/" "" "" "" ;; Shifted "" "~" "!"
+"@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" "" "" "" "Q" "W" "E" "R"
+"T" "Y" "U" "I" "O" "P" "{" "}" "|" "" "" "A" "S" "D" "F" "G" "H" "J"
+"K" "L" ":" """ "" "" "" "" "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" ""
+"" "") "US Engilsh QWERTY Keyboard")
+
+(defvar ergoemacs-layout-gb '("" "`" "1" "2" "3" "4" "5" "6" "7" "8"
+"9" "0" "-" "=" "" "" "" "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "["
+"]" "" "" "" "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" "'" "#" "" "" "\"
+"z" "x" "c" "v" "b" "n" "m" "," "." "/" "" "" "" ;; Shifted "" "¬" "!"
+"@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" "" "" "" "Q" "W" "E" "R"
+"T" "Y" "U" "I" "O" "P" "{" "}" "" "" "" "A" "S" "D" "F" "G" "H" "J"
+"K" "L" ":" "@" "~" "" "" "|" "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?"
+"" "" "") "UK QWERTY")
+
+This lists the keyboard positions from left to right for the unshifted
+and shifted states of he keyboard. After listing the keyboard
+descriptions it provides a description of the layout which is used for
+the customization variable `ergoemacs-keyboard-layout'. By simply
+defining your layout before ergoemacs-mode is loaded, you add it to the
+ergoemacs-keyboard-layout variable with its description. ###
+Customizing/Saving the variables You can customize the ergoemacs
+keybindings by typing M-x customize-group ergoemacs-mode
+
+
+File: ergoemacs-mode.info,  Node: Extras,  Next: Updating Ergoemacs for the latest version of emacs,  Prev: Windows,  Up: Ergoemacs Keys System wide
+
+1.6.3 Extras
+------------
+
+To generate keyboard binding diagrams and scripts that allow you to use
+ergoemacs elsewhere, please type M-x ergoemacs-extra. These scripts
+will be stored under the extras directory.
+
+Note that if you use an alternative layout on a QWERTY keyboard (such
+as colemak), and use the portable colemak layout, to use ergoemacs keys
+use the us layout not the colemak layout. However, if you installed the
+colemak keyboard layout to your system, use the colemak not the US
+layout variant.
+
+
+File: ergoemacs-mode.info,  Node: Updating Ergoemacs for the latest version of emacs,  Prev: Extras,  Up: Ergoemacs Keys System wide
+
+1.6.4 Updating Ergoemacs for the latest version of emacs
+--------------------------------------------------------
+
+To tell if a key was a globally defined emacs key, ergoemacs needs to
+know what key was defined by emacs. This typically changes a little for
+each emacs version. This is due to renamed functions, or re-purposed
+keys. To update for the current version of emacs, you can type
+
+(ergoemacs-warn-globally-changed-keys t)
+
+This is also done in the test suite. This can be accessed by
+`ergoemacs-test' command.
+
+
+
+Tag Table:
+Node: Top224
+Node: Ergoemacs Keybindings352
+Node: Standard Keyboard Shortcuts1087
+Node: Window/Tab Switching2236
+Node: Shrink-whitespaces compact/uncompact-block toggle-letter-case3041
+Node: Banish Key Chords3850
+Node: Background4245
+Node: Whence Did Key Chord Came From?5686
+Node: What Should a Keyboard Nerd Do with Key Chords?6504
+Node: Principles on Efficient Use of Key Chords8059
+Node: Keyboard Shortcut Design9581
+Node: Repeatable and Non-Repeatable Keys10799
+Node: Ergoemacs Key Chord Reduction12434
+Node: [Control+x] and [Control-c] reduction12748
+Node: Movement without key-chords15239
+Node: Where Did My Command Go?16945
+Node: Shortcut To Open Cheatsheet17415
+Node: Level 218742
+Node: Level 318979
+Node: Full Ergoemacs Keys19238
+Node: Guru19501
+Node: Master19771
+Node: Changing key layouts or adding variants20153
+Node: Globally defined keys20444
+Node: Adding an ergonomic key map with fixed mappings21899
+Node: Creating a keyboard variant22407
+Node: Ergoemacs Keys System wide22629
+Node: Bash22929
+Node: Windows23043
+Node: Extras25254
+Node: Updating Ergoemacs for the latest version of emacs25915
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:
