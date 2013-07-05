@@ -315,21 +315,39 @@
       (ergoemacs-mode 1)
       t)))
 
-(defun ergoemacs-get-html ()
-  "Gets a HTML description of ErgoEmacs"
+(defun ergoemacs-ghpages ()
+  "Generate github pages with o-blog"
   (interactive)
-  (if (called-interactively-p 'any)
-      (progn
-        (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode %s/ergoemacs-extras --eval \"(ergoemacs-get-html)\" &"
-                               (ergoemacs-emacs-exe)
-                               ergoemacs-dir ergoemacs-dir)))
-    (if (not (file-exists-p (expand-file-name "Readme.org" ergoemacs-dir)))
-        (message "Not creating HTML information file.  Readme.org was not found.")
-      (let ((extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-        (when (not (file-exists-p extra-dir))
-          (make-directory extra-dir t))
-        (with-temp-file (expand-file-name "tablefilter.js" extra-dir)
-          (insert "/*====================================================
+  (let ((o-blog (expand-file-name (file-name-directory (locate-library "o-blog"))))
+        (htmlize (expand-file-name (file-name-directory (locate-library "htmlize"))))
+        (emacs-exe (invocation-name))
+        (emacs-dir (invocation-directory))
+        (file (buffer-file-name))
+        (full-exe nil))
+    (setq full-exe (expand-file-name emacs-exe emacs-dir))
+    (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --funcall ergoemacs-publish-blog &"
+                           full-exe o-blog htmlize ergoemacs-dir ergoemacs-dir))))
+
+(defun ergoemacs-publish-blog ()
+  "Internal function for generating o-blog website"
+  (let ((extra-dir (expand-file-name "out/ergoemacs-extras" ergoemacs-dir)))
+    (ergoemacs-get-html-key-tables)
+    (ergoemacs-extras))
+  (find-file (expand-file-name "web.org" ergoemacs-dir))
+  (call-interactively 'org-publish-blog)
+  (find-file (expand-file-name "out/key-setup.html" ergoemacs-dir))
+  (goto-char (point-min))
+  (when (re-search-forward "<pre" nil t)
+    (insert " id=\"dot_emacs\""))
+  (save-buffer (current-buffer)))
+
+(defun ergoemacs-o-blog-html ()
+  "Gets HTML needed for o-blog variant page."
+  (let ((extra-dir (expand-file-name "out/ergoemacs-extras" ergoemacs-dir)))
+    (when (not (file-exists-p extra-dir))
+      (make-directory extra-dir t))
+    (with-temp-file (expand-file-name "tablefilter.js" extra-dir)
+      (insert "/*====================================================
         - HTML Table Filter Generator v1.6
         - By Max Guglielmi
         - mguglielmi.free.fr/scripts/TableFilter/?l=en
@@ -1546,8 +1564,8 @@ function setAutoComplete(id)
             
         }//fn
 }"))
-        (with-temp-file (expand-file-name "basic.css" extra-dir)
-          (insert "kbd {padding-left:.25em;padding-right:.25em;font-family:sans-serif;border:solid 1px #c2c2c2;border-radius:4px;background-color:#f0f0f0;box-shadow:1px 1px silver}
+    (with-temp-file (expand-file-name "basic.css" extra-dir)
+      (insert "kbd {padding-left:.25em;padding-right:.25em;font-family:sans-serif;border:solid 1px #c2c2c2;border-radius:4px;background-color:#f0f0f0;box-shadow:1px 1px silver}
 
 /*====================================================
   - HTML Table Filter Generator v1.6 
@@ -1602,34 +1620,19 @@ div.inf a:hover{ text-decoration:none; }/*link appearence in .inf div*/
 .even{ background-color:#fff; }/*row bg alternating color*/
 .odd{ background-color:#f4f4f4; }/*row bg alternating color*/
 "))
-        (with-temp-file (expand-file-name "index.org" extra-dir)
-          (insert-file-contents (expand-file-name "Readme.org" ergoemacs-dir))
-          (goto-char (point-min))
-          (when (re-search-forward "^[*]" nil t)
-            (beginning-of-line)
-            (insert "\n\n#+BEGIN_SRC emacs-lisp
-  (setq ergoemacs-theme nil)
-  (setq ergoemacs-keyboard-layout \"us\")
-  (require 'ergoemacs-mode)
-  (ergoemacs-mode 1)
-#+END_SRC
-\n\n[[./ergo-layouts/ergoemacs-layout-us.png]]\n\n")))
-        (find-file (expand-file-name "index.org" extra-dir))
-        (execute-kbd-macro (edmacro-parse-keys "C-c C-e h"))
-        (kill-buffer (current-buffer))
-        (find-file (expand-file-name "index.html" extra-dir))
-        (when (serach-forward "<pre class=\"example\"" nil t)
-          (insert "id=\"dot_emacs\""))
-        (goto-char (point-min))
-        (when (search-forward "ergoemacs-layout-us.png")
-          (delete-region
-           (progn (re-search-backward "<" nil t)
-                  (point))
-           (progn (re-search-forward ">" nil t)
-                  (point)))
-          (insert (ergoemacs-get-html-select)))
-        (save-buffer)
-        (kill-buffer (current-buffer)))
+    (ergoemacs-get-html-select)))
+
+(defun ergoemacs-get-html ()
+  "Gets a HTML description of ErgoEmacs"
+  (interactive)
+  (if (called-interactively-p 'any)
+      (progn
+        (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode %s/ergoemacs-extras --eval \"(ergoemacs-get-html)\" &"
+                               (ergoemacs-emacs-exe)
+                               ergoemacs-dir ergoemacs-dir)))
+    (if (not (file-exists-p (expand-file-name "Readme.org" ergoemacs-dir)))
+        (message "Not creating HTML information file.  Readme.org was not found.")
+      
       (ergoemacs-get-html-key-tables))))
 
 (defun ergoemacs-get-html-select ()
@@ -1644,7 +1647,7 @@ function change_layout() {
   select = document.getElementById('select_theme');
   selection = select.selectedIndex;
   var dir = select.options[selection].value;  
-  document.getElementById('ergo_image').src = dir + \"/ergoemacs-layout-\" + img + \".png\";
+  document.getElementById('ergo_image').src = \"ergoemacs-extras/\" + dir + \"/ergoemacs-layout-\" + img + \".png\";
   if (dir == \"kbd-layouts\"){
     dir = \"ergo-layouts\";
   } else {
@@ -1652,11 +1655,11 @@ function change_layout() {
     if (dir2 == \"ergo-layouts\"){
        dir2 = \"nil\";
     } else {
-       dir2 = '\"'+dir2+'\"';
+       dir2 = '<span style=\"font-style: italic;\">\"'+dir2+'\"</span>';
     }
-    document.getElementById('dot_emacs').innerHTML = '(setq ergoemacs-theme '+dir2+')\n(setq ergoemacs-keyboard-layout \"' + img + '\")\n(require \'ergoemacs-mode)\n(ergoemacs-mode 1)';
+    document.getElementById('dot_emacs').innerHTML = '(setq ergoemacs-theme '+dir2+')\\n(setq ergoemacs-keyboard-layout <span style=\"font-style: italic;\">\"' + img + '\"</span>)\\n(require \\'ergoemacs-mode)\\n(ergoemacs-mode 1)';
     }
-  document.getElementById('ergo_kbd').src = dir + \"/ergoemacs-layout-\" + img + \".html\";
+  document.getElementByTagName('ergo_kbd').src = \"ergoemacs-extras/\" + dir + \"/ergoemacs-layout-\" + img + \".html\";
 }
     </script><form><strong>Layout:</strong><select onchange=\"change_layout()\" id=\"select_layout\">\n"
      (mapconcat
@@ -1695,7 +1698,7 @@ function change_layout() {
                            ">" "&lt;"
                            (replace-regexp-in-string "<" "&gt;" doc)) "</option>")))
               lays "\n"))
-     "</select></form><br /><image id=\"ergo_image\" src=\"ergo-layouts/ergoemacs-layout-us.png\" /><br /><iframe id=\"ergo_kbd\" src=\"ergo-layouts/ergoemacs-layout-us.html\"
+     "</select></form><br /><image id=\"ergo_image\" src=\"ergoemacs-extras/ergo-layouts/ergoemacs-layout-us.png\" /><br /><iframe id=\"ergo_kbd\" src=\"ergoemacs-extras/ergo-layouts/ergoemacs-layout-us.html\"
   width=\"100%\" height=\"400\"></iframe>")))
 
 (defun ergoemacs-trans-mac-osx (key &optional swap-option-and-control)
@@ -2050,7 +2053,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
     (ergoemacs-gen-ahk)
     (ergoemacs-bashs layouts)
     (ergoemacs-mac-osx-dicts layouts)
-    (ergoemacs-get-html)
+    ;; (ergoemacs-get-html)
     ;; (find-file (expand-file-name "ergoemacs-extras" user-emacs-directory))
     ))
 
