@@ -1,0 +1,17 @@
+<lisp>(ob:insert-template "page_header.html")</lisp>
+<article>
+  <div class="article-content">
+    <nav class="tag-detail">
+      <ul>
+	<lisp>
+	  (progn
+	  (loop for post in POSTS
+	  do (when (member (ob:tags-safe TAG) (mapcar 'ob:tags-safe (ob:post-tags post)))
+	  (insert (format "<li><a href=\"%s/%s\">" (ob:path-to-root) (ob:post-htmlfile post))
+	      (ob:post-title post) "</a></li>"))))
+	</lisp>
+      </ul>
+    </nav>
+  </div>
+</article>
+<lisp>(ob:insert-template "page_footer.html")</lisp>    

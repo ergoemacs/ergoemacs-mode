@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title><lisp>(ob:blog-title BLOG)</lisp></title>
+  <link href="<lisp>(ob:get-header "URL")</lisp>index.xml" rel="self" />
+  <link href="<lisp>(ob:get-header "URL")</lisp>"/>
+  <updated><lisp>(ob:format-date (ob:get-header "DATE"))</lisp></updated>
+  <id><lisp>(ob:get-header "URL")</lisp>index.xml</id>
+  <lisp>
+    (loop for p in (ob:get-posts nil 10)
+    do (progn
+    (insert "<entry>"
+    (format "<title type=\"html\">%s</title>" (ob:post-title p))
+    (format "<author><name>%s</name></author>" (ob:get-header "AUTHOR"))
+    (format "<link href=\"%s/%s\"/>" (ob:get-header "URL") (ob:post-htmlfile p))
+    (format "<updated>%s</updated>" (ob:format-date (ob:post-timestamp p)))
+    (format "<published>%s</published>" (ob:format-date (ob:post-timestamp p)))
+    (format "<id>%s</id>" (ob:post-htmlfile p)))
+
+    (loop for tag in (ob:post-tags p)
+    do (insert (format "<category scheme=\"/tags/%s.html\" term=\"%s\" label=\"%s\"/>"
+    (ob:tags-safe tag) (ob:tags-name tag) (ob:tags-name tag))))
+
+    (insert
+    (format "<content type=\"html\">%s</content>" (htmlize-protect-string(ob:post-content-html p)))
+    "</entry>")))
+  </lisp>
+</feed>

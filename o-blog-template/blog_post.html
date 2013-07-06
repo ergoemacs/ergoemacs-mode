@@ -1,0 +1,74 @@
+<lisp>(ob:insert-template "page_header.html")</lisp>
+  <div class="article">
+  <header class="article-header">
+
+    <div class="well">
+      <div class="row">
+	<div class="date span1">
+	  <div class=" date-d"><lisp>(ob:format-date (ob:post-timestamp POST) "%d")</lisp></div>
+	  <div class=" date-m"><lisp>
+	      (format "<a href=\"%s/%s/%s/%s/index.html\">%s</a>"
+	      (ob:path-to-root)
+	      (ob:category-safe (ob:post-category POST))
+	      (ob:format-date (ob:post-timestamp POST) "%Y")
+	      (ob:format-date (ob:post-timestamp POST) "%m")
+	      (ob:format-date (ob:post-timestamp POST) "%b"))</lisp></div>
+	  <div class=" date-y"><lisp>
+	      <lisp>
+		(format "<a href=\"%s/%s/%s/index.html\">%s</a>"
+		(ob:path-to-root)
+		(ob:category-safe (ob:post-category POST))
+		(ob:format-date (ob:post-timestamp POST) "%Y")
+		(ob:format-date (ob:post-timestamp POST) "%Y"))
+	      </lisp>
+	  </div>
+	</div>
+	<div class="span1">
+	  <lisp>(ob:insert-template "plugin_qrcode.html")</lisp>
+	</div>
+	<h1 class="offset2" style="font-size: 250%"><lisp>(ob:post-title POST)</lisp></h1>
+      </div>
+      <nav>
+	<ul class="pager">
+	  <lisp>
+	    (progn
+	    (let ((ppost (ob:get-post-by-id (1+ (ob:post-id POST)))))
+	    (if ppost
+	    (insert (format "<li class=\"previous\"><a href=\"%s/%s\"><i class=\"icon-chevron-left\"></i>&nbsp;%s</a></li>"
+	    (ob:path-to-root)
+	    (ob:post-htmlfile ppost)
+	    (ob:post-title ppost)))
+	    (insert "<li class=\"previous\">&nbsp;</li>")))
+	    (let ((npost (ob:get-post-by-id (1- (ob:post-id POST)))))
+	    (if npost
+	    (insert (format "<li class=\"next\" style=\"text-align: right;\"><a href=\"%s/%s\">%s&nbsp;<i class=\"icon-chevron-right\"></i></a></li>"
+	    (ob:path-to-root)
+	    (ob:post-htmlfile npost)
+	    (ob:post-title npost)))
+	    (insert "<li class=\"next\">&nbsp;</li>"))))
+	  </lisp>
+	</ul>
+      </nav>
+    </div>
+
+  </header>
+  <div class="article-content">
+    <lisp>(ob:post-content-html POST)</lisp>
+  </div>
+  
+  <footer class="well article-footer">
+    <lisp>(ob:gettext :posted-on)</lisp> <time datetime="<lisp> (ob:format-date (ob:post-timestamp POST)) </lisp>"> <lisp> (ob:format-date (ob:post-timestamp POST) (ob:gettext :post-timestamp))</lisp></time>.
+    <nav class="tag-cloud">
+      <h1><i class="icon-tags"></i> <lisp>(ob:gettext :related-tags)</lisp></h1>
+      <ul>
+	<lisp>
+	  (loop for tag in (ob:post-tags POST)
+	  do (insert (format "<li class=\"label label-inverse small\"><a href=\"%s/tags/%s.html\">%s</a></li>"
+	  (ob:path-to-root) (ob:tags-safe tag) (ob:tags-name tag))))
+	</lisp>
+      </ul>
+    </nav>
+  </footer>
+  </div>
+  <lisp>(ob:insert-template "plugin_disqus.html")</lisp>
+<lisp>(ob:insert-template "page_footer.html")</lisp>

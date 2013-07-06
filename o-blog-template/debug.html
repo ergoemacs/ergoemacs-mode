@@ -1,0 +1,51 @@
+<lisp>(ob:insert-template "page_header.html")</lisp>
+ <div id="toc"></div>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+  $("#toc").append('<p>Debug tree</p>')
+  $('.topbar').css('position', 'relative')
+  $("#debug h1, #debug h2, #debug h3, #debug h4, #debug h5, #debug h6").each(function(i) {
+  var current = $(this);
+  current.attr("id", "title" + i);
+  
+  $("#toc").append("<a id='link" + i + "' href='#title" + i + "' title='" + current[0].tagName + "'>" + current.html() + "</a>");
+  });
+  });
+</script>
+
+<style type="text/css">
+  #toc {
+  position: fixed;
+  top: 40px;
+  background: white;
+  left: 10px;
+  z-index: 50000;
+  }
+
+  #toc a {
+  display: block;
+  }
+
+  #toc a[title=H1] { font-size: 9pt; margin-left: 10px;}
+  #toc a[title=H2] { font-size: 8pt; margin-left: 20px;}
+  #toc a[title=H3] { font-size: 7pt; margin-left: 30px;}
+  #toc a[title=H4] { font-size: 6pt; margin-left: 40px;}
+  #toc a[title=H5] { font-size: 5pt; margin-left: 50px;}
+  #toc a[title=H6] { font-size: 4pt; margin-left: 60px;}
+  
+</style>
+
+<div id="debug">
+  <h1><lisp>(ob:gettext :debug-blog-header)</lisp></h1>
+  <lisp>(ob:insert-template "debug_blog.html")</lisp>
+  <h1><lisp>(ob:gettext :debug-posts-header)</lisp></h1>
+  <lisp>(ob:insert-template "debug_posts.html")</lisp>
+  <h1><lisp>(ob:gettext :debug-static-pages-header)</lisp></h1>
+  <lisp>(ob:insert-template "debug_static.html")</lisp>
+  <h1><lisp>(ob:gettext :debug-snippets-header)</lisp></h1>
+  <lisp>(ob:insert-template "debug_snippets.html")</lisp>
+  <h1><lisp>(ob:gettext :debug-tags-header)</lisp></h1>
+  <lisp>(ob:insert-template "debug_tags.html")</lisp>
+</div>
+<lisp>(ob:insert-template "page_footer.html")</lisp>

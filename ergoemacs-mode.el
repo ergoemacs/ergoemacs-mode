@@ -804,8 +804,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
   ;; created out of context.  However, this seems to fix issue #134
   (mapc
    (lambda(buf)
-     (save-excursion
-       (set-buffer buf)
+     (with-current-buffer buf
        (let ((x (assq 'ergoemacs-mode minor-mode-overriding-map-alist)))
          (if x
              (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist))))))

@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="<lisp>(ob:blog-language BLOG)</lisp>">
+  <head>
+    <meta charset="utf-8"/>
+    <title><lisp>(if (boundp 'POST) (ob:post-title POST) (ob:blog-title BLOG))</lisp></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" type="text/less" href="<lisp>(ob:path-to-root)</lisp>/style/less/oblog-min.less"/>
+
+<script src="<lisp>(ob:path-to-root)</lisp>/style/js/less-1.3.0.min.js" type="text/javascript"></script>
+  <script src="<lisp>(ob:path-to-root)</lisp>/style/js/jquery-1.7.1.min.js" type="text/javascript"></script>
+  <script src="<lisp>(ob:path-to-root)</lisp>/style/bootstrap/js/bootstrap-modal.js" type="text/javascript"></script>
+  <script src="<lisp>(ob:path-to-root)</lisp>/style/bootstrap/js/bootstrap-transition.js" type="text/javascript"></script>
+  <script src="<lisp>(ob:path-to-root)</lisp>/style/bootstrap/js/bootstrap-dropdown.js" type="text/javascript"></script>
+  <script src="<lisp>(ob:path-to-root)</lisp>/style/bootstrap/js/bootstrap-collapse.js" type="text/javascript"></script>
+  <script src="<lisp>(ob:path-to-root)</lisp>/style/js/prettify.js" type="text/javascript"></script>
+  <script src="<lisp>(ob:path-to-root)</lisp>/style/js/o-blog.linenumber.js" type="text/javascript"></script>
+  <script src="<lisp>(ob:path-to-root)</lisp>/style/js/o-blog-fix.js" type="text/javascript"></script>
+
+<lisp>(when (boundp 'org-export-xhtml-scripts) org-export-xhtml-scripts)</lisp>
+
+</head>
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </a>
+      <a class="brand" href="<lisp>(ob:path-to-root)</lisp>/index.html"><lisp>(ob:blog-title BLOG)</lisp></a>
+      <div class="nav-collapse collapse">
+        <lisp>(ob:post-content-html (ob:get-snippet "Navigation"))</lisp>
+      </div>
+    </div>
+  </div>
+</div>
+
+<article>
+  <div class="article-content">
+    <lisp>
+      (ob:post-content-html POST)
+    </lisp>
+  </div>
+</article>
+
+</body>
+</html>

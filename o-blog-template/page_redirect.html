@@ -1,0 +1,26 @@
+<lisp>(ob:insert-template "page_header.html")</lisp>
+<article>
+  <header class="article-header">
+    <div class="well">
+      <h1 style="font-size: 250%;"><lisp>(ob:gettext :redirect-header)</lisp></h1>
+    </div>
+  </header>
+  <div class="article-content">
+    <p>
+      <lisp>
+	(ob:gettext :redirect-text)
+      </lisp>
+    </p>
+    <p>
+      <a href="../index.html">
+	<lisp>(ob:gettext :redirect-link)</lisp>
+      </a>
+    </p>
+  </div>
+</article>
+<script type="text/javascript">
+<!--
+$(document).ready().delay(5000, function() { location.href = "../index.html"} );
+//-->
+</script>
+<lisp>(ob:insert-template "page_footer.html")</lisp>

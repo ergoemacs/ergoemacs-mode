@@ -1,0 +1,6 @@
+<div class="qr-code">
+  <img src="http://chart.apis.google.com/chart?chs=50x50&cht=qr&chld=|0&chl=<lisp>
+	    (url-hexify-string (concat (ob:blog-url BLOG) "/"
+	    (when (and (boundp 'POST) POST)  (ob:post-htmlfile POST))))</lisp>"
+       alt="qr-code" />
+</div>

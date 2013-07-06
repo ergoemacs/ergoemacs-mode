@@ -1,0 +1,19 @@
+<lisp>(ob:insert-template "page_header.html")</lisp>
+<article>
+  <header class="article-header">
+    <div class="well">
+      <div class="row">
+	<div class="span1">
+	  <lisp>(ob:insert-template "plugin_qrcode.html")</lisp>
+	</div>
+	<h1 class="offset1" style="font-size: 250%;"><lisp>(ob:post-title POST)</lisp></h1>
+      </div>
+    </div>
+  </header>
+  <div class="article-content">
+    <lisp>
+      (ob:post-content-html POST)
+    </lisp>
+  </div>
+</article>
+<lisp>(ob:insert-template "page_footer.html")</lisp>

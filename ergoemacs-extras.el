@@ -256,6 +256,7 @@
     <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />
     <title></title>
     <link rel=\"stylesheet\" href=\"../basic.css\" />
+    <link rel=\"stylesheet\" href=\"../../style/keys.css\" />
     <script language=\"javascript\" type=\"text/javascript\" src=\"../tablefilter.js\"></script>
    </head>
     <table id=\"table_keys\"><tr><th>Type</th>><th>Key</th><th>Short Desc</th><th>Emacs Function</th></tr>")
@@ -330,16 +331,57 @@
 
 (defun ergoemacs-publish-blog ()
   "Internal function for generating o-blog website"
-  (let ((extra-dir (expand-file-name "out/ergoemacs-extras" ergoemacs-dir)))
+  (when noninteractive
+    (setq user-emacs-directory (expand-file-name "out" ergoemacs-dir))
     (ergoemacs-get-html-key-tables)
-    (ergoemacs-extras))
-  (find-file (expand-file-name "web.org" ergoemacs-dir))
-  (call-interactively 'org-publish-blog)
-  (find-file (expand-file-name "out/key-setup.html" ergoemacs-dir))
-  (goto-char (point-min))
-  (when (re-search-forward "<pre" nil t)
-    (insert " id=\"dot_emacs\""))
-  (save-buffer (current-buffer)))
+    (ergoemacs-extras)
+    (find-file (expand-file-name "web.org" ergoemacs-dir))
+    (call-interactively 'org-publish-blog)
+    (find-file (expand-file-name "out/key-setup.html" ergoemacs-dir))
+    (goto-char (point-min))
+    (when (re-search-forward "<pre" nil t)
+      (insert " id=\"dot_emacs\""))
+    ;; Now add [K]ey type headers.
+    (let (current-class)
+      (mapc
+       (lambda(file)
+         (find-file file)
+         (setq current-class "dark")
+         (goto-char (point-min))
+         (while (re-search-forward "\\<\\(Ctr?l\\|Alt\\|\\(?:.\\|&.*?;\\) +Shift\\)[+]\\(.\\)" nil t)
+           (if (save-match-data (looking-at "\\(.*?;\\)? +Shift[+]."))
+               (progn
+                 (replace-match "<kbd class=\"dark\">\\1</kbd>+\\2" t)
+                 (backward-char 1)
+                 (when (looking-at "\\(\\(?:.\\|&.*?;\\) +Shift\\)[+]\\(.\\)")
+                   (replace-match "<kbd class=\"dark\">\\1</kbd>+<kbd class=\"dark\">\\2</kbd>" t)))
+             (replace-match "<kbd class=\"dark\">\\1</kbd>+<kbd class=\"dark\">\\2</kbd>" t)))
+         (goto-char (point-min))
+         (let (p1 p2)
+           (while (re-search-forward "@@html:" nil t)
+             (replace-match "")
+             (setq p1 (point))
+             (when (search-forward "@@" nil t)
+               (replace-match "")
+               (setq p2 (point))
+               (goto-char p1)
+               (while (search-forward "&lt;" p2 t)
+                 (replace-match "<"))
+               (goto-char p1)
+               (while (search-forward "&gt;" p2 t)
+                 (replace-match ">")))))
+         (goto-char (point-min))
+         (while (re-search-forward "\\(<h[1234].*?>\\)" nil t)
+           (re-search-forward "\\=<a.*?>" nil t)
+           (when (looking-at "About")
+             (goto-char (point-max)) ;; Not displaying properly.  Remove.
+             (setq current-clas "light"))
+           (when (looking-at "\\([A-Za-z0-9]\\)")
+             (replace-match (format "<kbd class=\"%s\">\\1</kbd>" current-class) t)))
+         (save-buffer (current-buffer)))
+       (let ((default-directory (expand-file-name "out" ergoemacs-dir)))
+         (file-expand-wildcards "*.html" t))))
+    (save-buffer (current-buffer))))
 
 (defun ergoemacs-o-blog-html ()
   "Gets HTML needed for o-blog variant page."
@@ -1565,8 +1607,7 @@ function setAutoComplete(id)
         }//fn
 }"))
     (with-temp-file (expand-file-name "basic.css" extra-dir)
-      (insert "kbd {padding-left:.25em;padding-right:.25em;font-family:sans-serif;border:solid 1px #c2c2c2;border-radius:4px;background-color:#f0f0f0;box-shadow:1px 1px silver}
-
+      (insert "
 /*====================================================
   - HTML Table Filter Generator v1.6 
   elements and classes
@@ -2057,6 +2098,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
     ;; (find-file (expand-file-name "ergoemacs-extras" user-emacs-directory))
     ))
 
+;;;###autoload
 (defun ergoemacs-keyfreq-image ()
   "Create heatmap keyfreq images, based on the current layout."
   (interactive)

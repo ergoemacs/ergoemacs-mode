@@ -1,0 +1,32 @@
+<lisp>(ob:insert-template "page_header.html")</lisp>
+<div class="article">
+  <header class="article-header">
+    <div class="well">
+      <div class="row">
+	<div class="span1">
+	  <lisp>(ob:insert-template "plugin_qrcode.html")</lisp>
+	</div>
+	<h1 class="offset1" style="font-size: 250%;"><lisp>(ob:post-title POST)</lisp></h1>
+      </div>
+    </div>
+  </header>
+
+  <div class="article-content">
+    <nav class="tag-detail">
+      <div class="multicolumn3">
+	<lisp>
+(loop for TAG in TAGS
+      do (progn
+	   (insert (format "<h3>%s</h3><ul>" (ob:tags-name TAG)))
+	   (loop for post in POSTS
+		 do (when (member (ob:tags-safe TAG) (mapcar 'ob:tags-safe (ob:post-tags post)))
+		      (insert (format "<li><a href=\"%s/%s\">%s</a></li>"
+				      (ob:path-to-root) (ob:post-htmlfile post) (ob:post-title post)
+				      ))))
+	   (insert "</ul>")))
+	</lisp>
+      </div>
+    </nav>
+  </div>
+</div>
+<lisp>(ob:insert-template "page_footer.html")</lisp>

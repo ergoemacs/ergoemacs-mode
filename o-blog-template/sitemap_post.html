@@ -1,0 +1,6 @@
+<url>
+    <lisp>(format "<loc>%s/%s</loc>" (ob:get-header "URL") (ob:post-htmlfile POST))</lisp>
+    <lisp>(format "<lastmod>%s</lastmod>" (ob:format-date (ob:post-timestamp POST)))</lisp>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>

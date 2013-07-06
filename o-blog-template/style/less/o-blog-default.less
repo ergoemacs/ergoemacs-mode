@@ -1,0 +1,90 @@
+/*
+ * Define you own style here (overrides bootstrap's variables.less)
+ */
+
+
+@linkColor: #933;
+
+/* @media (min-width: 768px) { */
+
+
+    @baseFontSize: 18px;
+    @baseLineHeight: @baseFontSize * (18/13);
+
+
+    @gridColumns:             12;
+    @gridColumnWidth:         70px;
+    @gridGutterWidth:         20px;
+
+
+
+    @import "font-Yanone-Kaffeesatz.less";
+    @import "font-Ubuntu-Mono.less";
+    @import "font-Andika.less";
+
+
+    h1, h2, h3, h4, h5, h6 {
+	font-family: "Yanone Kaffeesatz", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+
+    @monoFontFamily: "Ubuntu Mono", Menlo, Monaco, Consolas, "Courier New";
+    @sansFontFamily: "Andika", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+    .navbar-fixed-top {
+	li {
+	    line-height: @baseLineHeight;
+	}
+    }
+
+    nav a:hover {
+	zoom: 1.1;
+    }
+
+    .navbar, .breadcrumb {
+	font-size: @baseFontSize / (18/13);
+	line-height: 0.76 * @baseLineHeight  / (18/13);
+    }
+
+    .breadcrumb {
+	padding: 3px 14px;
+	li {
+	    line-height: @baseLineHeight;
+	}
+    }
+
+    .modal {
+	left: 15%;
+	width: 70% /*@gridRowWidth*/;
+	margin-left: auto;
+	margin-right: auto;
+	li {
+	    line-height: @baseLineHeight;
+	}
+    }
+
+    li {
+	line-height: 1.5 * @baseLineHeight;
+    }
+
+    #disqus_thread {
+
+	font-size: @baseFontSize * (13/18);
+	line-height: @baseLineHeight * (13/18);
+
+	input,
+	textarea,
+	.uneditable-input {
+	    font-size: @baseFontSize * (13/18);
+	    line-height: @baseLineHeight * (13/18);
+	    height: @baseLineHeight * (13/18);
+	}
+
+	select {
+	    font-size: @baseFontSize * (13/18);
+	    line-height: @baseLineHeight * (13/18);
+	    height: 2 * @baseLineHeight * (13/18);
+
+	}
+    }
+/* } */

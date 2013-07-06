@@ -1,0 +1,6 @@
+<ul>
+  <lisp>
+    (loop for tag in TAGS
+    do (insert (format "<li style=\"font-size: %2.2f%%;\"><a href=\"%s/tags/%s.html\">%s</a></li> " (ob:tags-size tag) (ob:path-to-root)  (ob:tags-safe tag) (ob:tags-name tag))))
+  </lisp>
+</ul>
