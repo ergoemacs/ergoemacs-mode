@@ -96,9 +96,9 @@ If (CurrLayout == "ERROR"){
   CurrLayout=us
 }
 
-IniRead CurrVariant, ergoemacs-settings.ini, Curr, Variant
-If (CurrVariant == "ERROR"){
-  CurrVariant=Standard
+IniRead CurrTheme, ergoemacs-settings.ini, Curr, Theme
+If (CurrTheme == "ERROR"){
+  CurrTheme=Standard
 } 
 
 IniRead CurrTrans, ergoemacs-settings.ini, Curr, Trans
@@ -118,13 +118,13 @@ Loop, 120 {
   }
 }
 
-CurrLayVar= % "[" . CurrLayout . "-" . CurrVariant . "]"
+CurrLayVar= % "[" . CurrLayout . "-" . CurrTheme . "]"
 Loop, Read, ergoemacs.ini
 {
   If (A_LoopReadLine == "[Layouts]"){
      CareL = 1
      CareV = 0
-  } Else If (A_LoopReadLine == "[Variants]"){
+  } Else If (A_LoopReadLine == "[Themes]"){
      CareV = 1
      CareL = 0
   } Else If (CareL == 1 || CareV == 1){
@@ -198,12 +198,12 @@ Loop, parse, LayLst, `n
 Loop, parse, VarLst, `n
 {
         If (A_LoopField != ""){
-           Menu, VariantKey, add, %A_LoopField%, VariantKeyHandler
+           Menu, ThemeKey, add, %A_LoopField%, ThemeKeyHandler
            
-           If (A_LoopField == CurrVariant){
-              Menu, VariantKey, Check, %A_LoopField%
+           If (A_LoopField == CurrTheme){
+              Menu, ThemeKey, Check, %A_LoopField%
            } else {
-             Menu, VariantKey, UnCheck, %A_LoopField%
+             Menu, ThemeKey, UnCheck, %A_LoopField%
            }
            
         }
@@ -213,7 +213,7 @@ Menu, Tray, DeleteAll
 Menu, Tray, NoStandard
 Menu, tray, add, Keyboard Layouts, :MenuKey
 Menu, tray, add, Translated Layout, :TranslateKey
-Menu, tray, add, Variants, :VariantKey
+Menu, tray, add, Themes, :ThemeKey
 Menu, Tray, add, Caps to Menu in Emacs, ToggleCaps
 If (CurrCaps == "1"){
   Menu, Tray, Check, Caps to Menu in Emacs
@@ -408,8 +408,8 @@ If (CurrCaps == "1"){
 Reload
 return
 
-VariantKeyHandler:
-IniWrite,%A_ThisMenuItem%,ergoemacs-settings.ini,Curr,Variant
+ThemeKeyHandler:
+IniWrite,%A_ThisMenuItem%,ergoemacs-settings.ini,Curr,Theme
 Reload
 return
 
