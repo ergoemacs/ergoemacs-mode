@@ -139,6 +139,8 @@ org-mode and exported to HTML using [[https://github.com/renard/o-blog][o-blog]]
   - [[file:{lisp}(ob:path-to-root){/lisp}/key-themes.html][Key Themes]]
   - [[file:{lisp}(ob:path-to-root){/lisp}/keyboard-layouts.html][Keyboard Layouts]]
   - 
+  - [[file:design-basis.html][Design Basis]]
+  - 
   - [[file:{lisp}(ob:path-to-root){/lisp}/faq.html][FAQ]]
   - 
   - [[file:{lisp}(ob:path-to-root){/lisp}/bug-report.html][Bug report]]
@@ -672,7 +674,7 @@ previous-user-buffer, next-user-buffer, next-frame-command, previous-frame-comma
   :PROPERTIES:
   :PAGE:     features.html
   :TEMPLATE: blog_static_no_title.html
-  :END:
+  :END:e
 
 *** Features 
 Currently ergoemacs-mode:
@@ -686,6 +688,58 @@ Currently ergoemacs-mode:
   - Ergonomic personalization
 
 
+** Design Basis
+  :PROPERTIES:
+  :PAGE:     design-basis.html
+  :TEMPLATE: blog_static_no_title.html
+  :END:
+
+Here's the outline of how this design is arrived.
+
+Statistics of emacs commands are compiled from emacs users, and are
+listed by frequency of use. The top about 30 ones, are given a
+keyboard shortcut.
+
+To assign the key position, the following rules are used. The rules
+are listed roughly in order of priority:
+1. Home row keys are the best.
+2. 2nd and 3rd fingers (pointing finger and index finger) are better
+   than 4th (ring finger) and 5th finger (pinky).
+3. The row above home row is considered better than the row below home
+   row for 2nd and 3rd fingers. (for 5th finger the row below is
+   considered better.)
+4. Right hand's keys are considered better than left hand's keys. (because most people are right handed)
+5. @@html:<kbd class="dark">@@Alt@@html:</kbd>@@ is considered better
+   than @@html:<kbd class="dark">@@Ctrl@@html:</kbd>@@. (@@html:<kbd
+   class="dark">@@Alt@@html:</kbd>@@ 
+   is a natural thumb curl, @@html:<kbd class="dark">@@Ctrl@@html:</kbd>@@ is
+   stretched pinky. Thumb is most powerful finger, pinkie the weakest)
+6. In general, cursor moving commands are placed all for the right
+   hand, while text changing commands are all placed for the left
+   hand. (grouping advantage)
+7. Similar commands should be grouped together to avoid
+   scattering. For example, cursor moving by single char is together
+   (@@html:<kbd class="dark">@@I@@html:</kbd>@@ @@html:<kbd class="dark">@@J@@html:</kbd>@@ @@html:<kbd class="dark">@@K@@html:</kbd>@@ @@html:<kbd class="dark">@@L@@html:</kbd>@@). Undo, Cut, Copy, Paste are together (@@html:<kbd class="dark">@@Z@@html:</kbd>@@ @@html:<kbd class="dark">@@X@@html:</kbd>@@ @@html:<kbd class="dark">@@C@@html:</kbd>@@ @@html:<kbd class="dark">@@V@@html:</kbd>@@). Delete
+   char/word left/right are together (@@html:<kbd class="dark">@@E@@html:</kbd>@@ @@html:<kbd class="dark">@@R@@html:</kbd>@@ @@html:<kbd class="dark">@@D@@html:</kbd>@@ @@html:<kbd class="dark">@@F@@html:</kbd>@@).
+8. Commands with logical reversal or extension are done with @@html:<kbd class="dark">@@⇧ Shift@@html:</kbd>@@
+   key, after other priorities are considered. Examples: Undo/Redo,
+   move cursor to previous/next pane, find replace by string/regex,
+   isearch forward/backward, move cursor by beginning/ending of
+   line. Delete line to the right/left.
+
+The design is based on finger positions, not on first letter of
+command names. The shortcut set is the same for QWERTY and Dvorak. The
+ease of remembering what commands are on what keys are based on
+grouping and positioning. For example, cursor movings are all right
+hand, text changing are all left hand, moving or deleting to the
+left/right have keys that are place left and right together, and
+similar for up/down (by screen or to beginning/end of file). Undo,
+Cut, Copy, Paste are the familiar row @@html:<kbd class="dark">@@Z@@html:</kbd>@@ @@html:<kbd class="dark">@@X@@html:</kbd>@@ @@html:<kbd class="dark">@@C@@html:</kbd>@@ @@html:<kbd class="dark">@@V@@html:</kbd>@@.
+
+In this design, only the @@html:<kbd class="dark">@@Alt@@html:</kbd>@@+@@html:<kbd class="dark">@@‹key›@@html:</kbd>@@ space is used. Some @@html:<kbd class="dark">@@Alt@@html:</kbd>@@+@@html:<kbd class="dark">@@⇧ Shift@@html:</kbd>@@
+is used too. @@html:<kbd class="dark">@@Ctrl@@html:</kbd>@@+@@html:<kbd class="dark">@@‹key›@@html:</kbd>@@ space is not used except 7 standard
+keybindings (Open, Close, Save, Save As, Print, Select All). The
+operation and consistency of emacs is not affected.
 ** Standard Shortcuts 
   :PROPERTIES:
   :PAGE:     standard-shortcuts.html
@@ -1171,13 +1225,238 @@ for a while.
 Here are some ideas for future versions:
 
 - Use Apps/Menu key to have unchorded keys to reduce probability of
-  RSI
+  RSI.  See [[file:banish-key-chords.html][Banish Key Chords]].
 - Allow ergoemacs-mode keyboard themes to be customized based on user
   frequency.  
 
 If you have any ideas please [[https://github.com/mlf176f2/ergoemacs-mode/issues/new][drop me a line]].
 
+This section is experimental ergoemacs keybindings that are being
+incorporated into ergoemacs.  These are likely to change and are a
+work in progress.
 
+** Banish Key Chords
+  :PROPERTIES:
+  :PAGE:     banish-key-chords.html
+  :TEMPLATE: blog_static_no_title.html
+  :END:
+
+*** Background
+Key chords (like Ctrl+x) is the bane of keyboarding.
+There are 3 types of key shortcuts to invoke commands in software:
+
+1. Single key.  Examples include: @@html:<kbd class="dark">@@F1@@html:</kbd>@@, @@html:<kbd class="dark">@@PgUp@@html:</kbd>@@. 
+2. Key chord: @@html:<kbd class="dark">@@⇧ Shift+a @@html:</kbd>@@,
+   Ctrl+c, Ctrl+⇧ Shift+z, @@html:<kbd class="dark">@@Alt@@html:</kbd>@@+@@html:<kbd class="dark">@@F4@@html:</kbd>@@.
+3. Key sequence of single keys or chords. For example on Microsoft
+   Windows, @@html:<kbd class="dark">@@F10@@html:</kbd>@@ @@html:<kbd class="dark">@@e@@html:</kbd>@@ @@html:<kbd class="dark">@@c@@html:</kbd>@@ for copy, or @@html:<kbd class="dark">@@Alt@@html:</kbd>@@+@@html:<kbd class="dark">@@Space@@html:</kbd>@@ @@html:<kbd class="dark">@@c@@html:</kbd>@@ to close window.
+
+of these, in terms of efficiency and hand health (Repetitive Strain
+Injury), the single key is the best. Key sequence of single keys is
+second best. Key chord is the worst.
+
+
+Key chord is the most hard on hand health, but is also conceptually
+the most convoluted.
+
+I [Xah Lee] remember in around 1991, when i first learned about key
+chord on the Macintosh Classic. I thought, it's strange. You have to
+hold @@html:<kbd class="dark">@@⌘ Cmd@@html:</kbd>@@ first, then press the key @@html:<kbd class="dark">@@c@@html:</kbd>@@, then, release @@html:<kbd class="dark">@@c@@html:</kbd>@@, then, release
+@@html:<kbd class="dark">@@⌘ Cmd@@html:</kbd>@@. It must be in that specific order.
+
+A more natural way is either key sequence, or real chords. That is,
+pressing several keys together but you don't have to worry about which
+to hold or release first. Stenograph machines are like that.
+
+**** Whence Did Key Chord Came From?
+I suppose, when computer keyboard came, sans levels and gears, but
+habit stuck, and this evolved into “modifier” keys, with Bucky bits.
+
+Now, thinking about this, i think Microsoft must be a genius, when
+they invented the key system on Windows, where Alt is used to invoke
+menu, and all command can be called by a sequence of key strokes. This
+is probably the best system given the PC keyboard. This system, lets
+you invoke any command, yet has menu counter-part, so it's easy to see
+a list of them and also grouped by category. (emacs's system of course
+is much more extensive than that.)
+
+**** What Should a Keyboard Nerd Do with Key Chords?
+BAN the them out of the universe.
+
+But, there isn't enough keys on keyboard. You only have 12 function
+keys, plus some others such as ↖ Home, ↓. But there are 10 times more
+commands in software.  What to do?
+
+For majority of commands, you should use a key sequence of single
+keys, instead. For example, 【F10 e c】. But Function keys are further
+away. So, you could start with a easy key such as 【▤ Menu e c】, and
+reassign most of your keys to key sequence. (you can make Caps Lock as
+your start key, whichever key on YOUR keyboard is easy to press.)
+
+There are 26 letters in alphabet, plus 10 digits, so you have 36 key
+choices for the key. (ignore punctuation keys for the moment) If each
+of your command has 2 keys in a key sequence (not counting the
+starting key), then you have 36 × 36 = 1296 possible keys for
+commands. Quite enough!
+
+Still, some commands are not suitable for key sequence. For example,
+moving cursor by word. You want to be able to hold down a key and have
+the cursor keep moving. You can't do that with key sequences, because
+you need to release the key and press again to invoke the command
+again. Answer: use single key. Retort: But F keys are far away and
+arrow keys are already used. Answer: key chord then.
+
+**** Principles on Efficient Use of Key Chords
+Key chord should be used only for commands that need to be repeated
+within a second (hold the key and let the command repeat).  This
+includes moving cursor, paging, switching tab/window.
+
+Key chord should use no more than one modifier. This saves your
+hand. So, key chord such as emacs interactive replace 【Alt+⇧ Shift+%】
+or Mac's redo 【⌘ Cmd+⇧ Shift+z】 should not be allowed.
+
+more detail at Keyboard Shortcut Design: Repeatable vs Non-Repeatable
+Commands and Keys
+
+If you survey commands in a editor, such as emacs, vast majority of
+commands are the non-repeating type. The repeating type are probably
+less than 5% of commands. Using 【Ctrl+‹letter/digit›】 key give you
+about 36 spots. Adding Alt, you have 72 spots. And that's more than
+enough for repeating commands. In practice, i estimate a programer
+uses less than 30 repeating commands per day on average.
+**** What About Sticky Keys?
+I do not advocate the Sticky Keys feature for the handicapped. It's
+not the same. Sticky Keys actually make things a worse, because it's a
+hack over key chords. When you press a sequence of keys, it has to
+guess whether you mean a sequence or chord (since emacs supports
+both). The end result is that it's confusing to use, imprecise, and
+slows you down.
+
+*** Keyboard Shortcut Design
+This section discuss one criterion on the design of keyboard shortcut
+system: Repeatable vs Non-Repeatable Commands and Keys. This
+applicable in designing keybinding for emacs, vi, 3D modeling app, or
+any app that has hundreds commands that needs to map to keys.
+**** Repeatable and Non-Repeatable Commands
+In my keyboarding research, there's a important discovery. Commands
+can be classified into 2 types:
+1. Repeatable commands. Commands that make sense to be repeated within
+   a second. i.e. moving cursor by char, word, page. Page up/down. Delete
+   by char, word. Expand selection, prev/next tab. You can hold down a
+   key or a key-chord to repeat the command many times. 
+
+2. Non-repeat commands. This is vast majority. i.e. starting
+   find/replace, open file, close file, list buffers, call a shell
+   command or start shell, describe-function, keyword expansion or
+   completion, list-matching-lines, sort-lines, kill-buffer,
+   switch-to-buffer, ...
+
+**** Repeatable and Non-Repeatable Keys
+The Repeatable Commands must have keys that can be held down. Here's
+example of repeatable hotkeys: F8, t, ⇟ Page ▽, ↓, 【Ctrl+t】,
+【Ctrl+Alt+8】, ….
+
+Non-repeatable hotkeys are basically keys that involves a sequence:
+【Ctrl+x 2】, 【F8 F9】
+
+So, when designing a shortcut system, one of the principle is for
+repeatable commands be on repeatable keys, else it's a waste. (because
+you only have a few precious easy key spots, yet you have one hundred
+commands in common use.)
+
+In GNU Emacs's default keybinding, there are many such wastes. For
+example, all 【Ctrl+‹number›】 and 【Alt+‹number›】 are bound to
+digit-argument. The digit-argument is a non-repeat command, yet it
+sits on 20 EASY repeatable keys. (but most damaging is that
+digit-argument isn't a frequently needed command, with respect to all
+commands and the relatively few easy-key-spots.)
+
+Another bad example is forward-page 【Ctrl+x ]】. forward-page is a
+repeatable command, but it doesn't have a repeating key. Imagine, if
+every time you need to ⇟ Page ▽ that you have to press 【Ctrl+x】
+first. You couldn't just hold it down.
+
+But remember, this “Repeatable and Non-Repeatable key” is only a
+supporting criterion in keybinding design. It is not the most
+important criterion. The single most important criterion in designing
+a keyboard shortcut system is that most frequently used commands be
+mapped to the most easy-to-press keys. 
+
+
+*** Ergoemacs Key Chord Reduction
+**** [Control+x] and [Control-c] reduction
+For emacs, the most common prefixes are [Control-x] or [Control-c].
+
+For QWERTY, an additional mapping of these keys have been made:
+- A modified Control-x map has been assigned to Menu f:
+  - This map allows you to type the keys without a key chord
+    requirement.  For example to switch buffers instead of
+    [Control+x] [b] you could type [Menu] [f] [b].  (Note that the [f]
+    key changes based on layout; For example using the colemak layout
+    you would type [Menu] [t] [b] to switch buffers).
+
+  - This modified keymap changes the control-chorded keys to
+    alt-chorded keys since they are easier to reach, there is another
+    keymap that removes the control-chorded keys.  Therefore to get
+    the buffer list, instead of having to type [Control-x]
+    [Control-b] you can type [Menu] [f] [Alt-b].
+
+  - The [Alt-] keychords in this modified keymap are changed to
+    [Control-] keys.  For example, =repeat-complex-command= is mapped
+    from [Control-x] [Alt+:] to [Menu] [f] [Control-:].  As far as I
+    can tell this is the only [Control-x] [Alt] combination. 
+
+- A modified unchorded Control-x map has assigned to QWERTY [Menu]
+  [r].  This map has changed the Control-x map as follows:
+
+  - Chorded control keys are subset.  Therefore only keys that have
+    the combination [Control-x] [Control-] are used.
+
+  - Chorded key combinations are changed drop the chord.  For example
+    the buffer list [Control-x] [Conrtol-b] is changed to [Menu] [r]
+    [b].
+
+  - Chorded key combinations that are single key are translated to
+    [Alt+] for example [Control+k] [a] is changed to [Menu] [r] [k]
+    [Alt+a]
+
+  - Chorded key combinations that work with [Alt+] are translated to
+    [Control+].  For example [Control+k] [Alt+a] is changed to [Menu]
+    [r] [k] [Control+a].  I don't think there are currently any keys
+    bound to these types of key combinations.  They are quite
+    difficult to press and remember.
+
+Similarly The Control-c keymap is rebound to [Menu] [j] for the
+modified [Control-c] keymap and [Menu] [u] for the unchorded
+[Control-c] keymap.  This is also true of the [Control-h] keymap.
+This is bound to [Menu] [h] for the normal Control-h keymap.  It is
+also bound to [Menu] [y] for the unchorded Control-h keymap.
+
+
+**** Movement without key-chords
+***** Method #1 -- <menu> Movement mode
+One can enable movement without key-chords as follows:
+- On QWERTY, press [Menu] [k] and then the movement key.  This key is
+  repeatable.  Therefore [Menu] [k] [k] [k] would move the cursor down
+  two lines.  If this is followed by [i] this would have the cursor
+  move up a line.  To exit the repeatable movement/delete keys press
+  [Menu].  This is similar to VIM's edit mode, with a toggle of the
+  [Menu] key.
+  - Shifted keys still are allowed.  For example, page up can be
+    accomplished in QWERTY by [Shift+i].
+  - Any command that enters the minibuffer also exits the repeatable
+    movement/deletion.
+  - Any undefined key in the keymap (like 1) would exit the mode and
+    insert the character
+- To reduce the shifted key-chords, on QWERTY you can also press
+  [Menu] [i].  Therefore [Menu] [i] [i] is equivalent to one page
+  up. Followed by a [k] will be the page-down equivalent
+  - Again, [Menu] stops the movement mode and anything that enters
+    the minibuffer removes the movement mode.
+  - Any undefined key in the keymap (like 1) would exit the mode and
+    insert the character
+  - Shift and the key is the unshifted command.  Therefore [Menu] [i]
+    [i] [Shift+k] would be Page Up followed by down one character.
 
 ** FAQ
   :PROPERTIES:
