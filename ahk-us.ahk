@@ -76,6 +76,7 @@
 ; Author:         Ben Hansen <benhansenslc@gmail.com> 
 
 #SingleInstance force
+#MaxHotkeysPerInterval 9999
 #NoEnv
 SendMode Input
 SetStoreCapslockMode, Off

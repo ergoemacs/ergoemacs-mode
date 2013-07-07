@@ -831,7 +831,11 @@ To report a bug please be sure your issue is =ergoemacs-mode= related.
   :TEMPLATE: blog_static_no_title.html
   :END:
 
-*** Paul Michael Reilly
+This page collects testimonial for ergoemacs-mode. Thank you. I
+appreciate them very much. Your nice words keep me going. -- Xah Lee
+
+*** Paul Michael Reilly -- 2013-06-07
+[[https://groups.google.com/forum/#!topic/ergoemacs/ileUMQ0M3Lc][Posted Here]]
 #+begin_quote
 After some 30 years of using Emacs constantly, I recently switched
 from using Microsoft keyboards (of various sorts) to using Apple
@@ -888,6 +892,276 @@ fwiw,
 
 -pmr
 #+end_quote
+*** fleontrotsky -- 2012-10-12
+
+#+begin_quote
+Thanks to @xah_lee for ergo-emacs. If #emacs could become my prime
+editor for windows, I would be exuberant!
+#+end_quote
+- [[https://twitter.com/fleontrotsky][fleontrotsky]]
+*** Hacker News Mentions -- 2012-10-12
+- [[https://news.ycombinator.com/item?id=3386023][Emacs for the rest of us]] (Posted by macco)
+- [[https://news.ycombinator.com/item?id=1510146][ErgoEmacs]]
+- [[https://news.ycombinator.com/item?id=695893][Ergoemacs Keybindings]] (2009-07-09 By Xichekolas)
+
+*** Delicious bookmark and comments
+[[https://previous.delicious.com/url/aa40f8106085d7e6dd0e218d0350f5c8][Delicious.com bookmark site comments]]
+
+*** Jeffrey E Pace -- 2011-12-30
+#+begin_quote
+I just spent three days trying out Xah Lee's ErgoEmacs – ergonomic
+Emacs keybindings – and I've been impressed.
+#+end_quote
+
+[[http://jpace.wordpress.com/tag/ergoemacs/][ErgoEmacs keybinding review]]
+*** Joseph Buchignani -- 2011-11-21
+#+begin_quote
+Xah Lee's Ergoemacs is five different kinds of awesome.
+#+end_quote
+
+[[http://www.cyborganize.org/clarity/software/emacs-org-mode-installation-configuration-and-tutorial/installing-and-using-ergoemacs-for-intermediate-emacs-users/][Installing and using Ergoemacs]] 
+
+*** Don Womick -- 2010-08-17
+#+begin_quote
+From: Don Womick
+Subject: [Orgmode] ErgoEmacs
+Date: Sat, 14 Aug 2010 09:07:58 -0400
+I've just found ErgoEmacs (http://ergoemacs.org), another Emacs distribution for Windows that tries to make Emacs easy to use for ordinary users… and it does so: I was able to use it immediately, with all the standard Windows shortcuts--the only things that tripped me up briefly were the file commands (C-xf moved to C-o and C-xw moved to C-w), and that they moved M-x to M-a (M-x now cuts the entire line). This looks like a distro that might ease the learning curve enough to drive more widespread adoption of Emacs (and org-mode!): it really does seem to be as easy to use as Notepad right out of the box, yet doesn't take away any of the power of Emacs (as far as I can tell, except that I did have to load an org-mode file before capture would work, but that may be a setup problem on my part). If you're on Windows, take a look and see what you think… and for org newbies on win32, I think this is the version I would recommend.
+
+--Don
+
+lists.gnu.org emacs-orgmode
+#+end_quote
+- [[http://www.womick.com/Home.html][Don's website]]
+- [[http://lists.gnu.org/archive/html/emacs-orgmode/2010-08/msg00566.html][Original Message]]
+
+*** Kristian Hellquist -- 2010-07-19
+#+begin_quote
+I started using ergoemacs last week, and it looks promising. It lacked
+a swedish keyboard layout though
+
+Thanks for your great blog, work and opinions about emacs.
+
+/Kristian Hellquist
+#+end_quote
+
+Thanks to [[https://twitter.com/meeiw][Kristian Hellquist]] for contributing a Swedish layout. It's
+in ErgoEmacs Keybinding v5.3.4.
+
+*** jeangjs.blogspot.com -- 2010-06-09
+#+begin_quote
+2009年11月4日星期三
+
+ErgoEmacs 初探
+
+一直以來，我都是從 Xah's Emacs Tutorial 獲得一些 Emacs 使用上的小技巧。前幾天突然發現 Xah Lee 弄了一個專案 --- ErgoEmacs。一個很有趣的專案，同時也是破壞 Emacs 傳統的專案。
+
+Emacs 專屬的 keybindings 可以說是一項足以自豪的傳統。對於那些不使用滑鼠的高手來說，keybindings 一定背的滾瓜瀾熟。但非人使用 Emacs 超過十年了，熟悉的 keybindings 不會多過 10 個。並不是非人不想背下來，而是太複雜了，今天背了明天就忘了。再加上非人非常地依賴滑鼠，所以總是記不了幾個 keybindings。而 ErgoEmacs 這個專案主要就是在改變 keybindings，讓 Emacs 更能符合現代使用電腦的習慣。這個套件可以從這裡下載。
+
+jeangjs.blogspot.com 非人的筆記本
+#+end_quote
+[[http://jeangjs.blogspot.com/2009/11/ergoemacs.html][Source]]
+*** Chow at Stack Overflow -- 2010-06-04
+#+begin_quote
+I totally agree with the remap caps-lock solution, that helps quite a
+bit. To go even further, I tried and liked the Ergoemacs
+keybindings. The project is being actively developed, and supported
+quite well. I personally don't use it because it's not integrated with
+Mac OS X (some EMACS Keys are integrated in Cocoa), though it seems
+someone has posted an inputrc file with Ergoemacs keybindings. Another
+trick I've been playing with is enabling StickyKeys. It's supported on
+many platforms and alleviates some of the problems specific to
+chording (as opposed to just overuse): it is apparently recommended on
+the emacswiki: http://www.emacswiki.org/emacs/StickyModifiers
+#+end_quote
+
+[[http://stackoverflow.com/questions/52492/what-is-the-best-way-to-avoid-getting-emacs-pinky/2976688#2976688][Source]]
+*** jroes -- 2010-05-24
+
+#+begin_quote 
+I used to do the same thing, but I missed out on a lot
+of good emacs shortcuts. Today I use the dvorak version of Xah Lee's
+layout. You get vim-like navigation by holding Meta.
+#+end_quote
+
+— [[https://news.ycombinator.com/item?id=1374916][jroes Source news.ycombinator.com]]
+
+*** laurus -- 2009-08-19
+#+begin_quote
+(9:06:35 AM) laurus: Hello! I just wanted to let you know that I
+recently installed your Ergoemacs and I'm enjoying it very much.
+#+end_quote
+*** fadec -- 2009-08-05
+#+begin_quote 
+fadec: I had customized my keybindings but someone
+suggested I try Ergoemacs a few weeks ago. Forget vim - ergoemacs is
+how it's done.
+#+end_quote
+
+[[http://www.reddit.com/r/programming/comments/957rp/vimacs_vim_emulating_emacs/][reddit.com]]
+
+*** Ghoul -- 2009-01-26
+freenode irc chat:
+
+#+begin_quote
+Ghoul``: xah_lee: i appreciate the ergonomic emacs shortcuts
+especially M-x being M-a right now ☺ however only one thing is
+weird.. the M-; for searching (M-s in dvorak) but if i want to go to
+the next entry i press C-s and not M-; again; that's like the only
+tiny thing; otherwise i really like and use all the other shortcuts;
+really good stuff!
+#+end_quote
+*** ginstre --2009-01-25
+freenode irc chat:
+
+#+begin_quote
+ginstre: i'm an avid user of your ergonomic keybindings. one small
+suggestion: the isearch-mode-map bindings should be copied to the
+minibuffer-local-isearch-map. otherwise one can't resume an isearch
+that has been modified (⁖ by M-n, M-p or isearch-edit-string).
+#+end_quote
+
+*** w k -- 2008-12-27
+From w k
+
+#+begin_quote
+你好，偶然访问李杀网，从你的网站发现非常有价值的emacs教程。尤其关于人体工程力学的键位设置及键盘推荐，更是出类拔萃，对于像我这样的emacs新手具有非常大的帮助，我已经完全按照你的建议来做。
+
+教程需然全部都是英文书写，但是语法简单、文笔流畅，像我这样纯粹的中国人都可以轻松阅读。
+#+end_quote
+
+*** Will Parsons -- 2008-09-03
+#+begin_quote
+From: Will Parsons
+Date: 3 Sep 2008 00:21:16 GMT
+Subject: Re: ergonomic keybinding. Need qwerty testers.
+
+Some comments:
+
+I've been giving your keyboard mapping a try and generally like it. In
+particular, I like the cut/paste series (M-x, M-c, M-v) and the
+window-splitting series (M-0, M-1, M-2). I do regret, however, that
+the M-c binding does conflict with the default capitalize-word
+binding, as I use the capitalization functions bound by default to
+M-c, M-u, and M-l pretty frequently. At the moment, I've configured a
+"windows" key to be Hyper and bound the capitalization functions to
+H-c, H-u, and H-l, so I'll see how that works out.
+
+(I've noticed a slight anomaly - since M-x is bound to kill-region,
+M-a is used for execute-extended-command, but when one hits M-a, one
+is still presented with a prompt "M-x ".)
+
+As far as the cursor movement bindings, the single character movement
+bindings seem natural enough, but I suspect I'll prefer to continue to
+use arrow keys. I'll have to give the other movement bindings more of
+trial before making a final judgement, though the combinations
+involving M+S (Alt+Shift) seem a little awkward to me.
+
+I've bound M-g to goto-line for some time now, and am happy with the
+standard C-k for kill-line, so prefer not to rebind M-g.
+
+Similarly, I've bound M-p to ps-print-buffer, and since I don't use
+the recenter function too often, am happy to stick with C-l for it.
+
+I found the binding of M-d to delete-backward-char somewhat
+disconcerting, because even though I've bound C-delete to kill-word,
+I'm still acustomed to having M-d perform the same function in other
+contexts (⁖, in Bash).
+#+end_quote
+
+From [[https://groups.google.com/forum/#!topic/gnu.emacs.help/E2mxoz1EPeg][gnu.emacs.help]] newsgroup.
+
+*** Jerome Alet -- 2008-08-29
+
+#+begin_quote
+Hello,
+
+I've just read your rant about Emacs key bindings and other historical "features".
+
+I simply wanted to thank you for this : now I know I'm not alone thinking about this sort of things. Although I didn't had your historical knowledge about Emacs, these key bindings and features are what has always turned me away from Emacs, and why I coded my own text editor 14 years ago (Jered, available from http://www.librelogiciel.com/ )
+
+So, again : THANKS A LOT !
+
+bye
+
+Jerome Alet
+#+end_quote
+
+*** Markus Grunwald -- 2008-07-28
+#+begin_quote
+a few weeks ago I saw your page with ergonomic keybindings for
+emacs. Since I did not like the original bindings very much and was on
+the way to an "emacs pinky" I tried your keybindings - they are great
+☺
+
+Pain decays slowly and the new bindings are going into muscle memory
+quickly. Of cource, I made a few changes according to my special
+needs.
+
+Thank you VERY much!
+
+Markus Grunwald
+#+end_quote
+
+*** boskom --2008-05-02
+#+begin_quote 
+
+I have used your ergonomic_keybinding_querty.el a bit. It is
+interesting, it looks like it is the right way to go. Solution is
+elegant and does not interfere with or disable common shortcuts. There
+are two small issues I encountered: The first is that if CUA is
+enabled in emacs 22 moving around with page up/down (M-Shift-i and M-
+Shift-k) sets mark and starts selecting a region. The other issue is
+that on Windows pressing righ-alt + right-shift sometimes changes
+Windows keyboard layout.
+
+The main issue for me still remains position of Control keys, but this
+needs to be addressed by a keyboard manufacturer.
+
+Thanks,
+
+boskom
+#+end_quote
+
+[[https://groups.google.com/forum/#!topic/gnu.emacs.help/E2mxoz1EPeg][gnu.emacs.help]] newsgroup, 2008-04-30. 
+
+*** 2008-05-02
+#+begin_quote
+Pretty impressive.
+
+Do you have the frequency of the C-x prefix ? I use it pretty often,
+just wondering what's his rating. I definitively want to try your
+layout. Two remarks though. C-h = delete-backward-char is mandatory
+for me.
+
+Too many applications use it that way. And the h key is a perfect spot
+on the Dvorak keyboard.
+
+Also, C-t, M-t and M-c on a Dvorak keyboard definitely deserve better
+shortcuts than the default ones.
+
+I am currently using C-t as the C-x prefix and M-t as M-x.
+
+#+end_quote
+
+*** Sergio -- 2007-09-12
+#+begin_quote
+Sergio // Sep 12, 2007 at 12:06 pm
+
+That's nice, but the best thing about that website is the ‘ergonomic
+keybord layout’ that uses completely new bindings that are way more
+comfortable.
+
+I know that for long-time emacs users a new layout is perhaps not
+something attractive, but for me, being new to emacs, a more modern
+and ergonomic layout is just what I needed to get up to speed.
+
+They even have a Dvorak version. Great resource, thanks, I had been
+looking for this kind of info about how to make it easier to use emacs
+for a while.
+#+end_quote
+
+[[http://emacsblog.org/2007/08/27/newbie-tip-visual-emacs-keybinding-cheatsheet/#comments][emacsblog.org]]
 ** Roadmap
   :PROPERTIES:
   :PAGE:     roadmap.html

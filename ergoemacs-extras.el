@@ -316,6 +316,7 @@
       (ergoemacs-mode 1)
       t)))
 
+;;;###autoload
 (defun ergoemacs-ghpages ()
   "Generate github pages with o-blog"
   (interactive)
@@ -329,12 +330,13 @@
     (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --funcall ergoemacs-publish-blog &"
                            full-exe o-blog htmlize ergoemacs-dir ergoemacs-dir))))
 
-(defun ergoemacs-publish-blog ()
+(defun ergoemacs-publish-blog (&optional generate-all-layouts)
   "Internal function for generating o-blog website"
   (when noninteractive
     (setq user-emacs-directory (expand-file-name "out" ergoemacs-dir))
-    (ergoemacs-get-html-key-tables)
-    (ergoemacs-extras)
+    (when generate-all-layouts
+      (ergoemacs-get-html-key-tables)
+      (ergoemacs-extras))
     (find-file (expand-file-name "web.org" ergoemacs-dir))
     (call-interactively 'org-publish-blog)
     (find-file (expand-file-name "out/key-setup.html" ergoemacs-dir))
