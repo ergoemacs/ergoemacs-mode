@@ -285,6 +285,10 @@
 (defcustom ergoemacs-minor-mode-layout
   `(;; Key/variable command x-hook
     ;; Minibuffer hook
+    (org-agenda-mode-hook
+     (("C-s" org-save-all-org-buffers org-agenda-mode-map)
+      ("C-z" org-agenda-undo  org-agenda-mode-map)
+      (undo org-agenda-undo org-agenda-mode-map)))
     (minibuffer-setup-hook
      ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
       (previous-line previous-history-element minor-mode-overriding-map-alist)
