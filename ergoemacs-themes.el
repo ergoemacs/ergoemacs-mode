@@ -544,7 +544,9 @@ Some exceptions we don't want to unset.
   :group 'ergoemacs-standard-layout)
 
 
-(defcustom ergoemacs-theme nil
+(defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
+                               ergoemacs-variant
+                             nil)
   "Ergoemacs Keyboard Layout Themes"
   :type '(choice
           (const :tag "Standard" :value nil)
