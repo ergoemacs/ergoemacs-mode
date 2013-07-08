@@ -34,13 +34,13 @@
   "Cheet sheet file for ergoemacs"
   (let ((var-dir "") extra-dir)
     (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
-    (when ergoemacs-variant
-      (setq var-dir (concat ergoemacs-variant "/"))
-      (setq extra-dir (expand-file-name ergoemacs-variant extra-dir)))
+    (when ergoemacs-theme
+      (setq var-dir (concat ergoemacs-theme "/"))
+      (setq extra-dir (expand-file-name ergoemacs-theme extra-dir)))
     (setq extra-dir (expand-file-name "ergo-layouts" extra-dir))
     (setq extra-dir (expand-file-name (concat "ergoemacs-layout-" ergoemacs-keyboard-layout ".svg")))
     (when (not (file-exists-p extra-dir))
-      (ergoemacs-gen-svg ergoemacs-variant "kbd-ergo.svg" (concat var-dir "ergo-layouts")))
+      (ergoemacs-gen-svg ergoemacs-theme "kbd-ergo.svg" (concat var-dir "ergo-layouts")))
     (symbol-value 'extra-dir)))
 
 ;;; Ido-ergoemacs functional fixes
@@ -699,7 +699,7 @@ Else it is a user buffer."
   "Generates the current ergoemacs layout, unless it already exists and opens it in a browser.
 With a prefix, force regeneration. "
   (interactive "p")
-  (let ((var ergoemacs-variant)
+  (let ((var ergoemacs-theme)
         (layout ergoemacs-keyboard-layout)
         (extra "ergo-layouts")
         (dir "")
@@ -723,7 +723,7 @@ With a prefix, force regeneration. "
       (if (called-interactively-p 'any)
           (let ((temp-file (make-temp-file "ergoemacs-gen" nil ".el")))
             (with-temp-file temp-file
-              (insert (format "(setq ergoemacs-variant %s)\n(setq ergoemacs-keyboard-layout \"%s\")\n(ergoemacs-mode 1)\n(ergoemacs-display-current-svg 1)"
+              (insert (format "(setq ergoemacs-theme %s)\n(setq ergoemacs-keyboard-layout \"%s\")\n(ergoemacs-mode 1)\n(ergoemacs-display-current-svg 1)"
                               (if var
                                   (concat "\"" var "\"")
                                 "nil")
