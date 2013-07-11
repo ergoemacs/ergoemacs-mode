@@ -6,7 +6,7 @@
 #+TEMPLATE_DIR: ./o-blog-template
 #+URL: http://mlf176f2.github.com/ergoemacs-mode/
 #+DEFAULT_CATEGORY: Tips
-#+DISQUS: renard-ergoemacs-mode
+#-DISQUS: renard-ergoemacs-mode
 #+FILENAME_SANITIZER: ob-sanitize-string
 #+POST_SORTER: ob-sort-posts-by-title
 
@@ -877,7 +877,9 @@ support please [[https://github.com/mlf176f2/ergoemacs-mode/issues/new][drop me 
   :TEMPLATE: blog_static_no_title.html
   :END:
 
-To report a bug please be sure your issue is =ergoemacs-mode= related.
+To report a bug please be sure your issue is =ergoemacs-mode=
+related.  An easy way to do that is to boostrap your environment to
+see if you can reproduce the error.
 
 ** Testimonials
   :PROPERTIES:
@@ -1573,6 +1575,13 @@ The guru theme takes away the arrow keys and page up/page down keys.
 *** Bash
 You can [[http://www.gnu.org/software/bash/manual/html_node/Readline-Init-File-Syntax.html][make bash understand]] ergoemacs-mode keys by creating an
 appropriate =.inputrc= and placing it in your home-directory.
+
+When ergoemacs-mode is enabled, this can be done easily by typing
+
+Alt+a =ergoemacs-bash=
+
+This should also be available in the ergoemacs menu.
+
 *** Windows
 In windows some of the ergoemacs keys are implemented system wide by
 assuming apps follow the CUA-style keys like CTRL-f for find, CTRL-h

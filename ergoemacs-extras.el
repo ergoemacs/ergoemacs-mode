@@ -1832,9 +1832,25 @@ Currently only supports two modifier plus key."
       (setq ret (buffer-string)))
     (symbol-value 'ret)))
 
+;;;###autoload
+(defun ergoemacs-bash ()
+  "Generates `~/.inputrc' to use ergoemacs-keys in bash.  This is
+based on ergoemacs' current theme and layout."
+  (interactive)
+  (when (file-exists-p "~/.inputrc")
+    (if (yes-or-no-p "Would you like to overwrite ~/.inputrc ?")
+        (delete-file "~/.inputrc")
+      (error "Cannot generate ergoemacs ~/.inputrc")))
+  (ergoemacs-gen-bash ergoemacs-keyboard-layout "~/.inputrc")
+  (message "~/.inputrc set to ergoemacs keys."))
+
 (defun ergoemacs-gen-bash (layout &optional file-name extra)
   "Generates an Autohotkey Script for Ergoemacs Keybindings.
-Currently only supports two modifier plus key."
+Currently only supports two modifier plus key.
+FILE-NAME is the input file.  Or if FILE-NAME = ~/.inputrc, generate to the ~/.inputrc using bash-us.txt
+
+EXTRA is the extra directory used to gerenate the bash ~/.inputrc
+"
   (let ((dir ergoemacs-dir)
         (extra-dir)
         (fn (or file-name "bash-us.txt"))
@@ -1850,19 +1866,24 @@ Currently only supports two modifier plus key."
     (if (not lay)
         (message "Layout %s not found" layout)
       (ergoemacs-setup-keys-for-layout layout)
-      (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
-      (if (not (file-exists-p extra-dir))
-          (make-directory extra-dir t))
-      (setq extra-dir (expand-file-name xtra extra-dir))
-      (if (not (file-exists-p extra-dir))
-          (make-directory extra-dir t))
+      (if (and fn (string= fn "~/.inputrc"))
+          (setq file "~/.inputrc")
+        (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
+        (if (not (file-exists-p extra-dir))
+            (make-directory extra-dir t))
+        (setq extra-dir (expand-file-name xtra extra-dir))
+        (if (not (file-exists-p extra-dir))
+            (make-directory extra-dir t))
+        
+        ;; Translate keys
+        (setq file (expand-file-name
+                    (concat "ergoemacs-layout-" layout ".txt") extra-dir)))
       
-      ;; Translate keys
-      (setq file (expand-file-name
-                  (concat "ergoemacs-layout-" layout ".txt") extra-dir))
       (with-temp-file file
         (set-buffer-file-coding-system 'utf-8)
-        (insert-file-contents (expand-file-name fn dir))
+        (insert-file-contents (if (and fn (string= fn "~/.inputrc"))
+                                  (expand-file-name "bash-us.txt" dir)
+                                (expand-file-name fn dir)) )
         (goto-char (point-min))
         (when (re-search-forward "QWERTY")
           (replace-match layout))

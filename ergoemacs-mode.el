@@ -822,10 +822,13 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
     `("ErgoEmacs"
       ,(ergoemacs-get-layouts-menu)
       ,(ergoemacs-get-themes-menu)
-      ["Generate Documentation"
-       (lambda()
-         (interactive)
-         (call-interactively 'ergoemacs-extras)) t]
+      ["Make Bash aware of ergoemacs keys"
+       (lambda() (interactive)
+         (call-interactively 'ergoemacs-bash)) t]
+      ;; ["Generate Documentation"
+      ;;  (lambda()
+      ;;    (interactive)
+      ;;    (call-interactively 'ergoemacs-extras)) t]
       ["Customize Ergoemacs"
        (lambda()
          (interactive)
