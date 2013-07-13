@@ -546,7 +546,11 @@ Some exceptions we don't want to unset.
 
 (defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
                                ergoemacs-variant
-                             nil)
+                             (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
+                                 ergoemacs-theme
+                               (if (getenv "ERGOEMACS_THEME")
+                                   (getenv "ERGOEMACS_THEME")
+                                 nil)))
   "Ergoemacs Keyboard Layout Themes"
   :type '(choice
           (const :tag "Standard" :value nil)
@@ -847,7 +851,7 @@ Some exceptions we don't want to unset.
          :set 'ergoemacs-set-default
          :group ',(intern (format "ergoemacs-%s-theme" name)))
        
-       (defcustom ergoemacs-theme nil
+       (defcustom ergoemacs-theme (getenv "ERGOEMACS_THEME")
          (concat "Ergoemacs Keyboard Layout themes.\nThere are different layout themes for ergoemacs.  These include:\n" (ergoemacs-get-themes-doc))
          :type (ergoemacs-get-themes-type)
          :set 'ergoemacs-set-default

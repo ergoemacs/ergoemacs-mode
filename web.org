@@ -878,9 +878,28 @@ support please [[https://github.com/mlf176f2/ergoemacs-mode/issues/new][drop me 
   :END:
 
 To report a bug please be sure your issue is =ergoemacs-mode=
-related.  An easy way to do that is to boostrap your environment to
-see if you can reproduce the error.
+related.  An easy way to do that is to get a clean  environment to
+see if you can reproduce the error.  If you can load ergoemacs, then
+this can be accomplished by Alt+a =ergoemacs-clean=. 
 
+Otherwise, this can be accomplished by
+
+#+BEGIN_SRC sh
+  emacs -Q
+#+END_SRC
+
+Then in the scratch-buffer adding
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-debug t)
+  (setq ergoemacs-keyboard-layout "us") ; Layout you use.
+  (setq ergoemacs-theme nil) ; For standard theme.
+  (ergoemacs-mode 1)
+#+END_SRC
+
+Then type Alt+x =eval-buffer=.
+
+See if you can reproduce the bug from this empty environment.
 ** Testimonials
   :PROPERTIES:
   :PAGE:     testimonials.html

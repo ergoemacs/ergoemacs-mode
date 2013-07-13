@@ -16,8 +16,20 @@
   '(delete-backward-char delete-char kill-word backward-kill-word)
   "Defines deletion functions that ergoemacs is aware of.")
 
+(defun ergoemacs-clean ()
+  "Run ergoemacs in a bootstrap environment."
+  (interactive)
+  (let ((emacs-exe (ergoemacs-emacs-exe)))
+    (when ergoemacs-keyboard-layout
+      (setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout))
+    (when ergoemacs-theme
+      (setenv "ERGOEMACS_THEME" ergoemacs-theme))
+    (setenv "ERGOEMACS_DEBUG" "1")
+    (shell-command (format "%s -Q -L \"%s\" --load=\"ergoemacs-mode\"  --eval \"(ergoemacs-mode 1)\"& " emacs-exe
+                           (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))))
+
 (defun ergoemacs-emacs-exe ()
-  "Get the emacs executable for testing purposes."
+  "Get the emacs executable for testing purposes." 
   (let ((emacs-exe (invocation-name))
         (emacs-dir (invocation-directory))
         (full-exe nil))

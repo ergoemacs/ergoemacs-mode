@@ -676,7 +676,9 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                "C-" "^-" ret)))))
     (symbol-value 'ret)))
 
-(defvar ergoemacs-debug nil
+(defvar ergoemacs-debug (if (getenv "ERGOEMACS_DEBUG")
+                            t
+                          nil)
   "Debugging variable for ergoemacs.  Set to t to see debugging information in messages.")
 
 (defmacro ergoemacs-setup-keys-for-keymap (keymap)
