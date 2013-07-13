@@ -891,6 +891,8 @@ Otherwise, this can be accomplished by
 Then in the scratch-buffer adding
 
 #+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "/path/to/ergoemacs/")
+  (require 'ergoemacs-mode)
   (setq ergoemacs-debug t)
   (setq ergoemacs-keyboard-layout "us") ; Layout you use.
   (setq ergoemacs-theme nil) ; For standard theme.
