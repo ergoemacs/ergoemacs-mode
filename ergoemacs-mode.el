@@ -1198,17 +1198,17 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
        (t
         (when repeat
             `(defcustom ,(intern (symbol-name repeat)) t
-               ,(format "Allow %s to be repeated." key)
+               ,(format "Allow %s to be repeated." (ergoemacs-pretty-key key))
                :group 'ergoemacs-mode
                :type 'boolean))))
      (defun ,(intern (symbol-name name)) (&optional arg)
        ,(cond
          ((eq chorded 'ctl)
-          (format "Creates a keymap that extracts the unchorded %s combinations and then issues %s" key key))
+          (format "Creates a keymap that extracts the unchorded %s combinations and then issues %s" (ergoemacs-pretty-key key) (ergoemacs-pretty-key key)))
          ((eq chorded 'ctl-to-alt)
-          (format "Creates a keymap that extracts the %s combinations and translates Ctl+ to Alt+." key))
+          (format "Creates a keymap that extracts the %s combinations and translates Ctl+ to Alt+." (ergoemacs-pretty-key key)))
          (t
-          (format "A shortcut to %s." key)))
+          (format "A shortcut to %s." (ergoemacs-pretty-key key))))
        (interactive "P")
        (setq prefix-arg current-prefix-arg)
        (let (extract-map extract-map-1 key-seq)
@@ -1223,7 +1223,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (set-temporary-overlay-map extract-map-1)
                (setq key-seq (listify-key-sequence key-seq))
                (setq unread-command-events key-seq)
-               (message ,(format "<Unchorded> %s " key))))
+               (message ,(format "<Unchorded> %s " (ergoemacs-pretty-key key)))))
            ((eq chorded 'ctl-to-alt)
             `(progn
                (setq extract-map (make-keymap))
@@ -1234,7 +1234,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (setq key-seq (listify-key-sequence key-seq))
                (set-temporary-overlay-map extract-map-1)
                (setq unread-command-events key-seq)
-               (message ,(format "<Ctl→Alt> %s " key))))
+               (message ,(format "<Ctl→Alt> %s " (ergoemacs-pretty-key key)))))
            (t
             `(let ((ctl-c-keys (key-description (this-command-keys))))
                (setq prefix-arg current-prefix-arg)
@@ -1248,8 +1248,8 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                        (define-key ergoemacs-repeat-shortcut-keymap (read-kbd-macro ctl-c-keys)
                          'ergoemacs-ctl-c-ctl-c)
                        (setq ergoemacs-repeat-shortcut-msg
-                             (format ,(format "Repeat %s with `%%s'" key)
-                                     ctl-c-keys))
+                             (format ,(format "Repeat %s with %%s" (ergoemacs-pretty-key key))
+                                     (ergoemacs-pretty-key ctl-c-keys)))
                        ;; Allow time to process the unread command events before
                        ;; installing temporary keymap
                        (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-shortcut-timeout)))))))))))
