@@ -1060,18 +1060,6 @@ will change."
        (ergoemacs-key-fn-lookup 'smex-if-exists)
        (ergoemacs-key-fn-lookup 'ergoemacs-smex-if-exists))))
 
-(defvar ergoemacs-ctl-x-unchorded nil
-  "Keymap for unchorded 【Ctl+x】 combinations.")
-
-(defvar ergoemacs-ctl-x nil
-  "Keymap for 【Ctl+x】combinations.  C-x C- are mapped to C-x M-")
-
-(defvar ergoemacs-ctl-h nil
-  "Keymap for 【Ctl+h】 combinations.")
-
-(defvar ergoemacs-ctl-h-unchorded nil
-  "Keymap for unchorded 【Ctl+h】 combinations.")
-
 (defmacro ergoemacs-extract-map (keymap &optional prefix chord rep-chord new-chord)
   "Takes out the key-chords from the buffer-defined map.
 If Prefix is nil assume C-x.
@@ -1098,7 +1086,7 @@ If prefix is an empty string extract the map and remove the prefix.
 If rep-chord is non-nil, like M- instead these same translations would be:
 
 C-k C-n     -> M-k M-n             (kmacro-cycle-ring-next)
-C-k a       -> M-k M-a           (kmacro-add-counter)
+C-k a       -> M-k a           (kmacro-add-counter)
 C-k M-a     -> k C-a           not defined
 C-k S-a     -> k S-a           not defined
 
@@ -1161,65 +1149,118 @@ C-k S-a     -> k S-a           not defined
               (when ergoemacs-debug
                 (message "Error defining %s: %s" new-key err)))))))))
 
-(defun ergoemacs-ctl-c-unchorded (&optional arg)
-  "Creates a keymap for the current major mode that extract the unchorded 【Ctl+c】 combinations."
-  (interactive "P")
-  (setq prefix-arg current-prefix-arg)
-  (let ((ctl-c-unchorded (make-keymap))
-        (ctl-c-unchorded-1 (make-sparse-keymap)))
-    (ergoemacs-extract-map ctl-c-unchorded "C-c")
-    (define-key ctl-c-unchorded-1 (kbd "C-c *") ctl-c-unchorded)
-    (set-temporary-overlay-map ctl-c-unchorded-1)
-    (setq unread-command-events (listify-key-sequence (read-kbd-macro "C-c *")))
-    (message "C-c *-")))
+(defvar ergoemacs-repeat-shortcut-keymap (make-keymap)
+  "Keymap for repeating often used shortcuts like Ctl-c Ctl-c.")
 
-(defun ergoemacs-ctl-c (&optional arg)
-  "Creates a keymap for the current major mode that extract the 【Ctl+c】 combinations."
-  (interactive "P")
-  (setq prefix-arg current-prefix-arg)
-  (let ((ctl-c (make-keymap))
-        (ctl-c-1 (make-sparse-keymap)))
-    (ergoemacs-extract-map ctl-c "C-c" "C-" "M-" "")
-    (define-key ctl-c-1 (kbd "C-c") ctl-c)
-    (set-temporary-overlay-map ctl-c-1)
-    (setq unread-command-events (listify-key-sequence (read-kbd-macro "C-c")))
-    (message "C-c-")))
+(defvar ergoemacs-repeat-shortcut-msg ""
+  "Message for repeating keyboard shortcuts like [Ctl+c] [Ctl+c]")
 
-(defcustom ergoemacs-repeat-ctl-c-ctl-c t
-  "Allow [Ctl+c] [Ctl+c] to be repeated."
-  :group 'ergoemacs-mode
-  :type 'boolean)
+(defun ergoemacs-shortcut-timeout ()
+  (message ergoemacs-repeat-shortcut-msg)
+  (set-temporary-overlay-map ergoemacs-repeat-shortcut-keymap))
 
-(defvar ergoemacs-repeat-ctl-c-ctl-c-keymap (make-keymap)
-  "Keymap for repeating Ctl-c Ctl-c.")
 
-(defvar ergoemacs-repeat-ctl-c-ctl-c-msg ""
-  "Message for repeating [Ctl-c] [Ctl-c]")
+;;;###autoload
+(defmacro ergoemacs-keyboard-shortcut (name key &optional chorded repeat)
+  "Creates a function NAME that issues a keyboard shortcut for KEY.
+CHORDED is a variable that alters to keymap to allow unchorded
+key sequences.
 
-(defun ergoemacs-ctl-c-ctl-c-timeout ()
-  (message ergoemacs-repeat-ctl-c-ctl-c-msg)
-  (set-temporary-overlay-map ergoemacs-repeat-ctl-c-ctl-c-keymap))
+If CHORDED is nil, the NAME command will just issue the KEY sequence.
 
-(defun ergoemacs-ctl-c-ctl-c (&optional arg)
-  "Creates a function that looks up and binds 【Ctl+c】 【Ctl+c】.
-Optionally binds a temporary repeat keymap when `ergoemacs-repeat-ctl-c-ctl-c' is non-nil"
-  (interactive "P")
-  (let ((ctl-c-keys (key-description (this-command-keys))))
-    (setq prefix-arg current-prefix-arg)
-    (setq unread-command-events (listify-key-sequence (read-kbd-macro "C-c C-c")))
-    (when ergoemacs-repeat-ctl-c-ctl-c
-      (when (and (key-binding (read-kbd-macro "C-c C-c"))
-                 (string-match "[A-Za-z]$" ctl-c-keys))
-        (setq ctl-c-keys (match-string 0 ctl-c-keys))
-        (setq ergoemacs-repeat-ctl-c-ctl-c-keymap (make-keymap))
-        (define-key ergoemacs-repeat-ctl-c-ctl-c-keymap (read-kbd-macro ctl-c-keys)
-          'ergoemacs-ctl-c-ctl-c)
-        (setq ergoemacs-repeat-ctl-c-ctl-c-msg
-              (format "Repeat 【Ctl+c】 【Ctl+c】 with `%s'"
-                      ctl-c-keys))
-        ;; Allow time to process the unread command events before
-        ;; installing temporary keymap
-        (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-ctl-c-ctl-c-timeout)))))
+If CHORDED is 'ctl or the NAME command will translate the control
+bindings to be unchorded.  For example:
+
+For example for the C-x map,
+
+Original Key   Translated Key  Function
+C-k C-n     -> k n             (kmacro-cycle-ring-next)
+C-k a       -> k M-a           (kmacro-add-counter)
+C-k M-a     -> k C-a           not defined
+C-k S-a     -> k S-a           not defined
+
+If CHORDED is 'ctl-to-alt or the NAME command will translate the control
+bindings to be unchorded.  For example:
+
+C-k C-n     -> M-k M-n             (kmacro-cycle-ring-next)
+C-k a       -> M-k a           (kmacro-add-counter)
+C-k M-a     -> k C-a           not defined
+C-k S-a     -> k S-a           not defined
+
+When REPEAT is a variable name, then an easy repeat is setup for the command.
+
+For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to be repeated by m.
+"
+  `(progn
+     ,(cond
+       ((eq chorded 'ctl))
+       ((eq chorded 'ctl-to-alt))
+       (t
+        (when repeat
+            `(defcustom ,(intern (symbol-name repeat)) t
+               ,(format "Allow %s to be repeated." key)
+               :group 'ergoemacs-mode
+               :type 'boolean))))
+     (defun ,(intern (symbol-name name)) (&optional arg)
+       ,(cond
+         ((eq chorded 'ctl)
+          (format "Creates a keymap that extracts the unchorded %s combinations and then issues %s" key key))
+         ((eq chorded 'ctl-to-alt)
+          (format "Creates a keymap that extracts the %s combinations and translates Ctl+ to Alt+." key))
+         (t
+          (format "A shortcut to %s." key)))
+       (interactive "P")
+       (setq prefix-arg current-prefix-arg)
+       (let (extract-map extract-map-1 key-seq)
+         ,(cond
+           ((eq chorded 'ctl)
+            `(progn
+               (setq extract-map (make-keymap))
+               (setq extract-map-1 (make-sparse-keymap))
+               (ergoemacs-extract-map extract-map ,key)
+               (setq key-seq  (read-kbd-macro ,(format "<Unchorded> %s" key)))
+               (define-key extract-map-1 key-seq extract-map)
+               (set-temporary-overlay-map extract-map-1)
+               (setq key-seq (listify-key-sequence key-seq))
+               (setq unread-command-events key-seq)
+               (message ,(format "<Unchorded> %s " key))))
+           ((eq chorded 'ctl-to-alt)
+            `(progn
+               (setq extract-map (make-keymap))
+               (setq extract-map-1 (make-sparse-keymap))
+               (ergoemacs-extract-map extract-map ,key "C-" "M-" "")
+               (setq key-seq (read-kbd-macro ,(format "<Ctl→Alt> %s" key)))
+               (define-key extract-map-1 key-seq extract-map)
+               (setq key-seq (listify-key-sequence key-seq))
+               (set-temporary-overlay-map extract-map-1)
+               (setq unread-command-events key-seq)
+               (message ,(format "<Ctl→Alt> %s " key))))
+           (t
+            `(let ((ctl-c-keys (key-description (this-command-keys))))
+               (setq prefix-arg current-prefix-arg)
+               (setq unread-command-events (listify-key-sequence (read-kbd-macro ,key)))
+               ,(when repeat
+                  `(when ,(intern (symbol-name repeat))
+                     (when (and (key-binding (read-kbd-macro ,key))
+                                (string-match "[A-Za-z]$" ctl-c-keys))
+                       (setq ctl-c-keys (match-string 0 ctl-c-keys))
+                       (setq ergoemacs-repeat-shortcut-keymap (make-keymap))
+                       (define-key ergoemacs-repeat-shortcut-keymap (read-kbd-macro ctl-c-keys)
+                         'ergoemacs-ctl-c-ctl-c)
+                       (setq ergoemacs-repeat-shortcut-msg
+                             (format ,(format "Repeat %s with `%%s'" key)
+                                     ctl-c-keys))
+                       ;; Allow time to process the unread command events before
+                       ;; installing temporary keymap
+                       (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-shortcut-timeout)))))))))))
+
+(ergoemacs-keyboard-shortcut ergoemacs-ctl-c-unchorded "C-c" ctl)
+(ergoemacs-keyboard-shortcut ergoemacs-ctl-c "C-c" ctl-to-alt)
+
+(ergoemacs-keyboard-shortcut ergoemacs-ctl-x-unchorded "C-x" ctl)
+(ergoemacs-keyboard-shortcut ergoemacs-ctl-x "C-x" ctl-to-alt)
+
+(ergoemacs-keyboard-shortcut ergoemacs-ctl-c-ctl-c "C-c C-c" nil ergoemacs-repeat-ctl-c-ctl-c)
 
 
 (require 'cus-edit)
@@ -1284,11 +1325,6 @@ For the standard layout, with A QWERTY keyboard the `execute-extended-command' �
       (when ergoemacs-cua-rect-modifier
         (if ergoemacs-mode
             (progn
-              (ergoemacs-extract-map ergoemacs-ctl-x-unchorded)
-              (ergoemacs-extract-map ergoemacs-ctl-x "C-x" "C-" "M-" "")
-              (ergoemacs-extract-map ergoemacs-ctl-h-unchorded "C-h")
-              (ergoemacs-extract-map ergoemacs-ctl-h "C-h" "C-" "M-" "")
-              
               (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
               (setq cua--rectangle-keymap (make-sparse-keymap))
               (setq cua--rectangle-initialized nil)
