@@ -1259,7 +1259,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
 
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-x-unchorded "C-x" ctl)
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-x "C-x" ctl-to-alt)
-
+(ergoemacs-keyboard-shortcut ergoemacs-ctl-h "C-h" ctl-to-alt)
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-c-ctl-c "C-c C-c" nil ergoemacs-repeat-ctl-c-ctl-c)
 
 
