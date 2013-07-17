@@ -611,6 +611,9 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
             (setq new-key (replace-regexp-in-string "<menu>" "<apps>" new-key)))
            (t
             (setq new-key (replace-regexp-in-string "<apps>" "<menu>" new-key))))
+          ;; Translate Alt+ Ctl+ or Ctrl+ to M- and C-
+          (setq new-key (replace-regexp-in-string "[Aa][Ll][Tt][+]" "M-" new-key))
+          (setq new-key (replace-regexp-in-string "[Cc][Tt][Rr]?[Ll][+]" "C-" new-key))
         (when ergoemacs-needs-translation
           (setq new-key
                 (with-temp-buffer
@@ -1275,13 +1278,14 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
             (message "Reset ergoemacs-mode."))
           (ergoemacs-mode -1)
           (ergoemacs-mode 1))
-         (when (and
+        (when (and
                (custom-file t) ;; Make sure a custom file exists.
                (not ergoemacs-theme) ;; Ergoemacs default used.
                (or (not ergoemacs-mode-used)
                    (not (string= ergoemacs-mode-used ergoemacs-mode-version))))
-          (if (yes-or-no-p (format "Ergoemacs keybindings changed, %s; Would you like to change as well?"
-                                   ergoemacs-mode-changes))
+          (if (yes-or-no-p
+               (format "Ergoemacs keybindings changed, %s; Would you like to change as well?"
+                       ergoemacs-mode-changes))
               (progn
                 (setq ergoemacs-mode-used ergoemacs-mode-version)
                 (customize-save-variable 'ergoemacs-mode-used (symbol-value 'ergoemacs-mode-used))
@@ -1485,6 +1489,14 @@ For the standard layout, with A QWERTY keyboard the `execute-extended-command' ã
 (eval-after-load "org-src"
   '(progn
      (define-key org-src-mode-map [remap save-buffer] 'org-edit-src-save)))
+
+(defcustom ergoemacs-ignore-prev-global t
+  "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(when ergoemacs-ignore-prev-global
+  (ergoemacs-ignore-prev-global))
 
 (provide 'ergoemacs-mode)
 

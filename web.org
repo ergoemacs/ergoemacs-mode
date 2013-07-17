@@ -148,6 +148,7 @@ org-mode and exported to HTML using [[https://github.com/renard/o-blog][o-blog]]
 - [[file:#][/icon-file icon-white/ Tips]]
   - [[file:{lisp}(ob:path-to-root){/lisp}/gradual-adoption.html][Gradual Adoption]]
   - [[file:{lisp}(ob:path-to-root){/lisp}/system-wide.html][System Wide Keys]]
+  - [[file:{lisp}(ob:path-to-root){/lisp}/customize-keys.html][Customizing your keys]]
 
 - [[file:{lisp}(ob:path-to-root){/lisp}/testimonials.html][/icon-comments-alt icon-white/ Testimonials]]
 
@@ -1609,4 +1610,138 @@ assuming apps follow the CUA-style keys like CTRL-f for find, CTRL-h
 for replace.  This also optionally implements:
 - CapsLock as Menu in emacs
 *** Mac OS X
+** Customizing your keys
+  :PROPERTIES:
+  :PAGE:     customize-keys.html
+  :TEMPLATE: blog_static_no_title.html
+  :END:
+
+You may want to customize your ergoemacs-mode bindings to fit your
+particular workflow.  This can be accomplished in many ways,
+*** Ergoemacs defined keys
+These keys are defined in the =ergoemacs-keymap=.  When the layout
+changes by changing options, these keys are lost.  However, you may
+create your own theme to allow these keys to be saved.
+**** Adding a ergonomic key
+Ergonomic keys can be added by:
+#+BEGIN_SRC emacs-lisp
+  (ergoemacs-key "M-a" 'execute-extended-command "Execute")
+#+END_SRC
+
+This adds the Alt-a command to all keyboards based on the QWERTY
+layout.  This only applies to the currently selected keyboard theme.
+
+Note the last parameter is optional and allows Ergoemacs to document
+that this is an "Execute" command when generating keyboard layout diagrams.
+**** Adding a fixed key
+Fixed keys can be added by:
+#+BEGIN_SRC emacs-lisp
+  (ergoemacs-fixed-key "C-o" 'ido-find-file "Open File")
+#+END_SRC
+
+This adds the fixed key to the currently selected emacs theme
+
+Note the last parameter is optional and allows Ergoemacs to document
+that this is an "Open" command when generating keyboard layout diagrams.
+
+**** Adding an ergonomic key map with fixed mappings
+When you want to add an ergonomic keymap with fixed mappings such as
+the ergoprog theme you can add them as follows:
+
+#+BEGIN_SRC emacs-lisp
+  (ergoemacs-key "M-m s" 'save-buffer "" t)
+#+END_SRC
+
+This converts the QWERTY M-m keybinding and the fixed keybinding s to
+save buffer
+*** Using standard emacs functions
+**** Defining keys globally
+Ergoemacs respects emacs globally defined keys.  To define a global
+key, you can use:
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-a") 'backward-char)
+  (global-set-key (kbd "C-a") 'backward-char)
+#+END_SRC
+
+This uses [[http://www.emacswiki.org/emacs/EmacsKeyNotation][emacs key notation]].  In short =M-a= represents Alt+a, =C-a=
+represents Ctl+a.  For these two examples the key is bound to emacs function
+=backward-char=.
+
+When you define a global key that conflicts with ergoemacs-mode
+keybindings (after loading ergoemacs-mode) the binding will no longer
+active in ergoemacs-mode. Therefore, the binding should be active in
+most places in emacs.
+
+There is still a possibility that another major or minor mode will
+bind the key. If that occurs, you can locally override the bindings.
+Assuming this occurs in =silly-mode=, you can usually override the
+settings by setting the keys locally in the major-mode:
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'silly-mode-hook
+            (lambda()
+              (local-set-key (kbd "C-a") 'backward-char)))
+#+END_SRC
+
+Also note that the order that you define the global-keys matter when
+using =ergoemacs-mode=.  For example, if you decide to change the
+global binding before =ergoemacs-mode= loads, the key definition is
+typically ignored when =ergoemacs-mode= is enabled.  For example:
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-a") 'backward-char)
+  (require 'ergoemacs-mode)
+  (ergoemacs-mode 1)
+  
+#+END_SRC
+
+The keyboard definition for =backward-char= is ignored when
+=ergoemacs-mode= is enabled. However, if you use:
+
+#+BEGIN_SRC emacs-lisp
+  (require 'ergoemacs-mode)
+  (global-set-key (kbd "M-a") 'backward-char)
+  (ergoemacs-mode 1)
+  
+#+END_SRC
+
+then ergoemacs-mode will respect the Alt+a backward character
+assignment.  
+
+This behavior allows ergoemacs keybindings to override the keys in an
+emacs configuration like prelude, emacs-live, etc.  If you do not this
+behavior can be turned off by:
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-a") 'backward-char)
+  (setq ergoemacs-ignore-prev-global nil) ; Will not ignore any globally
+                                          ; defined keybinding
+  (require 'ergoemacs-mode)
+  (ergoemacs-mode 1)
+  
+#+END_SRC
+
+In this example Alt+a will be bound to =backward-char= for
+ergoemacs-mode as well as globally.
+
+If you are loading =ergoemacs-mode= before loading one of these emacs
+settings and you want to /ignore/ the keybindings of the settings,
+you can also ignore them by using the following code
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-a") 'backward-char)
+  (require 'ergoemacs-mode)
+  (ergoemacs-mode 1)
+  
+  ;; Load starter kit here
+  ;; Ignore starter-kit keys in ergoemacs-mode
+  (ergoemacs-ignore-prev-global) ; Globally defined keys defined
+                                 ; before this point are ignored
+#+END_SRC
+
+One of the disadvantages of using globally defined keys it they will
+be bound globally even if =ergoemacs-mode= is not active.
+Additionally, they are not Layout independent.  For example, defining
+Alt+j on QWERTY will not change to Alt+n for colemak.  
 
