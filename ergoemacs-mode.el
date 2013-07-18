@@ -154,6 +154,7 @@ Valid values are:
   :type 'boolean
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
+
 (defvar ergoemacs-cua-rect-modifier-orig cua--rectangle-modifier-key)
 
 (defcustom ergoemacs-cua-rect-modifier 'super
@@ -166,7 +167,6 @@ Valid values are:
           (const :tag "Alt Modifier" 'alt))
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
-
 
 (defcustom ergoemacs-repeat-movement-commands nil 
   "Allow movement commands to be repeated without pressing the ALT key."
@@ -1259,7 +1259,6 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
 
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-c-unchorded "C-c" ctl)
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-c "C-c" ctl-to-alt)
-
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-x-unchorded "C-x" ctl)
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-x "C-x" ctl-to-alt)
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-h "C-h" ctl-to-alt)
