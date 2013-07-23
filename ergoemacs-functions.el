@@ -92,11 +92,7 @@
   (interactive)
   (call-interactively (key-binding (kbd "M-TAB"))))
 
-(defun ergoemacs-describe-major-mode ()
-  "Show inline doc for current major-mode."
-  ;; code by Kevin Rodgers. 2009-02-25
-  (interactive)
-  (describe-function major-mode))
+
 
 (defun ergoemacs-copy-all ()
   "Put the whole buffer content into the kill-ring.
@@ -811,20 +807,31 @@ If arg is a negative prefix, copy file path only"
     (set-buffer-file-coding-system new-coding t)))
 
 ;;; ergoemacs help functions.
-
-(defun ergoemacs-describe-bindings ()
-  "Describe all bindings and their definitions using ergoemacs Ctl, Alt etc. Uses `describe-bindings'."
-  (interactive)
-  (call-interactively 'describe-bindings)
+(defun ergoemacs-translate-keybindings ()
+  "Fix keybindings"
   (with-current-buffer "*Help*"
     (let ((inhibit-read-only t))
       (goto-char (point-min))
+      (re-search-forward "^key +binding$")
       (while (re-search-forward "^\\(.*?\\)\\(   +\\| Prefix Command$\\| .$\\|<[^>]*?>$\\| \\(?:[a-zA-Z]\\|-\\)+$\\)" nil t)
         (unless (or (string= "---" (match-string 1))
                     (string= "key" (match-string 1))
                     (save-match-data (string-match "remap" (match-string 1))))
           (replace-match (concat (ergoemacs-pretty-key (match-string 1)) (match-string 2)) t t))
         (end-of-line)))))
+
+(defun ergoemacs-describe-major-mode ()
+  "Show inline doc for current major-mode."
+  ;; code by Kevin Rodgers. 2009-02-25
+  (interactive)
+  (describe-function major-mode)
+  (ergoemacs-translate-keybindings))
+
+(defun ergoemacs-describe-bindings ()
+  "Describe all bindings and their definitions using ergoemacs Ctl, Alt etc. Uses `describe-bindings'."
+  (interactive)
+  (call-interactively 'describe-bindings)
+  (ergoemacs-translate-keybindings))
 
 ;;; Unaccent region taken and modified from Drew Adam's unaccent.el
 
