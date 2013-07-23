@@ -810,6 +810,22 @@ If arg is a negative prefix, copy file path only"
                      "unix")) current-coding)))
     (set-buffer-file-coding-system new-coding t)))
 
+;;; ergoemacs help functions.
+
+(defun ergoemacs-describe-bindings ()
+  "Describe all bindings and their definitions using ergoemacs Ctl, Alt etc. Uses `describe-bindings'."
+  (interactive)
+  (call-interactively 'describe-bindings)
+  (with-current-buffer "*Help*"
+    (let ((inhibit-read-only t))
+      (goto-char (point-min))
+      (while (re-search-forward "^\\(.*?\\)\\(   +\\| Prefix Command$\\| .$\\|<[^>]*?>$\\| \\(?:[a-zA-Z]\\|-\\)+$\\)" nil t)
+        (unless (or (string= "---" (match-string 1))
+                    (string= "key" (match-string 1))
+                    (save-match-data (string-match "remap" (match-string 1))))
+          (replace-match (concat (ergoemacs-pretty-key (match-string 1)) (match-string 2)) t t))
+        (end-of-line)))))
+
 ;;; Unaccent region taken and modified from Drew Adam's unaccent.el
 
 (require 'strings nil t) ;; (no error if not found): region-description

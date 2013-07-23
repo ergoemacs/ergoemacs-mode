@@ -869,6 +869,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
           cmd-freq-ergo 
           tmp
           (select "")
+          (html-table '())
           (lay (or (intern-soft (format "ergoemacs-layout-%s"
                                         ergoemacs-keyboard-layout))
                    'ergoemacs-layout-us))
@@ -990,6 +991,11 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                                  (replace-match "fill:#FFFF00;")))))
                        (setq ret t)
                        (goto-char (point-min))
+                       (add-to-list 'html-table
+                             `(,(nth 2 tmp) ,(format "<tr><td style=\"background-color: %s\">%s</td><td style=\"background-color: %s\"><input type=\"text\" value=\"%s\"></td><td style=\"background-color: %s\">%s</td></tr>" 
+                                     (nth 6 tmp) (nth 2 tmp)
+                                     (nth 6 tmp) (nth 1 tmp)
+                                     (nth 6 tmp) (nth 4 tmp))))
                        (when (search-forward (format "id=\"key%s\"" i) nil t)
                          (when (re-search-backward "fill:.*?;" nil t)
                            (replace-match (format "fill:%s;" (nth 6 tmp)))))
@@ -1194,6 +1200,8 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                           select
                           (file-name-nondirectory file))))
           (message "Generated ▤ Menu/Apps")
+          (setq html-table (sort html-table (lambda(x y) (>= (nth 0 x) (nth 0 y)))))
+          
           (setq select (format "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
 <html xmlns=\"http://www.w3.org/1999/xhtml\">
   <head>
@@ -1208,11 +1216,16 @@ function change_keyfreq_layout() {
   var img = select.options[selection].value;
   document.getElementById('keyfreq_img').src =  img;
 }
-    </script><body><form><b>Keyboard Modifiers:</b>&nbsp;&nbsp;<select id=\"keyfreq\" onchange=\"change_keyfreq_layout()\">%s</select></form><image id=\"keyfreq_img\" src=\"keyfreq-alt-map.svg\"/></body></html>"
+    </script><body><form><b>Keyboard Modifiers:</b>&nbsp;&nbsp;<select id=\"keyfreq\" onchange=\"change_keyfreq_layout()\">%s</select></form><image id=\"keyfreq_img\" src=\"keyfreq-alt-map.svg\"/><form><table>"
                                select))
           (with-temp-file (expand-file-name "keyfreq.html"
                                             (expand-file-name "ergoemacs-extras" user-emacs-directory))
-            (insert select)))))))
+            (insert select)
+            (mapc
+             (lambda(x)
+               (insert (nth 1 x)))
+             html-table)
+            (insert "</table></form></body></html>")))))))
 
 ;; Allow the SVN prefixes to be specified by the following:
 (setq ergoemacs-svn-prefixes

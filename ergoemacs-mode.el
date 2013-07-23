@@ -805,6 +805,8 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
   (ergoemacs-setup-translation layout base-layout)
   (ergoemacs-setup-fast-keys)
   (ergoemacs-setup-keys-for-keymap ergoemacs-keymap)
+  (let ((no-ergoemacs-advice t))
+    (define-key ergoemacs-keymap [remap describe-bindings] 'ergoemacs-describe-bindings))
   ;; Remove all overriding-map-alists...  I believe some are being
   ;; created out of context.  However, this seems to fix issue #134
   (mapc
