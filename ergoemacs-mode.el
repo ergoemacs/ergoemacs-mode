@@ -1,4 +1,4 @@
-;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics. -*- coding: utf-8 -*-
+b;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics. -*- coding: utf-8 -*-
 
 ;; Copyright © 2007, 2008, 2009 by Xah Lee
 ;; Copyright © 2009, 2010 by David Capello
@@ -10,7 +10,7 @@
 ;; Maintainer: Matthew Fidler, Xah Lee, David Capello
 ;; Created: August 01 2007
 ;; Version: 5.8.0.1
-;; Keywords: convenience, qwerty, dvorak, keybinding, ergonomic, colemak
+;; Keywords: convenience, qwerty, dvorak, keybi+nding, ergonomic, colemak
 ;; Package-Requires: ((org-cua-dwim "0.5"))
 
 ;; You can redistribute this program and/or modify it under the terms
@@ -23,14 +23,7 @@
 ;; shortcuts into the most easy-to-type spots.
 ;;
 ;; For complete detail, see:
-;; http://xahlee.org/emacs/ergonomic_emacs_keybinding.html
-;; Also see the file "_README.txt"
-;;
-;; Install:
-;; See the file “_INSTALL.txt”.
-
-;;; Change Log:
-;; See the file “_HISTORY.txt”.
+;; http://ergoemacs.github.io/ergoemacs-mode/
 
 ;;; Acknowledgment:
 ;; Thanks to Shahin Azad for persian layout (fa) ishahinism at g
@@ -80,7 +73,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
     (buffer-file-name)))
   "Ergoemacs Directory")
 (add-to-list 'load-path  ergoemacs-dir)
-
 
 (defgroup ergoemacs-mode nil
   "Emulate CUA key bindings including C-x and C-c."
