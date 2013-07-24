@@ -1,4 +1,4 @@
-b;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics. -*- coding: utf-8 -*-
+;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics. -*- coding: utf-8 -*-
 
 ;; Copyright © 2007, 2008, 2009 by Xah Lee
 ;; Copyright © 2009, 2010 by David Capello
@@ -63,6 +63,8 @@ b;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics. -
 
 (defconst ergoemacs-mode-changes "Delete window Alt+0 changed to Alt+2.
 Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n")
+
+
 
 
 ;; Include extra files
@@ -1040,8 +1042,6 @@ will change."
      (t ; US qwerty by default
       (ergoemacs-setup-keys-for-layout "us")))
     (ergoemacs-create-hooks)
-    ;; (define-minor-mode ergoemacs-mode … )
-    ;; 2012-12-15 Xah: problem: when calling describe-function on ergoemacs-mode, it will say “ergoemacs-mode is an interactive Lisp function in `.emacs.desktop'”. So comment3ed out this for now. What's the consequence of not updating keymap?
     (unless no-check
       (when ergoemacs-state
         (when (fboundp 'ergoemacs-mode)
@@ -1252,11 +1252,14 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                        (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-shortcut-timeout)))))))))))
 
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-c-unchorded "C-c" ctl)
-(ergoemacs-keyboard-shortcut ergoemacs-ctl-c "C-c" ctl-to-alt)
+(ergoemacs-keyboard-shortcut ergoemacs-ctl-c-ctl-to-alt "C-c" ctl-to-alt)
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-x-unchorded "C-x" ctl)
-(ergoemacs-keyboard-shortcut ergoemacs-ctl-x "C-x" ctl-to-alt)
-(ergoemacs-keyboard-shortcut ergoemacs-ctl-h "C-h" ctl-to-alt)
+(ergoemacs-keyboard-shortcut ergoemacs-ctl-x-ctl-to-alt "C-x" ctl-to-alt)
+(ergoemacs-keyboard-shortcut ergoemacs-ctl-h-ctl-to-alt "C-h" ctl-to-alt)
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-c-ctl-c "C-c C-c" nil ergoemacs-repeat-ctl-c-ctl-c)
+
+(defun ergoemacs-ctl-c ()
+  )
 
 
 (require 'cus-edit)

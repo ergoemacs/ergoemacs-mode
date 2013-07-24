@@ -691,7 +691,87 @@ Else it is a user buffer."
   (insert "<?php echo ; ?>")
   (backward-char 4))
 
-;; Help
+(defun ergoemacs-copy-full-path (&optional arg)
+  "Copies full path to clipboard.
+If arg is nil, copy file name only.
+If arg is a negative prefix, copy file path only"
+  (interactive "p")
+  (let ((fn (buffer-file-name)))
+    (if (or (eq arg '-) (< arg 0))
+        (setq fn (file-name-directory fn))
+      (when current-prefix-arg
+        (setq fn (file-name-nondirectory fn))))
+    (with-temp-buffer
+      (insert fn)
+      (mark-whole-buffer)
+      (ergoemacs-cut-line-or-region))))
+
+(defun ergoemacs-copy-file-name ()
+  "Copy File Name"
+  (interactive)
+  (let ((current-prefix-arg 1))
+    (ergoemacs-copy-full-path 1)))
+
+(defun ergoemacs-copy-dir-path ()
+  "Copy File Name"
+  (interactive)
+  (ergoemacs-copy-full-path '-))
+
+(defun ergoemacs-eol-p (eol-type)
+  "Does this file match the eol-type dos, mac or unix"
+  (save-match-data
+    (string-match (symbol-name eol-type) (symbol-name buffer-file-coding-system))))
+
+(defun ergoemacs-eol-conversion (new-eol)
+  "Converts file to new EOL"
+  (let ((current-coding (symbol-name buffer-file-coding-system))
+        new-coding)
+    (setq new-coding
+          (intern (replace-regexp-in-string
+                   "\\(unix\\|dos\\|mac\\|\\)$"
+                   (cond
+                    ((eq 'dos new-eol)
+                     "dos")
+                    ((eq 'mac new-eol)
+                     "mac")
+                    (t
+                     "unix")) current-coding)))
+    (set-buffer-file-coding-system new-coding t)))
+
+;;; ergoemacs help functions.
+(defun ergoemacs-translate-keybindings ()
+  "Fix keybindings"
+  (with-current-buffer "*Help*"
+    (let ((inhibit-read-only t))
+      (goto-char (point-min))
+      (while (re-search-forward "\\(\\(?:[CAMHS]-\\)+\\(?:RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|.\\)\\|<[^>]*?>\\|RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\)\\( +\\|'\\)" nil t)
+        (unless (or (save-match-data (string-match "remap" (match-string 1)))
+                    (save-match-data (string-match "\\(\\[\\]\\|【】\\)" (ergoemacs-pretty-key (match-string 1)))))
+          (replace-match (concat (ergoemacs-pretty-key (match-string 1))
+                                 (match-string 2)) t t)
+          (while (re-search-forward "\\=\\(RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|[^\n ]\\)\\( +\\|'\\)" nil t)
+            (replace-match (concat (ergoemacs-pretty-key (match-string 1))
+                                   (match-string 2)) t t))))
+      (goto-char (point-min))
+      (while (re-search-forward "】 【" nil t)
+        (replace-match"】【")))))
+
+(defun ergoemacs-describe-major-mode ()
+  "Show inline doc for current major-mode."
+  ;; code by Kevin Rodgers. 2009-02-25.
+  ;; Modified to translate keybindings (2013)
+  (interactive)
+  (describe-function major-mode)
+  (ergoemacs-translate-keybindings))
+
+(defun ergoemacs-describe-bindings ()
+  "Describe all bindings and their definitions using ergoemacs Ctl, Alt etc. Uses `describe-bindings'."
+  (interactive)
+  (call-interactively 'describe-bindings)
+  (ergoemacs-translate-keybindings))
+
+
+;;; Help
 
 (defcustom ergoemacs-inkscape (executable-find "inkscape")
   "Location of inkscape (used to convert svgs to png files)"
@@ -748,7 +828,7 @@ With a prefix, force regeneration. "
     
     (when (file-exists-p png)
       (setq file png))
-      
+    
     (if (not(file-exists-p file))
         (message "Need to generate/download layout.")
       (when (called-interactively-p 'interactive)
@@ -757,81 +837,6 @@ With a prefix, force regeneration. "
           (error
            (ergoemacs-open-in-external-app file)))))
     (symbol-value 'file)))
-
-
-(defun ergoemacs-copy-full-path (&optional arg)
-  "Copies full path to clipboard.
-If arg is nil, copy file name only.
-If arg is a negative prefix, copy file path only"
-  (interactive "p")
-  (let ((fn (buffer-file-name)))
-    (if (or (eq arg '-) (< arg 0))
-        (setq fn (file-name-directory fn))
-      (when current-prefix-arg
-        (setq fn (file-name-nondirectory fn))))
-    (with-temp-buffer
-      (insert fn)
-      (mark-whole-buffer)
-      (ergoemacs-cut-line-or-region))))
-
-(defun ergoemacs-copy-file-name ()
-  "Copy File Name"
-  (interactive)
-  (let ((current-prefix-arg 1))
-    (ergoemacs-copy-full-path 1)))
-
-(defun ergoemacs-copy-dir-path ()
-  "Copy File Name"
-  (interactive)
-  (ergoemacs-copy-full-path '-))
-
-(defun ergoemacs-eol-p (eol-type)
-  "Does this file match the eol-type dos, mac or unix"
-  (save-match-data
-    (string-match (symbol-name eol-type) (symbol-name buffer-file-coding-system))))
-
-(defun ergoemacs-eol-conversion (new-eol)
-  "Converts file to new EOL"
-  (let ((current-coding (symbol-name buffer-file-coding-system))
-        new-coding)
-    (setq new-coding
-          (intern (replace-regexp-in-string
-                   "\\(unix\\|dos\\|mac\\|\\)$"
-                   (cond
-                    ((eq 'dos new-eol)
-                     "dos")
-                    ((eq 'mac new-eol)
-                     "mac")
-                    (t
-                     "unix")) current-coding)))
-    (set-buffer-file-coding-system new-coding t)))
-
-;;; ergoemacs help functions.
-(defun ergoemacs-translate-keybindings ()
-  "Fix keybindings"
-  (with-current-buffer "*Help*"
-    (let ((inhibit-read-only t))
-      (goto-char (point-min))
-      (re-search-forward "^key +binding$")
-      (while (re-search-forward "^\\(.*?\\)\\(   +\\| Prefix Command$\\| .$\\|<[^>]*?>$\\| \\(?:[a-zA-Z]\\|-\\)+$\\)" nil t)
-        (unless (or (string= "---" (match-string 1))
-                    (string= "key" (match-string 1))
-                    (save-match-data (string-match "remap" (match-string 1))))
-          (replace-match (concat (ergoemacs-pretty-key (match-string 1)) (match-string 2)) t t))
-        (end-of-line)))))
-
-(defun ergoemacs-describe-major-mode ()
-  "Show inline doc for current major-mode."
-  ;; code by Kevin Rodgers. 2009-02-25
-  (interactive)
-  (describe-function major-mode)
-  (ergoemacs-translate-keybindings))
-
-(defun ergoemacs-describe-bindings ()
-  "Describe all bindings and their definitions using ergoemacs Ctl, Alt etc. Uses `describe-bindings'."
-  (interactive)
-  (call-interactively 'describe-bindings)
-  (ergoemacs-translate-keybindings))
 
 ;;; Unaccent region taken and modified from Drew Adam's unaccent.el
 
