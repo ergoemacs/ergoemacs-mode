@@ -403,6 +403,7 @@
     ;; Helm mode hooks
     (helm-before-initialize-hook
      (("C-w" helm-keyboard-quit helm-map)
+      ("M-RET" helm-execute-persistent-action)
       (next-line helm-next-line helm-map)
       (previous-line helm-previous-line helm-map)
       (forward-char helm-next-source helm-map)
