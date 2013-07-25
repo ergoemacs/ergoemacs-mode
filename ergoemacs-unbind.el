@@ -927,18 +927,32 @@ disabled at `ergoemacs-restore-global-keys'."
         (setq ret (buffer-string))))
     (symbol-value 'ret)))
 
-(defun ergoemacs-pretty-key-rep (code)
+(defun ergoemacs-pretty-key-rep-internal ()
+  (goto-char (point-min))
+  (while (re-search-forward "\\(\\(?:[CAMHS]-\\)+\\(?:RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|.\\)\\|<[^>]*?>\\|RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\)\\( +\\|[':]\\)" nil t)
+    (unless (or (save-match-data (string-match "remap" (match-string 1)))
+                (save-match-data (string-match "\\(\\[\\]\\|【】\\)" (ergoemacs-pretty-key (match-string 1)))))
+      (replace-match (concat (ergoemacs-pretty-key (match-string 1))
+                             (match-string 2)) t t)
+      (while (re-search-forward "\\=\\(RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|[^\n ]\\)\\( +\\|[':]\\)" nil t)
+        (replace-match (concat (ergoemacs-pretty-key (match-string 1))
+                               (match-string 2)) t t))))
+  (goto-char (point-min))
+  (while (re-search-forward "】 【" nil t)
+    (replace-match"】【")))
+
+(defun ergoemacs-pretty-key-rep (&optional code)
   "Finds keyboard binding codes such as C-x and replaces them with `ergoemacs-pretty-key' encoding."
-  (let ((ret code)
-        (case-fold-search nil))
-    (save-match-data
-      (with-temp-buffer
-        (insert code)
-        (goto-char (point-min))
-        (while (re-search-forward "\\<\\([CMS]-\\)+.\\>" nil t)
-          (replace-match (ergoemacs-pretty-key (match-string 0)) t t))
-        (setq ret (buffer-string))))
-    (symbol-value 'ret)))
+  (if code
+      (let ((ret code)
+            (case-fold-search nil))
+        (save-match-data
+          (with-temp-buffer
+            (insert code)
+            (ergoemacs-pretty-key-rep-internal)
+            (setq ret (buffer-string))))
+        (symbol-value 'ret))
+    (ergoemacs-pretty-key-rep-internal)))
 
 ;; Based on describe-key-briefly
 (defun ergoemacs-where-is-old-binding (&optional key)

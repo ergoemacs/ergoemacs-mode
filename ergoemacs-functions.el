@@ -743,18 +743,7 @@ If arg is a negative prefix, copy file path only"
   "Fix keybindings"
   (with-current-buffer "*Help*"
     (let ((inhibit-read-only t))
-      (goto-char (point-min))
-      (while (re-search-forward "\\(\\(?:[CAMHS]-\\)+\\(?:RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|.\\)\\|<[^>]*?>\\|RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\)\\( +\\|'\\)" nil t)
-        (unless (or (save-match-data (string-match "remap" (match-string 1)))
-                    (save-match-data (string-match "\\(\\[\\]\\|【】\\)" (ergoemacs-pretty-key (match-string 1)))))
-          (replace-match (concat (ergoemacs-pretty-key (match-string 1))
-                                 (match-string 2)) t t)
-          (while (re-search-forward "\\=\\(RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|[^\n ]\\)\\( +\\|'\\)" nil t)
-            (replace-match (concat (ergoemacs-pretty-key (match-string 1))
-                                   (match-string 2)) t t))))
-      (goto-char (point-min))
-      (while (re-search-forward "】 【" nil t)
-        (replace-match"】【")))))
+      (ergoemacs-pretty-key-rep))))
 
 (defun ergoemacs-describe-major-mode ()
   "Show inline doc for current major-mode."

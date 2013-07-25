@@ -177,33 +177,6 @@ Valid values are:
           (const :tag "Do not allow fast repeat commands." nil)
           (const :tag "Allow fast repeat for <apps> menu." 'apps)))
 
-;; Movement commands need to be defined before ergoemacs-themes is
-;; called to get the correct movement commands for isearch.
-(defadvice cua--pre-command-handler (around ergoemacs-fix-shifted-commands activate)
-  "Fixes shifted movement problems"
-  (let ((do-it t)
-        (case-fold-search nil)
-        (send-timeout nil))
-    (condition-case nil
-        (progn
-          ;; Fix shifted commands.
-          (when (and (string-match "\\(^\\|-\\)M-" (key-descrtion (this-single-command-keys))) ;; Alt command
-                     (or (eq (get this-command 'CUA) 'move)
-                         (memq this-command ergoemacs-movement-functions)))
-            (setq do-it nil))
-          ;; Fix Issue 139.  However may introduce an issue when you
-          ;; want to issue C-c commands quickly... 
-          (when (and mark-active (string-match "^C-\\(c\\|x\\)" (key-description (this-single-command-keys))))
-            (setq do-it t)
-            (setq send-timeout t)))
-      (error nil))
-    (when cua--rectangle
-      (setq do-it t))
-    (when do-it
-      ad-do-it)
-    (when send-timeout
-      (setq unread-command-events
-            (cons 'timeout unread-command-events)))))
 
 (when (not (fboundp 'set-temporary-overlay-map))
   ;; Backport this function from newer emacs versions
@@ -967,6 +940,9 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
   "Adds a pair of HOOK and HOOK-FUNCTION to the list `ergoemacs-hook-list'."
   (add-to-list 'ergoemacs-hook-list (cons hook hook-function)))
 
+(defvar ergoemacs-advices '()
+  "List of advices to enable and disable when ergoemacs is running.")
+
 (defun ergoemacs-hook-modes ()
   "Installs/Removes ergoemacs minor mode hooks from major modes
 depending the state of `ergoemacs-mode' variable.  If the mode
@@ -993,18 +969,14 @@ will change."
       (funcall modify-hook (car hook) (cdr hook)))
     
     ;; enable advices
-    (condition-case err
-        (progn
-          (funcall modify-advice 'global-set-key 'around 'ergoemacs-global-set-key-advice)
-          (funcall modify-advice 'global-unset-key 'around 'ergoemacs-global-unset-key-advice)
-          (funcall modify-advice 'local-set-key 'around 'ergoemacs-local-set-key-advice)
-          (funcall modify-advice 'local-unset-key 'around 'ergoemacs-local-unset-key-advice)
-          ;; update advices
-          (ad-activate 'global-set-key)
-          (ad-activate 'global-unset-key)
-          (ad-activate 'local-set-key)
-          (ad-activate 'local-unset-key))
-      (error "Error modifying advices. %s" err))))
+    (mapc
+     (lambda(advice)
+       (condition-case err
+           (let ((fn (intern (replace-regexp-in-string "\\(^ergoemacs-\\|-advice$\\)" "" (symbol-name advice)))))
+             (funcall modify-advice fn 'around advice)
+             (ad-activate fn))
+         (error "Error modifying advice %s" (symbol-name advice))))
+     ergoemacs-advices)))
 
 (defun ergoemacs-create-hooks ()
   "Creates Ergoemacs Hooks from `ergoemacs-get-minor-mode-layout'."
@@ -1363,51 +1335,6 @@ For the standard layout, with A QWERTY keyboard the `execute-extended-command' ã
 
 ;; ErgoEmacs replacements for local-set-key
 
-(defadvice define-key (around ergoemacs-define-key-advice (keymap key def))
-  "This does the right thing when modifying `ergoemacs-keymap'"
-  (if (and (equal keymap 'ergoemacs-keymap)
-           (or (not (boundp 'no-ergoemacs-advice))
-               (and (boundp 'no-ergoemacs-advice) (not no-ergoemacs-advice))))
-      (progn
-        (message "Define Key Advice %s %s" key def)
-        (let ((found))
-          (set (ergoemacs-get-fixed-layout)
-               (mapcar
-                (lambda(x)
-                  (if (not (or (and (type-of (nth 0 x) 'string)
-                                    (string= (key-description
-                                              (condition-case err
-                                                  (read-kbd-macro (nth 0 x))
-                                                (error
-                                                 (read-kbd-macro (encode-coding-string (nth 0 x) locale-coding-system)))))
-                                             (key-description key)))
-                               (and (not (type-of (nth 0 x) 'string))
-                                    (string= (key-description (nth 0 x)) (key-description key)))))
-                      x
-                    (setq found t)
-                    `(,(nth 0 x) ,command "")))
-                (symbol-value (ergoemacs-get-fixed-layout))))
-          (unless found
-            (set (ergoemacs-get-variable-layout)
-                 (mapcar
-                  (lambda(x)
-                    (if (not (and (type-of (nth 0 x) 'string)
-                                  (string= (key-description (ergoemacs-kbd (nth 0 x) nil (nth 3 x))) (key-description key))))
-                        x
-                      (setq found t)
-                      ;; Assume the complete sequence is translated?
-                      `(,(nth 0 x) ,command "")))
-                  (symbol-value (ergoemacs-get-variable-layout)))))
-          (unless found
-            (add-to-list (ergoemacs-get-fixed-layout) `(,(key-description key) ,command ""))))
-        (message "Only changed ergoemacs-keybinding for current theme, %s" (or ergoemacs-theme "which happens to be the default key-binding"))
-        (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
-          (let ((no-ergoemacs-advice t))
-            (define-key ergoemacs-keymap key def))))
-    ad-do-it))
-
-(ad-activate 'define-key)
-
 (defvar ergoemacs-local-keymap nil
   "Local ergoemacs keymap")
 (make-variable-buffer-local 'ergoemacs-local-keymap)
@@ -1430,54 +1357,9 @@ For the standard layout, with A QWERTY keyboard the `execute-extended-command' ã
 
 ;; ErgoEmacs advices for local-set-key
 
-(defadvice local-set-key (around ergoemacs-local-set-key-advice (key command))
-  "This let you use local-set-key as usual when ergoemacs-mode is enabled."
-  (if (fboundp 'ergoemacs-mode)
-      (ergoemacs-local-set-key key command)
-    ad-do-it))
+(require 'ergoemacs-advices)
 
 
-(defadvice local-unset-key (around ergoemacs-local-unset-key-advice (key))
-  "This let you use local-unset-key as usual when ergoemacs-mode is enabled."
-  (if (fboundp 'ergoemacs-mode)
-      (ergoemacs-local-unset-key key)
-    ad-do-it))
-
-(defadvice global-set-key (around ergoemacs-global-set-key-advice (key command))
-  "This let you use global-set-key as usual when ergoemacs-mode is enabled."
-  ad-do-it
-  (add-to-list 'ergoemacs-do-not-restore-list (key-description key))
-  (add-to-list 'ergoemacs-global-changed-cache (key-description key))
-  (when ergoemacs-global-not-changed-cache
-    (delete (key-description key) ergoemacs-global-not-changed-cache))
-  (if (string-match "<\\(apps\\|menu\\)>" (key-description key))
-      (let ((no-ergoemacs-advice t))
-        (define-key ergoemacs-keymap key nil);; Take care of prefix
-        ;; commands.
-        (define-key ergoemacs-keymap key command))
-    (if (and ergoemacs-fix-M-O
-             (string= "M-O" (key-description key)))
-        (let ((no-ergoemacs-advice t))
-          (define-key ergoemacs-keymap key 'ergoemacs-M-O)
-          (define-key ergoemacs-M-O-keymap [timeout] command))
-      (if (and ergoemacs-fix-M-O
-               (string= "M-o" (key-description key)))
-          (let ((no-ergoemacs-advice t))
-            (define-key ergoemacs-keymap key 'ergoemacs-M-o)
-            (define-key ergoemacs-M-o-keymap [timeout] command)))
-      (let ((no-ergoemacs-advice t))
-        (define-key ergoemacs-keymap key nil)))))
-
-(defadvice global-unset-key (around ergoemacs-global-unset-key-advice (key))
-  "This let you use global-unset-key as usual when ergoemacs-mode is enabled."
-  ;; the global-unset-key will remove the key from ergoemacs as well.
-  ad-do-it
-  (add-to-list 'ergoemacs-do-not-restore-list (key-description key))
-  (add-to-list 'ergoemacs-global-changed-cache (key-description key))
-  (when ergoemacs-global-not-changed-cache
-    (delete (key-description key) ergoemacs-global-not-changed-cache))
-  (let ((no-ergoemacs-advice t))
-    (define-key ergoemacs-keymap key nil)))
 
 ;; Org edit source bug fix to allow C-s to save the org file in a
 ;; source snippet.
@@ -1493,6 +1375,7 @@ For the standard layout, with A QWERTY keyboard the `execute-extended-command' ã
 
 (when ergoemacs-ignore-prev-global
   (ergoemacs-ignore-prev-global))
+
 
 (provide 'ergoemacs-mode)
 
