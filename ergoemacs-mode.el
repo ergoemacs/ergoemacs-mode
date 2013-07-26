@@ -880,7 +880,12 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
             ((ergoemacs-key-fn-lookup key-def t)
              (ergoemacs-key-fn-lookup key-def t)
              nil)
-            (t nil))))
+            (t
+             (if (and (functionp key-def)
+                        (functionp definition))
+                 (eval
+                  (macroexpand `[remap ,(intern (symbol-name key-def))]))
+               nil)))))
         (when ergoemacs-debug
           (message "hook: %s->%s %s %s" key-def key-code
                    definition translate))

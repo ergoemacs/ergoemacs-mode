@@ -287,6 +287,7 @@
     ;; Minibuffer hook
     (org-agenda-mode-hook
      (("C-s" org-save-all-org-buffers org-agenda-mode-map)
+      (save-buffer org-save-all-org-buffers org-agenda-mode-map)
       ("C-z" org-agenda-undo  org-agenda-mode-map)
       (undo org-agenda-undo org-agenda-mode-map)))
     (minibuffer-setup-hook
@@ -405,8 +406,13 @@
      (("C-w" helm-keyboard-quit helm-map)
       ("C-z" nil helm-map)
       ("M-RET" helm-execute-persistent-action helm-map)
+
       (next-line helm-next-line helm-map)
       (previous-line helm-previous-line helm-map)
+
+      (next-history-element helm-next-line helm-map)
+      (previous-history-element helm-previous-line helm-map)
+      
       (forward-char helm-next-source helm-map)
       (backward-char helm-previous-source helm-map)
       (keyboard-quit helm-keyboard-quit helm-map)
