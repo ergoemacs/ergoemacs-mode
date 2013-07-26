@@ -284,12 +284,12 @@
 
 (defcustom ergoemacs-minor-mode-layout
   `(;; Key/variable command x-hook
-    ;; Minibuffer hook
+    (org-src-mode-hook
+     ((save-buffer org-edit-src-save org-src-mode-map remap)))
     (org-agenda-mode-hook
-     (("C-s" org-save-all-org-buffers org-agenda-mode-map)
-      (save-buffer org-save-all-org-buffers org-agenda-mode-map)
-      ("C-z" org-agenda-undo  org-agenda-mode-map)
-      (undo org-agenda-undo org-agenda-mode-map)))
+     ((save-buffer org-save-all-org-buffers org-agenda-mode-map remap)
+      (undo org-agenda-undo org-agenda-mode-map remap)))
+    ;; Minibuffer hook
     (minibuffer-setup-hook
      ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
       (previous-line previous-history-element minor-mode-overriding-map-alist)
@@ -440,7 +440,10 @@
                         (symbol :tag "Function to Run")
                         (const :tag "Unbind Key" nil))
                        (symbol :tag "Keymap to Modify")
-                       (boolean :tag "Translate key?")))))
+                       (choice
+                        (const :tag "Translate key" t)
+                        (const :tag "Raw key" nil)
+                        (const :tag "Remap key" remap))))))
   :set 'ergoemacs-set-default
   :group 'ergoemacs-standard-layout)
 
@@ -836,7 +839,10 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                                (symbol :tag "Function to Run")
                                (const :tag "Unbind Key" nil))
                               (symbol :tag "Keymap to Modify")
-                              (boolean :tag "Translate key?")))))
+                              (choice
+                               (const :tag "Translate key" t)
+                               (const :tag "Raw key" nil)
+                               (const :tag "Remap key" remap))))))
          :set 'ergoemacs-set-default
          :group ',(intern (format "ergoemacs-%s-theme" name)))
        (defcustom ,(intern (format "ergoemacs-redundant-keys-%s" name))

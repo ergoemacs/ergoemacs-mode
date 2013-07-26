@@ -861,89 +861,105 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                    (keymapp keymap)
                  (error nil)))
           (not key-def)) nil
+    (if (and (eq translate 'remap)
+             (functionp key-def)
+             (functionp definition))
+        (let ((no-ergoemacs-advice t))
+          (define-key keymap
+            (eval (macroexpand `[remap ,(intern (symbol-name key-def))]))
+            definition))
     (let* ((no-ergoemacs-advice t)
-          (key-code
-           (cond
-            ((and translate (eq 'string (type-of key-def)))
-             (ergoemacs-kbd key-def))
-            ((eq 'string (type-of key-def))
-             (condition-case err
-                 (read-kbd-macro key-def)
-               (error (read-kbd-macro
-                       (encode-coding-string key-def locale-coding-system)))))
-            ((ergoemacs-key-fn-lookup key-def)
-             ;; Also define <apps> key
-             (when (ergoemacs-key-fn-lookup key-def t)
-               (define-key keymap (ergoemacs-key-fn-lookup key-def t) definition))
-             (ergoemacs-key-fn-lookup key-def))
-            ;; Define <apps>  key
-            ((ergoemacs-key-fn-lookup key-def t)
-             (ergoemacs-key-fn-lookup key-def t)
-             nil)
-            (t
-             (if (and (functionp key-def)
-                        (functionp definition))
-                 (eval
-                  (macroexpand `[remap ,(intern (symbol-name key-def))]))
-               nil)))))
-        (when ergoemacs-debug
-          (message "hook: %s->%s %s %s" key-def key-code
-                   definition translate))
+           (key-code
+            (cond
+             ((and translate (eq 'string (type-of key-def)))
+              (ergoemacs-kbd key-def))
+             ((eq 'string (type-of key-def))
+              (condition-case err
+                  (read-kbd-macro key-def)
+                (error (read-kbd-macro
+                        (encode-coding-string key-def locale-coding-system)))))
+             ((ergoemacs-key-fn-lookup key-def)
+              ;; Also define <apps> key
+              (when (ergoemacs-key-fn-lookup key-def t)
+                (define-key keymap (ergoemacs-key-fn-lookup key-def t) definition))
+              (ergoemacs-key-fn-lookup key-def))
+             ;; Define <apps>  key
+             ((ergoemacs-key-fn-lookup key-def t)
+              (ergoemacs-key-fn-lookup key-def t)
+              nil)
+             (t
+              (if (and (functionp key-def)
+                       (functionp definition))
+                  (eval
+                   (macroexpand `[remap ,(intern (symbol-name key-def))]))
+                nil)))))
+      (when ergoemacs-debug
+        (message "hook: %s->%s %s %s" key-def key-code
+                 definition translate))
       (when key-code
-        (define-key keymap key-code definition)))))
+        (define-key keymap key-code definition))))))
 
 (defmacro ergoemacs-create-hook-function (hook keys &optional global)
   "Creates a hook function based on the HOOK and the list of KEYS defined."
   (let ((is-override (make-symbol "is-override"))
-        (local-list '()))
+        (old-keymap (make-symbol "old-keymap"))
+        (override-keymap (make-symbol "override-keymap")))
     (setq is-override (eq 'minor-mode-overriding-map-alist (nth 2 (nth 0 keys))))
     `(progn
        ,(if is-override
-            `(progn
-               (defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) nil
-                 ,(concat "Ergoemacs overriding keymap for `" (symbol-name hook) "'")))
-          nil)
+            (progn
+	      (setq old-keymap nil)
+	      `(progn
+		 (defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) nil
+		   ,(concat "Ergoemacs overriding keymap for `" (symbol-name hook) "'"))))
+	  (setq old-keymap t)
+          (setq override-keymap (nth 2 (nth 0 keys)))
+          `(defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil
+             ,(concat "Old keymap for `" (symbol-name hook) "'.")))
+       
        (defun ,(intern (concat "ergoemacs-" (symbol-name hook))) ()
          ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
 This is an automatically generated function derived from `ergoemacs-get-minor-mode-layout'.")
-         ,(if is-override
-              `(ergoemacs-setup-keys-for-keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
-            nil)
-         ,@(mapcar
-            (lambda(def)
-              `(progn
-                 ,(if (and is-override (equal (nth 2 def) 'minor-mode-overriding-map-alist)) nil
-                    (if (member (nth 2 def) local-list) nil
-                      (add-to-list 'local-list (nth 2 def))
-                      `(set (make-local-variable ',(nth 2 def)) ,(nth 2 def))))
-                 (ergoemacs-hook-define-key ,(if (and is-override
-                                                      (equal (nth 2 def)
-                                                             'minor-mode-overriding-map-alist))
-                                                 (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
-                                               (nth 2 def))
-                                            ,(if (eq (type-of (nth 0 def)) 'string)
-                                                 `,(nth 0 def)
-                                               `(quote ,(nth 0 def)))
-                                            ',(nth 1 def)
-                                            ,(nth 3 def))))
-            keys)
-         ,(if is-override
-              `(add-to-list 'minor-mode-overriding-map-alist
-                            (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
-                            nil ,(if (equal hook 'minibuffer-setup-hook)
-                                     '(lambda (x y)
-                                        (equal (car y) (car x)))
-                                   nil))
-            nil)
-         t)
-       (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook)))))))
+         ;; Only generate keymap if it hasn't previously been generated.
+         (unless ,(if is-override nil
+                    (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
+           
+           ,(if is-override
+                `(ergoemacs-setup-keys-for-keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
+              `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
+                     ,(nth 2 (nth 0 keys))))
+           ,@(mapcar
+              (lambda(def)
+                `(progn
+                   ,(if (and is-override (equal (nth 2 def) 'minor-mode-overriding-map-alist)) nil)
+                   (ergoemacs-hook-define-key ,(if (and is-override
+                                                        (equal (nth 2 def)
+                                                               'minor-mode-overriding-map-alist))
+                                                   (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
+                                                 (nth 2 def))
+                                              ,(if (eq (type-of (nth 0 def)) 'string)
+                                                   `,(nth 0 def)
+                                                 `(quote ,(nth 0 def)))
+                                              ',(nth 1 def)
+                                              ',(nth 3 def))))
+              keys)
+           ,(if is-override
+                `(add-to-list 'minor-mode-overriding-map-alist
+                              (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
+                              nil ,(if (equal hook 'minibuffer-setup-hook)
+                                       '(lambda (x y)
+                                          (equal (car y) (car x)))
+                                     nil))
+              nil)
+           t))
+       (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))) ',override-keymap))))
 
 (defvar ergoemacs-hook-list (list)
 "List of hook and hook-function pairs.")
 
-(defun ergoemacs-add-hook (hook hook-function)
+(defun ergoemacs-add-hook (hook hook-function old-keymap keymap-name)
   "Adds a pair of HOOK and HOOK-FUNCTION to the list `ergoemacs-hook-list'."
-  (add-to-list 'ergoemacs-hook-list (cons hook hook-function)))
+  (add-to-list 'ergoemacs-hook-list (list hook hook-function old-keymap keymap-name)))
 
 (defvar ergoemacs-advices '()
   "List of advices to enable and disable when ergoemacs is running.")
@@ -971,7 +987,16 @@ will change."
     
     ;; install the mode-hooks
     (dolist (hook ergoemacs-hook-list)
-      (funcall modify-hook (car hook) (cdr hook)))
+      (funcall modify-hook (nth 0 hook) (nth 1 hook))
+      ;; Restore original keymap
+      (when (and (eq modify-hook 'remove-hook)
+                 (nth 2 hook)
+                 (nth 3 hook)
+                 (symbol-value (nth 2 hook))
+                 (symbol-value (nth 3 hook)))
+        (set (nth 3 hook)
+             (symbol-value (nth 2 hook)))
+        (set (nth 2 hook) nil)))
     
     ;; enable advices
     (mapc
@@ -1360,18 +1385,8 @@ For the standard layout, with A QWERTY keyboard the `execute-extended-command' ã
   (ergoemacs-local-set-key key nil))
 
 
-;; ErgoEmacs advices for local-set-key
 
 (require 'ergoemacs-advices)
-
-
-
-;; Org edit source bug fix to allow C-s to save the org file in a
-;; source snippet.
-
-(eval-after-load "org-src"
-  '(progn
-     (define-key org-src-mode-map [remap save-buffer] 'org-edit-src-save)))
 
 (defcustom ergoemacs-ignore-prev-global t
   "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."
