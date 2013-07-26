@@ -4,7 +4,7 @@
 
 #+STARTUP: logdone
 #+TEMPLATE_DIR: ./o-blog-template
-#+URL: http://mlf176f2.github.com/ergoemacs-mode/
+#+URL: http://ergoemacs.github.com/ergoemacs-mode/
 #+DEFAULT_CATEGORY: Tips
 #-DISQUS: renard-ergoemacs-mode
 #+FILENAME_SANITIZER: ob-sanitize-string
@@ -43,7 +43,7 @@ A minor-mode that aims to:
 
 [[file:{lisp}(ob:path-to-root){/lisp}/features.html][/icon-cog icon-white/ Features]]
 
-[[https://github.com/mlf176f2/ergoemacs-mode][/icon-github-sign icon-white/ Github]]
+[[https://github.com/ergoemacs/ergoemacs-mode][/icon-github-sign icon-white/ Github]]
 
 [[file:{lisp}(ob:path-to-root){/lisp}/testimonials.html][/icon-comments-alt icon-white/ Testimonials]]
 
@@ -60,7 +60,7 @@ A minor-mode that aims to:
 ** Setup
 
 First you need to install [[http://www.gnu.org/s/emacs][Emacs]]. Then you have 2 ways to install
-[[https://github.com/mlf176f2/ergoemacs-mode][ergoemacs-mode]].
+[[https://github.com/ergoemacs/ergoemacs-mode][ergoemacs-mode]].
 
 #+begin_o_blog_row 5
 
@@ -78,7 +78,7 @@ Start by cloning the /git/ repository from [[http://github.com][Github]]
 
 #+begin_src bash
 cd ~/.emacs.d
-git clone https://github.com/mlf176f2/ergoemacs-mode.git
+git clone https://github.com/ergoemacs/ergoemacs-mode.git
 #+end_src
 
 And add following to your =~/.emacs.d/init.el= file:
@@ -871,7 +871,7 @@ defining your layout before ergoemacs-mode is loaded, you add it to
 the ergoemacs-keyboard-layout variable with its description.
 
 If you have generated a keyboard layout that ergoemacs-mode does not yet
-support please [[https://github.com/mlf176f2/ergoemacs-mode/issues/new][drop me a line]].
+support please [[https://github.com/ergoemacs/ergoemacs-mode/issues/new][drop me a line]].
 ** Bug report
   :PROPERTIES:
   :PAGE:     bug-report.html
@@ -1253,7 +1253,7 @@ Here are some ideas for future versions:
 - Allow ergoemacs-mode keyboard themes to be customized based on user
   frequency.  
 
-If you have any ideas please [[https://github.com/mlf176f2/ergoemacs-mode/issues/new][drop me a line]].
+If you have any ideas please [[https://github.com/ergoemacs/ergoemacs-mode/issues/new][drop me a line]].
 
 This section is experimental ergoemacs keybindings that are being
 incorporated into ergoemacs.  These are likely to change and are a
