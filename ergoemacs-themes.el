@@ -284,12 +284,19 @@
 
 (defcustom ergoemacs-minor-mode-layout
   `(;; Key/variable command x-hook
-    ;; Minibuffer hook
+    
+    ;; Org edit source bug fix to allow C-s to save the org file in a
+    ;; source snippet.
+    (org-src-mode-hook
+     ((save-buffer org-edit-src-save org-src-mode-map)))
+
+    ;; org-agenda
     (org-agenda-mode-hook
      (("C-s" org-save-all-org-buffers org-agenda-mode-map)
       (save-buffer org-save-all-org-buffers org-agenda-mode-map)
       ("C-z" org-agenda-undo  org-agenda-mode-map)
       (undo org-agenda-undo org-agenda-mode-map)))
+    ;; Minibuffer hook
     (minibuffer-setup-hook
      ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
       (previous-line previous-history-element minor-mode-overriding-map-alist)
