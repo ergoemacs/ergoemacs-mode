@@ -856,14 +856,37 @@ disabled at `ergoemacs-restore-global-keys'."
   (setq ergoemacs-overridden-global-keys '())
   (setq ergoemacs-do-not-restore-list '()))
 
-(defcustom ergoemacs-pretty-key-use-unicode 'gui
-  "Determines weather Unicode braces should be used for `ergoemacs-pretty-key'"
-  :type '(choice
-          (const :tag "Use [] everywhere" nil)
-          (const :tag "Use 【】 in gui, [] in terimnal" 'gui)
-          (const :tag "Use 【】 in everywhere" 'all))
-  :set 'ergoemacs-set-default
-  :group 'ergoemacs-mode)
+(defvar ergoemacs-display-char-list nil
+  "List of characters and fonts and if they display or not.")
+
+(defun ergoemacs-display-char-p (char)
+  "Determines if CHAR can be displayed."
+  (let* (ret
+         (buf (current-buffer))
+         (face (font-xlfd-name (face-attribute 'default :font)))
+         (found (assoc (list face char) ergoemacs-display-char-list)))
+    (if found
+        (nth 0 (cdr found))
+      (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
+      (delete-region (point-min) (point-max))
+      (insert char)
+      (let ((display (describe-char-display (point-min) (char-after (point-min)))))
+        (if (display-graphic-p (selected-frame))
+            (if display
+                (setq ret t))
+          (if display
+              (setq ret t))))
+      (switch-to-buffer buf)
+      ;; Save it so the user doesn't see the buffer popup very much
+      ;; (if at all).
+      (add-to-list 'ergoemacs-display-char-list (list (list face char) ret))
+      (symbol-value 'ret))))
+
+(defun ergoemacs-unicode-char (char alt-char)
+  "Uses CHAR if it can be displayed, otherwise use ALT-CHAR."
+  (if (ergoemacs-display-char-p char)
+      char
+    alt-char))
 
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE to like M-x to 【Alt+x】"
@@ -873,13 +896,9 @@ disabled at `ergoemacs-restore-global-keys'."
                            (and window-system (eq ergoemacs-pretty-key-use-unicode 'gui)))))
     (save-match-data
       (with-temp-buffer
-        (insert (if use-unicode-p
-                    "【"
-                  "["))
+        (insert (ergoemacs-unicode-char "【" "["))
         (insert code)
-        (insert (if use-unicode-p
-                    "】"
-                  "]"))
+        (insert (ergoemacs-unicode-char "】" "]"))
         (goto-char (point-min))
         (when (re-search-forward "\\<M-x\\>" nil t)
           (replace-match "")
@@ -891,10 +910,10 @@ disabled at `ergoemacs-restore-global-keys'."
         (while (re-search-forward "\\(S-\\)\\{2,\\}" nil t)
           (replace-match "S-" t t))
         (goto-char (point-min))
-        (while (re-search-forward " +" nil t)
-          (if use-unicode-p
-              (replace-match "】【")
-            (replace-match "][")))
+        ;; (while (re-search-forward " +" nil t)
+        ;;   (if use-unicode-p
+        ;;       (replace-match "】【")
+        ;;     (replace-match "][")))
         (goto-char (point-min))
         (while (search-forward "M-" nil t)
           (replace-match "Alt+" t))
@@ -903,27 +922,29 @@ disabled at `ergoemacs-restore-global-keys'."
           (replace-match "Ctrl+" t))
         (goto-char (point-min))
         (while (search-forward "S-" nil t)
-          (if use-unicode-p
-              (replace-match "⇧Shift+" t)
-            (replace-match "Shift+")))
+          (replace-match (format "%sShift+"
+                                 (ergoemacs-unicode-char "⇧" "")) t))
         (goto-char (point-min))
         (while (re-search-forward "[<>]" nil t)
           (replace-match ""))
         (goto-char (point-min))
         (while (re-search-forward "\\(RET\\|[Rr]eturn\\)" nil t)
-          (replace-match "Enter⏎"))
+          (replace-match (format "Enter%s"
+                                 (ergoemacs-unicode-char "⏎" "")) t))
         (goto-char (point-min))
         (while (re-search-forward "TAB" nil t)
-          (replace-match "↹ Tab"))
+          (replace-match (format "%sTab"
+                                 (ergoemacs-unicode-char "↹" "")) t))
         (goto-char (point-min))
         (while (re-search-forward "\\(menu\\|apps\\)" nil t)
-          (replace-match "▤ Menu"))
+          (replace-match (format "%sMenu"
+                                 (ergoemacs-unicode-char "▤" "")) t))
         (goto-char (point-min))
         (while (re-search-forward "prior" nil t)
-          (replace-match "PgUp"))
+          (replace-match "PgUp" t))
         (goto-char (point-max))
         (while (re-search-forward "next" nil t)
-          (replace-match "PgDn"))
+          (replace-match "PgDn" t))
         (setq ret (buffer-string))))
     (symbol-value 'ret)))
 
