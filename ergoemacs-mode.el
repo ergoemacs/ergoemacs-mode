@@ -1366,6 +1366,12 @@ For the standard layout, with A QWERTY keyboard the `execute-extended-command' ã
 
 
 
+;; Org edit source bug fix to allow C-s to save the org file in a
+;; source snippet.
+
+(eval-after-load "org-src"
+  '(progn
+     (define-key org-src-mode-map [remap save-buffer] 'org-edit-src-save)))
 
 (defcustom ergoemacs-ignore-prev-global t
   "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."
