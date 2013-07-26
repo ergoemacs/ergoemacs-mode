@@ -406,6 +406,8 @@
      (("C-w" helm-keyboard-quit helm-map)
       ("C-z" nil helm-map)
       ("M-RET" helm-execute-persistent-action helm-map)
+      ("M-S-RET" "C-u M-RET" helm-map)
+      ("<M-S-return>" "C-u M-RET" helm-map)
 
       (next-line helm-next-line helm-map)
       (previous-line helm-previous-line helm-map)
@@ -438,6 +440,7 @@
                         (string :tag "Kbd Code"))
                        (choice
                         (symbol :tag "Function to Run")
+                        (string :tag "Translated Kbd Code")
                         (const :tag "Unbind Key" nil))
                        (symbol :tag "Keymap to Modify")
                        (choice
@@ -837,6 +840,7 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                                (string :tag "Kbd Code"))
                               (choice
                                (symbol :tag "Function to Run")
+                               (string :tag "Translated Kbd Code")
                                (const :tag "Unbind Key" nil))
                               (symbol :tag "Keymap to Modify")
                               (choice

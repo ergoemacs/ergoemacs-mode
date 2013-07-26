@@ -861,13 +861,21 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                    (keymapp keymap)
                  (error nil)))
           (not key-def)) nil
-    (if (and (eq translate 'remap)
+    (let ((fn definition))
+      (when (stringp definition)
+        (eval (macroexpand `(progn
+                              (ergoemacs-keyboard-shortcut
+                               ,(intern (concat "ergoemacs-shortcut---"
+                                                (md5 (format "%s" definition)))) ,definition)
+                              (setq fn ',(intern (concat "ergoemacs-shortcut---"
+                                                         (md5 (format "%s" definition)))))))))
+      (if (and (eq translate 'remap)
              (functionp key-def)
-             (functionp definition))
+             (functionp fn))
         (let ((no-ergoemacs-advice t))
           (define-key keymap
             (eval (macroexpand `[remap ,(intern (symbol-name key-def))]))
-            definition))
+            fn))
     (let* ((no-ergoemacs-advice t)
            (key-code
             (cond
@@ -881,7 +889,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
              ((ergoemacs-key-fn-lookup key-def)
               ;; Also define <apps> key
               (when (ergoemacs-key-fn-lookup key-def t)
-                (define-key keymap (ergoemacs-key-fn-lookup key-def t) definition))
+                (define-key keymap (ergoemacs-key-fn-lookup key-def t) fn))
               (ergoemacs-key-fn-lookup key-def))
              ;; Define <apps>  key
              ((ergoemacs-key-fn-lookup key-def t)
@@ -889,15 +897,15 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
               nil)
              (t
               (if (and (functionp key-def)
-                       (functionp definition))
+                       (functionp fn))
                   (eval
                    (macroexpand `[remap ,(intern (symbol-name key-def))]))
                 nil)))))
       (when ergoemacs-debug
         (message "hook: %s->%s %s %s" key-def key-code
-                 definition translate))
+                 fn translate))
       (when key-code
-        (define-key keymap key-code definition))))))
+        (define-key keymap key-code fn)))))))
 
 (defmacro ergoemacs-create-hook-function (hook keys &optional global)
   "Creates a hook function based on the HOOK and the list of KEYS defined."

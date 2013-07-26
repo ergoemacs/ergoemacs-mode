@@ -859,12 +859,14 @@ disabled at `ergoemacs-restore-global-keys'."
 (defvar ergoemacs-display-char-list nil
   "List of characters and fonts and if they display or not.")
 
+(require 'descr-text)
+(require 'faces)
 (defun ergoemacs-display-char-p (char)
   "Determines if CHAR can be displayed."
   (let* (ret
          (buf (current-buffer))
          (face (font-xlfd-name (face-attribute 'default :font)))
-         (found (assoc (list face char) ergoemacs-display-char-list)))
+         (found (assoc (list face char window-system) ergoemacs-display-char-list)))
     (if found
         (nth 0 (cdr found))
       (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
@@ -879,7 +881,7 @@ disabled at `ergoemacs-restore-global-keys'."
       (switch-to-buffer buf)
       ;; Save it so the user doesn't see the buffer popup very much
       ;; (if at all).
-      (add-to-list 'ergoemacs-display-char-list (list (list face char) ret))
+      (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
       (symbol-value 'ret))))
 
 (defun ergoemacs-unicode-char (char alt-char)
@@ -891,9 +893,7 @@ disabled at `ergoemacs-restore-global-keys'."
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE to like M-x to 【Alt+x】"
   (let ((ret code)
-        (case-fold-search nil)
-        (use-unicode-p (or (eq ergoemacs-pretty-key-use-unicode 'all)
-                           (and window-system (eq ergoemacs-pretty-key-use-unicode 'gui)))))
+        (case-fold-search nil))
     (save-match-data
       (with-temp-buffer
         (insert (ergoemacs-unicode-char "【" "["))
