@@ -910,10 +910,10 @@ disabled at `ergoemacs-restore-global-keys'."
         (while (re-search-forward "\\(S-\\)\\{2,\\}" nil t)
           (replace-match "S-" t t))
         (goto-char (point-min))
-        ;; (while (re-search-forward " +" nil t)
-        ;;   (if use-unicode-p
-        ;;       (replace-match "】【")
-        ;;     (replace-match "][")))
+        (while (re-search-forward " +" nil t)
+          (if use-unicode-p
+              (replace-match "】【")
+            (replace-match "][")))
         (goto-char (point-min))
         (while (search-forward "M-" nil t)
           (replace-match "Alt+" t))
@@ -937,8 +937,9 @@ disabled at `ergoemacs-restore-global-keys'."
                                  (ergoemacs-unicode-char "↹" "")) t))
         (goto-char (point-min))
         (while (re-search-forward "\\(menu\\|apps\\)" nil t)
-          (replace-match (format "%sMenu"
-                                 (ergoemacs-unicode-char "▤" "")) t))
+          (unless (looking-at "-bar")
+            (replace-match (format "%sMenu"
+                                   (ergoemacs-unicode-char "▤" "")) t)))
         (goto-char (point-min))
         (while (re-search-forward "prior" nil t)
           (replace-match "PgUp" t))
@@ -950,12 +951,12 @@ disabled at `ergoemacs-restore-global-keys'."
 
 (defun ergoemacs-pretty-key-rep-internal ()
   (goto-char (point-min))
-  (while (re-search-forward "\\(\\(?:[CAMHS]-\\)+\\(?:RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|.\\)\\|<[^>]*?>\\|RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\)\\( +\\|[':]\\)" nil t)
+  (while (re-search-forward "\\(\\(?:[CAMHS]-\\)+\\(?:RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|.\\)\\|<[^>]*?>\\|RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\)\\( +\\|[':,.]\\)" nil t)
     (unless (or (save-match-data (string-match "remap" (match-string 1)))
                 (save-match-data (string-match "\\(\\[\\]\\|【】\\)" (ergoemacs-pretty-key (match-string 1)))))
       (replace-match (concat (ergoemacs-pretty-key (match-string 1))
                              (match-string 2)) t t)
-      (while (re-search-forward "\\=\\(RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|[^\n ]\\)\\( +\\|[':]\\)" nil t)
+      (while (re-search-forward "\\=\\(RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|[^\n ]\\)\\( +\\|[':,.]\\)" nil t)
         (replace-match (concat (ergoemacs-pretty-key (match-string 1))
                                (match-string 2)) t t))))
   (goto-char (point-min))
