@@ -745,19 +745,19 @@ If arg is a negative prefix, copy file path only"
     (let ((inhibit-read-only t))
       (ergoemacs-pretty-key-rep))))
 
+(defun ergoemacs-help-refactor-keys-hook ()
+  "Changes keys to ergoemacs key descriptions."
+  (when ergoemacs-mode
+    (ergoemacs-translate-keybindings)))
+
+(add-hook 'temp-buffer-show-hook 'ergoemacs-help-refactor-keys-hook)
+
 (defun ergoemacs-describe-major-mode ()
   "Show inline doc for current major-mode."
   ;; code by Kevin Rodgers. 2009-02-25.
   ;; Modified to translate keybindings (2013)
   (interactive)
-  (describe-function major-mode)
-  (ergoemacs-translate-keybindings))
-
-(defun ergoemacs-describe-bindings ()
-  "Describe all bindings and their definitions using ergoemacs Ctl, Alt etc. Uses `describe-bindings'."
-  (interactive)
-  (call-interactively 'describe-bindings)
-  (ergoemacs-translate-keybindings))
+  (describe-function major-mode))
 
 
 ;;; Help
