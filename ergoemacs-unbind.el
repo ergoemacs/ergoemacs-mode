@@ -905,7 +905,11 @@ disabled at `ergoemacs-restore-global-keys'."
           (insert (ergoemacs-lookup-execute-extended-command)))
         (goto-char (point-min))
         (while (re-search-forward "\\(-[A-Z]\\)\\([^-]\\|$\\)" nil t)
-          (replace-match (format "-S%s%s" (downcase (match-string 1)) (match-string 2))))
+          (unless (save-excursion
+                    (save-match-data
+                      (goto-char (match-beginning 0))
+                      (looking-at "-\\(RET\\|SPC\\|ESC\\)")))
+            (replace-match (format "-S%s%s" (downcase (match-string 1)) (match-string 2)))))
         (goto-char (point-min))
         (while (re-search-forward "\\(S-\\)\\{2,\\}" nil t)
           (replace-match "S-" t t))
