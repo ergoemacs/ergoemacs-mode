@@ -911,9 +911,8 @@ disabled at `ergoemacs-restore-global-keys'."
           (replace-match "S-" t t))
         (goto-char (point-min))
         (while (re-search-forward " +" nil t)
-          (if use-unicode-p
-              (replace-match "】【")
-            (replace-match "][")))
+          (replace-match (format "%s%s"
+                                 (ergoemacs-unicode-char "】" "]") (ergoemacs-unicode-char "【" "["))))
         (goto-char (point-min))
         (while (search-forward "M-" nil t)
           (replace-match "Alt+" t))
