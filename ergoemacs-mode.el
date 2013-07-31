@@ -64,9 +64,6 @@
 (defconst ergoemacs-mode-changes "Delete window Alt+0 changed to Alt+2.
 Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n")
 
-
-
-
 ;; Include extra files
 (defvar ergoemacs-dir
   (file-name-directory
@@ -1155,10 +1152,10 @@ C-k S-a     -> k S-a           not defined
                 (message "Error defining %s: %s" new-key err)))))))))
 
 (defvar ergoemacs-repeat-shortcut-keymap (make-keymap)
-  "Keymap for repeating often used shortcuts like Ctl-c Ctl-c.")
+  "Keymap for repeating often used shortcuts like C-c C-c.")
 
 (defvar ergoemacs-repeat-shortcut-msg ""
-  "Message for repeating keyboard shortcuts like [Ctl+c] [Ctl+c]")
+  "Message for repeating keyboard shortcuts like C-c C-c")
 
 (defun ergoemacs-shortcut-timeout ()
   (message ergoemacs-repeat-shortcut-msg)
@@ -1321,7 +1318,13 @@ If optional argument is 0, turn it off.
 
 Home page URL `http://ergoemacs.org/emacs/ergonomic_emacs_keybinding.html'
 
-For the standard layout, with A QWERTY keyboard the `execute-extended-command' 【Alt+x】 is now 【Alt+a】 or the PC keyboard's 【Menu】 key."
+For the standard layout, with A QWERTY keyboard the `execute-extended-command' M-x is now M-a.
+
+The layout and theme changes the bindings.  For the current
+bindings the keymap is:
+
+\\{ergoemacs-keymap}
+"
   nil
   :lighter " ErgoEmacs"
   :global t
