@@ -890,66 +890,72 @@ disabled at `ergoemacs-restore-global-keys'."
       char
     alt-char))
 
+(defcustom ergoemacs-use-ergoemacs-key-descriptions t
+  "Use ergoemacs key descriptions like Alt+ instead of emacs key descriptors like M-"
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE to like M-x to 【Alt+x】"
   (let ((ret code)
-        (case-fold-search nil))
-    (save-match-data
-      (with-temp-buffer
-        (insert (ergoemacs-unicode-char "【" "["))
-        (insert code)
-        (insert (ergoemacs-unicode-char "】" "]"))
-        (goto-char (point-min))
-        (when (re-search-forward "\\<M-x\\>" nil t)
-          (replace-match "")
-          (insert (ergoemacs-lookup-execute-extended-command)))
-        (goto-char (point-min))
-        (while (re-search-forward "\\(-[A-Z]\\)\\([^-]\\|$\\)" nil t)
-          (unless (save-excursion
-                    (save-match-data
-                      (goto-char (match-beginning 0))
-                      (looking-at "-\\(RET\\|SPC\\|ESC\\)")))
-            (replace-match (format "-S%s%s" (downcase (match-string 1)) (match-string 2)))))
-        (goto-char (point-min))
-        (while (re-search-forward "\\(S-\\)\\{2,\\}" nil t)
-          (replace-match "S-" t t))
-        (goto-char (point-min))
-        (while (re-search-forward " +" nil t)
-          (replace-match (format "%s%s"
-                                 (ergoemacs-unicode-char "】" "]") (ergoemacs-unicode-char "【" "["))))
-        (goto-char (point-min))
-        (while (search-forward "M-" nil t)
-          (replace-match "Alt+" t))
-        (goto-char (point-min))
-        (while (search-forward "C-" nil t)
-          (replace-match "Ctrl+" t))
-        (goto-char (point-min))
-        (while (search-forward "S-" nil t)
-          (replace-match (format "%sShift+"
-                                 (ergoemacs-unicode-char "⇧" "")) t))
-        (goto-char (point-min))
-        (while (re-search-forward "[<>]" nil t)
-          (replace-match ""))
-        (goto-char (point-min))
-        (while (re-search-forward "\\(RET\\|[Rr]eturn\\)" nil t)
-          (replace-match (format "Enter%s"
-                                 (ergoemacs-unicode-char "⏎" "")) t))
-        (goto-char (point-min))
-        (while (re-search-forward "TAB" nil t)
-          (replace-match (format "%sTab"
-                                 (ergoemacs-unicode-char "↹" "")) t))
-        (goto-char (point-min))
-        (while (re-search-forward "\\(menu\\|apps\\)" nil t)
-          (unless (looking-at "-bar")
-            (replace-match (format "%sMenu"
-                                   (ergoemacs-unicode-char "▤" "")) t)))
-        (goto-char (point-min))
-        (while (re-search-forward "prior" nil t)
-          (replace-match "PgUp" t))
-        (goto-char (point-max))
-        (while (re-search-forward "next" nil t)
-          (replace-match "PgDn" t))
-        (setq ret (buffer-string))))
+        (case-fold-search nil)) 
+    (when ergoemacs-use-ergoemacs-key-descriptions
+      (save-match-data
+        (with-temp-buffer
+          (insert (ergoemacs-unicode-char "【" "["))
+          (insert code)
+          (insert (ergoemacs-unicode-char "】" "]"))
+          (goto-char (point-min))
+          (when (re-search-forward "\\<M-x\\>" nil t)
+            (replace-match "")
+            (insert (ergoemacs-lookup-execute-extended-command)))
+          (goto-char (point-min))
+          (while (re-search-forward "\\(-[A-Z]\\)\\([^-]\\|$\\)" nil t)
+            (unless (save-excursion
+                      (save-match-data
+                        (goto-char (match-beginning 0))
+                        (looking-at "-\\(RET\\|SPC\\|ESC\\)")))
+              (replace-match (format "-S%s%s" (downcase (match-string 1)) (match-string 2)))))
+          (goto-char (point-min))
+          (while (re-search-forward "\\(S-\\)\\{2,\\}" nil t)
+            (replace-match "S-" t t))
+          (goto-char (point-min))
+          (while (re-search-forward " +" nil t)
+            (replace-match (format "%s%s"
+                                   (ergoemacs-unicode-char "】" "]") (ergoemacs-unicode-char "【" "["))))
+          (goto-char (point-min))
+          (while (search-forward "M-" nil t)
+            (replace-match "Alt+" t))
+          (goto-char (point-min))
+          (while (search-forward "C-" nil t)
+            (replace-match "Ctrl+" t))
+          (goto-char (point-min))
+          (while (search-forward "S-" nil t)
+            (replace-match (format "%sShift+"
+                                   (ergoemacs-unicode-char "⇧" "")) t))
+          (goto-char (point-min))
+          (while (re-search-forward "[<>]" nil t)
+            (replace-match ""))
+          (goto-char (point-min))
+          (while (re-search-forward "\\(RET\\|[Rr]eturn\\)" nil t)
+            (replace-match (format "Enter%s"
+                                   (ergoemacs-unicode-char "⏎" "")) t))
+          (goto-char (point-min))
+          (while (re-search-forward "TAB" nil t)
+            (replace-match (format "%sTab"
+                                   (ergoemacs-unicode-char "↹" "")) t))
+          (goto-char (point-min))
+          (while (re-search-forward "\\(menu\\|apps\\)" nil t)
+            (unless (looking-at "-bar")
+              (replace-match (format "%sMenu"
+                                     (ergoemacs-unicode-char "▤" "")) t)))
+          (goto-char (point-min))
+          (while (re-search-forward "prior" nil t)
+            (replace-match "PgUp" t))
+          (goto-char (point-max))
+          (while (re-search-forward "next" nil t)
+            (replace-match "PgDn" t))
+          (setq ret (buffer-string)))))
     (symbol-value 'ret)))
 
 (defun ergoemacs-pretty-key-rep-internal ()
@@ -971,13 +977,15 @@ disabled at `ergoemacs-restore-global-keys'."
   (if code
       (let ((ret code)
             (case-fold-search nil))
-        (save-match-data
-          (with-temp-buffer
-            (insert code)
-            (ergoemacs-pretty-key-rep-internal)
-            (setq ret (buffer-string))))
+        (when ergoemacs-use-ergoemacs-key-descriptions
+          (save-match-data
+            (with-temp-buffer
+              (insert code)
+              (ergoemacs-pretty-key-rep-internal)
+              (setq ret (buffer-string)))))
         (symbol-value 'ret))
-    (ergoemacs-pretty-key-rep-internal)))
+    (when ergoemacs-use-ergoemacs-key-descriptions
+      (ergoemacs-pretty-key-rep-internal))))
 
 ;; Based on describe-key-briefly
 (defun ergoemacs-where-is-old-binding (&optional key)
