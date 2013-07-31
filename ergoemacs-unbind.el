@@ -896,7 +896,7 @@ disabled at `ergoemacs-restore-global-keys'."
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-pretty-key (code)
-  "Creates Pretty keyboard binding from kbd CODE to like M-x to 【Alt+x】"
+  "Creates Pretty keyboard binding from kbd CODE to like M- to Alt+"
   (let ((ret code)
         (case-fold-search nil)) 
     (when ergoemacs-use-ergoemacs-key-descriptions
@@ -906,9 +906,8 @@ disabled at `ergoemacs-restore-global-keys'."
           (insert code)
           (insert (ergoemacs-unicode-char "】" "]"))
           (goto-char (point-min))
-          (when (re-search-forward "\\<M-x\\>" nil t)
-            (replace-match "")
-            (insert (ergoemacs-lookup-execute-extended-command)))
+          (while (re-search-forward "<f\\([0-9]+\\)>" nil t)
+            (replace-match "<F\\1>"))
           (goto-char (point-min))
           (while (re-search-forward "\\(-[A-Z]\\)\\([^-]\\|$\\)" nil t)
             (unless (save-excursion
@@ -952,7 +951,7 @@ disabled at `ergoemacs-restore-global-keys'."
           (goto-char (point-min))
           (while (re-search-forward "prior" nil t)
             (replace-match "PgUp" t))
-          (goto-char (point-max))
+          (goto-char (point-min))
           (while (re-search-forward "next" nil t)
             (replace-match "PgDn" t))
           (setq ret (buffer-string)))))
