@@ -669,11 +669,11 @@ Some exceptions we don't want to unset.
   "Defines KEY in ergoemacs keyboard based on QWERTY and binds to FUNCTION.
 Optionally provides DESC for a description of the key."
   (let* (found
-        (str-key (or
-                    (and (eq (type-of key) 'string) key)
-                    (key-description key)))
-        (cur-key str-key)
-        (no-ergoemacs-advice t))
+         (str-key (or
+                   (and (eq (type-of key) 'string) key)
+                   (key-description key)))
+         (cur-key str-key)
+         (no-ergoemacs-advice t))
     (set (if fixed-key (ergoemacs-get-fixed-layout)
            (ergoemacs-get-variable-layout))
          (mapcar
@@ -1021,6 +1021,193 @@ Some exceptions we don't want to unset.
   (ergoemacs-key "M-m b i" 'bookmark-jump "" t)       ;; i = Up = Jump
   (ergoemacs-key "M-m b b" 'bookmark-bmenu-list "" t) ;; b = Switch Buffer = List Bookmarks
   )
+
+(ergoemacs-deftheme cabbage
+  "Cabbage theme."
+  nil
+  ;;(ergoemacs-key "M-j" 'backward-char)
+  ;;(ergoemacs-key "M-l" 'forward-char)
+  ;;(ergoemacs-key "M-i" 'previous-line)
+  ;;(ergoemacs-key "M-k" 'next-line)
+  ;;(ergoemacs-key "M-I" 'scroll-down)
+  (ergoemacs-key "M-C-i" 'scroll-down "↓ page")
+  
+  (ergoemacs-key "M-K" 'scroll-up )
+  (ergoemacs-key "M-C-k" 'scroll-up "↑ page")
+  (ergoemacs-key "M-L" 'end-of-line "→ line")
+  (ergoemacs-key "M-C-l" 'end-of-line "→ line")
+  (ergoemacs-key "M-J" 'beginning-of-line "← line")
+  (ergoemacs-key "M-C-j" 'beginning-of-line "← line")
+
+  ;; (ergoemacs-key "M-u" 'backward-word)
+  ;; (ergoemacs-key "M-o" 'forward-word)
+  (ergoemacs-key "M-U" 'backward-paragraph "← ¶" )
+  (ergoemacs-key "M-O" 'forward-paragraph "→ ¶")
+  (ergoemacs-key "M-C-o" 'forward-paragraph "← ¶")
+  (ergoemacs-key "M-C-u" 'backward-paragraph "→ ¶")
+  (ergoemacs-key "M-b" 'pop-to-mark-command)
+
+  (ergoemacs-key "M-z" 'undo "undo")
+
+  (ergoemacs-fixed-key "M-SPC" 'set-mark-command)
+  (ergoemacs-fixed-key "M-S-SPC" 'mark-paragraph)
+
+  
+  ;; (ergoemacs-key "M-s" 'move-cursor-next-pane)
+  ;; (ergoemacs-key "M-S" 'move-cursor-previous-pane)
+
+  (ergoemacs-key "M-d" 'delete-backward-char "⌫ char")
+  (ergoemacs-key "M-f" 'delete-char "⌦ char")
+  (ergoemacs-key "M-D" 'backward-kill-word "⌫ word")
+  (ergoemacs-key "M-F" 'kill-word "⌦ word")
+  (ergoemacs-fixed-key "<delete>" 'delete-char)
+
+  (ergoemacs-key "M-h" 'beginning-of-buffer "↑ buffer")
+  (ergoemacs-key "M-H" 'end-of-buffer "↓ buffer")
+  (ergoemacs-key "M-RET" 'cabbage-next-line "Next Line")
+
+  (ergoemacs-key "M-1" 'cabbage-enlargement-enlarge)
+  (ergoemacs-key "M-C-1" 'cabbage-enlargement-restore)
+  (ergoemacs-key "M-0" 'delete-window)
+  (ergoemacs-key "M-2" 'split-window-vertically "split |")
+  (ergoemacs-key "M-3" 'split-window-horizontally "split -")
+  (ergoemacs-key "M-4" 'balance-windows)
+  (ergoemacs-key "M-5" 'delete-other-windows)
+  (ergoemacs-key "M-+" 'balance-windows)
+
+  (ergoemacs-key "M-a" '(smex execute-extended-command))
+  (ergoemacs-key "M-q" 'shell-command)
+  (ergoemacs-key "M-e" 'cabbage-testing-execute-test)
+  
+  (ergoemacs-fixed-key "C-d" 'windmove-right)
+  (ergoemacs-fixed-key "C-s" 'windmove-down)
+  (ergoemacs-fixed-key "C-a" 'windmove-left)
+  (ergoemacs-fixed-key "C-w" 'windmove-up)
+
+  ;; Allow semi-ergonomic locations
+  (ergoemacs-key "C-M-d" 'windmove-right)
+  (ergoemacs-key "C-M-s" 'windmove-down)
+  (ergoemacs-key "C-M-a" 'windmove-left)
+  (ergoemacs-key "C-M-w" 'windmove-up)
+  
+  (ergoemacs-key "M-x" '(cabbage-kill-region-or-rm-kill-region-executor kill-region) "M-x")
+  (ergoemacs-key "M-c" '(cabbage-kill-ring-save-or-rm-kill-ring-save-executor kill-ring-save) "Copy")
+  (ergoemacs-key "M-v" 'yank "paste")
+  (ergoemacs-key "M-V" 'yank-pop "paste ↑")
+  (ergoemacs-fixed-key "C-r d" 'kill-rectangle)
+
+  (ergoemacs-fixed-key "C-o" 'find-file "Edit File")
+  (ergoemacs-fixed-key "C-S-n" 'write-file "Save As")
+  (ergoemacs-fixed-key "C-S-a" 'mark-whole-buffer "Select All")
+
+  ;; Help should search more than just commands
+  (ergoemacs-fixed-key "C-h a" 'apropos)
+
+  ;; general
+  (ergoemacs-fixed-key "C-c e" 'eval-and-replace)
+  (ergoemacs-fixed-key "C-x C-m" 'execute-extended-command)
+  (ergoemacs-fixed-key "C-c C-m" 'execute-extended-command)
+  (ergoemacs-key "M-r" 'replace-string "Replace")
+  (ergoemacs-fixed-key "<C-return>" 'cabbage-duplicate-line)
+  (ergoemacs-fixed-key "C-$" 'cabbage-kill-buffer)
+  (ergoemacs-fixed-key "C-c i" 'indent-buffer)
+  (ergoemacs-fixed-key "C-c n" 'cabbage-cleanup-buffer)
+  (ergoemacs-fixed-key "C-x C-b" 'ibuffer)
+
+  (ergoemacs-fixed-key "C-c C-k" 'cabbage-comment-or-uncomment-region-or-line)
+  (ergoemacs-fixed-key "C-c k" 'kill-compilation)
+  (ergoemacs-fixed-key "C-c w" 'remove-trailing-whitespace-mode)
+
+  ;; Use regex searches by default.
+  (ergoemacs-fixed-key "C-f" 'isearch-forward-regexp "→ reg isearch")
+  (ergoemacs-fixed-key "C-*" 'isearch-forward-at-point "→ isearch")
+
+  ;; File finding
+  (ergoemacs-fixed-key "C-x M-f" 'ido-find-file-other-window)
+  
+  
+  (ergoemacs-fixed-key "C-x f" 'recentf-ido-find-file)
+  (ergoemacs-fixed-key "C-c r" 'revert-buffer)
+
+  ;; Need to figure out if any of these are missing...
+  ;; (define-key isearch-mode-map "M-s" 'move-cursor-next-pane)
+  ;; (define-key isearch-mode-map "M-v" 'isearch-yank-kill)
+  ;; (define-key isearch-mode-map "M-w" 'isearch-query-replace)
+  ;; (define-key isearch-mode-map "M-o" 'isearch-yank-word)
+  ;; (define-key isearch-mode-map "M-l" 'isearch-yank-char)
+  ;; (define-key isearch-mode-map "M-j" 'isearch-delete-char)
+  ;; (define-key isearch-mode-map "M-u" 'isearch-delete-char)
+  ;; (define-key isearch-mode-map "C-f" 'isearch-repeat-forward)
+  
+  ;; TODO: find a suitable binding to use the search ring
+  ;; (define-key isearch-mode-map "C-i" 'isearch-ring-retreat)
+  ;; (define-key isearch-mode-map "C-k" 'isearch-ring-advance)
+
+;;;; Global bindings for cabbage bundles
+
+  ;; rect-mark bundle bindings
+  (ergoemacs-fixed-key "C-x r M-SPC" 'rm-set-mark)
+  
+  
+  (ergoemacs-fixed-key "C-x r M-r" 'cabbage-replace-replace-string)
+  (ergoemacs-fixed-key "C-x r s" 'string-rectangle)
+  (ergoemacs-fixed-key "C-x r <down-mouse-1>" 'rm-mouse-drag-region)
+
+  ;; irc bundle bindings
+  (ergoemacs-fixed-key "C-p i" 'cabbage-erc)
+
+  ;; jabber bundle bindings
+  (ergoemacs-fixed-key "C-p j" 'cabbage-jabber)
+
+  ;; plone bundle bindings
+  (ergoemacs-key "M-T" 'cabbage-plone-find-file-in-package)
+  (ergoemacs-fixed-key "C-c f c" 'cabbage-plone-find-changelog-make-entry)
+  (ergoemacs-fixed-key "C-p b" 'cabbage-plone-ido-find-buildout)
+  (ergoemacs-fixed-key "C-c f r" 'cabbage-plone-reload-code)
+  (ergoemacs-fixed-key "C-c f f" 'cabbage-plone-run)
+  (ergoemacs-fixed-key "C-c f t" 'cabbage-plone-tests)
+  (ergoemacs-fixed-key "C-c f p" 'cabbage-plone--pep8-package)
+  (ergoemacs-fixed-key "C-c f a" 'cabbage-plone-find-adapter-by-name)
+  (ergoemacs-fixed-key "C-c f A" 'cabbage-plone-find-adapter-by-providing-interface)
+  (ergoemacs-fixed-key "C-c f u" 'cabbage-plone-find-utility-by-name)
+  (ergoemacs-fixed-key "C-c f U" 'cabbage-plone-find-utility-by-providing-interface)
+
+  ;; cabbage-developer bundle bindings
+  (ergoemacs-fixed-key "C-c p" 'cabbage-emdeveloper-find-cabbage-config)
+  (ergoemacs-fixed-key "C-p e" 'cabbage-emdeveloper-emacs-persp)
+
+  ;; power-edit bundle bindings
+  (ergoemacs-key "C-M-i" 'move-text-up)
+  (ergoemacs-key "C-M-k" 'move-text-down)
+  (ergoemacs-key "C-M-l"  'textmate-shift-right)
+  (ergoemacs-key "C-M-j" 'textmate-shift-left)
+
+  (ergoemacs-fixed-key "C-c SPC" 'ace-jump-mode)
+  (ergoemacs-fixed-key "M-<up>" 'move-text-up)
+  (ergoemacs-fixed-key "M-<down>" 'move-text-down)
+  (ergoemacs-fixed-key "M-<right>"  'textmate-shift-right)
+  (ergoemacs-fixed-key "M-<left>" 'textmate-shift-left)
+  (ergoemacs-fixed-key "<f5>" 'ns-toggle-fullscreen)
+  (ergoemacs-fixed-key "C-+" 'increase-font-size)
+  (ergoemacs-fixed-key "C--" 'decrease-font-size)
+  (ergoemacs-fixed-key "C-c C-w" 'whitespace-mode)
+
+;; project bundle bindings
+  
+  (ergoemacs-key "M-t" 'textmate-goto-file)
+  (ergoemacs-key "M-w" 'textmate-goto-symbol)
+  (ergoemacs-fixed-key "C-x p" 'cabbage-project-ido-find-project)
+  (ergoemacs-fixed-key "C-S-c C-S-c" 'mc/edit-lines)
+  (ergoemacs-fixed-key "C->" 'mc/mark-next-like-this)
+  (ergoemacs-fixed-key "C-<" 'mc/mark-previous-like-this)
+  (ergoemacs-fixed-key "C-c C-<" 'mc/mark-all-like-this)
+
+;; org bundle bindings
+  (ergoemacs-fixed-key "C-p o" 'cabbage-org-emacs-persp)
+
+;; git bundle bindings
+  (ergoemacs-fixed-key "C-x g" 'magit-status)
+)
 
 (make-obsolete-variable 'ergoemacs-variant 'ergoemacs-theme
                         "ergoemacs-mode 5.8.0.1")
