@@ -92,7 +92,7 @@
     ;; Mark point.
     ("M-SPC" set-mark-command "Set Mark")
     
-    ("M-a" execute-extended-command "M-x")
+    ("M-a" (helm-M-x smex execute-extended-command) "M-x")
     ("M-A" shell-command "shell cmd")
     
     ;; WINDOW SPLITING
@@ -123,7 +123,7 @@
     ("<apps> 3" delete-other-windows "x other pane")
     ("<apps> 4" split-window-vertically "split —")
     ("<apps> 5" query-replace "rep")
-    ("<apps> <return>" ergoemacs-smex-if-exists "M-x")
+    ("<apps> <return>" (helm-M-x smex execute-extended-command) "M-x")
     ("<apps> SPC" set-mark-command "Set Mark")
     ("<apps> a" mark-whole-buffer "Sel All")
     ("<apps> f" ergoemacs-ctl-x-ctl-to-alt "Ctl-x")
@@ -168,7 +168,9 @@
   :type '(repeat
           (list :tag "Keys"
                 (string :tag "QWERTY Kbd Code")
-                (symbol :tag "Function/Keymap")
+                (choice
+                 (symbol :tag "Function/Keymap")
+                 (sexp :tag "List of functions/keymaps"))
                 (choice (const :tag "No Label" nil)
                         (string :tag "Label"))
                 (boolean :tag "Translate Only first key?")))
@@ -276,7 +278,9 @@
           (list :tag "Fixed Key"
                 (choice (string :tag "Kbd code")
                         (sexp :tag "Key"))
-                (symbol :tag "Function/Keymap")
+                (choice
+                 (symbol :tag "Function/Keymap")
+                 (sexp :tag "List of functions/keymaps"))
                 (choice (const :tag "No Label" nil)
                         (string :tag "Label"))))
   :set 'ergoemacs-set-default
@@ -807,7 +811,10 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                  (list :tag "Keys"
                        (choice (string :tag "QWERTY Kbd Code")
                                (sexp :tag "Key"))
-                       (symbol :tag "Function")
+                       (choice
+                        (symbol :tag "Function/Keymap")
+                        (sexp :tag "List of functions/keymaps"))
+                       
                        (choice (const :tag "No Label" nil)
                                (string :tag "Label"))
                        (boolean :tag "Translate Only first key?")))
@@ -821,7 +828,9 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                  (list :tag "Keys"
                        (choice (string :tag "QWERTY Kbd Code")
                                (sexp :tag "Key"))
-                       (symbol :tag "Function")
+                       (choice
+                        (symbol :tag "Function/Keymap")
+                        (sexp :tag "List of functions/keymaps"))
                        (choice (const :tag "No Label" nil)
                                (string :tag "Label"))))
          :set 'ergoemacs-set-default

@@ -612,7 +612,10 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
   "Set up backward-compatible variables"
   (mapc
    (lambda(var)
-     (eval `(setq ,(intern (concat "ergoemacs-" (symbol-name (nth 1 var)) "-key")) (ergoemacs-kbd (nth 0 var)))))
+     (condition-case err
+         (eval `(setq ,(intern (concat "ergoemacs-" (symbol-name (nth 1 var)) "-key")) (ergoemacs-kbd (nth 0 var))))
+       (error (when ergoemacs-debug
+                (message "Ignored backward compatability for %s" (nth 1 var))))))
    (symbol-value (ergoemacs-get-variable-layout)))
   (mapc
    (lambda(var)
@@ -674,13 +677,37 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                           (encode-coding-string 
                            trans-key
                            locale-coding-system)))))
-            (if (condition-case err
-                    (keymapp (symbol-value cmd))
-                  (error nil))
-                (define-key ,keymap key (symbol-value cmd))
-              (define-key ,keymap key cmd))
-            (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
-                (message "Fixed: %s -> %s %s" trans-key cmd key)))))
+            (if (eq 'cons (type-of cmd))
+                (let (found)
+                  (mapc
+                   (lambda(new-cmd)
+                     (unless found
+                       (if (condition-case err
+                               (fboundp new-cmd)
+                             (error nil))
+                           (progn
+                             (define-key ,keymap key new-cmd)
+                             (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                                 (message "Fixed: %s -> %s %s" trans-key new-cmd key))
+                             (setq found t))
+                         (when (condition-case err
+                                   (keymapp (symbol-value new-cmd))
+                                 (error nil))
+                           (define-key ,keymap key (symbol-value new-cmd))
+                           (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                               (message "Fixed: %s -> %s %s" trans-key new-cmd key))
+                           (setq found t)))))
+                   cmd))
+              (if (condition-case err
+                      (keymapp (symbol-value cmd))
+                    (error nil))
+                  (define-key ,keymap key (symbol-value cmd))
+                (if (condition-case err
+                        (fboundp cmd)
+                      (error nil))
+                    (define-key ,keymap key cmd)))
+              (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                  (message "Fixed: %s -> %s %s" trans-key cmd key))))))
        (symbol-value (ergoemacs-get-fixed-layout)))
      
      ;; Variable Layout Keys
@@ -699,6 +726,37 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
             (if (and ergoemacs-fix-M-O (string= (ergoemacs-kbd trans-key t t) "M-O"))
                 (progn
                   (define-key ,keymap key  'ergoemacs-M-O)
+                  (if (eq 'cons (type-of cmd))
+                      (let (found)
+                        (mapc
+                         (lambda(new-cmd)
+                           (unless found
+                             (if (condition-case err
+                                     (fboundp new-cmd)
+                                   (error nil))
+                                 (progn
+                                   (define-key ergoemacs-M-O-keymap [timeout] new-cmd)
+                                   (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                                       (message "Variable (M-O): %s -> %s %s" trans-key new-cmd key))
+                                   (setq found t))
+                               (when (condition-case err
+                                         (keymapp (symbol-value new-cmd))
+                                       (error nil))
+                                 (define-key ergoemacs-M-O-keymap [timeout] (symbol-value new-cmd))
+                                 (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                                     (message "Variable (M-O): %s -> %s %s" trans-key new-cmd key))
+                                 (setq found t)))))
+                         cmd))
+                    (if (condition-case err
+                            (keymapp (symbol-value cmd))
+                          (error nil))
+                        (define-key ergoemacs-M-O-keymap [timeout] (symbol-value cmd))
+                      (if (condition-case err
+                              (fboundp cmd)
+                            (error nil))
+                          (define-key ergoemacs-M-O-keymap [timeout] cmd)))
+                    (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                        (message "Variable (M-O): %s -> %s %s" trans-key cmd key)))
                   (if (condition-case err
                           (keymapp (symbol-value cmd))
                         (error nil))
@@ -710,6 +768,37 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                        (string= (ergoemacs-kbd trans-key t t) "M-o"))
                   (progn
                     (define-key ,keymap key  'ergoemacs-M-o)
+                    (if (eq 'cons (type-of cmd))
+                        (let (found)
+                          (mapc
+                           (lambda(new-cmd)
+                             (unless found
+                               (if (condition-case err
+                                       (fboundp new-cmd)
+                                     (error nil))
+                                   (progn
+                                     (define-key ergoemacs-M-o-keymap [timeout] new-cmd)
+                                     (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                                         (message "Variable (M-o): %s -> %s %s" trans-key new-cmd key))
+                                     (setq found t))
+                                 (when (condition-case err
+                                           (keymapp (symbol-value new-cmd))
+                                         (error nil))
+                                   (define-key ergoemacs-M-o-keymap [timeout] (symbol-value new-cmd))
+                                   (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                                       (message "Variable (M-o): %s -> %s %s" trans-key new-cmd key))
+                                   (setq found t)))))
+                           cmd))
+                      (if (condition-case err
+                              (keymapp (symbol-value cmd))
+                            (error nil))
+                          (define-key ergoemacs-M-o-keymap [timeout] (symbol-value cmd))
+                        (if (condition-case err
+                                (fboundp cmd)
+                              (error nil))
+                            (define-key ergoemacs-M-o-keymap [timeout] cmd)))
+                      (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                          (message "Variable (M-o): %s -> %s %s" trans-key cmd key)))
                     (if (condition-case err
                             (keymapp (symbol-value cmd))
                           (error nil))
@@ -736,11 +825,37 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                                    (not (lookup-key (current-global-map) (read-kbd-macro "<apps>"))))
                         (setq cmd nil)))))
                 (when cmd
-                  (if (condition-case err
-                          (keymapp (symbol-value cmd))
-                        (error nil))
-                      (define-key ,keymap  key (symbol-value cmd))
-                    (define-key ,keymap  key cmd))
+                  (if (eq 'cons (type-of cmd))
+                      (let (found)
+                        (mapc
+                         (lambda(new-cmd)
+                           (unless found
+                             (if (condition-case err
+                                     (fboundp new-cmd)
+                                   (error nil))
+                                 (progn
+                                   (define-key ,keymap key new-cmd)
+                                   (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                                       (message "Variable (M-o): %s -> %s %s" trans-key new-cmd key))
+                                   (setq found t))
+                               (when (condition-case err
+                                         (keymapp (symbol-value new-cmd))
+                                       (error nil))
+                                 (define-key ,keymap key (symbol-value new-cmd))
+                                 (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                                     (message "Variable (M-o): %s -> %s %s" trans-key new-cmd key))
+                                 (setq found t)))))
+                         cmd))
+                    (if (condition-case err
+                            (keymapp (symbol-value cmd))
+                          (error nil))
+                        (define-key ,keymap key (symbol-value cmd))
+                      (if (condition-case err
+                              (fboundp cmd)
+                            (error nil))
+                          (define-key ,keymap key cmd)))
+                    (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
+                        (message "Variable (M-o): %s -> %s %s" trans-key cmd key)))
                   (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
                       (message "Variable: %s (%s) -> %s %s" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key))))))))
       (symbol-value (ergoemacs-get-variable-layout)))

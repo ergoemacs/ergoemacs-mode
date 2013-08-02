@@ -36,12 +36,6 @@
     (setq full-exe (expand-file-name emacs-exe emacs-dir))
     (symbol-value 'full-exe)))
 
-(defun ergoemacs-smex-if-exists (&optional prefix-arg)
-  (interactive "p")
-  (if (fboundp 'smex)
-      (smex)
-    (execute-extended-command prefix-arg)))
-
 (defun ergoemacs-cheat-sheet-file ()
   "Cheet sheet file for ergoemacs"
   (let ((var-dir "") extra-dir)
