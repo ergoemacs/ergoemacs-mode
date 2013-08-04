@@ -74,6 +74,12 @@
       (ido-next-match-dir)
     (next-history-element 1)))
 
+(defun ergoemacs-next-line ()
+  "Inserts an indented newline after the current line and moves the point to it."
+  (interactive "P")
+  (end-of-line)
+  (newline-and-indent))
+
 (defun ergoemacs-print-buffer-confirm ()
   "Print current buffer, but ask for confirmation first."
   (interactive)

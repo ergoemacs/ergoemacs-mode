@@ -169,6 +169,7 @@
           (list :tag "Keys"
                 (string :tag "QWERTY Kbd Code")
                 (choice
+                 (string :tag "Kbd Code")
                  (symbol :tag "Function/Keymap")
                  (sexp :tag "List of functions/keymaps"))
                 (choice (const :tag "No Label" nil)
@@ -279,6 +280,7 @@
                 (choice (string :tag "Kbd code")
                         (sexp :tag "Key"))
                 (choice
+                 (string :tag "Kbd Code")
                  (symbol :tag "Function/Keymap")
                  (sexp :tag "List of functions/keymaps"))
                 (choice (const :tag "No Label" nil)
@@ -812,6 +814,7 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                        (choice (string :tag "QWERTY Kbd Code")
                                (sexp :tag "Key"))
                        (choice
+                        (string :tag "Kbd Code")
                         (symbol :tag "Function/Keymap")
                         (sexp :tag "List of functions/keymaps"))
                        
@@ -829,6 +832,7 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                        (choice (string :tag "QWERTY Kbd Code")
                                (sexp :tag "Key"))
                        (choice
+                        (string :tag "Kbd Code")
                         (symbol :tag "Function/Keymap")
                         (sexp :tag "List of functions/keymaps"))
                        (choice (const :tag "No Label" nil)
@@ -1064,44 +1068,44 @@ Some exceptions we don't want to unset.
 
   (ergoemacs-key "M-h" 'beginning-of-buffer "↑ buffer")
   (ergoemacs-key "M-H" 'end-of-buffer "↓ buffer")
-  (ergoemacs-key "M-RET" 'cabbage-next-line "Next Line")
+  (ergoemacs-key "M-RET" '(cabbage-next-line ergoemacs-next-line) "Next Line")
 
   (ergoemacs-key "M-1" 'cabbage-enlargement-enlarge)
   (ergoemacs-key "M-C-1" 'cabbage-enlargement-restore)
   (ergoemacs-key "M-0" 'delete-window)
   (ergoemacs-key "M-2" 'split-window-vertically "split |")
   (ergoemacs-key "M-3" 'split-window-horizontally "split -")
-  (ergoemacs-key "M-4" 'balance-windows)
-  (ergoemacs-key "M-5" 'delete-other-windows)
-  (ergoemacs-key "M-+" 'balance-windows)
+  (ergoemacs-key "M-4" 'balance-windows "balance")
+  (ergoemacs-key "M-5" 'delete-other-windows "x other")
+  (ergoemacs-key "M-+" 'balance-windows "balance")
 
-  (ergoemacs-key "M-a" '(smex execute-extended-command))
-  (ergoemacs-key "M-q" 'shell-command)
+  (ergoemacs-key "M-a" '(smex execute-extended-command) "M-x")
+  (ergoemacs-key "M-q" 'shell-command "shell cmd")
   (ergoemacs-key "M-e" 'cabbage-testing-execute-test)
   
-  (ergoemacs-fixed-key "C-d" 'windmove-right)
-  (ergoemacs-fixed-key "C-s" 'windmove-down)
-  (ergoemacs-fixed-key "C-a" 'windmove-left)
-  (ergoemacs-fixed-key "C-w" 'windmove-up)
+  (ergoemacs-fixed-key "C-d" 'windmove-right "→pane")
+  (ergoemacs-fixed-key "C-s" 'windmove-down "↓pane")
+  (ergoemacs-fixed-key "C-a" 'windmove-left "←pane")
+  (ergoemacs-fixed-key "C-w" 'windmove-up "↑pane")
 
   ;; Allow semi-ergonomic locations
-  (ergoemacs-key "C-M-d" 'windmove-right)
-  (ergoemacs-key "C-M-s" 'windmove-down)
-  (ergoemacs-key "C-M-a" 'windmove-left)
-  (ergoemacs-key "C-M-w" 'windmove-up)
+  (ergoemacs-key "C-M-d" 'windmove-right "→pane")
+  (ergoemacs-key "C-M-s" 'windmove-down "↓pane")
+  (ergoemacs-key "C-M-a" 'windmove-left "←pane")
+  (ergoemacs-key "C-M-w" 'windmove-up "↑pane")
   
   (ergoemacs-key "M-x" '(cabbage-kill-region-or-rm-kill-region-executor kill-region) "M-x")
   (ergoemacs-key "M-c" '(cabbage-kill-ring-save-or-rm-kill-ring-save-executor kill-ring-save) "Copy")
   (ergoemacs-key "M-v" 'yank "paste")
   (ergoemacs-key "M-V" 'yank-pop "paste ↑")
-  (ergoemacs-fixed-key "C-r d" 'kill-rectangle)
+  (ergoemacs-fixed-key "C-r d" 'kill-rectangle "Cut rect")
 
   (ergoemacs-fixed-key "C-o" 'find-file "Edit File")
   (ergoemacs-fixed-key "C-S-n" 'write-file "Save As")
   (ergoemacs-fixed-key "C-S-a" 'mark-whole-buffer "Select All")
 
   ;; Help should search more than just commands
-  (ergoemacs-fixed-key "C-h a" 'apropos)
+  (ergoemacs-fixed-key "C-h a" 'apropos "Apropos")
 
   ;; general
   (ergoemacs-fixed-key "C-c e" 'eval-and-replace)
@@ -1114,7 +1118,7 @@ Some exceptions we don't want to unset.
   (ergoemacs-fixed-key "C-c n" 'cabbage-cleanup-buffer)
   (ergoemacs-fixed-key "C-x C-b" 'ibuffer)
 
-  (ergoemacs-fixed-key "C-c C-k" 'cabbage-comment-or-uncomment-region-or-line)
+  (ergoemacs-fixed-key "C-c C-k" '(cabbage-comment-or-uncomment-region-or-line comment-dwim))
   (ergoemacs-fixed-key "C-c k" 'kill-compilation)
   (ergoemacs-fixed-key "C-c w" 'remove-trailing-whitespace-mode)
 
