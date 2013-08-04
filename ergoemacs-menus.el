@@ -138,6 +138,32 @@
 
 (defvar ergoemacs-menu-bar-file-menu nil)
 
+
+(defun ergoemacs-get-major-modes ()
+  "Gets a list of language modes known to `ergoemacs-mode'.
+This gets all major modes known from the variables:
+-  `interpreter-mode-alist';
+-  `magic-mode-alist'
+-  `magic-fallback-mode-alist'
+-  `auto-mode-alist'
+
+All other modes are assumed to be minor modes or unimportant. 
+"
+  ;; Get known major modes
+  (let ((ret '()))
+    (mapc
+     (lambda(elt)
+       (when (and (functionp (cdr elt))
+                  (string-match "-mode$" (symbol-name (cdr elt))))
+         (add-to-list 'ret (cdr elt))))
+     (append
+      interpreter-mode-alist
+      magic-mode-alist
+      magic-fallback-mode-alist
+      auto-mode-alist))
+    
+    (symbol-value 'ret)))
+
 ;;; `File' menu
 (defun ergoemacs-menu-bar-file-menu ()
   "Creates Ergoemacs File Menu"
