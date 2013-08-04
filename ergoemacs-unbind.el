@@ -863,26 +863,28 @@ disabled at `ergoemacs-restore-global-keys'."
 (require 'faces)
 (defun ergoemacs-display-char-p (char)
   "Determines if CHAR can be displayed."
-  (let* (ret
-         (buf (current-buffer))
-         (face (font-xlfd-name (face-attribute 'default :font)))
-         (found (assoc (list face char window-system) ergoemacs-display-char-list)))
-    (if found
-        (nth 0 (cdr found))
-      (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
-      (delete-region (point-min) (point-max))
-      (insert char)
-      (let ((display (describe-char-display (point-min) (char-after (point-min)))))
-        (if (display-graphic-p (selected-frame))
-            (if display
-                (setq ret t))
-          (if display
-              (setq ret t))))
-      (switch-to-buffer buf)
-      ;; Save it so the user doesn't see the buffer popup very much
-      ;; (if at all).
-      (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
-      (symbol-value 'ret))))
+  (condition-case err
+      (let* (ret
+             (buf (current-buffer))
+             (face (font-xlfd-name (face-attribute 'default :font)))
+             (found (assoc (list face char window-system) ergoemacs-display-char-list)))
+        (if found
+            (nth 0 (cdr found))
+          (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
+          (delete-region (point-min) (point-max))
+          (insert char)
+          (let ((display (describe-char-display (point-min) (char-after (point-min)))))
+            (if (display-graphic-p (selected-frame))
+                (if display
+                    (setq ret t))
+              (if display
+                  (setq ret t))))
+          (switch-to-buffer buf)
+          ;; Save it so the user doesn't see the buffer popup very much
+          ;; (if at all).
+          (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
+          (symbol-value 'ret)))
+    (error nil)))
 
 (defun ergoemacs-unicode-char (char alt-char)
   "Uses CHAR if it can be displayed, otherwise use ALT-CHAR."
@@ -958,18 +960,19 @@ disabled at `ergoemacs-restore-global-keys'."
     (symbol-value 'ret)))
 
 (defun ergoemacs-pretty-key-rep-internal ()
-  (goto-char (point-min))
-  (while (re-search-forward "\\(\\(?:[CAMHS]-\\)+\\(?:RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|.\\)\\|<[^>]*?>\\|RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\)\\( +\\|[':,.]\\)" nil t)
-    (unless (or (save-match-data (string-match "remap" (match-string 1)))
-                (save-match-data (string-match "\\(\\[\\]\\|【】\\)" (ergoemacs-pretty-key (match-string 1)))))
-      (replace-match (concat (ergoemacs-pretty-key (match-string 1))
-                             (match-string 2)) t t)
-      (while (re-search-forward "\\=\\(RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|[^\n ]\\)\\( +\\|[':,.]\\)" nil t)
+  (let (case-fold-search)
+    (goto-char (point-min))
+    (while (re-search-forward "\\(\\(?:[CAMHS]-\\)+\\(?:RET\\|Return\\|TAB\\|prior\\|next\\|SPC\\|ESC\\|.\\)\\|<[^>]*?>\\|\\<RET\\>\\|\\<TAB\\>\\|\\<prior\\>\\|\\<next\\>\\|\\<SPC\\>\\|\\<ESC\\>\\)\\( +\\|[':,.]\\)" nil t)
+      (unless (or (save-match-data (string-match "remap" (match-string 1)))
+                  (save-match-data (string-match "\\(\\[\\]\\|【】\\)" (ergoemacs-pretty-key (match-string 1)))))
         (replace-match (concat (ergoemacs-pretty-key (match-string 1))
-                               (match-string 2)) t t))))
-  (goto-char (point-min))
-  (while (re-search-forward "】 【" nil t)
-    (replace-match"】【")))
+                               (match-string 2)) t t)
+        (while (re-search-forward "\\=\\(\\<RET\\>\\|\\<Return\\>\\|\\<TAB\\>\\|\\<prior\\>\\|\\<next\\>\\|\\<SPC\\>\\|\\<ESC\\>\\|[^\n ]\\)\\( +\\|[':,.]\\)" nil t)
+          (replace-match (concat (ergoemacs-pretty-key (match-string 1))
+                                 (match-string 2)) t t))))
+    (goto-char (point-min))
+    (while (re-search-forward "】 【" nil t)
+      (replace-match"】【"))))
 
 (defun ergoemacs-pretty-key-rep (&optional code)
   "Finds keyboard binding codes such as C-x and replaces them with `ergoemacs-pretty-key' encoding."
