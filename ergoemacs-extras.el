@@ -1,4 +1,8 @@
 ;;; ergoemacs-extras.el --- Generate Ergoemacs Extras  -*- coding: utf-8 -*-
+
+;;; Commentary:
+;; 
+
 ;;; Code:
 
 
@@ -148,7 +152,7 @@
           (goto-char (point-min))
           (while (re-search-forward "S-" nil t)
             (replace-match "<kbd>⇧Shift</kbd>+" t))
-          (goto-char (point-min)) 
+          (goto-char (point-min))
           (while (re-search-forward "C-" nil t)
             (replace-match "<kbd>Ctrl</kbd>+" t t))
           (goto-char (point-min))
@@ -800,7 +804,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
         (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode %s/ergoemacs-extras --eval \"(ergoemacs-gen-ahk)\" &"
                                (ergoemacs-emacs-exe)
                                ergoemacs-dir ergoemacs-dir)))
-    (let ((xtra (or extra "ahk")) 
+    (let ((xtra (or extra "ahk"))
           not-first
           (extra-dir)
           file-temp)
@@ -866,7 +870,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
           (cmd-n 0)
           (i 0)
           i2
-          cmd-freq-ergo 
+          cmd-freq-ergo
           tmp
           (select "")
           (html-table '())
@@ -992,7 +996,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                        (setq ret t)
                        (goto-char (point-min))
                        (add-to-list 'html-table
-                             `(,(nth 2 tmp) ,(format "<tr><td style=\"background-color: %s\">%s</td><td style=\"background-color: %s\"><input type=\"text\" value=\"%s\"></td><td style=\"background-color: %s\">%s</td></tr>" 
+                             `(,(nth 2 tmp) ,(format "<tr><td style=\"background-color: %s\">%s</td><td style=\"background-color: %s\"><input type=\"text\" value=\"%s\"></td><td style=\"background-color: %s\">%s</td></tr>"
                                      (nth 6 tmp) (nth 2 tmp)
                                      (nth 6 tmp) (nth 1 tmp)
                                      (nth 6 tmp) (nth 4 tmp))))
@@ -1090,7 +1094,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                      (setq num (+ num (cdr a)))
                      (add-to-list 'cmds (car a))))
                  ;; Also lookup based on any compatibility fixes with
-                 ;; made by ergoemacs. 
+                 ;; made by ergoemacs.
                  (mapc
                   (lambda(minor-list)
                     (mapc
@@ -1130,7 +1134,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
               (append cmd-freq-ergo
                       (mapcar
                        (lambda(x)
-                         (funcall calc-ergo x)) 
+                         (funcall calc-ergo x))
                        (append
                         (symbol-value (ergoemacs-get-variable-layout))))))
         
@@ -1484,7 +1488,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
            (progn
              (ergoemacs-gen-svg x)
              (ergoemacs-set-default 'ergoemacs-theme nil)
-             (ergoemacs-gen-svg x "kbd-ergo.svg" "ergo-layouts")) 
+             (ergoemacs-gen-svg x "kbd-ergo.svg" "ergo-layouts"))
          (error (message "Error generating base SVG for %s; %s" x err)))
        (mapc
         (lambda(y)

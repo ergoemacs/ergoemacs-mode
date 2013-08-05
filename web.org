@@ -1,8 +1,9 @@
 #+TITLE: ergoemacs-mode
-#-DESCRIPTION: A ergonomic keybinding for emacs
+#-DESCRIPTION: An ergonomic keybinding for emacs
 #+DATE: 2013-02-08 19:33:26
 
 #+STARTUP: logdone
+#+LANGUAGE:  en
 #+TEMPLATE_DIR: ./o-blog-template
 #+URL: http://ergoemacs.github.com/ergoemacs-mode/
 #+DEFAULT_CATEGORY: Tips
