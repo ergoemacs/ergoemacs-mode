@@ -1356,7 +1356,7 @@ within a second (hold the key and let the command repeat).  This
 includes moving cursor, paging, switching tab/window.
 
 Key chord should use no more than one modifier. This saves your
-hand. So, key chord such as emacs interactive replace 【Alt+⇧ Shift+%】
+hand. So, key chord such as emacs interactive replace 【Alt+⇧ Shift+5】
 or Mac's redo 【⌘ Cmd+⇧ Shift+z】 should not be allowed.
 
 more detail at Keyboard Shortcut Design: Repeatable vs Non-Repeatable
