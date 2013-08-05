@@ -1359,14 +1359,12 @@ Key chord should use no more than one modifier. This saves your
 hand. So, key chord such as emacs interactive replace 【Alt+⇧ Shift+5】
 or Mac's redo 【⌘ Cmd+⇧ Shift+z】 should not be allowed.
 
-more detail at Keyboard Shortcut Design: Repeatable vs Non-Repeatable
-Commands and Keys
-
-If you survey commands in a editor, such as emacs, vast majority of
+# FIXME: 【Ctrl+‹letter/digit›】 is displayed incorrect on web page
+If you survey commands in an editor, such as emacs, vast majority of
 commands are the non-repeating type. The repeating type are probably
 less than 5% of commands. Using 【Ctrl+‹letter/digit›】 key give you
 about 36 spots. Adding Alt, you have 72 spots. And that's more than
-enough for repeating commands. In practice, i estimate a programer
+enough for repeating commands. In practice, I estimate a programer
 uses less than 30 repeating commands per day on average.
 **** What About Sticky Keys?
 I do not advocate the Sticky Keys feature for the handicapped. It's
@@ -1382,7 +1380,7 @@ system: Repeatable vs Non-Repeatable Commands and Keys. This
 applicable in designing keybinding for emacs, vi, 3D modeling app, or
 any app that has hundreds commands that needs to map to keys.
 **** Repeatable and Non-Repeatable Commands
-In my keyboarding research, there's a important discovery. Commands
+In my keyboarding research, there's an important discovery. Commands
 can be classified into 2 types:
 1. Repeatable commands. Commands that make sense to be repeated within
    a second. i.e. moving cursor by char, word, page. Page up/down. Delete
@@ -1399,6 +1397,7 @@ can be classified into 2 types:
 The Repeatable Commands must have keys that can be held down. Here's
 example of repeatable hotkeys: F8, t, ⇟ Page ▽, ↓, 【Ctrl+t】,
 【Ctrl+Alt+8】, ….
+# FIXME: 【Ctrl+Alt+8】 is displayed incorrect on the web page
 
 Non-repeatable hotkeys are basically keys that involves a sequence:
 【Ctrl+x 2】, 【F8 F9】
@@ -1408,6 +1407,7 @@ repeatable commands be on repeatable keys, else it's a waste. (because
 you only have a few precious easy key spots, yet you have one hundred
 commands in common use.)
 
+# FIXME: 【Ctrl+‹number›】 and 【Alt+‹number›】 is displayed incorrect on the web page
 In GNU Emacs's default keybinding, there are many such wastes. For
 example, all 【Ctrl+‹number›】 and 【Alt+‹number›】 are bound to
 digit-argument. The digit-argument is a non-repeat command, yet it
