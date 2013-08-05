@@ -1,4 +1,4 @@
-;;; ergoemacs-track.el --- Minor mode to track layout-based distances typed.  -*- lexical-binding:t -*-
+;;; ergoemacs-track.el --- Minor mode to track layout-based distances typed. 
 ;; 
 ;; Filename: ergoemacs-track.el
 ;; Description:

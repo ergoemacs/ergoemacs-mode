@@ -1,4 +1,4 @@
-;;; ergoemacs-advices.el --- ergoemacs advices  -*- lexical-binding:t -*-
+;;; ergoemacs-advices.el --- ergoemacs advices 
 ;; 
 ;; Filename: ergoemacs-advices.el
 ;; Description:

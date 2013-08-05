@@ -1,4 +1,4 @@
-;;; ergoemacs-test.el --- Test Ergoemacs Issues  -*- lexical-binding:t -*-
+;;; ergoemacs-test.el --- Test Ergoemacs Issues  
 ;; 
 ;; Filename: ergoemacs-test.el
 ;; Description:

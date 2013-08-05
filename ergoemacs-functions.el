@@ -1,4 +1,4 @@
-;;; ergoemacs-functions.el --- Functions for use in ergoemacs  -*- lexical-binding:t -*-
+;;; ergoemacs-functions.el --- Functions for use in ergoemacs  
 
 ;;; Commentary:
 ;; 

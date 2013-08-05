@@ -1,5 +1,4 @@
-;;; ergoemacs-themes.el ---  Ergoemacs keybindings and themes  -*- lexical-binding:t -*-
-
+;;; ergoemacs-themes.el ---  Ergoemacs keybindings and themes
 ;;; Commentary:
 ;; 
 

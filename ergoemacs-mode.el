@@ -1,4 +1,4 @@
-;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics  -*- lexical-binding:t -*-
+;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics
 
 ;; Copyright © 2007, 2008, 2009 by Xah Lee
 ;; Copyright © 2009, 2010 by David Capello
