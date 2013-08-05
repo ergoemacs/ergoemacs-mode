@@ -1730,8 +1730,8 @@ then ergoemacs-mode will respect the Alt+a backward character
 assignment.  
 
 This behavior allows ergoemacs keybindings to override the keys in an
-emacs configuration like prelude, emacs-live, etc.  If you do not this
-behavior can be turned off by:
+emacs configuration like prelude, emacs-live, etc.  If you do not like
+this behavior, you can turn it off by:
 
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "M-a") 'backward-char)
