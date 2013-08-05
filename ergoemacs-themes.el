@@ -1,4 +1,8 @@
-;;; ergoemacs-themes.el ---  Ergoemacs keybindings and themes -*- coding: utf-8 -*-
+;;; ergoemacs-themes.el ---  Ergoemacs keybindings and themes  -*- lexical-binding:t -*-
+
+;;; Commentary:
+;; 
+
 ;;; Code:
 ;; Ergoemacs keys
 
@@ -435,7 +439,7 @@
     (auto-complete-mode-hook
      ((isearch-forward ac-isearch ac-completing-map)
       ("C-s" nil ac-completing-map))))
-  "Key bindings that are applied as hooks to specific modes"
+  "Key bindings that are applied as hooks to specific modes."
   :type '(repeat
           (list :tag "Keys for a particular minor/major mode"
                 (symbol :tag "Hook for mode")
@@ -765,6 +769,7 @@ format:
                              key-def))
                          (nth 1 mode-list)))
               (unless found
+		;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
                 (add-to-list 'lst list))
               `(,(nth 0 mode-list) ,lst))))
         (symbol-value (ergoemacs-get-minor-mode-layout)))))
@@ -791,7 +796,7 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                                             `(symbol-value (or (intern-soft ,(format "ergoemacs-fixed-layout-%s" based-on)) 'ergoemacs-fixed-layout))
                                           'ergoemacs-fixed-layout))
            (ergoemacs-variable-layout-tmp ,(if based-on
-                                               `(symbol-value (or (intern-soft ,(format "ergoemacs-variable-layout-%s" based-on)) 'ergoemacs-variable-layout)) 
+                                               `(symbol-value (or (intern-soft ,(format "ergoemacs-variable-layout-%s" based-on)) 'ergoemacs-variable-layout))
                                              'ergoemacs-variable-layout))
            (ergoemacs-minor-mode-layout-tmp ,(if based-on
                                                  `(symbol-value (or (intern-soft ,(format "ergoemacs-minor-mode-layout-%s" based-on)) 'ergoemacs-minor-mode-layout))
@@ -946,9 +951,9 @@ Some exceptions we don't want to unset.
                                        "<C-delete>"
                                        "<M-delete>"
                                        "<next>"
-                                       "<C-next>" 
+                                       "<C-next>"
                                        "<prior>"
-                                       "<C-prior>" 
+                                       "<C-prior>"
                                        "<home>"
                                        "<C-home>"
                                        "<end>"
@@ -1219,3 +1224,6 @@ Some exceptions we don't want to unset.
 (provide 'ergoemacs-themes)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-themes.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

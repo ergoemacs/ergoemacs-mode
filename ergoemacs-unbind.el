@@ -1,4 +1,4 @@
-;;-*- coding: utf-8 -*-
+;;  -*- lexical-binding:t -*-
 
 ;; this file define keys that we want to set/unset because they are already defined by ergoemacs minor mode
 
@@ -643,6 +643,7 @@
              (setq fn (lookup-key global-map (read-kbd-macro first)))
              (if (not (functionp fn))
                  elt
+	       ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
                (add-to-list 'last fn)
                `(,first ,last))))
          ergoemacs-emacs-default-bindings)))
@@ -1042,3 +1043,6 @@ disabled at `ergoemacs-restore-global-keys'."
 (provide 'ergoemacs-unbind)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-unbind.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

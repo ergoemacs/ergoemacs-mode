@@ -1,18 +1,18 @@
-;;; ergoemacs-advices.el --- ergoemacs advices
+;;; ergoemacs-advices.el --- ergoemacs advices  -*- lexical-binding:t -*-
 ;; 
 ;; Filename: ergoemacs-advices.el
-;; Description: 
+;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer:
 ;; Created: Thu Jul 25 09:33:22 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By: 
+;; Version:
+;; Last-Updated:
+;;           By:
 ;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
+;; URL:
+;; Doc URL:
+;; Keywords:
+;; Compatibility:
 ;; 
 ;; Features that might be required by this library:
 ;;
@@ -20,7 +20,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
-;;; Commentary: 
+;;; Commentary:
 ;; 
 ;; 
 ;; 
@@ -50,7 +50,7 @@
 ;; 
 ;;; Code:
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def))
-  "This does the right thing when modifying `ergoemacs-keymap'"
+  "This does the right thing when modifying `ergoemacs-keymap'."
   (if (and (equal keymap 'ergoemacs-keymap)
            (or (not (boundp 'no-ergoemacs-advice))
                (and (boundp 'no-ergoemacs-advice) (not no-ergoemacs-advice))))
@@ -95,7 +95,7 @@
 
 
 (defadvice cua--pre-command-handler (around ergoemacs-fix-shifted-commands activate)
-  "Fixes shifted movement problems"
+  "Fixes shifted movement problems."
   (let ((do-it t)
         (case-fold-search nil)
         (send-timeout nil))
@@ -107,7 +107,7 @@
                          (memq this-command ergoemacs-movement-functions)))
             (setq do-it nil))
           ;; Fix Issue 139.  However may introduce an issue when you
-          ;; want to issue C-c commands quickly... 
+          ;; want to issue C-c commands quickly...
           (when (and mark-active (string-match "^C-\\(c\\|x\\)" (key-description (this-single-command-keys))))
             (setq do-it t)
             (setq send-timeout t)))
@@ -124,7 +124,7 @@
 
 
 (defadvice global-set-key (around ergoemacs-global-set-key-advice (key command))
-  "This let you use global-set-key as usual when ergoemacs-mode is enabled."
+  "This let you use `global-set-key' as usual when `ergoemacs-mode' is enabled."
   ad-do-it
   (add-to-list 'ergoemacs-do-not-restore-list (key-description key))
   (add-to-list 'ergoemacs-global-changed-cache (key-description key))
@@ -151,7 +151,7 @@
 (add-to-list 'ergoemacs-advices 'ergoemacs-global-set-key-advice)
 
 (defadvice global-unset-key (around ergoemacs-global-unset-key-advice (key))
-  "This let you use global-unset-key as usual when ergoemacs-mode is enabled."
+  "This let you use `global-unset-key' as usual when `ergoemacs-mode' is enabled."
   ;; the global-unset-key will remove the key from ergoemacs as well.
   ad-do-it
   (add-to-list 'ergoemacs-do-not-restore-list (key-description key))
@@ -164,7 +164,7 @@
 (add-to-list 'ergoemacs-advices 'ergoemacs-global-unset-key-advice)
 
 (defadvice local-set-key (around ergoemacs-local-set-key-advice (key command))
-  "This let you use local-set-key as usual when ergoemacs-mode is enabled."
+  "This let you use `local-set-key' as usual when `ergoemacs-mode' is enabled."
   (if (fboundp 'ergoemacs-mode)
       (ergoemacs-local-set-key key command)
     ad-do-it))
@@ -172,7 +172,7 @@
 (add-to-list 'ergoemacs-advices 'ergoemacs-local-set-key-advice)
 
 (defadvice local-unset-key (around ergoemacs-local-unset-key-advice (key))
-  "This let you use local-unset-key as usual when ergoemacs-mode is enabled."
+  "This let you use `local-unset-key' as usual when `ergoemacs-mode' is enabled."
   (if (fboundp 'ergoemacs-mode)
       (ergoemacs-local-unset-key key)
     ad-do-it))
@@ -197,3 +197,6 @@
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

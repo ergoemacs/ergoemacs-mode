@@ -1,4 +1,8 @@
-;;; ergoemacs-layouts.el --- Keyboard Layouts for use in ergoemacs -*- coding: utf-8 -*-
+;;; ergoemacs-layouts.el --- Keyboard Layouts for use in ergoemacs   -*- lexical-binding:t -*-
+
+;;; Commentary:
+;; 
+
 ;;; Code:
 (defvar ergoemacs-layout-sw
   '("" "½" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "+" "’" ""
@@ -10,7 +14,7 @@
     "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "Å" "^" ""
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "Ö" "Ä" "*" ""
     "" ">"  "Z" "X" "C" "V" "B" "N" "M" ";" ":" "_" "" "" "")
-  "Swedish layout")
+  "Swedish layout.")
 
 (defvar ergoemacs-layout-da
   '("" "½" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "+" "’" ""
@@ -22,7 +26,7 @@
     "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "Á" "^" ""
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "Æ" "Ø" "*" ""
     "" ">"  "Z" "X" "C" "V" "B" "N" "M" ";" ":" "_" "" "" "")
-  "Danish layout")
+  "Danish layout.")
 
 (defvar ergoemacs-layout-pt-nativo
   '("" "+" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "º" "<" ""
@@ -34,7 +38,7 @@
     "" ""  "?" ";" ":" "H" "X" "W" "L" "T" "C" "P" "^" "_" ""
     "" ""  "I" "E" "A" "O" "U" "M" "D" "S" "R" "N" "`" "\\" ""
     "" "»"  "Y" "Ç" "J" "B" "K" "Q" "V" "G" "F" "Z" "" "" "")
-  "PT Nativo layout URL `http://xahlee.info/kbd/pt-nativo_keyboard_layout.html'")
+  "PT Nativo layout URL `http://xahlee.info/kbd/pt-nativo_keyboard_layout.html'.")
 
 (defvar ergoemacs-layout-us
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
@@ -46,7 +50,7 @@
     "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "{" "}" "|"
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "\"" "" ""
     "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
-  "US English QWERTY layout")
+  "US English QWERTY layout.")
 
 (defvar ergoemacs-layout-dv
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "[" "]" ""
@@ -58,7 +62,7 @@
     "" ""  "\"" "," "." "P" "Y" "F" "G" "C" "R" "L" "?" "+" "|"
     "" ""  "A" "O" "E" "U" "I" "D" "H" "T" "N" "S" "_" "" ""
     "" ""  ":" "Q" "J" "K" "X" "B" "M" "W" "V" "Z" "" "" "")
-  "US Dvorak layout. URL `http://en.wikipedia.org/wiki/Dvorak_Simplified_Keyboard'")
+  "US Dvorak layout.  URL `http://en.wikipedia.org/wiki/Dvorak_Simplified_Keyboard'.")
 
 (defvaralias 'ergoemacs-layout-us_dvorak 'ergoemacs-layout-dv)
 
@@ -72,7 +76,7 @@
     "" ""  "\"" "<" ">" "P" "Y" "F" "G" "C" "R" "L" "?" "+" "|"
     "" ""  "A" "O" "E" "U" "I" "D" "H" "T" "N" "S" "_" "" ""
     "" ""  ":" "Q" "J" "K" "X" "B" "M" "W" "V" "Z" "" "" "")
-  "US Programmer Dvorak layout")
+  "US Programmer Dvorak layout.")
 
 (defvar ergoemacs-layout-gb-dv
   '("" "`" "[" "7" "5" "3" "1" "9" "0" "2" "4" "6" "8" "]"  ""
@@ -84,7 +88,7 @@
     "" ""  "?" "<" ">" "P" "Y" "F" "G" "C" "R" "L" "@" "+" "|"
     "" ""  "A" "O" "E" "U" "I" "D" "H" "T" "N" "S" "_" "~" ""
     "" "|"  ":" "Q" "J" "K" "X" "B" "M" "W" "V" "Z" "" "" "")
-  "UK Dvorak layout")
+  "UK Dvorak layout.")
 
 (defvar ergoemacs-layout-colemak
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
@@ -96,7 +100,7 @@
     "" ""  "Q" "W" "F" "P" "G" "J" "L" "U" "Y" ":" "{" "}" "|"
     "" ""  "A" "R" "S" "T" "D" "H" "N" "E" "I" "O" "\"" "" ""
     "" ""  "Z" "X" "C" "V" "B" "K" "M" "<" ">" "?" "" "" "")
-  "US Colemak layout URL `http://colemak.com/'")
+  "US Colemak layout URL `http://colemak.com/'.")
 
 (defvar ergoemacs-layout-asset
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
@@ -108,7 +112,7 @@
     "" ""  "Q" "W" "J" "F" "G" "Y" "P" "U" "L" ":" "{" "}" "|"
     "" ""  "A" "S" "E" "T" "D" "H" "N" "I" "O" "R" "\"" "" ""
     "" ""  "Z" "X" "C" "V" "B" "K" "M" "<" ">" "?" "" "" "")
-  "US Asset layout. URL `http://millikeys.sourceforge.net/asset/'")
+  "US Asset layout.  URL `http://millikeys.sourceforge.net/asset/'.")
 
 (defvar ergoemacs-layout-workman
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
@@ -120,7 +124,7 @@
     "" ""  "Q" "D" "R" "W" "B" "J" "F" "U" "P" ":" "{" "}" "|"
     "" ""  "A" "S" "H" "T" "G" "Y" "N" "E" "O" "I" "\"" "" ""
     "" ""  "Z" "X" "M" "C" "V" "K" "L" "<" ">" "?" "" "" "")
-  "US Workman layout. URL `http://www.workmanlayout.com/blog/'")
+  "US Workman layout.  URL `http://www.workmanlayout.com/blog/'.")
 
 (defvar ergoemacs-layout-gb
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
@@ -132,7 +136,7 @@
     "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "{" "}" ""
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "@" "~" ""
     "" "|"  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
-  "UK layout. URL `http://en.wikipedia.org/wiki/Keyboard_layout'")
+  "UK layout.  URL `http://en.wikipedia.org/wiki/Keyboard_layout'.")
 
 (defvar ergoemacs-layout-it
   '("" "\\" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "'" "¡" ""
@@ -144,7 +148,7 @@
     "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "é" "+" ""
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "ç" "°" "§" ""
     "" ">"  "Z" "X" "C" "V" "B" "N" "M" ";" ":" "_" "" "" "")
-  "Italian layout. URL `http://en.wikipedia.org/wiki/Keyboard_layout'")
+  "Italian layout.  URL `http://en.wikipedia.org/wiki/Keyboard_layout'.")
 
 (defvar ergoemacs-layout-es
   '("" "°" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "'" "¡" ""
@@ -156,7 +160,7 @@
     "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "^" "*" ""
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "Ñ" "\"" "Ç" ""
     "" ">"  "Z" "X" "C" "V" "B" "N" "M" ";" ":" "_" "" "" "")
-  "Spanish layout. URL `http://en.wikipedia.org/wiki/Keyboard_layout'")
+  "Spanish layout.  URL `http://en.wikipedia.org/wiki/Keyboard_layout'.")
 
 (defvaralias 'ergoemacs-layout-sp 'ergoemacs-layout-es)
 
@@ -170,7 +174,7 @@
     "" ""  "A" "Z" "E" "R" "T" "Y" "U" "I" "O" "P" "" "£" ""
     "" ""  "Q" "S" "D" "F" "G" "H" "J" "K" "L" "M" "%" "μ" ""
     "" ">"  "W" "X" "C" "V" "B" "N" "?" "." "/" "§" "" "" "")
-  "French AZERTY layout. URL `http://en.wikipedia.org/wiki/Keyboard_layout'")
+  "French AZERTY layout.  URL `http://en.wikipedia.org/wiki/Keyboard_layout'.")
 
 ;; From Thomas Rikl
 (defvar ergoemacs-layout-de
@@ -183,7 +187,7 @@
     "" ""  "Q" "W" "E" "R" "T" "Z" "U" "I" "O" "P" "Ü" "*" ""
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "Ö" "Ä" "'" ""
     "" ""  "Y" "X" "C" "V" "B" "N" "M" ";" ":" "_" "" "" "")
-  "German QWERTZ layout")
+  "German QWERTZ layout.")
 
 (defvaralias 'ergoemacs-layout-ge 'ergoemacs-layout-de)
 
@@ -199,7 +203,7 @@
     "" ""  "B" "É" "P" "O" "È" "!" "V" "D" "L" "J" "Z" "W" ""
     "" ""  "A" "U" "I" "E" ";" "C" "T" "S" "R" "N" "M" "Ç" ""
     "" "Ê" "À" "Y" "X" ":" "K" "?" "Q" "G" "H" "F" "" "" "")
-  "French BÉPO layout. URL `http://bepo.fr/'")
+  "French BÉPO layout.  URL `http://bepo.fr/'.")
 
 (defvaralias 'ergoemacs-layout-bépo 'ergoemacs-layout-bepo)
 
@@ -213,21 +217,21 @@
     "" ""  "ْ" "ٌ" "ٍ" "ً" "ُ" "ِ" "َ" "ّ" "]" "[" "}" "{" "|"
     "" ""  "ؤ" "ئ" "ي" "إ" "أ" "آ" "ة" "»" "«" ":" "؛" "" ""
     "" ""  "ك" "ٓ" "ژ" "ٰ" "‌" "ٔ" "ء" ">" "<" "؟" "" "" "")
-  "FA Persian standard layout")
+  "FA Persian standard layout.")
 
 
 
 
 ;;; Layout Functions
 (defun ergoemacs-get-layouts-type ()
-  "Gets the customization types for `ergoemacs-keyboard-layout'"
+  "Gets the customization types for `ergoemacs-keyboard-layout'."
   `(choice ,@(mapcar
               (lambda(elt)
                 `(const :tag ,elt :value ,elt))
               (sort (ergoemacs-get-layouts t) 'string<))))
 
 (defun ergoemacs-set-layout (layout)
-  "Set the ergoemacs layout."
+  "Set the ergoemacs layout to LAYOUT."
   (ergoemacs-set-default 'ergoemacs-keyboard-layout layout))
 
 (defun ergoemacs-get-layouts-menu ()
@@ -270,7 +274,7 @@
 
 
 (defun ergoemacs-reset-layouts ()
-  "Reset Layout information"
+  "Reset Layout information."
   (interactive)
   (setq ergoemacs-get-layouts-no-aliases nil)
   (setq ergoemacs-get-layouts-aliases nil))
@@ -279,7 +283,7 @@
 (defvar ergoemacs-get-layouts-aliases nil)
 
 (defun ergoemacs-get-layouts (&optional aliases ob)
-  "Gets the list of all known layouts"
+  "Get the list of all known layouts."
   (if (and ergoemacs-get-layouts-no-aliases
            (not aliases))
       (symbol-value 'ergoemacs-get-layouts-no-aliases)
@@ -305,3 +309,6 @@
 (provide 'ergoemacs-layouts)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-layouts.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:
