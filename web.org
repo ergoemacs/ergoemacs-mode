@@ -879,10 +879,18 @@ support please [[https://github.com/ergoemacs/ergoemacs-mode/issues/new][drop me
   :TEMPLATE: blog_static_no_title.html
   :END:
 
-To report a bug please be sure your issue is =ergoemacs-mode=
-related.  An easy way to do that is to get a clean  environment to
-see if you can reproduce the error.  If you can load ergoemacs, then
-this can be accomplished by Alt+a =ergoemacs-clean=. 
+Before reporting a bug, please check if it is already known about.
+Indeed, it may already have been fixed in a later release of
+=ergoemacs-mode=, or in the development version.  Here is the issues
+list: https://github.com/ergoemacs/ergoemacs-mode/issues
+
+If you are able to, try the latest =ergoemacs-mode= to see if the
+problem has already been fixed.
+
+To report a bug please be sure your issue is =ergoemacs-mode= related.
+An easy way to do that is to get a clean environment to see if you can
+reproduce the error.  If you can load ergoemacs, then this can be
+accomplished by Alt+a =ergoemacs-clean=.
 
 Otherwise, this can be accomplished by
 
@@ -890,9 +898,10 @@ Otherwise, this can be accomplished by
   emacs -Q
 #+END_SRC
 
-Then in the scratch-buffer adding
+Then in the =*scratch*= buffer adding
 
 #+BEGIN_SRC emacs-lisp
+  (setq debug-on-error t) ; Activate debugging
   (add-to-list 'load-path "/path/to/ergoemacs/")
   (require 'ergoemacs-mode)
   (setq ergoemacs-debug t)
@@ -903,7 +912,17 @@ Then in the scratch-buffer adding
 
 Then type Alt+x =eval-buffer=.
 
-See if you can reproduce the bug from this empty environment.
+See if you can reproduce the bug from this empty environment.  If you
+can reproduce the bug this way, that rules out bugs in your personal
+customizations.  Then your bug report should begin by stating that you
+started Emacs with =emacs -Q=, followed by the exact sequence of steps
+for reproducing the bug.  If possible, inform us of the exact contents
+of any file that is needed to reproduce the bug.
+
+When you hit an error, a =*Backtrace*= buffer will appear on the
+screen.  Save this buffer to a file and attach it to your bug report.
+
+Please report documentation bug too.
 ** Testimonials
   :PROPERTIES:
   :PAGE:     testimonials.html
