@@ -37,6 +37,7 @@
   (let ((emacs-exe (invocation-name))
         (emacs-dir (invocation-directory))
         (full-exe nil))
+    ;; FIXME: Use `let*'.
     (setq full-exe (expand-file-name emacs-exe emacs-dir))
     (symbol-value 'full-exe)))
 

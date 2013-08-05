@@ -48,6 +48,7 @@
 
 
 ; (eval-when-compile (require 'cl))
+; FIXME: Use cl-lib when available.
 (require 'cl)
 (require 'easymenu)
 (require 'cua-base)
@@ -470,7 +471,7 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
 (add-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-exit-maps)
 
 (defun ergoemacs-exit-alt-keys ()
-  "Exit alt keys predicate"
+  "Exit alt keys predicate."
   (let (ret cmd)
     (condition-case err
         (progn

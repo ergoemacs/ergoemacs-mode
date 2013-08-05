@@ -23,6 +23,7 @@
   ;; Derived from `describe-char'
   (let* ((case-fold-search nil)
          code str)
+    ;; FIXME: what does `code' and `str' do?
     (save-match-data
       (cond
        ((string= char "")
@@ -323,7 +324,8 @@
 
 ;;;###autoload
 (defun ergoemacs-ghpages (&optional arg)
-  "Generate github pages with o-blog"
+  "Generate github pages with o-blog."
+  ;; FIXME: arg and file aren't used.
   (interactive "P")
   (let ((o-blog (expand-file-name (file-name-directory (locate-library "o-blog"))))
         (htmlize (expand-file-name (file-name-directory (locate-library "htmlize"))))
@@ -335,6 +337,7 @@
     (if current-prefix-arg
         (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --eval \"(ergoemacs-publish-blog 1)\" &"
                                full-exe o-blog htmlize ergoemacs-dir ergoemacs-dir))
+      ;; FIXME: `format' called with 5 args to fill 4 format field(s)
       (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --funcall ergoemacs-publish-blog &"
                                full-exe o-blog htmlize ergoemacs-dir ergoemacs-dir)))))
 
@@ -753,6 +756,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
         (goto-char (point-min))
         (while (re-search-forward "^\\([^ \n]*\\):" nil t)
           (add-to-list 'lst (match-string 1))))
+          ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
       (setq re (format "^%s$" (regexp-opt lst 't)))
       (with-temp-buffer
         (let ((old-lay ergoemacs-theme))
@@ -805,7 +809,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
                                (ergoemacs-emacs-exe)
                                ergoemacs-dir ergoemacs-dir)))
     (let ((xtra (or extra "ahk"))
-          not-first
+          not-first ; FIXME: what does it do?
           (extra-dir)
           file-temp)
       (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
@@ -1077,6 +1081,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                      (num 0))
                  (when a
                    (setq num (+ num (cdr a)))
+		   ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
                    (add-to-list 'cmds (car a)))
                  ;; Now lookup key based on the currently installed
                  ;; minor modes
@@ -1103,6 +1108,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                          (setq a (assoc (nth 1 translation-list) (cdr list)))
                          (when a
                            (setq num (+ num (cdr a)))
+			   ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
                            (add-to-list 'cmds (car a)))))
                      (nth 1 minor-list)))
                   (symbol-value (ergoemacs-get-minor-mode-layout)))

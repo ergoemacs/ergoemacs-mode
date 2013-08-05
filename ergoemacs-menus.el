@@ -885,6 +885,7 @@ All other modes are assumed to be minor modes or unimportant.
   (define-key global-map [menu-bar search] nil)
   (define-key global-map [menu-bar view] nil)
   (define-key global-map [menu-bar help-menu]
+    ;; FIXME: paren mismatch
     ("Help" ergoemacs-menu-bar-old-help-menu)))
 
 ;;(ergoemacs-menus-on)

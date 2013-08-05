@@ -459,6 +459,7 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
 (defun ergoemacs-track-post-command-hook ()
   "Tracks the key presses."
   (let ((keys (key-description (this-command-keys)))
+	;; FIXME: two `dist'?
         dist dist)
     ;; Note that sending something like QWERTY <apps> j
     ;; Adds a key binding of C-c or C-c * key binding.

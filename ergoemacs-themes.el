@@ -769,6 +769,7 @@ format:
                              key-def))
                          (nth 1 mode-list)))
               (unless found
+		;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
                 (add-to-list 'lst list))
               `(,(nth 0 mode-list) ,lst))))
         (symbol-value (ergoemacs-get-minor-mode-layout)))))

@@ -643,6 +643,7 @@
              (setq fn (lookup-key global-map (read-kbd-macro first)))
              (if (not (functionp fn))
                  elt
+	       ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
                (add-to-list 'last fn)
                `(,first ,last))))
          ergoemacs-emacs-default-bindings)))
