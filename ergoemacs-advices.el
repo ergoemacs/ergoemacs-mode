@@ -1,4 +1,4 @@
-;;; ergoemacs-advices.el --- ergoemacs advices
+;;; ergoemacs-advices.el --- ergoemacs advices  -*- lexical-binding:t -*-
 ;; 
 ;; Filename: ergoemacs-advices.el
 ;; Description:
@@ -197,3 +197,6 @@
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

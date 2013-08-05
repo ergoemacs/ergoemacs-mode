@@ -1,4 +1,8 @@
-;;; ergoemacs-functions.el --- Functions for use in ergoemacs -*- coding: utf-8 -*-
+;;; ergoemacs-functions.el --- Functions for use in ergoemacs  -*- lexical-binding:t -*-
+
+;;; Commentary:
+;; 
+
 ;;; Code:
 
 
@@ -29,7 +33,7 @@
                            (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))))
 
 (defun ergoemacs-emacs-exe ()
-  "Get the emacs executable for testing purposes." 
+  "Get the Emacs executable for testing purposes."
   (let ((emacs-exe (invocation-name))
         (emacs-dir (invocation-directory))
         (full-exe nil))
@@ -37,7 +41,7 @@
     (symbol-value 'full-exe)))
 
 (defun ergoemacs-cheat-sheet-file ()
-  "Cheet sheet file for ergoemacs"
+  "Cheet sheet file for ergoemacs."
   (let ((var-dir "") extra-dir)
     (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
     (when ergoemacs-theme
@@ -51,7 +55,7 @@
 
 ;;; Ido-ergoemacs functional fixes
 (defun ergoemacs-ido-c-o (arg)
-  "Ergoemacs ido C-o command"
+  "Ergoemacs ido C-o command."
   (interactive "P")
   (cond
    ((memq ido-cur-item '(file dir))
@@ -84,7 +88,7 @@
   "Print current buffer, but ask for confirmation first."
   (interactive)
   (when
-      (y-or-n-p "Print current buffer?")
+      (y-or-n-p "Print current buffer? ")
     (print-buffer)))
 
 (defun ergoemacs-call-keyword-completion ()
@@ -511,7 +515,7 @@ Emacs buffers are those whose name starts with *."
     
     (setq doIt (if (<= (length myFileList) 5)
                    t
-                 (y-or-n-p "Open more than 5 files?") ) )
+                 (y-or-n-p "Open more than 5 files? ") ) )
     
     (when doIt
       (cond
@@ -556,15 +560,15 @@ Else it is a user buffer."
     
     (if (string= major-mode "minibuffer-inactive-mode")
         nil ; if minibuffer, do nothing
-      (progn 
+      (progn
         ;; offer to save buffers that are non-empty and modified, even for non-file visiting buffer. (because kill-buffer does not offer to save buffers that are not associated with files)
         (when (and (buffer-modified-p)
                    (not emacsBuff-p)
                    (not (string-equal major-mode "dired-mode"))
-                   (if (equal (buffer-file-name) nil) 
+                   (if (equal (buffer-file-name) nil)
                        (if (string-equal "" (save-restriction (widen) (buffer-string))) nil t)
                      t))
-          (if (y-or-n-p (format "Buffer %s modified; Do you want to save?" (buffer-name)))
+          (if (y-or-n-p (format "Buffer %s modified; Do you want to save? " (buffer-name)))
               (save-buffer)
             (set-buffer-modified-p nil)))
         
@@ -910,3 +914,6 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
 (provide 'ergoemacs-functions)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-functions.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

@@ -1,18 +1,18 @@
-;;; ergoemacs-menus.el --- Turn on and off ergoemacs-style menus
+;;; ergoemacs-menus.el --- Turn on and off ergoemacs-style menus  -*- lexical-binding:t -*-
 ;; 
 ;; Filename: ergoemacs-menus.el
-;; Description: 
+;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer:
 ;; Created: Fri Jun 21 01:05:18 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By: 
+;; Version:
+;; Last-Updated:
+;;           By:
 ;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
+;; URL:
+;; Doc URL:
+;; Keywords:
+;; Compatibility:
 ;; 
 ;; Features that might be required by this library:
 ;;
@@ -20,7 +20,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
-;;; Commentary: 
+;;; Commentary:
 ;; 
 ;; 
 ;; 
@@ -57,7 +57,7 @@
   "http://mlf176f2.github.io/ErgoEmacs/")
 
 (defun ergoemacs-kbd-to-key (key)
-  "Converts key Emacs key code to ergoemacs-key-code."
+  "Convert key Emacs key code to ergoemacs-key-code."
   (let ((case-fold-search nil))
     (replace-regexp-in-string
      " " "  "
@@ -147,7 +147,7 @@ This gets all major modes known from the variables:
 -  `magic-fallback-mode-alist'
 -  `auto-mode-alist'
 
-All other modes are assumed to be minor modes or unimportant. 
+All other modes are assumed to be minor modes or unimportant.
 "
   ;; Get known major modes
   (let ((ret '()))
@@ -255,7 +255,7 @@ All other modes are assumed to be minor modes or unimportant.
                                   (cdr yank-menu)
                                   (not buffer-read-only))
                          :help "Choose a string from the kill ring and paste it")
-        (clear menu-item "Clear" delete-region 
+        (clear menu-item "Clear" delete-region
                :enable (and mark-active (not buffer-read-only))
                :help "Delete the text in region between mark and current position"
                :keys "Del")
@@ -290,7 +290,7 @@ All other modes are assumed to be minor modes or unimportant.
         (copy-to-clipboard menu-item "Copy File/Path to Clipboard"
                            (keymap
                             (copy-full-path menu-item
-                                            "Current Full File Path to Clipboard" 
+                                            "Current Full File Path to Clipboard"
                                             ergoemacs-copy-full-path
                                             :enable (buffer-file-name))
                             (copy-file-name menu-item
@@ -298,7 +298,7 @@ All other modes are assumed to be minor modes or unimportant.
                                             ergoemacs-copy-file-name
                                             :enable (buffer-file-name))
                             (copy-dir-path menu-item
-                                           "Current Dir. Path to Clipboard" 
+                                           "Current Dir. Path to Clipboard"
                                            ergoemacs-copy-dir-path
                                            :enable (buffer-file-name))))
         (convert-case-to menu-item "Convert Case To"
@@ -442,10 +442,10 @@ All other modes are assumed to be minor modes or unimportant.
         
         ;; (replace menu-item "Replace"
         ;;          (keymap
-        ;;           (query-replace menu-item "Replace String..." query-replace 
+        ;;           (query-replace menu-item "Replace String..." query-replace
         ;;                          :enable (not buffer-read-only)
         ;;                          :help "Replace string interactively, ask about each occurrence")
-        ;;           (query-replace-regexp menu-item "Replace Regexp..." query-replace-regexp 
+        ;;           (query-replace-regexp menu-item "Replace Regexp..." query-replace-regexp
         ;;                                 :enable (not buffer-read-only)
         ;;                                 :help "Replace regular expression interactively, ask about each occurrence")
         ;;           (separator-replace-tags menu-item "--")
@@ -470,7 +470,7 @@ All other modes are assumed to be minor modes or unimportant.
         ;;                           (not
         ;;                            (ring-empty-p tags-location-ring)))
         ;;                  :help "Find next function/variable matching last tag name")
-        ;;        (next-tag-otherw menu-item "Next Tag in Other Window" menu-bar-next-tag-other-window 
+        ;;        (next-tag-otherw menu-item "Next Tag in Other Window" menu-bar-next-tag-other-window
         ;;                         :enable (and
         ;;                                  (boundp 'tags-location-ring)
         ;;                                  (not
@@ -523,10 +523,10 @@ All other modes are assumed to be minor modes or unimportant.
         
         (replace menu-item "Replace"
                  (keymap
-                  (query-replace menu-item "Replace String..." query-replace 
+                  (query-replace menu-item "Replace String..." query-replace
                                  :enable (not buffer-read-only)
                                  :help "Replace string interactively, ask about each occurrence")
-                  (query-replace-regexp menu-item "Replace Regexp..." query-replace-regexp 
+                  (query-replace-regexp menu-item "Replace Regexp..." query-replace-regexp
                                         :enable (not buffer-read-only)
                                         :help "Replace regular expression interactively, ask about each occurrence")
                   (separator-replace-tags menu-item "--")
@@ -558,7 +558,7 @@ All other modes are assumed to be minor modes or unimportant.
                                   (not
                                    (ring-empty-p tags-location-ring)))
                          :help "Find next function/variable matching last tag name")
-               (next-tag-otherw menu-item "Next Tag in Other Window" menu-bar-next-tag-other-window 
+               (next-tag-otherw menu-item "Next Tag in Other Window" menu-bar-next-tag-other-window
                                 :enable (and
                                          (boundp 'tags-location-ring)
                                          (not
@@ -829,7 +829,7 @@ All other modes are assumed to be minor modes or unimportant.
                                :help "Open a list of all the info docs.")
                      (man-dir menu-item "Unix Man Pages..."
                               woman
-                              :help "Unix Manual entries (with WoMan)"))) 
+                              :help "Unix Manual entries (with WoMan)")))
         (separator-2 menu-item "--")
 
         (eroemacs-current-keybindings menu-item
@@ -891,3 +891,6 @@ All other modes are assumed to be minor modes or unimportant.
 (provide 'ergoemacs-menus)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-menus.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

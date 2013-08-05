@@ -1,4 +1,4 @@
-;;-*- coding: utf-8 -*-
+;;  -*- lexical-binding:t -*-
 
 ;; this file define keys that we want to set/unset because they are already defined by ergoemacs minor mode
 
@@ -1042,3 +1042,6 @@ disabled at `ergoemacs-restore-global-keys'."
 (provide 'ergoemacs-unbind)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-unbind.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

@@ -1,18 +1,18 @@
-;;; ergoemacs-test.el --- Test Ergoemacs Issues
+;;; ergoemacs-test.el --- Test Ergoemacs Issues  -*- lexical-binding:t -*-
 ;; 
 ;; Filename: ergoemacs-test.el
-;; Description: 
+;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer:
 ;; Created: Mon Feb 18 10:19:21 2013 (-0600)
 ;; Version:
-;; Last-Updated: 
-;;           By: 
+;; Last-Updated:
+;;           By:
 ;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
+;; URL:
+;; Doc URL:
+;; Keywords:
+;; Compatibility:
 ;; 
 ;; Features that might be required by this library:
 ;;
@@ -20,7 +20,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
-;;; Commentary: 
+;;; Commentary:
 ;; 
 ;; 
 ;; 
@@ -54,7 +54,7 @@
 
 ;;;###autoload
 (defun ergoemacs-test ()
-  "Tests ergoemacs issues"
+  "Test ergoemacs issues."
   (interactive)
   (let ((ret t)
         (test))
@@ -115,7 +115,7 @@
     (message "Overall test: %s" ret)))
 
 (defun ergoemacs-test-145 ()
-  "Backspace doesn't work in isearch-mode"
+  "Backspace doesn't work in `isearch-mode'."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
         (macro (edmacro-parse-keys "C-f ars C-f <backspace> M-n" t))
@@ -286,3 +286,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

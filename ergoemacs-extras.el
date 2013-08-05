@@ -1,4 +1,4 @@
-;;; ergoemacs-extras.el --- Generate Ergoemacs Extras  -*- coding: utf-8 -*-
+;;; ergoemacs-extras.el --- Generate Ergoemacs Extras  -*- lexical-binding:t -*-
 
 ;;; Commentary:
 ;; 
@@ -1505,3 +1505,6 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
 (provide 'ergoemacs-extras)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-extras.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

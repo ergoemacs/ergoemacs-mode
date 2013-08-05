@@ -1,18 +1,18 @@
-;;; ergoemacs-track.el --- Minor mode to track layout-based distances typed.
+;;; ergoemacs-track.el --- Minor mode to track layout-based distances typed.  -*- lexical-binding:t -*-
 ;; 
 ;; Filename: ergoemacs-track.el
-;; Description: 
+;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer:
 ;; Created: Wed Jun 12 08:57:44 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By: 
+;; Version:
+;; Last-Updated:
+;;           By:
 ;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
+;; URL:
+;; Doc URL:
+;; Keywords:
+;; Compatibility:
 ;; 
 ;; Features that might be required by this library:
 ;;
@@ -20,7 +20,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
-;;; Commentary: 
+;;; Commentary:
 ;; 
 ;; 
 ;; 
@@ -271,7 +271,7 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
   (if layout
       (let ((ret (gethash (cons (cons key1 key2) (cons last-plist layout)) ergoemacs-key-hash)))
         (if ret
-            (symbol-value 'ret)    
+            (symbol-value 'ret)
           (let ((kp1 (gethash (cons layout key1) ergoemacs-key-hash))
                 (kp2 (gethash (cons layout key2) ergoemacs-key-hash))
                 kpl kpl1
@@ -470,3 +470,6 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-track.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:
