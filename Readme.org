@@ -1,6 +1,7 @@
 #+TITLE: Ergoemacs Keybindings
 #+AUTHOR: Xah Lee, David Capello, and Matthew Fidler
 #+LANGUAGE:  en
+#+STARTUP: oddeven
 
 
 ErgoEmacs keybindings improves GNU Emacs for people who did not grew
@@ -225,6 +226,24 @@ can type
 This is also done in the test suite.  This can be accessed by
 =ergoemacs-test= command.
 
+* Contributing to ErgoEmacs
+ErgoEmacs is a collaborative project and we encourage contributions
+from anyone and everyone.  If you want to contribute in the way that
+will help us most, we recommend fixing reported bugs and implementing
+the feature ideas in [[https://github.com/ergoemacs/ergoemacs-mode/issues][Issues]].  However, if you think of new features to
+add, please suggest them too -- we might like your idea.
+
+** Coding Style and conventions
+- Remove all trailing whitespace in all source and text files.
+
+- Use ?\s instead of ?  in Lisp code for a space character.
+
+** Document your changes
+Think carefully about whether your change requires updating the
+documentation.
+
+# ** Write more tests.  Pick a fixed bug from the database, write a test
+# case to make sure it stays fixed.
 
 * Experimental Ergoemacs
 This section is experimental ergoemacs keybindings that are being
