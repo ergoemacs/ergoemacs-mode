@@ -294,6 +294,9 @@
 
 (defcustom ergoemacs-minor-mode-layout
   `(;; Key/variable command x-hook
+    (org-mode-hook
+     ((move-beginning-of-line org-beginning-of-line remap)
+      (move-end-of-line org-end-of-line remap)))
     (org-src-mode-hook
      ((save-buffer org-edit-src-save org-src-mode-map remap)))
     (org-agenda-mode-hook
