@@ -1,5 +1,7 @@
 #+TITLE: Ergoemacs Keybindings
 #+AUTHOR: Xah Lee, David Capello, and Matthew Fidler
+#+LANGUAGE:  en
+
 
 ErgoEmacs keybindings improves GNU Emacs for people who did not grew
 up with emacs. User interface is based on common modern software
