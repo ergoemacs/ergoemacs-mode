@@ -560,7 +560,7 @@ Else it is a user buffer."
     (setq emacsBuff-p (if (string-match "^*" (buffer-name)) t nil) )
     
     (if (string= major-mode "minibuffer-inactive-mode")
-        nil ; if minibuffer, do nothing
+        (minibuffer-keyboard-quit) ; if the buffer is minibuffer
       (progn
         ;; offer to save buffers that are non-empty and modified, even for non-file visiting buffer. (because kill-buffer does not offer to save buffers that are not associated with files)
         (when (and (buffer-modified-p)
