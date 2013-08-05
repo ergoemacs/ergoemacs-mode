@@ -226,6 +226,7 @@ can type
 This is also done in the test suite.  This can be accessed by
 =ergoemacs-test= command.
 
+# FIXME: maybe this can be a single file.
 * Contributing to ErgoEmacs
 ErgoEmacs is a collaborative project and we encourage contributions
 from anyone and everyone.  If you want to contribute in the way that
