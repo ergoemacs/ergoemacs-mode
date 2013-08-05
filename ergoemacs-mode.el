@@ -1,4 +1,4 @@
-;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics. -*- coding: utf-8 -*-
+;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics  -*- lexical-binding:t -*-
 
 ;; Copyright © 2007, 2008, 2009 by Xah Lee
 ;; Copyright © 2009, 2010 by David Capello
@@ -19,7 +19,7 @@
 ;; version.
 
 ;;; Commentary:
-;; This keybinding set puts the most frequently used emacs keyboard
+;; This keybinding set puts the most frequently used Emacs keyboard
 ;; shortcuts into the most easy-to-type spots.
 ;;
 ;; For complete detail, see:
@@ -27,7 +27,7 @@
 
 ;;; Acknowledgment:
 ;; Thanks to Shahin Azad for persian layout (fa) ishahinism at g
-;; mail.com 
+;; mail.com
 ;; Thanks to Thomas Rikl workhorse.t at googlemail.com for german layout
 ;; Thanks to Baptiste Fouques  bateast at bat.fr.eu.org for bepo layout
 ;; Thanks to Andrey Kotlarski (aka m00naticus) for a patch on 2012-12-08
@@ -40,20 +40,23 @@
 ;; Thanks to maddin for ergoemacs-global/local-set-key functions and ergoemacs-hook-modes improvements.
 ;; Thanks to many users who send in comments and appreciations on this.
 ;; Layout contributors:
-;; Danish layout “da”. Contributors: Michael Budde
-;; UK QWERTY layout “gb”. Contributor: Jorge Dias (aka theturingmachine)
-;; UK Dvorak layout “gb-dv”. Contributor: Phillip Wood
-;; French AZERTY layout “fr”. Contributor: Alexander Doe
-;; Italian QWERTY layout “it”. Contributor: David Capello, Francesco Biccari
+;; Danish layout “da”.  Contributors: Michael Budde
+;; UK QWERTY layout “gb”.  Contributor: Jorge Dias (aka theturingmachine)
+;; UK Dvorak layout “gb-dv”.  Contributor: Phillip Wood
+;; French AZERTY layout “fr”.  Contributor: Alexander Doe
+;; Italian QWERTY layout “it”.  Contributor: David Capello, Francesco Biccari
 
 
 ; (eval-when-compile (require 'cl))
+; FIXME: Use cl-lib when available.
 (require 'cl)
 (require 'easymenu)
 (require 'cua-base)
 (require 'cua-rect)
 
 (require 'org-cua-dwim nil "NOERROR")
+;;; Code:
+
 (when (featurep 'org-cua-dwim)
   (org-cua-dwim-activate))
 
@@ -70,7 +73,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
    (or
     load-file-name
     (buffer-file-name)))
-  "Ergoemacs Directory")
+  "Ergoemacs directory.")
 (add-to-list 'load-path  ergoemacs-dir)
 
 (defgroup ergoemacs-mode nil
@@ -94,13 +97,13 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
                 ergoemacs-forward-close-bracket move-end-of-line move-beginning-of-line backward-word forward-word
                 subword-backward subword-forward
                 beginning-of-buffer end-of-buffer)
-  "Movement functions")
+  "Movement functions.")
 
 (defvar ergoemacs-deletion-functions
   '(delete-backward-char
   delete-char backward-kill-word kill-word kill-line
   ergoemacs-shrink-whitespaces ergoemacs-kill-line-backward)
-  "Deletion functions")
+  "Deletion functions.")
 
 (defvar ergoemacs-undo-redo-functions
   '(undo
@@ -118,12 +121,12 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
     delete-other-windows
     split-window-vertically
     ergoemacs-next-user-buffer)
-  "Window/Tab switching functions")
+  "Window/Tab switching functions.")
 
 (defun ergoemacs-set-default (symbol new-value)
   "Ergoemacs equivalent to set-default.  Will reload `ergoemacs-mode' after setting the values."
   (set-default symbol new-value)
-  (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp)) 
+  (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
                  (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
              (boundp 'ergoemacs-mode) ergoemacs-mode)
     (ergoemacs-mode -1)
@@ -159,7 +162,7 @@ Valid values are:
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-repeat-movement-commands nil 
+(defcustom ergoemacs-repeat-movement-commands nil
   "Allow movement commands to be repeated without pressing the ALT key."
   :group 'ergoemacs-mode
   :type '(choice
@@ -468,7 +471,7 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
 (add-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-exit-maps)
 
 (defun ergoemacs-exit-alt-keys ()
-  "Exit alt keys predicate"
+  "Exit alt keys predicate."
   (let (ret cmd)
     (condition-case err
         (progn
@@ -600,7 +603,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                    ergoemacs-kbd-hash)
           new-key))))))
 
-(defvar ergoemacs-backward-compatability-variables 
+(defvar ergoemacs-backward-compatability-variables
   '((ergoemacs-backward-paragraph-key            backward-block)
     (ergoemacs-forward-paragraph-key             forward-block)
     (ergoemacs-recenter-key                      recenter-top-bottom)
@@ -708,8 +711,8 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                 (setq key (read-kbd-macro
                            trans-key))
               (error
-               (setq key (read-kbd-macro 
-                          (encode-coding-string 
+               (setq key (read-kbd-macro
+                          (encode-coding-string
                            trans-key
                            locale-coding-system)))))
 	    (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
@@ -1436,3 +1439,6 @@ bindings the keymap is:
 (provide 'ergoemacs-mode)
 
 ;;; ergoemacs-mode.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

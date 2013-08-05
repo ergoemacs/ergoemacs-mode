@@ -1,4 +1,8 @@
-;;; ergoemacs-extras.el --- Generate Ergoemacs Extras  -*- coding: utf-8 -*-
+;;; ergoemacs-extras.el --- Generate Ergoemacs Extras  -*- lexical-binding:t -*-
+
+;;; Commentary:
+;; 
+
 ;;; Code:
 
 
@@ -19,6 +23,7 @@
   ;; Derived from `describe-char'
   (let* ((case-fold-search nil)
          code str)
+    ;; FIXME: what does `code' and `str' do?
     (save-match-data
       (cond
        ((string= char "")
@@ -148,7 +153,7 @@
           (goto-char (point-min))
           (while (re-search-forward "S-" nil t)
             (replace-match "<kbd>⇧Shift</kbd>+" t))
-          (goto-char (point-min)) 
+          (goto-char (point-min))
           (while (re-search-forward "C-" nil t)
             (replace-match "<kbd>Ctrl</kbd>+" t t))
           (goto-char (point-min))
@@ -319,7 +324,8 @@
 
 ;;;###autoload
 (defun ergoemacs-ghpages (&optional arg)
-  "Generate github pages with o-blog"
+  "Generate github pages with o-blog."
+  ;; FIXME: arg and file aren't used.
   (interactive "P")
   (let ((o-blog (expand-file-name (file-name-directory (locate-library "o-blog"))))
         (htmlize (expand-file-name (file-name-directory (locate-library "htmlize"))))
@@ -331,6 +337,7 @@
     (if current-prefix-arg
         (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --eval \"(ergoemacs-publish-blog 1)\" &"
                                full-exe o-blog htmlize ergoemacs-dir ergoemacs-dir))
+      ;; FIXME: `format' called with 5 args to fill 4 format field(s)
       (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --funcall ergoemacs-publish-blog &"
                                full-exe o-blog htmlize ergoemacs-dir ergoemacs-dir)))))
 
@@ -749,6 +756,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
         (goto-char (point-min))
         (while (re-search-forward "^\\([^ \n]*\\):" nil t)
           (add-to-list 'lst (match-string 1))))
+          ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
       (setq re (format "^%s$" (regexp-opt lst 't)))
       (with-temp-buffer
         (let ((old-lay ergoemacs-theme))
@@ -800,8 +808,8 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
         (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode %s/ergoemacs-extras --eval \"(ergoemacs-gen-ahk)\" &"
                                (ergoemacs-emacs-exe)
                                ergoemacs-dir ergoemacs-dir)))
-    (let ((xtra (or extra "ahk")) 
-          not-first
+    (let ((xtra (or extra "ahk"))
+          not-first ; FIXME: what does it do?
           (extra-dir)
           file-temp)
       (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
@@ -866,7 +874,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
           (cmd-n 0)
           (i 0)
           i2
-          cmd-freq-ergo 
+          cmd-freq-ergo
           tmp
           (select "")
           (html-table '())
@@ -992,7 +1000,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                        (setq ret t)
                        (goto-char (point-min))
                        (add-to-list 'html-table
-                             `(,(nth 2 tmp) ,(format "<tr><td style=\"background-color: %s\">%s</td><td style=\"background-color: %s\"><input type=\"text\" value=\"%s\"></td><td style=\"background-color: %s\">%s</td></tr>" 
+                             `(,(nth 2 tmp) ,(format "<tr><td style=\"background-color: %s\">%s</td><td style=\"background-color: %s\"><input type=\"text\" value=\"%s\"></td><td style=\"background-color: %s\">%s</td></tr>"
                                      (nth 6 tmp) (nth 2 tmp)
                                      (nth 6 tmp) (nth 1 tmp)
                                      (nth 6 tmp) (nth 4 tmp))))
@@ -1073,6 +1081,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                      (num 0))
                  (when a
                    (setq num (+ num (cdr a)))
+		   ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
                    (add-to-list 'cmds (car a)))
                  ;; Now lookup key based on the currently installed
                  ;; minor modes
@@ -1090,7 +1099,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                      (setq num (+ num (cdr a)))
                      (add-to-list 'cmds (car a))))
                  ;; Also lookup based on any compatibility fixes with
-                 ;; made by ergoemacs. 
+                 ;; made by ergoemacs.
                  (mapc
                   (lambda(minor-list)
                     (mapc
@@ -1099,6 +1108,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                          (setq a (assoc (nth 1 translation-list) (cdr list)))
                          (when a
                            (setq num (+ num (cdr a)))
+			   ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
                            (add-to-list 'cmds (car a)))))
                      (nth 1 minor-list)))
                   (symbol-value (ergoemacs-get-minor-mode-layout)))
@@ -1130,7 +1140,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
               (append cmd-freq-ergo
                       (mapcar
                        (lambda(x)
-                         (funcall calc-ergo x)) 
+                         (funcall calc-ergo x))
                        (append
                         (symbol-value (ergoemacs-get-variable-layout))))))
         
@@ -1484,7 +1494,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
            (progn
              (ergoemacs-gen-svg x)
              (ergoemacs-set-default 'ergoemacs-theme nil)
-             (ergoemacs-gen-svg x "kbd-ergo.svg" "ergo-layouts")) 
+             (ergoemacs-gen-svg x "kbd-ergo.svg" "ergo-layouts"))
          (error (message "Error generating base SVG for %s; %s" x err)))
        (mapc
         (lambda(y)
@@ -1501,3 +1511,6 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
 (provide 'ergoemacs-extras)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-extras.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:
