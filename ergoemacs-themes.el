@@ -191,6 +191,7 @@
     
     
     ("C-+" text-scale-increase "+Font Size")
+    ("C-=" text-scale-increase "+Font Size")
     ("C--" text-scale-decrease "-Font Size")
     ("C-0" ergoemacs-text-scale-normal-size)
     ;; --------------------------------------------------
