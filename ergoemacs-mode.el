@@ -819,24 +819,24 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
       ,(ergoemacs-get-layouts-menu)
       ,(ergoemacs-get-themes-menu)
       ["Make Bash aware of ergoemacs keys"
-       (lambda() (interactive)
+       (lambda () (interactive)
          (call-interactively 'ergoemacs-bash)) t]
       ;; ["Generate Documentation"
       ;;  (lambda()
       ;;    (interactive)
       ;;    (call-interactively 'ergoemacs-extras)) t]
       ["Customize Ergoemacs"
-       (lambda()
+       (lambda ()
          (interactive)
          (customize-group 'ergoemacs-mode)) t]
-      ["Save Settings for next session"
-       (lambda()
+      ["Save Settings for Future Sessions"
+       (lambda ()
          (interactive)
          (customize-save-variable 'ergoemacs-theme ergoemacs-theme)
          (customize-save-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
          (customize-save-customized)) t]
       ["Exit ErgoEmacs"
-       (lambda()
+       (lambda ()
          (interactive)
          (ergoemacs-mode -1)) t]))
   
