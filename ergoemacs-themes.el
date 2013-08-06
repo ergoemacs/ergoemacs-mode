@@ -1,5 +1,4 @@
-;;; ergoemacs-themes.el ---  Ergoemacs keybindings and themes  -*- lexical-binding:t -*-
-
+;;; ergoemacs-themes.el ---  Ergoemacs keybindings and themes
 ;;; Commentary:
 ;; 
 
@@ -192,6 +191,7 @@
     
     
     ("C-+" text-scale-increase "+Font Size")
+    ("C-=" text-scale-increase "+Font Size")
     ("C--" text-scale-decrease "-Font Size")
     ("C-0" ergoemacs-text-scale-normal-size)
     ;; --------------------------------------------------
@@ -294,6 +294,9 @@
 
 (defcustom ergoemacs-minor-mode-layout
   `(;; Key/variable command x-hook
+    (org-mode-hook
+     ((move-beginning-of-line org-beginning-of-line org-mode-map remap)
+      (move-end-of-line org-end-of-line org-mode-map remap)))
     (org-src-mode-hook
      ((save-buffer org-edit-src-save org-src-mode-map remap)))
     (org-agenda-mode-hook

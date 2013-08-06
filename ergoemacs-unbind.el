@@ -1,5 +1,3 @@
-;;  -*- lexical-binding:t -*-
-
 ;; this file define keys that we want to set/unset because they are already defined by ergoemacs minor mode
 
 (require 'edmacro)
@@ -948,7 +946,8 @@ disabled at `ergoemacs-restore-global-keys'."
                                    (ergoemacs-unicode-char "↹" "")) t))
           (goto-char (point-min))
           (while (re-search-forward "\\(menu\\|apps\\)" nil t)
-            (unless (looking-at "-bar")
+            (unless (or (save-match-data (looking-at "-bar"))
+                        (save-match-data (not (looking-back "-"))))
               (replace-match (format "%sMenu"
                                      (ergoemacs-unicode-char "▤" "")) t)))
           (goto-char (point-min))

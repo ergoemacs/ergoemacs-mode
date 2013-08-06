@@ -15,4 +15,4 @@ File: dir,	Node: Top	This is the top of the INFO tree
 * Menu:
 
 Emacs lisp libraries
-* ergoemacs-mode: (ergoemacs-mode).        Emacs mode based on common modern software interface.
+* ergoemacs-mode: (ergoemacs-mode).        Emacs mode based on common modern software interface and ergonomics.

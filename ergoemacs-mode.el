@@ -1,4 +1,4 @@
-;;; ergoemacs-mode.el --- A minor mode, a keybinding set based on ergonomics  -*- lexical-binding:t -*-
+;;; ergoemacs-mode.el --- Emacs mode based on common modern software interface and ergonomics.
 
 ;; Copyright © 2007, 2008, 2009 by Xah Lee
 ;; Copyright © 2009, 2010 by David Capello
@@ -961,7 +961,7 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
            ,(if is-override
                 `(ergoemacs-setup-keys-for-keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
               `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
-                     ,(nth 2 (nth 0 keys))))
+                     (copy-keymap ,(nth 2 (nth 0 keys)))))
            ,@(mapcar
               (lambda(def)
                 `(progn
@@ -1029,7 +1029,7 @@ will change."
                  (symbol-value (nth 2 hook))
                  (symbol-value (nth 3 hook)))
         (set (nth 3 hook)
-             (symbol-value (nth 2 hook)))
+             (copy-keymap (symbol-value (nth 2 hook))))
         (set (nth 2 hook) nil)))
     
     ;; enable advices

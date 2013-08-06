@@ -1,4 +1,4 @@
-;;; ergoemacs-menus.el --- Turn on and off ergoemacs-style menus  -*- lexical-binding:t -*-
+;;; ergoemacs-menus.el --- Turn on and off ergoemacs-style menus
 ;; 
 ;; Filename: ergoemacs-menus.el
 ;; Description:
