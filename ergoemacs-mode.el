@@ -47,6 +47,8 @@
 ;; Italian QWERTY layout “it”.  Contributor: David Capello, Francesco Biccari
 
 
+;;; Code:
+
 ; (eval-when-compile (require 'cl))
 ; FIXME: Use cl-lib when available.
 (require 'cl)
@@ -54,8 +56,10 @@
 (require 'cua-base)
 (require 'cua-rect)
 
+(require 'ergoemacs-layouts)
+
 (require 'org-cua-dwim nil "NOERROR")
-;;; Code:
+
 
 (when (featurep 'org-cua-dwim)
   (org-cua-dwim-activate))
@@ -74,10 +78,10 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
     load-file-name
     (buffer-file-name)))
   "Ergoemacs directory.")
-(add-to-list 'load-path  ergoemacs-dir)
+(add-to-list 'load-path ergoemacs-dir)
 
 (defgroup ergoemacs-mode nil
-  "Emulate CUA key bindings including C-x and C-c."
+  "Emacs mode based on common modern software interface and ergonomics."
   :group 'editing-basics
   :group 'convenience
   :group 'emulations)
@@ -86,9 +90,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   "Ergoemacs-keybindings minor mode version number used."
   :type 'string
   :group 'ergoemacs-mode)
-
-
-(require 'ergoemacs-layouts)
 
 (defvar ergoemacs-movement-functions
   '(scroll-down move-beginning-of-line move-end-of-line scroll-up scroll-down forward-block backward-block
@@ -124,7 +125,8 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   "Window/Tab switching functions.")
 
 (defun ergoemacs-set-default (symbol new-value)
-  "Ergoemacs equivalent to set-default.  Will reload `ergoemacs-mode' after setting the values."
+  "Ergoemacs equivalent to set-default.
+Will reload `ergoemacs-mode' after setting the values."
   (set-default symbol new-value)
   (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
                  (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
@@ -143,6 +145,8 @@ Valid values are:
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
 
+;; FIXME: maybe a better name is `ergoemacs-change-smex-meta-x', since
+;; Customization displays it as "Ergoemacs Change Smex M X".
 (defcustom ergoemacs-change-smex-M-x t
   "Changes the `smex-prompt-string' to match the `execute-extended-command'"
   :type 'boolean
@@ -421,9 +425,10 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
 (defvar ergoemacs-full-alt-keymap (make-keymap)
   "Ergoemacs full Alt+ keymap.  Alt is removed from all these keys so that no key chord is necessary.")
 
-(defvar ergoemacacs-full-alt-shift-keymap (make-keymap)
-  "Ergoemacs full Alt+Shift+ keymap. Alt+shift is removed from all
-  these keys so that no key chord is necessary. Unshifted keys are changed to shifted keys.")
+(defvar ergoemacs-full-alt-shift-keymap (make-keymap)
+  "Ergoemacs full Alt+Shift+ keymap.
+Alt+shift is removed from all these keys so that no key chord is
+necessary.  Unshifted keys are changed to shifted keys.")
 
 (defun ergoemacs-exit-dummy ()
   "Dummy function for exiting keymaps."
@@ -818,24 +823,24 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
       ,(ergoemacs-get-layouts-menu)
       ,(ergoemacs-get-themes-menu)
       ["Make Bash aware of ergoemacs keys"
-       (lambda() (interactive)
+       (lambda () (interactive)
          (call-interactively 'ergoemacs-bash)) t]
       ;; ["Generate Documentation"
       ;;  (lambda()
       ;;    (interactive)
       ;;    (call-interactively 'ergoemacs-extras)) t]
       ["Customize Ergoemacs"
-       (lambda()
+       (lambda ()
          (interactive)
          (customize-group 'ergoemacs-mode)) t]
-      ["Save Settings for next session"
-       (lambda()
+      ["Save Settings for Future Sessions"
+       (lambda ()
          (interactive)
          (customize-save-variable 'ergoemacs-theme ergoemacs-theme)
          (customize-save-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
          (customize-save-customized)) t]
       ["Exit ErgoEmacs"
-       (lambda()
+       (lambda ()
          (interactive)
          (ergoemacs-mode -1)) t]))
   
