@@ -550,19 +550,25 @@ Similar to (kill-buffer (current-buffer)) with the following addition:
 
 • prompt user to save if the buffer has been modified even if the buffer is not associated with a file.
 • make sure the buffer shown after closing is a user buffer.
-• if the buffer is a file, add the path to the list `recently-closed-buffers'.
+• If the buffer is editing a source file in an org-mode file, prompt the user to save before closing.
+• If the buffer is a file, add the path to the list `recently-closed-buffers'.
+• If it is the minibuffer, exit the minibuffer
 
 A emacs buffer is one who's name starts with *.
 Else it is a user buffer."
   (interactive)
-  (let (emacsBuff-p isEmacsBufferAfter)
+  (let (emacsBuff-p
+        isEmacsBufferAfter
+        (org-p (string-match "^*Org Src" (buffer-name))))
     
     (setq emacsBuff-p (if (string-match "^*" (buffer-name)) t nil) )
     
     (if (string= major-mode "minibuffer-inactive-mode")
         (minibuffer-keyboard-quit) ; if the buffer is minibuffer
       (progn
-        ;; offer to save buffers that are non-empty and modified, even for non-file visiting buffer. (because kill-buffer does not offer to save buffers that are not associated with files)
+        ;; offer to save buffers that are non-empty and modified, even
+        ;; for non-file visiting buffer. (because kill-buffer does not
+        ;; offer to save buffers that are not associated with files)
         (when (and (buffer-modified-p)
                    (not emacsBuff-p)
                    (not (string-equal major-mode "dired-mode"))
@@ -572,6 +578,13 @@ Else it is a user buffer."
           (if (y-or-n-p (format "Buffer %s modified; Do you want to save? " (buffer-name)))
               (save-buffer)
             (set-buffer-modified-p nil)))
+        ;; 
+        (when (and (buffer-modified-p)
+                   org-p)
+          (if (y-or-n-p (format "Buffer %s modified; Do you want to save? " (buffer-name)))
+              (org-edit-src-save)
+            (set-buffer-modified-p nil)))
+        
         
         ;; save to a list of closed buffer
         (when (not (equal buffer-file-name nil))
