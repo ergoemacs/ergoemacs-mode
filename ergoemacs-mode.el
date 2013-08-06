@@ -1,29 +1,39 @@
-;;; ergoemacs-mode.el --- Emacs mode based on common modern software interface and ergonomics.
+;;; ergoemacs-menus.el --- toggle ErgoEmacs-style menus
 
-;; Copyright © 2007, 2008, 2009 by Xah Lee
-;; Copyright © 2009, 2010 by David Capello
-;; Copyright © 2012, 2013 by Matthew Fidler
+;; Copyright (C) 2007-2013 Matthew L. Fidler
 
-;; Author: Xah Lee <xah@xahlee.org> ( http://xahlee.org/ )
-;;     David Capello <davidcapello@gmail.com>  ( http://www.davidcapello.com.ar/ )
-;;     Matthew Fidler <matthew.fidler@gmail.com> ( http://github.com/mlf176f2/ )
-;; Maintainer: Matthew Fidler, Xah Lee, David Capello
+;; Author: Xah Lee <xah@xahlee.org>
+;;         David Capello <davidcapello@gmail.com>
+;;         Matthew L. Fidler <matthew.fidler@gmail.com>
+;; Maintainer: Matthew L. Fidler <matthew.fidler@gmail.com>
 ;; Created: August 01 2007
-;; Version: 5.8.0.1
-;; Keywords: convenience, qwerty, dvorak, keybi+nding, ergonomic, colemak
+;; Keywords: convenience
 ;; Package-Requires: ((org-cua-dwim "0.5"))
 
-;; You can redistribute this program and/or modify it under the terms
-;; of the GNU General Public License as published by the Free Software
-;; Foundation; either version 2, or (at your option) any later
-;; version.
+;; ErgoEmacs is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published
+;; by the Free Software Foundation, either version 3 of the License,
+;; or (at your option) any later version.
+
+;; ErgoEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with ErgoEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+
 ;; This keybinding set puts the most frequently used Emacs keyboard
 ;; shortcuts into the most easy-to-type spots.
 ;;
 ;; For complete detail, see:
 ;; http://ergoemacs.github.io/ergoemacs-mode/
+
+;; Todo:
+
+;; 
 
 ;;; Acknowledgment:
 ;; Thanks to Shahin Azad for persian layout (fa) ishahinism at g

@@ -1,4 +1,33 @@
-;; this file define keys that we want to set/unset because they are already defined by ergoemacs minor mode
+;;; ergoemacs-unbind.el --- unbind keys
+
+;; Copyright (C) 2013 Matthew L. Fidler
+
+;; Maintainer: Matthew L. Fidler
+;; Keywords: convenience
+
+;; ErgoEmacs is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published
+;; by the Free Software Foundation, either version 3 of the License,
+;; or (at your option) any later version.
+
+;; ErgoEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with ErgoEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; This library define keys that we want to set/unset because they are
+;; already defined by ergoemacs minor mode
+
+;; Todo:
+
+;; 
+
+;;; Code:
 
 (require 'edmacro)
 
