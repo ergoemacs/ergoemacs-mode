@@ -56,6 +56,17 @@
 (require 'cua-base)
 (require 'cua-rect)
 
+
+;; Include extra files
+(defvar ergoemacs-dir
+  (file-name-directory
+   (or
+    load-file-name
+    (buffer-file-name)))
+  "Ergoemacs directory.")
+(add-to-list 'load-path ergoemacs-dir)
+
+
 (require 'ergoemacs-layouts)
 
 (require 'org-cua-dwim nil "NOERROR")
@@ -70,15 +81,6 @@
 
 (defconst ergoemacs-mode-changes "Delete window Alt+0 changed to Alt+2.
 Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n")
-
-;; Include extra files
-(defvar ergoemacs-dir
-  (file-name-directory
-   (or
-    load-file-name
-    (buffer-file-name)))
-  "Ergoemacs directory.")
-(add-to-list 'load-path ergoemacs-dir)
 
 (defgroup ergoemacs-mode nil
   "Emacs mode based on common modern software interface and ergonomics."
