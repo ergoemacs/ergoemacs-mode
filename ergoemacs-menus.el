@@ -9,9 +9,9 @@
 ;; Last-Updated:
 ;;           By:
 ;;     Update #: 0
-;; URL:
+;; URL: https://raw.github.com/ergoemacs/ergoemacs-mode/master/ergoemacs-menus.el
 ;; Doc URL:
-;; Keywords:
+;; Keywords: convenience
 ;; Compatibility:
 ;; 
 ;; Features that might be required by this library:
