@@ -421,9 +421,10 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
 (defvar ergoemacs-full-alt-keymap (make-keymap)
   "Ergoemacs full Alt+ keymap.  Alt is removed from all these keys so that no key chord is necessary.")
 
-(defvar ergoemacacs-full-alt-shift-keymap (make-keymap)
-  "Ergoemacs full Alt+Shift+ keymap. Alt+shift is removed from all
-  these keys so that no key chord is necessary. Unshifted keys are changed to shifted keys.")
+(defvar ergoemacs-full-alt-shift-keymap (make-keymap)
+  "Ergoemacs full Alt+Shift+ keymap.
+Alt+shift is removed from all these keys so that no key chord is
+necessary.  Unshifted keys are changed to shifted keys.")
 
 (defun ergoemacs-exit-dummy ()
   "Dummy function for exiting keymaps."
