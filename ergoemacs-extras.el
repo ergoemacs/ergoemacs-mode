@@ -593,7 +593,7 @@ Currently only supports two modifier plus key."
       (while (re-search-forward "\\([MSC]-\\)" nil t)
         (replace-match "\\\\\\1"))
       (setq ret (buffer-string)))
-    (symbol-value 'ret)))
+    ret))
 
 ;;;###autoload
 (defun ergoemacs-bash ()
