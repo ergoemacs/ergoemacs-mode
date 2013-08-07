@@ -759,9 +759,11 @@ If arg is a negative prefix, copy file path only"
 ;;; ergoemacs help functions.
 (defun ergoemacs-translate-keybindings ()
   "Fix keybindings"
-  (with-current-buffer "*Help*"
-    (let ((inhibit-read-only t))
-      (ergoemacs-pretty-key-rep))))
+  (let ((help (get-buffer "*Help*")))
+    (when help
+      (with-current-buffer help
+        (let ((inhibit-read-only t))
+          (ergoemacs-pretty-key-rep))))))
 
 (defun ergoemacs-help-refactor-keys-hook ()
   "Changes keys to ergoemacs key descriptions."
