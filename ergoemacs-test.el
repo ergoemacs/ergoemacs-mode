@@ -110,7 +110,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   "Tests another shifted selection bug."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-        (macro (edmacro-parse-keys "M-S-h" t))
+        (macro (edmacro-parse-keys "M-H" t))
         (ret t))
     (ergoemacs-mode -1)
     (setq ergoemacs-theme nil)
@@ -121,7 +121,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
       (save-excursion
         (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
         (delete-region (point-min) (point-max))
-        (goto-char (point-max))
+        (goto-char (point-min))
         (insert ";;")
         (execute-kbd-macro macro)
         (setq ret (not mark-active)) ;;  Shouldn't be selected
@@ -130,7 +130,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (setq ergoemacs-theme old-ergoemacs-theme)
     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
     (ergoemacs-mode 1)
-    (should (equal ret t))))
+    (should (equal ret nil))))
 
 (ert-deftest ergoemacs-test-shifted-move-keep-mark ()
   "Test the shifted selection bug."
