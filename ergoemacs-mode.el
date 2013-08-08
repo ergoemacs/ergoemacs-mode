@@ -950,11 +950,13 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
 (defmacro ergoemacs-create-hook-function (hook keys &optional global)
   "Creates a hook function based on the HOOK and the list of KEYS defined."
   (let ((is-override (make-symbol "is-override"))
+        (minor-mode-p (make-symbol "minor-mode-p"))
         (old-keymap (make-symbol "old-keymap"))
         (override-keymap (make-symbol "override-keymap")))
     (setq is-override (eq 'minor-mode-overriding-map-alist (nth 2 (nth 0 keys))))
+    (setq minor-mode-p (eq 'override (nth 2 (nth 0 keys))))
     `(progn
-       ,(if is-override
+       ,(if (or is-override minor-mode-p)
             (progn
 	      (setq old-keymap nil)
 	      `(progn
@@ -965,34 +967,51 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
           `(defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil
              ,(concat "Old keymap for `" (symbol-name hook) "'.")))
        
+       ,(when minor-mode-p
+         `(define-minor-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
+            ,(concat "Minor mode for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
+This is an automatically generated function derived from `ergoemacs-get-minor-mode-layout'. See `ergoemacs-mode'.")
+	    nil
+	    :lighter ""
+	    :global nil
+	    :keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
+
        (defun ,(intern (concat "ergoemacs-" (symbol-name hook))) ()
          ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
 This is an automatically generated function derived from `ergoemacs-get-minor-mode-layout'.")
          ;; Only generate keymap if it hasn't previously been generated.
-         (unless ,(if is-override nil
+         (unless ,(if (or minor-mode-p is-override) nil
                     (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
            
-           ,(if is-override
+           ,(if (or is-override minor-mode-p)
                 `(ergoemacs-setup-keys-for-keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
               `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
                      (copy-keymap ,(nth 2 (nth 0 keys)))))
            ,@(mapcar
               (lambda(def)
-                `(progn
-                   ,(if (and is-override (equal (nth 2 def) 'minor-mode-overriding-map-alist))
-                            
-                        nil
-                      `(ergoemacs-hook-define-key ,(if (and is-override
-                                                            (equal (nth 2 def)
-                                                                   'minor-mode-overriding-map-alist))
-                                                       (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
-                                                     (nth 2 def))
-                                                  ,(if (eq (type-of (nth 0 def)) 'string)
-                                                       `,(nth 0 def)
-                                                     `(quote ,(nth 0 def)))
-                                                  ',(nth 1 def)
-                                                  ',(nth 3 def)))))
+                `(ergoemacs-hook-define-key ,(if (or minor-mode-p
+                                                     (and is-override
+                                                          (equal (nth 2 def)
+                                                                 'minor-mode-overriding-map-alist)))
+                                                 (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
+                                               (nth 2 def))
+                                            ,(if (eq (type-of (nth 0 def)) 'string)
+                                                 `,(nth 0 def)
+                                               `(quote ,(nth 0 def)))
+                                            ',(nth 1 def)
+                                            ',(nth 3 def)))
               keys)
+           ,(when minor-mode-p
+              `(progn
+                 (let ((x (assq ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
+                                minor-mode-map-alist)))
+                   ;; Delete keymap.
+                   (if x
+                       (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+                 (add-to-list 'minor-mode-map-alist
+                              (cons ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
+                                    ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
+                 (funcall ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode")) 1))))
            ,(if is-override
                 `(add-to-list 'minor-mode-overriding-map-alist
                               (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
