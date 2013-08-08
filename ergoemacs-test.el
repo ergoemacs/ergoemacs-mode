@@ -30,6 +30,17 @@
 
 (setq ergoemacs-dir (file-name-directory (or load-file-name (buffer-file-name))))
 
+(require 'ert)
+(defvar ergoemacs-test-lorem-ipsum
+  "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
+do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+enim ad minim veniam, quis nostrud exercitation ullamco laboris
+nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+reprehenderit in voluptate velit esse cillum dolore eu fugiat
+nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+sunt in culpa qui officia deserunt mollit anim id est laborum.")
+
+
 ;;;###autoload
 (defun ergoemacs-test ()
   "Test ergoemacs issues."
@@ -39,60 +50,9 @@
     (when nil
       (message "Updating for the current version of emacs")
       (ergoemacs-warn-globally-changed-keys t))
-    (setq test (ergoemacs-test-shifted-move-keep-mark))
-    (setq ret (and ret test))
-    (message "Shifted Move, Keep Mark: %s" test)
-    (setq test (ergoemacs-test-shifted-move-no-mark))
-    (setq ret (and ret test))
-    (message "Shifted movement and do not select: %s" test)
-    (setq test (ergoemacs-test-119))
-    (setq ret (and ret test))
-    (message "Test repeated C-f: %s" test)
+    (ert "^ergoemacs-test-")))
 
-    (setq test (ergoemacs-test-145))
-    (setq ret (and ret test))
-    (message "Test Backspace Isearch: %s" ret)
-    
-    (setq test (ergoemacs-test-global-key-set-before))
-    (setq ret (and ret test))
-    (message "Global-set-key before ergoemacs-mode loads: %s" test)
-    
-    (setq test (ergoemacs-test-global-key-set-before 'after))
-    (setq ret (and ret test))
-    (message "Global-set-key after ergoemacs-mode loads: %s" test)
-    
-    (setq test (ergoemacs-test-global-key-set-before 'after "<apps> m"))
-    (setq ret (and ret test))
-    (message "Test Issue #128: %s" test)
-    
-    (setq test (ergoemacs-test-global-key-set-before
-                nil
-                (if (eq system-type 'windows-nt)
-                    "<apps> m"
-                  "<menu> m")))
-    
-    (setq ret (and ret test))
-    (message "Test Issue #128a: %s" test)
-    
-    (setq test (ergoemacs-test-global-key-set-before
-                'after
-                (if (eq system-type 'windows-nt)
-                    "<apps> m"
-                  "<menu> m") 'ergoemacs-key))
-    (setq ret (and ret test))
-    (message "Test Issue #128b: %s" test)
-    
-    (setq test (ergoemacs-test-global-key-set-before
-                'after "C-e" 'ergoemacs-key))
-    (message "Test Issue #131a: %s" test)
-    (setq ret (and ret test))
-    
-    (setq test (ergoemacs-test-global-key-set-before
-                'after "C-e" 'ergoemacs-key))
-    
-    (message "Overall test: %s" ret)))
-
-(defun ergoemacs-test-145 ()
+(ert-deftest ergoemacs-test-google-code-145 ()
   "Backspace doesn't work in `isearch-mode'."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
@@ -117,19 +77,9 @@
     (setq ergoemacs-theme old-ergoemacs-theme)
     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
     (ergoemacs-mode 1)
-    (symbol-value 'ret)))
+    (should (equal ret t))))
 
-(defvar ergoemacs-test-lorem-ipsum
-  "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
-do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-enim ad minim veniam, quis nostrud exercitation ullamco laboris
-nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-reprehenderit in voluptate velit esse cillum dolore eu fugiat
-nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-sunt in culpa qui officia deserunt mollit anim id est laborum.")
-
-
-(defun ergoemacs-test-119 ()
+(ert-deftest ergoemacs-test-google-code-119 ()
   "C-f doesn't work in isearch-mode."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
@@ -154,9 +104,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (setq ergoemacs-theme old-ergoemacs-theme)
     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
     (ergoemacs-mode 1)
-    (symbol-value 'ret)))
+    (should (equal ret t))))
 
-(defun ergoemacs-test-shifted-move-no-mark ()
+(ert-deftest ergoemacs-test-shifted-move-no-mark ()
   "Tests another shifted selection bug."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
@@ -180,9 +130,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (setq ergoemacs-theme old-ergoemacs-theme)
     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
     (ergoemacs-mode 1)
-    (symbol-value 'ret)))
+    (should (equal ret t))))
 
-(defun ergoemacs-test-shifted-move-keep-mark ()
+(ert-deftest ergoemacs-test-shifted-move-keep-mark ()
   "Test the shifted selection bug."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
@@ -206,24 +156,11 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (setq ergoemacs-theme old-ergoemacs-theme)
     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
     (ergoemacs-mode 1)
-    (symbol-value 'ret)))
-
-(defun ergoemacs-issue-130 ()
-  "Tries to test ergoemacs Issue #130"
-  (interactive)
-  (let ((emacs-exe (ergoemacs-emacs-exe))
-        (temp-file (make-temp-file "ergoemacs-test" nil ".el"))
-        (temp-elpa (make-temp-file "ergoemacs-test" t)))
-    (make-directory temp-elpa t)
-    (with-temp-file temp-file
-      (insert (format "(when (>= emacs-major-version 24) (require 'package)\n(add-to-list 'package-archives '(\"melpa\" . \"http://melpa.milkbox.net/packages/\") t)(setq package-user-dir \"%s\")(package-initialize)(package-refresh-contents)(package-install 'ergoemacs-mode) (ergoemacs-mode 1))" temp-elpa)))
-    (message "%s"
-             (shell-command-to-string
-              (format "%s -Q -l %s" emacs-exe temp-file)))))
+    (should (equal ret t))))
 
 
 
-(defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs)
+(defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global)
   "Test the global key set before ergoemacs-mode is loaded."
   (let* ((emacs-exe (ergoemacs-emacs-exe))
         (ret nil)
@@ -243,6 +180,8 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
       (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
       (insert "(setq ergoemacs-theme nil)")
       (insert "(setq ergoemacs-keyboard-layout \"us\")")
+      (unless ignore-prev-global
+          (insert "(setq ergoemacs-ignore-prev-global nil)"))
       (insert "(require 'ergoemacs-mode)(ergoemacs-mode 1)")
       (insert (format
                "(setq ergoemacs-test-macro (edmacro-parse-keys \"%s\" t))"
@@ -260,6 +199,33 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
       (setq ret 't)
       (delete-file w-file))
     (symbol-value 'ret)))
+
+(ert-deftest ergoemacs-test-global-key-set-before-1 ()
+  "Test global set key before ergoemacs-mode loads."
+  (should (equal (ergoemacs-test-global-key-set-before) t)))
+
+(ert-deftest ergoemacs-test-global-key-set-after ()
+  "Test global set key after ergoemacs loads."
+  (should (equal (ergoemacs-test-global-key-set-before 'after) t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m ()
+  "Test setting <apps> m after loading."
+  (should (equal (ergoemacs-test-global-key-set-before 'after
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m"
+                                                         "<menu> m")) t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-after ()
+  "Test setting <apps> m after loading."
+  (should (equal (ergoemacs-test-global-key-set-before 'after
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m"
+                                                         "<menu> m")) t)))
+
+(ert-deftest ergoemast-test-global-key-set-after-c-e ()
+  "Test C-e after"
+  (should (equal (ergoemacs-test-global-key-set-before
+                  'after "C-e" 'ergoemacs-key))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
