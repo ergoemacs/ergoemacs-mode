@@ -1,9 +1,33 @@
-;;; ergoemacs-extras.el --- Generate Ergoemacs Extras  -*- lexical-binding:t -*-
+;;; ergoemacs-extras.el --- generate extras for ErgoEmacs -*- lexical-binding:t -*-
+
+;; Copyright (C) 2013 Matthew L. Fidler
+
+;; Maintainer: Matthew L. Fidler
+;; Keywords: convenience
+
+;; ErgoEmacs is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published
+;; by the Free Software Foundation, either version 3 of the License,
+;; or (at your option) any later version.
+
+;; ErgoEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with ErgoEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+
+;; 
+
+;; Todo:
+
 ;; 
 
 ;;; Code:
+
 
 
 (setq ergoemacs-dir (file-name-directory
@@ -569,7 +593,7 @@ Currently only supports two modifier plus key."
       (while (re-search-forward "\\([MSC]-\\)" nil t)
         (replace-match "\\\\\\1"))
       (setq ret (buffer-string)))
-    (symbol-value 'ret)))
+    ret))
 
 ;;;###autoload
 (defun ergoemacs-bash ()
