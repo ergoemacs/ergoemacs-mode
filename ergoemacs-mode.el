@@ -901,9 +901,13 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
              (functionp key-def)
              (functionp fn))
         (let ((no-ergoemacs-advice t))
-          (define-key keymap
-            (eval (macroexpand `[remap ,(intern (symbol-name key-def))]))
-            fn))
+          (if (equal keymap 'local)
+              (local-set-key
+               (eval (macroexpand `[remap ,(intern (symbol-name key-def))]))
+               fn)
+            (define-key keymap
+              (eval (macroexpand `[remap ,(intern (symbol-name key-def))]))
+              fn)))
     (let* ((no-ergoemacs-advice t)
            (key-code
             (cond
@@ -917,7 +921,9 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
              ((ergoemacs-key-fn-lookup key-def)
               ;; Also define <apps> key
               (when (ergoemacs-key-fn-lookup key-def t)
-                (define-key keymap (ergoemacs-key-fn-lookup key-def t) fn))
+                (if (equal keymap 'local)
+                    (local-set-key (ergoemacs-key-fn-lookup key-def t) fn)
+                  (define-key keymap (ergoemacs-key-fn-lookup key-def t) fn)))
               (ergoemacs-key-fn-lookup key-def))
              ;; Define <apps>  key
              ((ergoemacs-key-fn-lookup key-def t)
@@ -933,7 +939,9 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
         (message "hook: %s->%s %s %s" key-def key-code
                  fn translate))
       (when key-code
-        (define-key keymap key-code fn)))))))
+        (if (equal keymap 'local)
+            (local-set-key key-code fn)
+          (define-key keymap key-code fn))))))))
 
 (defmacro ergoemacs-create-hook-function (hook keys &optional global)
   "Creates a hook function based on the HOOK and the list of KEYS defined."
@@ -967,17 +975,18 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
            ,@(mapcar
               (lambda(def)
                 `(progn
-                   ,(if (and is-override (equal (nth 2 def) 'minor-mode-overriding-map-alist)) nil)
-                   (ergoemacs-hook-define-key ,(if (and is-override
-                                                        (equal (nth 2 def)
-                                                               'minor-mode-overriding-map-alist))
-                                                   (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
-                                                 (nth 2 def))
-                                              ,(if (eq (type-of (nth 0 def)) 'string)
-                                                   `,(nth 0 def)
-                                                 `(quote ,(nth 0 def)))
-                                              ',(nth 1 def)
-                                              ',(nth 3 def))))
+                   ,(if (and is-override (member (nth 2 def) '(local minor-mode-overriding-map-alist)))
+                        nil
+                      `(ergoemacs-hook-define-key ,(if (and is-override
+                                                            (equal (nth 2 def)
+                                                                   'minor-mode-overriding-map-alist))
+                                                       (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
+                                                     (nth 2 def))
+                                                  ,(if (eq (type-of (nth 0 def)) 'string)
+                                                       `,(nth 0 def)
+                                                     `(quote ,(nth 0 def)))
+                                                  ',(nth 1 def)
+                                                  ',(nth 3 def)))))
               keys)
            ,(if is-override
                 `(add-to-list 'minor-mode-overriding-map-alist
@@ -987,7 +996,21 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
                                           (equal (car y) (car x)))
                                      nil))
               nil)
-           t))
+           t)
+         ;; Now add any defined local hooks.
+         ,@(mapcar
+            (lambda(def)
+              `(progn
+                 ,(if (not (equal (nth 2 def) 'local))
+                      nil
+                    `(ergoemacs-hook-define-key
+                      'local
+                      ,(if (eq (type-of (nth 0 def)) 'string)
+                           `,(nth 0 def)
+                         `(quote ,(nth 0 def)))
+                      ',(nth 1 def)
+                      ',(nth 3 def)))))
+            keys))
        (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))) ',override-keymap))))
 
 (defvar ergoemacs-hook-list (list)
