@@ -320,8 +320,14 @@
 (defcustom ergoemacs-minor-mode-layout
   `(;; Key/variable command x-hook
     (org-mode-hook
-     ((move-beginning-of-line org-beginning-of-line org-mode-map remap)
-      (move-end-of-line org-end-of-line org-mode-map remap)))
+     ((move-beginning-of-line org-beginning-of-line override remap)
+      (move-end-of-line org-end-of-line override remap)
+      (cua-set-rectangle-mark org-insert-heading-respect-content override)
+      (cua-paste org-yank override)
+      ("<M-down>" org-metadown override)
+      ("<M-up>" org-metaup override)
+      ("<M-left>" org-metaleft override)
+      ("<M-right>" org-metaright override)))
     (org-src-mode-hook
      ((save-buffer org-edit-src-save org-src-mode-map remap)))
     (org-agenda-mode-hook
@@ -479,6 +485,7 @@
                        (choice
                         (symbol :tag "Function to Run")
                         (string :tag "Translated Kbd Code")
+                        (const :tag "Override by new minor mode" override)
                         (const :tag "Unbind Key" nil))
                        (symbol :tag "Keymap to Modify")
                        (choice
@@ -887,6 +894,7 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                               (choice
                                (symbol :tag "Function to Run")
                                (string :tag "Translated Kbd Code")
+                               (const :tag "Override by new minor mode" override)
                                (const :tag "Unbind Key" nil))
                               (symbol :tag "Keymap to Modify")
                               (choice
