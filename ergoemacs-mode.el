@@ -1,6 +1,8 @@
-;;; ergoemacs-menus.el --- toggle ErgoEmacs-style menus
+;;; ergoemacs-mode.el --- Emacs mode based on common modern software interface and ergonomics.
 
-;; Copyright (C) 2007-2013 Matthew L. Fidler
+;; Copyright © 2007, 2008, 2009 by Xah Lee
+;; Copyright © 2009, 2010 by David Capello
+;; Copyright © 2012, 2013 by Matthew Fidler
 
 ;; Author: Xah Lee <xah@xahlee.org>
 ;;         David Capello <davidcapello@gmail.com>
