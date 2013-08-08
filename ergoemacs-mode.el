@@ -908,50 +908,42 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                               (setq fn ',(intern (concat "ergoemacs-shortcut---"
                                                          (md5 (format "%s" definition)))))))))
       (if (and (eq translate 'remap)
-             (functionp key-def)
-             (functionp fn))
-        (let ((no-ergoemacs-advice t))
-          (if (equal keymap 'local)
-              (local-set-key
-               (eval (macroexpand `[remap ,(intern (symbol-name key-def))]))
-               fn)
+               (functionp key-def)
+               (functionp fn))
+          (let ((no-ergoemacs-advice t))
             (define-key keymap
               (eval (macroexpand `[remap ,(intern (symbol-name key-def))]))
-              fn)))
-    (let* ((no-ergoemacs-advice t)
-           (key-code
-            (cond
-             ((and translate (eq 'string (type-of key-def)))
-              (ergoemacs-kbd key-def))
-             ((eq 'string (type-of key-def))
-              (condition-case err
-                  (read-kbd-macro key-def)
-                (error (read-kbd-macro
-                        (encode-coding-string key-def locale-coding-system)))))
-             ((ergoemacs-key-fn-lookup key-def)
-              ;; Also define <apps> key
-              (when (ergoemacs-key-fn-lookup key-def t)
-                (if (equal keymap 'local)
-                    (local-set-key (ergoemacs-key-fn-lookup key-def t) fn)
-                  (define-key keymap (ergoemacs-key-fn-lookup key-def t) fn)))
-              (ergoemacs-key-fn-lookup key-def))
-             ;; Define <apps>  key
-             ((ergoemacs-key-fn-lookup key-def t)
-              (ergoemacs-key-fn-lookup key-def t)
-              nil)
-             (t
-              (if (and (functionp key-def)
-                       (functionp fn))
-                  (eval
-                   (macroexpand `[remap ,(intern (symbol-name key-def))]))
-                nil)))))
-      (when ergoemacs-debug
-        (message "hook: %s->%s %s %s" key-def key-code
-                 fn translate))
-      (when key-code
-        (if (equal keymap 'local)
-            (local-set-key key-code fn)
-          (define-key keymap key-code fn))))))))
+              fn))
+        (let* ((no-ergoemacs-advice t)
+               (key-code
+                (cond
+                 ((and translate (eq 'string (type-of key-def)))
+                  (ergoemacs-kbd key-def))
+                 ((eq 'string (type-of key-def))
+                  (condition-case err
+                      (read-kbd-macro key-def)
+                    (error (read-kbd-macro
+                            (encode-coding-string key-def locale-coding-system)))))
+                 ((ergoemacs-key-fn-lookup key-def)
+                  ;; Also define <apps> key
+                  (when (ergoemacs-key-fn-lookup key-def t)
+                    (define-key keymap (ergoemacs-key-fn-lookup key-def t) fn))
+                  (ergoemacs-key-fn-lookup key-def))
+                 ;; Define <apps>  key
+                 ((ergoemacs-key-fn-lookup key-def t)
+                  (ergoemacs-key-fn-lookup key-def t)
+                  nil)
+                 (t
+                  (if (and (functionp key-def)
+                           (functionp fn))
+                      (eval
+                       (macroexpand `[remap ,(intern (symbol-name key-def))]))
+                    nil)))))
+          (when ergoemacs-debug
+            (message "hook: %s->%s %s %s" key-def key-code
+                     fn translate))
+          (when key-code
+            (define-key keymap key-code fn)))))))
 
 (defmacro ergoemacs-create-hook-function (hook keys &optional global)
   "Creates a hook function based on the HOOK and the list of KEYS defined."
@@ -985,7 +977,8 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
            ,@(mapcar
               (lambda(def)
                 `(progn
-                   ,(if (and is-override (member (nth 2 def) '(local minor-mode-overriding-map-alist)))
+                   ,(if (and is-override (equal (nth 2 def) 'minor-mode-overriding-map-alist))
+                            
                         nil
                       `(ergoemacs-hook-define-key ,(if (and is-override
                                                             (equal (nth 2 def)
@@ -1006,22 +999,14 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
                                           (equal (car y) (car x)))
                                      nil))
               nil)
-           t)
-         ;; Now add any defined local hooks.
-         ,@(mapcar
-            (lambda(def)
-              `(progn
-                 ,(if (not (equal (nth 2 def) 'local))
-                      nil
-                    `(ergoemacs-hook-define-key
-                      'local
-                      ,(if (eq (type-of (nth 0 def)) 'string)
-                           `,(nth 0 def)
-                         `(quote ,(nth 0 def)))
-                      ',(nth 1 def)
-                      ',(nth 3 def)))))
-            keys))
+           t))
        (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))) ',override-keymap))))
+
+(defun ergoemacs-pre-command-install-minor-mode-overriding-map-alist ()
+  "Install `minor-mode-overriding-map-alist' if it didn't get installed (like in some `org-mode')."
+  (let ((hook (intern-soft (format "ergoemacs-%s-hook" major-mode))))
+    (when hook
+      (funcall hook))))
 
 (defvar ergoemacs-hook-list (list)
 "List of hook and hook-function pairs.")
@@ -1039,8 +1024,7 @@ depending the state of `ergoemacs-mode' variable.  If the mode
 is being initialized, some global keybindings in current-global-map
 will change."
   
-  (let ((modify-hook (if (and (boundp 'ergoemacs-mode) ergoemacs-mode) 'add-hook 'remove-hook))
-        (modify-advice (if (and (boundp 'ergoemacs-mode) ergoemacs-mode) 'ad-enable-advice 'ad-disable-advice)))
+  (let ((modify-advice (if (and (boundp 'ergoemacs-mode) ergoemacs-mode) 'ad-enable-advice 'ad-disable-advice)))
     
     
     ;; when ergoemacs-mode is on, activate hooks and unset global keys, else do inverse
@@ -1056,9 +1040,11 @@ will change."
     
     ;; install the mode-hooks
     (dolist (hook ergoemacs-hook-list)
-      (funcall modify-hook (nth 0 hook) (nth 1 hook))
+      (if (and (boundp 'ergoemacs-mode) ergoemacs-mode)
+          (add-hook (nth 0 hook) (nth 1 hook) t)
+        (remove-hook (nth 0 hook) (nth 1 hook)))
       ;; Restore original keymap
-      (when (and (eq modify-hook 'remove-hook)
+      (when (and (not (and (boundp 'ergoemacs-mode) ergoemacs-mode))
                  (nth 2 hook)
                  (nth 3 hook)
                  (symbol-value (nth 2 hook))
@@ -1125,8 +1111,7 @@ will change."
   (key-description
    (or (ergoemacs-key-fn-lookup 'execute-extended-command)
        (ergoemacs-key-fn-lookup 'smex)
-       (ergoemacs-key-fn-lookup 'smex-if-exists)
-       (ergoemacs-key-fn-lookup 'ergoemacs-smex-if-exists))))
+       (ergoemacs-key-fn-lookup 'helm-M-x))))
 
 (defmacro ergoemacs-extract-map (keymap &optional prefix chord rep-chord new-chord)
   "Takes out the key-chords from the buffer-defined map.
@@ -1332,9 +1317,6 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-x-ctl-to-alt "C-x" ctl-to-alt)
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-h-ctl-to-alt "C-h" ctl-to-alt)
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-c-ctl-c "C-c C-c" nil ergoemacs-repeat-ctl-c-ctl-c)
-
-(defun ergoemacs-ctl-c ()
-  )
 
 
 (require 'cus-edit)
