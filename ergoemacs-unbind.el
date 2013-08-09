@@ -954,7 +954,16 @@ disabled at `ergoemacs-restore-global-keys'."
                                    (ergoemacs-unicode-char "】" "]") (ergoemacs-unicode-char "【" "["))))
           (goto-char (point-min))
           (while (search-forward "M-" nil t)
-            (replace-match "Alt+" t))
+            (replace-match (if (eq system-type 'darwin)
+                               (cond
+                                ((eq ns-command-modifier 'meta)
+                                 (format "%sCmd+"
+                                         (ergoemacs-unicode-char "⌘" "")))
+                                ((eq ns-alternate-modifier 'meta)
+                                 (format "%sOpt+"
+                                         (ergoemacs-unicode-char "⌥" "")))
+                                (t "Alt+"))
+                               "Alt+") t))
           (goto-char (point-min))
           (while (search-forward "C-" nil t)
             (replace-match "Ctrl+" t))
