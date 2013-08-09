@@ -832,9 +832,11 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
     `("ErgoEmacs"
       ,(ergoemacs-get-layouts-menu)
       ,(ergoemacs-get-themes-menu)
+      "--"
       ["Make Bash aware of ergoemacs keys"
        (lambda () (interactive)
          (call-interactively 'ergoemacs-bash)) t]
+      "--"
       ["Use Menus"
        (lambda() (interactive)
          (setq ergoemacs-use-menus (not ergoemacs-use-menus))
@@ -844,8 +846,8 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                (ergoemacs-menus-on))
            (when (featurep 'ergoemacs-menus)
              (ergoemacs-menus-off))))
-       :style radio :selected ergoemacs-use-menus]
-      
+       :style toggle :selected (symbol-value 'ergoemacs-use-menus)]
+      "--"
       ;; ["Generate Documentation"
       ;;  (lambda()
       ;;    (interactive)
