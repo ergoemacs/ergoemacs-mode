@@ -879,6 +879,7 @@ support please [[https://github.com/ergoemacs/ergoemacs-mode/issues/new][drop me
   :PAGE:     minor-modes.html
   :TEMPLATE: blog_static_no_title.html
   :END:
+
 Most major and minor modes are setup to respect =ergoemacs-mode=
 keybindings.  There are additional changes described below
 *** Org mode
