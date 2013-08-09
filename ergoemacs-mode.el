@@ -513,8 +513,6 @@ necessary.  Unshifted keys are changed to shifted keys.")
   (set-temporary-overlay-map  ergoemacs-full-alt-keymap
                               'ergoemacs-exit-alt-keys))
 
-
-
 (defun ergoemacs-exit-alt-shift-keys ()
   "Exit alt-shift keys predicate"
   (let (ret cmd)
@@ -536,10 +534,8 @@ necessary.  Unshifted keys are changed to shifted keys.")
   "Install the alt-shift keymap temporarily"
   (interactive)
   (setq ergoemacs-exit-temp-map-var nil)
-  (set-temporary-overlay-map  ergoemacs-full-alt-shift-keymap
-                              'ergoemacs-exit-alt-shift-keys))
-
-
+  (set-temporary-overlay-map ergoemacs-full-alt-shift-keymap
+                             'ergoemacs-exit-alt-shift-keys))
 
 (require 'ergoemacs-functions)
 
@@ -839,6 +835,17 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
       ["Make Bash aware of ergoemacs keys"
        (lambda () (interactive)
          (call-interactively 'ergoemacs-bash)) t]
+      ["Use Menus"
+       (lambda() (interactive)
+         (setq ergoemacs-use-menus (not ergoemacs-use-menus))
+         (if ergoemacs-use-menus
+             (progn
+               (require 'ergoemacs-menus)
+               (ergoemacs-menus-on))
+           (when (featurep 'ergoemacs-menus)
+             (ergoemacs-menus-off))))
+       :style radio :selected ergoemacs-use-menus]
+      
       ;; ["Generate Documentation"
       ;;  (lambda()
       ;;    (interactive)
@@ -850,6 +857,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
       ["Save Settings for Future Sessions"
        (lambda ()
          (interactive)
+         (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
          (customize-save-variable 'ergoemacs-theme ergoemacs-theme)
          (customize-save-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
          (customize-save-customized)) t]
@@ -989,17 +997,18 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
                      (copy-keymap ,(nth 2 (nth 0 keys)))))
            ,@(mapcar
               (lambda(def)
-                `(ergoemacs-hook-define-key ,(if (or minor-mode-p
-                                                     (and is-override
-                                                          (equal (nth 2 def)
-                                                                 'minor-mode-overriding-map-alist)))
-                                                 (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
-                                               (nth 2 def))
-                                            ,(if (eq (type-of (nth 0 def)) 'string)
-                                                 `,(nth 0 def)
-                                               `(quote ,(nth 0 def)))
-                                            ',(nth 1 def)
-                                            ',(nth 3 def)))
+                `(ergoemacs-hook-define-key
+                  ,(if (or minor-mode-p
+                           (and is-override
+                                (equal (nth 2 def)
+                                       'minor-mode-overriding-map-alist)))
+                       (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
+                     (nth 2 def))
+                  ,(if (eq (type-of (nth 0 def)) 'string)
+                       `,(nth 0 def)
+                     `(quote ,(nth 0 def)))
+                  ',(nth 1 def)
+                  ',(nth 3 def)))
               keys)
            ,(when minor-mode-p
               `(progn
@@ -1044,10 +1053,7 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
 depending the state of `ergoemacs-mode' variable.  If the mode
 is being initialized, some global keybindings in current-global-map
 will change."
-  
-  (let ((modify-advice (if (and (boundp 'ergoemacs-mode) ergoemacs-mode) 'ad-enable-advice 'ad-disable-advice)))
-    
-    
+  (let ((modify-advice (if (and (boundp 'ergoemacs-mode) ergoemacs-mode) 'ad-enable-advice 'ad-disable-advice)))    
     ;; when ergoemacs-mode is on, activate hooks and unset global keys, else do inverse
     (if (and (boundp 'ergoemacs-mode) ergoemacs-mode (not (equal ergoemacs-mode 0)))
         (progn
@@ -1374,6 +1380,13 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
     (error nil)))
 
 (add-hook 'emacs-startup-hook 'ergoemacs-check-for-new-version)
+
+(defcustom ergoemacs-use-menus t
+  "Use ergoemacs menus"
+  :type 'boolean
+  :set 'ergoemacs-set-default
+  :group 'ergoemacs-mode)
+
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -1402,6 +1415,12 @@ bindings the keymap is:
   (ergoemacs-setup-keys t)
   (when ergoemacs-debug
     (message "Ergoemacs Keys have loaded."))
+  (if ergoemacs-use-menus
+      (progn
+        (require 'ergoemacs-menus)
+        (ergoemacs-menus-on))
+    (when (featurep 'ergoemacs-menus)
+      (ergoemacs-menus-off)))
   (if ergoemacs-mode
       (define-key cua--cua-keys-keymap (read-kbd-macro "M-v") nil)
     (define-key cua--cua-keys-keymap (read-kbd-macro "M-v") 'cua-repeat-replace-region))
@@ -1529,7 +1548,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (when ergoemacs-use-aliases
   (ergoemacs-load-aliases))
-
 
 (provide 'ergoemacs-mode)
 
