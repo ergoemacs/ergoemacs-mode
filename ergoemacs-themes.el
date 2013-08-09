@@ -41,6 +41,11 @@
     ("M-l" forward-char "→ char")
     ("M-i" previous-line "↑ line")
     ("M-k" next-line "↓ line")
+
+    ("M-C-j" "<C-left>"  "← char")
+    ("M-C-l" "<C-right>" "→ char")
+    ("M-C-i" "<C-up>" "↑ line")
+    ("M-C-k" "<C-down>" "↓ line")
     
     ;; Move by word
     ("M-u" backward-word "← word")
