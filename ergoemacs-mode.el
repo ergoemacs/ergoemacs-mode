@@ -1382,6 +1382,13 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
     (error nil)))
 
 (add-hook 'emacs-startup-hook 'ergoemacs-check-for-new-version)
+(defvar ergoemacs-old-ns-command-modifier nil)
+(defvar ergoemacs-old-ns-alternate-modifier nil)
+
+(defcustom ergoemacs-use-mac-command-as-meta t
+  "Use Mac's command/apple key as emacs meta-key when enabled."
+  :type 'boolean
+  :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-use-menus t
   "Use ergoemacs menus"
@@ -1423,6 +1430,15 @@ bindings the keymap is:
         (ergoemacs-menus-on))
     (when (featurep 'ergoemacs-menus)
       (ergoemacs-menus-off)))
+  (when (and (eq system-type 'darwin))
+    (if ergoemacs-mode
+        (progn
+          (setq ergoemacs-old-ns-command-modifier ns-command-modifier)
+          (setq ergoemacs-old-ns-alternate-modifier ns-alternate-modifier)
+          (setq ns-command-modifier 'meta)
+          (setq ns-alternate-modifier nil))
+      (setq ns-command-modifier ergoemacs-old-ns-command-modifier)
+      (setq ns-alternate-modifier ergoemacs-old-ns-alternate-modifier)))
   (if ergoemacs-mode
       (define-key cua--cua-keys-keymap (read-kbd-macro "M-v") nil)
     (define-key cua--cua-keys-keymap (read-kbd-macro "M-v") 'cua-repeat-replace-region))
