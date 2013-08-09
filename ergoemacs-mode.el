@@ -1478,6 +1478,58 @@ bindings the keymap is:
 (when ergoemacs-ignore-prev-global
   (ergoemacs-ignore-prev-global))
 
+;;; Frequently used commands as aliases
+
+(defcustom ergoemacs-use-aliases t
+  "Use aliases defined by `ergoemacs-aliases' to abbreviate commonly used commands.
+Depending on how you use the completion engines, this may or may not be useful.
+However instead of using M-a `eval-buffer', you could use M-a `eb'"
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-aliases
+  '((ar    align-regexp)
+    (cc    calc)
+    (dml   delete-matching-lines)
+    (dnml  delete-non-matching-lines)
+    (dtw   delete-trailing-whitespace)
+    (eb    eval-buffer)
+    (ed    eval-defun)
+    (eis   elisp-index-search)
+    (er    eval-region)
+    (fb    flyspell-buffer)
+    (fd    find-dired)
+    (g     grep)
+    (gf    grep-find)
+    (lcd   list-colors-display)
+    (lf    load-file)
+    (lml   list-matching-lines)
+    (ps    powershell)
+    (qrr   query-replace-regexp)
+    (rb    revert-buffer)
+    (rof   recentf-open-files)
+    (rr    reverse-region)
+    (rs    replace-string)
+    (sbc   set-background-color)
+    (sh    shell)
+    (sl    sort-lines))
+  "List of aliases defined by `ergoemacs-mode'."
+  :type '(repeat
+          (list
+           (sexp :tag "alias")
+           (symbol :tag "actual function")))
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-load-aliases ()
+  "Loads aliases defined in `ergoemacs-aliases'."
+  (mapc
+   (lambda(x)
+     (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x)))))
+   ergoemacs-aliases))
+
+(when ergoemacs-use-aliases
+  (ergoemacs-load-aliases))
+
 
 (provide 'ergoemacs-mode)
 
