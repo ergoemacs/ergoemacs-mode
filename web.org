@@ -151,6 +151,8 @@ org-mode and exported to HTML using [[https://github.com/renard/o-blog][o-blog]]
   - [[file:{lisp}(ob:path-to-root){/lisp}/gradual-adoption.html][Gradual Adoption]]
   - [[file:{lisp}(ob:path-to-root){/lisp}/system-wide.html][System Wide Keys]]
   - [[file:{lisp}(ob:path-to-root){/lisp}/customize-keys.html][Customizing your keys]]
+  - 
+  - [[file:{lisp}(ob:path-to-root){/lisp}/aliases.html][Making Commands Easier to Type]]
 
 - [[file:{lisp}(ob:path-to-root){/lisp}/testimonials.html][/icon-comments-alt icon-white/ Testimonials]]
 
@@ -1881,3 +1883,21 @@ be bound globally even if =ergoemacs-mode= is not active.
 Additionally, they are not Layout independent.  For example, defining
 Alt+j on QWERTY will not change to Alt+n for colemak.  
 
+** Making Keys Easier to type
+  :PROPERTIES:
+  :PAGE:     aliases.html
+  :TEMPLATE: blog_static_no_title.html
+  :END:
+
+Emacs commands are very long and descriptive.  It may be a good idea
+to shorten commands you use frequently.  This can be done by defining
+[[http://ergoemacs.org/emacs/emacs_alias.html][aliases]]. 
+
+Ergoemacs-mode already adds support for a few commonly used commands
+like allowing =eb= be the same as =eval-buffer=.  These are defined
+in the variable =ergoemacs-aliaeses= which may be customized.  This
+can also be turned off by setting =ergoemacs-use-aliases= to nil:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-use-aliases nil)
+#+END_SRC
