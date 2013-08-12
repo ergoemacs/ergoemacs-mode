@@ -1075,12 +1075,13 @@ Some exceptions we don't want to unset.
 
 (ergoemacs-deftheme cabbage
   "Cabbage theme."
-  nil
+  lvl1
   ;;(ergoemacs-key "M-j" 'backward-char)
   ;;(ergoemacs-key "M-l" 'forward-char)
   ;;(ergoemacs-key "M-i" 'previous-line)
   ;;(ergoemacs-key "M-k" 'next-line)
-  ;;(ergoemacs-key "M-I" 'scroll-down)
+  
+  (ergoemacs-key "M-I" 'scroll-down)
   (ergoemacs-key "M-C-i" 'scroll-down "↓ page")
   
   (ergoemacs-key "M-K" 'scroll-up )
