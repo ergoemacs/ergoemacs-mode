@@ -1263,11 +1263,11 @@ function change_keyfreq_layout() {
 
 ;; Allow the SVN prefixes to be specified by the following:
 (setq ergoemacs-svn-prefixes
-  '(("M-" "M" "MS" "Alt+⇧Shift+" "M-S-" nil)
-    ("M-" "M" "MM" "Alt+" "M-" nil)
-    ("C-" "C" "CS" "Ctrl+⇧Shift+" "C-S-" nil)
-    ("C-" "C" "CC" "Ctrl+" "C-" nil)
-    ("<apps> " "A" "AA" "▤ Menu/Apps " "<apps> " nil)))
+      '(("M-" "M" "MS" "Alt/⌘+⇧Shift+" "M-S-" nil)
+        ("M-" "M" "MM" "Alt/⌘+" "M-" nil)
+        ("C-" "C" "CS" "Ctrl+⇧Shift+" "C-S-" nil)
+        ("C-" "C" "CC" "Ctrl+" "C-" nil)
+        ("<apps> " "A" "AA" "▤ Menu/Apps " "<apps> " nil)))
 
 ;;; Format of list -- (0) Emacs prefix (1) svg prefix (2) Final/Symbol
 ;;; prefix (3) Final text legend (4) Keyboard lookup (5) Treat
