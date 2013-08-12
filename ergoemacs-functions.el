@@ -636,6 +636,18 @@ Else it is a user buffer."
   (interactive)
   (text-scale-increase 0))
 
+;;; org-mode functions.
+(defun ergoemacs-org-mode-ctrl-return (&optional reopen-or-invisible-ok)
+  "When in an `org-mode' table, use `cua-set-rectangle-mark', otherwise use `org-insert-heading-respect-content'"
+  (interactive "P")
+  (cond
+   ((save-excursion (beginning-of-line) (looking-at org-table-any-line-regexp))
+    (setq prefix-arg current-prefix-arg)
+    (cua-set-rectangle-mark reopen-or-invisible-ok))
+   (t
+    (setq prefix-arg current-prefix-arg)
+    (org-insert-heading-respect-content reopen-or-invisible-ok))))
+
 ;;; Ergoprog functions
 (defun ergoemacs-is-text-mode ()
   (or (eq major-mode 'text-mode)
