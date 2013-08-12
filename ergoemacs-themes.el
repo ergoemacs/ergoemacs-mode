@@ -180,6 +180,7 @@
     ("<apps> c" ergoemacs-copy-line-or-region "copy")
     ("<apps> v" yank "paste")
     ("<apps> b" redo "↷ redo")
+    ("<apps> f" (helm-mini ido-switch-buffer switch-to-buffer) "switch buf")
     ("<apps> z" undo "↶ undo")
     ("<apps> n c" calc "calc" t)
     ("<apps> n m" magit-status "magit" t)
