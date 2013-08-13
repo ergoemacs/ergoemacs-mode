@@ -648,6 +648,21 @@ Else it is a user buffer."
     (setq prefix-arg current-prefix-arg)
     (org-insert-heading-respect-content reopen-or-invisible-ok))))
 
+(defun ergoemacs-org-mode-paste (&optional arg)
+  "Ergoemacs org-mode paste."
+  (let ((regtxt (and cua--register (get-register cua--register))))
+    (cond
+     ((and mark-active cua--rectangle)
+      ;; call cua-paste
+      (cua-paste arg))
+     ((and cua--last-killed-rectangle
+           (eq (and kill-ring (car kill-ring)) (car cua--last-killed-rectangle)))
+      ;; Call cua-paste
+      (cua-paste arg))
+     (t
+      ;; Call org-yank.
+      (org-yank arg)))))
+
 ;;; Ergoprog functions
 (defun ergoemacs-is-text-mode ()
   (or (eq major-mode 'text-mode)

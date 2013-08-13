@@ -329,7 +329,7 @@
      ((move-beginning-of-line org-beginning-of-line override remap)
       (move-end-of-line org-end-of-line override remap)
       (cua-set-rectangle-mark ergoemacs-org-mode-ctrl-return override)
-      (cua-paste org-yank override)
+      (cua-paste ergoemacs-org-mode-paste override)
       ;;("<C-return>" ergoemacs-org-mode-ctrl-return override)
       ("<M-down>" org-metadown override)
       ("<M-up>" org-metaup override)
