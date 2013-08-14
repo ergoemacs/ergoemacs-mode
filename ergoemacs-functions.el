@@ -135,12 +135,19 @@ If narrow-to-region is in effect, then cut that region only."
   (kill-region (point-min) (point-max))
   (message "Buffer content cut"))
 
-(defun ergoemacs-copy-line-or-region ()
+(defun ergoemacs-copy-line-or-region (&optional arg)
   "Copy current line, or current text selection."
-  (interactive)
-  (if (region-active-p)
-      (kill-ring-save (region-beginning) (region-end))
-    (kill-ring-save (line-beginning-position) (line-beginning-position 2)) ) )
+  (interactive "P")
+  (cond
+   ;;; cua-copy-rectangle
+   ((and cua--rectangle (boundp 'cua-mode) cua-mode)
+    (cua-copy-rectangle arg))
+   ((and (region-active-p) (boundp 'cua-mode) cua-mode)
+    (cua-copy-region arg))
+   ((region-active-p)
+    (kill-ring-save (region-beginning) (region-end)))
+   (t
+    (kill-ring-save (line-beginning-position) (line-beginning-position 2)))))
 
 (defun ergoemacs-cut-line-or-region ()
   "Cut the current line, or current text selection."
