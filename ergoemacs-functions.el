@@ -149,12 +149,18 @@ If narrow-to-region is in effect, then cut that region only."
    (t
     (kill-ring-save (line-beginning-position) (line-beginning-position 2)))))
 
-(defun ergoemacs-cut-line-or-region ()
+(defun ergoemacs-cut-line-or-region (&optional arg)
   "Cut the current line, or current text selection."
-  (interactive)
-  (if (region-active-p)
-      (kill-region (region-beginning) (region-end))
-    (kill-region (line-beginning-position) (line-beginning-position 2)) ) )
+  (interactive "P")
+  (cond
+   ((and cua--rectangle (boundp 'cua-mode) cua-mode)
+    (cua-cut-rectangle arg))
+   ((and (region-active-p) (boundp 'cua-mode) cua-mode)
+    (cua-cut-region arg))
+   ((region-active-p)
+    (kill-ring (region-beginning) (region-end)))
+   (t
+    (kill-ring (line-beginning-position) (line-beginning-position 2)))))
 
 ;;; CURSOR MOVEMENT
 
