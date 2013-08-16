@@ -158,18 +158,40 @@
 
 (add-to-list 'ergoemacs-advices 'ergoemacs-local-unset-key-advice)
 
+(eval-after-load "helm"
+  '(progn
+     (defadvice helm-M-x (around ergoemacs-helm-M-x-keys)
+       "Translates Helm M-x keys to ergoemacs style bindings."
+       (flet ((helm-M-x-transformer
+               (candidates sources)
+               "filtered-candidate-transformer to show bindings in emacs commands.
+Show global bindings and local bindings according to current `major-mode'."
+               (with-helm-current-buffer
+                 (loop with local-map = (helm-M-x-current-mode-map-alist)
+                       for cand in candidates
+                       for local-key  = (car (rassq cand local-map))
+                       for key        = (substitute-command-keys (format "\\[%s]" cand))
+                       collect
+                       (cons (cond ((and (string-match "^M-x" key) local-key)
+                                    (format "%s (%s)"
+                                            cand (propertize
+                                                  (if (and ergoemacs-use-ergoemacs-key-descriptions ergoemacs-mode)
+                                                      (ergoemacs-pretty-key local-key)
+                                                    local-key)
+                                                  'face 'helm-M-x-key)))
+                                   ((string-match "^M-x" key) cand)
+                                   (t (format "%s (%s)"
+                                              cand (propertize
+                                                    (if (and ergoemacs-use-ergoemacs-key-descriptions ergoemacs-mode)
+                                                        (ergoemacs-pretty-key key)
+                                                      key)
+                                                    'face 'helm-M-x-key))))
+                             cand) into ls
+                             finally return
+                             (sort ls #'helm-command-M-x-sort-fn)))))
+         ad-do-it))
 
-;; I don't think this works...
-(defadvice helm-persistent-help-string (around ergoemacs-helm-persistent-help-string-advice activate)
-  "Formats the help string by pretty printing it."
-  (let ((ret ad-do-it))
-    (when ergoemacs-mode
-      (setq ret (ergoemacs-pretty-key-rep ret)))
-    (symbol-value 'ret)))
-
-(ad-activate 'helm-persistent-help-string)
-
-
+     (ad-activate 'helm-M-x)))
 
 
 
