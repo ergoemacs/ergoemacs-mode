@@ -676,6 +676,53 @@ Else it is a user buffer."
       ;; Call org-yank.
       (org-yank arg)))))
 
+(defun ergoemacs-lookup-key-and-run (key)
+  "Looks up KEY in `ergoemacs-map' and runs the function"
+  (let ((fun (lookup-key ergoemacs-keymap (read-kbd-macro key))))
+    (call-interactively fun)))
+
+(defmacro ergoemacs-define-org-meta (direction &optional disable)
+  "Defines org-mode meta-direction keys.
+DIRECTION defines the `org-mode' and `ergoemacs-mode' direction.
+DISABLE defines if the option should be disabled by default."
+  `(progn
+     (defcustom ,(intern (format "ergoemacs-use-ergoemacs-meta%s" direction)) ,(not disable)
+       ,(format "Use ergoemacs-mode defined <M-%s>." direction)
+       :type 'boolean
+       :group 'ergoemacs-mode)
+     (defun ,(intern (format "ergoemacs-org-meta%s" direction))  (&optional arg)
+       ,(format "Run `org-meta%s' in the proper context.
+When `ergoemacs-use-ergoemacs-meta%s' is non-nil use what ergoemacs-mode defines for <M-%s>.
+ARG is the prefix argument for either command." direction direction direction)
+       (interactive "P")
+       (cond
+        ((or
+          (not ,(intern (format "ergoemacs-use-ergoemacs-meta%s" direction)))
+          (org-at-heading-p)
+          (org-at-item-p)
+          (org-at-table-p)
+          (and (org-region-active-p)
+               (save-excursion
+                 (goto-char (region-beginning))
+                 (org-at-item-p)))
+          (org-with-limited-levels
+           (or (org-at-heading-p)
+               (and (org-region-active-p)
+                    (save-excursion
+                      (goto-char (region-beginning))
+                      (org-at-heading-p))))))
+         (setq prefix-arg current-prefix-arg) ;; Send prefix to next function
+         (call-interactively ',(intern (format "org-meta%s" direction))))
+        (t
+         (setq prefix-arg current-prefix-arg) ;; Send prefix to next function
+         (ergoemacs-lookup-key-and-run ,(format "<M-%s>" direction)))))))
+
+(ergoemacs-define-org-meta "left")
+(ergoemacs-define-org-meta "right")
+
+(ergoemacs-define-org-meta "up" t)
+(ergoemacs-define-org-meta "down" t)
+
 ;;; Ergoprog functions
 (defun ergoemacs-is-text-mode ()
   (or (eq major-mode 'text-mode)

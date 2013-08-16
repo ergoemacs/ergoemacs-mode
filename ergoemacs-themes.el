@@ -331,10 +331,10 @@
       (cua-set-rectangle-mark ergoemacs-org-mode-ctrl-return override)
       (cua-paste ergoemacs-org-mode-paste override)
       ;;("<C-return>" ergoemacs-org-mode-ctrl-return override)
-      ("<M-down>" org-metadown override)
-      ("<M-up>" org-metaup override)
-      ("<M-left>" org-metaleft override)
-      ("<M-right>" org-metaright override)))
+      ("<M-down>" ergoemacs-org-metadown override)
+      ("<M-up>" ergoemacs-org-metaup override)
+      ("<M-left>" ergoemacs-org-metaleft override)
+      ("<M-right>" ergoemacs-org-metaright override)))
     (org-src-mode-hook
      ((save-buffer org-edit-src-save org-src-mode-map remap)))
     (org-agenda-mode-hook
