@@ -1406,7 +1406,7 @@ Without argument, toggles the minor mode.
 If optional argument is 1, turn it on.
 If optional argument is 0, turn it off.
 
-Home page URL `http://ergoemacs.org/emacs/ergonomic_emacs_keybinding.html'
+Home page URL `http://ergoemacs.github.io/ergoemacs-mode/'
 
 For the standard layout, with A QWERTY keyboard the `execute-extended-command' M-x is now M-a.
 
