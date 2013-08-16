@@ -888,9 +888,13 @@ support please [[https://github.com/ergoemacs/ergoemacs-mode/issues/new][drop me
 Most major and minor modes are setup to respect =ergoemacs-mode=
 keybindings.  There are additional changes described below
 *** Org mode
-Ergoemacs-mode respects org-mode's Ctrl+Enter and Alt+arrow keys.
-Also pasting is done by org-mode's pasting mechanism instead of the
-default CUA-mode's pasting mechanism.
+Ergoemacs-mode in general respects org-mode's Ctrl+Enter and Alt+arrow
+keys.  The following exceptions are of note:
+**** Ctrl+Enter in tables
+In org-mode tables Ctrl+enter activates cua rectangle mode.  The
+paste knows what was copied, and will use cua-mode, or org-mode's
+default pasting mechanism depending on if a rectangle was copied last.
+
 *** Cua-mode
 Cua mode is enabled by default and respects ergoemacs-keys.  CUA
 rectangle support is enabled by changing the Alt+ keys to Win+ keys.  
