@@ -894,6 +894,26 @@ keys.  The following exceptions are of note:
 In org-mode tables Ctrl+enter activates cua rectangle mode.  The
 paste knows what was copied, and will use cua-mode, or org-mode's
 default pasting mechanism depending on if a rectangle was copied last.
+**** Alt+arrow keys
+The alt+arrow keys are respected based on context for org-mode.  When
+in text, you can use the ergoemacs-mode defined key, or the org-mode
+defined key by changing the value of a few variables
+
+|-----------+--------------------------------------------------------+--------------------|
+| Key       | Variable to Enable ergoemacs function in org-mode text | Enabled by default |
+|-----------+--------------------------------------------------------+--------------------|
+| <M-left>  | ergoemacs-use-ergoemacs-metaleft                       | yes                |
+| <M-right> | ergoemacs-use-ergoemacs-metaright                      | yes                |
+| <M-up>    | ergoemacs-use-ergoemacs-metaup                         | no                 |
+| <M-down>  | ergoemacs-use-ergoemacs-metadown                       | no                 |
+|-----------+--------------------------------------------------------+--------------------|
+
+The values of these variables could be changed by:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-use-ergoemacs-metaleft nil)
+#+END_SRC
+
 
 *** Cua-mode
 Cua mode is enabled by default and respects ergoemacs-keys.  CUA
