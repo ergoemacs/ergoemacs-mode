@@ -257,7 +257,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-remove-ergoemacs-keys-in-org-mode ()
   "Should test Issue #67.
-ergoemacs in `org-mode' should be removed. when turning off `ergoemacs-mode'"
+ergoemacs in `org-mode' should be removed when turning off `ergoemacs-mode'"
   (let ((old (symbol-value 'ergoemacs-mode))
         ret)
     (unless old
@@ -268,6 +268,21 @@ ergoemacs in `org-mode' should be removed. when turning off `ergoemacs-mode'"
       (setq ret (not ergoemacs-org-mode-hook-mode)))
     (when old
       (ergoemacs-mode 1))
+    (should ret)))
+
+(ert-deftest ergoemacs-test-add-back-ergoemacs-keys-in-org-mode ()
+    "Should be the second test for Issue #67.
+When ergoemacs-mode is enabled, and an org-mode buffer is already
+present, it should be re-enabled in that particular buffer."
+  (let ((old (symbol-value 'ergoemacs-mode)))
+    (when old
+      (ergoemacs-mode -1))
+    (with-temp-buffer
+      (org-mode)
+      (ergoemacs-mode 1)
+      (setq ret ergoemacs-org-mode-hook-mode))
+    (unless old
+      (ergoemacs-mode -1))
     (should ret)))
 
 (provide 'ergoemacs-test)
