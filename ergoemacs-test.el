@@ -237,6 +237,11 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (let (ergoemacs-use-unicode-char)
     (should (string= (ergoemacs-pretty-key-rep "C-c C-c") "[Ctrl+c] [Ctrl+c]"))))
 
+(ert-deftest ergoemacs-test-helm-M-x ()
+  "Issue #65.  helm-M-x should not be helm-[Alt+x]."
+  (let (ergoemacs-use-unicode-char)
+    (should (string= (ergoemacs-pretty-key-rep "helm-M-x test") "helm-M-x test"))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
