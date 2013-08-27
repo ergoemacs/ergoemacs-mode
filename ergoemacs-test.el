@@ -232,6 +232,11 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (should (equal (ergoemacs-test-global-key-set-before
                   'after "C-e" 'ergoemacs-key))))
 
+(ert-deftest ergoemacs-test-ctl-c-ctl-c ()
+  "Issue #64.  Should translate C-c C-c correctly."
+  (let (ergoemacs-use-unicode-char)
+    (should (string= (ergoemacs-pretty-key-rep "C-c C-c") "[Ctrl+c] [Ctrl+c]"))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here

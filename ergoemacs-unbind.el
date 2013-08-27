@@ -914,9 +914,13 @@ disabled at `ergoemacs-restore-global-keys'."
           (symbol-value 'ret)))
     (error nil)))
 
+(defvar ergoemacs-use-unicode-char t
+  "Use unicode characters when available.")
 (defun ergoemacs-unicode-char (char alt-char)
-  "Uses CHAR if it can be displayed, otherwise use ALT-CHAR."
-  (if (ergoemacs-display-char-p char)
+  "Uses CHAR if it can be displayed, otherwise use ALT-CHAR.
+This assumes `ergoemacs-use-unicode-char' is non-nil.  When
+`ergoemacs-use-unicode-char' is nil display ALT-CHAR"
+  (if (and ergoemacs-use-unicode-char (ergoemacs-display-char-p char))
       char
     alt-char))
 
