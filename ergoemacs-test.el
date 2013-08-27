@@ -194,8 +194,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
         (insert sk))
       (insert "(execute-kbd-macro ergoemacs-test-macro)")
       (insert ") (error nil))")
-      (insert "(kill-emacs)")
-      (message "%s" (buffer-string)))
+      (insert "(kill-emacs)"))
     (message "%s"
              (shell-command-to-string
               (format "%s -Q -l %s" emacs-exe temp-file)))
@@ -212,6 +211,20 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (ert-deftest ergoemacs-test-global-key-set-after ()
   "Test global set key after ergoemacs loads."
   (should (equal (ergoemacs-test-global-key-set-before 'after) t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
+  "Test setting <apps> m c before loading."
+  (should (equal (ergoemacs-test-global-key-set-before nil
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m c"
+                                                         "<menu> m c") nil nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-before ()
+  "Test setting <apps> m before loading."
+  (should (equal (ergoemacs-test-global-key-set-before nil
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m"
+                                                         "<menu> m") nil nil "<menu>") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-after ()
   "Test setting <apps> m after loading."
