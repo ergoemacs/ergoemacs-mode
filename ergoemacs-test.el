@@ -130,7 +130,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (setq ergoemacs-theme old-ergoemacs-theme)
     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
     (ergoemacs-mode 1)
-    (should (equal ret nil))))
+    (should (equal ret t))))
 
 (ert-deftest ergoemacs-test-shifted-move-keep-mark ()
   "Test the shifted selection bug."
@@ -160,7 +160,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 
 
-(defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global)
+(defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global delete-def)
   "Test the global key set before ergoemacs-mode is loaded."
   (let* ((emacs-exe (ergoemacs-emacs-exe))
         (ret nil)
@@ -176,6 +176,8 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (with-temp-file temp-file
       (insert "(condition-case err (progn")
       (unless after
+        (when delete-def
+          (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
         (insert sk))
       (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
       (insert "(setq ergoemacs-theme nil)")
@@ -187,10 +189,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                "(setq ergoemacs-test-macro (edmacro-parse-keys \"%s\" t))"
                test-key))
       (when after
+        (when delete-def
+          (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
         (insert sk))
       (insert "(execute-kbd-macro ergoemacs-test-macro)")
       (insert ") (error nil))")
-      (insert "(kill-emacs)"))
+      (insert "(kill-emacs)")
+      (message "%s" (buffer-string)))
     (message "%s"
              (shell-command-to-string
               (format "%s -Q -l %s" emacs-exe temp-file)))
@@ -208,19 +213,12 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   "Test global set key after ergoemacs loads."
   (should (equal (ergoemacs-test-global-key-set-before 'after) t)))
 
-(ert-deftest ergoemacs-test-global-key-set-apps-m ()
-  "Test setting <apps> m after loading."
-  (should (equal (ergoemacs-test-global-key-set-before 'after
-                                                       (if (eq system-type 'windows-nt)
-                                                           "<apps> m"
-                                                         "<menu> m")) t)))
-
 (ert-deftest ergoemacs-test-global-key-set-apps-m-after ()
   "Test setting <apps> m after loading."
   (should (equal (ergoemacs-test-global-key-set-before 'after
                                                        (if (eq system-type 'windows-nt)
                                                            "<apps> m"
-                                                         "<menu> m")) t)))
+                                                         "<menu> m") nil nil "<menu>") t)))
 
 (ert-deftest ergoemast-test-global-key-set-after-c-e ()
   "Test C-e after"

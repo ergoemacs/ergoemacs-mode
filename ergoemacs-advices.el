@@ -1,4 +1,4 @@
-;;; ergoemacs-advices.el.el --- advices for ErgoEmacs
+;;; ergoemacs-advices.el --- advices for ErgoEmacs
 
 ;; Copyright (C) 2013 Matthew L. Fidler
 
@@ -111,9 +111,12 @@
     (delete (key-description key) ergoemacs-global-not-changed-cache))
   (if (string-match "<\\(apps\\|menu\\)>" (key-description key))
       (let ((no-ergoemacs-advice t))
-        (define-key ergoemacs-keymap key nil);; Take care of prefix
-        ;; commands.
-        (define-key ergoemacs-keymap key command))
+        (when ergoemacs-debug
+          (message "Trying to set %s" (key-description key)))
+        (when command
+          (define-key ergoemacs-keymap key nil);; Take care of prefix
+          ;; commands.
+          (define-key ergoemacs-keymap key command)))
     (if (and ergoemacs-fix-M-O
              (string= "M-O" (key-description key)))
         (let ((no-ergoemacs-advice t))
