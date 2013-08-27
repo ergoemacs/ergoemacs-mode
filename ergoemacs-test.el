@@ -255,6 +255,21 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (let (ergoemacs-use-unicode-char)
     (should (string= (ergoemacs-pretty-key-rep "helm-M-x test") "helm-M-x test"))))
 
+(ert-deftest ergoemacs-test-remove-ergoemacs-keys-in-org-mode ()
+  "Should test Issue #67.
+ergoemacs in `org-mode' should be removed. when turning off `ergoemacs-mode'"
+  (let ((old (symbol-value 'ergoemacs-mode))
+        ret)
+    (unless old
+      (ergoemacs-mode 1))
+    (with-temp-buffer
+      (org-mode)
+      (ergoemacs-mode -1)
+      (setq ret (not ergoemacs-org-mode-hook-mode)))
+    (when old
+      (ergoemacs-mode 1))
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
