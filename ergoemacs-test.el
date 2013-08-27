@@ -220,6 +220,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                                                            "<apps> m"
                                                          "<menu> m") nil nil "<menu>") t)))
 
+(ert-deftest ergoemacs-test-global-key-set-apps-m-c-after ()
+  "Test setting <apps> m c after loading."
+  (should (equal (ergoemacs-test-global-key-set-before 'after
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m c"
+                                                         "<menu> m c") nil nil "<menu>") t)))
+
 (ert-deftest ergoemast-test-global-key-set-after-c-e ()
   "Test C-e after"
   (should (equal (ergoemacs-test-global-key-set-before
