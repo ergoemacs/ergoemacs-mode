@@ -815,6 +815,9 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
   (mapc
    (lambda(buf)
      (with-current-buffer buf
+       (when (and (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))
+                  (symbol-value (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))))
+         (funcall (intern-soft (format "ergoemacs-%s-hook-mode" major-mode)) -1))
        (let ((x (assq 'ergoemacs-mode minor-mode-overriding-map-alist)))
          (if x
              (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist))))))
