@@ -100,8 +100,6 @@
             (cons 'timeout unread-command-events)))))
 
 ;;; Advices enabled or disabled with ergoemacs-mode
-
-
 (defadvice global-set-key (around ergoemacs-global-set-key-advice (key command))
   "This let you use `global-set-key' as usual when `ergoemacs-mode' is enabled."
   ad-do-it
@@ -111,9 +109,16 @@
     (delete (key-description key) ergoemacs-global-not-changed-cache))
   (if (string-match "<\\(apps\\|menu\\)>" (key-description key))
       (let ((no-ergoemacs-advice t))
-        (when ergoemacs-debug
-          (message "Trying to set %s" (key-description key)))
         (when command
+          ;; Make prefixes possible
+          (when (integerp (lookup-key ergoemacs-keymap key))
+            (let ((key-as-vector (read-kbd-macro (key-description key) t))
+                  (prefix-vector (make-vector (lookup-key ergoemacs-keymap key) nil))
+                  (i 0))
+              (while (< i (length prefix-vector))
+                (aset prefix-vector i (elt key-as-vector i))
+                (setq i (+ 1 i)))
+              (define-key ergoemacs-keymap prefix-vector nil)))
           (define-key ergoemacs-keymap key nil);; Take care of prefix
           ;; commands.
           (define-key ergoemacs-keymap key command)))
