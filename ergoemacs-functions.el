@@ -158,9 +158,9 @@ If narrow-to-region is in effect, then cut that region only."
    ((and (region-active-p) (boundp 'cua-mode) cua-mode)
     (cua-cut-region arg))
    ((region-active-p)
-    (kill-ring (region-beginning) (region-end)))
+    (kill-region (region-beginning) (region-end)))
    (t
-    (kill-ring (line-beginning-position) (line-beginning-position 2)))))
+    (kill-region (line-beginning-position) (line-beginning-position 2)))))
 
 ;;; CURSOR MOVEMENT
 
