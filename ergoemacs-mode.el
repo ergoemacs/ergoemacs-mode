@@ -810,18 +810,6 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
   (ergoemacs-setup-translation layout base-layout)
   (ergoemacs-setup-fast-keys)
   (ergoemacs-setup-keys-for-keymap ergoemacs-keymap)
-  ;; Remove all overriding-map-alists...  I believe some are being
-  ;; created out of context.  However, this seems to fix issue #134
-  (mapc
-   (lambda(buf)
-     (with-current-buffer buf
-       (when (and (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))
-                  (symbol-value (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))))
-         (funcall (intern-soft (format "ergoemacs-%s-hook-mode" major-mode)) -1))
-       (let ((x (assq 'ergoemacs-mode minor-mode-overriding-map-alist)))
-         (if x
-             (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist))))))
-     (buffer-list))
   
   ;; Now change `minor-mode-map-alist'.
   (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
@@ -1131,6 +1119,7 @@ will change."
      (t ; US qwerty by default
       (ergoemacs-setup-keys-for-layout "us")))
     (ergoemacs-create-hooks)
+    
     (unless no-check
       (when ergoemacs-state
         (when (fboundp 'ergoemacs-mode)
@@ -1423,7 +1412,6 @@ bindings the keymap is:
   :global t
   :group 'ergoemacs-mode
   :keymap ergoemacs-keymap
-  
   (ergoemacs-setup-keys t)
   (when ergoemacs-debug
     (message "Ergoemacs Keys have loaded."))
@@ -1481,7 +1469,24 @@ bindings the keymap is:
   (when ergoemacs-change-smex-M-x
     (if ergoemacs-mode
         (setq smex-prompt-string (concat (ergoemacs-pretty-key "M-x") " "))
-      (setq smex-promt-string "M-x "))))
+      (setq smex-promt-string "M-x ")))
+  (if ergoemacs-mode
+      (mapc ;; Now install hooks.
+       (lambda(buf)
+         (with-current-buffer buf
+           (when (and (intern-soft (format "ergoemacs-%s-hook" major-mode)))
+             (funcall (intern-soft (format "ergoemacs-%s-hook" major-mode))))))
+       (buffer-list))
+    (mapc ;; Remove overriding keys.
+     (lambda(buf)
+       (with-current-buffer buf
+         (when (and (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))
+                    (symbol-value (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))))
+           (funcall (intern-soft (format "ergoemacs-%s-hook-mode" major-mode)) -1))
+         (let ((x (assq 'ergoemacs-mode minor-mode-overriding-map-alist)))
+           (if x
+               (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist))))))
+     (buffer-list))))
 
 
 
