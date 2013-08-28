@@ -575,8 +575,8 @@ Emacs buffers are those whose name starts with *."
     ;; (shell-command "xdg-open .") ;; 2013-02-10 this sometimes froze emacs till the folder is closed. ℯℊ with nautilus
     ) ))
 
-(defvar ergoemacs-recently-closed-buffers (cons nil nil) "A list of recently closed buffers. The max number to track is controlled by the variable recently-closed-buffers-max.")
-(defvar ergoemacs-recently-closed-buffers-max 30 "The maximum length for recently-closed-buffers.")
+(defvar ergoemacs-recently-closed-buffers (cons nil nil) "A list of recently closed buffers. The max number to track is controlled by the variable `ergoemacs-recently-closed-buffers-max'.")
+(defvar ergoemacs-recently-closed-buffers-max 30 "The maximum length for `ergoemacs-recently-closed-buffers'.")
 
 (defun ergoemacs-close-current-buffer ()
   "Close the current buffer.
@@ -586,7 +586,7 @@ Similar to (kill-buffer (current-buffer)) with the following addition:
 • prompt user to save if the buffer has been modified even if the buffer is not associated with a file.
 • make sure the buffer shown after closing is a user buffer.
 • If the buffer is editing a source file in an org-mode file, prompt the user to save before closing.
-• If the buffer is a file, add the path to the list `recently-closed-buffers'.
+• If the buffer is a file, add the path to the list `ergoemacs-recently-closed-buffers'.
 • If it is the minibuffer, exit the minibuffer
 
 A emacs buffer is one who's name starts with *.
