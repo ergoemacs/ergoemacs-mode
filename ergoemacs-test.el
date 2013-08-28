@@ -288,6 +288,22 @@ present, it should be re-enabled in that particular buffer."
       (ergoemacs-mode -1))
     (should ret)))
 
+(ert-deftest ergoemacs-test-cut-line-or-region ()
+  "Issue #68.
+kill-ring function name is used and such doesn't exist. It errs when
+not using cua or cutting line. I think kill-region is what is meant."
+  (let ((old-c cua-mode)
+        (ret t))
+    (cua-mode -1)
+    (with-temp-buffer
+      (insert ergoemacs-test-lorem-ipsum)
+      (condition-case err
+          (ergoemacs-cut-line-or-region)
+        (error (setq ret nil))))
+    (when old-c
+      (cua-mode 1))
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
