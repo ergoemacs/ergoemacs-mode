@@ -206,7 +206,7 @@ With a negative prefix argument NUMBER, move backward NUMBER closed brackets."
       (ergoemacs-backward-close-bracket (- 0 number))
     (search-forward-regexp
      (eval-when-compile
-       (regexp-opt '("\"" ")" "\\]" "}" ">" "〕" "】" "〗" "〉" "》" "」" "』" "”" "’" "›" "»"))) nil t number)))
+       (regexp-opt '("\"" ")" "]" "}" ">" "〕" "】" "〗" "〉" "》" "」" "』" "”" "’" "›" "»"))) nil t number)))
 
 (defun ergoemacs-backward-close-bracket (&optional number)
   "Move cursor to the previous occurrence of right bracket or quotation mark.
@@ -219,7 +219,7 @@ With a negative prefix argument NUMBER, move forward NUMBER closed brackets."
     (backward-char 1)
     (search-backward-regexp
      (eval-when-compile
-       (regexp-opt '("\"" ")" "\\]" "}" ">" "〕" "】" "〗" "〉" "》" "」" "』" "”" "’" "›" "»"))) nil t number)
+       (regexp-opt '("\"" ")" "]" "}" ">" "〕" "】" "〗" "〉" "》" "」" "』" "”" "’" "›" "»"))) nil t number)
     (forward-char 1)))
 
 (defun ergoemacs-forward-block (&optional number)
