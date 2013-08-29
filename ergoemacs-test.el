@@ -304,6 +304,12 @@ not using cua or cutting line. I think kill-region is what is meant."
       (cua-mode 1))
     (should ret)))
 
+(ert-deftest ergoemacs-test-next-and-prior-translation ()
+  "Issue #70.
+Test next and prior translation."
+  (should (string= (ergoemacs-pretty-key-rep "Test next and prior translation")
+                   "Test next and prior translation")))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
