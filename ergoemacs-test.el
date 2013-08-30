@@ -212,6 +212,12 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   "Test global set key after ergoemacs loads."
   (should (equal (ergoemacs-test-global-key-set-before 'after) t)))
 
+(defun ergoemacs-test-m ()
+  "Test <apps> m before functions."
+  (interactive)
+  (let ((wait-for-me t))
+    (ert "^ergoemacs-test-global-key-set-apps-m")))
+
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
   "Test setting <apps> m c before loading."
   :expected-result :failed
