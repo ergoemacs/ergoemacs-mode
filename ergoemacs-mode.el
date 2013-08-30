@@ -68,6 +68,16 @@
 (require 'cua-base)
 (require 'cua-rect)
 
+(defvar ergoemacs-debug ""
+  "Debugging for `ergoemacs-mode'.")
+
+(defun ergoemacs-debug (&rest arg)
+  "Ergoemacs debugging facility."
+  ;; (setq ergoemacs-debug
+  ;;       (format "%s\n%s"
+  ;;               ergoemacs-debug
+  ;;               (apply 'format arg)))
+  )
 
 ;; Include extra files
 (defvar ergoemacs-dir
@@ -106,18 +116,22 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :group 'ergoemacs-mode)
 
 (defvar ergoemacs-movement-functions
-  '(scroll-down move-beginning-of-line move-end-of-line scroll-up scroll-down forward-block backward-block
-                forward-word backward-word next-line previous-line forward-char backward-char
-                ergoemacs-backward-block ergoemacs-forward-block ergoemacs-backward-open-bracket
-                ergoemacs-forward-close-bracket move-end-of-line move-beginning-of-line backward-word forward-word
-                subword-backward subword-forward
-                beginning-of-buffer end-of-buffer)
+  '(scroll-down
+    move-beginning-of-line move-end-of-line scroll-up
+    scroll-down forward-block backward-block
+    forward-word backward-word next-line previous-line
+    forward-char backward-char ergoemacs-backward-block
+    ergoemacs-forward-block ergoemacs-backward-open-bracket
+    ergoemacs-forward-close-bracket move-end-of-line
+    move-beginning-of-line backward-word forward-word
+    subword-backward subword-forward
+    beginning-of-buffer end-of-buffer)
   "Movement functions.")
 
 (defvar ergoemacs-deletion-functions
   '(delete-backward-char
-  delete-char backward-kill-word kill-word kill-line
-  ergoemacs-shrink-whitespaces ergoemacs-kill-line-backward)
+    delete-char backward-kill-word kill-word kill-line
+    ergoemacs-shrink-whitespaces ergoemacs-kill-line-backward)
   "Deletion functions.")
 
 (defvar ergoemacs-undo-redo-functions
@@ -632,8 +646,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
    (lambda(var)
      (condition-case err
          (eval `(setq ,(intern (concat "ergoemacs-" (symbol-name (nth 1 var)) "-key")) (ergoemacs-kbd (nth 0 var))))
-       (error (when ergoemacs-debug
-                (message "Ignored backward compatability for %s" (nth 1 var))))))
+       (error (ergoemacs-debug "Ignored backward compatability for %s" (nth 1 var)))))
    (symbol-value (ergoemacs-get-variable-layout)))
   (mapc
    (lambda(var)
@@ -663,11 +676,6 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
               (replace-regexp-in-string
                "C-" "^-" ret)))))
     (symbol-value 'ret)))
-
-(defvar ergoemacs-debug (if (getenv "ERGOEMACS_DEBUG")
-                            t
-                          nil)
-  "Debugging variable for ergoemacs.  Set to t to see debugging information in messages.")
 
 (defun ergoemacs-setup-keys-for-keymap---internal (keymap key def)
   "Defines KEY in KEYMAP to be DEF"
@@ -713,8 +721,8 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
          cmd cmd-tmp)
      (setq ,keymap (make-sparse-keymap))
      
-     (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
-         (message "Theme: %s" ergoemacs-theme))
+     (if (eq ',keymap 'ergoemacs-keymap)
+         (ergoemacs-debug "Theme: %s" ergoemacs-theme))
      ;; Fixed layout keys
      (mapc
       (lambda(x)
@@ -730,10 +738,10 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                           (encode-coding-string
                            trans-key
                            locale-coding-system)))))
-	    (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
-                (message "Fixed: %s -> %s %s" trans-key cmd key))
-            (when (and (not (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd)) ergoemacs-debug)
-	      (message "Not loaded")))))
+	    (if (eq ',keymap 'ergoemacs-keymap)
+                (ergoemacs-debug "Fixed: %s -> %s %s" trans-key cmd key))
+            (when (not (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd))
+	      (ergoemacs-debug "Not loaded")))))
        (symbol-value (ergoemacs-get-fixed-layout)))
      
      ;; Variable Layout Keys
@@ -753,22 +761,21 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                 (progn
                   (define-key ,keymap key  'ergoemacs-M-O)
                   (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-O-keymap [timeout] cmd)
-                  (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
-                      (message "Variable: %s (%s) -> %s %s via ergoemacs-M-O" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
+                  (if (eq ',keymap 'ergoemacs-keymap)
+                      (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-O" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
               (if (and ergoemacs-fix-M-O
                        (string= (ergoemacs-kbd trans-key t t) "M-o"))
                   (progn
                     (define-key ,keymap key  'ergoemacs-M-o)
                     (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-o-keymap [timeout] cmd)
-                    (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
-                        (message "Variable: %s (%s) -> %s %s via ergoemacs-M-o" trans-key
+                    (if (eq ',keymap 'ergoemacs-keymap)
+                        (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-o" trans-key
                                  (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
                 (when (string-match "<\\(apps\\|menu\\)>" trans-key)
                   ;; Retain globally defined <apps> or <menu> defines.
                   (setq cmd-tmp (lookup-key (current-global-map) key t))
-                  (when (and ergoemacs-debug
-                             (eq ',keymap 'ergoemacs-keymap))
-                    (message "<apps>; %s -> cmd: %s; global cmd: %s" trans-key cmd cmd-tmp))
+                  (when (eq ',keymap 'ergoemacs-keymap)
+                    (ergoemacs-debug "<apps>; %s -> cmd: %s; global cmd: %s" trans-key cmd cmd-tmp))
                   (if (functionp cmd-tmp)
                       (setq cmd cmd-tmp)
                     (when (and cmd-tmp
@@ -782,26 +789,23 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                         (setq cmd nil)))))
                 (when cmd
                   (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd)
-                  (if (and ergoemacs-debug (eq ',keymap 'ergoemacs-keymap))
-                      (message "Variable: %s (%s) -> %s %s" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key))))))))
+                  (if (eq ',keymap 'ergoemacs-keymap)
+                      (ergoemacs-debug "Variable: %s (%s) -> %s %s" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key))))))))
       (symbol-value (ergoemacs-get-variable-layout)))
      (when ergoemacs-fix-M-O
        (let ((M-O (lookup-key ,keymap (read-kbd-macro "M-O")))
              (g-M-O (lookup-key global-map (read-kbd-macro "M-O")))
              (M-o (lookup-key ,keymap (read-kbd-macro "M-o")))
              (g-M-o (lookup-key global-map (read-kbd-macro "M-o"))))
-         (when ergoemacs-debug
-           (message "M-O %s; Global M-O: %s; M-o %s; Global M-o: %s" M-O g-M-O M-o g-M-o))
+         (ergoemacs-debug "M-O %s; Global M-O: %s; M-o %s; Global M-o: %s" M-O g-M-O M-o g-M-o)
          (when (and (not (functionp M-O))
                     (functionp g-M-O))
-           (when ergoemacs-debug
-             (message "Fixed M-O"))
+           (ergoemacs-debug "Fixed M-O")
            (define-key ,keymap (read-kbd-macro "M-O") 'ergoemacs-M-O)
            (define-key ergoemacs-M-O-keymap [timeout] g-M-O))
          (when (and (not (functionp M-o))
                     (functionp g-M-o))
-           (when ergoemacs-debug
-             (message "Fixed M-o"))
+           (ergoemacs-debug "Fixed M-o")
            (define-key ,keymap (read-kbd-macro "M-o") 'ergoemacs-M-o)
            (define-key ergoemacs-M-o-keymap [timeout] g-M-o))))))
 
@@ -942,9 +946,9 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                       (eval
                        (macroexpand `[remap ,(intern (symbol-name key-def))]))
                     nil)))))
-          (when ergoemacs-debug
-            (message "hook: %s->%s %s %s" key-def key-code
-                     fn translate))
+          (ergoemacs-debug "hook: %s->%s %s %s"
+                           key-def key-code
+                           fn translate)
           (when key-code
             (define-key keymap key-code fn)))))))
 
@@ -1098,10 +1102,9 @@ will change."
 (defun ergoemacs-setup-keys (&optional no-check)
   "Setups keys based on a particular layout. Based on `ergoemacs-keyboard-layout'."
   (interactive)
-  (when ergoemacs-debug
-    (message "Ergoemacs layout: %s" ergoemacs-keyboard-layout)
-    (message "Ergoemacs theme: %s" ergoemacs-theme)
-    (message "Emacs Version: %s" (emacs-version) ))
+  (ergoemacs-debug "Ergoemacs layout: %s" ergoemacs-keyboard-layout)
+  (ergoemacs-debug "Ergoemacs theme: %s" ergoemacs-theme)
+  (ergoemacs-debug "Emacs Version: %s" (emacs-version))
   (let ((ergoemacs-state (if (boundp 'ergoemacs-mode) ergoemacs-mode nil))
         (cua-state cua-mode)
         (layout
@@ -1177,8 +1180,7 @@ C-k S-a     -> k S-a           not defined
      (setq ,keymap (make-keymap))
      
      (with-temp-buffer
-       (when ergoemacs-debug
-         (message "Current prefix: %s" ergoemacs-current-prefix))
+       (ergoemacs-debug "Current prefix: %s" ergoemacs-current-prefix)
        (describe-buffer-bindings buf (read-kbd-macro ergoemacs-current-prefix))
        (goto-char (point-min))
        
@@ -1215,13 +1217,11 @@ C-k S-a     -> k S-a           not defined
          (unless (or (string= new-key "")
                      (not fn)
                      (eq fn 'Prefix))
-           (when ergoemacs-debug
-             (message "Translate: %s -> %s (%s)" (match-string 1) new-key fn))
+           (ergoemacs-debug "Translate: %s -> %s (%s)" (match-string 1) new-key fn)
            (condition-case err
                (define-key ,keymap (kbd new-key) fn)
              (error
-              (when ergoemacs-debug
-                (message "Error defining %s: %s" new-key err)))))))))
+              (ergoemacs-debug "Error defining %s: %s" new-key err))))))))
 
 (defvar ergoemacs-repeat-shortcut-keymap (make-keymap)
   "Keymap for repeating often used shortcuts like C-c C-c.")
@@ -1348,8 +1348,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
       (progn
         (when ergoemacs-mode
           ;; Apply any settings...
-          (when ergoemacs-debug
-            (message "Reset ergoemacs-mode."))
+          (ergoemacs-debug "Reset ergoemacs-mode.")
           (ergoemacs-mode -1)
           (ergoemacs-mode 1))
         (when (and
@@ -1413,8 +1412,7 @@ bindings the keymap is:
   :group 'ergoemacs-mode
   :keymap ergoemacs-keymap
   (ergoemacs-setup-keys t)
-  (when ergoemacs-debug
-    (message "Ergoemacs Keys have loaded."))
+  (ergoemacs-debug "Ergoemacs Keys have loaded.")
   (if ergoemacs-use-menus
       (progn
         (require 'ergoemacs-menus)
@@ -1462,8 +1460,7 @@ bindings the keymap is:
                   (cua--rectangle . ,cua--rectangle-keymap)
                   (cua--ena-region-keymap . ,cua--region-keymap)
                   (cua-mode . ,cua-global-keymap))))
-        (when ergoemacs-debug
-          (message "CUA rectangle mode modifier changed.")))
+        (ergoemacs-debug "CUA rectangle mode modifier changed."))
     (error (message "CUA rectangle modifier wasn't changed.")))
   
   (when ergoemacs-change-smex-M-x

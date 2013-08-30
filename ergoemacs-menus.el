@@ -108,7 +108,7 @@
 
 (defun ergoemacs-shortcut-for-command (cmd)
   (let ((key (key-description (where-is-internal cmd nil t nil t))))
-    (when ergoemacs-debug (message "Menu KEY Shortcut \"%s\"" key))
+    (ergoemacs-debug "Menu KEY Shortcut \"%s\"" key)
     (ergoemacs-kbd-to-key key)))
 
 

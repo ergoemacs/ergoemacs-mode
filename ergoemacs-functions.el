@@ -50,7 +50,6 @@
       (setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout))
     (when ergoemacs-theme
       (setenv "ERGOEMACS_THEME" ergoemacs-theme))
-    (setenv "ERGOEMACS_DEBUG" "1")
     (shell-command (format "%s -Q -L \"%s\" --load=\"ergoemacs-mode\"  --eval \"(ergoemacs-mode 1)\"& " emacs-exe
                            (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))))
 
