@@ -40,12 +40,6 @@ reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
-(defun ergoemacs-test-app ()
-  "test"
-  (interactive)
-  (let ((wait-for-me t))
-    (ert "ergoemacs-test-global-key-set-apps-before")))
-
 ;;;###autoload
 (defun ergoemacs-test ()
   "Test ergoemacs issues."
