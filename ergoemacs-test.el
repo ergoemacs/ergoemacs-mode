@@ -40,6 +40,11 @@ reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
+(defun ergoemacs-test-app ()
+  "test"
+  (interactive)
+  (let ((wait-for-me t))
+    (ert "ergoemacs-test-global-key-set-apps-before")))
 
 ;;;###autoload
 (defun ergoemacs-test ()
@@ -221,6 +226,16 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                                                            "<apps> m c"
                                                          "<menu> m c") nil nil "<menu>") t)))
 
+(ert-deftest ergoemacs-test-global-key-set-apps-before ()
+  "Test setting <apps> before loading."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps>"
+       "<menu>")) t)))
+
 (ert-deftest ergoemacs-test-global-key-set-apps-m-before ()
   "Test setting <apps> m before loading."
   (should (equal (ergoemacs-test-global-key-set-before nil
@@ -241,6 +256,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                                                        (if (eq system-type 'windows-nt)
                                                            "<apps> m c"
                                                          "<menu> m c") nil nil "<menu>") t)))
+
+
+
 
 (ert-deftest ergoemast-test-global-key-set-after-c-e ()
   "Test C-e after"

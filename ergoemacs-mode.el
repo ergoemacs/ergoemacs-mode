@@ -744,7 +744,6 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                 (ergoemacs-debug "!!!Fixed %s has changed globally." trans-key) 
                 (define-key ,keymap key  (lookup-key (current-global-map) key)))
             (setq cmd (nth 1 x))
-            
 	    (if (eq ',keymap 'ergoemacs-keymap)
                 (ergoemacs-debug "Fixed: %s -> %s %s" trans-key cmd key))
             (when (not (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd))
@@ -761,8 +760,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
           (if (ergoemacs-global-changed-p trans-key t)
               (progn
                 (ergoemacs-debug "!!!Variable %s (%s) has changed globally."
-                                 trans-key (ergoemacs-kbd trans-key t (nth 3 x)))
-                (define-key ,keymap key  (lookup-key (current-global-map) key)))
+                                 trans-key (ergoemacs-kbd trans-key t (nth 3 x))))
             ;; Add M-O and M-o handling for globally defined M-O and
             ;; M-o.
             ;; Only works if ergoemacs-mode is on...
