@@ -159,18 +159,19 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global delete-def)
   "Test the global key set before ergoemacs-mode is loaded."
   (let* ((emacs-exe (ergoemacs-emacs-exe))
-        (ret nil)
+         (ret nil)
         (sk nil)
         (test-key (or key "M-k"))
         (w-file (expand-file-name "global-test" ergoemacs-dir))
         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
-    (setq sk (format "(%s (lambda() (interactive) (with-temp-file \"%s\" (insert \"Ok\"))))"
-                     (if ergoemacs
-                         (format "ergoemacs-key \"%s\" " test-key)
-                       (format "global-set-key (kbd \"%s\") " test-key))
-                     w-file))
+    (setq sk
+          (format "(%s '(lambda() (interactive) (with-temp-file \"%s\" (insert \"Ok\"))))"
+                  (if ergoemacs
+                      (format "ergoemacs-key \"%s\" " test-key)
+                    (format "global-set-key (kbd \"%s\") " test-key))
+                  w-file))
     (with-temp-file temp-file
-      (insert "(condition-case err (progn")
+      (insert "(condition-case err (progn ")
       (unless after
         (when delete-def
           (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
@@ -181,21 +182,24 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
       (unless ignore-prev-global
           (insert "(setq ergoemacs-ignore-prev-global nil)"))
       (insert "(require 'ergoemacs-mode)(ergoemacs-mode 1)")
-      (insert (format
-               "(setq ergoemacs-test-macro (edmacro-parse-keys \"%s\" t))"
-               test-key))
+      (insert
+       (format
+        "(setq ergoemacs-test-macro (edmacro-parse-keys \"%s\" t))"
+        test-key))
       (when after
         (when delete-def
           (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
         (insert sk))
       (insert "(execute-kbd-macro ergoemacs-test-macro)")
       (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
-      (insert ") (error nil))")
+      (insert ") (error (message \"Error %s\" err)))")
       (unless (boundp 'wait-for-me)
-        (insert "(kill-emacs)")))
-    (message "%s"
-             (shell-command-to-string
-              (format "%s -Q -l %s" emacs-exe temp-file)))
+        (insert "(kill-emacs)"))
+      (message "%s" (buffer-string)))
+    (message
+     "%s"
+     (shell-command-to-string
+      (format "%s -Q -l %s" emacs-exe temp-file)))
     (delete-file temp-file)
     (when (file-exists-p w-file)
       (setq ret 't)
@@ -210,15 +214,8 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   "Test global set key after ergoemacs loads."
   (should (equal (ergoemacs-test-global-key-set-before 'after) t)))
 
-(defun ergoemacs-test-m ()
-  "Test <apps> m before functions."
-  (interactive)
-  (let ((wait-for-me t))
-    (ert "^ergoemacs-test-global-key-set-apps-m")))
-
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
   "Test setting <apps> m c before loading."
-  :expected-result :failed
   (should (equal (ergoemacs-test-global-key-set-before nil
                                                        (if (eq system-type 'windows-nt)
                                                            "<apps> m c"
@@ -226,7 +223,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-before ()
   "Test setting <apps> m before loading."
-  :expected-result :failed
   (should (equal (ergoemacs-test-global-key-set-before nil
                                                        (if (eq system-type 'windows-nt)
                                                            "<apps> m"

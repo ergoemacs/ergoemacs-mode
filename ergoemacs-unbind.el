@@ -635,16 +635,16 @@
     ("C-x v v" (vc-next-action))
     ("C-x v ~" (vc-version-other-window vc-revision-other-window))
     
-    ("M-s h f" (hi-lock-find-patterns 1))
-    ("M-s h l" (highlight-lines-matching-regexp 1))
-    ("M-s h p" (highlight-phrase 1))
-    ("M-s h r" (highlight-regexp 1))
-    ("M-s h u" (unhighlight-regexp 1))
-    ("M-s h w" (hi-lock-write-interactive-patterns 1))
+    ("M-s h f" (hi-lock-find-patterns))
+    ("M-s h l" (highlight-lines-matching-regexp))
+    ("M-s h p" (highlight-phrase))
+    ("M-s h r" (highlight-regexp))
+    ("M-s h u" (unhighlight-regexp))
+    ("M-s h w" (hi-lock-write-interactive-patterns))
     
-    ("M-o M-S" (center-paragraph 1))
-    ("M-o M-o" (font-lock-fontify-block 1))
-    ("M-o M-s" (center-line 1))
+    ("M-o M-S" (center-paragraph))
+    ("M-o M-o" (font-lock-fontify-block))
+    ("M-o M-s" (center-line))
     
     ("M-g M-g" (goto-line))
     ("M-g M-n" (next-error))
@@ -789,8 +789,13 @@ This should only be run when no global keys have been set.
                                    'prefix
                                  key-function))
                (has-changed (if (not old-bindings)
-                                nil ; Assume that if not known, it hasn't changed.
-                              (not (memq trans-function (nth 1 old-bindings))))))
+                                (if trans-function 
+                                    (if (integerp trans-function)
+                                        nil t)
+                                      nil)
+                              (if (integerp trans-function)
+                                  nil ; Prefix.  Hasn't changed
+                                (not (memq trans-function (nth 1 old-bindings)))))))
           (when (and has-changed
                      (condition-case err
                          (string-match "ergoemacs-old-key---" (symbol-name key-function))
@@ -803,7 +808,8 @@ This should only be run when no global keys have been set.
                   (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
                            trans-function old-bindings)
                   (when fix
-                    (ergoemacs-global-fix-defualt-bindings key-kbd trans-function)))
+                    (unless (integerp trans-function)
+                      (ergoemacs-global-fix-defualt-bindings key-kbd trans-function))))
                 (add-to-list 'ergoemacs-global-changed-cache key-kbd))
             (add-to-list 'ergoemacs-global-not-changed-cache key-kbd))
           ;;(message "%s %s %s" key-kbd key-function has-changed)

@@ -73,11 +73,15 @@
 
 (defun ergoemacs-debug (&rest arg)
   "Ergoemacs debugging facility."
-  ;; (setq ergoemacs-debug
-  ;;       (format "%s\n%s"
-  ;;               ergoemacs-debug
-  ;;               (apply 'format arg)))
-  )
+  (setq ergoemacs-debug
+        (format "%s\n%s"
+                ergoemacs-debug
+                (apply 'format arg))))
+(defun ergoemacs-debug-flush ()
+  "Flushes ergoemacs debug to *ergoemacs-debug*"
+  (with-current-buffer (get-buffer-create "*ergoemacs-debug*")
+    (insert ergoemacs-debug "\n"))
+  (setq ergoemacs-debug ""))
 
 ;; Include extra files
 (defvar ergoemacs-dir
@@ -720,7 +724,6 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
          trans-key
          cmd cmd-tmp)
      (setq ,keymap (make-sparse-keymap))
-     
      (if (eq ',keymap 'ergoemacs-keymap)
          (ergoemacs-debug "Theme: %s" ergoemacs-theme))
      ;; Fixed layout keys
@@ -728,16 +731,20 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
       (lambda(x)
         (when (and (eq 'string (type-of (nth 0 x))))
           (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))
-          (when (not (ergoemacs-global-changed-p trans-key))
+          (condition-case err
+              (setq key (read-kbd-macro
+                         trans-key))
+            (error
+             (setq key (read-kbd-macro
+                        (encode-coding-string
+                         trans-key
+                         locale-coding-system)))))
+          (if (ergoemacs-global-changed-p trans-key)
+              (progn
+                (ergoemacs-debug "!!!Fixed %s has changed globally." trans-key) 
+                (define-key ,keymap key  (lookup-key (current-global-map) key)))
             (setq cmd (nth 1 x))
-            (condition-case err
-                (setq key (read-kbd-macro
-                           trans-key))
-              (error
-               (setq key (read-kbd-macro
-                          (encode-coding-string
-                           trans-key
-                           locale-coding-system)))))
+            
 	    (if (eq ',keymap 'ergoemacs-keymap)
                 (ergoemacs-debug "Fixed: %s -> %s %s" trans-key cmd key))
             (when (not (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd))
@@ -750,13 +757,17 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
         (when (and (eq 'string (type-of (nth 0 x))))
           (setq trans-key
                 (ergoemacs-get-kbd-translation (nth 0 x)))
-          (when (or (string-match "<\\(apps\\|menu\\)>" trans-key)
-                    (not (ergoemacs-global-changed-p trans-key t)))
+          (setq key (ergoemacs-kbd trans-key nil (nth 3 x)))
+          (if (ergoemacs-global-changed-p trans-key t)
+              (progn
+                (ergoemacs-debug "!!!Variable %s (%s) has changed globally."
+                                 trans-key (ergoemacs-kbd trans-key t (nth 3 x)))
+                (define-key ,keymap key  (lookup-key (current-global-map) key)))
             ;; Add M-O and M-o handling for globally defined M-O and
             ;; M-o.
             ;; Only works if ergoemacs-mode is on...
             (setq cmd (nth 1 x))
-            (setq key (ergoemacs-kbd trans-key nil (nth 3 x)))
+            
             (if (and ergoemacs-fix-M-O (string= (ergoemacs-kbd trans-key t t) "M-O"))
                 (progn
                   (define-key ,keymap key  'ergoemacs-M-O)
@@ -771,22 +782,6 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                     (if (eq ',keymap 'ergoemacs-keymap)
                         (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-o" trans-key
                                  (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
-                (when (string-match "<\\(apps\\|menu\\)>" trans-key)
-                  ;; Retain globally defined <apps> or <menu> defines.
-                  (setq cmd-tmp (lookup-key (current-global-map) key t))
-                  (when (eq ',keymap 'ergoemacs-keymap)
-                    (ergoemacs-debug "<apps>; %s -> cmd: %s; global cmd: %s" trans-key cmd cmd-tmp))
-                  (if (functionp cmd-tmp)
-                      (setq cmd cmd-tmp)
-                    (when (and cmd-tmp
-                               (or
-                                (not (string-match "<menu>" trans-key))
-                                (not (= cmd-tmp 1))
-                                (not (eq (lookup-key (current-global-map) (read-kbd-macro "<menu>"))
-                                         'execute-extended-command))))
-                      (unless (and (string-match "<apps>" trans-key)
-                                   (not (lookup-key (current-global-map) (read-kbd-macro "<apps>"))))
-                        (setq cmd nil)))))
                 (when cmd
                   (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd)
                   (if (eq ',keymap 'ergoemacs-keymap)
@@ -1026,6 +1021,7 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
                                           (equal (car y) (car x)))
                                      nil))
               nil)
+           (ergoemacs-debug-flush)
            t))
        (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))) ',override-keymap))))
 
@@ -1483,7 +1479,8 @@ bindings the keymap is:
          (let ((x (assq 'ergoemacs-mode minor-mode-overriding-map-alist)))
            (if x
                (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist))))))
-     (buffer-list))))
+     (buffer-list)))
+  (ergoemacs-debug-flush))
 
 
 
