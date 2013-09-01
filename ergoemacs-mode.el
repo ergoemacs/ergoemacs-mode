@@ -408,7 +408,9 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     (setq unread-command-events (cons 'timeout unread-command-events))))
 
 (defun ergoemacs-M-o (&optional arg use-map)
-  "Ergoemacs M-o function to allow arrow keys and the like to work in the terminal. Call the true function immediately when `window-system' is true."
+  "Ergoemacs M-o function.
+Allows arrow keys and the to work in the terminal. Call the true
+function immediately when `window-system' is true."
   (interactive "P")
   (setq ergoemacs-curr-prefix-arg current-prefix-arg)
   (let ((map (or use-map ergoemacs-M-o-keymap)))
@@ -435,13 +437,16 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
 
 (defvar ergoemacs-needs-translation nil
   "Tells if ergoemacs keybindings need a translation")
+
 (defvar ergoemacs-translation-from nil
   "Translation from keyboard layout")
+
 (defvar ergoemacs-translation-to nil
   "Translation to keyboard layout")
 
 (defvar ergoemacs-translation-assoc nil
   "Translation alist")
+
 (defvar ergoemacs-translation-regexp nil
   "Translation regular expression")
 
@@ -1131,91 +1136,59 @@ will change."
        (ergoemacs-key-fn-lookup 'smex)
        (ergoemacs-key-fn-lookup 'helm-M-x))))
 
-(defmacro ergoemacs-extract-map (keymap &optional prefix chord rep-chord new-chord)
-  "Takes out the key-chords from the buffer-defined map.
-If Prefix is nil assume C-x.
-If chord is nil, assume C-
-If new-chord is nil, assume M-
-
-If chord is not an empty string and chorded is nil, then all
-control sequences will be translate as follows:
-
-Control characters will be translated to normal characters.
-Normal characters will be translated to new-chord prefixed characters.
-new-chord prefixed characters will be translated to the old chord.
-
-For example for the C-x map,
-
-Original Key   Translated Key  Function
-C-k C-n     -> k n             (kmacro-cycle-ring-next)
-C-k a       -> k M-a           (kmacro-add-counter)
-C-k M-a     -> k C-a           not defined
-C-k S-a     -> k S-a           not defined
-
-If prefix is an empty string extract the map and remove the prefix.
-
-If rep-chord is non-nil, like M- instead these same translations would be:
-
-C-k C-n     -> M-k M-n             (kmacro-cycle-ring-next)
-C-k a       -> M-k a           (kmacro-add-counter)
-C-k M-a     -> k C-a           not defined
-C-k S-a     -> k S-a           not defined
-
-"
-  `(let ((ret "")
-         (buf (current-buffer))
-         (ergoemacs-current-prefix (or ,prefix "C-x"))
-         (new-key "")
-         (fn "")
-         (chord (or ,chord "C-"))
-         (rep-chord (or ,rep-chord ""))
-         (new-chord (or ,new-chord "M-")))
-     
-     (setq ,keymap (make-keymap))
+(defmacro ergoemacs-extract-maps (keymap &optional prefix)
+  "Extracts maps."
+  `(let ((buf (current-buffer))
+         (normal '())
+         (prefixes '())
+         (tmp "")
+         (fn nil)
+         (new-key nil)
+         (cur-prefix (or ,prefix "C-x")))
      
      (with-temp-buffer
-       (ergoemacs-debug "Current prefix: %s" ergoemacs-current-prefix)
-       (describe-buffer-bindings buf (read-kbd-macro ergoemacs-current-prefix))
+       (describe-buffer-bindings buf (read-kbd-macro cur-prefix))
        (goto-char (point-min))
-       
-       (while (re-search-forward
-               (concat ergoemacs-current-prefix " \\("
-                       (if (string= "" rep-chord)
-                           chord
-                         "") ".*?\\)[ \t]\\{2,\\}\\(.+\\)$")
-               nil t)
+       (while (re-search-forward (format "%s \\(.*?\\)[ \t]\\{2,\\}\\(.+\\)$" cur-prefix) nil t)
          (setq new-key (match-string 1))
          (setq fn (match-string 2))
-         (condition-case err
-             (with-temp-buffer
-               (insert "(setq fn '" fn ")")
-               (eval-buffer))
-           (error (setq fn nil)))
-         (save-match-data
-           (unless (string= chord "")
-             (with-temp-buffer
-               (insert new-key)
-               (goto-char (point-min))
-               (while (re-search-forward "\\<" nil t)
-                 (if (looking-at chord)
-                     (replace-match rep-chord)
-                   (if (or (and (not (string= "" new-chord))
-                                (looking-at new-chord))
-                           (and (not (string= "" rep-chord))
-                                (looking-at rep-chord)))
-                       (replace-match chord)
-                     (if (not (looking-at ".-"))
-                         (insert new-chord))))
-                 (forward-char))
-               (setq new-key (buffer-string)))))
-         (unless (or (string= new-key "")
-                     (not fn)
-                     (eq fn 'Prefix))
-           (ergoemacs-debug "Translate: %s -> %s (%s)" (match-string 1) new-key fn)
-           (condition-case err
-               (define-key ,keymap (kbd new-key) fn)
-             (error
-              (ergoemacs-debug "Error defining %s: %s" new-key err))))))))
+         (unless (string-match "Prefix Command$" (match-string 0))
+           (unless (string-match "ergoemacs-old-key---" fn)
+             (condition-case err
+                 (with-temp-buffer
+                   (insert "(add-to-list 'normal '(\"" new-key "\" " fn "))")
+                   (eval-buffer))
+               (error (setq fn nil)))))))
+     
+     (setq ,keymap (make-keymap))
+
+     (mapc
+      (lambda(x)
+        (when (functionp (nth 1 x))
+          (let ((new (replace-regexp-in-string
+                      "\\<W-" "M-"
+                      (replace-regexp-in-string
+                       "\\<M-" "C-"
+                       (replace-regexp-in-string "\\<C-" "W-" (nth 0 x))))))
+            (define-key ,keymap
+              (read-kbd-macro (format "<Normal> %s %s" cur-prefix (nth 0 x))) (nth 1 x))
+            (define-key ,keymap
+              (read-kbd-macro
+               (format "<Ctl%sAlt> %s %s" 
+                       (ergoemacs-unicode-char "↔" " to ")
+                       cur-prefix new)) (nth 1 x))
+            (setq new
+                  (replace-regexp-in-string
+                   "\\<W-" ""
+                   (replace-regexp-in-string
+                    "\\(^\\| \\)\\([^-]+\\)\\( \\|$\\)" "\\1M-\\2\\3"
+                    (replace-regexp-in-string "\\<M-" "W-" new))))
+            (define-key ,keymap
+              (read-kbd-macro
+               (format "<Unchorded> %s %s" cur-prefix new)) (nth 1 x)))))
+      normal)))
+
+
 
 (defvar ergoemacs-repeat-shortcut-keymap (make-keymap)
   "Keymap for repeating often used shortcuts like C-c C-c.")
@@ -1280,32 +1253,28 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
        (interactive "P")
        (setq this-command last-command) ; Don't record this command.
        (setq prefix-arg current-prefix-arg)
-       (let (extract-map extract-map-1 key-seq)
+       (let (extract-map key-seq)
+         (ergoemacs-extract-maps extract-map ,key)
          ,(cond
            ((eq chorded 'ctl)
             `(progn
-               (setq extract-map (make-keymap))
-               (setq extract-map-1 (make-sparse-keymap))
-               (ergoemacs-extract-map extract-map ,key)
-               (setq key-seq  (read-kbd-macro ,(format "<Unchorded> %s" key)))
-               (define-key extract-map-1 key-seq extract-map)
-               (set-temporary-overlay-map extract-map-1)
+               (setq key-seq  (read-kbd-macro (format "<Unchorded> %s" ,key)))
+               (set-temporary-overlay-map extract-map)
                (setq key-seq (listify-key-sequence key-seq))
                (reset-this-command-lengths)
                (setq unread-command-events key-seq)
-               (message ,(format "<Unchorded> %s " (ergoemacs-pretty-key key)))))
+               (princ ,(format "<Unchorded> %s " (ergoemacs-pretty-key key)))
+               ))
            ((eq chorded 'ctl-to-alt)
             `(progn
-               (setq extract-map (make-keymap))
-               (setq extract-map-1 (make-sparse-keymap))
-               (ergoemacs-extract-map extract-map ,key "C-" "M-" "")
-               (setq key-seq (read-kbd-macro ,(format "<Ctl→Alt> %s" key)))
-               (define-key extract-map-1 key-seq extract-map)
+               (setq key-seq (read-kbd-macro (format "<Ctl%sAlt> %s" 
+                                                     (ergoemacs-unicode-char "↔" " to ")
+                                                     ,key)))
                (setq key-seq (listify-key-sequence key-seq))
-               (set-temporary-overlay-map extract-map-1)
+               (set-temporary-overlay-map extract-map)
                (reset-this-command-lengths)
                (setq unread-command-events key-seq)
-               (message ,(format "<Ctl→Alt> %s " (ergoemacs-pretty-key key)))))
+               (princ ,(format "<Ctl%sAlt> %s " (ergoemacs-unicode-char "↔" " to ") (ergoemacs-pretty-key key)))))
            (t
             `(let ((ctl-c-keys (key-description (this-command-keys))))
                (setq prefix-arg current-prefix-arg)
