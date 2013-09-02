@@ -42,10 +42,10 @@
     ("M-i" previous-line "↑ line")
     ("M-k" next-line "↓ line")
 
-    ("M-C-j" "<C-left>"  "← char")
-    ("M-C-l" "<C-right>" "→ char")
-    ("M-C-i" "<C-up>" "↑ line")
-    ("M-C-k" "<C-down>" "↓ line")
+    ("M-C-j" ("<C-left>" nil)  "← char")
+    ("M-C-l" ("<C-right>" nil) "→ char")
+    ("M-C-i" ("<C-up>" nil) "↑ line")
+    ("M-C-k" ("<C-down>" nil) "↓ line")
     
     ;; Move by word
     ("M-u" backward-word "← word")
@@ -159,16 +159,16 @@
     ("<apps> <return>" (helm-M-x smex execute-extended-command) "M-x")
     ("<apps> SPC" set-mark-command "Set Mark")
     ("<apps> a" mark-whole-buffer "Sel All")
-    ("<apps> f" ergoemacs-ctl-x-ctl-to-alt "Ctl-x")
-    ("<apps> h" ergoemacs-ctl-h-ctl-to-alt "Ctl-h")
+    ("<apps> f" ("C-x" ctl-to-alt) "Ctl-x")
+    ("<apps> h" ("C-h" nil) "Ctl-h")
     ("<apps> i" ergoemacs-alt-shift-keys "Rep Alt+Shift")
-    ("<apps> j" ergoemacs-ctl-c-ctl-to-alt "Ctl-c")
+    ("<apps> j" ("C-c" ctl-to-alt) "Ctl-c")
     ("<apps> k" ergoemacs-alt-keys "Repeat Alt")
     ("<apps> m" ergoemacs-ctl-c-ctl-c "C-c C-c")
-    ("<apps> r" ergoemacs-ctl-x-unchorded "Ctl-x*")
+    ("<apps> r" ("C-x" unchorded) "Ctl-x*")
     ("<apps> s" save-buffer "Save")
     ("<apps> o" find-file "Open")
-    ("<apps> u" ergoemacs-ctl-c-unchorded "Ctl-c*")
+    ("<apps> u" ("C-c" unchorded) "Ctl-c*")
     ("<apps> g" universal-argument "C-u")
     ("<apps> w" ergoemacs-close-current-buffer "Close")
     ;;("<apps> y" ergoemacs-ctl-h-unchorded "Ctl-h*")
@@ -203,7 +203,11 @@
           (list :tag "Keys"
                 (string :tag "QWERTY Kbd Code")
                 (choice
-                 (string :tag "Kbd Code")
+                 (list (string :tag "Kbd Code")
+                       (choice
+                        (const :tag "Shortcut" nil)
+                        (const :tag "Unchorded" 'unchorded)
+                        (const :tag "Ctl<->Alt" 'ctl-to-alt)))
                  (symbol :tag "Function/Keymap")
                  (sexp :tag "List of functions/keymaps"))
                 (choice (const :tag "No Label" nil)
@@ -861,7 +865,11 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                        (choice (string :tag "QWERTY Kbd Code")
                                (sexp :tag "Key"))
                        (choice
-                        (string :tag "Kbd Code")
+                        (list (string :tag "Kbd Code")
+                              (choice
+                               (const :tag "Shortcut" nil)
+                               (const :tag "Unchorded" 'unchorded)
+                               (const :tag "Ctl<->Alt" 'ctl-to-alt)))
                         (symbol :tag "Function/Keymap")
                         (sexp :tag "List of functions/keymaps"))
                        

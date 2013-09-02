@@ -691,12 +691,28 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
   (cond
    ((eq 'cons (type-of def))
     (let (found)
-      (mapc
-       (lambda(new-def)
-         (unless found
-           (setq found
-                 (ergoemacs-setup-keys-for-keymap---internal keymap key new-def))))
-       def)
+      (if (condition-case err
+              (stringp (nth 0 def))
+            (error nil))
+          (progn
+            (eval
+             (macroexpand
+              `(progn
+                 (ergoemacs-keyboard-shortcut
+                  ,(intern (concat "ergoemacs-shortcut---"
+                                   (md5 (format "%s; %s" (nth 0 def)
+                                                (nth 1 def))))) ,(nth 0 def)
+                                                ,(nth 1 def))
+                 (define-key keymap key
+                   ',(intern (concat "ergoemacs-shortcut---"
+                                     (md5 (format "%s; %s" (nth 0 def)
+                                                  (nth 1 def))))))))))
+        (mapc
+         (lambda(new-def)
+           (unless found
+             (setq found
+                   (ergoemacs-setup-keys-for-keymap---internal keymap key new-def))))
+         def))
       (symbol-value 'found)))
    ((condition-case err
         (fboundp def)
@@ -714,10 +730,10 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
     (eval (macroexpand `(progn
                           (ergoemacs-keyboard-shortcut
                            ,(intern (concat "ergoemacs-shortcut---"
-                                            (md5 (format "%s" def)))) ,def)
+                                            (md5 (format "%s; nil" def)))) ,def)
                           (define-key keymap key
                             ',(intern (concat "ergoemacs-shortcut---"
-                                              (md5 (format "%s" def))))))))
+                                              (md5 (format "%s; nil" def))))))))
     t)
    (t nil)))
 
@@ -1209,7 +1225,7 @@ key sequences.
 
 If CHORDED is nil, the NAME command will just issue the KEY sequence.
 
-If CHORDED is 'ctl or the NAME command will translate the control
+If CHORDED is 'unchorded or the NAME command will translate the control
 bindings to be unchorded.  For example:
 
 For example for the C-x map,
@@ -1234,7 +1250,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
 "
   `(progn
      ,(cond
-       ((eq chorded 'ctl))
+       ((eq chorded 'unchorded))
        ((eq chorded 'ctl-to-alt))
        (t
         (when repeat
@@ -1244,7 +1260,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                :type 'boolean))))
      (defun ,(intern (symbol-name name)) (&optional arg)
        ,(cond
-         ((eq chorded 'ctl)
+         ((eq chorded 'unchorded)
           (format "Creates a keymap that extracts the unchorded %s combinations and then issues %s" (ergoemacs-pretty-key key) (ergoemacs-pretty-key key)))
          ((eq chorded 'ctl-to-alt)
           (format "Creates a keymap that extracts the %s combinations and translates Ctl+ to Alt+." (ergoemacs-pretty-key key)))
@@ -1256,7 +1272,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
        (let (extract-map key-seq)
          (ergoemacs-extract-maps extract-map ,key)
          ,(cond
-           ((eq chorded 'ctl)
+           ((eq chorded 'unchorded)
             `(progn
                (setq key-seq  (read-kbd-macro (format "<Unchorded> %s" ,key)))
                (set-temporary-overlay-map extract-map)
@@ -1295,11 +1311,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                        ;; installing temporary keymap
                        (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-shortcut-timeout)))))))))))
 
-(ergoemacs-keyboard-shortcut ergoemacs-ctl-c-unchorded "C-c" ctl)
-(ergoemacs-keyboard-shortcut ergoemacs-ctl-c-ctl-to-alt "C-c" ctl-to-alt)
-(ergoemacs-keyboard-shortcut ergoemacs-ctl-x-unchorded "C-x" ctl)
-(ergoemacs-keyboard-shortcut ergoemacs-ctl-x-ctl-to-alt "C-x" ctl-to-alt)
-(ergoemacs-keyboard-shortcut ergoemacs-ctl-h-ctl-to-alt "C-h" ctl-to-alt)
+
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-c-ctl-c "C-c C-c" nil ergoemacs-repeat-ctl-c-ctl-c)
 
 
