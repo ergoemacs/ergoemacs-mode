@@ -1227,8 +1227,8 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
 
           (setq file (expand-file-name  "keyfreq-menu-map.svg" extra-dir))
           (when (funcall gen-img file (if (eq system-type 'windows-nt)
-                            "<apps> "
-                            "<menu> ") "▤ Menu/Apps " nil)
+                                          "<apps> "
+                                        "<menu> ") "▤ Menu/Apps " nil)
             (setq select
                   (format "%s<option value=\"%s\">▤ Menu/Apps</option>"
                           select
