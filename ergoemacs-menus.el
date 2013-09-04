@@ -32,38 +32,13 @@
   "http://ergoemacs.org/emacs/elisp.html")
 
 (defvar ergoemacs-mode-web-page-url
-  "http://mlf176f2.github.io/ErgoEmacs/")
+  "http://ergoemacs.github.io/ergoemacs-mode/")
 
 (defun ergoemacs-kbd-to-key (key)
   "Convert key Emacs key code to ergoemacs-key-code."
-  (let ((case-fold-search nil))
+  (let ((ergoemacs-use-unicode-char nil))
     (replace-regexp-in-string
-     " " "  "
-     (replace-regexp-in-string
-      "<" ""
-      (replace-regexp-in-string
-       "?" ""
-       (replace-regexp-in-string
-        "\\bRET\\b" "ENTER"
-        (replace-regexp-in-string
-         "\\bprior\\b" "PgUp"
-         (replace-regexp-in-string
-          "\\bnext\\b" "PgDn"
-          (replace-regexp-in-string
-           "<f\\([0-9]+\\)>" "F\\1"
-           (replace-regexp-in-string
-            "\\b-\\b" "+"
-            (replace-regexp-in-string
-             "\\b[[:lower:]]\\b" 'upcase
-             (replace-regexp-in-string
-              "\\b\\([[:upper:]]\\)\\b" "Shift+\\1"
-              (replace-regexp-in-string
-               "\\bC-" "Ctrl+"
-               (replace-regexp-in-string
-                "\\bS-" "Shift+"
-                (replace-regexp-in-string
-                 "\\bM-" "Alt+"
-                 key t) t) t) t) t) t) t) t) t) t) t) t) t)))
+     "\\(\\[\\|\\]\\)" "" (ergoemacs-pretty-key key))))
 
 (defun ergoemacs-shortcut-for-menu-item (item)
   (if (and (>= (safe-length item) 4)

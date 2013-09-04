@@ -262,10 +262,10 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (ert-deftest ergoemacs-test-ctl-c-ctl-c ()
   "Issue #64.  Should translate C-c C-c correctly."
   (let (ergoemacs-use-unicode-char)
-    (should (string= (ergoemacs-pretty-key-rep "C-c C-c") "[Ctrl+c] [Ctrl+c]"))))
+    (should (string= (ergoemacs-pretty-key-rep "C-c C-c") "[Ctrl+C] [Ctrl+C]"))))
 
 (ert-deftest ergoemacs-test-helm-M-x ()
-  "Issue #65.  helm-M-x should not be helm-[Alt+x]."
+  "Issue #65.  helm-M-x should not be helm-[Alt+X]."
   (let (ergoemacs-use-unicode-char)
     (should (string= (ergoemacs-pretty-key-rep "helm-M-x test") "helm-M-x test"))))
 
@@ -324,8 +324,8 @@ Test next and prior translation."
 
 (ert-deftest ergoemacs-test-issue-77 ()
   "Issue #77.
-Test \"C-x \" translating to \"[Ctrl+x][]\", should be \"[Ctrl+x]\""
-  (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+x]")))
+Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
+  (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]")))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
