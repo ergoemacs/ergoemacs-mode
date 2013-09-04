@@ -926,13 +926,14 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
 
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE to like M- to Alt+"
-  (let ((ret code)
+  (let ((ret (replace-regexp-in-string
+              " +$" "" (replace-regexp-in-string "^ +" "" code)))
         (case-fold-search nil)) 
     (when ergoemacs-use-ergoemacs-key-descriptions
       (save-match-data
         (with-temp-buffer
           (insert (ergoemacs-unicode-char "【" "["))
-          (insert code)
+          (insert ret)
           (insert (ergoemacs-unicode-char "】" "]"))
           (goto-char (point-min))
           (while (re-search-forward "<f\\([0-9]+\\)>" nil t)
