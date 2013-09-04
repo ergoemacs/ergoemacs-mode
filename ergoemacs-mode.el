@@ -1301,31 +1301,37 @@ the best match."
      ;; Now add root level swap.
      (ergoemacs-debug "Root: %s <%s>" cur-prefix (if (eq system-type 'windows-nt) "apps" "menu"))
      
-     (define-key ,keymap
-       (read-kbd-macro (format "<Normal> %s <%s>" cur-prefix
-                               (if (eq system-type 'windows-nt) "apps" "menu")))
-       `(lambda()
-          (interactive)
-          (ergoemacs-menu-swap ,cur-prefix "" 'normal)))
+     (condition-case err
+         (define-key ,keymap
+           (read-kbd-macro (format "<Normal> %s <%s>" cur-prefix
+                                   (if (eq system-type 'windows-nt) "apps" "menu")))
+           `(lambda()
+              (interactive)
+              (ergoemacs-menu-swap ,cur-prefix "" 'normal)))
+       (error nil))
      
-     (define-key ,keymap 
-       (read-kbd-macro
-        (format "<Ctl%sAlt> %s <%s>" 
-                (ergoemacs-unicode-char "↔" " to ")
-                cur-prefix
-                (if (eq system-type 'windows-nt) "apps" "menu")))
-       `(lambda()
-          (interactive)
-          (ergoemacs-menu-swap ,cur-prefix "" 'ctl-to-alt)))
+     (condition-case err
+         (define-key ,keymap 
+           (read-kbd-macro
+            (format "<Ctl%sAlt> %s <%s>" 
+                    (ergoemacs-unicode-char "↔" " to ")
+                    cur-prefix
+                    (if (eq system-type 'windows-nt) "apps" "menu")))
+           `(lambda()
+              (interactive)
+              (ergoemacs-menu-swap ,cur-prefix "" 'ctl-to-alt)))
+       (error nil))
 
-     (define-key ,keymap 
-       (read-kbd-macro
-        (format "<Unchorded> %s <%s>"
-                cur-prefix
-                (if (eq system-type 'windows-nt) "apps" "menu")))
-       `(lambda()
-          (interactive)
-          (ergoemacs-menu-swap ,cur-prefix "" 'unchorded)))
+     (condition-case err
+         (define-key ,keymap 
+           (read-kbd-macro
+            (format "<Unchorded> %s <%s>"
+                    cur-prefix
+                    (if (eq system-type 'windows-nt) "apps" "menu")))
+           `(lambda()
+              (interactive)
+              (ergoemacs-menu-swap ,cur-prefix "" 'unchorded)))
+       (error nil))
      
      ;; Now add prefixes.
      (mapc
@@ -1336,22 +1342,26 @@ the best match."
                      "\\<M-" "C-"
                      (replace-regexp-in-string "\\<C-" "W-" x)))))
 
-          (define-key ,keymap
-            (read-kbd-macro (format "<Normal> %s %s <%s>" cur-prefix x
-                                    (if (eq system-type 'windows-nt) "apps" "menu")))
-            `(lambda()
-               (interactive)
-               (ergoemacs-menu-swap ,cur-prefix ,x 'normal)))
+          (condition-case err
+              (define-key ,keymap
+                (read-kbd-macro (format "<Normal> %s %s <%s>" cur-prefix x
+                                        (if (eq system-type 'windows-nt) "apps" "menu")))
+                `(lambda()
+                   (interactive)
+                   (ergoemacs-menu-swap ,cur-prefix ,x 'normal)))
+            (error nil))
 
-          (define-key ,keymap 
-            (read-kbd-macro
-             (format "<Ctl%sAlt> %s %s <%s>" 
-                     (ergoemacs-unicode-char "↔" " to ")
-                     cur-prefix new
-                     (if (eq system-type 'windows-nt) "apps" "menu")))
-            `(lambda()
-               (interactive)
-               (ergoemacs-menu-swap ,cur-prefix ,x 'ctl-to-alt)))
+          (condition-case err
+              (define-key ,keymap 
+                (read-kbd-macro
+                 (format "<Ctl%sAlt> %s %s <%s>" 
+                         (ergoemacs-unicode-char "↔" " to ")
+                         cur-prefix new
+                         (if (eq system-type 'windows-nt) "apps" "menu")))
+                `(lambda()
+                   (interactive)
+                   (ergoemacs-menu-swap ,cur-prefix ,x 'ctl-to-alt)))
+            (error nil))
           
           (setq new
                 (replace-regexp-in-string
@@ -1360,14 +1370,16 @@ the best match."
                   "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
                   (replace-regexp-in-string "\\<M-" "W-" new))))
           
-          (define-key ,keymap 
-            (read-kbd-macro
-             (format "<Unchorded> %s %s <%s>"
-                     cur-prefix new
-                     (if (eq system-type 'windows-nt) "apps" "menu")))
-            `(lambda()
-               (interactive)
-               (ergoemacs-menu-swap ,cur-prefix ,x 'unchorded)))))
+          (condition-case err
+              (define-key ,keymap 
+                (read-kbd-macro
+                 (format "<Unchorded> %s %s <%s>"
+                         cur-prefix new
+                         (if (eq system-type 'windows-nt) "apps" "menu")))
+                `(lambda()
+                   (interactive)
+            (error nil))))
+                   (ergoemacs-menu-swap ,cur-prefix ,x 'unchorded)))
       prefixes)
      (ergoemacs-debug (make-string 80 ?=))
      (ergoemacs-debug-flush)))
@@ -1404,7 +1416,7 @@ the best match."
        ((eq type 'unchorded)
         (setq new-type 'ctl-to-alt))
        ((eq type 'normal)
-        (setq new-type 'unchorderd)))))
+        (setq new-type 'unchorded)))))
     (setq kbd-code
           (cond
            ((eq new-type 'normal)
