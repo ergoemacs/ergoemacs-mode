@@ -73,13 +73,19 @@
 
 (defun ergoemacs-debug (&rest arg)
   "Ergoemacs debugging facility."
-  (setq ergoemacs-debug
-        (format "%s\n%s"
-                ergoemacs-debug
-                (apply 'format arg))))
+  (interactive)
+  (if (interactive-p)
+      (progn
+        (ergoemacs-debug-flush)
+        (switch-to-buffer-other-window (get-buffer-create " *ergoemacs-debug*")))
+    (setq ergoemacs-debug
+          (format "%s\n%s"
+                  ergoemacs-debug
+                  (apply 'format arg)))))
+
 (defun ergoemacs-debug-flush ()
   "Flushes ergoemacs debug to *ergoemacs-debug*"
-  (with-current-buffer (get-buffer-create "*ergoemacs-debug*")
+  (with-current-buffer (get-buffer-create " *ergoemacs-debug*") ;; Should be hidden.
     (insert ergoemacs-debug "\n"))
   (setq ergoemacs-debug ""))
 
@@ -594,6 +600,7 @@ necessary.  Unshifted keys are changed to shifted keys.")
               (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
                       (regexp-opt (mapcar (lambda(x) (nth 0 x))
                                           ergoemacs-translation-assoc) nil)))))))
+
 (defvar ergoemacs-kbd-hash nil)
 
 (setq ergoemacs-kbd-hash (make-hash-table :test 'equal))
@@ -1160,50 +1167,194 @@ will change."
          (tmp "")
          (fn nil)
          (new-key nil)
-         (cur-prefix (or ,prefix "C-x")))
-     
+         (cur-prefix (or ,prefix "C-x"))
+         (prefix-regexp ""))
+     (ergoemacs-debug (make-string 80 ?=))
+     (ergoemacs-debug "Extracting maps for %s" cur-prefix)
+     (ergoemacs-debug (make-string 80 ?=))
      (with-temp-buffer
        (describe-buffer-bindings buf (read-kbd-macro cur-prefix))
        (goto-char (point-min))
        (while (re-search-forward (format "%s \\(.*?\\)[ \t]\\{2,\\}\\(.+\\)$" cur-prefix) nil t)
          (setq new-key (match-string 1))
          (setq fn (match-string 2))
-         (unless (string-match "Prefix Command$" (match-string 0))
+         (if (string-match "Prefix Command$" (match-string 0))
+             (progn
+               (ergoemacs-debug "Prefix: %s" new-key)
+               (add-to-list 'prefixes new-key))
            (unless (string-match "ergoemacs-old-key---" fn)
              (condition-case err
                  (with-temp-buffer
-                   (insert "(add-to-list 'normal '(\"" new-key "\" " fn "))")
+                   (insert "(if (keymapp '" fn
+                           ") (progn (add-to-list 'prefixes \"" new-key
+                           "\") (ergoemacs-debug \"Prefix (keymap): %s\" new-key)) (add-to-list 'normal '(\"" new-key
+                           "\" " fn ")) (ergoemacs-debug \"Normal: %s -> %s\" new-key fn))")
                    (eval-buffer))
                (error (setq fn nil)))))))
      
      (setq ,keymap (make-keymap))
 
+     (setq prefix-regexp (format "^%s" (regexp-opt prefixes t)))
+     
+     (mapc
+       (lambda(x)
+        (unless (string-match prefix-regexp (nth 0 x))
+          (when (functionp (nth 1 x))    
+            (let ((new (replace-regexp-in-string
+                        "\\<W-" "M-"
+                        (replace-regexp-in-string
+                         "\\<M-" "C-"
+                         (replace-regexp-in-string "\\<C-" "W-" (nth 0 x))))))
+              (ergoemacs-debug "<Normal> %s %s => %s" cur-prefix (nth 0 x) (nth 1 x))
+              (define-key ,keymap
+                (read-kbd-macro (format "<Normal> %s %s" cur-prefix (nth 0 x))) (nth 1 x))
+              (define-key ,keymap
+                (read-kbd-macro
+                 (format "<Ctl%sAlt> %s %s" 
+                         (ergoemacs-unicode-char "↔" " to ")
+                         cur-prefix new)) (nth 1 x))
+              (ergoemacs-debug "<Ctl%sAlt> %s %s => %s"
+                               (ergoemacs-unicode-char "↔" " to ")
+                               cur-prefix new (nth 1 x))
+              (setq new
+                    (replace-regexp-in-string
+                     "\\<W-" ""
+                     (replace-regexp-in-string
+                      "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
+                      (replace-regexp-in-string "\\<M-" "W-" new))))
+              (define-key ,keymap
+                (read-kbd-macro
+                 (format "<Unchorded> %s %s" cur-prefix new)) (nth 1 x))
+              (ergoemacs-debug "<Unchorded> %s %s => %s"
+                               cur-prefix new (nth 1 x))))))
+       normal)
+     ;; Now add root level swap.
+     (ergoemacs-debug "Root: %s <%s>" cur-prefix (if (eq system-type 'windows-nt) "apps" "menu"))
+     
+     (define-key ,keymap
+       (read-kbd-macro (format "<Normal> %s <%s>" cur-prefix
+                               (if (eq system-type 'windows-nt) "apps" "menu")))
+       `(lambda()
+          (interactive)
+          (ergoemacs-menu-swap ,cur-prefix "" 'normal)))
+     
+     (define-key ,keymap 
+       (read-kbd-macro
+        (format "<Ctl%sAlt> %s <%s>" 
+                (ergoemacs-unicode-char "↔" " to ")
+                cur-prefix
+                (if (eq system-type 'windows-nt) "apps" "menu")))
+       `(lambda()
+          (interactive)
+          (ergoemacs-menu-swap ,cur-prefix "" 'ctl-to-alt)))
+
+     (define-key ,keymap 
+       (read-kbd-macro
+        (format "<Unchorded> %s <%s>"
+                cur-prefix
+                (if (eq system-type 'windows-nt) "apps" "menu")))
+       `(lambda()
+          (interactive)
+          (ergoemacs-menu-swap ,cur-prefix "" 'unchorded)))
+     
+     ;; Now add prefixes.
      (mapc
       (lambda(x)
-        (when (functionp (nth 1 x))
-          (let ((new (replace-regexp-in-string
+        (let ((new (replace-regexp-in-string
+                    "\\<W-" "M-"
+                    (replace-regexp-in-string
+                     "\\<M-" "C-"
+                     (replace-regexp-in-string "\\<C-" "W-" x)))))
+
+          (define-key ,keymap
+            (read-kbd-macro (format "<Normal> %s %s <%s>" cur-prefix x
+                                    (if (eq system-type 'windows-nt) "apps" "menu")))
+            `(lambda()
+               (interactive)
+               (ergoemacs-menu-swap ,cur-prefix ,x 'normal)))
+
+          (define-key ,keymap 
+            (read-kbd-macro
+             (format "<Ctl%sAlt> %s %s <%s>" 
+                     (ergoemacs-unicode-char "↔" " to ")
+                     cur-prefix new
+                     (if (eq system-type 'windows-nt) "apps" "menu")))
+            `(lambda()
+               (interactive)
+               (ergoemacs-menu-swap ,cur-prefix ,x 'ctl-to-alt)))
+          
+          (setq new
+                (replace-regexp-in-string
+                 "\\<W-" ""
+                 (replace-regexp-in-string
+                  "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
+                  (replace-regexp-in-string "\\<M-" "W-" new))))
+          
+          (define-key ,keymap 
+            (read-kbd-macro
+             (format "<Unchorded> %s %s <%s>"
+                     cur-prefix new
+                     (if (eq system-type 'windows-nt) "apps" "menu")))
+            `(lambda()
+               (interactive)
+               (ergoemacs-menu-swap ,cur-prefix ,x 'unchorded)))))
+      prefixes)))
+
+(defun ergoemacs-menu-swap (prefix-key untranslated-key type)
+  "Swaps what <menu> key translation is in effect"
+  (let* ((new-type nil)
+         (new-key nil)
+         (kbd-code nil)
+         (normal untranslated-key)
+         (ctl-to-alt (replace-regexp-in-string
                       "\\<W-" "M-"
                       (replace-regexp-in-string
                        "\\<M-" "C-"
-                       (replace-regexp-in-string "\\<C-" "W-" (nth 0 x))))))
-            (define-key ,keymap
-              (read-kbd-macro (format "<Normal> %s %s" cur-prefix (nth 0 x))) (nth 1 x))
-            (define-key ,keymap
-              (read-kbd-macro
-               (format "<Ctl%sAlt> %s %s" 
-                       (ergoemacs-unicode-char "↔" " to ")
-                       cur-prefix new)) (nth 1 x))
-            (setq new
-                  (replace-regexp-in-string
-                   "\\<W-" ""
-                   (replace-regexp-in-string
-                    "\\(^\\| \\)\\([^-]+\\)\\( \\|$\\)" "\\1M-\\2\\3"
-                    (replace-regexp-in-string "\\<M-" "W-" new))))
-            (define-key ,keymap
-              (read-kbd-macro
-               (format "<Unchorded> %s %s" cur-prefix new)) (nth 1 x)))))
-      normal)))
-
+                       (replace-regexp-in-string "\\<C-" "W-" normal))))
+         (unchorded (replace-regexp-in-string
+                     "\\<W-" ""
+                     (replace-regexp-in-string
+                      "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
+                      (replace-regexp-in-string "\\<M-" "W-" ctl-to-alt)))))
+    (cond
+     ((member ergoemacs-first-extracted-variant '(ctl-to-alt normal))
+      (cond
+       ((eq type 'ctl-to-alt)
+        (setq new-type 'unchorded))
+       ((eq type 'unchorded)
+        (setq new-type 'normal))
+       ((eq type 'normal)
+        (setq new-type 'ctl-to-alt))))
+     ((equal ergoemacs-first-extracted-variant 'unchorded)
+      (cond
+       ((eq type 'ctl-to-alt)
+        (setq new-type 'normal))
+       ((eq type 'unchorded)
+        (setq new-type 'ctl-to-alt))
+       ((eq type 'normal)
+        (setq new-type 'unchorderd)))))
+    (setq kbd-code
+          (cond
+           ((eq new-type 'normal)
+            (format "<Normal> %s %s" prefix-key normal))
+           ((eq new-type 'ctl-to-alt)
+            (format "<Ctl%sAlt> %s %s"
+                    (ergoemacs-unicode-char "↔" " to ")
+                    prefix-key
+                    ctl-to-alt))
+           ((eq new-type 'unchorded)
+            (format "<Unchorded> %s %s" prefix-key
+                    unchorded))))
+    (setq new-key (listify-key-sequence (read-kbd-macro kbd-code)))
+    (setq this-command last-command) ; Don't record this command.
+    (setq prefix-arg current-prefix-arg)
+    (set-temporary-overlay-map ergoemacs-current-extracted-map)
+    (reset-this-command-lengths)
+    (setq unread-command-events new-key)
+    (save-match-data
+      (when (string-match "<\\(.*?\\)> \\(.*\\)" kbd-code)
+        (message "<%s> %s" (match-string 1 kbd-code)
+                 (ergoemacs-pretty-key (match-string 2 kbd-code)))))))
 
 
 (defvar ergoemacs-repeat-shortcut-keymap (make-keymap)
@@ -1215,6 +1366,12 @@ will change."
 (defun ergoemacs-shortcut-timeout ()
   (message ergoemacs-repeat-shortcut-msg)
   (set-temporary-overlay-map ergoemacs-repeat-shortcut-keymap))
+
+(defvar ergoemacs-current-extracted-map nil
+  "Current extracted map for `ergoemacs-keyboard-shortcut' defined functions")
+
+(defvar ergoemacs-first-extracted-variant nil
+  "Current extracted variant")
 
 
 ;;;###autoload
@@ -1261,33 +1418,45 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
      (defun ,(intern (symbol-name name)) (&optional arg)
        ,(cond
          ((eq chorded 'unchorded)
-          (format "Creates a keymap that extracts the unchorded %s combinations and then issues %s" (ergoemacs-pretty-key key) (ergoemacs-pretty-key key)))
+          (format "Creates a keymap that extracts the unchorded %s combinations and then issues %s.  Also allows unbound or normal variants by pressing the <menu> key." key key))
          ((eq chorded 'ctl-to-alt)
-          (format "Creates a keymap that extracts the %s combinations and translates Ctl+ to Alt+." (ergoemacs-pretty-key key)))
+          (format "Creates a keymap that extracts the %s combinations and translates Ctl+ to Alt+. Also allows the unbound or Ctl to alt variants by pressing the <menu>" key))
+         ((eq chorded 'normal)
+          (format "Creates a keymap that extracts the %s keymap. Also allows the unbound or Ctl+ to Alt+ and unbound variants by pressing the <menu>" key))
          (t
           (format "A shortcut to %s." (ergoemacs-pretty-key key))))
        (interactive "P")
        (setq this-command last-command) ; Don't record this command.
        (setq prefix-arg current-prefix-arg)
-       (let (extract-map key-seq)
-         (ergoemacs-extract-maps extract-map ,key)
+       (let (key-seq (key ,key))
+         (eval (macroexpand '(ergoemacs-extract-maps ergoemacs-current-extracted-map key)))
          ,(cond
            ((eq chorded 'unchorded)
             `(progn
+               (setq ergoemacs-first-extracted-variant 'unchorded)
                (setq key-seq  (read-kbd-macro (format "<Unchorded> %s" ,key)))
-               (set-temporary-overlay-map extract-map)
+               (set-temporary-overlay-map ergoemacs-current-extracted-map)
                (setq key-seq (listify-key-sequence key-seq))
                (reset-this-command-lengths)
                (setq unread-command-events key-seq)
-               (princ ,(format "<Unchorded> %s " (ergoemacs-pretty-key key)))
-               ))
+               (princ ,(format "<Unchorded> %s " (ergoemacs-pretty-key key)))))
+           ((eq chorded 'normal)
+            `(progn
+               (setq ergoemacs-first-extracted-variant 'normal)
+               (setq key-seq  (read-kbd-macro (format "<Normal> %s" ,key)))
+               (set-temporary-overlay-map ergoemacs-current-extracted-map)
+               (setq key-seq (listify-key-sequence key-seq))
+               (reset-this-command-lengths)
+               (setq unread-command-events key-seq)
+               (princ ,(format "<Normal> %s " (ergoemacs-pretty-key key)))))
            ((eq chorded 'ctl-to-alt)
             `(progn
+               (setq ergoemacs-first-extracted-variant 'ctl-to-alt)
                (setq key-seq (read-kbd-macro (format "<Ctl%sAlt> %s" 
                                                      (ergoemacs-unicode-char "↔" " to ")
                                                      ,key)))
                (setq key-seq (listify-key-sequence key-seq))
-               (set-temporary-overlay-map extract-map)
+               (set-temporary-overlay-map ergoemacs-current-extracted-map)
                (reset-this-command-lengths)
                (setq unread-command-events key-seq)
                (princ ,(format "<Ctl%sAlt> %s " (ergoemacs-unicode-char "↔" " to ") (ergoemacs-pretty-key key)))))
