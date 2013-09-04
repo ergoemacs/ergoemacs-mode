@@ -322,6 +322,11 @@ Test next and prior translation."
   (should (string= (ergoemacs-pretty-key-rep "Test next and prior translation")
                    "Test next and prior translation")))
 
+(ert-deftest ergoemacs-test-issue-77 ()
+  "Issue #77.
+Test \"C-x \" translating to \"[Ctrl+x][]\", should be \"[Ctrl+x]\""
+  (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+x]")))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
