@@ -16,8 +16,7 @@
 #+POST_BUILD_SHELL: cmd 3
 #+POST_BUILD_SHELL: cmd 4
 
-
-* Quick start Guide
+* ergoemacs-mode Quick start Guide
   :PROPERTIES:
   :PAGE:     index.html
   :TEMPLATE: blog_static_no_title.html
