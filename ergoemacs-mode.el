@@ -1748,6 +1748,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (defcustom ergoemacs-aliases
   '((ar    align-regexp)
+    (c     toggle-case-fold-search)
     (cc    calc)
     (dml   delete-matching-lines)
     (dnml  delete-non-matching-lines)
@@ -1771,7 +1772,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
     (rs    replace-string)
     (sbc   set-background-color)
     (sh    shell)
-    (sl    sort-lines))
+    (sl    sort-lines)
+    (ws    whitespace-mode))
   "List of aliases defined by `ergoemacs-mode'."
   :type '(repeat
           (list
