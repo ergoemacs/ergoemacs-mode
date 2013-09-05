@@ -995,7 +995,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
           (while (re-search-forward "next>" nil t)
             (replace-match "PgDn>" t))
           (goto-char (point-min))
-          (while (re-search-forward "\\([[:lower:]]\\)\\(】\\|\\]\\)" nil t)
+          (while (re-search-forward "[+]\\([[:lower:]]\\)\\(】\\|\\]\\)" nil t)
             (replace-match (upcase (match-string 0)) t t))
           (setq ret (buffer-string)))))
     (symbol-value 'ret)))
