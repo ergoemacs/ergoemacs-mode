@@ -1427,7 +1427,6 @@ the best match."
 
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
-  (message "Send %s %s of %s" prefix-key untranslated-key type)
   (let ((fn (concat "ergoemacs-shortcut---"
                     (md5 (format "%s %s; %s" prefix-key untranslated-key
                                  type)))))
@@ -1491,8 +1490,9 @@ the best match."
     (setq unread-command-events new-key)
     (save-match-data
       (when (string-match "<\\(.*?\\)> \\(.*\\)" kbd-code)
-        (message "<%s> %s" (match-string 1 kbd-code)
-                 (ergoemacs-pretty-key (match-string 2 kbd-code)))))))
+        (message (replace-regexp-in-string "<Normal> +" ""
+                  (format "<%s> %s" (match-string 1 kbd-code)
+                         (ergoemacs-pretty-key (match-string 2 kbd-code)))))))))
 
 
 (defvar ergoemacs-repeat-shortcut-keymap (make-keymap)
