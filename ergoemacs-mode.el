@@ -2,7 +2,7 @@
 
 ;; Copyright © 2007, 2008, 2009 by Xah Lee
 ;; Copyright © 2009, 2010 by David Capello
-;; Copyright © 2012, 2013 by Matthew cFidler
+;; Copyright © 2012, 2013 by Matthew Fidler
 
 ;; Author: Xah Lee <xah@xahlee.org>
 ;;         David Capello <davidcapello@gmail.com>
@@ -1165,16 +1165,22 @@ the best match."
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defvar ergoemacs-extract-map-hash (make-hash-table :test 'equal))
+
 (defmacro ergoemacs-extract-maps (keymap &optional prefix)
   "Extracts maps."
   `(let ((buf (current-buffer))
          (normal '())
          (translations '())
          (prefixes '())
+         (bound-regexp "")
          (tmp "")
          (fn nil)
          (new-key nil)
+	 (start-time (float-time))
+	 (last-time nil)
          (cur-prefix (or ,prefix "C-x"))
+         (hashkey "")
          (prefix-regexp ""))
      (ergoemacs-debug (make-string 80 ?=))
      (ergoemacs-debug "Extracting maps for %s" cur-prefix)
@@ -1185,37 +1191,42 @@ the best match."
        (while (re-search-forward (format "%s \\(.*?\\)[ \t]\\{2,\\}\\(.+\\)$" cur-prefix) nil t)
          (setq new-key (match-string 1))
          (setq fn (match-string 2))
-         (if (string-match "Prefix Command$" (match-string 0))
-             (progn
-               (ergoemacs-debug "Prefix: %s" new-key)
-               (add-to-list 'prefixes new-key))
-           (unless (string-match "ergoemacs-old-key---" fn)
-             (condition-case err
-                 (with-temp-buffer
-                   (insert "(if (keymapp '" fn
-                           ") (progn (add-to-list 'prefixes \"" new-key
-                           "\") (ergoemacs-debug \"Prefix (keymap): %s\" new-key)) (add-to-list 'normal '(\"" new-key
-                           "\" " fn ")) (ergoemacs-debug \"Normal: %s -> %s\" new-key fn))")
-                   (eval-buffer)
-                   (when ergoemacs-translate-keys
-                     (cond
-                      ((string-match "\\( \\|^\\)C-\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
-                       (add-to-list 'translations
-                                    (list (replace-match "\\1\\2" t nil new-key)
-                                      fn)))
-                      ((string-match "\\( \\|^\\)\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
-                       (add-to-list 'translations
-                                    (list (replace-match "\\1C-\\2" t nil new-key)
-                                          fn))))))
-               (error (setq fn nil)))))))
-     
-     (setq ,keymap (make-keymap))
+         (unless (string-match " " new-key)
+           (if (string-match "Prefix Command$" (match-string 0))
+               (unless (string-match "ESC" new-key)
+                 (ergoemacs-debug "Prefix: %s" new-key)
+                 (add-to-list 'prefixes new-key))
+             (unless (string-match "ergoemacs-old-key---" fn)
+               (condition-case err
+                   (with-temp-buffer
+                     (insert "(if (keymapp '" fn
+                             ") (unless (string-match \"ESC\" \"" new-key
+                             "\") (add-to-list 'prefixes \"" new-key
+                             "\") (ergoemacs-debug \"Prefix (keymap): %s\" new-key)) (add-to-list 'normal '(\"" new-key
+                             "\" " fn ")) (ergoemacs-debug \"Normal: %s -> %s\" new-key fn))")
+                     (eval-buffer)
+                     (when ergoemacs-translate-keys
+                       (cond
+                        ((string-match "\\( \\|^\\)C-\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
+                         (add-to-list 'translations
+                                      (list (replace-match "\\1\\2" t nil new-key)
+                                            fn)))
+                        ((string-match "\\( \\|^\\)\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
+                         (add-to-list 'translations
+                                      (list (replace-match "\\1C-\\2" t nil new-key)
+                                            fn))))))
+                 (error (setq fn nil))))))))
 
-     (setq prefix-regexp (format "^%s" (regexp-opt prefixes t)))
-     
-     (mapc
-       (lambda(x)
-        (unless (string-match prefix-regexp (nth 0 x))
+     (ergoemacs-debug (make-string 80 ?=))
+     (ergoemacs-debug "Finished (%1f sec); Building keymap" (- (float-time) start-time))
+     (setq last-time (float-time))
+     (ergoemacs-debug (make-string 80 ?=))
+     (setq hashkey (md5 (format "%s;%s;%s" cur-prefix normal prefixes)))
+     (setq ,keymap (gethash hashkey ergoemacs-extract-map-hash))
+     (unless ,keymap
+       (setq ,keymap (make-keymap))
+       (mapc
+        (lambda(x)
           (when (functionp (nth 1 x))    
             (let* ((normal (nth 0 x))
                    (ctl-to-alt
@@ -1247,142 +1258,185 @@ the best match."
                  (format "<Unchorded> %s %s" cur-prefix unchorded))
                 (nth 1 x))
               (ergoemacs-debug "<Unchorded> %s %s => %s"
-                               cur-prefix unchorded (nth 1 x))))))
-       normal)
-     ;;
-     (when ergoemacs-translate-keys
+                               cur-prefix unchorded (nth 1 x)))))
+        normal)
        (ergoemacs-debug (make-string 80 ?=))
-       (ergoemacs-debug "Translating keys for %s" cur-prefix)
+       (ergoemacs-debug "Built (%1f s;%1f s); Adding Prefixes" 
+                        (- (float-time) start-time)
+                        (- (float-time) last-time))
+       (setq last-time (float-time))
        (ergoemacs-debug (make-string 80 ?=))
+       
+       ;; Now add prefixes.
        (mapc
         (lambda(x)
-          (ergoemacs-debug "Testing %s; %s" x (functionp (intern (nth 1 x))))
-          (when (functionp (intern (nth 1 x)))    
-            (let* ((fn (intern (nth 1 x)))
-                   (normal (nth 0 x))
-                   (ctl-to-alt
-                    (replace-regexp-in-string
-                     "\\<W-" "M-"
-                     (replace-regexp-in-string
-                      "\\<M-" "C-"
-                      (replace-regexp-in-string "\\<C-" "W-" normal))))
-                   (unchorded
-                    (replace-regexp-in-string
-                     "\\<W-" ""
-                     (replace-regexp-in-string
-                      "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
-                      (replace-regexp-in-string "\\<M-" "W-" ctl-to-alt)))))
-              (let ((curr-kbd (format "<Normal> %s %s" cur-prefix normal)))
-                (ergoemacs-debug "\tcurr-kbd: %s" curr-kbd)
-                (unless (lookup-key ,keymap (read-kbd-macro curr-kbd))
-                  (define-key ,keymap
-                    (read-kbd-macro curr-kbd) fn)
-                  (ergoemacs-debug "<Normal> %s %s => %s" cur-prefix normal fn))
-                (setq curr-kbd
-                      (format "<Ctl%sAlt> %s %s" 
-                              (ergoemacs-unicode-char "↔" " to ")
-                              cur-prefix ctl-to-alt))
-                (ergoemacs-debug "\tcurr-kbd: %s" curr-kbd)
-                (unless (lookup-key ,keymap (read-kbd-macro curr-kbd))
-                  (define-key ,keymap
-                    (read-kbd-macro curr-kbd) fn)
-                  (ergoemacs-debug "<Ctl%sAlt> %s %s => %s"
-                                   (ergoemacs-unicode-char "↔" " to ")
-                                   cur-prefix ctl-to-alt fn))
-                (setq curr-kbd (format "<Unchorded> %s %s" cur-prefix unchorded))
-                (ergoemacs-debug "\tcurr-kbd: %s" curr-kbd)
-                (unless (lookup-key ,keymap (read-kbd-macro curr-kbd))
-                  (define-key ,keymap
-                    (read-kbd-macro curr-kbd) fn)
-                  (ergoemacs-debug "<Unchorded> %s %s => %s"
-                                   cur-prefix unchorded fn))))))
-        translations))
-     
-     ;; Now add root level swap.
-     (ergoemacs-debug "Root: %s <%s>" cur-prefix (if (eq system-type 'windows-nt) "apps" "menu"))
-     
-     (condition-case err
-         (define-key ,keymap
-           (read-kbd-macro (format "<Normal> %s <%s>" cur-prefix
-                                   (if (eq system-type 'windows-nt) "apps" "menu")))
-           `(lambda()
-              (interactive)
-              (ergoemacs-menu-swap ,cur-prefix "" 'normal)))
-       (error nil))
-     
-     (condition-case err
-         (define-key ,keymap 
-           (read-kbd-macro
-            (format "<Ctl%sAlt> %s <%s>" 
-                    (ergoemacs-unicode-char "↔" " to ")
-                    cur-prefix
-                    (if (eq system-type 'windows-nt) "apps" "menu")))
-           `(lambda()
-              (interactive)
-              (ergoemacs-menu-swap ,cur-prefix "" 'ctl-to-alt)))
-       (error nil))
+          (let ((new (replace-regexp-in-string
+                      "\\<W-" "M-"
+                      (replace-regexp-in-string
+                       "\\<M-" "C-"
+                       (replace-regexp-in-string "\\<C-" "W-" x)))))
 
-     (condition-case err
-         (define-key ,keymap 
-           (read-kbd-macro
-            (format "<Unchorded> %s <%s>"
-                    cur-prefix
-                    (if (eq system-type 'windows-nt) "apps" "menu")))
-           `(lambda()
-              (interactive)
-              (ergoemacs-menu-swap ,cur-prefix "" 'unchorded)))
-       (error nil))
-     
-     ;; Now add prefixes.
-     (mapc
-      (lambda(x)
-        (let ((new (replace-regexp-in-string
-                    "\\<W-" "M-"
-                    (replace-regexp-in-string
-                     "\\<M-" "C-"
-                     (replace-regexp-in-string "\\<C-" "W-" x)))))
+            (condition-case err
+                (define-key ,keymap
+                  (read-kbd-macro (format "<Normal> %s %s" cur-prefix x))
+                  `(lambda()
+                     (interactive)
+                     (ergoemacs-menu-send-prefix ,cur-prefix ,x 'normal)))
+              (error nil))
 
-          (condition-case err
-              (define-key ,keymap
-                (read-kbd-macro (format "<Normal> %s %s <%s>" cur-prefix x
-                                        (if (eq system-type 'windows-nt) "apps" "menu")))
-                `(lambda()
-                   (interactive)
-                   (ergoemacs-menu-swap ,cur-prefix ,x 'normal)))
-            (error nil))
+            (condition-case err
+                (define-key ,keymap 
+                  (read-kbd-macro
+                   (format "<Ctl%sAlt> %s %s" 
+                           (ergoemacs-unicode-char "↔" " to ")
+                           cur-prefix new))
+                  `(lambda()
+                     (interactive)
+                     (ergoemacs-menu-send-prefix ,cur-prefix ,x 'ctl-to-alt)))
+              (error nil))
+            
+            (setq new
+                  (replace-regexp-in-string
+                   "\\<W-" ""
+                   (replace-regexp-in-string
+                    "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
+                    (replace-regexp-in-string "\\<M-" "W-" new))))
+            
+            (condition-case err
+                (define-key ,keymap 
+                  (read-kbd-macro
+                   (format "<Unchorded> %s %s"
+                           cur-prefix new))
+                  `(lambda()
+                     (interactive)
+                     (ergoemacs-menu-send-prefix ,cur-prefix ,x 'unchorded)))
+              (error nil))))
+        prefixes)
 
-          (condition-case err
-              (define-key ,keymap 
-                (read-kbd-macro
-                 (format "<Ctl%sAlt> %s %s <%s>" 
-                         (ergoemacs-unicode-char "↔" " to ")
-                         cur-prefix new
-                         (if (eq system-type 'windows-nt) "apps" "menu")))
-                `(lambda()
-                   (interactive)
-                   (ergoemacs-menu-swap ,cur-prefix ,x 'ctl-to-alt)))
-            (error nil))
-          
-          (setq new
-                (replace-regexp-in-string
-                 "\\<W-" ""
-                 (replace-regexp-in-string
-                  "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
-                  (replace-regexp-in-string "\\<M-" "W-" new))))
-          
-          (condition-case err
-              (define-key ,keymap 
-                (read-kbd-macro
-                 (format "<Unchorded> %s %s <%s>"
-                         cur-prefix new
-                         (if (eq system-type 'windows-nt) "apps" "menu")))
-                `(lambda()
-                   (interactive)
-                   (ergoemacs-menu-swap ,cur-prefix ,x 'unchorded)))
-            (error nil))))
-      prefixes)
+       (ergoemacs-debug (make-string 80 ?=))
+       (ergoemacs-debug "Built (%1f s;%1f s); Translating keys" 
+                        (- (float-time) start-time)
+                        (- (float-time) last-time))
+       (setq last-time (float-time))
+       (ergoemacs-debug (make-string 80 ?=))
+       
+       ;;
+       (when ergoemacs-translate-keys
+         (setq bound-regexp
+               (format "^%s$"
+                       (regexp-opt
+                        (append
+                         (mapcar (lambda(x) (nth 0 x))
+                                 normal) prefixes) t)))
+         (ergoemacs-debug (make-string 80 ?=))
+         (ergoemacs-debug "Translating keys for %s" cur-prefix)
+         (ergoemacs-debug (make-string 80 ?=))
+         (mapc
+          (lambda(x)
+            (if (string-match bound-regexp (nth 0 x))
+                (ergoemacs-debug "Assume %s is already defined" x)
+              (ergoemacs-debug "Testing %s; %s" x (functionp (intern (nth 1 x))))
+              (when (functionp (intern (nth 1 x)))    
+                (let* ((fn (intern (nth 1 x)))
+                       (normal (nth 0 x))
+                       (ctl-to-alt
+                        (replace-regexp-in-string
+                         "\\<W-" "M-"
+                         (replace-regexp-in-string
+                          "\\<M-" "C-"
+                          (replace-regexp-in-string "\\<C-" "W-" normal))))
+                       (unchorded
+                        (replace-regexp-in-string
+                         "\\<W-" ""
+                         (replace-regexp-in-string
+                          "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
+                          (replace-regexp-in-string "\\<M-" "W-" ctl-to-alt)))))
+                  (let ((curr-kbd (format "<Normal> %s %s" cur-prefix normal)))
+                    (ergoemacs-debug "\tcurr-kbd: %s" curr-kbd)
+                    (define-key ,keymap
+                      (read-kbd-macro curr-kbd) fn)
+                    (condition-case err
+                        (ergoemacs-debug "<Normal> %s %s => %s" cur-prefix normal fn)
+                      (error (ergoemacs-debug "%s" err)))
+                    (setq curr-kbd
+                          (format "<Ctl%sAlt> %s %s" 
+                                  (ergoemacs-unicode-char "↔" " to ")
+                                  cur-prefix ctl-to-alt))
+                    (ergoemacs-debug "\tcurr-kbd: %s" curr-kbd)
+                    (condition-case err
+                        (define-key ,keymap
+                          (read-kbd-macro curr-kbd) fn)
+                      (error (ergoemacs-debug "%s" err)))
+                    (ergoemacs-debug "<Ctl%sAlt> %s %s => %s"
+                                     (ergoemacs-unicode-char "↔" " to ")
+                                     cur-prefix ctl-to-alt fn)
+                    (setq curr-kbd (format "<Unchorded> %s %s" cur-prefix unchorded))
+                    (ergoemacs-debug "\tcurr-kbd: %s" curr-kbd)
+                    (condition-case err
+                        (define-key ,keymap
+                          (read-kbd-macro curr-kbd) fn)
+                      (error (ergoemacs-debug "%s" err)))
+                    (ergoemacs-debug "<Unchorded> %s %s => %s"
+                                     cur-prefix unchorded fn))))))
+          translations))
+
+       (ergoemacs-debug (make-string 80 ?=))
+       (ergoemacs-debug "Built (%1f s;%1f s); Adding swap" 
+                        (- (float-time) start-time)
+                        (- (float-time) last-time))
+       (setq last-time (float-time))
+       (ergoemacs-debug (make-string 80 ?=))
+       
+       ;; Now add root level swap.
+       (ergoemacs-debug "Root: %s <%s>" cur-prefix (if (eq system-type 'windows-nt) "apps" "menu"))
+       
+       (condition-case err
+           (define-key ,keymap
+             (read-kbd-macro (format "<Normal> %s <%s>" cur-prefix
+                                     (if (eq system-type 'windows-nt) "apps" "menu")))
+             `(lambda()
+                (interactive)
+                (ergoemacs-menu-swap ,cur-prefix "" 'normal)))
+         (error nil))
+       
+       (condition-case err
+           (define-key ,keymap 
+             (read-kbd-macro
+              (format "<Ctl%sAlt> %s <%s>" 
+                      (ergoemacs-unicode-char "↔" " to ")
+                      cur-prefix
+                      (if (eq system-type 'windows-nt) "apps" "menu")))
+             `(lambda()
+                (interactive)
+                (ergoemacs-menu-swap ,cur-prefix "" 'ctl-to-alt)))
+         (error nil))
+
+       (condition-case err
+           (define-key ,keymap 
+             (read-kbd-macro
+              (format "<Unchorded> %s <%s>"
+                      cur-prefix
+                      (if (eq system-type 'windows-nt) "apps" "menu")))
+             `(lambda()
+                (interactive)
+                (ergoemacs-menu-swap ,cur-prefix "" 'unchorded)))
+         (error nil))
+       (puthash hashkey ,keymap ergoemacs-extract-map-hash))
      (ergoemacs-debug (make-string 80 ?=))
      (ergoemacs-debug-flush)))
+
+(defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
+  "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
+  (message "Send %s %s of %s" prefix-key untranslated-key type)
+  (let ((fn (concat "ergoemacs-shortcut---"
+                    (md5 (format "%s %s; %s" prefix-key untranslated-key
+                                 type)))))
+    (eval
+     (macroexpand
+      `(progn
+         (ergoemacs-keyboard-shortcut
+          ,(intern fn) ,(format "%s %s" prefix-key untranslated-key) ,type))))
+    (call-interactively (intern fn))))
 
 (defun ergoemacs-menu-swap (prefix-key untranslated-key type)
   "Swaps what <menu> key translation is in effect"
