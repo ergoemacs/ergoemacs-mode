@@ -215,6 +215,18 @@
 
 (defvaralias 'ergoemacs-layout-ge 'ergoemacs-layout-de)
 
+(defvar ergoemacs-layout-neo
+  '("" "^" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "`" ""
+    "" ""  "x" "v" "l" "c" "w" "k" "h" "g" "f" "q" "ß" "'" "\\"
+    "" ""  "u" "i" "a" "e" "o" "s" "n" "r" "t" "d" "y" "" ""
+    "" ""  "ü" "ö" "ä" "p" "z" "b" "m" "," "." "j" "" "" ""
+    ;; Shifted
+    "" "°" "ℓ" "§" "3" "»" "«" "$" "€" "„" "“" "”" "­" "¸" ""
+    "" ""  "X" "V" "L" "C" "W" "K" "H" "G" "F" "Q" "ß" "~" "\\"
+    "" ""  "U" "I" "A" "E" "O" "S" "N" "R" "T" "D" "Y" "" ""
+    "" ""  "Ü" "Ö" "Ä" "P" "Z" "B" "M" "-" "·" "J" "" "" "")
+  "Neo Layout")
+
 ;; From Baptiste Fouques
 ;; changed to bepo because it breaks how I run things (unfortunately)...
 (defvar ergoemacs-layout-bepo
