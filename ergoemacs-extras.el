@@ -1385,7 +1385,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                    (if (= 0 (length txt))
                        (setq txt "")
                      (setq prefix-fixed (nth 3 (assoc (nth 0 txt) (symbol-value (ergoemacs-get-variable-layout)))))
-                     (setq txt "♦")
+                     (setq txt "⌨")
                      ;; Add to prefix list
                      (setq prefix-lst
                            (append prefix-lst
@@ -1415,7 +1415,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                  (setq txt (all-completions (format "%s%s " key-pre (nth i lay)) fix))
                  (if (= 0 (length txt))
                      (setq txt "")
-                   (setq txt "♦")))
+                   (setq txt "⌨")))
                (unless (string= "" txt)
                  (when (search-forward (format ">%s%s<" rep-pre i) nil t)
                    (replace-match  (format ">%s<" txt) t t)))
@@ -1436,7 +1436,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                            (symbol-value (ergoemacs-get-variable-layout))))
                     (if (= 0 (length txt))
                         (setq txt "")
-                      (setq txt "♦")))
+                      (setq txt "⌨")))
                   (goto-char (point-min))
                   (unless (string= "" txt)
                     (when (search-forward (format ">%s-%s<" rep-sym-pre sym) nil t)
@@ -1537,4 +1537,4 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
 ;;; ergoemacs-extras.el ends here
 ;; Local Variables:
 ;; coding: utf-8-emacs
-;; End:
+;; End
