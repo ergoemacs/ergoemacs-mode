@@ -1279,8 +1279,8 @@ the best match."
             (condition-case err
                 (define-key ,keymap
                   (read-kbd-macro (format "<Normal> %s %s" cur-prefix x))
-                  `(lambda()
-                     (interactive)
+                  `(lambda(&optional arg)
+                     (interactive "P")
                      (ergoemacs-menu-send-prefix ,cur-prefix ,x 'normal)))
               (error nil))
 
@@ -1290,8 +1290,8 @@ the best match."
                    (format "<Ctl%sAlt> %s %s" 
                            (ergoemacs-unicode-char "↔" " to ")
                            cur-prefix new))
-                  `(lambda()
-                     (interactive)
+                  `(lambda(&optional arg)
+                     (interactive "P")
                      (ergoemacs-menu-send-prefix ,cur-prefix ,x 'ctl-to-alt)))
               (error nil))
             
@@ -1307,8 +1307,8 @@ the best match."
                   (read-kbd-macro
                    (format "<Unchorded> %s %s"
                            cur-prefix new))
-                  `(lambda()
-                     (interactive)
+                  `(lambda(&optional arg)
+                     (interactive "P")
                      (ergoemacs-menu-send-prefix ,cur-prefix ,x 'unchorded)))
               (error nil))))
         prefixes)
@@ -1394,8 +1394,8 @@ the best match."
            (define-key ,keymap
              (read-kbd-macro (format "<Normal> %s <%s>" cur-prefix
                                      (if (eq system-type 'windows-nt) "apps" "menu")))
-             `(lambda()
-                (interactive)
+             `(lambda(&optional arg)
+                (interactive "P")
                 (ergoemacs-menu-swap ,cur-prefix "" 'normal)))
          (error nil))
        
@@ -1406,8 +1406,8 @@ the best match."
                       (ergoemacs-unicode-char "↔" " to ")
                       cur-prefix
                       (if (eq system-type 'windows-nt) "apps" "menu")))
-             `(lambda()
-                (interactive)
+             `(lambda(&optional arg)
+                (interactive "P")
                 (ergoemacs-menu-swap ,cur-prefix "" 'ctl-to-alt)))
          (error nil))
 
@@ -1417,8 +1417,8 @@ the best match."
               (format "<Unchorded> %s <%s>"
                       cur-prefix
                       (if (eq system-type 'windows-nt) "apps" "menu")))
-             `(lambda()
-                (interactive)
+             `(lambda(&optional arg)
+                (interactive "P")
                 (ergoemacs-menu-swap ,cur-prefix "" 'unchorded)))
          (error nil))
        (puthash hashkey ,keymap ergoemacs-extract-map-hash))
@@ -1427,6 +1427,8 @@ the best match."
 
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
+  (setq this-command last-command) ; Don't record this command.
+  (setq prefix-arg current-prefix-arg)
   (let ((fn (concat "ergoemacs-shortcut---"
                     (md5 (format "%s %s; %s" prefix-key untranslated-key
                                  type)))))
