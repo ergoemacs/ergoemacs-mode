@@ -902,7 +902,29 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     ("g" [S-tab])        ;; Not an X keysym ; tvi
     ("i" [print]) ; tvi
     )
-  "Ergoemacs terminal ESC [ translations.")
+    "Ergoemacs terminal ESC [ translations.")
+
+(defvar ergoemacs-esc-translations
+  '(
+    ("5" [S-send]) 
+    ("E" [insertline])
+    ("I" [key-stab])  ;; Not an X keysym
+    ("J" [key-snext]) ;; Not an X keysym
+    ("K" [next])
+    ("N" [ALT])
+    ("P" [print])
+    ("Q" [insert])
+    ("R" [deleteline])
+    ("S" [send])
+    ("T" [clearline])
+    ("W" [?\C-?])                ;; Not an X keysym
+    ("Y" [key-clear]) ;; Not an X keysym
+    ("r" [replace])
+    )
+  "Ergoemacs terminal extra translations."
+  )
+
+
 
 (defvar ergoemacs-M-O-keymap (make-keymap)
   "M-O translation map.")
