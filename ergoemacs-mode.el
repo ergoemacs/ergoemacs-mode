@@ -402,6 +402,508 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     )
   "Terminal Translations.")
 
+(defvar ergoemacs-M-b-translations
+  '(
+    ("27;6;41~"  [?\C-)])
+    ("000q" [begin]) ; iris-ansi
+    ("001q" [f1]) ; iris-ansi
+    ("002q" [f2]) ; iris-ansi
+    ("003q" [f3]) ; iris-ansi
+    ("004q" [f4]) ; iris-ansi
+    ("005q" [f5]) ; iris-ansi
+    ("006q" [f6]) ; iris-ansi
+    ("007q" [f7]) ; iris-ansi
+    ("008q" [f8]) ; iris-ansi
+    ("009q" [f9]) ; iris-ansi
+    ("010q" [f10]) ; iris-ansi
+    ("011q" [f11]) ; iris-ansi
+    ("012q" [f12]) ; iris-ansi
+    ("013q" [S-f1]) ; iris-ansi
+    ("014q" [S-f2]) ; iris-ansi
+    ("015q" [S-f3]) ; iris-ansi
+    ("016q" [S-f4]) ; iris-ansi
+    ("017q" [S-f5]) ; iris-ansi
+    ("018q" [S-f6]) ; iris-ansi
+    ("019q" [S-f7]) ; iris-ansi
+    ("020q" [S-f8]) ; iris-ansi
+    ("021q" [S-f9]) ; iris-ansi
+    ("022q" [S-f10]) ; iris-ansi
+    ("023q" [S-f11]) ; iris-ansi
+    ("024q" [S-f12]) ; iris-ansi
+    ("025q" [C-f1]) ; iris-ansi
+    ("026q" [C-f2]) ; iris-ansi
+    ("027q" [C-f3]) ; iris-ansi
+    ("028q" [C-f4]) ; iris-ansi
+    ("029q" [C-f5]) ; iris-ansi
+    ("030q" [C-f6]) ; iris-ansi
+    ("031q" [C-f7]) ; iris-ansi
+    ("032q" [C-f8]) ; iris-ansi
+    ("033q" [C-f9]) ; iris-ansi
+    ("034q" [C-f10]) ; iris-ansi
+    ("035q" [C-f11]) ; iris-ansi
+    ("036q" [C-f12]) ; iris-ansi
+    ("038q" [M-f2]) ; iris-ansi
+    ("047q" [M-f11]) ; iris-ansi
+    ("048q" [M-f12]) ; iris-ansi
+    ("049q" [?\C-1]) ; iris-ansi
+    ("050q" [?\C-3]) ; iris-ansi
+    ("051q" [?\C-4]) ; iris-ansi
+    ("052q" [?\C-5]) ; iris-ansi
+    ("053q" [?\C-7]) ; iris-ansi
+    ("054q" [?\C-8]) ; iris-ansi
+    ("055q" [?\C-9]) ; iris-ansi
+    ("056q" [?\C-0]) ; iris-ansi
+    ("057q" [?\C-`]) ; iris-ansi
+    ("058q" [?\M-1]) ; iris-ansi
+    ("059q" [?\M-2]) ; iris-ansi
+    ("060q" [?\M-3]) ; iris-ansi
+    ("061q" [?\M-4]) ; iris-ansi
+    ("062q" [?\M-5]) ; iris-ansi
+    ("063q" [?\M-6]) ; iris-ansi
+    ("064q" [?\M-7]) ; iris-ansi
+    ("065q" [?\M-8]) ; iris-ansi
+    ("066q" [?\M-9]) ; iris-ansi
+    ("067q" [?\M-0]) ; iris-ansi
+    ("068q" [?\M--]) ; iris-ansi
+    ("069q" [?\C-=]) ; iris-ansi
+    ("070q" [?\M-=]) ; iris-ansi
+    ("072q" [?\C-\t]) ; iris-ansi
+    ("073q" [?\M-\t]) ; iris-ansi
+    ("074q" [?\M-q]) ; iris-ansi
+    ("075q" [?\M-w]) ; iris-ansi
+    ("076q" [?\M-e]) ; iris-ansi
+    ("077q" [?\M-r]) ; iris-ansi
+    ("078q" [?\M-t]) ; iris-ansi
+    ("079q" [?\M-y]) ; iris-ansi
+    ("080q" [?\M-u]) ; iris-ansi
+    ("081q" [?\M-i]) ; iris-ansi
+    ("082q" [?\M-o]) ; iris-ansi
+    ("083q" [?\M-p]) ; iris-ansi
+    ("084q" [?\M-\[]) ; iris-ansi
+    ("085q" [?\M-\]]) ; iris-ansi
+    ("086q" [?\M-\\]) ; iris-ansi
+    ("087q" [?\M-a]) ; iris-ansi
+    ("088q" [?\M-s]) ; iris-ansi
+    ("089q" [?\M-d]) ; iris-ansi
+    ("090q" [?\M-f]) ; iris-ansi
+    ("091q" [?\M-g]) ; iris-ansi
+    ("092q" [?\M-h]) ; iris-ansi
+    ("093q" [?\M-j]) ; iris-ansi
+    ("094q" [?\M-k]) ; iris-ansi
+    ("095q" [?\M-l]) ; iris-ansi
+    ("096q" [?\C-\;]) ; iris-ansi
+    ("097q" [?\M-:]) ; iris-ansi
+    ("098q" [?\C-']) ; iris-ansi
+    ("099q" [?\M-']) ; iris-ansi
+    ("100q" [?\M-\n]) ; iris-ansi
+    ("100q" [M-enter]) ; iris-ansi
+    ("101q" [?\M-z]) ; iris-ansi
+    ("102q" [?\M-x]) ; iris-ansi
+    ("103q" [?\M-c]) ; iris-ansi
+    ("104q" [?\M-v]) ; iris-ansi
+    ("105q" [?\M-b]) ; iris-ansi
+    ("106q" [M-n]) ; iris-ansi
+    ("107q" [M-m]) ; iris-ansi
+    ("108q" [?\C-,]) ; iris-ansi
+    ("109q" [?\M-,]) ; iris-ansi
+    ("110q" [?\C-.]) ; iris-ansi
+    ("111q" [?\M-.]) ; iris-ansi
+    ("112q" [?\C-/]) ; iris-ansi
+    ("113q" [?\M-/]) ; iris-ansi
+    ("115q" [?\M-`]) ; iris-ansi
+    ("11^" [C-f1]) ; rxvt
+    ("11~" [f1])
+    ("120q" [S-escape]) ; iris-ansi
+    ("121q" [C-escape]) ; iris-ansi
+    ("12^" [C-f2]) ; rxvt
+    ("12~" [f2])
+    ("139q" [insert]) ; iris-ansi ;; Not sure 
+    ("13^" [C-f3]) ; rxvt
+    ("13~" [f3])
+    ("140q" [C-insert]) ; iris-ansi
+    ("141q" [M-insert]) ; iris-ansi
+    ("142q" [C-delete]) ; iris-ansi
+    ("143q" [S-home]) ; iris-ansi
+    ("144q" [C-home]) ; iris-ansi
+    ("146q" [end]) ; iris-ansi
+    ("147q" [S-end]) ; Those don't seem to generate anything. ; iris-ansi
+    ("148q" [C-end]) ; iris-ansi
+    ("14^" [C-f4]) ; rxvt
+    ("14~" [f4])
+    ("14~" [f4]) ; lk201
+    ("14~" [f4]) ; rxvt
+    ("150q" [prior]) ; iris-ansi
+    ("151q" [S-prior]) ;Those don't seem to generate anything. ; iris-ansi
+    ("152q" [C-prior]) ; iris-ansi
+    ("154q" [next]) ; iris-ansi
+    ("155q" [S-next]) ; iris-ansi
+    ("156q" [C-next]) ; iris-ansi
+    ("158q" [S-left]) ; iris-ansi
+    ("159q" [C-left]) ; iris-ansi
+    ("15;2~" [S-f5])
+    ("15;3~" [M-f5])
+    ("15;4~" [M-S-f5])
+    ("15;6~" [C-S-f5])
+    ("15^" [C-f5]) ; rxvt
+    ("15~" [f5])
+    ("160q" [M-left]) ; iris-ansi
+    ("161q" [S-up]) ; iris-ansi
+    ("162q" [C-up]) ; iris-ansi
+    ("163q" [M-up]) ; iris-ansi
+    ("164q" [S-down]) ; iris-ansi
+    ("165q" [C-down]) ; iris-ansi
+    ("166q" [M-down]) ; iris-ansi
+    ("167q" [S-right]) ; iris-ansi
+    ("168q" [C-right]) ; iris-ansi
+    ("169q" [M-right]) ; iris-ansi
+    ("172q" [C-home]) ; iris-ansi
+    ("174q" [C-left]) ; iris-ansi
+    ("176q" [C-end]) ; iris-ansi
+    ("178q" [C-inset]) ; iris-ansi
+    ("179q" [?\C-/]) ; iris-ansi
+    ("17;2~" [S-f6])
+    ("17;3~" [M-f6])
+    ("17;4~" [M-S-f6])
+    ("17;6~" [C-S-f6])
+    ("17^" [C-f6]) ; rxvt
+    ("17~" [f6])
+    ("17~" [f6]) ; lk201
+    ("17~" [f6]) ; rxvt
+    ("180q" [?\M-/]) ; iris-ansi
+    ("182q" [C-up]) ; iris-ansi
+    ("184q" [C-begin]) ; iris-ansi
+    ("186q" [C-down]) ; iris-ansi
+    ("187q" [?\C-*]) ; iris-ansi
+    ("188q" [?\M-*]) ; iris-ansi
+    ("18;3~" [M-f7])
+    ("18;4~" [M-S-f7])
+    ("18;6~" [C-S-f7])
+    ("18^" [C-f7]) ; rxvt
+    ("18~" [f7])
+    ("18~" [f7]) ; lk201
+    ("18~" [f7]) ; rxvt
+    ("190q" [C-prior]) ; iris-ansi
+    ("192q" [C-right]) ; iris-ansi
+    ("194q" [C-next]) ; iris-ansi
+    ("196q" [C-delete]) ; iris-ansi
+    ("197q" [M-delete]) ; iris-ansi    
+    ("198q" [?\C--]) ; iris-ansi
+    ("199q" [?\M--]) ; iris-ansi
+    ("19;3~" [M-f8])
+    ("19;4~" [M-S-f8])
+    ("19;6~" [C-S-f8])
+    ("19^" [C-f8]) ; rxvt
+    ("19h" [S-erasepage]) ;; Not an X keysym ; tvi
+    ("19l" [key_seol])   ;; Not an X keysym ; tvi
+    ("19~" [f8])
+    ("1;2A" [S-up])
+    ("1;2B" [S-down])
+    ("1;2C" [S-right])
+    ("1;2D" [S-left])
+    ("1;2F" [S-end])
+    ("1;2H" [S-home])
+    ("1;2P" [S-f1])
+    ("1;2Q" [S-f2])
+    ("1;2R" [S-f3])
+    ("1;2S" [S-f4])
+    ("1;3A" [M-up])
+    ("1;3B" [M-down])
+    ("1;3C" [M-right])
+    ("1;3D" [M-left])
+    ("1;3F" [M-end])
+    ("1;3H" [M-home])
+    ("1;4A" [M-S-up])
+    ("1;4B" [M-S-down])
+    ("1;4C" [M-S-right])
+    ("1;4D" [M-S-left])
+    ("1;4F" [M-S-end])
+    ("1;4H" [M-S-home])
+    ("1;5A" [C-up])
+    ("1;5B" [C-down])
+    ("1;5C" [C-right])
+    ("1;5D" [C-left])
+    ("1;5F" [C-end])
+    ("1;5H" [C-home])
+    ("1;6A" [C-S-up])
+    ("1;6B" [C-S-down])
+    ("1;6C" [C-S-right])
+    ("1;6D" [C-S-left])
+    ("1;6F" [C-S-end])
+    ("1;6H" [C-S-home])
+    ("1;7A" [C-M-up])
+    ("1;7B" [C-M-down])
+    ("1;7C" [C-M-right])
+    ("1;7D" [C-M-left])
+    ("1;7F" [C-M-end])
+    ("1;7H" [C-M-home])
+    ("1;8A" [C-M-S-up])
+    ("1;8B" [C-M-S-down])
+    ("1;8C" [C-M-S-right])
+    ("1;8D" [C-M-S-left])
+    ("1;8F" [C-M-S-end])
+    ("1;8H" [C-M-S-home])
+    ("1~" [home])
+    ("200q" [?\C-+]) ; iris-ansi
+    ("201q" [?\M-+]) ; iris-ansi
+    ("20;3~" [M-f9])
+    ("20;4~" [M-S-f9])
+    ("20;6~" [C-S-f9])
+    ("20^" [C-f9]) ; rxvt
+    ("20~" [f9])
+    ("21;3~" [M-f10])
+    ("21;4~" [M-S-f10])
+    ("21;6~" [C-S-f10])
+    ("21^" [C-f10]) ; rxvt
+    ("21~" [f10])
+    ("23;3~" [M-f11])
+    ("23;4~" [M-S-f11])
+    ("23;6~" [C-S-f11])
+    ("23^" [C-S-f1]) ; rxvt
+    ;;("23~" [S-f1]) ; rxvt
+    ;;("23~" [f11]) ;Probably redundant.
+    ("24;3~" [M-f12])
+    ("24;4~" [M-S-f12])
+    ("24;5~" [C-f12])
+    ("24;6~" [C-S-f12])
+    ("24^" [C-S-f2]) ; rxvt
+    ;;("24~" [S-f2]) ; rxvt
+    ;;("24~" [f12])
+    ("25^" [C-S-f3]) ; rxvt
+    ("25~" [S-f3]) ; rxvt
+    ;;("25~" [f13]) ; lk201
+    ("26^" [C-S-f4]) ; rxvt
+    ("26~" [S-f4]) ; rxvt
+    ;;("26~" [f14]) ; lk201
+    ("27;13;13~" [C-M-return])
+    ("27;13;39~" [?\C-\M-\'])
+    ("27;13;44~" [?\C-\M-,])
+    ("27;13;45~" [?\C-\M--])
+    ("27;13;46~" [?\C-\M-.])
+    ("27;13;47~" [?\C-\M-/])
+    ("27;13;48~" [?\C-\M-0])
+    ("27;13;49~" [?\C-\M-1])
+    ("27;13;50~" [?\C-\M-2])
+    ("27;13;51~" [?\C-\M-3])
+    ("27;13;52~" [?\C-\M-4])
+    ("27;13;53~" [?\C-\M-5])
+    ("27;13;54~" [?\C-\M-6])
+    ("27;13;55~" [?\C-\M-7])
+    ("27;13;56~" [?\C-\M-8])
+    ("27;13;57~" [?\C-\M-9])
+    ("27;13;59~" [?\C-\M-\;])
+    ("27;13;61~" [?\C-\M-=])
+    ("27;13;92~" [?\C-\M-\\])
+    ("27;13;9~"  [C-M-tab])
+    ("27;14;33~"  [?\C-\M-!])
+    ("27;14;34~"  [?\C-\M-\"])
+    ("27;14;35~"  [?\C-\M-#])
+    ("27;14;36~"  [?\C-\M-$])
+    ("27;14;37~"  [?\C-\M-%])
+    ("27;14;38~"  [?\C-\M-&])
+    ("27;14;40~"  [?\C-\M-\(])
+    ("27;14;41~"  [?\C-\M-\)])
+    ("27;14;42~"  [?\C-\M-*])
+    ("27;14;43~"  [?\C-\M-+])
+    ("27;14;58~"  [?\C-\M-:])
+    ("27;14;60~"  [?\C-\M-<])
+    ("27;14;62~"  [?\C-\M->])
+    ("27;14;63~"  [(control meta ??)])
+    ("27;2;13~"  [S-return])
+    ("27;2;9~"   [S-tab])
+    ("27;5;13~"  [C-return])
+    ("27;5;39~"  [?\C-\'])
+    ("27;5;44~"  [?\C-,])
+    ("27;5;45~"  [?\C--])
+    ("27;5;46~"  [?\C-.])
+    ("27;5;47~"  [?\C-/])
+    ("27;5;48~"  [?\C-0])
+    ("27;5;49~"  [?\C-1])
+    ("27;5;57~"  [?\C-9])
+    ("27;5;59~"  [?\C-\;])
+    ("27;5;61~"  [?\C-=])
+    ("27;5;92~"  [?\C-\\])
+    ("27;5;9~"   [C-tab])
+    ("27;6;13~"  [C-S-return])
+    ("27;6;33~"  [?\C-!])
+    ("27;6;34~"  [?\C-\"])
+    ("27;6;35~"  [?\C-#])
+    ("27;6;36~"  [?\C-$])
+    ("27;6;37~"  [?\C-%])
+    ("27;6;38~"  [?\C-&])
+    ("27;6;40~"  [?\C-(])
+    ("27;6;42~"  [?\C-*])
+    ("27;6;43~"  [?\C-+])
+    ("27;6;58~"  [?\C-:])
+    ("27;6;60~"  [?\C-<])
+    ("27;6;62~"  [?\C->])
+    ("27;6;63~"  [(control ??)])
+    ("27;6;9~"   [C-S-tab])
+    ("27;7;13~" [C-M-return])
+    ("27;7;32~" [?\C-\M-\s])
+    ("27;7;39~" [?\C-\M-\'])
+    ("27;7;44~" [?\C-\M-,])
+    ("27;7;45~" [?\C-\M--])
+    ("27;7;46~" [?\C-\M-.])
+    ("27;7;47~" [?\C-\M-/])
+    ("27;7;48~" [?\C-\M-0])
+    ("27;7;49~" [?\C-\M-1])
+    ("27;7;50~" [?\C-\M-2])
+    ("27;7;51~" [?\C-\M-3])
+    ("27;7;52~" [?\C-\M-4])
+    ("27;7;53~" [?\C-\M-5])
+    ("27;7;54~" [?\C-\M-6])
+    ("27;7;55~" [?\C-\M-7])
+    ("27;7;56~" [?\C-\M-8])
+    ("27;7;57~" [?\C-\M-9])
+    ("27;7;59~" [?\C-\M-\;])
+    ("27;7;61~" [?\C-\M-=])
+    ("27;7;92~" [?\C-\M-\\])
+    ("27;7;9~"  [C-M-tab])
+    ("27;8;33~"  [?\C-\M-!])
+    ("27;8;34~"  [?\C-\M-\"])
+    ("27;8;35~"  [?\C-\M-#])
+    ("27;8;36~"  [?\C-\M-$])
+    ("27;8;37~"  [?\C-\M-%])
+    ("27;8;38~"  [?\C-\M-&])
+    ("27;8;40~"  [?\C-\M-\(])
+    ("27;8;41~"  [?\C-\M-\)])
+    ("27;8;42~"  [?\C-\M-*])
+    ("27;8;43~"  [?\C-\M-+])
+    ("27;8;58~"  [?\C-\M-:])
+    ("27;8;60~"  [?\C-\M-<])
+    ("27;8;62~"  [?\C-\M->])
+    ("27;8;63~"  [(control meta ??)])
+    ("28^" [C-S-f5]) ; rxvt
+    ("28~" [S-f5]) ; rxvt
+    ;;("28~" [help]) ; lk201
+    ("29^" [C-S-f6]) ; rxvt
+    ("29~" [S-f6]) ; rxvt
+    ;;("29~" [menu]) ; lk201
+    ;;("29~" [print])
+    ;;("29~" [print]) ; rxvt
+    ("2;2~" [S-insert]) ; rxvt
+    ("2;2~" [S-insert])
+    ("2;3~" [M-insert])
+    ("2;4~" [M-S-insert])
+    ("2;5~" [C-insert])
+    ("2;6~" [C-S-insert])
+    ("2;7~" [C-M-insert])
+    ("2;8~" [C-M-S-insert])
+    ("2J" [key_clear])    ;; Not an X keysym ; tvi
+    ("2K" [S-clearentry]) ;; Not an X keysym ; tvi
+    ("2N" [clearentry])   ;; Not an X keysym ; tvi
+    ("2^" [C-insert]) ; rxvt
+    ("2~" [insert])
+    ;;("2~" [insert]) ; lk201
+    ;;("2~" [insert]) ; rxvt
+    ("3$" [S-delete]) ; rxvt
+    ("31^" [C-S-f7]) ; rxvt
+    ("31~" [S-f7]) ; rxvt
+    ;;("31~" [f17]) ; lk201
+    ("32^" [C-S-f8]) ; rxvt
+    ("32~" [S-f8]) ; rxvt
+    ;;("32~" [f18]) ; lk201
+    ("33^" [C-S-f9]) ; rxvt
+    ("33~" [S-f9]) ; rxvt
+    ;;("33~" [f19]) ; lk201
+    ("34^" [C-S-f10]) ; rxvt
+    ("34~" [S-f10]) ; rxvt
+    ;;("34~" [f20]) ; lk201
+    ("3;2~" [S-delete])
+    ("3;3~" [M-delete])
+    ("3;4~" [M-S-delete])
+    ("3;5~" [C-delete])
+    ("3;6~" [C-S-delete])
+    ("3;7~" [C-M-delete])
+    ("3;8~" [C-M-S-delete])
+    ("3^" [C-delete]) ; rxvt
+    ("3~" [delete])
+    ;;("3~" [delete]) ; lk201
+    ;;("3~" [delete]) ; rxvt
+    ("4h" [key_sic])            ;; Not an X
+    ("4l" [S-delete])           ;; Not an X
+    ("4~" [select])
+    ;;("4~" [select]) ; lk201
+    ;;("4~" [select]) ; rxvt
+    ("5$" [S-prior]) ; rxvt
+    ("5;2~" [S-prior])
+    ("5;3~" [M-prior])
+    ("5;4~" [M-S-prior])
+    ("5;5~" [C-prior])
+    ("5;6~" [C-S-prior])
+    ("5;7~" [C-M-prior])
+    ("5;8~" [C-M-S-prior])
+    ("5^" [C-prior]) ; rxvt
+    ("5~" [prior])
+    ;;("5~" [prior]) ; lk201
+    ;;("5~" [prior]) ; rxvt
+    ("6$" [S-next]) ; rxvt
+    ("6;2~" [S-next])
+    ("6;3~" [M-next])
+    ("6;4~" [M-S-next])
+    ("6;5~" [C-next])
+    ("6;6~" [C-S-next])
+    ("6;7~" [C-M-next])
+    ("6;8~" [C-M-S-next])
+    ("6^" [C-next]) ; rxvt
+    ("6~" [next])
+    ;;("6~" [next]) ; lk201
+    ;;("6~" [next]) ; rxvt
+    ("7$" [S-home]) ; rxvt
+    ("7^" [C-home]) ; rxvt
+    ("7~" [home]) ; rxvt
+    ("8$" [S-end]) ; rxvt
+    ("8^" [C-end]) ; rxvt
+    ("8~" [end]) ; rxvt
+    ("?1i" [key_sprint]) ;; Not an X keysym ; tvi
+    ("@" [insert]) ; tvi
+    ("A" [up])
+    ("A" [up]) ; rxvt
+    ("B" [down])
+    ("B" [down]) ; rxvt
+    ("C" [right])
+    ("C" [right]) ; rxvt
+    ("D" [left])
+    ("D" [left]) ; rxvt
+    ("E" [?\C-j])        ;; Not an X keysym ; tvi
+    ("H" [home]) ; iris-ansi
+    ("H" [home]) ; tvi
+    ("J" [key_eos])      ;; Not an X keysym ; tvi
+    ("K" [key_eol])      ;; Not an X keysym ; tvi
+    ("L" [insertline]) ; tvi
+    ("M" [M-delete]) ; iris-ansi
+    ;;("M" [deleteline]) ; tvi
+    ;;("P" [S-delete]) ; iris-ansi
+    ;;("P" [delete]) ; iris-ansi
+    ("P" [key_dc])       ;; Not an X keysym ; tvi
+    ("Q" [S-insertline])       ;; Not an X keysym ; tvi
+    ("U" [next]) ;; actually the `page' key ; tvi
+    ("V" [S-page])              ;; Not an X keysym ; tvi8
+    ("Z" [?\S-\t]) ; iris-ansi
+    ;;("Z" [backtab]) ; tvi
+    ("a" [S-up]) ; rxvt
+    ("b" [S-down]) ; rxvt
+    ("c" [S-right]) ; rxvt
+    ("d" [S-left]) ; rxvt
+    ("e15;5~" [C-f5])
+    ("e17;5~" [C-f6])
+    ("e18;2~" [S-f7])
+    ("e18;5~" [C-f7])
+    ("e19;2~" [S-f8])
+    ("e19;5~" [C-f8])
+    ("e20;2~" [S-f9])
+    ("e20;5~" [C-f9])
+    ("e21;2~" [S-f10])
+    ("e21;5~" [C-f10])
+    ("e23;2~" [S-f11])
+    ("e23;5~" [C-f11])
+    ("e24;2~" [S-f12])
+    ;;("g" [S-backtab])    ;; Not an X keysym ; tvi
+    ("g" [S-tab])        ;; Not an X keysym ; tvi
+    ("i" [print]) ; tvi
+    )
+  "Ergoemacs terminal ESC [ translations.")
+
 (defvar ergoemacs-M-O-keymap (make-keymap)
   "M-O translation map.")
 
