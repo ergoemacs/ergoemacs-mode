@@ -331,24 +331,75 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
    (eval `(ergoemacs-create-movement-commands ,x)))
  ergoemacs-movement-functions)
 
+
 (defvar ergoemacs-M-O-trans
-  '(("A" up)
-    ("B" down)
-    ("C" right)
-    ("D" left)
-    ("E" begin)
-    ("F" end)
-    ("H" home)
-    ("M" kp-enter)
-    ("P" f1)
-    ("Q" f2)
-    ("R" f3)
-    ("S" f4)
-    ("q" kp-1)
-    ("s" kp-3)
-    ("u" kp-9)
-    ("w" kp-7)
-    ("y" kp-5))
+  '(
+    ("2A" [S-up])        ; xterm.el
+    ("2B" [S-down])      ; xterm.el
+    ("2C" [S-right])     ; xterm.el
+    ("2D" [S-left])      ; xterm.el
+    ("2F" [S-end])       ; xterm.el
+    ("2H" [S-home])      ; xterm.el
+    ("2P" [S-f1])        ; xterm.el
+    ("2Q" [S-f2])        ; xterm.el
+    ("2R" [S-f3])        ; xterm.el
+    ("2S" [S-f4])        ; xterm.el
+    ("3P" [M-f1])        ; xterm.el
+    ("3Q" [M-f2])        ; xterm.el
+    ("3R" [M-f3])        ; xterm.el
+    ("3S" [M-f4])        ; xterm.el
+    ("4P" [M-S-f1])      ; xterm.el
+    ("4Q" [M-S-f2])      ; xterm.el
+    ("4R" [M-S-f3])      ; xterm.el
+    ("4S" [M-S-f4])      ; xterm.el
+    ("5A" [C-up])        ; xterm.el
+    ("5B" [C-down])      ; xterm.el
+    ("5C" [C-right])     ; xterm.el
+    ("5D" [C-left])      ; xterm.el
+    ("5F" [C-end])       ; xterm.el
+    ("5H" [C-home])      ; xterm.el
+    ("5P" [C-f1])        ; xterm.el
+    ("5Q" [C-f2])        ; xterm.el
+    ("5R" [C-f3])        ; xterm.el
+    ("5S" [C-f4])        ; xterm.el
+    ("6P" [C-S-f1])      ; xterm.el
+    ("6Q" [C-S-f2])      ; xterm.el
+    ("6R" [C-S-f3])      ; xterm.el
+    ("6S" [C-S-f4])      ; xterm.el
+    ("A" up)             ; xterm.el
+    ("B" down)           ; xterm.el
+    ("C" right)          ; xterm.el
+    ("D" left)           ; xterm.el
+    ("E" begin)          ; xterm.el
+    ("F" end)            ; xterm.el
+    ("H" home)           ; xterm.el
+    ("I" [kp-tab])       ; lk201.el
+    ("M" kp-enter)       ; xterm.el
+    ("P" f1)             ; xterm.el
+    ("Q" f2)             ; xterm.el
+    ("R" f3)             ; xterm.el
+    ("S" f4)             ; xterm.el
+    ("a" [C-up])         ; rxvt.el
+    ("b" [C-down])       ; rxvt.el
+    ("c" [C-right])      ; rxvt.el
+    ("d" [C-left])       ; rxvt.el
+    ("j" [kp-multiply])  ; xterm.el
+    ("k" [kp-add])       ; xterm.el
+    ("l" [kp-separator]) ; xterm.el
+    ("m" [kp-subtract])  ; xterm.el
+    ("n" [kp-decimal])   ; lk201.el
+    ("o" [kp-divide])    ; xterm.el
+    ("p" [kp-0])         ; xterm.el
+    ("q" [kp-1])         ; xterm.el
+    ("r" [kp-2])         ; xterm.el
+    ("s" [kp-3])         ; xterm.el
+    ("t" [kp-4])         ; xterm.el
+    ("u" [kp-5])         ; xterm.el
+    ("v" [kp-6])         ; xterm.el
+    ("w" [kp-7])         ; xterm.el
+    ("x" [kp-8])         ; xterm.el
+    ("y" [kp-9])         ; xterm.el
+    )
   "Terminal Translations.")
 
 (defvar ergoemacs-M-O-keymap (make-keymap)
