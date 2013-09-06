@@ -1227,7 +1227,9 @@ the best match."
        (setq ,keymap (make-keymap))
        (mapc
         (lambda(x)
-          (when (functionp (nth 1 x))    
+          (if (not (functionp (nth 1 x)))
+              (progn
+                (ergoemacs-debug "Not a function: %s %s => %s" cur-prefix normal (nth 1 x)))
             (let* ((normal (nth 0 x))
                    (ctl-to-alt
                     (replace-regexp-in-string
@@ -1243,12 +1245,18 @@ the best match."
                       (replace-regexp-in-string "\\<M-" "W-" ctl-to-alt)))))
               (ergoemacs-debug "<Normal> %s %s => %s" cur-prefix normal (nth 1 x))
               (define-key ,keymap
-                (read-kbd-macro (format "<Normal> %s %s" cur-prefix normal)) (nth 1 x))
+                (read-kbd-macro (format "<Normal> %s %s" cur-prefix normal))
+                `(lambda(&optional arg)
+                   (interactive "P")
+                   (ergoemacs-menu-send-function ,cur-prefix ,normal ',(nth 1 x))))
               (define-key ,keymap
                 (read-kbd-macro
                  (format "<Ctl%sAlt> %s %s" 
                          (ergoemacs-unicode-char "↔" " to ")
-                         cur-prefix ctl-to-alt)) (nth 1 x))
+                         cur-prefix ctl-to-alt))
+                `(lambda(&optional arg)
+                   (interactive "P")
+                   (ergoemacs-menu-send-function ,cur-prefix ,normal ',(nth 1 x))))
               (ergoemacs-debug "<Ctl%sAlt> %s %s => %s"
                                (ergoemacs-unicode-char "↔" " to ")
                                cur-prefix ctl-to-alt (nth 1 x))
@@ -1256,7 +1264,9 @@ the best match."
               (define-key ,keymap
                 (read-kbd-macro
                  (format "<Unchorded> %s %s" cur-prefix unchorded))
-                (nth 1 x))
+                `(lambda(&optional arg)
+                   (interactive "P")
+                   (ergoemacs-menu-send-function ,cur-prefix ,normal ',(nth 1 x))))
               (ergoemacs-debug "<Unchorded> %s %s => %s"
                                cur-prefix unchorded (nth 1 x)))))
         normal)
@@ -1425,6 +1435,17 @@ the best match."
      (ergoemacs-debug (make-string 80 ?=))
      (ergoemacs-debug-flush)))
 
+(defun ergoemacs-menu-send-function (prefix-key untranslated-key fn)
+  "Sends actual key for translation maps or runs function FN"
+  (setq this-command last-command) ; Don't record this command.
+  (setq prefix-arg current-prefix-arg)
+  (condition-case err
+      (progn
+        (call-interactively fn)
+        (message "%s%s: %s" (ergoemacs-pretty-key prefix-key) (ergoemacs-pretty-key untranslated-key) fn))
+    (error
+     (message "Error %s" err))))
+
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
   (setq this-command last-command) ; Don't record this command.
@@ -1513,7 +1534,7 @@ the best match."
 (defvar ergoemacs-first-extracted-variant nil
   "Current extracted variant")
 
-
+(defvar ergoemacs-)
 ;;;###autoload
 (defmacro ergoemacs-keyboard-shortcut (name key &optional chorded repeat)
   "Creates a function NAME that issues a keyboard shortcut for KEY.
