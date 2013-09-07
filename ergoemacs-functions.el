@@ -328,7 +328,7 @@ If there's no text, delete the previous line ending."
       (if (looking-back "\n")
           (delete-char -1)
         (kill-line 0))
-    (kill-line (- 0 number))))
+    (kill-line (- 1 number))))
 
 (defun ergoemacs-move-cursor-next-pane (&optional number)
   "Move cursor to the next pane."
