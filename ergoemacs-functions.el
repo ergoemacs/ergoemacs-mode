@@ -324,10 +324,8 @@ Subsequent calls expands the selection to larger semantic unit."
   "Kill text between the beginning of the line to the cursor position.
 If there's no text, delete the previous line ending."
   (interactive "p")
-  (if (not number)
-      (if (looking-back "\n")
-          (delete-char -1)
-        (kill-line 0))
+  (if (and (= number 1) (looking-back "\n"))
+      (delete-char -1)
     (kill-line (- 1 number))))
 
 (defun ergoemacs-move-cursor-next-pane (&optional number)
