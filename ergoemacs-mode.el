@@ -1742,52 +1742,76 @@ the best match."
                  (ergoemacs-debug "Prefix: %s" new-key)
                  (add-to-list 'prefixes new-key))
              (unless (string-match "ergoemacs-old-key---" fn)
-               (when ergoemacs-translate-keys
-                 (cond
-                  ((string-match "\\( \\|^\\)C-\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
-                   (add-to-list 'translations
-                                (list (replace-match "\\1\\2" t nil new-key)
-                                      fn)))
-                  ((string-match "\\( \\|^\\)\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
-                   (add-to-list 'translations
-                                (list (replace-match "\\1C-\\2" t nil new-key)
-                                      fn)))))
                (condition-case err
                    (with-temp-buffer
                      (insert "(if (keymapp '" fn
                              ") (unless (string-match \"ESC\" \"" new-key
                              "\") (add-to-list 'prefixes \"" new-key
-                             "\") (ergoemacs-debug \"Prefix (keymap): %s\" new-key)) (add-to-list 'normal '(\"" new-key
-                             "\" " fn ")) (ergoemacs-debug \"Normal: %s -> %s\" new-key fn))")
-                     (eval-buffer))
-                 (error (setq fn nil))))))))
+                             "\") (ergoemacs-debug \"Prefix (keymap): %s\" new-key)) (add-to-list 'normal '(\""
+                             new-key "\" " fn ")) (ergoemacs-debug \"Normal: %s -> %s\" new-key fn))")
+                     (eval-buffer)
+                     (when ergoemacs-translate-keys
+                       (cond
+                        ((string-match "\\( \\|^\\)C-\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
+                         (add-to-list 'translations
+                                      (list (replace-match "\\1\\2" t nil new-key)
+                                            fn)))
+                        ((string-match "\\( \\|^\\)\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
+                         (add-to-list 'translations
+                                      (list (replace-match "\\1C-\\2" t nil new-key)
+                                            fn))))))
+                 (error
+                  (setq fn nil))))))))
 
      (ergoemacs-debug (make-string 80 ?=))
      (ergoemacs-debug "Finished (%1f sec); Building keymap" (- (float-time) start-time))
-     (setq last-time (float-time))
-     (ergoemacs-debug (make-string 80 ?=))
+     (setq last-time (float-time))      (ergoemacs-debug (make-string 80 ?=))
      (setq hashkey (md5 (format "%s;%s;%s" cur-prefix normal prefixes)))
      (setq ,keymap (gethash hashkey ergoemacs-extract-map-hash))
      (unless ,keymap
        (setq ,keymap (make-keymap))
        (mapc
         (lambda(x)
-          (if (not (functionp (nth 1 x)))
-              (progn
-                (ergoemacs-debug "Not a function: %s %s => %s" cur-prefix normal (nth 1 x)))
-            (let* ((normal (nth 0 x))
-                   (ctl-to-alt
-                    (replace-regexp-in-string
-                     "\\<W-" "M-"
-                     (replace-regexp-in-string
-                      "\\<M-" "C-"
-                      (replace-regexp-in-string "\\<C-" "W-" normal))))
-                   (unchorded
-                    (replace-regexp-in-string
-                     "\\<W-" ""
-                     (replace-regexp-in-string
-                      "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
-                      (replace-regexp-in-string "\\<M-" "W-" ctl-to-alt)))))
+          (let* ((normal (nth 0 x))
+                 (ctl-to-alt
+                  (replace-regexp-in-string
+                   "\\<W-" "M-"
+                   (replace-regexp-in-string
+                    "\\<M-" "C-"
+                    (replace-regexp-in-string "\\<C-" "W-" normal))))
+                 (unchorded
+                  (replace-regexp-in-string
+                   "\\<W-" ""
+                   (replace-regexp-in-string
+                    "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
+                    (replace-regexp-in-string "\\<M-" "W-" ctl-to-alt)))))
+            (if (not (functionp (nth 1 x)))
+                (progn
+                  (ergoemacs-debug "Not a function, assuming translation.")
+                  (ergoemacs-debug "<Normal> %s %s => %s" cur-prefix normal (nth 1 x))
+                  
+                  (define-key local-function-key-map
+                    (read-kbd-macro
+                     (format "<Normal> %s %s" cur-prefix normal))
+                    (read-kbd-macro (format "%s" (nth 1 x))))
+                  
+                  (define-key local-function-key-map
+                    (read-kbd-macro
+                     (format "<Ctl%sAlt> %s %s" 
+                             (ergoemacs-unicode-char "↔" " to ")
+                             cur-prefix ctl-to-alt))
+                    (read-kbd-macro (format "%s" (nth 1 x))))
+                  (ergoemacs-debug "<Ctl%sAlt> %s %s => %s"
+                                   (ergoemacs-unicode-char "↔" " to ")
+                                   cur-prefix ctl-to-alt (nth 1 x))
+
+                  (define-key local-function-key-map
+                    (read-kbd-macro
+                     (format "<Unchorded> %s %s" cur-prefix unchorded))
+                    (read-kbd-macro (format "%s" (nth 1 x))))
+
+                  (ergoemacs-debug "<Unchorded> %s %s => %s"
+                                   cur-prefix unchorded (nth 1 x)))
               (ergoemacs-debug "<Normal> %s %s => %s" cur-prefix normal (nth 1 x))
               (define-key ,keymap
                 (read-kbd-macro (format "<Normal> %s %s" cur-prefix normal))
