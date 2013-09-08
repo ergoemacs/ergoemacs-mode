@@ -2011,7 +2011,12 @@ the best match."
   (condition-case err
       (progn
         (call-interactively fn)
-        (message "%s%s: %s" (ergoemacs-pretty-key prefix-key) (ergoemacs-pretty-key untranslated-key) fn))
+        (message "%s%s%s: %s" (if current-prefix-arg
+                                  (format "%s " current-prefix-arg)
+                                "")
+                 (ergoemacs-pretty-key prefix-key)
+                 (ergoemacs-pretty-key untranslated-key)
+                 fn))
     (error
      (message "Error %s" err))))
 
@@ -2082,7 +2087,9 @@ the best match."
     (setq unread-command-events new-key)
     (save-match-data
       (when (string-match "<\\(.*?\\)> \\(.*\\)" kbd-code)
-        (message (replace-regexp-in-string "<Normal> +" ""
+        (message "%s%s"
+                 (if current-prefix-arg (format "%s " current-prefix-arg) "")
+                 (replace-regexp-in-string "<Normal> +" ""
                   (format "<%s> %s" (match-string 1 kbd-code)
                          (ergoemacs-pretty-key (match-string 2 kbd-code)))))))))
 
@@ -2169,7 +2176,11 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (setq key-seq (listify-key-sequence key-seq))
                (reset-this-command-lengths)
                (setq unread-command-events key-seq)
-               (princ ,(format "<Unchorded> %s " (ergoemacs-pretty-key key)))))
+               (princ (concat (if current-prefix-arg
+                                         (format "%s " current-prefix-arg)
+                                       "")
+                              ,(format "<Unchorded> %s "
+                                       (ergoemacs-pretty-key key))))))
            ((eq chorded 'normal)
             `(progn
                (setq ergoemacs-first-extracted-variant 'normal)
@@ -2178,7 +2189,11 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (setq key-seq (listify-key-sequence key-seq))
                (reset-this-command-lengths)
                (setq unread-command-events key-seq)
-               (princ ,(format "<Normal> %s " (ergoemacs-pretty-key key)))))
+               (princ (concat (if current-prefix-arg
+                                         (format "%s " current-prefix-arg)
+                                       "")
+                              ,(format "<Normal> %s "
+                                       (ergoemacs-pretty-key key))))))
            ((eq chorded 'ctl-to-alt)
             `(progn
                (setq ergoemacs-first-extracted-variant 'ctl-to-alt)
@@ -2189,7 +2204,11 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (set-temporary-overlay-map ergoemacs-current-extracted-map)
                (reset-this-command-lengths)
                (setq unread-command-events key-seq)
-               (princ ,(format "<Ctl%sAlt> %s " (ergoemacs-unicode-char "↔" " to ") (ergoemacs-pretty-key key)))))
+               (princ (concat (if current-prefix-arg
+                                  (format "%s " current-prefix-arg)
+                                "")
+                              ,(format "<Ctl%sAlt> %s "
+                                       (ergoemacs-unicode-char "↔" " to ") (ergoemacs-pretty-key key))))))
            (t
             `(let ((ctl-c-keys (key-description (this-command-keys))))
                (setq prefix-arg current-prefix-arg)
