@@ -875,8 +875,7 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     "Ergoemacs terminal ESC [ translations.")
 
 (defvar ergoemacs-esc-translations
-  '(
-    ("5" [S-send]) 
+  '(("5" [S-send]) 
     ("E" [insertline])
     ("I" [key-stab])  ;; Not an X keysym
     ("J" [key-snext]) ;; Not an X keysym
@@ -889,8 +888,7 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     ("T" [clearline])
     ("W" [?\C-?])                ;; Not an X keysym
     ("Y" [key-clear]) ;; Not an X keysym
-    ("r" [replace])
-    )
+    ("r" [replace]))
   "Ergoemacs terminal extra translations."
   )
 
