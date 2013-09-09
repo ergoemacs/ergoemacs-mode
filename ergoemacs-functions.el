@@ -885,7 +885,6 @@ If arg is a negative prefix, copy file path only"
   (interactive)
   (describe-function major-mode))
 
-
 ;;; Help
 
 (defcustom ergoemacs-inkscape (executable-find "inkscape")

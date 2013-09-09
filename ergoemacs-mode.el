@@ -2116,7 +2116,7 @@ the best match."
 (defvar ergoemacs-first-extracted-variant nil
   "Current extracted variant")
 
-(defvar ergoemacs-)
+
 ;;;###autoload
 (defmacro ergoemacs-keyboard-shortcut (name key &optional chorded repeat)
   "Creates a function NAME that issues a keyboard shortcut for KEY.
@@ -2198,7 +2198,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (princ (concat (if current-prefix-arg
                                          (format "%s " current-prefix-arg)
                                        "")
-                              ,(format "<Normal> %s "
+                              ,(format "%s "
                                        (ergoemacs-pretty-key key))))))
            ((eq chorded 'ctl-to-alt)
             `(progn
