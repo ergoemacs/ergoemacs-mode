@@ -209,7 +209,8 @@
                        (choice
                         (const :tag "Shortcut" nil)
                         (const :tag "Unchorded" 'unchorded)
-                        (const :tag "Ctl<->Alt" 'ctl-to-alt)))
+                        (const :tag "Ctl<->Alt" 'ctl-to-alt)
+                        (const :tag "Normal" 'normal)))
                  (symbol :tag "Function/Keymap")
                  (sexp :tag "List of functions/keymaps"))
                 (choice (const :tag "No Label" nil)
@@ -321,7 +322,12 @@
                 (choice (string :tag "Kbd code")
                         (sexp :tag "Key"))
                 (choice
-                 (string :tag "Kbd Code")
+                 (list (string :tag "Kbd Code")
+                       (choice
+                        (const :tag "Shortcut" nil)
+                        (const :tag "Unchorded" 'unchorded)
+                        (const :tag "Ctl<->Alt" 'ctl-to-alt)
+                        (const :tag "Normal" 'normal)))
                  (symbol :tag "Function/Keymap")
                  (sexp :tag "List of functions/keymaps"))
                 (choice (const :tag "No Label" nil)
@@ -871,7 +877,8 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                               (choice
                                (const :tag "Shortcut" nil)
                                (const :tag "Unchorded" 'unchorded)
-                               (const :tag "Ctl<->Alt" 'ctl-to-alt)))
+                               (const :tag "Ctl<->Alt" 'ctl-to-alt)
+                               (const :tag "Normal" 'normal)))
                         (symbol :tag "Function/Keymap")
                         (sexp :tag "List of functions/keymaps"))
                        
@@ -885,11 +892,16 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
          ergoemacs-fixed-layout-tmp
          "Ergoemacs that are fixed regardless of keyboard types.  By default these keybindings are based on QWERTY."
          :type '(repeat
-                 (list :tag "Keys"
-                       (choice (string :tag "QWERTY Kbd Code")
+                 (list :tag "Fixed Key"
+                       (choice (string :tag "Kbd code")
                                (sexp :tag "Key"))
                        (choice
-                        (string :tag "Kbd Code")
+                        (list (string :tag "Kbd Code")
+                              (choice
+                               (const :tag "Shortcut" nil)
+                               (const :tag "Unchorded" 'unchorded)
+                               (const :tag "Ctl<->Alt" 'ctl-to-alt)
+                               (const :tag "Normal" 'normal)))
                         (symbol :tag "Function/Keymap")
                         (sexp :tag "List of functions/keymaps"))
                        (choice (const :tag "No Label" nil)
@@ -983,6 +995,12 @@ Some exceptions we don't want to unset.
   nil
   (setq ergoemacs-variable-layout-tmp
         (remove-if (lambda (x) (string-match "<apps>" (car x))) ergoemacs-variable-layout)))
+
+(ergoemacs-deftheme lvl4
+  "Level 4 Ergoemacs -- All Keys, add overwrite for C-c and C-x. (Experimental)"
+  nil
+  (push '("C-c" ("C-c" normal) "C-c") ergoemacs-fixed-layout-tmp)
+  (push '("C-x" ("C-x" normal) "C-x") ergoemacs-fixed-layout-tmp))
 
 (ergoemacs-deftheme guru
   "Unbind some commonly used keys such as <left> and <right> to get in the habit of using ergoemacs keybindings."

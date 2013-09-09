@@ -1005,6 +1005,9 @@ function immediately when `window-system' is true."
 (defvar ergoemacs-keymap (make-sparse-keymap)
   "ErgoEmacs minor mode keymap.")
 
+(defvar ergoemacs-shortcut-keymap (make-sparse-keymap)
+  "ErgoEmacs minor mode shortcut keymap")
+
 (defvar ergoemacs-full-fast-keys-keymap (make-sparse-keymap)
   "Ergoemacs full fast keys keymap")
 
@@ -1253,7 +1256,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                                    (md5 (format "%s; %s" (nth 0 def)
                                                 (nth 1 def))))) ,(nth 0 def)
                                                 ,(nth 1 def))
-                 (define-key keymap key
+                 (define-key ergoemacs-shortcut-keymap key
                    ',(intern (concat "ergoemacs-shortcut---"
                                      (md5 (format "%s; %s" (nth 0 def)
                                                   (nth 1 def))))))))))
@@ -1281,7 +1284,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                           (ergoemacs-keyboard-shortcut
                            ,(intern (concat "ergoemacs-shortcut---"
                                             (md5 (format "%s; nil" def)))) ,def)
-                          (define-key keymap key
+                          (define-key ergoemacs-shortcut-keymap key
                             ',(intern (concat "ergoemacs-shortcut---"
                                               (md5 (format "%s; nil" def))))))))
     t)
@@ -1312,8 +1315,8 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                          locale-coding-system)))))
           (if (ergoemacs-global-changed-p trans-key)
               (progn
-                (ergoemacs-debug "!!!Fixed %s has changed globally." trans-key) 
-                (define-key ,keymap key  (lookup-key (current-global-map) key)))
+                (ergoemacs-debug "!!!Fixed %s has changed globally." trans-key)
+                (ergoemacs-setup-keys-for-keymap---internal ,keymap key (lookup-key (current-global-map) key)))
             (setq cmd (nth 1 x))
 	    (if (eq ',keymap 'ergoemacs-keymap)
                 (ergoemacs-debug "Fixed: %s -> %s %s" trans-key cmd key))
@@ -1724,12 +1727,17 @@ the best match."
 	 (last-time nil)
          (cur-prefix (or ,prefix "C-x"))
          (hashkey "")
+         (shortcuts-on ergoemacs-shortcut-mode)
          (prefix-regexp ""))
      (ergoemacs-debug (make-string 80 ?=))
      (ergoemacs-debug "Extracting maps for %s" cur-prefix)
      (ergoemacs-debug (make-string 80 ?=))
      (with-temp-buffer
+       (when shortcuts-on
+         (ergoemacs-shortcut-mode -1))
        (describe-buffer-bindings buf (read-kbd-macro cur-prefix))
+       (when shortcuts-on
+         (ergoemacs-shortcut-mode 1))
        (goto-char (point-min))
        (while (re-search-forward (format "%s \\(.*?\\)[ \t]\\{2,\\}\\(.+\\)$" cur-prefix) nil t)
          (setq new-key (match-string 1))
@@ -2296,12 +2304,17 @@ The layout and theme changes the bindings.  For the current
 bindings the keymap is:
 
 \\{ergoemacs-keymap}
+
+The shortcuts defined are:
+
+\\{ergoemacs-shortcut-keymap}
 "
   nil
   :lighter " ErgoEmacs"
   :global t
   :group 'ergoemacs-mode
   :keymap ergoemacs-keymap
+  (setq ergoemacs-shortcut-keymap (make-sparse-keymap))
   (ergoemacs-setup-keys t)
   (ergoemacs-debug "Ergoemacs Keys have loaded.")
   (if ergoemacs-use-menus
@@ -2375,6 +2388,31 @@ bindings the keymap is:
            (if x
                (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist))))))
      (buffer-list)))
+  (if ergoemacs-mode
+      (ergoemacs-shortcut-mode 1)
+    (ergoemacs-shortcut-mode -1))
+  (ergoemacs-debug-flush))
+
+(define-minor-mode ergoemacs-shortcut-mode
+  "Toggle `ergoemacs-mode' shortcut keys.  In theory, this allows
+`ergoemacs-mode' to overwrite commonly used shortcuts like C-c and C-x"
+  nil
+  :lighter ""
+  :global t
+  :group 'ergoemacs-mode
+  :keymap ergoemacs-shortcut-keymap
+  (if ergoemacs-shortcut-mode
+      (progn
+        (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned on.")
+        (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-map-alist)))
+          (when x
+            (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+          ;; (while x
+          ;;   (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist))
+          ;;   (setq x (assq 'ergoemacs-shortcut-mode minor-mode-map-alist)))
+          (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-map-alist)
+          ))
+    (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned off."))
   (ergoemacs-debug-flush))
 
 
