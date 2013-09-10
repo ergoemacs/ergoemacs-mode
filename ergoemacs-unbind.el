@@ -848,15 +848,16 @@ disabled at `ergoemacs-restore-global-keys'."
 
 (defun ergoemacs-unset-redundant-global-keys ()
   "Unsets redundant keyboard shortcuts that should not be used in ErgoEmacs."
-  (mapc
-   (lambda(x)
-     (eval `(ergoemacs-create-old-key-description-fn ,x)))
-   (symbol-value (ergoemacs-get-redundant-keys)))
-  (mapc (lambda (x)
-          (let ((key (ergoemacs-get-kbd-translation x)))
-            (unless (ergoemacs-global-changed-p key)
-              (ergoemacs-unset-global-key (current-global-map) key))))
-        (symbol-value (ergoemacs-get-redundant-keys))))
+  ;; (mapc
+  ;;  (lambda(x)
+  ;;    (eval `(ergoemacs-create-old-key-description-fn ,x)))
+  ;;  (symbol-value (ergoemacs-get-redundant-keys)))
+  ;; (mapc (lambda (x)
+  ;;         (let ((key (ergoemacs-get-kbd-translation x)))
+  ;;           (unless (ergoemacs-global-changed-p key)
+  ;;             (ergoemacs-unset-global-key (current-global-map) key))))
+  ;;       (symbol-value (ergoemacs-get-redundant-keys)))
+  )
 
 (defvar ergoemacs-do-not-restore-list '()
   "List of keys to not restore.")
