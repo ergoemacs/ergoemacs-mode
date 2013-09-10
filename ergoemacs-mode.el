@@ -1011,10 +1011,10 @@ function immediately when `window-system' is true."
 (defvar ergoemacs-full-fast-keys-keymap (make-sparse-keymap)
   "Ergoemacs full fast keys keymap")
 
-(defvar ergoemacs-full-alt-keymap (make-keymap)
+(defvar ergoemacs-full-alt-keymap (make-sparse-keymap)
   "Ergoemacs full Alt+ keymap.  Alt is removed from all these keys so that no key chord is necessary.")
 
-(defvar ergoemacs-full-alt-shift-keymap (make-keymap)
+(defvar ergoemacs-full-alt-shift-keymap (make-sparse-keymap)
   "Ergoemacs full Alt+Shift+ keymap.
 Alt+shift is removed from all these keys so that no key chord is
 necessary.  Unshifted keys are changed to shifted keys.")
@@ -1028,16 +1028,33 @@ necessary.  Unshifted keys are changed to shifted keys.")
   (interactive)
   (ergoemacs-create-undo-apps-keymap)
   (setq ergoemacs-full-fast-keys-keymap (make-sparse-keymap))
-  (setq ergoemacs-full-alt-keymap (make-keymap))
-  (setq ergoemacs-full-alt-shift-keymap (make-keymap))
-  (define-key ergoemacs-full-alt-keymap (kbd "<menu>") 'ergoemacs-exit-dummy)
-  (define-key ergoemacs-full-alt-shift-keymap (kbd "<menu>") 'ergoemacs-exit-dummy)
+  (setq ergoemacs-full-alt-keymap (make-sparse-keymap))
+  (setq ergoemacs-full-alt-shift-keymap (make-sparse-keymap))
+  (define-key ergoemacs-full-alt-keymap (read-kbd-macro
+                                         (if (eq system-type 'windows-nt)
+                                             "<apps>"
+                                           "<menu>"))
+    'ergoemacs-exit-dummy)
+  (define-key ergoemacs-full-alt-shift-keymap (read-kbd-macro
+                                               (if (eq system-type 'windows-nt)
+                                                   "<apps>"
+                                                 "<menu>"))
+    'ergoemacs-exit-dummy)
+  (ergoemacs-debug (make-string 80 ?=))
+  (ergoemacs-debug "Setup Fast Keys")
+  (ergoemacs-debug (make-string 80 ?=))
   (mapc
    (lambda(var)
      (let* ((key (ergoemacs-kbd (nth 0 var) t))
             (cmd (nth 1 var))
-            (stripped-key (replace-regexp-in-string "\\<[CM]-" "" key))
+            (stripped-key (replace-regexp-in-string
+                           (format "\\<[%s]-"
+                                   (if ergoemacs-swap-alt-and-control
+                                       "C"
+                                     "M"))
+                           "" key))
             (new-cmd (nth 1 var)))
+       (ergoemacs-debug "Key:%s stripped-key: %s" key stripped-key)
        (when (string-match "^[A-Za-z]$" stripped-key)
          ;;(message "Stripped key: %s" stripped-key)
          (if (string= (downcase stripped-key) stripped-key)
@@ -1086,7 +1103,8 @@ necessary.  Unshifted keys are changed to shifted keys.")
   (interactive)
   (setq ergoemacs-exit-temp-map-var nil)
   (set-temporary-overlay-map  ergoemacs-full-alt-keymap
-                              'ergoemacs-exit-alt-keys))
+                              'ergoemacs-exit-alt-keys)
+  (message "[Alt+] keys installed to keymap. Press [Menu], [Esc], to exit"))
 
 (defun ergoemacs-exit-alt-shift-keys ()
   "Exit alt-shift keys predicate"
@@ -1110,7 +1128,8 @@ necessary.  Unshifted keys are changed to shifted keys.")
   (interactive)
   (setq ergoemacs-exit-temp-map-var nil)
   (set-temporary-overlay-map ergoemacs-full-alt-shift-keymap
-                             'ergoemacs-exit-alt-shift-keys))
+                             'ergoemacs-exit-alt-shift-keys)
+  (message "[Alt+Shift+] keys installed to keymap. Press [Menu], [Esc], to exit"))
 
 (require 'ergoemacs-functions)
 
@@ -2115,7 +2134,6 @@ the best match."
 
 (defvar ergoemacs-first-extracted-variant nil
   "Current extracted variant")
-
 
 ;;;###autoload
 (defmacro ergoemacs-keyboard-shortcut (name key &optional chorded repeat)
