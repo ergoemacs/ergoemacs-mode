@@ -159,10 +159,10 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   "Test the global key set before ergoemacs-mode is loaded."
   (let* ((emacs-exe (ergoemacs-emacs-exe))
          (ret nil)
-        (sk nil)
-        (test-key (or key "M-k"))
-        (w-file (expand-file-name "global-test" ergoemacs-dir))
-        (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+         (sk nil)
+         (test-key (or key "M-k"))
+         (w-file (expand-file-name "global-test" ergoemacs-dir))
+         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (setq sk
           (format "(%s '(lambda() (interactive) (with-temp-file \"%s\" (insert \"Ok\"))))"
                   (if ergoemacs
@@ -193,8 +193,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
       (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
       (insert ") (error (message \"Error %s\" err)))")
       (unless (boundp 'wait-for-me)
-        (insert "(kill-emacs)"))
-      (message "%s" (buffer-string)))
+        (insert "(kill-emacs)")))
     (message
      "%s"
      (shell-command-to-string
@@ -326,6 +325,39 @@ Test next and prior translation."
   "Issue #77.
 Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
   (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]")))
+
+(ert-deftest ergoemacs-test-issue-86 ()
+  "Test Issue #86.
+Hyper Key mapping no longer works."
+  (let ((emacs-exe (ergoemacs-emacs-exe))
+        (w-file (expand-file-name "global-test" ergoemacs-dir))
+        (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+    (with-temp-file temp-file
+      (insert "(condition-case err (progn ")
+      (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
+      (insert "(setq ergoemacs-theme nil)")
+      (insert "(setq ergoemacs-keyboard-layout \"us\")")
+      (insert "(require 'ergoemacs-mode)(ergoemacs-mode 1)")
+      (insert "(defun osx-map-hyper ()
+        (global-unset-key \"\C-p\") 
+        (define-key function-key-map (kbd \"C-p\") 'event-apply-hyper-modifier))")
+      (insert "(osx-map-hyper)")
+      (insert "(run-hooks 'emacs-startup-hook)")
+      (insert (format "(when (not (eq 'ergoemacs-print-buffer-confirm
+                             (lookup-key ergoemacs-keymap (read-kbd-macro \"C-p\"))))
+                (with-temp-file \"%s\"
+                  (insert \"Ok\")))" w-file))
+      (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
+      (insert ") (error (message \"Error %s\" err)))")
+      (unless (boundp 'wait-for-me)
+        (insert "(kill-emacs)")))
+    (message "%s"
+     (shell-command-to-string
+      (format "%s -Q -l %s" emacs-exe temp-file)))
+    (delete-file temp-file)
+    (should (file-exists-p w-file))
+    (when (file-exists-p w-file)
+      (delete-file w-file))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
