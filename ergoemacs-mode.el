@@ -1319,6 +1319,20 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
      (setq ,keymap (make-sparse-keymap))
      (if (eq ',keymap 'ergoemacs-keymap)
          (ergoemacs-debug "Theme: %s" ergoemacs-theme))
+     ;; Unbind keys.
+     (mapc
+      (lambda(x)
+        (unless (ergoemacs-global-changed-p x)
+          (eval `(ergoemacs-create-old-key-description-fn ,x))
+          (define-key ,keymap (read-kbd-macro x)
+            (intern-soft (concat "ergoemacs-old-key---"
+                                 (md5 (format "%s" x)))))))
+      (symbol-value (ergoemacs-get-redundant-keys)))
+     (mapc (lambda (x)
+             (let ((key (ergoemacs-get-kbd-translation x)))
+               (unless (ergoemacs-global-changed-p key)
+                 (ergoemacs-unset-global-key (current-global-map) key))))
+           (symbol-value (ergoemacs-get-redundant-keys)))
      ;; Fixed layout keys
      (mapc
       (lambda(x)
@@ -1644,10 +1658,11 @@ will change."
           (ergoemacs-unset-redundant-global-keys)
           ;; alt+n is the new "Quit" in query-replace-map
           (when (ergoemacs-key-fn-lookup 'keyboard-quit)
-            (ergoemacs-unset-global-key query-replace-map "\e")
+            ;; Not sure if this is 
+            ;; (ergoemacs-unset-global-key query-replace-map "\e")
             (define-key query-replace-map (ergoemacs-key-fn-lookup 'keyboard-quit) 'exit-prefix)))
       ;; if ergoemacs was disabled: restore original keys
-      (ergoemacs-restore-global-keys))
+      )
     
     ;; install the mode-hooks
     (dolist (hook ergoemacs-hook-list)
