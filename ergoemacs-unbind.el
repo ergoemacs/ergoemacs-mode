@@ -681,25 +681,6 @@
    ((eq 'right-char curr-fn) 'forward-char)
    (t curr-fn)))
 
-(defmacro ergoemacs-create-old-key-description-fn (key)
-  `(defun ,(intern (concat "ergoemacs-old-key---" (md5 (format "%s" key)))) ()
-     (interactive)
-     (beep)
-     (let ((fn (assoc ,key ergoemacs-emacs-default-bindings))
-           (last (substring ,key -1))
-           (ergoemacs-where-is-skip t)
-           (curr-fn nil))
-       (message "%s keybinding is disabled! Use %s"
-                (ergoemacs-pretty-key ,key)
-                (ergoemacs-pretty-key-rep
-                 (with-temp-buffer
-                   (setq curr-fn (nth 0 (nth 1 fn)))
-                   (when (and fn (not (eq 'prefix curr-fn)))
-                     (setq curr-fn (ergoemacs-translate-current-function curr-fn))
-                     (where-is curr-fn t))
-                   (ergoemacs-format-where-is-buffer)
-                   (buffer-string)))))))
-
 (defvar ergoemacs-global-not-changed-cache '()
   "Cache of global variables that have not changed")
 
@@ -782,10 +763,6 @@ This should only be run when no global keys have been set.
                 (setq has-changed
                       (ergoemacs-global-changed-p
                        prefix-vector is-variable complain fix)))))
-           ((condition-case err
-                (string-match "ergoemacs-old-key---" (symbol-name key-function))
-              (error nil))
-            (setq has-changed nil))
            (old-bindings ; Trans function is defined, not an integer
             (unless (member trans-function (nth 1 old-bindings))
               (setq has-changed t)))
@@ -822,63 +799,6 @@ This should only be run when no global keys have been set.
      (and (eq 'string (type-of (nth 0 x)))
           (ergoemacs-global-changed-p (nth 0 x) t t)))
    (symbol-value (ergoemacs-get-variable-layout))))
-
-(defvar ergoemacs-overridden-global-keys '()
-  "Alist to store overridden keyboard shortcuts in
-  `current-global-map' and other maps. Each item looks like '(MAP KEY OLD-COMMAND).")
-
-(defun ergoemacs-unset-global-key (map key-s)
-  "Sets to nil the associated command for the specified key in specified map.
-It is like:
-
-  \(define-key map (kbd key-s) nil))
-
-But it saves the old command associated with the
-specified key, so we can restore it when ergoemacs minor mode is
-disabled at `ergoemacs-restore-global-keys'."
-  (let (key oldcmd)
-    (setq key (edmacro-parse-keys key-s))
-    ;; get the old command associated with this key
-    (setq oldcmd (lookup-key map key))
-    ;; save that shortcut in ergoemacs-overridden-global-keys
-    (if oldcmd
-	(add-to-list 'ergoemacs-overridden-global-keys (cons map (cons key-s (cons oldcmd nil)))))
-    ;; redefine the key in the ergoemacs-keymap
-    (define-key map key (intern-soft (concat "ergoemacs-old-key---" (md5 (format "%s" (key-description key))))))))
-
-(defun ergoemacs-unset-redundant-global-keys ()
-  "Unsets redundant keyboard shortcuts that should not be used in ErgoEmacs."
-  ;; (mapc
-  ;;  (lambda(x)
-  ;;    (eval `(ergoemacs-create-old-key-description-fn ,x)))
-  ;;  (symbol-value (ergoemacs-get-redundant-keys)))
-  ;; (mapc (lambda (x)
-  ;;         (let ((key (ergoemacs-get-kbd-translation x)))
-  ;;           (unless (ergoemacs-global-changed-p key)
-  ;;             (ergoemacs-unset-global-key (current-global-map) key))))
-  ;;       (symbol-value (ergoemacs-get-redundant-keys)))
-  )
-
-(defvar ergoemacs-do-not-restore-list '()
-  "List of keys to not restore.")
-(defun ergoemacs-restore-global-keys ()
-  "Restores all keyboard shortcuts that were overwritten by `ergoemacs-unbind-global-key'."
-  (mapc (lambda (x)
-          (let ((key (edmacro-parse-keys (car (cdr x)))))
-            (unless (member (key-description key) ergoemacs-do-not-restore-list)
-              (define-key
-                (car x)
-                key
-                (car (cdr (cdr x)))))))
-	ergoemacs-overridden-global-keys)
-  ;; Fix backspace issue
-  ;; (define-key global-map (kbd "<backspace>") 'backward-delete-char-untabify)
-  ;; (define-key global-map (kbd "DEL") 'backward-delete-char-untabify)
-  ;; clear the lists
-  (setq ergoemacs-global-not-changed-cache '())
-  (setq ergoemacs-global-changed-cache '())
-  (setq ergoemacs-overridden-global-keys '())
-  (setq ergoemacs-do-not-restore-list '()))
 
 (defvar ergoemacs-display-char-list nil
   "List of characters and fonts and if they display or not.")
