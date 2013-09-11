@@ -314,7 +314,7 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
              ((and last-plist kp1 (not kp2))
               ;; last keypress was not on the same finger as kp1. kp2 is a
               ;; reset
-              (setq ret `(:d ,(+ (plist-gt last-plist :dh)
+              (setq ret `(:d ,(+ (plist-get last-plist :dh)
                                  (* 2 (plist-get kp1 :d-home)))
                              :dh 0
                              :finger-n -10
@@ -438,7 +438,7 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
   "Tracks the key presses."
   (let ((keys (key-description (this-command-keys)))
 	;; FIXME: two `dist'?
-        dist dist)
+        dist-p dist)
     ;; Note that sending something like QWERTY <apps> j
     ;; Adds a key binding of C-c or C-c * key binding.
     (when ergoemacs-last-key-press
