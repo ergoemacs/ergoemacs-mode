@@ -994,13 +994,15 @@ Some exceptions we don't want to unset.
   "Level 3 Ergoemacs -- ALL key except <apps> keys."
   nil
   (setq ergoemacs-variable-layout-tmp
-        (remove-if (lambda (x) (string-match "<apps>" (car x))) ergoemacs-variable-layout)))
+        (remove-if (lambda (x) (string-match "<\\(apps\\|menu\\)>" (car x))) ergoemacs-variable-layout)))
 
 (ergoemacs-deftheme lvl4
   "Level 4 Ergoemacs -- All Keys, add overwrite for C-c and C-x. (Experimental)"
   nil
   (push '("C-c" ("C-c" normal) "C-c") ergoemacs-fixed-layout-tmp)
-  (push '("C-x" ("C-x" normal) "C-x") ergoemacs-fixed-layout-tmp))
+  (push '("C-S-c" ("C-c" normal) "C-c") ergoemacs-fixed-layout-tmp)
+  (push '("C-x" ("C-x" normal) "C-x") ergoemacs-fixed-layout-tmp)
+  (push '("C-S-x" ("C-x" normal) "C-x") ergoemacs-fixed-layout-tmp))
 
 (ergoemacs-deftheme guru
   "Unbind some commonly used keys such as <left> and <right> to get in the habit of using ergoemacs keybindings."
