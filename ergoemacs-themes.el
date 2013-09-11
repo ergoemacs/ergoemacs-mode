@@ -315,7 +315,16 @@
     
     ("<M-up>" ergoemacs-backward-block) ; Alt+↑
     ("<M-down>" ergoemacs-forward-block) ; Alt+↓
-    )
+
+    ;; Now add copy and paste support
+    ;; Timeout commands to support both
+    ("C-c <timeout>" ergoemacs-copy-line-or-region)
+    ("C-x <timeout>" ergoemacs-cut-line-or-region)
+    ;; Shortcuts
+    ("C-c" ergoemacs-ctl-c "Copy") 
+    ("C-x" ergoemacs-ctl-x "Cut") 
+    ("C-v" yank "Paste") 
+    ("C-S-v" yank-pop "paste ↑"))
   "Keybinding that are constant regardless of they keyboard used."
   :type '(repeat
           (list :tag "Fixed Key"
@@ -995,14 +1004,6 @@ Some exceptions we don't want to unset.
   nil
   (setq ergoemacs-variable-layout-tmp
         (remove-if (lambda (x) (string-match "<\\(apps\\|menu\\)>" (car x))) ergoemacs-variable-layout)))
-
-(ergoemacs-deftheme lvl4
-  "Level 4 Ergoemacs -- All Keys, add overwrite for C-c and C-x. (Experimental)"
-  nil
-  (push '("C-c" ("C-c" normal) "C-c") ergoemacs-fixed-layout-tmp)
-  (push '("C-S-c" ("C-c" normal) "C-c") ergoemacs-fixed-layout-tmp)
-  (push '("C-x" ("C-x" normal) "C-x") ergoemacs-fixed-layout-tmp)
-  (push '("C-S-x" ("C-x" normal) "C-x") ergoemacs-fixed-layout-tmp))
 
 (ergoemacs-deftheme guru
   "Unbind some commonly used keys such as <left> and <right> to get in the habit of using ergoemacs keybindings."

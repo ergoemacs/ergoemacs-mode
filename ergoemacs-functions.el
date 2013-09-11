@@ -42,6 +42,69 @@
   '(delete-backward-char delete-char kill-word backward-kill-word)
   "Defines deletion functions that ergoemacs is aware of.")
 
+(defcustom ergoemacs-ctl-c-or-ctl-x-delay 0.2
+  "Delay before sending Cut or Copy when using C-c and C-x."
+  :type '(choice (number :tag "Inhibit delay")
+                 (const :tag "No delay" nil))
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-handle-ctl-c-or-ctl-x 'both
+  "Type of C-c and C-x handling for `ergoemacs-mode'"
+  :type '(choice
+          (const :tag "C-c/C-x only copy/cut" 'only-copy-cut)
+          (const :tag "C-c/C-x only Emacs C-c and C-x" 'only-C-c-and-C-x)
+          (const :tag "C-c/C-x copy/paste when region active, Emacs C-c/C-x otherwise."))
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-ctl-c (&optional arg)
+  "Ergoemacs C-c key."
+  (interactive "P")
+  (ergoemacs-ctl-c-or-ctl-x "C-c" arg))
+
+(defun ergoemacs-ctl-x (&optional arg)
+  "Ergoemacs C-x key."
+  (interactive "P")
+  (ergoemacs-ctl-c-or-ctl-x "C-x" arg))
+
+(defun ergoemacs-ctl-c-or-ctl-x (key &optional arg)
+  "Ergoemacs C-c or C-x defined by KEY."
+  (let (fn-cp fn-cx fn-both deactivate-mark)
+    ;; Create the needed functions
+      (setq fn-cx (concat "ergoemacs-shortcut---"
+                          (md5 (format "%s; normal" key))))
+      (unless (intern-soft fn-cx)
+        (eval
+         (macroexpand
+          `(progn
+             (ergoemacs-keyboard-shortcut
+              ,(intern fn-cx) ,key normal)))))
+      (setq fn-cx (intern fn-cx))
+
+      (if (string= "C-c" key)
+          (progn
+            (setq fn-cp 'ergoemacs-copy-line-or-region))
+        (progn
+          (setq fn-cp 'ergoemacs-cut-line-or-region)))
+    (cond
+     ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+      (funcall fn-cp arg))
+     ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
+      (funcall fn-cx))
+     (this-command-keys-shift-translated
+      ;; Shift translated keys are C-c and C-x only.
+      (funcall fn-cx))
+     ((and ergoemacs-ctl-c-or-ctl-x-delay (region-active-p))
+      (setq ergoemacs-curr-prefix-arg current-prefix-arg)
+      (funcall fn-cx)
+      (setq ergoemacs-push-M-O-timeout t)
+      (setq ergoemacs-M-O-timer
+            (run-with-timer ergoemacs-ctl-c-or-ctl-x-delay nil
+                            #'ergoemacs-M-O-timeout)))
+     ((region-active-p)
+      (funcall fn-cp arg))
+     (t
+      (funcall fn-cx)))))
+
 (defun ergoemacs-clean ()
   "Run ergoemacs in a bootstrap environment."
   (interactive)
@@ -172,7 +235,7 @@ With a negative prefix NUMBER, move backward to the previous NUMBER left bracket
   (interactive "p")
   (if (and number
            (> 0 number))
-      (ergoemacs-backward-open-braket (- 0 number))
+      (ergoemacs-backward-open-bracket (- 0 number))
     (forward-char 1)
     (search-forward-regexp
      (eval-when-compile
@@ -553,8 +616,7 @@ Emacs buffers are those whose name starts with *."
     (when doIt
       (cond
        ((string-equal system-type "windows-nt")
-        (mapc (lambda (fPath) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" fPath t t)) ) myFileList)
-        )
+        (mapc (lambda (fPath) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" fPath t t)) ) myFileList))
        ((string-equal system-type "darwin")
         (mapc (lambda (fPath) (shell-command (format "open \"%s\"" fPath)) )  myFileList) )
        ((string-equal system-type "gnu/linux")
@@ -580,8 +642,8 @@ Emacs buffers are those whose name starts with *."
 
 Similar to (kill-buffer (current-buffer)) with the following addition:
 
-• prompt user to save if the buffer has been modified even if the buffer is not associated with a file.
-• make sure the buffer shown after closing is a user buffer.
+• Prompt user to save if the buffer has been modified even if the buffer is not associated with a file.
+• Make sure the buffer shown after closing is a user buffer.
 • If the buffer is editing a source file in an org-mode file, prompt the user to save before closing.
 • If the buffer is a file, add the path to the list `ergoemacs-recently-closed-buffers'.
 • If it is the minibuffer, exit the minibuffer
@@ -1023,7 +1085,7 @@ display in-progress messages."
   "Replace accented char at curser by corresponding unaccented char(s).
 Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
   (interactive)
-  (when (accented-char-p (following-char))
+  (when (ergoemacs-accented-char-p (following-char))
     (let ((sans-accent (assoc (following-char) ergoemacs-reverse-iso-chars-alist)))
       (delete-char 1)
       (insert (cdr sans-accent))
