@@ -201,6 +201,15 @@
      ))
 
 
+(defadvice cua-mode (around ergoemacs-activate-only-selection-mode (arg))
+  "When `ergoemacs-mode' is enabled, enable `cua-selection-mode' instead of plain `cua-mode'."
+  (when ergoemacs-mode
+    (setq-default cua-enable-cua-keys nil))
+  ad-do-it
+  (when ergoemacs-mode
+    (customize-mark-as-set 'cua-enable-cua-keys)))
+
+(ad-activate 'cua-mode)
 
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

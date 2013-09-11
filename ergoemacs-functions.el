@@ -70,21 +70,21 @@
   "Ergoemacs C-c or C-x defined by KEY."
   (let (fn-cp fn-cx fn-both deactivate-mark)
     ;; Create the needed functions
-      (setq fn-cx (concat "ergoemacs-shortcut---"
-                          (md5 (format "%s; normal" key))))
-      (unless (intern-soft fn-cx)
-        (eval
-         (macroexpand
-          `(progn
-             (ergoemacs-keyboard-shortcut
-              ,(intern fn-cx) ,key normal)))))
-      (setq fn-cx (intern fn-cx))
+    (setq fn-cx (concat "ergoemacs-shortcut---"
+                        (md5 (format "%s; normal" key))))
+    (unless (intern-soft fn-cx)
+      (eval
+       (macroexpand
+        `(progn
+           (ergoemacs-keyboard-shortcut
+            ,(intern fn-cx) ,key normal)))))
+    (setq fn-cx (intern fn-cx))
 
-      (if (string= "C-c" key)
-          (progn
-            (setq fn-cp 'ergoemacs-copy-line-or-region))
+    (if (string= "C-c" key)
         (progn
-          (setq fn-cp 'ergoemacs-cut-line-or-region)))
+          (setq fn-cp 'ergoemacs-copy-line-or-region))
+      (progn
+        (setq fn-cp 'ergoemacs-cut-line-or-region)))
     (cond
      ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
       (funcall fn-cp arg))
@@ -93,14 +93,17 @@
      (this-command-keys-shift-translated
       ;; Shift translated keys are C-c and C-x only.
       (funcall fn-cx))
-     ((and ergoemacs-ctl-c-or-ctl-x-delay (region-active-p))
+     ((and ergoemacs-ctl-c-or-ctl-x-delay
+           (or (region-active-p)
+               (and cua--rectangle (boundp 'cua-mode) cua-mode)))
       (setq ergoemacs-curr-prefix-arg current-prefix-arg)
       (funcall fn-cx)
       (setq ergoemacs-push-M-O-timeout t)
       (setq ergoemacs-M-O-timer
             (run-with-timer ergoemacs-ctl-c-or-ctl-x-delay nil
                             #'ergoemacs-M-O-timeout)))
-     ((region-active-p)
+     ((or (region-active-p)
+          (and cua--rectangle (boundp 'cua-mode) cua-mode))
       (funcall fn-cp arg))
      (t
       (funcall fn-cx)))))

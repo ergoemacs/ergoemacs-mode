@@ -2093,7 +2093,8 @@ the best match."
 
 (defun ergoemacs-menu-swap (prefix-key untranslated-key type)
   "Swaps what <menu> key translation is in effect"
-  (let* ((new-type nil)
+  (let* (deactivate-mark
+         (new-type nil)
          (new-key nil)
          (kbd-code nil)
          (normal untranslated-key)
@@ -2365,6 +2366,14 @@ The shortcuts defined are:
   :global t
   :group 'ergoemacs-mode
   :keymap ergoemacs-keymap
+  
+  ;; Try to turn on only rectangle support, global mark mode, and
+  ;; other features of CUA mode.  Let ergoemacs handle C-c and C-v.
+  ;; This will possibly allow swapping of C-c and M-c.
+  (when (and ergoemacs-mode cua-mode)
+    (cua-mode -1)
+    (cua-selection-mode 1))
+  
   (setq ergoemacs-shortcut-keymap (make-sparse-keymap))
   (ergoemacs-setup-keys t)
   (ergoemacs-debug "Ergoemacs Keys have loaded.")
