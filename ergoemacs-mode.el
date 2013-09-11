@@ -1755,7 +1755,7 @@ the best match."
 
 (defvar ergoemacs-extract-map-hash (make-hash-table :test 'equal))
 
-(defmacro ergoemacs-extract-maps (keymap &optional prefix)
+(defmacro ergoemacs-extract-maps (keymap &optional prefix timeout-function)
   "Extracts maps."
   `(let ((buf (current-buffer))
          (normal '())
@@ -1814,7 +1814,7 @@ the best match."
      (ergoemacs-debug (make-string 80 ?=))
      (ergoemacs-debug "Finished (%1f sec); Building keymap" (- (float-time) start-time))
      (setq last-time (float-time))      (ergoemacs-debug (make-string 80 ?=))
-     (setq hashkey (md5 (format "%s;%s;%s" cur-prefix normal prefixes)))
+     (setq hashkey (md5 (format "%s;%s;%s;%s" cur-prefix normal prefixes timeout-function)))
      (setq ,keymap (gethash hashkey ergoemacs-extract-map-hash))
      (unless ,keymap
        (setq ,keymap (make-keymap))
@@ -2025,6 +2025,13 @@ the best match."
                 (interactive "P")
                 (ergoemacs-menu-swap ,cur-prefix "" 'normal)))
          (error nil))
+
+       (when timeout-function
+         (condition-case err
+             (define-key ,keymap
+               (read-kbd-macro (format "<Normal> %s <timeout>" cur-prefix))
+               timeout-function)
+           (error nil)))
        
        (condition-case err
            (define-key ,keymap 
@@ -2038,6 +2045,15 @@ the best match."
                 (ergoemacs-menu-swap ,cur-prefix "" 'ctl-to-alt)))
          (error nil))
 
+       (when timeout-function
+         (condition-case err
+             (define-key ,keymap
+               (read-kbd-macro (format "<Ctl%sAlt> %s <timeout>"
+                                       (ergoemacs-unicode-char "↔" " to ")
+                                       cur-prefix))
+               timeout-function)
+           (error nil)))
+
        (condition-case err
            (define-key ,keymap 
              (read-kbd-macro
@@ -2048,6 +2064,15 @@ the best match."
                 (interactive "P")
                 (ergoemacs-menu-swap ,cur-prefix "" 'unchorded)))
          (error nil))
+
+       (when timeout-function
+         (condition-case err
+             (define-key ,keymap
+               (read-kbd-macro (format "<Unchorded> %s <timeout>"
+                                       cur-prefix))
+               timeout-function)
+           (error nil)))
+       
        (puthash hashkey ,keymap ergoemacs-extract-map-hash))
      (ergoemacs-debug (make-string 80 ?=))
      (ergoemacs-debug-flush)))
@@ -2159,7 +2184,7 @@ the best match."
   "Current extracted variant")
 
 ;;;###autoload
-(defmacro ergoemacs-keyboard-shortcut (name key &optional chorded repeat)
+(defmacro ergoemacs-keyboard-shortcut (name key &optional chorded repeat timeout-function)
   "Creates a function NAME that issues a keyboard shortcut for KEY.
 CHORDED is a variable that alters to keymap to allow unchorded
 key sequences.
@@ -2188,6 +2213,8 @@ C-k S-a     -> k S-a           not defined
 When REPEAT is a variable name, then an easy repeat is setup for the command.
 
 For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to be repeated by m.
+
+TIMEOUT-FUNCTION also binds timeout function to <timeout>
 "
   `(progn
      ,(cond
@@ -2213,7 +2240,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
        (setq this-command last-command) ; Don't record this command.
        (setq prefix-arg current-prefix-arg)
        (let (key-seq (key ,key))
-         (eval (macroexpand '(ergoemacs-extract-maps ergoemacs-current-extracted-map key)))
+         (eval (macroexpand '(ergoemacs-extract-maps ergoemacs-current-extracted-map key timeout-function)))
          ,(cond
            ((eq chorded 'unchorded)
             `(progn
