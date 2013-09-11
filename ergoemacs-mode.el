@@ -1319,14 +1319,28 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
      (setq ,keymap (make-sparse-keymap))
      (if (eq ',keymap 'ergoemacs-keymap)
          (ergoemacs-debug "Theme: %s" ergoemacs-theme))
-     ;; Unbind keys.
      (mapc
       (lambda(x)
         (unless (ergoemacs-global-changed-p x)
-          (eval `(ergoemacs-create-old-key-description-fn ,x))
           (define-key ,keymap (read-kbd-macro x)
-            (intern-soft (concat "ergoemacs-old-key---"
-                                 (md5 (format "%s" x)))))))
+            `(lambda()
+               ,(format "Undefined key %s, tells where to perform the old action" x)
+               (interactive)
+               (beep)
+               (let ((fn (assoc ,x ergoemacs-emacs-default-bindings))
+                     (last (substring ,x -1))
+                     (ergoemacs-where-is-skip t)
+                     (curr-fn nil))
+                 (message "%s keybinding is disabled! Use %s"
+                          (ergoemacs-pretty-key ,x)
+                          (ergoemacs-pretty-key-rep
+                           (with-temp-buffer
+                             (setq curr-fn (nth 0 (nth 1 fn)))
+                             (when (and fn (not (eq 'prefix curr-fn)))
+                               (setq curr-fn (ergoemacs-translate-current-function curr-fn))
+                               (where-is curr-fn t))
+                             (ergoemacs-format-where-is-buffer)
+                             (buffer-string)))))))))
       (symbol-value (ergoemacs-get-redundant-keys)))
      (mapc (lambda (x)
              (let ((key (ergoemacs-get-kbd-translation x)))
