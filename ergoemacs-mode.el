@@ -2411,7 +2411,7 @@ The shortcuts defined are:
   (when ergoemacs-change-smex-M-x
     (if ergoemacs-mode
         (setq smex-prompt-string (concat (ergoemacs-pretty-key "M-x") " "))
-      (setq smex-promt-string "M-x ")))
+      (setq smex-prompt-string "M-x ")))
   (if ergoemacs-mode
       (mapc ;; Now install hooks.
        (lambda(buf)
