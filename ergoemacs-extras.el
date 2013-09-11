@@ -734,7 +734,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
               (unless (string-match "\\(<apps>\\|<menu>\\)" x) ;; Currently take out
                 ;; <apps> mapping.  Needs some work.
                 (let ((key (format "%s" (string-to-char x))))
-                  (add-to-list 'trans-keys `(,x ,key))
+                  (push `(,x ,key) trans-keys)
                   (setq lay-ini (format "%s\n%s=%s" lay-ini i key))))
               (setq i (+ i 1)))
             (symbol-value variable))))
@@ -1103,8 +1103,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                      (num 0))
                  (when a
                    (setq num (+ num (cdr a)))
-		   ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
-                   (add-to-list 'cmds (car a)))
+                   (push (car a) cmds))
                  ;; Now lookup key based on the currently installed
                  ;; minor modes
 
@@ -1130,8 +1129,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                          (setq a (assoc (nth 1 translation-list) (cdr list)))
                          (when a
                            (setq num (+ num (cdr a)))
-			   ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
-                           (add-to-list 'cmds (car a)))))
+                           (push (car a) cmds))))
                      (nth 1 minor-list)))
                   (symbol-value (ergoemacs-get-minor-mode-layout)))
                  (list (if var-layout
