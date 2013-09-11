@@ -103,7 +103,6 @@
 (defadvice global-set-key (around ergoemacs-global-set-key-advice (key command))
   "This let you use `global-set-key' as usual when `ergoemacs-mode' is enabled."
   ad-do-it
-  (add-to-list 'ergoemacs-do-not-restore-list (key-description key))
   (add-to-list 'ergoemacs-global-changed-cache (key-description key))
   (when ergoemacs-global-not-changed-cache
     (delete (key-description key) ergoemacs-global-not-changed-cache))
@@ -141,7 +140,6 @@
   "This let you use `global-unset-key' as usual when `ergoemacs-mode' is enabled."
   ;; the global-unset-key will remove the key from ergoemacs as well.
   ad-do-it
-  (add-to-list 'ergoemacs-do-not-restore-list (key-description key))
   (add-to-list 'ergoemacs-global-changed-cache (key-description key))
   (when ergoemacs-global-not-changed-cache
     (delete (key-description key) ergoemacs-global-not-changed-cache))
