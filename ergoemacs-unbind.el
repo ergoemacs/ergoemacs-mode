@@ -921,12 +921,12 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
     alt-char))
 
 (defcustom ergoemacs-use-ergoemacs-key-descriptions t
-  "Use ergoemacs key descriptions like Alt+ instead of emacs key descriptors like M-"
+  "Use ergoemacs key descriptions (Alt+) instead of emacs key descriptors (M-)"
   :type 'boolean
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-pretty-key (code)
-  "Creates Pretty keyboard binding from kbd CODE to like M- to Alt+"
+  "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
   (let ((ret (replace-regexp-in-string
               " +$" "" (replace-regexp-in-string "^ +" "" code)))
         (case-fold-search nil)) 
