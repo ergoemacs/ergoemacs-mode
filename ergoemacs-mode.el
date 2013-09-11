@@ -2280,6 +2280,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (reset-this-command-lengths)
                ,(when repeat
                   `(when ,(intern (symbol-name repeat))
+                     (ergoemacs-shortcut-mode -1)
                      (when (and (key-binding (read-kbd-macro ,key))
                                 (string-match "[A-Za-z]$" ctl-c-keys))
                        (setq ctl-c-keys (match-string 0 ctl-c-keys))
@@ -2291,7 +2292,8 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                                      (ergoemacs-pretty-key ctl-c-keys)))
                        ;; Allow time to process the unread command events before
                        ;; installing temporary keymap
-                       (setq ergoemacs-M-O-timer (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-shortcut-timeout))))))))))))
+                       (setq ergoemacs-M-O-timer (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-shortcut-timeout)))
+                     (ergoemacs-shortcut-mode 1))))))))))
 
 
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-c-ctl-c "C-c C-c" nil ergoemacs-repeat-ctl-c-ctl-c)
