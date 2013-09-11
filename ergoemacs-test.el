@@ -287,7 +287,7 @@ Ergoemacs in `org-mode' should be removed when turning off `ergoemacs-mode'"
     "Should be the second test for Issue #67.
 When ergoemacs-mode is enabled, and an org-mode buffer is already
 present, it should be re-enabled in that particular buffer."
-  (let ((old (symbol-value 'ergoemacs-mode)))
+  (let ((old (symbol-value 'ergoemacs-mode)) ret)
     (when old
       (ergoemacs-mode -1))
     (set-buffer (get-buffer-create "*ergoemacs-test-org-mode*"))
@@ -324,7 +324,8 @@ Test next and prior translation."
 (ert-deftest ergoemacs-test-issue-77 ()
   "Issue #77.
 Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
-  (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]")))
+  (let ((ergoemacs-use-unicode-char nil))
+    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]"))))
 
 (ert-deftest ergoemacs-test-issue-86 ()
   "Test Issue #86.
