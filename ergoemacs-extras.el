@@ -274,10 +274,9 @@
 
 (defun ergoemacs-get-html-key-tables ()
   "Get key table and convert to HTML"
-  (let ((ergoemacs-unset-redundant-global-keys (lambda())))
-    (let* ((lay (ergoemacs-get-layouts))
-           (saved-layout ergoemacs-keyboard-layout)
-           (tbl "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+  (let* ((lay (ergoemacs-get-layouts))
+         (saved-layout ergoemacs-keyboard-layout)
+         (tbl "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
 <html xmlns=\"http://www.w3.org/1999/xhtml\">
   <head>
     <meta name=\"keywords\" content=\"\" />
@@ -290,25 +289,25 @@
    </head>
   <body>
     <table id=\"table_keys\"><tr><th>Type</th>><th>Key</th><th>Short Desc</th><th>Emacs Function</th></tr>")
-           (extra-dir)
-           (curr-dir)
-           (saved-theme ergoemacs-theme))
-      (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
-      (when (not (file-exists-p extra-dir))
-        (make-directory extra-dir t))
-      (mapc
-       (lambda(x)
-         (message "Generate Kbd table for %s" x)
-         (ergoemacs-set-default 'ergoemacs-theme nil)
-         (ergoemacs-set-default 'ergoemacs-keyboard-layout x)
-         (ergoemacs-mode 1)
-         (setq curr-dir (expand-file-name "ergo-layouts" extra-dir))
-         (when (not (file-exists-p curr-dir))
-           (make-directory curr-dir t))
-         (with-temp-file (expand-file-name (format "ergoemacs-layout-%s.html" x) curr-dir)
-           (insert tbl)
-           (insert (ergoemacs-get-html-key-table))
-           (insert "</table><script language=\"javascript\" type=\"text/javascript\">
+         (extra-dir)
+         (curr-dir)
+         (saved-theme ergoemacs-theme))
+    (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
+    (when (not (file-exists-p extra-dir))
+      (make-directory extra-dir t))
+    (mapc
+     (lambda(x)
+       (message "Generate Kbd table for %s" x)
+       (ergoemacs-set-default 'ergoemacs-theme nil)
+       (ergoemacs-set-default 'ergoemacs-keyboard-layout x)
+       (ergoemacs-mode 1)
+       (setq curr-dir (expand-file-name "ergo-layouts" extra-dir))
+       (when (not (file-exists-p curr-dir))
+         (make-directory curr-dir t))
+       (with-temp-file (expand-file-name (format "ergoemacs-layout-%s.html" x) curr-dir)
+         (insert tbl)
+         (insert (ergoemacs-get-html-key-table))
+         (insert "</table><script language=\"javascript\" type=\"text/javascript\">
   //<![CDATA[
         var table_keys_Props =      {
                                                         col_0: \"select\", on_change: true, display_all_text: \" [ Show all ] \", rows_counter: true, alternate_rows: true
@@ -316,20 +315,20 @@
         setFilterGrid( \"table_keys\",table_keys_Props );
 //]]>
 </script></body></html>"))
-         (mapc
-          (lambda(y)
-            (condition-case err
-                (progn
-                  (ergoemacs-set-default 'ergoemacs-theme y)
-                  (ergoemacs-mode 1)
-                  (message "\tTheme %s" y)
-                  (setq curr-dir (expand-file-name y extra-dir))
-                  (when (not (file-exists-p curr-dir))
-                    (make-directory curr-dir t))
-                  (with-temp-file (expand-file-name (format "ergoemacs-layout-%s.html" x) curr-dir)
-                    (insert tbl)
-                    (insert (ergoemacs-get-html-key-table))
-                    (insert "</table><script language=\"javascript\" type=\"text/javascript\">
+       (mapc
+        (lambda(y)
+          (condition-case err
+              (progn
+                (ergoemacs-set-default 'ergoemacs-theme y)
+                (ergoemacs-mode 1)
+                (message "\tTheme %s" y)
+                (setq curr-dir (expand-file-name y extra-dir))
+                (when (not (file-exists-p curr-dir))
+                  (make-directory curr-dir t))
+                (with-temp-file (expand-file-name (format "ergoemacs-layout-%s.html" x) curr-dir)
+                  (insert tbl)
+                  (insert (ergoemacs-get-html-key-table))
+                  (insert "</table><script language=\"javascript\" type=\"text/javascript\">
   //<![CDATA[
         var table_keys_Props =      {
                                                         col_0: \"select\"
@@ -337,14 +336,14 @@
         setFilterGrid( \"table_keys\",table_keys_Props );
 //]]>
 </script></html>")))
-              (error (message "Error generating theme %s; %s" y err))))
-          (sort (ergoemacs-get-themes) 'string<)))
-       lay)
-      (message "Setting theme back to %s" saved-theme)
-      (ergoemacs-set-default 'ergoemacs-theme saved-theme)
-      (ergoemacs-set-default 'ergoemacs-keyboard-layout saved-layout)
-      (ergoemacs-mode 1)
-      t)))
+            (error (message "Error generating theme %s; %s" y err))))
+        (sort (ergoemacs-get-themes) 'string<)))
+     lay)
+    (message "Setting theme back to %s" saved-theme)
+    (ergoemacs-set-default 'ergoemacs-theme saved-theme)
+    (ergoemacs-set-default 'ergoemacs-keyboard-layout saved-layout)
+    (ergoemacs-mode 1)
+    t))
 
 ;;;###autoload
 (defun ergoemacs-ghpages (&optional arg)
@@ -772,57 +771,56 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
 
 (defun ergoemacs-get-ahk-keys-ini ()
   "Get ahk keys for all themes/ahk combinations and put into INI file."
-  (let ((ergoemacs-unset-redundant-global-keys (lambda())))
-    (let ((re "")
-          lst)
-      (with-temp-buffer
-        (insert-file-contents (expand-file-name "ahk-us.ahk" ergoemacs-dir))
-        (goto-char (point-min))
-        (while (re-search-forward "^\\([^ \n]*\\):" nil t)
-          (add-to-list 'lst (match-string 1))))
-          ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
-      (setq re (format "^%s$" (regexp-opt lst 't)))
-      (with-temp-buffer
-        (let ((old-lay ergoemacs-theme))
-          (ergoemacs-set-default 'ergoemacs-theme nil)
-          (mapc
-           (lambda(x)
-             (ergoemacs-setup-keys-for-layout x)
-             (insert (concat "[" x "-Standard]\n"))
-             (mapc
-              (lambda(y)
-                (message "Generating AHK ini for %s Standard" x)
-                (when (string-match re (format "%s"(nth 1 y)))
-                  (unless (string-match "\\(<apps>\\|<menu>\\)"
-                                        (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
-                    (insert (symbol-name (nth 1 y)))
-                    (insert "=")
-                    (insert (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
-                    (insert "\n"))))
-              (symbol-value (ergoemacs-get-variable-layout))))
-           (ergoemacs-get-layouts))
-          (mapc
-           (lambda(z)
-             (ergoemacs-set-default 'ergoemacs-theme z)
-             (mapc
-              (lambda(x)
-                (ergoemacs-setup-keys-for-layout x)
-                (insert (concat "[" x "-" z "]\n"))
-                (message "Generating AHK ini for %s %s" x z)
-                (mapc
-                 (lambda(y)
-                   (when (string-match re (format "%s" (nth 1 y)))
-                     (unless (string-match "\\(<apps>\\|<menu>\\)" (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y))))
-                       (insert (symbol-name (nth 1 y)))
-                       (insert "=")
-                       (insert (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y))))
-                       (insert "\n"))))
-                 (symbol-value (ergoemacs-get-variable-layout))))
-              (ergoemacs-get-layouts)))
-           (ergoemacs-get-themes))
-          (ergoemacs-setup-keys-for-layout ergoemacs-keyboard-layout)
-          (ergoemacs-set-default 'ergoemacs-theme old-lay))
-        (buffer-string)))))
+  (let ((re "")
+        lst)
+    (with-temp-buffer
+      (insert-file-contents (expand-file-name "ahk-us.ahk" ergoemacs-dir))
+      (goto-char (point-min))
+      (while (re-search-forward "^\\([^ \n]*\\):" nil t)
+        (add-to-list 'lst (match-string 1))))
+    ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
+    (setq re (format "^%s$" (regexp-opt lst 't)))
+    (with-temp-buffer
+      (let ((old-lay ergoemacs-theme))
+        (ergoemacs-set-default 'ergoemacs-theme nil)
+        (mapc
+         (lambda(x)
+           (ergoemacs-setup-keys-for-layout x)
+           (insert (concat "[" x "-Standard]\n"))
+           (mapc
+            (lambda(y)
+              (message "Generating AHK ini for %s Standard" x)
+              (when (string-match re (format "%s"(nth 1 y)))
+                (unless (string-match "\\(<apps>\\|<menu>\\)"
+                                      (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
+                  (insert (symbol-name (nth 1 y)))
+                  (insert "=")
+                  (insert (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
+                  (insert "\n"))))
+            (symbol-value (ergoemacs-get-variable-layout))))
+         (ergoemacs-get-layouts))
+        (mapc
+         (lambda(z)
+           (ergoemacs-set-default 'ergoemacs-theme z)
+           (mapc
+            (lambda(x)
+              (ergoemacs-setup-keys-for-layout x)
+              (insert (concat "[" x "-" z "]\n"))
+              (message "Generating AHK ini for %s %s" x z)
+              (mapc
+               (lambda(y)
+                 (when (string-match re (format "%s" (nth 1 y)))
+                   (unless (string-match "\\(<apps>\\|<menu>\\)" (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y))))
+                     (insert (symbol-name (nth 1 y)))
+                     (insert "=")
+                     (insert (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y))))
+                     (insert "\n"))))
+               (symbol-value (ergoemacs-get-variable-layout))))
+            (ergoemacs-get-layouts)))
+         (ergoemacs-get-themes))
+        (ergoemacs-setup-keys-for-layout ergoemacs-keyboard-layout)
+        (ergoemacs-set-default 'ergoemacs-theme old-lay))
+      (buffer-string))))
 
 (defun ergoemacs-gen-ahk (&optional extra)
   "Generates autohotkey for all layouts and themes"
