@@ -1342,11 +1342,6 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                              (ergoemacs-format-where-is-buffer)
                              (buffer-string)))))))))
       (symbol-value (ergoemacs-get-redundant-keys)))
-     (mapc (lambda (x)
-             (let ((key (ergoemacs-get-kbd-translation x)))
-               (unless (ergoemacs-global-changed-p key)
-                 (ergoemacs-unset-global-key (current-global-map) key))))
-           (symbol-value (ergoemacs-get-redundant-keys)))
      ;; Fixed layout keys
      (mapc
       (lambda(x)
@@ -1669,14 +1664,13 @@ will change."
     ;; when ergoemacs-mode is on, activate hooks and unset global keys, else do inverse
     (if (and (boundp 'ergoemacs-mode) ergoemacs-mode (not (equal ergoemacs-mode 0)))
         (progn
-          (ergoemacs-unset-redundant-global-keys)
           ;; alt+n is the new "Quit" in query-replace-map
           (when (ergoemacs-key-fn-lookup 'keyboard-quit)
             ;; Not sure if this is 
             ;; (ergoemacs-unset-global-key query-replace-map "\e")
             (define-key query-replace-map (ergoemacs-key-fn-lookup 'keyboard-quit) 'exit-prefix)))
       ;; if ergoemacs was disabled: restore original keys
-      )
+      (define-key query-replace-map (read-kbd-macro "C-g") 'exit-prefix))
     
     ;; install the mode-hooks
     (dolist (hook ergoemacs-hook-list)
