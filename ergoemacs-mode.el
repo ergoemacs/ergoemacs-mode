@@ -2141,8 +2141,8 @@ the best match."
     (setq this-command last-command) ; Don't record this command.
     (setq prefix-arg current-prefix-arg)
     (set-temporary-overlay-map ergoemacs-current-extracted-map)
+    (setq unread-command-events (append new-key unread-command-events))
     (reset-this-command-lengths)
-    (setq unread-command-events new-key)
     (save-match-data
       (when (string-match "<\\(.*?\\)> \\(.*\\)" kbd-code)
         (message "%s%s"
@@ -2232,8 +2232,9 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (setq key-seq  (read-kbd-macro (format "<Unchorded> %s" ,key)))
                (set-temporary-overlay-map ergoemacs-current-extracted-map)
                (setq key-seq (listify-key-sequence key-seq))
+               (setq unread-command-events
+                     (append key-seq unread-command-events))
                (reset-this-command-lengths)
-               (setq unread-command-events key-seq)
                (princ (concat (if current-prefix-arg
                                   (format "%s " current-prefix-arg)
                                 "")
@@ -2245,8 +2246,9 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (setq key-seq  (read-kbd-macro (format "<Normal> %s" ,key)))
                (set-temporary-overlay-map ergoemacs-current-extracted-map)
                (setq key-seq (listify-key-sequence key-seq))
+               (setq unread-command-events
+                     (append key-seq unread-command-events))
                (reset-this-command-lengths)
-               (setq unread-command-events key-seq)
                (princ (concat (if current-prefix-arg
                                   (format "%s " current-prefix-arg)
                                 "")
@@ -2260,8 +2262,9 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                                                      ,key)))
                (setq key-seq (listify-key-sequence key-seq))
                (set-temporary-overlay-map ergoemacs-current-extracted-map)
+               (setq unread-command-events
+                     (append key-seq unread-command-events))
                (reset-this-command-lengths)
-               (setq unread-command-events key-seq)
                (princ (concat (if current-prefix-arg
                                   (format "%s " current-prefix-arg)
                                 "")
@@ -2270,8 +2273,11 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
            (t
             `(let ((ctl-c-keys (key-description (this-command-keys))))
                (setq prefix-arg current-prefix-arg)
+               (setq unread-command-events
+                     (append
+                      (listify-key-sequence (read-kbd-macro ,key))
+                      unread-command-events))
                (reset-this-command-lengths)
-               (setq unread-command-events (listify-key-sequence (read-kbd-macro ,key)))
                ,(when repeat
                   `(when ,(intern (symbol-name repeat))
                      (when (and (key-binding (read-kbd-macro ,key))
@@ -2279,7 +2285,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                        (setq ctl-c-keys (match-string 0 ctl-c-keys))
                        (setq ergoemacs-repeat-shortcut-keymap (make-keymap))
                        (define-key ergoemacs-repeat-shortcut-keymap (read-kbd-macro ctl-c-keys)
-                         'ergoemacs-ctl-c-ctl-c)
+                         ',(intern (symbol-name name)))
                        (setq ergoemacs-repeat-shortcut-msg
                              (format ,(format "Repeat %s with %%s" (ergoemacs-pretty-key key))
                                      (ergoemacs-pretty-key ctl-c-keys)))
