@@ -101,7 +101,7 @@
       (setq ergoemacs-curr-prefix-arg current-prefix-arg)
       (funcall fn-cx)
       (setq ergoemacs-push-M-O-timeout t)
-      (setq ergoemacs-M-O-prefix-keys (format "<Normal> %s" key))
+      (setq ergoemacs-M-O-prefix-keys key)
       (setq ergoemacs-M-O-timer
             (run-with-timer ergoemacs-ctl-c-or-ctl-x-delay nil
                             #'ergoemacs-M-O-timeout)))
@@ -215,7 +215,8 @@ If narrow-to-region is in effect, then cut that region only."
    ((region-active-p)
     (kill-ring-save (region-beginning) (region-end)))
    (t
-    (kill-ring-save (line-beginning-position) (line-beginning-position 2)))))
+    (kill-ring-save (line-beginning-position) (line-beginning-position 2))))
+  (deactivate-mark))
 
 (defun ergoemacs-cut-line-or-region (&optional arg)
   "Cut the current line, or current text selection."
@@ -228,7 +229,8 @@ If narrow-to-region is in effect, then cut that region only."
    ((region-active-p)
     (kill-region (region-beginning) (region-end)))
    (t
-    (kill-region (line-beginning-position) (line-beginning-position 2)))))
+    (kill-region (line-beginning-position) (line-beginning-position 2))))
+  (deactivate-mark))
 
 ;;; CURSOR MOVEMENT
 
