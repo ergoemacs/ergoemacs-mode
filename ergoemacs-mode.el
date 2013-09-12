@@ -1450,6 +1450,29 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
       ,(ergoemacs-get-layouts-menu)
       ,(ergoemacs-get-themes-menu)
       "--"
+       ("Ctrl+C and Ctrl+X behavior"
+        ["Ctrl+C and Ctrl+X are for Emacs Commands"
+         (lambda()
+           (interactive)
+           (set-default 'ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
+         :style radio
+         :selected (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)]
+        ["Ctrl+C and Ctrl+X are only Copy/Cut"
+         (lambda()
+           (interactive)
+           (set-default 'ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut))
+         :style radio
+         :selected (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)]
+        ["Ctrl+C and Ctrl+X are both Emacs Commands & Copy/Cut"
+         (lambda()
+           (interactive)
+           (set-default 'ergoemacs-handle-ctl-c-or-ctl-x 'both))
+         :style radio
+         :selected (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)]
+        ["Customize Ctrl+C and Ctrl+X Cut/Copy Timeout"
+         (lambda() (interactive)
+           (customize-variable 'ergoemacs-ctl-c-or-ctl-x-delay))])
+      "--"
       ["Make Bash aware of ergoemacs keys"
        (lambda () (interactive)
          (call-interactively 'ergoemacs-bash)) t]
@@ -1479,6 +1502,9 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
          (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
          (customize-save-variable 'ergoemacs-theme ergoemacs-theme)
          (customize-save-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+         (customize-save-variable 'ergoemacs-ctl-c-or-ctl-x-delay ergoemacs-ctl-c-or-ctl-x-delay)
+         (customize-save-variable 'ergoemacs-handle-ctl-c-or-ctl-x ergoemacs-handle-ctl-c-or-ctl-x)
+         (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
          (customize-save-customized)) t]
       ["Exit ErgoEmacs"
        (lambda ()

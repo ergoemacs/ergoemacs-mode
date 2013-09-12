@@ -322,7 +322,9 @@
     ("C-x <timeout>" ergoemacs-cut-line-or-region)
     ;; Shortcuts
     ("C-c" ergoemacs-ctl-c "Copy") 
-    ("C-x" ergoemacs-ctl-x "Cut") 
+    ("C-x" ergoemacs-ctl-x "Cut")
+    ("C-S-c" ("C-c" normal) "Copy") 
+    ("C-S-x" ("C-x" normal)  "Cut") 
     ("C-v" yank "Paste") 
     ("C-S-v" yank-pop "paste ↑"))
   "Keybinding that are constant regardless of they keyboard used."
