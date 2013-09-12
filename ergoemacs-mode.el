@@ -2572,6 +2572,43 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 (when ergoemacs-use-aliases
   (ergoemacs-load-aliases))
 
+(defvar ergoemacs-describe-keybindings-functions
+      '(describe-package
+        describe-bindings
+        describe-key
+        where-is
+        describe-key-briefly
+        describe-function
+        describe-variable
+        ergoemacs-describe-major-mode)
+      "Functions that describe keys.
+Setup C-c and C-x keys to be described properly.")
+
+(defun ergoemacs-toggle-describe-keys (&optional off)
+  "Turn on describing of keys. (or OFF if enabled)"
+  (cond
+   (off
+    (ergoemacs-shortcut-mode -1))
+   (ergoemacs-mode
+    (ergoemacs-shortcut-mode 1))))
+
+(defun ergoemacs-pre-command-hook ()
+  "Ergoemacs pre-command-hook"
+  (condition-case err
+      (when (memq this-command ergoemacs-describe-keybindings-functions)
+        (ergoemacs-toggle-describe-keys t))
+    (error nil)))
+
+(defun ergoemacs-post-command-hook ()
+  "Ergoemacs post-command-hook"
+  (condition-case err
+      (when (memq this-command ergoemacs-describe-keybindings-functions)
+        (ergoemacs-toggle-describe-keys))
+    (error nil)))
+
+(add-hook 'post-command-hook 'ergoemacs-post-command-hook)
+(add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
+
 (provide 'ergoemacs-mode)
 
 ;;; ergoemacs-mode.el ends here
