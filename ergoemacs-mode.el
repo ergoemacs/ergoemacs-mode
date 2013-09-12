@@ -942,14 +942,27 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     (cancel-timer ergoemacs-M-O-timer))
   nil)
 
+(defvar ergoemacs-M-O-prefix-keys nil)
+
 (defun ergoemacs-M-O-timeout ()
   "Push timeout on unread command events."
-  (when (timerp ergoemacs-M-O-timer)
-    (cancel-timer ergoemacs-M-O-timer))
   (when ergoemacs-push-M-O-timeout
-    (setq prefix-arg ergoemacs-curr-prefix-arg)
-    (reset-this-command-lengths) ;; Seems to flush the event queue.
-    (setq unread-command-events (cons 'timeout unread-command-events))))
+    (if ergoemacs-M-O-prefix-keys
+        (let ((fn (key-binding
+                   (read-kbd-macro
+                    (format "%s <timeout>"
+                            ergoemacs-M-O-prefix-keys)))))
+          ;; Lookup keys, and then send <exit> event.
+          (setq prefix-arg ergoemacs-curr-prefix-arg)
+          (reset-this-command-lengths)
+          (let (deactivate-mark)
+            (setq unread-command-events (cons 'exit unread-command-events)))
+          (call-interactively fn))
+      (setq prefix-arg ergoemacs-curr-prefix-arg)
+      (reset-this-command-lengths)
+      (setq unread-command-events (cons 'timeout unread-command-events))
+      (call-interactively fn))
+    (setq ergoemacs-M-O-prefix-keys nil)))
 
 (defun ergoemacs-M-o (&optional arg use-map)
   "Ergoemacs M-o function.
@@ -2024,6 +2037,12 @@ the best match."
                   (interactive "P")
                   (ergoemacs-menu-swap ,cur-prefix "" 'normal)))
            (error nil))
+
+         (condition-case err
+             (define-key ,keymap
+               (read-kbd-macro (format "<Normal> %s <exit>" cur-prefix))
+               'ignore)
+           (error nil))
          
          (condition-case err
              (define-key ,keymap 
@@ -2038,6 +2057,14 @@ the best match."
            (error nil))
 
          (condition-case err
+             (define-key ,keymap
+               (read-kbd-macro
+                (format "<Ctl%sAlt> %s <exit>"
+                        (ergoemacs-unicode-char "↔" " to ")
+                        cur-prefix)) 'ignore)
+           (error nil))
+
+         (condition-case err
              (define-key ,keymap 
                (read-kbd-macro
                 (format "<Unchorded> %s <%s>"
@@ -2046,6 +2073,13 @@ the best match."
                `(lambda(&optional arg)
                   (interactive "P")
                   (ergoemacs-menu-swap ,cur-prefix "" 'unchorded)))
+           (error nil))
+
+         (condition-case err
+             (define-key ,keymap 
+               (read-kbd-macro
+                (format "<Unchorded> %s <exit>"
+                        cur-prefix)) `ignore)
            (error nil))
          
          (puthash hashkey ,keymap ergoemacs-extract-map-hash))
