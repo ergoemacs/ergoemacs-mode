@@ -1833,8 +1833,8 @@ the best match."
                       "\\(^\\| \\)\\([^-]\\)\\( \\|$\\)" "\\1M-\\2\\3"
                       (replace-regexp-in-string "\\<M-" "W-" ctl-to-alt)))))
               (if (not (functionp (nth 1 x)))
-                  (progn
-                    (ergoemacs-debug "Not a function, assuming translation.")
+                  (when (string-match "^C-x 8" cur-prefix)
+                    (ergoemacs-debug "Not a function AND C-x 8, assuming translation.")
                     (ergoemacs-debug "<Normal> %s %s => %s" cur-prefix normal (nth 1 x))
                     
                     (define-key local-function-key-map
