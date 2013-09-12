@@ -60,8 +60,8 @@
 
 ;;; Code:
 
-; (eval-when-compile (require 'cl))
-; FIXME: Use cl-lib when available.
+;; (eval-when-compile (require 'cl))
+;; FIXME: Use cl-lib when available.
 (require 'cl)
 (require 'easymenu)
 (require 'cua-base)
@@ -277,7 +277,7 @@ remove the keymap depends on user input and KEEP-PRED:
      ad-do-it
      (when (and ergoemacs-mode (eq ergoemacs-repeat-undo-commands 'apps))
        (message "%s" ergoemacs-undo-apps-text)
-       (set-temporary-overlay-map ergoemacs-undo-apps-keymap t))))
+         (set-temporary-overlay-map ergoemacs-undo-apps-keymap t))))
 
 (mapc
  (lambda(x)
@@ -718,7 +718,7 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     ("2 7 ; 6 ; 3 7 ~"  [?\C-%])
     ("2 7 ; 6 ; 3 8 ~"  [?\C-&])
     ("2 7 ; 6 ; 4 0 ~"  [?\C-(])
-    ("2 7 ; 6 ; 4 1 ~"  [?\C-)])
+     ("2 7 ; 6 ; 4 1 ~"  [?\C-)])
     ("2 7 ; 6 ; 4 2 ~"  [?\C-*])
     ("2 7 ; 6 ; 4 3 ~"  [?\C-+])
     ("2 7 ; 6 ; 5 8 ~"  [?\C-:])
@@ -866,7 +866,7 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     ("e 2 4 ; 2 ~" [S-f12])
     ("g" [S-tab])        ;; Not an X keysym ; tvi
     )
-    "Ergoemacs terminal ESC [ translations.")
+  "Ergoemacs terminal ESC [ translations.")
 
 (defvar ergoemacs-esc-translations
   '(("5" [S-send]) 
@@ -948,10 +948,8 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     (cancel-timer ergoemacs-M-O-timer))
   (when ergoemacs-push-M-O-timeout
     (setq prefix-arg ergoemacs-curr-prefix-arg)
-    (setq unread-command-events (cons 'timeout unread-command-events))
-    ;; Now flush the events until the timeout
     (reset-this-command-lengths) ;; Seems to flush the event queue.
-    ))
+    (setq unread-command-events (cons 'timeout unread-command-events))))
 
 (defun ergoemacs-M-o (&optional arg use-map)
   "Ergoemacs M-o function.
@@ -1124,8 +1122,9 @@ necessary.  Unshifted keys are changed to shifted keys.")
   "Install the alt-shift keymap temporarily"
   (interactive)
   (setq ergoemacs-exit-temp-map-var nil)
-  (set-temporary-overlay-map ergoemacs-full-alt-shift-keymap
-                             'ergoemacs-exit-alt-shift-keys)
+  (let (deactviate-mark)
+    (set-temporary-overlay-map ergoemacs-full-alt-shift-keymap
+                               'ergoemacs-exit-alt-shift-keys))
   (message "[Alt+Shift+] keys installed to keymap. Press [Menu], [Esc], to exit"))
 
 (require 'ergoemacs-functions)
@@ -1188,27 +1187,27 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
           ;; Translate Alt+ Ctl+ or Ctrl+ to M- and C-
           (setq new-key (replace-regexp-in-string "[Aa][Ll][Tt][+]" "M-" new-key))
           (setq new-key (replace-regexp-in-string "[Cc][Tt][Rr]?[Ll][+]" "C-" new-key))
-        (when ergoemacs-needs-translation
-          (setq new-key
-                (with-temp-buffer
-                  (insert new-key)
-                  (goto-char (point-min))
-                  (when (re-search-forward ergoemacs-translation-regexp nil t)
-                    (replace-match (concat (match-string 1) (cdr (assoc (match-string 2) ergoemacs-translation-assoc)) (match-string 3)) t t)
-                    (skip-chars-backward " "))
-                  (when (not only-first)
-                    (while (re-search-forward ergoemacs-translation-regexp nil t)
+          (when ergoemacs-needs-translation
+            (setq new-key
+                  (with-temp-buffer
+                    (insert new-key)
+                    (goto-char (point-min))
+                    (when (re-search-forward ergoemacs-translation-regexp nil t)
                       (replace-match (concat (match-string 1) (cdr (assoc (match-string 2) ergoemacs-translation-assoc)) (match-string 3)) t t)
-                      (skip-chars-backward " ")))
-                  (buffer-string))))
-        (if (not just-translate)
-             (condition-case err
-                (read-kbd-macro new-key)
-              (error
-               (read-kbd-macro (encode-coding-string new-key locale-coding-system))))
-          (puthash `(,key ,just-translate ,only-first ,ergoemacs-translation-from ,ergoemacs-translation-to) new-key
-                   ergoemacs-kbd-hash)
-          new-key))))))
+                      (skip-chars-backward " "))
+                    (when (not only-first)
+                      (while (re-search-forward ergoemacs-translation-regexp nil t)
+                        (replace-match (concat (match-string 1) (cdr (assoc (match-string 2) ergoemacs-translation-assoc)) (match-string 3)) t t)
+                        (skip-chars-backward " ")))
+                    (buffer-string))))
+          (if (not just-translate)
+              (condition-case err
+                  (read-kbd-macro new-key)
+                (error
+                 (read-kbd-macro (encode-coding-string new-key locale-coding-system))))
+            (puthash `(,key ,just-translate ,only-first ,ergoemacs-translation-from ,ergoemacs-translation-to) new-key
+                     ergoemacs-kbd-hash)
+            new-key))))))
 
 (defvar ergoemacs-backward-compatability-variables
   '((ergoemacs-backward-paragraph-key            backward-block)
@@ -1365,7 +1364,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                 (ergoemacs-debug "Fixed: %s -> %s %s" trans-key cmd key))
             (when (not (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd))
 	      (ergoemacs-debug "Key %s->%s not setup." key cmd)))))
-       (symbol-value (ergoemacs-get-fixed-layout)))
+      (symbol-value (ergoemacs-get-fixed-layout)))
      
      ;; Variable Layout Keys
      (mapc
@@ -1396,7 +1395,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                     (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-o-keymap [timeout] cmd)
                     (if (eq ',keymap 'ergoemacs-keymap)
                         (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-o" trans-key
-                                 (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
+                                         (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
                 (when cmd
                   (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd)
                   (if (eq ',keymap 'ergoemacs-keymap)
@@ -1583,13 +1582,13 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
              ,(concat "Old keymap for `" (symbol-name hook) "'.")))
        
        ,(when minor-mode-p
-         `(define-minor-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
-            ,(concat "Minor mode for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
+          `(define-minor-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
+             ,(concat "Minor mode for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
 This is an automatically generated function derived from `ergoemacs-get-minor-mode-layout'. See `ergoemacs-mode'.")
-	    nil
-	    :lighter ""
-	    :global nil
-	    :keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
+             nil
+             :lighter ""
+             :global nil
+             :keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
 
        (defun ,(intern (concat "ergoemacs-" (symbol-name hook))) ()
          ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
@@ -1624,10 +1623,10 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
                    ;; Delete keymap.
                    (if x
                        (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
-                 (add-to-list 'minor-mode-map-alist
-                              (cons ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
-                                    ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
-                 (funcall ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode")) 1))))
+                   (add-to-list 'minor-mode-map-alist
+                                (cons ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
+                                      ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
+                   (funcall ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode")) 1))))
            ,(if is-override
                 `(add-to-list 'minor-mode-overriding-map-alist
                               (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
@@ -1647,7 +1646,7 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
       (funcall hook))))
 
 (defvar ergoemacs-hook-list (list)
-"List of hook and hook-function pairs.")
+  "List of hook and hook-function pairs.")
 
 (defun ergoemacs-add-hook (hook hook-function old-keymap keymap-name)
   "Adds a pair of HOOK and HOOK-FUNCTION to the list `ergoemacs-hook-list'."
@@ -1756,7 +1755,8 @@ the best match."
 (defmacro ergoemacs-extract-maps (keymap &optional prefix)
   "Extracts maps."
   `(save-excursion
-     (let ((buf (current-buffer))
+     (let ((deactivate-mark nil)
+           (buf (current-buffer))
            (normal '())
            (translations '())
            (prefixes '())
@@ -2141,15 +2141,16 @@ the best match."
     (setq this-command last-command) ; Don't record this command.
     (setq prefix-arg current-prefix-arg)
     (set-temporary-overlay-map ergoemacs-current-extracted-map)
-    (setq unread-command-events (append new-key unread-command-events))
     (reset-this-command-lengths)
+    (setq unread-command-events (append new-key unread-command-events))
+    
     (save-match-data
       (when (string-match "<\\(.*?\\)> \\(.*\\)" kbd-code)
         (message "%s%s"
                  (if current-prefix-arg (format "%s " current-prefix-arg) "")
                  (replace-regexp-in-string "<Normal> +" ""
-                  (format "<%s> %s" (match-string 1 kbd-code)
-                         (ergoemacs-pretty-key (match-string 2 kbd-code)))))))))
+                                           (format "<%s> %s" (match-string 1 kbd-code)
+                                                   (ergoemacs-pretty-key (match-string 2 kbd-code)))))))))
 
 
 (defvar ergoemacs-repeat-shortcut-keymap (make-keymap)
@@ -2232,9 +2233,9 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (setq key-seq  (read-kbd-macro (format "<Unchorded> %s" ,key)))
                (set-temporary-overlay-map ergoemacs-current-extracted-map)
                (setq key-seq (listify-key-sequence key-seq))
+               (reset-this-command-lengths)
                (setq unread-command-events
                      (append key-seq unread-command-events))
-               (reset-this-command-lengths)
                (princ (concat (if current-prefix-arg
                                   (format "%s " current-prefix-arg)
                                 "")
@@ -2475,11 +2476,7 @@ The shortcuts defined are:
         (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-map-alist)))
           (when x
             (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
-          ;; (while x
-          ;;   (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist))
-          ;;   (setq x (assq 'ergoemacs-shortcut-mode minor-mode-map-alist)))
-          (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-map-alist)
-          ))
+          (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-map-alist)))
     (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned off."))
   (ergoemacs-debug-flush))
 
@@ -2573,15 +2570,15 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   (ergoemacs-load-aliases))
 
 (defvar ergoemacs-describe-keybindings-functions
-      '(describe-package
-        describe-bindings
-        describe-key
-        where-is
-        describe-key-briefly
-        describe-function
-        describe-variable
-        ergoemacs-describe-major-mode)
-      "Functions that describe keys.
+  '(describe-package
+    describe-bindings
+    describe-key
+    where-is
+    describe-key-briefly
+    describe-function
+    describe-variable
+    ergoemacs-describe-major-mode)
+  "Functions that describe keys.
 Setup C-c and C-x keys to be described properly.")
 
 (defun ergoemacs-toggle-describe-keys (&optional off)
@@ -2597,14 +2594,16 @@ Setup C-c and C-x keys to be described properly.")
   (condition-case err
       (when (memq this-command ergoemacs-describe-keybindings-functions)
         (ergoemacs-toggle-describe-keys t))
-    (error nil)))
+    (error nil))
+  t)
 
 (defun ergoemacs-post-command-hook ()
   "Ergoemacs post-command-hook"
   (condition-case err
       (when (memq this-command ergoemacs-describe-keybindings-functions)
         (ergoemacs-toggle-describe-keys))
-    (error nil)))
+    (error nil))
+  t)
 
 (add-hook 'post-command-hook 'ergoemacs-post-command-hook)
 (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
