@@ -30,6 +30,7 @@
 
 (require 'redo "redo.elc" t) ; for redo shortcut
 
+(setq org-CUA-compatible t)
 (setq shift-select-mode t)
 (delete-selection-mode 1) ; turn on text selection highlighting and make typing override selected text (Note: when delete-selection-mode is on, then transient-mark-mode is automatically on too.)
 
@@ -100,6 +101,7 @@
       (setq ergoemacs-curr-prefix-arg current-prefix-arg)
       (funcall fn-cx)
       (setq ergoemacs-push-M-O-timeout t)
+      (setq ergoemacs-M-O-prefix-keys (format "<Normal> %s" key))
       (setq ergoemacs-M-O-timer
             (run-with-timer ergoemacs-ctl-c-or-ctl-x-delay nil
                             #'ergoemacs-M-O-timeout)))
