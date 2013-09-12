@@ -135,6 +135,7 @@ org-mode and exported to HTML using [[https://github.com/renard/o-blog][o-blog]]
 
 - [[file:#][/icon-book icon-white/ Documentation]]
   - [[file:{lisp}(ob:path-to-root){/lisp}/key-setup.html][Included Key Themes and Keyboard Layouts]]
+  - [[file:{lisp}(ob:path-to-root){/lisp}/cua-conflict.html][Preserving Emacs Commands while maintaining familiar shortcuts]]
   - 
   - [[file:{lisp}(ob:path-to-root){/lisp}/key-themes.html][Key Themes]]
   - [[file:{lisp}(ob:path-to-root){/lisp}/keyboard-layouts.html][Keyboard Layouts]] 
@@ -179,6 +180,7 @@ org-mode and exported to HTML using [[https://github.com/renard/o-blog][o-blog]]
   :PAGE:     changelog.html
   :TEMPLATE: blog_static_no_title.html
   :END:
+
 The current changelog is [[https://github.com/ergoemacs/ergoemacs-mode/commits/master][here]].
 
 The historic changelog is below:
@@ -778,6 +780,90 @@ Standard shortcuts for cursor navigation are also supported. For example:
 - @@html:<kbd class="dark">@@Home@@html:</kbd>@@ ⇒ move cursor to beginning of line.
 - ⇧ Shift+↓ select text downward.
 
+** Preserving Emacs Commands while maintaining familiar shortcuts
+  :PROPERTIES:
+  :PAGE:     cua-conflict.html
+  :TEMPLATE: blog_static_no_title.html
+  :END:
+
+*** Conflict for Emacs command keys and familiar shortcuts
+There is a conflict between standard shortcuts and emacs shortcuts.
+In most applications Ctrl+c is copy and Ctrl+x is cut.  In emacs
+Ctrl+x generally refer to global commands, while Ctrl+c refers to
+language specific commands. 
+
+Ergoemacs provides a few options to work with the Ctl+c and Ctl+x keys.
+
+**** Binding Ctrl+c and Ctrl+x to both copy and cut and emacs keys
+Like =cua-mode=, =ergoemacs-mode= allows Ctrl+c and Ctrl+x to be
+bound to both copy/cut, and the emacs key sequences.
+
+The default method will copy text when selected with Ctrl+c and cut
+text when selected with Ctrl+x.  This is fine, but if you wish to
+perform an emacs command on selected region, this could be problematic
+as discussed in Xah's [[http://ergoemacs.org/misc/emacs_keybinding_and_cua-mode_keys.html][blog]].  (For example python shift indent is bound
+to 【Ctrl+c <】) 
+
+When you wish to do issue emacs commands on a region you can:
+- Add a shift to the first Ctrl+c and Ctrl+x.
+  - For example press 【Ctrl+⇧ Shift+c <】 for python's shift indent
+    command
+  - This will not work in a terminal (most terminals cannot tell the
+    difference between 【Ctrl+⇧ Shift+c】 and 【Ctrl+c】)
+- Press the next key within 0.2 seconds.
+  - This can be tuned by setting =ergoemacs-ctl-c-or-ctl-x-delay=
+  - If you tune this to a higher setting, it takes longer to copy and
+    cut and other problems may be introduced.
+
+If you wanted the time required to press the next key be 1 second,
+you could use the following in your emacs startup file:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-ctl-c-or-ctl-x-delay 1)
+#+END_SRC
+**** Binding Ctrl+c and Ctrl+x to emacs commands only
+Another option is to ditch copy and paste with Ctrl+c and Ctrl+x, even
+though they are standard keys.  Instead you can use Alt+c and Alt+x to
+do copy and paste.
+
+This can be done in ergoemacs by the following variable:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
+#+END_SRC
+
+The disadvantage to this approach is that you use different keys in
+different applications. 
+
+
+**** Binding Ctrl+c and Ctrl+x to only copy and cut
+If you wanted Ctrl+c and Ctrl+x to only be copy and cut, you add
+the ability to copy/cut the current line when nothing is selected.
+This can be done by:
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+#+END_SRC
+
+The possible disadvantage to this is you would have to use another key
+to access the defined emacs commands.  Currently ergoemacs-mode allows
+you to use QWERTY 【▤ Menu f】 or 【Ctrl+⇧ Shift+x】 to access emacs
+Ctrl+x commands and QWERTY 【▤ Menu j】 or 【Ctrl+⇧ Shift+c】 to
+access Ctrl+c commands.
+
+The 【▤ Menu】 keybindings are slightly different than plan Ctrl+x or
+Ctrl+c:
+- For Ctrl+x, the Alt and Ctrl keys are swapped.  Hence for the
+  equivalent of 【Ctrl+x Ctrl+b】, you would press 【▤ Menu f Alt+b】
+- For Ctrl+c, control keys are mapped to plain keys. Plain keys
+  are mapped to Alt keys. Alt keys are mapped to Ctl keys.  Hence:
+  - 【Ctrl+c Ctrl+c】 would be 【▤ Menu j c】
+  - 【Ctrl+c c】 would be 【▤ Menu j Alt+c】
+  - 【Ctrl+c Alt+c】 would be 【▤ Menu j Ctl+c】
+  - This is called unchorded mapping
+- You can swap between Normal, Alt<->Ctl and unchorded keyboard
+  translations in ergoemacs by pressing 【▤ Menu】
+
+
 ** Included Key Themes and Layouts
   :PROPERTIES:
   :PAGE:     key-setup.html
@@ -915,8 +1001,19 @@ The values of these variables could be changed by:
 
 
 *** Cua-mode
-Cua mode is enabled by default and respects ergoemacs-keys.  CUA
-rectangle support is enabled by changing the Alt+ keys to Win+ keys.  
+Cua mode is not enabled by default, but ergoemacs-mode can use some of
+its features. To enable CUA rectangles, use:
+
+#+BEGIN_SRC emacs-lisp
+  (cua-selection-mode t)
+#+END_SRC
+
+If =cua-mode= is enabled before =ergoemacs-mode= is loaded,
+=ergoemacs-mode= changes to =cua-selection-mode=. If you attempt to
+enable =cua-mode=, only =cua-selection-mode= will be enabled.
+
+CUA rectangle support is enabled by changing the Alt+
+keys to Win+ keys.
 
 If you do not know what CUA rectangles are, the following describes
 CUA rectangles and gives the keys used for ergoemacs-mode.
