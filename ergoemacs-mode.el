@@ -948,16 +948,17 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
   "Push timeout on unread command events."
   (when ergoemacs-push-M-O-timeout
     (if ergoemacs-M-O-prefix-keys
-        (let ((fn (key-binding
-                   (read-kbd-macro
-                    (format "%s <timeout>"
-                            ergoemacs-M-O-prefix-keys)))))
+        (let (fn)
+          (let (ergoemacs-shortcut-mode)
+            (setq fn (key-binding
+                      (read-kbd-macro
+                       (format "%s <timeout>"
+                               ergoemacs-M-O-prefix-keys)))))
           ;; Lookup keys, and then send <exit> event.
           (setq prefix-arg ergoemacs-curr-prefix-arg)
+          (call-interactively fn t)
           (reset-this-command-lengths)
-          (let (deactivate-mark)
-            (setq unread-command-events (cons 'exit unread-command-events)))
-          (call-interactively fn))
+          (setq unread-command-events (cons 'exit unread-command-events)))
       (setq prefix-arg ergoemacs-curr-prefix-arg)
       (reset-this-command-lengths)
       (setq unread-command-events (cons 'timeout unread-command-events))
@@ -1135,9 +1136,8 @@ necessary.  Unshifted keys are changed to shifted keys.")
   "Install the alt-shift keymap temporarily"
   (interactive)
   (setq ergoemacs-exit-temp-map-var nil)
-  (let (deactviate-mark)
-    (set-temporary-overlay-map ergoemacs-full-alt-shift-keymap
-                               'ergoemacs-exit-alt-shift-keys))
+  (set-temporary-overlay-map ergoemacs-full-alt-shift-keymap
+                             'ergoemacs-exit-alt-shift-keys)
   (message "[Alt+Shift+] keys installed to keymap. Press [Menu], [Esc], to exit"))
 
 (require 'ergoemacs-functions)
@@ -1781,17 +1781,13 @@ the best match."
            (last-time nil)
            (cur-prefix (or ,prefix "C-x"))
            (hashkey "")
-           (shortcuts-on ergoemacs-shortcut-mode)
            (prefix-regexp ""))
        (ergoemacs-debug (make-string 80 ?=))
        (ergoemacs-debug "Extracting maps for %s" cur-prefix)
        (ergoemacs-debug (make-string 80 ?=))
        (with-temp-buffer
-         (when shortcuts-on
-           (ergoemacs-shortcut-mode -1))
-         (describe-buffer-bindings buf (read-kbd-macro cur-prefix))
-         (when shortcuts-on
-           (ergoemacs-shortcut-mode 1))
+         (let (ergoemacs-shortcut-mode)
+           (describe-buffer-bindings buf (read-kbd-macro cur-prefix)))
          (goto-char (point-min))
          (while (re-search-forward (format "%s \\(.*?\\)[ \t]\\{2,\\}\\(.+\\)$" cur-prefix) nil t)
            (setq new-key (match-string 1))
@@ -2315,20 +2311,20 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                (reset-this-command-lengths)
                ,(when repeat
                   `(when ,(intern (symbol-name repeat))
-                     (ergoemacs-shortcut-mode -1)
-                     (when (and (key-binding (read-kbd-macro ,key))
-                                (string-match "[A-Za-z]$" ctl-c-keys))
-                       (setq ctl-c-keys (match-string 0 ctl-c-keys))
-                       (setq ergoemacs-repeat-shortcut-keymap (make-keymap))
-                       (define-key ergoemacs-repeat-shortcut-keymap (read-kbd-macro ctl-c-keys)
-                         ',(intern (symbol-name name)))
-                       (setq ergoemacs-repeat-shortcut-msg
-                             (format ,(format "Repeat %s with %%s" (ergoemacs-pretty-key key))
-                                     (ergoemacs-pretty-key ctl-c-keys)))
-                       ;; Allow time to process the unread command events before
-                       ;; installing temporary keymap
-                       (setq ergoemacs-M-O-timer (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-shortcut-timeout)))
-                     (ergoemacs-shortcut-mode 1))))))))))
+                     
+                     (let (ergoemacs-shortcut-mode)
+                       (when (and (key-binding (read-kbd-macro ,key))
+                                  (string-match "[A-Za-z]$" ctl-c-keys))
+                         (setq ctl-c-keys (match-string 0 ctl-c-keys))
+                         (setq ergoemacs-repeat-shortcut-keymap (make-keymap))
+                         (define-key ergoemacs-repeat-shortcut-keymap (read-kbd-macro ctl-c-keys)
+                           ',(intern (symbol-name name)))
+                         (setq ergoemacs-repeat-shortcut-msg
+                               (format ,(format "Repeat %s with %%s" (ergoemacs-pretty-key key))
+                                       (ergoemacs-pretty-key ctl-c-keys)))
+                         ;; Allow time to process the unread command events before
+                         ;; installing temporary keymap
+                         (setq ergoemacs-M-O-timer (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-shortcut-timeout)))))))))))))
 
 
 (ergoemacs-keyboard-shortcut ergoemacs-ctl-c-ctl-c "C-c C-c" nil ergoemacs-repeat-ctl-c-ctl-c)
