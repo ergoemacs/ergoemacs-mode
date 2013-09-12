@@ -30,6 +30,7 @@
 
 (require 'redo "redo.elc" t) ; for redo shortcut
 
+(setq shift-select-mode t)
 (delete-selection-mode 1) ; turn on text selection highlighting and make typing override selected text (Note: when delete-selection-mode is on, then transient-mark-mode is automatically on too.)
 
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
@@ -68,7 +69,7 @@
 
 (defun ergoemacs-ctl-c-or-ctl-x (key &optional arg)
   "Ergoemacs C-c or C-x defined by KEY."
-  (let (fn-cp fn-cx fn-both deactivate-mark)
+  (let (fn-cp fn-cx fn-both)
     ;; Create the needed functions
     (setq fn-cx (concat "ergoemacs-shortcut---"
                         (md5 (format "%s; normal" key))))
