@@ -9,7 +9,7 @@
 # place this file in your home dir. e.g. ~/.inputrc
 # restart your terminal. Then, bash's keybinding for editing
 # should be like ErgoEmacs.
-# If no key works, try replace all \M- to \e. That's means change Meta to Esc key.
+# If no key works, try replace all \e to \M-. That's means change Esc to Meta key.
 
 # doc about how to edit the bash keybinding, see:
 # http://www.gnu.org/software/bash/manual/html_node/Readline-Init-File-Syntax.html

@@ -665,6 +665,8 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
                  (replace-match to t t)))))
          (symbol-value (ergoemacs-get-variable-layout)))
         (goto-char (point-min))
+        (while (re-search-forward "\"\\\\M-" nil t)
+          (replace-match "\"\\e" t t))
         (ergoemacs-setup-keys-for-layout ergoemacs-keyboard-layout)))))
 
 (defun ergoemacs-bashs (&optional layouts)
