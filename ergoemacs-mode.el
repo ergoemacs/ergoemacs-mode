@@ -2318,7 +2318,16 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
                      (message "%s is not defined." (ergoemacs-pretty-key ,key))
                    (setq this-command last-command) ; Don't record this command.
                    (setq prefix-arg current-prefix-arg)
-                   (call-interactively fn)
+                   (if (condition-case err
+                           (functionp fn)
+                         (error nil))
+                       (call-interactively fn)
+                     (setq prefix-arg current-prefix-arg)
+                     (setq unread-command-events
+                           (append
+                            (listify-key-sequence (read-kbd-macro ,key))
+                            unread-command-events))
+                     (reset-this-command-lengths))
                    ,(when repeat
                       `(when ,(intern (symbol-name repeat))
                          (when  (string-match "[A-Za-z]$" ctl-c-keys)
@@ -2498,7 +2507,7 @@ The shortcuts defined are:
         (ergoemacs-shortcut-mode 1)
         (ergoemacs-unbind-mode 1))
     (ergoemacs-shortcut-mode -1)
-    (ergoemacs-unbind-mode 1))
+    (ergoemacs-unbind-mode -1))
   (ergoemacs-debug-flush))
 
 (define-minor-mode ergoemacs-shortcut-mode
