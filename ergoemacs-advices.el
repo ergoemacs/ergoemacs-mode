@@ -106,6 +106,8 @@
   (add-to-list 'ergoemacs-global-changed-cache (key-description key))
   (when ergoemacs-global-not-changed-cache
     (delete (key-description key) ergoemacs-global-not-changed-cache))
+  (when (lookup-key ergoemacs-unbind-keymap key)
+    (define-key ergoemacs-unbind-keymap key nil))
   (if (string-match "<\\(apps\\|menu\\)>" (key-description key))
       (let ((no-ergoemacs-advice t))
         (when command
