@@ -168,7 +168,7 @@
     ("<apps> k" ergoemacs-alt-keys "Repeat Alt")
     ("<apps> m" ergoemacs-ctl-c-ctl-c "C-c C-c")
     ;; ("<apps> r" ("C-x" unchorded) "Ctl-x*")
-    ("<apps> s" save-buffer "Save")
+    ("<apps> s" ("C-x C-s" nil) "Save")
     ("<apps> o" find-file "Open")
     ;; ("<apps> u" ("C-c" unchorded) "Ctl-c*")
     ("<apps> g" universal-argument "C-u")
@@ -241,7 +241,7 @@
     ("C-S-o" ergoemacs-open-in-external-app "OS Open")
     ("C-S-t" ergoemacs-open-last-closed "Open Last")
     ("C-w" ergoemacs-close-current-buffer "Close Buf.")
-    ("C-s" save-buffer "Save")
+    ("C-s" ("C-x C-s") "Save")
     ("C-S-s" write-file "Save As")
     ("C-p" ergoemacs-print-buffer-confirm "Print")
     ("C-a" mark-whole-buffer "Select all")
@@ -358,11 +358,8 @@
       ("<M-up>" ergoemacs-org-metaup override)
       ("<M-left>" ergoemacs-org-metaleft override)
       ("<M-right>" ergoemacs-org-metaright override)))
-    (org-src-mode-hook
-     ((save-buffer org-edit-src-save org-src-mode-map remap)))
     (org-agenda-mode-hook
-     ((save-buffer org-save-all-org-buffers org-agenda-mode-map remap)
-      (undo org-agenda-undo org-agenda-mode-map remap)))
+     ((undo org-agenda-undo org-agenda-mode-map remap)))
     ;; Minibuffer hook
     (minibuffer-setup-hook
      ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
