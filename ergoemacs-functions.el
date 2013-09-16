@@ -30,9 +30,6 @@
 
 (require 'redo "redo.elc" t) ; for redo shortcut
 
-(setq org-CUA-compatible t)
-(setq shift-select-mode t)
-(delete-selection-mode 1) ; turn on text selection highlighting and make typing override selected text (Note: when delete-selection-mode is on, then transient-mark-mode is automatically on too.)
 
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
   "Backward char will edit isearch."

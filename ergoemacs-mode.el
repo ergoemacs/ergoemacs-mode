@@ -307,19 +307,20 @@ remove the keymap depends on user input and KEEP-PRED:
      (defvar ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")) (make-sparse-keymap)
        ,(format "Ergoemacs fast keymap for `%s'." (symbol-name command)))
      ;; Change to advices
-     (defadvice ,(intern (symbol-name command)) (around ergoemacs-movement-advice activate)
-       ,(format "Ergoemacs advice for command for `%s'.
-May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `ergoemacs-full-fast-keys-keymap' and `ergoemacs-fast-%s-keymap'.
-" (symbol-name command) (symbol-name command))
-       ad-do-it
-       (when (and ergoemacs-mode ergoemacs-repeat-movement-commands
-                  (called-interactively-p 'interactive) (not cua--rectangle-overlays)) ;; Don't add overlays to rectangles
-         (set-temporary-overlay-map (cond
-                                     ((eq ergoemacs-repeat-movement-commands 'single)
-                                      ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))
-                                     ((eq ergoemacs-repeat-movement-commands 'all)
-                                      ergoemacs-full-fast-keys-keymap)
-                                     (t ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))) t)))))
+     ;; (defadvice ,(intern (symbol-name command)) (around ergoemacs-movement-advice activate)
+;;        ,(format "Ergoemacs advice for command for `%s'.
+;; May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `ergoemacs-full-fast-keys-keymap' and `ergoemacs-fast-%s-keymap'.
+;; " (symbol-name command) (symbol-name command))
+;;        ad-do-it
+;;        (when (and ergoemacs-mode ergoemacs-repeat-movement-commands
+;;                   (called-interactively-p 'interactive) (not cua--rectangle-overlays)) ;; Don't add overlays to rectangles
+;;          (set-temporary-overlay-map (cond
+;;                                      ((eq ergoemacs-repeat-movement-commands 'single)
+;;                                       ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))
+;;                                      ((eq ergoemacs-repeat-movement-commands 'all)
+;;                                       ergoemacs-full-fast-keys-keymap)
+;;                                      (t ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))) t)))
+     ))
 (mapc
  (lambda(x)
    (eval `(ergoemacs-create-movement-commands ,x)))
@@ -2392,6 +2393,10 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
 
+(defvar ergoemacs-org-CUA-compatible nil)
+(defvar ergoemacs-shift-select-mode nil)
+(defvar ergoemacs-delete-selection-mode nil)
+
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -2427,6 +2432,26 @@ The shortcuts defined are:
   (when (and ergoemacs-mode cua-mode)
     (cua-mode -1)
     (cua-selection-mode 1))
+  ;; Turn on/off shift-select delete-selection and CUA-compatible org-mode
+  (cond
+   (ergoemacs-mode
+    ;; (if (boundp 'org-CUA-compatible)
+    ;;     (setq ergoemacs-org-CUA-compatible nil)
+    ;;   (setq ergoemacs-org-CUA-compatible org-CUA-compatible))
+    (setq ergoemacs-shift-select-mode shift-select-mode)
+    (setq ergoemacs-delete-selection-mode delete-selection-mode)
+    ;; (setq org-CUA-compatible t)
+    (set-default 'shift-select-mode t)
+    ;; turn on text selection highlighting and make typing override
+    ;; selected text (Note: when delete-selection-mode is on, then
+    ;; transient-mark-mode is automatically on too.)
+    (delete-selection-mode 1))
+   ((not ergoemacs-mode)
+    ;; (when (boundp 'org-CUA-compatible)
+    ;;   (setq org-CUA-compatible ergoemacs-org-CUA-compatible))
+    (setq shift-select-mode ergoemacs-shift-select-mode)
+    (unless ergoemacs-delete-selection-mode
+      (delete-selection-mode -1))))
   
   (setq ergoemacs-shortcut-keymap (make-sparse-keymap))
   (ergoemacs-setup-keys t)
@@ -2695,7 +2720,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
     describe-key-briefly
     describe-function
     describe-variable
-    ergoemacs-describe-major-mode)
+    ergoemacs-describe-major-mode
+    helm-M-x)
   "Functions that describe keys.
 Setup C-c and C-x keys to be described properly.")
 
