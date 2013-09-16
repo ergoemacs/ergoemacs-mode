@@ -307,20 +307,19 @@ remove the keymap depends on user input and KEEP-PRED:
      (defvar ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")) (make-sparse-keymap)
        ,(format "Ergoemacs fast keymap for `%s'." (symbol-name command)))
      ;; Change to advices
-     ;; (defadvice ,(intern (symbol-name command)) (around ergoemacs-movement-advice activate)
-;;        ,(format "Ergoemacs advice for command for `%s'.
-;; May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `ergoemacs-full-fast-keys-keymap' and `ergoemacs-fast-%s-keymap'.
-;; " (symbol-name command) (symbol-name command))
-;;        ad-do-it
-;;        (when (and ergoemacs-mode ergoemacs-repeat-movement-commands
-;;                   (called-interactively-p 'interactive) (not cua--rectangle-overlays)) ;; Don't add overlays to rectangles
-;;          (set-temporary-overlay-map (cond
-;;                                      ((eq ergoemacs-repeat-movement-commands 'single)
-;;                                       ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))
-;;                                      ((eq ergoemacs-repeat-movement-commands 'all)
-;;                                       ergoemacs-full-fast-keys-keymap)
-;;                                      (t ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))) t)))
-     ))
+     (defadvice ,(intern (symbol-name command)) (around ergoemacs-movement-advice activate)
+       ,(format "Ergoemacs advice for command for `%s'.
+May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `ergoemacs-full-fast-keys-keymap' and `ergoemacs-fast-%s-keymap'.
+" (symbol-name command) (symbol-name command))
+       ad-do-it
+       (when (and ergoemacs-mode ergoemacs-repeat-movement-commands
+                  (called-interactively-p 'interactive) (not cua--rectangle-overlays)) ;; Don't add overlays to rectangles
+         (set-temporary-overlay-map (cond
+                                     ((eq ergoemacs-repeat-movement-commands 'single)
+                                      ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))
+                                     ((eq ergoemacs-repeat-movement-commands 'all)
+                                      ergoemacs-full-fast-keys-keymap)
+                                     (t ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))) t)))))
 (mapc
  (lambda(x)
    (eval `(ergoemacs-create-movement-commands ,x)))
