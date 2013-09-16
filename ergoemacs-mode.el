@@ -2727,30 +2727,32 @@ Setup C-c and C-x keys to be described properly.")
 
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook"
-  (condition-case err
-      (when ergoemacs-mode
-        (cond
-         ((memq this-command ergoemacs-describe-keybindings-functions)
-          ;; Turn off shortcut mode for describing bindings. 
-          (ergoemacs-shortcut-mode -1))
-         ((not (eq 'ergoemacs-ctl-c (key-binding (read-kbd-macro "C-c"))))
-          ;; Promote shortcut mode if overwritten somehow.
-          (when ergoemacs-shortcut-mode
+  (let (deactivate-mark)
+    (condition-case err
+        (when ergoemacs-mode
+          (cond
+           ((memq this-command ergoemacs-describe-keybindings-functions)
+            ;; Turn off shortcut mode for describing bindings. 
             (ergoemacs-shortcut-mode -1))
-          (ergoemacs-shortcut-mode 1))))
-    (error nil))
+           ((not (eq 'ergoemacs-ctl-c (key-binding (read-kbd-macro "C-c"))))
+            ;; Promote shortcut mode if overwritten somehow.
+            (when ergoemacs-shortcut-mode
+              (ergoemacs-shortcut-mode -1))
+            (ergoemacs-shortcut-mode 1))))
+      (error nil)))
   t)
 
 (defun ergoemacs-post-command-hook ()
   "Ergoemacs post-command-hook"
-  (condition-case err
-      (when ergoemacs-mode
-        ;; Promote/activate shortcut mode if overwritten/disabled somehow.
-        (unless (eq 'ergoemacs-ctl-c (key-binding (read-kbd-macro "C-c")))
-          (when ergoemacs-shortcut-mode
-            (ergoemacs-shortcut-mode -1))
-          (ergoemacs-shortcut-mode 1)))
-    (error nil))
+  (let (deactivate-mark)
+    (condition-case err
+        (when ergoemacs-mode
+          ;; Promote/activate shortcut mode if overwritten/disabled somehow.
+          (unless (eq 'ergoemacs-ctl-c (key-binding (read-kbd-macro "C-c")))
+            (when ergoemacs-shortcut-mode
+              (ergoemacs-shortcut-mode -1))
+            (ergoemacs-shortcut-mode 1)))
+      (error nil)))
   t)
 
 (add-hook 'post-command-hook 'ergoemacs-post-command-hook)
