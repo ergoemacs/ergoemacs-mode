@@ -1269,6 +1269,9 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                "C-" "^-" ret)))))
     (symbol-value 'ret)))
 
+(defvar ergoemacs-prefer-shortcuts nil ;; Prefer shortcuts.
+  "Prefer shortcuts")
+
 (defun ergoemacs-setup-keys-for-keymap---internal (keymap key def)
   "Defines KEY in KEYMAP to be DEF"
   (cond
@@ -1303,6 +1306,27 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
     (cond
      ((memq def '(ergoemacs-ctl-c ergoemacs-ctl-x))
       (define-key ergoemacs-shortcut-keymap key def))
+     ((and ergoemacs-prefer-shortcuts
+           (boundp 'setup-ergoemacs-keymap) setup-ergoemacs-keymap)
+      (let (shortcut-key)
+        (setq shortcut-key (where-is-internal def (current-global-map)))
+        (if (not shortcut-key)
+            (define-key keymap key def)
+          ;; The shortcut key is the first-one that matches
+          (ergoemacs-debug "\tShortcut %s for %s"
+                           (key-description (nth 0 shortcut-key))
+                           def)
+          (setq shortcut-key (key-description (nth 0 shortcut-key)))
+          (eval
+           (macroexpand
+            `(progn
+               (ergoemacs-keyboard-shortcut
+                ,(intern (concat "ergoemacs-shortcut---"
+                                 (md5 (format "%s; global" shortcut-key)))) ,shortcut-key global)
+               (define-key ergoemacs-shortcut-keymap key
+                 ',(intern (concat "ergoemacs-shortcut---"
+                                   (md5 (format "%s; global" shortcut-key))))))))
+          )))
      (t
       (define-key keymap key def)))
     t)
@@ -1414,7 +1438,8 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
   "Setup keys based on a particular LAYOUT. All the keys are based on QWERTY layout."
   (ergoemacs-setup-translation layout base-layout)
   (ergoemacs-setup-fast-keys)
-  (ergoemacs-setup-keys-for-keymap ergoemacs-keymap)
+  (let ((setup-ergoemacs-keymap t))
+    (ergoemacs-setup-keys-for-keymap ergoemacs-keymap))
   
   ;; Now change `minor-mode-map-alist'.
   (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
@@ -2206,6 +2231,46 @@ the best match."
 (defvar ergoemacs-first-extracted-variant nil
   "Current extracted variant")
 
+(defun ergoemacs-shortcut (&optional arg key chorded repeat)
+  "Ergoemacs Shortcut.
+
+ARG is the prefix arg that was called.
+
+KEY is the keyboard shortcut.
+
+CHORDED is a variable that alters to keymap to allow unchorded
+key sequences.  Also if CHORDED is 'global, then make this a
+shortcut to a global command.
+
+If CHORDED is nil, the NAME command will just issue the KEY sequence.
+
+If CHORDED is 'unchorded or the NAME command will translate the control
+bindings to be unchorded.  For example:
+
+For example for the C-x map,
+
+Original Key   Translated Key  Function
+C-k C-n     -> k n             (kmacro-cycle-ring-next)
+C-k a       -> k M-a           (kmacro-add-counter)
+C-k M-a     -> k C-a           not defined
+C-k S-a     -> k S-a           not defined
+
+If CHORDED is 'ctl-to-alt or the NAME command will translate the control
+bindings to be unchorded.  For example:
+
+C-k C-n     -> M-k M-n             (kmacro-cycle-ring-next)
+C-k a       -> M-k a           (kmacro-add-counter)
+C-k M-a     -> k C-a           not defined
+C-k S-a     -> k S-a           not defined
+
+When REPEAT is a variable name, then an easy repeat is setup for the command.
+
+For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to be repeated by m.
+"
+  (interactive "P")
+  (when key
+    ))
+
 ;;;###autoload
 (defmacro ergoemacs-keyboard-shortcut (name key &optional chorded repeat)
   "Creates a function NAME that issues a keyboard shortcut for KEY.
@@ -2312,6 +2377,7 @@ For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to 
             `(let ((ctl-c-keys (key-description (this-command-keys))))
                (let (ergoemacs-shortcut-mode
                      ergoemacs-unbind-mode
+                     (ergoemacs-mode ,(not (eq chorded 'global)))
                      fn)
                  (setq fn (key-binding (read-kbd-macro ,key)))
                  (if (not fn)
