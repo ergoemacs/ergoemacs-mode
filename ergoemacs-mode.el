@@ -1902,28 +1902,19 @@ the best match."
                                      cur-prefix unchorded (nth 1 x)))
                 (ergoemacs-debug "<Normal> %s %s => %s" cur-prefix normal (nth 1 x))
                 (define-key ,keymap
-                  (read-kbd-macro (format "<Normal> %s %s" cur-prefix normal))
-                  `(lambda(&optional arg)
-                     (interactive "P")
-                     (ergoemacs-menu-send-function ,cur-prefix ,normal ',(nth 1 x))))
+                  (read-kbd-macro (format "<Normal> %s %s" cur-prefix normal)) (nth 1 x))
                 (define-key ,keymap
                   (read-kbd-macro
                    (format "<Ctl%sAlt> %s %s" 
                            (ergoemacs-unicode-char "↔" " to ")
-                           cur-prefix ctl-to-alt))
-                  `(lambda(&optional arg)
-                     (interactive "P")
-                     (ergoemacs-menu-send-function ,cur-prefix ,normal ',(nth 1 x))))
+                           cur-prefix ctl-to-alt)) (nth 1 x))
                 (ergoemacs-debug "<Ctl%sAlt> %s %s => %s"
                                  (ergoemacs-unicode-char "↔" " to ")
                                  cur-prefix ctl-to-alt (nth 1 x))
                 
                 (define-key ,keymap
                   (read-kbd-macro
-                   (format "<Unchorded> %s %s" cur-prefix unchorded))
-                  `(lambda(&optional arg)
-                     (interactive "P")
-                     (ergoemacs-menu-send-function ,cur-prefix ,normal ',(nth 1 x))))
+                   (format "<Unchorded> %s %s" cur-prefix unchorded)) (nth 1 x))
                 (ergoemacs-debug "<Unchorded> %s %s => %s"
                                  cur-prefix unchorded (nth 1 x)))))
           normal)
