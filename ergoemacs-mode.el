@@ -1825,31 +1825,41 @@ the best match."
            (setq new-key (match-string 1))
            (setq fn (match-string 2))
            (unless (string-match " " new-key)
-             (if (string-match "Prefix Command$" (match-string 0))
-                 (unless (string-match "ESC" new-key)
-                   (ergoemacs-debug "Prefix: %s" new-key)
-                   (add-to-list 'prefixes new-key))
-               (unless (string-match "ergoemacs-old-key---" fn)
-                 (condition-case err
-                     (with-temp-buffer
-                       (insert "(if (keymapp '" fn
-                               ") (unless (string-match \"ESC\" \"" new-key
-                               "\") (add-to-list 'prefixes \"" new-key
-                               "\") (ergoemacs-debug \"Prefix (keymap): %s\" new-key)) (add-to-list 'normal '(\""
-                               new-key "\" " fn ")) (ergoemacs-debug \"Normal: %s -> %s\" new-key fn))")
-                       (eval-buffer)
-                       (when ergoemacs-translate-keys
-                         (cond
-                          ((string-match "\\( \\|^\\)C-\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
-                           (add-to-list 'translations
-                                        (list (replace-match "\\1\\2" t nil new-key)
-                                              fn)))
-                          ((string-match "\\( \\|^\\)\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
-                           (add-to-list 'translations
-                                        (list (replace-match "\\1C-\\2" t nil new-key)
-                                              fn))))))
-                   (error
-                    (setq fn nil))))))))
+             (cond
+              ((save-match-data
+                 (string-match "??$" (match-string 0)))
+               (ergoemacs-debug "Anonymous function for %s" new-key)
+               (let (ergoemacs-unbind-mode
+                     ergoemacs-shortcut-mode
+                     (ergoemacs-mode ,(not (eq chorded 'global))))
+                 (setq fn (key-binding (read-kbd-macro new-key)))
+                 (add-to-list 'normal (list new-key fn))))
+              ((save-match-data
+                 (string-match "Prefix Command$" (match-string 0)))
+               (unless (string-match "ESC" new-key)
+                 (ergoemacs-debug "Prefix: %s" new-key)
+                 (add-to-list 'prefixes new-key)))
+              (t
+               (condition-case err
+                   (with-temp-buffer
+                     (insert "(if (keymapp '" fn
+                             ") (unless (string-match \"ESC\" \"" new-key
+                             "\") (add-to-list 'prefixes \"" new-key
+                             "\") (ergoemacs-debug \"Prefix (keymap): %s\" new-key)) (add-to-list 'normal '(\""
+                             new-key "\" " fn ")) (ergoemacs-debug \"Normal: %s -> %s\" new-key fn))")
+                     (eval-buffer)
+                     (when ergoemacs-translate-keys
+                       (cond
+                        ((string-match "\\( \\|^\\)C-\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
+                         (add-to-list 'translations
+                                      (list (replace-match "\\1\\2" t nil new-key)
+                                            fn)))
+                        ((string-match "\\( \\|^\\)\\([a-zA-Z'0-9{}/,.`]\\)$" new-key)
+                         (add-to-list 'translations
+                                      (list (replace-match "\\1C-\\2" t nil new-key)
+                                            fn))))))
+                 (error
+                  (setq fn nil))))))))
 
        (ergoemacs-debug (make-string 80 ?=))
        (ergoemacs-debug "Finished (%1f sec); Building keymap" (- (float-time) start-time))
@@ -2249,7 +2259,7 @@ C-k S-a     -> k S-a           not defined
 If CHORDED is 'ctl-to-alt or the NAME command will translate the control
 bindings to be unchorded.  For example:
 
-C-k C-n     -> M-k M-n             (kmacro-cycle-ring-next)
+C-k C-n     -> M-k M-n         (kmacro-cycle-ring-next)
 C-k a       -> M-k a           (kmacro-add-counter)
 C-k M-a     -> k C-a           not defined
 C-k S-a     -> k S-a           not defined
