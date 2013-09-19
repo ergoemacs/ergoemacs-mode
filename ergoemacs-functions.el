@@ -69,15 +69,6 @@
   "Ergoemacs C-c or C-x defined by KEY."
   (let (fn-cp fn-cx fn-both)
     ;; Create the needed functions
-    (setq fn-cx (concat "ergoemacs-shortcut---"
-                        (md5 (format "%s; normal" key))))
-    (unless (intern-soft fn-cx)
-      (eval
-       (macroexpand
-        `(progn
-           (ergoemacs-keyboard-shortcut
-            ,(intern fn-cx) ,key normal)))))
-    (setq fn-cx (intern fn-cx))
 
     (if (string= "C-c" key)
         (progn
@@ -88,15 +79,15 @@
      ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
       (funcall fn-cp arg))
      ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
-      (funcall fn-cx))
+      (ergoemacs-shortcut key 'normal))
      (this-command-keys-shift-translated
       ;; Shift translated keys are C-c and C-x only.
-      (funcall fn-cx))
+      (ergoemacs-shortcut key 'normal))
      ((and ergoemacs-ctl-c-or-ctl-x-delay
            (or (region-active-p)
                (and cua--rectangle (boundp 'cua-mode) cua-mode)))
       (setq ergoemacs-curr-prefix-arg current-prefix-arg)
-      (funcall fn-cx)
+      (ergoemacs-shortcut key 'normal)
       (setq ergoemacs-push-M-O-timeout t)
       (setq ergoemacs-M-O-prefix-keys key)
       (setq ergoemacs-M-O-timer
@@ -106,7 +97,7 @@
           (and cua--rectangle (boundp 'cua-mode) cua-mode))
       (funcall fn-cp arg))
      (t
-      (funcall fn-cx)))))
+      (ergoemacs-shortcut key 'normal)))))
 
 (defun ergoemacs-clean ()
   "Run ergoemacs in a bootstrap environment."
