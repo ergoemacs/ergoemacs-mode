@@ -32,7 +32,7 @@
 (require 'edmacro)
 
 (defvar ergoemacs-emacs-default-bindings
-  '(    
+  '(
     ("<C-M-down>" (down-list))
     ("<C-M-end>" (end-of-defun))
     ("<C-M-home>" (beginning-of-defun))
@@ -631,22 +631,42 @@
     ("RET" (newline)))
   "Default Emacs Key Bindings")
 
+(defvar ergoemacs-where-is-global-hash (make-hash-table :test 'equal)
+  "Hash for ergoemacs lookup of global functions.")
+
+(defun ergoemacs-reset-global-where-is ()
+  "Reset `ergoemacs-where-is-global-hash'."
+  (setq ergoemacs-where-is-global-hash (make-hash-table :test 'equal))
+  (mapc
+   (lambda(x)
+     (let ((key (read-kbd-macro (nth 0 x))))
+       (mapc
+        (lambda(fn)
+          (let ((keys (gethash fn ergoemacs-where-is-global-hash)))
+            (add-to-list 'keys key)
+            (puthash fn keys ergoemacs-where-is-global-hash)))
+        (nth 1 x))))
+   ergoemacs-emacs-default-bindings))
+
+
 ;;;###autoload
 (defun ergoemacs-ignore-prev-global ()
   "Ignores previously defined global keys."
   (setq ergoemacs-emacs-default-bindings
         (mapcar
          (lambda(elt)
-           (let ((first (car elt))
-                 (last (cdr elt))
+           (let ((first (nth 0  elt))
+                 (last (nth 1 elt))
                  fn)
              (setq fn (lookup-key global-map (read-kbd-macro first)))
              (if (not (functionp fn))
                  elt
-	       ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
+	       ;; FIXME: Use `push' or `cl-pushnew' instead of
+               ;; `add-to-list'.
                (add-to-list 'last fn)
                `(,first ,last))))
-         ergoemacs-emacs-default-bindings)))
+         ergoemacs-emacs-default-bindings))
+  (ergoemacs-reset-global-where-is))
 
   
 (defun ergoemacs-format-where-is-buffer (&optional include-menu-bar include-alias)
