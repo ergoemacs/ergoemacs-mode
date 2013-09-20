@@ -360,6 +360,8 @@
       ("<M-right>" ergoemacs-org-metaright override)))
     (org-agenda-mode-hook
      ((undo org-agenda-undo org-agenda-mode-map remap)))
+    (org-src-mode-hook
+     ((save-buffer org-edit-src-save org-src-mode-map remap)))
     ;; Minibuffer hook
     (minibuffer-setup-hook
      ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
