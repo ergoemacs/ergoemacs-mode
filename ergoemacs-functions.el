@@ -706,7 +706,7 @@ Else it is a user buffer."
   (text-scale-increase 0))
 
 ;;; org-mode functions.
-(defun ergoemacs-org-mode-ctrl-return (&optional reopen-or-invisible-ok)
+(defun ergoemacs-org-insert-heading-respect-content (&optional reopen-or-invisible-ok)
   "When in an `org-mode' table, use `cua-set-rectangle-mark', otherwise use `org-insert-heading-respect-content'"
   (interactive "P")
   (cond
@@ -717,7 +717,7 @@ Else it is a user buffer."
     (setq prefix-arg current-prefix-arg)
     (org-insert-heading-respect-content reopen-or-invisible-ok))))
 
-(defun ergoemacs-org-mode-paste (&optional arg)
+(defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
   (let ((regtxt (and cua--register (get-register cua--register))))
     (cond
