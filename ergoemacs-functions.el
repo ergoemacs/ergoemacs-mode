@@ -308,6 +308,26 @@ See: `ergoemacs-forward-block'"
           (forward-char 1))
       (progn (goto-char (point-min))))))
 
+(defun ergoemacs-beginning-of-line-or-block ()
+  "Move cursor to beginning of line, or beginning of current or previous text block.
+ (a text block is separated by empty lines)"
+  (interactive)
+  (if (or (equal last-command this-command )
+          (equal last-command 'ergoemacs-end-of-line-or-block ) )
+      (ergoemacs-backward-block)
+    (beginning-of-line)
+    ))
+
+(defun ergoemacs-end-of-line-or-block ()
+  "Move cursor to end of line, or end of current or next text block.
+ (a text block is separated by empty lines)"
+  (interactive)
+  (if (or (equal last-command this-command )
+          (equal last-command 'ergoemacs-beginning-of-line-or-block ) )
+      (ergoemacs-forward-block)
+    (end-of-line)
+    ))
+
 ;;; TEXT SELECTION RELATED
 
 (defun ergoemacs-select-current-line ()
