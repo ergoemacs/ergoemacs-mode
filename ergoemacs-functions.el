@@ -308,25 +308,56 @@ See: `ergoemacs-forward-block'"
           (forward-char 1))
       (progn (goto-char (point-min))))))
 
-(defun ergoemacs-beginning-of-line-or-block ()
-  "Move cursor to beginning of line, or beginning of current or previous text block.
- (a text block is separated by empty lines)"
-  (interactive)
-  (if (or (equal last-command this-command )
-          (equal last-command 'ergoemacs-end-of-line-or-block ) )
-      (ergoemacs-backward-block)
-    (beginning-of-line)
-    ))
+(defcustom ergoemacs-back-to-indentation t
+  "Allow `ergoemacs-beginning-of-line-or-block' to move cursor back to the beginning of the indentation.  Otherwise, it is always beginning of line."
+  :type 'boolean
+  :group 'ergoemacs-mode)
 
-(defun ergoemacs-end-of-line-or-block ()
+;; Extends behavior of http://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/
+(defun ergoemacs-beginning-of-line-or-block (&optional N)
+  "Move cursor to beginning of indentation, line, or text block.
+ (a text block is separated by empty lines).
+
+Move cursor to the first non-whitespace character of a line.  If
+already there move the cursor to the beginning of the line.  If
+at the beginning of the line, move to the last block.
+
+With argument N not nil or 1, and not at the beginning of
+the line move forward N - 1 lines first If point reaches the
+beginning or end of buffer, it stops there.
+ (Similar to `beginning-of-line' arguments)
+
+If argument N not nil or 1, and at the beginning of the line,
+move N blocks backward.
+
+Back to indentation can be turned off with `ergoemacs-back-to-indentation'.
+"
+  (interactive "^p")
+  (setq N (or N 1))
+  (if (= (point) (point-at-bol))
+      (progn
+        (ergoemacs-backward-block N))
+    
+    (if ergoemacs-back-to-indentation
+        (progn
+          (when (not (= 1 N))
+            (let ((line-move-visual nil))
+              (forward-line (- N 1))))
+          
+          (let ((orig-point (point)))
+            (back-to-indentation)
+            (when (= orig-point (point))
+              (move-beginning-of-line 1))))
+      (move-beginning-of-line 1))))
+
+(defun ergoemacs-end-of-line-or-block (&optional N )
   "Move cursor to end of line, or end of current or next text block.
  (a text block is separated by empty lines)"
-  (interactive)
-  (if (or (equal last-command this-command )
-          (equal last-command 'ergoemacs-beginning-of-line-or-block ) )
-      (ergoemacs-forward-block)
-    (end-of-line)
-    ))
+  (interactive "^p")
+  (setq N (or N 1))
+  (if (= (point) (point-at-eol))
+      (ergoemacs-forward-block N)
+    (end-of-line N)))
 
 ;;; TEXT SELECTION RELATED
 
