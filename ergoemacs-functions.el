@@ -331,6 +331,9 @@ If argument N not nil or 1, and at the beginning of the line,
 move N blocks backward.
 
 Back to indentation can be turned off with `ergoemacs-back-to-indentation'.
+
+Also this function tries to use whatever the specific mode bound
+to beginning of line by using `ergoemacs-shortcut-internal'
 "
   (interactive "^p")
   (setq N (or N 1))
@@ -344,20 +347,52 @@ Back to indentation can be turned off with `ergoemacs-back-to-indentation'.
             (let ((line-move-visual nil))
               (forward-line (- N 1))))
           
-          (let ((orig-point (point)))
-            (back-to-indentation)
-            (when (= orig-point (point))
-              (move-beginning-of-line 1))))
-      (move-beginning-of-line 1))))
+          (let ((orig-point (point))
+                ind-point bol-point)
+            
+	    (save-excursion
+              (setq prefix-arg 1)
+              (setq current-prefix-arg 1)
+              (ergoemacs-shortcut-internal 'move-beginning-of-line)
+              (setq bol-point (point)))
+            
+	    (save-excursion
+              (back-to-indentation)
+              (setq ind-point (point)))
+	    
+            (cond
+             ((and (< ind-point orig-point)
+		   (< bol-point orig-point)
+		   (= ind-point (max ind-point bol-point)))
+	      (goto-char ind-point))
+	     ((and (< ind-point orig-point)
+                   (< bol-point orig-point)
+                   (= bol-point (max ind-point bol-point)))
+              (goto-char bol-point))
+	     ((and (< bol-point orig-point)
+                   (>= ind-point orig-point))
+              (goto-char bol-point))
+	     ((and (< ind-point orig-point)
+		   (>= bol-point orig-point))
+	      (goto-char ind-point))
+	     (t
+	      (goto-char bol-point)))))
+      (ergoemacs-shortcut-internal 'move-beginning-of-line))))
 
 (defun ergoemacs-end-of-line-or-block (&optional N )
   "Move cursor to end of line, or end of current or next text block.
- (a text block is separated by empty lines)"
+ (a text block is separated by empty lines).
+
+Attempt to honor each modes modification of beginning and end of
+line functions by using `ergoemacs-shortcut-internal'."
   (interactive "^p")
   (setq N (or N 1))
   (if (= (point) (point-at-eol))
       (ergoemacs-forward-block N)
-    (end-of-line N)))
+    (setq N (if (= N 1) nil N))
+    (setq prefix-arg N)
+    (setq current-prefix-arg N)
+    (ergoemacs-shortcut-internal 'move-end-of-line)))
 
 ;;; TEXT SELECTION RELATED
 
