@@ -58,6 +58,9 @@
     ;; Move to beginning/ending of line
     ("M-h" ergoemacs-beginning-of-line-or-block "← line/¶")
     ("M-H" ergoemacs-end-of-line-or-block "→ line/¶")
+
+    ("<home>" ergoemacs-beginning-of-line-or-block "← line/¶")
+    ("<end>" ergoemacs-end-of-line-or-block "→ line/¶")
     
     ;; Move by screen (page up/down)
     ("M-I" scroll-down "↑ page")
