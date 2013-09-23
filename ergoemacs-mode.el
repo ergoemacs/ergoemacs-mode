@@ -1282,8 +1282,8 @@ the best match."
               (t
                (condition-case err
                    (with-temp-buffer
-                     (insert "(if (keymapp '" fn
-                             ") (unless (string-match \"ESC\" \"" new-key
+                     (insert "(if (condition-case err (keymapp '" fn
+                             ") (error nil)) (unless (string-match \"ESC\" \"" new-key
                              "\") (add-to-list 'prefixes \"" new-key
                              "\") (ergoemacs-debug \"Prefix (keymap): %s\" new-key)) (add-to-list 'normal '(\""
                              new-key "\" " fn ")) (ergoemacs-debug \"Normal: %s -> %s\" new-key fn))")
