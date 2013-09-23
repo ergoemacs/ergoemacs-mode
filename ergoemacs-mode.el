@@ -1018,7 +1018,8 @@ For example, on dvorak, change C-j to C-c (copy/command)."
         (let* ((no-ergoemacs-advice t)
                (key-code
                 (cond
-                 ((and translate (eq 'string (type-of key-def)))
+                 ((and (or translate ergoemacs-change-fixed-layout-to-variable-layout)
+                       (eq 'string (type-of key-def)))
                   (ergoemacs-kbd key-def))
                  ((eq 'string (type-of key-def))
                   (condition-case err
