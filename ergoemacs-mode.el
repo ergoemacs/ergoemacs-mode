@@ -677,6 +677,13 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-change-fixed-layout-to-variable-layout nil
+  "Change the fixed layout to variable layout keys.
+For example, on dvorak, change C-j to C-c (copy/command)."
+  :type 'boolean
+  :set 'ergoemacs-set-default
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-get-kbd-translation (pre-kbd-code &optional dont-swap)
   "This allows a translation from the listed kbd-code and the true kbd code."
   (let ((ret (replace-regexp-in-string
@@ -775,89 +782,97 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
 
 (defmacro ergoemacs-setup-keys-for-keymap (keymap)
   "Setups ergoemacs keys for a specific keymap"
-  `(let ((no-ergoemacs-advice t)
-         (case-fold-search t)
-         key
-         trans-key
-         cmd cmd-tmp)
-     (setq ,keymap (make-sparse-keymap))
-     (if (eq ',keymap 'ergoemacs-keymap)
-         (ergoemacs-debug "Theme: %s" ergoemacs-theme))
-     ;; Fixed layout keys
-     (mapc
-      (lambda(x)
-        (when (and (eq 'string (type-of (nth 0 x))))
-          (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))
-          (condition-case err
-              (setq key (read-kbd-macro
-                         trans-key))
-            (error
-             (setq key (read-kbd-macro
-                        (encode-coding-string
-                         trans-key
-                         locale-coding-system)))))
-          (if (ergoemacs-global-changed-p trans-key)
-              (progn
-                (ergoemacs-debug "!!!Fixed %s has changed globally." trans-key)
-                (ergoemacs-setup-keys-for-keymap---internal ,keymap key (lookup-key (current-global-map) key)))
-            (setq cmd (nth 1 x))
-	    (if (eq ',keymap 'ergoemacs-keymap)
-                (ergoemacs-debug "Fixed: %s -> %s %s" trans-key cmd key))
-            (when (not (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd))
-	      (ergoemacs-debug "Key %s->%s not setup." key cmd)))))
-      (symbol-value (ergoemacs-get-fixed-layout)))
-     
-     ;; Variable Layout Keys
-     (mapc
-      (lambda(x)
-        (when (and (eq 'string (type-of (nth 0 x))))
-          (setq trans-key
-                (ergoemacs-get-kbd-translation (nth 0 x)))
-          (setq key (ergoemacs-kbd trans-key nil (nth 3 x)))
-          (if (ergoemacs-global-changed-p trans-key t)
-              (progn
-                (ergoemacs-debug "!!!Variable %s (%s) has changed globally."
-                                 trans-key (ergoemacs-kbd trans-key t (nth 3 x))))
-            ;; Add M-O and M-o handling for globally defined M-O and
-            ;; M-o.
-            ;; Only works if ergoemacs-mode is on...
-            (setq cmd (nth 1 x))
-            
-            (if (and ergoemacs-fix-M-O (string= (ergoemacs-kbd trans-key t t) "M-O"))
-                (progn
-                  (define-key ,keymap key  'ergoemacs-M-O)
-                  (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-O-keymap [timeout] cmd)
-                  (if (eq ',keymap 'ergoemacs-keymap)
-                      (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-O" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
-              (if (and ergoemacs-fix-M-O
-                       (string= (ergoemacs-kbd trans-key t t) "M-o"))
+  `(condition-case err
+       (let ((no-ergoemacs-advice t)
+             (case-fold-search t)
+             key
+             trans-key
+             cmd cmd-tmp)
+         (setq ,keymap (make-sparse-keymap))
+         (if (eq ',keymap 'ergoemacs-keymap)
+             (ergoemacs-debug "Theme: %s" ergoemacs-theme))
+         ;; Fixed layout keys
+         (mapc
+          (lambda(x)
+            (when (and (eq 'string (type-of (nth 0 x))))
+              (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))
+              
+              (if ergoemacs-change-fixed-layout-to-variable-layout
+                  (progn ;; Change to the fixed keyboard layout.
+                    (setq key (ergoemacs-kbd trans-key)))
+                (condition-case err
+                    (setq key (read-kbd-macro
+                               trans-key))
+                  (error
+                   (setq key (read-kbd-macro
+                              (encode-coding-string
+                               trans-key
+                               locale-coding-system))))))
+              (if (eq ',keymap 'ergoemacs-keymap)
+                  (ergoemacs-debug "Fixed: %s -> %s %s (%s)" trans-key cmd key (key-description key)))
+              (if (ergoemacs-global-changed-p trans-key)
                   (progn
-                    (define-key ,keymap key  'ergoemacs-M-o)
-                    (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-o-keymap [timeout] cmd)
-                    (if (eq ',keymap 'ergoemacs-keymap)
-                        (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-o" trans-key
-                                         (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
-                (when cmd
-                  (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd)
-                  (if (eq ',keymap 'ergoemacs-keymap)
-                      (ergoemacs-debug "Variable: %s (%s) -> %s %s" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key))))))))
-      (symbol-value (ergoemacs-get-variable-layout)))
-     (when ergoemacs-fix-M-O
-       (let ((M-O (lookup-key ,keymap (read-kbd-macro "M-O")))
-             (g-M-O (lookup-key global-map (read-kbd-macro "M-O")))
-             (M-o (lookup-key ,keymap (read-kbd-macro "M-o")))
-             (g-M-o (lookup-key global-map (read-kbd-macro "M-o"))))
-         (ergoemacs-debug "M-O %s; Global M-O: %s; M-o %s; Global M-o: %s" M-O g-M-O M-o g-M-o)
-         (when (and (not (functionp M-O))
-                    (functionp g-M-O))
-           (ergoemacs-debug "Fixed M-O")
-           (define-key ,keymap (read-kbd-macro "M-O") 'ergoemacs-M-O)
-           (define-key ergoemacs-M-O-keymap [timeout] g-M-O))
-         (when (and (not (functionp M-o))
-                    (functionp g-M-o))
-           (ergoemacs-debug "Fixed M-o")
-           (define-key ,keymap (read-kbd-macro "M-o") 'ergoemacs-M-o)
-           (define-key ergoemacs-M-o-keymap [timeout] g-M-o))))))
+                    (ergoemacs-debug "!!!Fixed %s has changed globally." trans-key)
+                    (ergoemacs-setup-keys-for-keymap---internal ,keymap key (lookup-key (current-global-map) key)))
+                (setq cmd (nth 1 x))
+                (when (not (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd))
+                  (ergoemacs-debug "Key %s->%s not setup." key cmd)))))
+          (symbol-value (ergoemacs-get-fixed-layout)))
+         
+         ;; Variable Layout Keys
+         (mapc
+          (lambda(x)
+            (when (and (eq 'string (type-of (nth 0 x))))
+              (setq trans-key
+                    (ergoemacs-get-kbd-translation (nth 0 x)))
+              (setq key (ergoemacs-kbd trans-key nil (nth 3 x)))
+              (if (ergoemacs-global-changed-p trans-key t)
+                  (progn
+                    (ergoemacs-debug "!!!Variable %s (%s) has changed globally."
+                                     trans-key (ergoemacs-kbd trans-key t (nth 3 x))))
+                ;; Add M-O and M-o handling for globally defined M-O and
+                ;; M-o.
+                ;; Only works if ergoemacs-mode is on...
+                (setq cmd (nth 1 x))
+                
+                (if (and ergoemacs-fix-M-O (string= (ergoemacs-kbd trans-key t t) "M-O"))
+                    (progn
+                      (define-key ,keymap key  'ergoemacs-M-O)
+                      (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-O-keymap [timeout] cmd)
+                      (if (eq ',keymap 'ergoemacs-keymap)
+                          (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-O" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
+                  (if (and ergoemacs-fix-M-O
+                           (string= (ergoemacs-kbd trans-key t t) "M-o"))
+                      (progn
+                        (define-key ,keymap key  'ergoemacs-M-o)
+                        (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-o-keymap [timeout] cmd)
+                        (if (eq ',keymap 'ergoemacs-keymap)
+                            (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-o" trans-key
+                                             (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
+                    (when cmd
+                      (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd)
+                      (if (eq ',keymap 'ergoemacs-keymap)
+                          (ergoemacs-debug "Variable: %s (%s) -> %s %s" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key))))))))
+          (symbol-value (ergoemacs-get-variable-layout)))
+         (when ergoemacs-fix-M-O
+           (let ((M-O (lookup-key ,keymap (read-kbd-macro "M-O")))
+                 (g-M-O (lookup-key global-map (read-kbd-macro "M-O")))
+                 (M-o (lookup-key ,keymap (read-kbd-macro "M-o")))
+                 (g-M-o (lookup-key global-map (read-kbd-macro "M-o"))))
+             (ergoemacs-debug "M-O %s; Global M-O: %s; M-o %s; Global M-o: %s" M-O g-M-O M-o g-M-o)
+             (when (and (not (functionp M-O))
+                        (functionp g-M-O))
+               (ergoemacs-debug "Fixed M-O")
+               (define-key ,keymap (read-kbd-macro "M-O") 'ergoemacs-M-O)
+               (define-key ergoemacs-M-O-keymap [timeout] g-M-O))
+             (when (and (not (functionp M-o))
+                        (functionp g-M-o))
+               (ergoemacs-debug "Fixed M-o")
+               (define-key ,keymap (read-kbd-macro "M-o") 'ergoemacs-M-o)
+               (define-key ergoemacs-M-o-keymap [timeout] g-M-o)))))
+     (error
+      (ergoemacs-debug "Error: %s" err)
+      (ergoemacs-debug-flush))))
 
 (defun ergoemacs-setup-keys-for-layout (layout &optional base-layout)
   "Setup keys based on a particular LAYOUT. All the keys are based on QWERTY layout."
@@ -2106,13 +2121,15 @@ The shortcuts defined are:
   :group 'ergoemacs-mode
   (if ergoemacs-shortcut-mode
       (progn
-        (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned on.")
+        ;; (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned on.")
         (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-map-alist)))
           (when x
             (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
           (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-map-alist)))
-    (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned off."))
-  (ergoemacs-debug-flush))
+    ;; (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned off.")
+    )
+  ;; (ergoemacs-debug-flush)
+  )
 
 (define-minor-mode ergoemacs-shortcut-override-mode
   "Lookup the functions for `ergoemacs-mode' shortcut keys."
