@@ -187,6 +187,7 @@
     ("<apps> b" redo "↷ redo")
     ("<apps> t" (helm-mini ido-switch-buffer switch-to-buffer) "switch buf")
     ("<apps> z" undo "↶ undo")
+    ("<apps> n a" org-agenda "agenda")
     ("<apps> n c" calc "calc" t)
     ("<apps> n m" magit-status "magit" t)
     ("<apps> n g" grep "grep" t)
