@@ -353,7 +353,8 @@ to beginning of line by using `ergoemacs-shortcut-internal'
 	    (save-excursion
               (setq prefix-arg 1)
               (setq current-prefix-arg 1)
-              (ergoemacs-shortcut-internal 'move-beginning-of-line)
+              ;;(ergoemacs-shortcut-internal 'move-beginning-of-line)
+              (call-interactively 'move-beginning-of-line)
               (setq bol-point (point)))
             
 	    (save-excursion
@@ -377,7 +378,9 @@ to beginning of line by using `ergoemacs-shortcut-internal'
 	      (goto-char ind-point))
 	     (t
 	      (goto-char bol-point)))))
-      (ergoemacs-shortcut-internal 'move-beginning-of-line))))
+      ;; (ergoemacs-shortcut-internal 'move-beginning-of-line)
+      (call-interactively 'move-begining-of-line)
+      )))
 
 (defun ergoemacs-end-of-line-or-block (&optional N )
   "Move cursor to end of line, or end of current or next text block.
@@ -392,7 +395,9 @@ line functions by using `ergoemacs-shortcut-internal'."
     (setq N (if (= N 1) nil N))
     (setq prefix-arg N)
     (setq current-prefix-arg N)
-    (ergoemacs-shortcut-internal 'move-end-of-line)))
+    ;; (ergoemacs-shortcut-internal 'move-end-of-line)
+    (call-interactively 'move-end-of-line)
+    ))
 
 ;;; TEXT SELECTION RELATED
 
