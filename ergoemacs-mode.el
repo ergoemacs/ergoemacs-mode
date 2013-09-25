@@ -2132,9 +2132,9 @@ The shortcuts defined are:
       (progn
         (ergoemacs-debug "Ergoemacs Shortcut Override have loaded been turned on.")
         (let ((x (assq 'ergoemacs-shortcut-override-mode
-                       minor-mode-map-alist)))
+                       emulation-mode-map-alists)))
           (when x
-            (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+            (setq emulation-mode-map-alists (delq x emulation-mode-map-alists)))
           ;; Create keymap
           (setq ergoemacs-shortcut-override-keymap (make-sparse-keymap))
           ;; Add M-O and M-o key-bindings; Pretend they are the actual
@@ -2157,7 +2157,7 @@ The shortcuts defined are:
            ergoemacs-command-shortcuts-hash)
           (push (cons 'ergoemacs-shortcut-override-mode
                       ergoemacs-shortcut-override-keymap)
-                minor-mode-map-alist)))
+                emulation-mode-map-alists)))
     (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned off."))
   (ergoemacs-debug-flush))
 
@@ -2374,23 +2374,24 @@ Setup C-c and C-x keys to be described properly.")
                      (memq this-command ergoemacs-describe-keybindings-functions))
             (ergoemacs-shortcut-mode 1)
             (ergoemacs-shortcut-override-mode -1))
-          (unless (eq 'ergoemacs-ctl-c
-                      (key-binding (read-kbd-macro "C-c")))
-            (when ergoemacs-shortcut-mode
-              (ergoemacs-shortcut-mode -1))
-            (ergoemacs-shortcut-mode 1)
-            (unless (eq 'ergoemacs-ctl-c
-                        (key-binding (read-kbd-macro "C-c")))
-              ;; Still doesn't work; Promote shortcuts further to
-              ;; `minor-mode-overriding-map-alist'.
+          
+          (unless (eq 'ergoemacs-shortcut-mode
+                      (car (car minor-mode-map-alist)))
+            (ergoemacs-debug "Promote ergoemacs-shortcut-mode in `minor-mode-map-alist'")
+            (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-map-alist)))
+              (when x
+                (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+              (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-map-alist)))
+          
+          (when minor-mode-overriding-map-alist
+            (unless (eq 'ergoemacs-shortcut-mode
+                        (car (car minor-mode-overriding-map-alist)))
+              (ergoemacs-debug "Promote ergoemacs-shortcut-mode in `minor-mode-overriding-map-overriding-map-alist'")
               (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-overriding-map-alist)))
-                ;; Make sure its at the top of the list.
                 (when x
                   (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist)))
-                (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist))
-              ;; FIXME: promote shortcuts further.
-              )))
-      (error nil)))
+                (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist)))))
+      (error (message "Error %s" err))))
   t)
 
 (add-hook 'post-command-hook 'ergoemacs-post-command-hook)
