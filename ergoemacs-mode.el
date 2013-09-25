@@ -1108,12 +1108,14 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
                                       ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
                    (funcall ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode")) 1))))
            ,(if is-override
-                `(add-to-list 'minor-mode-overriding-map-alist
-                              (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
-                              nil ,(if (equal hook 'minibuffer-setup-hook)
-                                       '(lambda (x y)
-                                          (equal (car y) (car x)))
-                                     nil))
+                `(progn
+                   (add-to-list 'minor-mode-overriding-map-alist
+                                (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
+                                nil ,(if (equal hook 'minibuffer-setup-hook)
+                                         '(lambda (x y)
+                                            (equal (car y) (car x)))
+                                       nil))
+                   (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist))
               nil)
            (ergoemacs-debug-flush)
            t))
@@ -2089,7 +2091,9 @@ The shortcuts defined are:
            (funcall (intern-soft (format "ergoemacs-%s-hook-mode" major-mode)) -1))
          (let ((x (assq 'ergoemacs-mode minor-mode-overriding-map-alist)))
            (if x
-               (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist))))))
+               (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist)))
+           (setq x (assq 'ergoemacs-shortcut-mode minor-mode-overriding-map-alist))
+           (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist)))))
      (buffer-list)))
   (if ergoemacs-mode
       (progn
@@ -2374,7 +2378,18 @@ Setup C-c and C-x keys to be described properly.")
                       (key-binding (read-kbd-macro "C-c")))
             (when ergoemacs-shortcut-mode
               (ergoemacs-shortcut-mode -1))
-            (ergoemacs-shortcut-mode 1)))
+            (ergoemacs-shortcut-mode 1)
+            (unless (eq 'ergoemacs-ctl-c
+                        (key-binding (read-kbd-macro "C-c")))
+              ;; Still doesn't work; Promote shortcuts further to
+              ;; `minor-mode-overriding-map-alist'.
+              (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-overriding-map-alist)))
+                ;; Make sure its at the top of the list.
+                (when x
+                  (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist)))
+                (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist))
+              ;; FIXME: promote shortcuts further.
+              )))
       (error nil)))
   t)
 
