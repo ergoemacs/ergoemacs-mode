@@ -353,24 +353,24 @@
 (defcustom ergoemacs-minor-mode-layout
   `(;; Key/variable command x-hook
     (org-mode-hook
-     ((move-beginning-of-line org-beginning-of-line override remap)
-      (move-end-of-line org-end-of-line override remap)
-      (cua-set-rectangle-mark ergoemacs-org-mode-ctrl-return override)
-      (cua-paste ergoemacs-org-mode-paste override)
-      ;;("<C-return>" ergoemacs-org-mode-ctrl-return override)
-      ("<M-down>" ergoemacs-org-metadown override)
-      ("<M-up>" ergoemacs-org-metaup override)
-      ("<M-left>" ergoemacs-org-metaleft override)
-      ("<M-right>" ergoemacs-org-metaright override)))
-    (org-agenda-mode-hook
-     ((undo org-agenda-undo org-agenda-mode-map remap)))
-    (org-src-mode-hook
-     ((save-buffer org-edit-src-save org-src-mode-map remap)))
+     ((move-beginning-of-line org-beginning-of-line nil remap)
+      (move-end-of-line org-end-of-line nil remap)
+      (cua-set-rectangle-mark ergoemacs-org-mode-ctrl-return nil)
+      (cua-paste ergoemacs-org-mode-paste nil)
+      ;;("<C-return>" ergoemacs-org-mode-ctrl-return nil)
+      ("<M-down>" ergoemacs-org-metadown nil)
+      ("<M-up>" ergoemacs-org-metaup nil)
+      ("<M-left>" ergoemacs-org-metaleft nil)
+      ("<M-right>" ergoemacs-org-metaright nil)))
+    ;; (org-agenda-mode-hook
+    ;;  ((undo org-agenda-undo org- remap)))
+    ;; (org-src-mode-hook
+    ;;  ((save-buffer org-edit-src-save org-src-mode-map remap)))
     ;; Minibuffer hook
     (minibuffer-setup-hook
-     ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
-      (previous-line previous-history-element minor-mode-overriding-map-alist)
-      (next-line next-history-element minor-mode-overriding-map-alist)
+     (;; (keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
+      ;; (previous-line previous-history-element minor-mode-overriding-map-alist)
+      ;; (next-line next-history-element minor-mode-overriding-map-alist)
       ("<f11>" previous-history-element  minor-mode-overriding-map-alist)
       ("<f12>" next-history-element  minor-mode-overriding-map-alist)
       ("S-<f11>" previous-matching-history-element  minor-mode-overriding-map-alist)
@@ -451,28 +451,28 @@
       ("S-<f12>" eshell-next-matching-input-from-input)))
     
     ;; Iswitchdb hook
-    (iswitchb-minibuffer-setup-hook
-     ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
-      (isearch-backward iswitchb-prev-match minor-mode-overriding-map-alist)
-      (isearch-forward iswitchb-next-match minor-mode-overriding-map-alist)
+    ;; (iswitchb-minibuffer-setup-hook
+    ;;  ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
+    ;;   (isearch-backward iswitchb-prev-match minor-mode-overriding-map-alist)
+    ;;   (isearch-forward iswitchb-next-match minor-mode-overriding-map-alist)
       
-      ("<f11>" iswitchb-prev-match minor-mode-overriding-map-alist)
-      ("<f12>" iswitchb-next-match minor-mode-overriding-map-alist)
-      ("S-<f11>" iswitchb-prev-match minor-mode-overriding-map-alist)
-      ("S-<f12>" iswitchb-next-match minor-mode-overriding-map-alist)))
+    ;;   ("<f11>" iswitchb-prev-match minor-mode-overriding-map-alist)
+    ;;   ("<f12>" iswitchb-next-match minor-mode-overriding-map-alist)
+    ;;   ("S-<f11>" iswitchb-prev-match minor-mode-overriding-map-alist)
+    ;;   ("S-<f12>" iswitchb-next-match minor-mode-overriding-map-alist)))
     
     ;; Ido minibuffer setup hook
-    (ido-minibuffer-setup-hook
-     ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
-      ("C-o" ergoemacs-ido-c-o minor-mode-overriding-map-alist)
-      (forward-char ido-next-match minor-mode-overriding-map-alist)
-      (backward-char ido-prev-match minor-mode-overriding-map-alist)
-      (previous-line ergoemacs-ido-next-match-dir minor-mode-overriding-map-alist)
-      (next-line ergoemacs-ido-prev-match-dir minor-mode-overriding-map-alist)
-      ("<f11>" previous-history-element minor-mode-overriding-map-alist)
-      ("<f12>" next-history-element minor-mode-overriding-map-alist)
-      ("S-<f11>" previous-matching-history-element minor-mode-overriding-map-alist)
-      ("S-<f12>" next-matching-history-element minor-mode-overriding-map-alist)))
+    ;; (ido-minibuffer-setup-hook
+    ;;  ((keyboard-quit minibuffer-keyboard-quit minor-mode-overriding-map-alist)
+    ;;   ("C-o" ergoemacs-ido-c-o minor-mode-overriding-map-alist)
+    ;;   (forward-char ido-next-match minor-mode-overriding-map-alist)
+    ;;   (backward-char ido-prev-match minor-mode-overriding-map-alist)
+    ;;   (previous-line ergoemacs-ido-next-match-dir minor-mode-overriding-map-alist)
+    ;;   (next-line ergoemacs-ido-prev-match-dir minor-mode-overriding-map-alist)
+    ;;   ("<f11>" previous-history-element minor-mode-overriding-map-alist)
+    ;;   ("<f12>" next-history-element minor-mode-overriding-map-alist)
+    ;;   ("S-<f11>" previous-matching-history-element minor-mode-overriding-map-alist)
+    ;;   ("S-<f12>" next-matching-history-element minor-mode-overriding-map-alist)))
     
     ;; Info Mode hooks
     (Info-mode-hook
@@ -486,19 +486,20 @@
       ("M-S-RET" "C-u M-RET" helm-map)
       ("<M-S-return>" "C-u M-RET" helm-map)
 
-      (next-line helm-next-line helm-map)
-      (previous-line helm-previous-line helm-map)
+      ;; (next-line helm-next-line helm-map)
+      ;; (previous-line helm-previous-line helm-map)
 
-      (next-history-element helm-next-line helm-map)
-      (previous-history-element helm-previous-line helm-map)
+      ;; (next-history-element helm-next-line helm-map)
+      ;; (previous-history-element helm-previous-line helm-map)
       
-      (forward-char helm-next-source helm-map)
-      (backward-char helm-previous-source helm-map)
-      (keyboard-quit helm-keyboard-quit helm-map)
-      (recenter-top-bottom helm-recenter-top-bottom helm-map)
-      (cut-line-or-region helm-yank-text-at-point helm-map)
-      (scroll-down helm-next-page helm-map)
-      (scroll-up helm-previous-page helm-map)))
+      ;; (forward-char helm-next-source helm-map)
+      ;; (backward-char helm-previous-source helm-map)
+      ;; (keyboard-quit helm-keyboard-quit helm-map)
+      ;; (recenter-top-bottom helm-recenter-top-bottom helm-map)
+      ;; (cut-line-or-region helm-yank-text-at-point helm-map)
+      ;; (scroll-down helm-next-page helm-map)
+      ;; (scroll-up helm-previous-page helm-map)
+      ))
     ;; Auto-complete-mode-hook
     ;; When the `auto-complete-mode' is on, and when a word completion
     ;; is in process, Ctrl+s does `ac-isearch'.
