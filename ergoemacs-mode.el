@@ -1822,14 +1822,15 @@ When KEYMAP-KEY is non-nil, define the KEYMAP-KEY on the `ergoemacs-shortcut-ove
                   (progn
                     (define-key ergoemacs-shortcut-override-keymap
                       keymap-key fn))
-                (when (featurep 'keyfreq)
-                  (when keyfreq-mode
-                    (let ((command fn) count)
-                      ;; Add function name to to counter.
-                      (setq count (gethash (cons major-mode command)
-                                           keyfreq-table))
-                      (puthash (cons major-mode command) (if count (+ count 1) 1)
-                               keyfreq-table))))
+                (unless (boundp 'keyfreq-no-record)
+                  (when (featurep 'keyfreq)
+                    (when keyfreq-mode
+                      (let ((command fn) count)
+                        ;; Add function name to to counter.
+                        (setq count (gethash (cons major-mode command)
+                                             keyfreq-table))
+                        (puthash (cons major-mode command) (if count (+ count 1) 1)
+                                 keyfreq-table)))))
                 (call-interactively fn)
                 ;; repeat only works with a function.
                 (when (and repeat
@@ -2080,7 +2081,7 @@ The shortcuts defined are:
         (ergoemacs-debug "CUA rectangle mode modifier changed."))
     (error (message "CUA rectangle modifier wasn't changed.")))
   
-  (when ergoemacs-change-smex-meta-x
+  ;(when ergoemacs-change-smex-meta-x
     (if ergoemacs-mode
         (setq smex-prompt-string (concat (ergoemacs-pretty-key "M-x") " "))
       (setq smex-prompt-string "M-x ")))
