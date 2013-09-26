@@ -177,9 +177,7 @@ Valid values are:
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
 
-;; FIXME: maybe a better name is `ergoemacs-change-smex-meta-x', since
-;; Customization displays it as "Ergoemacs Change Smex M X".
-(defcustom ergoemacs-change-smex-M-x t
+(defcustom ergoemacs-change-smex-meta-x t
   "Changes the `smex-prompt-string' to match the `execute-extended-command'"
   :type 'boolean
   :set 'ergoemacs-set-default
@@ -2082,7 +2080,7 @@ The shortcuts defined are:
         (ergoemacs-debug "CUA rectangle mode modifier changed."))
     (error (message "CUA rectangle modifier wasn't changed.")))
   
-  (when ergoemacs-change-smex-M-x
+  (when ergoemacs-change-smex-meta-x
     (if ergoemacs-mode
         (setq smex-prompt-string (concat (ergoemacs-pretty-key "M-x") " "))
       (setq smex-prompt-string "M-x ")))

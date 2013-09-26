@@ -45,9 +45,7 @@
 ;; Color scheme chose from color brewer.
 (defun ergoemacs-gen-svg-quote (char)
   ;; Derived from `describe-char'
-  (let* ((case-fold-search nil)
-         code str)
-    ;; FIXME: what does `code' and `str' do?
+  (let* ((case-fold-search nil))
     (save-match-data
       (cond
        ((string= char "")
@@ -348,21 +346,18 @@
 ;;;###autoload
 (defun ergoemacs-ghpages (&optional arg)
   "Generate github pages with o-blog."
-  ;; FIXME: arg and file aren't used.
   (interactive "P")
   (let ((o-blog (expand-file-name (file-name-directory (locate-library "o-blog"))))
         (htmlize (expand-file-name (file-name-directory (locate-library "htmlize"))))
         (emacs-exe (invocation-name))
         (emacs-dir (invocation-directory))
-        (file (buffer-file-name))
         (full-exe nil))
     (setq full-exe (expand-file-name emacs-exe emacs-dir))
     (if current-prefix-arg
         (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --eval \"(ergoemacs-publish-blog 1)\" &"
                                full-exe o-blog htmlize ergoemacs-dir ergoemacs-dir))
-      ;; FIXME: `format' called with 5 args to fill 4 format field(s)
       (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --funcall ergoemacs-publish-blog &"
-                               full-exe o-blog htmlize ergoemacs-dir ergoemacs-dir)))))
+                               full-exe o-blog htmlize ergoemacs-dir)))))
 
 (defun ergoemacs-publish-blog (&optional generate-all-layouts)
   "Internal function for generating o-blog website"
@@ -833,7 +828,6 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
                                (ergoemacs-emacs-exe)
                                ergoemacs-dir ergoemacs-dir)))
     (let ((xtra (or extra "ahk"))
-          not-first ; FIXME: what does it do?
           (extra-dir)
           file-temp)
       (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))

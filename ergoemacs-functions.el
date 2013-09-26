@@ -112,11 +112,9 @@
 
 (defun ergoemacs-emacs-exe ()
   "Get the Emacs executable for testing purposes."
-  (let ((emacs-exe (invocation-name))
+  (let* ((emacs-exe (invocation-name))
         (emacs-dir (invocation-directory))
-        (full-exe nil))
-    ;; FIXME: Use `let*'.
-    (setq full-exe (expand-file-name emacs-exe emacs-dir))
+        (full-exe (expand-file-name emacs-exe emacs-dir)))
     (symbol-value 'full-exe)))
 
 (defun ergoemacs-cheat-sheet-file ()
