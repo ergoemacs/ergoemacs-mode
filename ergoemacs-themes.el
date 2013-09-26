@@ -429,26 +429,26 @@
     
     ;; Comint
     (comint-mode-hook
-     (("<f11>" comint-previous-input comint-mode-map)
-      ("<f12>" comint-next-input comint-mode-map)
-      ("S-<f11>" comint-previous-matching-input comint-mode-map)
-      ("S-<f12>" comint-next-matching-input comint-mode-map)))
+     (("<f11>" comint-previous-input )
+      ("<f12>" comint-next-input )
+      ("S-<f11>" comint-previous-matching-input )
+      ("S-<f12>" comint-next-matching-input )))
     
     ;; Log Edit
     (log-edit-mode-hook
-     (("<f11>" log-edit-previous-comment log-edit-mode-map)
-      ("<f12>" log-edit-next-comment log-edit-mode-map)
-      ("S-<f11>" log-edit-previous-comment log-edit-mode-map)
-      ("S-<f12>" log-edit-next-comment log-edit-mode-map)))
+     (("<f11>" log-edit-previous-comment )
+      ("<f12>" log-edit-next-comment )
+      ("S-<f11>" log-edit-previous-comment )
+      ("S-<f12>" log-edit-next-comment )))
     
     ;; Eshell
     (eshell-mode-hook
-     ((move-beginning-of-line eshell-bol minor-mode-overriding-map-alist)
-      ("<home>" eshell-bol minor-mode-overriding-map-alist)
-      ("<f11>" eshell-previous-matching-input-from-input minor-mode-overriding-map-alist)
-      ("<f12>" eshell-next-matching-input-from-input minor-mode-overriding-map-alist)
-      ("S-<f11>" eshell-previous-matching-input-from-input minor-mode-overriding-map-alist)
-      ("S-<f12>" eshell-next-matching-input-from-input minor-mode-overriding-map-alist)))
+     ((move-beginning-of-line eshell-bol)
+      ("<home>" eshell-bol)
+      ("<f11>" eshell-previous-matching-input-from-input)
+      ("<f12>" eshell-next-matching-input-from-input)
+      ("S-<f11>" eshell-previous-matching-input-from-input)
+      ("S-<f12>" eshell-next-matching-input-from-input)))
     
     ;; Iswitchdb hook
     (iswitchb-minibuffer-setup-hook
@@ -476,8 +476,8 @@
     
     ;; Info Mode hooks
     (Info-mode-hook
-     (("<backspace>" Info-history-back Info-mode-map)
-      ("<S-backspace>" Info-history-forward Info-mode-map)))
+     (("<backspace>" Info-history-back)
+      ("<S-backspace>" Info-history-forward)))
     ;; Helm mode hooks
     (helm-before-initialize-hook
      (("C-w" helm-keyboard-quit helm-map)
@@ -518,9 +518,11 @@
                        (choice
                         (symbol :tag "Function to Run")
                         (string :tag "Translated Kbd Code")
-                        (const :tag "Override by new minor mode" override)
                         (const :tag "Unbind Key" nil))
-                       (symbol :tag "Keymap to Modify")
+                       (choice
+                        (const :tag "Use overriding emulation map" nil)
+                        (const :tag "Override by new minor mode" override)
+                        (symbol :tag "Keymap to Modify"))
                        (choice
                         (const :tag "Translate key" t)
                         (const :tag "Raw key" nil)
@@ -937,9 +939,11 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                               (choice
                                (symbol :tag "Function to Run")
                                (string :tag "Translated Kbd Code")
-                               (const :tag "Override by new minor mode" override)
                                (const :tag "Unbind Key" nil))
-                              (symbol :tag "Keymap to Modify")
+                              (choice
+                               (const :tag "Use overriding emulation map" nil)
+                               (const :tag "Override by new minor mode" override)
+                               (symbol :tag "Keymap to Modify"))
                               (choice
                                (const :tag "Translate key" t)
                                (const :tag "Raw key" nil)

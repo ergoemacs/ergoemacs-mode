@@ -1041,14 +1041,17 @@ For example, on dvorak, change C-j to C-c (copy/command)."
 
 (defmacro ergoemacs-create-hook-function (hook keys &optional global)
   "Creates a hook function based on the HOOK and the list of KEYS defined."
-  (let ((is-override (make-symbol "is-override"))
+  (let ((is-override-p (make-symbol "is-override-p"))
+        (is-emulation-p (make-symbol "is-emulation-p"))
         (minor-mode-p (make-symbol "minor-mode-p"))
         (old-keymap (make-symbol "old-keymap"))
         (override-keymap (make-symbol "override-keymap")))
-    (setq is-override (eq 'minor-mode-overriding-map-alist (nth 2 (nth 0 keys))))
+    (setq is-override-p (eq 'minor-mode-overriding-map-alist (nth 2 (nth 0 keys))))
+    (setq is-emulation-p (or (not (nth 2 (nth 0 keys)))
+                             (eq 'emulation-mode-map-alists (nth 2 (nth 0 keys)))))
     (setq minor-mode-p (eq 'override (nth 2 (nth 0 keys))))
     `(progn
-       ,(if (or is-override minor-mode-p)
+       ,(if (or is-override-p minor-mode-p is-emulation-p)
             (progn
 	      (setq old-keymap nil)
 	      `(progn
@@ -1072,10 +1075,10 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
          ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
 This is an automatically generated function derived from `ergoemacs-get-minor-mode-layout'.")
          ;; Only generate keymap if it hasn't previously been generated.
-         (unless ,(if (or minor-mode-p is-override) nil
+         (unless ,(if (or minor-mode-p is-override-p is-emulation-p) nil
                     (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
            
-           ,(if (or is-override minor-mode-p)
+           ,(if (or is-override-p minor-mode-p is-emulation-p)
                 `(ergoemacs-setup-keys-for-keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
               `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
                      (copy-keymap ,(nth 2 (nth 0 keys)))))
@@ -1083,7 +1086,11 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
               (lambda(def)
                 `(ergoemacs-hook-define-key
                   ,(if (or minor-mode-p
-                           (and is-override
+                           (and is-emulation-p
+                                (or (not (nth 2 (nth 0 keys)))
+                                    (equal (nth 2 def)
+                                           'emulation-mode-map-alists)))
+                           (and is-override-p
                                 (equal (nth 2 def)
                                        'minor-mode-overriding-map-alist)))
                        (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
@@ -1105,7 +1112,22 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
                                 (cons ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
                                       ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
                    (funcall ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode")) 1))))
-           ,(if is-override
+           ,(when is-emulation-p
+              `(progn
+                 (let ((name (intern (format "ergoemacs--emulation-for-%s" major-mode))))
+                   (set-default name nil)
+                   (set (make-local-variable name) t)
+                   
+                   (let ((x (assq ',(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
+                                  ergoemacs-emulation-mode-map-alist)))
+                     ;; Delete keymap.
+                     (if x
+                         (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+                     ;; Put at the end of the list
+                     (setq ergoemacs-emulation-mode-map-alist
+                           (append ergoemacs-emulation-mode-map-alist
+                                   (list (cons name ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))))))))
+           ,(if is-override-p
                 `(progn
                    (add-to-list 'minor-mode-overriding-map-alist
                                 (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
@@ -2081,7 +2103,7 @@ The shortcuts defined are:
         (ergoemacs-debug "CUA rectangle mode modifier changed."))
     (error (message "CUA rectangle modifier wasn't changed.")))
   
-  ;(when ergoemacs-change-smex-meta-x
+  (when ergoemacs-change-smex-meta-x
     (if ergoemacs-mode
         (setq smex-prompt-string (concat (ergoemacs-pretty-key "M-x") " "))
       (setq smex-prompt-string "M-x ")))
