@@ -1749,6 +1749,22 @@ One can enable movement without key-chords as follows:
   :TEMPLATE: blog_static_no_title.html
   :END:
 
+*** How do you get a 【▤ Menu】 key in Mac OS X
+Some of ergoemacs keys make use of the 【▤ Menu】 key.
+One way to set this up in a mac is to replace the Caps Lock key with
+F13 or above, and tell emacs that F13 is actually the menu key.  This
+is done by:
+
+1. Downloading and installing [[https://pqrs.org/macosx/keyremap4macbook/pckeyboardhack.html][PCKeyboardHack]]
+2. Going to the system prefences and PCKeyboardHack
+3. Change the caps lock mapping to F13
+4. Adding the translation to emacs startup script (like ~/.emacs or
+   ~/.emacs.d/init.el) as follows:
+
+#+BEGIN_SRC emacs-lisp
+(define-key key-translation-map (kbd "<F13>") (kbd "<menu>"))
+#+END_SRC
+
 *** How do you select text when using ergoemacs-mode and ergoemacs-arrow keys
 You can hold the left @@html:<kbd class="dark">@@Alt@@html:</kbd>@@,
 then right hand press space to mark, then right hand using any of
@@ -1776,6 +1792,7 @@ users.  One of the goals of ergoemacs-mode is to allow new emacs users
 to not have to learn anything about the keys to start using emacs.
 Therefore, all keys are defined in Ctrl+s notation instead of =C-s=
 notation.
+
 * Tips
 ** Gradual Adoption
   :PROPERTIES:
