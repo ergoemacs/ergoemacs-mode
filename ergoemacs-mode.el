@@ -1963,6 +1963,9 @@ When KEYMAP-KEY is non-nil, define the KEYMAP-KEY on the `ergoemacs-shortcut-ove
 (defvar ergoemacs-shift-select-mode nil)
 (defvar ergoemacs-delete-selection-mode nil)
 
+(defvar ergoemacs-emulation-mode-map-alist nil
+  "Override keys in ergoemacs-mode for `emulation-mode-map-alist'")
+
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -2011,13 +2014,20 @@ The shortcuts defined are:
     ;; turn on text selection highlighting and make typing override
     ;; selected text (Note: when delete-selection-mode is on, then
     ;; transient-mark-mode is automatically on too.)
-    (delete-selection-mode 1))
+    (delete-selection-mode 1)
+    ;; From yasnippet:
+    ;; Install the direct keymaps in `emulation-mode-map-alists'
+    ;; (we use `add-hook' even though it's not technically a hook,
+    ;; but it works). Then define variables named after modes to
+    ;; index `ergoemacs-emulation-mode-map-alist'.
+    (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
    ((not ergoemacs-mode)
     ;; (when (boundp 'org-CUA-compatible)
     ;;   (setq org-CUA-compatible ergoemacs-org-CUA-compatible))
     (setq shift-select-mode ergoemacs-shift-select-mode)
     (unless ergoemacs-delete-selection-mode
-      (delete-selection-mode -1))))
+      (delete-selection-mode -1))
+    (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)))
   
   (setq ergoemacs-shortcut-keymap (make-sparse-keymap))
   (ergoemacs-setup-keys t)
@@ -2113,10 +2123,10 @@ The shortcuts defined are:
   (if ergoemacs-shortcut-mode
       (progn
         ;; (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned on.")
-        (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-map-alist)))
+        (let ((x (assq 'ergoemacs-shortcut-mode ergoemacs-emulation-mode-map-alist)))
           (when x
-            (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
-          (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-map-alist)))
+            (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+          (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)))
     ;; (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned off.")
     )
   ;; (ergoemacs-debug-flush)
@@ -2130,11 +2140,10 @@ The shortcuts defined are:
   :group 'ergoemacs-mode
   (if ergoemacs-shortcut-override-mode
       (progn
-        (ergoemacs-debug "Ergoemacs Shortcut Override have loaded been turned on.")
         (let ((x (assq 'ergoemacs-shortcut-override-mode
-                       emulation-mode-map-alists)))
+                       ergoemacs-emulation-mode-map-alist)))
           (when x
-            (setq emulation-mode-map-alists (delq x emulation-mode-map-alists)))
+            (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
           ;; Create keymap
           (setq ergoemacs-shortcut-override-keymap (make-sparse-keymap))
           ;; Add M-O and M-o key-bindings; Pretend they are the actual
@@ -2157,9 +2166,7 @@ The shortcuts defined are:
            ergoemacs-command-shortcuts-hash)
           (push (cons 'ergoemacs-shortcut-override-mode
                       ergoemacs-shortcut-override-keymap)
-                emulation-mode-map-alists)))
-    (ergoemacs-debug "Ergoemacs Shortcut Keys have loaded been turned off."))
-  (ergoemacs-debug-flush))
+                ergoemacs-emulation-mode-map-alist)))))
 
 (defvar ergoemacs-unbind-keymap (make-sparse-keymap)
   "Keymap for `ergoemacs-unbind-mode'")
@@ -2375,22 +2382,23 @@ Setup C-c and C-x keys to be described properly.")
             (ergoemacs-shortcut-mode 1)
             (ergoemacs-shortcut-override-mode -1))
           
-          (unless (eq 'ergoemacs-shortcut-mode
-                      (car (car minor-mode-map-alist)))
-            (ergoemacs-debug "Promote ergoemacs-shortcut-mode in `minor-mode-map-alist'")
-            (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-map-alist)))
-              (when x
-                (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
-              (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-map-alist)))
+          ;; (unless (eq 'ergoemacs-shortcut-mode
+          ;;             (car (car minor-mode-map-alist)))
+          ;;   (ergoemacs-debug "Promote ergoemacs-shortcut-mode in `minor-mode-map-alist'")
+          ;;   (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-map-alist)))
+          ;;     (when x
+          ;;       (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+          ;;     (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-map-alist)))
           
-          (when minor-mode-overriding-map-alist
-            (unless (eq 'ergoemacs-shortcut-mode
-                        (car (car minor-mode-overriding-map-alist)))
-              (ergoemacs-debug "Promote ergoemacs-shortcut-mode in `minor-mode-overriding-map-overriding-map-alist'")
-              (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-overriding-map-alist)))
-                (when x
-                  (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist)))
-                (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist)))))
+          ;; (when minor-mode-overriding-map-alist
+          ;;   (unless (eq 'ergoemacs-shortcut-mode
+          ;;               (car (car minor-mode-overriding-map-alist)))
+          ;;     (ergoemacs-debug "Promote ergoemacs-shortcut-mode in `minor-mode-overriding-map-overriding-map-alist'")
+          ;;     (let ((x (assq 'ergoemacs-shortcut-mode minor-mode-overriding-map-alist)))
+          ;;       (when x
+          ;;         (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist)))
+          ;;       (push (cons 'ergoemacs-shortcut-mode ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist))))
+          )
       (error (message "Error %s" err))))
   t)
 
