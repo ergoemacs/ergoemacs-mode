@@ -370,55 +370,55 @@
       ("S-<f12>" next-matching-history-element)))
     
     ;; Isearch Hook
-    (isearch-mode-hook
-     (("M-p" isearch-other-meta-char isearch-mode-map) ; was isearch-ring-retreat
-      ("M-n" isearch-other-meta-char isearch-mode-map) ; was isearch-ring-advance
-      ("M-y" isearch-other-meta-char isearch-mode-map) ; was isearch-yank-kill
-      ("C-f" isearch-other-meta-char isearch-mode-map) ; was isearch-yank-kill
-      ("M-c" isearch-other-meta-char isearch-mode-map) ; was isearch-toggle-case-fold
-      ("M-r" isearch-other-meta-char isearch-mode-map) ; was isearch-toggle-regexp
-      ("M-e" isearch-other-meta-char isearch-mode-map) ; was isearch-edit-string
+    ;; (isearch-mode-hook
+    ;;  (("M-p" isearch-other-meta-char isearch-mode-map) ; was isearch-ring-retreat
+    ;;   ("M-n" isearch-other-meta-char isearch-mode-map) ; was isearch-ring-advance
+    ;;   ("M-y" isearch-other-meta-char isearch-mode-map) ; was isearch-yank-kill
+    ;;   ("C-f" isearch-other-meta-char isearch-mode-map) ; was isearch-yank-kill
+    ;;   ("M-c" isearch-other-meta-char isearch-mode-map) ; was isearch-toggle-case-fold
+    ;;   ("M-r" isearch-other-meta-char isearch-mode-map) ; was isearch-toggle-regexp
+    ;;   ("M-e" isearch-other-meta-char isearch-mode-map) ; was isearch-edit-string
       
-      ;; Add all the movement commands to fix Colemack's movement issues.
-      ,@(mapcar
-         (lambda(x)
-           `(,x ,(intern-soft (concat "ergoemacs-isearch-"
-                                      (symbol-name x)))
-                isearch-mode-map))
-         ergoemacs-movement-functions)
-      ("M-7" isearch-toggle-regexp isearch-mode-map t)
-      ;; ("C-r" isearch-toggle-regexp isearch-mode-map)
+    ;;   ;; Add all the movement commands to fix Colemack's movement issues.
+    ;;   ,@(mapcar
+    ;;      (lambda(x)
+    ;;        `(,x ,(intern-soft (concat "ergoemacs-isearch-"
+    ;;                                   (symbol-name x)))
+    ;;             isearch-mode-map))
+    ;;      ergoemacs-movement-functions)
+    ;;   ("M-7" isearch-toggle-regexp isearch-mode-map t)
+    ;;   ;; ("C-r" isearch-toggle-regexp isearch-mode-map)
       
-      ;; ("C-c" isearch-toggle-case-fold isearch-mode-map)
+    ;;   ;; ("C-c" isearch-toggle-case-fold isearch-mode-map)
       
-      ;; Should fix issue #3
-      (isearch-forward isearch-forward-exit-minibuffer minibuffer-local-isearch-map)
-      (isearch-backward isearch-backward-exit-minibuffer minibuffer-local-isearch-map)
+    ;;   ;; Should fix issue #3
+    ;;   (isearch-forward isearch-forward-exit-minibuffer minibuffer-local-isearch-map)
+    ;;   (isearch-backward isearch-backward-exit-minibuffer minibuffer-local-isearch-map)
       
       
-      (keyboard-quit isearch-abort isearch-mode-map)
-      (isearch-forward isearch-repeat-forward isearch-mode-map)
-      ("C-f" isearch-repeat-forward isearch-mode-map)
-      (isearch-backward isearch-repeat-backward isearch-mode-map)
-      (recenter recenter isearch-mode-map)
-      (yank isearch-yank-kill isearch-mode-map)
+    ;;   (keyboard-quit isearch-abort isearch-mode-map)
+    ;;   (isearch-forward isearch-repeat-forward isearch-mode-map)
+    ;;   ("C-f" isearch-repeat-forward isearch-mode-map)
+    ;;   (isearch-backward isearch-repeat-backward isearch-mode-map)
+    ;;   (recenter recenter isearch-mode-map)
+    ;;   (yank isearch-yank-kill isearch-mode-map)
       
-      ;; CUA paste key is isearch-yank-kill in isearch mode
-      ("C-v" isearch-yank-kill isearch-mode-map)
+    ;;   ;; CUA paste key is isearch-yank-kill in isearch mode
+    ;;   ("C-v" isearch-yank-kill isearch-mode-map)
       
-      ;; isearch-other-control-char sends the key to the original buffer and cancels isearch
-      (kill-ring-save isearch-other-control-char isearch-mode-map)
-      (kill-word isearch-other-control-char isearch-mode-map)
-      (backward-kill-word isearch-other-control-char isearch-mode-map)
-      (recenter isearch-recenter isearch-mode-map)
-      (delete-backward-char isearch-delete-char isearch-mode-map)
-      (delete-char isearch-del-char isearch-mode-map)
-      (query-replace isearch-query-replace isearch-mode-map)
-      (query-replace-regexp isearch-query-replace-regexp isearch-mode-map)
-      (ergoemacs-call-keyword-completion isearch-complete isearch-mode-map)
+    ;;   ;; isearch-other-control-char sends the key to the original buffer and cancels isearch
+    ;;   (kill-ring-save isearch-other-control-char isearch-mode-map)
+    ;;   (kill-word isearch-other-control-char isearch-mode-map)
+    ;;   (backward-kill-word isearch-other-control-char isearch-mode-map)
+    ;;   (recenter isearch-recenter isearch-mode-map)
+    ;;   (delete-backward-char isearch-delete-char isearch-mode-map)
+    ;;   (delete-char isearch-del-char isearch-mode-map)
+    ;;   (query-replace isearch-query-replace isearch-mode-map)
+    ;;   (query-replace-regexp isearch-query-replace-regexp isearch-mode-map)
+    ;;   (ergoemacs-call-keyword-completion isearch-complete isearch-mode-map)
       
-      ("<f11>" isearch-ring-retreat isearch-mode-map)
-      ("<f12>" isearch-ring-advance isearch-mode-map)))
+    ;;   ("<f11>" isearch-ring-retreat isearch-mode-map)
+    ;;   ("<f12>" isearch-ring-advance isearch-mode-map)))
     
     ;; Comint
     (comint-mode-hook

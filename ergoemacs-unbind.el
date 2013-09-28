@@ -631,6 +631,65 @@
     ("RET" (newline)))
   "Default Emacs Key Bindings")
 
+(defvar ergoemacs-unbind-keymap (make-sparse-keymap)
+  "Keymap for `ergoemacs-unbind-keys'")
+
+(defun ergoemacs-undefined (&optional arg)
+  "Ergoemacs Undefined key, tells where to perform the old action."
+  (interactive "P")
+  (let* ((key (key-description (this-command-keys)))
+         (fn (assoc key ergoemacs-emacs-default-bindings))
+         (local-fn nil)
+         (last (substring key -1))
+         (ergoemacs-where-is-skip t)
+         (curr-fn nil))
+    ;; Lookup local key, if present and then issue that
+    ;; command instead...
+    ;;
+    ;; This way the unbound keys are just above the global
+    ;; map and doesn't actually change it.
+    (cond
+     ((progn
+        ;; Local map present.  Use it, if there is a key
+        ;; defined there.
+        (setq local-fn (get-char-property (point) 'local-map))
+        (if local-fn
+            (setq local-fn (lookup-key local-fn
+                                       (read-kbd-macro key)))
+          (setq local-fn (lookup-key (current-local-map)
+                                     (read-kbd-macro key))))
+        (functionp local-fn))
+      (setq this-command last-command) ; Don't record this
+                                        ; command.
+      (setq prefix-arg current-prefix-arg)
+      (condition-case err
+          (call-interactively local-fn t)
+        (error (beep) (message "%s" err))))
+     (t
+      ;; Not locally defined, complain.
+      (beep)
+      (message "%s keybinding is disabled! Use %s"
+               (ergoemacs-pretty-key key)
+               (ergoemacs-pretty-key-rep
+                (with-temp-buffer
+                  (setq curr-fn (nth 0 (nth 1 fn)))
+                  (when (and fn (not (eq 'prefix curr-fn)))
+                    (setq curr-fn (ergoemacs-translate-current-function curr-fn))
+                    (where-is curr-fn t))
+                  (ergoemacs-format-where-is-buffer)
+                  (buffer-string))))))))
+
+(defun ergoemacs-unbind-setup-keymap ()
+  "Setup `ergoemacs-unbind-keymap' based on current layout."
+  (setq ergoemacs-unbind-keymap (make-sparse-keymap))
+  (mapc
+   (lambda(x)
+     (unless (ergoemacs-global-changed-p x)
+       (define-key ergoemacs-unbind-keymap (read-kbd-macro x) 'ergoemacs-undefined
+         )))
+   (symbol-value (ergoemacs-get-redundant-keys))))
+
+
 (defvar ergoemacs-where-is-global-hash (make-hash-table :test 'equal)
   "Hash for ergoemacs lookup of global functions.")
 
