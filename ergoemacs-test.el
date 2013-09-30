@@ -237,7 +237,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                                                          "<menu> m") nil nil "<menu>") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-after ()
-  "Test setting <apps> m after loading
+  "Test setting <apps> m after loading"
   (should (equal (ergoemacs-test-global-key-set-before 'after
                                                        (if (eq system-type 'windows-nt)
                                                            "<apps> m"

@@ -107,7 +107,12 @@
   (when ergoemacs-global-not-changed-cache
     (delete (key-description key) ergoemacs-global-not-changed-cache))
   (when (lookup-key ergoemacs-unbind-keymap key)
-    (define-key ergoemacs-unbind-keymap key nil))
+    (define-key ergoemacs-unbind-keymap key nil)
+    (define-key ergoemacs-shortcut-keymap key nil))
+  (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
+    (when x
+      (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+    (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist))
   (if (string-match "<\\(apps\\|menu\\)>" (key-description key))
       (let ((no-ergoemacs-advice t))
         (when command
