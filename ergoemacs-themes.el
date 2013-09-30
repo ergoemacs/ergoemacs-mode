@@ -30,7 +30,7 @@
 
 ;; Ergoemacs keys
 
-;; F6 is fall back
+
 
 (defgroup ergoemacs-standard-layout nil
   "Default Ergoemacs Layout"
@@ -44,8 +44,8 @@
 
     ("M-C-j" left-word  "← char")
     ("M-C-l" right-word "→ char")
-    ("M-C-i" backward-paragraph "↑ line")
-    ("M-C-k" forward-paragraph "↓ line")
+    ("M-C-i" backward-paragraph "↑ ¶")
+    ("M-C-k" forward-paragraph "↓ ¶")
     
     ;; Move by word
     ("M-u" backward-word "← word")
@@ -357,68 +357,23 @@
       ;; (move-end-of-line org-end-of-line nil remap)
       (cua-set-rectangle-mark ergoemacs-org-mode-ctrl-return nil)
       (cua-paste ergoemacs-org-mode-paste nil)
-      ;;("<C-return>" ergoemacs-org-mode-ctrl-return nil)
+      ("<C-return>" ergoemacs-org-insert-heading-respect-content nil)
       ("<M-down>" ergoemacs-org-metadown nil)
       ("<M-up>" ergoemacs-org-metaup nil)
       ("<M-left>" ergoemacs-org-metaleft nil)
       ("<M-right>" ergoemacs-org-metaright nil)))
+
+    ;; Isearch Hook
+    (isearch-mode-hook
+     (("<f11>" isearch-ring-retreat isearch-mode-map)
+      ("<f12>" isearch-ring-advance isearch-mode-map)))
+    
     ;; Minibuffer hook
     (minibuffer-setup-hook
      (("<f11>" previous-history-element)
       ("<f12>" next-history-element)
       ("S-<f11>" previous-matching-history-element)
-      ("S-<f12>" next-matching-history-element)))
-    
-    ;; Isearch Hook
-    ;; (isearch-mode-hook
-    ;;  (("M-p" isearch-other-meta-char isearch-mode-map) ; was isearch-ring-retreat
-    ;;   ("M-n" isearch-other-meta-char isearch-mode-map) ; was isearch-ring-advance
-    ;;   ("M-y" isearch-other-meta-char isearch-mode-map) ; was isearch-yank-kill
-    ;;   ("C-f" isearch-other-meta-char isearch-mode-map) ; was isearch-yank-kill
-    ;;   ("M-c" isearch-other-meta-char isearch-mode-map) ; was isearch-toggle-case-fold
-    ;;   ("M-r" isearch-other-meta-char isearch-mode-map) ; was isearch-toggle-regexp
-    ;;   ("M-e" isearch-other-meta-char isearch-mode-map) ; was isearch-edit-string
-      
-    ;;   ;; Add all the movement commands to fix Colemack's movement issues.
-    ;;   ,@(mapcar
-    ;;      (lambda(x)
-    ;;        `(,x ,(intern-soft (concat "ergoemacs-isearch-"
-    ;;                                   (symbol-name x)))
-    ;;             isearch-mode-map))
-    ;;      ergoemacs-movement-functions)
-    ;;   ("M-7" isearch-toggle-regexp isearch-mode-map t)
-    ;;   ;; ("C-r" isearch-toggle-regexp isearch-mode-map)
-      
-    ;;   ;; ("C-c" isearch-toggle-case-fold isearch-mode-map)
-      
-    ;;   ;; Should fix issue #3
-    ;;   (isearch-forward isearch-forward-exit-minibuffer minibuffer-local-isearch-map)
-    ;;   (isearch-backward isearch-backward-exit-minibuffer minibuffer-local-isearch-map)
-      
-      
-    ;;   (keyboard-quit isearch-abort isearch-mode-map)
-    ;;   (isearch-forward isearch-repeat-forward isearch-mode-map)
-    ;;   ("C-f" isearch-repeat-forward isearch-mode-map)
-    ;;   (isearch-backward isearch-repeat-backward isearch-mode-map)
-    ;;   (recenter recenter isearch-mode-map)
-    ;;   (yank isearch-yank-kill isearch-mode-map)
-      
-    ;;   ;; CUA paste key is isearch-yank-kill in isearch mode
-    ;;   ("C-v" isearch-yank-kill isearch-mode-map)
-      
-    ;;   ;; isearch-other-control-char sends the key to the original buffer and cancels isearch
-    ;;   (kill-ring-save isearch-other-control-char isearch-mode-map)
-    ;;   (kill-word isearch-other-control-char isearch-mode-map)
-    ;;   (backward-kill-word isearch-other-control-char isearch-mode-map)
-    ;;   (recenter isearch-recenter isearch-mode-map)
-    ;;   (delete-backward-char isearch-delete-char isearch-mode-map)
-    ;;   (delete-char isearch-del-char isearch-mode-map)
-    ;;   (query-replace isearch-query-replace isearch-mode-map)
-    ;;   (query-replace-regexp isearch-query-replace-regexp isearch-mode-map)
-    ;;   (ergoemacs-call-keyword-completion isearch-complete isearch-mode-map)
-      
-    ;;   ("<f11>" isearch-ring-retreat isearch-mode-map)
-    ;;   ("<f12>" isearch-ring-advance isearch-mode-map)))
+      ("S-<f12>" next-matching-history-element)))    
     
     ;; Comint
     (comint-mode-hook
@@ -463,25 +418,26 @@
      (("<backspace>" Info-history-back)
       ("<S-backspace>" Info-history-forward)))
     ;; Helm mode hooks
+    
     (helm-before-initialize-hook
      (("C-w" helm-keyboard-quit helm-map)
       ("C-z" nil helm-map)
       ("M-RET" helm-execute-persistent-action helm-map)
       ("M-S-RET" "C-u M-RET" helm-map)
       ("<M-S-return>" "C-u M-RET" helm-map)
-      ;; (next-line helm-next-line helm-map)
-      ;; (previous-line helm-previous-line helm-map)
+      (next-line helm-next-line helm-map)
+      (previous-line helm-previous-line helm-map)
 
-      ;; (next-history-element helm-next-line helm-map)
-      ;; (previous-history-element helm-previous-line helm-map)
+      (next-history-element helm-next-line helm-map)
+      (previous-history-element helm-previous-line helm-map)
       
-      ;; (forward-char helm-next-source helm-map)
-      ;; (backward-char helm-previous-source helm-map)
-      ;; (keyboard-quit helm-keyboard-quit helm-map)
-      ;; (recenter-top-bottom helm-recenter-top-bottom helm-map)
-      ;; (cut-line-or-region helm-yank-text-at-point helm-map)
-      ;; (scroll-down helm-next-page helm-map)
-      ;; (scroll-up helm-previous-page helm-map)
+      (forward-char helm-next-source helm-map)
+      (backward-char helm-previous-source helm-map)
+      (keyboard-quit helm-keyboard-quit helm-map)
+      (recenter-top-bottom helm-recenter-top-bottom helm-map)
+      (cut-line-or-region helm-yank-text-at-point helm-map)
+      (scroll-down helm-next-page helm-map)
+      (scroll-up helm-previous-page helm-map)
       ))
     ;; Auto-complete-mode-hook
     ;; When the `auto-complete-mode' is on, and when a word completion
@@ -489,7 +445,19 @@
     ;; This fixes it.
     (auto-complete-mode-hook
      ((isearch-forward ac-isearch ac-completing-map)
-      ("C-s" nil ac-completing-map))))
+      (next-line ac-next-line ac-completing-map)
+      (previous-line ac-previous ac-completing-map)
+      (previous-line ac-previous ac-completing-map)
+      (backward-paragraph ac-quick-help-scroll-down ac-completing-map)
+      (forward-paragraph ac-quick-help-scroll-up ac-completing-map)
+      ("C-s" nil ac-completing-map)
+      (isearch-forward ac-isearch ac-menu-map)
+      (next-line ac-next-line ac-menu-map)
+      (previous-line ac-previous ac-menu-map)
+      (previous-line ac-previous ac-menu-map)
+      (backward-paragraph ac-quick-help-scroll-down ac-menu-map)
+      (forward-paragraph ac-quick-help-scroll-up ac-menu-map)
+      )))
   "Key bindings that are applied as hooks to specific modes."
   :type '(repeat
           (list :tag "Keys for a particular minor/major mode"

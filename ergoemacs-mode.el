@@ -78,11 +78,10 @@
 %soverriding-local-map\n%s%s\n
 %s(get-char-property (point) 'keymap)\n%s%s\n
 %semulation-mode-map-alists\n%s%s\n
-%sergoemacs-emulation-mode-map-alist\n%s%s\(not  )
+%sergoemacs-emulation-mode-map-alist\n%s%s\n
 %sminor-mode-overriding-map-alist\n%s%s\n
 %sminor-mode-map-alist%s%s\n
 %s(get-text-property (point) 'local-map)\n%s%s\n"
-                   sep sep overriding-terminal-local-map
                    sep sep overriding-terminal-local-map
                    sep sep overriding-local-map
                    sep sep (get-char-property (point) 'keymap)
@@ -318,7 +317,7 @@ remove the keymap depends on user input and KEEP-PRED:
                  (isearch-edit-string)
                (isearch-exit)
                (condition-case err
-                   (call-interactively (or (command-remapping ',command (point)) ',command) t)
+                   (call-interactively (or (command-remapping ',command (point)) ',command))
                  (error
                   (beep)
                   (message "%s" err)))
@@ -330,7 +329,7 @@ remove the keymap depends on user input and KEEP-PRED:
            (isearch-exit)
            
            (condition-case err
-               (call-interactively (or (command-remapping ',command (point)) ',command) t)
+               (call-interactively (or (command-remapping ',command (point)) ',command))
              (error
               (beep)
               (message "%s" err)))
@@ -435,7 +434,7 @@ function immediately when `window-system' is true."
         (let ((fn (lookup-key map [timeout] t)))
           (condition-case err
               (call-interactively
-               (or (command-remapping fn (point)) fn) t)
+               (or (command-remapping fn (point)) fn))
             (error
              (beep)
              (message "%s" err))))
@@ -689,8 +688,6 @@ work in the terminal."
   (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal))
   (let ((setup-ergoemacs-keymap t))
     (ergoemacs-setup-keys-for-keymap ergoemacs-keymap))
-  
-  ;; Now change `minor-mode-map-alist'.
   (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
     ;; Install keymap
     (if x
@@ -1752,7 +1749,14 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
             (setq ergoemacs-shortcut-keys nil)
             (ergoemacs-shortcut-override-mode 1))
           (ergoemacs-install-shortcuts-overriding-maps)
-          (ergoemacs-install-shortcuts-char-property))
+          (ergoemacs-install-shortcuts-char-property)
+          (let ((key-binding
+                 (read-kbd-macro
+                  (format
+                   "<override> %s" (key-description (this-command-keys))))))
+            (cond
+             ((interactive-form key-binding)
+              (setq this-command key-binding)))))
       (error nil)))
   t)
 
@@ -1768,7 +1772,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
             (ergoemacs-shortcut-override-mode -1))
           (ergoemacs-install-shortcuts-overriding-maps)
           (ergoemacs-install-shortcuts-char-property))
-      
       (error (message "Error %s" err))))
   t)
 

@@ -237,7 +237,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                                                          "<menu> m") nil nil "<menu>") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-after ()
-  "Test setting <apps> m after loading."
+  "Test setting <apps> m after loading
   (should (equal (ergoemacs-test-global-key-set-before 'after
                                                        (if (eq system-type 'windows-nt)
                                                            "<apps> m"
@@ -267,37 +267,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   "Issue #65.  helm-M-x should not be helm-[Alt+X]."
   (let (ergoemacs-use-unicode-char)
     (should (string= (ergoemacs-pretty-key-rep "helm-M-x test") "helm-M-x test"))))
-
-(ert-deftest ergoemacs-test-remove-ergoemacs-keys-in-org-mode ()
-  "Should test Issue #67.
-Ergoemacs in `org-mode' should be removed when turning off `ergoemacs-mode'"
-  (let ((old (symbol-value 'ergoemacs-mode))
-        ret)
-    (unless old
-      (ergoemacs-mode 1))
-    (with-temp-buffer
-      (org-mode)
-      (ergoemacs-mode -1)
-      (setq ret (not ergoemacs-org-mode-hook-mode)))
-    (when old
-      (ergoemacs-mode 1))
-    (should ret)))
-
-(ert-deftest ergoemacs-test-add-back-ergoemacs-keys-in-org-mode ()
-    "Should be the second test for Issue #67.
-When ergoemacs-mode is enabled, and an org-mode buffer is already
-present, it should be re-enabled in that particular buffer."
-  (let ((old (symbol-value 'ergoemacs-mode)) ret)
-    (when old
-      (ergoemacs-mode -1))
-    (set-buffer (get-buffer-create "*ergoemacs-test-org-mode*"))
-    (org-mode)
-    (ergoemacs-mode 1)
-    (setq ret ergoemacs-org-mode-hook-mode)
-    (kill-buffer (get-buffer-create "*ergoemacs-test-org-mode*"))
-    (unless old
-      (ergoemacs-mode -1))
-    (should ret)))
 
 (ert-deftest ergoemacs-test-cut-line-or-region ()
   "Issue #68.

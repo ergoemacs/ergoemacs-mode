@@ -276,7 +276,7 @@ on that key.
                          (let ((cmd ',(nth 0 fn)))
                            (setq cmd (or (command-remapping cmd (point)) cmd))
                            (setq prefix-arg current-prefix-arg)
-                           (call-interactively cmd t ,(nth 1 fn)))))
+                           (call-interactively cmd nil ,(nth 1 fn)))))
                     ;; Store override keymap for quickly figuring out
                     ;; what keys are bound where.
                     (define-key ergoemacs-shortcut-override-keymap
@@ -293,7 +293,7 @@ on that key.
                                  keyfreq-table)))))
                 (condition-case err
                     (call-interactively (or (command-remapping (nth 0 fn) (point)) (nth 0 fn))
-                                        t (nth 1 fn))
+                                        nil (nth 1 fn))
                   (error (beep) (message "%s" err)))
                 ;; repeat only works with a function.
                 (when (and repeat

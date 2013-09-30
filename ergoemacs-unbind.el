@@ -663,7 +663,7 @@
                                         ; command.
       (setq prefix-arg current-prefix-arg)
       (condition-case err
-          (call-interactively local-fn t)
+          (call-interactively local-fn)
         (error (beep) (message "%s" err))))
      (t
       ;; Not locally defined, complain.
