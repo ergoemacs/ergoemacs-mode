@@ -203,24 +203,29 @@ on that key.
           (setq ergoemacs-unbind-keys nil)
           (mapc
            (lambda(cur-key)
-             (let ((binding (key-binding cur-key t nil (point))))
-               (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
-               (when (and new-fn (condition-case err
-                                     (interactive-form new-fn)
-                                   (error nil)))
-                 ;; When a lookup finds org-metadown and there is a
-                 ;; function ergoemacs-org-metadown, use the
-                 ;; ergoemacs-org-metadown instead.
-                 (setq fn-override
-                       (list new-fn
-                             (read-kbd-macro
-                              (key-description cur-key) t))))
-               (unless (or (eq binding key)
-                           (memq binding
-                                 ergoemacs-shortcut-ignored-functions))
-                 (add-to-list 'fn-lst (list binding
-                                            (read-kbd-macro
-                                             (key-description cur-key) t))))))
+             (unless (let (case-fold-search)
+                       ;; only use when M- C- are used
+                       (string-match "\\(s-\\|A-\\|H-\\)"
+                                     (key-description cur-key)))
+               
+               (let ((binding (key-binding cur-key t nil (point))))
+                 (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
+                 (when (and new-fn (condition-case err
+                                       (interactive-form new-fn)
+                                     (error nil)))
+                   ;; When a lookup finds org-metadown and there is a
+                   ;; function ergoemacs-org-metadown, use the
+                   ;; ergoemacs-org-metadown instead.
+                   (setq fn-override
+                         (list new-fn
+                               (read-kbd-macro
+                                (key-description cur-key) t))))
+                 (unless (or (eq binding key)
+                             (memq binding
+                                   ergoemacs-shortcut-ignored-functions))
+                   (add-to-list 'fn-lst (list binding
+                                              (read-kbd-macro
+                                               (key-description cur-key) t)))))))
            (or
             (remove-if
              '(lambda(x)
