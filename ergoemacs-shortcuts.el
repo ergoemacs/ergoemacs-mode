@@ -85,11 +85,15 @@ Calls the function shortcut key defined in
 `ergoemacs-command-shortcuts-hash' for `this-command-keys-vector'.  The
 workhorse of this function is in `ergoemacs-shortcut-internal'."
   (interactive "P")
+  
   (let ((args (gethash (this-command-keys-vector)
                        ergoemacs-command-shortcuts-hash)))
     (unless args
-      (gethash (read-kbd-macro (key-description (this-command-keys)) t)
-               ergoemacs-command-shortcuts-hash))
+      ;; Take care of vectors and universal arguments
+      (setq args
+            (gethash (read-kbd-macro
+                      (key-description (this-single-command-keys)) t)
+                     ergoemacs-command-shortcuts-hash)))
     (if (not args)
         (progn
           ;; Remove reference to `ergoemacs-shortcut'
