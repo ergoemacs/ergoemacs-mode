@@ -1748,8 +1748,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
                      (memq this-command ergoemacs-describe-keybindings-functions))
             (setq ergoemacs-shortcut-keys nil)
             (ergoemacs-shortcut-override-mode 1))
-          (ergoemacs-install-shortcuts-overriding-maps)
-          (ergoemacs-install-shortcuts-char-property)
+          (ergoemacs-install-shortcuts-up)
           (let ((key-binding
                  (read-kbd-macro
                   (format
@@ -1770,8 +1769,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
                      (memq this-command ergoemacs-describe-keybindings-functions))
             (setq ergoemacs-shortcut-keys t)
             (ergoemacs-shortcut-override-mode -1))
-          (ergoemacs-install-shortcuts-overriding-maps)
-          (ergoemacs-install-shortcuts-char-property))
+          (ergoemacs-install-shortcuts-up))
       (error (message "Error %s" err))))
   t)
 

@@ -441,51 +441,49 @@ Setup C-c and C-x keys to be described properly.")
                       ergoemacs-shortcut-override-keymap)
                 ergoemacs-emulation-mode-map-alist)))))
 
-(defun ergoemacs-install-shortcuts-overriding-maps ()
+(defun ergoemacs-install-shortcuts-up ()
   "Installs ergoemacs shortcuts into overriding keymaps.
-The keymaps are: `overriding-terminal-local-map' `overriding-local-map'."
-  (let (hashkey lookup)
-    (when (and overriding-local-map
-               (not (eq (lookup-key overriding-local-map
-                                    (read-kbd-macro "<ergoemacs>"))
-                        'ignore)))
-      (setq hashkey (md5 (format "%s" overriding-local-map)))
-      (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
-      (if lookup
-          (setq overriding-local-map lookup)
-        (setq overriding-local-map
-              (ergoemacs-install-shortcuts-map
-               overriding-local-map))
-        (define-key overriding-local-map
-          (read-kbd-macro "<ergoemacs>") 'ignore)
-        (puthash hashkey overriding-local-map ergoemacs-extract-map-hash)))
-    (when (and overriding-terminal-local-map
-               (not (eq (lookup-key overriding-terminal-local-map
-                                    (read-kbd-macro "<ergoemacs>"))
-                        'ignore)))
-      (setq hashkey (md5 (format "%s" overriding-terminal-local-map)))
-      (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
-      (if lookup
-          (setq overriding-terminal-local-map lookup)
-        (setq overriding-terminal-local-map
-              (ergoemacs-install-shortcuts-map
-               overriding-terminal-local-map))
-        (define-key overriding-terminal-local-map
-          (read-kbd-macro "<ergoemacs>") 'ignore)
-        (puthash hashkey overriding-terminal-local-map ergoemacs-extract-map-hash)))))
-
-(defun ergoemacs-install-shortcuts-char-property ()
-  "Installs ergoemacs shortcuts into an overlay or text-property.
-Also adds a dummy <ergoemacs> keys to let us know its already
-been installed."
-  (let ((override-text-map
-         (get-char-property (point) 'keymap))
-        hashkey lookup)
-    (when (and (keymapp override-text-map)
-               (not (eq (lookup-key override-text-map
-                                    (read-kbd-macro "<ergoemacs>"))
-                        'ignore)))
-      ;; (message "Install Shortcut Overlay")
+The keymaps are:
+- `overriding-terminal-local-map'
+- `overriding-local-map'
+- overlays with :keymap property
+- text property with :keymap property."
+  (let (hashkey lookup override-text-map)
+    (cond
+     (overriding-terminal-local-map
+      (when (not (eq (lookup-key overriding-terminal-local-map
+                                 (read-kbd-macro "<ergoemacs>"))
+                          'ignore))
+        (setq hashkey (md5 (format "override-terminal:%s" overriding-terminal-local-map)))
+        (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
+        (if lookup
+            (setq overriding-terminal-local-map lookup)
+          (setq overriding-terminal-local-map
+                (ergoemacs-install-shortcuts-map
+                 overriding-terminal-local-map))
+          (define-key overriding-terminal-local-map
+            (read-kbd-macro "<ergoemacs>") 'ignore)
+          (puthash hashkey overriding-terminal-local-map ergoemacs-extract-map-hash))))
+     (overriding-local-map
+      (when  (not (eq (lookup-key overriding-local-map
+                                  (read-kbd-macro "<ergoemacs>"))
+                      'ignore))
+        (setq hashkey (md5 (format "override-local:%s" overriding-local-map)))
+        (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
+        (if lookup
+            (setq overriding-local-map lookup)
+          (setq overriding-local-map
+                (ergoemacs-install-shortcuts-map
+                 overriding-local-map))
+          (define-key overriding-local-map
+            (read-kbd-macro "<ergoemacs>") 'ignore)
+          (puthash hashkey overriding-local-map ergoemacs-extract-map-hash))))
+     ((progn
+        (setq override-text-map (get-char-property (point) 'keymap))
+        (and (keymapp override-text-map)
+             (not (eq (lookup-key override-text-map
+                                  (read-kbd-macro "<ergoemacs>"))
+                      'ignore))))
       (let ((overlays (overlays-at (point)))
             found)
         (while overlays
@@ -495,7 +493,7 @@ been installed."
                 (setq overlays (cdr overlays))
               (setq found overlay)
               (setq overlays nil))))
-        (setq hashkey (md5 (format "%s" override-text-map)))
+        (setq hashkey (md5 (format "char-map:%s" override-text-map)))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
             (setq override-text-map lookup)
@@ -512,7 +510,7 @@ been installed."
            (previous-single-property-change (point) 'keymap)
            (next-single-property-change (point) 'keymap)
            'keymap
-           override-text-map))))))
+           override-text-map)))))))
 
 (provide 'ergoemacs-shortcuts)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
