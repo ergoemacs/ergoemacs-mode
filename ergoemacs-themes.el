@@ -228,9 +228,10 @@
     ("<C-home>" beginning-of-buffer "↑ Top")
     ("<C-end>" end-of-buffer "↓ Bottom")
     ("<M-f4>" delete-frame) ;; Alt+f4 should work.
+    
     ;; From http://superuser.com/questions/521223/shift-click-to-extend-marked-region
     ("<S-down-mouse-1>" mouse-save-then-kill) ;; Allow shift selection
-    
+    ("<S-mouse-1>" ignore)
     
     ("C-+" text-scale-increase "+Font Size")
     ("C-=" text-scale-increase "+Font Size")
@@ -366,7 +367,8 @@
     ;; Isearch Hook
     (isearch-mode-hook
      (("<f11>" isearch-ring-retreat isearch-mode-map)
-      ("<f12>" isearch-ring-advance isearch-mode-map)))
+      ("<f12>" isearch-ring-advance isearch-mode-map)
+      (ergoemacs-toggle-letter-case isearch-toggle-letter-case isearch-mode-map)))
     
     ;; Minibuffer hook
     (minibuffer-setup-hook

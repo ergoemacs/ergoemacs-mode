@@ -549,6 +549,7 @@ work in the terminal."
      ((memq def '(ergoemacs-ctl-c ergoemacs-ctl-x))
       (define-key ergoemacs-shortcut-keymap key def))
      ((and ergoemacs-prefer-shortcuts
+           (not (string-match "\\(mouse\\|wheel\\)" (key-description key)))
            (boundp 'setup-ergoemacs-keymap) setup-ergoemacs-keymap
            (or (remove-if '(lambda(x) (eq 'menu-bar (elt x 0))) ; Ignore
                                                            ; menu-bar

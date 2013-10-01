@@ -799,66 +799,68 @@ This should only be run when no global keys have been set.
                          key locale-coding-system))))))
            (t key)))
          (key-kbd (key-description key-code)))
-    (if (member key-kbd ergoemacs-global-changed-cache)
-        (progn
-          (when (or fix complain)
-            (let* ((key-function (lookup-key (current-global-map) key-code t))
-                   (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
-                   (trans-function (if (condition-case err
-                                           (keymapp key-function)
-                                         (error nil))
-                                       'prefix
-                                     key-function)))
-              (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
-                       trans-function old-bindings)))
-          t)
-      (if (member key-kbd ergoemacs-global-not-changed-cache)
-           nil
-        (let* ((key-function (lookup-key (current-global-map) key-code t))
-               (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
-               (trans-function (if (condition-case err
-                                       (keymapp key-function)
-                                     (error nil))
-                                   'prefix
-                                 key-function))
-               (has-changed nil))
-          (cond
-           ((not trans-function)) ; trans-function is undefined.
-                                  ; Assume not globally changed.
-           ((integerp trans-function) ; Over defined. See if previous key is globally-changed.
-            (let ((key-as-vector (read-kbd-macro (key-description key-code) t))
-                  (prefix-vector (make-vector trans-function nil))
-                  (i 0))
-              (while (< i trans-function)
-                (aset prefix-vector i (elt key-as-vector i))
-                (setq i (+ 1 i)))
-              (unless (condition-case err ; If it is a prefix vector,
-                                          ; assume not globally
-                                          ; changed
-                          (keymapp (lookup-key (current-global-map) prefix-vector))
-                        (error nil))
-                ;; Not a prefix, see if the key had actually changed
-                ;; by recursively calling `ergoemacs-global-changed-p'
-                (setq has-changed
-                      (ergoemacs-global-changed-p
-                       prefix-vector is-variable complain fix)))))
-           (old-bindings ; Trans function is defined, not an integer
-            (unless (member trans-function (nth 1 old-bindings))
-              (setq has-changed t)))
-           (t
-            (setq has-changed t)) ; Not found in old bindings, but bound globally
-            )
-          (if has-changed
-              (progn
-                (when (or fix complain)
-                  (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
-                           trans-function old-bindings)
-                  (when fix
-                    (unless (integerp trans-function)
-                      (ergoemacs-global-fix-defualt-bindings key-kbd trans-function))))
-                (add-to-list 'ergoemacs-global-changed-cache key-kbd))
-            (add-to-list 'ergoemacs-global-not-changed-cache key-kbd))
-          (symbol-value 'has-changed))))))
+    (if (string-match "\\(mouse\\|wheel\\)" key-kbd)
+        nil
+      (if (member key-kbd ergoemacs-global-changed-cache)
+          (progn
+            (when (or fix complain)
+              (let* ((key-function (lookup-key (current-global-map) key-code t))
+                     (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
+                     (trans-function (if (condition-case err
+                                             (keymapp key-function)
+                                           (error nil))
+                                         'prefix
+                                       key-function)))
+                (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
+                         trans-function old-bindings)))
+            t)
+        (if (member key-kbd ergoemacs-global-not-changed-cache)
+            nil
+          (let* ((key-function (lookup-key (current-global-map) key-code t))
+                 (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
+                 (trans-function (if (condition-case err
+                                         (keymapp key-function)
+                                       (error nil))
+                                     'prefix
+                                   key-function))
+                 (has-changed nil))
+            (cond
+             ((not trans-function)) ; trans-function is undefined.
+                                        ; Assume not globally changed.
+             ((integerp trans-function) ; Over defined. See if previous key is globally-changed.
+              (let ((key-as-vector (read-kbd-macro (key-description key-code) t))
+                    (prefix-vector (make-vector trans-function nil))
+                    (i 0))
+                (while (< i trans-function)
+                  (aset prefix-vector i (elt key-as-vector i))
+                  (setq i (+ 1 i)))
+                (unless (condition-case err ; If it is a prefix vector,
+                                        ; assume not globally
+                                        ; changed
+                            (keymapp (lookup-key (current-global-map) prefix-vector))
+                          (error nil))
+                  ;; Not a prefix, see if the key had actually changed
+                  ;; by recursively calling `ergoemacs-global-changed-p'
+                  (setq has-changed
+                        (ergoemacs-global-changed-p
+                         prefix-vector is-variable complain fix)))))
+             (old-bindings ; Trans function is defined, not an integer
+              (unless (member trans-function (nth 1 old-bindings))
+                (setq has-changed t)))
+             (t
+              (setq has-changed t)) ; Not found in old bindings, but bound globally
+             )
+            (if has-changed
+                (progn
+                  (when (or fix complain)
+                    (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
+                             trans-function old-bindings)
+                    (when fix
+                      (unless (integerp trans-function)
+                        (ergoemacs-global-fix-defualt-bindings key-kbd trans-function))))
+                  (add-to-list 'ergoemacs-global-changed-cache key-kbd))
+              (add-to-list 'ergoemacs-global-not-changed-cache key-kbd))
+            (symbol-value 'has-changed)))))))
 
 (defun ergoemacs-warn-globally-changed-keys (&optional fix)
   "Warns about globally changed keys. If FIX is true, fix the ergoemacs-unbind file."
