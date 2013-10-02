@@ -334,6 +334,7 @@ Hyper Key mapping no longer works."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
         (macro (edmacro-parse-keys "C-f ars C-f <backspace> M-n" t))
+        (ergoemacs-repeat-movement-commands 'all)
         (ret t))
     (ergoemacs-mode -1)
     (setq ergoemacs-theme nil)

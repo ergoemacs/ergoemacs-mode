@@ -326,18 +326,7 @@ remove the keymap depends on user input and KEEP-PRED:
                   (beep)
                   (message "%s" err)))
                
-               (setq this-command ',command)))
-        `(defun ,(intern (concat "ergoemacs-isearch-" (symbol-name command))) (&optional arg)
-           ,(format "Ergoemacs isearch movement command for `%s'." (symbol-name command))
-           (interactive "^P")
-           (isearch-exit)
-           
-           (condition-case err
-               (call-interactively (or (command-remapping ',command (point)) ',command))
-             (error
-              (beep)
-              (message "%s" err)))
-           (setq this-command ',command)))
+               (setq this-command ',command))))
      (defvar ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")) (make-sparse-keymap)
        ,(format "Ergoemacs fast keymap for `%s'." (symbol-name command)))
      ;; Change to advices
@@ -347,7 +336,8 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
 " (symbol-name command) (symbol-name command))
        ad-do-it
        (when (and ergoemacs-mode ergoemacs-repeat-movement-commands
-                  (called-interactively-p 'interactive) (not cua--rectangle-overlays)) ;; Don't add overlays to rectangles
+                  (called-interactively-p 'any)
+                  (not cua--rectangle-overlays)) ;; Don't add overlays to rectangles
          (set-temporary-overlay-map (cond
                                      ((eq ergoemacs-repeat-movement-commands 'single)
                                       ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))

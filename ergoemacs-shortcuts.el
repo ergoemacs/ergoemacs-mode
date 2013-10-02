@@ -300,7 +300,8 @@ sets `this-command' to `%s'. Also after
                                (setq cmd (or (command-remapping cmd (point)) cmd))
                                (setq prefix-arg current-prefix-arg)
                                (setq this-command cmd)
-                               (call-interactively cmd nil ,(nth 1 fn))))))
+                               (let ((ergoemacs-mode t))
+                                 (call-interactively cmd nil ,(nth 1 fn)))))))
                         (define-key ergoemacs-shortcut-override-keymap
                           keymap-key (intern (format "%s-ergoemacs" (nth 0 fn))))
                         
@@ -322,8 +323,9 @@ sets `this-command' to `%s'. Also after
                         (puthash (cons major-mode command) (if count (+ count 1) 1)
                                  keyfreq-table)))))
                 (condition-case err
-                    (call-interactively (or (command-remapping (nth 0 fn) (point)) (nth 0 fn))
-                                        nil (nth 1 fn))
+                    (let ((ergoemacs-mode t))
+                      (call-interactively (or (command-remapping (nth 0 fn) (point)) (nth 0 fn))
+                                          nil (nth 1 fn)))
                   (error (beep) (message "%s" err)))
                 ;; repeat only works with a function.
                 (when (and repeat
