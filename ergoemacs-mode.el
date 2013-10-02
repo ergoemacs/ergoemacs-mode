@@ -93,7 +93,7 @@
     (ergoemacs-debug-flush)
     (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer))))
 
-(defvar ergoemacs-debug-buffer "*ErgoEmacs-mode Debug Log*"
+(defvar ergoemacs-debug-buffer " *ErgoEmacs-mode Debug Log*"
   "Variable for ergoemacs debugging buffer.")
 
 (defun ergoemacs-debug-keymap (keymap)
@@ -122,7 +122,9 @@
   (if (interactive-p)
       (progn
         (ergoemacs-debug-flush)
-        (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer)))
+        (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer))
+        (setq ergoemacs-debug-buffer (replace-regexp-in-string "^ +" "" ergoemacs-debug-buffer))
+        (rename-buffer ergoemacs-debug-buffer))
     (setq ergoemacs-debug
           (format "%s\n%s"
                   ergoemacs-debug
