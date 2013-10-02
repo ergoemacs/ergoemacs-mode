@@ -1639,8 +1639,8 @@ bindings the keymap is:
                    (set (nth 0 x) (nth 1 x))
 		   (setq val (not (nth 1 x)))
                    (set-default (nth 0 x) (nth 1 x)))
-                 `(,(nth 0 x) ,val))))
-	    ergoemacs-save-variables)
+                 `(,(nth 0 x) ,val)))
+             ergoemacs-save-variables))
       (ergoemacs-debug "New ergoemacs-save-variables: %s" ergoemacs-save-variables)
       (setq ergoemacs-save-variables-state nil))
     
