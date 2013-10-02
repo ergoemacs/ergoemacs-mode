@@ -303,8 +303,8 @@ sets `this-command' to `%s'. Also after
                     ;; Store override keymap for quickly figuring out
                     ;; what keys are bound where.
                     (define-key ergoemacs-shortcut-override-keymap
-                      (read-kbd-macro "<override> %s" (key-description (nth 1 fn)))
-                      (nth 0 fn)))
+                      (read-kbd-macro (format "<override> %s" (key-description keymap-key)))
+                                      (nth 0 fn)))
                 (unless (boundp 'keyfreq-no-record)
                   (when (featurep 'keyfreq)
                     (when keyfreq-mode

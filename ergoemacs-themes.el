@@ -30,8 +30,6 @@
 
 ;; Ergoemacs keys
 
-
-
 (defgroup ergoemacs-standard-layout nil
   "Default Ergoemacs Layout"
   :group 'ergoemacs-mode)
@@ -368,6 +366,8 @@
     (isearch-mode-hook
      (("<f11>" isearch-ring-retreat isearch-mode-map)
       ("<f12>" isearch-ring-advance isearch-mode-map)
+      ("S-<f11>" isearch-ring-advance isearch-mode-map)
+      ("S-<f12>" isearch-ring-retreat isearch-mode-map)
       (ergoemacs-toggle-letter-case isearch-toggle-case-fold isearch-mode-map)))
     
     ;; Minibuffer hook
@@ -379,10 +379,10 @@
     
     ;; Comint
     (comint-mode-hook
-     (("<f11>" comint-previous-input )
-      ("<f12>" comint-next-input )
-      ("S-<f11>" comint-previous-matching-input )
-      ("S-<f12>" comint-next-matching-input )))
+     (("<f11>" comint-previous-input)
+      ("<f12>" comint-next-input)
+      ("S-<f11>" comint-previous-matching-input)
+      ("S-<f12>" comint-next-matching-input)))
     
     ;; Log Edit
     (log-edit-mode-hook
@@ -402,10 +402,10 @@
     
     ;; Iswitchdb hook
     (iswitchb-minibuffer-setup-hook
-     (("<f11>" iswitchb-prev-match )
-      ("<f12>" iswitchb-next-match )
-      ("S-<f11>" iswitchb-prev-match )
-      ("S-<f12>" iswitchb-next-match )))
+     (("<f11>" iswitchb-prev-match)
+      ("<f12>" iswitchb-next-match)
+      ("S-<f11>" iswitchb-prev-match)
+      ("S-<f12>" iswitchb-next-match)))
     
     ;; Ido minibuffer setup hook
     (ido-minibuffer-setup-hook
@@ -428,46 +428,30 @@
       ("M-S-RET" "C-u M-RET" helm-map)
       ("<M-S-return>" "C-u M-RET" helm-map)))
     
-    ;; Auto-complete-mode-hook
-    ;; When the `auto-complete-mode' is on, and when a word completion
-    ;; is in process, Ctrl+s does `ac-isearch'.
-    ;; This fixes it.
-    (auto-complete-mode-hook
-     ((isearch-forward ac-isearch ac-completing-map)
-      (next-line ac-next-line ac-completing-map)
-      (previous-line ac-previous ac-completing-map)
-      (previous-line ac-previous ac-completing-map)
-      (backward-paragraph ac-quick-help-scroll-down ac-completing-map)
-      (forward-paragraph ac-quick-help-scroll-up ac-completing-map)
-      ("C-s" nil ac-completing-map)
-      (isearch-forward ac-isearch ac-menu-map)
-      (next-line ac-next-line ac-menu-map)
-      (previous-line ac-previous ac-menu-map)
-      (previous-line ac-previous ac-menu-map)
-      (backward-paragraph ac-quick-help-scroll-down ac-menu-map)
-      (forward-paragraph ac-quick-help-scroll-up ac-menu-map)
-      )))
+    (auto-complete-mode-hook ac-completing-map))
   "Key bindings that are applied as hooks to specific modes."
   :type '(repeat
           (list :tag "Keys for a particular minor/major mode"
                 (symbol :tag "Hook for mode")
-                (repeat
-                 (list :tag "Key"
-                       (choice
-                        (symbol :tag "Defined Ergoemacs Function to Remap")
-                        (string :tag "Kbd Code"))
-                       (choice
-                        (symbol :tag "Function to Run")
-                        (string :tag "Translated Kbd Code")
-                        (const :tag "Unbind Key" nil))
-                       (choice
-                        (const :tag "Use overriding emulation map" nil)
-                        (const :tag "Override by new minor mode" override)
-                        (symbol :tag "Keymap to Modify"))
-                       (choice
-                        (const :tag "Translate key" t)
-                        (const :tag "Raw key" nil)
-                        (const :tag "Remap key" remap))))))
+                (choice
+                 (symbol :tag "Keymap to update")
+                 (repeat
+                  (list :tag "Key"
+                        (choice
+                         (symbol :tag "Defined Ergoemacs Function to Remap")
+                         (string :tag "Kbd Code"))
+                        (choice
+                         (symbol :tag "Function to Run")
+                         (string :tag "Translated Kbd Code")
+                         (const :tag "Unbind Key" nil))
+                        (choice
+                         (const :tag "Use overriding emulation map" nil)
+                         (const :tag "Override by new minor mode" override)
+                         (symbol :tag "Keymap to Modify"))
+                        (choice
+                         (const :tag "Translate key" t)
+                         (const :tag "Raw key" nil)
+                         (const :tag "Remap key" remap)))))))
   :set 'ergoemacs-set-default
   :group 'ergoemacs-standard-layout)
 
@@ -872,23 +856,25 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
          :type '(repeat
                  (list :tag "Keys for a particular minor/major mode"
                        (symbol :tag "Hook for mode")
-                       (repeat
-                        (list :tag "Key"
-                              (choice
-                               (symbol :tag "Defined Ergoemacs Function to Remap")
-                               (string :tag "Kbd Code"))
-                              (choice
-                               (symbol :tag "Function to Run")
-                               (string :tag "Translated Kbd Code")
-                               (const :tag "Unbind Key" nil))
-                              (choice
-                               (const :tag "Use overriding emulation map" nil)
-                               (const :tag "Override by new minor mode" override)
-                               (symbol :tag "Keymap to Modify"))
-                              (choice
-                               (const :tag "Translate key" t)
-                               (const :tag "Raw key" nil)
-                               (const :tag "Remap key" remap))))))
+                       (choice
+                        (symbol :tag "Keymap to update")
+                        (repeat
+                         (list :tag "Key"
+                               (choice
+                                (symbol :tag "Defined Ergoemacs Function to Remap")
+                                (string :tag "Kbd Code"))
+                               (choice
+                                (symbol :tag "Function to Run")
+                                (string :tag "Translated Kbd Code")
+                                (const :tag "Unbind Key" nil))
+                               (choice
+                                (const :tag "Use overriding emulation map" nil)
+                                (const :tag "Override by new minor mode" override)
+                                (symbol :tag "Keymap to Modify"))
+                               (choice
+                                (const :tag "Translate key" t)
+                                (const :tag "Raw key" nil)
+                                (const :tag "Remap key" remap)))))))
          :set 'ergoemacs-set-default
          :group ',(intern (format "ergoemacs-%s-theme" name)))
        (defcustom ,(intern (format "ergoemacs-redundant-keys-%s" name))

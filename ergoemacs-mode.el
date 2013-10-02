@@ -573,8 +573,7 @@ work in the terminal."
     (cond
      ((memq def '(ergoemacs-ctl-c ergoemacs-ctl-x))
       (define-key ergoemacs-shortcut-keymap key def))
-     ((and ergoemacs-prefer-shortcuts
-           (not (string-match "\\(mouse\\|wheel\\)" (key-description key)))
+     ((and (not (string-match "\\(mouse\\|wheel\\)" (key-description key)))
            (boundp 'setup-ergoemacs-keymap) setup-ergoemacs-keymap
            (or (remove-if '(lambda(x) (eq 'menu-bar (elt x 0))) ; Ignore
                                                            ; menu-bar
@@ -876,118 +875,139 @@ work in the terminal."
         (minor-mode-p (make-symbol "minor-mode-p"))
         (old-keymap (make-symbol "old-keymap"))
         (override-keymap (make-symbol "override-keymap")))
-    (setq is-override-p (eq 'minor-mode-overriding-map-alist (nth 2 (nth 0 keys))))
-    (setq is-emulation-p (or (not (nth 2 (nth 0 keys)))
-                             (eq 'emulation-mode-map-alists (nth 2 (nth 0 keys)))))
-    (when is-emulation-p
-      (setq is-major-mode-p
-            (intern-soft
-             (replace-regexp-in-string
-              "-hook$" "" (symbol-name hook)))))
-    (setq minor-mode-p (eq 'override (nth 2 (nth 0 keys))))
-    `(progn
-       (ergoemacs-debug-heading ,(format "ergoemacs-create-hook-function for %s" (symbol-name hook)))
-       (ergoemacs-debug ,(format "Override: %s" is-override-p))
-       (ergoemacs-debug ,(format "Minor Mode: %s" minor-mode-p))
-       (ergoemacs-debug ,(format "Emulation: %s" is-emulation-p))
-       ,(if (or is-override-p minor-mode-p is-emulation-p)
-            (progn
-	      (setq old-keymap nil)
-	      `(progn
-		 (defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) nil
-		   ,(concat "Ergoemacs overriding keymap for `" (symbol-name hook) "'"))))
-	  (setq old-keymap t)
-          (setq override-keymap (nth 2 (nth 0 keys)))
-          `(defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil
-             ,(concat "Old keymap for `" (symbol-name hook) "'.")))
-       
-       ,(when minor-mode-p
-          `(define-minor-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
-             ,(concat "Minor mode for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
-This is an automatically generated function derived from `ergoemacs-create-hook-function'. See `ergoemacs-mode'.")
-             nil
-             :lighter ""
-             :global nil
-             :keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
-
-       (defun ,(intern (concat "ergoemacs-" (symbol-name hook))) ()
-         ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
+    (if (not (listp keys))
+        (progn
+          `(progn
+             (defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil
+               ,(concat "Old keymap for `" (symbol-name hook) "'."))
+             (defun ,(intern (concat "ergoemacs-" (symbol-name hook))) ()
+               ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
 This is an automatically generated function derived from `ergoemacs-create-hook-function'.")
-         ;; Only generate keymap if it hasn't previously been generated.
-         (unless ,(if (or minor-mode-p is-override-p is-emulation-p) nil
-                    (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
-           
-           ,(if (or is-override-p minor-mode-p is-emulation-p)
-                `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) (make-sparse-keymap))
-              `(progn
+               ;; Only generate keymap if it hasn't previously been
+               ;; generated.
+               (unless ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
+                 (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
                  (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
-                       (copy-keymap ,(nth 2 (nth 0 keys))))
-                 (ergoemacs-install-shortcuts-map
-                         ,(nth 2 (nth 0 keys)))
-                 (define-key ,(nth 2 (nth 0 keys))
-                   (read-kbd-macro  "<ergoemacs>") 'ignore)))
-           ,@(mapcar
-              (lambda(def)
-                `(ergoemacs-hook-define-key
-                  ,(if (or minor-mode-p
-                           (and is-emulation-p
-                                (or (not (nth 2 (nth 0 keys)))
-                                    (equal (nth 2 def)
-                                           'emulation-mode-map-alists)))
-                           (and is-override-p
-                                (equal (nth 2 def)
-                                       'minor-mode-overriding-map-alist)))
-                       (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
-                     (nth 2 def))
-                  ,(if (eq (type-of (nth 0 def)) 'string)
-                       `,(nth 0 def)
-                     `(quote ,(nth 0 def)))
-                  ',(nth 1 def)
-                  ',(nth 3 def)))
-              keys)
-	   ,(if (not (or is-override-p minor-mode-p is-emulation-p))
-		`(ergoemacs-debug-keymap ',(nth 2 (nth 0 keys))))
-           ;;(set-default ',(nth 2 (nth 0 keys)) ,(nth 2 (nth 0 keys)))
-           ,(when minor-mode-p
-              `(progn
-                 (let ((x (assq ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
-                                minor-mode-map-alist)))
-                   ;; Delete keymap.
-                   (if x
-                       (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
-                   (add-to-list 'minor-mode-map-alist
-                                (cons ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
-                                      ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
-                   (funcall ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode")) 1))))
-           ,(when is-emulation-p
-              `(progn
-                 (let ((name ,(if is-major-mode-p
-                                  '(intern (format "ergoemacs--emulation-for-%s" major-mode))
-                                `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))))
-                   (set-default name nil)
-                   (set (make-local-variable name) t)
-                   
-                   (let ((x (assq name ergoemacs-emulation-mode-map-alist)))
+                       (copy-keymap ,keys))
+                 (ergoemacs-install-shortcuts-map ,keys)
+                 (define-key ,keys
+                   (read-kbd-macro  "<ergoemacs>") 'ignore)
+                 (ergoemacs-debug-keymap ',keys)
+                 (ergoemacs-debug-flush))
+               t)
+             (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil)))
+    (setq is-override-p (eq 'minor-mode-overriding-map-alist (nth 2 (nth 0 keys))))
+      (setq is-emulation-p (or (not (nth 2 (nth 0 keys)))
+                               (eq 'emulation-mode-map-alists (nth 2 (nth 0 keys)))))
+      (when is-emulation-p
+        (setq is-major-mode-p
+              (intern-soft
+               (replace-regexp-in-string
+                "-hook$" "" (symbol-name hook)))))
+      (setq minor-mode-p (eq 'override (nth 2 (nth 0 keys))))
+      `(progn
+         (ergoemacs-debug-heading ,(format "ergoemacs-create-hook-function for %s" (symbol-name hook)))
+         (ergoemacs-debug ,(format "Override: %s" is-override-p))
+         (ergoemacs-debug ,(format "Minor Mode: %s" minor-mode-p))
+         (ergoemacs-debug ,(format "Emulation: %s" is-emulation-p))
+         ,(if (or is-override-p minor-mode-p is-emulation-p)
+              (progn
+                (setq old-keymap nil)
+                `(progn
+                   (defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) nil
+                     ,(concat "Ergoemacs overriding keymap for `" (symbol-name hook) "'"))))
+            (setq old-keymap t)
+            (setq override-keymap (nth 2 (nth 0 keys)))
+            `(defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil
+               ,(concat "Old keymap for `" (symbol-name hook) "'.")))
+         
+         ,(when minor-mode-p
+            `(define-minor-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
+               ,(concat "Minor mode for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
+This is an automatically generated function derived from `ergoemacs-create-hook-function'. See `ergoemacs-mode'.")
+               nil
+               :lighter ""
+               :global nil
+               :keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
+
+         (defun ,(intern (concat "ergoemacs-" (symbol-name hook))) ()
+           ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
+This is an automatically generated function derived from `ergoemacs-create-hook-function'.")
+           ;; Only generate keymap if it hasn't previously been generated.
+           (unless ,(if (or minor-mode-p is-override-p is-emulation-p) nil
+                      (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
+             
+             ,(if (or is-override-p minor-mode-p is-emulation-p)
+                  `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) (make-sparse-keymap))
+                `(progn
+                   (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
+                         (copy-keymap ,(nth 2 (nth 0 keys))))
+                   (ergoemacs-install-shortcuts-map
+                    ,(nth 2 (nth 0 keys)))
+                   (define-key ,(nth 2 (nth 0 keys))
+                     (read-kbd-macro  "<ergoemacs>") 'ignore)))
+             ,@(mapcar
+                (lambda(def)
+                  `(ergoemacs-hook-define-key
+                    ,(if (or minor-mode-p
+                             (and is-emulation-p
+                                  (or (not (nth 2 (nth 0 keys)))
+                                      (equal (nth 2 def)
+                                             'emulation-mode-map-alists)))
+                             (and is-override-p
+                                  (equal (nth 2 def)
+                                         'minor-mode-overriding-map-alist)))
+                         (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
+                       (nth 2 def))
+                    ,(if (eq (type-of (nth 0 def)) 'string)
+                         `,(nth 0 def)
+                       `(quote ,(nth 0 def)))
+                    ',(nth 1 def)
+                    ',(nth 3 def)))
+                keys)
+             ,(if (not (or is-override-p minor-mode-p is-emulation-p))
+                  `(ergoemacs-debug-keymap ',(nth 2 (nth 0 keys))))
+             ;;(set-default ',(nth 2 (nth 0 keys)) ,(nth 2 (nth 0 keys)))
+             ,(when minor-mode-p
+                `(progn
+                   (let ((x (assq ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
+                                  minor-mode-map-alist)))
                      ;; Delete keymap.
                      (if x
-                         (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-                     ;; Put at the end of the list
-                     (setq ergoemacs-emulation-mode-map-alist
-                           (append ergoemacs-emulation-mode-map-alist
-                                   (list (cons name ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))))))))
-           ,(if is-override-p
+                         (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+                     (add-to-list 'minor-mode-map-alist
+                                  (cons ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
+                                        ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
+                     (funcall ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode")) 1))))
+             ,(when is-emulation-p
                 `(progn
-                   (add-to-list 'minor-mode-overriding-map-alist
-                                (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
-                                nil ,(if (equal hook 'minibuffer-setup-hook)
-                                         '(lambda (x y)
-                                            (equal (car y) (car x)))
-                                       nil))
-                   (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist))
-              nil)
-           (ergoemacs-debug-flush)
-           t))
-       (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))) ',override-keymap))))
+                   (let ((name ,(if is-major-mode-p
+                                    '(intern (format "ergoemacs--emulation-for-%s" major-mode))
+                                  `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))))
+                     (set-default name nil)
+                     (set (make-local-variable name) t)
+                     
+                     (let ((x (assq name ergoemacs-emulation-mode-map-alist)))
+                       ;; Delete keymap.
+                       (if x
+                           (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+                       ;; Put at the end of the list
+                       (setq ergoemacs-emulation-mode-map-alist
+                             (append ergoemacs-emulation-mode-map-alist
+                                     (list (cons name ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))))))))
+             ,(if is-override-p
+                  `(progn
+                     (add-to-list 'minor-mode-overriding-map-alist
+                                  (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
+                                  nil ,(if (equal hook 'minibuffer-setup-hook)
+                                           '(lambda (x y)
+                                              (equal (car y) (car x)))
+                                         nil))
+                     (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist))
+                nil)
+             (ergoemacs-debug-flush)
+             t))
+         (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))) ',override-keymap)))))
 
 (defun ergoemacs-pre-command-install-minor-mode-overriding-map-alist ()
   "Install `minor-mode-overriding-map-alist' if it didn't get installed (like in some `org-mode')."
@@ -1790,7 +1810,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
           (let ((key-binding
                  (read-kbd-macro
                   (format
-                   "<override> %s" (key-description (this-command-keys))))))
+                   "<override> %s" (key-description (this-single-command-keys))))))
             (cond
              ((interactive-form key-binding)
               (setq this-command key-binding)))))
