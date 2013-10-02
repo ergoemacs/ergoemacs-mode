@@ -368,7 +368,7 @@
     (isearch-mode-hook
      (("<f11>" isearch-ring-retreat isearch-mode-map)
       ("<f12>" isearch-ring-advance isearch-mode-map)
-      (ergoemacs-toggle-letter-case isearch-toggle-letter-case isearch-mode-map)))
+      (ergoemacs-toggle-letter-case isearch-toggle-case-fold isearch-mode-map)))
     
     ;; Minibuffer hook
     (minibuffer-setup-hook
@@ -426,21 +426,8 @@
       ("C-z" nil helm-map)
       ("M-RET" helm-execute-persistent-action helm-map)
       ("M-S-RET" "C-u M-RET" helm-map)
-      ("<M-S-return>" "C-u M-RET" helm-map)
-      (next-line helm-next-line helm-map)
-      (previous-line helm-previous-line helm-map)
-
-      (next-history-element helm-next-line helm-map)
-      (previous-history-element helm-previous-line helm-map)
-      
-      (forward-char helm-next-source helm-map)
-      (backward-char helm-previous-source helm-map)
-      (keyboard-quit helm-keyboard-quit helm-map)
-      (recenter-top-bottom helm-recenter-top-bottom helm-map)
-      (cut-line-or-region helm-yank-text-at-point helm-map)
-      (scroll-down helm-next-page helm-map)
-      (scroll-up helm-previous-page helm-map)
-      ))
+      ("<M-S-return>" "C-u M-RET" helm-map)))
+    
     ;; Auto-complete-mode-hook
     ;; When the `auto-complete-mode' is on, and when a word completion
     ;; is in process, Ctrl+s does `ac-isearch'.

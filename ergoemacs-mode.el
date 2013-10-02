@@ -91,7 +91,30 @@
                    sep sep minor-mode-map-alist
                    sep sep (get-text-property (point) 'local-map))
     (ergoemacs-debug-flush)
-    (switch-to-buffer-other-window (get-buffer-create " *ergoemacs-debug*"))))
+    (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer))))
+
+(defvar ergoemacs-debug-buffer "*ErgoEmacs-mode Debug Log*"
+  "Variable for ergoemacs debugging buffer.")
+
+(defun ergoemacs-debug-keymap (keymap)
+  "Print keymap bindings."
+  (ergoemacs-debug-heading (format "Keymap Description: %s" (symbol-name keymap)))
+  (ergoemacs-debug
+   (substitute-command-keys (format "\\{%s}" (symbol-name keymap)))))
+
+(defvar ergoemacs-debug-heading-start-time (float-time))
+(defvar ergoemacs-debug-heading-last-time (float-time))
+
+(defun ergoemacs-debug-heading (&rest arg)
+  "Ergoemacs debugging heading."
+  (ergoemacs-debug (make-string 80 ?=))
+  (ergoemacs-debug (condition-case err
+                       (apply 'format arg)
+                     (error (format "Bad format string: %s" arg))))
+  (ergoemacs-debug "Time Since Start ergoemacs-mode: %1f sec" (- (float-time) ergoemacs-debug-heading-start-time))
+  (ergoemacs-debug "Time Since Last Heading: %1f sec" (- (float-time) ergoemacs-debug-heading-last-time))
+  (ergoemacs-debug (make-string 80 ?=))
+  (setq ergoemacs-debug-heading-last-time (float-time)))
 
 (defun ergoemacs-debug (&rest arg)
   "Ergoemacs debugging facility."
@@ -99,16 +122,18 @@
   (if (interactive-p)
       (progn
         (ergoemacs-debug-flush)
-        (switch-to-buffer-other-window (get-buffer-create " *ergoemacs-debug*")))
+        (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer)))
     (setq ergoemacs-debug
           (format "%s\n%s"
                   ergoemacs-debug
-                  (apply 'format arg)))))
+                  (condition-case err
+                      (apply 'format arg)
+                    (error (format "Bad Format String: %s" arg)))))))
 
 (defun ergoemacs-debug-flush ()
-  "Flushes ergoemacs debug to *ergoemacs-debug*"
+  "Flushes ergoemacs debug to `ergoemacs-debug-buffer'"
   (save-excursion
-    (with-current-buffer (get-buffer-create " *ergoemacs-debug*") ;; Should be hidden.
+    (with-current-buffer (get-buffer-create ergoemacs-debug-buffer) 
       (insert ergoemacs-debug "\n")))
   (setq ergoemacs-debug ""))
 
@@ -595,10 +620,12 @@ work in the terminal."
              key
              trans-key
              cmd cmd-tmp)
+         (ergoemacs-debug-heading ,(format "Setup keys for %s" (symbol-name keymap)))
          (setq ,keymap (make-sparse-keymap))
          (if (eq ',keymap 'ergoemacs-keymap)
              (ergoemacs-debug "Theme: %s" ergoemacs-theme))
          ;; Fixed layout keys
+         (ergoemacs-debug-heading "Setup Fixed Keys")
          (mapc
           (lambda(x)
             (when (and (eq 'string (type-of (nth 0 x))))
@@ -625,7 +652,7 @@ work in the terminal."
                 (when (not (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd))
                   (ergoemacs-debug "Key %s->%s not setup." key cmd)))))
           (symbol-value (ergoemacs-get-fixed-layout)))
-         
+         (ergoemacs-debug-heading "Setup Variable Layout Keys")
          ;; Variable Layout Keys
          (mapc
           (lambda(x)
@@ -676,7 +703,8 @@ work in the terminal."
                         (functionp g-M-o))
                (ergoemacs-debug "Fixed M-o")
                (define-key ,keymap (read-kbd-macro "M-o") 'ergoemacs-M-o)
-               (define-key ergoemacs-M-o-keymap [timeout] g-M-o)))))
+               (define-key ergoemacs-M-o-keymap [timeout] g-M-o))))
+         (ergoemacs-debug-keymap ',keymap))
      (error
       (ergoemacs-debug "Error: %s" err)
       (ergoemacs-debug-flush))))
@@ -858,6 +886,10 @@ work in the terminal."
               "-hook$" "" (symbol-name hook)))))
     (setq minor-mode-p (eq 'override (nth 2 (nth 0 keys))))
     `(progn
+       (ergoemacs-debug-heading ,(format "ergoemacs-create-hook-function for %s" (symbol-name hook)))
+       (ergoemacs-debug ,(format "Override: %s" is-override-p))
+       (ergoemacs-debug ,(format "Minor Mode: %s" minor-mode-p))
+       (ergoemacs-debug ,(format "Emulation: %s" is-emulation-p))
        ,(if (or is-override-p minor-mode-p is-emulation-p)
             (progn
 	      (setq old-keymap nil)
@@ -872,7 +904,7 @@ work in the terminal."
        ,(when minor-mode-p
           `(define-minor-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
              ,(concat "Minor mode for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
-This is an automatically generated function derived from `ergoemacs-get-minor-mode-layout'. See `ergoemacs-mode'.")
+This is an automatically generated function derived from `ergoemacs-create-hook-function'. See `ergoemacs-mode'.")
              nil
              :lighter ""
              :global nil
@@ -880,15 +912,20 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
 
        (defun ,(intern (concat "ergoemacs-" (symbol-name hook))) ()
          ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
-This is an automatically generated function derived from `ergoemacs-get-minor-mode-layout'.")
+This is an automatically generated function derived from `ergoemacs-create-hook-function'.")
          ;; Only generate keymap if it hasn't previously been generated.
          (unless ,(if (or minor-mode-p is-override-p is-emulation-p) nil
                     (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
            
            ,(if (or is-override-p minor-mode-p is-emulation-p)
                 `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) (make-sparse-keymap))
-              `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
-                     (copy-keymap ,(nth 2 (nth 0 keys)))))
+              `(progn
+                 (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
+                       (copy-keymap ,(nth 2 (nth 0 keys))))
+                 (ergoemacs-install-shortcuts-map
+                         ,(nth 2 (nth 0 keys)))
+                 (define-key ,(nth 2 (nth 0 keys))
+                   (read-kbd-macro  "<ergoemacs>") 'ignore)))
            ,@(mapcar
               (lambda(def)
                 `(ergoemacs-hook-define-key
@@ -908,6 +945,9 @@ This is an automatically generated function derived from `ergoemacs-get-minor-mo
                   ',(nth 1 def)
                   ',(nth 3 def)))
               keys)
+	   ,(if (not (or is-override-p minor-mode-p is-emulation-p))
+		`(ergoemacs-debug-keymap ',(nth 2 (nth 0 keys))))
+           ;;(set-default ',(nth 2 (nth 0 keys)) ,(nth 2 (nth 0 keys)))
            ,(when minor-mode-p
               `(progn
                  (let ((x (assq ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
@@ -1070,7 +1110,6 @@ will change."
 the best match."
   :type 'boolean
   :group 'ergoemacs-mode)
-
 (defvar ergoemacs-extract-map-hash (make-hash-table :test 'equal))
 
 
@@ -1532,10 +1571,6 @@ The layout and theme changes the bindings.  For the current
 bindings the keymap is:
 
 \\{ergoemacs-keymap}
-
-The shortcuts defined are:
-
-\\{ergoemacs-shortcut-keymap}
 "
   nil
   :lighter " ErgoEmacs"
@@ -1548,6 +1583,8 @@ The shortcuts defined are:
   ;; This will possibly allow swapping of C-c and M-c.
   (cond
    (ergoemacs-mode
+    (setq ergoemacs-debug-heading-start-time (float-time))
+    (setq ergoemacs-debug-heading-last-time (float-time))
     (when cua-mode
       (cua-mode -1)
       (cua-selection-mode 1))
@@ -1571,7 +1608,7 @@ The shortcuts defined are:
     ;; Setup keys
     (setq ergoemacs-shortcut-keymap (make-sparse-keymap))
     (ergoemacs-setup-keys t)
-    (ergoemacs-debug "Ergoemacs Keys have loaded.")
+    (ergoemacs-debug-heading "Ergoemacs Keys have loaded.")
     (when (eq system-type 'darwin)
       (setq ergoemacs-old-ns-command-modifier ns-command-modifier)
       (setq ergoemacs-old-ns-alternate-modifier ns-alternate-modifier)
@@ -1584,6 +1621,7 @@ The shortcuts defined are:
           (ergoemacs-menus-on))
       (when (featurep 'ergoemacs-menus)
         (ergoemacs-menus-off)))
+    (ergoemacs-debug-heading "Ergoemacs Menus have loaded.")
     (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
     (setq cua--rectangle-keymap (make-sparse-keymap))
     (setq cua--rectangle-initialized nil)
@@ -1616,8 +1654,7 @@ The shortcuts defined are:
     (when (and (eq system-type 'darwin))
       (setq ns-command-modifier ergoemacs-old-ns-command-modifier)
       (setq ns-alternate-modifier ergoemacs-old-ns-alternate-modifier))
-    ;; Change retangle modifier back.
-    
+    ;; Change retangle modifier back.    
     (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier-orig)
     (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
     (setq cua--rectangle-keymap (make-sparse-keymap))

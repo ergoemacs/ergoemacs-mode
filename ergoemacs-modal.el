@@ -80,9 +80,7 @@ necessary.  Unshifted keys are changed to shifted keys.")
                                                    "<apps>"
                                                  "<menu>"))
     'ergoemacs-exit-dummy)
-  (ergoemacs-debug (make-string 80 ?=))
-  (ergoemacs-debug "Setup Fast Keys")
-  (ergoemacs-debug (make-string 80 ?=))
+  (ergoemacs-debug-heading "Setup Fast/Modal Keys")
   (mapc
    (lambda(var)
      (let* ((key (ergoemacs-kbd (nth 0 var) t))
@@ -96,7 +94,6 @@ necessary.  Unshifted keys are changed to shifted keys.")
             (new-cmd (nth 1 var)))
        (ergoemacs-debug "Key:%s stripped-key: %s" key stripped-key)
        (when (string-match "^[A-Za-z]$" stripped-key)
-         ;;(message "Stripped key: %s" stripped-key)
          (if (string= (downcase stripped-key) stripped-key)
              (progn
                (define-key ergoemacs-full-alt-keymap (edmacro-parse-keys stripped-key) new-cmd)
@@ -111,7 +108,9 @@ necessary.  Unshifted keys are changed to shifted keys.")
          (define-key ergoemacs-full-fast-keys-keymap
            (edmacro-parse-keys stripped-key)
            new-cmd))))
-   (symbol-value (ergoemacs-get-variable-layout))))
+   (symbol-value (ergoemacs-get-variable-layout)))
+  (ergoemacs-debug-keymap 'ergoemacs-full-alt-keymap)
+  (ergoemacs-debug-keymap 'ergoemacs-full-alt-shift-keymap))
 
 (defvar ergoemacs-exit-temp-map-var nil)
 
