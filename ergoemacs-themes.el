@@ -126,7 +126,8 @@
     ;; Mark point.
     ("M-SPC" set-mark-command "Set Mark")
     
-    ("M-a" (helm-M-x smex execute-extended-command) "M-x")
+    ;; ("M-a" (helm-M-x smex execute-extended-command) "M-x")
+    ("M-a" execute-extended-command "M-x")
     ("M-A" shell-command "shell cmd")
     
     ;; WINDOW SPLITING
@@ -157,7 +158,7 @@
     ("<apps> 3" delete-other-windows "x other pane")
     ("<apps> 4" split-window-vertically "split —")
     ("<apps> 5" query-replace "rep")
-    ("<apps> <return>" (helm-M-x smex execute-extended-command) "M-x")
+    ("<apps> <return>" execute-extended-command "M-x")
     ("<apps> SPC" set-mark-command "Set Mark")
     ("<apps> a" mark-whole-buffer "Sel All")
     ("<apps> f" ("C-x" ctl-to-alt) "Ctl-x")
@@ -368,7 +369,8 @@
       ("<f12>" isearch-ring-advance isearch-mode-map)
       ("S-<f11>" isearch-ring-advance isearch-mode-map)
       ("S-<f12>" isearch-ring-retreat isearch-mode-map)
-      (ergoemacs-toggle-letter-case isearch-toggle-case-fold isearch-mode-map)))
+      (ergoemacs-toggle-letter-case isearch-toggle-regexp isearch-mode-map)
+      (ergoemacs-toggle-camel-case isearch-toggle-case-fold isearch-mode-map)))
     
     ;; Minibuffer hook
     (minibuffer-setup-hook
@@ -450,7 +452,6 @@
                          (const :tag "Unbind Key" nil))
                         (choice
                          (const :tag "Use overriding emulation map" nil)
-                         (const :tag "Override by new minor mode" override)
                          (symbol :tag "Keymap to Modify"))
                         (choice
                          (const :tag "Translate key" t)

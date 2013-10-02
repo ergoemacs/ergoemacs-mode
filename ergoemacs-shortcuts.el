@@ -211,12 +211,9 @@ on that key.
                        (string-match "\\(s-\\|A-\\|H-\\)"
                                      (key-description cur-key)))
                (let ((binding
-                      (if keymap-key
-                          (lookup-key
-                           (if (and (boundp 'ergoemacs-orig-keymap) ergoemacs-orig-keymap)
-                               ergoemacs-orig-keymap
-                             ergoemacs-shortcut-override-keymap)
-                           cur-key t)
+                      (if (and keymap-key (boundp 'ergoemacs-orig-keymap)
+                               ergoemacs-orig-keymap)
+                          (lookup-key ergoemacs-orig-keymap cur-key t)
                         (key-binding cur-key t nil (point)))))
                  (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
                  (when (and new-fn (condition-case err
@@ -271,40 +268,50 @@ on that key.
                   (interactive-form (nth 0 fn))
                 (error nil))
               (if keymap-key
-                  (when  (or
-                          ;; Overwrite local mode's maps (should issue warning?)
-                          (condition-case err
-                              (interactive-form
-                               (lookup-key ergoemacs-shortcut-override-keymap keymap-key))
-                            (error nil))
-                          ;; Add key if it changed.
-                          (not (eq key (nth 0 fn))))
-                    (ergoemacs-debug "Shortcut %s to %s %s" (key-description keymap-key)
-                                     (nth 0 fn) (nth 1 fn))
-                    (eval
-                     (macroexpand
-                      `(defun ,(intern (format "%s-ergoemacs" (nth 0 fn)))
-                         (&optional arg)
-                         ,(format "Run `%s' or what is remapped to by `command-remapping'.
+                  (let ((do-it
+                         (or (not (boundp 'ergoemacs-orig-keymap))
+                             (and (boundp 'ergoemacs-orig-keymap) (not ergoemacs-orig-keymap))
+                             ;; Overwrite local mode's maps (should issue
+                             ;; warning?)
+                             (condition-case err
+                                 (interactive-form
+                                  (lookup-key ergoemacs-shortcut-override-keymap keymap-key))
+                               (error nil))
+                             ;; Add key if it changed.
+                             (not (eq key (nth 0 fn))))))
+                    (when  do-it
+                        (ergoemacs-debug "Shortcut %s to %s %s" (key-description keymap-key)
+                                       (nth 0 fn) (nth 1 fn))
+                      (cond
+                       ((and (boundp 'ergoemacs-orig-keymap) ergoemacs-orig-keymap)
+                        (eval
+                         (macroexpand
+                          `(defun ,(intern (format "%s-ergoemacs" (nth 0 fn)))
+                             (&optional arg)
+                             ,(format "Run `%s' or what is remapped to by `command-remapping'.
 It also tells the function that you pressed %s, and after run it
 sets `this-command' to `%s'. Also after
 `ergoemacs-pre-command-hook' `this-command' should be set to
 `%s'"
-                                  (nth 0 fn) (key-description (nth 1 fn))
-                                  (nth 0 fn) (nth 0 fn))
-                         (interactive "P")
-                         (let ((cmd ',(nth 0 fn)))
-                           (setq cmd (or (command-remapping cmd (point)) cmd))
-                           (setq prefix-arg current-prefix-arg)
-                           (setq this-command cmd)
-                           (call-interactively cmd nil ,(nth 1 fn))))))
-                    (define-key ergoemacs-shortcut-override-keymap
-                      keymap-key (intern (format "%s-ergoemacs" (nth 0 fn))))
-                    ;; Store override keymap for quickly figuring out
-                    ;; what keys are bound where.
-                    (define-key ergoemacs-shortcut-override-keymap
-                      (read-kbd-macro (format "<override> %s" (key-description keymap-key)))
-                                      (nth 0 fn)))
+                                      (nth 0 fn) (key-description (nth 1 fn))
+                                      (nth 0 fn) (nth 0 fn))
+                             (interactive "P")
+                             (let ((cmd ',(nth 0 fn)))
+                               (setq cmd (or (command-remapping cmd (point)) cmd))
+                               (setq prefix-arg current-prefix-arg)
+                               (setq this-command cmd)
+                               (call-interactively cmd nil ,(nth 1 fn))))))
+                        (define-key ergoemacs-shortcut-override-keymap
+                          keymap-key (intern (format "%s-ergoemacs" (nth 0 fn))))
+                        
+                        ;; Store override keymap for quickly figuring out
+                        ;; what keys are bound where.
+                        (define-key ergoemacs-shortcut-override-keymap
+                          (read-kbd-macro (format "<override> %s" (key-description keymap-key)))
+                          (nth 0 fn)))
+                       (t
+                        (define-key ergoemacs-shortcut-override-keymap
+                          keymap-key (nth 0 fn))))))
                 (unless (boundp 'keyfreq-no-record)
                   (when (featurep 'keyfreq)
                     (when keyfreq-mode
@@ -442,7 +449,8 @@ Setup C-c and C-x keys to be described properly.")
           (when x
             (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
           ;; Create keymap
-          (setq ergoemacs-shortcut-override-keymap ())
+          (ergoemacs-debug-heading "Turn on `ergoemacs-shortcut-override-mode'")
+          (setq ergoemacs-shortcut-override-keymap (ergoemacs-install-shortcuts-map))
           ;; Add M-O and M-o key-bindings; Pretend they are the actual
           ;; bindings instead of the M-O and M-o work-rounds.
           (when (eq (key-binding (read-kbd-macro "M-O"))
@@ -455,10 +463,14 @@ Setup C-c and C-x keys to be described properly.")
             (define-key ergoemacs-shortcut-override-keymap
               (read-kbd-macro "M-o")
               (lookup-key ergoemacs-M-o-keymap [timeout])))
-          (ergoemacs-install-shortcuts-map)
+          
+          (ergoemacs-debug-keymap 'ergoemacs-shortcut-override-keymap)
           (push (cons 'ergoemacs-shortcut-override-mode
                       ergoemacs-shortcut-override-keymap)
-                ergoemacs-emulation-mode-map-alist)))))
+                ergoemacs-emulation-mode-map-alist)
+          (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s" (mapcar (lambda(x) (nth 0 x)) ergoemacs-emulation-mode-map-alist))
+          (ergoemacs-debug-heading "Finish `ergoemacs-shortcut-override-mode'")
+          (ergoemacs-debug-flush)))))
 
 (defun ergoemacs-install-shortcuts-up ()
   "Installs ergoemacs shortcuts into overriding keymaps.
@@ -475,6 +487,7 @@ The keymaps are:
                   overriding-terminal-local-map
                   (read-kbd-macro "<ergoemacs>"))
                  'ignore))
+        (ergoemacs-debug-heading "Install shortcuts into overriding-terminal-local-map")
         (setq hashkey (md5 (format "override-terminal:%s" overriding-terminal-local-map)))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
@@ -482,11 +495,13 @@ The keymaps are:
           (ergoemacs-install-shortcuts-map overriding-terminal-local-map)
           (define-key overriding-terminal-local-map
             (read-kbd-macro  "<ergoemacs>") 'ignore)
-          (puthash hashkey overriding-terminal-local-map ergoemacs-extract-map-hash))))
+          (puthash hashkey overriding-terminal-local-map ergoemacs-extract-map-hash))
+        (ergoemacs-debug-keymap 'overriding-terminal-local-map)))
      (overriding-local-map
       (when  (not (eq (lookup-key overriding-local-map
                                   (read-kbd-macro "<ergoemacs>"))
-                          'ignore))
+                      'ignore))
+        (ergoemacs-debug-heading "Install shortcuts into overriding-local-map")
         (setq hashkey (md5 (format "override-local:%s" overriding-local-map)))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
@@ -494,13 +509,15 @@ The keymaps are:
           (ergoemacs-install-shortcuts-map overriding-local-map)
           (define-key overriding-local-map
             (read-kbd-macro "<ergoemacs>") 'ignore)
-          (puthash hashkey overriding-local-map ergoemacs-extract-map-hash))))
+          (puthash hashkey overriding-local-map ergoemacs-extract-map-hash))
+        (ergoemacs-debug-keymap 'overriding-local-map)))
      ((progn
         (setq override-text-map (get-char-property (point) 'keymap))
         (and (keymapp override-text-map)
              (not (eq (lookup-key override-text-map
                                   (read-kbd-macro "<ergoemacs>"))
                       'ignore))))
+      (ergoemacs-debug-heading "Install shortcuts into (get-char-property (point) 'keymap)")
       (let ((overlays (overlays-at (point)))
             found)
         (while overlays
@@ -521,11 +538,13 @@ The keymaps are:
         (if found
             (overlay-put found 'keymap override-text-map)
           ;; Overlay not found; change text property
+          (ergoemacs-debug "Put into text properties")
           (put-text-property
            (previous-single-property-change (point) 'keymap)
            (next-single-property-change (point) 'keymap)
            'keymap
-           override-text-map)))))))
+           override-text-map))
+        (ergoemacs-debug-keymap 'override-text-map))))))
 
 (provide 'ergoemacs-shortcuts)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

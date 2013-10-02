@@ -120,9 +120,9 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                     (buffer-string))))
           (if (not just-translate)
               (condition-case err
-                  (read-kbd-macro new-key)
+                  (read-kbd-macro new-key t)
                 (error
-                 (read-kbd-macro (encode-coding-string new-key locale-coding-system))))
+                 (read-kbd-macro (encode-coding-string new-key locale-coding-system) t)))
             (puthash `(,key ,just-translate ,only-first ,ergoemacs-translation-from ,ergoemacs-translation-to) new-key
                      ergoemacs-kbd-hash)
             new-key))))))

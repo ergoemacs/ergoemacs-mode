@@ -93,7 +93,7 @@
     (ergoemacs-debug-flush)
     (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer))))
 
-(defvar ergoemacs-debug-buffer " *ErgoEmacs-mode Debug Log*"
+(defvar ergoemacs-debug-buffer "*ErgoEmacs-mode Debug Log*"
   "Variable for ergoemacs debugging buffer.")
 
 (defun ergoemacs-debug-keymap (keymap)
@@ -634,13 +634,12 @@ work in the terminal."
                   (progn ;; Change to the fixed keyboard layout.
                     (setq key (ergoemacs-kbd trans-key)))
                 (condition-case err
-                    (setq key (read-kbd-macro
-                               trans-key))
+                    (setq key (read-kbd-macro trans-key t))
                   (error
                    (setq key (read-kbd-macro
                               (encode-coding-string
                                trans-key
-                               locale-coding-system))))))
+                               locale-coding-system) t)))))
               (if (eq ',keymap 'ergoemacs-keymap)
                   (ergoemacs-debug "Fixed: %s -> %s %s (%s)" trans-key cmd key (key-description key)))
               (if (ergoemacs-global-changed-p trans-key)
@@ -869,10 +868,8 @@ work in the terminal."
 
 (defmacro ergoemacs-create-hook-function (hook keys &optional global)
   "Creates a hook function based on the HOOK and the list of KEYS defined."
-  (let ((is-override-p (make-symbol "is-override-p"))
-        (is-emulation-p (make-symbol "is-emulation-p"))
+  (let ((is-emulation-p (make-symbol "is-emulation-p"))
         (is-major-mode-p (make-symbol "is-major-mode-p"))
-        (minor-mode-p (make-symbol "minor-mode-p"))
         (old-keymap (make-symbol "old-keymap"))
         (override-keymap (make-symbol "override-keymap")))
     (if (not (listp keys))
@@ -897,7 +894,6 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                  (ergoemacs-debug-flush))
                t)
              (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil)))
-    (setq is-override-p (eq 'minor-mode-overriding-map-alist (nth 2 (nth 0 keys))))
       (setq is-emulation-p (or (not (nth 2 (nth 0 keys)))
                                (eq 'emulation-mode-map-alists (nth 2 (nth 0 keys)))))
       (when is-emulation-p
@@ -905,13 +901,10 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
               (intern-soft
                (replace-regexp-in-string
                 "-hook$" "" (symbol-name hook)))))
-      (setq minor-mode-p (eq 'override (nth 2 (nth 0 keys))))
       `(progn
          (ergoemacs-debug-heading ,(format "ergoemacs-create-hook-function for %s" (symbol-name hook)))
-         (ergoemacs-debug ,(format "Override: %s" is-override-p))
-         (ergoemacs-debug ,(format "Minor Mode: %s" minor-mode-p))
          (ergoemacs-debug ,(format "Emulation: %s" is-emulation-p))
-         ,(if (or is-override-p minor-mode-p is-emulation-p)
+         ,(if is-emulation-p
               (progn
                 (setq old-keymap nil)
                 `(progn
@@ -921,24 +914,16 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
             (setq override-keymap (nth 2 (nth 0 keys)))
             `(defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil
                ,(concat "Old keymap for `" (symbol-name hook) "'.")))
-         
-         ,(when minor-mode-p
-            `(define-minor-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
-               ,(concat "Minor mode for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
-This is an automatically generated function derived from `ergoemacs-create-hook-function'. See `ergoemacs-mode'.")
-               nil
-               :lighter ""
-               :global nil
-               :keymap ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
 
          (defun ,(intern (concat "ergoemacs-" (symbol-name hook))) ()
            ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
 This is an automatically generated function derived from `ergoemacs-create-hook-function'.")
+           (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
            ;; Only generate keymap if it hasn't previously been generated.
-           (unless ,(if (or minor-mode-p is-override-p is-emulation-p) nil
+           (unless ,(if is-emulation-p nil
                       (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
              
-             ,(if (or is-override-p minor-mode-p is-emulation-p)
+             ,(if  is-emulation-p
                   `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) (make-sparse-keymap))
                 `(progn
                    (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
@@ -950,14 +935,10 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
              ,@(mapcar
                 (lambda(def)
                   `(ergoemacs-hook-define-key
-                    ,(if (or minor-mode-p
-                             (and is-emulation-p
-                                  (or (not (nth 2 (nth 0 keys)))
-                                      (equal (nth 2 def)
-                                             'emulation-mode-map-alists)))
-                             (and is-override-p
+                    ,(if (and is-emulation-p
+                              (or (not (nth 2 (nth 0 keys)))
                                   (equal (nth 2 def)
-                                         'minor-mode-overriding-map-alist)))
+                                         'emulation-mode-map-alists)))
                          (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
                        (nth 2 def))
                     ,(if (eq (type-of (nth 0 def)) 'string)
@@ -966,20 +947,9 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                     ',(nth 1 def)
                     ',(nth 3 def)))
                 keys)
-             ,(if (not (or is-override-p minor-mode-p is-emulation-p))
+             ,(if (not  is-emulation-p)
                   `(ergoemacs-debug-keymap ',(nth 2 (nth 0 keys))))
              ;;(set-default ',(nth 2 (nth 0 keys)) ,(nth 2 (nth 0 keys)))
-             ,(when minor-mode-p
-                `(progn
-                   (let ((x (assq ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
-                                  minor-mode-map-alist)))
-                     ;; Delete keymap.
-                     (if x
-                         (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
-                     (add-to-list 'minor-mode-map-alist
-                                  (cons ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode"))
-                                        ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))
-                     (funcall ',(intern (concat "ergoemacs-" (symbol-name hook) "-mode")) 1))))
              ,(when is-emulation-p
                 `(progn
                    (let ((name ,(if is-major-mode-p
@@ -996,16 +966,7 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                        (setq ergoemacs-emulation-mode-map-alist
                              (append ergoemacs-emulation-mode-map-alist
                                      (list (cons name ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))))))))
-             ,(if is-override-p
-                  `(progn
-                     (add-to-list 'minor-mode-overriding-map-alist
-                                  (cons 'ergoemacs-mode ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
-                                  nil ,(if (equal hook 'minibuffer-setup-hook)
-                                           '(lambda (x y)
-                                              (equal (car y) (car x)))
-                                         nil))
-                     (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist))
-                nil)
+             (ergoemacs-debug-heading ,(concat "Finish ergoemacs-" (symbol-name hook)))
              (ergoemacs-vars-sync)
              (ergoemacs-debug-flush)
              t))
@@ -1741,12 +1702,7 @@ bindings the keymap is:
        (with-current-buffer buf
          (when (and (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))
                     (symbol-value (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))))
-           (funcall (intern-soft (format "ergoemacs-%s-hook-mode" major-mode)) -1))
-         (let ((x (assq 'ergoemacs-mode minor-mode-overriding-map-alist)))
-           (if x
-               (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist)))
-           (setq x (assq 'ergoemacs-shortcut-keys minor-mode-overriding-map-alist))
-           (setq minor-mode-overriding-map-alist (delq x minor-mode-overriding-map-alist)))))
+           (funcall (intern-soft (format "ergoemacs-%s-hook-mode" major-mode)) -1))))
      (buffer-list))
     (setq ergoemacs-shortcut-keys nil)
     (setq ergoemacs-unbind-keys nil))
@@ -1851,8 +1807,10 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
       (setq ergoemacs-mode t)
       (ergoemacs-debug "WARNING: ergoemacs-mode was turned off; Turning on."))
     (unless ergoemacs-shortcut-keys
-      (setq ergoemacs-shortcut-keys t)
-      (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned off; Turning on."))
+      (if ergoemacs-shortcut-override-mode
+          (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned off, but ergoemacs-shortcut-override-mode is on, keeping off.")
+        (setq ergoemacs-shortcut-keys t)
+        (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned off; Turning on.")))
     (unless ergoemacs-unbind-keys
       (setq ergoemacs-unbind-keys t)
       (ergoemacs-debug "WARNING: ergoemacs-unbind-keys was turned off; Turning on."))))
@@ -1864,18 +1822,18 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
         (progn
           (ergoemacs-vars-sync)
           (when ergoemacs-mode
-            (when (and (not ergoemacs-show-true-bindings)
-                       (memq this-command ergoemacs-describe-keybindings-functions))
-              (setq ergoemacs-shortcut-keys nil)
-              (ergoemacs-shortcut-override-mode 1))
-            (ergoemacs-install-shortcuts-up)
             (let ((key-binding
                    (read-kbd-macro
                     (format
                      "<override> %s" (key-description (this-single-command-keys))))))
               (cond
                ((interactive-form key-binding)
-                (setq this-command key-binding))))))
+                (setq this-command key-binding))))
+            (ergoemacs-install-shortcuts-up)
+            (when (and (not ergoemacs-show-true-bindings)
+                       (memq this-command ergoemacs-describe-keybindings-functions))
+              (setq ergoemacs-shortcut-keys nil)
+              (ergoemacs-shortcut-override-mode 1))))
       (error nil)))
   t)
 
@@ -1884,13 +1842,13 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   (let (deactivate-mark)
     (condition-case err
         (progn
-          (ergoemacs-vars-sync)
           (when ergoemacs-mode
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (setq ergoemacs-shortcut-keys t)
               (ergoemacs-shortcut-override-mode -1))
-            (ergoemacs-install-shortcuts-up)))
+            (ergoemacs-install-shortcuts-up)
+            (ergoemacs-vars-sync)))
       (error (message "Error %s" err))))
   t)
 
