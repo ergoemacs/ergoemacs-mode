@@ -93,7 +93,7 @@
     (ergoemacs-debug-flush)
     (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer))))
 
-(defvar ergoemacs-debug-buffer "*ErgoEmacs-mode Debug Log*"
+(defvar ergoemacs-debug-buffer " *ErgoEmacs-mode Debug Log*"
   "Variable for ergoemacs debugging buffer.")
 
 (defun ergoemacs-debug-keymap (keymap)
@@ -893,6 +893,7 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                  (define-key ,keys
                    (read-kbd-macro  "<ergoemacs>") 'ignore)
                  (ergoemacs-debug-keymap ',keys)
+                 (ergoemacs-vars-sync)
                  (ergoemacs-debug-flush))
                t)
              (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil)))
@@ -1005,6 +1006,7 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                                          nil))
                      (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) minor-mode-overriding-map-alist))
                 nil)
+             (ergoemacs-vars-sync)
              (ergoemacs-debug-flush)
              t))
          (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))) ',override-keymap)))))
@@ -1566,9 +1568,15 @@ the best match."
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
 
-(defvar ergoemacs-org-CUA-compatible nil)
-(defvar ergoemacs-shift-select-mode nil)
-(defvar ergoemacs-delete-selection-mode nil)
+(defvar ergoemacs-save-variables
+  '((org-CUA-compatible t)
+    (shift-select-mode t)
+    (delete-selection-mode 1)
+    (scroll-error-top-bottom t))
+  "Variables/Modes that `ergoemacs-mode' changes, and restores.
+Initial state is what `ergoemacs-mode' toggles to when it is turned on.
+When the state is 1 or -1 it turns on/off the corresponding mode.")
+(defvar ergoemacs-save-variables-state nil)
 
 (defvar ergoemacs-emulation-mode-map-alist nil
   "Override keys in ergoemacs-mode for `emulation-mode-map-alist'")
@@ -1611,10 +1619,29 @@ bindings the keymap is:
     ;; (if (boundp 'org-CUA-compatible)
     ;;     (setq ergoemacs-org-CUA-compatible nil)
     ;;   (setq ergoemacs-org-CUA-compatible org-CUA-compatible))
-    (setq ergoemacs-shift-select-mode shift-select-mode)
-    (setq ergoemacs-delete-selection-mode delete-selection-mode)
-    ;; (setq org-CUA-compatible t)
-    (set-default 'shift-select-mode t)
+    (unless ergoemacs-save-variables-state
+      (ergoemacs-debug-heading "Update variables and modes")
+      (ergoemacs-debug "Old ergoemacs-save-variables: %s" ergoemacs-save-variables)
+      (setq ergoemacs-save-variables
+            (mapcar
+             (lambda(x)
+               (let (val)
+                 (if (condition-case err (or (= 1 (nth 1 x)) (= -1 (nth 1 x))) (error nil))
+                     (progn
+                       (ergoemacs-debug "Call (%s %s)"
+                                        (symbol-name (nth 0 x)) (nth 1 x))
+                       (funcall (nth 0 x) (nth 1 x))
+		       (setq val (if (= (nth 1 x) 1) -1 1)))
+                   (ergoemacs-debug "Set %s to %s" (symbol-name (nth 0 x)) (nth 1 x))
+                   (set (nth 0 x) (nth 1 x))
+                   (set-default (nth 0 x) (nth 1 x))
+		   (setq val (not (nth 1 x))))
+                 `(,(nth 0 x) ,val)))
+	     ergoemacs-save-variables))
+      (ergoemacs-debug "New ergoemacs-save-variables: %s" ergoemacs-save-variables)
+      (setq ergoemacs-save-variables-state t))
+    
+    
     ;; turn on text selection highlighting and make typing override
     ;; selected text (Note: when delete-selection-mode is on, then
     ;; transient-mark-mode is automatically on too.)
@@ -1665,9 +1692,28 @@ bindings the keymap is:
     (setq ergoemacs-shortcut-keys t)
     (setq ergoemacs-unbind-keys t))   
    (t ;; turn off ergoemacs-mode
-    (setq shift-select-mode ergoemacs-shift-select-mode)
-    (unless ergoemacs-delete-selection-mode
-      (delete-selection-mode -1))
+    (when ergoemacs-save-variables-state
+      (ergoemacs-debug-heading "Revert variables and modes")
+      (ergoemacs-debug "Old ergoemacs-save-variables: %s" ergoemacs-save-variables)
+      (setq ergoemacs-save-variables
+            (mapcar
+             (lambda(x)
+               (let (val)
+                 (if (condition-case err (or (= 1 (nth 1 x)) (= -1 (nth 1 x))) (error nil))
+                     (progn
+                       (ergoemacs-debug "Call (%s %s)"
+                                        (symbol-name (nth 0 x)) (nth 1 x))
+                       (funcall (nth 0 x) (nth 1 x))
+		       (setq val (if (= 1 (nth 1 x)) -1 1)))
+                   (ergoemacs-debug "Set %s to %s" (symbol-name (nth 0 x)) (nth 1 x))
+                   (set (nth 0 x) (nth 1 x))
+		   (setq val (not (nth 1 x)))
+                   (set-default (nth 0 x) (nth 1 x)))
+                 `(,(nth 0 x) ,val))))
+	    ergoemacs-save-variables)
+      (ergoemacs-debug "New ergoemacs-save-variables: %s" ergoemacs-save-variables)
+      (setq ergoemacs-save-variables-state nil))
+    
     (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
     (when (featurep 'ergoemacs-menus)
       (ergoemacs-menus-off))
@@ -1797,37 +1843,54 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 (when ergoemacs-use-aliases
   (ergoemacs-load-aliases))
 
+(defun ergoemacs-vars-sync ()
+  "Sync variables. `ergoemacs-mode' `ergoemacs-shortcut-keys', `ergoemacs-unbind-keys'."
+  (when (or ergoemacs-mode ergoemacs-shortcut-keys ergoemacs-unbind-keys
+            ergoemacs-save-variables)
+    (unless ergoemacs-mode
+      (setq ergoemacs-mode t)
+      (ergoemacs-debug "WARNING: ergoemacs-mode was turned off; Turning on."))
+    (unless ergoemacs-shortcut-keys
+      (setq ergoemacs-shortcut-keys t)
+      (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned off; Turning on."))
+    (unless ergoemacs-unbind-keys
+      (setq ergoemacs-unbind-keys t)
+      (ergoemacs-debug "WARNING: ergoemacs-unbind-keys was turned off; Turning on."))))
+
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
   (let (deactivate-mark)
     (condition-case err
-        (when ergoemacs-mode
-          (when (and (not ergoemacs-show-true-bindings)
-                     (memq this-command ergoemacs-describe-keybindings-functions))
-            (setq ergoemacs-shortcut-keys nil)
-            (ergoemacs-shortcut-override-mode 1))
-          (ergoemacs-install-shortcuts-up)
-          (let ((key-binding
-                 (read-kbd-macro
-                  (format
-                   "<override> %s" (key-description (this-single-command-keys))))))
-            (cond
-             ((interactive-form key-binding)
-              (setq this-command key-binding)))))
+        (progn
+          (ergoemacs-vars-sync)
+          (when ergoemacs-mode
+            (when (and (not ergoemacs-show-true-bindings)
+                       (memq this-command ergoemacs-describe-keybindings-functions))
+              (setq ergoemacs-shortcut-keys nil)
+              (ergoemacs-shortcut-override-mode 1))
+            (ergoemacs-install-shortcuts-up)
+            (let ((key-binding
+                   (read-kbd-macro
+                    (format
+                     "<override> %s" (key-description (this-single-command-keys))))))
+              (cond
+               ((interactive-form key-binding)
+                (setq this-command key-binding))))))
       (error nil)))
   t)
-
 
 (defun ergoemacs-post-command-hook ()
   "Ergoemacs post-command-hook"
   (let (deactivate-mark)
     (condition-case err
-        (when ergoemacs-mode
-          (when (and (not ergoemacs-show-true-bindings)
-                     (memq this-command ergoemacs-describe-keybindings-functions))
-            (setq ergoemacs-shortcut-keys t)
-            (ergoemacs-shortcut-override-mode -1))
-          (ergoemacs-install-shortcuts-up))
+        (progn
+          (ergoemacs-vars-sync)
+          (when ergoemacs-mode
+            (when (and (not ergoemacs-show-true-bindings)
+                       (memq this-command ergoemacs-describe-keybindings-functions))
+              (setq ergoemacs-shortcut-keys t)
+              (ergoemacs-shortcut-override-mode -1))
+            (ergoemacs-install-shortcuts-up)))
       (error (message "Error %s" err))))
   t)
 
