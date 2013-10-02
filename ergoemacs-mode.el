@@ -70,29 +70,6 @@
 (defvar ergoemacs-debug ""
   "Debugging for `ergoemacs-mode'.")
 
-(defun ergoemacs-debug-current-bindings ()
-  (interactive)
-  (let ((sep (concat (make-string 80 ?=) "\n")))
-    (ergoemacs-debug
-     "%soverriding-terminal-local-map\n%s%s\n
-%soverriding-local-map\n%s%s\n
-%s(get-char-property (point) 'keymap)\n%s%s\n
-%semulation-mode-map-alists\n%s%s\n
-%sergoemacs-emulation-mode-map-alist\n%s%s\n
-%sminor-mode-overriding-map-alist\n%s%s\n
-%sminor-mode-map-alist%s%s\n
-%s(get-text-property (point) 'local-map)\n%s%s\n"
-                   sep sep overriding-terminal-local-map
-                   sep sep overriding-local-map
-                   sep sep (get-char-property (point) 'keymap)
-                   sep sep emulation-mode-map-alists
-                   sep sep ergoemacs-emulation-mode-map-alist
-                   sep sep minor-mode-overriding-map-alist
-                   sep sep minor-mode-map-alist
-                   sep sep (get-text-property (point) 'local-map))
-    (ergoemacs-debug-flush)
-    (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer))))
-
 (defvar ergoemacs-debug-buffer " *ErgoEmacs-mode Debug Log*"
   "Variable for ergoemacs debugging buffer.")
 
