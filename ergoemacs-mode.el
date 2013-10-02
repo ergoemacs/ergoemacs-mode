@@ -308,7 +308,7 @@ remove the keymap depends on user input and KEEP-PRED:
    (eval `(ergoemacs-create-undo-advices ,x)))
  ergoemacs-undo-redo-functions)
 
-
+(defvar ergoemacs-check-mode-line-change nil)
 (defmacro ergoemacs-create-movement-commands (command)
   "Creates a shifted and repeat advices and isearch commands."
   `(progn
@@ -340,8 +340,18 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
                   (not cua--rectangle-overlays)) ;; Don't add overlays to rectangles
          (set-temporary-overlay-map (cond
                                      ((eq ergoemacs-repeat-movement-commands 'single)
+                                      (unless (where-is-internal last-command (list ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap"))) t)
+                                        (setq ergoemacs-check-mode-line-change (list ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap"))))
+                                        (message ,(format "Repeat last movement(%s) key: %%s" (symbol-name command))
+                                                 (replace-regexp-in-string
+                                                  "M-" "" (key-description (this-single-command-keys))))
+                                        (ergoemacs-mode-line (format " %sSingle" (ergoemacs-unicode-char "↔" "<->"))))
                                       ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))
                                      ((eq ergoemacs-repeat-movement-commands 'all)
+                                      (unless (where-is-internal last-command (list ergoemacs-full-fast-keys-keymap) t)
+                                        (setq ergoemacs-check-mode-line-change (list ergoemacs-full-fast-keys-keymap))
+                                        (message "Repeating movement keys installed")
+                                        (ergoemacs-mode-line (format " %sFull" (ergoemacs-unicode-char "↔" "<->"))))
                                       ergoemacs-full-fast-keys-keymap)
                                      (t ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))) t)))))
 (mapc
@@ -761,21 +771,33 @@ work in the terminal."
     (if existing
         (setcdr existing ergoemacs-keymap)
       (push (cons 'ergoemacs-mode ergoemacs-keymap) minor-mode-map-alist)))
-  
+  (ergoemacs-mode-line)
   ;; Set appropriate mode-line indicator
-  (setq minor-mode-alist
-        (mapcar (lambda(x)
-                  (if (not (eq 'ergoemacs-mode (nth 0 x)))
-                      x
-                    `(ergoemacs-mode ,(concat
-                                       (if (not ergoemacs-theme)
-                                           " ErgoEmacs"
-                                         (concat " Ergo"
-                                                 (upcase (substring ergoemacs-theme 0 1))
-                                                 (substring ergoemacs-theme 1)))
-                                       "[" ergoemacs-keyboard-layout "]"))))
-                minor-mode-alist))
   (ergoemacs-setup-backward-compatability))
+
+(defun ergoemacs-mode-line (&optional text)
+  "Set ergoemacs-mode-line"
+  (ergoemacs-debug-heading "Set Mode Line to %s" (or text "Default"))
+  (if text
+      (setq minor-mode-alist
+            (mapcar (lambda(x)
+                      (if (not (eq 'ergoemacs-mode (nth 0 x)))
+                          x
+                        `(ergoemacs-mode ,text)))
+                    minor-mode-alist))
+    (setq minor-mode-alist
+          (mapcar (lambda(x)
+                    (if (not (eq 'ergoemacs-mode (nth 0 x)))
+                        x
+                      `(ergoemacs-mode ,(concat
+                                         (if (not ergoemacs-theme)
+                                             " ErgoEmacs"
+                                           (concat " Ergo"
+                                                   (upcase (substring ergoemacs-theme 0 1))
+                                                   (substring ergoemacs-theme 1)))
+                                         "[" ergoemacs-keyboard-layout "]"))))
+                  minor-mode-alist)))
+  (ergoemacs-debug-flush))
 
 (require 'lookup-word-on-internet nil "NOERROR")
 (require 'ergoemacs-extras)
@@ -1812,6 +1834,11 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
     (condition-case err
         (progn
           (when ergoemacs-mode
+            ;; Reset mode-line
+            (when ergoemacs-check-mode-line-change
+              (unless (where-is-internal this-command ergoemacs-check-mode-line-change)
+                (message "Restored normal ergoemacs keys.")
+                (ergoemacs-mode-line)))
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (setq ergoemacs-shortcut-keys t)
