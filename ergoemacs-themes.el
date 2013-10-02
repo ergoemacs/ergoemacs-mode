@@ -410,6 +410,10 @@
     ;; Ido minibuffer setup hook
     (ido-minibuffer-setup-hook
      (("C-o" ergoemacs-ido-c-o)
+      (forward-char ido-next-match minor-mode-overriding-map-alist)
+      (backward-char ido-prev-match minor-mode-overriding-map-alist)
+      (previous-line ergoemacs-ido-next-match-dir minor-mode-overriding-map-alist)
+      (next-line ergoemacs-ido-prev-match-dir minor-mode-overriding-map-alist)
       ("<f11>" previous-history-element )
       ("<f12>" next-history-element)
       ("S-<f11>" previous-matching-history-element)
