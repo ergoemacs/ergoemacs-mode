@@ -329,6 +329,37 @@ Hyper Key mapping no longer works."
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
+(ert-deftest ergoemacs-test-issue-98 ()
+  "Test full fast-movement-keys"
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (macro (edmacro-parse-keys "C-f ars C-f <backspace> M-n" t))
+        (ret t))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme nil)
+    (setq ergoemacs-keyboard-layout "colemak")
+    (ergoemacs-mode 1)
+    (cua-mode 1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-min))
+      (execute-kbd-macro (edmacro-parse-keys "M-e"))
+      (unless (looking-at "do eiusmod")
+        (setq ret nil))
+      (execute-kbd-macro (edmacro-parse-keys "e"))
+      (unless (looking-at "enim ad")
+        (setq ret nil))
+      (execute-kbd-macro (edmacro-parse-keys "u"))
+      (unless (looking-at "do eiusmod")
+        (setq ret nil))
+      (kill-buffer (current-buffer)))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here

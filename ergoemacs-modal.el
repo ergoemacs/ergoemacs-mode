@@ -66,19 +66,22 @@ necessary.  Unshifted keys are changed to shifted keys.")
 (defun ergoemacs-setup-fast-keys ()
   "Setup an array listing the fast keys."
   (interactive)
+  (ergoemacs-debug-heading "Start ergoemacs-setup-fast-keys")
   (ergoemacs-create-undo-apps-keymap)
   (setq ergoemacs-full-fast-keys-keymap (make-sparse-keymap))
   (setq ergoemacs-full-alt-keymap (make-sparse-keymap))
   (setq ergoemacs-full-alt-shift-keymap (make-sparse-keymap))
-  (define-key ergoemacs-full-alt-keymap (read-kbd-macro
-                                         (if (eq system-type 'windows-nt)
-                                             "<apps>"
-                                           "<menu>"))
+  (define-key ergoemacs-full-alt-keymap
+    (read-kbd-macro
+     (if (eq system-type 'windows-nt)
+         "<apps>"
+       "<menu>"))
     'ergoemacs-exit-dummy)
-  (define-key ergoemacs-full-alt-shift-keymap (read-kbd-macro
-                                               (if (eq system-type 'windows-nt)
-                                                   "<apps>"
-                                                 "<menu>"))
+  (define-key ergoemacs-full-alt-shift-keymap
+    (read-kbd-macro
+     (if (eq system-type 'windows-nt)
+         "<apps>"
+       "<menu>"))
     'ergoemacs-exit-dummy)
   (ergoemacs-debug-heading "Setup Fast/Modal Keys")
   (mapc
@@ -110,7 +113,10 @@ necessary.  Unshifted keys are changed to shifted keys.")
            new-cmd))))
    (symbol-value (ergoemacs-get-variable-layout)))
   (ergoemacs-debug-keymap 'ergoemacs-full-alt-keymap)
-  (ergoemacs-debug-keymap 'ergoemacs-full-alt-shift-keymap))
+  (ergoemacs-debug-keymap 'ergoemacs-full-alt-shift-keymap)
+  (ergoemacs-debug-keymap 'ergoemacs-full-fast-keys-keymap)
+  (ergoemacs-debug-heading "Stop ergoemacs-setup-fast-keys")
+  (ergoemacs-debug-flush))
 
 (defvar ergoemacs-exit-temp-map-var nil)
 
