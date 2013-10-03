@@ -63,7 +63,8 @@
   "Message for repeating keyboard shortcuts like C-c C-c")
 
 (defun ergoemacs-shortcut-timeout ()
-  (message ergoemacs-repeat-shortcut-msg)
+  (let (message-log-max)
+    (message ergoemacs-repeat-shortcut-msg))
   (set-temporary-overlay-map ergoemacs-repeat-shortcut-keymap))
 
 (defvar ergoemacs-current-extracted-map nil
@@ -260,7 +261,8 @@ on that key.
                          (read-kbd-macro key t)))))
         (if (not fn)
             (unless keymap-key
-              (message "%s is not defined." (ergoemacs-pretty-key key)))
+              (let (message-log-max)
+                (message "%s is not defined." (ergoemacs-pretty-key key))))
           (unless keymap-key
             (setq this-command (nth 0 fn)) ; Don't record this command.
             (setq prefix-arg current-prefix-arg))
@@ -386,12 +388,13 @@ sets `this-command' to `%s'. Also after
       (setq key-type (concat "<" key-type "> "))
       (when (string= key-type "<Normal> ")
         (setq key-type ""))
-      (princ (concat
-              (if current-prefix-arg
-                  (format "%s " current-prefix-arg)
-                "")
-              (format "%s%s " key-type
-                      (ergoemacs-pretty-key key))))))))
+      (let (message-log-max)
+        (message (concat
+                  (if current-prefix-arg
+                      (format "%s " current-prefix-arg)
+                    "")
+                  (format "%s%s " key-type
+                          (ergoemacs-pretty-key key)))))))))
 
 (defcustom ergoemacs-repeat-ctl-c-ctl-c t
   "Repeat C-c C-c"

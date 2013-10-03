@@ -300,7 +300,8 @@ remove the keymap depends on user input and KEEP-PRED:
      ,(format "ErgoEmacs fast keymap for `%s'" (symbol-name command))
      ad-do-it
      (when (and ergoemacs-mode (eq ergoemacs-repeat-undo-commands 'apps))
-       (message "%s" ergoemacs-undo-apps-text)
+       (message
+        "%s" ergoemacs-undo-apps-text)
          (set-temporary-overlay-map ergoemacs-undo-apps-keymap t))))
 
 (mapc
@@ -1105,9 +1106,7 @@ the best match."
            (cur-prefix (or ,prefix "C-x"))
            (hashkey "")
            (prefix-regexp ""))
-       (ergoemacs-debug (make-string 80 ?=))
-       (ergoemacs-debug "Extracting maps for %s" cur-prefix)
-       (ergoemacs-debug (make-string 80 ?=))
+       (ergoemacs-debug-heading "Extracting maps for %s" cur-prefix)
        (with-temp-buffer
          (let (ergoemacs-shortcut-keys)
            (describe-buffer-bindings buf (read-kbd-macro cur-prefix)))
@@ -1149,10 +1148,7 @@ the best match."
                                             fn))))))
                  (error
                   (setq fn nil))))))))
-
-       (ergoemacs-debug (make-string 80 ?=))
-       (ergoemacs-debug "Finished (%1f sec); Building keymap" (- (float-time) start-time))
-       (setq last-time (float-time))      (ergoemacs-debug (make-string 80 ?=))
+       (ergoemacs-debug-heading "Building keymap")
        (setq hashkey (md5 (format "%s;%s;%s" cur-prefix normal prefixes)))
        (setq ,keymap (gethash hashkey ergoemacs-extract-map-hash))
        (unless ,keymap
@@ -1217,13 +1213,7 @@ the best match."
                 (ergoemacs-debug "<Unchorded> %s %s => %s"
                                  cur-prefix unchorded (nth 1 x)))))
           normal)
-         (ergoemacs-debug (make-string 80 ?=))
-         (ergoemacs-debug "Built (%1f s;%1f s); Adding Prefixes" 
-                          (- (float-time) start-time)
-                          (- (float-time) last-time))
-         (setq last-time (float-time))
-         (ergoemacs-debug (make-string 80 ?=))
-         
+         (ergoemacs-debug-heading "Adding Prefixes")
          ;; Now add prefixes.
          (mapc
           (lambda(x)
@@ -1269,13 +1259,10 @@ the best match."
                        (ergoemacs-menu-send-prefix ,cur-prefix ,x 'unchorded)))
                 (error nil))))
           prefixes)
-
-         (ergoemacs-debug (make-string 80 ?=))
-         (ergoemacs-debug "Built (%1f s;%1f s); Translating keys" 
-                          (- (float-time) start-time)
-                          (- (float-time) last-time))
-         (setq last-time (float-time))
-         (ergoemacs-debug (make-string 80 ?=))
+         
+         (ergoemacs-debug-heading "Translating keys")
+         
+         
          
          ;;
          (when ergoemacs-translate-keys
@@ -1285,9 +1272,7 @@ the best match."
                           (append
                            (mapcar (lambda(x) (nth 0 x))
                                    normal) prefixes) t)))
-           (ergoemacs-debug (make-string 80 ?=))
-           (ergoemacs-debug "Translating keys for %s" cur-prefix)
-           (ergoemacs-debug (make-string 80 ?=))
+           (ergoemacs-debug-heading "Translating keys for %s" cur-prefix)
            (mapc
             (lambda(x)
               (if (string-match bound-regexp (nth 0 x))
@@ -1336,13 +1321,7 @@ the best match."
                       (ergoemacs-debug "<Unchorded> %s %s => %s"
                                        cur-prefix unchorded fn))))))
             translations))
-
-         (ergoemacs-debug (make-string 80 ?=))
-         (ergoemacs-debug "Built (%1f s;%1f s); Adding swap" 
-                          (- (float-time) start-time)
-                          (- (float-time) last-time))
-         (setq last-time (float-time))
-         (ergoemacs-debug (make-string 80 ?=))
+         (ergoemacs-debug-heading "Adding swap")
          
          ;; Now add root level swap.
          (ergoemacs-debug "Root: %s <%s>" cur-prefix (if (eq system-type 'windows-nt) "apps" "menu"))
@@ -1400,7 +1379,6 @@ the best match."
                         cur-prefix)) `ignore)
            (error nil))
          (puthash hashkey ,keymap ergoemacs-extract-map-hash))
-       (ergoemacs-debug (make-string 80 ?=))
        (ergoemacs-debug-flush))))
 
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
@@ -1464,11 +1442,12 @@ the best match."
     
     (save-match-data
       (when (string-match "<\\(.*?\\)> \\(.*\\)" kbd-code)
-        (message "%s%s"
-                 (if current-prefix-arg (format "%s " current-prefix-arg) "")
-                 (replace-regexp-in-string "<Normal> +" ""
-                                           (format "<%s> %s" (match-string 1 kbd-code)
-                                                   (ergoemacs-pretty-key (match-string 2 kbd-code)))))))))
+        (let (message-log-max)
+          (message "%s%s"
+                   (if current-prefix-arg (format "%s " current-prefix-arg) "")
+                   (replace-regexp-in-string "<Normal> +" ""
+                                             (format "<%s> %s" (match-string 1 kbd-code)
+                                                     (ergoemacs-pretty-key (match-string 2 kbd-code))))))))))
 
 
 

@@ -668,16 +668,17 @@
      (t
       ;; Not locally defined, complain.
       (beep)
-      (message "%s keybinding is disabled! Use %s"
-               (ergoemacs-pretty-key key)
-               (ergoemacs-pretty-key-rep
-                (with-temp-buffer
-                  (setq curr-fn (nth 0 (nth 1 fn)))
-                  (when (and fn (not (eq 'prefix curr-fn)))
-                    (setq curr-fn (ergoemacs-translate-current-function curr-fn))
-                    (where-is curr-fn t))
-                  (ergoemacs-format-where-is-buffer)
-                  (buffer-string))))))))
+      (let (message-log-max)
+        (message "%s keybinding is disabled! Use %s"
+                 (ergoemacs-pretty-key key)
+                 (ergoemacs-pretty-key-rep
+                  (with-temp-buffer
+                    (setq curr-fn (nth 0 (nth 1 fn)))
+                    (when (and fn (not (eq 'prefix curr-fn)))
+                      (setq curr-fn (ergoemacs-translate-current-function curr-fn))
+                      (where-is curr-fn t))
+                    (ergoemacs-format-where-is-buffer)
+                    (buffer-string)))))))))
 
 (defun ergoemacs-unbind-setup-keymap ()
   "Setup `ergoemacs-unbind-keymap' based on current layout."
@@ -1064,25 +1065,28 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
 	 (setq yank-menu (copy-sequence saved-yank-menu))
 	 (fset 'yank-menu (cons 'keymap yank-menu))))))
   
-  (let (key-desc item item-key item-cmd old-cmd
-                 (ergoemacs-where-is-skip t))
-    (setq key-desc (key-description key))
-    (setq item ergoemacs-overridden-global-keys)
-    (while (and item (not old-cmd))
-      (setq item-key (car (cdr (car item))))
-      (setq item-cmd (car (cdr (cdr (car item)))))
-      (if (string= item-key key-desc)
-	  (setq old-cmd item-cmd))
-      (setq item (cdr item)))
-    (if old-cmd
-	(with-temp-buffer
-          (where-is (ergoemacs-translate-current-function old-cmd) t)
-          (ergoemacs-format-where-is-buffer)
-	  (message "Key %s was bound to %s which is now invoked by %s"
-		   (ergoemacs-pretty-key key-desc)
-                   old-cmd
-                   (ergoemacs-pretty-key-rep (buffer-string))))
-      (message "Key %s was not bound to any command" (ergoemacs-pretty-key key-desc)))))
+  (let* ((old-cmd (lookup-key (current-global-map) key))
+         message-log-max
+         (key-desc (key-description key))
+         (new-key (key-description (ergoemacs-key-fn-lookup old-cmd))))
+    (cond
+     ((and old-cmd new-key)
+      (if (called-interactively-p  'any)
+          (message "%s keybinding%s%s. (%s)"
+                   (ergoemacs-pretty-key key-desc)
+                   (if (called-interactively-p  'any)
+                       " is changed to "
+                     " is disabled! Use ")
+                   (ergoemacs-pretty-key new-key)
+                   old-cmd)))
+     (old-cmd
+      (message "Key %s was bound to `%s' which is not bound any longer"
+               (ergoemacs-pretty-key key-desc)
+               old-cmd))
+     (t
+      (message "Key %s was not bound to any command"
+               (ergoemacs-pretty-key key-desc)
+               old-cmd)))))
 
 (provide 'ergoemacs-unbind)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
