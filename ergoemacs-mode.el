@@ -113,6 +113,7 @@
   "Flushes ergoemacs debug to `ergoemacs-debug-buffer'"
   (save-excursion
     (with-current-buffer (get-buffer-create ergoemacs-debug-buffer) 
+      (goto-char (point-max))
       (insert ergoemacs-debug "\n")))
   (setq ergoemacs-debug ""))
 
