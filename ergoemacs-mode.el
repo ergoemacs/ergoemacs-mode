@@ -1315,13 +1315,6 @@ bindings the keymap is:
             (cua-mode . ,cua-global-keymap)))
     (when ergoemacs-change-smex-meta-x
       (setq smex-prompt-string "M-x "))
-    (mapc ;; Remove overriding keys.
-     (lambda(buf)
-       (with-current-buffer buf
-         (when (and (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))
-                    (symbol-value (intern-soft (format "ergoemacs-%s-hook-mode" major-mode))))
-           (funcall (intern-soft (format "ergoemacs-%s-hook-mode" major-mode)) -1))))
-     (buffer-list))
     
     (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
       ;; Remove keymap
@@ -1335,7 +1328,7 @@ bindings the keymap is:
     (setq ergoemacs-emulation-mode-map-alist nil)
     (ergoemacs-hook-modes) ;; Remove hooks and advices.
     (remove-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
-    (remove-hook 'post-command-hook 'ergoemacs-post-command-hook)
+    ;; (remove-hook 'post-command-hook 'ergoemacs-post-command-hook)
     (remove-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
     (ergoemacs-debug-heading "Ergoemacs-mode turned OFF."))
   (ergoemacs-debug "post-command-hook: %s" post-command-hook)
@@ -1518,8 +1511,9 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
               (setq ergoemacs-shortcut-keys t)
               (ergoemacs-shortcut-override-mode -1))
             (ergoemacs-install-shortcuts-up)
-            (unless (eq this-command 'ergoemacs-mode)
-              (ergoemacs-vars-sync))))
+            (ergoemacs-vars-sync))
+          (when (not ergoemacs-mode)
+            (remove-hook 'post-command-hook 'ergoemacs-post-command-hook)))
       (error (message "Error %s" err))))
   t)
 
