@@ -1817,7 +1817,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
             (when ergoemacs-check-mode-line-change
               (unless (where-is-internal this-command ergoemacs-check-mode-line-change)
                 (message "Restored normal ergoemacs keys.")
-                (ergoemacs-mode-line)))
+                (ergoemacs-mode-line)
+                (setq ergoemacs-check-mode-line-change nil)))
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (setq ergoemacs-shortcut-keys t)
