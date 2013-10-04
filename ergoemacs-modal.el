@@ -125,8 +125,6 @@ necessary.  Unshifted keys are changed to shifted keys.")
   (setq ergoemacs-exit-temp-map-var t)
   (setq ergoemacs-shortcut-keys t))
 
-(add-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
-
 (defun ergoemacs-exit-alt-keys ()
   "Exit alt keys predicate."
   (let (ret cmd)

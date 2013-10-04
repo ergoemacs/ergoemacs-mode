@@ -695,7 +695,7 @@ sets `this-command' to `%s'. Also after
                              (interactive "P")
                              (ergoemacs-send-fn
                               ,(key-description (nth 1 fn))
-                              `,(nth 0 fn)))))
+                              ',(nth 0 fn)))))
                         (define-key ergoemacs-shortcut-override-keymap
                           keymap-key (intern (format "%s-ergoemacs" (nth 0 fn))))
                         
