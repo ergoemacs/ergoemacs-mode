@@ -561,23 +561,16 @@ on that key.
         (memq chorded '(repeat repeat-global global-repeat global)))
     ;; A single function for the key shortcut.
     (let ((ctl-c-keys (key-description (this-command-keys))))
-      (let (ergoemacs-shortcut-keys
-            ergoemacs-unbind-keys
-            (minor (intern-soft (format "ergoemacs-%s-hook-mode" major-mode)))
-            old-minor
-            ;; if chorded is undefined, shortcut is to ergoemacs-keys
-            ;; if chorded doesn't have global in it it acts on
-            ;; ergoemacs-keys.
-            ;; otherwise the shortcut is acting on non-ergoemacs keys.
-            (ergoemacs-mode
-             (or (eq chorded 'repeat)
-                 (not chorded)))
-            fn fn-lst new-fn fn-override)
-        (when (condition-case err
-                  (interactive-form key)
-                (error nil))
-          (setq ergoemacs-mode nil))
-        (setq ergoemacs-unbind-keys ergoemacs-mode)
+      (let* ((ergoemacs-mode
+              (if (condition-case err
+                      (interactive-form key)
+                    (error nil)) nil
+                (or (eq chorded 'repeat)
+                    (not chorded))))
+             (ergoemacs-unbind-keys ergoemacs-mode)
+             (minor (intern-soft (format "ergoemacs-%s-hook-mode" major-mode)))
+             old-minor ergoemacs-shortcut-keys
+             fn fn-lst new-fn fn-override)
         ;; Temporarily unbind ergoemacs-major-mode-hook-mode
         (when minor
           (setq old-minor (symbol-value minor))
@@ -598,42 +591,41 @@ on that key.
           ;; Currently fixed by a hook :)
           
           ;; Lookup function on non-ergoemacs keymaps.
-          (setq ergoemacs-mode nil)
-          (setq ergoemacs-unbind-keys nil)
-          (mapc
-           (lambda(cur-key)
-             (unless (let (case-fold-search)
-                       ;; only use when M- C- are used
-                       (string-match "\\(s-\\|A-\\|H-\\)"
-                                     (key-description cur-key)))
-               (let ((binding
-                      (if (and keymap-key (boundp 'ergoemacs-orig-keymap)
-                               ergoemacs-orig-keymap)
-                          (lookup-key ergoemacs-orig-keymap cur-key t)
-                        (key-binding cur-key t nil (point)))))
-                 (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
-                 (when (and new-fn (condition-case err
-                                       (interactive-form new-fn)
-                                     (error nil)))
-                   ;; When a lookup finds org-metadown and there is a
-                   ;; function ergoemacs-org-metadown, use the
-                   ;; ergoemacs-org-metadown instead.
-                   (setq fn-override
-                         (list new-fn
-                               (read-kbd-macro
-                                (key-description cur-key) t))))
-                 (unless (or (eq binding key)
-                             (memq binding
-                                   ergoemacs-shortcut-ignored-functions))
-                   (add-to-list 'fn-lst (list binding
-                                              (read-kbd-macro
-                                               (key-description cur-key) t)))))))
-           (or
-            (remove-if
-             '(lambda(x)
-                (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
-             (where-is-internal key (current-global-map)))
-            (gethash key ergoemacs-where-is-global-hash)))
+          (let (ergoemacs-mode ergoemacs-unbind-keys)
+            (mapc
+             (lambda(cur-key)
+               (unless (let (case-fold-search)
+                         ;; only use when M- C- are used
+                         (string-match "\\(s-\\|A-\\|H-\\)"
+                                       (key-description cur-key)))
+                 (let ((binding
+                        (if (and keymap-key (boundp 'ergoemacs-orig-keymap)
+                                 ergoemacs-orig-keymap)
+                            (lookup-key ergoemacs-orig-keymap cur-key t)
+                          (key-binding cur-key t nil (point)))))
+                   (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
+                   (when (and new-fn (condition-case err
+                                         (interactive-form new-fn)
+                                       (error nil)))
+                     ;; When a lookup finds org-metadown and there is a
+                     ;; function ergoemacs-org-metadown, use the
+                     ;; ergoemacs-org-metadown instead.
+                     (setq fn-override
+                           (list new-fn
+                                 (read-kbd-macro
+                                  (key-description cur-key) t))))
+                   (unless (or (eq binding key)
+                               (memq binding
+                                     ergoemacs-shortcut-ignored-functions))
+                     (add-to-list 'fn-lst (list binding
+                                                (read-kbd-macro
+                                                 (key-description cur-key) t)))))))
+             (or
+              (remove-if
+               '(lambda(x)
+                  (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
+               (where-is-internal key (current-global-map)))
+              (gethash key ergoemacs-where-is-global-hash))))
           (cond
            (fn-override
             (set fn fn-override))
