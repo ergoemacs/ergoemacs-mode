@@ -891,7 +891,10 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                    (ergoemacs-vars-sync)
                    (ergoemacs-debug-flush)))
                t)
-             (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil)))
+             (ergoemacs-add-hook ',hook
+                                 ',(intern (concat "ergoemacs-" (symbol-name hook)))
+                                 ',(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
+                                 nil)))
       (setq is-emulation-p (or (not (nth 2 (nth 0 keys)))
                                (eq 'emulation-mode-map-alists (nth 2 (nth 0 keys)))))
       (when is-emulation-p
@@ -926,7 +929,8 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
              (unless ,(if is-emulation-p
                           `(assq ,(if is-major-mode-p
                                       '(intern (format "ergoemacs--emulation-for-%s" major-mode))
-                                    `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook)))) ergoemacs-emulation-mode-map-alist)
+                                    `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))
+                                 ergoemacs-emulation-mode-map-alist)
                         (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
                (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
                ,(if  is-emulation-p
@@ -971,7 +975,8 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                          ;; Put at the end of the list
                          (setq ergoemacs-emulation-mode-map-alist
                                (append ergoemacs-emulation-mode-map-alist
-                                       (list (cons name ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))))))))
+                                       (list (cons name ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))))))
+                       (ergoemacs-debug-keymap ',(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))))
                (ergoemacs-debug-heading ,(concat "Finish ergoemacs-" (symbol-name hook)))
                (ergoemacs-vars-sync)
                (ergoemacs-debug-flush)
