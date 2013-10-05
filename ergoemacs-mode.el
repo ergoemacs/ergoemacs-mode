@@ -609,8 +609,7 @@ work in the terminal."
          (mapc
           (lambda(x)
             (when (and (eq 'string (type-of (nth 0 x))))
-              (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))
-              
+              (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))              
               (if ergoemacs-change-fixed-layout-to-variable-layout
                   (progn ;; Change to the fixed keyboard layout.
                     (setq key (ergoemacs-kbd trans-key)))
@@ -1265,7 +1264,6 @@ bindings the keymap is:
          (buffer-list))
         (setq ergoemacs-shortcut-keys t)
         (setq ergoemacs-unbind-keys t)
-        (add-hook 'post-command-hook 'ergoemacs-post-command-hook)
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
         (add-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
         (ergoemacs-debug-heading "Ergoemacs-mode turned ON."))
@@ -1291,8 +1289,7 @@ bindings the keymap is:
                  `(,(nth 0 x) ,val)))
              ergoemacs-save-variables))
       (ergoemacs-debug "New ergoemacs-save-variables: %s" ergoemacs-save-variables)
-      (setq ergoemacs-save-variables-state nil))
-    
+      (setq ergoemacs-save-variables-state nil))    
     (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
     (when (featurep 'ergoemacs-menus)
       (ergoemacs-menus-off))
@@ -1328,9 +1325,12 @@ bindings the keymap is:
     (setq ergoemacs-emulation-mode-map-alist nil)
     (ergoemacs-hook-modes) ;; Remove hooks and advices.
     (remove-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
-    ;; (remove-hook 'post-command-hook 'ergoemacs-post-command-hook)
     (remove-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
     (ergoemacs-debug-heading "Ergoemacs-mode turned OFF."))
+  ;; Always have `ergoemacs-post-command-hook' on so that it will
+  ;; uninstall ergoemacs keymaps that were installed to overlays and
+  ;; text-properties and anything above `emulation-mode-map-alists'.
+  (add-hook 'post-command-hook 'ergoemacs-post-command-hook) 
   (ergoemacs-debug "post-command-hook: %s" post-command-hook)
   (ergoemacs-debug "pre-command-hook: %s" pre-command-hook)
   (ergoemacs-debug "ergoemacs-shortcut-keys: %s" ergoemacs-shortcut-keys)
@@ -1513,7 +1513,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
             (ergoemacs-install-shortcuts-up)
             (ergoemacs-vars-sync))
           (when (not ergoemacs-mode)
-            (remove-hook 'post-command-hook 'ergoemacs-post-command-hook)))
+            (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))
   t)
 

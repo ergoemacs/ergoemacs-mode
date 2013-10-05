@@ -861,6 +861,59 @@ Setup C-c and C-x keys to be described properly.")
           (ergoemacs-debug-heading "Finish `ergoemacs-shortcut-override-mode'")
           (ergoemacs-debug-flush)))))
 
+(defun ergoemacs-remove-shortcuts ()
+  "Removes ergoemacs shortcuts from keymaps."
+  (let (hashkey lookup override-text-map override orig-map)
+    (cond
+     (overriding-terminal-local-map
+      (when (eq (lookup-key
+                 overriding-terminal-local-map
+                 (read-kbd-macro "<ergoemacs>")) 'ignore)
+        (setq hashkey (md5 (format "override-terminal-orig:%s" overriding-terminal-local-map)))
+        (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
+        (when lookup
+          (setq overriding-terminal-local-map lookup)
+          (ergoemacs-debug-heading "Remove ergoemacs from `overriding-terminal-local-map'")
+          ;; Save old map.
+          (ergoemacs-debug-keymap 'overriding-terminal-local-map))))
+     (overriding-local-map
+      (when (eq (lookup-key overriding-local-map
+                            (read-kbd-macro "<ergoemacs>")) 'ignore)
+        (setq hashkey (md5 (format "override-local-orig:%s" overriding-local-map)))
+        (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
+        (when lookup
+          (ergoemacs-debug-heading "Remove ergoemacs from `overriding-local-map'")
+          (setq overriding-local-map lookup)
+          (ergoemacs-debug-keymap 'overriding-local-map))))
+     ((progn
+        (setq override-text-map (get-char-property (point) 'keymap))
+        (and (keymapp override-text-map)
+             (eq (lookup-key override-text-map
+                             (read-kbd-macro "<ergoemacs>"))
+                 'ignore)))
+      (let ((overlays (overlays-at (point)))
+            found)
+        (while overlays
+          (let* ((overlay (car overlays))
+                 (overlay-keymap (overlay-get overlay 'keymap)))
+            (if (not (equal overlay-keymap override-text-map))
+                (setq overlays (cdr overlays))
+              (setq found overlay)
+              (setq overlays nil))))
+        (setq hashkey (md5 (format "char-map-orig:%s" override-text-map)))
+        (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
+        (when lookup
+          (ergoemacs-debug-heading "Remove ergoemacs from (get-char-property (point) 'keymap)")
+          (setq override-text-map lookup)
+          (if found
+              (overlay-put found 'keymap override-text-map)
+            (ergoemacs-debug "Put into text properties")
+            (put-text-property
+             (previous-single-property-change (point) 'keymap)
+             (next-single-property-change (point) 'keymap)
+             'keymap override-text-map))
+          (ergoemacs-debug-keymap 'override-text-map)))))))
+
 (defun ergoemacs-install-shortcuts-up ()
   "Installs ergoemacs shortcuts into overriding keymaps.
 The keymaps are:
@@ -868,7 +921,7 @@ The keymaps are:
 - `overriding-local-map'
 - overlays with :keymap property
 - text property with :keymap property."
-  (let (hashkey lookup override-text-map)
+  (let (hashkey lookup override-text-map override orig-map)
     (cond
      (overriding-terminal-local-map
       (when (not
@@ -878,13 +931,17 @@ The keymaps are:
                  'ignore))
         (ergoemacs-debug-heading "Install shortcuts into overriding-terminal-local-map")
         (setq hashkey (md5 (format "override-terminal:%s" overriding-terminal-local-map)))
+        (setq orig-map (copy-keymap overriding-terminal-local-map))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
             (setq overriding-terminal-local-map lookup)
           (ergoemacs-install-shortcuts-map overriding-terminal-local-map)
           (define-key overriding-terminal-local-map
             (read-kbd-macro  "<ergoemacs>") 'ignore)
-          (puthash hashkey overriding-terminal-local-map ergoemacs-extract-map-hash))
+          (puthash hashkey overriding-terminal-local-map ergoemacs-extract-map-hash)
+          ;; Save old map.
+          (setq hashkey (md5 (format "override-terminal-orig:%s" overriding-terminal-local-map)))
+          (puthash hashhey orig-map ergoemacs-extract-map-hash))
         (ergoemacs-debug-keymap 'overriding-terminal-local-map)))
      (overriding-local-map
       (when  (not (eq (lookup-key overriding-local-map
@@ -892,13 +949,17 @@ The keymaps are:
                       'ignore))
         (ergoemacs-debug-heading "Install shortcuts into overriding-local-map")
         (setq hashkey (md5 (format "override-local:%s" overriding-local-map)))
+        (setq orig-map (copy-keymap overriding-local-map))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
             (setq overriding-local-map lookup)
           (ergoemacs-install-shortcuts-map overriding-local-map)
           (define-key overriding-local-map
             (read-kbd-macro "<ergoemacs>") 'ignore)
-          (puthash hashkey overriding-local-map ergoemacs-extract-map-hash))
+          (puthash hashkey overriding-local-map ergoemacs-extract-map-hash)
+          ;; Save old map.
+          (setq hashkey (md5 (format "override-local-orig:%s" overriding-local-map)))
+          (puthash hashkey orig-map ergoemacs-extract-map-hash))
         (ergoemacs-debug-keymap 'overriding-local-map)))
      ((progn
         (setq override-text-map (get-char-property (point) 'keymap))
@@ -917,13 +978,17 @@ The keymaps are:
               (setq found overlay)
               (setq overlays nil))))
         (setq hashkey (md5 (format "char-map:%s" override-text-map)))
+        (setq orig-map (copy-keymap override-text-map))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
             (setq override-text-map lookup)
           (ergoemacs-install-shortcuts-map override-text-map)
           (define-key override-text-map
             (read-kbd-macro "<ergoemacs>") 'ignore)
-          (puthash hashkey override-text-map ergoemacs-extract-map-hash))
+          (puthash hashkey override-text-map ergoemacs-extract-map-hash)
+          ;; Save old map.
+          (setq hashkey (md5 (format "char-map-orig:%s" override-text-map)))
+          (puthash hashkey orig-map ergoemacs-extract-map-hash))
         (if found
             (overlay-put found 'keymap override-text-map)
           ;; Overlay not found; change text property
