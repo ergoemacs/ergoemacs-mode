@@ -108,7 +108,8 @@
     (delete (key-description key) ergoemacs-global-not-changed-cache))
   (when (lookup-key ergoemacs-unbind-keymap key)
     (define-key ergoemacs-unbind-keymap key nil)
-    (define-key ergoemacs-shortcut-keymap key nil))
+    (unless (string-match "^C-[xc]" (key-description key))
+      (define-key ergoemacs-shortcut-keymap key nil)))
   (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
     (when x
       (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
