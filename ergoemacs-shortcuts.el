@@ -941,7 +941,7 @@ The keymaps are:
           (puthash hashkey overriding-terminal-local-map ergoemacs-extract-map-hash)
           ;; Save old map.
           (setq hashkey (md5 (format "override-terminal-orig:%s" overriding-terminal-local-map)))
-          (puthash hashhey orig-map ergoemacs-extract-map-hash))
+          (puthash hashkey orig-map ergoemacs-extract-map-hash))
         (ergoemacs-debug-keymap 'overriding-terminal-local-map)))
      (overriding-local-map
       (when  (not (eq (lookup-key overriding-local-map
