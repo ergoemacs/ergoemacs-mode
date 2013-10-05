@@ -147,13 +147,25 @@ For example, on dvorak, change C-j to C-c (copy/command)."
               (replace-regexp-in-string
                "[Aa]lt[+-]" "M-" pre-kbd-code))))
     (when (and ergoemacs-swap-alt-and-control (not dont-swap))
-      (setq ret
-            (replace-regexp-in-string
-             "\\^-" "M-"
-             (replace-regexp-in-string
-              "M-" "C-"
-              (replace-regexp-in-string
-               "C-" "^-" ret)))))
+      (with-temp-buffer
+        (insert ret)
+        (goto-char (point-min))
+        (while (re-search-forward "[MC]-" nil t)
+          (cond
+           ((string= "M-" (match-string 0)) ; M-A to C-S-a or M-a to C-a
+            (replace-match "C-")
+            (when (looking-at "[[:upper:]]\\( \\|$\\)")
+              (replace-match (format "S-%s" (downcase (match-string 0))) t)))
+           (t ; C-S-a to M-A or C-a to M-a
+            (replace-match "M-")
+            (cond
+             ((looking-at "S-\\(.\\)\\( \\|$\\)")
+              (replace-match
+               (format "%s%s" (upcase (match-string 1)) (match-string 2)) t))
+             ((looking-at "\\(.\\)\\( \\|$\\)")
+              (replace-match
+               (format "%s%s" (downcase (match-string 1)) (match-string 2)) t))))))
+        (setq ret (buffer-string))))
     (symbol-value 'ret)))
 
 (defun ergoemacs-key-fn-lookup (function &optional use-apps)
