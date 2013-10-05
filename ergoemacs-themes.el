@@ -227,7 +227,13 @@
     ("<C-home>" beginning-of-buffer "↑ Top")
     ("<C-end>" end-of-buffer "↓ Bottom")
     ("<M-f4>" delete-frame) ;; Alt+f4 should work.
-    
+    ;; C-i is open in OS direbctory for Mac OSX; ....
+    ;; C-q is quit in Mac OSX; Quoted insert in emacs
+    ("C-l" goto-line "Goto")
+    ;; C-T show/hide font panel.
+    ;; C-m Minimize frame
+    ;; C-` move to different window (frame)
+    ("C-`" other-frame "↔ Frame")
     ;; From http://superuser.com/questions/521223/shift-click-to-extend-marked-region
     ("<S-down-mouse-1>" mouse-save-then-kill) ;; Allow shift selection
     ("<S-mouse-1>" ignore)
@@ -241,10 +247,15 @@
     ;; See http://en.wikipedia.org/wiki/Table_of_keyboard_shortcuts
     ("C-n" ergoemacs-new-empty-buffer "New Buffer")
     ("C-S-n" make-frame-command "New Frame")
+    
     ("C-o" find-file "Edit File")
     ("C-S-o" ergoemacs-open-in-external-app "OS Open")
     ("C-S-t" ergoemacs-open-last-closed "Open Last")
     ("C-w" ergoemacs-close-current-buffer "Close Buf.")
+    ("C-S-w" delete-frame "× Frame")
+    ("C-?" info "Info")
+    ("C-/" info "Info")
+    
     ("C-s" save-buffer "Save")
     ("C-S-s" write-file "Save As")
     ("C-p" ergoemacs-print-buffer-confirm "Print")
@@ -259,6 +270,7 @@
     ("<S-insert>" yank "paste")
     
     ("C-f" isearch-forward "Search")
+    ("C-S-f" occur "Occur")
     
     ("<delete>" delete-char) ; the Del key for forward delete. Needed if C-d is set to nil.
     
@@ -301,17 +313,19 @@
     ("C-h 9" lookup-word-definition)
     ("C-h `" elisp-index-search)
     
-    ("<f2>" ergoemacs-cut-line-or-region)
-    ("<C-f2>" ergoemacs-cut-all)
-    ("<f3>" ergoemacs-copy-line-or-region)
-    ("<C-f3>" ergoemacs-copy-all)
-    ("<f4>" yank)
-    ("<C-f4>" yank-pop)
+    ("<f2>" ergoemacs-cut-line-or-region "✂ region")
+    ("<C-f2>" ergoemacs-cut-all "✂ all")
+    ("<f3>" ergoemacs-copy-line-or-region "copy")
+    ("<C-f3>" ergoemacs-copy-all "Copy all")
+    ("<f4>" yank "paste")
+    ("<C-f4>" yank-pop "paste ↑")
     
-    ("<f5>" undo)
-    ("<C-f5>" redo)
+    ("<f5>" undo "Undo")
+    ("<C-f5>" redo "Redo")
+
+    ("C-." keyboard-quit "Quit")
     
-    ("<M-delete>" kill-word)
+    ("<M-delete>" kill-word "⌦ word")
     
     ;; arrow keys to traverse brackets
     ("<M-left>" ergoemacs-backward-open-bracket) ; Alt+←
@@ -369,6 +383,8 @@
       ("<f12>" isearch-ring-advance isearch-mode-map)
       ("S-<f11>" isearch-ring-advance isearch-mode-map)
       ("S-<f12>" isearch-ring-retreat isearch-mode-map)
+      ("C-S-f" isearch-occur isearch-mode-map)
+      ("C-M-f" isearch-occur isearch-mode-map)
       (ergoemacs-toggle-letter-case isearch-toggle-regexp isearch-mode-map)
       (ergoemacs-toggle-camel-case isearch-toggle-case-fold isearch-mode-map)))
     
