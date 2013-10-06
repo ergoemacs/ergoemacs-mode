@@ -96,7 +96,7 @@ necessary.  Unshifted keys are changed to shifted keys.")
                            "" key))
             (new-cmd (nth 1 var)))
        (ergoemacs-debug "Key:%s stripped-key: %s" key stripped-key)
-       (when (string-match "^[A-Za-z]$" stripped-key)
+       (when (string-match "^\\([[:ascii:]]\\|SPC\\)$" stripped-key)
          (if (string= (downcase stripped-key) stripped-key)
              (progn
                (define-key ergoemacs-full-alt-keymap (edmacro-parse-keys stripped-key) new-cmd)
@@ -140,6 +140,10 @@ necessary.  Unshifted keys are changed to shifted keys.")
             (setq ret nil)
             (setq ergoemacs-exit-temp-map-var nil)))
       (error (message "Err %s" err)))
+    (unless ret
+      (ergoemacs-mode-line) ;; Reset ergoemacs mode line
+      (let (message-log-max)
+        (message "[Alt+] keys removed from keymap.")))
     (symbol-value 'ret)))
 
 (defun ergoemacs-alt-keys ()
@@ -148,7 +152,12 @@ necessary.  Unshifted keys are changed to shifted keys.")
   (setq ergoemacs-exit-temp-map-var nil)
   (set-temporary-overlay-map  ergoemacs-full-alt-keymap
                               'ergoemacs-exit-alt-keys)
-  (message "[Alt+] keys installed to keymap. Press [Menu], [Esc], to exit"))
+  (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+   (concat
+    " " (replace-regexp-in-string
+         "!" "" (ergoemacs-pretty-key "M-!"))))
+  (let (message-log-max)
+    (message "[Alt+] keys installed to keymap. Press [Menu], [Esc], to exit")))
 
 (defun ergoemacs-exit-alt-shift-keys ()
   "Exit alt-shift keys predicate"
