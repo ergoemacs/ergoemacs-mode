@@ -51,6 +51,7 @@
 ;;; Code:
 (defvar ergoemacs-full-fast-keys-keymap (make-sparse-keymap)
   "Ergoemacs full fast keys keymap")
+
 (defvar ergoemacs-full-alt-keymap (make-sparse-keymap)
   "Ergoemacs full Alt+ keymap.  Alt is removed from all these keys so that no key chord is necessary.")
 
@@ -215,6 +216,11 @@ modal state is currently enabled."
   :type  '(repeat symbol)
   :group 'ergoemacs-modal)
 
+(defcustom ergoemacs-modal-translated-shifted-to-alt-commands nil
+  "Translate Shifted Commands to Alt+ commands.  For example, on QWERTY ! becomes M-1."
+  :type 'boolean
+  :group 'ergoemacs-modal)
+
 (defun ergoemacs-setup-fast-keys ()
   "Setup an array listing the fast keys."
   (interactive)
@@ -240,22 +246,41 @@ modal state is currently enabled."
                                        "C"
                                      "M"))
                            "" key))
-            (new-cmd (nth 1 var)))
+            (new-cmd (nth 1 var)) tmp)
        (ergoemacs-debug "Key:%s stripped-key: %s" key stripped-key)
        (when (string-match "^\\([[:ascii:]]\\|SPC\\)$" stripped-key)
-         (if (string= (downcase stripped-key) stripped-key)
-             (progn
-               (define-key ergoemacs-full-alt-keymap (edmacro-parse-keys stripped-key) new-cmd)
-               (define-key ergoemacs-full-alt-shift-keymap (edmacro-parse-keys (upcase stripped-key)) new-cmd))
-           (define-key ergoemacs-full-alt-shift-keymap (edmacro-parse-keys (downcase stripped-key)) new-cmd)
-           (define-key ergoemacs-full-alt-keymap (edmacro-parse-keys stripped-key) new-cmd)))
+         (if (save-match-data
+               (let (case-fold-search)
+                 (string-match ergoemacs-unshifted-regexp stripped-key)))
+             (progn ;; Lower case
+               (define-key ergoemacs-full-alt-keymap
+                 (read-kbd-macro stripped-key) new-cmd)
+               (setq tmp (assoc stripped-key ergoemacs-shifted-assoc))
+               (when tmp
+                 ;; M-lower case key for shifted map.
+                 (define-key ergoemacs-full-alt-shift-keymap
+                   (read-kbd-macro (concat "M-" stripped-key))
+                   new-cmd)
+                 ;; Upper case for shifted map
+                 (define-key ergoemacs-full-alt-shift-keymap
+                   (read-kbd-macro (cdr tmp)) new-cmd)))
+           ;; Upper case
+           (setq tmp (assoc stripped-key ergoemacs-shifted-assoc))
+           (when tmp
+             ;; Install lower case on shifted map.
+             (define-key ergoemacs-full-alt-shift-keymap
+               (read-kbd-macro (cdr tmp)) new-cmd)
+             ;; Install M-lower for alt map.
+             (define-key ergoemacs-full-alt-keymap
+               (read-kbd-macro (concat "M-" (cdr tmp))) new-cmd))
+           (define-key ergoemacs-full-alt-keymap (read-kbd-macro stripped-key) new-cmd)))
        (when (member cmd ergoemacs-movement-functions)
          (set (intern (concat "ergoemacs-fast-" (symbol-name cmd) "-keymap"))
               (make-sparse-keymap))
          (eval `(define-key ,(intern (concat "ergoemacs-fast-" (symbol-name cmd) "-keymap"))
-                  ,(edmacro-parse-keys stripped-key) new-cmd))
+                  ,(read-kbd-macro stripped-key) new-cmd))
          (define-key ergoemacs-full-fast-keys-keymap
-           (edmacro-parse-keys stripped-key)
+           (read-kbd-macro stripped-key)
            new-cmd))))
    (symbol-value (ergoemacs-get-variable-layout)))
   (mapc
@@ -344,66 +369,6 @@ modal state is currently enabled."
     "A" "" (ergoemacs-pretty-key "M-S-A")) ergoemacs-full-alt-shift-keymap)
   (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt-shift'")
   (ergoemacs-debug-flush))
-;; (defun ergoemacs-exit-alt-keys ()
-;;   "Exit alt keys predicate."
-;;   (let (ret cmd)
-;;     (condition-case err
-;;         (progn
-;;           (setq cmd (lookup-key ergoemacs-full-alt-keymap
-;;                                 (this-command-keys-vector)))
-;;           (when cmd
-;;             (setq ret t))
-;;           (when (eq cmd 'ergoemacs-exit-dummy)
-;;             (setq ret nil))
-;;           (when ergoemacs-exit-temp-map-var
-;;             (setq ret nil)
-;;             (setq ergoemacs-exit-temp-map-var nil)))
-;;       (error (message "Err %s" err)))
-;;     (unless ret
-;;       (ergoemacs-mode-line) ;; Reset ergoemacs mode line
-;;       (let (message-log-max)
-;;         (message "[Alt+] keys removed from keymap.")))
-;;     (symbol-value 'ret)))
-
-;; (defun ergoemacs-alt-keys ()
-;;   "Install the alt keymap temporarily"
-;;   (interactive)
-;;   (setq ergoemacs-exit-temp-map-var nil)
-;;   (set-temporary-overlay-map  ergoemacs-full-alt-keymap
-;;                               'ergoemacs-exit-alt-keys)
-;;   (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-;;    (concat
-;;     " " (replace-regexp-in-string
-;;          "!" "" (ergoemacs-pretty-key "M-!"))))
-;;   (let (message-log-max)
-;;     (message "[Alt+] keys installed to keymap. Press [Menu], [Esc], to exit")))
-
-;; (defun ergoemacs-exit-alt-shift-keys ()
-;;   "Exit alt-shift keys predicate"
-;;   (let (ret cmd)
-;;     (condition-case err
-;;         (progn
-;;           (setq cmd (lookup-key ergoemacs-full-alt-shift-keymap
-;;                                 (this-command-keys-vector)))
-;;           (when cmd
-;;             (setq ret t))
-;;           (when (eq cmd 'ergoemacs-exit-dummy)
-;;             (setq ret nil))
-;;           (when ergoemacs-exit-temp-map-var
-;;             (setq ret nil)
-;;             (setq ergoemacs-exit-temp-map-var nil)))
-;;       (error (message "Err %s" err)))
-;;     (symbol-value 'ret)))
-
-;; (defun ergoemacs-alt-shift-keys ()
-;;   "Install the alt-shift keymap temporarily"
-;;   (interactive)
-;;   (setq ergoemacs-exit-temp-map-var nil)
-;;   (set-temporary-overlay-map ergoemacs-full-alt-shift-keymap
-;;                              'ergoemacs-exit-alt-shift-keys)
-;;   (message "[Alt+Shift+] keys installed to keymap. Press [Menu], [Esc], to exit"))
-
-
 
 (provide 'ergoemacs-modal)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

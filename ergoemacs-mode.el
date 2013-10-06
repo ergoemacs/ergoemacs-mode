@@ -463,22 +463,6 @@ work in the terminal."
 (require 'ergoemacs-themes)
 (require 'ergoemacs-unbind)
 
-
-(defvar ergoemacs-needs-translation nil
-  "Tells if ergoemacs keybindings need a translation")
-
-(defvar ergoemacs-translation-from nil
-  "Translation from keyboard layout")
-
-(defvar ergoemacs-translation-to nil
-  "Translation to keyboard layout")
-
-(defvar ergoemacs-translation-assoc nil
-  "Translation alist")
-
-(defvar ergoemacs-translation-regexp nil
-  "Translation regular expression")
-
 ;;; ergoemacs-keymap
 
 

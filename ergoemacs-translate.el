@@ -50,10 +50,35 @@
 ;; 
 ;;; Code:
 
+(defvar ergoemacs-needs-translation nil
+  "Tells if ergoemacs keybindings need a translation")
+
+(defvar ergoemacs-translation-from nil
+  "Translation from keyboard layout")
+
+(defvar ergoemacs-translation-to nil
+  "Translation to keyboard layout")
+
+(defvar ergoemacs-translation-assoc nil
+  "Translation alist")
+
+(defvar ergoemacs-translation-regexp nil
+  "Translation regular expression")
+
+(defvar ergoemacs-unshifted-regexp nil
+  "Unshifted regular expression.")
+
+(defvar ergoemacs-shifted-regexp nil
+  "Shifted regular expression.")
+
+(defvar ergoemacs-shifted-assoc nil
+  "Translation alist.")
+
+
 (defun ergoemacs-setup-translation (layout &optional base-layout)
   "Setup translation from BASE-LAYOUT to LAYOUT."
   (let ((base (or base-layout "us"))
-        lay
+        lay shifted-list unshifted-list
         len i)
     (unless (and (string= layout ergoemacs-translation-to)
                  (string= base ergoemacs-translation-from))
@@ -77,7 +102,22 @@
                       (string= "" (nth i lay)))
             (add-to-list 'ergoemacs-translation-assoc
                          `(,(nth i base) . ,(nth i lay))))
+          (when (< i 60)
+            (unless (or (string= "" (nth i lay))
+                        (string= "" (nth (+ i 60) lay)))
+              (add-to-list 'ergoemacs-shifted-assoc
+                           `(,(nth i lay) . ,(nth (+ i 60) lay)))
+              (add-to-list 'ergoemacs-shifted-assoc
+                           `(,(nth (+ i 60) lay) . ,(nth i lay)))
+              (add-to-list 'unshifted-list (nth i lay))
+              (add-to-list 'shifted-list (nth (+ i 60) lay))))
           (setq i (+ i 1)))
+        (setq ergoemacs-shifted-regexp 
+              (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
+                      (regexp-opt shifted-list nil)))
+        (setq ergoemacs-unshifted-regexp 
+              (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
+                      (regexp-opt unshifted-list nil)))
         (setq ergoemacs-translation-regexp
               (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
                       (regexp-opt (mapcar (lambda(x) (nth 0 x))
