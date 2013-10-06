@@ -9,7 +9,7 @@
 ;; Last-Updated: 
 ;;           By: 
 ;;     Update #: 0
-;; URL: 
+;; URL:
 ;; Doc URL: 
 ;; Keywords: 
 ;; Compatibility: 
@@ -346,7 +346,7 @@ modal state is currently enabled."
 (defvar ergoemacs-modal nil
   "Weather modal ergoemacs is active.")
 
-(defun ergoemacs-modal-toggle (mode-text keymap)
+(defun ergoemacs-modal-toggle (mode-text keymap exit-fn)
   "Toggle ergoemacs command modes."
   (let ((alt mode-text)
         (x (assq 'ergoemacs-modal
@@ -373,8 +373,7 @@ modal state is currently enabled."
                (mapconcat
                 (lambda(key)
                   (ergoemacs-pretty-key (key-description key)))
-                (where-is-internal
-                 'ergoemacs-toggle-full-alt keymap)
+                (where-is-internal exit-fn keymap)
                 ", ")))
     (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s" (mapcar (lambda(x) (nth 0 x)) ergoemacs-emulation-mode-map-alist))))
 
@@ -384,7 +383,7 @@ modal state is currently enabled."
   (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt'")
   (ergoemacs-modal-toggle
    (replace-regexp-in-string
-    "!" "" (ergoemacs-pretty-key "M-!")) ergoemacs-full-alt-keymap)
+    "!" "" (ergoemacs-pretty-key "M-!")) ergoemacs-full-alt-keymap 'ergoemacs-toggle-full-alt)
   (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt'")
   (ergoemacs-debug-flush))
 
@@ -394,7 +393,7 @@ modal state is currently enabled."
   (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt-shift'")
   (ergoemacs-modal-toggle
    (replace-regexp-in-string
-    "A" "" (ergoemacs-pretty-key "M-S-A")) ergoemacs-full-alt-shift-keymap)
+    "~" "" (ergoemacs-pretty-key "M-S-~")) ergoemacs-full-alt-shift-keymap 'ergoemacs-toggle-full-alt-shift)
   (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt-shift'")
   (ergoemacs-debug-flush))
 
