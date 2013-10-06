@@ -249,6 +249,15 @@ modal state is currently enabled."
             (new-cmd (nth 1 var)) tmp)
        (ergoemacs-debug "Key:%s stripped-key: %s" key stripped-key)
        (when (string-match "^\\([[:ascii:]]\\|SPC\\)$" stripped-key)
+         (eval
+          (macroexpand
+           `(defun ,(intern (format "%s-ergoemacs" (symbol-name (nth 1 var)))) (&optional arg)
+              ,(format "Run `%s' or whatever this mode remaps the command to be using `ergoemacs-shortcut-internal'." (symbol-name (nth 1 var)))
+              (interactive "P")
+              (setq this-command last-command)
+              (setq prefix-arg current-prefix-arg)
+              (ergoemacs-shortcut-internal ',(nth 1 var)))))
+         (setq new-cmd (intern (format "%s-ergoemacs" (symbol-name (nth 1 var)))))
          (if (save-match-data
                (let (case-fold-search)
                  (string-match ergoemacs-unshifted-regexp stripped-key)))
