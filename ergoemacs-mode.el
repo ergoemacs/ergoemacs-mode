@@ -352,7 +352,7 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
                                      ((eq ergoemacs-repeat-movement-commands 'all)
                                       (unless (where-is-internal last-command (list ergoemacs-full-fast-keys-keymap) t)
                                         (setq ergoemacs-check-mode-line-change (list ergoemacs-full-fast-keys-keymap))
-                                        (message "Repeating movement keys installed")
+                                        ;; (message "Repeating movement keys installed")
                                         (ergoemacs-mode-line (format " %sFull" (ergoemacs-unicode-char "↔" "<->"))))
                                       ergoemacs-full-fast-keys-keymap)
                                      (t ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))) t)))))
@@ -1486,8 +1486,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
           (when ergoemacs-mode
             ;; Reset mode-line
             (when ergoemacs-check-mode-line-change
-              (unless (where-is-internal this-command ergoemacs-check-mode-line-change)
-                (message "Restored normal ergoemacs keys.")
+              (unless (where-is-internal this-command  ergoemacs-check-mode-line-change)
+                ;; (message "Restored normal ergoemacs keys.")
                 (ergoemacs-mode-line)
                 (setq ergoemacs-check-mode-line-change nil)))
             (when (and (not ergoemacs-show-true-bindings)
