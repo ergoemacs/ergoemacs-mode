@@ -21,7 +21,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Commentary: 
-;; 
+;;
 ;; 
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -59,9 +59,161 @@
 Alt+shift is removed from all these keys so that no key chord is
 necessary.  Unshifted keys are changed to shifted keys.")
 
-(defun ergoemacs-exit-dummy ()
-  "Dummy function for exiting keymaps."
-  (interactive))
+(defgroup ergoemacs-modal nil
+  "Modal ergoemacs"
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-modal-ignored-buffers
+  '("^ \\*load\\*" "^[*]e?shell[*]" "^[*]R.*[*]$")
+  "Regular expression of bufferst that should come up in
+ErgoEmacs state, regardless of if a modal state is currently
+enabled."
+  :type '(repeat string)
+  :group 'ergoemacs-modal)
+
+(defcustom ergoemacs-default-cursor ;; Adapted from evil-mode
+  (or (frame-parameter nil 'cursor-color) "black")
+  "The default cursor color.
+A color string as passed to `set-cursor-color'."
+  :type 'string
+  :group 'ergoemacs-modal)
+
+(defcustom ergoemacs-modal-cursor ;; Adapted from evil-mode
+  "red"
+  "The default cursor.
+A color string as passed to `set-cursor-color'."
+  :type 'string
+  :group 'ergoemacs-modal)
+
+(defcustom ergoemacs-modal-emacs-state-modes
+  '(archive-mode
+    bbdb-mode
+    bookmark-bmenu-mode
+    bookmark-edit-annotation-mode
+    browse-kill-ring-mode
+    bzr-annotate-mode
+    calc-mode
+    cfw:calendar-mode
+    completion-list-mode
+    Custom-mode
+    debugger-mode
+    delicious-search-mode
+    desktop-menu-blist-mode
+    desktop-menu-mode
+    doc-view-mode
+    dvc-bookmarks-mode
+    dvc-diff-mode
+    dvc-info-buffer-mode
+    dvc-log-buffer-mode
+    dvc-revlist-mode
+    dvc-revlog-mode
+    dvc-status-mode
+    dvc-tips-mode
+    ediff-mode
+    ediff-meta-mode
+    efs-mode
+    Electric-buffer-menu-mode
+    emms-browser-mode
+    emms-mark-mode
+    emms-metaplaylist-mode
+    emms-playlist-mode
+    etags-select-mode
+    fj-mode
+    gc-issues-mode
+    gdb-breakpoints-mode
+    gdb-disassembly-mode
+    gdb-frames-mode
+    gdb-locals-mode
+    gdb-memory-mode
+    gdb-registers-mode
+    gdb-threads-mode
+    gist-list-mode
+    gnus-article-mode
+    gnus-browse-mode
+    gnus-group-mode
+    gnus-server-mode
+    gnus-summary-mode
+    google-maps-static-mode
+    ibuffer-mode
+    jde-javadoc-checker-report-mode
+    magit-commit-mode
+    magit-diff-mode
+    magit-key-mode
+    magit-log-mode
+    magit-mode
+    magit-reflog-mode
+    magit-show-branches-mode
+    magit-branch-manager-mode ;; New name for magit-show-branches-mode
+    magit-stash-mode
+    magit-status-mode
+    magit-wazzup-mode
+    mh-folder-mode
+    monky-mode
+    notmuch-hello-mode
+    notmuch-search-mode
+    notmuch-show-mode
+    occur-mode
+    org-agenda-mode
+    package-menu-mode
+    proced-mode
+    rcirc-mode
+    rebase-mode
+    recentf-dialog-mode
+    reftex-select-bib-mode
+    reftex-select-label-mode
+    reftex-toc-mode
+    sldb-mode
+    slime-inspector-mode
+    slime-thread-control-mode
+    slime-xref-mode
+    shell-mode
+    sr-buttons-mode
+    sr-mode
+    sr-tree-mode
+    sr-virtual-mode
+    tar-mode
+    tetris-mode
+    tla-annotate-mode
+    tla-archive-list-mode
+    tla-bconfig-mode
+    tla-bookmarks-mode
+    tla-branch-list-mode
+    tla-browse-mode
+    tla-category-list-mode
+    tla-changelog-mode
+    tla-follow-symlinks-mode
+    tla-inventory-file-mode
+    tla-inventory-mode
+    tla-lint-mode
+    tla-logs-mode
+    tla-revision-list-mode
+    tla-revlog-mode
+    tla-tree-lint-mode
+    tla-version-list-mode
+    twittering-mode
+    urlview-mode
+    vc-annotate-mode
+    vc-dir-mode
+    vc-git-log-view-mode
+    vc-svn-log-view-mode
+    vm-mode
+    vm-summary-mode
+    w3m-mode
+    wab-compilation-mode
+    xgit-annotate-mode
+    xgit-changelog-mode
+    xgit-diff-mode
+    xgit-revlog-mode
+    xhg-annotate-mode
+    xhg-log-mode
+    xhg-mode
+    xhg-mq-mode
+    xhg-mq-sub-mode
+    xhg-status-extra-mode)
+  "Modes that should come up in ErgoEmacs state, regardless of if a
+modal state is currently enabled."
+  :type  '(repeat symbol)
+  :group 'ergoemacs-modal)
 
 (defun ergoemacs-setup-fast-keys ()
   "Setup an array listing the fast keys."
@@ -72,17 +224,11 @@ necessary.  Unshifted keys are changed to shifted keys.")
   (setq ergoemacs-full-alt-keymap (make-sparse-keymap))
   (setq ergoemacs-full-alt-shift-keymap (make-sparse-keymap))
   (define-key ergoemacs-full-alt-keymap
-    (read-kbd-macro
-     (if (eq system-type 'windows-nt)
-         "<apps>"
-       "<menu>"))
-    'ergoemacs-exit-dummy)
+    (read-kbd-macro "RET")
+    'ergoemacs-toggle-full-alt)
   (define-key ergoemacs-full-alt-shift-keymap
-    (read-kbd-macro
-     (if (eq system-type 'windows-nt)
-         "<apps>"
-       "<menu>"))
-    'ergoemacs-exit-dummy)
+    (read-kbd-macro "RET")
+    'ergoemacs-toggle-full-alt-shift)
   (ergoemacs-debug-heading "Setup Fast/Modal Keys")
   (mapc
    (lambda(var)
@@ -112,6 +258,23 @@ necessary.  Unshifted keys are changed to shifted keys.")
            (edmacro-parse-keys stripped-key)
            new-cmd))))
    (symbol-value (ergoemacs-get-variable-layout)))
+  (mapc
+   (lambda(key)
+     (unless (string= "" key)
+       (unless (lookup-key ergoemacs-full-alt-keymap (read-kbd-macro key))
+         (define-key ergoemacs-full-alt-keymap
+           (read-kbd-macro key)
+           '(lambda() (interactive)
+              (let (message-log-max)
+                (message "[Alt+] keymap active.")))))
+       (unless (lookup-key ergoemacs-full-alt-shift-keymap (read-kbd-macro key))
+         (define-key ergoemacs-full-alt-shift-keymap
+           (read-kbd-macro key)
+           '(lambda() (interactive)
+              (let (message-log-max)
+                (message "[Alt+Shift] keymap active.")))))))
+   (symbol-value (intern (concat "ergoemacs-layout-" (or ergoemacs-keyboard-layout "us")))))
+  
   (ergoemacs-debug-keymap 'ergoemacs-full-alt-keymap)
   (ergoemacs-debug-keymap 'ergoemacs-full-alt-shift-keymap)
   (ergoemacs-debug-keymap 'ergoemacs-full-fast-keys-keymap)
@@ -122,67 +285,123 @@ necessary.  Unshifted keys are changed to shifted keys.")
 
 (defun ergoemacs-minibuffer-setup ()
   "Exit temporary overlay maps."
-  (setq ergoemacs-exit-temp-map-var t)
+  ;; (setq ergoemacs-exit-temp-map-var t)
+  (set (make-local-variable 'ergoemacs-modal) nil)
   (setq ergoemacs-shortcut-keys t))
 
-(defun ergoemacs-exit-alt-keys ()
-  "Exit alt keys predicate."
-  (let (ret cmd)
-    (condition-case err
+
+(defvar ergoemacs-modal nil
+  "Weather modal ergoemacs is active.")
+
+(defun ergoemacs-modal-toggle (mode-text keymap)
+  "Toggle ergoemacs command modes."
+  (let ((alt mode-text)
+        (x (assq 'ergoemacs-modal
+                 ergoemacs-emulation-mode-map-alist)))
+    (if x
         (progn
-          (setq cmd (lookup-key ergoemacs-full-alt-keymap
-                                (this-command-keys-vector)))
-          (when cmd
-            (setq ret t))
-          (when (eq cmd 'ergoemacs-exit-dummy)
-            (setq ret nil))
-          (when ergoemacs-exit-temp-map-var
-            (setq ret nil)
-            (setq ergoemacs-exit-temp-map-var nil)))
-      (error (message "Err %s" err)))
-    (unless ret
-      (ergoemacs-mode-line) ;; Reset ergoemacs mode line
-      (let (message-log-max)
-        (message "[Alt+] keys removed from keymap.")))
-    (symbol-value 'ret)))
+          (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist))
+          (set-cursor-color ergoemacs-default-cursor)
+          (message "Full %s command mode removed." alt)
+          (set-default 'ergoemacs-modal nil)
+          (setq ergoemacs-modal nil)
+          (ergoemacs-mode-line))
+      ;; Turn on full alt command mode.
+      (push (cons 'ergoemacs-modal
+                  keymap)
+            ergoemacs-emulation-mode-map-alist)
+      (set-default 'ergoemacs-modal t)
+      (setq ergoemacs-modal t)
+      (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+       (concat " " alt))
+      (set-cursor-color ergoemacs-modal-cursor)
+      (message "%s command move installed. Exit by %s"
+               alt
+               (mapconcat
+                (lambda(key)
+                  (ergoemacs-pretty-key (key-description key)))
+                (where-is-internal
+                 'ergoemacs-toggle-full-alt keymap)
+                ", ")))
+    (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s" (mapcar (lambda(x) (nth 0 x)) ergoemacs-emulation-mode-map-alist))))
 
-(defun ergoemacs-alt-keys ()
-  "Install the alt keymap temporarily"
+(defun ergoemacs-toggle-full-alt ()
+  "Toggles full Alt+ keymap"
   (interactive)
-  (setq ergoemacs-exit-temp-map-var nil)
-  (set-temporary-overlay-map  ergoemacs-full-alt-keymap
-                              'ergoemacs-exit-alt-keys)
-  (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-   (concat
-    " " (replace-regexp-in-string
-         "!" "" (ergoemacs-pretty-key "M-!"))))
-  (let (message-log-max)
-    (message "[Alt+] keys installed to keymap. Press [Menu], [Esc], to exit")))
+  (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt'")
+  (ergoemacs-modal-toggle
+   (replace-regexp-in-string
+    "!" "" (ergoemacs-pretty-key "M-!")) ergoemacs-full-alt-keymap)
+  (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt'")
+  (ergoemacs-debug-flush))
 
-(defun ergoemacs-exit-alt-shift-keys ()
-  "Exit alt-shift keys predicate"
-  (let (ret cmd)
-    (condition-case err
-        (progn
-          (setq cmd (lookup-key ergoemacs-full-alt-shift-keymap
-                                (this-command-keys-vector)))
-          (when cmd
-            (setq ret t))
-          (when (eq cmd 'ergoemacs-exit-dummy)
-            (setq ret nil))
-          (when ergoemacs-exit-temp-map-var
-            (setq ret nil)
-            (setq ergoemacs-exit-temp-map-var nil)))
-      (error (message "Err %s" err)))
-    (symbol-value 'ret)))
-
-(defun ergoemacs-alt-shift-keys ()
-  "Install the alt-shift keymap temporarily"
+(defun ergoemacs-toggle-full-alt-shift ()
+  "Toggles full Alt+Shift+ keymap"
   (interactive)
-  (setq ergoemacs-exit-temp-map-var nil)
-  (set-temporary-overlay-map ergoemacs-full-alt-shift-keymap
-                             'ergoemacs-exit-alt-shift-keys)
-  (message "[Alt+Shift+] keys installed to keymap. Press [Menu], [Esc], to exit"))
+  (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt-shift'")
+  (ergoemacs-modal-toggle
+   (replace-regexp-in-string
+    "A" "" (ergoemacs-pretty-key "M-S-A")) ergoemacs-full-alt-shift-keymap)
+  (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt-shift'")
+  (ergoemacs-debug-flush))
+;; (defun ergoemacs-exit-alt-keys ()
+;;   "Exit alt keys predicate."
+;;   (let (ret cmd)
+;;     (condition-case err
+;;         (progn
+;;           (setq cmd (lookup-key ergoemacs-full-alt-keymap
+;;                                 (this-command-keys-vector)))
+;;           (when cmd
+;;             (setq ret t))
+;;           (when (eq cmd 'ergoemacs-exit-dummy)
+;;             (setq ret nil))
+;;           (when ergoemacs-exit-temp-map-var
+;;             (setq ret nil)
+;;             (setq ergoemacs-exit-temp-map-var nil)))
+;;       (error (message "Err %s" err)))
+;;     (unless ret
+;;       (ergoemacs-mode-line) ;; Reset ergoemacs mode line
+;;       (let (message-log-max)
+;;         (message "[Alt+] keys removed from keymap.")))
+;;     (symbol-value 'ret)))
+
+;; (defun ergoemacs-alt-keys ()
+;;   "Install the alt keymap temporarily"
+;;   (interactive)
+;;   (setq ergoemacs-exit-temp-map-var nil)
+;;   (set-temporary-overlay-map  ergoemacs-full-alt-keymap
+;;                               'ergoemacs-exit-alt-keys)
+;;   (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+;;    (concat
+;;     " " (replace-regexp-in-string
+;;          "!" "" (ergoemacs-pretty-key "M-!"))))
+;;   (let (message-log-max)
+;;     (message "[Alt+] keys installed to keymap. Press [Menu], [Esc], to exit")))
+
+;; (defun ergoemacs-exit-alt-shift-keys ()
+;;   "Exit alt-shift keys predicate"
+;;   (let (ret cmd)
+;;     (condition-case err
+;;         (progn
+;;           (setq cmd (lookup-key ergoemacs-full-alt-shift-keymap
+;;                                 (this-command-keys-vector)))
+;;           (when cmd
+;;             (setq ret t))
+;;           (when (eq cmd 'ergoemacs-exit-dummy)
+;;             (setq ret nil))
+;;           (when ergoemacs-exit-temp-map-var
+;;             (setq ret nil)
+;;             (setq ergoemacs-exit-temp-map-var nil)))
+;;       (error (message "Err %s" err)))
+;;     (symbol-value 'ret)))
+
+;; (defun ergoemacs-alt-shift-keys ()
+;;   "Install the alt-shift keymap temporarily"
+;;   (interactive)
+;;   (setq ergoemacs-exit-temp-map-var nil)
+;;   (set-temporary-overlay-map ergoemacs-full-alt-shift-keymap
+;;                              'ergoemacs-exit-alt-shift-keys)
+;;   (message "[Alt+Shift+] keys installed to keymap. Press [Menu], [Esc], to exit"))
 
 
 

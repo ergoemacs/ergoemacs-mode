@@ -1510,6 +1510,21 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (setq ergoemacs-shortcut-keys t)
               (ergoemacs-shortcut-override-mode -1))
+            (when (and ergoemacs-modal
+                       (memq major-mode ergoemacs-modal-emacs-state-modes))
+              (set (make-local-variable 'ergoemacs-modal)
+                   nil))
+            (when ergoemacs-modal
+              (mapc
+               (lambda(reg)
+                 (when (and ergoemacs-modal
+                            (string-match reg (buffer-name)))
+                   (set (make-local-variable 'ergoemacs-modal)
+                        nil)))
+               ergoemacs-modal-ignored-buffers))
+            (if ergoemacs-modal
+                (set-cursor-color ergoemacs-modal-cursor)
+              (set-cursor-color ergoemacs-default-cursor))
             (ergoemacs-install-shortcuts-up)
             (ergoemacs-vars-sync))
           (when (not ergoemacs-mode)
