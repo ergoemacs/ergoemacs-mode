@@ -674,11 +674,11 @@ work in the terminal."
 (defun ergoemacs-setup-keys-for-layout (layout &optional base-layout)
   "Setup keys based on a particular LAYOUT. All the keys are based on QWERTY layout."
   (ergoemacs-setup-translation layout base-layout)
-  (ergoemacs-setup-fast-keys)
   ;; Reset shortcuts layer.
   (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal))
   (let ((setup-ergoemacs-keymap t))
     (ergoemacs-setup-keys-for-keymap ergoemacs-keymap))
+  (ergoemacs-setup-fast-keys)
   (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
     ;; Install keymap
     (if x

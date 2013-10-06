@@ -258,6 +258,8 @@ modal state is currently enabled."
               (setq prefix-arg current-prefix-arg)
               (ergoemacs-shortcut-internal ',(nth 1 var)))))
          (setq new-cmd (intern (format "%s-ergoemacs" (symbol-name (nth 1 var)))))
+         (ergoemacs-debug "Created %s" new-cmd)
+         (ergoemacs-debug "Unshifted regular expression: %s" ergoemacs-unshifted-regexp)
          (if (save-match-data
                (let (case-fold-search)
                  (string-match ergoemacs-unshifted-regexp stripped-key)))

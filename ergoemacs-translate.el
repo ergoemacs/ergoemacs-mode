@@ -80,6 +80,27 @@
   (let ((base (or base-layout "us"))
         lay shifted-list unshifted-list
         len i)
+    (setq lay (symbol-value (intern (concat "ergoemacs-layout-" layout))))
+    (setq base (symbol-value (intern (concat "ergoemacs-layout-" base))))
+    
+    (setq len (length base))
+    (setq i 0)
+    (while (< i 60)
+      (unless (or (string= "" (nth i lay))
+                  (string= "" (nth (+ i 60) lay)))
+        (add-to-list 'ergoemacs-shifted-assoc
+                     `(,(nth i lay) . ,(nth (+ i 60) lay)))
+        (add-to-list 'ergoemacs-shifted-assoc
+                     `(,(nth (+ i 60) lay) . ,(nth i lay)))
+        (add-to-list 'unshifted-list (nth i lay))
+        (add-to-list 'shifted-list (nth (+ i 60) lay)))
+      (setq i (+ i 1)))
+    (setq ergoemacs-shifted-regexp 
+          (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
+                  (regexp-opt shifted-list nil)))
+    (setq ergoemacs-unshifted-regexp 
+          (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
+                  (regexp-opt unshifted-list nil)))
     (unless (and (string= layout ergoemacs-translation-to)
                  (string= base ergoemacs-translation-from))
       (if (equal layout base)
@@ -91,8 +112,6 @@
             (setq ergoemacs-translation-regexp nil))
         (setq ergoemacs-translation-from base)
         (setq ergoemacs-translation-to layout)
-        (setq lay (symbol-value (intern (concat "ergoemacs-layout-" layout))))
-        (setq base (symbol-value (intern (concat "ergoemacs-layout-" base))))
         (setq ergoemacs-needs-translation t)
         (setq ergoemacs-translation-assoc nil)
         (setq len (length base))
@@ -102,22 +121,7 @@
                       (string= "" (nth i lay)))
             (add-to-list 'ergoemacs-translation-assoc
                          `(,(nth i base) . ,(nth i lay))))
-          (when (< i 60)
-            (unless (or (string= "" (nth i lay))
-                        (string= "" (nth (+ i 60) lay)))
-              (add-to-list 'ergoemacs-shifted-assoc
-                           `(,(nth i lay) . ,(nth (+ i 60) lay)))
-              (add-to-list 'ergoemacs-shifted-assoc
-                           `(,(nth (+ i 60) lay) . ,(nth i lay)))
-              (add-to-list 'unshifted-list (nth i lay))
-              (add-to-list 'shifted-list (nth (+ i 60) lay))))
           (setq i (+ i 1)))
-        (setq ergoemacs-shifted-regexp 
-              (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
-                      (regexp-opt shifted-list nil)))
-        (setq ergoemacs-unshifted-regexp 
-              (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
-                      (regexp-opt unshifted-list nil)))
         (setq ergoemacs-translation-regexp
               (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
                       (regexp-opt (mapcar (lambda(x) (nth 0 x))
