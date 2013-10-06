@@ -77,11 +77,11 @@
 
 (defun ergoemacs-setup-translation (layout &optional base-layout)
   "Setup translation from BASE-LAYOUT to LAYOUT."
-  (let ((base (or base-layout "us"))
-        lay shifted-list unshifted-list
+  (let ((orig-base (or base-layout "us"))
+        lay shifted-list unshifted-list base
         len i)
     (setq lay (symbol-value (intern (concat "ergoemacs-layout-" layout))))
-    (setq base (symbol-value (intern (concat "ergoemacs-layout-" base))))
+    (setq base (symbol-value (intern (concat "ergoemacs-layout-" orig-base))))
     
     (setq len (length base))
     (setq i 0)
@@ -102,15 +102,15 @@
           (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
                   (regexp-opt unshifted-list nil)))
     (unless (and (string= layout ergoemacs-translation-to)
-                 (string= base ergoemacs-translation-from))
-      (if (equal layout base)
+                 (string= orig-base ergoemacs-translation-from))
+      (if (equal layout orig-base)
           (progn
-            (setq ergoemacs-translation-from base)
+            (setq ergoemacs-translation-from orig-base)
             (setq ergoemacs-translation-to layout)
             (setq ergoemacs-needs-translation nil)
             (setq ergoemacs-translation-assoc nil)
             (setq ergoemacs-translation-regexp nil))
-        (setq ergoemacs-translation-from base)
+        (setq ergoemacs-translation-from orig-base)
         (setq ergoemacs-translation-to layout)
         (setq ergoemacs-needs-translation t)
         (setq ergoemacs-translation-assoc nil)
