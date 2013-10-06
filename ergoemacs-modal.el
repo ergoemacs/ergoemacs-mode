@@ -254,7 +254,7 @@ modal state is currently enabled."
            `(defun ,(intern (format "%s-ergoemacs" (symbol-name (nth 1 var)))) (&optional arg)
               ,(format "Run `%s' or whatever this mode remaps the command to be using `ergoemacs-shortcut-internal'." (symbol-name (nth 1 var)))
               (interactive "P")
-              (setq this-command last-command)
+              (setq this-command ',(nth 1 var))
               (setq prefix-arg current-prefix-arg)
               (ergoemacs-shortcut-internal ',(nth 1 var)))))
          (setq new-cmd (intern (format "%s-ergoemacs" (symbol-name (nth 1 var)))))
@@ -264,25 +264,44 @@ modal state is currently enabled."
              (progn ;; Lower case
                (define-key ergoemacs-full-alt-keymap
                  (read-kbd-macro stripped-key) new-cmd)
+               (define-key ergoemacs-full-alt-keymap
+                 (read-kbd-macro (concat "<override> " stripped-key))
+                 (nth 1 var))
                (setq tmp (assoc stripped-key ergoemacs-shifted-assoc))
                (when tmp
                  ;; M-lower case key for shifted map.
                  (define-key ergoemacs-full-alt-shift-keymap
                    (read-kbd-macro (concat "M-" stripped-key))
                    new-cmd)
+                 (define-key ergoemacs-full-alt-keymap
+                   (read-kbd-macro (concat "<override> M-" stripped-key))
+                   (nth 1 var))
                  ;; Upper case for shifted map
                  (define-key ergoemacs-full-alt-shift-keymap
-                   (read-kbd-macro (cdr tmp)) new-cmd)))
+                   (read-kbd-macro (cdr tmp)) new-cmd)
+                 (define-key ergoemacs-full-alt-keymap
+                   (read-kbd-macro (concat "<override> " (cdr tmp)))
+                   (nth 1 var))))
            ;; Upper case
            (setq tmp (assoc stripped-key ergoemacs-shifted-assoc))
            (when tmp
              ;; Install lower case on shifted map.
              (define-key ergoemacs-full-alt-shift-keymap
                (read-kbd-macro (cdr tmp)) new-cmd)
+             (define-key ergoemacs-full-alt-shift-keymap
+               (read-kbd-macro (concat "<override> " (cdr tmp)))
+               (nth 1 var))
              ;; Install M-lower for alt map.
              (define-key ergoemacs-full-alt-keymap
-               (read-kbd-macro (concat "M-" (cdr tmp))) new-cmd))
-           (define-key ergoemacs-full-alt-keymap (read-kbd-macro stripped-key) new-cmd)))
+               (read-kbd-macro (concat "M-" (cdr tmp))) new-cmd)
+             (define-key ergoemacs-full-alt-keymap
+               (read-kbd-macro (concat "<override> M-" (cdr tmp)))
+               (nth 1 var)))
+           (define-key ergoemacs-full-alt-keymap
+             (read-kbd-macro stripped-key) new-cmd)
+           (define-key ergoemacs-full-alt-keymap
+             (read-kbd-macro (concat "<override> M-" stripped-key))
+             (nth 1 var))))
        (when (member cmd ergoemacs-movement-functions)
          (set (intern (concat "ergoemacs-fast-" (symbol-name cmd) "-keymap"))
               (make-sparse-keymap))
