@@ -1456,6 +1456,19 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
       (setq ergoemacs-shortcut-override-mode nil)
       (ergoemacs-debug "WARNING: ergoemacs-shortcut-override-mode was turned on; Turning off."))))
 
+(defun ergoemacs-shuffle-keys ()
+  "Shuffle ergoemacs keymaps"
+  ;; Promotes keymaps in `ergoemacs-emulation-mode-map-alist'
+  (mapc
+   (lambda(what)
+     (let ((x (assq 'ergoemacs-modal ergoemacs-emulation-mode-map-alist)))
+       (and x (setq ergoemacs-emulation-mode-map-alist
+                    (cons x (delq x ergoemacs-emulation-mode-map-alist ))))))
+   '(ergoemacs-modal ergoemacs-shortcut-keys ergoemacs-shortcut-override-mode))
+  ;; Demote
+  (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
+    (setq minor-mode-map-alist (append (delete x minor-mode-map-alist) (list x)))))
+
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
   (let (deactivate-mark)
@@ -1463,6 +1476,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
         (progn
           (ergoemacs-vars-sync)
           (when ergoemacs-mode
+            ;; Raise shortcuts and modal modes.
+            (ergoemacs-shuffle-keys)
             (let ((key-binding
                    (read-kbd-macro
                     (format
@@ -1470,7 +1485,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
               (cond
                ((interactive-form key-binding)
                 (setq this-command key-binding))))
-            (ergoemacs-install-shortcuts-up)
+            (unless ergoemacs-modal
+              (ergoemacs-install-shortcuts-up))
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (setq ergoemacs-shortcut-keys nil)
@@ -1484,6 +1500,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
     (condition-case err
         (progn
           (when ergoemacs-mode
+            (ergoemacs-shuffle-keys)
             ;; Reset mode-line
             (when ergoemacs-check-mode-line-change
               (unless (where-is-internal this-command  ergoemacs-check-mode-line-change)
@@ -1509,8 +1526,9 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
             (if ergoemacs-modal
                 (set-cursor-color ergoemacs-modal-cursor)
               (set-cursor-color ergoemacs-default-cursor))
-            (ergoemacs-install-shortcuts-up)
-            (ergoemacs-vars-sync))
+            (unless ergoemacs-modal
+              (ergoemacs-install-shortcuts-up)
+              (ergoemacs-vars-sync)))
           (when (not ergoemacs-mode)
             (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))
