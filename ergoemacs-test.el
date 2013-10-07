@@ -361,6 +361,18 @@ Hyper Key mapping no longer works."
     (ergoemacs-mode 1)
     (should ret)))
 
+(ert-deftest ergoemacs-test-modal-preserve-mark ()
+  "Issue #101.
+Test next and prior translation."
+  (with-temp-buffer
+    (insert ergoemacs-test-lorem-ipsum)
+    (goto-char (point-min))
+    (ergoemacs-toggle-full-alt)
+    (set-mark (point))
+    (forward-char 3)
+    (ergoemacs-toggle-full-alt)
+    (should mark-active)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
