@@ -459,7 +459,8 @@ the best match."
 
 (defun ergoemacs-shortcut-timeout ()
   (let (message-log-max)
-    (message ergoemacs-repeat-shortcut-msg))
+    (unless (current-message)
+      (message ergoemacs-repeat-shortcut-msg)))
   (set-temporary-overlay-map ergoemacs-repeat-shortcut-keymap))
 
 (defvar ergoemacs-current-extracted-map nil
