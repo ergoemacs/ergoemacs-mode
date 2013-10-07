@@ -1,7 +1,7 @@
 ;;; ergoemacs-modal.el --- Modal Editing commands
 ;; 
 ;; Filename: ergoemacs-modal.el
-;; Description: 
+;; Description:
 ;; Author: Matthew L. Fidler
 ;; Maintainer: 
 ;; Created: Sat Sep 28 20:03:23 2013 (-0500)
@@ -384,22 +384,24 @@ modal state is currently enabled."
 (defun ergoemacs-toggle-full-alt ()
   "Toggles full Alt+ keymap"
   (interactive)
-  (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt'")
-  (ergoemacs-modal-toggle
-   (replace-regexp-in-string
-    "!" "" (ergoemacs-pretty-key "M-!")) ergoemacs-full-alt-keymap 'ergoemacs-toggle-full-alt)
-  (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt'")
-  (ergoemacs-debug-flush))
+  (let (deactivate-mark)
+    (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt'")
+    (ergoemacs-modal-toggle
+     (replace-regexp-in-string
+      "!" "" (ergoemacs-pretty-key "M-!")) ergoemacs-full-alt-keymap 'ergoemacs-toggle-full-alt)
+    (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt'")
+    (ergoemacs-debug-flush)))
 
 (defun ergoemacs-toggle-full-alt-shift ()
   "Toggles full Alt+Shift+ keymap"
   (interactive)
-  (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt-shift'")
-  (ergoemacs-modal-toggle
-   (replace-regexp-in-string
-    "~" "" (ergoemacs-pretty-key "M-S-~")) ergoemacs-full-alt-shift-keymap 'ergoemacs-toggle-full-alt-shift)
-  (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt-shift'")
-  (ergoemacs-debug-flush))
+  (let (deactivate-mark)
+    (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt-shift'")
+    (ergoemacs-modal-toggle
+     (replace-regexp-in-string
+      "~" "" (ergoemacs-pretty-key "M-S-~")) ergoemacs-full-alt-shift-keymap 'ergoemacs-toggle-full-alt-shift)
+    (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt-shift'")
+    (ergoemacs-debug-flush)))
 
 (provide 'ergoemacs-modal)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
