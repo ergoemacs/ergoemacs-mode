@@ -43,6 +43,8 @@ A minor-mode that aims to:
 
 [[file:{lisp}(ob:path-to-root){/lisp}/features.html][/icon-cog icon-white/ Features]]
 
+[[https://groups.google.com/forum/#!forum/ergoemacs][/icon-group icon-white/ ErgoEmacs Google Group]]
+
 [[https://github.com/ergoemacs/ergoemacs-mode][/icon-github-sign icon-white/ Github]]
 
 [[file:{lisp}(ob:path-to-root){/lisp}/testimonials.html][/icon-comments-alt icon-white/ Testimonials]]
@@ -50,6 +52,8 @@ A minor-mode that aims to:
 [[file:{lisp}(ob:path-to-root){/lisp}/changelog.html][/icon-pencil icon-white/ Changelog]]
 
 [[file:{lisp}(ob:path-to-root){/lisp}/bug-report.html][/icon-fire icon-white/ Bug report]]
+
+[[http://ergoemacs.org/emacs/blog.html][/icon-blog icon-white/ Xah's Emacs Blog]]
 
 
 #+HTML: </div>
@@ -1748,6 +1752,26 @@ One can enable movement without key-chords as follows:
   :PAGE:     faq.html
   :TEMPLATE: blog_static_no_title.html
   :END:
+*** I was expecting C-j to be mapped to copy but instead it's C-c on my dvorak 
+You have some options to get to copy and paste:
+- You can Alt + the normal key positions for undo cut copy paste
+- If you want, you can easily do it with:
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "<C-j>") 'ergoemacs-cut-line-or-region)
+#+END_SRC
+
+- If you want you can keep /all/ standard shortcuts in the normal
+  QWERTY positions by:
+
+#+BEGIN_SRC emacs-lisp
+(setq ergoemacs-theme nil)
+(setq ergoemacs-change-fixed-layout-to-variable-layout t)
+(setq ergoemacs-keyboard-layout "dv")
+(require 'ergoemacs-mode)
+(ergoemacs-mode 1)
+#+END_SRC
+
 
 *** How do you get a 【▤ Menu】 key in Mac OS X
 Some of ergoemacs keys make use of the 【▤ Menu】 key.
