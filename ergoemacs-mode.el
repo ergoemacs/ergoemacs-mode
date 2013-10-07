@@ -1524,8 +1524,12 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
                         nil)))
                ergoemacs-modal-ignored-buffers))
             (if ergoemacs-modal
-                (set-cursor-color ergoemacs-modal-cursor)
-              (set-cursor-color ergoemacs-default-cursor))
+                (progn
+                  (set-cursor-color ergoemacs-modal-cursor)
+                  (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+                   (concat " " ergoemacs-modal)))
+              (set-cursor-color ergoemacs-default-cursor)
+              (ergoemacs-mode-line))
             (unless ergoemacs-modal
               (ergoemacs-install-shortcuts-up)
               (ergoemacs-vars-sync)))

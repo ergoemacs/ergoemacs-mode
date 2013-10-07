@@ -357,7 +357,8 @@ modal state is currently enabled."
         (progn
           (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist))
           (set-cursor-color ergoemacs-default-cursor)
-          (message "Full %s command mode removed." alt)
+          (let (message-log-max)
+            (message "Full %s command mode removed." alt))
           (set-default 'ergoemacs-modal nil)
           (setq ergoemacs-modal nil)
           (ergoemacs-mode-line))
@@ -365,18 +366,19 @@ modal state is currently enabled."
       (push (cons 'ergoemacs-modal
                   keymap)
             ergoemacs-emulation-mode-map-alist)
-      (set-default 'ergoemacs-modal t)
-      (setq ergoemacs-modal t)
+      (set-default 'ergoemacs-modal mode-text)
+      (setq ergoemacs-modal mode-text)
       (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-       (concat " " alt))
+       (concat " " mode-text))
       (set-cursor-color ergoemacs-modal-cursor)
-      (message "%s command move installed. Exit by %s"
+      (let (message-log-max)
+        (message "%s command move installed. Exit by %s"
                alt
                (mapconcat
                 (lambda(key)
                   (ergoemacs-pretty-key (key-description key)))
                 (where-is-internal exit-fn keymap)
-                ", ")))
+                ", "))))
     (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s" (mapcar (lambda(x) (nth 0 x)) ergoemacs-emulation-mode-map-alist))))
 
 (defun ergoemacs-toggle-full-alt ()
