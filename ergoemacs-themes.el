@@ -333,6 +333,8 @@
     ("<C-f5>" redo "Redo")
     ("<M-f5>" redo "Redo")
 
+    ("<f6>" ergoemacs-toggle-full-alt "Alt mode")
+
     ("C-." keyboard-quit "Quit")
     
     ("<M-delete>" kill-word "⌦ word")
