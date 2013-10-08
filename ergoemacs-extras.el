@@ -1298,7 +1298,8 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
         (i 0))
     (if (not lay)
         (message "Layout %s not found" layout)
-      (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
+      (setq extra-dir
+            (expand-file-name "ergoemacs-extras" user-emacs-directory))
       (if (not (file-exists-p extra-dir))
           (make-directory extra-dir t))
       (setq extra-dir (expand-file-name xtra extra-dir))
@@ -1306,7 +1307,9 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
           (make-directory extra-dir t))
       (setq lay (symbol-value lay))
       (setq file (expand-file-name
-                  (concat "ergoemacs-layout-" layout (if is-prefix "-prefix" "") ".svg") extra-dir))
+                  (concat "ergoemacs-layout-" layout
+                          (if is-prefix "-prefix" "") ".svg")
+                  extra-dir))
       (with-temp-file file
         ;;(set-buffer-file-coding-system 'utf-8)
         (insert-file-contents
@@ -1345,7 +1348,9 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
         (while (< i (length lay))
           (goto-char (point-min))
           (when (search-forward (format ">%s<" i) nil t)
-            (replace-match (format ">%s<" (ergoemacs-gen-svg-quote (nth i lay))) t t))
+            (replace-match
+             (format ">%s<"
+                     (ergoemacs-gen-svg-quote (nth i lay))) t t))
           (mapc
            (lambda(x)
              (let ((key-pre (nth 0 x))
