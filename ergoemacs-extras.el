@@ -1434,7 +1434,102 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                     (when (search-forward (format ">%s-%s<" rep-sym-pre sym) nil t)
                       (replace-match  (format ">%s<" (ergoemacs-gen-svg-quote txt)) t t))))
                 '("SPC"))
-               
+
+               (mapc
+                (lambda(sym)
+                  (setq txt (assoc (format "<%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
+                  (if (not txt)
+                      (progn
+                        (setq txt (assoc (format "<%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
+                        (if (not txt)
+                            (setq txt "")
+                          (if (>= (length txt) 3)
+                              (setq txt (nth 2 txt))
+                            (setq txt ""))))
+                    (if (>= (length txt) 3)
+                        (setq txt (nth 2 txt))
+                      (setq txt "")))
+                  (when (string= "" txt)
+                    (setq txt
+                          (all-completions
+                           (format "<%s> " (downcase sym))
+                           (symbol-value (ergoemacs-get-variable-layout))))
+                    (if (= 0 (length txt))
+                        (progn
+                          (setq txt
+                                (all-completions
+                                 (format "<%s> " (downcase sym))
+                                 (symbol-value (ergoemacs-get-fixed-layout))))
+                          (if (= 0 (length txt))
+                              (setq txt "")
+                            (setq txt "⌨")))
+                      (setq txt "⌨")))
+                  (goto-char (point-min))
+                  (when (search-forward (format ">N%s<" (upcase sym)) nil t)
+                    (replace-match  (format ">%s<" txt) t t))
+
+                  (setq txt (assoc (format "<C-%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
+                  (if (not txt)
+                      (progn
+                        (setq txt (assoc (format "<C-%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
+                        (if (not txt)
+                            (setq txt "")
+                          (if (>= (length txt) 3)
+                              (setq txt (nth 2 txt))
+                            (setq txt ""))))
+                    (if (>= (length txt) 3)
+                        (setq txt (nth 2 txt))
+                      (setq txt "")))
+                  (when (string= "" txt)
+                    (setq txt
+                          (all-completions
+                           (format "<C-%s> " (downcase sym))
+                           (symbol-value (ergoemacs-get-variable-layout))))
+                    (if (= 0 (length txt))
+                        (progn
+                          (setq txt
+                                (all-completions
+                                 (format "<C-%s> " (downcase sym))
+                                 (symbol-value (ergoemacs-get-fixed-layout))))
+                          (if (= 0 (length txt))
+                              (setq txt "")
+                            (setq txt "⌨")))
+                      (setq txt "⌨")))
+                  (goto-char (point-min))
+                  (when (search-forward (format ">CC%s<" (upcase sym)) nil t)
+                    (replace-match  (format ">%s<" txt) t t))
+                  
+                  (setq txt (assoc (format "<M-%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
+                  (if (not txt)
+                      (progn
+                        (setq txt (assoc (format "<M-%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
+                        (if (not txt)
+                            (setq txt "")
+                          (if (>= (length txt) 3)
+                              (setq txt (nth 2 txt))
+                            (setq txt ""))))
+                    (if (>= (length txt) 3)
+                        (setq txt (nth 2 txt))
+                      (setq txt "")))
+                  (when (string= "" txt)
+                    (setq txt
+                          (all-completions
+                           (format "<M-%s> " (downcase sym))
+                           (symbol-value (ergoemacs-get-variable-layout))))
+                    (if (= 0 (length txt))
+                        (progn
+                          (setq txt
+                                (all-completions
+                                 (format "<M-%s> " (downcase sym))
+                                 (symbol-value (ergoemacs-get-fixed-layout))))
+                          (if (= 0 (length txt))
+                              (setq txt "")
+                            (setq txt "⌨")))
+                      (setq txt "⌨")))
+                  (goto-char (point-min))
+                  (when (search-forward (format ">MM%s<" (upcase sym)) nil t)
+                    (replace-match  (format ">%s<" txt) t t)))
+                '("F1" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9" "F10" "F11" "F12"))
                ;; Legend/Key
                (goto-char (point-min))
                (when (search-forward (format ">%s<" rep-sym-pre) nil t)
@@ -1459,7 +1554,9 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
       (message "Layout generated to %s" file)
       (when prefix-lst
         (let ((ergoemacs-svn-prefixes prefix-lst))
-          (ergoemacs-gen-svg layout file-name extra t)))
+          ;; Remove prefix generation for now.  It seems a bit buggy.
+          ;; (ergoemacs-gen-svg layout file-name extra t)
+          ))
       (when (and is-prefix ergoemacs-convert ergoemacs-inkscape)
         (message "Concatenating layouts.")
         ;; Concatenate two files

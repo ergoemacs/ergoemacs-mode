@@ -161,8 +161,9 @@
     ("<apps> <return>" execute-extended-command "M-x")
     ("<apps> SPC" set-mark-command "Set Mark")
     ("<apps> a" mark-whole-buffer "Sel All")
-    ("<apps> f" ("C-x" ctl-to-alt) "Ctl-x")
-    ("<apps> <apps> f" ("C-x" unchorded) "Ctl-x")
+    ("<apps> d" ("C-x" ctl-to-alt) "Ctl-x")
+    ("<apps> f" ("C-c" ctl-to-alt) "Ctl-c")
+    ;;("<apps> <apps> f" ("C-x" unchorded) "Ctl-x")
     ("<apps> h" ("C-h" nil) "Ctl-h")
     ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
     ("<apps> j" ("C-c" unchorded) "Ctl-c")
@@ -226,7 +227,7 @@
   `(
     ("<C-home>" beginning-of-buffer "↑ Top")
     ("<C-end>" end-of-buffer "↓ Bottom")
-    ("<M-f4>" delete-frame) ;; Alt+f4 should work.
+    ("<M-f4>" delete-frame "× Frame") ;; Alt+f4 should work.
     ;; C-i is open in OS direbctory for Mac OSX; ....
     ;; C-q is quit in Mac OSX; Quoted insert in emacs
     ("C-l" goto-line "Goto")
@@ -315,13 +316,22 @@
     
     ("<f2>" ergoemacs-cut-line-or-region "✂ region")
     ("<C-f2>" ergoemacs-cut-all "✂ all")
+    ("<M-f2>" ergoemacs-cut-all "✂ all")
+    
     ("<f3>" ergoemacs-copy-line-or-region "copy")
     ("<C-f3>" ergoemacs-copy-all "Copy all")
+    ("<M-f3>" ergoemacs-copy-all "Copy all")
+    
     ("<f4>" yank "paste")
     ("<C-f4>" yank-pop "paste ↑")
+    ;; ("<M-f4>" yank-pop "paste ↑")
+
+    ("<f11>" previous-line "Previous")
+    ("<f12>" next-line "Next")
     
     ("<f5>" undo "Undo")
     ("<C-f5>" redo "Redo")
+    ("<M-f5>" redo "Redo")
 
     ("C-." keyboard-quit "Quit")
     
@@ -392,7 +402,9 @@
     (minibuffer-setup-hook
      (("<f11>" previous-history-element)
       ("<f12>" next-history-element)
+      ("<M-f11>" previous-matching-history-element)
       ("S-<f11>" previous-matching-history-element)
+      ("<M-f12>" next-matching-history-element)
       ("S-<f12>" next-matching-history-element)))    
     
     ;; Comint
@@ -400,14 +412,18 @@
      (("<f11>" comint-previous-input)
       ("<f12>" comint-next-input)
       ("S-<f11>" comint-previous-matching-input)
-      ("S-<f12>" comint-next-matching-input)))
+      ("<M-f11>" comint-previous-matching-input)
+      ("S-<f12>" comint-next-matching-input)
+      ("<M-f12>" comint-next-matching-input)))
     
     ;; Log Edit
     (log-edit-mode-hook
      (("<f11>" log-edit-previous-comment )
       ("<f12>" log-edit-next-comment )
       ("S-<f11>" log-edit-previous-comment )
-      ("S-<f12>" log-edit-next-comment )))
+      ("<M-f11>" log-edit-previous-comment )
+      ("S-<f12>" log-edit-next-comment )
+      ("<M-f12>" log-edit-next-comment )))
     
     ;; Eshell
     (eshell-mode-hook
@@ -416,14 +432,19 @@
       ("<f11>" eshell-previous-matching-input-from-input)
       ("<f12>" eshell-next-matching-input-from-input)
       ("S-<f11>" eshell-previous-matching-input-from-input)
-      ("S-<f12>" eshell-next-matching-input-from-input)))
+      ("<M-f11>" eshell-previous-matching-input-from-input)
+      ("<f11>" eshell-previous-matching-input-from-input)
+      ("S-<f12>" eshell-next-matching-input-from-input)
+      ("<M-f12>" eshell-next-matching-input-from-input)))
     
     ;; Iswitchdb hook
     (iswitchb-minibuffer-setup-hook
      (("<f11>" iswitchb-prev-match)
       ("<f12>" iswitchb-next-match)
       ("S-<f11>" iswitchb-prev-match)
-      ("S-<f12>" iswitchb-next-match)))
+      ("<M-f11>" iswitchb-prev-match)
+      ("S-<f12>" iswitchb-next-match)
+      ("<M-f12>" iswitchb-next-match)))
     
     ;; Ido minibuffer setup hook
     (ido-minibuffer-setup-hook
@@ -435,7 +456,9 @@
       ("<f11>" previous-history-element )
       ("<f12>" next-history-element)
       ("S-<f11>" previous-matching-history-element)
-      ("S-<f12>" next-matching-history-element)))
+      ("<M-f11>" previous-matching-history-element)
+      ("S-<f12>" next-matching-history-element)
+      ("<M-f12>" next-matching-history-element)))
     
     ;; Info Mode hooks
     (Info-mode-hook
