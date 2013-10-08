@@ -1786,7 +1786,7 @@ is done by:
    ~/.emacs.d/init.el) as follows:
 
 #+BEGIN_SRC emacs-lisp
-(define-key key-translation-map (kbd "<F13>") (kbd "<menu>"))
+(define-key key-translation-map (kbd "<f13>") (kbd "<menu>"))
 #+END_SRC
 
 *** How do you select text when using ergoemacs-mode and ergoemacs-arrow keys
