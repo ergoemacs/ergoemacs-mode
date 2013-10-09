@@ -673,7 +673,7 @@ on that key.
                         (ergoemacs-debug "Shortcut %s to %s %s" (key-description keymap-key)
                                        (nth 0 fn) (nth 1 fn))
                         (cond
-                       ((and (boundp 'ergoemacs-orig-keymap) ergoemacs-orig-keymap)
+                         ((and (boundp 'ergoemacs-orig-keymap) ergoemacs-orig-keymap)
                         (eval
                          (macroexpand
                           `(defun ,(intern (format "%s-ergoemacs" (nth 0 fn)))
@@ -721,7 +721,12 @@ sets `this-command' to `%s'. Also after
                   (when  (string-match "[A-Za-z]$" ctl-c-keys)
                     (setq ctl-c-keys (match-string 0 ctl-c-keys))
                     (setq ergoemacs-repeat-shortcut-keymap (make-keymap))
-                    (define-key ergoemacs-repeat-shortcut-keymap (read-kbd-macro ctl-c-keys) fn)
+                    (define-key ergoemacs-repeat-shortcut-keymap (read-kbd-macro ctl-c-keys)
+                      `(lambda(&optional arg)
+                         (interactive "P")
+                         (ergoemacs-send-fn
+                          ,(key-description (nth 1 fn))
+                          ',(nth 0 fn))))
                     (setq ergoemacs-repeat-shortcut-msg
                           (format  "Repeat %s with %s"
                                    (ergoemacs-pretty-key key)
