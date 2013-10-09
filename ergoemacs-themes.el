@@ -149,10 +149,12 @@
     ("M-4" split-window-vertically "split |")
     ("M-$" split-window-horizontally "split —")
     
-    ("M-8" ergoemacs-extend-selection "←region→")
-    ("M-*" ergoemacs-select-text-in-quote "←quote→")
+    ("M-8" (er/expand-region ergoemacs-extend-selection) "←region→")
+    ("M-*" (er/mark-outside-quotes ergoemacs-select-text-in-quote) "←quote→")
     ("M-6" ergoemacs-select-current-block "Sel. Block")
     ("M-7" ergoemacs-select-current-line "Sel. Line")
+
+    ("M-b" ace-jump-mode "Ace Jump")
     
     ("<apps> 2" delete-window "x pane")
     ("<apps> 3" delete-other-windows "x other pane")
@@ -694,10 +696,11 @@ Some exceptions we don't want to unset.
 (defun ergoemacs-get-themes (&optional ob)
   "Gets the list of all known themes."
   (let (ret)
-    (mapatoms (lambda(s)
-                (let ((sn (symbol-name s)))
-                  (and (string-match "^ergoemacs-\\(.*?\\)-theme$" sn)
-                       (setq ret (cons (match-string 1 sn) ret)))))
+    (mapatoms
+     (lambda(s)
+       (let ((sn (symbol-name s)))
+         (and (string-match "^ergoemacs-\\(.*?\\)-theme$" sn)
+              (setq ret (cons (match-string 1 sn) ret)))))
               ob)
     ret))
 
@@ -716,24 +719,36 @@ Some exceptions we don't want to unset.
   "Defines KEY in ergoemacs keyboard based on QWERTY and binds to FUNCTION.
 Optionally provides DESC for a description of the key."
   (let* (found
-         (str-key (or
-                   (and (eq (type-of key) 'string) key)
-                   (key-description key)))
+         (str-key (replace-regexp-in-string ;; <menu> variant
+                   "<apps>" "<menu>"
+                   (or
+                    (and (eq (type-of key) 'string) key)
+                    (key-description key))))
+         (str-key2 (replace-regexp-in-string ;; <apps> variant
+                    "<menu>" "<apps>" str-key))
          (cur-key str-key)
          (no-ergoemacs-advice t))
     (set (if fixed-key (ergoemacs-get-fixed-layout)
            (ergoemacs-get-variable-layout))
-         (mapcar
-          (lambda(x)
-            (if (not (string= str-key (nth 0 x)))
-                x
-              (setq found t)
-              (if fixed-key
-                  `(,str-key ,function ,desc)
-                `(,str-key ,function ,desc ,only-first))))
-          (symbol-value (if fixed-key
-                            (ergoemacs-get-fixed-layout)
-                          (ergoemacs-get-variable-layout)))))
+         (remove-if
+          #'(lambda(x) (not x))
+          (mapcar
+           #'(lambda(x)
+              (if (not (or (string= str-key (nth 0 x))
+                           (string= str-key2 (nth 0 x))))
+                  (if (string-match
+                       (format "^\\(%s\\|%s\\) "
+                               (regexp-quote str-key)
+                               (regexp-quote str-key2))
+                       (nth 0 x)) nil
+                    x)
+                (setq found t)
+                (if fixed-key
+                    `(,str-key ,function ,desc)
+                  `(,str-key ,function ,desc ,only-first))))
+           (symbol-value (if fixed-key
+                             (ergoemacs-get-fixed-layout)
+                           (ergoemacs-get-variable-layout))))))
     (unless found
       (add-to-list (if fixed-key
                        (ergoemacs-get-fixed-layout)
@@ -1014,6 +1029,36 @@ Some exceptions we don't want to unset.
                                        "<C-home>"
                                        "<end>"
                                        "<C-end>")))
+
+
+(ergoemacs-deftheme hardcore
+  "Hardcore ergoemacs-mode. Removes <backspace> as well as arrow keys."
+  nil
+  (setq ergoemacs-redundant-keys-tmp `(,@ergoemacs-redundant-keys-tmp
+                                       "<left>"
+                                       "<right>"
+                                       "<up>"
+                                       "<down>"
+                                       "<C-left>"
+                                       "<C-right>"
+                                       "<C-up>"
+                                       "<C-down>"
+                                       "<M-left>"
+                                       "<M-right>"
+                                       "<M-up>"
+                                       "<M-down>"
+                                       "<delete>"
+                                       "<C-delete>"
+                                       "<M-delete>"
+                                       "<next>"
+                                       "<C-next>"
+                                       "<prior>"
+                                       "<C-prior>"
+                                       "<home>"
+                                       "<C-home>"
+                                       "<end>"
+                                       "<C-end>"
+                                       "<backspace>")))
 
 (ergoemacs-deftheme 5.7.5
   "Old ergoemacs layout.  Uses M-0 for close pane. Does not have beginning/end of buffer."
