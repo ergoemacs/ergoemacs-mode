@@ -247,17 +247,29 @@ modal state is currently enabled."
                                      "M"))
                            "" key))
             (new-cmd (nth 1 var)) tmp)
+       (when (eq 'cons (type-of cmd))
+         (mapc
+          (lambda(fn)
+            (when (and (not tmp)
+                       (condition-case err
+                           (interactive-form fn)
+                         (error nil)))
+              (setq tmp fn)))
+          (reverse cmd))
+         (setq cmd tmp)
+         (setq new-cmd tmp)
+         (setq tmp nil))
        (ergoemacs-debug "Key:%s stripped-key: %s" key stripped-key)
        (when (string-match "^\\([[:ascii:]]\\|SPC\\)$" stripped-key)
          (eval
           (macroexpand
-           `(defun ,(intern (format "%s-ergoemacs" (symbol-name (nth 1 var)))) (&optional arg)
-              ,(format "Run `%s' or whatever this mode remaps the command to be using `ergoemacs-shortcut-internal'." (symbol-name (nth 1 var)))
+           `(defun ,(intern (format "%s-ergoemacs" (symbol-name cmd))) (&optional arg)
+              ,(format "Run `%s' or whatever this mode remaps the command to be using `ergoemacs-shortcut-internal'." (symbol-name cmd))
               (interactive "P")
-              (setq this-command ',(nth 1 var))
+              (setq this-command ',cmd)
               (setq prefix-arg current-prefix-arg)
-              (ergoemacs-shortcut-internal ',(nth 1 var)))))
-         (setq new-cmd (intern (format "%s-ergoemacs" (symbol-name (nth 1 var)))))
+              (ergoemacs-shortcut-internal ',cmd))))
+         (setq new-cmd (intern (format "%s-ergoemacs" (symbol-name cmd))))
          (ergoemacs-debug "Created %s" new-cmd)
          (ergoemacs-debug "Unshifted regular expression: %s" ergoemacs-unshifted-regexp)
          (if (save-match-data
@@ -268,7 +280,7 @@ modal state is currently enabled."
                  (read-kbd-macro stripped-key) new-cmd)
                (define-key ergoemacs-full-alt-keymap
                  (read-kbd-macro (concat "<override> " stripped-key))
-                 (nth 1 var))
+                 cmd)
                (setq tmp (assoc stripped-key ergoemacs-shifted-assoc))
                (when tmp
                  ;; M-lower case key for shifted map.
@@ -277,13 +289,13 @@ modal state is currently enabled."
                    new-cmd)
                  (define-key ergoemacs-full-alt-keymap
                    (read-kbd-macro (concat "<override> M-" stripped-key))
-                   (nth 1 var))
+                   cmd)
                  ;; Upper case for shifted map
                  (define-key ergoemacs-full-alt-shift-keymap
                    (read-kbd-macro (cdr tmp)) new-cmd)
                  (define-key ergoemacs-full-alt-keymap
                    (read-kbd-macro (concat "<override> " (cdr tmp)))
-                   (nth 1 var))))
+                   cmd)))
            ;; Upper case
            (setq tmp (assoc stripped-key ergoemacs-shifted-assoc))
            (when tmp
@@ -292,18 +304,18 @@ modal state is currently enabled."
                (read-kbd-macro (cdr tmp)) new-cmd)
              (define-key ergoemacs-full-alt-shift-keymap
                (read-kbd-macro (concat "<override> " (cdr tmp)))
-               (nth 1 var))
+               cmd)
              ;; Install M-lower for alt map.
              (define-key ergoemacs-full-alt-keymap
                (read-kbd-macro (concat "M-" (cdr tmp))) new-cmd)
              (define-key ergoemacs-full-alt-keymap
                (read-kbd-macro (concat "<override> M-" (cdr tmp)))
-               (nth 1 var)))
+               cmd))
            (define-key ergoemacs-full-alt-keymap
              (read-kbd-macro stripped-key) new-cmd)
            (define-key ergoemacs-full-alt-keymap
              (read-kbd-macro (concat "<override> M-" stripped-key))
-             (nth 1 var))))
+             cmd)))
        (when (member cmd ergoemacs-movement-functions)
          (set (intern (concat "ergoemacs-fast-" (symbol-name cmd) "-keymap"))
               (make-sparse-keymap))
