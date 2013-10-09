@@ -528,8 +528,11 @@ work in the terminal."
         (mapc
          (lambda(new-def)
            (unless found
-             (setq found
-                   (ergoemacs-setup-keys-for-keymap---internal keymap key new-def))))
+             (when (condition-case err
+                       (interactive-form new-def)
+                     (error nil))
+               (setq found
+                     (ergoemacs-setup-keys-for-keymap---internal keymap key new-def)))))
          def))
       (symbol-value 'found)))
    ((condition-case err
@@ -1483,7 +1486,9 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
                     (format
                      "<override> %s" (key-description (this-single-command-keys))))))
               (cond
-               ((interactive-form key-binding)
+               ((condition-case err
+                    (interactive-form key-binding)
+                  (error nil))
                 (setq this-command key-binding))))
             (unless ergoemacs-modal
               (ergoemacs-install-shortcuts-up))
