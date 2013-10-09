@@ -850,19 +850,19 @@ This can be done by:
 
 The possible disadvantage to this is you would have to use another key
 to access the defined emacs commands.  Currently ergoemacs-mode allows
-you to use QWERTY 【▤ Menu f】 or 【Ctrl+⇧ Shift+x】 to access emacs
-Ctrl+x commands and QWERTY 【▤ Menu j】 or 【Ctrl+⇧ Shift+c】 to
+you to use QWERTY 【▤ Menu d】 or 【Ctrl+⇧ Shift+x】 to access emacs
+Ctrl+x commands and QWERTY 【▤ Menu t】 or 【Ctrl+⇧ Shift+c】 to
 access Ctrl+c commands.
 
 The 【▤ Menu】 keybindings are slightly different than plan Ctrl+x or
 Ctrl+c:
 - For Ctrl+x, the Alt and Ctrl keys are swapped.  Hence for the
-  equivalent of 【Ctrl+x Ctrl+b】, you would press 【▤ Menu f Alt+b】
+  equivalent of 【Ctrl+x Ctrl+b】, you would press 【▤ Menu s Alt+b】
 - For Ctrl+c, control keys are mapped to plain keys. Plain keys
   are mapped to Alt keys. Alt keys are mapped to Ctl keys.  Hence:
-  - 【Ctrl+c Ctrl+c】 would be 【▤ Menu j c】
-  - 【Ctrl+c c】 would be 【▤ Menu j Alt+c】
-  - 【Ctrl+c Alt+c】 would be 【▤ Menu j Ctl+c】
+  - 【Ctrl+c Ctrl+c】 would be 【▤ Menu f c】
+  - 【Ctrl+c c】 would be 【▤ Menu f Alt+c】
+  - 【Ctrl+c Alt+c】 would be 【▤ Menu f Ctl+c】
   - This is called unchorded mapping
 - You can swap between Normal, Alt<->Ctl and unchorded keyboard
   translations in ergoemacs by pressing 【▤ Menu】
@@ -1890,6 +1890,15 @@ The guru theme takes away the arrow keys and page up/page down keys.
   (setq ergoemacs-theme "guru")
   (ergoemacs-mode 1)
 #+END_SRC
+**** Hardcore
+The hardcore theme takes away the backspace key as well as the arrow
+and page up/down keys. 
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-theme "hardcore")
+  (ergoemacs-mode 1)
+#+END_SRC
+
 ** System Wide Keys
   :PROPERTIES:
   :PAGE:     system-wide.html
