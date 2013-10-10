@@ -458,12 +458,12 @@ forward-word:
   SendKey("{Ctrl down}{Right}{Ctrl up}",1)
   return
 
-
+ergoemacs-beginning-of-line-or-block:
 move-beginning-of-line:
   SendKey("{Home}",1)
   return
 
-
+ergoemacs-end-of-line-or-block:
 move-end-of-line:
  SendKey("{End}",1)
  return
@@ -551,7 +551,34 @@ redo:
  SendKey("{Ctrl down}{y}{Ctrl up}",0)
  return
 
+ergoemacs-toggle-letter-case:
+ ;; Word Shift+F3 is toggle letter case.
+ ;; Maybe do somthing different in other apps.
+ If WinActive("ahk_class OpusApp"){
+   SendKey("{Shift down}{F3}{Shift up}",0)
+ }
+ return
 
+split-window-below:
+ ;; Word is Alt+Ctrl+s
+ If WinActive("ahk_class OpusApp"){
+   SendKey("{Alt down}{Ctrl down}{s}{Ctrl up}{Alt up}{Enter}",0)
+ }
+ return
+
+delete-other-windows:
+  ;; Word is
+  If WinActive("ahk_class OpusApp"){
+    SendKey("{Alt down}{Ctrl down}{s}{Alt up}{Ctrl up}",0)
+  }
+  return
+
+ergoemacs-move-cursor-next-pane:
+  ;; Word is
+  If WinActive("ahk_class OpusApp"){
+    SendKey("{F6}")
+  }
+  return
   
 GetSpaceBarHoldTime()
 {

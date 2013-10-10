@@ -473,13 +473,13 @@ line functions by using `ergoemacs-shortcut-internal'."
     (progn
       (if (re-search-backward "\n[ \t]*\n" nil "move")
           (progn (re-search-forward "\n[ \t]*\n")
-                 (setq p1 (point) ) )
+                 (setq p1 (point)))
         (setq p1 (point)))
       (if (re-search-forward "\n[ \t]*\n" nil "move")
           (progn (re-search-backward "\n[ \t]*\n")
-                 (setq p2 (point) ))
-        (setq p2 (point) ) ) )
-    (set-mark p1) ) )
+                 (setq p2 (point)))
+        (setq p2 (point))))
+    (set-mark p1)))
 
 (defun ergoemacs-select-text-in-quote ()
   "Select text between the nearest left and right delimiters.

@@ -679,27 +679,24 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
   (let ((ret key)
         (mod-code 0)
         (case-fold-search nil))
-    
     (while (string-match "-\\([A-Z]\\)\\($\\| \\)" ret)
       (setq ret (replace-match
                  (concat "-S-"
-                         (downcase (match-string 1 ret)) (match-string 2 ret))
+                         (downcase (match-string 1 ret))
+                         (match-string 2 ret))
                  t t ret)))
-    
     (while (string-match "M-" ret)
       (setq mod-code (+ mod-code 2))
       (setq ret (replace-match (if number "" "!") t t ret)))
-    
     (while (string-match "S-" ret)
       (setq mod-code (+ mod-code 8))
       (setq ret (replace-match (if number "" "+") t t ret)))
-    
     (while (string-match "C-" ret)
       (setq mod-code (+ mod-code 4))
       (setq ret (replace-match (if number "" "^") t t ret)))
     (if (and number (= 1 (length ret)))
         (setq ret (format "%s%s" (string-to-char ret) (number-to-string mod-code))))
-    (symbol-value 'ret)))
+    ret))
 
 (defun ergoemacs-get-layouts-ahk-ini ()
   "Gets the easymenu entry for ergoemacs-layouts."
@@ -769,12 +766,12 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
 (defun ergoemacs-get-ahk-keys-ini ()
   "Get ahk keys for all themes/ahk combinations and put into INI file."
   (let ((re "")
-        lst)
+        (lst '()))
     (with-temp-buffer
       (insert-file-contents (expand-file-name "ahk-us.ahk" ergoemacs-dir))
       (goto-char (point-min))
       (while (re-search-forward "^\\([^ \n]*\\):" nil t)
-        (add-to-list 'lst (match-string 1))))
+        (push (match-string 1) lst)))
     ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
     (setq re (format "^%s$" (regexp-opt lst 't)))
     (with-temp-buffer
@@ -788,8 +785,10 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
             (lambda(y)
               (message "Generating AHK ini for %s Standard" x)
               (when (string-match re (format "%s"(nth 1 y)))
-                (unless (string-match "\\(<apps>\\|<menu>\\)"
-                                      (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
+                (unless (string-match
+                         "\\(<apps>\\|<menu>\\|<home>\\|<end>\\)"
+                         (ergoemacs-trans-ahk
+                          (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
                   (insert (symbol-name (nth 1 y)))
                   (insert "=")
                   (insert (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
