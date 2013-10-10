@@ -764,7 +764,22 @@ Optionally provides DESC for a description of the key."
             (error
              (setq cur-key (read-kbd-macro (encode-coding-string str-key locale-coding-system)))))
         (setq cur-key (ergoemacs-kbd str-key nil only-first)))
-      (define-key ergoemacs-keymap cur-key function))))
+      (cond
+       ((eq 'cons (type-of function))
+        (let (found)
+          (mapc
+           (lambda(new-fn)
+             (when (and (not found)
+                        (condition-case err
+                            (interactive-form new-fn)
+                          (error nil)))
+               (define-key ergoemacs-keymap cur-key new-fn)
+               (setq found t)))
+           function)
+          (unless found
+            (ergoemacs-debug "Could not find any defined functions: %s" function))))
+       (t
+        (define-key ergoemacs-keymap cur-key function))))))
 
 ;;;###autoload
 (defun ergoemacs-fixed-key (key function &optional desc)
