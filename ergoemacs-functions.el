@@ -352,12 +352,18 @@ See: `ergoemacs-forward-block'"
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-use-beginning-or-end-of-line-only nil
+(defcustom ergoemacs-use-beginning-or-end-of-line-only 'on-repeat 
   "Allow `ergoemacs-beginning-of-line-or-block' and `ergoemacs-end-of-line-or-block' to only go to the beginning/end of a line."
-  :type 'boolean
+  :type '(choice
+          (const t :tag "Only go to the beginning or end of a line")
+          (const nil :tag "Goto beginning/end of block whenever at beginning/end of line")
+          (const on-repeat :tag "Goto beginning/end of block when at beginining/end of line and have already pressed the key."))
   :group 'ergoemacs-mode)
 
-;; Extends behavior of http://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/
+;; Extends behavior of
+;; http://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/
+
+(defvar ergoemacs-beginning-of-line-or-block-last-command nil)
 (defun ergoemacs-beginning-of-line-or-block (&optional N)
   "Move cursor to beginning of indentation, line, or text block.
  (a text block is separated by empty lines).
@@ -365,7 +371,8 @@ See: `ergoemacs-forward-block'"
 Move cursor to the first non-whitespace character of a line.  If
 already there move the cursor to the beginning of the line.  If
 at the beginning of the line, move to the last block.  Moving to
-the last block can be toggled with `ergoemacs-use-beginning-or-end-of-line-only'.
+the last block can be toggled with
+`ergoemacs-use-beginning-or-end-of-line-only'.  Also 
 
 With argument N not nil or 1, and not at the beginning of
 the line move forward N - 1 lines first If point reaches the
@@ -382,7 +389,10 @@ to beginning of line by using `ergoemacs-shortcut-internal'
 "
   (interactive "^p")
   (setq N (or N 1))
-  (if (and (not ergoemacs-use-beginning-or-end-of-line-only) (= (point) (point-at-bol)))
+  (if (and (or (not ergoemacs-use-beginning-or-end-of-line-only)
+               (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
+                    (eq last-command ergoemacs-beginning-of-line-or-block-last-command)))
+           (= (point) (point-at-bol)))
       (progn
         (ergoemacs-backward-block N))
     
@@ -422,7 +432,9 @@ to beginning of line by using `ergoemacs-shortcut-internal'
 	      (goto-char ind-point))
 	     (t
 	      (goto-char bol-point)))))
-      (ergoemacs-shortcut-internal 'move-beginning-of-line))))
+      (ergoemacs-shortcut-internal 'move-beginning-of-line)))
+  ;; ergoemacs shortcut changes this-command
+  (setq ergoemacs-beginning-of-line-or-block-last-command this-command))
 
 (defun ergoemacs-end-of-line-or-block (&optional N )
   "Move cursor to end of line, or end of current or next text block.
@@ -434,14 +446,17 @@ Attempt to honor each modes modification of beginning and end of
 line functions by using `ergoemacs-shortcut-internal'."
   (interactive "^p")
   (setq N (or N 1))
-  (if (and (not ergoemacs-use-beginning-or-end-of-line-only) (= (point) (point-at-eol)))
+  (if (and (or (not ergoemacs-use-beginning-or-end-of-line-only)
+               (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
+                    (eq last-command ergoemacs-beginning-of-line-or-block-last-command)))
+           (= (point) (point-at-eol)))
       (ergoemacs-forward-block N)
     (setq N (if (= N 1) nil N))
     (setq prefix-arg N)
     (setq current-prefix-arg N)
     ;; (ergoemacs-shortcut-internal 'move-end-of-line)
-    (call-interactively 'move-end-of-line)
-    ))
+    (call-interactively 'move-end-of-line))
+  (setq ergoemacs-beginning-of-line-or-block-last-command this-command))
 
 ;;; TEXT SELECTION RELATED
 
