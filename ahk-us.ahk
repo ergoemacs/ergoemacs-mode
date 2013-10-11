@@ -23,6 +23,7 @@
 ;; hotkey layout taken from http://xahlee.org/emacs/ergonomic_emacs_keybinding.html
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Changelog:
+;; Changlog moved to github.
 ;; Version 0.9:
 ;; - Added beginning and end of buffer commands.
 ;; Version 0.8:
@@ -83,6 +84,7 @@ SetStoreCapslockMode, Off
 Process, priority, , High
 IniRead ToggleCtrl, ergoemacs-settings.ini,BigCtl, App
 IniRead CurrCaps, ergoemacs-settings.ini, Caps, App
+IniRead CurrLAlt, ergoemacs-settings.ini, LAlt, App
 LayLst=
 VarLst=
 CareL = 0
@@ -166,6 +168,8 @@ Loop, Read, ergoemacs.ini
 
 
 HotKey,Capslock,capslock-handle
+Hotkey,LAlt,lalt-handle-down
+Hotkey,LAlt up, lalt-handle-up
 ;; HotKey,(,autopair-paren
 
 
@@ -219,6 +223,11 @@ Menu, Tray, add, Caps to Menu in Emacs, ToggleCaps
 If (CurrCaps == "1"){
   Menu, Tray, Check, Caps to Menu in Emacs
 }
+Menu, Tray, add, Left Alt to Menu in Emacs, ToggleLAlt
+If (CurrLAlt == "1"){
+  Menu, Tray, Check, Left Alt to Menu in Emacs 
+}
+
 Menu, Tray, add, Space->Control, ToggleCtrl
 If (ToggleCtrl == "1"){
   Menu, Tray, Check, Space->Control
@@ -269,6 +278,22 @@ Loop %keysToDelayArray0%
   key := keysToDelayArray%A_Index% 
   Hotkey, % "*"key, DelayKeyOutput
 }
+
+lalt-handle-down:
+  If ((WinActive("ahk_class Emacs") || WinActive("ahk_class ConsoleWindowClass")) && CurrLAlt == "1") {
+    SendInput {AppsKey}
+  } else {
+    SendInput {LAlt down}
+  }
+  return
+
+lalt-handle-up:
+  If ((WinActive("ahk_class Emacs") || WinActive("ahk_class ConsoleWindowClass")) && CurrLAlt == "1") {
+  } else {
+    SendInput {LAlt up}
+  }
+  return
+
 
 capslock-handle:
   If ((WinActive("ahk_class Emacs") || WinActive("ahk_class ConsoleWindowClass")) && CurrCaps == "1") {
@@ -396,6 +421,15 @@ If (ToggleCtrl == "1"){
   IniWrite,0,ergoemacs-settings.ini,BigCtl,App
 } Else {
   IniWrite,1,ergoemacs-settings.ini,BigCtl,App
+}
+Reload
+return
+
+ToggleLAlt:
+If (CurrLAlt == "1"){
+   IniWrite,0,ergoemacs-settings.ini,LAlt,App
+} Else {
+   IniWrite,1,ergoemacs-settings.ini,LAlt,App
 }
 Reload
 return
