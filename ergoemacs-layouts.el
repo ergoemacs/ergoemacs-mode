@@ -83,7 +83,7 @@
     "" ""  ";" "q" "j" "k" "x" "b" "m" "w" "v" "z" ""  ""  ""
     ;; Shifted
     "" "~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "{" "}"  ""
-    "" ""  "\"" "," "." "P" "Y" "F" "G" "C" "R" "L" "?" "+" "|"
+    "" ""  "\"" "<" ">" "P" "Y" "F" "G" "C" "R" "L" "?" "+" "|"
     "" ""  "A" "O" "E" "U" "I" "D" "H" "T" "N" "S" "_" "" ""
     "" ""  ":" "Q" "J" "K" "X" "B" "M" "W" "V" "Z" "" "" "")
   "US Dvorak layout.  URL `http://en.wikipedia.org/wiki/Dvorak_Simplified_Keyboard'.")
