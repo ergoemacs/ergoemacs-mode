@@ -79,12 +79,14 @@
 #SingleInstance force
 #MaxHotkeysPerInterval 9999
 #NoEnv
+#InstallKeybdHook 
 SendMode Input
-SetStoreCapslockMode, Off
 Process, priority, , High
 IniRead ToggleCtrl, ergoemacs-settings.ini,BigCtl, App
 IniRead CurrCaps, ergoemacs-settings.ini, Caps, App
+IniRead CurrRAlt, ergoemacs-settings.ini, RAlt, App
 IniRead CurrLAlt, ergoemacs-settings.ini, LAlt, App
+IniRead CurrRAltLAlt, ergoemacs-settings.ini, RAltLAlt, App
 LayLst=
 VarLst=
 CareL = 0
@@ -167,9 +169,8 @@ Loop, Read, ergoemacs.ini
 }
 
 
-HotKey,Capslock,capslock-handle
-Hotkey,LAlt,lalt-handle-down
-Hotkey,LAlt up, lalt-handle-up
+
+
 ;; HotKey,(,autopair-paren
 
 
@@ -219,14 +220,87 @@ Menu, Tray, NoStandard
 Menu, tray, add, Keyboard Layouts, :MenuKey
 Menu, tray, add, Translated Layout, :TranslateKey
 Menu, tray, add, Themes, :ThemeKey
-Menu, Tray, add, Caps to Menu in Emacs, ToggleCaps
-If (CurrCaps == "1"){
-  Menu, Tray, Check, Caps to Menu in Emacs
+Menu, Tray, add
+Menu, Caps, add, Caps Lock, ToggleCaps
+Menu, Caps, add, Control, ToggleCaps
+Menu, Caps, add, Apps Key, ToggleCaps
+Menu, Caps, add, F6, ToggleCaps
+If (CurrCaps == "Control"){
+  Menu, Caps, Check, Control
+  Hotkey, CapsLock, send-ctl
+  Hotkey, CapsLock Up, send-ctl-up
+  ;Hotkey Up, previous-line
+  ;Capslock::Ctrl
+  ;+Capslock::Capslock
+} Else If (CurrCaps == "Apps Key"){
+  Menu, Caps, Check, Apps Key
+  Hotkey, CapsLock, send-apps 
+  ;Capslock::AppsKey
+  ;+Capslock::Capslock
+} Else if (CurrCaps == "F6"){
+  Menu, Caps, Check, F6
+  Hotkey CapsLock, send-f6
+  ;Capslock::F6
+  ;+Capslock::Capslock
+} Else {
+  Menu, Caps, Check, Caps Lock
 }
-Menu, Tray, add, Left Alt to Menu in Emacs, ToggleLAlt
-If (CurrLAlt == "1"){
-  Menu, Tray, Check, Left Alt to Menu in Emacs 
+Menu, Tray, add, Caps Lock To, :Caps
+
+Menu, RAlt, add, Alt, ToggleRAlt
+Menu, RAlt, add, Control, ToggleRAlt
+Menu, RAlt, add, Apps Key, ToggleRAlt
+Menu, RAlt, add, F6, ToggleRAlt
+If (CurrRAlt == "Control"){
+  Menu, RAlt, Check, Control
+  Hotkey, RAlt, send-ctl
+  Hotkey, RAlt Up, send-ctl-up
+  } Else If (CurrRAlt == "Apps Key"){
+  Menu, RAlt, Check, Apps Key
+  Hotkey, RAlt, send-apps 
+} Else if (CurrRAlt == "F6"){
+  Menu, RAlt, Check, F6
+  Hotkey RAlt, send-f6
+} Else {
+  Menu, RAlt, Check, Alt
 }
+Menu, Tray, add, Right Alt to, :RAlt
+
+; Left Alt
+Menu, LAlt, add, Alt, ToggleLAlt
+Menu, LAlt, add, Control, ToggleLAlt
+Menu, LAlt, add, Apps Key, ToggleLAlt
+Menu, LAlt, add, F6, ToggleLAlt
+If (CurrLAlt == "Control"){
+  Menu, LAlt, Check, Control
+  Hotkey, LAlt, send-ctl
+  Hotkey, LAlt Up, send-ctl-up
+} Else If (CurrLAlt == "Apps Key"){
+  Menu, LAlt, Check, Apps Key
+  Hotkey, LAlt, send-apps 
+} Else if (CurrLAlt == "F6"){
+  Menu, LAlt, Check, F6
+  Hotkey LAlt, send-f6
+} Else {
+  Menu, LAlt, Check, Alt
+}
+
+Menu, Tray, add, Left Alt to, :LAlt
+
+Menu, RAltLAlt, add, Alt, ToggleRLA
+Menu, RAltLAlt, add, Apps Key, ToggleRLA
+Menu, RAltLAlt, add, F6, ToggleRLA
+If (CurrRAltLAlt == "Apps Key"){
+  Menu, RAltLAlt, Check, Apps Key
+  Hotkey, RAlt & LAlt, send-apps 
+} Else if (CurrRAltLAlt == "F6"){
+  Menu, RAltLAlt, Check, F6
+  Hotkey RAlt & LAlt, send-f6
+} Else {
+  Menu, RAltLAlt, Check, Alt
+}
+Menu, Tray, add, Left & Right Alt to, :RAltLAlt
+
 
 Menu, Tray, add, Space->Control, ToggleCtrl
 If (ToggleCtrl == "1"){
@@ -278,30 +352,6 @@ Loop %keysToDelayArray0%
   key := keysToDelayArray%A_Index% 
   Hotkey, % "*"key, DelayKeyOutput
 }
-
-lalt-handle-down:
-  If ((WinActive("ahk_class Emacs") || WinActive("ahk_class ConsoleWindowClass")) && CurrLAlt == "1") {
-    SendInput {AppsKey}
-  } else {
-    SendInput {LAlt down}
-  }
-  return
-
-lalt-handle-up:
-  If ((WinActive("ahk_class Emacs") || WinActive("ahk_class ConsoleWindowClass")) && CurrLAlt == "1") {
-  } else {
-    SendInput {LAlt up}
-  }
-  return
-
-
-capslock-handle:
-  If ((WinActive("ahk_class Emacs") || WinActive("ahk_class ConsoleWindowClass")) && CurrCaps == "1") {
-    SendInput {AppsKey}
-  } else {
-    SendInput {Capslock}
-  }
-  return
 
 
 ListenForKey:
@@ -425,21 +475,24 @@ If (ToggleCtrl == "1"){
 Reload
 return
 
-ToggleLAlt:
-If (CurrLAlt == "1"){
-   IniWrite,0,ergoemacs-settings.ini,LAlt,App
-} Else {
-   IniWrite,1,ergoemacs-settings.ini,LAlt,App
-}
+ToggleRAlt:
+IniWrite, %A_ThisMenuItem%,ergoemacs-settings.ini,RAlt,App
 Reload
 return
 
+ToggleLAlt:
+IniWrite, %A_ThisMenuItem%,ergoemacs-settings.ini,LAlt,App
+Reload
+return
+
+ToggleRLA:
+IniWrite, %A_ThisMenuItem%,ergoemacs-settings.ini,RAltLAlt,App
+Reload
+return
+
+
 ToggleCaps:
-If (CurrCaps == "1"){
-   IniWrite,0,ergoemacs-settings.ini,Caps,App
-} Else {
-   IniWrite,1,ergoemacs-settings.ini,Caps,App
-}
+IniWrite, %A_ThisMenuItem%,ergoemacs-settings.ini,Caps,App
 Reload
 return
 
@@ -613,7 +666,23 @@ ergoemacs-move-cursor-next-pane:
     SendKey("{F6}")
   }
   return
-  
+
+send-ctl:
+  SendKey("{Ctrl down}")
+  return
+
+send-ctl-up:
+  SendKey("{Ctrl up}")
+  return
+
+send-apps:
+  SendKey("{AppsKey}")
+  return
+
+send-f6:
+  SendKey("{F6}")
+  return
+
 GetSpaceBarHoldTime()
 {
   global g_SpacePressDownTime
