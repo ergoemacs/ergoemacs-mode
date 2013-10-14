@@ -638,6 +638,14 @@ redo:
  SendKey("{Ctrl down}{y}{Ctrl up}",0)
  return
 
+
+comment-dwim:
+ ;; Word Alt+Ctrl+M is insert comment
+ If WinActive("ahk_class OpusApp"){
+   SendKey("{Alt down}{Ctrl down}{M}{Alt up}{Ctrl up}",0)
+ }
+ return
+
 ergoemacs-toggle-letter-case:
  ;; Word Shift+F3 is toggle letter case.
  ;; Maybe do somthing different in other apps.
