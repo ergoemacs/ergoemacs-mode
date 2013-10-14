@@ -65,6 +65,32 @@
                    (insert char)
                    (char-before)) 'unicode)))))))
 
+(defun ergoemacs-fix-keyfreq ()
+  "Fixes ergoemacs induced keyfreq bug..."
+  (interactive)
+  (when (featurep 'keyfreq)
+    (with-temp-buffer
+      (insert-file-contents keyfreq-file)
+      (goto-char (point-min))
+      (while (re-search-forward " \\[.*?\\]" nil t)
+        (replace-match ""))
+      (goto-char (point-min))
+      (while (re-search-forward " \".*?\"" nil t)
+        (replace-match ""))
+      (goto-char (point-min))
+      (while (re-search-forward "(\\_<\\([/A-Za-z0-9.-]*?\\)\\_> *\\_<\\([/A-Za-z0-9.-]*?\\)\\_>)" nil t)
+        (replace-match "(\\1 . \\2)"))
+      (goto-char (point-min))
+      (while (re-search-forward "(lambda" nil t)
+        (goto-char (match-beginning 0))
+        (when (re-search-backward "((" nil t)
+          (goto-char (match-beginning 0))
+          (delete-region (point)
+                         (save-excursion
+                           (forward-sexp 1)
+                           (point)))))
+      (write-file keyfreq-file))))
+
 (defun ergoemacs-get-html-key-table ()
   "Gets the key table for the current layout."
   (ergoemacs-mode -1)
