@@ -1139,7 +1139,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                    (setq a (assoc curr-cmd (cdr list)))
                    (when a
                      (setq num (+ num (cdr a)))
-                     (add-to-list 'cmds (car a))))
+                     (push (car a) cmds)))
                  ;; Also lookup based on any compatibility fixes with
                  ;; made by ergoemacs.
                  (mapc
