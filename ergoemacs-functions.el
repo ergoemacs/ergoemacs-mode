@@ -360,6 +360,40 @@ See: `ergoemacs-forward-block'"
           (const on-repeat :tag "Goto beginning/end of block when at beginining/end of line and have already pressed the key."))
   :group 'ergoemacs-mode)
 
+(defun ergoemacs-beginning-or-end-of-buffer (&optional arg)
+  "Go to beginning or end of buffer.
+
+This calls `beginning-of-buffer', unless there is no prefix and
+the point is already at the beginning of the buffer.  Then it
+will call `end-of-buffer'.  This function tries to be smart and
+if the major mode redefines the keys, use those keys instead.
+This is done by `ergoemacs-shortcut-internal'."
+  (interactive "P")
+  (if current-prefix-arg
+      (progn
+        (setq prefix-arg current-prefix-arg)
+        (ergoemacs-shortcut-internal 'beginning-of-buffer))
+    (cond
+     ((bobp) (ergoemacs-shortcut-internal 'end-of-buffer))
+     (t (ergoemacs-shortcut-internal 'beginning-of-buffer)))))
+
+(defun ergoemacs-beginning-or-end-of-buffer (&optional arg)
+  "Go to beginning or end of buffer.
+
+This calls `end-of-buffer', unless there is no prefix and the
+point is already at the beginning of the buffer.  Then it will
+call `beginning-of-buffer'. This function tries to be smart and
+if the major mode redefines the keys, use those keys instead.
+This is done by `ergoemacs-shortcut-internal'."
+  (interactive "P")
+  (if current-prefix-arg
+      (progn
+        (setq prefix-arg current-prefix-arg)
+        (ergoemacs-shortcut-internal 'end-of-buffer))
+    (cond
+     ((eobp) (ergoemacs-shortcut-internal 'beginning-of-buffer))
+     (t (ergoemacs-shortcut-internal 'end-of-buffer)))))
+
 ;; Extends behavior of
 ;; http://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/
 
