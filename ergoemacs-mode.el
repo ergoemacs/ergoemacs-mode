@@ -908,6 +908,12 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
            ;; Only generate keymap if it hasn't previously been
            ;; generated.
            (ergoemacs-vars-sync)
+           ,(if is-emulation-p
+                `(let ((name ,(if is-major-mode-p
+                                  '(intern (format "ergoemacs--emulation-for-%s" major-mode))
+                                `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))))
+                   (set-default name nil)
+                   (set (make-local-variable name) t)))
            (if  (not ergoemacs-mode)
                (progn
                  (ergoemacs-debug ,(format "WARNING: %s not removed."
@@ -951,8 +957,6 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                      (let ((name ,(if is-major-mode-p
                                       '(intern (format "ergoemacs--emulation-for-%s" major-mode))
                                     `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))))
-                       (set-default name nil)
-                       (set (make-local-variable name) t)
                        (ergoemacs-debug-keymap ',(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
                        (let ((x (assq name ergoemacs-emulation-mode-map-alist)))
                          ;; Delete keymap.
