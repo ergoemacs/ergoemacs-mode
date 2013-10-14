@@ -704,11 +704,15 @@ sets `this-command' to `%s'. Also after
                   (when (featurep 'keyfreq)
                     (when keyfreq-mode
                       (let ((command (nth 0 fn)) count)
-                        ;; Add function name to to counter.
-                        (setq count (gethash (cons major-mode command)
-                                             keyfreq-table))
-                        (puthash (cons major-mode command) (if count (+ count 1) 1)
-                                 keyfreq-table)))))
+                        (when (and (interactive-form command)
+                                   (condition-case err
+                                       (symbolp command)
+                                     (error nil)))
+                          ;; Add function name to to counter.
+                          (setq count (gethash (cons major-mode command)
+                                               keyfreq-table))
+                          (puthash (cons major-mode command) (if count (+ count 1) 1)
+                                   keyfreq-table))))))
                 (condition-case err
                     (let ((ergoemacs-mode t))
                       (call-interactively (or (command-remapping (nth 0 fn) (point)) (nth 0 fn))
