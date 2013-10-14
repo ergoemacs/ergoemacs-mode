@@ -703,7 +703,7 @@ sets `this-command' to `%s'. Also after
                 (unless (boundp 'keyfreq-no-record)
                   (when (featurep 'keyfreq)
                     (when keyfreq-mode
-                      (let ((command fn) count)
+                      (let ((command (nth 0 fn)) count)
                         ;; Add function name to to counter.
                         (setq count (gethash (cons major-mode command)
                                              keyfreq-table))
