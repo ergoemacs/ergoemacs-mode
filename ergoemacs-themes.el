@@ -65,8 +65,8 @@
     ("M-K" scroll-up "↓ page")
     
     ;; Move to beginning/ending of file
-    ("M-n" beginning-of-buffer "↑ Top")
-    ("M-N" end-of-buffer "↓ Bottom")
+    ("M-n" ergoemacs-beginning-or-end-of-buffer "↑ Top*")
+    ("M-N" ergoemacs-end-or-beginning-of-buffer "↓ Bottom*")
     
     ;; Move by bracket
     ("M-J" ergoemacs-backward-open-bracket "← bracket")
@@ -168,8 +168,8 @@
     ;;("<apps> <apps> f" ("C-x" unchorded) "Ctl-x")
     ("<apps> h" ("C-h" nil) "Ctl-h")
     ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
-    ("<apps> j" ("C-c" unchorded) "Ctl-c")
-    ("<apps> <apps> j" ("C-c" ctl-to-alt) "Ctl-c")
+    ;; ("<apps> j" ("C-c" unchorded) "Ctl-c")
+    ;; ("<apps> <apps> j" ("C-c" ctl-to-alt) "Ctl-c")
     ("<apps> k" ergoemacs-toggle-full-alt "Alt+mode")
     ("<apps> m" ergoemacs-ctl-c-ctl-c "C-c C-c")
     ;; ("<apps> r" ("C-x" unchorded) "Ctl-x*")
@@ -468,6 +468,34 @@
     (Info-mode-hook
      (("<backspace>" Info-history-back)
       ("<S-backspace>" Info-history-forward)))
+    ;; (when (or (not (featurep 'xemacs)) (featurep 'rtf-support))
+    ;;   (global-set-key [(control f1)] 'ess-sas-rtf-portrait)
+    ;;   (global-set-key [(control f2)] 'ess-sas-rtf-landscape))
+    ;; (global-set-key (quote [f2]) 'ess-revert-wisely)
+    ;; (global-set-key (quote [f3]) 'ess-sas-goto-shell)
+    ;; (global-set-key (quote [f4]) 'ess-sas-goto-file-1)
+    ;; (global-set-key (quote [f5]) 'ess-sas-goto-sas)
+    ;; (global-set-key (quote [f6]) 'ess-sas-goto-log)
+    ;; (global-set-key [(control f6)] 'ess-sas-append-log)
+    ;; (global-set-key (quote [f7]) 'ess-sas-goto-lst)
+    ;; (global-set-key [(control f7)] 'ess-sas-append-lst)
+    ;; (global-set-key (quote [f8]) 'ess-sas-submit)
+    ;; (global-set-key [(control f8)] 'ess-sas-submit-region)
+    ;; (global-set-key (quote [f9]) 'ess-sas-data-view-fsview)
+    ;; (global-set-key [(control f9)] 'ess-sas-data-view-insight)
+    ;; (global-set-key (quote [f10]) 'ess-sas-toggle-sas-log-mode)
+    ;; (global-set-key [(control f10)] 'ess-sas-toggle-sas-listing-mode)
+    ;; (global-set-key (quote [f11]) 'ess-sas-goto-file-2)
+    ;; (global-set-key [(control f11)] 'ess-ebcdic-to-ascii-search-and-replace)
+    ;; (global-set-key (quote [f12]) 'ess-sas-graph-view)
+    (SAS-mode-hook
+     (("<apps> j j" ess-sas-goto-log nil t)
+      ("<apps> j u" ess-sas-goto-lst nil t)
+      ("<apps> j h" ess-sas-submit nil t)
+      ("<apps> j k" ess-sas-data-view-fsview nil t)
+      ("<apps> j ," ess-sas-data-view-insight nil t)
+      ("<apps> j m" ess-sas-graph-view nil t)
+      ("<apps> j n" ess-sas-goto-shell nil t)))
     ;; Helm mode hooks
     
     (helm-before-initialize-hook
