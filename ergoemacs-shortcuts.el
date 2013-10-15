@@ -684,23 +684,21 @@ on that key.
                                        (nth 0 fn) (nth 1 fn))
                         (cond
                          ((and (boundp 'ergoemacs-orig-keymap) ergoemacs-orig-keymap)
-                        (eval
-                         (macroexpand
-                          `(defun ,(intern (format "%s-ergoemacs" (nth 0 fn)))
-                             (&optional arg)
-                             ,(format "Run `%s' or what is remapped to by `command-remapping'.
+                        (define-key ergoemacs-shortcut-override-keymap
+                          keymap-key (eval
+                                      (macroexpand
+                                       `(lambda (&optional arg)
+                                          ,(format "Run `%s' or what is remapped to by `command-remapping'.
 It also tells the function that you pressed %s, and after run it
 sets `this-command' to `%s'. Also after
 `ergoemacs-pre-command-hook' `this-command' should be set to
 `%s'"
-                                      (nth 0 fn) (key-description (nth 1 fn))
-                                      (nth 0 fn) (nth 0 fn))
-                             (interactive "P")
-                             (ergoemacs-send-fn
-                              ,(key-description (nth 1 fn))
-                              ',(nth 0 fn)))))
-                        (define-key ergoemacs-shortcut-override-keymap
-                          keymap-key (intern (format "%s-ergoemacs" (nth 0 fn))))
+                                                   (nth 0 fn) (key-description (nth 1 fn))
+                                                   (nth 0 fn) (nth 0 fn))
+                                          (interactive "P")
+                                          (ergoemacs-send-fn
+                                           ,(key-description (nth 1 fn))
+                                           ',(nth 0 fn))))))
                         
                         ;; Store override keymap for quickly figuring out
                         ;; what keys are bound where.
