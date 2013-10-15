@@ -1033,7 +1033,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
       (ergoemacs-pretty-key-rep-internal))))
 
 ;; Based on describe-key-briefly
-(defun ergoemacs-where-is-old-binding (&optional key)
+(defun ergoemacs-where-is-old-binding (&optional key only-new-key)
   "Print the name of the function KEY invoked before to start ErgoEmacs minor mode."
   (interactive
    (let ((enable-disabled-menus-and-buttons t)
@@ -1072,6 +1072,10 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
                      (ergoemacs-translate-current-key key)))
       (setq new-key (key-description (ergoemacs-key-fn-lookup old-cmd))))
     (cond
+     ((and new-key only-new-key)
+      (read-kbd-macro new-key t))
+     (only-new-key
+      nil)
      ((and old-cmd new-key)
       (message "%s keybinding%s%s (%s)"
                (ergoemacs-pretty-key key-desc)

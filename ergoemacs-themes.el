@@ -164,7 +164,7 @@
     ("<apps> SPC" set-mark-command "Set Mark")
     ("<apps> a" mark-whole-buffer "Sel All")
     ("<apps> d" ("C-x" ctl-to-alt) "Ctl-x")
-    ("<apps> f" ("C-c" ctl-to-alt) "Ctl-c")
+    ("<apps> f" ("C-c" unchorded) "Ctl-c")
     ;;("<apps> <apps> f" ("C-x" unchorded) "Ctl-x")
     ("<apps> h" ("C-h" nil) "Ctl-h")
     ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")

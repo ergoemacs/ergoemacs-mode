@@ -369,7 +369,11 @@ the best match."
 
 (defun ergoemacs-send-fn (key fn &optional message)
   "Sends the function."
-  (let ((cmd fn))
+  (let ((cmd fn)
+        (old-unread (listify-key-sequence (this-command-keys)))
+        new-unread
+        ergoemacs-mode ergoemacs-unbind-keys
+        ergoemacs-shortcut-keys)
     (setq cmd (or (command-remapping cmd (point)) cmd))
     (setq this-command cmd)
     (setq prefix-arg current-prefix-arg)
@@ -379,13 +383,23 @@ the best match."
     ;; For some reason call-interactively doesn't always send the keys
     ;; appropriately :( For this reason, change `this-command-keys'
     ;; and `this-single-command-keys'.
+    (remove-hook 'emulation-mode-map-alists
+                 'ergoemacs-emulation-mode-map-alist)
     (eval
      (macroexpand
       `(flet
-        ((this-command-keys () ,(read-kbd-macro key t))
-         (this-command-keys-vector () ,(read-kbd-macro key t))
-         (this-single-command-keys () ,(read-kbd-macro key t)))
-        (call-interactively cmd nil ,(read-kbd-macro key t)))))))
+           ((this-command-keys () ,(read-kbd-macro key t))
+            (this-command-keys-vector () ,(read-kbd-macro key t))
+            (this-single-command-keys () ,(read-kbd-macro key t)))
+         (setq new-unread (listify-key-sequence (this-command-keys)))
+         (call-interactively cmd nil ,(read-kbd-macro key t)))))
+    (add-hook 'emulation-mode-map-alists
+              'ergoemacs-emulation-mode-map-alist)
+    ;; Some commands, like isearch, put commands in
+    ;; `unread-command-events'; Try to handle these.
+    (when (and unread-command-events
+               (equal unread-command-events new-unread))
+      (setq unread-command-events old-unread))))
 
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
