@@ -1439,6 +1439,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   (if (assq 'ergoemacs-mode minor-mode-map-alist)
       (when (or ergoemacs-mode ergoemacs-shortcut-keys ergoemacs-unbind-keys
                 ergoemacs-save-variables)
+        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
         (unless ergoemacs-mode
           (setq ergoemacs-mode t)
           (ergoemacs-debug "WARNING: ergoemacs-mode was turned off; Turning on."))
@@ -1450,7 +1451,9 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
         (unless ergoemacs-unbind-keys
           (setq ergoemacs-unbind-keys t)
           (ergoemacs-debug "WARNING: ergoemacs-unbind-keys was turned off; Turning on.")))
+    (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
     (when ergoemacs-mode
+      
       (setq ergoemacs-mode nil)
       (ergoemacs-debug "WARNING: ergoemacs-mode was turned on; Turning off."))
     (unless ergoemacs-unbind-keys
