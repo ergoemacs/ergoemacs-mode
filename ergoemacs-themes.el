@@ -387,7 +387,7 @@
       (cua-paste ergoemacs-org-mode-paste nil)
       ("C-b" ergoemacs-org-bold)
       ("C-i" ergoemacs-org-italic)
-      ("C-u" ergoemacs-org-underline)
+      ;; ("C-u" ergoemacs-org-underline)
       ("<C-return>" ergoemacs-org-insert-heading-respect-content nil)
       ("<M-down>" ergoemacs-org-metadown nil)
       ("<M-up>" ergoemacs-org-metaup nil)
