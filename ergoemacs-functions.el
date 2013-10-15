@@ -901,6 +901,22 @@ Else it is a user buffer."
   (text-scale-increase 0))
 
 ;;; org-mode functions.
+
+(defun ergoemacs-org-bold ()
+  "Call `org-emphasize' with *"
+  (interactive)
+  (org-emphasize ?*))
+
+(defun ergoemacs-org-italic ()
+  "Call `org-emphasize' with /"
+  (interactive)
+  (org-emphasize ?/))
+
+(defun ergoemacs-org-underline ()
+  "Call `org-emphasize' with _"
+  (interactive)
+  (org-emphasize ?_))
+
 (defun ergoemacs-org-insert-heading-respect-content (&optional reopen-or-invisible-ok)
   "When in an `org-mode' table, use `cua-set-rectangle-mark', otherwise use `org-insert-heading-respect-content'"
   (interactive "P")
