@@ -1,5 +1,5 @@
 ;;; ergoemacs-shortcuts.el --- Ergoemacs shortcuts interface
-;; 
+;;
 ;; Filename: ergoemacs-shortcuts.el
 ;; Description: 
 ;; Author: Matthew L. Fidler
@@ -374,8 +374,18 @@ the best match."
     (setq this-command cmd)
     (setq prefix-arg current-prefix-arg)
     ;; (let (message-log-max)
-    ;;   (message "%s %s: %s" (ergoemacs-pretty-key key) cmd))
-    (call-interactively cmd nil (read-kbd-macro (format "%s" key) t))))
+    ;;   (message "%s: %s" (ergoemacs-pretty-key key) cmd))
+
+    ;; For some reason call-interactively doesn't always send the keys
+    ;; appropriately :( For this reason, change `this-command-keys'
+    ;; and `this-single-command-keys'.
+    (eval
+     (macroexpand
+      `(flet
+        ((this-command-keys () ,(read-kbd-macro key t))
+         (this-command-keys-vector () ,(read-kbd-macro key t))
+         (this-single-command-keys () ,(read-kbd-macro key t)))
+        (call-interactively cmd nil ,(read-kbd-macro key t)))))))
 
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."

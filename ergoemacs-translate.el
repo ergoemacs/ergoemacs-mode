@@ -219,10 +219,24 @@ For example, on dvorak, change C-j to C-c (copy/command)."
      (lambda(x)
        (when (and (equal (nth 1 x) function)
                   (if use-apps
-                      (string-match "<apps>" (nth 0 x))
-                    (not (string-match "<apps>" (nth 0 x)))))
+                      (string-match "<\\(apps\\|menu\\)>" (nth 0 x))
+                    (not (string-match "<\\(apps\\|menu\\)>" (nth 0 x)))))
          (setq ret (ergoemacs-kbd (nth 0 x) nil (nth 3 x)))))
      (symbol-value (ergoemacs-get-variable-layout)))
+    (unless ret
+      (mapc
+       (lambda(x)
+         (when (and (equal (nth 1 x) function)
+                    (if use-apps
+                        (string-match "<\\(apps\\|menu\\)>" (nth 0 x))
+                      (not (string-match "<\\(apps\\|menu\\)>" (nth 0 x)))))
+           (setq ret (read-kbd-macro
+                      (ergoemacs-get-kbd-translation (nth 0 x))))))
+       (symbol-value (ergoemacs-get-fixed-layout))))
+    (unless ret ;; Attempt to do a function translation.
+      (let ((new-fn (ergoemacs-translate-current-function function)))
+        (unless (eq new-fn function)
+          (setq ret (ergoemacs-key-fn-lookup new-fn use-apps)))))
     (symbol-value 'ret)))
 
 

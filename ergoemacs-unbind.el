@@ -637,8 +637,11 @@
 (defun ergoemacs-undefined (&optional arg)
   "Ergoemacs Undefined key, tells where to perform the old action."
   (interactive "P")
-  (let* ((key (key-description (this-command-keys)))
+  (message "%s;%s" (key-description (this-command-keys))
+           (key-description (this-single-command-keys)))
+  (let* ((key (key-description (this-single-command-keys)))
          (fn (assoc key ergoemacs-emacs-default-bindings))
+         tmp
          (local-fn nil)
          (last (substring key -1))
          (ergoemacs-where-is-skip t)
@@ -659,8 +662,7 @@
           (setq local-fn (lookup-key (current-local-map)
                                      (read-kbd-macro key))))
         (functionp local-fn))
-      (setq this-command last-command) ; Don't record this
-                                        ; command.
+      (setq this-command last-command) ; Don't record this command.
       (setq prefix-arg current-prefix-arg)
       (condition-case err
           (call-interactively local-fn)
@@ -668,17 +670,7 @@
      (t
       ;; Not locally defined, complain.
       (beep)
-      (let (message-log-max)
-        (message "%s keybinding is disabled! Use %s"
-                 (ergoemacs-pretty-key key)
-                 (ergoemacs-pretty-key-rep
-                  (with-temp-buffer
-                    (setq curr-fn (nth 0 (nth 1 fn)))
-                    (when (and fn (not (eq 'prefix curr-fn)))
-                      (setq curr-fn (ergoemacs-translate-current-function curr-fn))
-                      (where-is curr-fn t))
-                    (ergoemacs-format-where-is-buffer)
-                    (buffer-string)))))))))
+      (ergoemacs-where-is-old-binding (this-single-command-keys))))))
 
 (defun ergoemacs-unbind-setup-keymap ()
   "Setup `ergoemacs-unbind-keymap' based on current layout."
@@ -751,6 +743,13 @@
     (goto-char (point-min))
     (when (re-search-forward " *([^)]*);\n.*alias *" nil t)
       (replace-match ""))))
+
+(defun ergoemacs-translate-current-key (key)
+  "Translate the current key."
+  (cond
+   ((string= (key-description key) "<backspace>")
+    (read-kbd-macro "DEL" t))
+   (t key)))
 
 (defun ergoemacs-translate-current-function (curr-fn)
   "Translate the current function"
@@ -1069,22 +1068,26 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
          message-log-max
          (key-desc (key-description key))
          (new-key (key-description (ergoemacs-key-fn-lookup old-cmd))))
+    (unless old-cmd
+      (setq old-cmd (lookup-key
+                     (current-global-map)
+                     (ergoemacs-translate-current-key key)))
+      (setq new-key (key-description (ergoemacs-key-fn-lookup old-cmd))))
     (cond
      ((and old-cmd new-key)
-      (if (called-interactively-p  'any)
-          (message "%s keybinding%s%s. (%s)"
-                   (ergoemacs-pretty-key key-desc)
-                   (if (called-interactively-p  'any)
-                       " is changed to "
-                     " is disabled! Use ")
-                   (ergoemacs-pretty-key new-key)
-                   old-cmd)))
+      (message "%s keybinding%s%s (%s)"
+               (ergoemacs-pretty-key key-desc)
+               (if (called-interactively-p  'any)
+                   " is changed to "
+                 " is disabled! Use ")
+               (ergoemacs-pretty-key new-key)
+               old-cmd))
      (old-cmd
       (message "Key %s was bound to `%s' which is not bound any longer"
                (ergoemacs-pretty-key key-desc)
                old-cmd))
      (t
-      (message "Key %s was not bound to any command"
+      (message "Key %s was not bound to any command (%s)"
                (ergoemacs-pretty-key key-desc)
                old-cmd)))))
 
