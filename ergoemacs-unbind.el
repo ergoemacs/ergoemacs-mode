@@ -660,8 +660,10 @@
                    (error nil)))
             (setq local-fn (lookup-key local-fn
                                        (read-kbd-macro key)))
-          (setq local-fn (lookup-key (current-local-map)
-                                     (read-kbd-macro key))))
+          (if (current-local-map)
+              (setq local-fn (lookup-key (current-local-map)
+                                         (read-kbd-macro key)))
+            (setq local-fn nil)))
         (functionp local-fn))
       (setq this-command last-command) ; Don't record this command.
       (setq prefix-arg current-prefix-arg)
