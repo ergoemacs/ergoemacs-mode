@@ -114,7 +114,9 @@
   (save-excursion
     (with-current-buffer (get-buffer-create ergoemacs-debug-buffer) 
       (goto-char (point-max))
-      (insert ergoemacs-debug "\n")))
+      (insert ergoemacs-debug)
+      (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point))
+      (insert "\n")))
   (setq ergoemacs-debug ""))
 
 ;; Include extra files
@@ -765,7 +767,7 @@ work in the terminal."
 
 (defun ergoemacs-mode-line (&optional text)
   "Set ergoemacs-mode-line"
-  (ergoemacs-debug-heading "Set Mode Line to %s" (or text "Default"))
+  ;; (ergoemacs-debug-heading "Set Mode Line to %s" (or text "Default"))
   (if text
       (setq minor-mode-alist
             (mapcar (lambda(x)
@@ -1439,7 +1441,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   (if (assq 'ergoemacs-mode minor-mode-map-alist)
       (when (or ergoemacs-mode ergoemacs-shortcut-keys ergoemacs-unbind-keys
                 ergoemacs-save-variables)
-        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
         (unless ergoemacs-mode
           (setq ergoemacs-mode t)
           (ergoemacs-debug "WARNING: ergoemacs-mode was turned off; Turning on."))
@@ -1451,9 +1452,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
         (unless ergoemacs-unbind-keys
           (setq ergoemacs-unbind-keys t)
           (ergoemacs-debug "WARNING: ergoemacs-unbind-keys was turned off; Turning on.")))
-    (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-    (when ergoemacs-mode
-      
+    (when ergoemacs-mode      
       (setq ergoemacs-mode nil)
       (ergoemacs-debug "WARNING: ergoemacs-mode was turned on; Turning off."))
     (unless ergoemacs-unbind-keys
