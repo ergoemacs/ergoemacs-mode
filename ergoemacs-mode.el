@@ -610,7 +610,9 @@ work in the terminal."
                                trans-key
                                locale-coding-system) t)))))
               (if (eq ',keymap 'ergoemacs-keymap)
-                  (ergoemacs-debug "Fixed: %s -> %s %s (%s)" trans-key cmd key (key-description key)))
+                  (ergoemacs-debug "Fixed %s: %s -> %s %s (%s)"
+                                   (nth 0 x) trans-key cmd
+                                   key (key-description key)))
               (if (ergoemacs-global-changed-p trans-key)
                   (progn
                     (ergoemacs-debug "!!!Fixed %s has changed globally." trans-key)
@@ -641,7 +643,8 @@ work in the terminal."
                       (define-key ,keymap key  'ergoemacs-M-O)
                       (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-O-keymap [timeout] cmd)
                       (if (eq ',keymap 'ergoemacs-keymap)
-                          (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-O" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
+                          (ergoemacs-debug "Variable %s: %s (%s) -> %s %s via ergoemacs-M-O"
+                                           (nth 0 x) trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
                   (if (and ergoemacs-fix-M-O
                            (string= (ergoemacs-kbd trans-key t t) "M-o"))
                       (progn
