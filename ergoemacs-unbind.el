@@ -654,7 +654,10 @@
         ;; Local map present.  Use it, if there is a key
         ;; defined there.
         (setq local-fn (get-char-property (point) 'local-map))
-        (if local-fn
+        (if (and local-fn
+                 (condition-case err
+                     (keymapp local-fn)
+                   (error nil)))
             (setq local-fn (lookup-key local-fn
                                        (read-kbd-macro key)))
           (setq local-fn (lookup-key (current-local-map)
