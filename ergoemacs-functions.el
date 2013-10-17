@@ -360,6 +360,13 @@ See: `ergoemacs-forward-block'"
           (const on-repeat :tag "Goto beginning/end of block when at beginining/end of line and have already pressed the key."))
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-beginning-of-line-and-buffer nil
+  "When `ergoemacs-beginning-of-line-and-buffer' is t, when calling `ergoemacs-beginning-of-line-or-block' or `ergoemacs-end-of-line-or-block', goto the beginning or ending of the buffer."
+  :type '(choice
+          (const t :tag "Goto beginning/end of buffer")
+          (const nil :tag "Goto beginning/end of block"))
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-beginning-or-end-of-buffer (&optional arg)
   "Go to beginning or end of buffer.
 
@@ -438,7 +445,8 @@ to beginning of line by using `ergoemacs-shortcut-internal'
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                     (eq last-command ergoemacs-beginning-of-line-or-block-last-command)))
            (= (point) (point-at-bol)))
-      (progn
+      (if ergoemacs-beginning-of-line-and-buffer
+          (ergoemacs-shortcut-internal 'beginning-of-buffer)
         (ergoemacs-backward-block N))
     
     (if ergoemacs-back-to-indentation
@@ -495,7 +503,9 @@ line functions by using `ergoemacs-shortcut-internal'."
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                     (eq last-command ergoemacs-beginning-of-line-or-block-last-command)))
            (= (point) (point-at-eol)))
-      (ergoemacs-forward-block N)
+      (if ergoemacs-beginning-of-line-and-buffer
+          (ergoemacs-shortcut-internal 'end-of-buffer)
+        (ergoemacs-forward-block N))
     (setq N (if (= N 1) nil N))
     (setq prefix-arg N)
     (setq current-prefix-arg N)
