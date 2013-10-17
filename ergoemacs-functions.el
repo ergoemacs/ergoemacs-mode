@@ -370,7 +370,7 @@ cursor to the beginning of the comment line.
           (const on-repeat :tag "Goto beginning/end of block when at beginining/end of line and have already pressed the key."))
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-beginning-or-end-of-line-and-what 'page
+(defcustom ergoemacs-beginning-or-end-of-line-and-what 'block
   "Change repeatable behavior of beginning/end of line.
 
 When 'buffer use `beginning-of-buffer' or `end-of-buffer'
