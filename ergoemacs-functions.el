@@ -417,16 +417,15 @@ This will not honor `shift-select-mode'."
 
 (defvar ergoemacs-beginning-of-line-or-block-last-command nil)
 (defun ergoemacs-beginning-of-line-or-block (&optional N)
-  "Move cursor to beginning of indentation, line, or text block.
+  "Move cursor to beginning of indentation, line, or text block, or beginning of buffer.
  (a text block is separated by empty lines).
 
 Move cursor to the first non-whitespace character of a line.  If
 already there move the cursor to the beginning of the line.  If
 at the beginning of the line, move to the last block.  Moving to
 the last block can be toggled with
-`ergoemacs-use-beginning-or-end-of-line-only'.  Also 
-
-With argument N not nil or 1, and not at the beginning of
+`ergoemacs-use-beginning-or-end-of-line-only'.  Also
+with argument N not nil or 1, and not at the beginning of
 the line move forward N - 1 lines first If point reaches the
 beginning or end of buffer, it stops there.
  (Similar to `beginning-of-line' arguments)
@@ -434,10 +433,19 @@ beginning or end of buffer, it stops there.
 If argument N not nil or 1, and at the beginning of the line,
 move N blocks backward.
 
+If `ergoemacs-beginning-of-line-and-buffer' is non-nil, then
+instead of moving to the beginning of a text block, move to the
+beginning of a the buffer.
+
+In this case if argument with numeric arg N, put point N/10 of
+the way from the beginning.  If the buffer is narrowed, this
+command uses the beginning of the accessible part of the buffer.
+ (Similar to `beginning-of-buffer' arguments)
+
 Back to indentation can be turned off with `ergoemacs-back-to-indentation'.
 
 Also this function tries to use whatever the specific mode bound
-to beginning of line by using `ergoemacs-shortcut-internal'
+to beginning of line and/or beginning of buffer by using `ergoemacs-shortcut-internal'
 "
   (interactive "^p")
   (setq N (or N 1))
@@ -490,10 +498,20 @@ to beginning of line by using `ergoemacs-shortcut-internal'
   (setq ergoemacs-beginning-of-line-or-block-last-command this-command))
 
 (defun ergoemacs-end-of-line-or-block (&optional N )
-  "Move cursor to end of line, or end of current or next text block.
+  "Move cursor to end of line, or end of current or next text block or even end of buffer.
  (a text block is separated by empty lines).
 
-You can make this only go to the end of the line by toggling `ergoemacs-use-beginning-or-end-of-line-only'.
+You can make this only go to the end of the line by toggling
+`ergoemacs-use-beginning-or-end-of-line-only'.
+
+If `ergoemacs-beginning-of-line-and-buffer' is non-nil, then
+instead of moving to the end of a text block, move to the
+end of a the buffer.
+
+In this case if argument with numeric arg N, put point N/10 of
+the way from the end.  If the buffer is narrowed, this
+command uses the end of the accessible part of the buffer.
+ (Similar to `end-of-buffer' arguments)
 
 Attempt to honor each modes modification of beginning and end of
 line functions by using `ergoemacs-shortcut-internal'."
