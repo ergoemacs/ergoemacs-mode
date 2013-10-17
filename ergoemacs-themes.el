@@ -40,8 +40,8 @@
     ("M-i" previous-line "↑ line")
     ("M-k" next-line "↓ line")
 
-    ("M-C-j" left-word  "← char")
-    ("M-C-l" right-word "→ char")
+    ("M-C-j" left-word  "← word")
+    ("M-C-l" right-word "→ word")
     ("M-C-i" backward-paragraph "↑ ¶")
     ("M-C-k" forward-paragraph "↓ ¶")
     
@@ -54,8 +54,8 @@
     ("M-O" ergoemacs-forward-block  "→ ¶")
     
     ;; Move to beginning/ending of line
-    ("M-h" ergoemacs-beginning-of-line-or-block "← line/¶")
-    ("M-H" ergoemacs-end-of-line-or-block "→ line/¶")
+    ("M-h" ergoemacs-beginning-of-line-or-what "← line/*")
+    ("M-H" ergoemacs-end-of-line-or-what "→ line/*")
 
     ("<home>" ergoemacs-beginning-of-line-or-block "← line/¶")
     ("<end>" ergoemacs-end-of-line-or-block "→ line/¶")
