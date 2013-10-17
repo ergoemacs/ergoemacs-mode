@@ -2083,6 +2083,7 @@ can also be turned off by setting =ergoemacs-use-aliases= to nil:
   :END:
 
 *** Beginning of Line
+
 Often you wish to move to the beginning of some part of a line.  For
 example:
 
@@ -2166,6 +2167,7 @@ it, and do the right thing.  This is because ergoemacs-mode actually
 replaces the =move-beginning-line= with whatever the mode defines
 =move-beginning-line= to be.
 *** End of line
+
 The end of line command for ergoemacs is just as smart as beginning
 of line.  For example if your cursor is =|=, and you are at:
 
