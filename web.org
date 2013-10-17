@@ -2166,5 +2166,50 @@ it, and do the right thing.  This is because ergoemacs-mode actually
 replaces the =move-beginning-line= with whatever the mode defines
 =move-beginning-line= to be.
 *** End of line
+The end of line command for ergoemacs is just as smart as beginning
+of line.  For example if your cursor is =|=, and you are at:
+
+#+BEGIN_SRC emacs-lisp
+  (progn
+  |  (ergoemacs-mode 1)) ; This turns ergoemacs-mode on.
+#+END_SRC
+
+ may wish to go to the end of the code block:
+
+#+BEGIN_SRC emacs-lisp
+  (progn
+    (ergoemacs-mode 1))| ; This turns ergoemacs-mode on.
+#+END_SRC
+
+or the end of the line:
+
+#+BEGIN_SRC emacs-lisp
+  (progn
+    (ergoemacs-mode 1)) ; This turns ergoemacs-mode on.|
+#+END_SRC
+
+The after that you can:
+- Goto the next text-block (default)
+- Issue a PageDown command
+- Goto the end of the buffer.
+
+Currently this command is bound to 【Alt+Shift+h】
+
+You can ignore the comment feature by the following initialization code:
+
+You can change the command that is issued at the end of the
+line by using one of the following commands.
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-beginning-or-end-of-line-and-what 'block) ; End
+                                          ; of text block
+  (setq ergoemacs-beginning-or-end-of-line-and-what 'page) ; Page Down
+  (setq ergoemacs-beginning-or-end-of-line-and-what 'buffer) ; End
+                                          ; of Buffer
+#+END_SRC
+
+Note that this command also respects mode specific changes to
+end-of-line commands (like in =org-mode=).
+
 *** Beginning or end of buffer
 
