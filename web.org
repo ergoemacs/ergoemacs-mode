@@ -43,7 +43,7 @@ A minor-mode that aims to:
 
 [[file:{lisp}(ob:path-to-root){/lisp}/features.html][/icon-cog icon-white/ Features]]
 
-[[https://groups.google.com/forum/#!forum/ergoemacs][/icon-group icon-white/ ErgoEmacs Google Group]]
+[[https://groups.google.com/forum/#!forum/ergoemacs][/icon-group icon-white/ Google Group]]
 
 [[https://github.com/ergoemacs/ergoemacs-mode][/icon-github-sign icon-white/ Github]]
 
