@@ -2075,9 +2075,10 @@ can also be turned off by setting =ergoemacs-use-aliases= to nil:
 #+BEGIN_SRC emacs-lisp
   (setq ergoemacs-use-aliases nil)
 #+END_SRC
+
 ** Smart Commands
   :PROPERTIES:
-  :PAGE:     smart-commands.html 
+  :PAGE:     smart-commands.html
   :TEMPLATE: blog_static_no_title.html
   :END:
 
