@@ -431,12 +431,57 @@ This will not honor `shift-select-mode'."
 
 This command moves the cursor as follows:
 
-1. Move cursor to the first non-whitespace character of a line,
+1. Move cursor to the beginning of a comment
+   (if `ergoemacs-end-of-comment-line') is true.
+
+From:
+ (progn
+   (ergoemacs-mode 1)) ; Turn on ergoemacs-mode|
+
+To:
+
+  (progn
+    (ergoemacs-mode 1)) ; |Turn on ergoemacs-mode
+
+2. Move to the end of the line, ignoring comments
+  (if `ergoemacs-end-of-comment-line') is true.
+
+From:
+  (progn
+    (ergoemacs-mode 1)) ; |Turn on ergoemacs-mode
+
+To:
+
+ (progn
+   (ergoemacs-mode 1))| ; Turn on ergoemacs-mode
+
+
+3. Move cursor to the first non-whitespace character of a line,
    if `ergoemacs-back-to-indentation' is true (otherwise skip).
 
-2. After #1, move to the beginning of line
+From:
+  (progn
+    (ergoemacs-mode 1))| ; Turn on ergoemacs-mode
 
-3. After #2, move to (based on `ergoemacs-beginning-or-end-of-line-and-what'):
+To:
+
+ (progn
+   |(ergoemacs-mode 1)) ; Turn on ergoemacs-mode
+
+
+4. Move to the beginning of line
+
+From:
+  (progn
+    |(ergoemacs-mode 1)) ; Turn on ergoemacs-mode
+
+To:
+
+ (progn
+|   (ergoemacs-mode 1)) ; Turn on ergoemacs-mode
+
+
+5. After #4, move to (based on `ergoemacs-beginning-or-end-of-line-and-what'):
    a. Beginning of text-block when selected ('block),
    b. Beginning of buffer ('buffer), or
    c. A PgUp ('page)
@@ -445,9 +490,10 @@ Currently if you are at the beginning of a line, you will have to
 call this command twice to move with #3.  This behavior can be
 changed by `ergoemacs-use-beginning-or-end-of-line-only'.
 
-Also this function tries to use whatever the specific mode wants for these functions by using `ergoemacs-shortcut-internal'.
+Also this function tries to use whatever the specific mode wants
+for these functions by using `ergoemacs-shortcut-internal'.
 
-When moving in steps #1 or #2 if N is not nil or 1, move forward
+When moving in steps #1 - #4 if N is not nil or 1, move forward
 N - 1 lines first.  If point reaches the beginning or end of
 the buffer, stop there.
 
@@ -472,39 +518,39 @@ the prefix arguments of `beginning-of-buffer',
     (when (not (= 1 N))
       (let ((line-move-visual nil))
         (forward-line (- N 1))))
-    (if ergoemacs-back-to-indentation
-        (progn
-          (let (pts)
-            (push (point-at-bol) pts)
-            (save-excursion
-              (setq prefix-arg nil)
-              (setq current-prefix-arg nil)
-              (ergoemacs-shortcut-internal 'move-beginning-of-line)
-              (push (point) pts))
-            (when ergoemacs-back-to-indentation
-              (save-excursion
-                (back-to-indentation)
-                (push (point) pts)))
-            (when ergoemacs-end-of-comment-line
-              (save-excursion
-		(when (not (eolp))
-		  (forward-char 1))
-                (let ((cs (comment-search-backward (point-at-bol) t)))
-                  (when cs
-                    (skip-syntax-forward " " (point-at-eol))
-                    (unless (looking-at "$")
-                      (push (point) pts))
-                    (goto-char cs)
-                    (skip-syntax-backward " " (point-at-bol))
-		    (push (point) pts)))))   ;; Test
-	    (cond
-	     ((not pts)
-	      (call-interactively 'move-beginning-of-line))
-	     (t
-	      (setq pts (sort pts '>))
-	      (setq pts (remove-if (lambda(x) (>= x (point))) pts))
-	      (goto-char (nth 0 pts))))))
-      (ergoemacs-shortcut-internal 'move-beginning-of-line)))
+    (let (pts)
+      (push (point-at-bol) pts)
+      (save-excursion
+        (setq prefix-arg nil)
+        (setq current-prefix-arg nil)
+        (ergoemacs-shortcut-internal 'move-beginning-of-line)
+        (push (point) pts))
+      (when ergoemacs-back-to-indentation
+        (save-excursion
+          (back-to-indentation)
+          (push (point) pts)))
+      (when ergoemacs-end-of-comment-line
+        (save-excursion
+          (when (not (eolp))
+            (forward-char 1))
+          (let ((cs (condition-case err
+                        (comment-search-backward (point-at-bol) t)
+                      (error nil))))
+            (when cs
+              (skip-syntax-forward " " (point-at-eol))
+              (unless (looking-at "$")
+                (push (point) pts))
+              (goto-char cs)
+              (skip-syntax-backward " " (point-at-bol))
+              (push (point) pts)))))   ;; Test
+      (cond
+       ((not pts)
+        (call-interactively 'move-beginning-of-line))
+       (t
+        (setq pts (sort pts '>))
+        (setq pts (remove-if (lambda(x) (>= x (point))) pts))
+        (when pts
+          (goto-char (nth 0 pts)))))))
   ;; ergoemacs shortcut changes this-command
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
 
@@ -512,8 +558,30 @@ the prefix arguments of `beginning-of-buffer',
   "Move cursor to end of line, or end of current or next text block or even end of buffer.
  (a text block is separated by empty lines).
 
-1. Move cursor to the end of a line
-2. After #1, move to (based on `ergoemacs-beginning-or-end-of-line-and-what'):
+1. Move cursor to the end of a line, ignoring comments
+   (if `ergoemacs-end-of-comment-line') is true.
+
+From:
+ (progn
+ |  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode
+
+To:
+
+  (progn
+    (ergoemacs-mode 1))| ; Turn on ergoemacs-mode
+
+2. Move to the end of the line
+
+From:
+  (progn
+    (ergoemacs-mode 1))| ; Turn on ergoemacs-mode
+
+To:
+
+ (progn
+  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode|
+
+3. After #2, move to (based on `ergoemacs-beginning-or-end-of-line-and-what'):
    a. End of text-block when selected ('block),
    b. End of buffer ('buffer), or
    c. A PgDown ('page)
@@ -523,14 +591,20 @@ With argument ARG not nil or 1, move forward ARG - 1 lines first.
 If point reaches the beginning or end of buffer, it stops there.
 
 Attempt to honor each modes modification of beginning and end of
-line functions by using `ergoemacs-shortcut-internal'."
+line functions by using `ergoemacs-shortcut-internal'.
+
+When calling the repeatable command of #3, this command honors
+the prefix arguments of `end-of-buffer',
+`ergoemacs-forward-block' and `scroll-up-command'.
+
+"
   (interactive "^p")
   (if (and ergoemacs-beginning-or-end-of-line-and-what
            (or (not ergoemacs-use-beginning-or-end-of-line-only)
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                     (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
            (= (point) (point-at-eol)))
-      (progn
+      (progn 
         (cond
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
           (ergoemacs-shortcut-internal 'end-of-buffer))
@@ -552,7 +626,9 @@ line functions by using `ergoemacs-shortcut-internal'."
       (when ergoemacs-end-of-comment-line
         (save-excursion
           ;; See http://www.emacswiki.org/emacs/EndOfLineNoComments
-          (let ((cs (comment-search-forward (point-at-eol) t)))
+          (let ((cs (condition-case err
+                        (comment-search-forward (point-at-eol) t)
+                      (error nil))))
             (when cs
               (goto-char cs)
               (skip-syntax-backward " " (point-at-bol))
