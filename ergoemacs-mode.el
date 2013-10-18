@@ -414,15 +414,28 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
                       (read-kbd-macro
                        (format "%s <timeout>"
                                ergoemacs-M-O-prefix-keys)))))
+          (unless fn
+            (let (message-log-max
+                  ergoemacs-mode
+                  ergoemacs-unbind-keys
+                  nk)
+              (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+              (setq nk (key-binding (read-kbd-macro prefix-keys) t nil (point)))
+              (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+              (if nk
+                  (setq fn nk)
+                (beep)
+                (message "Nothing is assigned to %s" ergoemacs-M-O-prefix-keys))))
           ;; Lookup keys, and then send <exit> event.
-          (setq prefix-arg ergoemacs-curr-prefix-arg)
-          (setq this-command fn)
-          (condition-case err
-              (call-interactively
-               (or (command-remapping fn (point)) fn) t (read-kbd-macro ergoemacs-M-O-prefix-keys t))
-            (error
-             (beep)
-             (message "%s" err)))
+          (when fn
+            (setq prefix-arg ergoemacs-curr-prefix-arg)
+            (setq this-command fn)
+            (condition-case err
+                (call-interactively
+                 (or (command-remapping fn (point)) fn) t (read-kbd-macro ergoemacs-M-O-prefix-keys t))
+              (error
+               (beep)
+               (message "%s" err))))
           (reset-this-command-lengths)
           (setq unread-command-events (cons 'exit unread-command-events)))
       (setq prefix-arg ergoemacs-curr-prefix-arg)
@@ -440,12 +453,25 @@ function immediately when `window-system' is true."
         (prefix-keys (if use-map "M-O" "M-o")))
     (if window-system
         (let ((fn (lookup-key map [timeout] t)))
-          (condition-case err
-              (call-interactively
-               (or (command-remapping fn (point)) fn))
-            (error
-             (beep)
-             (message "%s" err))))
+          (if fn
+              (condition-case err
+                  (call-interactively
+                   (or (command-remapping fn (point)) fn))
+                (error
+                 (beep)
+                 (let (message-log-max)
+                   (message "%s" err))))
+            (let (message-log-max
+                  ergoemacs-mode
+                  ergoemacs-unbind-keys
+                  nk)
+              (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+              (setq nk (key-binding (read-kbd-macro prefix-keys) t nil (point)))
+              (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+              (if nk
+                  (call-interactively nk)
+                (beep)
+                (message "Nothing is assigned to %s" prefix-keys)))))
       (when (timerp ergoemacs-M-O-timer)
         (cancel-timer ergoemacs-M-O-timer)
         ;; Issue correct command.
