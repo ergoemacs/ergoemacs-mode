@@ -639,7 +639,8 @@ the prefix arguments of `end-of-buffer',
        (t
 	(setq pts (sort pts '<))
 	(setq pts (remove-if (lambda(x) (<= x (point))) pts))
-        (goto-char (nth 0 pts))))))
+        (when pts
+          (goto-char (nth 0 pts)))))))
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
 
 ;;; TEXT SELECTION RELATED
