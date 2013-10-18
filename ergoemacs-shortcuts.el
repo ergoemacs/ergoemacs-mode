@@ -375,6 +375,7 @@ the best match."
     (setq cmd (or (command-remapping cmd (point)) cmd))
     (setq this-command cmd)
     (setq prefix-arg current-prefix-arg)
+    
     ;; (let (message-log-max)
     ;;   (message "%s: %s" (ergoemacs-pretty-key key) cmd))
 
@@ -530,7 +531,9 @@ workhorse of this function is in `ergoemacs-shortcut-internal'."
             (remhash (cons major-mode command) keyfreq-table))))
       (setq this-command last-command)
       (setq prefix-arg current-prefix-arg)
-      (if (interactive-form (nth 0 args))
+      (if (condition-case err
+              (interactive-form (nth 0 args))
+            (error nil))
           (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args))))
         (eval (macroexpand `(ergoemacs-shortcut-internal ,(nth 0 args) ',(nth 1 args))))))))
 
@@ -729,7 +732,9 @@ sets `this-command' to `%s'. The hook
                 (when (featurep 'keyfreq)
                   (when keyfreq-mode
                     (let ((command (nth 0 fn)) count)
-                      (when (and (interactive-form command)
+                      (when (and (condition-case err
+                                     (interactive-form command)
+                                   (error nil))
                                  (condition-case err
                                      (symbolp command)
                                    (error nil)))
@@ -836,7 +841,9 @@ If MAP is nil, base this on a sparse keymap."
              (copy-keymap map) nil)))
     (maphash
      (lambda(key args)
-       (if (interactive-form (nth 0 args))
+       (if (condition-case err
+               (interactive-form (nth 0 args))
+             (error nil))
            (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args) nil ,key)))
          (eval (macroexpand `(ergoemacs-shortcut-internal ,(nth 0 args) ',(nth 1 args) nil ,key)))))
      ergoemacs-command-shortcuts-hash)
