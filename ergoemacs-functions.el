@@ -519,13 +519,15 @@ the prefix arguments of `beginning-of-buffer',
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                     (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
            (= (point) (point-at-bol)))
-      (cond
-       ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
-        (ergoemacs-shortcut-internal 'beginning-of-buffer))
-       ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
-        (ergoemacs-shortcut-internal 'ergoemacs-backward-block))
-       ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
-        (ergoemacs-shortcut-internal 'scroll-down-command)))
+      (progn
+        (cond
+         ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
+          (ergoemacs-shortcut-internal 'beginning-of-buffer))
+         ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
+          (ergoemacs-shortcut-internal 'ergoemacs-backward-block))
+         ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
+          (ergoemacs-shortcut-internal 'scroll-down-command)))
+        (beginning-of-line))
     (setq N (or N 1))
     (when (not (= 1 N))
       (let ((line-move-visual nil))
