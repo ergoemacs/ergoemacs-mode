@@ -2166,6 +2166,27 @@ beginning or end of line.  Don't worry ergoemacs-mode will respect
 it, and do the right thing.  This is because ergoemacs-mode actually
 replaces the =move-beginning-line= with whatever the mode defines
 =move-beginning-line= to be.
+
+For example set:
+#+BEGIN_SRC emacs-lisp
+(setq org-special-ctrl-a/e t)
+#+END_SRC
+
+And then go to an =org-mode= headline:
+
+#+BEGIN_SRC org
+  ,* TODO Install ergoemacs-mode  |
+#+END_SRC
+
+By pressing the beginning of line command, you would go to:
+
+
+#+BEGIN_SRC org
+  ,* TODO |Install ergoemacs-mode  
+#+END_SRC
+
+As hoped/expected.
+
 *** End of line
 
 The end of line command for ergoemacs is just as smart as beginning
