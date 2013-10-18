@@ -363,11 +363,11 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
    (eval `(ergoemacs-create-movement-commands ,x)))
  ergoemacs-movement-functions)
 
-(defvar ergoemacs-M-O-keymap (make-keymap)
+(defvar ergoemacs-M-O-keymap (make-sparse-keymap)
   "M-O translation map.")
 (define-key ergoemacs-M-O-keymap [exit] 'ignore)
 
-(defvar ergoemacs-M-o-keymap (make-keymap)
+(defvar ergoemacs-M-o-keymap (make-sparse-keymap)
   "M-o translation map.")
 (define-key ergoemacs-M-o-keymap [exit] 'ignore)
 
