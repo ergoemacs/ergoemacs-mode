@@ -385,8 +385,16 @@ When 'nil don't use a repeatable command
           (const nil :tag "Do nothing on repeat at beginning/end of line"))
   :group 'ergoemacs-mode)
 
-(defun ergoemacs-end-or-beginning-of-buffer (&optional arg)
-  "Goto end or beginning of buffer. See `ergoemacs-beginning-or-end-of-buffer'"
+(defcustom ergoemacs-repeatable-beginning-or-end-of-buffer t
+  "Makes the beginning and end of buffer command repeatable.
+  Calling it more than once changes the point from the beginning
+  to the end of the buffer."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-beginning-or-end-of-buffer (&optional arg)
+  "Goto end or beginning of buffer. See `ergoemacs-end-or-beginning-of-buffer'.
+This behavior can be turned off with `ergoemacs-repeatable-beginning-or-end-of-buffer'."
   (interactive "p")
   (let ((ma (region-active-p)))
     (if current-prefix-arg
@@ -394,19 +402,22 @@ When 'nil don't use a repeatable command
           (setq prefix-arg current-prefix-arg)
           (ergoemacs-shortcut-internal 'end-of-buffer))
       (cond
-       ((bobp) (ergoemacs-shortcut-internal 'end-of-buffer))
+       ((and ergoemacs-repeatable-beginning-or-end-of-buffer (bobp))
+        (ergoemacs-shortcut-internal 'end-of-buffer))
        (t (ergoemacs-shortcut-internal 'beginning-of-buffer))))
     (when (and (not ma) (region-active-p))
       (deactivate-mark))))
 
-(defun ergoemacs-beginning-or-end-of-buffer (&optional arg)
+(defun ergoemacs-end-or-beginning-of-buffer (&optional arg)
   "Go to beginning or end of buffer.
 
 This calls `end-of-buffer', unless there is no prefix and the
 point is already at the beginning of the buffer.  Then it will
 call `beginning-of-buffer'. This function tries to be smart and
 if the major mode redefines the keys, use those keys instead.
-This is done by `ergoemacs-shortcut-internal'.
+This is done by `ergoemacs-shortcut-internal'.  The repatable
+behavior can be turned off
+with`ergoemacs-repeatable-beginning-or-end-of-buffer'
 
 This will not honor `shift-select-mode'."
   (interactive "p")
@@ -416,7 +427,8 @@ This will not honor `shift-select-mode'."
           (setq prefix-arg current-prefix-arg)
           (ergoemacs-shortcut-internal 'end-of-buffer))
       (cond
-       ((eobp) (ergoemacs-shortcut-internal 'beginning-of-buffer))
+       ((and ergoemacs-repeatable-beginning-or-end-of-buffer (eobp))
+        (ergoemacs-shortcut-internal 'beginning-of-buffer))
        (t (ergoemacs-shortcut-internal 'end-of-buffer))))
     (when (and (not ma) (region-active-p))
       (deactivate-mark))))
