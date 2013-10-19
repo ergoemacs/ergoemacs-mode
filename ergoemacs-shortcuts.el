@@ -382,20 +382,23 @@ the best match."
     ;; For some reason call-interactively doesn't always send the keys
     ;; appropriately :( For this reason, change `this-command-keys'
     ;; and `this-single-command-keys'.
-    
-    (eval
-     (macroexpand
-      `(flet
-           ((this-command-keys () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys))))
-            (this-single-command-keys () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-single-command-keys))))
-            (this-command-keys-vector () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys-vector)))))
-         (setq new-unread (listify-key-sequence (this-command-keys)))
-         (call-interactively cmd nil ,(read-kbd-macro key t)))))
+    ;; While the below works, eventually emacs gets to an unsuble
+    ;; state because the flet is wrapped too much...
+    (call-interactively cmd nil (read-kbd-macro key t))
+    ;; (eval
+    ;;  (macroexpand
+    ;;   `(flet
+    ;;        ((this-command-keys () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys))))
+    ;;         (this-single-command-keys () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-single-command-keys))))
+    ;;         (this-command-keys-vector () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys-vector)))))
+    ;;      (setq new-unread (listify-key-sequence (this-command-keys)))
+    ;;      (call-interactively cmd nil ,(read-kbd-macro key t)))))
     ;; Some commands, like isearch, put commands in
     ;; `unread-command-events'; Try to handle these.
-    (when (and unread-command-events
-               (equal unread-command-events new-unread))
-      (setq unread-command-events old-unread))))
+    ;; (when (and unread-command-events
+    ;;            (equal unread-command-events new-unread))
+    ;;   (setq unread-command-events old-unread))
+    ))
 
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
