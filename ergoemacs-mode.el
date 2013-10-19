@@ -1252,10 +1252,16 @@ bindings the keymap is:
         (ergoemacs-setup-keys t)
         (ergoemacs-debug-heading "Ergoemacs Keys have loaded.")
         (when (eq system-type 'darwin)
-          (setq ergoemacs-old-ns-command-modifier ns-command-modifier)
-          (setq ergoemacs-old-ns-alternate-modifier ns-alternate-modifier)
-          (setq ns-command-modifier 'meta)
-          (setq ns-alternate-modifier nil))
+          (let ((cm (or (intern-soft "ns-command-modifier")
+                        (intern-soft "mac-command-modifier")))
+                (am (or (intern-soft "ns-alternate-modifier")
+                        (intern-soft "mac-command-modifier"))))
+            (when cm
+              (setq ergoemacs-old-ns-command-modifier (symbol-value cm))
+              (set cm 'meta))
+            (when am
+              (setq ergoemacs-old-ns-alternate-modifier ns-alternate-modifier)
+              (set am nil))))
         ;; Turn on menu
         (if ergoemacs-use-menus
             (progn
@@ -1316,8 +1322,14 @@ bindings the keymap is:
     (when (featurep 'ergoemacs-menus)
       (ergoemacs-menus-off))
     (when (and (eq system-type 'darwin))
-      (setq ns-command-modifier ergoemacs-old-ns-command-modifier)
-      (setq ns-alternate-modifier ergoemacs-old-ns-alternate-modifier))
+      (let ((cm (or (intern-soft "ns-command-modifier")
+                    (intern-soft "mac-command-modifier")))
+            (am (or (intern-soft "ns-alternate-modifier")
+                    (intern-soft "mac-alternate-modifier"))))
+        (when cm
+          (set cm ergoemacs-old-ns-command-modifier))
+        (when am
+          (set am ergoemacs-old-ns-alternate-modifier))))
     ;; Change retangle modifier back.    
     (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier-orig)
     (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)

@@ -961,10 +961,16 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
           (while (search-forward "M-" nil t)
             (replace-match (if (eq system-type 'darwin)
                                (cond
-                                ((eq ns-command-modifier 'meta)
+                                ((or (and (boundp 'mac-command-modifier)
+                                          (eq mac-command-modifier 'meta))
+                                     (and (boundp 'ns-command-modifier)
+                                          (eq ns-command-modifier 'meta)))
                                  (format "%sCmd+"
                                          (ergoemacs-unicode-char "⌘" "")))
-                                ((eq ns-alternate-modifier 'meta)
+                                ((or (and (boundp 'mac-alternate-modifier)
+                                          (eq mac-alternate-modifier 'meta))
+                                     (and (boundp 'ns-alternate-modifier)
+                                          (eq ns-alternate-modifier 'meta)))
                                  (format "%sOpt+"
                                          (ergoemacs-unicode-char "⌥" "")))
                                 (t "Alt+"))
