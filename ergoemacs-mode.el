@@ -666,18 +666,39 @@ work in the terminal."
                 
                 (if (and ergoemacs-fix-M-O (string= (ergoemacs-kbd trans-key t t) "M-O"))
                     (progn
-                      (define-key ,keymap key  'ergoemacs-M-O)
-                      (define-key ergoemacs-M-O-keymap [timeout] cmd)
-                      ;; (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-O-keymap [timeout] cmd)
+                      ;; Add shortcut if available
+                      (cond
+                       ((or (remove-if '(lambda(x) (eq 'menu-bar (elt x 0))) ; Ignore
+                                        ; menu-bar
+                                        ; functions
+                                     (where-is-internal cmd (current-global-map)))
+                            (gethash cmd ergoemacs-where-is-global-hash))
+                        (puthash (read-kbd-macro (key-description key) t)
+                                 (list cmd 'global) ergoemacs-command-shortcuts-hash)
+                        (define-key ergoemacs-shortcut-keymap key 'ergoemacs-M-O)
+                        (define-key ergoemacs-M-O-keymap [timeout] 'ergoemacs-shortcut))
+                       (t
+                        (define-key ,keymap key  'ergoemacs-M-O)
+                        (define-key ergoemacs-M-O-keymap [timeout] cmd)))
                       (if (eq ',keymap 'ergoemacs-keymap)
                           (ergoemacs-debug "Variable %s: %s (%s) -> %s %s via ergoemacs-M-O"
                                            (nth 0 x) trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
                   (if (and ergoemacs-fix-M-O
                            (string= (ergoemacs-kbd trans-key t t) "M-o"))
                       (progn
-                        (define-key ,keymap key  'ergoemacs-M-o)
-                        (define-key ergoemacs-M-o-keymap [timeout] cmd)
-                        ;; (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-o-keymap [timeout] cmd)
+                        (cond  ;; Use shortcut if available.
+                         ((or (remove-if '(lambda(x) (eq 'menu-bar (elt x 0))) ; Ignore
+                                        ; menu-bar
+                                        ; functions
+                                         (where-is-internal cmd (current-global-map)))
+                              (gethash cmd ergoemacs-where-is-global-hash))
+                          (puthash (read-kbd-macro (key-description key) t)
+                                   (list cmd 'global) ergoemacs-command-shortcuts-hash)
+                          (define-key ergoemacs-shortcut-keymap key 'ergoemacs-M-o)
+                          (define-key ergoemacs-M-o-keymap [timeout] 'ergoemacs-shortcut))
+                         (t
+                          (define-key ,keymap key  'ergoemacs-M-o)
+                          (define-key ergoemacs-M-o-keymap [timeout] cmd)))
                         (if (eq ',keymap 'ergoemacs-keymap)
                             (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-o" trans-key
                                              (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))

@@ -386,10 +386,9 @@ Test next and prior translation."
     (setq ergoemacs-theme nil)
     (setq ergoemacs-keyboard-layout "us")
     (ergoemacs-mode 1)
-    (setq ret (equal 'forward-word (lookup-key ergoemacs-M-o-keymap [timeout])))
+    (setq ret (lookup-key ergoemacs-M-o-keymap [timeout]))
     (when ret
-      (setq ret (equal 'ergoemacs-forward-block
-                       (lookup-key ergoemacs-M-O-keymap [timeout]))))
+      (setq ret (lookup-key ergoemacs-M-O-keymap [timeout])))
     (ergoemacs-mode -1)
     (setq ergoemacs-theme old-ergoemacs-theme)
     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
