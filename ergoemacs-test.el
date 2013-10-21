@@ -361,9 +361,9 @@ Hyper Key mapping no longer works."
     (ergoemacs-mode 1)
     (should ret)))
 
-(ert-deftest ergoemacs-test-issue-108 ()
-  "Issue #108.
-Test M-O and M-o issues."
+(ert-deftest ergoemacs-test-modal-preserve-mark ()
+  "Issue #101.
+Test next and prior translation."
   (with-temp-buffer
     (insert ergoemacs-test-lorem-ipsum)
     (goto-char (point-min))
@@ -373,19 +373,23 @@ Test M-O and M-o issues."
     (ergoemacs-toggle-full-alt)
     (should mark-active)))
 
-(ert-deftest ergoemacs-test-shifted-move-keep-mark ()
-  "Test the shifted selection bug."
+(ert-deftest ergoemacs-test-issue-108 ()
+  "Test Issue #108."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
         (macro (edmacro-parse-keys "C-SPC M-h M-S-i" t))
+        (ergoemacs-end-of-comment-line nil)
+        (ergoemacs-back-to-indentation nil)
+        (ergoemacs-use-beginning-or-end-of-line-only t)
         (ret))
     (ergoemacs-mode -1)
     (setq ergoemacs-theme nil)
     (setq ergoemacs-keyboard-layout "us")
     (ergoemacs-mode 1)
-    (setq ret (eq 'forward-word (lookup-key ergoemacs-M-o-timeout 'timeout)))
+    (setq ret (equal 'forward-word (lookup-key ergoemacs-M-o-keymap [timeout])))
     (when ret
-      (setq ret (eq 'forward-paragraph (lookup-key ergoemacs-M-O-timeout 'timeout))))
+      (setq ret (equal 'ergoemacs-forward-block
+                       (lookup-key ergoemacs-M-O-keymap [timeout]))))
     (ergoemacs-mode -1)
     (setq ergoemacs-theme old-ergoemacs-theme)
     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
