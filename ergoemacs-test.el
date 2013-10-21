@@ -361,9 +361,9 @@ Hyper Key mapping no longer works."
     (ergoemacs-mode 1)
     (should ret)))
 
-(ert-deftest ergoemacs-test-modal-preserve-mark ()
-  "Issue #101.
-Test next and prior translation."
+(ert-deftest ergoemacs-test-issue-108 ()
+  "Issue #108.
+Test M-O and M-o issues."
   (with-temp-buffer
     (insert ergoemacs-test-lorem-ipsum)
     (goto-char (point-min))
@@ -372,6 +372,25 @@ Test next and prior translation."
     (forward-char 3)
     (ergoemacs-toggle-full-alt)
     (should mark-active)))
+
+(ert-deftest ergoemacs-test-shifted-move-keep-mark ()
+  "Test the shifted selection bug."
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (macro (edmacro-parse-keys "C-SPC M-h M-S-i" t))
+        (ret))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme nil)
+    (setq ergoemacs-keyboard-layout "us")
+    (ergoemacs-mode 1)
+    (setq ret (eq 'forward-word (lookup-key ergoemacs-M-o-timeout 'timeout)))
+    (when ret
+      (setq ret (eq 'forward-paragraph (lookup-key ergoemacs-M-O-timeout 'timeout))))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should ret)))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
