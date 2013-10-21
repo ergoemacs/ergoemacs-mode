@@ -667,7 +667,8 @@ work in the terminal."
                 (if (and ergoemacs-fix-M-O (string= (ergoemacs-kbd trans-key t t) "M-O"))
                     (progn
                       (define-key ,keymap key  'ergoemacs-M-O)
-                      (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-O-keymap [timeout] cmd)
+                      (define-key ergoemacs-M-O-keymap [timeout] cmd)
+                      ;; (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-O-keymap [timeout] cmd)
                       (if (eq ',keymap 'ergoemacs-keymap)
                           (ergoemacs-debug "Variable %s: %s (%s) -> %s %s via ergoemacs-M-O"
                                            (nth 0 x) trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
@@ -675,7 +676,8 @@ work in the terminal."
                            (string= (ergoemacs-kbd trans-key t t) "M-o"))
                       (progn
                         (define-key ,keymap key  'ergoemacs-M-o)
-                        (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-o-keymap [timeout] cmd)
+                        (define-key ergoemacs-M-o-keymap [timeout] cmd)
+                        ;; (ergoemacs-setup-keys-for-keymap---internal ergoemacs-M-o-keymap [timeout] cmd)
                         (if (eq ',keymap 'ergoemacs-keymap)
                             (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-o" trans-key
                                              (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)))
