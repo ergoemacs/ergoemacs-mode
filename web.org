@@ -852,7 +852,7 @@ This can be done by:
 The possible disadvantage to this is you would have to use another key
 to access the defined emacs commands.  Currently ergoemacs-mode allows
 you to use QWERTY 【▤ Menu d】 or 【Ctrl+⇧ Shift+x】 to access emacs
-Ctrl+x commands and QWERTY 【▤ Menu t】 or 【Ctrl+⇧ Shift+c】 to
+Ctrl+x commands and QWERTY 【▤ Menu f】 or 【Ctrl+⇧ Shift+c】 to
 access Ctrl+c commands.
 
 The 【▤ Menu】 keybindings are slightly different than plan Ctrl+x or
@@ -1531,95 +1531,7 @@ work in progress.
   :TEMPLATE: blog_static_no_title.html
   :END:
 
-*** Background
-Key chords (like Ctrl+x) is the bane of keyboarding.
-There are 3 types of key shortcuts to invoke commands in software:
-
-1. Single key.  Examples include: @@html:<kbd class="dark">@@F1@@html:</kbd>@@, @@html:<kbd class="dark">@@PgUp@@html:</kbd>@@. 
-2. Key chord: @@html:<kbd class="dark">@@⇧ Shift+a @@html:</kbd>@@,
-   Ctrl+c, Ctrl+⇧ Shift+z, @@html:<kbd class="dark">@@Alt@@html:</kbd>@@+@@html:<kbd class="dark">@@F4@@html:</kbd>@@.
-3. Key sequence of single keys or chords. For example on Microsoft
-   Windows, @@html:<kbd class="dark">@@F10@@html:</kbd>@@ @@html:<kbd class="dark">@@e@@html:</kbd>@@ @@html:<kbd class="dark">@@c@@html:</kbd>@@ for copy, or @@html:<kbd class="dark">@@Alt@@html:</kbd>@@+@@html:<kbd class="dark">@@Space@@html:</kbd>@@ @@html:<kbd class="dark">@@c@@html:</kbd>@@ to close window.
-
-of these, in terms of efficiency and hand health (Repetitive Strain
-Injury), the single key is the best. Key sequence of single keys is
-second best. Key chord is the worst.
-
-
-Key chord is the most hard on hand health, but is also conceptually
-the most convoluted.
-
-I [Xah Lee] remember in around 1991, when i first learned about key
-chord on the Macintosh Classic. I thought, it's strange. You have to
-hold @@html:<kbd class="dark">@@⌘ Cmd@@html:</kbd>@@ first, then press the key @@html:<kbd class="dark">@@c@@html:</kbd>@@, then, release @@html:<kbd class="dark">@@c@@html:</kbd>@@, then, release
-@@html:<kbd class="dark">@@⌘ Cmd@@html:</kbd>@@. It must be in that specific order.
-
-A more natural way is either key sequence, or real chords. That is,
-pressing several keys together but you don't have to worry about which
-to hold or release first. Stenograph machines are like that.
-
-**** Whence Did Key Chord Came From?
-I suppose, when computer keyboard came, sans levels and gears, but
-habit stuck, and this evolved into “modifier” keys, with Bucky bits.
-
-Now, thinking about this, i think Microsoft must be a genius, when
-they invented the key system on Windows, where Alt is used to invoke
-menu, and all command can be called by a sequence of key strokes. This
-is probably the best system given the PC keyboard. This system, lets
-you invoke any command, yet has menu counter-part, so it's easy to see
-a list of them and also grouped by category. (emacs's system of course
-is much more extensive than that.)
-
-**** What Should a Keyboard Nerd Do with Key Chords?
-BAN the them out of the universe.
-
-But, there isn't enough keys on keyboard. You only have 12 function
-keys, plus some others such as ↖ Home, ↓. But there are 10 times more
-commands in software.  What to do?
-
-For majority of commands, you should use a key sequence of single
-keys, instead. For example, 【F10 e c】. But Function keys are further
-away. So, you could start with a easy key such as 【▤ Menu e c】, and
-reassign most of your keys to key sequence. (you can make Caps Lock as
-your start key, whichever key on YOUR keyboard is easy to press.)
-
-There are 26 letters in alphabet, plus 10 digits, so you have 36 key
-choices for the key. (ignore punctuation keys for the moment) If each
-of your command has 2 keys in a key sequence (not counting the
-starting key), then you have 36 × 36 = 1296 possible keys for
-commands. Quite enough!
-
-Still, some commands are not suitable for key sequence. For example,
-moving cursor by word. You want to be able to hold down a key and have
-the cursor keep moving. You can't do that with key sequences, because
-you need to release the key and press again to invoke the command
-again. Answer: use single key. Retort: But F keys are far away and
-arrow keys are already used. Answer: key chord then.
-
-**** Principles on Efficient Use of Key Chords
-Key chord should be used only for commands that need to be repeated
-within a second (hold the key and let the command repeat).  This
-includes moving cursor, paging, switching tab/window.
-
-Key chord should use no more than one modifier. This saves your
-hand. So, key chord such as emacs interactive replace 【Alt+⇧ Shift+5】
-or Mac's redo 【⌘ Cmd+⇧ Shift+z】 should not be allowed.
-
-# FIXME: 【Ctrl+‹letter/digit›】 is displayed incorrect on web page
-If you survey commands in an editor, such as emacs, vast majority of
-commands are the non-repeating type. The repeating type are probably
-less than 5% of commands. Using 【Ctrl+‹letter/digit›】 key give you
-about 36 spots. Adding Alt, you have 72 spots. And that's more than
-enough for repeating commands. In practice, I estimate a programer
-uses less than 30 repeating commands per day on average.
-**** What About Sticky Keys?
-I do not advocate the Sticky Keys feature for the handicapped. It's
-not the same. Sticky Keys actually make things a worse, because it's a
-hack over key chords. When you press a sequence of keys, it has to
-guess whether you mean a sequence or chord (since emacs supports
-both). The end result is that it's confusing to use, imprecise, and
-slows you down.
-
+For a background why it would be good to banish key chords, see [[http://xahlee.info/kbd/banish_key_chords.html][this page]].
 *** Keyboard Shortcut Design
 This section discuss one criterion on the design of keyboard shortcut
 system: Repeatable vs Non-Repeatable Commands and Keys. This
@@ -1681,7 +1593,7 @@ For QWERTY, an additional mapping of these keys have been made:
 - A modified Control-x map has been assigned to Menu f:
   - This map allows you to type the keys without a key chord
     requirement.  For example to switch buffers instead of
-    [Control+x] [b] you could type [Menu] [f] [b].  (Note that the [f]
+    [Control+x] [b] you could type [Menu] [d] [b].  (Note that the [d]
     key changes based on layout; For example using the colemak layout
     you would type [Menu] [t] [b] to switch buffers).
 
@@ -1689,30 +1601,30 @@ For QWERTY, an additional mapping of these keys have been made:
     alt-chorded keys since they are easier to reach, there is another
     keymap that removes the control-chorded keys.  Therefore to get
     the buffer list, instead of having to type [Control-x]
-    [Control-b] you can type [Menu] [f] [Alt-b].
+    [Control-b] you can type [Menu] [d] [Alt-b].
 
   - The [Alt-] keychords in this modified keymap are changed to
     [Control-] keys.  For example, =repeat-complex-command= is mapped
-    from [Control-x] [Alt+:] to [Menu] [f] [Control-:].  As far as I
+    from [Control-x] [Alt+:] to [Menu] [d] [Control-:].  As far as I
     can tell this is the only [Control-x] [Alt] combination. 
 
 - A modified unchorded Control-x map has assigned to QWERTY [Menu]
-  [r].  This map has changed the Control-x map as follows:
+  [f].  This map has changed the Control-x map as follows:
 
   - Chorded control keys are subset.  Therefore only keys that have
     the combination [Control-x] [Control-] are used.
 
   - Chorded key combinations are changed drop the chord.  For example
-    the buffer list [Control-x] [Conrtol-b] is changed to [Menu] [r]
+    the buffer list [Control-x] [Conrtol-b] is changed to [Menu] [f]
     [b].
 
   - Chorded key combinations that are single key are translated to
-    [Alt+] for example [Control+k] [a] is changed to [Menu] [r] [k]
+    [Alt+] for example [Control+k] [a] is changed to [Menu] [f] [k]
     [Alt+a]
 
   - Chorded key combinations that work with [Alt+] are translated to
     [Control+].  For example [Control+k] [Alt+a] is changed to [Menu]
-    [r] [k] [Control+a].  I don't think there are currently any keys
+    [f] [k] [Control+a].  I don't think there are currently any keys
     bound to these types of key combinations.  They are quite
     difficult to press and remember.
 
@@ -2128,7 +2040,7 @@ Or even the fist actual first character of the line:
 
 Once there it is not too useful to go to the beginning of the line
 again.  So, you may wish to:
-- Goto the last text block (separated by 2 new lines; default)
+- Goto the last text block (separated by 2 new lines; default, [[http://ergoemacs.org/emacs/emacs_key_combo.html][why?]])
 - Issue a page-up command
 - Goto the beginning of the buffer
 
@@ -2212,7 +2124,7 @@ or the end of the line:
 #+END_SRC
 
 The after that you can:
-- Goto the next text-block (default)
+- Goto the next text-block (default, [[http://ergoemacs.org/emacs/emacs_key_combo.html][why?]])
 - Issue a PageDown command
 - Goto the end of the buffer.
 
