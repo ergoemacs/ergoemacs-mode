@@ -1660,6 +1660,12 @@ One can enable movement without key-chords as follows:
   - Shift and the key is the unshifted command.  Therefore [Menu] [i]
     [i] [Shift+k] would be Page Up followed by down one character.
 
+***** Method #2 -- Modal Ergoemacs-mode
+You can press [F6] to get all the [Alt+] commands bound letters
+themselves.  For example [Alt+k] is bound to [k].  [Alt+Shift+] keys
+are bound to [Shift+] or [Alt+] keys.  Hence, [Shift+Alt+m] is bound
+to both [Shift+m] and  [Alt+m].  To exit ergoemacs modal mode, you
+can press [Return] or [F6].  
 ** FAQ
   :PROPERTIES:
   :PAGE:     faq.html
