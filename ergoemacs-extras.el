@@ -1651,6 +1651,11 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
        (ergoemacs-set-default 'ergoemacs-theme saved-theme))
      lay)))
 
+(require 'json nil t)
+(defun ergoemacs-json-current ()
+  "Provide ergoemacs theme and layout as a json object."
+  (json-encode `(:fixed-keys ,(symbol-value (ergoemacs-get-fixed-layout)) :variable-keys ,(symbol-value (ergoemacs-get-variable-layout)) :translation ,ergoemacs-translation-assoc)))
+
 (provide 'ergoemacs-extras)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-extras.el ends here
