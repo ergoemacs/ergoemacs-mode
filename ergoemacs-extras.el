@@ -832,10 +832,10 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
               (mapc
                (lambda(y)
                  (when (string-match re (format "%s" (nth 1 y)))
-                   (unless (string-match "\\(<apps>\\|<menu>\\)" (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y))))
+                   (unless (string-match "\\(<apps>\\|<menu>\\|<home>\\|<end>\\)" (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
                      (insert (symbol-name (nth 1 y)))
                      (insert "=")
-                     (insert (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y))))
+                     (insert (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
                      (insert "\n"))))
                (symbol-value (ergoemacs-get-variable-layout))))
             (ergoemacs-get-layouts)))

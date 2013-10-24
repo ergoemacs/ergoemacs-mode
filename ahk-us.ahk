@@ -93,6 +93,8 @@ CareL = 0
 CareV = 0
 CareLV = 0
 g_MarkSet=
+g_LastBol=
+g_LastEol=
 modifiers=
 skipUpDown=
 
@@ -414,6 +416,8 @@ DelayKeyOutput:
   } Else {
     SendInput % modifiers pressedKey
     g_MarkSet=
+    g_LastBol=
+    g_LastEol=
   }
   g_OtherKeyPressed := true
   Return
@@ -457,6 +461,8 @@ DelayKeyOutput:
             g_MarkSet=1
           } Else {
             g_MarkSet=
+            g_LastBol=
+            g_LastEol=
           }
        } else {
           SendInput % modifiers "{Space}"
@@ -545,9 +551,32 @@ forward-word:
   SendKey("{Ctrl down}{Right}{Ctrl up}",1)
   return
 
-ergoemacs-beginning-of-line-or-block:
 move-beginning-of-line:
   SendKey("{Home}",1)
+  return
+
+ergoemacs-end-of-line-or-what:
+  if (g_LastEol <> ""){
+     ;; Last Key was end of line
+     ;; Send PgDown...
+     SendKey("{PgDown}",1)    
+  } else {
+     ;; Last key was not bol send home
+     SendKey("{End}",1)
+  }
+  g_LastEol=eol
+  return
+
+ergoemacs-beginning-of-line-or-what:
+  if (g_LastBol <> ""){
+     ;; Last Key was beginning of line
+     ;; Send PgUp...
+     SendKey("{PgUp}",1)    
+  } else {
+     ;; Last key was not bol send home
+     SendKey("{Home}",1)
+  }
+  g_LastBol=bol
   return
 
 ergoemacs-end-of-line-or-block:
@@ -575,12 +604,12 @@ delete-char:
 
 
 scroll-down:
- SendKey("{PgUp}",0)
- return
+ SendKey("{PgUp}",1)
+  return
 
 
 scroll-up:
- SendKey("{PgDn}",0)
+ SendKey("{PgDn}",1)
  return
 
 
@@ -749,6 +778,10 @@ GetModifiers()
 SendKey(key,Movement = 0){
   global g_MarkSet
   global g_OtherKeyPressed
+  global g_LastBol
+  global g_LastEol
+  g_LastEol=
+  g_LastBol=
   g_OtherKeyPressed := true
   If (Movement == 0){
     g_MarkSet=
