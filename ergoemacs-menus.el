@@ -3,6 +3,7 @@
 ;; Copyright (C) 2013 Matthew L. Fidler
 
 ;; Maintainer: Matthew L. Fidler
+;; Authors: Xah Lee,  Matthew Fidler, Xah Lee, Drew Adams
 ;; Keywords: convenience
 
 ;; ErgoEmacs is free software: you can redistribute it and/or modify
