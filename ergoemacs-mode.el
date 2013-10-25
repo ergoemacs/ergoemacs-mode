@@ -398,49 +398,60 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
     (cancel-timer ergoemacs-M-O-timer))
   nil)
 
-(defvar ergoemacs-M-O-prefix-keys nil)
-
 (defvar ergoemacs-shortcut-keys nil)
 (defvar ergoemacs-unbind-keys nil)
 
+(defvar ergoemacs-M-O-prefix-keys nil)
+(defvar ergoemacs-M-O-function nil)
 (defun ergoemacs-M-O-timeout ()
   "Push timeout on unread command events."
   (when ergoemacs-push-M-O-timeout
     (setq ergoemacs-push-M-O-timeout nil)
-    (if ergoemacs-M-O-prefix-keys
-        (let (fn)
-          (let (ergoemacs-shortcut-keys)
-            (setq fn (key-binding
-                      (read-kbd-macro
-                       (format "%s <timeout>"
-                               ergoemacs-M-O-prefix-keys)))))
-          (unless fn
-            (let (message-log-max
-                  ergoemacs-mode
-                  ergoemacs-unbind-keys
-                  nk)
-              (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-              (setq nk (key-binding (read-kbd-macro prefix-keys) t nil (point)))
-              (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-              (if nk
-                  (setq fn nk)
-                (beep)
-                (message "Nothing is assigned to %s" ergoemacs-M-O-prefix-keys))))
-          ;; Lookup keys, and then send <exit> event.
-          (when fn
-            (setq prefix-arg ergoemacs-curr-prefix-arg)
-            (setq this-command fn)
-            (condition-case err
-                (call-interactively
-                 (or (command-remapping fn (point)) fn) t (read-kbd-macro ergoemacs-M-O-prefix-keys t))
-              (error
-               (beep)
-               (message "%s" err))))
-          (reset-this-command-lengths)
-          (setq unread-command-events (cons 'exit unread-command-events)))
+    (cond
+     ((and (condition-case err
+               (interactive-form ergoemacs-M-O-function)
+             (error nil))
+           ergoemacs-M-O-prefix-keys
+           (equal 'ignore
+               (key-binding
+                (read-kbd-macro
+                 (format "%s <exit>"
+                         ergoemacs-M-O-prefix-keys)))))
+      (ergoemacs-send-fn ergoemacs-M-O-prefix-keys ergoemacs-M-O-function)
+      (setq unread-command-events (cons 'exit unread-command-events)))
+     (ergoemacs-M-O-prefix-keys
+      (let (fn)
+        (let (ergoemacs-shortcut-keys)
+          (setq fn (key-binding
+                    (read-kbd-macro
+                     (format "%s <timeout>"
+                             ergoemacs-M-O-prefix-keys)))))
+        (unless fn
+          (let (message-log-max
+                ergoemacs-mode
+                ergoemacs-unbind-keys
+                nk)
+            (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+            (setq nk (key-binding (read-kbd-macro prefix-keys) t nil (point)))
+            (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+            (if nk
+                (setq fn nk)
+              (beep)
+              (message "Nothing is assigned to %s" ergoemacs-M-O-prefix-keys))))
+        ;; Lookup keys, and then send <exit> event.
+        (when fn
+          (condition-case err
+              (ergoemacs-send-fn ergoemacs-M-O-prefix-keys fn)
+            (error
+             (beep)
+             (message "%s" err))))
+        (reset-this-command-lengths)
+        ))
+     (t 
       (setq prefix-arg ergoemacs-curr-prefix-arg)
       (reset-this-command-lengths)
-      (setq unread-command-events (cons 'timeout unread-command-events)))
+      (setq unread-command-events (cons 'timeout unread-command-events))))
+    (setq ergoemacs-M-O-function nil)
     (setq ergoemacs-M-O-prefix-keys nil)))
 
 (defun ergoemacs-M-o (&optional arg use-map)

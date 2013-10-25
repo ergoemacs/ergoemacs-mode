@@ -554,6 +554,11 @@ workhorse of this function is in `ergoemacs-shortcut-internal'."
           (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args))))
         (eval (macroexpand `(ergoemacs-shortcut-internal ,(nth 0 args) ',(nth 1 args))))))))
 
+(defun ergoemacs-quit-key-sequence ()
+  (interactive)
+  (beep)
+  (message "Quit key sequence."))
+
 (defun ergoemacs-shortcut-internal (key &optional chorded repeat keymap-key)
   "Ergoemacs Shortcut.
 
@@ -814,25 +819,64 @@ sets `this-command' to `%s'. The hook
             (t "Normal")))
           deactivate-mark)
       (eval (macroexpand '(ergoemacs-extract-maps ergoemacs-current-extracted-map key)))
-      (set-temporary-overlay-map ergoemacs-current-extracted-map)
       (setq ergoemacs-first-extracted-variant chorded)
       (setq key-seq
             (read-kbd-macro
              (format "<%s> %s" key-type key)))
-      (setq key-seq (listify-key-sequence key-seq))
-      (reset-this-command-lengths)
-      (setq unread-command-events
-            (append key-seq unread-command-events))
       (setq key-type (concat "<" key-type "> "))
       (when (string= key-type "<Normal> ")
         (setq key-type ""))
+      
       (let (message-log-max)
         (message (concat
                   (if current-prefix-arg
                       (format "%s " current-prefix-arg)
                     "")
                   (format "%s%s " key-type
-                          (ergoemacs-pretty-key key)))))))))
+                          (ergoemacs-pretty-key key)))))
+      (let* ((next-key (eval (macroexpand `(key-description [,(read-key)]))))
+             (new-key-seq (read-kbd-macro (concat (key-description key-seq) " " next-key)))
+             (new-cmd (lookup-key ergoemacs-current-extracted-map new-key-seq)))
+        (cond
+         ((condition-case err
+              (interactive-form new-cmd)
+            (error nil))
+          (ergoemacs-send-fn (concat key " " next-key) new-cmd))
+         ((string-match "\\(M-[oO]\\|ESC\\|<escape>\\|M-\\[\\)"
+                        (key-description (ergoemacs-key-fn-lookup 'keyboard-quit)))
+          ;; Keep translations; Send quit.
+          (setq ergoemacs-push-M-O-timeout t)
+          (define-key ergoemacs-current-extracted-map
+            (read-kbd-macro (concat (key-description key-seq)
+                                    " " next-key " <timeout>"))
+            'ergoemacs-quit-key-sequence)
+          (set-temporary-overlay-map ergoemacs-current-extracted-map)
+          (setq key-seq (listify-key-sequence new-key-seq))
+          (reset-this-command-lengths)
+          (setq unread-command-events
+                (append key-seq unread-command-events))
+          (setq ergoemacs-M-O-timer (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-M-O-timeout))
+           )
+         ;; Allow prefixes to be picked up if they were not already
+         ;; defined.  This is done by a temporary keymap and waiting.
+         ((or ; When the key-sequence is a keymap or a prefix for a
+              ; translation map, exit command with
+              ; unread-command-events taking care of any translations.
+           (condition-case err
+               (keymapp new-cmd)
+             (error nil))
+           (string-match "\\(M-[oO]\\|ESC\\|<escape>\\|M-\\[\\)" next-key))
+          (set-temporary-overlay-map ergoemacs-current-extracted-map)
+          (setq key-seq (listify-key-sequence new-key-seq))
+          (reset-this-command-lengths)
+          (setq unread-command-events
+                (append key-seq unread-command-events)))
+         (t
+          (ergoemacs-send-fn (concat key " " next-key) 'ergoemacs-undefined))))
+      
+      
+      
+      ))))
 
 (defcustom ergoemacs-repeat-ctl-c-ctl-c t
   "Repeat C-c C-c"
