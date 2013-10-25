@@ -391,6 +391,8 @@
       ("S-<f12>" isearch-ring-retreat isearch-mode-map)
       ("C-S-f" isearch-occur isearch-mode-map)
       ("C-M-f" isearch-occur isearch-mode-map)
+      (yank isearch-yank-kill isearch-mode-map) ;; Not sure why this
+      ;; didn't translate appropriately...
       (ergoemacs-toggle-letter-case isearch-toggle-regexp isearch-mode-map)
       (ergoemacs-toggle-camel-case isearch-toggle-case-fold isearch-mode-map)))
     
