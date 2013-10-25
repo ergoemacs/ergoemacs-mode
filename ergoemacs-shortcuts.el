@@ -842,8 +842,10 @@ sets `this-command' to `%s'. The hook
               (interactive-form new-cmd)
             (error nil))
           (ergoemacs-send-fn (concat key " " next-key) new-cmd))
-         ((string-match "\\(M-[oO]\\|ESC\\|<escape>\\|M-\\[\\)"
-                        (key-description (ergoemacs-key-fn-lookup 'keyboard-quit)))
+         ((and (string-match "\\(M-[oO]\\|ESC\\|<escape>\\|M-\\[\\)"
+                             next-key)
+           (string-match "\\(M-[oO]\\|ESC\\|<escape>\\|M-\\[\\)"
+                        (key-description (ergoemacs-key-fn-lookup 'keyboard-quit))))
           ;; Keep translations; Send quit.
           (setq ergoemacs-push-M-O-timeout t)
           (define-key ergoemacs-current-extracted-map
@@ -855,8 +857,9 @@ sets `this-command' to `%s'. The hook
           (reset-this-command-lengths)
           (setq unread-command-events
                 (append key-seq unread-command-events))
-          (setq ergoemacs-M-O-timer (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-M-O-timeout))
-           )
+          (setq ergoemacs-M-O-timer (run-with-timer ergoemacs-M-O-delay nil #'ergoemacs-M-O-timeout)))
+         ((equal 'keyboard-quit (key-binding (read-kbd-macro next-key)))
+          (ergoemacs-quit-key-sequence))
          ;; Allow prefixes to be picked up if they were not already
          ;; defined.  This is done by a temporary keymap and waiting.
          ((or ; When the key-sequence is a keymap or a prefix for a
