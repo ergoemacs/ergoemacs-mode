@@ -152,6 +152,20 @@
     (shell-command (format "%s --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\"  --eval \"(ergoemacs-mode 1)\"& " emacs-exe
                            (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))))
 
+(defun ergoemacs-clean-nw ()
+  "Run ergoemacs in bootstrap environment in terminal."
+  (interactive)
+  (let ((emacs-exe (ergoemacs-emacs-exe)))
+    (cond
+     ((executable-find "xterm")
+      (when ergoemacs-keyboard-layout
+        (setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout))
+      (when ergoemacs-theme
+        (setenv "ERGOEMACS_THEME" ergoemacs-theme))
+      (shell-command (format "%s -e %s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\"  --eval \"(ergoemacs-mode 1)\"& "
+                             (executable-find "xterm") emacs-exe
+                             (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))))))
+
 (defun ergoemacs-emacs-exe ()
   "Get the Emacs executable for testing purposes."
   (let* ((emacs-exe (invocation-name))
@@ -1113,11 +1127,11 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
 
 (defun ergoemacs-smart-punctuation ()
   "Smart Punctuation Function for `ergoemacs-mode'."
-  (interactive)
+  (interactive) 
   (unless (run-hook-with-args-until-success 'ergoemacs-smart-punctuation-hooks)
-    (cond
+    (cond 
      ((and (eq last-command this-command)
-           (looking-back (regexp-opt (mapcar (lambda(pair) (substring pair 0 1)) ergoemacs-smart-punctuation-pairs))))
+           (looking-back (regexp-opt (mapcar (lambda(pair) (substring pair 0 1)) ergoemacs-smart-punctuation-pairs) t)))
       (undo)
       (when ergoemacs-smart-punctuation-last-mark
         ;; I use set-mark because I don't want it to be added to the mark-stack.
