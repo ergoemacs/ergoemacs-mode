@@ -370,9 +370,6 @@ the best match."
 
 (defvar ergoemacs-send-fn-keys-fns '(ergoemacs-undefined ergoemacs-shortcut)
   "List of functions where `unread-command-events' are sent with `ergoemacs-send-fn'.")
-
-(defvar ergoemacs-send-fn-overriding nil)
-(defvar ergoemacs-send-fn-saved-overriding nil)
 (defun ergoemacs-send-fn (key fn &optional message)
   "Sends the function."
   (let ((cmd fn)
