@@ -192,7 +192,8 @@
     ("<apps> n s" shell "shell" t)
     ("<apps> TAB" indent-region "indent-region")  ;; Already in CUA
     ;; but some modes don't honor it...
-    
+
+    ("<apps> r" goto-map "Goto")
     )
   
   "Ergoemacs that vary from keyboard types.  By default these keybindings are based on QWERTY."
@@ -393,6 +394,7 @@
       ("C-M-f" isearch-occur isearch-mode-map)
       (yank isearch-yank-kill isearch-mode-map) ;; Not sure why this
       ;; didn't translate appropriately...
+      (keyboard-quit isearch-abort isearch-mode-map)
       (ergoemacs-toggle-letter-case isearch-toggle-regexp isearch-mode-map)
       (ergoemacs-toggle-camel-case isearch-toggle-case-fold isearch-mode-map)))
     
@@ -403,7 +405,9 @@
       ("<M-f11>" previous-matching-history-element)
       ("S-<f11>" previous-matching-history-element)
       ("<M-f12>" next-matching-history-element)
-      ("S-<f12>" next-matching-history-element)))    
+      ("S-<f12>" next-matching-history-element)
+      (keyboard-quit minibuffer-keyboard-quit)))
+    
     
     ;; Comint
     (comint-mode-hook
