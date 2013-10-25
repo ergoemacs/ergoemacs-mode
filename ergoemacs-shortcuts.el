@@ -367,6 +367,12 @@ the best match."
          (puthash hashkey ,keymap ergoemacs-extract-map-hash))
        (ergoemacs-debug-flush))))
 
+
+(defvar ergoemacs-send-fn-keys-fns '(ergoemacs-undefined ergoemacs-shortcut)
+  "List of functions where `unread-command-events' are sent with `ergoemacs-send-fn'.")
+
+(defvar ergoemacs-send-fn-overriding nil)
+(defvar ergoemacs-send-fn-saved-overriding nil)
 (defun ergoemacs-send-fn (key fn &optional message)
   "Sends the function."
   (let ((cmd fn)
@@ -379,26 +385,37 @@ the best match."
     ;; (let (message-log-max)
     ;;   (message "%s: %s" (ergoemacs-pretty-key key) cmd))
 
-    ;; For some reason call-interactively doesn't always send the keys
-    ;; appropriately :( For this reason, change `this-command-keys'
-    ;; and `this-single-command-keys'.
-    ;; While the below works, eventually emacs gets to an unsuble
-    ;; state because the flet is wrapped too much...
-    (call-interactively cmd nil (read-kbd-macro key t))
-    ;; (eval
-    ;;  (macroexpand
-    ;;   `(flet
-    ;;        ((this-command-keys () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys))))
-    ;;         (this-single-command-keys () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-single-command-keys))))
-    ;;         (this-command-keys-vector () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys-vector)))))
-    ;;      (setq new-unread (listify-key-sequence (this-command-keys)))
-    ;;      (call-interactively cmd nil ,(read-kbd-macro key t)))))
+    
     ;; Some commands, like isearch, put commands in
     ;; `unread-command-events'; Try to handle these.
     ;; (when (and unread-command-events
     ;;            (equal unread-command-events new-unread))
     ;;   (setq unread-command-events old-unread))
-    ))
+
+    ;; For some reason call-interactively doesn't always send the keys
+    ;; appropriately :( For this reason, change `this-command-keys'
+    ;; and `this-single-command-keys'.
+    
+    ;; For now, only send keys for that need it (which I assume
+    ;; are relatively few).  If you change every command by flet,
+    ;; emacs gets too many levels of recursive definitions of
+    ;; `this-command-keys' and `this-single-command-keys' which
+    ;; renders it a tad unstable.
+    (if (not (memq cmd ergoemacs-send-fn-keys-fns))
+        (call-interactively cmd) ; Do not send keys (in case emacs bug is fixed)
+      (eval
+       (macroexpand
+        `(flet
+             ((this-command-keys () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys))))
+              (this-single-command-keys () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-single-command-keys))))
+              (this-command-keys-vector () (if (equal this-command ',cmd) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys-vector)))))
+           (setq new-unread (listify-key-sequence (this-command-keys)))
+           (call-interactively cmd nil ,(read-kbd-macro key t)))))
+      ;; Some commands, like isearch, put commands in
+      ;; `unread-command-events'; Try to handle these.
+      (when (and unread-command-events
+                 (equal unread-command-events new-unread))
+        (setq unread-command-events old-unread)))))
 
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
