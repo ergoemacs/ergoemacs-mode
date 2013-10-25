@@ -639,7 +639,7 @@ All other modes are assumed to be minor modes or unimportant.
 (defvar ergoemacs-menu-bar-old-help-menu (lookup-key global-map [menu-bar help-menu]))
 
 (setq ergoemacs-menu-bar-help-menu
-      '(keymap
+      `(keymap
         ;; Adapted from Menu-bar+
         (whoops menu-item "Whoops!?"
                 (keymap
@@ -808,7 +808,7 @@ All other modes are assumed to be minor modes or unimportant.
         (separator-licence menu-item "--")
         (license menu-item "License"
                  describe-copying)
-        "?"))
+        ,(if (eq system-type 'darwin) "Help" "?")))
 
 ;; Preprocess menu keybindings...
 
