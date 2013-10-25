@@ -3,6 +3,7 @@
 ;; Copyright (C) 2013 Matthew L. Fidler
 
 ;; Maintainer: Matthew L. Fidler
+;; Authors: Xah Lee, Matthew Fidler, Drew Adams, Ting-Yu Lin, David Capello
 ;; Keywords: convenience
 
 ;; ErgoEmacs is free software: you can redistribute it and/or modify
@@ -1070,6 +1071,80 @@ Else it is a user buffer."
   "Call `org-emphasize' with _"
   (interactive)
   (org-emphasize ?_))
+
+(defvar ergoemacs-smart-punctuation-hooks nil
+  "`ergoemacs-smart-punctuation' hooks.")
+
+(defun ergoemacs-smart-punctuation-mode-p ()
+  "Determines if a smart paren mode is active."
+  (or (and (boundp 'smartparens-mode)
+           smartparens-mode)
+      (and (boundp 'autopair-mode)
+           autopair-mode)
+      (and (boundp 'textmate-mode)
+           textmate-mode)
+      (and (boundp 'wrap-region-mode)
+           wrap-region-mode)
+      (and (boundp 'electric-pair-mode)
+           electric-pair-mode)
+      (and (boundp 'paredit-mode)
+           paredit-mode)))
+
+(defun ergoemacs-smart-punctuation-insert-pair (pair)
+  "Inserts a matched pair like ().
+If a smart-punctuation mode is active, use it by placing the initial pair in the unread command events."
+  (if (ergoemacs-smart-punctuation-mode-p)
+      (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (substring pair 0 1))) unread-command-events))
+    (insert pair)
+    (backward-char 1)))
+
+(defvar ergoemacs-smart-punctuation-pairs '("()" "[]" "{}" "\"\"")
+  "Default pairs to cycle among for `ergoemacs-smart-punctuation'")
+
+(defvar ergoemacs-smart-punctuation-next-pair 0)
+(defvar ergoemacs-smart-punctuation-last-mark nil)
+
+(defcustom ergoemacs-repeat-smart-punctuation t
+  "Makes `ergoemacs-smart-punctuation' repeatable"
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+
+
+(defun ergoemacs-smart-punctuation ()
+  "Smart Punctuation Function for `ergoemacs-mode'."
+  (interactive)
+  (unless (run-hook-with-args-until-success 'ergoemacs-smart-punctuation-hooks)
+    (cond
+     ((and (eq last-command this-command)
+           (looking-back (regexp-opt (mapcar (lambda(pair) (substring pair 0 1)) ergoemacs-smart-punctuation-pairs))))
+      (undo)
+      (when ergoemacs-smart-punctuation-last-mark
+        ;; I use set-mark because I don't want it to be added to the mark-stack.
+        (set-mark ergoemacs-smart-punctuation-last-mark))
+      (setq ergoemacs-smart-punctuation-last-mark (condition-case err
+                                                      (mark)
+                                                    (error nil)))
+      (ergoemacs-smart-punctuation-insert-pair (nth ergoemacs-smart-punctuation-next-pair
+                                                    ergoemacs-smart-punctuation-pairs)))
+     (t
+      (setq ergoemacs-smart-punctuation-last-mark (condition-case err
+                                                      (mark)
+                                                    (error nil)))
+      (ergoemacs-smart-punctuation-insert-pair (nth 0 ergoemacs-smart-punctuation-pairs))
+      (setq ergoemacs-smart-punctuation-next-pair 0)))
+    (setq ergoemacs-smart-punctuation-next-pair (+ ergoemacs-smart-punctuation-next-pair 1))
+    (unless (nth ergoemacs-smart-punctuation-next-pair ergoemacs-smart-punctuation-pairs)
+      (setq ergoemacs-smart-punctuation-next-pair 0))
+    (when ergoemacs-repeat-smart-punctuation
+      (let ((repeat-key (key-description (this-single-command-keys)))
+            (temp-map (make-sparse-keymap))
+            message-log-max)
+        (setq repeat-key (substring repeat-key (- (length repeat-key) 1)))
+        (define-key temp-map (read-kbd-macro repeat-key) this-command)
+        (set-temporary-overlay-map temp-map)
+        (when (eq (key-binding (read-kbd-macro repeat-key) t) this-command)
+          (message "Cycle with %s" (ergoemacs-pretty-key repeat-key)))))))
 
 (defun ergoemacs-org-insert-heading-respect-content (&optional reopen-or-invisible-ok)
   "When in an `org-mode' table, use `cua-set-rectangle-mark', otherwise use `org-insert-heading-respect-content'"

@@ -34,7 +34,7 @@
   "Default Ergoemacs Layout"
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-variable-layout
+ (defcustom ergoemacs-variable-layout
   '(("M-j" backward-char  "← char")
     ("M-l" forward-char "→ char")
     ("M-i" previous-line "↑ line")
@@ -57,8 +57,8 @@
     ("M-h" ergoemacs-beginning-of-line-or-what "← line/*")
     ("M-H" ergoemacs-end-of-line-or-what "→ line/*")
 
-    ("<home>" ergoemacs-beginning-of-line-or-block "← line/¶")
-    ("<end>" ergoemacs-end-of-line-or-block "→ line/¶")
+    ("<home>" ergoemacs-beginning-of-line-or-what "← line/¶")
+    ("<end>" ergoemacs-end-of-line-or-what "→ line/¶")
     
     ;; Move by screen (page up/down)
     ("M-I" scroll-down "↑ page")
@@ -166,28 +166,19 @@
     ("<apps> a" mark-whole-buffer "Sel All")
     ("<apps> d" ("C-x" ctl-to-alt) "Ctl-x")
     ("<apps> f" ("C-c" unchorded) "Ctl-c")
-    ;;("<apps> <apps> f" ("C-x" unchorded) "Ctl-x")
     ("<apps> h" ("C-h" nil) "Ctl-h")
     ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
-    ;; ("<apps> j" ("C-c" unchorded) "Ctl-c")
-    ;; ("<apps> <apps> j" ("C-c" ctl-to-alt) "Ctl-c")
     ("<apps> k" ergoemacs-toggle-full-alt "Alt+mode")
     ("<apps> m" ergoemacs-ctl-c-ctl-c "C-c C-c")
-    ;; ("<apps> r" ("C-x" unchorded) "Ctl-x*")
     ("<apps> s" save-buffer "Save")
     ("<apps> o" find-file "Open")
-    ;; ("<apps> u" ("C-c" unchorded) "Ctl-c*")
     ("<apps> g" universal-argument "C-u")
     ("<apps> w" ergoemacs-close-current-buffer "Close")
-    ;;("<apps> y" ergoemacs-ctl-h-unchorded "Ctl-h*")
-    ;; ("<apps> y y" isearch-forward "→ isearch")
-    ;; ("<apps> y h" isearch-backward "← isearch")
-    ;; ("<apps> y u" isearch-forward-regexp "→ reg isearch")
-    ;; ("<apps> y j" isearch-backward-regexp "← reg isearch")
     ("<apps> x" ergoemacs-cut-line-or-region "✂ region")
     ("<apps> c" ergoemacs-copy-line-or-region "copy")
     ("<apps> v" yank "paste")
     ("<apps> b" redo "↷ redo")
+    ("<apps> u" ergoemacs-smart-punctuation "()")
     ("<apps> t" (helm-mini ido-switch-buffer switch-to-buffer) "switch buf")
     ("<apps> z" undo "↶ undo")
     ("<apps> n a" org-agenda "agenda")
@@ -201,10 +192,6 @@
     ("<apps> n s" shell "shell" t)
     ("<apps> TAB" indent-region "indent-region")  ;; Already in CUA
     ;; but some modes don't honor it...
-    
-    ;; ("<apps> V" yank-pop "paste ↑")
-    ;; ("<apps> C" ergoemacs-copy-all "copy all")
-    ;; ("<apps> X" ergoemacs-cut-all "✂ all")
     
     )
   
@@ -1347,7 +1334,22 @@ Some exceptions we don't want to unset.
 
 ;; git bundle bindings
   (ergoemacs-fixed-key "C-x g" 'magit-status)
-)
+  )
+
+(ergoemacs-deftheme mate
+  "EmacsMate"
+  nil
+  (ergoemacs-key "M-*" 'mc/mark-next-like-this "Mark Next")
+  (ergoemacs-key "M-&" 'mc/edit-lines "Edit Lines")
+  (ergoemacs-key "M-," 'goto-last-change "Goto Last Change")
+  (ergoemacs-key "M-." 'ergoemacs-end-of-line-or-what (format "%s line/*" (make-string 1 8592)))
+  (ergoemacs-key "M-m" 'ergoemacs-beginning-of-line-or-what (format "%s line/*" (make-string 1 8594)))
+  (ergoemacs-key "M-t" 'execute-extended-command "M-x")
+  (ergoemacs-key "M-a" 'ergo-call-keyward-completion "compl")
+  (ergoemacs-key "M-9" 'er/contract-region (format "%sregion%s"
+                                                   (make-string 1 8594)
+                                                   (make-string 1 8592)))
+  (ergoemacs-key "M-h" 'flyspell-auto-correct-previous-word "spell"))
 
 (make-obsolete-variable 'ergoemacs-variant 'ergoemacs-theme
                         "ergoemacs-mode 5.8.0.1")
