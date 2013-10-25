@@ -1341,7 +1341,7 @@ Some exceptions we don't want to unset.
   nil
   (ergoemacs-key "M-*" 'mc/mark-next-like-this "Mark Next")
   (ergoemacs-key "M-&" 'mc/edit-lines "Edit Lines")
-  (ergoemacs-key "M-," 'goto-last-change "Goto Last Change")
+  (ergoemacs-key "M-," 'ergoemacs-smart-punctuation "()")
   (ergoemacs-key "M-." 'ergoemacs-end-of-line-or-what (format "%s line/*" (make-string 1 8592)))
   (ergoemacs-key "M-m" 'ergoemacs-beginning-of-line-or-what (format "%s line/*" (make-string 1 8594)))
   (ergoemacs-key "M-t" 'execute-extended-command "M-x")
