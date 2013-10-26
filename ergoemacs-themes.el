@@ -166,7 +166,7 @@
     ("<apps> a" mark-whole-buffer "Sel All")
     ("<apps> d" ("C-x" ctl-to-alt) "Ctl-x")
     ("<apps> f" ("C-c" unchorded) "Ctl-c")
-    ("<apps> h" ("C-h" nil) "Ctl-h")
+    ("<apps> h" help-map "Help")
     ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
     ("<apps> k" ergoemacs-toggle-full-alt "Alt+mode")
     ("<apps> m" ergoemacs-ctl-c-ctl-c "C-c C-c")
