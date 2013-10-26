@@ -1347,14 +1347,12 @@ Some exceptions we don't want to unset.
   nil
   (ergoemacs-key "M-*" 'mc/mark-next-like-this "Mark Next")
   (ergoemacs-key "M-&" 'mc/edit-lines "Edit Lines")
-  (ergoemacs-key "M-," 'ergoemacs-smart-punctuation "()")
-  (ergoemacs-key "M-." 'ergoemacs-end-of-line-or-what (format "%s line/*" (make-string 1 8592)))
-  (ergoemacs-key "M-m" 'ergoemacs-beginning-of-line-or-what (format "%s line/*" (make-string 1 8594)))
+  (ergoemacs-key "M-," 'ergoemacs-smart-punctuation "Toggle ()")
+  (ergoemacs-key "M-." 'ergoemacs-end-of-line-or-what "→ line/*")
+  (ergoemacs-key "M-m" 'ergoemacs-beginning-of-line-or-what "← line/*" )
   (ergoemacs-key "M-t" 'execute-extended-command "M-x")
   (ergoemacs-key "M-a" 'ergo-call-keyward-completion "compl")
-  (ergoemacs-key "M-9" 'er/contract-region (format "%sregion%s"
-                                                   (make-string 1 8594)
-                                                   (make-string 1 8592)))
+  (ergoemacs-key "M-9" 'er/contract-region "←region→")
   (ergoemacs-key "M-h" 'flyspell-auto-correct-previous-word "spell"))
 
 (make-obsolete-variable 'ergoemacs-variant 'ergoemacs-theme
