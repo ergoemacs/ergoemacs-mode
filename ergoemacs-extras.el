@@ -380,16 +380,21 @@
                                      (error "")))
                           (desc (nth 2 var))
                           emacs-key)
+                     (setq desc
+                           (replace-regexp-in-string "[+]" "\\\\+" desc))
                      (setq emacs-key (condition-case err
-                                         (where-is-internal
-                                          command
-                                          (current-global-map) t)
+                                          (key-description
+                                           (where-is-internal
+                                            (nth 1 var)
+                                            (current-global-map) t))
                                        (error "NA")))
-                     (when (string= emacs-key "")
-                       (setq emacs-key "NA"))
+                     (if (string= emacs-key "")
+                         (setq emacs-key "NA")
+                       (setq emacs-key (ergoemacs-pretty-key emacs-key)))
                      (concat "| " desc " | " key  " | "
                              emacs-key " | =" command "= |")))
-               (remove-if #'(lambda(x) (not (nth 2 x))) ergoemacs-fixed-layout) "\n"))
+               (remove-if #'(lambda(x) (not (nth 2 x)))
+                          ergoemacs-fixed-layout) "\n"))
       (sort-lines nil (point-min) (point-max))
       (goto-char (point-min))
       (insert "|-\n| Standard Name | Ergoemacs Key | Emacs Key | Emacs Command Name |\n|-")
