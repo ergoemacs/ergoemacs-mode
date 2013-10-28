@@ -53,7 +53,11 @@ A minor-mode that aims to:
 
 [[file:{lisp}(ob:path-to-root){/lisp}/bug-report.html][/icon-fire icon-white/ Bug report]]
 
-[[http://ergoemacs.org/emacs/blog.html][/icon-blog icon-white/ Xah's Emacs Blog]]
+[[http://ergoemacs.org/emacs/emacs_keys_index.html][/icon-keyboard-wireless icon-white/ Keyboard Articles]]
+
+[[http://ergoemacs.org/emacs/blog.html][/icon-blog icon-white/ Emacs Blog]]
+
+
 
 
 #+HTML: </div>
@@ -2153,4 +2157,16 @@ Note that this command also respects mode specific changes to
 end-of-line commands (like in =org-mode=).
 
 *** Beginning or end of buffer
+This smart will:
+ 1. Goto the beginning of the buffer
+ 2. If at the beginning of the buffer it will go to the end of the buffer.
 
+If you want to go to the beginning of the buffer only, you can turn it
+of by setting =ergoemacs-repeatable-beginning-or-end-of-buffer= to
+nil:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-repeatable-beginning-or-end-of-buffer nil)
+#+END_SRC
+
+*** Smart punctuation
