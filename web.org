@@ -7,7 +7,7 @@
 #+TEMPLATE_DIR: ./o-blog-template
 #+URL: http://ergoemacs.github.com/ergoemacs-mode/
 #+DEFAULT_CATEGORY: Tips
-#-DISQUS: renard-ergoemacs-mode
+#+DISQUS: ergoemacsmode
 #+FILENAME_SANITIZER: ob-sanitize-string
 #+POST_SORTER: ob-sort-posts-by-title
 
@@ -789,6 +789,10 @@ Standard shortcuts for cursor navigation are also supported. For example:
 - @@html:<kbd class="dark">@@Home@@html:</kbd>@@ ⇒ move cursor to beginning of line.
 - ⇧ Shift+↓ select text downward.
 
+The ergoemacs fixed keys are given by:
+
+{lisp}(ergoemacs-ghpages-standard-keys){/lisp}
+
 ** Preserving Emacs Commands while maintaining familiar shortcuts
   :PROPERTIES:
   :PAGE:     cua-conflict.html
@@ -1510,6 +1514,24 @@ for a while.
 #+end_quote
 
 [[http://emacsblog.org/2007/08/27/newbie-tip-visual-emacs-keybinding-cheatsheet/#comments][emacsblog.org]]
+
+#+BEGIN_HTML
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'ergoemacsmode'; // required: replace example with your forum shortname
+  
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+#+END_HTML
+
 ** Roadmap
   :PROPERTIES:
   :PAGE:     roadmap.html
