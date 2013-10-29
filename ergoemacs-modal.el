@@ -72,12 +72,10 @@ enabled."
   :type '(repeat string)
   :group 'ergoemacs-modal)
 
-(defcustom ergoemacs-default-cursor ;; Adapted from evil-mode
-  (or (frame-parameter nil 'cursor-color) "black")
+(defvar ergoemacs-default-cursor nil
   "The default cursor color.
-A color string as passed to `set-cursor-color'."
-  :type 'string
-  :group 'ergoemacs-modal)
+This should be reset every time that the modal cursor changes color.  Otherwise this will be nil
+A color string as passed to `set-cursor-color'.")
 
 (defcustom ergoemacs-modal-cursor ;; Adapted from evil-mode
   "red"
@@ -396,7 +394,10 @@ modal state is currently enabled."
       (setq ergoemacs-modal mode-text)
       (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
        (concat " " mode-text))
-      (set-cursor-color ergoemacs-modal-cursor)
+      (unless ergoemacs-default-cursor
+        (setq ergoemacs-default-cursor
+              (or (frame-parameter nil 'cursor-color) "black"))
+        (set-cursor-color ergoemacs-modal-cursor))
       (let (message-log-max)
         (message "%s command move installed. Exit by %s"
                alt
