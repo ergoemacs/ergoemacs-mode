@@ -1171,6 +1171,40 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
     (setq prefix-arg current-prefix-arg)
     (org-insert-heading-respect-content reopen-or-invisible-ok))))
 
+(defcustom ergoemacs-smart-paste nil
+  "Do a smart paste.  That is repeated pastes cycle though the kill ring."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-yank-pop (&optional arg)
+  "Run `yank-pop' or`yank'.
+This is `yank-pop' if `ergoemacs-smart-paste' is nil.
+This is `yank' if `ergoemacs-smart-paste' is t.
+
+Each of these commands may be changed based on smart lookup with
+`ergoemacs-shortcut-internal'.
+"
+  (interactive "P")
+  (if ergoemacs-smart-paste
+      (ergoemacs-shortcut-internal 'yank)
+    (ergoemacs-shortcut-internal 'yank-pop)))
+
+(defun ergoemacs-yank (&optional arg)
+  "Run `yank' or `yank-pop' if this command is repeated.
+This is `yank' if `ergoemacs-smart-paste' is nil.
+This is `yank-pop' if `ergoemacs-smart-paste' is t.
+If `yank-pop' fails, call `yank'.
+
+Each of these commands may be changed based on smart lookup with
+`ergoemacs-shortcut-internal'.
+"
+  (interactive "P")
+  (if ergoemacs-smart-paste
+      (if (eq last-command 'yank)
+          (ergoemacs-shortcut-internal 'yank-pop)
+        (ergoemacs-shortcut-internal 'yank))
+    (ergoemacs-shortcut-internal 'yank)))
+
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
   (let ((regtxt (and cua--register (get-register cua--register))))

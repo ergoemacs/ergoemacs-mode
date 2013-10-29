@@ -781,6 +781,12 @@ work in the terminal."
         ["Customize Ctrl+C and Ctrl+X Cut/Copy Timeout"
          (lambda() (interactive)
            (customize-variable 'ergoemacs-ctl-c-or-ctl-x-delay))])
+       ["Repeating Paste cycles through previous pastes"
+        (lambda()
+          (interactive)
+          (set-default 'ergoemacs-smart-paste (not ergoemacs-smart-paste)))
+        :style checkbox
+        :selected ergoemacs-smart-paste]
       "--"
       ["Make Bash aware of ergoemacs keys"
        (lambda () (interactive)
@@ -808,6 +814,7 @@ work in the terminal."
       ["Save Settings for Future Sessions"
        (lambda ()
          (interactive)
+         (customize-save-variable 'ergoemacs-smart-paste ergoemacs-smart-paste)
          (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
          (customize-save-variable 'ergoemacs-theme ergoemacs-theme)
          (customize-save-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)

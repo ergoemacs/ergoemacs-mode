@@ -91,8 +91,8 @@
     ;; Copy Cut Paste, Paste previous
     ("M-x" ergoemacs-cut-line-or-region "✂ region")
     ("M-c" ergoemacs-copy-line-or-region "copy")
-    ("M-v" yank "paste")
-    ("M-V" yank-pop "paste ↑")
+    ("M-v" ergoemacs-yank "paste")
+    ("M-V" ergoemacs-yank-pop "paste ↑")
     ("M-C" ergoemacs-copy-all "copy all")
     ("M-X" ergoemacs-cut-all "✂ all")
     
@@ -176,7 +176,7 @@
     ("<apps> w" ergoemacs-close-current-buffer "Close")
     ("<apps> x" ergoemacs-cut-line-or-region "✂ region")
     ("<apps> c" ergoemacs-copy-line-or-region "copy")
-    ("<apps> v" yank "paste")
+    ("<apps> v" ergoemacs-yank "paste")
     ("<apps> b" redo "↷ redo")
     ("<apps> u" ergoemacs-smart-punctuation "()")
     ("<apps> t" (helm-mini ido-switch-buffer switch-to-buffer) "switch buf")
@@ -260,7 +260,7 @@
     ("<M-backspace>" undo "↶ undo")
     ("<S-delete>" ergoemacs-cut-line-or-region "✂ region")
     ("<C-insert>" ergoemacs-copy-line-or-region "copy")
-    ("<S-insert>" yank "paste")
+    ("<S-insert>" ergoemacs-yank "paste")
     
     ("C-f" isearch-forward "Search")
     ("C-S-f" occur "Occur")
@@ -314,8 +314,8 @@
     ("<C-f3>" ergoemacs-copy-all "Copy all")
     ("<M-f3>" ergoemacs-copy-all "Copy all")
     
-    ("<f4>" yank "paste")
-    ("<C-f4>" yank-pop "paste ↑")
+    ("<f4>" ergoemacs-yank "paste")
+    ("<C-f4>" ergoemacs-yank-pop "paste ↑")
     ;; ("<M-f4>" yank-pop "paste ↑")
 
     ("<f11>" previous-line "Previous")
@@ -347,8 +347,8 @@
     ("C-x" ergoemacs-ctl-x "Cut")
     ("C-S-c" ("C-c" normal) "Copy") 
     ("C-S-x" ("C-x" normal)  "Cut") 
-    ("C-v" yank "Paste") 
-    ("C-S-v" yank-pop "paste ↑"))
+    ("C-v" ergoemacs-yank "Paste") 
+    ("C-S-v" ergoemacs-yank-pop "paste ↑"))
   "Keybinding that are constant regardless of they keyboard used."
   :type '(repeat
           (list :tag "Fixed Key"
@@ -392,8 +392,7 @@
       ("S-<f12>" isearch-ring-retreat isearch-mode-map)
       ("C-S-f" isearch-occur isearch-mode-map)
       ("C-M-f" isearch-occur isearch-mode-map)
-      (yank isearch-yank-kill isearch-mode-map) ;; Not sure why this
-      ;; didn't translate appropriately...
+      (ergoemacs-yank isearch-yank-kill isearch-mode-map)
       (keyboard-quit isearch-abort isearch-mode-map)
       (ergoemacs-toggle-letter-case isearch-toggle-regexp isearch-mode-map)
       (ergoemacs-toggle-camel-case isearch-toggle-case-fold isearch-mode-map)))
@@ -1352,7 +1351,7 @@ Some exceptions we don't want to unset.
   (ergoemacs-key "M-m" 'ergoemacs-beginning-of-line-or-what "← line/*" )
   (ergoemacs-key "M-t" 'execute-extended-command "M-x")
   (ergoemacs-key "M-a" 'ergo-call-keyward-completion "compl")
-  (ergoemacs-key "M-9" 'er/contract-region "←region→")
+  (ergoemacs-key "M-9" 'er/contract-region "→region←")
   (ergoemacs-key "M-h" 'flyspell-auto-correct-previous-word "spell"))
 
 (make-obsolete-variable 'ergoemacs-variant 'ergoemacs-theme
