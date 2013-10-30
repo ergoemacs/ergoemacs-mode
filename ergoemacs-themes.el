@@ -384,6 +384,18 @@
       ("<M-left>" ergoemacs-org-metaleft nil)
       ("<M-right>" ergoemacs-org-metaright nil)))
 
+    ;; Browse Kill ring support
+    (browse-kill-ring-hook
+     (("<f11>" browse-kill-ring-previous browse-kill-ring-edit-mode-map)
+      ("<f12>" browse-kill-ring-forward browse-kill-ring-edit-mode-map)
+      (keboard-quit  browse-kill-ring-quit browse-kill-ring-edit-mode-map)
+      (isearch-forward browse-kill-ring-search-forward browse-kill-ring-edit-mode-map)
+      (isearch-backward browse-kill-ring-search-backward browse-kill-ring-edit-mode-map)
+      (previous-line browse-kill-ring-previous browse-kill-ring-edit-mode-map)
+      (next-line browse-kill-ring-forward browse-kill-ring-edit-mode-map)
+      (delete-char browse-kill-ring-delete browse-kill-ring-edit-mode-map)
+      (undo browse-kill-ring-undo-other-window browse-kill-ring-edit-mode-map)))
+
     ;; Isearch Hook
     (isearch-mode-hook
      (("<f11>" isearch-ring-retreat isearch-mode-map)
