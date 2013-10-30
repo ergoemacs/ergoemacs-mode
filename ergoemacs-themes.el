@@ -386,15 +386,15 @@
 
     ;; Browse Kill ring support
     (browse-kill-ring-hook
-     (("<f11>" browse-kill-ring-previous browse-kill-ring-edit-mode-map)
-      ("<f12>" browse-kill-ring-forward browse-kill-ring-edit-mode-map)
-      (keboard-quit  browse-kill-ring-quit browse-kill-ring-edit-mode-map)
-      (isearch-forward browse-kill-ring-search-forward browse-kill-ring-edit-mode-map)
-      (isearch-backward browse-kill-ring-search-backward browse-kill-ring-edit-mode-map)
-      (previous-line browse-kill-ring-previous browse-kill-ring-edit-mode-map)
-      (next-line browse-kill-ring-forward browse-kill-ring-edit-mode-map)
-      (delete-char browse-kill-ring-delete browse-kill-ring-edit-mode-map)
-      (undo browse-kill-ring-undo-other-window browse-kill-ring-edit-mode-map)))
+     (("<f11>" browse-kill-ring-previous)
+      ("<f12>" browse-kill-ring-forward)
+      (keboard-quit  browse-kill-ring-quit)
+      (isearch-forward browse-kill-ring-search-forward)
+      (isearch-backward browse-kill-ring-search-backward)
+      (previous-line browse-kill-ring-previous)
+      (next-line browse-kill-ring-forward)
+      (delete-char browse-kill-ring-delete)
+      (undo browse-kill-ring-undo-other-window)))
 
     ;; Isearch Hook
     (isearch-mode-hook
