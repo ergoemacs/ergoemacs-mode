@@ -182,14 +182,16 @@
     ("<apps> t" (helm-mini ido-switch-buffer switch-to-buffer) "switch buf")
     ("<apps> z" undo "↶ undo")
     ("<apps> n a" org-agenda "agenda")
-    ("<apps> n t" org-capure "capture")
     ("<apps> n c" calc "calc" t)
-    ("<apps> n m" magit-status "magit" t)
-    ("<apps> n g" grep "grep" t)
     ("<apps> n d" dired-jump "dired" t)
+    ("<apps> n e" eshell "eshell" t)
     ("<apps> n f" ergoemacs-open-in-desktop "OS Dir" t)
+    ("<apps> n g" grep "grep" t)
+    ("<apps> n m" magit-status "magit" t)
     ("<apps> n o" ergoemacs-open-in-external-app "OS Open" t)
+    ("<apps> n r" R "R" t)
     ("<apps> n s" shell "shell" t)
+    ("<apps> n t" org-capure "capture")
     ("<apps> TAB" indent-region "indent-region")  ;; Already in CUA
     ;; but some modes don't honor it...
 
