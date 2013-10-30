@@ -2189,24 +2189,29 @@ nil:
 
 *** Paste
 Ergoemacs can allow a paste command to cycle through the previous
-items that were copied.  This can be enabled by:
-
-#+BEGIN_SRC emacs-lisp 
-  (setq ergoemacs-smart-paste t)
-#+END_SRC
+items that were copied.  
 
 In this case Ctrl+v:
 - Pastes the first item
 - Upon repeating, Ctrl+v cycles through previous items pasted.
 
+Note that if you move/type then this pattern repeats itself, you will
+paste and then cycle through the items pasted.
+
 If you wish to paste an item twice, you can use Ctrl+Shift+v.
 
-When this is disabled (default), the Ctrl+v only pastes and
-Ctrl+Shift+v cycles through the previous items pasted.
+When this is disabled, the Ctrl+v only pastes and
+Ctrl+Shift+v cycles through the previous items pasted.  This can be
+disabled by
 
-By taking away the shift key, it reduces pinky usage.
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-smart-paste nil)
+#+END_SRC
 
-When installed, ergoemacs' smart paste will also use browse-kill-ring
+
+This is enabled by default because it reduces pinky usage.
+
+When installed, ergoemacs' smart paste can also use browse-kill-ring
 
 When calling Ctrl+Shift+v if the last command was not a paste, it
 starts browsing the kill ring.  The standard ergoemacs-mode keys
