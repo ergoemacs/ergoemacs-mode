@@ -1171,7 +1171,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
     (setq prefix-arg current-prefix-arg)
     (org-insert-heading-respect-content reopen-or-invisible-ok))))
 
-(defcustom ergoemacs-smart-paste nil
+(defcustom ergoemacs-smart-paste t
   "Do a smart paste.  That is repeated pastes cycle though the kill ring."
   :type '(choice
           (const :tag "Repeated paste cycles through last pasted items." t)
