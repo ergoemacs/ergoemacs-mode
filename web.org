@@ -786,8 +786,9 @@ This shows the standard shortcuts implemented in ergoemacs:
 Standard shortcuts for cursor navigation are also supported. For example:
 
 - Ctrl+← ⇒ move cursor to to previous word.
-- @@html:<kbd class="dark">@@Home@@html:</kbd>@@ ⇒ move cursor to beginning of line.
-- ⇧ Shift+↓ select text downward.
+- @@html:<kbd class="dark">@@Home@@html:</kbd>@@ ⇒ move cursor to beginning of
+- Shift+↓ select text downward.
+
 
 ** Preserving Emacs Commands while maintaining familiar shortcuts
   :PROPERTIES:

@@ -799,6 +799,8 @@ work in the terminal."
            (interactive)
            (set-default 'ergoemacs-smart-paste 'browse-kill-ring))
          :style radio
+         :enable (condition-case err (interactive-form 'browse-kill-ring)
+                    (error nil))
          :selected (eq ergoemacs-smart-paste 'browse-kill-ring)])
       "--"
       ["Make Bash aware of ergoemacs keys"

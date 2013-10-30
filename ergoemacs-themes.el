@@ -219,77 +219,52 @@
   :set 'ergoemacs-set-default
   :group 'ergoemacs-standard-layout)
 
+
+;; C-i is open in OS direbctory for Mac OSX; ....
+;; C-q is quit in Mac OSX; Quoted insert in emacs
+;; C-T show/hide font panel.
+;; C-m Minimize frame
+;; C-` move to different window (frame)
+;; --------------------------------------------------
+;; STANDARD SHORTCUTS
+;; See http://en.wikipedia.org/wiki/Table_of_keyboard_shortcuts
+
+
+;; ("<M-f4>" yank-pop "paste ↑")
+;; From http://superuser.com/questions/521223/shift-click-to-extend-marked-region
+;; Now add copy and paste support
+;; Shortcuts
+;; Timeout commands to support both
+;; arrow keys to traverse brackets
+
+
+
 (defcustom ergoemacs-fixed-layout
-  `(
+  `(("<C-end>" end-of-buffer "↓ Bottom")
+    ("<C-f2>" ergoemacs-cut-all "✂ all")
+    ("<C-f3>" ergoemacs-copy-all "Copy all")
+    ("<C-f4>" ergoemacs-yank-pop "paste ↑")
+    ("<C-f5>" redo "Redo")
     ("<C-home>" beginning-of-buffer "↑ Top")
-    ("<C-end>" end-of-buffer "↓ Bottom")
-    ("<M-f4>" delete-frame "× Frame") ;; Alt+f4 should work.
-    ;; C-i is open in OS direbctory for Mac OSX; ....
-    ;; C-q is quit in Mac OSX; Quoted insert in emacs
-    ("C-l" goto-line "Goto")
-    ;; C-T show/hide font panel.
-    ;; C-m Minimize frame
-    ;; C-` move to different window (frame)
-    ("C-`" other-frame "↔ Frame")
-    ;; From http://superuser.com/questions/521223/shift-click-to-extend-marked-region
-    ("<S-down-mouse-1>" mouse-save-then-kill) ;; Allow shift selection
-    ("<S-mouse-1>" ignore)
-    
-    ("C-+" text-scale-increase "+Font Size")
-    ("C-=" text-scale-increase "+Font Size")
-    ("C--" text-scale-decrease "-Font Size")
-    ("C-0" ergoemacs-text-scale-normal-size)
-    ;; --------------------------------------------------
-    ;; STANDARD SHORTCUTS
-    ;; See http://en.wikipedia.org/wiki/Table_of_keyboard_shortcuts
-    ("C-n" ergoemacs-new-empty-buffer "New Buffer")
-    ("C-S-n" make-frame-command "New Frame")
-    
-    ("C-o" find-file "Edit File")
-    ("C-S-o" ergoemacs-open-in-external-app "OS Open")
-    ("C-S-t" ergoemacs-open-last-closed "Open Last")
-    ("C-w" ergoemacs-close-current-buffer "Close Buf.")
-    ("C-S-w" delete-frame "× Frame")
-    ("C-?" info "Info")
-    ("C-/" info "Info")
-    
-    ("C-s" save-buffer "Save")
-    ("C-S-s" write-file "Save As")
-    ("C-p" ergoemacs-print-buffer-confirm "Print")
-    ("C-a" mark-whole-buffer "Select all")
-    ("C-S-z" redo "↷ redo")
-    ("C-y" redo "↷ redo")
-    ("C-z" undo "↶ undo")
-    
-    ("<M-backspace>" undo "↶ undo")
-    ("<S-delete>" ergoemacs-cut-line-or-region "✂ region")
     ("<C-insert>" ergoemacs-copy-line-or-region "copy")
+    ("<M-backspace>" undo "↶ undo")
+    ("<M-delete>" kill-word "⌦ word")
+    ("<M-down>" ergoemacs-forward-block) ; Alt+↓
+    ("<M-f2>" ergoemacs-cut-all "✂ all")
+    ("<M-f3>" ergoemacs-copy-all "Copy all")
+    ("<M-f4>" delete-frame "× Frame") ;; Alt+f4 should work.
+    ("<M-f5>" redo "Redo")
+    ("<M-left>" ergoemacs-backward-open-bracket) ; Alt+←
+    ("<M-right>" ergoemacs-forward-close-bracket) ; Alt+→
+    ("<M-up>" ergoemacs-backward-block) ; Alt+↑
+    ("<S-delete>" ergoemacs-cut-line-or-region "✂ region")
+    ("<S-down-mouse-1>" mouse-save-then-kill) ;; Allow shift selection
     ("<S-insert>" ergoemacs-yank "paste")
-    
-    ("C-f" isearch-forward "Search")
-    ("C-S-f" occur "Occur")
-    
+    ("<S-mouse-1>" ignore)
     ("<delete>" delete-char) ; the Del key for forward delete. Needed if C-d is set to nil.
-    
-    ("C-<prior>" ergoemacs-previous-user-buffer)
-    ("C-<next>" ergoemacs-next-user-buffer)
-    
-    ("C-S-<prior>" ergoemacs-previous-emacs-buffer)
-    ("C-S-<next>" ergoemacs-next-emacs-buffer)
-    
-    ("M-S-<prior>" backward-page)
-    ("M-S-<next>" forward-page)
-    
-    ("C-x C-b" ibuffer)
-    ("C-h m" ergoemacs-describe-major-mode)
-    ("<f1> m" ergoemacs-describe-major-mode)
-    ("C-h o" ergoemacs-where-is-old-binding)
-    ("<f1> o" ergoemacs-where-is-old-binding)
-    ("C-h '" ergoemacs-display-current-svg)
+    ("<f11>" previous-line "Previous")
+    ("<f12>" next-line "Next")
     ("<f1> '" ergoemacs-display-current-svg)
-    
-    ("C-<pause>" kill-compilation)      ; stop compilation/find/grep
-    
     ("<f1> 1" describe-function)
     ("<f1> 2" describe-variable)
     ("<f1> 3" describe-key)
@@ -299,7 +274,41 @@
     ("<f1> 8" lookup-wikipedia)
     ("<f1> 9" lookup-word-definition)
     ("<f1> `" elisp-index-search)
-    
+    ("<f1> m" ergoemacs-describe-major-mode)
+    ("<f1> o" ergoemacs-where-is-old-binding)
+    ("<f2>" ergoemacs-cut-line-or-region "✂ region")
+    ("<f3>" ergoemacs-copy-line-or-region "copy")
+    ("<f4>" ergoemacs-yank "paste")
+    ("<f5>" undo "Undo")
+    ("<f6>" ergoemacs-toggle-full-alt "Alt mode")
+    ("C-+" text-scale-increase "+Font Size")
+    ("C--" text-scale-decrease "-Font Size")
+    ("C-." keyboard-quit "Quit")
+    ("C-/" info "Info")
+    ("C-0" ergoemacs-text-scale-normal-size)
+    ("C-<next>" ergoemacs-next-user-buffer)
+    ("C-<pause>" kill-compilation)      ; stop compilation/find/grep
+    ("C-<prior>" ergoemacs-previous-user-buffer)
+    ("C-=" text-scale-increase "+Font Size")
+    ("C-?" info "Info")
+    ("C-S-<next>" ergoemacs-next-emacs-buffer)
+    ("C-S-<prior>" ergoemacs-previous-emacs-buffer)
+    ("C-S-c" ("C-c" normal) "Copy") 
+    ("C-S-f" occur "Occur")
+    ("C-S-n" make-frame-command "New Frame")
+    ("C-S-o" ergoemacs-open-in-external-app "OS Open")
+    ("C-S-s" write-file "Save As")
+    ("C-S-t" ergoemacs-open-last-closed "Open Last")
+    ("C-S-v" ergoemacs-yank-pop "paste ↑")
+    ("C-S-w" delete-frame "× Frame")
+    ("C-S-x" ("C-x" normal)  "Cut") 
+    ("C-S-z" redo "↷ redo")
+    ("C-`" other-frame "↔ Frame")
+    ("C-a" mark-whole-buffer "Select all")
+    ("C-c <timeout>" ergoemacs-copy-line-or-region)
+    ("C-c" ergoemacs-ctl-c "Copy") 
+    ("C-f" isearch-forward "Search")
+    ("C-h '" ergoemacs-display-current-svg)
     ("C-h 1" describe-function)
     ("C-h 2" describe-variable)
     ("C-h 3" describe-key)
@@ -309,50 +318,23 @@
     ("C-h 8" lookup-wikipedia)
     ("C-h 9" lookup-word-definition)
     ("C-h `" elisp-index-search)
-    
-    ("<f2>" ergoemacs-cut-line-or-region "✂ region")
-    ("<C-f2>" ergoemacs-cut-all "✂ all")
-    ("<M-f2>" ergoemacs-cut-all "✂ all")
-    
-    ("<f3>" ergoemacs-copy-line-or-region "copy")
-    ("<C-f3>" ergoemacs-copy-all "Copy all")
-    ("<M-f3>" ergoemacs-copy-all "Copy all")
-    
-    ("<f4>" ergoemacs-yank "paste")
-    ("<C-f4>" ergoemacs-yank-pop "paste ↑")
-    ;; ("<M-f4>" yank-pop "paste ↑")
-
-    ("<f11>" previous-line "Previous")
-    ("<f12>" next-line "Next")
-    
-    ("<f5>" undo "Undo")
-    ("<C-f5>" redo "Redo")
-    ("<M-f5>" redo "Redo")
-
-    ("<f6>" ergoemacs-toggle-full-alt "Alt mode")
-
-    ("C-." keyboard-quit "Quit")
-    
-    ("<M-delete>" kill-word "⌦ word")
-    
-    ;; arrow keys to traverse brackets
-    ("<M-left>" ergoemacs-backward-open-bracket) ; Alt+←
-    ("<M-right>" ergoemacs-forward-close-bracket) ; Alt+→
-    
-    ("<M-up>" ergoemacs-backward-block) ; Alt+↑
-    ("<M-down>" ergoemacs-forward-block) ; Alt+↓
-
-    ;; Now add copy and paste support
-    ;; Timeout commands to support both
-    ("C-c <timeout>" ergoemacs-copy-line-or-region)
-    ("C-x <timeout>" ergoemacs-cut-line-or-region)
-    ;; Shortcuts
-    ("C-c" ergoemacs-ctl-c "Copy") 
-    ("C-x" ergoemacs-ctl-x "Cut")
-    ("C-S-c" ("C-c" normal) "Copy") 
-    ("C-S-x" ("C-x" normal)  "Cut") 
+    ("C-h m" ergoemacs-describe-major-mode)
+    ("C-h o" ergoemacs-where-is-old-binding)
+    ("C-l" goto-line "Goto")
+    ("C-n" ergoemacs-new-empty-buffer "New Buffer")
+    ("C-o" find-file "Edit File")
+    ("C-p" ergoemacs-print-buffer-confirm "Print")
+    ("C-s" save-buffer "Save")
     ("C-v" ergoemacs-yank "Paste") 
-    ("C-S-v" ergoemacs-yank-pop "paste ↑"))
+    ("C-w" ergoemacs-close-current-buffer "Close Buf.")
+    ("C-x <timeout>" ergoemacs-cut-line-or-region)
+    ("C-x C-b" ibuffer)
+    ("C-x" ergoemacs-ctl-x "Cut")
+    ("C-y" redo "↷ redo")
+    ("C-z" undo "↶ undo")
+    ("M-S-<next>" forward-page)
+    ("M-S-<prior>" backward-page)
+    )
   "Keybinding that are constant regardless of they keyboard used."
   :type '(repeat
           (list :tag "Fixed Key"
