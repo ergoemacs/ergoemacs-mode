@@ -1184,8 +1184,12 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
 This is `yank-pop' if `ergoemacs-smart-paste' is nil.
 This is `yank' if `ergoemacs-smart-paste' is t.
 
-Each of these commands may be changed based on smart lookup with
+If `browse-kill-ring' is enabled and the last command is not a
+paste, this will start `browse-kill-ring'.
+
+Each `yank' and `yank-pop' may be changed based on smart lookup with
 `ergoemacs-shortcut-internal'.
+
 
 When in `browse-kill-ring-mode', cycle backward through the key ring.
 "
@@ -1208,7 +1212,7 @@ This is `yank' if `ergoemacs-smart-paste' is nil.
 This is `yank-pop' if `ergoemacs-smart-paste' is t and last command is a yank.
 This is `browse-kill-ring' if `ergoemacs-smart-paste' equals 'browse-kill-ring and last command is a yank.
 
-Each of these commands may be changed based on smart lookup with
+Each `yank' and `yank-pop' may be changed based on smart lookup with
 `ergoemacs-shortcut-internal'.
 
 When in `browse-kill-ring-mode', cycle forward through the key ring.
