@@ -517,42 +517,60 @@ the best match."
   "Shortcut for other key/function.
 Calls the function shortcut key defined in
 `ergoemacs-command-shortcuts-hash' for `this-command-keys-vector'.  The
-workhorse of this function is in `ergoemacs-shortcut-internal'."
+workhorse of this function is in `ergoemacs-shortcut-internal'.
+
+This is only performed it `ergoemacs-mode' has not defined some
+work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
+"
   (interactive "P")
-  (let ((args (gethash (this-command-keys-vector)
-                       ergoemacs-command-shortcuts-hash)))
-    (unless args
-      ;; Take care of vectors and universal arguments
-      (setq args
-            (gethash (read-kbd-macro
-                      (key-description (this-single-command-keys)) t)
-                     ergoemacs-command-shortcuts-hash)))
-    (if (not args)
+  
+  (let (
+        cmd1 cmd2)
+    
+    (let (ergoemacs-shortcut-keys ergoemacs-shortcut-override-mode)
+      (setq cmd1 (key-binding (this-single-command-keys)))
+      (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+      (setq cmd2 (key-binding (this-single-command-keys)))
+      (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
+    
+    (if (not (equal cmd1 cmd2))
         (progn
-          ;; Remove reference to `ergoemacs-shortcut'
-          (when (featurep 'keyfreq)
-            (when keyfreq-mode
-              (let ((command 'ergoemacs-shortcut) count)
-                (setq count (gethash (cons major-mode command) keyfreq-table))
-                (remhash (cons major-mode command) keyfreq-table)
-                ;; Add `ergoemacs-undefined' to counter.
-                (setq command 'ergoemacs-undefined)
-                (setq count (gethash (cons major-mode command) keyfreq-table))
-                (puthash (cons major-mode command) (if count (+ count 1) 1)
-                         keyfreq-table))))
-          (ergoemacs-undefined))
-      (when (featurep 'keyfreq)
-        (when keyfreq-mode
-          (let ((command 'ergoemacs-shortcut) count)
-            (setq count (gethash (cons major-mode command) keyfreq-table))
-            (remhash (cons major-mode command) keyfreq-table))))
-      (setq this-command last-command)
-      (setq prefix-arg current-prefix-arg)
-      (if (condition-case err
-              (interactive-form (nth 0 args))
-            (error nil))
-          (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args))))
-        (eval (macroexpand `(ergoemacs-shortcut-internal ,(nth 0 args) ',(nth 1 args))))))))
+          (ergoemacs-send-fn (key-description (this-command-keys-vector))
+                             cmd1))
+      (setq args (gethash (this-command-keys-vector)
+                          ergoemacs-command-shortcuts-hash))
+      (unless args
+        ;; Take care of vectors and universal arguments
+        (setq args
+              (gethash (read-kbd-macro
+                        (key-description (this-single-command-keys)) t)
+                       ergoemacs-command-shortcuts-hash)))
+      (if (not args)
+          (progn
+            ;; Remove reference to `ergoemacs-shortcut'
+            (when (featurep 'keyfreq)
+              (when keyfreq-mode
+                (let ((command 'ergoemacs-shortcut) count)
+                  (setq count (gethash (cons major-mode command) keyfreq-table))
+                  (remhash (cons major-mode command) keyfreq-table)
+                  ;; Add `ergoemacs-undefined' to counter.
+                  (setq command 'ergoemacs-undefined)
+                  (setq count (gethash (cons major-mode command) keyfreq-table))
+                  (puthash (cons major-mode command) (if count (+ count 1) 1)
+                           keyfreq-table))))
+            (ergoemacs-undefined))
+        (when (featurep 'keyfreq)
+          (when keyfreq-mode
+            (let ((command 'ergoemacs-shortcut) count)
+              (setq count (gethash (cons major-mode command) keyfreq-table))
+              (remhash (cons major-mode command) keyfreq-table))))
+        (setq this-command last-command)
+        (setq prefix-arg current-prefix-arg)
+        (if (condition-case err
+                (interactive-form (nth 0 args))
+              (error nil))
+            (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args))))
+          (eval (macroexpand `(ergoemacs-shortcut-internal ,(nth 0 args) ',(nth 1 args)))))))))
 
 (defun ergoemacs-quit-key-sequence ()
   (interactive)
