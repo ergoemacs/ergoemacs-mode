@@ -445,7 +445,7 @@
            (while (looking-at "\\(Ctr?l\\|Alt\\|\\(?:.\\|&.*?;\\)? ?Shift\\|Shift\\)[+]\\(.\\)")
              (replace-match "<kbd class=\"dark\">\\1</kbd>+\\2")
              (backward-char))
-           (when (looking-at ".")
+           (when (looking-at "\\(.\\)")
              (replace-match "<kbd class=\"dark\">\\1</kbd>")))
          (goto-char (point-min))
          (while (re-search-forward ">Shift</kbd>" nil t)
