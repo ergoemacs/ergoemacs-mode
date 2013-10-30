@@ -789,76 +789,6 @@ Standard shortcuts for cursor navigation are also supported. For example:
 - @@html:<kbd class="dark">@@Home@@html:</kbd>@@ ⇒ move cursor to beginning of line.
 - ⇧ Shift+↓ select text downward.
 
-The ergoemacs fixed keys are given by:
-
-#+BEGIN_SRC emacs-lisp :exports results :results value raw
-  (ergoemacs-ghpages-standard-keys)
-#+END_SRC
-
-#+RESULTS:
-|---------------+-----------------+------------------+----------------------------------|
-| Standard Name | Ergoemacs Key   | Emacs Key        | Emacs Command Name               |
-|---------------+-----------------+------------------+----------------------------------|
-| Alt mode      | [F6]            | NA               | =ergoemacs-toggle-full-alt=      |
-| Close Buf.    | [Ctrl+W]        | NA               | =ergoemacs-close-current-buffer= |
-| Copy all      | [Alt+f3]        | NA               | =ergoemacs-copy-all=             |
-| Copy all      | [Ctrl+f3]       | NA               | =ergoemacs-copy-all=             |
-| Copy          | [Ctrl+C]        | NA               | =ergoemacs-ctl-c=                |
-| Copy          | [Ctrl+⇧Shift+C] | NA               | ==                               |
-| Cut           | [Ctrl+X]        | NA               | =ergoemacs-ctl-x=                |
-| Cut           | [Ctrl+⇧Shift+X] | NA               | ==                               |
-| Edit File     | [Ctrl+O]        | [Ctrl+X][Ctrl+F] | =find-file=                      |
-| Goto          | [Ctrl+L]        | [Alt+G][g]       | =goto-line=                      |
-| Info          | [Ctrl+/]        | [Ctrl+H][i]      | =info=                           |
-| Info          | [Ctrl+?]        | [Ctrl+H][i]      | =info=                           |
-| New Buffer    | [Ctrl+N]        | NA               | =ergoemacs-new-empty-buffer=     |
-| New Frame     | [Ctrl+⇧Shift+N] | [Ctrl+X][5][2]   | =make-frame-command=             |
-| Next          | [F12]           | [Ctrl+N]         | =next-line=                      |
-| OS Open       | [Ctrl+⇧Shift+O] | NA               | =ergoemacs-open-in-external-app= |
-| Occur         | [Ctrl+⇧Shift+F] | [Alt+S][o]       | =occur=                          |
-| Open Last     | [Ctrl+⇧Shift+T] | NA               | =ergoemacs-open-last-closed=     |
-| Paste         | [Ctrl+V]        | [Ctrl+Y]         | =yank=                           |
-| Previous      | [F11]           | [Ctrl+P]         | =previous-line=                  |
-| Print         | [Ctrl+P]        | NA               | =ergoemacs-print-buffer-confirm= |
-| Quit          | [Ctrl+.]        | [Ctrl+G]         | =keyboard-quit=                  |
-| Redo          | [Alt+f5]        | NA               | =redo=                           |
-| Redo          | [Ctrl+f5]       | NA               | =redo=                           |
-| Save As       | [Ctrl+⇧Shift+S] | [Ctrl+X][Ctrl+W] | =write-file=                     |
-| Save          | [Ctrl+S]        | [Ctrl+X][Ctrl+S] | =save-buffer=                    |
-| Search        | [Ctrl+F]        | [Ctrl+S]         | =isearch-forward=                |
-| Select all    | [Ctrl+A]        | [Ctrl+X][h]      | =mark-whole-buffer=              |
-| Undo          | [F5]            | [Ctrl+X][u]      | =undo=                           |
-| \+Font Size   | [Ctrl++]        | [Ctrl+wheel-up]  | =text-scale-increase=            |
-| \+Font Size   | [Ctrl+=]        | [Ctrl+wheel-up]  | =text-scale-increase=            |
-| copy          | [Ctrl+insert]   | NA               | =ergoemacs-copy-line-or-region=  |
-| copy          | [F3]            | NA               | =ergoemacs-copy-line-or-region=  |
-| paste         | [F4]            | [Ctrl+Y]         | =yank=                           |
-| paste         | [⇧Shift+insert] | [Ctrl+Y]         | =yank=                           |
-| paste ↑       | [Ctrl+f4]       | [Alt+Y]          | =yank-pop=                       |
-| paste ↑       | [Ctrl+⇧Shift+V] | [Alt+Y]          | =yank-pop=                       |
-| × Frame       | [Alt+f4]        | [Ctrl+X][5][0]   | =delete-frame=                   |
-| × Frame       | [Ctrl+⇧Shift+W] | [Ctrl+X][5][0]   | =delete-frame=                   |
-| ↑ Top         | [Ctrl+home]     | [Alt+]           | =beginning-of-buffer=            |
-| ↓ Bottom      | [Ctrl+end]      | [Alt+]           | =end-of-buffer=                  |
-| ↔ Frame       | [Ctrl+`]        | [Ctrl+X][5][o]   | =other-frame=                    |
-| ↶ undo        | [Alt+backspace] | [Ctrl+X][u]      | =undo=                           |
-| ↶ undo        | [Ctrl+Z]        | [Ctrl+X][u]      | =undo=                           |
-| ↷ redo        | [Ctrl+Y]        | NA               | =redo=                           |
-| ↷ redo        | [Ctrl+⇧Shift+Z] | NA               | =redo=                           |
-| ⌦ word        | [Alt+delete]    | [Alt+D]          | =kill-word=                      |
-| ✂ all         | [Alt+f2]        | NA               | =ergoemacs-cut-all=              |
-| ✂ all         | [Ctrl+f2]       | NA               | =ergoemacs-cut-all=              |
-| ✂ region      | [F2]            | NA               | =ergoemacs-cut-line-or-region=   |
-| ✂ region      | [⇧Shift+delete] | NA               | =ergoemacs-cut-line-or-region=   |
-|---------------+-----------------+------------------+----------------------------------|
-
-
-
-
-
-
-
-
 ** Preserving Emacs Commands while maintaining familiar shortcuts
   :PROPERTIES:
   :PAGE:     cua-conflict.html
@@ -2275,5 +2205,21 @@ When this is disabled (default), the Ctrl+v only pastes and
 Ctrl+Shift+v cycles through the previous items pasted.
 
 By taking away the shift key, it reduces pinky usage.
+
+When installed, ergoemacs' smart paste will also use browse-kill-ring
+
+When calling Ctrl+Shift+v if the last command was not a paste, it
+starts browsing the kill ring.  The standard ergoemacs-mode keys
+apply.  Pressing Ctrl+v or Alt+v will cycle forward through the kill
+ring.  Pressing Ctrl+Shift+v or Ctrl+Alt+v will cycle backward
+through the kill ring.  To accept the text, press enter.
+
+If you want the second paste to call =browse-kill-ring=, you can
+enable this by:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-smart-paste 'browse-kill-ring)
+#+END_SRC
+
 
 *** Smart punctuation
