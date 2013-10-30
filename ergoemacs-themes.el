@@ -182,6 +182,7 @@
     ("<apps> t" (helm-mini ido-switch-buffer switch-to-buffer) "switch buf")
     ("<apps> z" undo "↶ undo")
     ("<apps> n a" org-agenda "agenda")
+    ("<apps> n A" org-capture "capture")
     ("<apps> n c" calc "calc" t)
     ("<apps> n d" dired-jump "dired" t)
     ("<apps> n e" eshell "eshell" t)
@@ -192,6 +193,7 @@
     ("<apps> n r" R "R" t)
     ("<apps> n s" shell "shell" t)
     ("<apps> n t" org-capure "capture")
+    ("<apps> n T" org-agenda "agenda")
     ("<apps> TAB" indent-region "indent-region")  ;; Already in CUA
     ;; but some modes don't honor it...
 
