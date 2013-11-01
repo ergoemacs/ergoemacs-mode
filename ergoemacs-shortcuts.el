@@ -739,32 +739,34 @@ on that key.
                                      (nth 0 fn) (nth 1 fn))
                     (cond
                      ((and (boundp 'ergoemacs-orig-keymap) ergoemacs-orig-keymap)
-                      (eval
-                       (macroexpand
-                        `(defun ,(intern (format "%s-ergoemacs-%s"
-                                                 (nth 0 fn)
-                                                 (md5 (key-description (nth 1 fn))))) (&optional arg)
-                                                 ,(format "Run `%s' or what is remapped to by `command-remapping'.
+                      (if (not (memq (nth 0 fn) ergoemacs-send-fn-keys-fns))
+                          (define-key ergoemacs-shortcut-override-keymap
+                            keymap-key (nth 0 fn))
+                        (eval
+                         (macroexpand
+                          `(defun ,(intern (format "%s-ergoemacs-%s"
+                                                   (nth 0 fn)
+                                                   (md5 (key-description (nth 1 fn))))) (&optional arg)
+                                                   ,(format "Run `%s' or what is remapped to by `command-remapping'.
 It also tells the function that you pressed %s, and after run it
 sets `this-command' to `%s'. The hook
 `ergoemacs-pre-command-hook' tries to set `this-command'  to
 `%s' as well."
-                                                          (nth 0 fn) (key-description (nth 1 fn))
-                                                          (nth 0 fn) (nth 0 fn))
-                                                 (interactive "P")
-                                                 (ergoemacs-send-fn
-                                                  ,(key-description (nth 1 fn))
-                                                  ',(nth 0 fn)))))
-                      (define-key ergoemacs-shortcut-override-keymap
-                        keymap-key (intern (format "%s-ergoemacs-%s"
-                                                   (nth 0 fn)
-                                                   (md5 (key-description (nth 1 fn))))))
-                      
-                      ;; Store override keymap for quickly figuring out
-                      ;; what keys are bound where.
-                      (define-key ergoemacs-shortcut-override-keymap
-                        (read-kbd-macro (format "<override> %s" (key-description keymap-key)))
-                        (nth 0 fn)))
+                                                            (nth 0 fn) (key-description (nth 1 fn))
+                                                            (nth 0 fn) (nth 0 fn))
+                                                   (interactive "P")
+                                                   (ergoemacs-send-fn
+                                                    ,(key-description (nth 1 fn))
+                                                    ',(nth 0 fn)))))
+                        (define-key ergoemacs-shortcut-override-keymap
+                          keymap-key (intern (format "%s-ergoemacs-%s"
+                                                     (nth 0 fn)
+                                                     (md5 (key-description (nth 1 fn))))))
+                        ;; Store override keymap for quickly figuring out
+                        ;; what keys are bound where.
+                        (define-key ergoemacs-shortcut-override-keymap
+                          (read-kbd-macro (format "<override> %s" (key-description keymap-key)))
+                          (nth 0 fn))))
                      (t
                       (define-key ergoemacs-shortcut-override-keymap
                         keymap-key (nth 0 fn))))))
@@ -794,7 +796,8 @@ sets `this-command' to `%s'. The hook
                 (when  (string-match "[A-Za-z]$" ctl-c-keys)
                   (setq ctl-c-keys (match-string 0 ctl-c-keys))
                   (setq ergoemacs-repeat-shortcut-keymap (make-keymap))
-                  (define-key ergoemacs-repeat-shortcut-keymap (read-kbd-macro ctl-c-keys)
+                  (define-key ergoemacs-repeat-shortcut-keymap
+                    (read-kbd-macro ctl-c-keys)
                     `(lambda(&optional arg)
                        (interactive "P")
                        (ergoemacs-send-fn
@@ -893,11 +896,7 @@ sets `this-command' to `%s'. The hook
           (setq unread-command-events
                 (append key-seq unread-command-events)))
          (t
-          (ergoemacs-send-fn (concat key " " next-key) 'ergoemacs-undefined))))
-      
-      
-      
-      ))))
+          (ergoemacs-send-fn (concat key " " next-key) 'ergoemacs-undefined))))))))
 
 (defcustom ergoemacs-repeat-ctl-c-ctl-c t
   "Repeat C-c C-c"
