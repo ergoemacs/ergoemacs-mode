@@ -170,7 +170,8 @@
   "Get the Emacs executable for testing purposes."
   (let* ((emacs-exe (invocation-name))
         (emacs-dir (invocation-directory))
-        (full-exe (expand-file-name emacs-exe emacs-dir)))
+        (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
+                          "\"")))
     (symbol-value 'full-exe)))
 
 (defun ergoemacs-cheat-sheet-file ()
