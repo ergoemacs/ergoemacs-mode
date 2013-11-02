@@ -932,7 +932,9 @@ If MAP is nil, base this on a sparse keymap."
                    (let (overriding-terminal-local-map
                          overriding-local-map)
                      (setq prefix-arg current-prefix-arg)
-                     (call-interactively 'ergoemacs-shortcut))))))
+                     (condition-case err
+                         (call-interactively 'ergoemacs-shortcut)
+                       (error (beep) (message "%s" err))))))))
      ergoemacs-command-shortcuts-hash)
     ;; Now install the rest of the ergoemacs-mode keys
     (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap)
