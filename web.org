@@ -623,7 +623,11 @@ This version is now a full featured minor mode. It supports 3 different keyboard
 *** The key 【Ctrl+x Ctrl+b】 is now ibuffer, instead of list-buffers.
 *** 【Ctrl+h m】 now calls describe-major-mode.
 ** version 4.2.1, 2009-02-28
-Changed the keybinding for previous-user-buffer from 【Ctrl+←】 to 【Ctrl+PageUp】. And previous-emacs-buffer from 【Ctrl+Shift+←】 to 【Ctrl+Shift+PageUp】. Similar for the “next” versions. Rationale: The 【Ctrl+Arrow】 are standard editing shortcuts command in Windows, Mac, Linux.
+Changed the keybinding for previous-user-buffer from 【Ctrl+←】 to
+【Ctrl+PageUp】. And previous-emacs-buffer from 【Ctrl+Shift+←】 to
+【Ctrl+Shift+PageUp】. Similar for the “next” versions. Rationale: The
+【Ctrl+Arrow】 are standard editing shortcuts command in Windows, Mac,
+Linux.
 ** version 4.2.0, 2009-02-27
 Added 【Alt+t】 for keyword completion. Rationale: The default 「M-TAB」 is used by Windows, Mac, Linux, to switch apps.
 ** version 4.1.8, 2009-02-15
@@ -1554,110 +1558,60 @@ work in progress.
   :TEMPLATE: blog_static_no_title.html
   :END:
 
-For a background why it would be good to banish key chords, see [[http://xahlee.info/kbd/banish_key_chords.html][this page]].
-*** Keyboard Shortcut Design
-This section discuss one criterion on the design of keyboard shortcut
-system: Repeatable vs Non-Repeatable Commands and Keys. This
-applicable in designing keybinding for emacs, vi, 3D modeling app, or
-any app that has hundreds commands that needs to map to keys.
-**** Repeatable and Non-Repeatable Commands
-In my keyboarding research, there's an important discovery. Commands
-can be classified into 2 types:
-1. Repeatable commands. Commands that make sense to be repeated within
-   a second. i.e. moving cursor by char, word, page. Page up/down. Delete
-   by char, word. Expand selection, prev/next tab. You can hold down a
-   key or a key-chord to repeat the command many times. 
+This is an experimental ergoemacs feature to banish key chord and
+replace ergoemacs keys.  The background is given in the following pages
+- Why it would be good to [[http://xahlee.info/kbd/banish_key_chords.html][banish key chords]].
+- Xah's quest to [[http://ergoemacs.org/emacs/emacs_keybinding_redesign_2.html][totally redesign the keys]].
 
-2. Non-repeat commands. This is vast majority. i.e. starting
-   find/replace, open file, close file, list buffers, call a shell
-   command or start shell, describe-function, keyword expansion or
-   completion, list-matching-lines, sort-lines, kill-buffer,
-   switch-to-buffer, ...
+*** Changing C-x and C-c
+For emacs, the most common key sequences start with C-x or C-c. This
+usually requires the use of the control key, and leads to the dreaded
+[[http://ergoemacs.org/emacs/emacs_pinky.html][emacs pinky]].  It also conflicts with the standard Cut and Copy
+commands (see [[file:standard-shortcuts.html][standard shortcuts]]).
 
-**** Repeatable and Non-Repeatable Keys
-The Repeatable Commands must have keys that can be held down. Here's
-example of repeatable hotkeys: F8, t, ⇟ Page ▽, ↓, 【Ctrl+t】,
-【Ctrl+Alt+8】, ….
-# FIXME: 【Ctrl+Alt+8】 is displayed incorrect on the web page
+I've thought about how to take out the use of the
+control key and reduce the key chord reduction. This is how
+I came up with the C-c and C-x replacements:
 
-Non-repeatable hotkeys are basically keys that involves a sequence:
-【Ctrl+x 2】, 【F8 F9】
+- C-x commands can be accessed by QWERTY 
+  @@html:<kbd class="dark">@@Menu@@html:</kbd>@@  @@html:<kbd class="dark">@@d@@html:</kbd>@@
+  - This is *not* the same as the traditional C-x. Heres how its
+    different:
+    - By default all @@html:<kbd class="dark">@@Ctrl@@html:</kbd>@@ commands are translated to @@html:<kbd class="dark">@@Alt@@html:</kbd>@@ commands.
+      - C-x C-b could be accessed by @@html:<kbd class="dark">@@Menu@@html:</kbd>@@ @@html:<kbd class="dark">@@d@@html:</kbd>@@ @@html:<kbd class="dark">@@Alt@@html:</kbd>@@+@@html:<kbd class="dark">@@b@@html:</kbd>@@ (list-buffers)
+      - C-x b could be accessed by @@html:<kbd class="dark">@@Menu@@html:</kbd>@@ @@html:<kbd class="dark">@@d@@html:</kbd>@@ @@html:<kbd class="dark">@@b@@html:</kbd>@@ (switch-to-buffer)
+    - Pressing @@html:<kbd class="dark">@@Menu@@html:</kbd>@@ will
+      change the type of key translation used.  The default for C-x is
+      translate/swap the Alt and Ctl keys.  Pressing Menu again will:
+      - Make the keyboard translation for C-x "unchorded"
+      - The pressing Menu would remove the keyboard translation for C-x.
+      - Finally pressing Menu again would result the translation/swap
+        of Ctrl and Alt (as at the beginning).
 
-So, when designing a shortcut system, one of the principle is for
-repeatable commands be on repeatable keys, else it's a waste. (because
-you only have a few precious easy key spots, yet you have one hundred
-commands in common use.)
+For your information, an "unchorded" filter/translation would translate:
+- Ctrl key combinations to standard keys.  For example C-b would be
+  just b.
+- Standard keys like b would be translated to M-b.
+- Alt key combinations would be translated to Ctrl key combinations.
+  Therefore M-b would be translated to C-b.
 
-# FIXME: 【Ctrl+‹number›】 and 【Alt+‹number›】 is displayed incorrect on the web page
-In GNU Emacs's default keybinding, there are many such wastes. For
-example, all 【Ctrl+‹number›】 and 【Alt+‹number›】 are bound to
-digit-argument. The digit-argument is a non-repeat command, yet it
-sits on 20 EASY repeatable keys. (but most damaging is that
-digit-argument isn't a frequently needed command, with respect to all
-commands and the relatively few easy-key-spots.)
-
-Another bad example is forward-page 【Ctrl+x ]】. forward-page is a
-repeatable command, but it doesn't have a repeating key. Imagine, if
-every time you need to ⇟ Page ▽ that you have to press 【Ctrl+x】
-first. You couldn't just hold it down.
-
-But remember, this “Repeatable and Non-Repeatable key” is only a
-supporting criterion in keybinding design. It is not the most
-important criterion. The single most important criterion in designing
-a keyboard shortcut system is that most frequently used commands be
-mapped to the most easy-to-press keys. 
-
-
+- C-c commands can be accessed by QWERTY 
+  @@html:<kbd class="dark">@@Menu@@html:</kbd>@@  @@html:<kbd class="dark">@@f@@html:</kbd>@@
+  - This is *not* the same as the traditional C-c. Heres how its
+    different:
+    - By default the "unchorded" filter is on.  This is because by [[http://www.gnu.org/software/emacs/manual/html_node/elisp/Key-Binding-Conventions.html][convention]],
+      major modes bind control keys like C-c C-r and leave keys like
+      C-c r to be bound by the user.  This means that you would put
+      less strain on your hand to have these key combinations to be
+      unchorded by default.
+    - @@html:<kbd class="dark">@@Ctrl@@html:</kbd>@@ commands are translated to @@html:<kbd class="dark">@@Alt@@html:</kbd>@@ commands.
+  - Like C-x, pressing Menu changes the filter
+    - First Menu press changes the unchorded filter to the ctl <->
+      alt filter
+    - Second Menu press removes the filter
+    - Press Menu again to go back to the unchorded keyboard filter.
+      
 *** Ergoemacs Key Chord Reduction
-**** [Control+x] and [Control-c] reduction
-For emacs, the most common prefixes are [Control-x] or [Control-c].
-
-For QWERTY, an additional mapping of these keys have been made:
-- A modified Control-x map has been assigned to Menu f:
-  - This map allows you to type the keys without a key chord
-    requirement.  For example to switch buffers instead of
-    [Control+x] [b] you could type [Menu] [d] [b].  (Note that the [d]
-    key changes based on layout; For example using the colemak layout
-    you would type [Menu] [t] [b] to switch buffers).
-
-  - This modified keymap changes the control-chorded keys to
-    alt-chorded keys since they are easier to reach, there is another
-    keymap that removes the control-chorded keys.  Therefore to get
-    the buffer list, instead of having to type [Control-x]
-    [Control-b] you can type [Menu] [d] [Alt-b].
-
-  - The [Alt-] keychords in this modified keymap are changed to
-    [Control-] keys.  For example, =repeat-complex-command= is mapped
-    from [Control-x] [Alt+:] to [Menu] [d] [Control-:].  As far as I
-    can tell this is the only [Control-x] [Alt] combination. 
-
-- A modified unchorded Control-x map has assigned to QWERTY [Menu]
-  [f].  This map has changed the Control-x map as follows:
-
-  - Chorded control keys are subset.  Therefore only keys that have
-    the combination [Control-x] [Control-] are used.
-
-  - Chorded key combinations are changed drop the chord.  For example
-    the buffer list [Control-x] [Conrtol-b] is changed to [Menu] [f]
-    [b].
-
-  - Chorded key combinations that are single key are translated to
-    [Alt+] for example [Control+k] [a] is changed to [Menu] [f] [k]
-    [Alt+a]
-
-  - Chorded key combinations that work with [Alt+] are translated to
-    [Control+].  For example [Control+k] [Alt+a] is changed to [Menu]
-    [f] [k] [Control+a].  I don't think there are currently any keys
-    bound to these types of key combinations.  They are quite
-    difficult to press and remember.
-
-Similarly The Control-c keymap is rebound to [Menu] [j] for the
-modified [Control-c] keymap and [Menu] [u] for the unchorded
-[Control-c] keymap.  This is also true of the [Control-h] keymap.
-This is bound to [Menu] [h] for the normal Control-h keymap.  It is
-also bound to [Menu] [y] for the unchorded Control-h keymap.
-
-
 **** Movement without key-chords
 ***** Method #1 -- <menu> Movement mode
 One can enable movement without key-chords as follows:
