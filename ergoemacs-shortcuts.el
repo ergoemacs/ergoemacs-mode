@@ -926,8 +926,6 @@ If MAP is nil, base this on a sparse keymap."
                (interactive-form (nth 0 args))
              (error nil))
            (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args) nil ,key)))
-         ;; (eval (macroexpand `(ergoemacs-shortcut-internal ,(nth 0
-         ;; args) ',(nth 1 args) nil ,key)))
          (define-key ergoemacs-shortcut-override-keymap
            key #'(lambda(&optional arg)
                    (interactive "P")
@@ -936,6 +934,8 @@ If MAP is nil, base this on a sparse keymap."
                      (setq prefix-arg current-prefix-arg)
                      (call-interactively 'ergoemacs-shortcut))))))
      ergoemacs-command-shortcuts-hash)
+    ;; Now install the rest of the ergoemacs-mode keys
+    (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap)
     ergoemacs-shortcut-override-keymap))
 
 (defvar ergoemacs-describe-keybindings-functions
