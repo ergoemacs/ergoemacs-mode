@@ -926,7 +926,15 @@ If MAP is nil, base this on a sparse keymap."
                (interactive-form (nth 0 args))
              (error nil))
            (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args) nil ,key)))
-         (eval (macroexpand `(ergoemacs-shortcut-internal ,(nth 0 args) ',(nth 1 args) nil ,key)))))
+         ;; (eval (macroexpand `(ergoemacs-shortcut-internal ,(nth 0
+         ;; args) ',(nth 1 args) nil ,key)))
+         (define-key ergoemacs-shortcut-override-keymap
+           key #'(lambda(&optional arg)
+                   (interactive "P")
+                   (let (overriding-terminal-local-map
+                         overriding-local-map)
+                     (setq prefix-arg current-prefix-arg)
+                     (call-interactively 'ergoemacs-shortcut))))))
      ergoemacs-command-shortcuts-hash)
     ergoemacs-shortcut-override-keymap))
 
