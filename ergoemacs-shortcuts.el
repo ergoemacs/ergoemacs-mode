@@ -935,7 +935,7 @@ If MAP is nil, base this on a sparse keymap."
                      (call-interactively 'ergoemacs-shortcut))))))
      ergoemacs-command-shortcuts-hash)
     ;; Now install the rest of the ergoemacs-mode keys
-    ;; (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap)
+    (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap)
     ergoemacs-shortcut-override-keymap))
 
 (defvar ergoemacs-describe-keybindings-functions

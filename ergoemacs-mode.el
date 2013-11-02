@@ -558,12 +558,13 @@ work in the terminal."
                      ergoemacs-command-shortcuts-hash)
                 (define-key ergoemacs-shortcut-keymap key
                   'ergoemacs-shortcut))
-            (define-key keymap key
-              `(lambda(&optional arg)
-                 (interactive "P")
-                 (setq this-command last-command) ; Don't record this command.
-                 (setq prefix-arg current-prefix-arg)
-                 (ergoemacs-shortcut-internal ,(nth 0 def) ',(nth 1 def)))))
+            (unless (lookup-key keymap key)
+              (define-key keymap key
+                `(lambda(&optional arg)
+                   (interactive "P")
+                   (setq this-command last-command) ; Don't record this command.
+                   (setq prefix-arg current-prefix-arg)
+                   (ergoemacs-shortcut-internal ,(nth 0 def) ',(nth 1 def))))))
         (mapc
          (lambda(new-def)
            (unless found
@@ -578,7 +579,10 @@ work in the terminal."
         (interactive-form def)
       (error nil))
     (cond
-     ((memq def '(ergoemacs-ctl-c ergoemacs-ctl-x))
+     ;; only setup on `ergoemacs-shortcut-keymap' when setting up
+     ;; ergoemacs default keymap.
+     ((and (boundp 'setup-ergoemacs-keymap) setup-ergoemacs-keymap
+           (memq def '(ergoemacs-ctl-c ergoemacs-ctl-x)))
       (define-key ergoemacs-shortcut-keymap key def))
      ((and (not (string-match "\\(mouse\\|wheel\\)" (key-description key)))
            (boundp 'setup-ergoemacs-keymap) setup-ergoemacs-keymap
@@ -590,8 +594,9 @@ work in the terminal."
       
       (puthash (read-kbd-macro (key-description key) t)
                (list def 'global) ergoemacs-command-shortcuts-hash)
-      (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut))
-     (t
+      (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut))     
+     ((or (and (boundp 'setup-ergoemacs-keymap) setup-ergoemacs-keymap)
+          (not (lookup-key keymap key)))
       (define-key keymap key def)))
     t)
    ((condition-case err
@@ -608,12 +613,13 @@ work in the terminal."
                    `(,def nil)
                    ergoemacs-command-shortcuts-hash)
           (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut))
-      (define-key keymap key
-        `(lambda(&optional arg)
-           (interactive "P")
-           (setq this-command last-command) ; Don't record this command.
-           (setq prefix-arg current-prefix-arg)
-           (ergoemacs-shortcut-internal ,def))))
+      (unless (lookup-key keymap key)
+        (define-key keymap key
+          `(lambda(&optional arg)
+             (interactive "P")
+             (setq this-command last-command) ; Don't record this command.
+             (setq prefix-arg current-prefix-arg)
+             (ergoemacs-shortcut-internal ,def)))))
     
     t)
    (t nil)))
@@ -627,8 +633,8 @@ work in the terminal."
              trans-key
              cmd cmd-tmp)
          (ergoemacs-debug-heading ,(format "Setup keys for %s" (symbol-name keymap)))
-         (setq ,keymap (make-sparse-keymap))
          (if (eq ',keymap 'ergoemacs-keymap)
+             (setq ,keymap (make-sparse-keymap))
              (ergoemacs-debug "Theme: %s" ergoemacs-theme))
          ;; Fixed layout keys
          (ergoemacs-debug-heading "Setup Fixed Keys")
@@ -675,14 +681,15 @@ work in the terminal."
                 ;; Only works if ergoemacs-mode is on...
                 (setq cmd (nth 1 x))
                 
-                (if (and ergoemacs-fix-M-O (string= (ergoemacs-kbd trans-key t t) "M-O"))
+                (if (and ergoemacs-fix-M-O
+                         (string= (ergoemacs-kbd trans-key t t) "M-O"))
                     (progn
                       ;; Add shortcut if available
                       (cond
                        ((or (remove-if '(lambda(x) (eq 'menu-bar (elt x 0))) ; Ignore
                                         ; menu-bar
                                         ; functions
-                                     (where-is-internal cmd (current-global-map)))
+                                       (where-is-internal cmd (current-global-map)))
                             (gethash cmd ergoemacs-where-is-global-hash))
                         (puthash (read-kbd-macro (key-description key) t)
                                  (list cmd 'global) ergoemacs-command-shortcuts-hash)
