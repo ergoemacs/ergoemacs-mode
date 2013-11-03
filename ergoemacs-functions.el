@@ -863,9 +863,20 @@ Calling this command 3 times will always result in no whitespaces around cursor.
       ;; todo: possibly code my own delete-blank-lines here for better efficiency, because delete-blank-lines seems complex.
       )))
 
+
+(defcustom ergoemacs-toggle-letter-case-and-spell t
+  "Auto-corrects previous word when can't toggle letter case."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-toggle-letter-case ()
   "Toggle the letter case of current word or text selection.
-Toggles between: “all lower”, “Init Caps”, “ALL CAPS”."
+Toggles between: “all lower”, “Init Caps”, “ALL CAPS”.
+
+When not in a word, and `ergoemacs-toggle-letter-case-and-spell'
+is non-nil, spell check the last misspelled word with
+`flyspell-auto-correct-previous-word'.
+"
   (interactive)
   (let (p1 p2 (deactivate-mark nil) (case-fold-search nil))
     (if (region-active-p)
@@ -873,7 +884,9 @@ Toggles between: “all lower”, “Init Caps”, “ALL CAPS”."
       (let ((bds (bounds-of-thing-at-point 'word) ) )
         (setq p1 (car bds) p2 (cdr bds)) ) )
 
-    (when (and p1 p2)
+    (if (not (and p1 p2))
+        (when ergoemacs-toggle-letter-case-and-spell
+          (call-interactively 'flyspell-auto-correct-previous-word))
       (when (not (eq last-command this-command))
         (save-excursion
           (goto-char p1)
