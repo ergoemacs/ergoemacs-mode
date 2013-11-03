@@ -1403,18 +1403,31 @@ Some exceptions we don't want to unset.
   (ergoemacs-fixed-key "C-x g" 'magit-status)
   )
 
-(ergoemacs-deftheme mate
-  "EmacsMate"
+(ergoemacs-deftheme reduction
+  "Chord-Reduction"
   nil
   (ergoemacs-key "M-*" 'mc/mark-next-like-this "Mark Next")
   (ergoemacs-key "M-&" 'mc/edit-lines "Edit Lines")
-  (ergoemacs-key "M-," 'ergoemacs-smart-punctuation "Toggle ()")
+  (ergoemacs-key "M-," 'ace-jump-mode "Ace Jump Mode")
+  (ergoemacs-key "M-g" 'kill-line "⌦ line")
+  (ergoemacs-key "M-b" 'ergoemacs-kill-line-backward "⌫ line")
+  ;; (ergoemacs-key "M-," 'ergoemacs-smart-punctuation "Toggle ()")
   (ergoemacs-key "M-." 'ergoemacs-end-of-line-or-what "→ line/*")
   (ergoemacs-key "M-m" 'ergoemacs-beginning-of-line-or-what "← line/*" )
-  (ergoemacs-key "M-t" 'execute-extended-command "M-x")
-  (ergoemacs-key "M-a" 'ergo-call-keyward-completion "compl")
+  (ergoemacs-key "M-t" 'isearch-backward "← isearch")
+  (ergoemacs-key "M-T" 'isearch-backward-regexp "← reg isearch")
+  (ergoemacs-key "M-Y" 'isearch-backward-regexp "→ reg isearch")
+  
+  (ergoemacs-key "M-H" nil)
+  (ergoemacs-key "M-I" nil)
+  (ergoemacs-key "M-K" nil)
+  (ergoemacs-key "M-U" nil)
+  (ergoemacs-key "M-O" nil)
+  (ergoemacs-key "M-N" nil)
+  ;; (ergoemacs-key "M-t" 'execute-extended-command "M-x")
+  ;; (ergoemacs-key "M-a" 'ergo-call-keyward-completion "compl")
   (ergoemacs-key "M-9" 'er/contract-region "→region←")
-  (ergoemacs-key "M-h" 'flyspell-auto-correct-previous-word "spell"))
+  (ergoemacs-key "M-h" 'execute-extended-command "M-x"))
 
 (make-obsolete-variable 'ergoemacs-variant 'ergoemacs-theme
                         "ergoemacs-mode 5.8.0.1")
