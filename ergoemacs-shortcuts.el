@@ -239,8 +239,6 @@ the best match."
          
          (ergoemacs-debug-heading "Translating keys")
          
-         
-         
          ;;
          (when ergoemacs-translate-keys
            (setq bound-regexp
@@ -366,7 +364,6 @@ the best match."
            (error nil))
          (puthash hashkey ,keymap ergoemacs-extract-map-hash))
        (ergoemacs-debug-flush))))
-
 
 (defvar ergoemacs-send-fn-keys-fns '(ergoemacs-undefined ergoemacs-shortcut)
   "List of functions where `unread-command-events' are sent with `ergoemacs-send-fn'.")
@@ -697,14 +694,16 @@ on that key.
          (t  ; Could not find another function, just use the function
              ; passed to `ergoemacs-shortcut'
           (let (ergoemacs-mode ergoemacs-unbind-keys)
-            (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+            (remove-hook 'emulation-mode-map-alists
+                         'ergoemacs-emulation-mode-map-alist)
             (setq fn (list key
                          (read-kbd-macro
                           (key-description
                            (or (where-is-internal
                                 key (current-global-map) t)
                                (this-command-keys))) t)))
-            (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)))))
+            (add-hook 'emulation-mode-map-alists
+                      'ergoemacs-emulation-mode-map-alist)))))
        (t ;; lookup keybinding for the function keys.
         
         (let (ergoemacs-mode ergoemacs-unbind-keys)
@@ -725,7 +724,8 @@ on that key.
             (if keymap-key
                 (let ((do-it
                        (or (not (boundp 'ergoemacs-orig-keymap))
-                           (and (boundp 'ergoemacs-orig-keymap) (not ergoemacs-orig-keymap))
+                           (and (boundp 'ergoemacs-orig-keymap)
+                                (not ergoemacs-orig-keymap))
                            ;; Overwrite local mode's maps (should issue
                            ;; warning?)
                            (condition-case err
