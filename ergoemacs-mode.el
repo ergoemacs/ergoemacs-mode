@@ -1454,18 +1454,28 @@ bindings the keymap is:
 
 (defvar ergoemacs-local-keymap nil
   "Local ergoemacs keymap")
-(make-variable-buffer-local 'ergoemacs-local-keymap)
 
 (defun ergoemacs-local-set-key (key command)
   "Set a key in the ergoemacs local map."
   ;; install keymap if not already installed
   (interactive)
-  (progn
-    (unless ergoemacs-local-keymap
-      (ergoemacs-setup-keys-for-keymap ergoemacs-local-keymap)
-      (add-to-list 'minor-mode-overriding-map-alist (cons 'ergoemacs-mode ergoemacs-local-keymap)))
-    ;; add key
-    (define-key ergoemacs-local-keymap key command)))
+  (let (major ergoemacs-local-keymap)
+    (eval (macroexpand `(setq major ',(intern (format "ergoemacs--emulation-for-%s-local" major-mode)))))
+    (set (make-local-variable major) t)
+    (progn
+      (unless ergoemacs-local-keymap
+        (set (make-local-variable 'ergoemacs-local-keymap) (make-sparse-keymap)))
+      ;; add key
+      (define-key ergoemacs-local-keymap key command)
+      (let ((x (assq major ergoemacs-emulation-mode-map-alist)))
+        ;; Delete keymap.
+        (if x
+            (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+        ;; Put at the top of the list
+        (setq ergoemacs-emulation-mode-map-alist
+              (append ergoemacs-emulation-mode-map-alist
+                      (list (cons major ergoemacs-local-keymap))))
+        (ergoemacs-shuffle-keys)))))
 
 (defun ergoemacs-local-unset-key (key)
   "Unset a key in the ergoemacs local map."
@@ -1574,10 +1584,11 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   ;; Promotes keymaps in `ergoemacs-emulation-mode-map-alist'
   (mapc
    (lambda(what)
-     (let ((x (assq 'ergoemacs-modal ergoemacs-emulation-mode-map-alist)))
+     (let ((x (assq what ergoemacs-emulation-mode-map-alist)))
        (and x (setq ergoemacs-emulation-mode-map-alist
                     (cons x (delq x ergoemacs-emulation-mode-map-alist ))))))
-   '(ergoemacs-modal ergoemacs-shortcut-keys ergoemacs-shortcut-override-mode))
+   ;; Promoted from least to most important
+   '(ergoemacs-shortcut-keys ergoemacs-shortcut-override-mode ergoemacs-modal))
   ;; Demote
   (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
     (setq minor-mode-map-alist (append (delete x minor-mode-map-alist) (list x)))))
@@ -1604,7 +1615,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
               (ergoemacs-install-shortcuts-up))
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
-              (setq ergoemacs-shortcut-keys nil)
               (ergoemacs-shortcut-override-mode 1))))
       (error nil)))
   t)
@@ -1624,7 +1634,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
                 (setq ergoemacs-check-mode-line-change nil)))
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
-              (setq ergoemacs-shortcut-keys t)
               (ergoemacs-shortcut-override-mode -1))
             (when (and ergoemacs-modal
                        (memq major-mode ergoemacs-modal-emacs-state-modes))
