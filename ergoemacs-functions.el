@@ -873,16 +873,17 @@ Calling this command 3 times will always result in no whitespaces around cursor.
   "Toggle the letter case of current word or text selection.
 Toggles between: “all lower”, “Init Caps”, “ALL CAPS”.
 
-When not in a word, and `ergoemacs-toggle-letter-case-and-spell'
-is non-nil, spell check the last misspelled word with
+When not in a word, nothing is selected, and
+`ergoemacs-toggle-letter-case-and-spell' is non-nil, spell check
+the last misspelled word with
 `flyspell-auto-correct-previous-word'.
 "
   (interactive)
   (let (p1 p2 (deactivate-mark nil) (case-fold-search nil))
     (if (region-active-p)
         (setq p1 (region-beginning) p2 (region-end))
-      (let ((bds (bounds-of-thing-at-point 'word) ) )
-        (setq p1 (car bds) p2 (cdr bds)) ) )
+      (let ((bds (bounds-of-thing-at-point 'word)))
+        (setq p1 (car bds) p2 (cdr bds))))
 
     (if (not (and p1 p2))
         (when ergoemacs-toggle-letter-case-and-spell
@@ -891,12 +892,18 @@ is non-nil, spell check the last misspelled word with
         (save-excursion
           (goto-char p1)
           (cond
-           ((looking-at "[[:lower:]][[:lower:]]") (put this-command 'state "all lower"))
-           ((looking-at "[[:upper:]][[:upper:]]") (put this-command 'state "all caps") )
-           ((looking-at "[[:upper:]][[:lower:]]") (put this-command 'state "init caps") )
-           ((looking-at "[[:lower:]]") (put this-command 'state "all lower"))
-           ((looking-at "[[:upper:]]") (put this-command 'state "all caps") )
-           (t (put this-command 'state "all lower") ) ) ) )
+           ((looking-at "[[:lower:]][[:lower:]]")
+            (put this-command 'state "all lower"))
+           ((looking-at "[[:upper:]][[:upper:]]")
+            (put this-command 'state "all caps"))
+           ((looking-at "[[:upper:]][[:lower:]]")
+            (put this-command 'state "init caps"))
+           ((looking-at "[[:lower:]]")
+            (put this-command 'state "all lower"))
+           ((looking-at "[[:upper:]]")
+            (put this-command 'state "all caps"))
+           (t
+            (put this-command 'state "all lower")))))
 
       (cond
        ((string= "all lower" (get this-command 'state))
@@ -904,7 +911,7 @@ is non-nil, spell check the last misspelled word with
        ((string= "init caps" (get this-command 'state))
         (upcase-region p1 p2) (put this-command 'state "all caps"))
        ((string= "all caps" (get this-command 'state))
-        (downcase-region p1 p2) (put this-command 'state "all lower")) ))) )
+        (downcase-region p1 p2) (put this-command 'state "all lower"))))))
 
 ;;; FRAME
 
@@ -1361,7 +1368,7 @@ ARG is the prefix argument for either command." direction direction direction)
                         (lambda (word) (capitalize (downcase word)))
                         (split-string s "_")) ""))
 (defun ergoemacs-camelize-method (s)
-  "Convert under_score string S to camelCase string."
+  "Convert under_score string S to CamelCase string."
   (mapconcat 'identity (ergoemacs-mapcar-head
                         '(lambda (word) (downcase word))
                         '(lambda (word) (capitalize (downcase word)))
@@ -1374,7 +1381,7 @@ ARG is the prefix argument for either command." direction direction direction)
   (let* ((bounds (progn (if (= (cdr (bounds-of-thing-at-point 'word))
                                (car (bounds-of-thing-at-point 'sexp)))
                             (backward-char))
-                        (bounds-of-thing-at-point 'sexp)))
+                        (bounds-of-thing-at-poinut 'sexp)))
          (beg (car bounds))
          (end (cdr bounds))
          (rgn (filter-buffer-substring beg end))
@@ -1616,6 +1623,114 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
       (delete-char 1)
       (insert (cdr sans-accent))
       (backward-char))))
+
+
+;;; Ergoemacs lookup words. from lookup-word-on-internet.el
+
+(defvar ergoemacs-all-dictionaries nil
+  "A vector of dictionaries. Used by `lookup-ergoemacs-all-dictionaries'. http://wordyenglish.com/words/dictionary_tools.html ")
+(setq ergoemacs-all-dictionaries [
+                        "http://www.dict.org/bin/Dict?Form=Dict2&Database=*&Query=�" ; 1913 Webster, WordNet
+                        "http://www.thefreedictionary.com/�"                         ; AHD
+                        "http://www.answers.com/main/ntquery?s=�"                    ; AHD
+                        "http://en.wiktionary.org/wiki/�"
+                        "http://www.google.com/search?q=define:+�" ; google
+                        "http://www.etymonline.com/index.php?search=�" ; etymology
+                        ] )
+
+(defun ergoemacs-lookup-word-on-internet (&optional input-word site-to-use)
+  "Look up current word or text selection in a online reference site.
+This command launches/switches you to default browser.
+
+Optional argument INPUT-WORD and SITE-TO-USE can be given.
+SITE-TO-USE a is URL string in this form: 「http://en.wiktionary.org/wiki/�」.
+the 「�」 is a placeholder for the query string.
+
+If SITE-TO-USE is nil, Google Search is used.
+
+For a list of online reference sites, see:
+ URL `http://ergoemacs.org/emacs/emacs_lookup_ref.html'"
+  (interactive)
+  (let (ξword refUrl myUrl)
+    (setq ξword
+          (if input-word
+              input-word
+            (if (region-active-p)
+                (buffer-substring-no-properties (region-beginning) (region-end))
+              (thing-at-point 'word) )) )
+    
+    (setq ξword (with-temp-buffer
+                  (insert ξword)
+                  (ergoemacs-unaccent-region (point-min) (point-max) t)
+                  (goto-char (point-min))
+                  (while (re-search-forward " " nil t)
+                    (replace-match "%20"))
+                  (buffer-string)))
+    
+    (setq refUrl
+          (if site-to-use
+              site-to-use
+            "http://www.google.com/search?q=�" ))
+
+    (setq myUrl (replace-regexp-in-string "�" ξword refUrl t t))
+    (cond
+     ((string-equal system-type "windows-nt") ; any flavor of Windows
+      (browse-url-default-windows-browser myUrl))
+     ((string-equal system-type "gnu/linux")
+      (browse-url myUrl))
+     ((string-equal system-type "darwin") ; Mac
+      (browse-url myUrl)))))
+
+(defun ergoemacs-lookup-google (&optional input-word)
+  "Lookup urrent word or text selection in Google Search.
+See also `ergoemacs-lookup-word-on-internet'."
+  (interactive)
+  (let ((dictUrl "http://www.google.com/search?q=�"))
+    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+
+(defun ergoemacs-lookup-wikipedia (&optional input-word)
+  "Lookup current word or text selection in Wikipedia.
+See also `ergoemacs-lookup-word-on-internet'."
+  (interactive)
+  (let ((dictUrl "http://en.wikipedia.org/wiki/�"))
+    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+
+(defun ergoemacs-lookup-word-dict-org (&optional input-word)
+  "Lookup definition of current word or text selection in URL `http://dict.org/'.
+See also `ergoemacs-lookup-word-on-internet'."
+  (interactive)
+  (let ((dictUrl "http://www.dict.org/bin/Dict?Form=Dict2&Database=*&Query=�" ))
+    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+
+(defun ergoemacs-lookup-word-definition (&optional input-word)
+  "Lookup definition of current word or text selection in URL `http://thefreedictionary.com/'.
+See also `ergoemacs-lookup-word-on-internet'."
+  (interactive)
+  (let ((dictUrl "http://www.thefreedictionary.com/�"))
+    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+
+(defun ergoemacs-lookup-answers.com (&optional input-word)
+  "Lookup current word or text selection in URL `http://answers.com/'.
+See also `ergoemacs-lookup-word-on-internet'."
+  (interactive)
+  (let ((dictUrl "http://www.answers.com/main/ntquery?s=�"))
+    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+
+(defun ergoemacs-lookup-wiktionary (&optional input-word)
+  "Lookup definition of current word or text selection in URL `http://en.wiktionary.org/'
+See also `ergoemacs-lookup-word-on-internet'."
+  (interactive)
+  (let ((dictUrl "http://en.wiktionary.org/wiki/�" ))
+    (ergoemacs-lookup-word-on-internet input-word dictUrl) ) )
+
+(defun ergoemacs-lookup-all-dictionaries (&optional input-word)
+  "Lookup definition in many dictionaries.
+Current word or text selection is used as input.
+The dictionaries used are in `ergoemacs-all-dictionaries'.
+
+See also `ergoemacs-lookup-word-on-internet'."
+  (interactive)
+  (mapc (lambda (dictUrl) (ergoemacs-lookup-word-on-internet input-word dictUrl)) ergoemacs-all-dictionaries)) 
 
 
 
