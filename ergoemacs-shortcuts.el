@@ -956,7 +956,7 @@ Setup C-c and C-x keys to be described properly.")
   "Show the true bindings.  Otherwise, show what the bindings translate to...")
 
 (define-minor-mode ergoemacs-shortcut-override-mode
-  "Lookup the functions for `ergoemacs-mode' shortcut keys."
+  "Lookup the functions for `ergoemacs-mode' shortcut keys and pretend they are currently bound."
   nil
   :lighter ""
   :global t
@@ -965,6 +965,10 @@ Setup C-c and C-x keys to be described properly.")
       (progn
         (let ((x (assq 'ergoemacs-shortcut-override-mode
                        ergoemacs-emulation-mode-map-alist)))
+          (when x
+            (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+          ;; Remove shortcuts.
+          (setq x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist))
           (when x
             (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
           ;; Create keymap
@@ -977,6 +981,7 @@ Setup C-c and C-x keys to be described properly.")
             (define-key ergoemacs-shortcut-override-keymap
               (read-kbd-macro "M-O")
               (lookup-key ergoemacs-M-O-keymap [timeout])))
+          
           (when (eq (key-binding (read-kbd-macro "M-o"))
                     'ergoemacs-M-o)
             (define-key ergoemacs-shortcut-override-keymap
@@ -987,9 +992,15 @@ Setup C-c and C-x keys to be described properly.")
           (push (cons 'ergoemacs-shortcut-override-mode
                       ergoemacs-shortcut-override-keymap)
                 ergoemacs-emulation-mode-map-alist)
+          
           (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s" (mapcar (lambda(x) (nth 0 x)) ergoemacs-emulation-mode-map-alist))
           (ergoemacs-debug-heading "Finish `ergoemacs-shortcut-override-mode'")
-          (ergoemacs-debug-flush)))))
+          (ergoemacs-debug-flush)))
+    ;; Add back shortcuts.
+    (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
+      (when x
+        (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+      (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist))))
 
 (defun ergoemacs-remove-shortcuts ()
   "Removes ergoemacs shortcuts from keymaps."
