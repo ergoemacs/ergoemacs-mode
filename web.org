@@ -82,11 +82,11 @@ type:
 
 #+HTML: <h4>Manual setup</h4>
 
-Start by cloning the /git/ repository from [[http://github.com][Github]]
+Start by cloning the main branch /git/ repository from [[http://github.com][Github]]
 
 #+begin_src bash
 cd ~/.emacs.d
-git clone https://github.com/ergoemacs/ergoemacs-mode.git
+git clone -b master --single-branch https://github.com/ergoemacs/ergoemacs-mode.git
 #+end_src
 
 And add following to your =~/.emacs.d/init.el= file:
