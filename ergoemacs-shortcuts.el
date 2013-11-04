@@ -910,7 +910,7 @@ sets `this-command' to `%s'. The hook
   (setq prefix-arg current-prefix-arg)
   (ergoemacs-shortcut-internal "C-c C-c" 'repeat-global ergoemacs-repeat-ctl-c-ctl-c))
 
-(defun ergoemacs-install-shortcuts-map (&optional map)
+(defun ergoemacs-install-shortcuts-map (&optional map dont-complete)
   "Returns a keymap with shortcuts installed.
 If MAP is defined, use a copy of that keymap as a basis for the shortcuts.
 If MAP is nil, base this on a sparse keymap."
@@ -937,7 +937,8 @@ If MAP is nil, base this on a sparse keymap."
                        (error (beep) (message "%s" err))))))))
      ergoemacs-command-shortcuts-hash)
     ;; Now install the rest of the ergoemacs-mode keys
-    (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap)
+    (unless dont-complete
+      (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap))
     ergoemacs-shortcut-override-keymap))
 
 (defvar ergoemacs-describe-keybindings-functions

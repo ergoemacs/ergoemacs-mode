@@ -28,6 +28,9 @@
 
 ;;; Code:
 
+(defvar ergoemacs-maps-only-install-shortcuts '(isearch-mode-map)
+  "List of keymaps where the full ergoemacs keymap is not installed.")
+
 ;; Ergoemacs keys
 
 (defgroup ergoemacs-standard-layout nil
