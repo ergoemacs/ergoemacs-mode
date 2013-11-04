@@ -165,7 +165,7 @@
 
 (defadvice local-set-key (around ergoemacs-local-set-key-advice (key command))
   "This let you use `local-set-key' as usual when `ergoemacs-mode' is enabled."
-  (if (fboundp 'ergoemacs-mode)
+  (if (and (fboundp 'ergoemacs-mode) ergoemacs-mode)
       (ergoemacs-local-set-key key command)
     ad-do-it))
 
