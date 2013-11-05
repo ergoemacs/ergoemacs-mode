@@ -142,7 +142,7 @@
     ("M-`" ergoemacs-switch-to-next-frame "next frame")
     
     ("M-5" query-replace "rep")
-    ("M-%" query-replace-regexp "rep reg")
+    ("M-%" (vr/query-replace query-replace-regexp) "rep reg")
     
     ("M-3" delete-other-windows "x other pane")
     ("M-2" delete-window "x pane")
