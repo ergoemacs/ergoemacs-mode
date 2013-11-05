@@ -671,7 +671,7 @@ redo:
 comment-dwim:
  ;; Word Alt+Ctrl+M is insert comment
  If WinActive("ahk_class OpusApp"){
-   SendKey("{Alt down}{Ctrl down}{M}{Alt up}{Ctrl up}",0)
+   SendKey("{Alt down}{Ctrl down}{M}{Ctrl up}{Alt up}",0)
  }
  return
 
