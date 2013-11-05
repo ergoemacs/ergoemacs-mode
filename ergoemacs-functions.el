@@ -818,7 +818,7 @@ Calling this command 3 times will always result in no whitespaces around cursor.
   (interactive)
   (let (cursor-point
         line-has-meat-p  ; current line contains non-white space chars
-        spaceTabNeighbor-p
+        space-tab-neighbor-p
         whitespace-begin whitespace-end
         space-or-tab-begin space-or-tab-end
         line-begin-pos line-end-pos)
@@ -826,7 +826,7 @@ Calling this command 3 times will always result in no whitespaces around cursor.
       ;; todo: might consider whitespace as defined by syntax table, and also consider whitespace chars in unicode if syntax table doesn't already considered it.
       (setq cursor-point (point))
       
-      (setq spaceTabNeighbor-p (if (or (looking-at " \\|\t") (looking-back " \\|\t")) t nil) )
+      (setq space-tab-neighbor-p (if (or (looking-at " \\|\t") (looking-back " \\|\t")) t nil) )
       (move-beginning-of-line 1) (setq line-begin-pos (point) )
       (move-end-of-line 1) (setq line-end-pos (point) )
       ;;       (re-search-backward "\n$") (setq line-begin-pos (point) )
@@ -848,7 +848,7 @@ Calling this command 3 times will always result in no whitespaces around cursor.
     
     (if line-has-meat-p
         (let (deleted-text)
-          (when spaceTabNeighbor-p
+          (when space-tab-neighbor-p
             ;; remove all whitespaces in the range
             (setq deleted-text (delete-and-extract-region space-or-tab-begin space-or-tab-end))
             ;; insert a whitespace only if we have removed something
@@ -869,9 +869,59 @@ Calling this command 3 times will always result in no whitespaces around cursor.
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-toggle-camel-case-chars
+  '((R-mode ("." "_"))
+    (emacs-lisp-mode ("-" "_"))
+    (t ("_")))
+  "Characters to toggle between camelCase and extended_variables."
+  :type '(repeat
+          (list
+           (choice
+            (const :tag "Default" t)
+            (symbol :tag "Major Mode"))
+           (repeat (string :tag "Character"))))
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-toggle-case-and-camel-case t
+  "Toggles Case and CamelCase depending on context."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-get-toggle-camel-case-chars ()
+  "Gets camel case characters to toggle between.
+Based on the value of `major-mode' and
+`ergoemacs-toggle-camel-case-chars'."
+  (let ((a (assoc major-mode ergoemacs-toggle-camel-case-chars)))
+    (unless a
+      (setq a (assoc t ergoemacs-toggle-camel-case-chars)))
+    (car (cdr a))))
+
+(defun ergoemacs-camelize-method (s &optional char)
+  "Convert under_score string S to CamelCase string."
+  (mapconcat 'identity (ergoemacs-mapcar-head
+                        '(lambda (word) (downcase word))
+                        '(lambda (word) (capitalize (downcase word)))
+                        (split-string s (or char "_"))) ""))
+
+(defun ergoemacs-camel-bounds (camel-case-chars)
+  "Return the camel-case bounds.
+This command assumes that CAMEL-CASE-CHARS is list of characters
+that can separate a variable."
+  (let* ((reg (concat "[:alpha:]"
+                      (mapconcat (lambda(x) x) camel-case-chars "")))
+         (p1 (save-excursion (skip-chars-backward reg) (point)))
+         (p2 (save-excursion (skip-chars-forward reg) (point))))
+    (if (= p1 p2) nil
+      (cons p1 p2))))
+
 (defun ergoemacs-toggle-letter-case ()
-  "Toggle the letter case of current word or text selection.
-Toggles between: “all lower”, “Init Caps”, “ALL CAPS”.
+  "Toggle the letter case/camelCase of current word or text selection.
+For words or toggles between: “all lower”, “Initial Caps”, “ALL CAPS”.
+
+When you are in a camelCase or separated variable like:
+emacs-lisp or emacs_lisp emacsLisp or EmacsLisp, toggle between
+the different forms of the variable.  This can be turned off with
+`ergoemacs-toggle-case-and-camel-case'.
 
 When not in a word, nothing is selected, and
 `ergoemacs-toggle-letter-case-and-spell' is non-nil, spell check
@@ -879,12 +929,34 @@ the last misspelled word with
 `flyspell-auto-correct-previous-word'.
 "
   (interactive)
-  (let (p1 p2 (deactivate-mark nil) (case-fold-search nil))
-    (if (region-active-p)
-        (setq p1 (region-beginning) p2 (region-end))
+  (let (p1 p2 (deactivate-mark nil) (case-fold-search nil)
+           camel-case
+           (ccc (ergoemacs-get-toggle-camel-case-chars)))
+    (cond
+     ((region-active-p)
+      (setq p1 (region-beginning) p2 (region-end)))
+     ((and (eq last-command this-command)
+           (string-match "\\(all\\|caps\\)" (get this-command 'state)))
       (let ((bds (bounds-of-thing-at-point 'word)))
         (setq p1 (car bds) p2 (cdr bds))))
-
+     ((eq last-command this-command)
+      (let ((bds (ergoemacs-camel-bounds ccc)))
+        (setq p1 (car bds) p2 (cdr bds))
+        (setq camel-case (get this-command 'state))))
+     (t
+      (let* ((bds (ergoemacs-camel-bounds ccc))
+             (txt (if (not bds) nil
+                    (filter-buffer-substring (car bds) (cdr bds)))))
+        (cond
+         ((and txt (string-match "[[:lower:]][[:upper:]]" txt))
+          (if (string-match "^[[:lower:]]" txt)
+              (setq camel-case "camel lower")
+            (setq camel-case "camel upper")))
+         ((and txt (string-match (regexp-opt ccc t) txt))
+          (setq camel-case (match-string 1 txt)))
+         (t
+          (setq bds (bounds-of-thing-at-point 'word))))
+        (setq p1 (car bds) p2 (cdr bds)))))
     (if (not (and p1 p2))
         (when ergoemacs-toggle-letter-case-and-spell
           (call-interactively 'flyspell-auto-correct-previous-word))
@@ -892,6 +964,8 @@ the last misspelled word with
         (save-excursion
           (goto-char p1)
           (cond
+           (camel-case
+            (put this-command 'state camel-case))
            ((looking-at "[[:lower:]][[:lower:]]")
             (put this-command 'state "all lower"))
            ((looking-at "[[:upper:]][[:upper:]]")
@@ -904,14 +978,42 @@ the last misspelled word with
             (put this-command 'state "all caps"))
            (t
             (put this-command 'state "all lower")))))
-
+      
       (cond
        ((string= "all lower" (get this-command 'state))
         (upcase-initials-region p1 p2) (put this-command 'state "init caps"))
        ((string= "init caps" (get this-command 'state))
         (upcase-region p1 p2) (put this-command 'state "all caps"))
        ((string= "all caps" (get this-command 'state))
-        (downcase-region p1 p2) (put this-command 'state "all lower"))))))
+        (downcase-region p1 p2) (put this-command 'state "all lower"))
+       ((string= "camel lower" (get this-command 'state))
+        (upcase-region p1 (+ p1 1)) (put this-command 'state "camel upper"))
+       ((string= "camel upper" (get this-command 'state))
+        (let ((txt (filter-buffer-substring p1 p2)))
+          (delete-region p1 p2)
+          (insert (ergoemacs-un-camelcase-string txt (nth 0 ccc)))
+          (put this-command 'state (nth 0 ccc))))
+       (t ;; This cycles through the camel-case types.
+        (let ((c-char (get this-command 'state))
+              n-char)
+          (mapc
+           (lambda(char)
+             (when (eq n-char t)
+               (setq n-char char))
+             (when (string= c-char char)
+               (setq n-char t)))
+           ccc)
+          (cond
+           ((eq n-char t) ;; at last char. convert un_camel to unCamel
+            (let ((txt (filter-buffer-substring p1 p2)))
+              (delete-region p1 p2)
+              (insert (ergoemacs-camelize-method txt c-char)))
+            (put this-command 'state "camel lower"))
+           (t
+            (goto-char p1)
+            (while (search-forward c-char p2 t)
+              (replace-match n-char t t))
+            (put this-command 'state n-char)))))))))
 
 ;;; FRAME
 
@@ -1239,19 +1341,21 @@ Each `yank' and `yank-pop' may be changed based on smart lookup with
 When in `browse-kill-ring-mode', cycle forward through the key ring.
 "
   (interactive "P")
-  (if (eq major-mode 'browse-kill-ring-mode)
-      (if (save-excursion (re-search-forward "^----" nil t))
-          (call-interactively 'browse-kill-ring-forward)
-        (goto-char (point-min)))
-    (if ergoemacs-smart-paste
-        (if (eq last-command 'yank)
-            (if (not (eq ergoemacs-smart-paste 'browse-kill-ring))
-                (ergoemacs-shortcut-internal 'yank-pop)
-              (browse-kill-ring)
-              ;; Add unread command events another "paste"
-              (setq unread-command-events (listify-key-sequence (this-single-command-keys))))
-          (ergoemacs-shortcut-internal 'yank))
-      (ergoemacs-shortcut-internal 'yank))))
+  (cond
+   ((and (eq major-mode 'browse-kill-ring-mode) (save-excursion (re-search-forward "^----" nil t)))
+    (call-interactively 'browse-kill-ring-forward))
+   ((eq major-mode 'browse-kill-ring-mode)
+    (goto-char (point-min)))
+   ((and (eq ergoemacs-smart-paste 'browse-kill-ring)
+         (eq last-command 'yank)
+         (fboundp 'browse-kill-ring))
+    (browse-kill-ring)
+    ;; Add unread command events another "paste"
+    (setq unread-command-events (listify-key-sequence (this-single-command-keys))))
+   ((and ergoemacs-smart-paste (eq last-command 'yank))
+    (ergoemacs-shortcut-internal 'yank-pop))
+   (t
+    (ergoemacs-shortcut-internal 'yank))))
 
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
@@ -1362,26 +1466,21 @@ ARG is the prefix argument for either command." direction direction direction)
   (if list
       (cons (funcall fn-head (car list)) (mapcar fn-rest (cdr list)))))
 
-(defun ergoemacs-camelize (s)
+(defun ergoemacs-camelize (s &optional char)
   "Convert under_score string S to CamelCase string."
   (mapconcat 'identity (mapcar
                         (lambda (word) (capitalize (downcase word)))
-                        (split-string s "_")) ""))
-(defun ergoemacs-camelize-method (s)
-  "Convert under_score string S to CamelCase string."
-  (mapconcat 'identity (ergoemacs-mapcar-head
-                        '(lambda (word) (downcase word))
-                        '(lambda (word) (capitalize (downcase word)))
-                        (split-string s "_")) ""))
+                        (split-string s (or char "_"))) ""))
+
+
 
 ;; This is my camel-case switcher
-
 (defun ergoemacs-toggle-camel-case ()
   (interactive)
   (let* ((bounds (progn (if (= (cdr (bounds-of-thing-at-point 'word))
                                (car (bounds-of-thing-at-point 'sexp)))
                             (backward-char))
-                        (bounds-of-thing-at-poinut 'sexp)))
+                        (bounds-of-thing-at-point 'sexp)))
          (beg (car bounds))
          (end (cdr bounds))
          (rgn (filter-buffer-substring beg end))
