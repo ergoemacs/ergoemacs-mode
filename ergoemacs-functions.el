@@ -872,6 +872,7 @@ Calling this command 3 times will always result in no whitespaces around cursor.
 (defcustom ergoemacs-toggle-camel-case-chars
   '((R-mode ("." "_"))
     (emacs-lisp-mode ("-" "_"))
+    (org-mode nil)
     (t ("_")))
   "Characters to toggle between camelCase and extended_variables."
   :type '(repeat
@@ -879,7 +880,9 @@ Calling this command 3 times will always result in no whitespaces around cursor.
            (choice
             (const :tag "Default" t)
             (symbol :tag "Major Mode"))
-           (repeat (string :tag "Character"))))
+           (choice
+            (repeat (string :tag "Character"))
+            (const :tag "No camelCase conversion" nil))))
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-toggle-case-and-camel-case t
@@ -944,7 +947,8 @@ the last misspelled word with
         (setq p1 (car bds) p2 (cdr bds))
         (setq camel-case (get this-command 'state))))
      (t
-      (let* ((bds (ergoemacs-camel-bounds ccc))
+      (let* ((bds (if (not ccc) nil
+                    (ergoemacs-camel-bounds ccc)))
              (txt (if (not bds) nil
                     (filter-buffer-substring (car bds) (cdr bds)))))
         (cond
