@@ -94,6 +94,48 @@
 (defvar ergoemacs-menu-bar-file-menu nil)
 
 
+;; (defvar ergoemacs-excluded-major-modes '()
+;;   )
+
+(defcustom ergoemacs-excluded-major-modes
+  '(conf-colon-mode
+    conf-xdefaults-mode conf-space-mode conf-javaprop-mode
+    conf-ppd-mode mail-mode
+    ebrowse-tree-mode diff-mode fundamental-mode emacs-lisp-byte-code-mode
+    R-transcript-mode S-transcript-mode XLS-mode tar-mode)
+  "List of major modes excluded from ergoemacs' Languages menu."
+  :type '(repeat (symbol :tag "Excluded Major Mode"))
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-mode-names
+  '((conf-mode "Settings")
+    (ses-mode "Emacs Spreadsheet")
+    (m2-mode "Modula-2")
+    (snmpv2-mode "SNMPv2 MIBs")
+    (snmp-mode "SKMP MIBs"))
+  "Menu name for ergoemacs' Languages menu."
+  :type '(repeat
+          (list
+           (symbol :tag "Major Mode Name")
+           (text :tag "Alternative Description:")))
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-get-major-mode-name (major-mode)
+  "Gets the major-mode language name.
+Tries to get the value from `ergoemacs-mode-names'.  If not guess the language name."
+  (let ((ret (assoc major-mode ergoemacs-mode-names)))
+    (if (not ret)
+        (setq ret (replace-regexp-in-string
+                   "-" " "
+                   (replace-regexp-in-string
+                    "-mode" ""
+                    (symbol-name major-mode))))
+      (setq ret (car (cdr ret))))
+    (setq ret (concat (upcase (substring ret 0 1))
+                      (substring ret 1)))
+    (symbol-value 'ret)))
+
+;; `Languages'  
 (defun ergoemacs-get-major-modes ()
   "Gets a list of language modes known to `ergoemacs-mode'.
 This gets all major modes known from the variables:
@@ -105,19 +147,64 @@ This gets all major modes known from the variables:
 All other modes are assumed to be minor modes or unimportant.
 "
   ;; Get known major modes
-  (let ((ret '()))
+  (let ((ret '())
+        all dups cur-let cur-lst
+        (modes '()))
     (mapc
      (lambda(elt)
-       (when (and (functionp (cdr elt))
-                  (string-match "-mode$" (symbol-name (cdr elt))))
-         (add-to-list 'ret (cdr elt))))
+       (unless (memq (cdr elt) modes)
+         (when (and (functionp (cdr elt))
+                    (string-match "-mode$" (symbol-name (cdr elt))))
+           (unless (memq (cdr elt) ergoemacs-excluded-major-modes)
+             (let* ((name (ergoemacs-get-major-mode-name (cdr elt)))
+                    (first (upcase (substring name 0 1))))
+               (if (member first all)
+                   (unless (member first dups)
+                     (push first dups))
+                 (push first all))
+               (push (list (cdr elt) 'menu-item
+                           name
+                           (cdr elt)) ret))
+             (push (cdr elt) modes)))))
      (append
       interpreter-mode-alist
       magic-mode-alist
       magic-fallback-mode-alist
       auto-mode-alist))
-    
-    (symbol-value 'ret)))
+    (setq mode (sort ret (lambda(x1 x2) (string< (downcase (nth 2 x2))
+                                            (downcase (nth 2 x1))))))
+    (setq ret '())
+    (mapc
+     (lambda(elt)
+       (let ((this-letter (upcase (substring (nth 2 elt) 0 1))))
+         (cond
+          ((not (member this-letter dups))
+           ;; not duplicated -- add prior list and push current element.
+           (when cur-lst
+             (push `(,(intern current-letter) menu-item ,current-letter
+                     (keymap ,@cur-lst)) ret))
+           (push elt ret)
+           (setq current-letter this-letter)
+           (setq cur-lst nil))
+          ((not (equal this-letter current-letter))
+           ;; duplicated, but not last letter.
+           (when cur-lst
+             (push `(,(intern current-letter) menu-item ,current-letter
+                     (keymap ,@cur-lst)) ret))
+           (setq cur-lst nil)
+           (setq current-letter this-letter)
+           (push elt cur-lst))
+          (t
+           ;; duplicated and last letter
+           (push elt cur-lst)))))
+     mode)
+    (when cur-lst
+      (push `(,(intern current-letter) menu-item ,current-letter
+              (keymap ,@cur-lst)) ret))
+    ;; Now create nested menu.
+    `(keymap ,@ret
+             (separator1 menu-item "--")
+             (package menu-item  "Manage Packages" list-packages))))
 
 ;;; `File' menu
 (defun ergoemacs-menu-bar-file-menu ()
@@ -133,33 +220,6 @@ All other modes are assumed to be minor modes or unimportant.
           (save-buffer menu-item "Save" save-buffer)
           (write-file menu-item "Save As..." write-file)
           (revert-buffer menu-item "Revert to Saved" revert-buffer)
-          (separator2 menu-item "--")
-          (lang-modes menu-item "Language Modes"
-                      (keymap (c "C" . c-mode)
-                              (c++ "C++" . c++-mode)
-                              (java "Java" . java-mode)
-                              (separator3 "--")
-                              (css "CSS" . css-mode)
-                              (html "HTML" . html-mode)
-                              (nxml "XML (nxml-mode)" . nxml-mode)
-                              (xml "XML (xml-mode)" . xml-mode)
-                              (js "Javascript (js-mode)" . js-mode)
-                              (latex "LaTeX" . latex-mode)
-                              (separator2 "--")
-                              (elisp "Emacs Lisp" . emacs-lisp-mode)
-                              (separator1 "--")
-                              (perl "Perl" . cperl-mode)
-                              (php "PHP" . php-mode)
-                              (python "Python" . python-mode)
-                              (ruby "Ruby" . ruby-mode)
-                              (tcl "TCL" . tcl-mode)
-                              (bash "Bash" . sh-mode)
-                              (vb "Visual Basic" . visual-basic-mode)
-                              (cmd "cmd.exe" . dos-mode)
-                              (powershell "PowerShell" . powershell-mode)
-                              (list-text-editing-modes "List Text Editing Modes..." . list-text-editing-modes)
-                              "major modes"))
-          (separator3 menu-item "--")
           (print-buffer menu-item "Print" print-buffer)
           (ps-print-buffer-faces menu-item "Print (font+color)" ps-print-buffer-faces)
           (separator4 menu-item "--")
@@ -218,7 +278,8 @@ All other modes are assumed to be minor modes or unimportant.
                            :help "Mark the whole buffer for a subsequent cut/copy"
                            :keys "Ctrl+A")
         (separator-search menu-item "--")
-        (blank-operations menu-item "Blank/Whitespace Operations" (keymap
+        (blank-operations menu-item "Blank/Whitespace Operations"
+                          (keymap
                            (trim-trailing-space menu-item
                                                 "Trim Trailing Space"
                                                 delete-trailing-whitespace
@@ -830,7 +891,9 @@ All other modes are assumed to be minor modes or unimportant.
   (define-key-after global-map [menu-bar search] (cons "Search" ergoemacs-menu-bar-search-menu)
     'edit)
   (define-key-after global-map [menu-bar view] (cons "View" ergoemacs-menu-bar-view-menu)
-    'search))
+    'search)
+  (define-key-after global-map [menu-bar languages]
+    (cons "Languages" (ergoemacs-get-major-modes)) 'view))
 
 (defun ergoemacs-menus-off ()
   "Turn off ergoemacs menus instead of emacs menus"
@@ -839,6 +902,7 @@ All other modes are assumed to be minor modes or unimportant.
   (define-key global-map [menu-bar edit] (cons "Edit" ergoemacs-menu-bar-old-edit-menu))
   (define-key global-map [menu-bar search] nil)
   (define-key global-map [menu-bar view] nil)
+  (define-key global-map [menu-bar languages] nil)
   (define-key global-map [menu-bar help-menu]
     ;; FIXME: paren mismatch
     (cons "Help" ergoemacs-menu-bar-old-help-menu)))
