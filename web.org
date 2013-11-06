@@ -55,6 +55,8 @@ A minor-mode that aims to:
 
 [[http://ergoemacs.org/emacs/emacs_keys_index.html][/icon-keyboard-wireless icon-white/ Keyboard Articles]]
 
+[[http://ergoemacs.org/emacs/emacs_modernization.html][Emacs Modernization]]
+
 [[http://ergoemacs.org/emacs/blog.html][/icon-blog icon-white/ Emacs Blog]]
 
 
@@ -1128,6 +1130,15 @@ right of the rectangle and filling the rectangle with blanks.
 and down; lines scrolled outside the top or bottom of the rectangle
 are lost, but can be recovered using [C-z].
 
+*** Visual Regexp
+When [[https://github.com/benma/visual-regexp.el][visual regexp]] is installed, ergoemacs-mode changes
+=query-replace-regexp= to =vr/query-replace=
+*** Browse-kill-ring and pasting
+The package =browse-kill-ring= can be integrated into the way that
+ergoemacs-mode pastes.  For information see
+[[file:smart-commands.html][smart commands]].
+*** Highlight Symbol and searching
+
 ** Bug report
   :PROPERTIES:
   :PAGE:     bug-report.html
@@ -2182,3 +2193,36 @@ enable this by:
 
 
 *** Smart punctuation
+*** Smart Capitalization
+This command is an extension of the [[http://ergoemacs.org/emacs/modernization_upcase-word.html][smart Letter-Case command]]. It
+also toggles camelCase words when it detects you are in a variable.
+When you are outside of a word, it corrects the last mis-spelled
+word. 
+
+The camel-case is determined by the major-mode's mode's settings in
+=ergoemacs-toggle-camel-case-chars=.  In emacs-lisp it is more common
+to separate variables with =-= rather than =_=.  The default setting
+for =emacs-lisp-mode= allows toggling between the various variables.
+For exampleVariable emacs-lisp toggles between the following:
+
+- exampleVariable
+- ExampleVariable
+- example-variable
+- example_variable
+
+In =R= it is likely that you separate variables by =.= or =_=  so
+exampleVariable would be toggled between
+
+- exampleVariable
+- ExampleVariable
+- example.variable
+- example_variable
+
+In some modes, like =org-mode= only the toggle letter case is
+active.  
+
+Any of these can be customized by customizing the variable
+=ergoemacs-toggle-camel-case-chars=. 
+
+
+
