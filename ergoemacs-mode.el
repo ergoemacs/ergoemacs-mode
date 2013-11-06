@@ -447,7 +447,7 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
              (message "%s" err))))
         (reset-this-command-lengths)
         ))
-     (t 
+     (t ;; Prefix arg required when sending unread command events 
       (setq prefix-arg ergoemacs-curr-prefix-arg)
       (reset-this-command-lengths)
       (setq unread-command-events (cons 'timeout unread-command-events))))
@@ -563,7 +563,7 @@ work in the terminal."
                 `(lambda(&optional arg)
                    (interactive "P")
                    (setq this-command last-command) ; Don't record this command.
-                   (setq prefix-arg current-prefix-arg)
+                   ;; (setq prefix-arg current-prefix-arg)
                    (ergoemacs-shortcut-internal ,(nth 0 def) ',(nth 1 def))))))
         (mapc
          (lambda(new-def)
@@ -618,7 +618,7 @@ work in the terminal."
           `(lambda(&optional arg)
              (interactive "P")
              (setq this-command last-command) ; Don't record this command.
-             (setq prefix-arg current-prefix-arg)
+             ;; (setq prefix-arg current-prefix-arg)
              (ergoemacs-shortcut-internal ,def)))))
     
     t)
@@ -898,7 +898,7 @@ work in the terminal."
         (setq fn `(lambda(&optional arg)
                     (interactive "P")
                     (setq this-command last-command) ; Don't record this command.
-                    (setq prefix-arg current-prefix-arg)
+                    ;; (setq prefix-arg current-prefix-arg)
                     (ergoemacs-shortcut-internal ,definition))))
       (if (and (eq translate 'remap)
                (functionp key-def)

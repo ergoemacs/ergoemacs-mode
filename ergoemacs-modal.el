@@ -265,7 +265,7 @@ modal state is currently enabled."
               ,(format "Run `%s' or whatever this mode remaps the command to be using `ergoemacs-shortcut-internal'." (symbol-name cmd))
               (interactive "P")
               (setq this-command ',cmd)
-              (setq prefix-arg current-prefix-arg)
+              ;; (setq prefix-arg current-prefix-arg)
               (ergoemacs-shortcut-internal ',cmd))))
          (setq new-cmd (intern (format "%s-ergoemacs" (symbol-name cmd))))
          (ergoemacs-debug "Created %s" new-cmd)

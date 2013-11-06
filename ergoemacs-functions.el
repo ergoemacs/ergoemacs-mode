@@ -415,7 +415,7 @@ This behavior can be turned off with `ergoemacs-repeatable-beginning-or-end-of-b
   (let ((ma (region-active-p)))
     (if current-prefix-arg
         (progn
-          (setq prefix-arg current-prefix-arg)
+          ;; (setq prefix-arg current-prefix-arg)
           (ergoemacs-shortcut-internal 'end-of-buffer))
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (bobp))
@@ -440,7 +440,7 @@ This will not honor `shift-select-mode'."
   (let ((ma (region-active-p)))
     (if current-prefix-arg
         (progn
-          (setq prefix-arg current-prefix-arg)
+          ;; (setq prefix-arg current-prefix-arg)
           (ergoemacs-shortcut-internal 'end-of-buffer))
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (eobp))
@@ -1288,10 +1288,10 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
   (interactive "P")
   (cond
    ((save-excursion (beginning-of-line) (looking-at org-table-any-line-regexp))
-    (setq prefix-arg current-prefix-arg)
+    ;; (setq prefix-arg current-prefix-arg)
     (cua-set-rectangle-mark reopen-or-invisible-ok))
    (t
-    (setq prefix-arg current-prefix-arg)
+    ;; (setq prefix-arg current-prefix-arg)
     (org-insert-heading-respect-content reopen-or-invisible-ok))))
 
 (defcustom ergoemacs-smart-paste t
@@ -1407,10 +1407,12 @@ ARG is the prefix argument for either command." direction direction direction)
                     (save-excursion
                       (goto-char (region-beginning))
                       (org-at-heading-p))))))
-         (setq prefix-arg current-prefix-arg) ;; Send prefix to next function
+         ;; (setq prefix-arg current-prefix-arg)
+         ;; Send prefix to next function
          (call-interactively ',(intern (format "org-meta%s" direction))))
         (t
-         (setq prefix-arg current-prefix-arg) ;; Send prefix to next function
+         ;; (setq prefix-arg current-prefix-arg)
+         ;; Send prefix to next function
          (ergoemacs-lookup-key-and-run ,(format "<M-%s>" direction)))))))
 
 (ergoemacs-define-org-meta "left")

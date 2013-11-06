@@ -367,6 +367,7 @@ the best match."
 
 (defvar ergoemacs-send-fn-keys-fns '(ergoemacs-undefined ergoemacs-shortcut)
   "List of functions where `unread-command-events' are sent with `ergoemacs-send-fn'.")
+
 (defun ergoemacs-send-fn (key fn &optional message)
   "Sends the function."
   (let ((cmd fn)
@@ -374,7 +375,7 @@ the best match."
         new-unread)
     (setq cmd (or (command-remapping cmd (point)) cmd))
     (setq this-command cmd)
-    (setq prefix-arg current-prefix-arg)
+    ;; (setq prefix-arg current-prefix-arg)
     
     ;; (let (message-log-max)
     ;;   (message "%s: %s" (ergoemacs-pretty-key key) cmd))
@@ -414,7 +415,7 @@ the best match."
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
   (setq this-command last-command) ; Don't record this command.
-  (setq prefix-arg current-prefix-arg)
+  ;; (setq prefix-arg current-prefix-arg)
   (ergoemacs-shortcut-internal (format "%s %s" prefix-key untranslated-key) type))
 
 (defun ergoemacs-menu-swap (prefix-key untranslated-key type)
@@ -465,7 +466,7 @@ the best match."
                     unchorded))))
     (setq new-key (listify-key-sequence (read-kbd-macro kbd-code)))
     (setq this-command last-command) ; Don't record this command.
-    (setq prefix-arg current-prefix-arg)
+    (setq prefix-arg current-prefix-arg) ; Need to send prefix argument since sending unread command events
     (set-temporary-overlay-map ergoemacs-current-extracted-map)
     (reset-this-command-lengths)
     (setq unread-command-events (append new-key unread-command-events))
@@ -521,9 +522,7 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
 "
   (interactive "P")
   
-  (let (
-        cmd1 cmd2)
-    
+  (let (cmd1 cmd2)
     (let (ergoemacs-shortcut-keys ergoemacs-shortcut-override-mode)
       (setq cmd1 (key-binding (this-single-command-keys)))
       (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
@@ -562,11 +561,12 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
               (setq count (gethash (cons major-mode command) keyfreq-table))
               (remhash (cons major-mode command) keyfreq-table))))
         (setq this-command last-command)
-        (setq prefix-arg current-prefix-arg)
+        ;; (setq prefix-arg current-prefix-arg)
         (if (condition-case err
                 (interactive-form (nth 0 args))
               (error nil))
-            (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args))))
+            (progn
+              (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args)))))
           (eval (macroexpand `(ergoemacs-shortcut-internal ,(nth 0 args) ',(nth 1 args)))))))))
 
 (defun ergoemacs-quit-key-sequence ()
@@ -612,6 +612,10 @@ When KEYMAP-KEY is non-nil, define the KEYMAP-KEY on the `ergoemacs-shortcut-ove
 
 When `override-text-map' is bound and defined only look up based
 on that key.
+
+When KEY is a function, lookup the corresponding binding of that
+function if it is bound globally.  For example
+`beginning-of-line' becomes `org-beginning-of-line' in `org-mode'
 "
   (cond
    ((or (not chorded)
@@ -717,7 +721,8 @@ on that key.
               (message "%s is not defined." (ergoemacs-pretty-key key))))
         (unless keymap-key
           (setq this-command (nth 0 fn)) ; Don't record this command.
-          (setq prefix-arg current-prefix-arg))
+          ;; (setq prefix-arg current-prefix-arg)
+          )
         (if (condition-case err
                 (interactive-form (nth 0 fn))
               (error nil))
@@ -828,7 +833,7 @@ sets `this-command' to `%s'. The hook
    (t ;; key prefix
     (setq ergoemacs-push-M-O-timeout nil) ;; Cancel timeouts
     (setq this-command last-command) ; Don't record this command.
-    (setq prefix-arg current-prefix-arg)
+    ;; (setq prefix-arg current-prefix-arg)
     (let (key-seq
           (key-type
            (cond
@@ -907,7 +912,7 @@ sets `this-command' to `%s'. The hook
   "Ergoemacs C-c C-c. If `ergoemacs-repeat-ctl-c-ctl-c', repeat the command"
   (interactive "P")
   (setq this-command last-command) ; Don't record this command.
-  (setq prefix-arg current-prefix-arg)
+  ;; (setq prefix-arg current-prefix-arg)
   (ergoemacs-shortcut-internal "C-c C-c" 'repeat-global ergoemacs-repeat-ctl-c-ctl-c))
 
 (defun ergoemacs-install-shortcuts-map (&optional map dont-complete)
@@ -931,7 +936,7 @@ If MAP is nil, base this on a sparse keymap."
                    (interactive "P")
                    (let (overriding-terminal-local-map
                          overriding-local-map)
-                     (setq prefix-arg current-prefix-arg)
+                     ;; (setq prefix-arg current-prefix-arg)
                      (condition-case err
                          (call-interactively 'ergoemacs-shortcut)
                        (error (beep) (message "%s" err))))))))
