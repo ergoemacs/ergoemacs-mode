@@ -1314,10 +1314,6 @@ This is `yank' if `ergoemacs-smart-paste' is t.
 If `browse-kill-ring' is enabled and the last command is not a
 paste, this will start `browse-kill-ring'.
 
-Each `yank' and `yank-pop' may be changed based on smart lookup with
-`ergoemacs-shortcut-internal'.
-
-
 When in `browse-kill-ring-mode', cycle backward through the key ring.
 "
   (interactive "P")
@@ -1330,17 +1326,14 @@ When in `browse-kill-ring-mode', cycle backward through the key ring.
              (not (eq last-command 'yank)))
         (browse-kill-ring)
       (if ergoemacs-smart-paste
-          (ergoemacs-shortcut-internal 'yank)
-        (ergoemacs-shortcut-internal 'yank-pop)))))
+          (yank)
+        (yank-pop)))))
 
 (defun ergoemacs-yank (&optional arg)
   "Run `yank' or `yank-pop' if this command is repeated.
 This is `yank' if `ergoemacs-smart-paste' is nil.
 This is `yank-pop' if `ergoemacs-smart-paste' is t and last command is a yank.
 This is `browse-kill-ring' if `ergoemacs-smart-paste' equals 'browse-kill-ring and last command is a yank.
-
-Each `yank' and `yank-pop' may be changed based on smart lookup with
-`ergoemacs-shortcut-internal'.
 
 When in `browse-kill-ring-mode', cycle forward through the key ring.
 "
@@ -1357,9 +1350,9 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
     ;; Add unread command events another "paste"
     (setq unread-command-events (listify-key-sequence (this-single-command-keys))))
    ((and ergoemacs-smart-paste (eq last-command 'yank))
-    (ergoemacs-shortcut-internal 'yank-pop))
+    (yank-pop))
    (t
-    (ergoemacs-shortcut-internal 'yank))))
+    (yank))))
 
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
