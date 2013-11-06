@@ -189,6 +189,8 @@
     ("<apps> h `" elisp-index-search)
     ("<apps> h m" ergoemacs-describe-major-mode)
     ("<apps> h o" ergoemacs-where-is-old-binding)
+    ("<apps> h z" ergoemacs-clean)
+    ("<apps> h Z" ergoemacs-clean-nw)
 
     ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
     ("<apps> k" ergoemacs-toggle-full-alt "Alt+mode")
