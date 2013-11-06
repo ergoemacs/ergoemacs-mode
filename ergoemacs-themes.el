@@ -276,6 +276,13 @@
     ("<M-f5>" redo "↷ redo")
     ("C-S-z" redo "↷ redo")
 
+    ;; Modernize isearch and add back search-map to ergoemacs-mode
+    ("<f8>" search-map)
+    ("<f8> <f8>" highlight-symbol-at-point)
+    ("<C-f8>" highlight-symbol-prev)
+    ("<C-f9>" highlight-symbol-next)
+    ("<f8> <f9>" highlight-symbol-query-replace)
+
     ("<S-delete>" ergoemacs-cut-line-or-region "✂ region")
     ("<f2>" ergoemacs-cut-line-or-region "✂ region")
 
