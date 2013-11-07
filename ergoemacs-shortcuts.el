@@ -505,7 +505,7 @@ the best match."
   "Current extracted variant")
 
 (defcustom ergoemacs-shortcut-ignored-functions
-  '(undo-tree-visualize)
+  '(undo-tree-visualize ergoemacs-undefined)
   "Ignored functions for `ergoemacs-shortcut'."
   :group 'ergoemacs-mode
   :type '(repeat
