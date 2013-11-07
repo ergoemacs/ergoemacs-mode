@@ -666,7 +666,12 @@
         (when keyfreq-mode
           (let ((command 'ergoemacs-undefined) count)
             (setq count (gethash (cons major-mode command) keyfreq-table))
-            (remhash (cons major-mode command) keyfreq-table)
+            (cond
+             ((= count 1)
+              (remhash (cons major-mode command) keyfreq-table))
+             (count
+              (puthash (cons major-mode command) (- count 1)
+                       keyfreq-table)))
             ;; Add local-fn to counter.
             (setq command local-fn)
             (setq count (gethash (cons major-mode command) keyfreq-table))
@@ -696,7 +701,12 @@
         (when keyfreq-mode
           (let ((command 'ergoemacs-undefined) count)
             (setq count (gethash (cons major-mode command) keyfreq-table))
-            (remhash (cons major-mode command) keyfreq-table)
+            (cond
+             ((= count 1)
+              (remhash (cons major-mode command) keyfreq-table))
+             (count
+              (puthash (cons major-mode command) (- count 1)
+                       keyfreq-table)))
             ;; Add local-fn to counter.
             (setq command local-fn)
             (setq count (gethash (cons major-mode command) keyfreq-table))
