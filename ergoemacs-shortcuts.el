@@ -639,7 +639,7 @@ function if it is bound globally.  For example
            (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
            ;; Dont bind to shortcut maps... causes infinite recursion
            ;; of that function calls `ergoemacs-shortcut-internal'
-           (when (and new-fn (not (boundp 'ergoemacs-orig-keymap))
+           (when (and new-fn (not (eq real-this-command new-fn))
                       (condition-case err
                           (interactive-form new-fn)
                         (error nil)))
@@ -651,6 +651,7 @@ function if it is bound globally.  For example
                          (read-kbd-macro
                           (key-description cur-key) t))))
            (unless (or (eq binding key)
+                       (eq real-this-command binding)
                        (memq binding
                              (append ergoemacs-shortcut-ignored-functions
                                      '(ergoemacs-undefined
@@ -940,8 +941,7 @@ If MAP is nil, base this on a sparse keymap."
      ergoemacs-command-shortcuts-hash)
     ;; Now install the rest of the ergoemacs-mode keys
     (unless dont-complete
-      ;; (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap)
-      )
+      (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap))
     ergoemacs-shortcut-override-keymap))
 
 (defvar ergoemacs-describe-keybindings-functions
