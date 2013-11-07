@@ -651,6 +651,32 @@
     ;; map and doesn't actually change it.
     (cond
      ((progn
+        ;; See if this is present in the `ergoemacs-shortcut-keymap'
+        (setq local-fn (lookup-key ergoemacs-shortcut-keymap (read-kbd-macro key)))
+        (unless (functionp local-fn)
+          ;; Lookup in ergoemacs-keymap
+          (setq local-fn (lookup-key ergoemacs-keymap (read-kbd-macro key))))
+        (functionp local-fn))
+      (ergoemacs-debug "WARNING: The command %s is undefined when if shouldn't be..." local-fn)
+      (ergoemacs-vars-sync) ;; Try to fix issue.
+      (setq tmp (key-binding (read-kbd-macro key)))
+      (when (and tmp (not (equal tmp 'ergoemacs-undefined)))
+        (setq local-fn tmp))
+      (when (featurep 'keyfreq)
+        (when keyfreq-mode
+          (let ((command 'ergoemacs-undefined) count)
+            (setq count (gethash (cons major-mode command) keyfreq-table))
+            (remhash (cons major-mode command) keyfreq-table)
+            ;; Add local-fn to counter.
+            (setq command local-fn)
+            (setq count (gethash (cons major-mode command) keyfreq-table))
+            (puthash (cons major-mode command) (if count (+ count 1) 1)
+                     keyfreq-table))))
+      (setq this-command local-fn)
+      (condition-case err
+          (call-interactively local-fn)
+        (error (beep) (message "%s" err))))
+     ((progn
         ;; Local map present.  Use it, if there is a key
         ;; defined there.
         (setq local-fn (get-char-property (point) 'local-map))
@@ -665,8 +691,17 @@
                                          (read-kbd-macro key)))
             (setq local-fn nil)))
         (functionp local-fn))
-      (setq this-command last-command) ; Don't record this command.
-      (setq prefix-arg current-prefix-arg)
+      (setq this-command local-fn) ; Don't record this command.
+      (when (featurep 'keyfreq)
+        (when keyfreq-mode
+          (let ((command 'ergoemacs-undefined) count)
+            (setq count (gethash (cons major-mode command) keyfreq-table))
+            (remhash (cons major-mode command) keyfreq-table)
+            ;; Add local-fn to counter.
+            (setq command local-fn)
+            (setq count (gethash (cons major-mode command) keyfreq-table))
+            (puthash (cons major-mode command) (if count (+ count 1) 1)
+                     keyfreq-table))))
       (condition-case err
           (call-interactively local-fn)
         (error (beep) (message "%s" err))))
