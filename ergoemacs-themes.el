@@ -91,8 +91,8 @@
     ;; Copy Cut Paste, Paste previous
     ("M-x" ergoemacs-cut-line-or-region "✂ region")
     ("M-c" ergoemacs-copy-line-or-region "copy")
-    ("M-v" ergoemacs-yank "paste")
-    ("M-V" ergoemacs-yank-pop "paste ↑")
+    ("M-v" ergoemacs-paste "paste")
+    ("M-V" ergoemacs-paste-cycle "paste ↑")
     ("M-C" ergoemacs-copy-all "copy all")
     ("M-X" ergoemacs-cut-all "✂ all")
     
@@ -202,7 +202,7 @@
     ("<apps> w" ergoemacs-close-current-buffer "Close")
     ("<apps> x" ergoemacs-cut-line-or-region "✂ region")
     ("<apps> c" ergoemacs-copy-line-or-region "copy")
-    ("<apps> v" ergoemacs-yank "paste")
+    ("<apps> v" ergoemacs-paste "paste")
     ("<apps> b" redo "↷ redo")
     ;; ("<apps> u" ergoemacs-smart-punctuation "()")
     ("<apps> t" (helm-mini ido-switch-buffer switch-to-buffer) "switch buf")
@@ -293,12 +293,12 @@
     ("<C-f2>" ergoemacs-cut-all "✂ all")
     ("<C-f3>" ergoemacs-copy-all "Copy all")
 
-    ("<C-f4>" ergoemacs-yank-pop "paste ↑")
-    ("C-S-v" ergoemacs-yank-pop "paste ↑")
+    ("<C-f4>" ergoemacs-paste-cycle "paste ↑")
+    ("C-S-v" ergoemacs-paste-cycle "paste ↑")
     
-    ("<S-insert>" ergoemacs-yank "paste")
-    ("<f4>" ergoemacs-yank "paste")
-    ("C-v" ergoemacs-yank "paste")
+    ("<S-insert>" ergoemacs-paste "paste")
+    ("<f4>" ergoemacs-paste "paste")
+    ("C-v" ergoemacs-paste "paste")
 
     ;; Navigation
     ("C-S-n" make-frame-command "New Frame")
@@ -477,7 +477,7 @@
       ("S-<f12>" isearch-ring-retreat isearch-mode-map)
       ("C-S-f" isearch-occur isearch-mode-map)
       ("C-M-f" isearch-occur isearch-mode-map)
-      (ergoemacs-yank isearch-yank-kill isearch-mode-map)
+      (ergoemacs-paste isearch-yank-kill isearch-mode-map)
       (keyboard-quit isearch-abort isearch-mode-map)
       (ergoemacs-toggle-letter-case isearch-toggle-regexp isearch-mode-map)
       (ergoemacs-toggle-camel-case isearch-toggle-case-fold isearch-mode-map)))

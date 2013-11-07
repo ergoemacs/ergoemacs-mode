@@ -1306,7 +1306,8 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
           (const :tag "Repeated paste, pastes same thing multiple times."))
   :group 'ergoemacs-mode)
 
-(defun ergoemacs-yank-pop (&optional arg)
+
+(defun ergoemacs-paste-cycle (&optional arg)
   "Run `yank-pop' or`yank'.
 This is `yank-pop' if `ergoemacs-smart-paste' is nil.
 This is `yank' if `ergoemacs-smart-paste' is t.
@@ -1326,10 +1327,10 @@ When in `browse-kill-ring-mode', cycle backward through the key ring.
              (not (eq last-command 'yank)))
         (browse-kill-ring)
       (if ergoemacs-smart-paste
-          (yank)
-        (yank-pop)))))
+          (ergoemacs-shortcut-internal 'yank)
+        (erogemacs-shortcut-internal 'yank-pop)))))
 
-(defun ergoemacs-yank (&optional arg)
+(defun ergoemacs-paste (&optional arg)
   "Run `yank' or `yank-pop' if this command is repeated.
 This is `yank' if `ergoemacs-smart-paste' is nil.
 This is `yank-pop' if `ergoemacs-smart-paste' is t and last command is a yank.
@@ -1350,9 +1351,9 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
     ;; Add unread command events another "paste"
     (setq unread-command-events (listify-key-sequence (this-single-command-keys))))
    ((and ergoemacs-smart-paste (eq last-command 'yank))
-    (yank-pop))
+    (ergoemacs-shortcut-internal 'yank-pop))
    (t
-    (yank))))
+    (ergoemacs-shortcut-internal 'yank))))
 
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
