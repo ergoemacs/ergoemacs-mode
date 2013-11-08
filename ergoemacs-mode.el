@@ -1230,14 +1230,25 @@ depending the state of `ergoemacs-mode' variable."
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
 
-(defvar ergoemacs-save-variables
+(defcustom ergoemacs-save-variables
   '((org-CUA-compatible t)
     (shift-select-mode t)
     (delete-selection-mode 1)
+    (set-mark-command-repeat-pop t)
+    (org-special-ctrl-a/e t)
     (scroll-error-top-bottom t))
   "Variables/Modes that `ergoemacs-mode' changes, and restores.
 Initial state is what `ergoemacs-mode' toggles to when it is turned on.
-When the state is 1 or -1 it turns on/off the corresponding mode.")
+When the state is 1 or -1 it turns on/off the corresponding mode."
+  :type '(repeat
+          (list 
+           (symbol :tag "Variable/Mode")
+           (choice
+            (const :tag "Set Variable to t" t)
+            (const :tag "Set Variable to nil" t)
+            (const :tag "Turn ON mode" 1)
+            (const :tag "Turn OFF mode" -1))))
+  :group 'ergoemacs-mode)
 (defvar ergoemacs-save-variables-state nil)
 
 (defvar ergoemacs-emulation-mode-map-alist nil
