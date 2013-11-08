@@ -37,7 +37,7 @@
   "Default Ergoemacs Layout"
   :group 'ergoemacs-mode)
 
- (defcustom ergoemacs-variable-layout
+(defcustom ergoemacs-variable-layout
   '(("M-j" backward-char  "← char")
     ("M-l" forward-char "→ char")
     ("M-i" previous-line "↑ line")
@@ -127,8 +127,8 @@
     ;; Mark point.
     ("M-SPC" set-mark-command "Set Mark")
     
-    ;; ("M-a" (helm-M-x smex execute-extended-command) "M-x")
     ("M-a" execute-extended-command "M-x")
+    ;; ("M-a" execute-extended-command "M-x")
     ("M-A" shell-command "shell cmd")
     
     ;; WINDOW SPLITING
@@ -205,7 +205,7 @@
     ("<apps> v" ergoemacs-paste "paste")
     ("<apps> b" redo "↷ redo")
     ;; ("<apps> u" ergoemacs-smart-punctuation "()")
-    ("<apps> t" (helm-mini ido-switch-buffer switch-to-buffer) "switch buf")
+    ("<apps> t" switch-to-buffer "switch buf")
     ("<apps> z" undo "↶ undo")
 
     ("<apps> n a" org-agenda "agenda")
@@ -443,6 +443,7 @@
 
 (defcustom ergoemacs-minor-mode-layout
   `(;; Key/variable command x-hook
+    
     (org-mode-hook
      (;; (move-beginning-of-line org-beginning-of-line nil remap)
       ;; (move-end-of-line org-end-of-line nil remap)
@@ -462,6 +463,8 @@
      (("<f11>" browse-kill-ring-previous)
       ("<f12>" browse-kill-ring-forward)
       (keboard-quit  browse-kill-ring-quit)
+      ("ESC" browse-kill-ring-quit)
+      ("<escape>" browse-kill-ring-quit)
       (isearch-forward browse-kill-ring-search-forward)
       (isearch-backward browse-kill-ring-search-backward)
       (previous-line browse-kill-ring-previous)
@@ -545,6 +548,9 @@
       ("<M-f11>" previous-matching-history-element)
       ("S-<f12>" next-matching-history-element)
       ("<M-f12>" next-matching-history-element)))
+
+    (ido-mode
+     ((execute-extended-command smex nil remap)))
     
     ;; Info Mode hooks
     (Info-mode-hook
@@ -559,7 +565,14 @@
       ("<apps> j ," ess-sas-data-view-insight nil t)
       ("<apps> j m" ess-sas-graph-view nil t)
       ("<apps> j n" ess-sas-goto-shell nil t)))
+    
     ;; Helm mode hooks
+    (helm-mode
+     ((execute-extended-command helm-M-x nil remap)
+      (switch-to-buffer helm-mini nil remap)
+      (find-file helm-find-files nil remap)
+      (eshell-pcomplete helm-esh-pcomplete nil remap)
+      (grep helm-do-grep nil remap)))
     
     (helm-before-initialize-hook
      (("C-w" helm-keyboard-quit helm-map)
@@ -1292,7 +1305,7 @@ Some exceptions we don't want to unset.
   (ergoemacs-key "M-5" 'delete-other-windows "x other")
   (ergoemacs-key "M-+" 'balance-windows "balance")
 
-  (ergoemacs-key "M-a" '(smex execute-extended-command) "M-x")
+  (ergoemacs-key "M-a" 'execute-extended-command "M-x")
   (ergoemacs-key "M-q" 'shell-command "shell cmd")
   (ergoemacs-key "M-e" 'cabbage-testing-execute-test)
   

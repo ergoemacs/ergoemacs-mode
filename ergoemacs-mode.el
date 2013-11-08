@@ -902,7 +902,9 @@ work in the terminal."
                     (ergoemacs-shortcut-internal ,definition))))
       (if (and (eq translate 'remap)
                (functionp key-def)
-               (functionp fn))
+               (condition-case err
+                   (interactive-form fn)
+                 (error nil)))
           (let ((no-ergoemacs-advice t))
             (define-key keymap
               (eval (macroexpand `[remap ,(intern (symbol-name key-def))]))
@@ -920,7 +922,10 @@ work in the terminal."
                             (encode-coding-string key-def locale-coding-system)))))
                  ((ergoemacs-key-fn-lookup key-def)
                   ;; Also define <apps> key
-                  (when (ergoemacs-key-fn-lookup key-def t)
+                  (when (and (ergoemacs-key-fn-lookup key-def t)
+                             (condition-case err
+                                 (interactive-form fn)
+                               (error nil)))
                     (define-key keymap (ergoemacs-key-fn-lookup key-def t) fn))
                   (ergoemacs-key-fn-lookup key-def))
                  ;; Define <apps>  key
@@ -929,14 +934,19 @@ work in the terminal."
                   nil)
                  (t
                   (if (and (functionp key-def)
-                           (functionp fn))
+                           (condition-case err
+                               (interactive-form fn)
+                             (error nil)))
                       (eval
                        (macroexpand `[remap ,(intern (symbol-name key-def))]))
                     nil)))))
           (ergoemacs-debug "hook: %s->%s %s %s"
                            key-def key-code
                            fn translate)
-          (when key-code
+          (when (and key-code
+                     (condition-case err
+                         (interactive-form fn)
+                       (error nil)))
             (define-key keymap key-code fn)))))))
 
 (defmacro ergoemacs-create-hook-function (hook keys &optional global)
@@ -1129,8 +1139,23 @@ depending the state of `ergoemacs-mode' variable."
   (setq ergoemacs-hook-list nil)
   (mapc
    (lambda(x)
-     (let ((f (macroexpand `(ergoemacs-create-hook-function ,(car x) ,(car (cdr x))))))
-       (eval f)))
+     (cond
+      ((string-match "-hook$" (symbol-name (car x)))
+       (let ((f (macroexpand `(ergoemacs-create-hook-function ,(car x) ,(car (cdr x))))))
+         (eval f)))
+      (t ;; not a hook, assume it is a variable
+       (let ((var (car x))
+             (keys (car (cdr x)))
+             (map (make-sparse-keymap)))
+         (mapc
+          (lambda(args)
+            (ergoemacs-hook-define-key
+             map (nth 0 args) (nth 1 args) (nth 3 args)))
+	  keys)
+         (let ((x (assq var ergoemacs-emulation-mode-map-alist)))
+           (when x
+             (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+           (push (cons var map) ergoemacs-emulation-mode-map-alist))))))
    (symbol-value (ergoemacs-get-minor-mode-layout)))
   (ergoemacs-hook-modes))
 
