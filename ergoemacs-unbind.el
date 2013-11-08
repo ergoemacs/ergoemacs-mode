@@ -667,6 +667,7 @@
           (let ((command 'ergoemacs-undefined) count)
             (setq count (gethash (cons major-mode command) keyfreq-table))
             (cond
+             ((not count))
              ((= count 1)
               (remhash (cons major-mode command) keyfreq-table))
              (count
@@ -702,6 +703,7 @@
           (let ((command 'ergoemacs-undefined) count)
             (setq count (gethash (cons major-mode command) keyfreq-table))
             (cond
+             ((not count))
              ((= count 1)
               (remhash (cons major-mode command) keyfreq-table))
              (count
