@@ -128,13 +128,16 @@
      ((and ergoemacs-ctl-c-or-ctl-x-delay
            (or (region-active-p)
                (and cua--rectangle (boundp 'cua-mode) cua-mode)))
-      (setq ergoemacs-curr-prefix-arg current-prefix-arg)
-      (ergoemacs-shortcut-internal key 'normal)
-      (setq ergoemacs-push-M-O-timeout t)
-      (setq ergoemacs-M-O-prefix-keys key)
-      (setq ergoemacs-M-O-timer
-            (run-with-timer ergoemacs-ctl-c-or-ctl-x-delay nil
-                            #'ergoemacs-M-O-timeout)))
+      ;; Wait for next key...
+      (let (next-key)
+        (catch 'ergoemacs-finish-wait
+          (run-with-idle-timer ergoemacs-ctl-c-or-ctl-x-delay nil
+                               #'(lambda() (throw 'ergoemacs-finish-wait)))
+          (setq next-key (eval (macroexpand `(key-description [,(read-key)]))))
+          (sit-for ergoemacs-ctl-c-or-ctl-x-delay))
+        (if next-key
+            (ergoemacs-shortcut-internal (concat key " " next-key) 'normal)
+          (funcall fn-cp arg))))
      ((or (region-active-p)
           (and cua--rectangle (boundp 'cua-mode) cua-mode))
       (funcall fn-cp arg))

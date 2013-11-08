@@ -569,13 +569,13 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
 (defvar ergoemacs-shortcut-send-key nil)
 (defvar ergoemacs-shortcut-send-fn nil)
 (defvar ergoemacs-shortcut-send-timer nil)
-(defun ergoemacs-shortcut-internal (key &optional chorded repeat keymap-key)
+(defun ergoemacs-shortcut-internal (key &optional chorded repeat keymap-key timeout timeout-fn)
   "Ergoemacs Shortcut.
 
 KEY is the keyboard shortcut.
 
 CHORDED is a variable that alters to keymap to allow unchorded
-key sequences.  Also if CHORDED is 'global, then make this a
+Key sequences.  Also if CHORDED is 'global, then make this a
 shortcut to a global command.
 
 If CHORDED is nil, the NAME command will just issue the KEY sequence.
@@ -730,10 +730,19 @@ function if it is bound globally.  For example
                      "")
                    (format "%s%s " key-type
                            (ergoemacs-pretty-key key)))))
-       (let* ((next-key (eval (macroexpand `(key-description [,(read-key)]))))
-              (new-key-seq (read-kbd-macro (concat (key-description key-seq) " " next-key)))
-              (new-cmd (lookup-key ergoemacs-current-extracted-map new-key-seq)))
+       (let* ((next-key (if timeout
+                            (with-timeout (timeout nil)
+                              (eval (macroexpand `(key-description [,(read-key)]))))
+                          (eval (macroexpand `(key-description [,(read-key)])))))
+              (new-key-seq (if next-key (read-kbd-macro (concat (key-description key-seq) " " next-key)) nil))
+              (new-cmd (if next-key (lookup-key ergoemacs-current-extracted-map new-key-seq) nil)))
          (cond
+          ((and (not next-key) timeout timeout-fn)
+           (let (message-log-max)
+             (message ""))
+           (call-interactively timeout-fn))
+          ((and (not next-key) timeout)
+           (message "Exiting."))
           ((condition-case err
                (interactive-form new-cmd)
              (error nil))
