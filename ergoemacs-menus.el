@@ -149,13 +149,15 @@ All other modes are assumed to be minor modes or unimportant.
   ;; Get known major modes
   (let ((ret '())
         all dups cur-let cur-lst
+        added-modes
         (modes '()))
     (mapc
      (lambda(elt)
        (unless (memq (cdr elt) modes)
          (when (and (functionp (cdr elt))
                     (string-match "-mode$" (symbol-name (cdr elt))))
-           (unless (memq (cdr elt) ergoemacs-excluded-major-modes)
+           (unless (or (memq (cdr elt) ergoemacs-excluded-major-modes)
+                       (member (downcase (symbol-name (cdr elt))) added-modes))
              (let* ((name (ergoemacs-get-major-mode-name (cdr elt)))
                     (first (upcase (substring name 0 1))))
                (if (member first all)
@@ -165,6 +167,7 @@ All other modes are assumed to be minor modes or unimportant.
                (push (list (cdr elt) 'menu-item
                            name
                            (cdr elt)) ret))
+             (push (downcase (symbol-name (cdr elt))) added-modes)
              (push (cdr elt) modes)))))
      (append
       interpreter-mode-alist
