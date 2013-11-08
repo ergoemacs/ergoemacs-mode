@@ -268,13 +268,13 @@
 (defcustom ergoemacs-fixed-layout
   `(
     ;; General Shortcuts
-    ("<M-backspace>" undo "↶ undo")
-    ("<f5>" undo "↶ undo")
-    ("C-z" undo "↶ undo")
+    ("<M-backspace>" (undo-tree-undo undo) "↶ undo")
+    ("<f5>" (undo-tree-undo undo) "↶ undo")
+    ("C-z" (undo-tree-undo undo) "↶ undo")
 
-    ("<C-f5>" redo "↷ redo")
-    ("<M-f5>" redo "↷ redo")
-    ("C-S-z" redo "↷ redo")
+    ("<C-f5>" (undo-tree-redo redo) "↷ redo")
+    ("<M-f5>" (undo-tree-redo redo) "↷ redo")
+    ("C-S-z" (undo-tree-redo redo) "↷ redo")
 
     ;; Modernize isearch and add back search-map to ergoemacs-mode
     ("<f8>" search-map)

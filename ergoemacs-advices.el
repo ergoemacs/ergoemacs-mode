@@ -226,6 +226,17 @@
 
 (ad-activate 'cua-mode)
 
+(defadvice icicle-mode (around ergoemacs-icicle-play (arg))
+  "Allow `ergoemacs-mode' to play nicely with `icicle-mode.'"
+  (let ((oee ergoemacs-mode))
+    (when oee ;; Remove key bindings
+      (ergoemacs-mode -1))
+    ad-do-it
+    (when oee ;; Add them back.  Now icy-mode should play nice.
+      (ergoemacs-mode 1))))
+
+(ad-activate 'icicle-mode)
+
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
