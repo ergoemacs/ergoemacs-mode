@@ -771,6 +771,13 @@ function if it is bound globally.  For example
            (reset-this-command-lengths)
            (setq unread-command-events
                  (append key-seq unread-command-events)))
+          ((lookup-key (current-global-map)
+                       (read-kbd-macro (concat key " " next-key)))
+           ;; Fallback if the extracted map didn't pick up the global
+           ;; binding...  
+           (ergoemacs-debug "WARNING: Did not extract the correct map.")
+           (call-interactively (lookup-key (current-global-map)
+                                           (read-kbd-macro (concat key " " next-key)))))
           (t
            (setq ergoemacs-shortcut-send-key (concat key " " next-key))
            (setq ergoemacs-shortcut-send-fn 'ergoemacs-undefined)))))))
@@ -941,7 +948,11 @@ If MAP is nil, base this on a sparse keymap."
      ergoemacs-command-shortcuts-hash)
     ;; Now install the rest of the ergoemacs-mode keys
     (unless dont-complete
-      (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap))
+      (ergoemacs-setup-keys-for-keymap ergoemacs-shortcut-override-keymap)
+      ;; Remove bindings for C-c and C-x so that the extract keyboard
+      ;; macro will work correctly on links.  (Issue #121)
+      (define-key ergoemacs-shortcut-override-keymap (read-kbd-macro "C-c") nil)
+      (define-key ergoemacs-shortcut-override-keymap (read-kbd-macro "C-x") nil))
     ergoemacs-shortcut-override-keymap))
 
 (defvar ergoemacs-describe-keybindings-functions
