@@ -111,7 +111,6 @@
   "Ergoemacs C-c or C-x defined by KEY."
   (let (fn-cp fn-cx fn-both)
     ;; Create the needed functions
-
     (if (string= "C-c" key)
         (progn
           (setq fn-cp 'ergoemacs-copy-line-or-region))
@@ -129,15 +128,9 @@
            (or (region-active-p)
                (and cua--rectangle (boundp 'cua-mode) cua-mode)))
       ;; Wait for next key...
-      (let (next-key)
-        (catch 'ergoemacs-finish-wait
-          (run-with-idle-timer ergoemacs-ctl-c-or-ctl-x-delay nil
-                               #'(lambda() (throw 'ergoemacs-finish-wait)))
-          (setq next-key (eval (macroexpand `(key-description [,(read-key)]))))
-          (sit-for ergoemacs-ctl-c-or-ctl-x-delay))
-        (if next-key
-            (ergoemacs-shortcut-internal (concat key " " next-key) 'normal)
-          (funcall fn-cp arg))))
+      (ergoemacs-shortcut-internal key 'normal nil nil
+                                   ergoemacs-ctl-c-or-ctl-x-delay
+                                   fn-cp))
      ((or (region-active-p)
           (and cua--rectangle (boundp 'cua-mode) cua-mode))
       (funcall fn-cp arg))
