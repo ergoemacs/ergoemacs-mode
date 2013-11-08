@@ -227,7 +227,7 @@
 (ad-activate 'cua-mode)
 
 (defadvice icicle-mode (around ergoemacs-icicle-play (arg))
-  "Allow `ergoemacs-mode' to play nicely with `icicle-mode.'"
+  "Allow `ergoemacs-mode' to play nicely with `icicle-mode'."
   (let ((oee ergoemacs-mode))
     (when oee ;; Remove key bindings
       (ergoemacs-mode -1))
@@ -237,8 +237,9 @@
 
 (ad-activate 'icicle-mode)
 
+
 (provide 'ergoemacs-advices)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
 ;; Local Variables:
 ;; coding: utf-8-emacs
