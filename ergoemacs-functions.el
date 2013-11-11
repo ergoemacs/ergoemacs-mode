@@ -183,31 +183,6 @@
       (ergoemacs-gen-svg ergoemacs-theme "kbd-ergo.svg" (concat var-dir "ergo-layouts")))
     (symbol-value 'extra-dir)))
 
-;;; Ido-ergoemacs functional fixes
-(defun ergoemacs-ido-c-o (arg)
-  "Ergoemacs ido C-o command."
-  (interactive "P")
-  (cond
-   ((memq ido-cur-item '(file dir))
-    (ido-fallback-command))
-   (t
-    (minibuffer-keyboard-quit)
-    (ido-find-file))))
-
-(defun ergoemacs-ido-prev-match-dir ()
-  "Call the correct function based on if we are completing directories or not"
-  (interactive)
-  (if (and (boundp 'item) item (eq item 'file))
-      (ido-prev-match-dir)
-    (previous-history-element 1)))
-
-(defun ergoemacs-ido-next-match-dir ()
-  "Call the correct function based on if we are completing directories or not."
-  (interactive)
-  (if (and (boundp 'item) item (eq item 'file))
-      (ido-next-match-dir)
-    (next-history-element 1)))
-
 (defun ergoemacs-next-line ()
   "Inserts an indented newline after the current line and moves the point to it."
   (interactive "P")
