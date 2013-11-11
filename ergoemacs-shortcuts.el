@@ -651,7 +651,7 @@ function if it is bound globally.  For example
                          (read-kbd-macro
                           (key-description cur-key) t))))
            (unless (or (eq binding key)
-                       (eq real-this-command binding)
+                       (eq ergoemacs-this-command binding)
                        (memq binding
                              (append ergoemacs-shortcut-ignored-functions
                                      '(ergoemacs-undefined
