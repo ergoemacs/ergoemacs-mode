@@ -347,8 +347,8 @@
     ("<M-left>" ergoemacs-backward-open-bracket) ; Alt+←
     ("<M-right>" ergoemacs-forward-close-bracket) ; Alt+→
     ("<M-up>" ergoemacs-backward-block) ; Alt+↑
-    ("<S-down-mouse-1>" mouse-save-then-kill) ;; Allow shift selection
-    
+    ;; Allow shift selection
+    ("<S-down-mouse-1>" mouse-save-then-kill)
     ("<S-mouse-1>" ignore)
     
     ("<f11>" previous-line "Previous")
@@ -526,29 +526,6 @@
       ("S-<f12>" eshell-next-matching-input-from-input)
       ("<M-f12>" eshell-next-matching-input-from-input)))
     
-    ;; Iswitchdb hook
-    (iswitchb-minibuffer-setup-hook
-     (("<f11>" iswitchb-prev-match)
-      ("<f12>" iswitchb-next-match)
-      ("S-<f11>" iswitchb-prev-match)
-      ("<M-f11>" iswitchb-prev-match)
-      ("S-<f12>" iswitchb-next-match)
-      ("<M-f12>" iswitchb-next-match)))
-    
-    ;; Ido minibuffer setup hook
-    (ido-minibuffer-setup-hook
-     (("C-o" ergoemacs-ido-c-o)
-      (forward-char ido-next-match minor-mode-overriding-map-alist)
-      (backward-char ido-prev-match minor-mode-overriding-map-alist)
-      (previous-line ergoemacs-ido-next-match-dir minor-mode-overriding-map-alist)
-      (next-line ergoemacs-ido-prev-match-dir minor-mode-overriding-map-alist)
-      ("<f11>" previous-history-element )
-      ("<f12>" next-history-element)
-      ("S-<f11>" previous-matching-history-element)
-      ("<M-f11>" previous-matching-history-element)
-      ("S-<f12>" next-matching-history-element)
-      ("<M-f12>" next-matching-history-element)))
-
     (ido-mode
      ((execute-extended-command smex nil remap)))
     
@@ -572,6 +549,9 @@
       (switch-to-buffer helm-mini nil remap)
       (find-file helm-find-files nil remap)
       (eshell-pcomplete helm-esh-pcomplete nil remap)
+      (occur helm-occur nil remap)
+      (info helm-info nil remap)
+      (ac-isearch ac-complete-with-helm nil reamp)
       (grep helm-do-grep nil remap)))
     
     (helm-before-initialize-hook
@@ -581,7 +561,7 @@
       ("M-S-RET" "C-u M-RET" helm-map)
       ("<M-S-return>" "C-u M-RET" helm-map)))
     
-    (auto-complete-mode-hook ac-completing-map))
+    (auto-complete-mode-hook ac-completing-map ac-menu-map))
   "Key bindings that are applied as hooks to specific modes."
   :type '(repeat
           (list :tag "Keys for a particular minor/major mode"
