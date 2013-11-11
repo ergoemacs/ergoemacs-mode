@@ -1628,12 +1628,14 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
     (setq minor-mode-map-alist (append (delete x minor-mode-map-alist) (list x)))))
 
+(defvar ergoemacs-this-command nil)
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
   (let (deactivate-mark)
     (condition-case err
         (progn
           (ergoemacs-vars-sync)
+          (setq ergoemacs-this-command this-command)
           (when ergoemacs-mode
             ;; Raise shortcuts and modal modes.
             (ergoemacs-shuffle-keys)
