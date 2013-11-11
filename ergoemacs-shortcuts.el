@@ -639,7 +639,7 @@ function if it is bound globally.  For example
            (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
            ;; Dont bind to shortcut maps... causes infinite recursion
            ;; of that function calls `ergoemacs-shortcut-internal'
-           (when (and new-fn (not (eq real-this-command new-fn))
+           (when (and new-fn (not (eq ergoemacs-this-command new-fn))
                       (condition-case err
                           (interactive-form new-fn)
                         (error nil)))
