@@ -624,6 +624,7 @@ work in the terminal."
     t)
    (t nil)))
 
+;;;###autoload
 (defmacro ergoemacs-setup-keys-for-keymap (keymap)
   "Setups ergoemacs keys for a specific keymap"
   `(condition-case err
