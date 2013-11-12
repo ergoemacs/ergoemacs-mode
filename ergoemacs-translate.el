@@ -162,12 +162,13 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                         (replace-match (concat (match-string 1) (cdr (assoc (match-string 2) ergoemacs-translation-assoc)) (match-string 3)) t t)
                         (skip-chars-backward " ")))
                     (buffer-string))))
-          (setq new-key (replace-regexp-in-string
-                         ">>" ">"
-                         (replace-regexp-in-string
-                          "<<" "<"
-                          (replace-regexp-in-string
-                           "\\<\\(ENTER\\|enter\\)\\>" "<return>" new-key t t))))
+          (let ((case-fold-search t))
+            (setq new-key (replace-regexp-in-string
+                           ">>" ">"
+                           (replace-regexp-in-string
+                            "<<" "<"
+                            (replace-regexp-in-string
+                             "\\<\\(ENTER\\|enter\\)\\>" "<return>" new-key t t)))))
           (if (not just-translate)
               (condition-case err
                   (read-kbd-macro new-key t)
