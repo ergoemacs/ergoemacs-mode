@@ -432,8 +432,9 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
                 ergoemacs-unbind-keys
                 nk)
             (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-            (setq nk (key-binding (read-kbd-macro prefix-keys) t nil (point)))
-            (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+            (unwind-protect
+                (setq nk (key-binding (read-kbd-macro prefix-keys) t nil (point)))
+              (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
             (if nk
                 (setq fn nk)
               (beep)
@@ -477,8 +478,10 @@ function immediately when `window-system' is true."
                   ergoemacs-unbind-keys
                   nk)
               (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-              (setq nk (key-binding (read-kbd-macro prefix-keys) t nil (point)))
-              (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+              (unwind-protect
+                  (setq nk (key-binding (read-kbd-macro prefix-keys) t nil (point)))
+                (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))s
+              
               (if nk
                   (call-interactively nk)
                 (beep)
