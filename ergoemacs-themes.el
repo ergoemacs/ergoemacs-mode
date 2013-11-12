@@ -320,9 +320,9 @@
     ("<C-left>" backward-word "← word")
     ("<C-right>" forward-word "→ word")
 
-    ("<C-up>" ergoemacs-backward-block "← ¶")
+    ;; ("<C-up>" ergoemacs-backward-block "← ¶")
     ("<M-up>" ergoemacs-backward-block "→ ¶")
-    ("<C-down>" ergoemacs-forward-block "→ ¶")
+    ;; ("<C-down>" ergoemacs-forward-block "→ ¶")
     ("<M-down>" ergoemacs-forward-block "→ ¶")
 
     ;; C-H is search and replace.
