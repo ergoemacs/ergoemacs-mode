@@ -324,6 +324,7 @@
     ("<M-up>" ergoemacs-backward-block "→ ¶")
     ;; ("<C-down>" ergoemacs-forward-block "→ ¶")
     ("<M-down>" ergoemacs-forward-block "→ ¶")
+    ("M-RET" newline-and-indent "Newline & Indent")
 
     ;; C-H is search and replace.
 
@@ -529,9 +530,9 @@
     (ido-mode
      ((execute-extended-command smex nil remap)))
     
-    (ido-setup-hook ; Add M-RET to select text in ido-mode.  More
-                    ; ergonomically friendly
-     (("M-RET" ido-select-text ido-common-completion-map)))
+    ;; (ido-setup-hook ; Add M-RET to select text in ido-mode.  More
+    ;;                 ; ergonomically friendly
+    ;;  (("M-RET" ido-select-text ido-common-completion-map)))
     
     ;; Info Mode hooks
     (Info-mode-hook
