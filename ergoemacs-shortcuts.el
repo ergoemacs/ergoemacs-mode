@@ -514,7 +514,8 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
       (setq cmd1 (key-binding (this-single-command-keys)))
       (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
       (unwind-protect
-          (setq cmd2 (key-binding (this-single-command-keys)))))
+          (setq cmd2 (key-binding (this-single-command-keys)))
+        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)))
     (if (not (equal cmd1 cmd2))
         (progn
           (setq ergoemacs-shortcut-send-key (key-description (this-command-keys-vector))
