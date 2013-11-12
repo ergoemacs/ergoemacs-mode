@@ -529,6 +529,10 @@
     (ido-mode
      ((execute-extended-command smex nil remap)))
     
+    (ido-setup-hook ; Add M-RET to select text in ido-mode.  More
+                    ; ergonomically friendly
+     (("M-RET" ido-select-text ido-common-completion-map)))
+    
     ;; Info Mode hooks
     (Info-mode-hook
      (("<backspace>" Info-history-back)
