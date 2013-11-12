@@ -513,8 +513,8 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
     (let (ergoemacs-shortcut-keys ergoemacs-shortcut-override-mode)
       (setq cmd1 (key-binding (this-single-command-keys)))
       (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-      (setq cmd2 (key-binding (this-single-command-keys)))
-      (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
+      (unwind-protect
+          (setq cmd2 (key-binding (this-single-command-keys)))))
     (if (not (equal cmd1 cmd2))
         (progn
           (setq ergoemacs-shortcut-send-key (key-description (this-command-keys-vector))
@@ -627,45 +627,46 @@ function if it is bound globally.  For example
           (interactive-form key)
         (error nil))
       (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-      (mapc
-       (lambda(cur-key)
-         (unless (string-match "\\(s-\\|A-\\|H-\\)"
-                               (key-description cur-key))
-           (setq binding
-                 (if (and keymap-key (boundp 'ergoemacs-orig-keymap)
-                          ergoemacs-orig-keymap)
-                     (lookup-key ergoemacs-orig-keymap cur-key t)
-                   (key-binding cur-key t nil (point))))
-           (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
-           ;; Dont bind to shortcut maps... causes infinite recursion
-           ;; of that function calls `ergoemacs-shortcut-internal'
-           (when (and new-fn (not (eq ergoemacs-this-command new-fn))
-                      (condition-case err
-                          (interactive-form new-fn)
-                        (error nil)))
-             ;; When a lookup finds org-metadown and there is a
-             ;; function ergoemacs-org-metadown, use the
-             ;; ergoemacs-org-metadown instead.
-             (setq fn-override
-                   (list new-fn
-                         (read-kbd-macro
-                          (key-description cur-key) t))))
-           (unless (or (eq binding key)
-                       (eq ergoemacs-this-command binding)
-                       (memq binding
-                             (append ergoemacs-shortcut-ignored-functions
-                                     '(ergoemacs-undefined
-                                       ergoemacs-shortcut))))
-             (add-to-list 'fn-lst (list binding
-                                        (read-kbd-macro
-                                         (key-description cur-key) t))))))
-       (or
-        (remove-if
-         '(lambda(x)
-            (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
-         (where-is-internal key (current-global-map)))
-        (gethash key ergoemacs-where-is-global-hash)))
-      (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+      (unwind-protect
+          (mapc
+           (lambda(cur-key)
+             (unless (string-match "\\(s-\\|A-\\|H-\\)"
+                                   (key-description cur-key))
+               (setq binding
+                     (if (and keymap-key (boundp 'ergoemacs-orig-keymap)
+                              ergoemacs-orig-keymap)
+                         (lookup-key ergoemacs-orig-keymap cur-key t)
+                       (key-binding cur-key t nil (point))))
+               (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
+               ;; Dont bind to shortcut maps... causes infinite recursion
+               ;; of that function calls `ergoemacs-shortcut-internal'
+               (when (and new-fn (not (eq ergoemacs-this-command new-fn))
+                          (condition-case err
+                              (interactive-form new-fn)
+                            (error nil)))
+                 ;; When a lookup finds org-metadown and there is a
+                 ;; function ergoemacs-org-metadown, use the
+                 ;; ergoemacs-org-metadown instead.
+                 (setq fn-override
+                       (list new-fn
+                             (read-kbd-macro
+                              (key-description cur-key) t))))
+               (unless (or (eq binding key)
+                           (eq ergoemacs-this-command binding)
+                           (memq binding
+                                 (append ergoemacs-shortcut-ignored-functions
+                                         '(ergoemacs-undefined
+                                           ergoemacs-shortcut))))
+                 (add-to-list 'fn-lst (list binding
+                                            (read-kbd-macro
+                                             (key-description cur-key) t))))))
+           (or
+            (remove-if
+             '(lambda(x)
+                (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
+             (where-is-internal key (current-global-map)))
+            (gethash key ergoemacs-where-is-global-hash)))
+        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
       (cond
        (fn-override
         (set fn fn-override))
@@ -679,24 +680,23 @@ function if it is bound globally.  For example
                                         ; passed to `ergoemacs-shortcut'
         (remove-hook 'emulation-mode-map-alists
                      'ergoemacs-emulation-mode-map-alist)
-        (setq fn (list key
+        (unwind-protect
+            (setq fn (list key
                        (read-kbd-macro
                         (key-description
                          (or (where-is-internal
                               key (current-global-map) t)
                              (this-command-keys))) t)))
-          
-        (add-hook 'emulation-mode-map-alists
-                  'ergoemacs-emulation-mode-map-alist)))
+          (add-hook 'emulation-mode-map-alists
+                    'ergoemacs-emulation-mode-map-alist))))
       (setq shared-do-it t))
      ((or (not chorded)
           (memq chorded '(repeat repeat-global global-repeat global))) ;; lookup keybinding for the function keys.
       (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-      (condition-case err
+      (unwind-protect
           (setq fn (list (key-binding (read-kbd-macro key))
                          (read-kbd-macro key t)))
-        (error (ergoemacs-debug "Error in lookup: %s; Restoring keys." err)))
-      (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
       (setq shared-do-it t))
     (keymap-key ;; extract key prefixes.
      )
