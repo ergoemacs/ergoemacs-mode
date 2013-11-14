@@ -1,7 +1,7 @@
 ;;; ergoemacs-shortcuts.el --- Ergoemacs shortcuts interface
 ;;
 ;; Filename: ergoemacs-shortcuts.el
-;; Description: 
+;; Description:
 ;; Author: Matthew L. Fidler
 ;; Maintainer: 
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
@@ -600,11 +600,14 @@ C-k a       -> M-k a           (kmacro-add-counter)
 C-k M-a     -> k C-a           not defined
 C-k S-a     -> k S-a           not defined
 
-When REPEAT is a variable name, then an easy repeat is setup for the command.
+When REPEAT is a variable name, then an easy repeat is setup for
+the command.
 
-For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows Ctrl+c Ctrl+c to be repeated by m.
+For example if you bind <apps> m to Ctrl+c Ctrl+c, this allows
+Ctrl+c Ctrl+c to be repeated by m.
 
-When KEYMAP-KEY is non-nil, define the KEYMAP-KEY on the `ergoemacs-shortcut-override-keymap'
+When KEYMAP-KEY is non-nil, define the KEYMAP-KEY on the
+`ergoemacs-shortcut-override-keymap'
 
 When `override-text-map' is bound and defined only look up based
 on that key.

@@ -1283,6 +1283,8 @@ When the state is 1 or -1 it turns on/off the corresponding mode."
 (defvar ergoemacs-emulation-mode-map-alist nil
   "Override keys in ergoemacs-mode for `emulation-mode-map-alist'")
 
+(defvar ergoemacs-remap t
+  "Variable for ergoemacs remap keymap.  Should always be true.")
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
