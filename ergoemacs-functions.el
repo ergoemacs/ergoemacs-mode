@@ -3,7 +3,8 @@
 ;; Copyright (C) 2013 Matthew L. Fidler
 
 ;; Maintainer: Matthew L. Fidler
-;; Authors: Xah Lee, Matthew Fidler, Drew Adams, Ting-Yu Lin, David Capello
+;; Authors: Xah Lee, Matthew Fidler, Drew Adams, Ting-Yu Lin, David
+;; Capello, Nikolaj Schumacher
 ;; Keywords: convenience
 
 ;; ErgoEmacs is free software: you can redistribute it and/or modify
@@ -851,6 +852,28 @@ Calling this command 3 times will always result in no whitespaces around cursor.
   '((R-mode ("." "_"))
     (emacs-lisp-mode ("-" "_"))
     (org-mode nil)
+    (markup-mode nil)
+    (nxml-mode nil)
+    (texinfo-mode nil)
+    (html-mode nil)
+    (nxhtml-mode nil)
+    (muse-mode nil)
+    (nxhtml-mode nil)
+    (css-mode nil)
+    (wiki-mode nil)
+    (oddmuse-mode nil)
+    (yaoddmuse-mode nil)
+    (confluence-mode nil)
+    (mediawiki-draft-mode nil)
+    (mediawiki-mode nil)
+    (text-mode nil)
+    (fundamental-mode nil)
+    (wikipedia-mode nil)
+    (latex-mode nil)
+    (LaTeX-mode nil)
+    (message-mode nil)
+    (dired-mode nil)
+    (rst-mode nil)
     (t ("_")))
   "Characters to toggle between camelCase and extended_variables."
   :type '(repeat
