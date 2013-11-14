@@ -1386,8 +1386,6 @@ bindings the keymap is:
                 (cua--rectangle . ,cua--rectangle-keymap)
                 (cua--ena-region-keymap . ,cua--region-keymap)
                 (cua-mode . ,cua-global-keymap)))
-        (when ergoemacs-change-smex-meta-x
-          (setq smex-prompt-string (concat (ergoemacs-pretty-key "M-x") " ")))
         (mapc ;; Now install hooks.
          (lambda(buf)
            (with-current-buffer buf
@@ -1448,9 +1446,6 @@ bindings the keymap is:
             (cua--rectangle . ,cua--rectangle-keymap)
             (cua--ena-region-keymap . ,cua--region-keymap)
             (cua-mode . ,cua-global-keymap)))
-    (when ergoemacs-change-smex-meta-x
-      (setq smex-prompt-string "M-x "))
-    
     (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
       ;; Remove keymap
       (when x
