@@ -869,6 +869,7 @@ Calling this command 3 times will always result in no whitespaces around cursor.
     (text-mode nil)
     (fundamental-mode nil)
     (wikipedia-mode nil)
+    
     (latex-mode nil)
     (LaTeX-mode nil)
     (message-mode nil)
@@ -911,7 +912,7 @@ Based on the value of `major-mode' and
   "Return the camel-case bounds.
 This command assumes that CAMEL-CASE-CHARS is list of characters
 that can separate a variable."
-  (let* ((reg (concat "[:alpha:]"
+  (let* ((reg (concat "[:alpha:]0-9"
                       (mapconcat (lambda(x) x) camel-case-chars "")))
          (p1 (save-excursion (skip-chars-backward reg) (point)))
          (p2 (save-excursion (skip-chars-forward reg) (point))))
@@ -957,6 +958,10 @@ the last misspelled word with
           (if (string-match "^[[:lower:]]" txt)
               (setq camel-case "camel lower")
             (setq camel-case "camel upper")))
+         ((and txt (string-match (format "^%s" (regexp-opt ccc t)) txt)
+               (not (string-match (regexp-opt ccc t) (substring txt 1))))
+          ;; Assume variables such as _temp are not camel case variables.
+          (setq bds (bounds-of-thing-at-point 'word)))
          ((and txt (string-match (regexp-opt ccc t) txt))
           (setq camel-case (match-string 1 txt)))
          (t
@@ -1447,7 +1452,7 @@ ARG is the prefix argument for either command." direction direction direction)
 ;; Camel Case
 ;; ==================================================
 
-;; These functions were taken from:
+;; These functions were taken from and then modified. 
 ;; http://www.emacswiki.org/emacs/CamelCase
 
 (defun ergoemacs-un-camelcase-string (s &optional sep start)
@@ -1455,10 +1460,16 @@ ARG is the prefix argument for either command." direction direction direction)
     Default for SEP is a hyphen \"-\".
     If third argument START is non-nil, convert words after that
     index in STRING."
-  (let ((case-fold-search nil))
-    (while (string-match "[A-Z]" s (or start 1))
-      (setq s (replace-match (concat (or sep "-")
-                                     (downcase (match-string 0 s)))
+  (let ((case-fold-search nil)
+        new-start)
+    (while (string-match "[A-Z]" s (or new-start start 1))
+      (setq new-start (+ 1 (match-end 0)))
+      (setq s (replace-match (concat (or sep "-") (match-string 0 s))
+                             t nil s)))
+    (setq new-start nil)
+    (while (string-match "[0-9]+" s (or new-start start 1))
+      (setq new-start (+ 1 (match-end 0)))
+      (setq s (replace-match (concat (or sep "-") (match-string 0 s))
                              t nil s)))
     (downcase s)))
 
