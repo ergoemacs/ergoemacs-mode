@@ -97,7 +97,7 @@
     ("M-X" ergoemacs-cut-all "✂ all")
     
     ;; undo and redo
-    ("M-Z" redo "↷ redo")
+    ("M-Z" (undo-tree-redo redo) "↷ redo")
     ("M-z" undo "↶ undo")
     
     ;; Kill line
@@ -203,7 +203,7 @@
     ("<apps> x" ergoemacs-cut-line-or-region "✂ region")
     ("<apps> c" ergoemacs-copy-line-or-region "copy")
     ("<apps> v" ergoemacs-paste "paste")
-    ("<apps> b" redo "↷ redo")
+    ("<apps> b" (undo-tree-redo redo) "↷ redo")
     ;; ("<apps> u" ergoemacs-smart-punctuation "()")
     ("<apps> t" switch-to-buffer "switch buf")
     ("<apps> z" undo "↶ undo")
@@ -223,8 +223,7 @@
     ("<apps> n T" org-agenda "agenda")
     
     ;; but some modes don't honor it...
-    ("<apps> r" goto-map "Goto")
-    )
+    ("<apps> r" goto-map "Goto"))
   
   "Ergoemacs that vary from keyboard types.  By default these keybindings are based on QWERTY."
   :type '(repeat
@@ -269,8 +268,8 @@
   `(
     ;; General Shortcuts
     ("<M-backspace>" (undo-tree-undo undo) "↶ undo")
-    ("<f5>" (undo-tree-undo undo) "↶ undo")
-    ("C-z" (undo-tree-undo undo) "↶ undo")
+    ("<f5>" undo "↶ undo")
+    ("C-z" undo "↶ undo")
 
     ("<C-f5>" (undo-tree-redo redo) "↷ redo")
     ("<M-f5>" (undo-tree-redo redo) "↷ redo")
@@ -418,7 +417,7 @@
     ("C-x <timeout>" ergoemacs-cut-line-or-region)
     ("C-x C-b" ibuffer)
     ("C-x" ergoemacs-ctl-x "Cut")
-    ("C-y" redo "↷ redo")
+    ("C-y" (undo-tree-redo redo) "↷ redo")
     
     ("M-S-<next>" forward-page)
     ("M-S-<prior>" backward-page)
