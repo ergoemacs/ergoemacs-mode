@@ -233,15 +233,20 @@ If narrow-to-region is in effect, then cut that region only."
   (deactivate-mark))
 
 (defun ergoemacs-cut-line-or-region (&optional arg)
-  "Cut the current line, or current text selection."
+  "Cut the current line, or current text selection.
+Use `cua-cut-rectangle' or `cua-cut-region' when `cua-mode' is
+turned on.  When region is active, use
+`ergoemacs-shortcut-internal' to remap any mode that changes
+emacs' default cut key, C-w."
   (interactive "P")
   (cond
+   ;; FIXME: figure out how to lookup shortcuts and still support cua.
    ((and cua--rectangle (boundp 'cua-mode) cua-mode)
     (cua-cut-rectangle arg))
    ((and (region-active-p) (boundp 'cua-mode) cua-mode)
     (cua-cut-region arg))
-   ((region-active-p)
-    (kill-region (region-beginning) (region-end)))
+   ((region-active-p) ;; In case something else is bound to C-w.
+    (ergoemacs-shortcut-internal 'kill-region))
    (t
     (kill-region (line-beginning-position) (line-beginning-position 2))))
   (deactivate-mark))
