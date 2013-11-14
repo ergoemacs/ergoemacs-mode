@@ -722,11 +722,13 @@ Subsequent calls expands the selection to larger semantic unit."
 
 (defun ergoemacs-kill-line-backward (&optional number)
   "Kill text between the beginning of the line to the cursor position.
-If there's no text, delete the previous line ending."
+If there's no text, delete the previous line ending.
+Use `ergoemacs-shortcut-internal' in case kill line was remapped."
   (interactive "p")
   (if (and (= number 1) (looking-back "\n"))
       (delete-char -1)
-    (kill-line (- 1 number))))
+    (setq current-prefix-arg (- 1 number))
+    (ergoemacs-shortcut-internal 'kill-line)))
 
 (defun ergoemacs-move-cursor-next-pane (&optional number)
   "Move cursor to the next pane.
@@ -747,13 +749,14 @@ This command does the reverse of `fill-paragraph'.
 See also: `compact-uncompact-block'"
   (interactive)
   (let ((fill-column 90002000))
-    (fill-paragraph nil)))
+    (setq current-prefix-arg nil);; Fill paragraph is bound it M-q.
+    (ergoemacs-shortcut-internal 'fill-paragraph)))
 
 (defun ergoemacs-unfill-region (start end)
   "Replace newline char in region by space.
 This command does the reverse of `fill-region'.
 See also: `ergoemacs-compact-uncompact-block'"
-  (interactive "r")
+  (interactive "r") ;; Fill region is only bound to emacs menu.
   (let ((fill-column 90002000))
     (fill-region start end)))
 
@@ -762,28 +765,26 @@ See also: `ergoemacs-compact-uncompact-block'"
 This command is similar to a toggle of `fill-paragraph'.
 When there is a text selection, act on the region."
   (interactive)
-  
   ;; This command symbol has a property “'stateIsCompact-p”.
-  (let (currentStateIsCompact (bigFillColumnVal 4333999) (deactivate-mark nil))
+  (let (current-state-is-compact (big-fill-column-val 4333999) (deactivate-mark nil))
     
     (save-excursion
       ;; Determine whether the text is currently compact.
-      (setq currentStateIsCompact
+      (setq current-state-is-compact
             (if (eq last-command this-command)
-                (get this-command 'stateIsCompact-p)
+                (get this-command 'state-is-compact-p)
               (if (> (- (line-end-position) (line-beginning-position)) fill-column) t nil) ) )
       
       (if (region-active-p)
-          (if currentStateIsCompact
+          (if current-state-is-compact
               (fill-region (region-beginning) (region-end))
-            (let ((fill-column bigFillColumnVal))
+            (let ((fill-column big-fill-column-val))
               (fill-region (region-beginning) (region-end))) )
-        (if currentStateIsCompact
-            (fill-paragraph nil)
-          (let ((fill-column bigFillColumnVal))
-            (fill-paragraph nil)) ) )
-      
-      (put this-command 'stateIsCompact-p (if currentStateIsCompact nil t)))))
+        (if current-state-is-compact
+            (ergoemacs-shortcut-internal 'fill-paragraph)
+          (let ((fill-column big-fill-column-val))
+            (ergoemacs-shortcut-internal 'fill-paragraph))))
+      (put this-command 'stateIsCompact-p (if current-state-is-compact nil t)))))
 
 (defun ergoemacs-shrink-whitespaces ()
   "Remove white spaces around cursor to just one or none.
