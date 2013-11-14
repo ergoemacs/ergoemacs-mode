@@ -729,16 +729,17 @@ If there's no text, delete the previous line ending."
     (kill-line (- 1 number))))
 
 (defun ergoemacs-move-cursor-next-pane (&optional number)
-  "Move cursor to the next pane."
-  (interactive "p")
-  (other-window (or number 1)))
+  "Move cursor to the next pane.
+Use `ergoemacs-shortcut-internal' for maximum mode compatibility."
+  (interactive "p") ;; Other window is bound to C-x o
+  (ergoemacs-shortcut-internal 'other-window))
 
 (defun ergoemacs-move-cursor-previous-pane (&optional number)
-  "Move cursor to the previous pane."
-  (interactive)
-  (other-window (if number
-                    (- 0 number)
-                  -1)))
+  "Move cursor to the previous pane.
+Use `ergoemacs-shortcut-interal' for maximum mode compatibility."
+  (interactive "p")
+  (setq current-prefix-arg (if number (- 0 number) -1))
+  (ergoemacs-shortcut-internal 'other-window))
 
 (defun ergoemacs-unfill-paragraph ()
   "Replace newline char in current paragraph by space.
