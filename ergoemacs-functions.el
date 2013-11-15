@@ -251,24 +251,22 @@ Note that `ergoemacs-shortcut-internal' will remap mode-specific
 changes to `kill-line' to allow it to work as expected in
 major-modes like `org-mode'. "
   (interactive "P")
-  (cond
-   ;; FIXME: figure out how to lookup shortcuts and still support cua.
-   ((and cua--rectangle (boundp 'cua-mode) cua-mode)
-    (cua-cut-rectangle arg))
+  (cond   
    ((and (region-active-p) (boundp 'cua-mode) cua-mode)
-    (cua-cut-region arg))
+    (cua-cut-region arg)
+    (deactivate-mark))
    ((region-active-p) ;; In case something else is bound to C-w.
-    (ergoemacs-shortcut-internal 'kill-region))
+    (ergoemacs-shortcut-internal 'kill-region)
+    (deactivate-mark))
    (t
-    ;; (kill-region (line-beginning-position) (line-beginning-position
-    ;; 2))
-    (beginning-of-line)
+    (when (not (= (point) (point-at-bol)))
+      (beginning-of-line))
     ;; Keep prefix args.
     (ergoemacs-shortcut-internal 'kill-line)
+    (setq last-command 'kill-region)
     (when (looking-at "\n")
       (setq current-prefix-arg nil) ;; remove prefix args.
-      (ergoemacs-shortcut-internal 'kill-line))))
-  (deactivate-mark))
+      (ergoemacs-shortcut-internal 'kill-line)))))
 
 ;;; CURSOR MOVEMENT
 
