@@ -175,17 +175,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
     undo-tree-redo)
   "Undo and redo functions that ErgoEmacs is aware of...")
 
-(defvar ergoemacs-window-tab-switching
-  '(ergoemacs-switch-to-previous-frame
-    ergoemacs-switch-to-next-frame
-    ergoemacs-previous-user-buffer
-    split-window-horizontally
-    delete-window
-    delete-other-windows
-    split-window-vertically
-    ergoemacs-next-user-buffer)
-  "Window/Tab switching functions.")
-
 (defun ergoemacs-set-default (symbol new-value)
   "Ergoemacs equivalent to set-default.
 Will reload `ergoemacs-mode' after setting the values."
@@ -1265,6 +1254,7 @@ depending the state of `ergoemacs-mode' variable."
     (delete-selection-mode 1)
     (set-mark-command-repeat-pop t)
     (org-special-ctrl-a/e t)
+    (ido-vertical-define-keys C-n-C-p-up-down-left-right C-n-and-C-p-only)
     (scroll-error-top-bottom t))
   "Variables/Modes that `ergoemacs-mode' changes, and restores.
 Initial state is what `ergoemacs-mode' toggles to when it is turned on.
@@ -1274,10 +1264,15 @@ When the state is 1 or -1 it turns on/off the corresponding mode."
            (symbol :tag "Variable/Mode")
            (choice
             (const :tag "Set Variable to t" t)
-            (const :tag "Set Variable to nil" t)
+            (const :tag "Set Variable to nil" nil)
             (const :tag "Turn ON mode" 1)
-            (const :tag "Turn OFF mode" -1))))
+            (const :tag "Turn OFF mode" -1)
+            (sexp :tag "Value to set"))
+           (choce
+            (const :tag "Restore opposite behavior" nil)
+            (const :tag "Value to revert"))))
   :group 'ergoemacs-mode)
+(defvar ergoemacs-save-variables-actual nil)
 (defvar ergoemacs-save-variables-state nil)
 
 (defvar ergoemacs-emulation-mode-map-alist nil
@@ -1323,12 +1318,13 @@ bindings the keymap is:
         ;;     (setq ergoemacs-org-CUA-compatible nil)
         ;;   (setq ergoemacs-org-CUA-compatible org-CUA-compatible))
         (unless ergoemacs-save-variables-state
+          (setq ergoemacs-save-variables-actual ergoemacs-save-variables)
           (ergoemacs-debug-heading "Update variables and modes")
           (ergoemacs-debug "Old ergoemacs-save-variables: %s" ergoemacs-save-variables)
-          (setq ergoemacs-save-variables
+          (setq ergoemacs-save-variables-actual
                 (mapcar
                  (lambda(x)
-                   (let (val)
+                   (let (val val2)
                      (if (condition-case err (or (= 1 (nth 1 x)) (= -1 (nth 1 x))) (error nil))
                          (progn
                            (ergoemacs-debug "Call (%s %s)"
@@ -1338,9 +1334,12 @@ bindings the keymap is:
                        (ergoemacs-debug "Set %s to %s" (symbol-name (nth 0 x)) (nth 1 x))
                        (set (nth 0 x) (nth 1 x))
                        (set-default (nth 0 x) (nth 1 x))
-                       (setq val (not (nth 1 x))))
-                     `(,(nth 0 x) ,val)))
-                 ergoemacs-save-variables))
+                       (if (not (nth 2 x))
+                           (setq val (not (nth 1 x)))
+                         (setq val (nth 2 x))
+                         (setq val2 (nth 1 x))))
+                     `(,(nth 0 x) ,val ,val2)))
+                 ergoemacs-save-variables-actual))
           (ergoemacs-debug "New ergoemacs-save-variables: %s" ergoemacs-save-variables)
           (setq ergoemacs-save-variables-state t))
         ;; From yasnippet:
@@ -1400,10 +1399,10 @@ bindings the keymap is:
     (when ergoemacs-save-variables-state
       (ergoemacs-debug-heading "Revert variables and modes")
       (ergoemacs-debug "Old ergoemacs-save-variables: %s" ergoemacs-save-variables)
-      (setq ergoemacs-save-variables
+      (setq ergoemacs-save-variables-actual
             (mapcar
              (lambda(x)
-               (let (val)
+               (let (val val2)
                  (if (condition-case err (or (= 1 (nth 1 x)) (= -1 (nth 1 x))) (error nil))
                      (progn
                        (ergoemacs-debug "Call (%s %s)"
@@ -1412,11 +1411,15 @@ bindings the keymap is:
 		       (setq val (if (= 1 (nth 1 x)) -1 1)))
                    (ergoemacs-debug "Set %s to %s" (symbol-name (nth 0 x)) (nth 1 x))
                    (set (nth 0 x) (nth 1 x))
-		   (setq val (not (nth 1 x)))
+		   (if (not (nth 2 x))
+                       (setq val (not (nth 1 x)))
+                     (setq val (nth 2 x))
+                     (setq val2 (nth 1 x)))
                    (set-default (nth 0 x) (nth 1 x)))
-                 `(,(nth 0 x) ,val)))
-             ergoemacs-save-variables))
-      (ergoemacs-debug "New ergoemacs-save-variables: %s" ergoemacs-save-variables)
+                 `(,(nth 0 x) ,val ,val2)))
+             ergoemacs-save-variables-actual))
+      (ergoemacs-debug "Old ergoemacs-save-variables: %s" ergoemacs-save-variables-actual)
+      (setq ergoemacs-save-variables-actual nil)
       (setq ergoemacs-save-variables-state nil))    
     (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
     (when (featurep 'ergoemacs-menus)
