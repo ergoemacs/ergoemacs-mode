@@ -236,9 +236,20 @@ If narrow-to-region is in effect, then cut that region only."
 (defun ergoemacs-cut-line-or-region (&optional arg)
   "Cut the current line, or current text selection.
 Use `cua-cut-rectangle' or `cua-cut-region' when `cua-mode' is
-turned on.  When region is active, use
+turned on.
+
+Otherwise, when a region is active, use
 `ergoemacs-shortcut-internal' to remap any mode that changes
-emacs' default cut key, C-w."
+emacs' default cut key, C-w (`kill-region').
+
+When region is not active, move to the beginning of the line and
+use `kill-line'.  If looking at the end of the line, run
+`kill-line' again. The prefix arguments will be preserved for the
+first `kill-line', but not the second.
+
+Note that `ergoemacs-shortcut-internal' will remap mode-specific
+changes to `kill-line' to allow it to work as expected in
+major-modes like `org-mode'. "
   (interactive "P")
   (cond
    ;; FIXME: figure out how to lookup shortcuts and still support cua.
@@ -249,7 +260,14 @@ emacs' default cut key, C-w."
    ((region-active-p) ;; In case something else is bound to C-w.
     (ergoemacs-shortcut-internal 'kill-region))
    (t
-    (kill-region (line-beginning-position) (line-beginning-position 2))))
+    ;; (kill-region (line-beginning-position) (line-beginning-position
+    ;; 2))
+    (beginning-of-line)
+    ;; Keep prefix args.
+    (ergoemacs-shortcut-internal 'kill-line)
+    (when (looking-at "\n")
+      (setq current-prefix-arg nil) ;; remove prefix args.
+      (ergoemacs-shortcut-internal 'kill-line))))
   (deactivate-mark))
 
 ;;; CURSOR MOVEMENT
