@@ -102,7 +102,8 @@
     conf-xdefaults-mode conf-space-mode conf-javaprop-mode
     conf-ppd-mode mail-mode
     ebrowse-tree-mode diff-mode fundamental-mode emacs-lisp-byte-code-mode
-    R-transcript-mode S-transcript-mode XLS-mode tar-mode)
+    R-transcript-mode S-transcript-mode XLS-mode tar-mode
+    git-commit-mode git-rebase-mode image-mode)
   "List of major modes excluded from ergoemacs' Languages menu."
   :type '(repeat (symbol :tag "Excluded Major Mode"))
   :group 'ergoemacs-mode)
