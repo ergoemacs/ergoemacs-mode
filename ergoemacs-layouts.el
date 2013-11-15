@@ -300,7 +300,7 @@
            `[,(concat lay " - " doc)
              (lambda() (interactive)
                (ergoemacs-set-layout ,lay)) :style radio :selected (string= ergoemacs-keyboard-layout ,lay)]))
-       (ergoemacs-get-layouts))))
+       (sort (ergoemacs-get-layouts) 'string<))))
 
 (defun ergoemacs-get-layouts-doc ()
   "Gets the list of all known layouts and the documentation associated with the layouts."
