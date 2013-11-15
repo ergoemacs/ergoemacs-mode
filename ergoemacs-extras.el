@@ -91,6 +91,17 @@
                            (point)))))
       (write-file keyfreq-file))))
 
+(defvar ergoemacs-window-tab-switching
+  '(ergoemacs-switch-to-previous-frame
+    ergoemacs-switch-to-next-frame
+    ergoemacs-previous-user-buffer
+    split-window-horizontally
+    delete-window
+    delete-other-windows
+    split-window-vertically
+    ergoemacs-next-user-buffer)
+  "Window/Tab switching functions.")
+
 (defun ergoemacs-get-html-key-table ()
   "Gets the key table for the current layout."
   (ergoemacs-mode -1)
