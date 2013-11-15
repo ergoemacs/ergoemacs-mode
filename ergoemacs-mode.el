@@ -129,7 +129,7 @@
 (add-to-list 'load-path ergoemacs-dir)
 
 
-(require 'ergoemacs-layouts)
+(load "ergoemacs-layouts")
 
 ;; Ergoemacs-keybindings version
 (defconst ergoemacs-mode-version "5.8.0"
@@ -491,8 +491,8 @@ work in the terminal."
   (interactive "P")
   (ergoemacs-M-o arg ergoemacs-M-O-keymap))
 
-(require 'ergoemacs-themes)
-(require 'ergoemacs-unbind)
+(load "ergoemacs-themes")
+(load "ergoemacs-unbind")
 
 ;;; ergoemacs-keymap
 
@@ -506,10 +506,10 @@ work in the terminal."
 (defvar ergoemacs-shortcut-override-keymap (make-sparse-keymap)
   "Keymap for overriding keymap.")
 
-(require 'ergoemacs-modal)
-(require 'ergoemacs-functions)
-(require 'ergoemacs-translate)
-(require 'ergoemacs-shortcuts)
+(load "ergoemacs-modal")
+(load "ergoemacs-functions")
+(load "ergoemacs-translate")
+(load "ergoemacs-shortcuts")
 
 
 (defvar ergoemacs-backward-compatability-variables
@@ -875,7 +875,7 @@ work in the terminal."
   (ergoemacs-debug-flush))
 
 (require 'lookup-word-on-internet nil "NOERROR")
-(require 'ergoemacs-extras)
+(load "ergoemacs-extras")
 
 ;; ErgoEmacs hooks
 
@@ -1520,7 +1520,7 @@ bindings the keymap is:
 
 
 
-(require 'ergoemacs-advices)
+(load "ergoemacs-advices")
 
 (defcustom ergoemacs-ignore-prev-global t
   "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."
