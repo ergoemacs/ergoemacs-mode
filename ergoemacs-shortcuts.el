@@ -496,6 +496,61 @@ the best match."
   :type '(repeat
           (symbol :tag "Function to ignore:")))
 
+(defmacro ergoemacs-with-global (&rest body)
+  "With global keymap, not ergoemacs keymaps.
+In theory `ergoemacs-mode' and `ergoemacs-unbind-keys' should
+also be nil, but this is used in `ergoemacs-shortcut-internal'
+which allows a shortcut to ergoemacs keys as well, so these
+variables are handled in `ergoemacs-shortcut-internal'.
+"
+  `(let (overriding-terminal-local-map
+         overriding-local-map
+         ergoemacs-overlays overlay overlay-keymap
+         keymap-begin keymap-end
+         (overlays (overlays-at (point))))
+     ;; Remove most of ergoemacs-mode's key bindings
+     (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+
+     ;; Sigh.  Now remove overriding overlay and text-map key bindings
+     ;; that have been altered by ergoemacs-mode. If this does not
+     ;; happen, and press Ctrl+v will lookup the emacs equivalent
+     ;; command of Ctrl+y which is ergoemacs' redo.  This only occurs
+     ;; in things that add an overlay, such a smart-parens mode.
+
+     ;; First remove overlay key bindings
+     (while overlays
+       (setq overlay (car overlays))
+       (setq overlay-keymap (overlay-get overlay 'keymap))
+       (when (and overlay-keymap (eq (lookup-key overlay-keymap (read-kbd-macro "<ergoemacs>")) 'ignore))
+         ;; ergoemacs-mode altered keymap.
+         (overlay-put overlay 'save-keymap overlay-keymap)
+         (overlay-put overlay 'keymap nil)
+         (push overlay ergoemacs-overlays))
+       (setq overlays (cdr overlays)))
+     
+     ;; Now remove text key bindings
+     (setq overlay-keymap (get-text-property (point) 'keymap))
+     (when (and overlay-keymap
+                (eq (lookup-key overlay-keymap (read-kbd-macro "<ergoemacs>")) 'ignore))
+       (setq keymap-begin (previous-single-property-change (point) 'keymap))
+       (setq keymap-end (next-single-property-change (point) 'keymap))
+       (put-text-property keymap-begin keymap-end 'save-keymap overlay-keymap)
+       (put-text-property keymap-begin keymap-end 'keymap nil))
+     (unwind-protect
+         (progn
+           ,@body)
+       (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+       ;; Put back text key bindings
+       (when keymap-begin
+         (put-text-property keymap-begin keymap-end 'keymap
+                            (get-text-property (point) 'save-keymap))
+         (put-text-property keymap-begin keymap-end 'save-keymap nil))
+       (while ergoemacs-overlays
+         (setq overlay (car ergoemacs-overlays))
+         (overlay-put overlay 'keymap (overlay-get overlay 'save-keymap))
+         (overlay-put overlay 'save-keymap nil)
+         (setq ergoemacs-overlays (cdr ergoemacs-overlays))))))
+
 (defun ergoemacs-shortcut (&optional arg)
   "Shortcut for other key/function.
 Calls the function shortcut key defined in
@@ -512,10 +567,8 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
   (let (cmd1 cmd2)
     (let (ergoemacs-shortcut-keys ergoemacs-shortcut-override-mode)
       (setq cmd1 (key-binding (this-single-command-keys)))
-      (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-      (unwind-protect
-          (setq cmd2 (key-binding (this-single-command-keys)))
-        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)))
+      (ergoemacs-with-global 
+       (setq cmd2 (key-binding (this-single-command-keys)))))
     (if (not (equal cmd1 cmd2))
         (progn
           (setq ergoemacs-shortcut-send-key (key-description (this-command-keys-vector))
@@ -630,8 +683,7 @@ function if it is bound globally.  For example
      ((condition-case err ;; This is a function (possibly global)
           (interactive-form key)
         (error nil))
-      (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-      (unwind-protect
+      (ergoemacs-with-global
           (mapc
            (lambda(cur-key)
              (unless (string-match "\\(s-\\|A-\\|H-\\)"
@@ -669,8 +721,7 @@ function if it is bound globally.  For example
              '(lambda(x)
                 (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
              (where-is-internal key (current-global-map)))
-            (gethash key ergoemacs-where-is-global-hash)))
-        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
+            (gethash key ergoemacs-where-is-global-hash))))
       (cond
        (fn-override
         (set fn fn-override))
@@ -682,22 +733,18 @@ function if it is bound globally.  For example
         (setq fn (nth 0 fn-lst)))
        (t  ; Could not find another function, just use the function
                                         ; passed to `ergoemacs-shortcut'
-        (remove-hook 'emulation-mode-map-alists
-                     'ergoemacs-emulation-mode-map-alist)
-        (unwind-protect
+        (ergoemacs-with-global
             (setq fn (list key
                        (read-kbd-macro
                         (key-description
                          (or (where-is-internal
                               key (current-global-map) t)
-                             (this-command-keys))) t)))
-          (add-hook 'emulation-mode-map-alists
-                    'ergoemacs-emulation-mode-map-alist))))
+                             (this-command-keys))) t))))))
       (setq shared-do-it t))
      ((or (not chorded)
           (memq chorded '(repeat repeat-global global-repeat global))) ;; lookup keybinding for the function keys.
       (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-      (unwind-protect
+      (ergoemacs-with-global
           (setq fn (list (key-binding (read-kbd-macro key))
                          (read-kbd-macro key t)))
         (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
