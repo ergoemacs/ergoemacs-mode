@@ -868,7 +868,7 @@ Calling this command 3 times will always result in no whitespaces around cursor.
 
 (defcustom ergoemacs-toggle-camel-case-chars
   '((LaTeX-mode nil)
-    (R-mode ("." "_"))
+    (ess-mode ("." "_"))
     (bbcode-mode nil)
     (confluence-mode nil)
     (css-mode nil)
@@ -962,6 +962,7 @@ the last misspelled word with
      ((region-active-p)
       (setq p1 (region-beginning) p2 (region-end)))
      ((and (eq last-command this-command)
+           (get this-command 'state)
            (string-match "\\(all\\|caps\\)" (get this-command 'state)))
       (let ((bds (bounds-of-thing-at-point 'word)))
         (setq p1 (car bds) p2 (cdr bds))))
