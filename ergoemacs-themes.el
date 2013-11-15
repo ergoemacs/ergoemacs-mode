@@ -107,7 +107,7 @@
     ;; Textual Transformation
     
     ("M-S-SPC" mark-paragraph "Mark Paragraph")
-    ("M-w" just-one-space "⌧ white")
+    ("M-w" ergoemacs-shrink-whitespaces "⌧ white")
     ("M-'" comment-dwim "cmt dwim")
     ("M-?" ergoemacs-toggle-camel-case "tog. camel")
     ("M-/" ergoemacs-toggle-letter-case "tog. case")
@@ -142,7 +142,7 @@
     ("M-`" ergoemacs-switch-to-next-frame "next frame")
     
     ("M-5" query-replace "rep")
-    ("M-%" query-replace-regexp "rep reg")
+    ("M-%" (vr/query-replace query-replace-regexp) "rep reg")
     
     ("M-3" delete-other-windows "x other pane")
     ("M-2" delete-window "x pane")
@@ -564,11 +564,6 @@
       ("M-RET" helm-execute-persistent-action helm-map)
       ("M-S-RET" "C-u M-RET" helm-map)
       ("<M-S-return>" "C-u M-RET" helm-map)))
-    ;; Remap ergoemacs-commands
-    
-    (ergoemacs-remap
-     ((just-one-space ergoemacs-shrink-whitespaces nil remap))
-     ((query-replace-regexp vr/query-replace nil remap)))
     
     (auto-complete-mode-hook ac-completing-map ac-menu-map))
   "Key bindings that are applied as hooks to specific modes."
