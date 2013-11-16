@@ -156,7 +156,9 @@ All other modes are assumed to be minor modes or unimportant.
      (lambda(elt)
        (unless (memq (cdr elt) modes)
          (when (and (functionp (cdr elt))
-                    (string-match "-mode$" (symbol-name (cdr elt))))
+                    (string-match "-mode$" (condition-case err
+                                               (symbol-name (cdr elt))
+                                             (error ""))))
            (unless (or (memq (cdr elt) ergoemacs-excluded-major-modes)
                        (member (downcase (symbol-name (cdr elt))) added-modes))
              (let* ((name (ergoemacs-get-major-mode-name (cdr elt)))
