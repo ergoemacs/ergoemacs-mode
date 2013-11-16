@@ -75,22 +75,37 @@
 
 (defun ergoemacs-debug-keymap (keymap)
   "Print keymap bindings."
-  (ergoemacs-debug-heading (format "Keymap Description: %s" (symbol-name keymap)))
+  (ergoemacs-debug-heading
+   (format "Keymap Description: %s" (symbol-name keymap)))
   (ergoemacs-debug
-   (substitute-command-keys (format "\\{%s}" (symbol-name keymap)))))
+   "|-\n%s"
+   (substring
+    (replace-regexp-in-string
+     "---|\n|-" "---|"
+     (replace-regexp-in-string
+      "^|[ \t]*|$" "|-"
+      (replace-regexp-in-string
+       ".*(that binding is.*\n" ""
+       (replace-regexp-in-string
+        "^" "|"
+        (replace-regexp-in-string
+         "$" "|"
+         (replace-regexp-in-string
+          "\\([ \t]\\{2,\\}\\|\t\\)" "\\1|"
+          (substitute-command-keys (format "\\{%s}" (symbol-name keymap)))))))))
+    0 -2)))
 
 (defvar ergoemacs-debug-heading-start-time (float-time))
 (defvar ergoemacs-debug-heading-last-time (float-time))
 
 (defun ergoemacs-debug-heading (&rest arg)
   "Ergoemacs debugging heading."
-  (ergoemacs-debug (make-string 80 ?=))
-  (ergoemacs-debug (condition-case err
-                       (apply 'format arg)
-                     (error (format "Bad format string: %s" arg))))
+  (ergoemacs-debug (concat "** "
+                           (condition-case err
+                               (apply 'format arg)
+                             (eurror (format "Bad format string: %s" arg)))))
   (ergoemacs-debug "Time Since Start ergoemacs-mode: %1f sec" (- (float-time) ergoemacs-debug-heading-start-time))
-  (ergoemacs-debug "Time Since Last Heading: %1f sec" (- (float-time) ergoemacs-debug-heading-last-time))
-  (ergoemacs-debug (make-string 80 ?=))
+  (ergoemacs-debug "Time Sincuue Last Heading: %1f sec" (- (float-time) ergoemacs-debug-heading-last-time))
   (setq ergoemacs-debug-heading-last-time (float-time)))
 
 (defun ergoemacs-debug (&rest arg)
@@ -101,7 +116,9 @@
         (ergoemacs-debug-flush)
         (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer))
         (setq ergoemacs-debug-buffer (replace-regexp-in-string "^ +" "" ergoemacs-debug-buffer))
-        (rename-buffer ergoemacs-debug-buffer))
+        (rename-buffer ergoemacs-debug-buffer)
+        (unless (eq major-mode 'org-mode)
+          (call-interactively 'org-mode)))
     (setq ergoemacs-debug
           (format "%s\n%s"
                   ergoemacs-debug
@@ -997,7 +1014,7 @@ bindings the keymap is:
       (progn
         (setq ergoemacs-debug-heading-start-time (float-time))
         (setq ergoemacs-debug-heading-last-time (float-time))
-        (ergoemacs-debug-heading "Ergoemacs-mode is turning ON.")
+        (ergoemacs-debug "* Ergoemacs-mode is turning ON.")
         (when cua-mode
           (cua-mode -1)
           (cua-selection-mode 1))
