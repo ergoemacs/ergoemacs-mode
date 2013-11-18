@@ -1,3 +1,4 @@
+
 ;;; ergoemacs-themes.el --- ErgoEmacs keybindings and themes
 
 ;; Copyright (C) 2013 Matthew L. Fidler
@@ -1436,7 +1437,7 @@ Some exceptions we don't want to unset.
   (ergoemacs-key "M-m" 'ergoemacs-beginning-of-line-or-what "← line/*" )
   (ergoemacs-key "M-t" 'isearch-backward "← isearch")
   (ergoemacs-key "M-T" 'isearch-backward-regexp "← reg isearch")
-  (ergoemacs-key "M-Y" 'isearch-backward-regexp "→ reg isearch")
+  (ergoemacs-key "M-Y" 'isearch-forward-regexp "→ reg isearch")
   
   (ergoemacs-key "M-H" nil)
   (ergoemacs-key "M-I" nil)
