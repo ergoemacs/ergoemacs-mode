@@ -622,11 +622,14 @@ the prefix arguments of `end-of-buffer',
 
 "
   (interactive "^p")
+  (message "%s" last-command)
   (if (and ergoemacs-beginning-or-end-of-line-and-what
            (or (not ergoemacs-use-beginning-or-end-of-line-only)
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                     (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
-           (= (point) (point-at-eol)))
+           (or (= (point) (point-at-eol))
+               (and (eq 'scroll-up-command last-command)
+                    (= (point) (point-at-bol)))))
       (progn 
         (cond
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
@@ -634,8 +637,8 @@ the prefix arguments of `end-of-buffer',
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
           (ergoemacs-shortcut-internal 'ergoemacs-forward-block))
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
-          (ergoemacs-shortcut-internal 'scroll-up-command)))
-        (end-of-line))
+          (ergoemacs-shortcut-internal 'scroll-up-command)
+          (beginning-of-line))))
     (setq N (or N 1))
     (when (not (= 1 N))
       (let ((line-move-visual nil))
