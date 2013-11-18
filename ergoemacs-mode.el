@@ -149,7 +149,7 @@
 (load "ergoemacs-layouts")
 
 ;; Ergoemacs-keybindings version
-(defconst ergoemacs-mode-version "5.8.0"
+(defconst ergoemacs-mode-version "5.13.11"
   "Ergoemacs-keybindings minor mode version number.")
 
 (defconst ergoemacs-mode-changes "Delete window Alt+0 changed to Alt+2.
@@ -910,7 +910,12 @@ depending the state of `ergoemacs-mode' variable."
 (defun ergoemacs-check-for-new-version ()
   "This allows the user to keep an old-version of keybindings if they change."
   (condition-case err
-      (progn
+      (let ((ver-used ergoemacs-mode-used)
+            (ver ergoemacs-mode-version))
+        (when (and ver-used (string-match "^[0-9]+\\." ver-used))
+          (setq ver-used (match-string 0 ver-used)))
+        (when (string-match "^[0-9]+\\." ver)
+          (setq ver (match-string 0 ver)))
         (when ergoemacs-mode
           ;; Apply any settings...
           (ergoemacs-debug "Reset ergoemacs-mode.")
@@ -920,7 +925,7 @@ depending the state of `ergoemacs-mode' variable."
                (custom-file t) ;; Make sure a custom file exists.
                (not ergoemacs-theme) ;; Ergoemacs default used.
                (or (not ergoemacs-mode-used)
-                   (not (string= ergoemacs-mode-used ergoemacs-mode-version))))
+                   (not (string= ver-used ver))))
           (if (yes-or-no-p
                (format "Ergoemacs keybindings changed, %s; Would you like to change as well?"
                        ergoemacs-mode-changes))
