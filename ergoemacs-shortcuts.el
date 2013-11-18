@@ -975,7 +975,9 @@ function if it is bound globally.  For example
       ;; Lookup ergoemacs key bindings.
       (mapc
        (lambda(cur-key)
-         (setq new-fn (lookup-key ergoemacs-keymap cur-key))
+         (setq new-fn (condition-case err
+                          (lookup-key ergoemacs-keymap cur-key)
+                        (error nil)))
          (unless new-fn
            (setq new-fn (gethash (read-kbd-macro
                                    (key-description cur-key) t)
@@ -996,7 +998,9 @@ function if it is bound globally.  For example
           (mapc
            (lambda(cur-key)
              (unless (string-match "\\(s-\\|A-\\|H-\\)"
-                                   (key-description cur-key))
+                                   (condition-case err
+                                       (key-description cur-key)
+                                     (error "")))
                (setq binding
                      (if (and keymap-key (boundp 'ergoemacs-orig-keymap)
                               ergoemacs-orig-keymap)
@@ -1436,11 +1440,13 @@ Setup C-c and C-x keys to be described properly.")
           (setq override-text-map lookup)
           (if found
               (overlay-put found 'keymap override-text-map)
-            (ergoemacs-debug "Put into text properties")
-            (put-text-property
+            (when (and (previous-single-property-change (point) 'keymap)
+                       (next-single-property-change (point) 'keymap))
+              (ergoemacs-debug "Put into text properties")
+              (put-text-property
              (previous-single-property-change (point) 'keymap)
              (next-single-property-change (point) 'keymap)
-             'keymap override-text-map))
+             'keymap override-text-map)))
           (ergoemacs-debug-keymap 'override-text-map)))))))
 
 (defun ergoemacs-install-shortcuts-up ()
@@ -1511,7 +1517,7 @@ The keymaps are:
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
             (setq override-text-map lookup)
-          (ergoemacs-install-shortcuts-map override-text-map)
+          (ergoemacs-install-shortcuts-map override-text-map t)
           (define-key override-text-map
             (read-kbd-macro "<ergoemacs>") 'ignore)
           (puthash hashkey override-text-map ergoemacs-extract-map-hash)
