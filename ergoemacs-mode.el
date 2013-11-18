@@ -671,7 +671,7 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                    (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
                    (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
                          (copy-keymap ,keys))
-                   (ergoemacs-install-shortcuts-map ,keys (memq ',keys ergoemacs-maps-only-install-shortcuts))
+                   (ergoemacs-install-shortcuts-map ,keys (not (memq ',keys ergoemacs-full-maps)))
                    (define-key ,keys
                      (read-kbd-macro  "<ergoemacs>") 'ignore)
                    (ergoemacs-debug-keymap ',keys)
@@ -725,7 +725,7 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                   `(progn
                      (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
                            (copy-keymap ,(nth 2 (nth 0 keys))))
-                     (ergoemacs-install-shortcuts-map ,(nth 2 (nth 0 keys)) (memq ',(nth 2 (nth 0 keys)) ergoemacs-maps-only-install-shortcuts))
+                     (ergoemacs-install-shortcuts-map ,(nth 2 (nth 0 keys)) (not (memq ',(nth 2 (nth 0 keys)) ergoemacs-full-maps)))
                      (define-key ,(nth 2 (nth 0 keys))
                        (read-kbd-macro  "<ergoemacs>") 'ignore)))
                ,@(mapcar

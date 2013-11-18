@@ -1,4 +1,3 @@
-
 ;;; ergoemacs-themes.el --- ErgoEmacs keybindings and themes
 
 ;; Copyright (C) 2013 Matthew L. Fidler
@@ -29,8 +28,8 @@
 
 ;;; Code:
 
-(defvar ergoemacs-maps-only-install-shortcuts '(isearch-mode-map)
-  "List of keymaps where the full ergoemacs keymap is not installed.")
+(defvar ergoemacs-full-maps '(helm-map)
+  "List of keymaps where the full ergoemacs keymap is fully installed (ie they use an overriding keymap).")
 
 ;; Ergoemacs keys
 
