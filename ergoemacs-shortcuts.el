@@ -825,14 +825,15 @@ variables are handled in `ergoemacs-shortcut-internal'.
          (overlays (overlays-at (point))))
      ;; Remove most of ergoemacs-mode's key bindings
      (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-     ;; Sigh.  Now remove overriding overlay and text-map key bindings
-     ;; that have been altered by ergoemacs-mode. If this does not
-     ;; happen, and press Ctrl+v will lookup the emacs equivalent
-     ;; command of Ctrl+y which is ergoemacs' redo.  This only occurs
-     ;; in things that add an overlay, such a smart-parens mode.
-     (ergoemacs-remove-shortcuts)
      (unwind-protect
          (progn
+           ;; Sigh.  Now remove overriding overlay and text-map key
+           ;; bindings that have been altered by ergoemacs-mode. If
+           ;; this does not happen, and press Ctrl+v will lookup the
+           ;; emacs equivalent command of Ctrl+y which is ergoemacs'
+           ;; redo.  This only occurs in things that add an overlay,
+           ;; such a smart-parens mode.
+           (ergoemacs-remove-shortcuts)
            ,@body)
        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
        ;; The shortcuts will be put back in post command hook.
