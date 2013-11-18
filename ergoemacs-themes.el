@@ -1429,6 +1429,7 @@ Some exceptions we don't want to unset.
   (ergoemacs-key "M-*" 'mc/mark-next-like-this "Mark Next")
   (ergoemacs-key "M-&" 'mc/edit-lines "Edit Lines")
   (ergoemacs-key "M-," 'ace-jump-mode "Jump")
+  (ergoemacs-key "M-<" 'zap-to-char "Zap")
   (ergoemacs-key "M-g" 'kill-line "⌦ line")
   (ergoemacs-key "M-b" 'ergoemacs-kill-line-backward "⌫ line")
   ;; (ergoemacs-key "M-," 'ergoemacs-smart-punctuation "Toggle ()")
