@@ -262,10 +262,7 @@ major-modes like `org-mode'. "
     (when (not (= (point) (point-at-bol)))
       (beginning-of-line))
     ;; Keep prefix args.
-    (ergoemacs-shortcut-internal 'kill-line)
-    (setq last-command 'kill-region)
-    (when (looking-at "\n")
-      (setq current-prefix-arg nil) ;; remove prefix args.
+    (let ((kill-whole-line t))
       (ergoemacs-shortcut-internal 'kill-line)))))
 
 ;;; CURSOR MOVEMENT
