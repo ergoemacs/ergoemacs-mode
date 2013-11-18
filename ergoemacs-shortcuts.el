@@ -1396,7 +1396,8 @@ Setup C-c and C-x keys to be described properly.")
 
 (defun ergoemacs-remove-shortcuts ()
   "Removes ergoemacs shortcuts from keymaps."
-  (let (hashkey lookup override-text-map override orig-map)
+  (let ((inhibit-read-only t)
+        hashkey lookup override-text-map override orig-map)
     (cond
      (overriding-terminal-local-map
       (when (eq (lookup-key
@@ -1456,7 +1457,8 @@ The keymaps are:
 - `overriding-local-map'
 - overlays with :keymap property
 - text property with :keymap property."
-  (let (hashkey lookup override-text-map override orig-map)
+  (let ((inhibit-read-only t)
+        hashkey lookup override-text-map override orig-map)
     (cond
      (overriding-terminal-local-map
       (when (not
