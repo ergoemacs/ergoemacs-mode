@@ -1221,6 +1221,75 @@ Else it is a user buffer."
   (interactive)
   (text-scale-increase 0))
 
+;;; helm-mode functions
+
+;;; This comes from https://github.com/emacs-helm/helm/issues/340
+(defcustom ergoemacs-helm-ido-style-return t
+  "Allows ido-style return in `helm-mode'"
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-helm-ff-expand-dir (candidate)
+  "Allows return to expand a directory like in `ido-find-file'.
+This requires `ergoemacs-mode' to be non-nil and
+`ergoemacs-helm-ido-style-return' to be non-nil."
+  (let* ((follow (buffer-local-value
+                  'helm-follow-mode
+                  (get-buffer-create helm-buffer)))
+         (insert-in-minibuffer
+          #'(lambda (fname)
+              (with-selected-window (minibuffer-window)
+                (unless follow
+                  (delete-minibuffer-contents)
+                  (set-text-properties 0 (length fname)
+                                       nil fname)
+                  (insert fname))))))
+    (if (and ergoemacs-helm-ido-style-return ergoemacs-mode
+             (file-directory-p candidate))
+        (progn
+          (when (string= (helm-basename candidate) "..")
+            (setq helm-ff-last-expanded helm-ff-default-directory))
+          (funcall insert-in-minibuffer (file-name-as-directory
+                                         (expand-file-name candidate))))
+      (helm-exit-minibuffer))))
+
+(defun ergoemacs-helm-ff-persistent-expand-dir ()
+  "Makes `eroemacs-helm-ff-expand-dir' the default action for
+expanding helm-files."
+  (interactive)
+  (helm-attrset 'expand-dir 'ergoemacs-helm-ff-expand-dir)
+  (helm-execute-persistent-action 'expand-dir))
+
+
+(defun ergoemacs-helm-ff-dired-dir (candidate)
+  "Determines if a persistent action is called on directories.
+When `ergoemacs-mode' is enabled with
+ `ergoemacs-helm-ido-style-return' non-nil then:
+- `helm-execute-persistent-action' is called on files.
+- `helm-exit-minibuffer' is called on directories.
+
+Otherwise `helm-execute-persistent-action' is called.
+"
+  (interactive)
+  (if (and ergoemacs-helm-ido-style-return ergoemacs-mode
+           (file-directory-p candidate))
+      (helm-exit-minibuffer)
+    (helm-execute-persistent-action)))
+
+(defun ergoemacs-helm-ff-execute-dired-dir ()
+  "Allow <M-return> to execute dired on directories in `helm-mode'.
+This requires `ergoemacs-mode' to be enabled with 
+`ergoemacs-helm-ido-style-return' to be non-nil."
+  (interactive)
+  (helm-attrset 'dired-dir 'ergoemacs-helm-ff-dired-dir)
+  (helm-execute-persistent-action 'dired-dir))
+
+;; (define-key helm-find-files-map (kbd "<M-return>")
+;;   'ergoemacs-helm-ff-execute-dired-dir)
+
+;; (define-key helm-find-files-map (kbd "RET")
+;;   'ergoemacs-helm-ff-persistent-expand-dir)
+
 ;;; org-mode functions.
 
 (defun ergoemacs-org-bold ()

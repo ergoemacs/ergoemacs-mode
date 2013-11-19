@@ -564,7 +564,11 @@
       ("M-RET" helm-execute-persistent-action helm-map)
       ("<M-return>" helm-execute-persistent-action helm-map)
       ("M-S-RET" "C-u M-RET" helm-map)
-      ("<M-S-return>" "C-u M-RET" helm-map)))
+      ("<M-S-return>" "C-u M-RET" helm-map)
+      ("RET" ergoemacs-helm-ff-persistent-expand-dir helm-find-files-map)
+      ("<return>" ergoemacs-helm-ff-persistent-expand-dir helm-find-files-map)
+      ("M-RET" ergoemacs-helm-ff-execute-dired-dir helm-find-files-map)
+      ("<M-return>" ergoemacs-helm-ff-execute-dired-dir helm-find-files-map)))
     
     (auto-complete-mode-hook ac-completing-map ac-menu-map))
   "Key bindings that are applied as hooks to specific modes."
