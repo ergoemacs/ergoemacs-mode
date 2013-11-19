@@ -1130,6 +1130,23 @@ right of the rectangle and filling the rectangle with blanks.
 and down; lines scrolled outside the top or bottom of the rectangle
 are lost, but can be recovered using [C-z].
 
+*** Helm-mode
+Helm mode's actions are in general executed with the Return key. The
+persistent actions can be executed with Alt+Return.  The prefix-based
+persistent actions can be execute with Alt+Shift+Return.  
+
+The exception to this is when finding files.  Return will expand the
+directory within helm (equivalent to helm's execute persistent action
+for a directory). And Alt+Return will open dired.  This is equivalent
+to ido-mode.  In my opinion it is more likely that you want to do
+than to open in ido-mode. Therefore an unchorded key is more
+ergonomic than a key combination like Alt+Return.  However, you can
+turn off this behavior by changing the following setting:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ergoemacs-helm-ido-style-return nil)
+#+END_SRC
+
 *** Visual Regexp
 When [[https://github.com/benma/visual-regexp.el][visual regexp]] is installed, ergoemacs-mode changes
 =query-replace-regexp= to =vr/query-replace=
@@ -2226,3 +2243,5 @@ Any of these can be customized by customizing the variable
 
 
 
+
+#  LocalWords:  ido dired
