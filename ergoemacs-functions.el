@@ -619,7 +619,6 @@ the prefix arguments of `end-of-buffer',
 
 "
   (interactive "^p")
-  (message "%s" last-command)
   (if (and ergoemacs-beginning-or-end-of-line-and-what
            (or (not ergoemacs-use-beginning-or-end-of-line-only)
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
