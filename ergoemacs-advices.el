@@ -254,34 +254,35 @@ This makes helm behave more like `ido-find-file'"
   :group 'ergoemacs-mode
   :type 'boolean)
 
-(defadvice helm-ff-auto-expand-to-home-or-root (around ergoemacs-helm-ido-user-dirs)
-  "Allow `helm-find-files' to expand user directories.
+(eval-after-load "helm-files"
+  '(progn
+    (defadvice helm-ff-auto-expand-to-home-or-root (around ergoemacs-helm-ido-user-dirs)
+      "Allow `helm-find-files' to expand user directories.
 For example ~ergoemacs/ would expand to /usr/ergoemacs or
 whatever that points to...
 
 This require `ergoemacs-mode' to be enabled as well as
 `ergoemacs-helm-expand-user-dirs' to be true.
 "
-  (cond
-   ((and ergoemacs-helm-expand-user-dirs
-         ergoemacs-mode
-         (helm-file-completion-source-p)
-         (string-match "/\\(~[^/]*/\\)$" helm-pattern)
-         (with-current-buffer (window-buffer (minibuffer-window)) (eolp))
-         (not (string-match helm-ff-url-regexp helm-pattern)))
-    (let ((input (match-string 1 helm-pattern)))
-      (if (file-directory-p input)
-          (setq helm-ff-default-directory
-                (setq input (file-name-as-directory input)))
-        (setq helm-ff-default-directory (file-name-as-directory
-                                         (file-name-directory input))))
-      (with-helm-window
-        (helm-set-pattern input)
-        (helm-check-minibuffer-input))))
-   (t
-    ad-do-it)))
-
-(ad-activate 'helm-ff-auto-expand-to-home-or-root)
+      (cond
+       ((and ergoemacs-helm-expand-user-dirs
+             ergoemacs-mode
+             (helm-file-completion-source-p)
+             (string-match "/\\(~[^/]*/\\)$" helm-pattern)
+             (with-current-buffer (window-buffer (minibuffer-window)) (eolp))
+             (not (string-match helm-ff-url-regexp helm-pattern)))
+        (let ((input (match-string 1 helm-pattern)))
+          (if (file-directory-p input)
+              (setq helm-ff-default-directory
+                    (setq input (file-name-as-directory input)))
+            (setq helm-ff-default-directory (file-name-as-directory
+                                             (file-name-directory input))))
+          (with-helm-window
+            (helm-set-pattern input)
+            (helm-check-minibuffer-input))))
+       (t
+        ad-do-it)))
+    (ad-activate 'helm-ff-auto-expand-to-home-or-root)))
 
 
 (provide 'ergoemacs-advices)
