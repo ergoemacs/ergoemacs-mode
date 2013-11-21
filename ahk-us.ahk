@@ -45,37 +45,6 @@
 ;; - Replaced occurences of DEL with C-x to 'kill' to the clipboard
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Copyright (c) 2012 Benjamin Hansen
-;
-; Permission is hereby granted, free of charge, to any person
-; obtaining a copy of this software and associated documentation files
-; (the "Software"), to deal in the Software without restriction,
-; including without limitation the rights to use,i copy, modify, merge,
-; publish, distribute, sublicense, and/or sell copies of the Software,
-; and to permit persons to whom the Software is furnished to do so,
-; subject to the following conditions:
-; 
-; The above copyright notice and this permission notice shall be
-; included in all copies or substantial portions of the Software.
-; 
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-; NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-; BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-; ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-; SOFTWARE.
-;
-; Allows the spacebar key to mimic the Ctrl key while retaining most
-; of its normal functionality. Holding down the spacebar key down acts
-; like holding down the ctrl key. This allows for easier use of
-; keyboard shortcuts (such as Ctrl+C for copy). If the spacebar key is
-; pressed and released quickly (less than the specified timeout) and
-; no other key was pressed then a normal space is sent.
-;
-; Author:         Ben Hansen <benhansenslc@gmail.com> 
-
 #SingleInstance force
 #MaxHotkeysPerInterval 9999
 #NoEnv
@@ -95,6 +64,7 @@ CareLV = 0
 g_MarkSet=
 g_LastBol=
 g_LastEol=
+g_LastBobp=
 modifiers=
 skipUpDown=
 
@@ -169,9 +139,6 @@ Loop, Read, ergoemacs.ini
     }
   }
 }
-
-
-
 
 ;; HotKey,(,autopair-paren
 
@@ -418,6 +385,7 @@ DelayKeyOutput:
     g_MarkSet=
     g_LastBol=
     g_LastEol=
+    g_LastBobp=
   }
   g_OtherKeyPressed := true
   Return
@@ -463,6 +431,7 @@ DelayKeyOutput:
             g_MarkSet=
             g_LastBol=
             g_LastEol=
+            g_LastBobp= 
           }
        } else {
           SendInput % modifiers "{Space}"
@@ -642,6 +611,18 @@ ergoemacs-kill-line-backward:
   SendKey("{Shift down}{Home}{Shift up}{Ctrl down}{x}{Ctrl up}",0)
   return
 
+ergoemacs-beginning-or-end-of-buffer:
+  if (g_LastBobp <> ""){
+     ;; Last Key was not beginning of buffer
+     SendKey("{Ctrl down}{Home}{Ctrl up}",1)
+     g_LastBobp=yes
+  } else {
+     ;; Last Key was end of buffer
+     SendKey("{End}",1)
+     g_LastBobp= 
+  }
+  return
+
 
 ergoemacs-cut-line-or-region:
  SendKey("{Ctrl down}{x}{Ctrl up}",0)
@@ -671,7 +652,7 @@ redo:
 comment-dwim:
  ;; Word Alt+Ctrl+M is insert comment
  If WinActive("ahk_class OpusApp"){
-   SendKey("{Alt down}{Ctrl down}{M}{Ctrl up}{Alt up}",0)
+   SendKey("{Alt down}{Ctrl down}{M}{Alt up}{Ctrl up}",0)
  }
  return
 
