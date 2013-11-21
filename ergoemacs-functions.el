@@ -1422,7 +1422,7 @@ When in `browse-kill-ring-mode', cycle backward through the key ring.
         (browse-kill-ring)
       (if ergoemacs-smart-paste
           (ergoemacs-shortcut-internal 'yank)
-        (erogemacs-shortcut-internal 'yank-pop)))))
+        (ergoemacs-shortcut-internal 'yank-pop)))))
 
 (defun ergoemacs-paste (&optional arg)
   "Run `yank' or `yank-pop' if this command is repeated.
