@@ -1130,6 +1130,10 @@ right of the rectangle and filling the rectangle with blanks.
 and down; lines scrolled outside the top or bottom of the rectangle
 are lost, but can be recovered using [C-z].
 
+*** Dired-mode
+In dired-mode, [Ctrl+c] [Ctrl+c] or [Apps] [m] will toggle to
+writable dired mode (wdired-mode).  Then [Ctrl+c] [Ctrl+c] or [Apps]
+[m] will commit the changes. 
 *** Helm-mode
 Helm mode's actions are in general executed with the Return key. The
 persistent actions can be executed with Alt+Return.  The prefix-based
