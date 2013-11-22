@@ -529,15 +529,12 @@
     (ido-mode
      ((execute-extended-command smex nil remap)))
     
-    ;; (ido-setup-hook ; Add M-RET to select text in ido-mode.  More
-    ;;                 ; ergonomically friendly
-    ;;  (("M-RET" ido-select-text ido-common-completion-map)))
-    
     ;; Info Mode hooks
     (Info-mode-hook
      (("<backspace>" Info-history-back)
       ("<S-backspace>" Info-history-forward)))
-    
+
+    ;; Example remapping.
     (SAS-mode-hook
      (("<apps> j j" ess-sas-goto-log nil t)
       ("<apps> j u" ess-sas-goto-lst nil t)
@@ -546,6 +543,10 @@
       ("<apps> j ," ess-sas-data-view-insight nil t)
       ("<apps> j m" ess-sas-graph-view nil t)
       ("<apps> j n" ess-sas-goto-shell nil t)))
+
+    ;; Dired
+    (dired-mode-hook
+     (("C-c C-c" wdired-change-to-wdired-mode)))
     
     ;; Helm mode hooks
     (helm-mode
