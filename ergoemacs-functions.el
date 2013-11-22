@@ -887,6 +887,7 @@ Calling this command 3 times will always result in no whitespaces around cursor.
     (rst-mode nil)
     (texinfo-mode nil)
     (text-mode nil)
+    (wdired-mode nil)
     (wiki-mode nil)
     (wikipedia-mode nil)
     (xah-css-mode nil)
