@@ -310,8 +310,8 @@
     ("<M-delete>" kill-word "⌦ word")
     ("<C-delete>" kill-word "⌦ word")
 
-    ("<home>" ergoemacs-beginning-of-line-or-what "← line/¶")
-    ("<end>" ergoemacs-end-of-line-or-what "→ line/¶")
+    ("<home>" move-beginning-of-line "← line")
+    ("<end>" move-end-of-line "→ line")
     
     ("<C-home>" beginning-of-buffer "↑ Top")
     ("<C-end>" end-of-buffer "↓ Bottom")
@@ -401,9 +401,9 @@
     ("C-h 3" describe-key)
     ("C-h 4" describe-char)
     ("C-h 5" man)
-    ("C-h 7" lookup-google)
-    ("C-h 8" lookup-wikipedia)
-    ("C-h 9" lookup-word-definition)
+    ("C-h 7" ergoemacs-lookup-google)
+    ("C-h 8" ergoemacs-lookup-wikipedia)
+    ("C-h 9" ergoemacs-lookup-word-definition)
     ("C-h `" elisp-index-search)
     ("C-h m" ergoemacs-describe-major-mode)
     ("C-h o" ergoemacs-where-is-old-binding)
