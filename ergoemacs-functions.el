@@ -974,14 +974,14 @@ the last misspelled word with
              (txt (if (not bds) nil
                     (filter-buffer-substring (car bds) (cdr bds)))))
         (cond
+         ((and txt (or (string-match (format "^%s" (regexp-opt ccc t)) txt)
+                       (string-match (format "%s\\{2,\\}" (regexp-opt ccc t)) txt)))
+          ;; Assume variables such as _temp are not camel case variables.
+          (setq bds (bounds-of-thing-at-point 'word)))
          ((and txt (string-match "[[:lower:]][[:upper:]]" txt))
           (if (string-match "^[[:lower:]]" txt)
               (setq camel-case "camel lower")
             (setq camel-case "camel upper")))
-         ((and txt (string-match (format "^%s" (regexp-opt ccc t)) txt)
-               (not (string-match (regexp-opt ccc t) (substring txt 1))))
-          ;; Assume variables such as _temp are not camel case variables.
-          (setq bds (bounds-of-thing-at-point 'word)))
          ((and txt (string-match (regexp-opt ccc t) txt))
           (setq camel-case (match-string 1 txt)))
          (t
