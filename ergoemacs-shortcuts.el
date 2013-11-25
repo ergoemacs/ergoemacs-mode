@@ -793,9 +793,13 @@ function if it is bound globally.  For example
                                          '(ergoemacs-undefined
                                            ergoemacs-shortcut)
                                          fn-ergo)))
-                 (add-to-list 'fn-lst (list binding
-                                            (read-kbd-macro
-                                             (key-description cur-key) t))))))
+                 (when (condition-case err
+                           (interactive-form (read-kbd-macro
+                                              (key-description cur-key) t))
+                         nil)
+                   (add-to-list 'fn-lst (list binding
+                                              (read-kbd-macro
+                                               (key-description cur-key) t)))))))
            (or
             (remove-if
              '(lambda(x)
@@ -837,10 +841,11 @@ function if it is bound globally.  For example
        (setq ergoemacs-first-variant chorded)
        (ergoemacs- key chorded))))
     (when shared-do-it
+      (message "%s" fn)
       (if (not fn)
           (unless keymap-key
-         (let (message-log-max)
-           (message "%s is not defined." (ergoemacs-pretty-key key))))
+            (let (message-log-max)
+              (message "%s is not defined." (ergoemacs-pretty-key key))))
      (unless keymap-key
        (setq this-command (nth 0 fn)) ; Don't record this command.
        ;; (setq prefix-arg current-prefix-arg)
