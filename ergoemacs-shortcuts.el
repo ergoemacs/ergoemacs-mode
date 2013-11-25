@@ -841,7 +841,6 @@ function if it is bound globally.  For example
        (setq ergoemacs-first-variant chorded)
        (ergoemacs- key chorded))))
     (when shared-do-it
-      (message "%s" fn)
       (if (not fn)
           (unless keymap-key
             (let (message-log-max)
