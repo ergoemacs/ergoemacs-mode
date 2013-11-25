@@ -149,7 +149,7 @@
 (load "ergoemacs-layouts")
 
 ;; Ergoemacs-keybindings version
-(defconst ergoemacs-mode-version "5.13.11"
+(defconst ergoemacs-mode-version "5.13.11-1"
   "Ergoemacs-keybindings minor mode version number.")
 
 (defconst ergoemacs-mode-changes "Delete window Alt+0 changed to Alt+2.
