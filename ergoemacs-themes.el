@@ -546,7 +546,7 @@
 
     ;; Dired
     (dired-mode-hook
-     (("C-c C-c" wdired-change-to-wdired-mode)))
+     (("C-c C-c" wdired-change-to-wdired-mode dired-mode-map)))
     
     ;; Helm mode hooks
     (helm-mode
