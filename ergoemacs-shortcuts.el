@@ -573,6 +573,13 @@ the best match."
   :type '(repeat
           (symbol :tag "Function to ignore:")))
 
+(defcustom ergoemacs-shortcuts-do-not-lookup
+  '(execute-extended-command)
+  "Functions that `ergoemacs-mode' does not lookup equivalent key-bindings for. "
+  :group 'ergoemacs-mode
+  :type '(repeat
+          (symbol :tag "Function to call literally:")))
+
 (defmacro ergoemacs-with-global (&rest body)
   "With global keymap, not ergoemacs keymaps.
 In theory `ergoemacs-mode' and `ergoemacs-unbind-keys' should
@@ -667,11 +674,6 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
    (ergoemacs-shortcut-send-fn
     (eval ergoemacs-shortcut-send-fn))))
 
-(defun ergoemacs-quit-key-sequence ()
-  (interactive)
-  (beep)
-  (message "Quit key sequence."))
-
 (defvar ergoemacs-shortcut-send-key nil)
 (defvar ergoemacs-shortcut-send-fn nil)
 (defvar ergoemacs-shortcut-send-timer nil)
@@ -736,76 +738,78 @@ function if it is bound globally.  For example
           (interactive-form key)
         (error nil))
       ;; Lookup ergoemacs key bindings.
-      (mapc
-       (lambda(cur-key)
-         (setq new-fn (condition-case err
-                          (lookup-key ergoemacs-keymap cur-key)
-                        (error nil)))
-         (unless new-fn
-           (setq new-fn (gethash (read-kbd-macro
-                                   (key-description cur-key) t)
-                                  ergoemacs-command-shortcuts-hash))
+      (if (memq key ergoemacs-shortcuts-do-not-lookup)
+          (progn
+            (setq fn (list (this-single-command-keys)
+                           key))
+            (setq shared-do-it t))
+        (mapc
+         (lambda(cur-key)
+           (setq new-fn (condition-case err
+                            (lookup-key ergoemacs-keymap cur-key)
+                          (error nil)))
+           (unless new-fn
+             (setq new-fn (gethash (read-kbd-macro
+                                    (key-description cur-key) t)
+                                   ergoemacs-command-shortcuts-hash))
+             (when new-fn
+               (setq new-fn (car new-fn))))
            (when new-fn
-             (setq new-fn (car new-fn))))
-         (when new-fn
-           (push new-fn fn-ergo)))
-       (or
-        (remove-if
-         '(lambda(x)
-            (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
-         (where-is-internal key (current-global-map)))
-        (gethash key ergoemacs-where-is-global-hash)))
-      
-      (setq new-fn nil)
-      (ergoemacs-with-global
-          (mapc
-           (lambda(cur-key)
-             (unless (string-match "\\(s-\\|A-\\|H-\\)"
-                                   (condition-case err
-                                       (key-description cur-key)
-                                     (error "")))
-               (setq binding
-                     (if (and keymap-key (boundp 'ergoemacs-orig-keymap)
-                              ergoemacs-orig-keymap)
-                         (lookup-key ergoemacs-orig-keymap cur-key t)
-                       (key-binding cur-key t nil (point))))
-               (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
-               ;; Dont bind to shortcut maps... causes infinite recursion
-               ;; of that function calls `ergoemacs-shortcut-internal'
-               (when (and new-fn (not (eq ergoemacs-this-command new-fn))
-                          (condition-case err
-                              (interactive-form new-fn)
-                            (error nil)))
-                 ;; When a lookup finds org-metadown and there is a
-                 ;; function ergoemacs-org-metadown, use the
-                 ;; ergoemacs-org-metadown instead.
-                 (setq fn-override
-                       (list new-fn
-                             (read-kbd-macro
-                              (key-description cur-key) t))))
-               (unless (or (eq binding key)
-                           ;; No infinite lookups.
-                           (eq ergoemacs-this-command binding)
-                           ;; No shortcuts to ergoemacs from function.
-                           (eq binding fn-ergo)
-                           (memq binding
-                                 (append ergoemacs-shortcut-ignored-functions
-                                         '(ergoemacs-undefined
-                                           ergoemacs-shortcut)
-                                         fn-ergo)))
-                 (when (condition-case err
-                           (interactive-form (read-kbd-macro
-                                              (key-description cur-key) t))
-                         nil)
-                   (add-to-list 'fn-lst (list binding
-                                              (read-kbd-macro
-                                               (key-description cur-key) t)))))))
-           (or
-            (remove-if
-             '(lambda(x)
-                (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
-             (where-is-internal key (current-global-map)))
-            (gethash key ergoemacs-where-is-global-hash))))
+             (push new-fn fn-ergo)))
+         (or
+          (remove-if
+           '(lambda(x)
+              (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
+           (where-is-internal key (current-global-map)))
+          (gethash key ergoemacs-where-is-global-hash)))
+        
+        (setq new-fn nil)
+        (ergoemacs-with-global
+         (mapc
+          (lambda(cur-key)
+            (unless (string-match "\\(s-\\|A-\\|H-\\)"
+                                  (condition-case err
+                                      (key-description cur-key)
+                                    (error "")))
+              (setq binding
+                    (if (and keymap-key (boundp 'ergoemacs-orig-keymap)
+                             ergoemacs-orig-keymap)
+                        (lookup-key ergoemacs-orig-keymap cur-key t)
+                      (key-binding cur-key t nil (point))))
+              (setq new-fn (intern-soft (format "erogemacs-%s" binding)))
+              ;; Dont bind to shortcut maps... causes infinite recursion
+              ;; of that function calls `ergoemacs-shortcut-internal'
+              (when (and new-fn (not (eq ergoemacs-this-command new-fn))
+                         (condition-case err
+                             (interactive-form new-fn)
+                           (error nil)))
+                ;; When a lookup finds org-metadown and there is a
+                ;; function ergoemacs-org-metadown, use the
+                ;; ergoemacs-org-metadown instead.
+                (setq fn-override
+                      (list new-fn
+                            (read-kbd-macro
+                             (key-description cur-key) t))))
+              (unless (or (eq binding key)
+                          ;; No infinite lookups.
+                          (eq ergoemacs-this-command binding)
+                          ;; No shortcuts to ergoemacs from function.
+                          (eq binding fn-ergo)
+                          (memq binding
+                                (append ergoemacs-shortcut-ignored-functions
+                                        '(ergoemacs-undefined
+                                          ergoemacs-shortcut)
+                                        fn-ergo)))
+                
+                (add-to-list 'fn-lst (list binding
+                                           (read-kbd-macro
+                                            (key-description cur-key) t))))))
+          (or
+           (remove-if
+            '(lambda(x)
+               (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
+            (where-is-internal key (current-global-map)))
+           (gethash key ergoemacs-where-is-global-hash)))))
       (cond
        (fn-override
         (set fn fn-override))
