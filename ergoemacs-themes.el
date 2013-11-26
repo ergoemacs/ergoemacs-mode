@@ -462,9 +462,7 @@
     (browse-kill-ring-hook
      (("<f11>" browse-kill-ring-previous)
       ("<f12>" browse-kill-ring-forward)
-      (keboard-quit  browse-kill-ring-quit)
-      ("ESC" browse-kill-ring-quit)
-      ("<escape>" browse-kill-ring-quit)
+      (keyboard-quit  browse-kill-ring-quit)
       (isearch-forward browse-kill-ring-search-forward)
       (isearch-backward browse-kill-ring-search-backward)
       (previous-line browse-kill-ring-previous)
@@ -547,7 +545,7 @@
     ;; Dired
     (dired-mode-hook
      (("C-c C-c" wdired-change-to-wdired-mode dired-mode-map)))
-    
+
     ;; Helm mode hooks
     (helm-mode
      ((execute-extended-command helm-M-x nil remap)
