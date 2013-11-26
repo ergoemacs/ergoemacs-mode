@@ -1701,6 +1701,40 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
      lay)))
 
 (require 'json nil t)
+
+(defun ergoemacs-json-layout (layout)
+  (concat "kbd_layout = " (json-encode layout) ";"))
+
+;; (insert (ergoemacs-json-fixed-theme ergoemacs-fixed-layout))
+(defun ergoemacs-json-fixed-theme (theme)
+  (concat
+   "fix_layout = "
+   (json-encode
+    (mapcar
+     (lambda(x)
+       `(,(with-temp-buffer
+            (insert (nth 0 x))
+            (goto-char (point-min))
+            (while (re-search-forward "S-\\(.\\)\\>" nil t)
+              (replace-match (upcase (match-string 1))))
+            (buffer-string))  . ,(nth 2 x)))
+     theme)) ";"))
+
+;; (insert (ergoemacs-json-variable-theme ergoemacs-variable-layout))
+(defun ergoemacs-json-variable-theme (theme)
+  (concat
+   "var_layout = "
+   (json-encode
+    (mapcar
+     (lambda(x)
+       `(,(with-temp-buffer
+            (insert (ergoemacs-kbd (nth 0 x) t (nth 3 x)))
+            (goto-char (point-min))
+            (while (re-search-forward "S-\\(.\\)\\>" nil t)
+              (replace-match (upcase (match-string 1))))
+            (buffer-string))  . ,(nth 2 x)))
+     theme)) ";"))
+
 (defun ergoemacs-json-current ()
   "Provide ergoemacs theme and layout as a json object."
   (json-encode `(:fixed-keys ,(symbol-value (ergoemacs-get-fixed-layout)) :variable-keys ,(symbol-value (ergoemacs-get-variable-layout)) :translation ,ergoemacs-translation-assoc)))
