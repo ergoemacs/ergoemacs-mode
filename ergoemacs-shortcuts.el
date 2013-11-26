@@ -834,8 +834,7 @@ function if it is bound globally.  For example
       (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
       (ergoemacs-with-global
           (setq fn (list (key-binding (read-kbd-macro key))
-                         (read-kbd-macro key t)))
-        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
+                         (read-kbd-macro key t))))
       (setq shared-do-it t))
     (keymap-key ;; extract key prefixes.
      )
