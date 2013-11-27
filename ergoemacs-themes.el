@@ -546,6 +546,9 @@
     (dired-mode-hook
      (("C-c C-c" wdired-change-to-wdired-mode dired-mode-map)))
 
+    (wdired-mode-hook
+     ((keyboard-quit wdired-exit wdired-mode-map)))
+
     ;; Helm mode hooks
     (helm-mode
      ((execute-extended-command helm-M-x nil remap)
