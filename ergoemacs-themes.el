@@ -27,6 +27,9 @@
 ;; 
 
 ;;; Code:
+(autoload 'dired-jump "dired-x" "ergoemacs-autoload." t)
+(autoload 'wdired-change-to-wdired-mode "wdired" "ergoemacs-autoload." t)
+(autoload 'wdired-exit "wdired" "ergoemacs-autoload." t)
 
 (defvar ergoemacs-full-maps '(helm-map)
   "List of keymaps where the full ergoemacs keymap is fully installed (ie they use an overriding keymap).")
