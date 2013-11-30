@@ -146,7 +146,8 @@
 (add-to-list 'load-path ergoemacs-dir)
 
 
-(load "ergoemacs-layouts")
+(unless (featurep 'ergoemacs-layout)
+  (load "ergoemacs-layouts"))
 
 ;; Ergoemacs-keybindings version
 (defconst ergoemacs-mode-version "5.13.11-1"
@@ -508,8 +509,10 @@ work in the terminal."
   (interactive "P")
   (ergoemacs-M-o arg ergoemacs-M-O-keymap))
 
-(load "ergoemacs-themes")
-(load "ergoemacs-unbind")
+(unless (featurep 'ergoemacs-themes)
+  (load "ergoemacs-themes"))
+(unless (featurep 'ergoemacs-unbind)
+  (load "ergoemacs-unbind"))
 
 ;;; ergoemacs-keymap
 
@@ -523,10 +526,14 @@ work in the terminal."
 (defvar ergoemacs-shortcut-override-keymap (make-sparse-keymap)
   "Keymap for overriding keymap.")
 
-(load "ergoemacs-modal")
-(load "ergoemacs-functions")
-(load "ergoemacs-translate")
-(load "ergoemacs-shortcuts")
+(unless (featurep 'ergoemacs-modal)
+  (load "ergoemacs-modal"))
+(unless (featurep 'ergoemacs-functions)
+  (load "ergoemacs-functions"))
+(unless (featurep 'ergoemacs-translate)
+  (load "ergoemacs-translate"))
+(unless (featurep 'ergoemacs-shortcuts)
+  (load "ergoemacs-shortcuts"))
 
 
 (defvar ergoemacs-backward-compatability-variables
@@ -579,7 +586,8 @@ work in the terminal."
   (ergoemacs-debug-flush))
 
 (require 'lookup-word-on-internet nil "NOERROR")
-(load "ergoemacs-extras")
+(unless (featurep 'ergoemacs-extras)
+  (load "ergoemacs-extras"))
 
 ;; ErgoEmacs hooks
 
@@ -1229,7 +1237,8 @@ bindings the keymap is:
 
 
 
-(load "ergoemacs-advices")
+(unless (featurep 'ergoemacs-advices)
+  (load "ergoemacs-advices"))
 
 (defcustom ergoemacs-ignore-prev-global t
   "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."
