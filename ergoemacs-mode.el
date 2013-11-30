@@ -146,7 +146,7 @@
 (add-to-list 'load-path ergoemacs-dir)
 
 
-(unless (featurep 'ergoemacs-layout)
+(unless (featurep 'ergoemacs-layouts)
   (load "ergoemacs-layouts"))
 
 ;; Ergoemacs-keybindings version
