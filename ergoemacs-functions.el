@@ -129,9 +129,13 @@
            (or (region-active-p)
                (and cua--rectangle (boundp 'cua-mode) cua-mode)))
       ;; Wait for next key...
-      (ergoemacs-shortcut-internal key 'normal nil nil
-                                   ergoemacs-ctl-c-or-ctl-x-delay
-                                   fn-cp))
+      (let ((next-key
+             (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
+               (eval (macroexpand `(key-description [,(read-key)]))))))
+        (if next-key
+            (progn
+              (ergoemacs-read (concat key " " next-key) 'normal))
+          (funcall fn-cp arg))))
      ((or (region-active-p)
           (and cua--rectangle (boundp 'cua-mode) cua-mode))
       (funcall fn-cp arg))
