@@ -571,24 +571,6 @@ active.
   (setq ergoemacs-shortcut-send-fn (or (command-remapping fn (point)) fn))
   (setq this-command ergoemacs-shortcut-send-fn)
   (cond
-   ;; ((and (not unread-command-events)
-   ;;       (null overriding-terminal-local-map))
-   ;;  (let ((override-map (make-sparse-keymap))
-   ;;        (new-key (read-kbd-macro key t)))
-   ;;    (define-key override-map (read-kbd-macro "<ergoemacs>") 'ignore)
-   ;;    (define-key override-map new-key
-   ;;      `(lambda(&optional arg)
-   ;;         (interactive "P")
-   ;;         (setq overriding-terminal-local-map nil)
-   ;;         ;; Pretend `ergoemacs-mode' is off.
-   ;;         (ergoemacs-with-global
-   ;;          (let (ergoemacs-unbind-keys
-   ;;                ergoemacs-mode)
-   ;;            (call-interactively ',ergoemacs-shortcut-send-fn)))))
-   ;;    (setq overriding-terminal-local-map override-map)
-   ;;    (setq prefix-arg current-prefix-arg)
-   ;;    (setq unread-comand-events
-   ;;          (listify-key-sequence new-key))))
    ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
     (let ((old-unread (listify-key-sequence (this-command-keys)))
           new-unread)
@@ -601,14 +583,18 @@ active.
               (this-single-command-keys () (if (equal this-command ',ergoemacs-shortcut-send-fn) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-single-command-keys))))
               (this-command-keys-vector () (if (equal this-command ',ergoemacs-shortcut-send-fn) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys-vector)))))
            (setq new-unread (listify-key-sequence (this-command-keys)))
-           (call-interactively ergoemacs-shortcut-send-fn nil ,(read-kbd-macro key t)))))
+           (ergoemacs-with-global
+            (let (ergoemacs-mode ergoemacs-unbind-keys)
+              (call-interactively ergoemacs-shortcut-send-fn nil ,(read-kbd-macro key t)))))))
       ;; Some commands, like isearch, put commands in
       ;; `unread-command-events'; Try to handle these.
       (when (and unread-command-events
                  (equal unread-command-events new-unread))
         (setq unread-command-events old-unread))))
    (t
-    (call-interactively ergoemacs-shortcut-send-fn))))
+    (ergoemacs-with-global
+     (let (ergoemacs-mode ergoemacs-unbind-keys)
+       (call-interactively ergoemacs-shortcut-send-fn))))))
 
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
