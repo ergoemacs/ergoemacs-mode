@@ -424,7 +424,7 @@ Test next and prior translation."
     (with-temp-buffer
       (insert ergoemacs-test-lorem-ipsum)
       (mark-whole-buffer)
-      (with-timeout ((+ ergoemacs-ctl-c-or-ctl-x-delay 0.1) nil)
+      (with-timeout ((* ergoemacs-ctl-c-or-ctl-x-delay 2) nil)
         (call-interactively 'ergoemacs-ctl-x))
       (setq ret (string= "" (buffer-string))))
     (should ret)))
@@ -436,7 +436,7 @@ Test next and prior translation."
     (with-temp-buffer
       (insert ergoemacs-test-lorem-ipsum)
       (mark-whole-buffer)
-      (with-timeout ((+ ergoemacs-ctl-c-or-ctl-x-delay 0.1) nil)
+      (with-timeout ((* ergoemacs-ctl-c-or-ctl-x-delay 2) nil)
         (call-interactively 'ergoemacs-ctl-c))
       (goto-char (point-max))
       (ergoemacs-paste)
