@@ -291,6 +291,7 @@ Performs `keyboard-quit' in most circumstances unless a minor
 mode defines a more appropriate quit key like `browse-kill-ring'.  The default ergoemacs-theme defines `keyboard-quit' to be `browse-kill-ring-quit'."
   (let (defined-fn
          ergoemacs-shortcut-keys
+         ergoemacs-read-input-keys
          ergoemacs-shortcut-override-mode
          ergoemacs-mode)
     (setq defined-fn (ergoemacs-key-fn-lookup 'keyboard-quit))

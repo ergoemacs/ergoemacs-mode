@@ -169,6 +169,7 @@
     ("<apps> <f3>" ergoemacs-copy-all "copy all")
     
     ("<apps> <return>" execute-extended-command "M-x")
+    ("<apps> RET" execute-extended-command "M-x")
     ;;("<apps> <backspace>" )  Delete/cut text-block.
     
     ("<apps> TAB" indent-region "indent-region")  ;; Already in CUA
