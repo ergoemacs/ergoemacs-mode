@@ -416,6 +416,35 @@ Test next and prior translation."
     (ergoemacs-mode 1)
     (should ret)))
 
+
+(ert-deftest ergoemacs-test-issue-130-cut ()
+  "Attempts to test Issue #130 -- Cut"
+  (let ((ret t)
+        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
+    (with-temp-buffer
+      (insert ergoemacs-test-lorem-ipsum)
+      (mark-whole-buffer)
+      (with-timeout ((+ ergoemacs-ctl-c-or-ctl-x-delay 0.1) nil)
+        (call-interactively 'ergoemacs-ctl-x))
+      (setq ret (string= "" (buffer-string))))
+    (should ret)))
+
+(ert-deftest ergoemacs-test-issue-130-copy ()
+  "Attempts to test Issue #130 -- Copy"
+  (let ((ret t)
+        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
+    (with-temp-buffer
+      (insert ergoemacs-test-lorem-ipsum)
+      (mark-whole-buffer)
+      (with-timeout ((+ ergoemacs-ctl-c-or-ctl-x-delay 0.1) nil)
+        (call-interactively 'ergoemacs-ctl-c))
+      (goto-char (point-max))
+      (ergoemacs-paste)
+      (setq ret (string= (concat ergoemacs-test-lorem-ipsum
+                                 ergoemacs-test-lorem-ipsum)
+                         (buffer-string))))
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
