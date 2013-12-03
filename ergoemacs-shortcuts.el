@@ -80,8 +80,7 @@ active.
         (ergoemacs-shortcut-keys keep-shortcut-layer)
         ergoemacs-shortcut-override-mode
         test-key new-type
-        ;; message-log-max
-        )
+        message-log-max)
     (message "%s%s%s"
              (if current-prefix-arg
                  (concat current-prefix-arg " ")
