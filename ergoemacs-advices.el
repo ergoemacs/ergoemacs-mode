@@ -237,17 +237,6 @@
 
 (ad-activate 'icicle-mode)
 
-(defadvice smex (around ergoemacs-change-text)
-  (let ((smex-prompt-string smex-prompt-string))
-    (when (and ergoemacs-mode ergoemacs-change-smex-meta-x)
-      (setq smex-prompt-string
-            (ergoemacs-pretty-key
-             (key-description
-              (this-single-command-keys)))))
-    ad-do-it))
-
-(ad-activate 'smex)
-
 (defcustom ergoemacs-helm-expand-user-dirs 't
   "Expand user directories under helm.
 This makes helm behave more like `ido-find-file'"

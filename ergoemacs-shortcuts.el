@@ -679,11 +679,19 @@ This is only performed it `ergoemacs-mode' has not defined some
 work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
 "
   (interactive "P")
+  (when (and ergoemacs-change-smex-meta-x (boundp 'smex-prompt-string))
+    (setq ergoemacs-change-smex-meta-x smex-prompt-string
+          smex-prompt-string
+          (ergoemacs-pretty-key
+           (key-description
+            (or ergoemacs-single-command-keys (this-single-command-keys))))))
   (setq ergoemacs-shortcut-send-key nil
         ergoemacs-shortcut-send-fn nil
         ergoemacs-shortcut-send-timer nil)
   (let (cmd1 cmd2)
-    (let (ergoemacs-shortcut-keys ergoemacs-read-input-keys ergoemacs-shortcut-override-mode)
+    (let (ergoemacs-shortcut-keys
+          ergoemacs-read-input-keys
+          ergoemacs-shortcut-override-mode)
       (setq cmd1 (key-binding (or ergoemacs-single-command-keys (this-single-command-keys))))
       (ergoemacs-with-global 
        (setq cmd2 (key-binding (or ergoemacs-single-command-keys (this-single-command-keys))))))
@@ -691,9 +699,10 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
         (progn
           (setq ergoemacs-shortcut-send-key (key-description (this-command-keys-vector))
                 ergoemacs-shortcut-send-fn cmd1)
+          
           (when ergoemacs-single-command-keys
-            (setq ergoemacs-single-command-keys nil)
-            (setq ergoemacs-read-input-keys t)))
+            (setq ergoemacs-single-command-keys nil
+                  ergoemacs-read-input-keys t)))
       (setq args (gethash (or ergoemacs-single-command-keys (this-single-command-keys))
                           ergoemacs-command-shortcuts-hash))
       (unless args
@@ -703,8 +712,8 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
                         (key-description (or ergoemacs-single-command-keys (this-single-command-keys))) t)
                        ergoemacs-command-shortcuts-hash)))
       (when ergoemacs-single-command-keys
-        (setq ergoemacs-single-command-keys nil)
-        (setq ergoemacs-read-input-keys t))
+        (setq ergoemacs-single-command-keys nil
+              ergoemacs-read-input-keys t))
       (if (not args)
           (progn
             ;; Remove reference to `ergoemacs-shortcut'
@@ -737,7 +746,10 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
    (ergoemacs-shortcut-send-key
     (ergoemacs-send-fn ergoemacs-shortcut-send-key ergoemacs-shortcut-send-fn))
    (ergoemacs-shortcut-send-fn
-    (eval ergoemacs-shortcut-send-fn))))
+    (eval ergoemacs-shortcut-send-fn)))
+  (when (and ergoemacs-change-smex-meta-x (boundp 'smex-prompt-string))
+    (setq smex-prompt-string ergoemacs-change-smex-meta-x
+          ergoemacs-change-smex-meta-x t)))
 
 (defvar ergoemacs-shortcut-send-key nil)
 (defvar ergoemacs-shortcut-send-fn nil)
@@ -918,7 +930,9 @@ function if it is bound globally.  For example
        ;; (setq prefix-arg current-prefix-arg)
        )
      (if (and
-          (not (string-match "self-insert" (symbol-name (nth 0 fn))))
+          (condition-case err
+              (not (string-match "self-insert" (symbol-name (nth 0 fn))))
+            (error t))
           (condition-case err
               (interactive-form (nth 0 fn))
             (error nil)))
