@@ -197,7 +197,6 @@
     ("<apps> h Z" ergoemacs-clean-nw)
 
     ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
-    ("<apps> k" ergoemacs-toggle-full-alt "Alt+mode")
     ("<apps> m" ergoemacs-ctl-c-ctl-c "C-c C-c")
     ("<apps> s" save-buffer "Save")
     ("<apps> o" find-file "Open")
@@ -225,6 +224,23 @@
     ("<apps> n s" shell "shell" t)
     ("<apps> n t" org-capure "capture")
     ("<apps> n T" org-agenda "agenda")
+    
+    ;; Smart punctuation
+    ;; `http://xahlee.info/comp/computer_language_char_distribution.html'
+    ("<apps> k k" ergoemacs-smart-paren "()")
+    ("<apps> k i" ergoemacs-smart-bracket "[]")
+    ("<apps> k ," ergoemacs-smart-curly "{}")
+    ("<apps> k j" ergoemacs-smart-quote "\"\"")
+    ("<apps> k m" ("_" nil) "_")
+    ("<apps> k d" ("+" nil) "+")
+    ("<apps> k s" ("-" nil) "-")
+    ("<apps> k f" ("=" nil) "=")
+    ("<apps> k e" ("&" nil) "&")
+    ("<apps> k p" ("|" nil) "|")
+    ("<apps> k c" ("!" nil) "!")
+    ("<apps> k v" ("?" nil) "?")
+    ("<apps> k x" ("%" nil) "%")
+    ("<apps> k s" ("@" nil) "@")
     
     ;; but some modes don't honor it...
     ("<apps> r" goto-map "Goto"))

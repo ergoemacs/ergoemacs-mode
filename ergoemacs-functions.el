@@ -1338,6 +1338,28 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
     (insert pair)
     (backward-char 1)))
 
+(defun ergoemacs-smart-paren ()
+  "Insert ()"
+  (interactive)
+  (ergoemacs-smart-punctuation-insert-pair "()"))
+
+(defun ergoemacs-smart-bracket ()
+  "Insert []"
+  (interactive)
+  (ergoemacs-smart-punctuation-insert-pair "[]"))
+
+(defun ergoemacs-smart-curly ()
+  "Insert {}"
+  (interactive)
+  (ergoemacs-smart-punctuation-insert-pair "{}"))
+
+(defun ergoemacs-smart-quote ()
+  "Insert \"\""
+  (interactive)
+  (ergoemacs-smart-punctuation-insert-pair "\"\""))
+
+
+
 (defvar ergoemacs-smart-punctuation-pairs '("()" "[]" "{}" "\"\"")
   "Default pairs to cycle among for `ergoemacs-smart-punctuation'")
 
@@ -1348,8 +1370,6 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
   "Makes `ergoemacs-smart-punctuation' repeatable"
   :type 'boolean
   :group 'ergoemacs-mode)
-
-
 
 (defun ergoemacs-smart-punctuation ()
   "Smart Punctuation Function for `ergoemacs-mode'."
