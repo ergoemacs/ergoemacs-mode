@@ -1361,7 +1361,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
 (defun ergoemacs-smart-apostrophe ()
   "Insert ''"
   (interactive)
-  (ergoemacs-smrat-punctaion-insert-pair "''"))
+  (ergoemacs-smart-punctuation-insert-pair "''"))
 
 
 
