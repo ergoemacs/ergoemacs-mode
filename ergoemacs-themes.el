@@ -231,6 +231,7 @@
     ("<apps> k i" ergoemacs-smart-bracket "[]")
     ("<apps> k ," ergoemacs-smart-curly "{}")
     ("<apps> k j" ergoemacs-smart-quote "\"\"")
+    ("<apps> k n" ergoemacs-smart-apostrophe "''")
     ("<apps> k m" ("_" nil) "_")
     ("<apps> k d" ("+" nil) "+")
     ("<apps> k s" ("-" nil) "-")
