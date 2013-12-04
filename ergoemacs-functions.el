@@ -1335,8 +1335,16 @@ This requires `ergoemacs-mode' to be enabled with
 If a smart-punctuation mode is active, use it by placing the initial pair in the unread command events."
   (if (ergoemacs-smart-punctuation-mode-p)
       (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (substring pair 0 1))) unread-command-events))
-    (insert pair)
-    (backward-char 1)))
+    (if (region-active-p)
+        (let ((p1 (region-beginning))
+              (p2 (region-end)))
+          (goto-char p2)
+          (insert (substring pair 1 2))
+          (goto-char p1)
+          (insert (substring pair 0 1))
+          (goto-char (+ p2 2)))
+      (insert pair)
+      (backward-char 1))))
 
 (defun ergoemacs-smart-paren ()
   "Insert ()"
