@@ -901,7 +901,7 @@ function if it is bound globally.  For example
           (setq fn (list (key-binding (read-kbd-macro key))
                          (read-kbd-macro key t))))
       (setq shared-do-it t))
-    (keymap-key ;; extract key prefixes.
+     (keymap-key ;; extract key prefixes.
      )
     (t ;; key prefix
      (setq this-command last-command) ; Don't record this command.
@@ -917,9 +917,11 @@ function if it is bound globally.  For example
        (setq this-command (nth 0 fn)) ; Don't record this command.
        ;; (setq prefix-arg current-prefix-arg)
        )
-     (if (condition-case err
-             (interactive-form (nth 0 fn))
-           (error nil))
+     (if (and
+          (not (string-match "self-insert" (symbol-name (nth 0 fn))))
+          (condition-case err
+              (interactive-form (nth 0 fn))
+            (error nil)))
          (if keymap-key
              (progn
                (setq do-it
@@ -1008,7 +1010,7 @@ sets `this-command' to `%s'. The hook
                ;; Allow time to process the unread command events before
                ;; installing temporary keymap
                (setq ergoemacs-shortcut-send-timer t))))
-       ;; Not a function, probably a keymap
+       ;; Not a function, probably a keymap or self-insert
        (if keymap-key
            (progn
              ;; (define-key ergoemacs-repeat-shortcut-keymap (read-kbd-macro ctl-c-keys) (symbol-value fn))
