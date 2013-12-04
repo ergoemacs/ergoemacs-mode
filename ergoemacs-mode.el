@@ -1378,6 +1378,9 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
     (condition-case err
         (progn
           (ergoemacs-vars-sync)
+          (when (and (not ergoemacs-read-input-keys)
+                     (not unread-command-events))
+            (setq ergoemacs-read-input-keys t))
           (setq ergoemacs-this-command this-command)
           (when ergoemacs-mode
             ;; Raise shortcuts and modal modes.
