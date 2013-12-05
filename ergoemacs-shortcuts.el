@@ -164,8 +164,7 @@ active.
       (let* ((new-key (concat key " " fn-key))
              (new-key-vector (read-kbd-macro new-key t)))
         (cond
-         ((and keep-shortcut-layer
-               (eq (lookup-key ergoemacs-shortcut-keymap new-key-vector) 'ergoemacs-shortcut))
+         (keep-shortcut-layer
           (setq ergoemacs-single-command-keys new-key-vector)
           (setq prefix-arg current-prefix-arg)
           (setq unread-command-events (listify-key-sequence new-key-vector)))
