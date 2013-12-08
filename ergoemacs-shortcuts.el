@@ -306,22 +306,22 @@ active.
      ((string-match "<\\(menu\\|apps\\)>" next-key)
       ;; Swap translation
       (cond
-       ((equal ergoemacs-first-variant 'unchorded)
-        (cond
-         ((eq type 'ctl-to-alt)
-          (setq new-type 'normal))
-         ((eq type 'unchorded)
-          (setq new-type 'ctl-to-alt))
-         ((eq type 'normal)
-          (setq new-type 'unchorded))))
-       (t
+       ((not (equal ergoemacs-first-variant 'unchorded))
         (cond
          ((eq type 'ctl-to-alt)
           (setq new-type 'unchorded))
          ((eq type 'unchorded)
           (setq new-type 'normal))
          ((eq type 'normal)
-          (setq new-type 'ctl-to-alt)))))
+          (setq new-type 'ctl-to-alt))))
+       (t
+        (cond
+         ((eq type 'ctl-to-alt)
+          (setq new-type 'normal))
+         ((eq type 'unchorded)
+          (setq new-type 'ctl-to-alt))
+         ((eq type 'normal)
+          (setq new-type 'unchorded)))))
       (ergoemacs-read key new-type keep-shortcut-layer))
      ((string= next-key
                (key-description (ergoemacs-key-fn-lookup 'keyboard-quit)))
