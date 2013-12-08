@@ -628,7 +628,11 @@ the prefix arguments of `end-of-buffer',
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                     (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
            (or (= (point) (point-at-eol))
-               (and (eq 'scroll-up-command last-command)
+               (and
+                (or
+                 (eq
+                  (ergoemacs-with-global (let (ergoemacs-mode ergoemacs-unbind-keys) (key-binding (read-kbd-macro "<next>"))))
+                  last-command))
                     (= (point) (point-at-bol)))))
       (progn 
         (cond
