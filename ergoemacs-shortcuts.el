@@ -913,7 +913,7 @@ function if it is bound globally.  For example
       (setq shared-do-it t))
      (keymap-key ;; extract key prefixes.
      )
-    (t ;; key prefix
+     (t ;; key prefix
      (setq this-command last-command) ; Don't record this command.
      (let  (deactivate-mark)
        (setq ergoemacs-first-variant chorded)
@@ -1039,10 +1039,12 @@ sets `this-command' to `%s'. The hook
      ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
       (ergoemacs-send-fn ergoemacs-shortcut-send-key ergoemacs-shortcut-send-fn))
      (t
-      (setq this-command (or (command-remapping
-                              ergoemacs-shortcut-send-fn (point))
-                             ergoemacs-shortcut-send-fn))
-      (call-interactively this-command)))
+      (ergoemacs-with-global
+       (let (ergoemacs-unbind-keys ergoemacs-mode)
+         (setq this-command (or (command-remapping
+                                 ergoemacs-shortcut-send-fn (point))
+                                ergoemacs-shortcut-send-fn))
+         (call-interactively this-command)))))
     
     (when ergoemacs-shortcut-send-timer
       (setq ergoemacs-M-O-timer
