@@ -1039,13 +1039,11 @@ sets `this-command' to `%s'. The hook
      ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
       (ergoemacs-send-fn ergoemacs-shortcut-send-key ergoemacs-shortcut-send-fn))
      (t
-      (ergoemacs-with-global
-       (let (ergoemacs-unbind-keys ergoemacs-mode)
+      (let (ergoemacs-shortcut-keys ergoemacs-read-input-keys)
          (setq this-command (or (command-remapping
                                  ergoemacs-shortcut-send-fn (point))
                                 ergoemacs-shortcut-send-fn))
-         (call-interactively this-command)))))
-    
+         (call-interactively this-command))))
     (when ergoemacs-shortcut-send-timer
       (setq ergoemacs-M-O-timer
             (run-with-timer ergoemacs-M-O-delay nil
