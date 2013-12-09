@@ -240,7 +240,7 @@ the best match."
   "First variant of `ergoemacs-read' key.")
 
 (defvar ergoemacs-single-command-keys nil)
-
+(defvar ergoemacs-mark-active)
 (defun ergoemacs-read (key &optional type keep-shortcut-layer)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.
@@ -345,6 +345,7 @@ active.
              (new-key-vector (read-kbd-macro new-key t)))
         (cond
          (keep-shortcut-layer
+          (setq ergoemacs-mark-active mark-active)
           (setq ergoemacs-single-command-keys new-key-vector)
           (setq prefix-arg current-prefix-arg)
           (setq unread-command-events (listify-key-sequence new-key-vector)))

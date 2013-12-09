@@ -1374,6 +1374,9 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 (defvar ergoemacs-this-command nil)
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
+  (when (and (not ergoemacs-read-input-keys)
+             ergoemacs-mark-active)
+    (setq mark-active t))
   (let (deactivate-mark)
     (condition-case err
         (progn
