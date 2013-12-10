@@ -1377,6 +1377,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   (when (and (not ergoemacs-read-input-keys)
              ergoemacs-mark-active)
     (setq mark-active t))
+  (setq ergoemacs-mark-active nil)
   (let (deactivate-mark)
     (condition-case err
         (progn
