@@ -284,10 +284,8 @@ mode defines a more appropriate quit key like `browse-kill-ring'.  The default e
          ergoemacs-shortcut-override-mode
          ergoemacs-mode)
     (setq defined-fn (ergoemacs-key-fn-lookup 'keyboard-quit))
-    (message "Defined fn: %s" defined-fn)
     (setq defined-fn (condition-case err (key-binding defined-fn)
                        (error nil)))
-    (message "Defined fn: %s" defined-fn)
     (cond
      (defined-fn
        (call-interactively defined-fn))
