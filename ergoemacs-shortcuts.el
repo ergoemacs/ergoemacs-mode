@@ -307,7 +307,15 @@ active.
      ((string-match "<\\(menu\\|apps\\)>" next-key)
       ;; Swap translation
       (cond
-       ((not (equal ergoemacs-first-variant 'unchorded))
+       ((equal ergoemacs-first-variant 'unchorded)
+        (cond
+         ((eq type 'ctl-to-alt)
+          (setq new-type 'normal))
+         ((eq type 'unchorded)
+          (setq new-type 'ctl-to-alt))
+         ((eq type 'normal)
+          (setq new-type 'unchorded))))
+       ((equal ergoemacs-first-variant 'ctl-to-alt)
         (cond
          ((eq type 'ctl-to-alt)
           (setq new-type 'unchorded))
@@ -317,12 +325,12 @@ active.
           (setq new-type 'ctl-to-alt))))
        (t
         (cond
-         ((eq type 'ctl-to-alt)
-          (setq new-type 'normal))
+         ((eq type 'normal)
+          (setq new-type 'unchorded))
          ((eq type 'unchorded)
           (setq new-type 'ctl-to-alt))
-         ((eq type 'normal)
-          (setq new-type 'unchorded)))))
+         ((eq type 'ctl-to-alt)
+          (setq new-type 'normal)))))
       (ergoemacs-read key new-type keep-shortcut-layer))
      ((string= next-key
                (key-description (ergoemacs-key-fn-lookup 'keyboard-quit)))
@@ -347,10 +355,12 @@ active.
         (cond
          (keep-shortcut-layer
           (setq ergoemacs-mark-active mark-active)
+          (setq ergoemacs-first-variant nil)
           (setq ergoemacs-single-command-keys new-key-vector)
           (setq prefix-arg current-prefix-arg)
           (setq unread-command-events (listify-key-sequence new-key-vector)))
          (t
+          (setq ergoemacs-first-variant nil)
           (setq fn (or (command-remapping fn (point)) fn))
           (ergoemacs-send-fn (concat key " " fn-key) fn)))))
      (fn ;; not complete.
@@ -916,10 +926,10 @@ function if it is bound globally.  For example
      (keymap-key ;; extract key prefixes.
      )
      (t ;; key prefix
-     (setq this-command last-command) ; Don't record this command.
-     (let  (deactivate-mark)
-       (setq ergoemacs-first-variant chorded)
-       (ergoemacs-read key chorded))))
+      (setq this-command last-command) ; Don't record this command.
+      (let  (deactivate-mark)
+        (setq ergoemacs-first-variant chorded)
+        (ergoemacs-read key chorded))))
     (when shared-do-it
       (if (not fn)
           (unless keymap-key
