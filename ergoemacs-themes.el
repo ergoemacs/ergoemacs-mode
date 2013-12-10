@@ -1508,11 +1508,12 @@ Some exceptions we don't want to unset.
   ;; (ergoemacs-key "M-," 'ergoemacs-smart-punctuation "Toggle ()")
   (ergoemacs-key "M-." 'ergoemacs-end-of-line-or-what "→ line/*")
   (ergoemacs-key "M-m" 'ergoemacs-beginning-of-line-or-what "← line/*" )
-  (ergoemacs-key "M-t" 'isearch-backward "← isearch")
-  (ergoemacs-key "M-T" 'isearch-backward-regexp "← reg isearch")
-  (ergoemacs-key "M-Y" 'isearch-forward-regexp "→ reg isearch")
+  (ergoemacs-key "M-y" 'isearch-backward "← isearch")
+  (ergoemacs-key "M-Y" 'isearch-backward-regexp "← reg isearch")
+  (ergoemacs-key "M-h" 'isearch-forward "→ isearch")
+  (ergoemacs-key "M-H" 'isearch-forward-regexp "→ reg isearch")
   
-  (ergoemacs-key "M-H" nil)
+  (ergoemacs-key "M-T" nil)
   (ergoemacs-key "M-I" nil)
   (ergoemacs-key "M-K" nil)
   (ergoemacs-key "M-U" nil)
@@ -1527,7 +1528,7 @@ Some exceptions we don't want to unset.
   ;; (ergoemacs-key "M-t" 'execute-extended-command "M-x")
   ;; (ergoemacs-key "M-a" 'ergo-call-keyward-completion "compl")
   (ergoemacs-key "M-9" 'er/contract-region "→region←")
-  (ergoemacs-key "M-h" 'execute-extended-command "M-x"))
+  (ergoemacs-key "M-t" 'execute-extended-command "M-x"))
 
 (make-obsolete-variable 'ergoemacs-variant 'ergoemacs-theme
                         "ergoemacs-mode 5.8.0.1")
