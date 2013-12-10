@@ -261,19 +261,20 @@ active.
         ergoemacs-shortcut-override-mode
         test-key new-type
         message-log-max)
-    (message "%s%s%s"
-             (if current-prefix-arg
-                 (concat current-prefix-arg " ")
-               "")
-             (cond
-              ((eq type 'ctl-to-alt)
-               (format "<Ctl%sAlt> " 
-                       (ergoemacs-unicode-char "↔" " to ")))
-              ((eq type 'unchorded)
-               "<Unchorded> ")
-              (t
-               ""))
-             (ergoemacs-pretty-key key))
+    (unless (minibufferp)
+      (message "%s%s%s"
+               (if current-prefix-arg
+                   (concat current-prefix-arg " ")
+                 "")
+               (cond
+                ((eq type 'ctl-to-alt)
+                 (format "<Ctl%sAlt> " 
+                         (ergoemacs-unicode-char "↔" " to ")))
+                ((eq type 'unchorded)
+                 "<Unchorded> ")
+                (t
+                 ""))
+               (ergoemacs-pretty-key key)))
     (setq next-key (eval (macroexpand `(key-description [,(read-key)]))))
     ;; M-a -> C-a
     ;; C-a -> M-a
