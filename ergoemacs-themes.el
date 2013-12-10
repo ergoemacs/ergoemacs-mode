@@ -199,6 +199,7 @@
     ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
     ("<apps> m" ergoemacs-ctl-c-ctl-c "C-c C-c")
     ("<apps> s" save-buffer "Save")
+    ("<apps> C-s" write-file "Save As")
     ("<apps> o" find-file "Open")
 
     ("<apps> g" universal-argument "C-u")
@@ -241,13 +242,13 @@
     ;; |    9 | =         |    4.3% | Yes                   |
     ;; |   10 | '         |    3.9% | Yes (by pair)         |
     ;; |   11 | /         |    3.8% | No; Already unchorded |
-    ;; |   12 | *         |    3.5% | Not yet               |
-    ;; |   13 | :         |    3.2% | Not yet               |
+    ;; |   12 | *         |    3.5% | Yes                   |
+    ;; |   13 | :         |    3.2% | Yes                   |
     ;; |   14 | {         |    3.2% | By pair               |
     ;; |   15 | }         |    3.2% | By pair               |
     ;; |   16 | >         |    2.4% | Yes                   |
-    ;; |   17 | $         |    2.2% | Not yet               |
-    ;; |   18 | #         |    1.7% | Not yet               |
+    ;; |   17 | $         |    2.2% | Yes                   |
+    ;; |   18 | #         |    1.7% | Yes                   |
     ;; |   19 | +         |    1.2% | Yes                   |
     ;; |   20 | \         |    1.1% | No; Already unchorded |
     ;; |   21 | [         |    1.0% | Yes (by pair)         |
@@ -259,25 +260,35 @@
     ;; |   27 | !         |    0.5% | Yes                   |
     ;; |   28 | %         |    0.3% | Yes                   |
     ;; |   29 | ?         |    0.2% | No; Already unchorded |
-    ;; |   30 | `         |    0.1% | No;                   |
-    ;; |   31 | ^         |    0.1% | Not yet               |
-    ;; |   32 | ~         |    0.1% | Not yet.              |
+    ;; |   30 | `         |    0.1% | Yes                   |
+    ;; |   31 | ^         |    0.1% | Yes                   |
+    ;; |   32 | ~         |    0.1% | Yes                   |
     ;; |------+-----------+---------+-----------------------|
 
+    ;; No pinkies are used in this setup.
+    ("<apps> k o" ("#" nil) "#")
+    ("<apps> k l" ("$" nil) "$")
+    ("<apps> k ." (":" nil) ":")
+
+    ("<apps> k w" ("^" nil) "^")
+    ("<apps> k s" ("*" nil) "*")
+    ("<apps> k x" ("~" nil) "~")
+    
     ("<apps> k i" ergoemacs-smart-bracket "[]")
     ("<apps> k k" ergoemacs-smart-paren "()")
     ("<apps> k ," ergoemacs-smart-curly "{}")
     
     ("<apps> k j" ergoemacs-smart-quote "\"\"")
-    ("<apps> k m" ergoemacs-smart-apostrophe "''")
+    ("<apps> k u" ergoemacs-smart-apostrophe "''")
+    ("<apps> k m" ("`" nil) "`")
 
     ("<apps> k y" ("?" nil) "?")
     ("<apps> k h" ("%" nil) "%")
     ("<apps> k n" ("@" nil) "@")
     
-    ("<apps> k r" (">" nil) "_")
+    ("<apps> k r" (">" nil) ">")
     ("<apps> k f" ("_" nil) "_")
-    ("<apps> k v" ("<" nil) "_")
+    ("<apps> k v" ("<" nil) "<")
     
     ("<apps> k e" ("+" nil) "+")
     ("<apps> k d" ("=" nil) "=")
