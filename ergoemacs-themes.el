@@ -227,21 +227,66 @@
     
     ;; Smart punctuation
     ;; `http://xahlee.info/comp/computer_language_char_distribution.html'
-    ("<apps> k k" ergoemacs-smart-paren "()")
+    ;; |------+-----------+---------+-----------------------|
+    ;; | Rank | Character | Percent | Defined               |
+    ;; |------+-----------+---------+-----------------------|
+    ;; |    1 | ,         |   12.1% | No; Already unchorded |
+    ;; |    2 | _         |    8.0% | Yes                   |
+    ;; |    3 | "         |    8.0% | Yes                   |
+    ;; |    4 | (         |    7.7% | Yes                   |
+    ;; |    5 | )         |    7.7% | By pair               |
+    ;; |    6 | .         |    7.4% | No; Already unchorded |
+    ;; |    7 | ;         |    4.8% | No; Already unchorded |
+    ;; |    8 | -         |    4.4% | Yes                   |
+    ;; |    9 | =         |    4.3% | Yes                   |
+    ;; |   10 | '         |    3.9% | Yes (by pair)         |
+    ;; |   11 | /         |    3.8% | No; Already unchorded |
+    ;; |   12 | *         |    3.5% | Not yet               |
+    ;; |   13 | :         |    3.2% | Not yet               |
+    ;; |   14 | {         |    3.2% | By pair               |
+    ;; |   15 | }         |    3.2% | By pair               |
+    ;; |   16 | >         |    2.4% | Yes                   |
+    ;; |   17 | $         |    2.2% | Not yet               |
+    ;; |   18 | #         |    1.7% | Not yet               |
+    ;; |   19 | +         |    1.2% | Yes                   |
+    ;; |   20 | \         |    1.1% | No; Already unchorded |
+    ;; |   21 | [         |    1.0% | Yes (by pair)         |
+    ;; |   22 | ]         |    1.0% | Yes                   |
+    ;; |   23 | <         |    1.0% | Yes                   |
+    ;; |   24 | &         |    0.9% | Yes                   |
+    ;; |   25 | @         |    0.7% | Yes                   |
+    ;; |   26 | |         |    0.5% | Yes                   |
+    ;; |   27 | !         |    0.5% | Yes                   |
+    ;; |   28 | %         |    0.3% | Yes                   |
+    ;; |   29 | ?         |    0.2% | No; Already unchorded |
+    ;; |   30 | `         |    0.1% | No;                   |
+    ;; |   31 | ^         |    0.1% | Not yet               |
+    ;; |   32 | ~         |    0.1% | Not yet.              |
+    ;; |------+-----------+---------+-----------------------|
+
     ("<apps> k i" ergoemacs-smart-bracket "[]")
+    ("<apps> k k" ergoemacs-smart-paren "()")
     ("<apps> k ," ergoemacs-smart-curly "{}")
+    
     ("<apps> k j" ergoemacs-smart-quote "\"\"")
-    ("<apps> k n" ergoemacs-smart-apostrophe "''")
-    ("<apps> k m" ("_" nil) "_")
-    ("<apps> k d" ("+" nil) "+")
-    ("<apps> k s" ("-" nil) "-")
-    ("<apps> k f" ("=" nil) "=")
-    ("<apps> k e" ("&" nil) "&")
-    ("<apps> k p" ("|" nil) "|")
-    ("<apps> k c" ("!" nil) "!")
-    ("<apps> k v" ("?" nil) "?")
-    ("<apps> k x" ("%" nil) "%")
-    ("<apps> k s" ("@" nil) "@")
+    ("<apps> k m" ergoemacs-smart-apostrophe "''")
+
+    ("<apps> k y" ("?" nil) "?")
+    ("<apps> k h" ("%" nil) "%")
+    ("<apps> k n" ("@" nil) "@")
+    
+    ("<apps> k r" (">" nil) "_")
+    ("<apps> k f" ("_" nil) "_")
+    ("<apps> k v" ("<" nil) "_")
+    
+    ("<apps> k e" ("+" nil) "+")
+    ("<apps> k d" ("=" nil) "=")
+    ("<apps> k c" ("-" nil) "-")
+
+    ("<apps> k t" ("&" nil) "&")
+    ("<apps> k g" ("|" nil) "|")
+    ("<apps> k b" ("!" nil) "!")
+    
     
     ;; but some modes don't honor it...
     ("<apps> r" goto-map "Goto"))
