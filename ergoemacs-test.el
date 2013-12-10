@@ -445,6 +445,60 @@ Test next and prior translation."
                          (buffer-string))))
     (should ret)))
 
+(ert-deftest ergoemacs-test-apps-cut ()
+  "Tests <apps> x on QWERTY cutting a region, not just a line."
+  (let ((ret nil)
+        (old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (macro (edmacro-parse-keys (format "<%s> x"
+                                           (if (eq system-type 'windows-nt)
+                                               "apps" "menu")) t)))
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (ergoemacs-mode -1)
+      (setq ergoemacs-theme nil)
+      (setq ergoemacs-keyboard-layout "us")
+      (ergoemacs-mode 1)
+      (insert ergoemacs-test-lorem-ipsum)
+      (mark-whole-buffer)
+      (execute-kbd-macro macro)
+      (setq ret (string= "" (buffer-string)))
+      (ergoemacs-mode -1)
+      (setq ergoemacs-theme old-ergoemacs-theme)
+      (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+      (ergoemacs-mode 1)
+      (kill-buffer (current-buffer)))
+    (should ret)))
+
+(ert-deftest ergoemacs-test-apps-copy ()
+  "Tests <apps> c on QWERTY cutting a region, not just a line."
+  (let ((ret nil)
+        (old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (macro (edmacro-parse-keys (format "<%s> c"
+                                           (if (eq system-type 'windows-nt)
+                                               "apps" "menu")) t)))
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (ergoemacs-mode -1)
+      (setq ergoemacs-theme nil)
+      (setq ergoemacs-keyboard-layout "us")
+      (ergoemacs-mode 1)
+      (insert ergoemacs-test-lorem-ipsum)
+      (mark-whole-buffer)
+      (execute-kbd-macro macro)
+      (goto-char (point-max))
+      (ergoemacs-paste)
+      (setq ret (string= (concat ergoemacs-test-lorem-ipsum
+                                 ergoemacs-test-lorem-ipsum)
+                         (buffer-string)))
+      (ergoemacs-mode -1)
+      (setq ergoemacs-theme old-ergoemacs-theme)
+      (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+      (ergoemacs-mode 1)
+      (kill-buffer (current-buffer)))
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
