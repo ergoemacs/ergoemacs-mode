@@ -545,7 +545,7 @@ the prefix arguments of `beginning-of-buffer',
     (let (pts)
       (push (point-at-bol) pts)
       (save-excursion
-        (setq prefix-arg nil)
+        ;; (setq prefix-arg nil)
         (setq current-prefix-arg nil)
         (ergoemacs-shortcut-internal 'move-beginning-of-line)
         (push (point) pts))
@@ -648,7 +648,7 @@ the prefix arguments of `end-of-buffer',
       (let ((line-move-visual nil))
         (forward-line (- N 1))))
     (let (pts)
-      (setq prefix-arg nil)
+      ;; (setq prefix-arg nil)
       (setq current-prefix-arg nil)
       (save-excursion
         (call-interactively 'move-end-of-line)
