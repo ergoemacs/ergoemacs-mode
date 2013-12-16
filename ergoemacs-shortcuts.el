@@ -450,7 +450,8 @@ active.
                                         ; menu-bar
                                         ; functions
                           (where-is-internal def (current-global-map)))
-               (gethash def ergoemacs-where-is-global-hash)))
+               (gethash def ergoemacs-where-is-global-hash))
+           (not (memq def '(execute-extended-command))))
       
       (puthash (read-kbd-macro (key-description key) t)
                (list def 'global) ergoemacs-command-shortcuts-hash)
