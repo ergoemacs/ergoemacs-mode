@@ -1485,7 +1485,7 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
          (fboundp 'browse-kill-ring))
     (browse-kill-ring)
     ;; Add unread command events another "paste"
-    (setq unread-command-events (listify-key-sequence (this-single-command-keys))))
+    (setq unread-command-events (append (listify-key-sequence (this-single-command-keys)) unread-command-events)))
    ((and ergoemacs-smart-paste (eq last-command 'yank))
     (ergoemacs-shortcut-internal 'yank-pop))
    (t

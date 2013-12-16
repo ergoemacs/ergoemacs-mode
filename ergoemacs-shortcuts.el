@@ -275,7 +275,7 @@ active.
                 (t
                  ""))
                (ergoemacs-pretty-key key)))
-    (setq next-key (eval (macroexpand `(key-description [,(read-key)]))))
+    (setq next-key (eval (macroexpand `(key-description [,(read-key)])))) 
     ;; M-a -> C-a
     ;; C-a -> M-a
     (setq ctl-to-alt
@@ -358,7 +358,7 @@ active.
           (setq ergoemacs-first-variant nil)
           (setq ergoemacs-single-command-keys new-key-vector)
           (setq prefix-arg current-prefix-arg)
-          (setq unread-command-events (listify-key-sequence new-key-vector)))
+          (setq unread-command-events (append (listify-key-sequence new-key-vector) unread-command-events)))
          (t
           (setq ergoemacs-first-variant nil)
           (setq fn (or (command-remapping fn (point)) fn))
