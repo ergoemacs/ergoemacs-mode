@@ -1448,7 +1448,14 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
               (ergoemacs-mode-line))
             (unless ergoemacs-modal
               (ergoemacs-install-shortcuts-up)
-              (ergoemacs-vars-sync)))
+              (ergoemacs-vars-sync))
+            (when (memq this-command '(smex execute-extended-command))
+              (when current-prefix-arg
+                ;;; Argh.
+                ;; Does not fix the underlying cause of Issue #133,
+                ;; but fixes it until I can figure it out
+                (setq unread-command-events (append (listify-key-sequence (read-kbd-macro "p" t)) unread-command-events))))
+            )
           (when (not ergoemacs-mode)
             (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))
