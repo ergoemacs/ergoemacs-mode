@@ -1399,7 +1399,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
                   (error nil))
                 (setq this-command key-binding))))
             (unless ergoemacs-modal
-              (ergoemacs-install-shortcuts-up))
+              (when (eq saved-overriding-map t) 
+                (ergoemacs-install-shortcuts-up)))
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (ergoemacs-shortcut-override-mode 1))))
@@ -1447,17 +1448,12 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
                 (setq ergoemacs-default-cursor nil))
               (ergoemacs-mode-line))
             (unless ergoemacs-modal
-              (ergoemacs-install-shortcuts-up)
-              (ergoemacs-vars-sync))
-            (when (memq this-command '(smex execute-extended-command helm-M-x))
-              (when current-prefix-arg
-                ;;; Argh.
-                ;; Does not fix the underlying cause of Issue #133,
-                ;; but fixes it until I can figure it out
-                (setq unread-command-events (append (listify-key-sequence (read-kbd-macro "p" t)) unread-command-events))))
-            )
+              (when (eq saved-overriding-map t)
+                (ergoemacs-install-shortcuts-up))
+              (ergoemacs-vars-sync)))
           (when (not ergoemacs-mode)
-            (ergoemacs-remove-shortcuts)))
+            (when (eq saved-overriding-map t)
+              (ergoemacs-remove-shortcuts))))
       (error (message "Error %s" err))))
   t)
 
