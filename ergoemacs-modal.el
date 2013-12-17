@@ -352,7 +352,6 @@ modal state is currently enabled."
   "Exit temporary overlay maps."
   ;; (setq ergoemacs-exit-temp-map-var t)
   (set (make-local-variable 'ergoemacs-modal) nil)
-  (set (make-local-variable 'ergoemacs-read-input-keys) nil)
   (ergoemacs-debug-heading "ergoemacs-minibuffer-setup")
   (ergoemacs-debug "emulation-mode-map-alists: %s" emulation-mode-map-alists)
   (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s"
