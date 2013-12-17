@@ -765,7 +765,7 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
 (defvar ergoemacs-shortcut-send-fn nil)
 (defvar ergoemacs-shortcut-send-timer nil)
 
-(defvar ergoemacs-debug-shortcuts '(execute-extended-command smex helm-M-x))
+(defvar ergoemacs-debug-shortcuts nil)
 (defun ergoemacs-shortcut-internal (key &optional chorded repeat keymap-key timeout timeout-fn)
   "Ergoemacs Shortcut.
 
