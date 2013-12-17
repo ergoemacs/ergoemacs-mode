@@ -1205,7 +1205,8 @@ Setup C-c and C-x keys to be described properly.")
   (let ((inhibit-read-only t)
         hashkey lookup override-text-map override orig-map)
     (cond
-     (overriding-terminal-local-map
+     ((and overriding-terminal-local-map
+           (eq saved-overriding-map t))
       (when (eq (lookup-key
                  overriding-terminal-local-map
                  (read-kbd-macro "<ergoemacs>")) 'ignore)
@@ -1266,7 +1267,8 @@ The keymaps are:
   (let ((inhibit-read-only t)
         hashkey lookup override-text-map override orig-map)
     (cond
-     (overriding-terminal-local-map
+     ((and overriding-terminal-local-map
+           (eq saved-overriding-map t))
       (when (not
              (eq (lookup-key
                   overriding-terminal-local-map

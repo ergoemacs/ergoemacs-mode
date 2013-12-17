@@ -1448,12 +1448,10 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
                 (setq ergoemacs-default-cursor nil))
               (ergoemacs-mode-line))
             (unless ergoemacs-modal
-              (when (eq saved-overriding-map t)
-                (ergoemacs-install-shortcuts-up))
+              (ergoemacs-install-shortcuts-up)
               (ergoemacs-vars-sync)))
           (when (not ergoemacs-mode)
-            (when (eq saved-overriding-map t)
-              (ergoemacs-remove-shortcuts))))
+            (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))
   t)
 
