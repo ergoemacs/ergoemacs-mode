@@ -201,12 +201,15 @@
       (ergoemacs-debug-flush))))
 
 (defmacro ergoemacs-with-global (&rest body)
-  "With global keymap, not ergoemacs keymaps.
-In theory `ergoemacs-mode' and `ergoemacs-unbind-keys' should
-also be nil, but this is used in `ergoemacs-shortcut-internal'
-which allows a shortcut to ergoemacs keys as well, so these
-variables are handled in `ergoemacs-shortcut-internal'.
-"
+  "With global keymap, not ergoemacs keymaps."
+  `(ergoemacs-without-emulation
+    (let (ergoemacs-mode ergoemacs-unbind-keys)
+      ,@body)))
+
+(defmacro ergoemacs-without-emulation (&rest body)
+  "Without keys defined at `ergoemacs-emulation-mode-map-alist'.
+Also turns off other things like `overriding-terminal-local-map'
+and `overriding-local-map'"
   `(let (overriding-terminal-local-map
          overriding-local-map
          ergoemacs-overlays overlay overlay-keymap
@@ -622,8 +625,7 @@ active.
               (this-command-keys-vector () (if (equal this-command ',ergoemacs-shortcut-send-fn) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys-vector)))))
            (setq new-unread (listify-key-sequence (this-command-keys)))
            (ergoemacs-with-global
-            (let (ergoemacs-mode ergoemacs-unbind-keys)
-              (call-interactively ergoemacs-shortcut-send-fn nil ,(read-kbd-macro key t)))))))
+            (call-interactively ergoemacs-shortcut-send-fn nil ,(read-kbd-macro key t))))))
       ;; Some commands, like isearch, put commands in
       ;; `unread-command-events'; Try to handle these.
       (when (and unread-command-events
@@ -631,8 +633,7 @@ active.
         (setq unread-command-events old-unread))))
    (t
     (ergoemacs-with-global
-     (let (ergoemacs-mode ergoemacs-unbind-keys)
-       (call-interactively ergoemacs-shortcut-send-fn))))))
+     (call-interactively ergoemacs-shortcut-send-fn)))))
 
 (defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
   "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
@@ -702,7 +703,7 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
           ergoemacs-read-input-keys
           ergoemacs-shortcut-override-mode)
       (setq cmd1 (key-binding (or ergoemacs-single-command-keys (this-single-command-keys))))
-      (ergoemacs-with-global 
+      (ergoemacs-without-emulation
        (setq cmd2 (key-binding (or ergoemacs-single-command-keys (this-single-command-keys))))))
     (if (not (equal cmd1 cmd2))
         (progn
@@ -850,7 +851,7 @@ function if it is bound globally.  For example
           (gethash key ergoemacs-where-is-global-hash)))
         
         (setq new-fn nil)
-        (ergoemacs-with-global
+        (ergoemacs-without-emulation
          (mapc
           (lambda(cur-key)
             (unless (string-match "\\(s-\\|A-\\|H-\\)"
@@ -907,7 +908,7 @@ function if it is bound globally.  For example
         (setq fn (nth 0 fn-lst)))
        (t  ; Could not find another function, just use the function
            ; passed to `ergoemacs-shortcut'
-        (ergoemacs-with-global
+        (ergoemacs-without-emulation
             (setq fn (list key
                        (read-kbd-macro
                         (key-description
@@ -918,7 +919,7 @@ function if it is bound globally.  For example
      ((or (not chorded)
           (memq chorded '(repeat repeat-global global-repeat global))) ;; lookup keybinding for the function keys.
       (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-      (ergoemacs-with-global
+      (ergoemacs-without-emulation
           (setq fn (list (key-binding (read-kbd-macro key))
                          (read-kbd-macro key t))))
       (setq shared-do-it t))
