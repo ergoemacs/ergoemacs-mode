@@ -631,7 +631,8 @@ the prefix arguments of `end-of-buffer',
                (and
                 (or
                  (eq
-                  (ergoemacs-with-global (let (ergoemacs-mode ergoemacs-unbind-keys) (key-binding (read-kbd-macro "<next>"))))
+                  (ergoemacs-with-global
+                   (key-binding (read-kbd-macro "<next>")))
                   last-command))
                     (= (point) (point-at-bol)))))
       (progn 
