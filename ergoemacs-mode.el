@@ -1449,7 +1449,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
             (unless ergoemacs-modal
               (ergoemacs-install-shortcuts-up)
               (ergoemacs-vars-sync))
-            (when (memq this-command '(smex execute-extended-command))
+            (when (memq this-command '(smex execute-extended-command helm-M-x))
               (when current-prefix-arg
                 ;;; Argh.
                 ;; Does not fix the underlying cause of Issue #133,
