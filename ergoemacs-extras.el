@@ -1719,45 +1719,51 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
             (buffer-string))  . ,(nth 2 x)))
      (remove-if (lambda(x) (not (nth 2 x))) theme))) ";"))
 
-(defun ergoemacs-variable-theme-json (theme)
-  (concat
-   "var_layout = "
-   (json-encode
-    (mapcar
-     (lambda(x)
-       `(,(with-temp-buffer
-            (insert (ergoemacs-kbd (nth 0 x) t (nth 3 x)))
-            (goto-char (point-min))
-            (while (re-search-forward "S-\\(.\\)\\>" nil t)
-              (replace-match (upcase (match-string 1))))
-            (buffer-string))  . ,(nth 2 x)))
-     (remove-if (lambda(x) (not (nth 2 x))) theme))) ";"))
+(defun ergoemacs-fixed-themes-json ()
+  "Fixed themes json string."
+  (concat "fixed_layouts = "
+          (json-encode
+           (mapcar
+            (lambda(theme)
+              `(,theme .
+                       ,(mapcar
+                         (lambda(x)
+                           `(,(with-temp-buffer
+                                (insert (ergoemacs-kbd (nth 0 x) t (nth 3 x)))
+                                (goto-char (point-min))
+                                (while (re-search-forward "S-\\(.\\)\\>" nil t)
+                                  (replace-match (upcase (match-string 1))))
+                                (buffer-string))  . ,(nth 2 x)))
+                         (remove-if (lambda(x) (not (nth 2 x)))
+                                    (symbol-value
+                                     (if (string= "" theme)
+                                         (intern "ergoemacs-fixed-layout")
+                                       (intern (concat "ergoemacs-fixed-layout-" theme))))))))
+            `("" ,@(ergoemacs-get-themes))))
+          ";"))
 
-(defun ergoemacs-get-theme-js (&optional dir)
-  "Gets ergoemacs themes javascript code."
-  (interactive)
-  (let ((extra-dir
-         (or dir
-             (expand-file-name
-              "html" (expand-file-name
-                      "ergoemacs-extras" user-emacs-directory)))))
-    (when (not (file-exists-p extra-dir))
-      (make-directory extra-dir t))
-    (mapc
-     (lambda(theme)
-       (let ((theme-js (if (string= "" theme)
-                           "theme-default.js"
-                         (concat "theme-" theme ".js")))
-             (var (if (string= "" theme)
-                      (intern "ergoemacs-variable-layout")
-                    (intern (concat "ergoemacs-variable-layout-" theme))))
-             (fix (if (string= "" theme)
-                      (intern "ergoemacs-fixed-layout")
-                    (intern (concat "ergoemacs-fixed-layout-" theme)))))
-         (with-temp-file (expand-file-name theme-js extra-dir)
-           (insert (ergoemacs-fixed-theme-json (symbol-value fix)))
-           (insert (ergoemacs-variable-theme-json (symbol-value var))))))
-     `("" ,@(ergoemacs-get-themes)))))
+(defun ergoemacs-variable-themes-json ()
+  "Variable themes json string."
+  (concat "var_layouts = "
+          (json-encode
+           (mapcar
+            (lambda(theme)
+              `(,theme .
+                       ,(mapcar
+                         (lambda(x)
+                           `(,(with-temp-buffer
+                                (insert (ergoemacs-kbd (nth 0 x) t (nth 3 x)))
+                                (goto-char (point-min))
+                                (while (re-search-forward "S-\\(.\\)\\>" nil t)
+                                  (replace-match (upcase (match-string 1))))
+                                (buffer-string))  . ,(nth 2 x)))
+                         (remove-if (lambda(x) (not (nth 2 x)))
+                                    (symbol-value
+                                     (if (string= "" theme)
+                                         (intern "ergoemacs-variable-layout")
+                                       (intern (concat "ergoemacs-variable-layout-" theme))))))))
+            `("" ,@(ergoemacs-get-themes))))
+          ";"))
 
 
 (provide 'ergoemacs-extras)
