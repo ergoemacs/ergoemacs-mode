@@ -707,7 +707,7 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
        (setq cmd2 (key-binding (or ergoemacs-single-command-keys (this-single-command-keys))))))
     (if (not (equal cmd1 cmd2))
         (progn
-          (setq ergoemacs-shortcut-send-key (key-description (this-command-keys-vector))
+          (setq ergoemacs-shortcut-send-key (key-description (this-single-command-keys))
                 ergoemacs-shortcut-send-fn cmd1)
           
           (when ergoemacs-single-command-keys
@@ -764,6 +764,8 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
 (defvar ergoemacs-shortcut-send-key nil)
 (defvar ergoemacs-shortcut-send-fn nil)
 (defvar ergoemacs-shortcut-send-timer nil)
+
+(defvar ergoemacs-debug-shortcuts '(execute-extended-command smex helm-M-x))
 (defun ergoemacs-shortcut-internal (key &optional chorded repeat keymap-key timeout timeout-fn)
   "Ergoemacs Shortcut.
 
@@ -810,6 +812,22 @@ When KEY is a function, lookup the corresponding binding of that
 function if it is bound globally.  For example
 `beginning-of-line' becomes `org-beginning-of-line' in `org-mode'
 "
+  (when (and ergoemacs-debug-shortcuts (member key ergoemacs-debug-shortcuts))
+    (ergoemacs-debug-heading "ergoemacs-shortcut %s"
+                             (key-description (this-command-keys)))
+    (ergoemacs-debug
+     "
+|----------|-------|
+| argument | value |
+|----------|-------|
+| key      | %s |
+| chorded  | %s |
+| repeat   | %s |
+| keymap-key | %s |
+| timeout  | %s |
+| timeout-fn | %s |
+|----------|-------|"
+     key chorded repeat keymap-key timeout timeout-fn))
   (setq ergoemacs-shortcut-send-key nil
         ergoemacs-shortcut-send-fn nil
         ergoemacs-shortcut-send-timer nil)
@@ -824,12 +842,18 @@ function if it is bound globally.  For example
      ((condition-case err ;; This is a function (possibly global)
           (interactive-form key)
         (error nil))
+      (when (and ergoemacs-debug-shortcuts (member key ergoemacs-debug-shortcuts))
+        (ergoemacs-debug "This is a function (possibly global)"))
       ;; Lookup ergoemacs key bindings.
       (if (memq key ergoemacs-shortcuts-do-not-lookup)
           (progn
+            (when (and ergoemacs-debug-shortcuts (member key ergoemacs-debug-shortcuts))
+              (ergoemacs-debug "Do not lookup this function, just pass it directly."))
             (setq fn (list (or ergoemacs-single-command-keys (this-single-command-keys))
                            key))
             (setq shared-do-it t))
+        (when (and ergoemacs-debug-shortcuts (member key ergoemacs-debug-shortcuts))
+          (ergoemacs-debug "Looking up possible function remaps."))
         (mapc
          (lambda(cur-key)
            (setq new-fn (condition-case err
@@ -899,6 +923,9 @@ function if it is bound globally.  For example
            (gethash key ergoemacs-where-is-global-hash)))))
       (cond
        (fn-override
+        (when (and ergoemacs-debug-shortcuts (member key ergoemacs-debug-shortcuts))
+          (ergoemacs-debug "Use Function Override: %s" fn)
+          (ergoemacs-debug "Function List: %s" fn-lst))
         (set fn fn-override))
        (fn-lst
         ;; FIXME: If new functions exist, give the user the option to use
@@ -961,8 +988,9 @@ function if it is bound globally.  For example
                          ;; Add key if it changed.
                          (not (eq key (nth 0 fn)))))
                (when  do-it
-                 (ergoemacs-debug "Shortcut %s to %s %s" (key-description keymap-key)
-                                  (nth 0 fn) (nth 1 fn))
+                 (when (and ergoemacs-debug-shortcuts (member key ergoemacs-debug-shortcuts))
+                   (ergoemacs-debug "Shortcut %s to %s %s" (key-description keymap-key)
+                                  (nth 0 fn) (nth 1 fn)))
                  (cond
                   ((and (boundp 'ergoemacs-orig-keymap) ergoemacs-orig-keymap)
                    (if (not (memq (nth 0 fn) ergoemacs-send-fn-keys-fns))
@@ -1059,7 +1087,9 @@ sets `this-command' to `%s'. The hook
     (when ergoemacs-shortcut-send-timer
       (setq ergoemacs-M-O-timer
             (run-with-timer ergoemacs-M-O-delay nil
-                            #'ergoemacs-shortcut-timeout)))))
+                            #'ergoemacs-shortcut-timeout))))
+  (when (and ergoemacs-debug-shortcuts (member key ergoemacs-debug-shortcuts))
+    (ergoemacs-debug-flush)))
 
 (defcustom ergoemacs-repeat-ctl-c-ctl-c t
   "Repeat C-c C-c"
