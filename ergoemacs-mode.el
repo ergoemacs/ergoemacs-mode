@@ -1,5 +1,9 @@
 ;;; ergoemacs-mode.el --- Emacs mode based on common modern software interface and ergonomics.
 
+;; Change Log:
+;; 18-Dec-2013    Matthew L. Fidler  
+;;    Fix Issue #33.
+
 ;; Copyright © 2007, 2008, 2009 by Xah Lee
 ;; Copyright © 2009, 2010 by David Capello
 ;; Copyright © 2012, 2013 by Matthew Fidler

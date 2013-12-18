@@ -1,0 +1,4 @@
+(ergoemacs-mode
+ :repo "ergoemacs/ergoemacs-mode"
+ :fetcher github
+ :files ("ergoemacs-mode.el" "dir" "ergoemacs-mode.info"))
