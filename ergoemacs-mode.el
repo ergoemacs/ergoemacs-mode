@@ -1230,12 +1230,12 @@ bindings the keymap is:
   "Set a key in the ergoemacs local map."
   ;; install keymap if not already installed
   (interactive)
-  (let (major ergoemacs-local-keymap)
+  (unless ergoemacs-local-keymap
+    (set (make-local-variable 'ergoemacs-local-keymap) (make-sparse-keymap)))
+  (let (major)
     (eval (macroexpand `(setq major ',(intern (format "ergoemacs--emulation-for-%s-local" major-mode)))))
     (set (make-local-variable major) t)
     (progn
-      (unless ergoemacs-local-keymap
-        (set (make-local-variable 'ergoemacs-local-keymap) (make-sparse-keymap)))
       ;; add key
       (define-key ergoemacs-local-keymap key command)
       (let ((x (assq major ergoemacs-emulation-mode-map-alist)))
