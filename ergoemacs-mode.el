@@ -595,8 +595,6 @@ work in the terminal."
   (load "ergoemacs-extras"))
 
 ;; ErgoEmacs hooks
-
-
 (defun ergoemacs-hook-define-key (keymap key-def definition translate)
   "Ergoemacs `define-key' in hook."
   (if (or (not (condition-case err
@@ -658,8 +656,10 @@ work in the terminal."
                          (interactive-form fn)
                        (error nil)))
             (define-key keymap key-code fn)))))))
-(defmacro ergoemacs-create-hook-function (hook keys &optional global)
-  "Creates a hook function based on the HOOK and the list of KEYS defined."
+
+(defmacro ergoemacs-create-hook-function (hook keys &optional always)
+  "Creates a hook function based on the HOOK and the list of KEYS defined.
+When ALWAYS, then change the keymap every time the hook is run."
   (let ((is-emulation-p (make-symbol "is-emulation-p"))
         (is-major-mode-p (make-symbol "is-major-mode-p"))
         (old-keymap (make-symbol "old-keymap"))
@@ -679,7 +679,8 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                    (progn
                      (ergoemacs-debug ,(format "WARNING: %s not removed."
                                                (intern (concat "ergoemacs-" (symbol-name hook))))))
-                 (unless ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
+                 (unless ,(if always nil
+                            (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
                    (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
                    (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
                          (copy-keymap ,keys))
@@ -692,7 +693,8 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                t)
              (ergoemacs-add-hook ',hook
                                  ',(intern (concat "ergoemacs-" (symbol-name hook)))
-                                 ',(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
+                                 ',(if always nil
+                                     (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
                                  nil)))
       (setq is-emulation-p (or (not (nth 2 (nth 0 keys)))
                                (eq 'emulation-mode-map-alists (nth 2 (nth 0 keys)))))
@@ -730,7 +732,8 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                                       '(intern (format "ergoemacs--emulation-for-%s" major-mode))
                                     `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))
                                  ergoemacs-emulation-mode-map-alist)
-                        (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
+                        (if always nil
+                          (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))))
                (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
                ,(if  is-emulation-p
                     `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) (make-sparse-keymap))
@@ -783,7 +786,7 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                                  `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))))
                     (set-default name nil)
                     (set (make-local-variable name) t)))))
-         (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))) ',override-keymap)))))
+         (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if always nil (if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))) ',override-keymap)))))
 
 (defun ergoemacs-pre-command-install-minor-mode-overriding-map-alist ()
   "Install `minor-mode-overriding-map-alist' if it didn't get installed (like in some `org-mode')."
@@ -850,8 +853,9 @@ depending the state of `ergoemacs-mode' variable."
    (lambda(x)
      (cond
       ((string-match "-hook$" (symbol-name (car x)))
-       (let ((f (macroexpand `(ergoemacs-create-hook-function ,(car x) ,(car (cdr x))
-                                                              ,(car (cdr (cdr x)))))))
+       (let ((f (macroexpand
+                 `(ergoemacs-create-hook-function
+                   ,(car x) ,(car (cdr x)) ,(car (cdr (cdr x)))))))
          (eval f)))
       (t ;; not a hook, assume it is a variable
        (let ((var (car x))
