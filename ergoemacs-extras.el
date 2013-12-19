@@ -1702,22 +1702,14 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
 
 (require 'json nil t)
 
-(defun ergoemacs-layout-json (layout)
-  (concat "kbd_layout = " (json-encode layout) ";"))
-
-(defun ergoemacs-fixed-theme-json (theme)
-  (concat
-   "fix_layout = "
-   (json-encode
-    (mapcar
-     (lambda(x)
-       `(,(with-temp-buffer
-            (insert (nth 0 x))
-            (goto-char (point-min))
-            (while (re-search-forward "S-\\(.\\)\\>" nil t)
-              (replace-match (upcase (match-string 1))))
-            (buffer-string))  . ,(nth 2 x)))
-     (remove-if (lambda(x) (not (nth 2 x))) theme))) ";"))
+(defun ergoemacs-layouts-json ()
+  "Fixed layouts json string."
+  (concat "kbd_layout = "
+          (json-encode
+           (mapcar
+            (lambda(layout)
+              `(,layout ,@(symbol-value (intern (concat "ergoemacs-layout-" layout)))))
+            (ergoemacs-get-layouts))) ";"))
 
 (defun ergoemacs-fixed-themes-json ()
   "Fixed themes json string."
