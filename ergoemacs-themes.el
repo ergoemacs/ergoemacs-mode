@@ -535,6 +535,9 @@
       ("<M-left>" ergoemacs-org-metaleft nil)
       ("<M-right>" ergoemacs-org-metaright nil)))
 
+    (org-read-date-minibuffer-setup-hook
+     ((keyboard-quit minibuffer-keyboard-quit minibuffer-local-map)) t)
+
     ;; Browse Kill ring support
     (browse-kill-ring-hook
      (("<f11>" browse-kill-ring-previous)
@@ -671,7 +674,10 @@
                         (choice
                          (const :tag "Translate key" t)
                          (const :tag "Raw key" nil)
-                         (const :tag "Remap key" remap)))))))
+                         (const :tag "Remap key" remap)))))
+                (choice
+                 (symbol :tag "Always setup" t)
+                 (symbol :tag "Setup once" nil))))
   :set 'ergoemacs-set-default
   :group 'ergoemacs-standard-layout)
 
@@ -1122,7 +1128,10 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
                                (choice
                                 (const :tag "Translate key" t)
                                 (const :tag "Raw key" nil)
-                                (const :tag "Remap key" remap)))))))
+                                (const :tag "Remap key" remap)))))
+                       (choice
+                        (symbol :tag "Always setup" t)
+                        (symbol :tag "Setup once" nil))))
          :set 'ergoemacs-set-default
          :group ',(intern (format "ergoemacs-%s-theme" name)))
        (defcustom ,(intern (format "ergoemacs-redundant-keys-%s" name))
