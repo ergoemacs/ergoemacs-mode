@@ -658,10 +658,8 @@ work in the terminal."
                          (interactive-form fn)
                        (error nil)))
             (define-key keymap key-code fn)))))))
-
-(defmacro ergoemacs-create-hook-function (hook keys &optional always)
-  "Creates a hook function based on the HOOK and the list of KEYS defined.
-If ALWAYS is defined, then always bind the keys, and don't save the keymap."
+(defmacro ergoemacs-create-hook-function (hook keys &optional global)
+  "Creates a hook function based on the HOOK and the list of KEYS defined."
   (let ((is-emulation-p (make-symbol "is-emulation-p"))
         (is-major-mode-p (make-symbol "is-major-mode-p"))
         (old-keymap (make-symbol "old-keymap"))
@@ -669,10 +667,8 @@ If ALWAYS is defined, then always bind the keys, and don't save the keymap."
     (if (not (listp keys))
         (progn
           `(progn
-             ,(if (not always)
-                  `(defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil
-                     ,(concat "Old keymap for `" (symbol-name hook) "'."))
-                nil)
+             (defvar ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")) nil
+               ,(concat "Old keymap for `" (symbol-name hook) "'."))
              (defun ,(intern (concat "ergoemacs-" (symbol-name hook))) ()
                ,(concat "Hook for `" (symbol-name hook) "' so ergoemacs keybindings are not lost.
 This is an automatically generated function derived from `ergoemacs-create-hook-function'.")
@@ -683,13 +679,10 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                    (progn
                      (ergoemacs-debug ,(format "WARNING: %s not removed."
                                                (intern (concat "ergoemacs-" (symbol-name hook))))))
-                 (unless ,(if always
-                              nil
-                            (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
+                 (unless ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
                    (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
-                   ,(if always nil
-                      `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
-                             (copy-keymap ,keys)))
+                   (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
+                         (copy-keymap ,keys))
                    (ergoemacs-install-shortcuts-map ,keys (not (memq ',keys ergoemacs-full-maps)))
                    (define-key ,keys
                      (read-kbd-macro  "<ergoemacs>") 'ignore)
@@ -711,7 +704,7 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
       `(progn
          (ergoemacs-debug-heading ,(format "ergoemacs-create-hook-function for %s" (symbol-name hook)))
          (ergoemacs-debug ,(format "Emulation: %s" is-emulation-p))
-         ,(if (or (not always) is-emulation-p)
+         ,(if is-emulation-p
               (progn
                 (setq old-keymap nil)
                 `(progn
@@ -737,9 +730,7 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                                       '(intern (format "ergoemacs--emulation-for-%s" major-mode))
                                     `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))
                                  ergoemacs-emulation-mode-map-alist)
-                        (if always
-                            nil
-                          (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))))
+                        (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
                (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
                ,(if  is-emulation-p
                     `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) (make-sparse-keymap))
