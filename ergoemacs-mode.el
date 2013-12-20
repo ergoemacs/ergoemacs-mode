@@ -1414,6 +1414,17 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (defun ergoemacs-post-command-hook ()
   "Ergoemacs post-command-hook"
+  (when (and shift-select-mode this-command-keys-shift-translated
+             mark-active
+             (not (eq (car-safe transient-mark-mode) 'only)))
+    (let ((intf (condition-case err
+                    (car (cdr (interactive-form this-command))))))
+      (when (and intf (eq (type-of intf) 'string)
+                 (string-match "^[@*]*\\^" intf))
+        (setq transient-mark-mode
+              (cons 'only
+                    (unless (eq transient-mark-mode 'lambda)
+                      transient-mark-mode))))))
   (let (deactivate-mark)
     (condition-case err
         (progn
