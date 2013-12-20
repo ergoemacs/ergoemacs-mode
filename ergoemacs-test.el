@@ -499,6 +499,18 @@ Test next and prior translation."
       (kill-buffer (current-buffer)))
     (should ret)))
 
+
+(ert-deftest ergoemacs-test-shift-selection ()
+  "Test that shift selection works properly.
+Issue #137."
+  (let (ret)
+    (with-temp-buffer
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-min))
+      (execute-kbd-macro (edmacro-parse-keys "<S-down> <S-down>" t))
+      (ergoemacs-cut-line-or-region)
+      (should (= (point) (bobp))))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
