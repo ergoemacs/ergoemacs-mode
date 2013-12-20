@@ -983,6 +983,7 @@ depending the state of `ergoemacs-mode' variable."
 
 (defcustom ergoemacs-save-variables
   '((org-CUA-compatible t)
+    (org-support-shift-select t)
     (shift-select-mode t)
     (delete-selection-mode 1)
     (set-mark-command-repeat-pop t)
