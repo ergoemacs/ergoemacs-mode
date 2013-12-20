@@ -688,7 +688,7 @@ workhorse of this function is in `ergoemacs-shortcut-internal'.
 This is only performed it `ergoemacs-mode' has not defined some
 work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
 "
-  (interactive "P")
+  (interactive "^P")
   (when (and ergoemacs-change-smex-meta-x (boundp 'smex-prompt-string))
     (setq ergoemacs-change-smex-meta-x smex-prompt-string
           smex-prompt-string
