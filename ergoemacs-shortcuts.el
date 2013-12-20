@@ -620,7 +620,7 @@ active.
         (when intf
           (while (string-match "^\\(\\^\\|[@*]\\)" intf)
             (when (and (string= "*" (match-string 1 intf)))
-              (barf-if-read-only))
+              (barf-if-buffer-read-only))
             (when (string= "^" (match-string 1 intf))
               (handle-shift-selection))
             ;; Not sure what to do with @...
