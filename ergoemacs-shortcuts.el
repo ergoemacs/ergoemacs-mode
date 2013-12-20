@@ -611,6 +611,19 @@ active.
         ergoemacs-shortcut-send-timer nil)
   (setq ergoemacs-shortcut-send-fn (or (command-remapping fn (point)) fn))
   (setq this-command ergoemacs-shortcut-send-fn)
+  
+  ;; Handle interactive forms..
+  (let ((intf (condition-case err
+                  (car (cdr (interactive-form this-command)))
+                (error nil))))
+    (when intf
+      (while (string-match "^\\(\\^\\|[@*]\\)" intf)
+        (when (and (string= "*" (match-string 1 intf)))
+          (barf-if-read-only))
+        (when (string= "^" (match-string 1 intf))
+          (handle-shift-selection))
+        ;; Not sure what to do with @...
+        (setq intf (replace-match "" nil nil intf)))))
   (cond
    ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
     (let ((old-unread (listify-key-sequence (this-command-keys)))
@@ -688,7 +701,7 @@ workhorse of this function is in `ergoemacs-shortcut-internal'.
 This is only performed it `ergoemacs-mode' has not defined some
 work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
 "
-  (interactive "^P")
+  (interactive "P")
   (when (and ergoemacs-change-smex-meta-x (boundp 'smex-prompt-string))
     (setq ergoemacs-change-smex-meta-x smex-prompt-string
           smex-prompt-string
