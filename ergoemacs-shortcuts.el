@@ -613,17 +613,18 @@ active.
   (setq this-command ergoemacs-shortcut-send-fn)
   
   ;; Handle interactive forms..
-  (let ((intf (condition-case err
-                  (car (cdr (interactive-form this-command)))
-                (error nil))))
-    (when intf
-      (while (string-match "^\\(\\^\\|[@*]\\)" intf)
-        (when (and (string= "*" (match-string 1 intf)))
-          (barf-if-read-only))
-        (when (string= "^" (match-string 1 intf))
-          (handle-shift-selection))
-        ;; Not sure what to do with @...
-        (setq intf (replace-match "" nil nil intf)))))
+  (unwind-protect
+      (let ((intf (condition-case err
+                      (car (cdr (interactive-form this-command)))
+                    (error nil))))
+        (when intf
+          (while (string-match "^\\(\\^\\|[@*]\\)" intf)
+            (when (and (string= "*" (match-string 1 intf)))
+              (barf-if-read-only))
+            (when (string= "^" (match-string 1 intf))
+              (handle-shift-selection))
+            ;; Not sure what to do with @...
+            (setq intf (replace-match "" nil nil intf))))))
   (cond
    ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
     (let ((old-unread (listify-key-sequence (this-command-keys)))
