@@ -516,11 +516,10 @@ Issue #137."
 (ert-deftest ergoemacs-test-translations ()
   "Test that unicode translations work.
 See Issue #138."
-  (let (ret)
-    (with-temp-buffer
-      (execute-kbd-macro (edmacro-parse-keys "C-u 1 0 C-x 8 !" t))
-      (goto-char (point-min))
-      (setq ret (looking-at "¡¡¡¡¡¡¡¡¡¡")))
+  (let (ret
+        unread-command-events)
+    (ergoemacs-read "C-x 8" nil nil (aref (read-kbd-macro "!") 0))
+    (setq ret (equal (listify-key-sequence (read-kbd-macro "¡")) unread-command-events))
     (should ret)))
 
 (provide 'ergoemacs-test)
