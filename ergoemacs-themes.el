@@ -196,7 +196,7 @@
     ("<apps> h z" ergoemacs-clean)
     ("<apps> h Z" ergoemacs-clean-nw)
 
-    ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
+    ;; ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
     ("<apps> m" ergoemacs-ctl-c-ctl-c "C-c C-c")
     ("<apps> s" save-buffer "Save")
     ("<apps> C-s" write-file "Save As")
@@ -606,6 +606,9 @@
     
     (ido-mode
      ((execute-extended-command smex nil remap)))
+
+    (ergoemacs-mode
+     ((describe-key ergoemacs-describe-key nil remap)))
     
     ;; Info Mode hooks
     (Info-mode-hook
