@@ -352,22 +352,25 @@ INPUT is the input to read instead of using `read-key'
      ((progn
         (setq tmp (lookup-key input-decode-map (read-kbd-macro (if key (concat key " " fn-key)
                                                                  fn-key))))
-        (when (and tmp (or (integerp tmp) (keymapp tmp)))
+        (when (and tmp (integerp tmp))
           (setq tmp nil))
         (unless tmp
           (setq tmp (lookup-key local-function-key-map (read-kbd-macro (if key (concat key " " fn-key)
                                                                          fn-key))))
-          (when (and tmp (or (integerp tmp) (keymapp tmp)))
+          (when (and tmp (integerp tmp))
             (setq tmp nil))
           (unless tmp
             (setq tmp (lookup-key key-translation-map (read-kbd-macro (if key (concat key " " fn-key)
                                                                         fn-key))))
-            (when (and tmp (or (integerp tmp) (keymapp tmp)))
+            (when (and tmp (integerp tmp))
               (setq tmp nil))))
         tmp)
       ;; Should use emacs key translation.
       (cond
-       (ergoemacs-describe-key
+       ((keymapp tmp)
+        (ergoemacs-read (if key (concat key " " fn-key) fn-key)
+                        type keep-shortcut-layer))
+       ((and ergoemacs-describe-key (vectorp tmp))
         (message "%s translates to %s"
                  (ergoemacs-pretty-key
                   (if key (concat key " " fn-key) fn-key))
