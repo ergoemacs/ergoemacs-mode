@@ -247,7 +247,7 @@ the best match."
 Uses `ergoemacs-read'"
   (interactive)
   (setq ergoemacs-describe-key t)
-  (ergoemacs-read))
+  (ergoemacs-read nil 'normal t))
 
 (defvar ergoemacs-single-command-keys nil)
 (defvar ergoemacs-mark-active nil)
@@ -662,13 +662,14 @@ INPUT is the input to read instead of using `read-key'
         ergoemacs-shortcut-send-timer nil)
   (setq ergoemacs-shortcut-send-fn (or (command-remapping fn (point)) fn))
   (cond
-   ((and ergoemacs-describe-key
+   ((and ergoemacs-describe-key ergoemacs-shortcut-send-fn
          (or ergoemacs-show-true-bindings
              (and (not ergoemacs-show-true-bindings)
                   (not (eq ergoemacs-shortcut-send-fn 'ergoemacs-shortcut)))))
-    (ergoemacs-shortcut-override-mode 1)
-    (describe-function ergoemacs-shortcut-send-fn)
-    (ergoemacs-shortcut-override-mode -1)
+    (let ((desc-fn ergoemacs-shortcut-send-fn))
+      (ergoemacs-shortcut-override-mode 1)
+      (describe-function desc-fn)
+      (ergoemacs-shortcut-override-mode -1))
     (setq ergoemacs-describe-key nil))
    ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
     (let ((old-unread (listify-key-sequence (or ergoemacs-single-command-keys (this-command-keys))))
