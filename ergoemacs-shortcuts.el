@@ -267,7 +267,7 @@ active.
     (unless (minibufferp)
       (message "%s%s%s"
                (if current-prefix-arg
-                   (concat current-prefix-arg " ")
+                   (format "%s " current-prefix-arg)
                  "")
                (cond
                 ((eq type 'ctl-to-alt)
