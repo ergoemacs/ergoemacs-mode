@@ -522,6 +522,15 @@ See Issue #138."
     (setq ret (equal (listify-key-sequence (read-kbd-macro "¡")) unread-command-events))
     (should ret)))
 
+(ert-deftest ergoemacs-test-multi-translations ()
+  "Test that multicode unicode translations work.
+See Issue #140."
+  (let (ret
+        unread-command-events)
+    (ergoemacs-read "C-x 8 \"" nil nil (aref (read-kbd-macro "A") 0))
+    (setq ret (equal (listify-key-sequence (read-kbd-macro "Ä")) unread-command-events))
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
