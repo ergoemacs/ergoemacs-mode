@@ -367,6 +367,12 @@ INPUT is the input to read instead of using `read-key'
         tmp)
       ;; Should use emacs key translation.
       (cond
+       (ergoemacs-describe-key
+        (message "%s translates to %s"
+                 (ergoemacs-pretty-key
+                  (if key (concat key " " fn-key) fn-key))
+                 (ergoemacs-pretty-key (key-description tmp)))
+        (setq ergoemacs-describe-key nil))
        ((vectorp tmp)
         (setq last-input-event tmp)
         (setq prefix-arg current-prefix-arg)
