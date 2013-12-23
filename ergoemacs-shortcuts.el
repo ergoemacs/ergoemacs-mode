@@ -262,7 +262,7 @@ active.
         ergoemacs-read-input-keys
         (ergoemacs-shortcut-keys keep-shortcut-layer)
         ergoemacs-shortcut-override-mode
-        test-key new-type
+        test-key new-type tmp
         message-log-max)
     (unless (minibufferp)
       (message "%s%s%s"
@@ -335,6 +335,27 @@ active.
          ((eq type 'ctl-to-alt)
           (setq new-type 'normal)))))
       (ergoemacs-read key new-type keep-shortcut-layer))
+     ((progn
+        (setq tmp (lookup-key input-decode-map (read-kbd-macro (concat key " " fn-key))))
+        (when (and tmp (or (integerp tmp) (keymapp tmp)))
+          (setq tmp nil))
+        (unless tmp
+          (setq tmp (lookup-key local-function-key-map (read-kbd-macro (concat key " " fn-key))))
+          (when (and tmp (or (integerp tmp) (keymapp tmp)))
+            (setq tmp nil))
+          (unless tmp
+            (setq tmp (lookup-key key-translation-map (read-kbd-macro (concat key " " fn-key))))
+            (when (and tmp (or (integerp tmp) (keymapp tmp)))
+              (setq tmp nil))))
+        tmp)
+      ;; Should use emacs key translation.
+      (cond
+       ((vectorp tmp)
+        (setq ergoemacs-mark-active mark-active)
+        (setq ergoemacs-first-variant nil)
+        (setq ergoemacs-single-command-keys tmp)
+        (setq prefix-arg current-prefix-arg)
+        (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events)))))
      ((string= next-key
                (key-description (ergoemacs-key-fn-lookup 'keyboard-quit)))
       (unless (minibufferp)
