@@ -720,7 +720,8 @@
      (t
       ;; Not locally defined, complain.
       (beep)
-      (ergoemacs-where-is-old-binding (this-single-command-keys))))))
+      (ergoemacs-where-is-old-binding (this-single-command-keys)))))
+  (setq ergoemacs-describe-key nil))
 
 (defun ergoemacs-unbind-setup-keymap ()
   "Setup `ergoemacs-unbind-keymap' based on current layout."
