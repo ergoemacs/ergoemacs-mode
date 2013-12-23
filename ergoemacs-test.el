@@ -513,6 +513,16 @@ Issue #137."
       (kill-buffer (current-buffer)))
     (should ret)))
 
+(ert-deftest ergoemacs-test-translations ()
+  "Test that unicode translations work.
+See Issue #138."
+  (let (ret)
+    (with-temp-buffer
+      (execute-kbd-macro (edmacro-parse-keys "C-u 1 0 C-x 8 !" t))
+      (goto-char (point-min))
+      (setq ret (looking-at "¡¡¡¡¡¡¡¡¡¡")))
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
