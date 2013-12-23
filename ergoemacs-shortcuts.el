@@ -241,16 +241,23 @@ the best match."
 
 (defvar ergoemacs-first-variant nil
   "First variant of `ergoemacs-read' key.")
+(defvar ergoemacs-describe-key nil)
+(defun ergoemacs-describe-key ()
+  "Ergoemacs replacement for `describe-key'
+Uses `ergoemacs-read'"
+  (interactive)
+  (setq ergoemacs-describe-key t)
+  (ergoemacs-read))
 
 (defvar ergoemacs-single-command-keys nil)
-(defvar ergoemacs-mark-active)
-(defun ergoemacs-read (key &optional type keep-shortcut-layer input)
+(defvar ergoemacs-mark-active nil)
+(defun ergoemacs-read (&optional key type keep-shortcut-layer input)
   "Read keyboard input and execute command.
-The KEY is the keyboard input where the reading begins.
-TYPE is the keyboard translation type.  It can be:
- 'ctl-to-alt
- 'unchorded
- 'normal
+The KEY is the keyboard input where the reading begins.  If nil,
+read the whole keymap.
+
+TYPE is the keyboard translation type.
+It can be: 'ctl-to-alt 'unchorded 'normal
 
 KEEP-SHORTCUT-LAYER keeps the `ergoemacs-mode' shortcut layer
 active.
@@ -267,7 +274,9 @@ INPUT is the input to read instead of using `read-key'
         test-key new-type tmp
         message-log-max)
     (unless (minibufferp)
-      (message "%s%s%s"
+      (message "%s%s%s%s"
+               (if ergoemacs-describe-key
+                   "Describe key: " "")
                (if current-prefix-arg
                    (format "%s " current-prefix-arg)
                  "")
@@ -279,7 +288,8 @@ INPUT is the input to read instead of using `read-key'
                  "<Unchorded> ")
                 (t
                  ""))
-               (ergoemacs-pretty-key key)))
+               (if key (ergoemacs-pretty-key key)
+                 "")))
     (setq next-key (eval (macroexpand `(key-description [,(or input (read-key))])))) 
     ;; M-a -> C-a
     ;; C-a -> M-a
@@ -309,6 +319,8 @@ INPUT is the input to read instead of using `read-key'
       (setq next-key "<escape>"))
     ;; Next key is apps/menu
     (cond
+     ((and (not key) (lookup-key ergoemacs-read-input-keymap (read-kbd-macro next-key)))
+      (ergoemacs-read next-key 'normal t))
      ((string-match "<\\(menu\\|apps\\)>" next-key)
       ;; Swap translation
       (cond
@@ -338,15 +350,18 @@ INPUT is the input to read instead of using `read-key'
           (setq new-type 'normal)))))
       (ergoemacs-read key new-type keep-shortcut-layer))
      ((progn
-        (setq tmp (lookup-key input-decode-map (read-kbd-macro (concat key " " fn-key))))
+        (setq tmp (lookup-key input-decode-map (read-kbd-macro (if key (concat key " " fn-key)
+                                                                 fn-key))))
         (when (and tmp (or (integerp tmp) (keymapp tmp)))
           (setq tmp nil))
         (unless tmp
-          (setq tmp (lookup-key local-function-key-map (read-kbd-macro (concat key " " fn-key))))
+          (setq tmp (lookup-key local-function-key-map (read-kbd-macro (if key (concat key " " fn-key)
+                                                                         fn-key))))
           (when (and tmp (or (integerp tmp) (keymapp tmp)))
             (setq tmp nil))
           (unless tmp
-            (setq tmp (lookup-key key-translation-map (read-kbd-macro (concat key " " fn-key))))
+            (setq tmp (lookup-key key-translation-map (read-kbd-macro (if key (concat key " " fn-key)
+                                                                        fn-key))))
             (when (and tmp (or (integerp tmp) (keymapp tmp)))
               (setq tmp nil))))
         tmp)
@@ -360,7 +375,9 @@ INPUT is the input to read instead of using `read-key'
      ((string= next-key
                (key-description (ergoemacs-key-fn-lookup 'keyboard-quit)))
       (unless (minibufferp)
-        (message "%s%s Canceled with %s"
+        (message "%s%s%s Canceled with %s"
+                 (if ergoemacs-describe-key
+                     "Help for: " "")
                  (cond
                   ((eq type 'ctl-to-alt)
                    (format "<Ctl%sAlt> " 
@@ -369,17 +386,21 @@ INPUT is the input to read instead of using `read-key'
                    "<Unchorded> ")
                   (t
                    ""))
-                 (ergoemacs-pretty-key key)
-                 (ergoemacs-pretty-key next-key))))
+                 (if key (ergoemacs-pretty-key key) "")
+                 (ergoemacs-pretty-key next-key)))
+      (setq ergoemacs-describe-key nil))
      ((progn
-        (setq fn (key-binding (read-kbd-macro (concat key " " fn-key))))
+        (setq fn (key-binding (read-kbd-macro (if key (concat key " " fn-key) fn-key))))
         (condition-case err
             (interactive-form fn)
           nil))
-      (let* ((new-key (concat key " " fn-key))
+      (let* ((new-key (if key (concat key " " fn-key) fn-key))
              (new-key-vector (read-kbd-macro new-key t)))
         (cond
-         (keep-shortcut-layer
+         ((and keep-shortcut-layer (not ergoemacs-describe-key))
+          ;; There is some issue with these key.  Read-key thinks it
+          ;; is in a minibuffer, so the recurive minibuffer error is
+          ;; raised unless these are put into unread-command-events.
           (setq ergoemacs-mark-active mark-active)
           (setq ergoemacs-first-variant nil)
           (setq ergoemacs-single-command-keys new-key-vector)
@@ -388,9 +409,10 @@ INPUT is the input to read instead of using `read-key'
          (t
           (setq ergoemacs-first-variant nil)
           (setq fn (or (command-remapping fn (point)) fn))
-          (ergoemacs-send-fn (concat key " " fn-key) fn)))))
+          (setq ergoemacs-single-command-keys new-key-vector)
+          (ergoemacs-send-fn (if key (concat key " " fn-key) fn-key) fn)))))
      (fn ;; not complete.
-      (ergoemacs-read (concat key " " fn-key) type keep-shortcut-layer))
+      (ergoemacs-read (if key (concat key " " fn-key) fn-key) type keep-shortcut-layer))
      ;; Now try to translate...
      ((and ergoemacs-translate-keys
            (progn
@@ -398,35 +420,40 @@ INPUT is the input to read instead of using `read-key'
              (when (string-match "C-" fn-key)
                (setq test-key (replace-match "" t t fn-key))
                (setq fn (key-binding
-                         (read-kbd-macro (concat key " " test-key)))))
+                         (read-kbd-macro (if key (concat key " " test-key) test-key)))))
              ;; Look at key without M- in it.
              (when (and (not fn) (string-match "M-" fn-key))
                (setq test-key (replace-match "" t t fn-key))
                (setq fn (key-binding
-                         (read-kbd-macro (concat key " " test-key)))))
+                         (read-kbd-macro (if key (concat key " " test-key) test-key)))))
              ;; Try key with C- in it.
              (unless (or fn (string-match "C-" fn-key))
                (setq test-key (concat "C-" fn-key))
                (setq fn (key-binding
-                         (read-kbd-macro (concat key " " test-key)))))
+                         (read-kbd-macro (if key (concat key " " test-key) test-key)))))
              ;; Try key with M- in it
              (unless (or fn (string-match "M-" fn-key))
                (setq test-key (concat "M-" fn-key))
                (setq fn (key-binding
-                         (read-kbd-macro (concat key " " test-key)))))
+                         (read-kbd-macro (if key (concat key " " test-key) test-key)))))
              (condition-case err
                  (interactive-form fn)
                (error nil))))
       (setq fn (or (command-remapping fn (point)) fn))
       (setq ergoemacs-shortcut-keys nil)
-      (ergoemacs-send-fn (concat key " " test-key) fn))
+      (setq ergoemacs-single-command-keys (read-kbd-macro (if key (concat key " " test-key) test-key) t))
+      (ergoemacs-send-fn (if key (concat key " " test-key) test-key) fn))
      (fn
-      (ergoemacs-read (concat key " " test-key) type keep-shortcut-layer))
+      (ergoemacs-read (if key (concat key " " test-key) test-key) type keep-shortcut-layer))
      (t
       (beep)
       (unless (minibufferp)
-        (message "%s %s is undefined!" (ergoemacs-pretty-key key)
-                 (ergoemacs-pretty-key fn-key))))))
+        (message "%s%s %s is undefined!"
+                 (if ergoemacs-describe-key
+                     "Describe Key: " "")
+                 (if key (ergoemacs-pretty-key key) "")
+                 (ergoemacs-pretty-key fn-key)))
+      (setq ergoemacs-describe-key nil))))
   (when ergoemacs-single-command-keys 
     (setq ergoemacs-read-input-keys nil)))
 
@@ -634,10 +661,17 @@ INPUT is the input to read instead of using `read-key'
         ergoemacs-shortcut-send-fn nil
         ergoemacs-shortcut-send-timer nil)
   (setq ergoemacs-shortcut-send-fn (or (command-remapping fn (point)) fn))
-  (setq this-command ergoemacs-shortcut-send-fn)
   (cond
+   ((and ergoemacs-describe-key
+         (or ergoemacs-show-true-bindings
+             (and (not ergoemacs-show-true-bindings)
+                  (not (eq ergoemacs-shortcut-send-fn 'ergoemacs-shortcut)))))
+    (ergoemacs-shortcut-override-mode 1)
+    (describe-function ergoemacs-shortcut-send-fn)
+    (ergoemacs-shortcut-override-mode -1)
+    (setq ergoemacs-describe-key nil))
    ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
-    (let ((old-unread (listify-key-sequence (this-command-keys)))
+    (let ((old-unread (listify-key-sequence (or ergoemacs-single-command-keys (this-command-keys))))
           new-unread)
       ;; Force emacs to send the correct keys.  Workaround for emacs
       ;; bug.
@@ -1107,7 +1141,12 @@ sets `this-command' to `%s'. The hook
          (setq this-command (or (command-remapping
                                  ergoemacs-shortcut-send-fn (point))
                                 ergoemacs-shortcut-send-fn))
-         (call-interactively this-command))))
+         (if (not ergoemacs-describe-key)
+             (call-interactively this-command)
+           (ergoemacs-shortcut-override-mode 1)
+           (describe-function this-command)
+           (ergoemacs-shortcut-override-mode -1)
+           (setq ergoemacs-describe-key nil)))))
     (when ergoemacs-shortcut-send-timer
       (setq ergoemacs-M-O-timer
             (run-with-timer ergoemacs-M-O-delay nil
