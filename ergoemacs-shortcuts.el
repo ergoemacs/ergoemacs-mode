@@ -244,7 +244,7 @@ the best match."
 
 (defvar ergoemacs-single-command-keys nil)
 (defvar ergoemacs-mark-active)
-(defun ergoemacs-read (key &optional type keep-shortcut-layer)
+(defun ergoemacs-read (key &optional type keep-shortcut-layer input)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.
 TYPE is the keyboard translation type.  It can be:
@@ -254,6 +254,8 @@ TYPE is the keyboard translation type.  It can be:
 
 KEEP-SHORTCUT-LAYER keeps the `ergoemacs-mode' shortcut layer
 active.
+
+INPUT is the input to read instead of using `read-key'
 "
   (let (next-key
         ctl-to-alt
@@ -278,7 +280,7 @@ active.
                 (t
                  ""))
                (ergoemacs-pretty-key key)))
-    (setq next-key (eval (macroexpand `(key-description [,(read-key)])))) 
+    (setq next-key (eval (macroexpand `(key-description [,(or input (read-key))])))) 
     ;; M-a -> C-a
     ;; C-a -> M-a
     (setq ctl-to-alt
@@ -351,11 +353,10 @@ active.
       ;; Should use emacs key translation.
       (cond
        ((vectorp tmp)
-        (setq ergoemacs-mark-active mark-active)
-        (setq ergoemacs-first-variant nil)
-        (setq ergoemacs-single-command-keys tmp)
+        (setq last-input-event tmp)
         (setq prefix-arg current-prefix-arg)
-        (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events)))))
+        (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
+        (reset-this-command-lengths))))
      ((string= next-key
                (key-description (ergoemacs-key-fn-lookup 'keyboard-quit)))
       (unless (minibufferp)
