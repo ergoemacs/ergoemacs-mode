@@ -337,17 +337,18 @@ active.
       (ergoemacs-read key new-type keep-shortcut-layer))
      ((string= next-key
                (key-description (ergoemacs-key-fn-lookup 'keyboard-quit)))
-      (message "%s%s Canceled with %s"
-               (cond
-                ((eq type 'ctl-to-alt)
-                 (format "<Ctl%sAlt> " 
-                         (ergoemacs-unicode-char "↔" " to ")))
-                ((eq type 'unchorded)
-                 "<Unchorded> ")
-                (t
-                 ""))
-               (ergoemacs-pretty-key key)
-               (ergoemacs-pretty-key next-key)))
+      (unless (minibufferp)
+        (message "%s%s Canceled with %s"
+                 (cond
+                  ((eq type 'ctl-to-alt)
+                   (format "<Ctl%sAlt> " 
+                           (ergoemacs-unicode-char "↔" " to ")))
+                  ((eq type 'unchorded)
+                   "<Unchorded> ")
+                  (t
+                   ""))
+                 (ergoemacs-pretty-key key)
+                 (ergoemacs-pretty-key next-key))))
      ((progn
         (setq fn (key-binding (read-kbd-macro (concat key " " fn-key))))
         (condition-case err
@@ -401,8 +402,9 @@ active.
       (ergoemacs-read (concat key " " test-key) type keep-shortcut-layer))
      (t
       (beep)
-      (message "%s %s is undefined!" (ergoemacs-pretty-key key)
-               (ergoemacs-pretty-key fn-key)))))
+      (unless (minibufferp)
+        (message "%s %s is undefined!" (ergoemacs-pretty-key key)
+                 (ergoemacs-pretty-key fn-key))))))
   (when ergoemacs-single-command-keys 
     (setq ergoemacs-read-input-keys nil)))
 
