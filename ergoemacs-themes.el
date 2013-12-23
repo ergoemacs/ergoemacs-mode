@@ -607,8 +607,8 @@
     (ido-mode
      ((execute-extended-command smex nil remap)))
 
-    ;; (ergoemacs-mode
-    ;;  ((describe-key ergoemacs-describe-key nil remap)))
+    (ergoemacs-mode
+     ((describe-key ergoemacs-describe-key nil remap)))
     
     ;; Info Mode hooks
     (Info-mode-hook
