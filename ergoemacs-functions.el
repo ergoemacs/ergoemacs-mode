@@ -983,6 +983,11 @@ the last misspelled word with
              (txt (if (not bds) nil
                     (filter-buffer-substring (car bds) (cdr bds)))))
         (cond
+         
+         ((or (memq (get-text-property (car bds) 'face) '(font-lock-string-face font-lock-doc-face font-lock-comment-face))
+              (memq (get-text-property (car bds) 'face) '(font-lock-string-face font-lock-doc-face font-lock-comment-face)))
+          ;; In comment/string.
+          (setq bds (bounds-of-thing-at-point 'word)))
          ((and txt (or (string-match (format "^%s" (regexp-opt ccc t)) txt)
                        (string-match (format "%s\\{2,\\}" (regexp-opt ccc t)) txt)))
           ;; Assume variables such as _temp are not camel case variables.
