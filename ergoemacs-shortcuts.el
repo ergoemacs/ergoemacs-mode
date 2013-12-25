@@ -234,8 +234,8 @@ and `overriding-local-map'"
        )))
 
 (defcustom ergoemacs-translate-keys t
-  "When translating extracted keymaps, attempt to translate to
-the best match."
+  "When translation is enabled, when a command is not defined
+look for the command with or without modifiers."
   :type 'boolean
   :group 'ergoemacs-mode)
 
