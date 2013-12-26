@@ -121,10 +121,10 @@
      ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
       (funcall fn-cp arg))
      ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
-      (ergoemacs-shortcut-internal key 'normal))
+      (ergoemacs-read key 'normal))
      (this-command-keys-shift-translated
       ;; Shift translated keys are C-c and C-x only.
-      (ergoemacs-shortcut-internal key 'normal))
+      (ergoemacs-read key 'normal))
      ((and ergoemacs-ctl-c-or-ctl-x-delay
            (or (region-active-p)
                (and cua--rectangle (boundp 'cua-mode) cua-mode)))
@@ -140,7 +140,7 @@
           (and cua--rectangle (boundp 'cua-mode) cua-mode))
       (funcall fn-cp arg))
      (t
-      (ergoemacs-shortcut-internal key 'normal)))))
+      (ergoemacs-read key 'normal)))))
 
 (defun ergoemacs-clean ()
   "Run ergoemacs in a bootstrap environment."
@@ -188,7 +188,7 @@
       (ergoemacs-gen-svg ergoemacs-theme "kbd-ergo.svg" (concat var-dir "ergo-layouts")))
     (symbol-value 'extra-dir)))
 
-(defun ergoemacs-next-line ()
+(defun ergoemacs-open-line ()
   "Inserts an indented newline after the current line and moves the point to it."
   (interactive "P")
   (end-of-line)
