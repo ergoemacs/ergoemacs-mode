@@ -607,7 +607,7 @@ work in the terminal."
                     (interactive "P")
                     (setq this-command last-command) ; Don't record this command.
                     ;; (setq prefix-arg current-prefix-arg)
-                    (ergoemacs-shortcut-internal ,definition))))
+                    (ergoemacs-shortcut-remap ,definition))))
       (if (and (eq translate 'remap)
                (functionp key-def)
                (condition-case err
