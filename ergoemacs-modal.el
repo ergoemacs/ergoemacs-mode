@@ -262,11 +262,11 @@ modal state is currently enabled."
          (eval
           (macroexpand
            `(defun ,(intern (format "%s-ergoemacs" (symbol-name cmd))) (&optional arg)
-              ,(format "Run `%s' or whatever this mode remaps the command to be using `ergoemacs-shortcut-internal'." (symbol-name cmd))
+              ,(format "Run `%s' or whatever this mode remaps the command to be using `ergoemacs-shortcut-remap'." (symbol-name cmd))
               (interactive "P")
               (setq this-command ',cmd)
               ;; (setq prefix-arg current-prefix-arg)
-              (ergoemacs-shortcut-internal ',cmd))))
+              (ergoemacs-shortcut-remap ',cmd))))
          (setq new-cmd (intern (format "%s-ergoemacs" (symbol-name cmd))))
          (ergoemacs-debug "Created %s" new-cmd)
          (ergoemacs-debug "Unshifted regular expression: %s" ergoemacs-unshifted-regexp)
