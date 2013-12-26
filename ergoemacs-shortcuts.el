@@ -712,12 +712,6 @@ INPUT is the input to read instead of using `read-key'
     (ergoemacs-with-global
      (call-interactively ergoemacs-shortcut-send-fn)))))
 
-(defun ergoemacs-menu-send-prefix (prefix-key untranslated-key type)
-  "Extracts maps for PREFIX-KEY UNTRANSLATED-KEY of TYPE."
-  (setq this-command last-command) ; Don't record this command.
-  ;; (setq prefix-arg current-prefix-arg)
-  (ergoemacs-shortcut-internal (format "%s %s" prefix-key untranslated-key) type))
-
 (defvar ergoemacs-prefer-shortcuts t ;; Prefer shortcuts.
   "Prefer shortcuts")
 
@@ -838,6 +832,44 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
     (setq smex-prompt-string ergoemacs-change-smex-meta-x
           ergoemacs-change-smex-meta-x t)))
 
+(defun ergoemacs-shortcut (&optional arg)
+  (interactive "P")
+  (let* ((keys (or ergoemacs-single-command-keys (this-single-command-keys)))
+         (args (gethash keys ergoemacs-command-shortcuts-hash))
+         (one (nth 0 args)) tmp)
+    (unless args
+      (setq keys (read-kbd-macro (key-description keys) t))
+      (setq args (gethash keys ergoemacs-command-shortcuts-hash))
+      (setq one (nth 0 args)))
+    (cond
+     ((condition-case err
+          (interactive-form one)
+        (error nil))
+      (ergoemacs-shortcut-remap one))
+     ((and (eq 'string (type-of one))
+           (progn
+             (setq tmp (key-binding (read-kbd-macro one) t nil (point)))
+             tmp))
+      (cond
+       ((string-match "self-insert" tmp)
+        (setq ergoemacs-mark-active mark-active)
+        (setq prefix-arg current-prefix-arg)
+        (setq unread-command-events (append (read-kbd-macro one t) unread-command-events))
+        (reset-this-command-lengths))
+       ((memq tmp ergoemacs-send-fn-keys-fns)
+        (ergoemacs-send-fn (key-descripiton keys) tmp))
+       (t
+        (setq this-command (or (command-remapping tmp (point)) tmp))
+        (if (not ergoemacs-describe-key)
+            (call-interactively this-command)
+          (ergoemacs-shortcut-override-mode 1)
+          (describe-function this-command)
+          (ergoemacs-shortcut-override-mode -1)
+          (setq ergoemacs-describe-key nil)))))
+     ((eq 'string (type-of one))
+      (ergoemacs-read one (nth 1 args)))))
+  (setq ergoemacs-single-command-keys nil))
+
 (defvar ergoemacs-shortcut-send-key nil)
 (defvar ergoemacs-shortcut-send-fn nil)
 (defvar ergoemacs-shortcut-send-timer nil)
@@ -947,12 +979,23 @@ in the ignored commands.
   "Runs the FUNCTION or whatever `ergoemacs-shortcut-remap-list' returns.
 Will use KEYS or `this-single-command-keys'"
   (let ((send-keys (or keys (key-description (this-single-command-keys))))
-        (fn-lst (ergoemacs-shortcut-remap-list function)))
-    (if (not fn-lst)
-        (ergoemacs-send-fn send-keys function)
-      (ergoemacs-send-fn (nth 2 (nth 0 fn-lst))
-                         (nth 0 (nth 0 fn-lst))))
-    ))
+        (fn-lst (ergoemacs-shortcut-remap-list function))
+        (fn function))
+    ;; (message "%s; %s; %s" fn-lst send-keys function)
+    (when fn-lst
+      (setq send-keys (nth 2 (nth 0 fn-lst)))
+      (setq fn (nth 0 (nth 0 fn-lst))))
+    (cond
+     ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
+      (ergoemacs-send-fn send-keys fn))
+     (t
+      (setq this-command (or (command-remapping fn (point)) fn))
+      (if (not ergoemacs-describe-key)
+          (call-interactively this-command)
+        (ergoemacs-shortcut-override-mode 1)
+        (describe-function this-command)
+        (ergoemacs-shortcut-override-mode -1)
+        (setq ergoemacs-describe-key nil))))))
 
 (defun ergoemacs-shortcut-internal (key &optional chorded repeat keymap-key timeout timeout-fn)
   "Ergoemacs Shortcut.
@@ -1252,7 +1295,6 @@ sets `this-command' to `%s'. The hook
                    (listify-key-sequence (read-kbd-macro key))
                    unread-command-events))
             (reset-this-command-lengths))))))
-  
   (when (and (not unread-command-events)
              ergoemacs-shortcut-send-key ergoemacs-shortcut-send-fn)
     (cond
