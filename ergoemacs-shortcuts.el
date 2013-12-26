@@ -937,7 +937,7 @@ in the ignored commands.
                (cond
                 (fn2
                  (push `(,fn2 ,key ,key-desc) ret2))
-                (t (push `(,fn ,key ,key-desc) ret)))))))
+                (fn (push `(,fn ,key ,key-desc) ret)))))))
        key-bindings-lst))
     (when ret2
       (setq ret (append ret2 ret)))
@@ -951,7 +951,8 @@ Will use KEYS or `this-single-command-keys'"
     (if (not fn-lst)
         (ergoemacs-send-fn send-keys function)
       (ergoemacs-send-fn (nth 2 (nth 0 fn-lst))
-                         (nth 0 (nth 0 fn-lst))))))
+                         (nth 0 (nth 0 fn-lst))))
+    ))
 
 (defun ergoemacs-shortcut-internal (key &optional chorded repeat keymap-key timeout timeout-fn)
   "Ergoemacs Shortcut.
