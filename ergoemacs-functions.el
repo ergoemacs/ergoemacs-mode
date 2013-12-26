@@ -243,7 +243,7 @@ Use `cua-cut-rectangle' or `cua-cut-region' when `cua-mode' is
 turned on.
 
 Otherwise, when a region is active, use
-`ergoemacs-shortcut-internal' to remap any mode that changes
+`ergoemacs-shortcut-remap' to remap any mode that changes
 emacs' default cut key, C-w (`kill-region').
 
 When region is not active, move to the beginning of the line and
@@ -251,7 +251,7 @@ use `kill-line'.  If looking at the end of the line, run
 `kill-line' again. The prefix arguments will be preserved for the
 first `kill-line', but not the second.
 
-Note that `ergoemacs-shortcut-internal' will remap mode-specific
+Note that `ergoemacs-shortcut-remap' will remap mode-specific
 changes to `kill-line' to allow it to work as expected in
 major-modes like `org-mode'. "
   (interactive "P")
@@ -260,14 +260,14 @@ major-modes like `org-mode'. "
     (cua-cut-region arg)
     (deactivate-mark))
    ((region-active-p) ;; In case something else is bound to C-w.
-    (ergoemacs-shortcut-internal 'kill-region)
+    (ergoemacs-shortcut-remap 'kill-region)
     (deactivate-mark))
    (t
     (when (not (= (point) (point-at-bol)))
       (beginning-of-line))
     ;; Keep prefix args.
     (let ((kill-whole-line t))
-      (ergoemacs-shortcut-internal 'kill-line)))))
+      (ergoemacs-shortcut-remap 'kill-line)))))
 
 ;;; CURSOR MOVEMENT
 
@@ -410,11 +410,11 @@ This behavior can be turned off with `ergoemacs-repeatable-beginning-or-end-of-b
     (if current-prefix-arg
         (progn
           ;; (setq prefix-arg current-prefix-arg)
-          (ergoemacs-shortcut-internal 'end-of-buffer))
+          (ergoemacs-shortcut-remap 'end-of-buffer))
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (bobp))
-        (ergoemacs-shortcut-internal 'end-of-buffer))
-       (t (ergoemacs-shortcut-internal 'beginning-of-buffer))))
+        (ergoemacs-shortcut-remap 'end-of-buffer))
+       (t (ergoemacs-shortcut-remap 'beginning-of-buffer))))
     (when (and (not ma) (region-active-p))
       (deactivate-mark))))
 
@@ -425,7 +425,7 @@ This calls `end-of-buffer', unless there is no prefix and the
 point is already at the beginning of the buffer.  Then it will
 call `beginning-of-buffer'. This function tries to be smart and
 if the major mode redefines the keys, use those keys instead.
-This is done by `ergoemacs-shortcut-internal'.  The repatable
+This is done by `ergoemacs-shortcut-remap'.  The repatable
 behavior can be turned off
 with`ergoemacs-repeatable-beginning-or-end-of-buffer'
 
@@ -435,11 +435,11 @@ This will not honor `shift-select-mode'."
     (if current-prefix-arg
         (progn
           ;; (setq prefix-arg current-prefix-arg)
-          (ergoemacs-shortcut-internal 'end-of-buffer))
+          (ergoemacs-shortcut-remap 'end-of-buffer))
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (eobp))
-        (ergoemacs-shortcut-internal 'beginning-of-buffer))
-       (t (ergoemacs-shortcut-internal 'end-of-buffer))))
+        (ergoemacs-shortcut-remap 'beginning-of-buffer))
+       (t (ergoemacs-shortcut-remap 'end-of-buffer))))
     (when (and (not ma) (region-active-p))
       (deactivate-mark))))
 
@@ -513,7 +513,7 @@ call this command twice to move with #3.  This behavior can be
 changed by `ergoemacs-use-beginning-or-end-of-line-only'.
 
 Also this function tries to use whatever the specific mode wants
-for these functions by using `ergoemacs-shortcut-internal'.
+for these functions by using `ergoemacs-shortcut-remap'.
 
 When moving in steps #1 - #4 if N is not nil or 1, move forward
 N - 1 lines first.  If point reaches the beginning or end of
@@ -532,11 +532,11 @@ the prefix arguments of `beginning-of-buffer',
       (progn
         (cond
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
-          (ergoemacs-shortcut-internal 'beginning-of-buffer))
+          (ergoemacs-shortcut-remap 'beginning-of-buffer))
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
-          (ergoemacs-shortcut-internal 'ergoemacs-backward-block))
+          (ergoemacs-shortcut-remap 'ergoemacs-backward-block))
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
-          (ergoemacs-shortcut-internal 'scroll-down-command)))
+          (ergoemacs-shortcut-remap 'scroll-down-command)))
         (beginning-of-line))
     (setq N (or N 1))
     (when (not (= 1 N))
@@ -547,7 +547,7 @@ the prefix arguments of `beginning-of-buffer',
       (save-excursion
         ;; (setq prefix-arg nil)
         (setq current-prefix-arg nil)
-        (ergoemacs-shortcut-internal 'move-beginning-of-line)
+        (ergoemacs-shortcut-remap 'move-beginning-of-line)
         (push (point) pts))
       (when ergoemacs-back-to-indentation
         (save-excursion
@@ -615,7 +615,7 @@ With argument ARG not nil or 1, move forward ARG - 1 lines first.
 If point reaches the beginning or end of buffer, it stops there.
 
 Attempt to honor each modes modification of beginning and end of
-line functions by using `ergoemacs-shortcut-internal'.
+line functions by using `ergoemacs-shortcut-remap'.
 
 When calling the repeatable command of #3, this command honors
 the prefix arguments of `end-of-buffer',
@@ -638,11 +638,11 @@ the prefix arguments of `end-of-buffer',
       (progn 
         (cond
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
-          (ergoemacs-shortcut-internal 'end-of-buffer))
+          (ergoemacs-shortcut-remap 'end-of-buffer))
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
-          (ergoemacs-shortcut-internal 'ergoemacs-forward-block))
+          (ergoemacs-shortcut-remap 'ergoemacs-forward-block))
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
-          (ergoemacs-shortcut-internal 'scroll-up-command)
+          (ergoemacs-shortcut-remap 'scroll-up-command)
           (beginning-of-line))))
     (setq N (or N 1))
     (when (not (= 1 N))
@@ -748,25 +748,25 @@ Subsequent calls expands the selection to larger semantic unit."
 (defun ergoemacs-kill-line-backward (&optional number)
   "Kill text between the beginning of the line to the cursor position.
 If there's no text, delete the previous line ending.
-Use `ergoemacs-shortcut-internal' in case kill line was remapped."
+Use `ergoemacs-shortcut-remap' in case kill line was remapped."
   (interactive "p")
   (if (and (= number 1) (looking-back "\n"))
       (delete-char -1)
     (setq current-prefix-arg (- 1 number))
-    (ergoemacs-shortcut-internal 'kill-line)))
+    (ergoemacs-shortcut-remap 'kill-line)))
 
 (defun ergoemacs-move-cursor-next-pane (&optional number)
   "Move cursor to the next pane.
-Use `ergoemacs-shortcut-internal' for maximum mode compatibility."
+Use `ergoemacs-shortcut-remap' for maximum mode compatibility."
   (interactive "p") ;; Other window is bound to C-x o
-  (ergoemacs-shortcut-internal 'other-window))
+  (ergoemacs-shortcut-remap 'other-window))
 
 (defun ergoemacs-move-cursor-previous-pane (&optional number)
   "Move cursor to the previous pane.
 Use `ergoemacs-shortcut-interal' for maximum mode compatibility."
   (interactive "p")
   (setq current-prefix-arg (if number (- 0 number) -1))
-  (ergoemacs-shortcut-internal 'other-window))
+  (ergoemacs-shortcut-remap 'other-window))
 
 (defun ergoemacs-unfill-paragraph ()
   "Replace newline char in current paragraph by space.
@@ -775,7 +775,7 @@ See also: `compact-uncompact-block'"
   (interactive)
   (let ((fill-column 90002000))
     (setq current-prefix-arg nil);; Fill paragraph is bound it M-q.
-    (ergoemacs-shortcut-internal 'fill-paragraph)))
+    (ergoemacs-shortcut-remap 'fill-paragraph)))
 
 (defun ergoemacs-unfill-region (start end)
   "Replace newline char in region by space.
@@ -806,9 +806,9 @@ When there is a text selection, act on the region."
             (let ((fill-column big-fill-column-val))
               (fill-region (region-beginning) (region-end))) )
         (if current-state-is-compact
-            (ergoemacs-shortcut-internal 'fill-paragraph)
+            (ergoemacs-shortcut-remap 'fill-paragraph)
           (let ((fill-column big-fill-column-val))
-            (ergoemacs-shortcut-internal 'fill-paragraph))))
+            (ergoemacs-shortcut-remap 'fill-paragraph))))
       (put this-command 'stateIsCompact-p (if current-state-is-compact nil t)))))
 
 (defun ergoemacs-shrink-whitespaces ()
@@ -1469,8 +1469,8 @@ When in `browse-kill-ring-mode', cycle backward through the key ring.
              (not (eq last-command 'yank)))
         (browse-kill-ring)
       (if ergoemacs-smart-paste
-          (ergoemacs-shortcut-internal 'yank)
-        (ergoemacs-shortcut-internal 'yank-pop)))))
+          (ergoemacs-shortcut-remap 'yank)
+        (ergoemacs-shortcut-remap 'yank-pop)))))
 
 (defun ergoemacs-paste (&optional arg)
   "Run `yank' or `yank-pop' if this command is repeated.
@@ -1493,9 +1493,9 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
     ;; Add unread command events another "paste"
     (setq unread-command-events (append (listify-key-sequence (this-single-command-keys)) unread-command-events)))
    ((and ergoemacs-smart-paste (eq last-command 'yank))
-    (ergoemacs-shortcut-internal 'yank-pop))
+    (ergoemacs-shortcut-remap 'yank-pop))
    (t
-    (ergoemacs-shortcut-internal 'yank))))
+    (ergoemacs-shortcut-remap 'yank))))
 
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
