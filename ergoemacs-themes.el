@@ -1374,7 +1374,7 @@ Some exceptions we don't want to unset.
 
   (ergoemacs-key "M-h" 'beginning-of-buffer "↑ buffer")
   (ergoemacs-key "M-H" 'end-of-buffer "↓ buffer")
-  (ergoemacs-key "M-RET" '(cabbage-next-line ergoemacs-next-line) "Next Line")
+  (ergoemacs-key "M-RET" '(cabbage-next-line ergoemacs-open-line) "Next Line")
 
   (ergoemacs-key "M-1" 'cabbage-enlargement-enlarge)
   (ergoemacs-key "M-C-1" 'cabbage-enlargement-restore)
