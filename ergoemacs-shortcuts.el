@@ -938,7 +938,11 @@ in the ignored commands.
          (let (fn key-desc fn2)
            (cond
             (keymap
-             (setq fn (lookup-key keymap key t)))
+             (setq fn (lookup-key keymap key t))
+             (unless (condition-case err
+                       (interactive-form fn)
+                     (error nil))
+               (setq fn nil)))
             (t
              (ergoemacs-with-global
               (setq fn (key-binding key t nil (point))))))
@@ -968,8 +972,8 @@ in the ignored commands.
                  (setq fn2 nil))
                (cond
                 (fn2
-                 (push `(,fn2 ,key ,key-desc) ret2))
-                (fn (push `(,fn ,key ,key-desc) ret)))))))
+                 (push (list fn2 key key-desc) ret2))
+                (fn (push (list fn key key-desc) ret)))))))
        key-bindings-lst))
     (when ret2
       (setq ret (append ret2 ret)))
@@ -977,16 +981,20 @@ in the ignored commands.
 
 (defun ergoemacs-shortcut-remap (function &optional keys)
   "Runs the FUNCTION or whatever `ergoemacs-shortcut-remap-list' returns.
-Will use KEYS or `this-single-command-keys'"
+Will use KEYS or `this-single-command-keys', if cannot find the
+original key binding.
+"
   (let ((send-keys (or keys (key-description (this-single-command-keys))))
         (fn-lst (ergoemacs-shortcut-remap-list function))
-        (fn function))
+        (fn function)
+        send-fn)
     ;; (message "%s; %s; %s" fn-lst send-keys function)
     (when fn-lst
       (setq send-keys (nth 2 (nth 0 fn-lst)))
       (setq fn (nth 0 (nth 0 fn-lst))))
+    (setq send-fn (memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns))
     (cond
-     ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
+     (send-fn
       (ergoemacs-send-fn send-keys fn))
      (t
       (setq this-command (or (command-remapping fn (point)) fn))
@@ -1339,13 +1347,23 @@ If MAP is nil, base this on a sparse keymap."
              (make-sparse-keymap)))
         (ergoemacs-orig-keymap
          (if map
-             (copy-keymap map) nil)))
+             (copy-keymap map) nil))
+        fn-lst)
     (maphash
      (lambda(key args)
-       (if (condition-case err
-               (interactive-form (nth 0 args))
-             (error nil))
-           (eval (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args) nil ,key)))
+       (cond
+        ((condition-case err
+                 (interactive-form (nth 0 args))
+               (error nil))
+         (setq fn-lst (ergoemacs-shortcut-remap-list
+                       (nth 0 args) ergoemacs-orig-keymap))
+         (if fn-lst
+             (define-key ergoemacs-shortcut-override-keymap key
+               (nth 0 (nth 0 fn-lst)))
+           (unless dont-complete
+             (define-key ergoemacs-shortcut-override-keymap key
+               (nth 0 args)))))
+        (t
          (define-key ergoemacs-shortcut-override-keymap
            key #'(lambda(&optional arg)
                    (interactive "P")
@@ -1354,7 +1372,7 @@ If MAP is nil, base this on a sparse keymap."
                      ;; (setq prefix-arg current-prefix-arg)
                      (condition-case err
                          (call-interactively 'ergoemacs-shortcut)
-                       (error (beep) (message "%s" err))))))))
+                       (error (beep) (message "%s" err)))))))))
      ergoemacs-command-shortcuts-hash)
     ;; Now install the rest of the ergoemacs-mode keys
     (unless dont-complete
