@@ -113,11 +113,7 @@
                     (progn
                       ;; Add shortcut if available
                       (cond
-                       ((or (remove-if '(lambda(x) (eq 'menu-bar (elt x 0))) ; Ignore
-                                        ; menu-bar
-                                        ; functions
-                                       (where-is-internal cmd (current-global-map)))
-                            (gethash cmd ergoemacs-where-is-global-hash))
+                       ((ergoemacs-shortcut-function-binding cmd)
                         (puthash (read-kbd-macro (key-description key) t)
                                  (list cmd 'global) ergoemacs-command-shortcuts-hash)
                         (define-key ergoemacs-shortcut-keymap key 'ergoemacs-M-O)
@@ -138,11 +134,7 @@
                            (string= (ergoemacs-kbd trans-key t t) "M-o"))
                       (progn
                         (cond  ;; Use shortcut if available.
-                         ((or (remove-if '(lambda(x) (eq 'menu-bar (elt x 0))) ; Ignore
-                                        ; menu-bar
-                                        ; functions
-                                         (where-is-internal cmd (current-global-map)))
-                              (gethash cmd ergoemacs-where-is-global-hash))
+                         ((ergoemacs-shortcut-function-binding cmd)
                           (puthash (read-kbd-macro (key-description key) t)
                                    (list cmd 'global) ergoemacs-command-shortcuts-hash)
                           (define-key ergoemacs-shortcut-keymap key 'ergoemacs-M-o)
@@ -518,11 +510,7 @@ INPUT is the input to read instead of using `read-key'
       (define-key ergoemacs-shortcut-keymap key def))
      ((and (not (string-match "\\(mouse\\|wheel\\)" (key-description key)))
            (boundp 'setup-ergoemacs-keymap) setup-ergoemacs-keymap
-           (or (remove-if '(lambda(x) (eq 'menu-bar (elt x 0))) ; Ignore
-                                        ; menu-bar
-                                        ; functions
-                          (where-is-internal def (current-global-map)))
-               (gethash def ergoemacs-where-is-global-hash)))
+           (ergoemacs-shortcut-function-binding def))
       (puthash (read-kbd-macro (key-description key) t)
                (list def 'global) ergoemacs-command-shortcuts-hash)
       (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut))     
@@ -1097,12 +1085,7 @@ function if it is bound globally.  For example
                (setq new-fn (car new-fn))))
            (when new-fn
              (push new-fn fn-ergo)))
-         (or
-          (remove-if
-           '(lambda(x)
-              (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
-           (where-is-internal key (current-global-map)))
-          (gethash key ergoemacs-where-is-global-hash)))
+         (ergoemacs-shortcut-function-binding key))
         
         (setq new-fn nil)
         (ergoemacs-without-emulation
@@ -1145,12 +1128,7 @@ function if it is bound globally.  For example
                 (add-to-list 'fn-lst (list binding
                                            (read-kbd-macro
                                             (key-description cur-key) t))))))
-          (or
-           (remove-if
-            '(lambda(x)
-               (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
-            (where-is-internal key (current-global-map)))
-           (gethash key ergoemacs-where-is-global-hash)))))
+          (ergoemacs-shortcut-function-binding key))))
       (cond
        (fn-override
         (when (and ergoemacs-debug-shortcuts (member key ergoemacs-debug-shortcuts))
