@@ -1469,6 +1469,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
           (when (not ergoemacs-mode)
             (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))
+  (unless unread-command-events 
+    (setq ergoemacs-single-command-keys nil))
   t)
 
 (provide 'ergoemacs-mode)
