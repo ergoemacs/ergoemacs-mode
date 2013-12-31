@@ -851,7 +851,7 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
              (setq tmp (key-binding (read-kbd-macro one) t nil (point)))
              tmp))
       (cond
-       ((string-match "self-insert" tmp)
+       ((string-match "self-insert" (symbol-name tmp))
         (setq ergoemacs-mark-active mark-active)
         (setq prefix-arg current-prefix-arg)
         (setq unread-command-events (append (read-kbd-macro one t) unread-command-events))
