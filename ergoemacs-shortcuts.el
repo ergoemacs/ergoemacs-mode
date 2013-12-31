@@ -946,7 +946,9 @@ in the ignored commands.
                  (setq fn nil))))
              (when fn
                (unless dont-swap-for-ergoemacs-functions
-                 (setq fn2 (intern-soft (concat "ergoemacs-" (symbol-name fn))))
+                 (setq fn2 (condition-case err
+                               (intern-soft (concat "ergoemacs-" (symbol-name fn)))
+                             (error nil)))
                  (when (and fn2 (not (interactive-form fn2)))
                    (setq fn2 nil)))
                (when (memq fn (append
