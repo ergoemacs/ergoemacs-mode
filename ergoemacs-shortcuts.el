@@ -86,9 +86,9 @@
               (if (ergoemacs-global-changed-p trans-key)
                   (progn
                     (ergoemacs-debug "!!!Fixed %s has changed globally." trans-key)
-                    (ergoemacs-setup-keys-for-keymap---internal ,keymap key (lookup-key (current-global-map) key)))
+                    (ergoemacs-define-key ,keymap key (lookup-key (current-global-map) key)))
                 (setq cmd (nth 1 x))
-                (when (not (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd))
+                (when (not (ergoemacs-define-key ,keymap key cmd))
                   (ergoemacs-debug "Key %s->%s not setup." key cmd)))))
           (symbol-value (ergoemacs-get-fixed-layout)))
          (ergoemacs-debug-heading "Setup Variable Layout Keys")
@@ -150,7 +150,7 @@
                              'input-keys
                              (match-string 1 (ergoemacs-kbd trans-key t (nth 3 x)))))))
                     (when cmd
-                      (ergoemacs-setup-keys-for-keymap---internal ,keymap key cmd)
+                      (ergoemacs-define-key ,keymap key cmd)
                       (when (eq ',keymap 'ergoemacs-keymap)
                         (ergoemacs-debug "Variable: %s (%s) -> %s %s" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)
                         (when (string-match "^\\([^ ]+\\) " (ergoemacs-kbd trans-key t (nth 3 x)))
@@ -467,8 +467,17 @@ INPUT is the input to read instead of using `read-key'
   (when ergoemacs-single-command-keys 
     (setq ergoemacs-read-input-keys nil)))
 
-(defun ergoemacs-setup-keys-for-keymap---internal (keymap key def)
-  "Defines KEY in KEYMAP to be DEF"
+(defun ergoemacs-define-key (keymap key def)
+  "Defines KEY in KEYMAP to be DEF.
+Similar to `define-key'.
+
+DEF can be:
+1. A function; If globally defined, this is defined by `ergoemacs-shortcut-remap'
+2. A list of functions
+3. A keymap
+4. A kbd-code that this shortcuts to with `ergoemacs-read'
+
+"
   (cond
    ((eq 'cons (type-of def))
     (let (found)
@@ -483,12 +492,23 @@ INPUT is the input to read instead of using `read-key'
                 (define-key ergoemacs-shortcut-keymap key
                   'ergoemacs-shortcut))
             (unless (lookup-key keymap key)
-              (define-key keymap key
+              (cond
+               ((condition-case err
+                    (interactive-form (nth 0 def))
+                  (error nil))
+                (define-key keymap key
+                  `(lambda(&optional arg)
+                     (interactive "P")
+                     (setq this-command last-command) ; Don't record this command.
+                     ;; (setq prefix-arg current-prefix-arg)
+                     (ergoemacs-shortcut-remap ,(nth 0 def)))))
+               (t
+                (define-key keymap key
                 `(lambda(&optional arg)
                    (interactive "P")
                    (setq this-command last-command) ; Don't record this command.
                    ;; (setq prefix-arg current-prefix-arg)
-                   (ergoemacs-shortcut-internal ,(nth 0 def) ',(nth 1 def))))))
+                   (ergoemacs-read ,(nth 0 def) ',(nth 1 def))))))))
         (mapc
          (lambda(new-def)
            (unless found
@@ -496,7 +516,7 @@ INPUT is the input to read instead of using `read-key'
                        (interactive-form new-def)
                      (error nil))
                (setq found
-                     (ergoemacs-setup-keys-for-keymap---internal keymap key new-def)))))
+                     (ergoemacs-define-key keymap key new-def)))))
          def))
       (symbol-value 'found)))
    ((condition-case err
@@ -538,7 +558,7 @@ INPUT is the input to read instead of using `read-key'
              (interactive "P")
              (setq this-command last-command) ; Don't record this command.
              ;; (setq prefix-arg current-prefix-arg)
-             (ergoemacs-shortcut-internal ,def)))))
+             (ergoemacs-read ,def)))))
     
     t)
    (t nil)))
@@ -768,7 +788,6 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
         (progn
           (setq ergoemacs-shortcut-send-key (key-description (this-single-command-keys))
                 ergoemacs-shortcut-send-fn cmd1)
-          
           (when ergoemacs-single-command-keys
             (setq ergoemacs-single-command-keys nil
                   ergoemacs-read-input-keys t)))
@@ -777,8 +796,9 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
       (unless args
         ;; Take care of vectors and universal arguments
         (setq args
-              (gethash (read-kbd-macro
-                        (key-description (or ergoemacs-single-command-keys (this-single-command-keys))) t)
+              (gethash
+               (read-kbd-macro
+                (key-description (or ergoemacs-single-command-keys (this-single-command-keys))) t)
                        ergoemacs-command-shortcuts-hash)))
       (when ergoemacs-single-command-keys
         (setq ergoemacs-single-command-keys nil
@@ -820,7 +840,7 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
     (setq smex-prompt-string ergoemacs-change-smex-meta-x
           ergoemacs-change-smex-meta-x t)))
 
-(defun ergoemacs-shortcut (&optional arg)
+(defun ergoemacs-shortcut (&optional opt-args)
   (interactive "P")
   (let* ((keys (or ergoemacs-single-command-keys (this-single-command-keys)))
          (args (gethash keys ergoemacs-command-shortcuts-hash))
@@ -849,13 +869,16 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
        (t
         (setq this-command (or (command-remapping tmp (point)) tmp))
         (if (not ergoemacs-describe-key)
-            (call-interactively this-command)
+            (progn
+              (call-interactively this-command))
           (ergoemacs-shortcut-override-mode 1)
           (describe-function this-command)
           (ergoemacs-shortcut-override-mode -1)
           (setq ergoemacs-describe-key nil)))))
      ((eq 'string (type-of one))
-      (ergoemacs-read one (nth 1 args)))))
+      (ergoemacs-read one (nth 1 args)))
+     (t 
+      (message "Keys: %s; Args: %s; One: %s" keys args one))))
   (setq ergoemacs-single-command-keys nil))
 
 (defvar ergoemacs-shortcut-send-key nil)
@@ -978,7 +1001,6 @@ original key binding.
         (fn-lst (ergoemacs-shortcut-remap-list function))
         (fn function)
         send-fn)
-    ;; (message "%s; %s; %s" fn-lst send-keys function)
     (when fn-lst
       (setq send-keys (nth 2 (nth 0 fn-lst)))
       (setq fn (nth 0 (nth 0 fn-lst))))
