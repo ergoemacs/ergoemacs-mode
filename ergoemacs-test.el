@@ -587,6 +587,34 @@ Should test issue #142"
     (ergoemacs-mode 1)
     (should (equal ret t))))
 
+(ert-deftest ergoemacs-test-shift-select-subword ()
+  "Test for mark working with shift-selection of `subword-forward'."
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (macro (edmacro-parse-keys (format "M-Y M-x"
+                                           (if (eq system-type 'windows-nt)
+                                               "apps" "menu")) t))
+        (ret nil))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme "reduction")
+    (setq ergoemacs-keyboard-layout "colemak")
+    (ergoemacs-mode 1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (insert ergoemacs-test-lorem-ipsum)
+      (subword-mode 1)
+      (goto-char (point-max))
+      (beginning-of-line)
+      (execute-kbd-macro macro)
+      (when (looking-at " in culpa qui")
+        (setq ret t))
+      (kill-buffer (current-buffer)))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should (equal ret t))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
