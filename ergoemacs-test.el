@@ -558,9 +558,19 @@ See Issue #140."
     (ergoemacs-mode 1)
     (should (equal ret t))))
 
+
+(defvar ergoemacs-test-misspelled-mark-should-fail
+  (condition-case err
+      (with-temp-buffer
+        (insert "mart")
+        (flyspell-buffer)
+        :passed)
+    (error :failed)))
+
 (ert-deftest ergoemacs-test-misspelled-mark ()
   "Test for mark working with flyspell misspelled word.
 Should test issue #142"
+  :expected-result ergoemacs-test-misspelled-mark-should-fail
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
         (macro (edmacro-parse-keys (format "M-SPC M-y M-x"
