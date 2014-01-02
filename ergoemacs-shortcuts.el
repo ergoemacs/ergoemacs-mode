@@ -375,7 +375,7 @@ INPUT is the input to read instead of using `read-key'
       (cond
        ((keymapp tmp)
         (ergoemacs-read (if key (concat key " " fn-key) fn-key)
-                        type t input))
+                        type nil input))
        ((and ergoemacs-describe-key (vectorp tmp))
         (message "%s translates to %s"
                  (ergoemacs-pretty-key
@@ -415,11 +415,9 @@ INPUT is the input to read instead of using `read-key'
         (cond
          ((and (eq fn 'ergoemacs-shortcut) hash
                (eq 'string (type-of (nth 0 hash)))
-               (condition-case err
-                   (keymapp (key-binding new-key-vector t nil (point)))
-                 (error nil)))
+               (memq (nth 1 hash) '(ctl-to-alt unchorded normal)))
           (ergoemacs-read (nth 0 hash) (nth 1 hash)
-                          t input))
+                          nil input))
          ((and (eq fn 'ergoemacs-shortcut) hash
                (eq 'string (type-of (nth 0 hash))))
           (setq ergoemacs-mark-active mark-active)
@@ -482,12 +480,10 @@ INPUT is the input to read instead of using `read-key'
       (cond
        ((and (eq fn 'ergoemacs-shortcut) hash
              (eq 'string (type-of (nth 0 hash)))
-             (condition-case err
-                 (keymapp (key-binding ergoemacs-single-command-keys t nil (point)))
-               (error nil)))
+             (memq (nth 1 hash) '(ctl-to-alt unchorded normal)))
         (setq ergoemacs-single-command-keys nil)
         (ergoemacs-read (nth 0 hash) (nth 1 hash)
-                        t input))
+                        keep-shortcut-layer input))
        ((and (eq fn 'ergoemacs-shortcut) hash
              (eq 'string (type-of (nth 0 hash))))
         (setq ergoemacs-mark-active mark-active)
