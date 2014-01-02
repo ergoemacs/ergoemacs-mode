@@ -625,6 +625,32 @@ Should test issue #142"
     (ergoemacs-mode 1)
     (should (equal ret t))))
 
+(ert-deftest ergoemacs-test-apps-e-t-_ ()
+  "Test that colemak <apps> e t sends _.
+Should test for Issue #143."
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        unread-command-events
+        (ret nil))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme "reduction")
+    (setq ergoemacs-keyboard-layout "colemak")
+    (ergoemacs-mode 1)
+    (ergoemacs-read nil nil nil
+                    (read-kbd-macro
+                     (format "<%s> e t"
+                             (if (eq system-type 'windows-nt)
+                                 "apps" "menu"))))
+    (setq ret (equal (listify-key-sequence (read-kbd-macro "_"))
+                     unread-command-events))
+    (message "%s;%s" (listify-key-sequence (read-kbd-macro "_"))
+             unread-command-events)
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should (equal ret t))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
