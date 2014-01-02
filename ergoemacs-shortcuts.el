@@ -117,7 +117,9 @@
                         (puthash (read-kbd-macro (key-description key) t)
                                  (list cmd 'global) ergoemacs-command-shortcuts-hash)
                         (define-key ergoemacs-shortcut-keymap key 'ergoemacs-M-O)
-                        (define-key ergoemacs-M-O-keymap [timeout] 'ergoemacs-shortcut))
+                        (if (ergoemacs-is-movement-command-p cmd)
+                            (define-key ergoemacs-M-O-keymap [timeout] 'ergoemacs-shortcut-movement)
+                          (define-key ergoemacs-M-O-keymap [timeout] 'ergoemacs-shortcut)))
                        (t
                         (define-key ,keymap key  'ergoemacs-M-O)
                         (define-key ergoemacs-M-O-keymap [timeout] cmd)))
@@ -138,7 +140,9 @@
                           (puthash (read-kbd-macro (key-description key) t)
                                    (list cmd 'global) ergoemacs-command-shortcuts-hash)
                           (define-key ergoemacs-shortcut-keymap key 'ergoemacs-M-o)
-                          (define-key ergoemacs-M-o-keymap [timeout] 'ergoemacs-shortcut))
+                          (if (ergoemacs-is-movement-command-p cmd)
+                              (define-key ergoemacs-M-o-keymap [timeout] 'ergoemacs-shortcut-movement)
+                            (define-key ergoemacs-M-o-keymap [timeout] 'ergoemacs-shortcut)))
                          (t
                           (define-key ,keymap key  'ergoemacs-M-o)
                           (define-key ergoemacs-M-o-keymap [timeout] cmd)))
@@ -533,7 +537,9 @@ DEF can be:
            (ergoemacs-shortcut-function-binding def))
       (puthash (read-kbd-macro (key-description key) t)
                (list def 'global) ergoemacs-command-shortcuts-hash)
-      (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut))     
+      (if (ergoemacs-is-movement-command-p def)
+          (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut-movement)
+        (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut)))     
      ((or (and (boundp 'setup-ergoemacs-keymap) setup-ergoemacs-keymap)
           (not (lookup-key keymap key)))
       (define-key keymap key def)))
@@ -551,7 +557,9 @@ DEF can be:
           (puthash (read-kbd-macro (key-description key) t)
                    `(,def nil)
                    ergoemacs-command-shortcuts-hash)
-          (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut))
+          (if (ergoemacs-is-movement-command-p def)
+              (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut-movement)
+            (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut)))
       (unless (lookup-key keymap key)
         (define-key keymap key
           `(lambda(&optional arg)
@@ -691,7 +699,7 @@ DEF can be:
    ((and ergoemacs-describe-key ergoemacs-shortcut-send-fn
          (or ergoemacs-show-true-bindings
              (and (not ergoemacs-show-true-bindings)
-                  (not (eq ergoemacs-shortcut-send-fn 'ergoemacs-shortcut)))))
+                  (not (memq ergoemacs-shortcut-send-fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))))))
     (let ((desc-fn ergoemacs-shortcut-send-fn))
       (ergoemacs-shortcut-override-mode 1)
       (describe-function desc-fn)
@@ -758,90 +766,7 @@ DEF can be:
   :type '(repeat
           (symbol :tag "Function to call literally:")))
 
-(defun ergoemacs-shortcut (&optional arg)
-  "Shortcut for other key/function.
-Calls the function shortcut key defined in
-`ergoemacs-command-shortcuts-hash' for `this-command-keys-vector'.  The
-workhorse of this function is in `ergoemacs-shortcut-internal'.
-
-This is only performed it `ergoemacs-mode' has not defined some
-work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
-"
-  (interactive "P")
-  (when (and ergoemacs-change-smex-meta-x (boundp 'smex-prompt-string))
-    (setq ergoemacs-change-smex-meta-x smex-prompt-string
-          smex-prompt-string
-          (ergoemacs-pretty-key
-           (key-description
-            (or ergoemacs-single-command-keys (this-single-command-keys))))))
-  (setq ergoemacs-shortcut-send-key nil
-        ergoemacs-shortcut-send-fn nil
-        ergoemacs-shortcut-send-timer nil)
-  (let (cmd1 cmd2)
-    (let (ergoemacs-shortcut-keys
-          ergoemacs-read-input-keys
-          ergoemacs-shortcut-override-mode)
-      (setq cmd1 (key-binding (or ergoemacs-single-command-keys (this-single-command-keys))))
-      (ergoemacs-without-emulation
-       (setq cmd2 (key-binding (or ergoemacs-single-command-keys (this-single-command-keys))))))
-    (if (not (equal cmd1 cmd2))
-        (progn
-          (setq ergoemacs-shortcut-send-key (key-description (this-single-command-keys))
-                ergoemacs-shortcut-send-fn cmd1)
-          (when ergoemacs-single-command-keys
-            (setq ergoemacs-single-command-keys nil
-                  ergoemacs-read-input-keys t)))
-      (setq args (gethash (or ergoemacs-single-command-keys (this-single-command-keys))
-                          ergoemacs-command-shortcuts-hash))
-      (unless args
-        ;; Take care of vectors and universal arguments
-        (setq args
-              (gethash
-               (read-kbd-macro
-                (key-description (or ergoemacs-single-command-keys (this-single-command-keys))) t)
-                       ergoemacs-command-shortcuts-hash)))
-      (when ergoemacs-single-command-keys
-        (setq ergoemacs-single-command-keys nil
-              ergoemacs-read-input-keys t))
-      (if (not args)
-          (progn
-            ;; Remove reference to `ergoemacs-shortcut'
-            (when (featurep 'keyfreq)
-              (when keyfreq-mode
-                (let ((command 'ergoemacs-shortcut) count)
-                  (setq count (gethash (cons major-mode command) keyfreq-table))
-                  (remhash (cons major-mode command) keyfreq-table)
-                  ;; Add `ergoemacs-undefined' to counter.
-                  (setq command 'ergoemacs-undefined)
-                  (setq count (gethash (cons major-mode command) keyfreq-table))
-                  (puthash (cons major-mode command) (if count (+ count 1) 1)
-                           keyfreq-table))))
-            (ergoemacs-undefined))
-        (when (featurep 'keyfreq)
-          (when keyfreq-mode
-            (let ((command 'ergoemacs-shortcut) count)
-              (setq count (gethash (cons major-mode command) keyfreq-table))
-              (remhash (cons major-mode command) keyfreq-table))))
-        (setq this-command last-command)
-        ;; (setq prefix-arg current-prefix-arg)
-        (if (condition-case err
-                (interactive-form (nth 0 args))
-              (error nil))
-            (progn
-              (setq ergoemacs-shortcut-send-fn (macroexpand `(ergoemacs-shortcut-internal ',(nth 0 args) ',(nth 1 args)))))
-          (setq ergoemacs-shortcut-send-fn (macroexpand `(ergoemacs-shortcut-internal ,(nth 0 args) ',(nth 1 args))))))))
-  ;; Get out of the nesting and let bindings...
-  (cond
-   (ergoemacs-shortcut-send-key
-    (ergoemacs-send-fn ergoemacs-shortcut-send-key ergoemacs-shortcut-send-fn))
-   (ergoemacs-shortcut-send-fn
-    (eval ergoemacs-shortcut-send-fn)))
-  (when (and ergoemacs-change-smex-meta-x (boundp 'smex-prompt-string))
-    (setq smex-prompt-string ergoemacs-change-smex-meta-x
-          ergoemacs-change-smex-meta-x t)))
-
-(defun ergoemacs-shortcut (&optional opt-args)
-  (interactive "P")
+(defun ergoemacs-shortcut---internal ()
   (let* ((keys (or ergoemacs-single-command-keys (this-single-command-keys)))
          (args (gethash keys ergoemacs-command-shortcuts-hash))
          (one (nth 0 args)) tmp)
@@ -878,8 +803,23 @@ work-around for a particular key in `ergoemacs-emulation-mode-map-alist'
      ((eq 'string (type-of one))
       (ergoemacs-read one (nth 1 args)))
      (t 
-      (message "Keys: %s; Args: %s; One: %s" keys args one))))
-  (setq ergoemacs-single-command-keys nil))
+      (message "Keys: %s; Args: %s; One: %s" keys args one)))
+    (setq ergoemacs-single-command-keys nil)))
+
+(defun ergoemacs-shortcut-movement (&optional opt-args)
+  "Shortcut for other key/function for movement keys.
+Calls the function shortcut key defined in
+`ergoemacs-command-shortcuts-hash' for `ergoemacs-single-command-keys' or `this-single-command-keys'."
+  (interactive "^P")
+  (ergoemacs-shortcut---internal))
+(put 'ergoemacs-shortcut-movement 'CUA 'move)
+
+(defun ergoemacs-shortcut (&optional opt-args)
+  "Shortcut for other key/function for non-movement keys.
+Calls the function shortcut key defined in
+`ergoemacs-command-shortcuts-hash' for `ergoemacs-single-command-keys' or `this-single-command-keys'."
+  (interactive "P")
+  (ergoemacs-shortcut---internal))
 
 (defvar ergoemacs-shortcut-send-key nil)
 (defvar ergoemacs-shortcut-send-fn nil)
