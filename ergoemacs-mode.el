@@ -1377,8 +1377,10 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
     (setq minor-mode-map-alist (append (delete x minor-mode-map-alist) (list x)))))
 
 (defvar ergoemacs-this-command nil)
+(defvar ergoemacs-pre-command-point nil)
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
+  (setq ergoemacs-pre-command-point (point))
   (when (and (not ergoemacs-read-input-keys)
              ergoemacs-mark-active)
     (setq mark-active t))
@@ -1414,6 +1416,11 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (defun ergoemacs-post-command-hook ()
   "Ergoemacs post-command-hook"
+  (when (and shift-select-mode
+             this-command-keys-shift-translated
+             (not mark-active)
+             (eq (get this-command 'CUA) 'move))
+    (push-mark ergoemacs-pre-command-point nil t))
   (when (and shift-select-mode
              this-command-keys-shift-translated
              mark-active
