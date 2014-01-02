@@ -409,8 +409,17 @@ INPUT is the input to read instead of using `read-key'
             (interactive-form fn)
           nil))
       (let* ((new-key (if key (concat key " " fn-key) fn-key))
-             (new-key-vector (read-kbd-macro new-key t)))
+             (new-key-vector (read-kbd-macro new-key t))
+             (hash (gethash new-key-vector ergoemacs-command-shortcuts-hash)))
         (cond
+         ((and (eq fn 'ergoemacs-shortcut) hash
+               (eq 'string (type-of (nth 0 hash))))
+          (ergoemacs-read (nth 0 hash) (nth 1 hash)))
+         ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))
+               (condition-case err
+                   (interactive-form (nth 0 hash))
+                 (error nil)))
+          (ergoemacs-shortcut-remap (nth 0 hash)))
          ((and keep-shortcut-layer (not ergoemacs-describe-key))
           ;; There is some issue with these key.  Read-key thinks it
           ;; is in a minibuffer, so the recurive minibuffer error is
@@ -456,7 +465,17 @@ INPUT is the input to read instead of using `read-key'
       (setq fn (or (command-remapping fn (point)) fn))
       (setq ergoemacs-shortcut-keys nil)
       (setq ergoemacs-single-command-keys (read-kbd-macro (if key (concat key " " test-key) test-key) t))
-      (ergoemacs-send-fn (if key (concat key " " test-key) test-key) fn))
+      (cond
+       ((and (eq fn 'ergoemacs-shortcut) hash
+             (eq 'string (type-of (nth 0 hash))))
+        (ergoemacs-read (nth 0 hash) (nth 1 hash)))
+       ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))
+             (condition-case err
+                 (interactive-form (nth 0 hash))
+               (error nil)))
+        (ergoemacs-shortcut-remap (nth 0 hash)))
+       (t
+        (ergoemacs-send-fn (if key (concat key " " test-key) test-key) fn))))
      (fn
       (ergoemacs-read (if key (concat key " " test-key) test-key) type keep-shortcut-layer))
      (t
@@ -1127,8 +1146,8 @@ function if it is bound globally.  For example
      (t ;; key prefix
       (setq this-command last-command) ; Don't record this command.
       (let  (deactivate-mark)
-        (setq ergoemacs-first-variant chorded)
-        (ergoemacs-read key chorded))))
+        (setq ergoemacs-first-variant 'chorded)
+        (ergoemacs-read key 'chorded))))
     (when shared-do-it
       (if (not fn)
           (unless keymap-key
