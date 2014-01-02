@@ -276,7 +276,8 @@ INPUT is the input to read instead of using `read-key'
         ergoemacs-read-input-keys
         (ergoemacs-shortcut-keys keep-shortcut-layer)
         ergoemacs-shortcut-override-mode
-        test-key new-type tmp
+        test-key new-type tmp hash
+        (input (listify-key-sequence input))
         message-log-max)
     (unless (minibufferp)
       (message "%s%s%s%s"
@@ -295,7 +296,7 @@ INPUT is the input to read instead of using `read-key'
                  ""))
                (if key (ergoemacs-pretty-key key)
                  "")))
-    (setq next-key (eval (macroexpand `(key-description [,(or input (read-key))])))) 
+    (setq next-key (eval (macroexpand `(key-description [,(or (pop input) (read-key))])))) 
     ;; M-a -> C-a
     ;; C-a -> M-a
     (setq ctl-to-alt
@@ -325,7 +326,7 @@ INPUT is the input to read instead of using `read-key'
     ;; Next key is apps/menu
     (cond
      ((and (not key) (lookup-key ergoemacs-read-input-keymap (read-kbd-macro next-key)))
-      (ergoemacs-read next-key 'normal t))
+      (ergoemacs-read next-key 'normal t input))
      ((string-match "<\\(menu\\|apps\\)>" next-key)
       ;; Swap translation
       (cond
@@ -353,7 +354,7 @@ INPUT is the input to read instead of using `read-key'
           (setq new-type 'ctl-to-alt))
          ((eq type 'ctl-to-alt)
           (setq new-type 'normal)))))
-      (ergoemacs-read key new-type keep-shortcut-layer))
+      (ergoemacs-read key new-type keep-shortcut-layer input))
      ((progn
         (setq tmp (lookup-key input-decode-map (read-kbd-macro (if key (concat key " " fn-key)
                                                                  fn-key))))
@@ -374,7 +375,7 @@ INPUT is the input to read instead of using `read-key'
       (cond
        ((keymapp tmp)
         (ergoemacs-read (if key (concat key " " fn-key) fn-key)
-                        type keep-shortcut-layer))
+                        type keep-shortcut-layer input))
        ((and ergoemacs-describe-key (vectorp tmp))
         (message "%s translates to %s"
                  (ergoemacs-pretty-key
@@ -409,12 +410,16 @@ INPUT is the input to read instead of using `read-key'
             (interactive-form fn)
           nil))
       (let* ((new-key (if key (concat key " " fn-key) fn-key))
-             (new-key-vector (read-kbd-macro new-key t))
-             (hash (gethash new-key-vector ergoemacs-command-shortcuts-hash)))
+             (new-key-vector (read-kbd-macro new-key t)))
+        (setq hash (gethash new-key-vector ergoemacs-command-shortcuts-hash))
         (cond
          ((and (eq fn 'ergoemacs-shortcut) hash
-               (eq 'string (type-of (nth 0 hash))))
-          (ergoemacs-read (nth 0 hash) (nth 1 hash)))
+               (eq 'string (type-of (nth 0 hash)))
+               (condition-case err
+                   (keymapp (key-binding new-key-vector t nil (point)))
+                 (error nil)))
+          (ergoemacs-read (nth 0 hash) (nth 1 hash)
+                          keep-shortcut-layer input))
          ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))
                (condition-case err
                    (interactive-form (nth 0 hash))
@@ -435,7 +440,8 @@ INPUT is the input to read instead of using `read-key'
           (setq ergoemacs-single-command-keys new-key-vector)
           (ergoemacs-send-fn (if key (concat key " " fn-key) fn-key) fn)))))
      (fn ;; not complete.
-      (ergoemacs-read (if key (concat key " " fn-key) fn-key) type keep-shortcut-layer))
+      (ergoemacs-read (if key (concat key " " fn-key) fn-key) type
+                      keep-shortcut-layer input))
      ;; Now try to translate...
      ((and ergoemacs-translate-keys
            (progn
@@ -465,19 +471,26 @@ INPUT is the input to read instead of using `read-key'
       (setq fn (or (command-remapping fn (point)) fn))
       (setq ergoemacs-shortcut-keys nil)
       (setq ergoemacs-single-command-keys (read-kbd-macro (if key (concat key " " test-key) test-key) t))
+      (setq hash (gethash ergoemacs-single-command-keys ergoemacs-command-shortcuts-hash))
       (cond
        ((and (eq fn 'ergoemacs-shortcut) hash
-             (eq 'string (type-of (nth 0 hash))))
-        (ergoemacs-read (nth 0 hash) (nth 1 hash)))
+             (eq 'string (type-of (nth 0 hash)))
+             (condition-case err
+                 (keymapp (key-binding ergoemacs-single-command-keys t nil (point)))
+               (error nil)))
+        (setq ergoemacs-single-command-keys nil)
+        (ergoemacs-read (nth 0 hash) (nth 1 hash)
+                        keep-shortcut-layer input))
        ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))
              (condition-case err
                  (interactive-form (nth 0 hash))
                (error nil)))
+        (setq ergoemacs-single-command-keys nil)
         (ergoemacs-shortcut-remap (nth 0 hash)))
        (t
         (ergoemacs-send-fn (if key (concat key " " test-key) test-key) fn))))
      (fn
-      (ergoemacs-read (if key (concat key " " test-key) test-key) type keep-shortcut-layer))
+      (ergoemacs-read (if key (concat key " " test-key) test-key) type keep-shortcut-layer input))
      (t
       (beep)
       (unless (minibufferp)
