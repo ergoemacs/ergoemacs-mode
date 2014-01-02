@@ -1386,14 +1386,14 @@ This is done by checking if this is a command that supports shift selection or c
              (string-match "^[@*]*\\^" intf)))))
 
 (defvar ergoemacs-this-command nil)
-(defvar ergoemacs-pre-command-point nil)
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
-  (setq ergoemacs-pre-command-point (point))
-  (when (and (not ergoemacs-read-input-keys)
-             ergoemacs-mark-active)
-    (setq mark-active t))
-  (setq ergoemacs-mark-active nil)
+  (when (and ergoemacs-mark-active
+             (not ergoemacs-read-input-keys)
+             (not mark-active))
+    (set-mark (mark t))
+    (when transient-mark-mode ;; restore transient-mark-mode state
+      (setq transient-mark-mode ergoemacs-mark-active)))
   (let (deactivate-mark)
     (condition-case err
         (progn
@@ -1425,6 +1425,12 @@ This is done by checking if this is a command that supports shift selection or c
 
 (defun ergoemacs-post-command-hook ()
   "Ergoemacs post-command-hook"
+  (when ergoemacs-read-input-keys
+    (if (and mark-active deactivate-mark
+               (or (ergoemacs-is-movement-command-p this-command)
+                   (memq this-command '(set-mark cua-set-mark))))
+        (progn
+          (setq deactivate-mark nil))))
   (let (deactivate-mark)
     (when (and shift-select-mode
                this-command-keys-shift-translated
