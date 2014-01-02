@@ -314,7 +314,7 @@ modal state is currently enabled."
            (define-key ergoemacs-full-alt-keymap
              (read-kbd-macro (concat "<override> M-" stripped-key))
              cmd)))
-       (when (member cmd ergoemacs-movement-functions)
+       (when (ergoemacs-is-movement-command-p cmd)
          (set (intern (concat "ergoemacs-fast-" (symbol-name cmd) "-keymap"))
               (make-sparse-keymap))
          (eval `(define-key ,(intern (concat "ergoemacs-fast-" (symbol-name cmd) "-keymap"))

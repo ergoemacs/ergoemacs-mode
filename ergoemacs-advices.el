@@ -82,8 +82,7 @@
         (progn
           ;; Fix shifted commands.
           (when (and (string-match "\\(^\\|-\\)M-" (key-descrtion (this-single-command-keys))) ;; Alt command
-                     (or (eq (get this-command 'CUA) 'move)
-                         (memq this-command ergoemacs-movement-functions)))
+                     (ergoemacs-is-movement-command-p this-command))
             (setq do-it nil))
           ;; Fix Issue 139.  However may introduce an issue when you
           ;; want to issue C-c commands quickly...
