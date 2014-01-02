@@ -375,7 +375,7 @@ INPUT is the input to read instead of using `read-key'
       (cond
        ((keymapp tmp)
         (ergoemacs-read (if key (concat key " " fn-key) fn-key)
-                        type keep-shortcut-layer input))
+                        type t input))
        ((and ergoemacs-describe-key (vectorp tmp))
         (message "%s translates to %s"
                  (ergoemacs-pretty-key
@@ -419,7 +419,14 @@ INPUT is the input to read instead of using `read-key'
                    (keymapp (key-binding new-key-vector t nil (point)))
                  (error nil)))
           (ergoemacs-read (nth 0 hash) (nth 1 hash)
-                          keep-shortcut-layer input))
+                          t input))
+         ((and (eq fn 'ergoemacs-shortcut) hash
+               (eq 'string (type-of (nth 0 hash))))
+          (setq ergoemacs-mark-active mark-active)
+          (setq ergoemacs-first-variant nil)
+          (setq ergoemacs-single-command-keys new-key-vector)
+          (setq prefix-arg current-prefix-arg)
+          (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events)))
          ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))
                (condition-case err
                    (interactive-form (nth 0 hash))
@@ -480,7 +487,15 @@ INPUT is the input to read instead of using `read-key'
                (error nil)))
         (setq ergoemacs-single-command-keys nil)
         (ergoemacs-read (nth 0 hash) (nth 1 hash)
-                        keep-shortcut-layer input))
+                        t input))
+       ((and (eq fn 'ergoemacs-shortcut) hash
+             (eq 'string (type-of (nth 0 hash))))
+        (setq ergoemacs-mark-active mark-active)
+        (setq ergoemacs-first-variant nil)
+        (setq ergoemacs-single-command-keys new-key-vector)
+        (setq prefix-arg current-prefix-arg)
+        (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events))
+        (setq ergoemacs-single-command-keys nil))
        ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))
              (condition-case err
                  (interactive-form (nth 0 hash))
@@ -490,7 +505,7 @@ INPUT is the input to read instead of using `read-key'
        (t
         (ergoemacs-send-fn (if key (concat key " " test-key) test-key) fn))))
      (fn
-      (ergoemacs-read (if key (concat key " " test-key) test-key) type keep-shortcut-layer input))
+      (ergoemacs-read (if key (concat key " " test-key) test-key) type t input))
      (t
       (beep)
       (unless (minibufferp)
