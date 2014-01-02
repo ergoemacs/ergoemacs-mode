@@ -518,7 +518,7 @@ Issue #137."
 See Issue #138."
   (let (ret
         unread-command-events)
-    (ergoemacs-read "C-x 8" nil nil (aref (read-kbd-macro "!") 0))
+    (ergoemacs-read nil nil nil (read-kbd-macro "C-x 8 !"))
     (setq ret (equal (listify-key-sequence (read-kbd-macro "¡")) unread-command-events))
     (should ret)))
 
@@ -527,7 +527,7 @@ See Issue #138."
 See Issue #140."
   (let (ret
         unread-command-events)
-    (ergoemacs-read "C-x 8 \"" nil nil (aref (read-kbd-macro "A") 0))
+    (ergoemacs-read nil nil nil (read-kbd-macro "C-x 8 \" A"))
     (setq ret (equal (listify-key-sequence (read-kbd-macro "Ä")) unread-command-events))
     (should ret)))
 
