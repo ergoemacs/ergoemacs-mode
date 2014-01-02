@@ -1376,6 +1376,15 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
     (setq minor-mode-map-alist (append (delete x minor-mode-map-alist) (list x)))))
 
+(defun ergoemacs-is-movement-command-p (command)
+  "Determines if COMMAND is a movement command.
+This is done by checking if this is a command that supports shift selection or cua-mode's movement."
+  (let ((intf (condition-case err
+                  (car (cdr (interactive-form command))))))
+    (and intf (eq (type-of intf) 'string)
+         (or (eq (get command 'CUA) 'move)
+             (string-match "^[@*]*\\^" intf)))))
+
 (defvar ergoemacs-this-command nil)
 (defvar ergoemacs-pre-command-point nil)
 (defun ergoemacs-pre-command-hook ()
@@ -1416,25 +1425,16 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (defun ergoemacs-post-command-hook ()
   "Ergoemacs post-command-hook"
-  (when (and shift-select-mode
-             this-command-keys-shift-translated
-             (not mark-active)
-             (eq (get this-command 'CUA) 'move))
-    (push-mark ergoemacs-pre-command-point nil t))
-  (when (and shift-select-mode
-             this-command-keys-shift-translated
-             mark-active
-             (not (eq (car-safe transient-mark-mode) 'only)))
-    (let ((intf (condition-case err
-                    (car (cdr (interactive-form this-command))))))
-      (when (and intf (eq (type-of intf) 'string)
-                 (or (eq (get this-command 'CUA) 'move)
-                     (string-match "^[@*]*\\^" intf)))
+  (let (deactivate-mark)
+    (when (and shift-select-mode
+               this-command-keys-shift-translated
+               mark-active
+               (not (eq (car-safe transient-mark-mode) 'only)))
+      (when (ergoemacs-is-movement-command-p this-command)
         (setq transient-mark-mode
               (cons 'only
                     (unless (eq transient-mark-mode 'lambda)
-                      transient-mark-mode))))))
-  (let (deactivate-mark)
+                      transient-mark-mode)))))
     (condition-case err
         (progn
           (when ergoemacs-mode
