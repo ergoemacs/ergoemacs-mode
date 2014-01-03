@@ -682,7 +682,8 @@ Addresses Issue #145."
 (ert-deftest ergoemacs-test-ignore-ctrl-w ()
   "Ignore user-defined C-w in major-mode `ergoemacs-test-major-mode'.
 Part of addressing Issue #147."
-  (let (ret)
+  (let (ret
+        (ergoemacs-use-function-remapping t))
     (with-temp-buffer
       (ergoemacs-test-major-mode)
       (setq ret (ergoemacs-shortcut-remap-list 'kill-region)))
@@ -691,7 +692,8 @@ Part of addressing Issue #147."
 (ert-deftest ergoemacs-test-keep-ctrl-s ()
   "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
 Part of addressing Issue #147."
-  (let (ret)
+  (let (ret
+        (ergoemacs-use-function-remapping t))
     (with-temp-buffer
       (ergoemacs-test-major-mode)
       (setq ret (ergoemacs-shortcut-remap-list 'isearch-forward)))
