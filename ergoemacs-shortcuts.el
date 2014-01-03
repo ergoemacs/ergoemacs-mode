@@ -284,9 +284,9 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
       (setq key nil))
      ((eq (type-of key) 'cons) ;; Listified key sequence
       (setq input key)
-      (setq key (eval (macroexpand `(key-description [,(pop input)])))))
+      (setq key nil))
      ((eq (type-of key) 'string) ;; Kbd code
-      (setq input (listify-key-sequence (read-kbd-macro key)))
+      (setq input (listify-key-sequence (read-kbd-macro key t)))
       (setq key nil)))
     (while continue-read
       (setq continue-read nil)
@@ -307,7 +307,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
                    ""))
                  (if key (ergoemacs-pretty-key key)
                    "")))
-      (setq next-key (eval (macroexpand `(key-description [,(or (pop input) (read-key))]))))
+      (setq next-key (key-description (vector (or (pop input) (read-key)))))
       (when (member next-key '("M-o" "M-O" "M-[" "ESC"))
         
         )
