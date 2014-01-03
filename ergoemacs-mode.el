@@ -455,8 +455,7 @@ May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `e
             (error
              (beep)
              (message "%s" err))))
-        (reset-this-command-lengths)
-        ))
+        (reset-this-command-lengths)))
      (t ;; Prefix arg required when sending unread command events 
       (setq prefix-arg ergoemacs-curr-prefix-arg)
       (reset-this-command-lengths)

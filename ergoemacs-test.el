@@ -666,7 +666,6 @@ Addresses Issue #145."
           (use-global-map new-global-map)
           (setq ret (ergoemacs-shortcut-remap-list 'fill-paragraph)))
       (use-global-map old-global-map))
-    (message "Ret: %s" ret)
     (should (not ret))))
 
 (provide 'ergoemacs-test)
