@@ -668,6 +668,35 @@ Addresses Issue #145."
       (use-global-map old-global-map))
     (should (not ret))))
 
+(define-derived-mode ergoemacs-test-major-mode fundamental-mode "ET"
+  "Major mode for testing some issues with `ergoemacs-mode'.
+\\{ergoemacs-test-major-mode-map}"
+  (define-key ergoemacs-test-major-mode-map (read-kbd-macro "C-s") 'save-buffer))
+
+(add-hook 'ergoemacs-test-major-mode-hook
+          '(lambda()
+             (interactive)
+             (define-key ergoemacs-test-major-mode-map
+               (read-kbd-macro "C-w") 'ergoemacs-close-current-buffer)))
+
+(ert-deftest ergoemacs-test-ignore-ctrl-w ()
+  "Ignore user-defined C-w in major-mode `ergoemacs-test-major-mode'.
+Part of addressing Issue #147."
+  (let (ret)
+    (with-temp-buffer
+      (ergoemacs-test-major-mode)
+      (setq ret (ergoemacs-shortcut-remap-list 'kill-region)))
+    (should (not ret))))
+
+(ert-deftest ergoemacs-test-keep-ctrl-s ()
+  "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
+Part of addressing Issue #147."
+  (let (ret)
+    (with-temp-buffer
+      (ergoemacs-test-major-mode)
+      (setq ret (ergoemacs-shortcut-remap-list 'isearch-forward)))
+    (eq (nth 0 (nth 0 ret)) 'save-buffer)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
