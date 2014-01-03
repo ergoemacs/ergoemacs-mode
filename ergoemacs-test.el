@@ -653,6 +653,22 @@ Should test for Issue #143."
     (ergoemacs-mode 1)
     (should (equal ret t))))
 
+(ert-deftest ergoemacs-test-ignore-global-definitions-on-remap ()
+  "If someone sets a key on the global keymap, ignore it.
+Addresses Issue #145."
+  (let ((old-global-map (current-global-map))
+        ret
+        new-global-map)
+    (setq new-global-map (copy-keymap (current-global-map)))
+    (define-key new-global-map (read-kbd-macro "M-q") 'ergoemacs-cut-line-or-region)
+    (unwind-protect
+        (with-temp-buffer
+          (use-global-map new-global-map)
+          (setq ret (ergoemacs-shortcut-remap-list 'fill-paragraph)))
+      (use-global-map old-global-map))
+    (message "Ret: %s" ret)
+    (should (not ret))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
