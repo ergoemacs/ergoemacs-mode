@@ -271,7 +271,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
         unchorded
         fn fn-key
         ergoemacs-read-input-keys
-        (ergoemacs-shortcut-keys ergoemacs-shortcut-keys)
+        ergoemacs-shortcut-keys
         ergoemacs-shortcut-override-mode
         test-key new-type tmp hash
         input
