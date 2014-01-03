@@ -953,7 +953,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
 
 (defun ergoemacs-keyfreq-gen-img (file prefix text shift lay ergoemacs-keyfreq-gen-img cmd-freq-ergo)
   "Ergoemacs keyfreq generate image."
-  (let (ret i)
+  (let (ret i tmp)
     (with-temp-file file
       (insert-file-contents (expand-file-name "kbd-ergo.svg" ergoemacs-dir))
       ;; Change all text to black
