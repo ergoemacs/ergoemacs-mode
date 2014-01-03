@@ -265,7 +265,7 @@ read the whole keymap.
 TYPE is the keyboard translation type.
 It can be: 'ctl-to-alt 'unchorded 'normal
 
-KEEP-SHORTCUT-LAYER keeps the `ergoemacs-mode' shortcut layer
+ERGOEMACS-SHORTCUT-KEYS keeps the `ergoemacs-mode' shortcut layer
 active.
 
 INPUT is the input to read instead of using `read-key'
@@ -301,6 +301,8 @@ INPUT is the input to read instead of using `read-key'
                  (if key (ergoemacs-pretty-key key)
                    "")))
       (setq next-key (eval (macroexpand `(key-description [,(or (pop input) (read-key))]))))
+      ;; (when (member next-key '("M-o" "M-O" "M-[" "ESC"))
+      ;;   )
       ;; M-a -> C-a
       ;; C-a -> M-a
       (setq ctl-to-alt
