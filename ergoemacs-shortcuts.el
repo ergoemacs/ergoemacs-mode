@@ -966,6 +966,11 @@ in the ignored commands.
 
 Also this ignores anything that is changed in the global keymap.
 
+If <ergoemacs-user> key is defined, ignore this functional remap.
+
+<ergoemacs-user> key is defined with the `define-key' advice when
+running `run-mode-hooks'.  It is a work-around to try to respect
+user-defined keys.
 "
   (if (not ergoemacs-use-function-remapping) nil
     (let ((key-bindings-lst (ergoemacs-shortcut-function-binding function))
@@ -979,19 +984,23 @@ Also this ignores anything that is changed in the global keymap.
             (when key-bindings-lst
               (mapc
                (lambda(key)
-                 (let (fn key-desc fn2)
+                 (let* (fn
+                        (key-desc (key-description key))
+                        (user-key (read-kbd-macro (concat "<ergoemacs-user> " key-desc)))
+                        fn2)
                    (cond
                     (keymap
-                     (setq fn (lookup-key keymap key t))
-                     (unless (condition-case err
-                                 (interactive-form fn)
-                               (error nil))
-                       (setq fn nil)))
+                     (unless (eq 'ignore (lookup-key keymap user-key))
+                       (setq fn (lookup-key keymap key t))
+                       (unless (condition-case err
+                                   (interactive-form fn)
+                                 (error nil))
+                         (setq fn nil))))
                     (t
                      (ergoemacs-with-global
-                      (setq fn (key-binding key t nil (point))))))
+                      (unless (eq 'ignore (key-binding user-key t nil (point)))
+                        (setq fn (key-binding key t nil (point)))))))
                    (when fn
-                     (setq key-desc (key-description key))
                      (cond
                       ((eq ignore-desc t))
                       ((eq (type-of ignore-desc) 'string)

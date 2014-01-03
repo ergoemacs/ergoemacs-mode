@@ -29,7 +29,17 @@
 ;;; Code:
 
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def))
-  "This does the right thing when modifying `ergoemacs-keymap'."
+  "This does the right thing when modifying `ergoemacs-keymap'.
+Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
+  (if (and (boundp 'ergoemacs-run-mode-hooks) ergoemacs-run-mode-hooks
+           (not (equal keymap (current-global-map)))
+           (not (equal keymap ergoemacs-keymap)))
+      (let ((no-ergoemacs-advice t)
+            (ergoemacs-run-mode-hooks nil))
+        (define-key keymap
+          (read-kbd-macro
+           (format "<ergoemacs-user> %s"
+                   (key-description key))) 'ignore)))
   (if (and (equal keymap 'ergoemacs-keymap)
            (or (not (boundp 'no-ergoemacs-advice))
                (and (boundp 'no-ergoemacs-advice) (not no-ergoemacs-advice))))
@@ -291,9 +301,16 @@ mode defines a more appropriate quit key like `browse-kill-ring'.  The default e
        (call-interactively defined-fn))
      (t
       ad-do-it))))
-
 (add-to-list 'ergoemacs-advices 'keyboard-quit)
 
+
+(defadvice run-mode-hooks (around ergoemacs-run-hooks)
+  "`ergoemacs-mode' run-hooks run-hooks advice helps user define keys properly.
+This assumes any key defined while running a hook is a user-defined hook."
+  (let ((ergoemacs-run-mode-hooks t))
+    ad-do-it))
+
+(ad-activate 'run-mode-hooks)
 
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
