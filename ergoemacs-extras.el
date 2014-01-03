@@ -480,7 +480,7 @@
            (re-search-forward "\\=<a.*?>" nil t)
            (when (looking-at "About")
              (goto-char (point-max)) ;; Not displaying properly.  Remove.
-             (setq current-clas "light"))
+             (setq current-class "light"))
            (when (looking-at "\\([A-Za-z0-9]\\)")
              (replace-match (format "<kbd class=\"%s\">\\1</kbd>" current-class) t)))
          (save-buffer (current-buffer)))
