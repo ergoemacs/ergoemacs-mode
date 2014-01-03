@@ -910,6 +910,13 @@ in effect)."
       (where-is-internal function (current-global-map))))
    (gethash function ergoemacs-where-is-global-hash)))
 
+(defcustom ergoemacs-use-function-remapping t
+  "Uses function remapping.
+For example in `org-agenda-mode' the standard key for
+save-buffer (C-x C-s) `org-save-all-org-buffers'"
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-shortcut-remap-list
   (function
    &optional keymap
@@ -925,11 +932,20 @@ If KEYMAP is non-nil, lookup the binding based on that keymap
 instead of the keymap with ergoemacs disabled.
 
 For example, in `org-agenda-mode' C-x C-s runs
-`org-save-all-org-buffers' instead of `save-buffer'.  Therefore
-this function will return `org-save-all-org-buffers' when you
-specify `ergoemacs-shortcut-remap-list' with FUNCTION equal to
-`save-buffer'.in `org-agenda-mode', this function will return
-`org-save-all-org-buffers'.
+`org-save-all-org-buffers' instead of `save-buffer'.
+
+Therefore:
+
+ (ergoemacs-shortcut-remap-list 'save-buffer)
+
+returns
+
+ ((org-save-all-org-buffers [24 19] \"C-x C-s\"))
+
+in `org-agenda-mode'.
+
+If you wish to disable this remapping, you can set
+`ergoemacs-use-function-remapping' to nil.
 
 When IGNORE-DESC is t, then ignore key description filters.  When
 IGNORE-DESC is nil, then ignore keys that match \"[sAH]-\".  When
@@ -948,67 +964,67 @@ by setting changed by setting DONT-IGNORE-COMMANDS to t.
 When KEYMAP is defined, `ergoemacs-this-command' is not included
 in the ignored commands.
 
-Also this ignores ANYTHING that is changed in the global keymap.
-
+Also this ignores anything that is changed in the global keymap.
 
 "
-  (let ((key-bindings-lst (ergoemacs-shortcut-function-binding function))
-        case-fold-search
-        (old-global-map (current-global-map))
-        (new-global-map (make-sparse-keymap))
-        ret ret2)
-    (unwind-protect
-        (progn
-          (use-global-map new-global-map)
-          (when key-bindings-lst
-            (mapc
-             (lambda(key)
-               (let (fn key-desc fn2)
-                 (cond
-                  (keymap
-                   (setq fn (lookup-key keymap key t))
-                   (unless (condition-case err
-                               (interactive-form fn)
-                             (error nil))
-                     (setq fn nil)))
-                  (t
-                   (ergoemacs-with-global
-                    (setq fn (key-binding key t nil (point))))))
-                 (when fn
-                   (setq key-desc (key-description key))
+  (if (not ergoemacs-use-function-remapping) nil
+    (let ((key-bindings-lst (ergoemacs-shortcut-function-binding function))
+          case-fold-search
+          (old-global-map (current-global-map))
+          (new-global-map (make-sparse-keymap))
+          ret ret2)
+      (unwind-protect
+          (progn
+            (use-global-map new-global-map)
+            (when key-bindings-lst
+              (mapc
+               (lambda(key)
+                 (let (fn key-desc fn2)
                    (cond
-                    ((eq ignore-desc t))
-                    ((eq (type-of ignore-desc) 'string)
-                     (when (string-match ignore-desc key-desc)
+                    (keymap
+                     (setq fn (lookup-key keymap key t))
+                     (unless (condition-case err
+                                 (interactive-form fn)
+                               (error nil))
                        (setq fn nil)))
                     (t
-                     (when (string-match "[sAH]-" key-desc)
-                       (setq fn nil))))
+                     (ergoemacs-with-global
+                      (setq fn (key-binding key t nil (point))))))
                    (when fn
-                     (unless dont-swap-for-ergoemacs-functions
-                       (setq fn2 (condition-case err
-                                     (intern-soft (concat "ergoemacs-" (symbol-name fn)))
-                                   (error nil)))
-                       (when (and fn2 (not (interactive-form fn2)))
-                         (setq fn2 nil)))
-                     (when (memq fn (append
-                                     `(,function ,(if keymap nil ergoemacs-this-command))
-                                     ergoemacs-shortcut-ignored-functions))
-                       (setq fn nil))
-                     (when (and fn2
-                                (memq fn2 (append
-                                           `(,function ,(if keymap nil ergoemacs-this-command))
-                                           ergoemacs-shortcut-ignored-functions)))
-                       (setq fn2 nil))
+                     (setq key-desc (key-description key))
                      (cond
-                      (fn2
-                       (push (list fn2 key key-desc) ret2))
-                      (fn (push (list fn key key-desc) ret)))))))
-             key-bindings-lst)))
-      (use-global-map old-global-map))
-    (when ret2
-      (setq ret (append ret2 ret)))
-    (symbol-value 'ret)))
+                      ((eq ignore-desc t))
+                      ((eq (type-of ignore-desc) 'string)
+                       (when (string-match ignore-desc key-desc)
+                         (setq fn nil)))
+                      (t
+                       (when (string-match "[sAH]-" key-desc)
+                         (setq fn nil))))
+                     (when fn
+                       (unless dont-swap-for-ergoemacs-functions
+                         (setq fn2 (condition-case err
+                                       (intern-soft (concat "ergoemacs-" (symbol-name fn)))
+                                     (error nil)))
+                         (when (and fn2 (not (interactive-form fn2)))
+                           (setq fn2 nil)))
+                       (when (memq fn (append
+                                       `(,function ,(if keymap nil ergoemacs-this-command))
+                                       ergoemacs-shortcut-ignored-functions))
+                         (setq fn nil))
+                       (when (and fn2
+                                  (memq fn2 (append
+                                             `(,function ,(if keymap nil ergoemacs-this-command))
+                                             ergoemacs-shortcut-ignored-functions)))
+                         (setq fn2 nil))
+                       (cond
+                        (fn2
+                         (push (list fn2 key key-desc) ret2))
+                        (fn (push (list fn key key-desc) ret)))))))
+               key-bindings-lst)))
+        (use-global-map old-global-map))
+      (when ret2
+        (setq ret (append ret2 ret)))
+      (symbol-value 'ret))))
 
 (defun ergoemacs-shortcut-remap (function &optional keys)
   "Runs the FUNCTION or whatever `ergoemacs-shortcut-remap-list' returns.
