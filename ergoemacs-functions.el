@@ -771,7 +771,7 @@ Use `ergoemacs-shortcut-interal' for maximum mode compatibility."
 (defun ergoemacs-unfill-paragraph ()
   "Replace newline char in current paragraph by space.
 This command does the reverse of `fill-paragraph'.
-See also: `compact-uncompact-block'"
+See also: `ergoemacs-compact-uncompact-block'"
   (interactive)
   (let ((fill-column 90002000))
     (setq current-prefix-arg nil);; Fill paragraph is bound it M-q.
