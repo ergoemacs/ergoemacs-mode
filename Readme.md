@@ -12,10 +12,10 @@ for Copy,【Ctrl+Z】 for undo, 【Ctrl+O】 for Open file, and also
 bundles many Emacs Lisp functions that are not in GNU Emacs by default.
 
 
-  (setq ergoemacs-theme nil)
-  (setq ergoemacs-keyboard-layout "us")
-  (require 'ergoemacs-mode)
-  (ergoemacs-mode 1)
+    (setq ergoemacs-theme nil)
+    (setq ergoemacs-keyboard-layout "us")
+    (require 'ergoemacs-mode)
+    (ergoemacs-mode 1)
 
 
 ## Tips for adopting ErgoEmacs Keybindings
@@ -43,8 +43,8 @@ Here's some tips that may help you adopt.
 #### Level 1
 If you find it too painful to switch, don't use the whole package. Instead, start off with just the arrow key movements.
 
-  (setq ergoemacs-theme "lvl1")
-  (ergoemacs-mode 1)
+    (setq ergoemacs-theme "lvl1")
+    (ergoemacs-mode 1)
 
 Either put the above in your emacs init file (usually at “~/.emacs”), or customize ergoemacs-mode to set the theme to lvl1.
 
@@ -56,29 +56,26 @@ Once you used the above for a couple of weeks, you may add more keys to adopt.
 #### Level 2
 Adding keys for moving around words and deleting words.
 
-
-  (setq ergoemacs-theme "lvl2")
-  (ergoemacs-mode 1)
+    (setq ergoemacs-theme "lvl2")
+    (ergoemacs-mode 1)
 
 #### Level 3
 Full ergoemacs keyset without the <menu> unchorded keys.
 
-  (setq ergoemacs-theme "lvl3")
-  (ergoemacs-mode 1)
-
+    (setq ergoemacs-theme "lvl3")
+    (ergoemacs-mode 1)
 
 #### Full Ergoemacs Keys~
 Try to use the full ergoemacs mode.
 
-  (setq ergoemacs-theme nil)
-  (ergoemacs-mode 1)
+    (setq ergoemacs-theme nil)
+    (ergoemacs-mode 1)
 
 #### Guru
 The guru theme takes away the arrow keys and page up/page down keys.
 
-
-  (setq ergoemacs-theme "guru")
-  (ergoemacs-mode 1)
+    (setq ergoemacs-theme "guru")
+    (ergoemacs-mode 1)
 
 #### Master
 The Master theme takes away the backspace.  This key is not
@@ -86,10 +83,8 @@ particularly ergonomic, and can cause possible pinky issues.
 Changing this means that you may wish to try to get ergoemacs
 bindings everywhere.
 
-
-  (setq ergoemacs-theme "master")
-  (ergoemacs-mode 1)
-
+    (setq ergoemacs-theme "master")
+    (ergoemacs-mode 1)
 
 ## Changing key layouts or adding themes
 ### Globally defined keys
@@ -104,20 +99,17 @@ create your own theme to allow these keys to be saved.
 #### Adding a ergonomic key
 Ergonomic keys can be added by:
 
-  (ergoemacs-key "M-a" 'execute-extended-command "Execute")
-
+    (ergoemacs-key "M-a" 'execute-extended-command "Execute")
 
 This adds the Alt-a command to all keyboards based on the QWERTY
 layout.  This only applies to the currently selected keyboard theme.
-
 
 Note the last parameter is optional and allows Ergoemacs to document
 that this is an "Execute" command when generating keyboard layout diagrams.
 #### Adding a fixed key
 Fixed keys can be added by:
 
-  (ergoemacs-fixed-key "C-o" 'ido-find-file "Open File")
-
+    (ergoemacs-fixed-key "C-o" 'ido-find-file "Open File")
 
 This adds the fixed key to the currently selected emacs theme
 
@@ -128,9 +120,7 @@ that this is an "Open" command when generating keyboard layout diagrams.
 When you want to add an ergonomic keymap with fixed mappings such as
 the ergoprog theme you can add them as follows:
 
-
-  (ergoemacs-key "M-m s" 'save-buffer "" t)
-
+    (ergoemacs-key "M-m s" 'save-buffer "" t)
 
 This converts the QWERTY M-m keybinding and the fixed keybinding s to
 save buffer
@@ -142,12 +132,10 @@ the standard emacs keys.  However, some starter kits, like prelude,
 may compete for these keys.  To make the ErgoEmacs keys dominate,
 load the starter kit and then add the following to your startup
 
-
-  (require 'ergoemacs-mode)
-  (ergoemacs-ignore-prev-global) ; Do not honor previously defined
-                                 ; global keys.
-  (ergoemacs-mode 1)
-
+    (require 'ergoemacs-mode)
+    (ergoemacs-ignore-prev-global) ; Do not honor previously defined
+                                   ; global keys.
+    (ergoemacs-mode 1)
 
 ## Ergoemacs interaction with specific modes
 ### 
@@ -166,31 +154,31 @@ personal layout you just need to match the keybindings for your in a
 layout variable from `ergoemacs-layout-XXX`.  For the US and UK
 layouts, the defining variable adds the layout:
 
-
-  (defvar ergoemacs-layout-us
-    '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
-      "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "[" "]" "\\"
-      "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" "'" "" ""
-      "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "" "" ""
-      ;; Shifted
-      "" "~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" ""
-      "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "{" "}" "|"
-      "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "\"" "" ""
-      "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
-    "US Engilsh QWERTY Keyboard")
+```
+(defvar ergoemacs-layout-us
+  '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
+    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "[" "]" "\\"
+    "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" "'" "" ""
+    "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "" "" ""
+    ;; Shifted
+    "" "~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" ""
+    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "{" "}" "|"
+    "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "\"" "" ""
+    "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
+  "US Engilsh QWERTY Keyboard")
   
-  (defvar ergoemacs-layout-gb
-    '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
-      "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "[" "]" ""
-      "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" "'" "#" ""
-      "" "\\"  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "" "" ""
-      ;; Shifted
-      "" "¬" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" ""
-      "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "{" "}" ""
-      "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "@" "~" ""
-      "" "|"  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
-    "UK QWERTY")
-
+(defvar ergoemacs-layout-gb
+  '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
+    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "[" "]" ""
+    "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" "'" "#" ""
+    "" "\\"  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "" "" ""
+    ;; Shifted
+    "" "¬" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" ""
+    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "{" "}" ""
+    "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "@" "~" ""
+    "" "|"  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
+  "UK QWERTY")
+```
 
 This lists the keyboard positions from left to right for the unshifted
 and shifted states of he keyboard.  After listing the keyboard
@@ -220,13 +208,10 @@ for each emacs version.  This is due to renamed functions, or
 re-purposed keys.  To update for the current version of emacs, you
 can type
 
-
-  (ergoemacs-warn-globally-changed-keys t)
-
+    (ergoemacs-warn-globally-changed-keys t)
 
 This is also done in the test suite.  This can be accessed by
 `ergoemacs-test` command.
-
 
 ## Contributing to ErgoEmacs
 ErgoEmacs is a collaborative project and we encourage contributions
@@ -243,9 +228,6 @@ add, please suggest them too -- we might like your idea.
 ### Document your changes
 Think carefully about whether your change requires updating the
 documentation.
-
-
-
 
 ## Experimental Ergoemacs
 This section is experimental ergoemacs keybindings that are being
@@ -265,7 +247,6 @@ There are 3 types of key shortcuts to invoke commands in software:
 of these, in terms of efficiency and hand health (Repetitive Strain
 Injury), the single key is the best. Key sequence of single keys is
 second best. Key chord is the worst.
-
 
 Key chord is the most hard on hand health, but is also conceptually
 the most convoluted.
@@ -392,7 +373,6 @@ supporting criterion in keybinding design. It is not the most
 important criterion. The single most important criterion in designing
 a keyboard shortcut system is that most frequently used commands be
 mapped to the most easy-to-press keys. 
-
 
 #### Ergoemacs Key Chord Reduction
 ##### [Control+x] and [Control-c] reduction
