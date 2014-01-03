@@ -149,7 +149,7 @@ All other modes are assumed to be minor modes or unimportant.
 "
   ;; Get known major modes
   (let ((ret '())
-        all dups cur-let cur-lst
+        all dups cur-let cur-lst current-letter
         added-modes
         (modes '()))
     (mapc

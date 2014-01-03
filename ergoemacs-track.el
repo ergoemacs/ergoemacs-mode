@@ -152,7 +152,7 @@
   "Key the KEY properties based on ergoemacs LAYOUT"
   (let ((i 0)
         (lay (intern-soft (format "ergoemacs-layout-%s" layout)))
-        xh yh xc yc
+        wi xh yh xc yc
         dx dy
         ret)
     (when lay
