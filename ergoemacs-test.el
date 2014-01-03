@@ -518,7 +518,7 @@ Issue #137."
 See Issue #138."
   (let (ret
         unread-command-events)
-    (ergoemacs-read nil nil nil (read-kbd-macro "C-x 8 !"))
+    (ergoemacs-read (read-kbd-macro "C-x 8 !"))
     (setq ret (equal (listify-key-sequence (read-kbd-macro "¡")) unread-command-events))
     (should ret)))
 
@@ -527,7 +527,7 @@ See Issue #138."
 See Issue #140."
   (let (ret
         unread-command-events)
-    (ergoemacs-read nil nil nil (read-kbd-macro "C-x 8 \" A"))
+    (ergoemacs-read (read-kbd-macro "C-x 8 \" A"))
     (setq ret (equal (listify-key-sequence (read-kbd-macro "Ä")) unread-command-events))
     (should ret)))
 
@@ -639,8 +639,7 @@ Should test for Issue #143."
     (setq ergoemacs-theme "reduction")
     (setq ergoemacs-keyboard-layout "colemak")
     (ergoemacs-mode 1)
-    (ergoemacs-read nil nil nil
-                    (read-kbd-macro
+    (ergoemacs-read (read-kbd-macro
                      (format "<%s> e t"
                              (if (eq system-type 'windows-nt)
                                  "apps" "menu"))))
