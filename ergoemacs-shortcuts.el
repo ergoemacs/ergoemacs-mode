@@ -189,7 +189,7 @@
                   (read-kbd-macro key)
                   `(lambda()
                      (interactive)
-                     (ergoemacs-read ,key 'normal t)))))
+                     (ergoemacs-read ,key 'normal)))))
             input-keys)
            (ergoemacs-debug-keymap 'ergoemacs-read-input-keymap)))
      (error
@@ -252,25 +252,21 @@ look for the command with or without modifiers."
 Uses `ergoemacs-read'"
   (interactive)
   (setq ergoemacs-describe-key t)
-  (ergoemacs-read nil 'normal t))
+  (ergoemacs-read nil 'normal))
 
 (defvar ergoemacs-single-command-keys nil)
 (defvar ergoemacs-mark-active nil)
 
-(defun ergoemacs-read (&optional key type ergoemacs-shortcut-keys input)
+(defun ergoemacs-read (&optional key type)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
 read the whole keymap.
 
 TYPE is the keyboard translation type.
-It can be: 'ctl-to-alt 'unchorded 'normal
-
-ERGOEMACS-SHORTCUT-KEYS keeps the `ergoemacs-mode' shortcut layer
-active.
-
-INPUT is the input to read instead of using `read-key'
-"
+It can be: 'ctl-to-alt 'unchorded 'normal"
   (let (next-key
+        (key key)
+        (type type)
         ctl-to-alt
         unchorded
         fn fn-key
@@ -278,12 +274,23 @@ INPUT is the input to read instead of using `read-key'
         (ergoemacs-shortcut-keys ergoemacs-shortcut-keys)
         ergoemacs-shortcut-override-mode
         test-key new-type tmp hash
-        (input (listify-key-sequence input))
+        input
         (continue-read t)
         message-log-max)
+    (cond
+     ((not key)) ;; Not specified.
+     ((eq (type-of key) 'vector) ;; Actual key sequence
+      (setq input (listify-key-sequence key))
+      (setq key nil))
+     ((eq (type-of key) 'cons) ;; Listified key sequence
+      (setq input key)
+      (setq key (eval (macroexpand `(key-description [,(pop input)])))))
+     ((eq (type-of key) 'string) ;; Kbd code
+      (setq input (listify-key-sequence (read-kbd-macro key)))
+      (setq key nil)))
     (while continue-read
       (setq continue-read nil)
-      (unless (minibufferp)
+      (unless (or (minibufferp) input)
         (message "%s%s%s%s"
                  (if ergoemacs-describe-key
                      "Describe key: " "")
@@ -301,9 +308,10 @@ INPUT is the input to read instead of using `read-key'
                  (if key (ergoemacs-pretty-key key)
                    "")))
       (setq next-key (eval (macroexpand `(key-description [,(or (pop input) (read-key))]))))
-      ;; (when (member next-key '("M-o" "M-O" "M-[" "ESC"))
-      ;;   )
-      ;; M-a -> C-a
+      (when (member next-key '("M-o" "M-O" "M-[" "ESC"))
+        
+        )
+      ;; M-a ->
       ;; C-a -> M-a
       (setq ctl-to-alt
             (replace-regexp-in-string
