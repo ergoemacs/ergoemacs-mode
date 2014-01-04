@@ -313,7 +313,8 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
                  (if key (ergoemacs-pretty-key key)
                    "")))
       (setq next-key (key-description (vector (or (pop input) (read-key)))))
-      (when (and ergoemacs-unchorded-g-is-alt (string= next-key "g")
+      (when (and ergoemacs-unchorded-g-is-alt
+                 (or (string= next-key "g") (string= next-key "G"))
                  (eq type 'unchorded))
         (unless (or (minibufferp) input)
           (message "%s%s%s%s%s"
@@ -325,9 +326,20 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
                    "<Unchorded> "
                    (if key (ergoemacs-pretty-key key)
                      "")
-                   (replace-regexp-in-string "q" ""
-                    (ergoemacs-pretty-key "M-q"))))
-        (setq next-key (concat "M-" (key-description (vector (or (pop input) (read-key)))))))
+                   (replace-regexp-in-string
+                    "q" ""
+                    (cond
+                     ((string= next-key "g")
+                      (ergoemacs-pretty-key "M-q"))
+                     ((string= next-key "G")
+                      (ergoemacs-pretty-key "M-C-q"))
+                     (t "next key is literal")))))
+        (setq next-key (concat
+                        (cond
+                         ((string= next-key "g") "M-")
+                         ((string= next-key "G") "M-C-")
+                         (t ""))
+                        (key-description (vector (or (pop input) (read-key)))))))
       (when (member next-key '("M-o" "M-O" "M-[" "ESC"))
         
         )
