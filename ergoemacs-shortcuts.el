@@ -271,7 +271,8 @@ TYPE is the keyboard translation type.
 It can be: 'ctl-to-alt 'unchorded 'normal"
   (let (next-key
         (key key)
-        (type type)
+        (real-type type)
+        type
         ctl-to-alt
         unchorded
         fn fn-key
@@ -293,7 +294,10 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
      ((eq (type-of key) 'string) ;; Kbd code
       (setq input (listify-key-sequence (read-kbd-macro key t)))
       (setq key nil)))
-    (while continue-read
+    (while continue-read 
+      (when (and (not input) real-type)
+        (setq type real-type)
+        (setq real-type nil))
       (setq continue-read nil)
       (unless (or (minibufferp) input)
         (message "%s%s%s%s"
@@ -371,7 +375,9 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
         (setq next-key "<escape>"))
       ;; Next key is apps/menu
       (cond
-       ((and (not key) (lookup-key ergoemacs-read-input-keymap (read-kbd-macro next-key)))
+       ((and (not key)
+             (lookup-key
+              ergoemacs-read-input-keymap (read-kbd-macro next-key)))
         (setq key next-key
               type 'normal
               ergoemacs-shortcut-keys t
@@ -1446,15 +1452,28 @@ If MAP is nil, base this on a sparse keymap."
              (define-key ergoemacs-shortcut-override-keymap key
                (nth 0 args)))))
         (t
-         (define-key ergoemacs-shortcut-override-keymap
-           key #'(lambda(&optional arg)
-                   (interactive "P")
-                   (let (overriding-terminal-local-map
-                         overriding-local-map)
-                     ;; (setq prefix-arg current-prefix-arg)
-                     (condition-case err
-                         (call-interactively 'ergoemacs-shortcut)
-                       (error (beep) (message "%s" err)))))))))
+         (let ((hash (gethash key ergoemacs-command-shortcuts-hash)))
+           (cond
+            ((not hash) ;; Shouldn't get here
+             (define-key ergoemacs-shortcut-override-keymap
+               key #'(lambda(&optional arg)
+                       (interactive "P")
+                       (let (overriding-terminal-local-map
+                             overriding-local-map)
+                         ;; (setq prefix-arg current-prefix-arg)
+                         (condition-case err
+                             (call-interactively 'ergoemacs-shortcut)
+                           (error (beep) (message "%s" err))))))) 
+            ((condition-case err
+                 (interactive-form (nth 0 hash))
+               (error nil))
+             (define-key ergoemacs-shortcut-override-keymap
+               key (nth 0 hash)))
+            (t
+             (define-key ergoemacs-shortcut-override-keymap key
+               `(lambda(&optional arg)
+                  (interactive "P")
+                  (ergoemacs-read ,(nth 0 hash) ',(nth 1 hash))))))))))
      ergoemacs-command-shortcuts-hash)
     ;; Now install the rest of the ergoemacs-mode keys
     (unless dont-complete
