@@ -257,6 +257,11 @@ Uses `ergoemacs-read'"
 (defvar ergoemacs-single-command-keys nil)
 (defvar ergoemacs-mark-active nil)
 
+(defcustom ergoemacs-unchorded-g-is-alt t
+  "When in unchorded key mode, the key g is equivalent to pressing Alt+."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-read (&optional key type)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -308,6 +313,21 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
                  (if key (ergoemacs-pretty-key key)
                    "")))
       (setq next-key (key-description (vector (or (pop input) (read-key)))))
+      (when (and ergoemacs-unchorded-g-is-alt (string= next-key "g")
+                 (eq type 'unchorded))
+        (unless (or (minibufferp) input)
+          (message "%s%s%s%s%s"
+                   (if ergoemacs-describe-key
+                       "Describe key: " "")
+                   (if current-prefix-arg
+                       (format "%s " current-prefix-arg)
+                     "")
+                   "<Unchorded> "
+                   (if key (ergoemacs-pretty-key key)
+                     "")
+                   (replace-regexp-in-string "q" ""
+                    (ergoemacs-pretty-key "M-q"))))
+        (setq next-key (concat "M-" (key-description (vector (or (pop input) (read-key)))))))
       (when (member next-key '("M-o" "M-O" "M-[" "ESC"))
         
         )
@@ -374,18 +394,15 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
         (setq type new-type
               continue-read t))
        ((progn
-          (setq tmp (lookup-key input-decode-map (read-kbd-macro (if key (concat key " " fn-key)
-                                                                   fn-key))))
+          (setq tmp (lookup-key input-decode-map (read-kbd-macro (if key (concat key " " fn-key) fn-key))))
           (when (and tmp (integerp tmp))
             (setq tmp nil))
           (unless tmp
-            (setq tmp (lookup-key local-function-key-map (read-kbd-macro (if key (concat key " " fn-key)
-                                                                           fn-key))))
+            (setq tmp (lookup-key local-function-key-map (read-kbd-macro (if key (concat key " " fn-key) fn-key))))
             (when (and tmp (integerp tmp))
               (setq tmp nil))
             (unless tmp
-              (setq tmp (lookup-key key-translation-map (read-kbd-macro (if key (concat key " " fn-key)
-                                                                          fn-key))))
+              (setq tmp (lookup-key key-translation-map (read-kbd-macro (if key (concat key " " fn-key) fn-key))))
               (when (and tmp (integerp tmp))
                 (setq tmp nil))))
           tmp)
@@ -496,7 +513,11 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
                  (error nil))))
         (setq fn (or (command-remapping fn (point)) fn))
         (setq ergoemacs-shortcut-keys nil)
-        (setq ergoemacs-single-command-keys (read-kbd-macro (if key (concat key " " test-key) test-key) t))
+        (cond
+         ((eq fn 'ergoemacs-undefined)
+          (setq ergoemacs-single-command-keys (read-kbd-macro (if key (concat key " " next-key) next-key) t)))
+         (t
+          (setq ergoemacs-single-command-keys (read-kbd-macro (if key (concat key " " test-key) test-key) t))))
         (setq hash (gethash ergoemacs-single-command-keys ergoemacs-command-shortcuts-hash))
         (cond
          ((and (eq fn 'ergoemacs-shortcut) hash
@@ -534,7 +555,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
                    (if ergoemacs-describe-key
                        "Describe Key: " "")
                    (if key (ergoemacs-pretty-key key) "")
-                   (ergoemacs-pretty-key fn-key)))
+                   (ergoemacs-pretty-key next-key)))
         (setq ergoemacs-describe-key nil)))))
   (when ergoemacs-single-command-keys 
     (setq ergoemacs-read-input-keys nil)))

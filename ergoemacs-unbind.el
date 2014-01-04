@@ -637,7 +637,7 @@
 (defun ergoemacs-undefined (&optional arg)
   "Ergoemacs Undefined key, tells where to perform the old action."
   (interactive "P")
-  (let* ((key (key-description (this-single-command-keys)))
+  (let* ((key (key-description (or ergoemacs-single-command-keys (this-single-command-keys))))
          (fn (assoc key ergoemacs-emacs-default-bindings))
          tmp
          (local-fn nil)
