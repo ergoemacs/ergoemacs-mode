@@ -35,11 +35,12 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
            (not (equal keymap (current-global-map)))
            (not (equal keymap ergoemacs-keymap)))
       (let ((no-ergoemacs-advice t)
-            (ergoemacs-run-mode-hooks nil))
-        (define-key keymap
-          (read-kbd-macro
-           (format "<ergoemacs-user> %s"
-                   (key-description key))) 'ignore)))
+            (ergoemacs-run-mode-hooks nil)
+            (new-key (read-kbd-macro
+                      (format "<ergoemacs-user> %s"
+                              (key-description key)))))
+        (unless (integerp (lookup-key keymap new-key))
+          (define-key keymap new-key def))))
   (if (and (equal keymap 'ergoemacs-keymap)
            (or (not (boundp 'no-ergoemacs-advice))
                (and (boundp 'no-ergoemacs-advice) (not no-ergoemacs-advice))))
