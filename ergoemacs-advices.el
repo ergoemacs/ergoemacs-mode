@@ -39,8 +39,8 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
             (new-key (read-kbd-macro
                       (format "<ergoemacs-user> %s"
                               (key-description key)))))
-        (unless (integerp (lookup-key keymap new-key))
-          (define-key keymap new-key def))))
+        (unwind-protect
+            (define-key keymap new-key def))))
   (if (and (equal keymap 'ergoemacs-keymap)
            (or (not (boundp 'no-ergoemacs-advice))
                (and (boundp 'no-ergoemacs-advice) (not no-ergoemacs-advice))))

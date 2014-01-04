@@ -1007,20 +1007,24 @@ user-defined keys.
                (lambda(key)
                  (let* (fn
                         (key-desc (key-description key))
-                        (user-key (read-kbd-macro (concat "<ergoemacs-user> " key-desc)))
+                        (user-key
+                         (read-kbd-macro
+                          (concat "<ergoemacs-user> " key-desc)))
                         fn2)
                    (cond
                     (keymap
-                     (unless (eq 'ignore (lookup-key keymap user-key))
-                       (setq fn (lookup-key keymap key t))
+                     (setq fn (lookup-key keymap key t))
+                     (if (eq fn (lookup-key keymap user-key))
+                         (setq fn nil)
                        (unless (condition-case err
                                    (interactive-form fn)
                                  (error nil))
                          (setq fn nil))))
                     (t
                      (ergoemacs-with-global
-                      (unless (eq 'ignore (key-binding user-key t nil (point)))
-                        (setq fn (key-binding key t nil (point)))))))
+                      (setq fn (key-binding key t nil (point)))
+                      (if (eq fn (key-binding user-key t nil (point)))
+                          (setq fn nil)))))
                    (when fn
                      (cond
                       ((eq ignore-desc t))
