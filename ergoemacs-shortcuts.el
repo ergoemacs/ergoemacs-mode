@@ -257,9 +257,17 @@ Uses `ergoemacs-read'"
 (defvar ergoemacs-single-command-keys nil)
 (defvar ergoemacs-mark-active nil)
 
-(defcustom ergoemacs-unchorded-g-is-alt t
-  "When in unchorded key mode, the key g is equivalent to pressing Alt+."
+(defcustom ergoemacs-unchorded-g-is-special t
+  "When in unchorded key mode, the key g has special meaning.
+g is equivalent to pressing Alt+.
+G is equivalent to pessing Alt+Ctrl+."
   :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-unchorded-escape-kbd "SPC"
+  "Kbd description for escaping for unchorded sequences.
+If equal \"\", then there are no escaped kbd combinations."
+  :type 'string
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-read (&optional key type)
@@ -282,6 +290,8 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
         test-key new-type tmp hash
         input
         (continue-read t)
+        (ctl-to-alt-text
+         (replace-regexp-in-string "q" "" (ergoemacs-pretty-key "C-q")))
         message-log-max)
     (cond
      ((not key)) ;; Not specified.
@@ -300,7 +310,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
         (setq real-type nil))
       (setq continue-read nil)
       (unless (or (minibufferp) input)
-        (message "%s%s%s%s"
+        (message "%s%s%s%s%s"
                  (if ergoemacs-describe-key
                      "Describe key: " "")
                  (if current-prefix-arg
@@ -315,10 +325,14 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
                   (t
                    ""))
                  (if key (ergoemacs-pretty-key key)
-                   "")))
+                   "")
+                 (if (eq type 'unchorded)
+                     ctl-to-alt-text "")))
       (setq next-key (key-description (vector (or (pop input) (read-key)))))
-      (when (and ergoemacs-unchorded-g-is-alt
-                 (or (string= next-key "g") (string= next-key "G"))
+      (when (and (or
+                  (and ergoemacs-unchorded-g-is-special
+                       (or (string= next-key "g") (string= next-key "G")))
+                  (string= next-key ergoemacs-unchorded-escape-kbd))
                  (eq type 'unchorded))
         (unless (or (minibufferp) input)
           (message "%s%s%s%s%s"
@@ -337,7 +351,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
                       (ergoemacs-pretty-key "M-q"))
                      ((string= next-key "G")
                       (ergoemacs-pretty-key "M-C-q"))
-                     (t "next key is literal")))))
+                     (t "")))))
         (setq next-key (concat
                         (cond
                          ((string= next-key "g") "M-")
