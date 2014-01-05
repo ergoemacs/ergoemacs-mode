@@ -587,7 +587,12 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
                    (if ergoemacs-describe-key
                        "Describe Key: " "")
                    (if key (ergoemacs-pretty-key key) "")
-                   (ergoemacs-pretty-key next-key)))
+                   (ergoemacs-pretty-key
+                    (cond
+                     ((and (eq type 'unchorded)
+                           (not (string-match "M-" next-key)))
+                      (concat "C-" next-key))
+                     (t next-key)))))
         (setq ergoemacs-describe-key nil)))))
   (when ergoemacs-single-command-keys 
     (setq ergoemacs-read-input-keys nil)))
