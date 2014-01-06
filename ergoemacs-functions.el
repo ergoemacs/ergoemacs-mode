@@ -558,7 +558,12 @@ the prefix arguments of `beginning-of-buffer',
           (when (not (eolp))
             (forward-char 1))
           (let ((cs (condition-case err
-                        (comment-search-backward (point-at-bol) t)
+                        (let ((tmp (comment-search-backward (point-at-bol) t)))
+                          (if (and font-lock
+                                     (not
+                                      (eq (get-text-property (point) 'face)
+                                          'font-lock-comment-face))) nil
+                            tmp))
                       (error nil))))
             (when cs
               (skip-syntax-forward " " (point-at-eol))
