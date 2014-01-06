@@ -306,12 +306,17 @@ mode defines a more appropriate quit key like `browse-kill-ring'.  The default e
 
 
 (defadvice run-mode-hooks (around ergoemacs-run-hooks)
-  "`ergoemacs-mode' run-hooks run-hooks advice helps user define keys properly.
+  "`ergoemacs-mode' run-hooks advice helps user define keys properly.
 This assumes any key defined while running a hook is a user-defined hook."
   (let ((ergoemacs-run-mode-hooks t))
     ad-do-it))
-
 (ad-activate 'run-mode-hooks)
+
+(defadvice turn-on-undo-tree-mode (around ergoemacs-undo-tree-mode)
+  "Make `ergoemacs-mode' and undo-tree compatible."
+  (ergoemacs-with-global
+   ad-do-it))
+(ad-activate 'turn-on-undo-tree-mode)
 
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
