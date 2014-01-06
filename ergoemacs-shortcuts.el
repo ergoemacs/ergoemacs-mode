@@ -232,7 +232,8 @@ and `overriding-local-map'"
            ;; such a smart-parens mode.
            (ergoemacs-remove-shortcuts)
            ,@body)
-       (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+       (when ergoemacs-mode
+         (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist))
        ;; The shortcuts will be put back in post command hook.
        ;; Putting them back here will end up in an infinite loop. 
        ;;(ergoemacs-install-shortcuts-up)
