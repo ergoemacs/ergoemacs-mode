@@ -381,8 +381,8 @@
 
     ;; Text editing
     ("<delete>" delete-char "⌦ char") ; the Del key for forward
-                                      ; delete. Needed if C-d is set
-                                      ; to nil.
+                                        ; delete. Needed if C-d is set
+                                        ; to nil.
 
     ("<M-delete>" kill-word "⌦ word")
     ("<C-delete>" kill-word "⌦ word")
@@ -489,7 +489,7 @@
     ("C-o" find-file "Edit File")
     ("C-p" ergoemacs-print-buffer-confirm "Print")
     ("C-s" save-buffer "Save")
-     
+    
     ("C-w" ergoemacs-close-current-buffer "Close Buf.")
     ("C-x <timeout>" ergoemacs-cut-line-or-region)
     ("C-x C-b" ibuffer)
@@ -562,6 +562,14 @@
       (keyboard-quit isearch-abort isearch-mode-map)
       (ergoemacs-toggle-letter-case isearch-toggle-regexp isearch-mode-map)
       (ergoemacs-toggle-camel-case isearch-toggle-case-fold isearch-mode-map)))
+
+    (iswitchb-minibuffer-setup-hook
+     (("<f11>" iswitchb-prev-match iswitchb-mode-map)
+      ("<f12>" iswitchb-next-match iswitchb-mode-map)
+      ("S-<f11>" iswitchb-prev-match iswitchb-mode-map)
+      ("S-<f12>" iswitchb-next-match iswitchb-mode-map)
+      (ergoemacs-toggle-letter-case iswitchb-toggle-regexp iswitchb-mode-map)
+      (ergoemacs-toggle-camel-case iswitchb-toggle-case iswitchb-mode-map)))
     
     ;; Minibuffer hook
     (minibuffer-setup-hook
