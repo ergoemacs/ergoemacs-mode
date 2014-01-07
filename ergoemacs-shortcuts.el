@@ -197,13 +197,20 @@
       (ergoemacs-debug-flush))))
 
 (defmacro ergoemacs-with-overrides (&rest body)
-  "With only the `ergoemacs-mode' mode overrides."
+  "With only the `ergoemacs-mode' mode overrides.
+The global map is ignored."
   `(let (ergoemacs-mode
          ergoemacs-unbind-keys
          ergoemacs-shortcut-keys
          ergoemacs-modal
-         ergoemacs-read-input-keys)
-     ,@body))
+         ergoemacs-read-input-keys
+         (old-global-map (current-global-map))
+         (new-global-map (make-sparse-keymap)))
+     (unwind-protect
+         (progn
+           (use-global-map new-global-map)
+           ,@body)
+       (use-global-map old-global-map))))
 
 (defmacro ergoemacs-with-global (&rest body)
   "With global keymap, not ergoemacs keymaps."
@@ -901,7 +908,16 @@ DEF can be:
       (setq keys (read-kbd-macro (key-description keys) t))
       (setq args (gethash keys ergoemacs-command-shortcuts-hash))
       (setq one (nth 0 args)))
+    ;; Overrides for functions are:
+    ;; (1) user overrides 
     (setq override (key-binding (read-kbd-macro (format "<ergoemacs-user> %s" (key-description keys)))))
+    (unless (and override
+                 (condition-case err
+                     (interactive-form override)
+                   (error nil)))
+      ;; If user override isn't find use ergoemacs override
+      (ergoemacs-with-overrides
+       (setq override (key-binding keys))))
     (cond
      ((and override
            (condition-case err
