@@ -633,7 +633,11 @@ work in the terminal."
                              (condition-case err
                                  (interactive-form fn)
                                (error nil)))
-                    (define-key keymap (ergoemacs-key-fn-lookup key-def t) fn))
+                    (define-key keymap (ergoemacs-key-fn-lookup key-def t) fn)
+                    (when (and (boundp 'ergoemacs-is-emulation-p) (not ergoemacs-is-emulation-p))
+                      (define-key keymap (read-kbd-macro
+                                          (format "<ergoemacs-user> %s"
+                                                  (key-description (ergoemacs-key-fn-lookup key-def t)))) fn)))
                   (ergoemacs-key-fn-lookup key-def))
                  ;; Define <apps>  key
                  ((ergoemacs-key-fn-lookup key-def t)
@@ -654,7 +658,9 @@ work in the terminal."
                      (condition-case err
                          (interactive-form fn)
                        (error nil)))
-            (define-key keymap key-code fn)))))))
+            (define-key keymap key-code fn)
+            (when (and (boundp 'ergoemacs-is-emulation-p) (not ergoemacs-is-emulation-p))
+              (define-key keymap (read-kbd-macro (format "<ergoemacs-user> %s" (key-description key-code))) fn))))))))
 
 (defmacro ergoemacs-create-hook-function (hook keys &optional always)
   "Creates a hook function based on the HOOK and the list of KEYS defined.
@@ -723,7 +729,8 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
            ;; Only generate keymap if it hasn't previously been
            ;; generated.
            (ergoemacs-vars-sync)
-           (let ((ergoemacs-run-mode-hooks nil))
+           (let ((ergoemacs-run-mode-hooks nil)
+                 (ergoemacs-is-emulation-p ,is-emulation-p))
              (if  (not ergoemacs-mode)
                  (progn
                    (ergoemacs-debug ,(format "WARNING: %s not removed."
