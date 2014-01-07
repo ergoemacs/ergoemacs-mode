@@ -896,12 +896,18 @@ DEF can be:
 (defun ergoemacs-shortcut---internal ()
   (let* ((keys (or ergoemacs-single-command-keys (this-single-command-keys)))
          (args (gethash keys ergoemacs-command-shortcuts-hash))
-         (one (nth 0 args)) tmp)
+         (one (nth 0 args)) tmp override)
     (unless args
       (setq keys (read-kbd-macro (key-description keys) t))
       (setq args (gethash keys ergoemacs-command-shortcuts-hash))
       (setq one (nth 0 args)))
+    (setq override (key-binding (read-kbd-macro (format "<ergoemacs-user> %s" (key-description keys)))))
     (cond
+     ((and override
+           (condition-case err
+               (interactive-form override)
+             (error nil)))
+      (call-interactively override))
      ((condition-case err
           (interactive-form one)
         (error nil))
