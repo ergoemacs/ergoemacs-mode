@@ -197,8 +197,8 @@
       (ergoemacs-debug-flush))))
 
 (defmacro ergoemacs-with-overrides (&rest body)
-  "With only the `ergoemacs-mode' mode overrides.
-The global map is ignored."
+  "With the `ergoemacs-mode' mode overrides.
+The global map is ignored, but major/minor modes keymaps are included."
   `(let (ergoemacs-mode
          ergoemacs-unbind-keys
          ergoemacs-shortcut-keys
@@ -217,6 +217,17 @@ The global map is ignored."
   `(ergoemacs-without-emulation
     (let (ergoemacs-mode ergoemacs-unbind-keys)
       ,@body)))
+
+(defmacro ergoemacs-with-major-and-minor-modes (&rest body)
+  "Without global keymaps and ergoemacs keymaps."
+  `(let ((old-global-map (current-global-map))
+         (new-global-map (make-sparse-keymap)))
+     (unwind-protect
+         (progn
+           (use-global-map new-global-map)
+           (ergoemacs-with-global
+            ,@body))
+       (use-global-map old-global-map))))
 
 (defmacro ergoemacs-without-emulation (&rest body)
   "Without keys defined at `ergoemacs-emulation-mode-map-alist'.
@@ -277,6 +288,98 @@ G is equivalent to pessing Alt+Ctrl+."
 If equal \"\", then there are no escaped kbd combinations."
   :type 'string
   :group 'ergoemacs-mode)
+
+(defun ergoemacs-translate (key)
+  "Translates KEY and returns a plist of the translations.
+
+:raw
+   No translation
+
+:ctl-to-alt
+     M-a -> C-a
+     C-a -> M-a
+
+:ctl-to-alt-shift
+     M-a   -> C-a
+     C-a   -> M-a
+
+     S-a   -> M-a
+     M-S-a -> C-M-a
+     C-S-a -> C-M-a
+
+:unchorded
+     a   -> C-a
+     M-a -> a
+     C-a -> M-a
+
+:unchorded-shift
+     a   -> C-a
+     M-a -> a
+     C-a -> M-a
+
+     S-a   -> M-a
+     M-S-a -> C-M-a
+     C-S-a -> C-M-a
+
+:shift-translated
+    S-a    -> a
+    M-S-a  -> M-a
+    C-S-a  -> C-a
+    Anything without shift is nil.
+
+"
+  (let* (ret tmp
+         case-fold-search
+         (key key)
+         (only-key (replace-regexp-in-string "^.*\\(.\\)$" "\\1" key))
+         (shifted-key (assoc only-key ergoemacs-shifted-assoc))
+         shift-translated
+         unshifted-key)
+    (when (string-match "\\([A-Z]\\)$" key)
+      (setq key
+            (replace-match
+             (concat "S-" (downcase (match-string 1 key))) t t key)))
+    (when shifted-key
+      (setq shifted-key (cdr shifted-key))
+      (setq unshifted-key only-key)
+      (when (string-match "[A-Z]" shifted-key)
+        (setq shifted-key (concat "S-" (downcase shifted-key))))
+      (when (string-match "[A-Z]" unshifted-key)
+        (setq unshifted-key (concat "S-" (downcase unshifted-key)))))
+    (when (string-match "S-" key)
+      (setq shift-translated (replace-regexp-in-string "S-" "" key)))
+    (put 'ret ':raw key)
+    (put 'ret ':shift-translated shift-translated)
+    (put 'ret ':shifted shifted-key)
+    (put 'ret ':unshifted unshifted-key)
+    ;; M-a -> C-a
+    ;; C-a -> M-a
+    (put 'ret ':ctl-to-alt (replace-regexp-in-string
+                            "\\(^\\|-\\)W-" "\\1M-"
+                            (replace-regexp-in-string
+                             "\\(^\\|-\\)M-" "\\1C-"
+                             (replace-regexp-in-string
+                              "\\(^\\|-\\)C-" "\\1W-" key))))
+    (put 'ret ':ctl-to-alt-shift
+         (replace-regexp-in-string
+          "M-M-" "C-M-"
+          (replace-regexp-in-string
+           "S-" "M-" (get 'ret ':ctl-to-alt))))
+    (if (string-match "\\(^\\|-\\)[MC]-" (get 'ret ':ctl-to-alt))
+        (put 'ret ':unchorded (get 'ret ':ctl-to-alt))
+      (put 'ret ':unchorded (concat "W-" (get 'ret ':ctl-to-alt))))
+    (put 'ret ':unchorded
+         (replace-regexp-in-string
+          "W-" "C-"
+          (replace-regexp-in-string
+           "C-" "" (get 'ret ':unchorded))))
+    (put 'ret ':ctl (concat "C-" unshifted-key))
+    (put 'ret ':alt (concat "M-" unshifted-key))
+    (put 'ret ':alt-ctl (concat "M-C-" unshifted-key))
+    (put 'ret ':ctl-shift (concat "C-" shifted-key))
+    (put 'ret ':alt-shift (concat "M-" shifted-key))
+    (put 'ret ':alt-ctl-shift (concat "M-C-" shifted-key))
+    (symbol-plist 'ret)))
 
 (defun ergoemacs-read (&optional key type)
   "Read keyboard input and execute command.
@@ -900,6 +1003,38 @@ DEF can be:
   :type '(repeat
           (symbol :tag "Function to call literally:")))
 
+(defun ergoemacs-get-override-function (keys)
+  "See if KEYS has an overriding function.
+If so, return the function, otherwise return nil.
+
+First it looks up ergoemacs user commands.  These are defined in the key
+<ergoemacs-user> KEYS
+
+If there is no ergoemacs user commands, look in override map.
+This is done by looking up the function for KEYS with
+`ergoemacs-with-overrides'.
+
+If the overriding function is found make sure it isn't the key
+defined in the major/minor modes (by
+`ergoemacs-with-major-and-minor-modes'). "
+  (let ((override (key-binding (read-kbd-macro (format "<ergoemacs-user> %s" (key-description keys)))))
+        cmd1 cmd2)
+    (unless (condition-case err
+              (interactive-form override)
+            (error nil))
+      (setq override nil))
+    (unless override
+      (setq cmd1 (ergoemacs-with-overrides
+                  (key-binding keys)))
+      (when (condition-case err
+                  (interactive-form cmd1)
+              (error nil))
+        (setq cmd2 (ergoemacs-with-major-and-minor-modes
+                    (key-binding keys)))
+        (unless (eq cmd1 cmd2)
+          (setq override cmd1))))
+    override))
+
 (defun ergoemacs-shortcut---internal ()
   (let* ((keys (or ergoemacs-single-command-keys (this-single-command-keys)))
          (args (gethash keys ergoemacs-command-shortcuts-hash))
@@ -908,21 +1043,9 @@ DEF can be:
       (setq keys (read-kbd-macro (key-description keys) t))
       (setq args (gethash keys ergoemacs-command-shortcuts-hash))
       (setq one (nth 0 args)))
-    ;; Overrides for functions are:
-    ;; (1) user overrides 
-    (setq override (key-binding (read-kbd-macro (format "<ergoemacs-user> %s" (key-description keys)))))
-    (unless (and override
-                 (condition-case err
-                     (interactive-form override)
-                   (error nil)))
-      ;; If user override isn't find use ergoemacs override
-      (ergoemacs-with-overrides
-       (setq override (key-binding keys))))
+    (setq override (ergoemacs-get-override-function keys))
     (cond
-     ((and override
-           (condition-case err
-               (interactive-form override)
-             (error nil)))
+     (override
       (call-interactively override))
      ((condition-case err
           (interactive-form one)
