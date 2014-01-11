@@ -83,33 +83,6 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ad-do-it))
 (ad-activate 'define-key)
 
-
-(defadvice cua--pre-command-handler (around ergoemacs-fix-shifted-commands activate)
-  "Fixes shifted movement problems."
-  (let ((do-it t)
-        (case-fold-search nil)
-        (send-timeout nil))
-    (condition-case nil
-        (progn
-          ;; Fix shifted commands.
-          (when (and (string-match "\\(^\\|-\\)M-" (key-descrtion (this-single-command-keys))) ;; Alt command
-                     (or (eq (get this-command 'CUA) 'move)
-                         (memq this-command ergoemacs-movement-functions)))
-            (setq do-it nil))
-          ;; Fix Issue 139.  However may introduce an issue when you
-          ;; want to issue C-c commands quickly...
-          (when (and mark-active (string-match "^C-\\(c\\|x\\)" (key-description (this-single-command-keys))))
-            (setq do-it t)
-            (setq send-timeout t)))
-      (error nil))
-    (when cua--rectangle
-      (setq do-it t))
-    (when do-it
-      ad-do-it)
-    (when send-timeout
-      (setq unread-command-events
-            (cons 'timeout unread-command-events)))))
-
 ;;; Advices enabled or disabled with ergoemacs-mode
 (defadvice global-set-key (around ergoemacs-global-set-key-advice (key command))
   "This let you use `global-set-key' as usual when `ergoemacs-mode' is enabled."

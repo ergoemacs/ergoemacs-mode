@@ -118,7 +118,7 @@
                                  (list cmd 'global) ergoemacs-command-shortcuts-hash)
                         (define-key ergoemacs-shortcut-keymap key 'ergoemacs-M-O)
                         (if (ergoemacs-is-movement-command-p cmd)
-                            (define-key ergoemacs-M-O-keymap [timeout] 'ergoemacs-shortcut-movement)
+                            (define-key ergoemacs-M-O-keymap [timeout] 'ergoemacs-shortcut-movement-no-shift-select)
                           (define-key ergoemacs-M-O-keymap [timeout] 'ergoemacs-shortcut)))
                        (t
                         (define-key ,keymap key  'ergoemacs-M-O)
@@ -606,7 +606,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
             (setq ergoemacs-single-command-keys new-key-vector)
             (setq prefix-arg current-prefix-arg)
             (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events)))
-           ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))
+           ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement ergoemacs-shortcut-movement-no-shift-select))
                  (condition-case err
                      (interactive-form (nth 0 hash))
                    (error nil)))
@@ -679,7 +679,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
           (setq prefix-arg current-prefix-arg)
           (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events))
           (setq ergoemacs-single-command-keys nil))
-         ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))
+         ((and (memq fn '(ergoemacs-shortcut ergoemacs-shortcut-movement ergoemacs-shortcut-movement-no-shift-select))
                (condition-case err
                    (interactive-form (nth 0 hash))
                  (error nil)))
@@ -775,7 +775,9 @@ DEF can be:
       (puthash (read-kbd-macro (key-description key) t)
                (list def 'global) ergoemacs-command-shortcuts-hash)
       (if (ergoemacs-is-movement-command-p def)
-          (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut-movement)
+          (if (let (case-fold-search) (string-match "\\(S-\\|[A-Z]$\\)" (key-description key)))
+              (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut-movement-no-shift-select)
+            (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut-movement))
         (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut)))     
      ((or (and (boundp 'setup-ergoemacs-keymap) setup-ergoemacs-keymap)
           (not (lookup-key keymap key)))
@@ -795,7 +797,9 @@ DEF can be:
                    `(,def nil)
                    ergoemacs-command-shortcuts-hash)
           (if (ergoemacs-is-movement-command-p def)
-              (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut-movement)
+              (if (let (case-fold-search) (string-match "\\(S-\\|[A-Z]$\\)" (key-description key)))
+                  (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut-movement-no-shift-select)
+                (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut-movement))
             (define-key ergoemacs-shortcut-keymap key 'ergoemacs-shortcut)))
       (unless (lookup-key keymap key)
         (define-key keymap key
@@ -936,7 +940,7 @@ DEF can be:
    ((and ergoemacs-describe-key ergoemacs-shortcut-send-fn
          (or ergoemacs-show-true-bindings
              (and (not ergoemacs-show-true-bindings)
-                  (not (memq ergoemacs-shortcut-send-fn '(ergoemacs-shortcut ergoemacs-shortcut-movement))))))
+                  (not (memq ergoemacs-shortcut-send-fn '(ergoemacs-shortcut ergoemacs-shortcut-movement ergoemacs-shortcut-movement-no-shift-select))))))
     (let ((desc-fn ergoemacs-shortcut-send-fn))
       (ergoemacs-shortcut-override-mode 1)
       (describe-function desc-fn)
@@ -1080,9 +1084,24 @@ defined in the major/minor modes (by
 
 (defun ergoemacs-shortcut-movement (&optional opt-args)
   "Shortcut for other key/function for movement keys.
+
+This function is `cua-mode' aware for movement and supports
+`shift-select-mode'.
+
 Calls the function shortcut key defined in
-`ergoemacs-command-shortcuts-hash' for `ergoemacs-single-command-keys' or `this-single-command-keys'."
+`ergoemacs-command-shortcuts-hash' for
+`ergoemacs-single-command-keys' or `this-single-command-keys'."
   (interactive "^P")
+  (ergoemacs-shortcut-movement-no-shift-select opt-args))
+
+(defun ergoemacs-shortcut-movement-no-shift-select (&optional opt-args)
+  "Shortcut for other key/function in movement keys without shift-selection support.
+
+Calls the function shortcut key defined in
+`ergoemacs-command-shortcuts-hash' for
+`ergoemacs-single-command-keys' or `this-single-command-keys'.
+"
+  (interactive "P")
   (ergoemacs-shortcut---internal))
 (put 'ergoemacs-shortcut-movement 'CUA 'move)
 
