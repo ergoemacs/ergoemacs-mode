@@ -568,6 +568,8 @@
       ("<f12>" iswitchb-next-match iswitchb-mode-map)
       ("S-<f11>" iswitchb-prev-match iswitchb-mode-map)
       ("S-<f12>" iswitchb-next-match iswitchb-mode-map)
+      (backward-char iswitchb-prev-match iswitchb-mode-map)
+      (forward-char  iswitchb-next-match iswitchb-mode-map)
       (ergoemacs-toggle-letter-case iswitchb-toggle-regexp iswitchb-mode-map)
       (ergoemacs-toggle-camel-case iswitchb-toggle-case iswitchb-mode-map))
      t)
