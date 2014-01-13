@@ -288,6 +288,7 @@ G is equivalent to pessing Alt+Ctrl+."
 If equal \"\", then there are no escaped kbd combinations."
   :type 'string
   :group 'ergoemacs-mode)
+
 (defvar ergoemacs-translate-hash (make-hash-table :test 'equal))
 (defun ergoemacs-translate (key)
   "Translates KEY and returns a plist of the translations.
@@ -462,6 +463,20 @@ and `ergoemacs-pretty-key' descriptions.
           (puthash (read-kbd-macro orig-key) (symbol-plist 'ret) ergoemacs-translate-hash)
           (symbol-plist 'ret)))))
 
+(defun ergoemacs-to-sequence (key)
+  "Returns a key sequence from KEY.
+This sequence is compatible with `listify-key-sequence'."
+  (let (input)
+    (cond
+     ((not key)) ;; Not specified.
+     ((eq (type-of key) 'vector) ;; Actual key sequence
+      (setq input (listify-key-sequence key)))
+     ((eq (type-of key) 'cons) ;; Listified key sequence
+      (setq input key))
+     ((eq (type-of key) 'string) ;; Kbd code
+      (setq input (listify-key-sequence (read-kbd-macro key t)))))
+    (symbol-value 'input)))
+
 (defun ergoemacs-read (&optional key type)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -485,17 +500,8 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
         (ctl-to-alt-text
          (replace-regexp-in-string "q" "" (ergoemacs-pretty-key "C-q")))
         message-log-max)
-    (cond
-     ((not key)) ;; Not specified.
-     ((eq (type-of key) 'vector) ;; Actual key sequence
-      (setq input (listify-key-sequence key))
-      (setq key nil))
-     ((eq (type-of key) 'cons) ;; Listified key sequence
-      (setq input key)
-      (setq key nil))
-     ((eq (type-of key) 'string) ;; Kbd code
-      (setq input (listify-key-sequence (read-kbd-macro key t)))
-      (setq key nil)))
+    (setq input (ergoemacs-to-sequence key)
+          key nil)
     (while continue-read 
       (when (and (not input) real-type)
         (setq type real-type)
