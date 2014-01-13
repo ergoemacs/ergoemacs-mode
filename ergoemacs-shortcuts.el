@@ -332,18 +332,23 @@ There are also :XXX-key and :XXX-pretty for actual key-strokes
 and `ergoemacs-pretty-key' descriptions.
 
 "
+  ;; (setq ergoemacs-translate-hash (make-hash-table :test 'equal))
   (let* ((ret (gethash key ergoemacs-command-shortcuts-hash))
          (orig-key key)
          tmp
          case-fold-search
          (key key)
-         (only-key (replace-regexp-in-string "^.*\\(.\\)$" "\\1" key))
-         (shifted-key (assoc only-key ergoemacs-shifted-assoc))
+         only-key
          shift-translated
          (ergoemacs-use-ergoemacs-key-descriptions t)
          unshifted-key)
     (or ret
         (progn
+          (unless (stringp key)
+            (setq key (key-description key))
+            (setq orig-key key))
+          (setq only-key (replace-regexp-in-string "^.*\\(.\\)$" "\\1" key)
+                shifted-key (assoc only-key ergoemacs-shifted-assoc))
           (when (string-match "\\([A-Z]\\)$" key)
             (setq key
                   (replace-match
@@ -447,6 +452,7 @@ and `ergoemacs-pretty-key' descriptions.
           (put 'ret ':alt-ctl-shift-key (read-kbd-macro (get 'ret ':alt-ctl-shift)))
           (put 'ret ':alt-ctl-shift-pretty (ergoemacs-pretty-key (get 'ret ':alt-ctl-shift)))
           (puthash orig-key (symbol-plist 'ret) ergoemacs-translate-hash)
+          (puthash (read-kbd-macro orig-key) (symbol-plist 'ret) ergoemacs-translate-hash)
           (symbol-plist 'ret)))))
 
 (defun ergoemacs-read (&optional key type)
