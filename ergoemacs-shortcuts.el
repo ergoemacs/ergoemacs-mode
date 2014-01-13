@@ -288,7 +288,6 @@ G is equivalent to pessing Alt+Ctrl+."
 If equal \"\", then there are no escaped kbd combinations."
   :type 'string
   :group 'ergoemacs-mode)
-
 (defvar ergoemacs-translate-hash (make-hash-table :test 'equal))
 (defun ergoemacs-translate (key)
   "Translates KEY and returns a plist of the translations.
@@ -332,7 +331,6 @@ There are also :XXX-key and :XXX-pretty for actual key-strokes
 and `ergoemacs-pretty-key' descriptions.
 
 "
-  ;; (setq ergoemacs-translate-hash (make-hash-table :test 'equal))
   (let* ((ret (gethash key ergoemacs-command-shortcuts-hash))
          (orig-key key)
          tmp
@@ -347,19 +345,28 @@ and `ergoemacs-pretty-key' descriptions.
           (unless (stringp key)
             (setq key (key-description key))
             (setq orig-key key))
-          (setq only-key (replace-regexp-in-string "^.*\\(.\\)$" "\\1" key)
-                shifted-key (assoc only-key ergoemacs-shifted-assoc))
+          (cond
+           ((string-match "^<.+>$" key)
+            (setq only-key (replace-regexp-in-string "[CMS]-" "" key))
+            (if (string-match "S-" key)
+                (setq shifted-key nil)
+              (setq shifted-key (replace-regexp-in-string "<" "<S-" only-key t t))))
+           (t
+            (setq only-key (replace-regexp-in-string "^.*\\(.\\)$" "\\1" key t)
+                  shifted-key (assoc only-key ergoemacs-shifted-assoc))
+            (when shifted-key
+              (setq shifted-key (cdr shifted-key)))))
           (when (string-match "\\([A-Z]\\)$" key)
             (setq key
                   (replace-match
                    (concat "S-" (downcase (match-string 1 key))) t t key)))
           (when shifted-key
-            (setq shifted-key (cdr shifted-key))
             (setq unshifted-key only-key)
-            (when (string-match "[A-Z]" shifted-key)
-              (setq shifted-key (concat "S-" (downcase shifted-key))))
-            (when (string-match "[A-Z]" unshifted-key)
-              (setq unshifted-key (concat "S-" (downcase unshifted-key)))))
+            (unless (string-match "^<.+>$" shifted-key)
+              (when (string-match "[A-Z]" shifted-key)
+                (setq shifted-key (concat "S-" (downcase shifted-key))))
+              (when (string-match "[A-Z]" unshifted-key)
+                (setq unshifted-key (concat "S-" (downcase unshifted-key))))))
           (when (string-match "S-" key)
             (setq shift-translated (replace-regexp-in-string "S-" "" key)))
           (put 'ret ':raw key)
@@ -390,7 +397,7 @@ and `ergoemacs-pretty-key' descriptions.
                                   (replace-regexp-in-string
                                    "\\(^\\|-\\)M-" "\\1C-"
                                    (replace-regexp-in-string
-                                    "\\(^\\|-\\)C-" "\\1W-" key))))
+                                    "\\(^\\|-\\)C-" "\\1W-" key t) t) t))
           (put 'ret ':ctl-to-alt-key (read-kbd-macro (get 'ret ':ctl-to-alt)))
           (put 'ret ':ctl-to-alt-pretty (ergoemacs-pretty-key (get 'ret ':ctl-to-alt)))
           
@@ -398,7 +405,7 @@ and `ergoemacs-pretty-key' descriptions.
                (replace-regexp-in-string
                 "M-M-" "C-M-"
                 (replace-regexp-in-string
-                 "S-" "M-" (get 'ret ':ctl-to-alt))))
+                 "S-" "M-" (get 'ret ':ctl-to-alt) t) t))
           (put 'ret ':ctl-to-alt-shift-key (read-kbd-macro (get 'ret ':ctl-to-alt-shift)))
           (put 'ret ':ctl-to-alt-shift-pretty (ergoemacs-pretty-key (get 'ret ':ctl-to-alt-shift)))
           
@@ -410,7 +417,7 @@ and `ergoemacs-pretty-key' descriptions.
                (replace-regexp-in-string
                 "W-" "C-"
                 (replace-regexp-in-string
-                 "C-" "" (get 'ret ':unchorded))))
+                 "C-" "" (get 'ret ':unchorded) t) t))
           (put 'ret ':unchorded-key (read-kbd-macro (get 'ret ':unchorded)))
           (put 'ret ':unchorded-pretty (ergoemacs-pretty-key (get 'ret ':unchorded)))
           
@@ -424,7 +431,7 @@ and `ergoemacs-pretty-key' descriptions.
                  (replace-regexp-in-string
                   "M-M-" "C-M-"
                   (replace-regexp-in-string
-                   "S-" "M-" (get 'ret ':ctl-to-alt)))))
+                   "S-" "M-" (get 'ret ':ctl-to-alt) t) t)))
           (put 'ret ':unchorded-shift-key (read-kbd-macro (get 'ret ':unchorded-shift)))
           (put 'ret ':unchorded-shift-pretty (ergoemacs-pretty-key (get 'ret ':unchorded-shift)))
           
