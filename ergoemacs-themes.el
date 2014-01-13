@@ -197,7 +197,7 @@
     ("<apps> h Z" ergoemacs-clean-nw)
 
     ;; ("<apps> i"  ergoemacs-toggle-full-alt-shift "Alt+Shift")
-    ("<apps> m" ergoemacs-ctl-c-ctl-c "C-c C-c")
+    ("<apps> m" ("C-c C-c" nil) "C-c C-c")
     ("<apps> s" save-buffer "Save")
     ("<apps> C-s" write-file "Save As")
     ("<apps> o" find-file "Open")
