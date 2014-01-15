@@ -498,7 +498,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal"
         input
         (continue-read t)
         (ctl-to-alt-text
-         (replace-regexp-in-string "q" "" (ergoemacs-pretty-key "C-q")))
+         (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "C-q")))
         message-log-max)
     (setq input (ergoemacs-to-sequence key)
           key nil)
