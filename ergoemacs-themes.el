@@ -653,12 +653,6 @@
       (info helm-info nil remap)
       (ac-isearch ac-complete-with-helm nil reamp)
       (grep helm-do-grep nil remap)))
-
-    ;; Icicles remapping
-    ;; Thanks to Nikolay Kudryavtsev
-    (icicle-mode
-     ((next-history-element icicle-next-candidate-per-mode remap))
-     ((previous-history-element icicle-previous-candidate-per-mode remap)))
     
     (helm-before-initialize-hook
      (("C-w" helm-keyboard-quit helm-map)
