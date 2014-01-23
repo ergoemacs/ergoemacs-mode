@@ -250,9 +250,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                                                            "<apps> m c"
                                                          "<menu> m c") nil nil "<menu>") t)))
 
-
-
-
 (ert-deftest ergoemast-test-global-key-set-after-c-e ()
   "Test C-e after"
   (should (equal (ergoemacs-test-global-key-set-before
