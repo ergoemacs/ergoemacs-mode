@@ -83,6 +83,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ad-do-it))
 (ad-activate 'define-key)
 
+(defvar ergoemacs-global-override-keymap (make-sparse-keymap))
 ;;; Advices enabled or disabled with ergoemacs-mode
 (defadvice global-set-key (around ergoemacs-global-set-key-advice (key command))
   "This let you use `global-set-key' as usual when `ergoemacs-mode' is enabled."
@@ -91,6 +92,8 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (when ergoemacs-global-not-changed-cache
     (delete (key-description key) ergoemacs-global-not-changed-cache))
   (let ((no-ergoemacs-advice t))
+    ;; Put in the overriding keymap
+    (define-key ergoemacs-global-override-keymap key command)
     (when (lookup-key ergoemacs-unbind-keymap key)
       (define-key ergoemacs-unbind-keymap key nil)
       (unless (string-match "^C-[xc]" (key-description key))
@@ -143,6 +146,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (when ergoemacs-global-not-changed-cache
     (delete (key-description key) ergoemacs-global-not-changed-cache))
   (let ((no-ergoemacs-advice t))
+    (define-key ergoemacs-global-override-keymap key nil)
     (define-key ergoemacs-keymap key nil)))
 
 (add-to-list 'ergoemacs-advices 'ergoemacs-global-unset-key-advice)
