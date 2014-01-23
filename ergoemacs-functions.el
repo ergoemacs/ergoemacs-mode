@@ -121,10 +121,10 @@
      ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
       (funcall fn-cp arg))
      ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
-      (ergoemacs-read key 'normal))
+      (ergoemacs-read-key key 'normal))
      (this-command-keys-shift-translated
       ;; Shift translated keys are C-c and C-x only.
-      (ergoemacs-read key 'normal))
+      (ergoemacs-read-key key 'normal))
      ((and ergoemacs-ctl-c-or-ctl-x-delay
            (or (region-active-p)
                (and cua--rectangle (boundp 'cua-mode) cua-mode)))
@@ -134,13 +134,13 @@
                (eval (macroexpand `(key-description [,(read-key)]))))))
         (if next-key
             (progn
-              (ergoemacs-read (concat key " " next-key) 'normal))
+              (ergoemacs-read-key (concat key " " next-key) 'normal))
           (funcall fn-cp arg))))
      ((or (region-active-p)
           (and cua--rectangle (boundp 'cua-mode) cua-mode))
       (funcall fn-cp arg))
      (t
-      (ergoemacs-read key 'normal)))))
+      (ergoemacs-read-key key 'normal)))))
 
 (defun ergoemacs-clean ()
   "Run ergoemacs in a bootstrap environment."
