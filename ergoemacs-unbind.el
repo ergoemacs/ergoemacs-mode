@@ -979,7 +979,8 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
 
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
-  (let (deactivate-mark
+  (if (not code) ""
+    (let (deactivate-mark
         (ret (replace-regexp-in-string
               " +$" "" (replace-regexp-in-string "^ +" "" code)))
         (case-fold-search nil)) 
@@ -1026,7 +1027,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
                              "Alt+") t))
           (goto-char (point-min))
           (while (search-forward "C-" nil t)
-            (replace-match "Ctrl+" t))
+            (replace-match "Ctl+" t))
           (goto-char (point-min))
           (while (search-forward "S-" nil t)
             (replace-match (format "%sShift+"
@@ -1071,10 +1072,10 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
             (while (re-search-forward ".Shift[+]" nil t)
               (replace-match "⇧"))
             (goto-char (point-min))
-            (while (re-search-forward "Ctrl[+]" nil t)
+            (while (re-search-forward "Ctl[+]" nil t)
               (replace-match "^")))
           (setq ret (buffer-string)))))
-    (symbol-value 'ret)))
+    (symbol-value 'ret))))
 
 (defun ergoemacs-pretty-key-rep-internal ()
   (let (case-fold-search)
