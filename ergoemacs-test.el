@@ -261,7 +261,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (ert-deftest ergoemacs-test-ctl-c-ctl-c ()
   "Issue #64.  Should translate C-c C-c correctly."
   (let (ergoemacs-use-unicode-char)
-    (should (string= (ergoemacs-pretty-key-rep "C-c C-c") "[Ctrl+C] [Ctrl+C]"))))
+    (should (string= (ergoemacs-pretty-key-rep "C-c C-c") "[Ctl+C] [Ctl+C]"))))
 
 (ert-deftest ergoemacs-test-helm-M-x ()
   "Issue #65.  helm-M-x should not be helm-[Alt+X]."
@@ -292,9 +292,9 @@ Test next and prior translation."
 
 (ert-deftest ergoemacs-test-issue-77 ()
   "Issue #77.
-Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
+Test \"C-x \" translating to \"[Ctl+X][]\", should be \"[Ctl+X]\""
   (let ((ergoemacs-use-unicode-char nil))
-    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]"))))
+    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctl+X]"))))
 
 (ert-deftest ergoemacs-test-issue-86 ()
   "Test Issue #86.
@@ -518,7 +518,7 @@ Issue #137."
 See Issue #138."
   (let (ret
         unread-command-events)
-    (ergoemacs-read (read-kbd-macro "C-x 8 !"))
+    (ergoemacs-read-key "C-x 8 !")
     (setq ret (equal (listify-key-sequence (read-kbd-macro "¡")) unread-command-events))
     (should ret)))
 
@@ -527,7 +527,7 @@ See Issue #138."
 See Issue #140."
   (let (ret
         unread-command-events)
-    (ergoemacs-read (read-kbd-macro "C-x 8 \" A"))
+    (ergoemacs-read-key "C-x 8 \" A")
     (setq ret (equal (listify-key-sequence (read-kbd-macro "Ä")) unread-command-events))
     (should ret)))
 
@@ -639,10 +639,9 @@ Should test for Issue #143."
     (setq ergoemacs-theme "reduction")
     (setq ergoemacs-keyboard-layout "colemak")
     (ergoemacs-mode 1)
-    (ergoemacs-read (read-kbd-macro
-                     (format "<%s> e t"
-                             (if (eq system-type 'windows-nt)
-                                 "apps" "menu"))))
+    (ergoemacs-read-key (format "<%s> e t"
+                                (if (eq system-type 'windows-nt)
+                                    "apps" "menu")))
     (setq ret (equal (listify-key-sequence (read-kbd-macro "_"))
                      unread-command-events))
     (message "%s;%s" (listify-key-sequence (read-kbd-macro "_"))
@@ -679,7 +678,7 @@ Addresses Issue #145."
              (define-key ergoemacs-test-major-mode-map
                (read-kbd-macro "C-w") 'ergoemacs-close-current-buffer)))
 
-(ert-deftest ergoemacs-test-ignore-ctrl-w ()
+(ert-deftest ergoemacs-test-ignore-ctl-w ()
   "Ignore user-defined C-w in major-mode `ergoemacs-test-major-mode'.
 Part of addressing Issue #147."
   (let (ret
@@ -689,7 +688,7 @@ Part of addressing Issue #147."
       (setq ret (ergoemacs-shortcut-remap-list 'kill-region)))
     (should (not ret))))
 
-(ert-deftest ergoemacs-test-keep-ctrl-s ()
+(ert-deftest ergoemacs-test-keep-ctl-s ()
   "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
 Part of addressing Issue #147."
   (let (ret
