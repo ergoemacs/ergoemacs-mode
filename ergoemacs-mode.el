@@ -1498,6 +1498,9 @@ This is done by checking if this is a command that supports shift selection or c
     (setq ergoemacs-single-command-keys nil))
   t)
 
+(unless (fboundp 'ergoemacs-test)
+  (autoload 'ergoemacs-test (expand-file-name "ergoemacs-test.el" ergoemacs-dir) nil t))
+
 (provide 'ergoemacs-mode)
 
 ;;; ergoemacs-mode.el ends here
