@@ -1436,9 +1436,7 @@ This is done by checking if this is a command that supports shift selection or c
   (when ergoemacs-read-input-keys
     (if (and mark-active deactivate-mark
                (or (ergoemacs-is-movement-command-p this-command)
-                   (memq this-command '(set-mark
-                                        cua-set-mark
-                                        mark-whole-buffer))))
+                   (string-match "\\<mark\\>" (symbol-name this-command))))
         (progn
           (setq deactivate-mark nil))))
   (let (deactivate-mark)
