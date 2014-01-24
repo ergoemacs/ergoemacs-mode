@@ -550,6 +550,14 @@ FORCE-KEY forces keys like <escape> to work properly.
             (setq prefix-arg current-prefix-arg)
             (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
             (reset-this-command-lengths)
+            (when (boundp 'pretty-key-undefined)
+              (if (string= pretty-key-undefined pretty-key)
+                  (message "%s run with %s"
+                           (ergoemacs-pretty-key (key-descrpition))
+                           pretty-key))
+              (message "%s run with %s (translated from %s)"
+                       (ergoemacs-pretty-key (key-descrpition))
+                       pretty-key pretty-key-undefined))
             (setq ret 'translate))))
          ;; Global override
          ((progn
@@ -621,8 +629,11 @@ FORCE-KEY forces keys like <escape> to work properly.
                        (key-binding key))
                       ;; Call unbound or global key?
                       (if (eq (lookup-key ergoemacs-unbind-keymap key) 'ergoemacs-undefined) 'ergoemacs-undefined
-                        (ergoemacs-with-global
-                         (key-binding key)))))
+                        (let (ergoemacs-read-input-keys)
+                          (if (keymapp (key-binding key))
+                              (setq ret 'keymap)
+                            (ergoemacs-with-global
+                             (key-binding key)))))))
             (when (condition-case err (keymapp fn) nil)
               ;; If keymap, continue.
               (setq ret 'keymap))
