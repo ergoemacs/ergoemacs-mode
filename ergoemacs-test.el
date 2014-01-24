@@ -31,6 +31,7 @@
 (setq ergoemacs-dir (file-name-directory (or load-file-name (buffer-file-name))))
 
 (require 'ert)
+(require 'elp)
 (defvar ergoemacs-test-lorem-ipsum
   "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
 do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
@@ -49,7 +50,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (when nil
       (message "Updating for the current version of emacs")
       (ergoemacs-warn-globally-changed-keys t))
-    (ert "^ergoemacs-test-")))
+    (elp-instrument-package "ergoemacs-")
+    (ert "^ergoemacs-test-")
+    (call-interactively 'elp-results)))
 
 (ert-deftest ergoemacs-test-google-code-145 ()
   "Backspace doesn't work in `isearch-mode'."
