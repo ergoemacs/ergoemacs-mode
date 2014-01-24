@@ -499,13 +499,6 @@ PRIOR-KEY is the prior key press recorded.  For example, for the
 key sequence, <apps> k the PRIOR-KEY is 'apps
 
 FORCE-KEY forces keys like <escape> to work properly.
-
-This will return one of the following:
-'keymap for key sequences that are not completely specified.
-'translate for translated key sequences
-'kbd-shortcut for a keyboard shortcut
-'
- (list shortcut-kbd translation first-translation)
 "
   (prog1
       (let* (ergoemacs-read-input-keys
@@ -601,7 +594,8 @@ This will return one of the following:
             (setq ergoemacs-mark-active mark-active)
             (setq ergoemacs-single-command-keys key)
             (setq prefix-arg current-prefix-arg)
-            (setq unread-command-events (append (listify-key-sequence key) unread-command-events))
+            (setq unread-command-events
+                  (append (listify-key-sequence key) unread-command-events))
             (setq ret 'shortcut-workaround))
            (t
             (setq fn (or (command-remapping fn (point)) fn))
@@ -609,12 +603,18 @@ This will return one of the following:
             (call-interactively fn nil key)
             (setq ergoemacs-single-command-keys nil)
             (setq ret 'function))))
-         ;; Does this call a global function?
+         ;; Does this call an override or major/minor mode function?
          ((progn
             (setq fn (or
+                      ;; Call an override key?
                       (ergoemacs-get-override-function key)
+                      ;; Call major/minor mode key?
                       (ergoemacs-with-major-and-minor-modes 
-                       (key-binding key))))
+                       (key-binding key))
+                      ;; Call unbound or global key?
+                      (if (eq (lookup-key ergoemacs-unbind-keymap key) 'ergoemacs-undefined) 'ergoemacs-undefined
+                        (ergoemacs-with-global
+                         (key-binding key)))))
             (when (condition-case err (keymapp fn) nil)
               ;; If keymap, continue.
               (setq ret 'keymap))
