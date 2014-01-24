@@ -79,7 +79,7 @@
   "Translates anything with S- and no C- in it to an upper-case character."
   (if (not kbd) nil
     (let ((ret kbd))
-      (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<ESC\\>\\|\\<RET\\>\\|C-\\)" ret)
+      (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<DEL\\>\\|\\<ESC\\>\\|\\<RET\\>\\|C-\\)" ret)
         (when (string-match "^\\(.*\\)S-\\(.*\\)\\(.\\)$" ret)
           (setq ret (concat (match-string 1 ret)
                             (match-string 2 ret)
@@ -91,7 +91,7 @@
   "Translates anything with S- and no C- in it to an upper-case character."
   (if (not kbd) nil
     (let ((ret kbd))
-      (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<ESC\\>\\|\\<RET\\>\\|C-\\)" ret)
+      (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<DEL\\>\\|\\<ESC\\>\\|\\<RET\\>\\|C-\\)" ret)
         (when (string-match "^\\(.*\\)S-\\(.*\\)\\(.\\)$" ret)
           (setq ret (concat (match-string 1 ret)
                             (match-string 2 ret)
@@ -160,7 +160,7 @@ and `ergoemacs-pretty-key' descriptions.
             (setq key (key-description key))
             (setq orig-key key))
           (cond
-           ((string-match "\\(^<.+>$\\|SPC\\|ESC\\|RET\\)" key)
+           ((string-match "\\(^<.+>$\\|SPC\\|DEL\\|ESC\\|RET\\)" key)
             (setq only-key (replace-regexp-in-string "[CMS]-" "" key t))
             (if (string-match "S-" key)
                 (setq shifted-key (replace-match "" t nil key))
@@ -171,13 +171,13 @@ and `ergoemacs-pretty-key' descriptions.
             (when shifted-key
               (setq shifted-key (cdr shifted-key)))))
           (when (and (string-match "\\([A-Z]\\)$" key)
-                     (not (string-match "\\<\\(SPC\\|ESC\\|RET\\)\\>" key)))
+                     (not (string-match "\\<\\(SPC\\|DEL\\|ESC\\|RET\\)\\>" key)))
             (setq key
                   (replace-match
                    (concat "S-" (downcase (match-string 1 key))) t t key)))
           (when shifted-key
             (setq unshifted-key only-key)
-            (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<ESC\\>\\|\\<RET\\>\\)" shifted-key)
+            (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<DEL\\>\\|\\<ESC\\>\\|\\<RET\\>\\)" shifted-key)
               (when (string-match "[A-Z]" shifted-key)
                 (setq shifted-key (concat "S-" (downcase shifted-key))))
               (when (string-match "[A-Z]" unshifted-key)
@@ -362,7 +362,7 @@ and `ergoemacs-pretty-key' descriptions.
                    "<f10>" "<S-f10>"
                    "<f11>" "<S-f11>"
                    "<f12>" "<S-f12>"
-                   "SPC" "RET" "ESC"
+                   "SPC" "RET" "ESC" "DEL"
                    "<home>" "<S-home>"
                    "<next>" "<S-next>"
                    "<prior>" "<S-prior>"
