@@ -633,7 +633,7 @@ FORCE-KEY forces keys like <escape> to work properly.
           (setq ergoemacs-single-command-keys key)
           (call-interactively fn nil key)
           (setq ergoemacs-single-command-keys nil)
-          (setq ret 'function)))
+          (setq ret 'function-global-or-override)))
         (symbol-value 'ret))
     ;; Turn off read-input-keys for shortcuts
     (when ergoemacs-single-command-keys
@@ -666,6 +666,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
         local-fn
         force-key
         key-trials
+        real-read
         input tmp)
     (setq input (ergoemacs-to-sequence key)
           key nil)
@@ -687,6 +688,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
               (symbol-value
                (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
         (setq real-type nil))
+      (setq real-read (not input))
       (setq next-key
                 (ergoemacs-translate
                  (vector
@@ -720,21 +722,30 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
             (setq ergoemacs-describe-key nil))
         (setq tmp (plist-get next-key ':normal-key))
         ;; See if there is a local equivalent of this...
-        (setq local-fn (lookup-key local-keymap tmp))
-        (if (and key (eq local-fn 'ergoemacs-read-key-undo-last))
+        (if real-read
+            (setq local-fn (lookup-key local-keymap tmp))
+          (setq local-fn nil))
+        (if (eq local-fn 'ergoemacs-read-key-undo-last)
             (if (= 0 (length key))
                 (setq continue-read nil) ;; Exit read-key
               (setq continue-read t ;; Undo last key
                     input (ergoemacs-to-sequence (substring key 0 (- (length key) 1)))
-                    real-type type
-                    key nil
+                    real-read nil
+                    real-type type)
+              (setq key nil
                     pretty-key nil
                     type 'normal
                     key-trial nil
                     key-trials nil
                     pretty-key-trial nil
-                    pretty-key nil))
-          (if (and key (eq local-fn 'ergoemacs-read-key-swap))
+                    pretty-key nil)
+              (setq base (concat ":" (symbol-name type)
+                                 (if ergoemacs-read-shift-to-alt "-shift"
+                                   ""))
+                    local-keymap
+                    (symbol-value
+                     (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map")))))
+          (if (eq local-fn 'ergoemacs-read-key-swap)
               (progn
                 ;; Swap translation
                 (setq type (ergoemacs-read-key-swap first-type type)
