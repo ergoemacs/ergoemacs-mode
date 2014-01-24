@@ -553,10 +553,10 @@ FORCE-KEY forces keys like <escape> to work properly.
             (when (boundp 'pretty-key-undefined)
               (if (string= pretty-key-undefined pretty-key)
                   (message "%s run with %s"
-                           (ergoemacs-pretty-key (key-descrpition))
+                           (ergoemacs-pretty-key (key-description key))
                            pretty-key))
               (message "%s run with %s (translated from %s)"
-                       (ergoemacs-pretty-key (key-descrpition))
+                       (ergoemacs-pretty-key (key-description key))
                        pretty-key pretty-key-undefined))
             (setq ret 'translate))))
          ;; Global override
@@ -789,6 +789,8 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
               (setq key-trials nil)
               ;; This is the order that ergoemacs-read-key tries keys:
               (push base key-trials)
+              (when ergoemacs-read-shift-to-alt
+                (push (replace-regexp-in-string "-shift" "" base) key-trials))
               (push ":shift-translated" key-trials)
               (when ergoemacs-translate-keys
                 (push ":ctl" key-trials)
