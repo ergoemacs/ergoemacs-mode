@@ -383,6 +383,11 @@ translation."
         (nth 1 next-swap)
       'normal)))
 
+(defun ergoemacs-read-key-undo-last ()
+  "Function to undo the last key-press.
+This is actually a dummy function.  The actual work is done in `ergoemacs-read-key'"
+  (interactive))
+
 (defun ergoemacs-read-key-install-next-key (next-key key pretty kbd)
   "Installs KEY PRETTY-KEY and KBD into NEXT-KEY plist.
 Currently will replace the :normal :unchorded and :ctl-to-alt properties."
@@ -466,6 +471,7 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
   (let ((map (make-sparse-keymap))
         (no-ergoemacs-advice t))
     (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
+    (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
     map)
   "Local keymap for `ergoemacs-read-key' with normal translation enabled")
 
@@ -475,6 +481,7 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
     (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
     (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-alt)
     (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
+    (define-key map (read-kbd-macro "DEL")  'ergoemacs-read-key-undo-last)
     (define-key map "g" 'ergoemacs-read-key-next-key-is-quoted)
     map)
   "Local keymap for `ergoemacs-read-key' with ctl-to-alt translation enabled.")
@@ -487,6 +494,7 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
     (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
     (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
     (define-key map "G" 'ergoemacs-read-key-next-key-is-alt-ctl)
+    (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
     map)
   "Local keymap for `ergoemacs-read-key' with unchorded translation enabled.")
 
@@ -713,110 +721,123 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
         (setq tmp (plist-get next-key ':normal-key))
         ;; See if there is a local equivalent of this...
         (setq local-fn (lookup-key local-keymap tmp))
-        (if (and key (eq local-fn 'ergoemacs-read-key-swap))
-            (progn
-              ;; Swap translation
-              (setq type (ergoemacs-read-key-swap first-type type)
-                    continue-read t)
-              (setq base (concat ":" (symbol-name type)
-                                 (if ergoemacs-read-shift-to-alt "-shift"
-                                   "")))
-              (setq local-keymap
-                    (symbol-value
-                     (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map")))))
-          (when (or (not (condition-case err (interactive-form local-fn) (error nil)))
-                    (eq local-fn 'ergoemacs-read-key-swap))
-            ;; Either the `ergoemacs-read-key-swap' is not applicable,
-            ;; or not specified correctly.  Therefore set local-fn to
-            ;; nil.
-            (setq local-fn nil))
-          ;; Change input type for next key press.
-          (when (memq local-fn '(ergoemacs-read-key-next-key-is-alt
-                                 ergoemacs-read-key-next-key-is-ctl
-                                 ergoemacs-read-key-next-key-is-alt-ctl
-                                 ergoemacs-read-key-next-key-is-quoted))
-            (setq next-key (funcall local-fn type pretty-key))
-            (setq force-key t)
-            (setq local-fn nil))
-          (if local-fn
-              (call-interactively local-fn)
-            (setq pretty-key-undefined nil)
-            ;; Now we have the 'next-key, try to find a function/keymap
-            ;; completion.
-            (setq key-trials nil)
-            ;; This is the order that ergoemacs-read-key tries keys:
-            (push base key-trials)
-            (push ":shift-translated" key-trials)
-            (when ergoemacs-translate-keys
-              (push ":ctl" key-trials)
-              (push ":alt" key-trials)
-              (push ":alt-ctl" key-trials)
-              (push ":ctl-shift" key-trials)
-              (push ":alt-shift" key-trials)
-              (push ":alt-ctl-shift" key-trials))
-            (setq key-trials (reverse key-trials))
-            (unless
-                (catch 'ergoemacs-key-trials
-                  (while key-trials
-                    (setq key-trial nil)
-                    (while (and key-trials (not key-trial))
-                      (setq tmp (pop key-trials))
-                      ;; If :shift-translated is nil, go to next option.
-                      (when (plist-get next-key (intern (concat tmp "-key")))
-                        (setq key-trial
-                              (if key
-                                  (vconcat key (plist-get next-key (intern (concat tmp "-key"))))
-                                (plist-get next-key (intern (concat tmp "-key"))))
-                              pretty-key-trial
-                              (if pretty-key
-                                  (concat pretty-key
-                                          (plist-get next-key
-                                                     (intern (concat tmp (if ergoemacs-use-ergoemacs-key-descriptions
-                                                                             "-pretty" "")))))
-                                (plist-get next-key
-                                           (intern (concat tmp (if ergoemacs-use-ergoemacs-key-descriptions
-                                                                   "-pretty" ""))))))))
-                    (unless pretty-key-undefined
-                      (setq pretty-key-undefined pretty-key-trial))
-                    (setq local-fn (ergoemacs-read-key-lookup key pretty-key
-                                                              key-trial pretty-key-trial
-                                                              force-key))
-                    (cond
-                     ((eq local-fn 'keymap)
-                      (setq continue-read t
-                            key key-trial
-                            pretty-key pretty-key-trial)
-                      ;; Found, exit
-                      (throw 'ergoemacs-key-trials t))
-                     ((eq (type-of local-fn) 'cons)
-                      ;; ergoemacs-shortcut reset ergoemacs-read-key
-                      (setq continue-read t
-                            input (ergoemacs-to-sequence (nth 0 local-fn))
-                            key nil
-                            pretty-key nil
-                            type 'normal
-                            real-type (nth 1 local-fn)
-                            key-trial nil
-                            key-trials nil
-                            pretty-key-trial nil
-                            first-type (nth 2 local-fn))
-                      (setq base (concat ":" (symbol-name type)
-                                         (if ergoemacs-read-shift-to-alt "-shift"
-                                           "")))
-                      ;; Found, exit
-                      (throw 'ergoemacs-key-trials t))
-                     (local-fn
-                      ;; Found exit
-                      (throw 'ergoemacs-key-trials t)))
-                    ;; Not found, try the next in the trial
-                    (unless key-trials ;; exit
-                      (setq key-trial nil)))
-                  nil)
-              ;; Could not find the key.
-              (beep)
-              (unless (minibufferp)
-                (let (message-log-max)
-                  (message "%s is undefined!" pretty-key-undefined)))))))))
+        (if (and key (eq local-fn 'ergoemacs-read-key-undo-last))
+            (if (= 0 (length key))
+                (setq continue-read nil) ;; Exit read-key
+              (setq continue-read t ;; Undo last key
+                    input (ergoemacs-to-sequence (substring key 0 (- (length key) 1)))
+                    real-type type
+                    key nil
+                    pretty-key nil
+                    type 'normal
+                    key-trial nil
+                    key-trials nil
+                    pretty-key-trial nil
+                    pretty-key nil))
+          (if (and key (eq local-fn 'ergoemacs-read-key-swap))
+              (progn
+                ;; Swap translation
+                (setq type (ergoemacs-read-key-swap first-type type)
+                      continue-read t)
+                (setq base (concat ":" (symbol-name type)
+                                   (if ergoemacs-read-shift-to-alt "-shift"
+                                     "")))
+                (setq local-keymap
+                      (symbol-value
+                       (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map")))))
+            (when (or (not (condition-case err (interactive-form local-fn) (error nil)))
+                      (eq local-fn 'ergoemacs-read-key-swap))
+              ;; Either the `ergoemacs-read-key-swap' is not applicable,
+              ;; or not specified correctly.  Therefore set local-fn to
+              ;; nil.
+              (setq local-fn nil))
+            ;; Change input type for next key press.
+            (when (memq local-fn '(ergoemacs-read-key-next-key-is-alt
+                                   ergoemacs-read-key-next-key-is-ctl
+                                   ergoemacs-read-key-next-key-is-alt-ctl
+                                   ergoemacs-read-key-next-key-is-quoted))
+              (setq next-key (funcall local-fn type pretty-key))
+              (setq force-key t)
+              (setq local-fn nil))
+            (if local-fn
+                (call-interactively local-fn)
+              (setq pretty-key-undefined nil)
+              ;; Now we have the 'next-key, try to find a function/keymap
+              ;; completion.
+              (setq key-trials nil)
+              ;; This is the order that ergoemacs-read-key tries keys:
+              (push base key-trials)
+              (push ":shift-translated" key-trials)
+              (when ergoemacs-translate-keys
+                (push ":ctl" key-trials)
+                (push ":alt" key-trials)
+                (push ":alt-ctl" key-trials)
+                (push ":ctl-shift" key-trials)
+                (push ":alt-shift" key-trials)
+                (push ":alt-ctl-shift" key-trials))
+              (setq key-trials (reverse key-trials))
+              (unless
+                  (catch 'ergoemacs-key-trials
+                    (while key-trials
+                      (setq key-trial nil)
+                      (while (and key-trials (not key-trial))
+                        (setq tmp (pop key-trials))
+                        ;; If :shift-translated is nil, go to next option.
+                        (when (plist-get next-key (intern (concat tmp "-key")))
+                          (setq key-trial
+                                (if key
+                                    (vconcat key (plist-get next-key (intern (concat tmp "-key"))))
+                                  (plist-get next-key (intern (concat tmp "-key"))))
+                                pretty-key-trial
+                                (if pretty-key
+                                    (concat pretty-key
+                                            (plist-get next-key
+                                                       (intern (concat tmp (if ergoemacs-use-ergoemacs-key-descriptions
+                                                                               "-pretty" "")))))
+                                  (plist-get next-key
+                                             (intern (concat tmp (if ergoemacs-use-ergoemacs-key-descriptions
+                                                                     "-pretty" ""))))))))
+                      (unless pretty-key-undefined
+                        (setq pretty-key-undefined pretty-key-trial))
+                      (setq local-fn (ergoemacs-read-key-lookup key pretty-key
+                                                                key-trial pretty-key-trial
+                                                                force-key))
+                      (cond
+                       ((eq local-fn 'keymap)
+                        (setq continue-read t
+                              key key-trial
+                              pretty-key pretty-key-trial)
+                        ;; Found, exit
+                        (throw 'ergoemacs-key-trials t))
+                       ((eq (type-of local-fn) 'cons)
+                        ;; ergoemacs-shortcut reset ergoemacs-read-key
+                        (setq continue-read t
+                              input (ergoemacs-to-sequence (nth 0 local-fn))
+                              key nil
+                              pretty-key nil
+                              type 'normal
+                              real-type (nth 1 local-fn)
+                              key-trial nil
+                              key-trials nil
+                              pretty-key-trial nil
+                              first-type (nth 2 local-fn))
+                        (setq base (concat ":" (symbol-name type)
+                                           (if ergoemacs-read-shift-to-alt "-shift"
+                                             "")))
+                        ;; Found, exit
+                        (throw 'ergoemacs-key-trials t))
+                       (local-fn
+                        ;; Found exit
+                        (throw 'ergoemacs-key-trials t)))
+                      ;; Not found, try the next in the trial
+                      (unless key-trials ;; exit
+                        (setq key-trial nil)))
+                    nil)
+                ;; Could not find the key.
+                (beep)
+                (unless (minibufferp)
+                  (let (message-log-max)
+                    (message "%s is undefined!" pretty-key-undefined))))))))))
   (setq ergoemacs-describe-key nil))
 
 (defun ergoemacs-define-key (keymap key def)
