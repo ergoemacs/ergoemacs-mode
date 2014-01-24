@@ -1494,7 +1494,8 @@ This is done by checking if this is a command that supports shift selection or c
           (when (not ergoemacs-mode)
             (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))
-  (unless unread-command-events 
+  (unless unread-command-events
+    (setq ergoemacs-read-input-keys t)
     (setq ergoemacs-single-command-keys nil))
   t)
 
