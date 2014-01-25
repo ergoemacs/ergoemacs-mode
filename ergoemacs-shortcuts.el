@@ -864,9 +864,11 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
                 (push (replace-regexp-in-string "-shift" "" base) key-trials))
               (push ":shift-translated" key-trials)
               (when ergoemacs-translate-keys
+                (push ":raw" key-trials)
                 (push ":ctl" key-trials)
                 (push ":alt" key-trials)
                 (push ":alt-ctl" key-trials)
+                (push ":raw-shift" key-trials)
                 (push ":ctl-shift" key-trials)
                 (push ":alt-shift" key-trials)
                 (push ":alt-ctl-shift" key-trials))

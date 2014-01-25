@@ -74,17 +74,6 @@
 (defvar ergoemacs-shifted-assoc nil
   "Translation alist.")
 
-(defvar ergoemacs-translate-hash (make-hash-table :test 'equal))
-(defun ergoemacs-translate-shifted (kbd)
-  "Translates anything with S- and no C- in it to an upper-case character."
-  (if (not kbd) nil
-    (let ((ret kbd))
-      (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<DEL\\>\\|\\<ESC\\>\\|\\<RET\\>\\|C-\\)" ret)
-        (when (string-match "^\\(.*\\)S-\\(.*\\)\\(.\\)$" ret)
-          (setq ret (concat (match-string 1 ret)
-                            (match-string 2 ret)
-                            (upcase (match-string 3 ret))))))
-      (symbol-value 'ret))))
 
 (defvar ergoemacs-translate-hash (make-hash-table :test 'equal)) 
 (defun ergoemacs-translate-shifted (kbd)
@@ -262,6 +251,28 @@ and `ergoemacs-pretty-key' descriptions.
                                           (concat "C-" unshifted-key))))
           (setq ret (plist-put ret ':ctl-key (read-kbd-macro (plist-get ret ':ctl) t)))
           (setq ret (plist-put ret ':ctl-pretty (ergoemacs-pretty-key (plist-get ret ':ctl))))
+
+          (setq ret (plist-put ret ':raw (ergoemacs-translate-shifted
+                                      (replace-regexp-in-string
+                                       "\\<[CSMS]-" "" key))))
+          (setq ret (plist-put ret ':raw-key  (read-kbd-macro (plist-get ret ':raw) t)))
+          (setq ret (plist-put ret ':raw-pretty (ergoemacs-pretty-key
+                                             (plist-get ret ':raw))))
+          (if (assoc (plist-get ret ':raw) ergoemacs-shifted-assoc)
+              (progn
+                (setq ret (plist-put ret ':raw-shift
+                               (ergoemacs-translate-shifted
+                                (replace-regexp-in-string
+                                 "\\<[CSM]-" ""
+                                 (cdr (assoc (plist-get ret ':raw) ergoemacs-shifted-assoc))))))
+                (setq ret (plist-put ret ':raw-shift-key
+                                     (read-kbd-macro (plist-get ret ':raw-shift) t)))
+                (setq ret (plist-put ret ':raw-shift-pretty
+                                     (ergoemacs-pretty-key
+                                      (plist-get ret ':raw-shift)))))
+            (setq ret (plist-put ret ':raw-shift nil))
+            (setq ret (plist-put ret ':raw-shift-key nil))
+            (setq ret (plist-put ret ':raw-shift-pretty nil)))
           
           (setq ret (plist-put ret ':alt (ergoemacs-translate-shifted
                                           (concat "M-" unshifted-key))))
@@ -342,33 +353,34 @@ and `ergoemacs-pretty-key' descriptions.
               (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
                       (regexp-opt (mapcar (lambda(x) (nth 0 x))
                                           ergoemacs-translation-assoc) nil)))))
-    ;; Pre-cache the translations...
-    (mapc
-     (lambda(char)
-       (unless (string= "" char)
-         (ergoemacs-translate char)
-         (ergoemacs-translate (concat "C-" char))
-         (ergoemacs-translate (concat "M-" char))
-         (ergoemacs-translate (concat "M-C-" char))))
-     (append lay '("<f1>"  "<S-f1>"
-                   "<f2>"  "<S-f2>"
-                   "<f3>"  "<S-f3>"
-                   "<f4>"  "<S-f4>"
-                   "<f5>"  "<S-f5>"
-                   "<f6>"  "<S-f6>"
-                   "<f7>"  "<S-f7>"
-                   "<f8>"  "<S-f8>"
-                   "<f9>"  "<S-f9>"
-                   "<f10>" "<S-f10>"
-                   "<f11>" "<S-f11>"
-                   "<f12>" "<S-f12>"
-                   "SPC" "RET" "ESC" "DEL"
-                   "<home>" "<S-home>"
-                   "<next>" "<S-next>"
-                   "<prior>" "<S-prior>"
-                   "<end>" "<S-end>"
-                   "<insert>" "<S-insert>"
-                   "<deletechar>" "<S-deletechar>")))))
+    ;; Pre-cache the translations...?  Takes too long to load :(
+    (when nil
+      (mapc
+       (lambda(char)
+         (unless (string= "" char)
+           (ergoemacs-translate char)
+           (ergoemacs-translate (concat "C-" char))
+           (ergoemacs-translate (concat "M-" char))
+           (ergoemacs-translate (concat "M-C-" char))))
+       (append lay '("<f1>"  "<S-f1>"
+                     "<f2>"  "<S-f2>"
+                     "<f3>"  "<S-f3>"
+                     "<f4>"  "<S-f4>"
+                     "<f5>"  "<S-f5>"
+                     "<f6>"  "<S-f6>"
+                     "<f7>"  "<S-f7>"
+                     "<f8>"  "<S-f8>"
+                     "<f9>"  "<S-f9>"
+                     "<f10>" "<S-f10>"
+                     "<f11>" "<S-f11>"
+                     "<f12>" "<S-f12>"
+                     "SPC" "RET" "ESC" "DEL"
+                     "<home>" "<S-home>"
+                     "<next>" "<S-next>"
+                     "<prior>" "<S-prior>"
+                     "<end>" "<S-end>"
+                     "<insert>" "<S-insert>"
+                     "<deletechar>" "<S-deletechar>"))))))
 
 (defvar ergoemacs-kbd-hash (make-hash-table :test 'equal))
 ;; This is called so frequently make a hash-table of the results.
