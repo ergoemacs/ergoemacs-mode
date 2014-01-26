@@ -502,6 +502,16 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
     map)
   "Local keymap for `ergoemacs-read-key' with unchorded translation enabled.")
 
+(defun ergoemacs-read-key-call (function record-flag keys)
+  "Use `call-interactively' unless the function matches \"self-insert\"."
+  (cond
+   ((string-match "self-insert" (symbol-name function))
+    (setq ergoemacs-single-command-keys nil)
+    (setq last-input-event keys)
+    (setq prefix-arg current-prefix-arg)
+    (setq unread-command-events (append (listify-key-sequence keys) unread-command-events))
+    (reset-this-command-lengths))
+   (t (call-interactively function record-flag keys))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
 (defun ergoemacs-read-key-lookup (prior-key prior-pretty-key key pretty-key force-key)
@@ -632,7 +642,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                                (ergoemacs-unicode-char "→" "->")
                                (symbol-name fn)
                                pretty-key-undefined))))
-                (call-interactively fn nil key)
+                (ergoemacs-read-key-call fn nil key)
                 (setq ergoemacs-single-command-keys nil)
                 (setq ret 'global-function-override)))
              ;; Does this call a function?
@@ -725,7 +735,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                                (ergoemacs-unicode-char "→" "->")
                                (symbol-name fn)
                                pretty-key-undefined))))
-                (call-interactively fn nil key)
+                (ergoemacs-read-key-call fn nil key)
                 (setq ergoemacs-single-command-keys nil)
                 (setq ret 'function))))
              ;; Does this call an override or major/minor mode function?
@@ -761,7 +771,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                            (ergoemacs-unicode-char "→" "->")
                            fn
                            pretty-key-undefined)))
-              (call-interactively fn nil key)
+              (ergoemacs-read-key-call fn nil key)
               (setq ergoemacs-single-command-keys nil)
               (setq ret 'function-global-or-override)))
           (when tmp-overlay
