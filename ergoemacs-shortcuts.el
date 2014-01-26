@@ -314,7 +314,6 @@ This sequence is compatible with `listify-key-sequence'."
       (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-quoted local-keymap t))
       (when tmp
         (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") "Quote")))      )
-    
     (while (not ret)
       (unless (minibufferp)
         (message "%s%s%s%s%s%s\t%s"
@@ -750,6 +749,9 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
         key-trials
         real-read
         input tmp)
+    ;; (when (keymapp (get-char-property (point) 'keymap))
+    ;;   (ergoemacs-remove-shortcuts)
+    ;;   (ergoemacs-install-shortcuts-up t))
     (setq input (ergoemacs-to-sequence key)
           key nil)
     (setq local-keymap
@@ -1696,7 +1698,7 @@ Setup C-c and C-x keys to be described properly.")
              'keymap override-text-map)))
           (ergoemacs-debug-keymap 'override-text-map)))))))
 
-(defun ergoemacs-install-shortcuts-up ()
+(defun ergoemacs-install-shortcuts-up (&optional no-read-input)
   "Installs ergoemacs shortcuts into overriding keymaps.
 The keymaps are:
 - `overriding-terminal-local-map'
@@ -1704,7 +1706,8 @@ The keymaps are:
 - overlays with :keymap property
 - text property with :keymap property."
   (let ((inhibit-read-only t)
-        hashkey lookup override-text-map override orig-map)
+        hashkey lookup override-text-map override-read-map
+        override orig-map)
     (cond
      ((and overriding-terminal-local-map
            (eq saved-overriding-map t))
@@ -1714,7 +1717,8 @@ The keymaps are:
                   (read-kbd-macro "<ergoemacs>"))
                  'ignore))
         (ergoemacs-debug-heading "Install shortcuts into overriding-terminal-local-map")
-        (setq hashkey (md5 (format "override-terminal:%s" overriding-terminal-local-map)))
+        (setq hashkey (md5 (format "override-terminal:%s"
+                                   overriding-terminal-local-map)))
         (setq orig-map (copy-keymap overriding-terminal-local-map))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
@@ -1722,9 +1726,11 @@ The keymaps are:
           (ergoemacs-install-shortcuts-map overriding-terminal-local-map)
           (define-key overriding-terminal-local-map
             (read-kbd-macro  "<ergoemacs>") 'ignore)
-          (puthash hashkey overriding-terminal-local-map ergoemacs-extract-map-hash)
+          (puthash hashkey overriding-terminal-local-map
+                   ergoemacs-extract-map-hash)
           ;; Save old map.
-          (setq hashkey (md5 (format "override-terminal-orig:%s" overriding-terminal-local-map)))
+          (setq hashkey (md5 (format "override-terminal-orig:%s"
+                                     overriding-terminal-local-map)))
           (puthash hashkey orig-map ergoemacs-extract-map-hash))
         (ergoemacs-debug-keymap 'overriding-terminal-local-map)))
      (overriding-local-map
@@ -1732,7 +1738,8 @@ The keymaps are:
                                   (read-kbd-macro "<ergoemacs>"))
                       'ignore))
         (ergoemacs-debug-heading "Install shortcuts into overriding-local-map")
-        (setq hashkey (md5 (format "override-local:%s" overriding-local-map)))
+        (setq hashkey (md5 (format "override-local:%s"
+                                   overriding-local-map)))
         (setq orig-map (copy-keymap overriding-local-map))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
@@ -1742,7 +1749,8 @@ The keymaps are:
             (read-kbd-macro "<ergoemacs>") 'ignore)
           (puthash hashkey overriding-local-map ergoemacs-extract-map-hash)
           ;; Save old map.
-          (setq hashkey (md5 (format "override-local-orig:%s" overriding-local-map)))
+          (setq hashkey (md5 (format "override-local-orig:%s"
+                                     overriding-local-map)))
           (puthash hashkey orig-map ergoemacs-extract-map-hash))
         (ergoemacs-debug-keymap 'overriding-local-map)))
      ((progn
