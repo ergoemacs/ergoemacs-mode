@@ -1134,6 +1134,8 @@ bindings the keymap is:
         (setq ergoemacs-shortcut-keys t)
         (setq ergoemacs-read-input-keys t) ; Hasn't completely been
                                              ; fixed.
+        (when (key-binding [ergoemacs-single-command-keys])
+          (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save))
         (setq ergoemacs-unbind-keys t)
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
         (add-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
@@ -1408,7 +1410,9 @@ This is done by checking if this is a command that supports shift selection or c
           (ergoemacs-vars-sync)
           (when (and (not ergoemacs-read-input-keys)
                      (not unread-command-events))
-            (setq ergoemacs-read-input-keys t))
+            (setq ergoemacs-read-input-keys t)
+            (when (key-binding [ergoemacs-single-command-keys])
+              (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)))
           (setq ergoemacs-this-command this-command)
           (when ergoemacs-mode
             ;; Raise shortcuts and modal modes.
@@ -1495,6 +1499,8 @@ This is done by checking if this is a command that supports shift selection or c
             (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))
   (unless unread-command-events
+    (when (key-binding [ergoemacs-single-command-keys])
+      (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save))
     (setq ergoemacs-read-input-keys t)
     (setq ergoemacs-single-command-keys nil))
   t)
