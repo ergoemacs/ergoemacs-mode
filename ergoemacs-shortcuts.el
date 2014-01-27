@@ -457,7 +457,9 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
 (defun ergoemacs-read-key-call (function record-flag keys)
   "Use `call-interactively' unless the function matches \"self-insert\"."
   (cond
-   ((string-match "self-insert" (symbol-name function))
+   ((condition-case err
+        (string-match "self-insert" (symbol-name function))
+      (error nil))
     (setq ergoemacs-single-command-keys nil)
     (setq last-input-event keys)
     (setq prefix-arg current-prefix-arg)
