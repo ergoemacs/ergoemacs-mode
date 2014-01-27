@@ -94,37 +94,16 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (let ((no-ergoemacs-advice t))
     ;; Put in the overriding keymap
     (define-key ergoemacs-global-override-keymap key command)
-    (when (lookup-key ergoemacs-unbind-keymap key)
+    (when (condition-case err
+              (interactive-form (lookup-key ergoemacs-unbind-keymap key))
+            (error nil))
       (define-key ergoemacs-unbind-keymap key nil)
       (unless (string-match "^C-[xc]" (key-description key))
         (define-key ergoemacs-shortcut-keymap key nil))))
   (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
     (when x
       (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-    (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist))
-  (if (string-match "<\\(apps\\|menu\\)>" (key-description key))
-      (let ((no-ergoemacs-advice t))
-        (when command
-          ;; Make prefixes possible
-          (when (integerp (lookup-key ergoemacs-keymap key))
-            (let ((key-as-vector (read-kbd-macro (key-description key) t))
-                  (prefix-vector (make-vector (lookup-key ergoemacs-keymap key) nil))
-                  (i 0))
-              (while (< i (length prefix-vector))
-                (aset prefix-vector i (elt key-as-vector i))
-                (setq i (+ 1 i)))
-              (define-key ergoemacs-keymap prefix-vector nil)))
-          ;; Take care of prefix
-          (when (lookup-key ergoemacs-keymap key)
-            (define-key ergoemacs-keymap key nil))
-          (when (lookup-key ergoemacs-shortcut-keymap key)
-            (define-key ergoemacs-shortcut-keymap key nil))
-          ;; commands.
-          (define-key ergoemacs-keymap key command)))
-    (let ((no-ergoemacs-advice t))
-      (condition-case err
-	  (define-key ergoemacs-keymap key nil)
-	(error (ergoemacs-debug "Key %s not found in erogemacs-keymap (probably a shortcut).  Did not remove it from the map." (key-description key)))))))
+    (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)))
 
 (add-to-list 'ergoemacs-advices 'ergoemacs-global-set-key-advice)
 
