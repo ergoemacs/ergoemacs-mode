@@ -272,7 +272,11 @@ This sequence is compatible with `listify-key-sequence'."
                  (or extra-txt
                      (if (eq type 'unchorded)
                          ergoemacs-ctl-text ""))
-                 (if blink-on (ergoemacs-unicode-char "•" "-") "")
+                 (if blink-on
+                     (if ergoemacs-read-blink
+                         (ergoemacs-unicode-char
+                          ergoemacs-read-blink "-")
+                       "") "")
                  (if help-text
                      (concat "\nTranslations:" (substring help-text 1)) "")))
       (setq blink-on (not blink-on))
@@ -312,6 +316,13 @@ This is done for ctl-to-alt and unchorded translations."
           (const :tag "Always echo" t)
           (const :tag "Echo on translations" 'on-translation)
           (const :tag "Don't Echo"))
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-read-blink "•"
+  "Blink character."
+  :type '(choice
+          (string :tag "Cursor")
+          (const :tag "No cursor" nil))
   :group 'ergoemacs-read)
 
 (defun ergoemacs-read-key-swap (&optional first-type current-type)
