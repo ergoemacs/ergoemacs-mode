@@ -121,20 +121,10 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
             (define-key ergoemacs-shortcut-keymap key nil))
           ;; commands.
           (define-key ergoemacs-keymap key command)))
-    (if (and ergoemacs-fix-M-O
-             (string= "M-O" (key-description key)))
-        (let ((no-ergoemacs-advice t))
-          (define-key ergoemacs-keymap key 'ergoemacs-M-O)
-          (define-key ergoemacs-M-O-keymap [timeout] command))
-      (if (and ergoemacs-fix-M-O
-               (string= "M-o" (key-description key)))
-          (let ((no-ergoemacs-advice t))
-            (define-key ergoemacs-keymap key 'ergoemacs-M-o)
-            (define-key ergoemacs-M-o-keymap [timeout] command)))
-      (let ((no-ergoemacs-advice t))
-        (condition-case err
-            (define-key ergoemacs-keymap key nil)
-          (error (ergoemacs-debug "Key %s not found in erogemacs-keymap (probably a shortcut).  Did not remove it from the map." (key-description key))))))))
+    (let ((no-ergoemacs-advice t))
+      (condition-case err
+	  (define-key ergoemacs-keymap key nil)
+	(error (ergoemacs-debug "Key %s not found in erogemacs-keymap (probably a shortcut).  Did not remove it from the map." (key-description key)))))))
 
 (add-to-list 'ergoemacs-advices 'ergoemacs-global-set-key-advice)
 
