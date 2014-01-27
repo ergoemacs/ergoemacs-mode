@@ -532,8 +532,6 @@ FORCE-KEY forces keys like <escape> to work properly.
              ;; This way keys like <apps> will read the from the
              ;; `ergoemacs-shortcut-keys' layer and then discontinue
              ;; reading from that layer.
-             (overriding-terminal-local-map overriding-terminal-local-map)
-             (overriding-local-map overriding-local-map)
              (ergoemacs-shortcut-keys
               (if prior-key
                   (lookup-key ergoemacs-read-input-keymap prior-key)
@@ -541,7 +539,9 @@ FORCE-KEY forces keys like <escape> to work properly.
              lookup
              tmp-overlay
              tmp ret fn hash)
-        ;; Install ergoemacs-read overriding-terminal-local-map
+        ;; Install overriding-terminal-local-map without
+        ;; ergoemacs-read-key The composed map with ergoemacs-read-key
+        ;; will be installed on the ergoemacs-post-command-hook
         (when overriding-terminal-local-map
           (setq lookup (gethash
                         (md5
@@ -551,7 +551,7 @@ FORCE-KEY forces keys like <escape> to work properly.
           (when lookup
             (setq overriding-terminal-local-map lookup)))
         
-        ;; Install ergoemacs-read-key overriding-local-map
+        ;; Install overriding-local-map
         (when overriding-local-map 
           (setq lookup (gethash
                         (md5
@@ -569,7 +569,7 @@ FORCE-KEY forces keys like <escape> to work properly.
             (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
                                             (min (+ (point) 1) (point-max))))
             (overlay-put tmp-overlay 'keymap lookup)
-            (overlay-put tmp-overlay 'priority 536870910)))
+            (overlay-put tmp-overlay 'priority 536870911)))
         (unwind-protect
             (cond
              ((progn
@@ -645,6 +645,11 @@ FORCE-KEY forces keys like <escape> to work properly.
                 (ergoemacs-read-key-call fn nil key)
                 (setq ergoemacs-single-command-keys nil)
                 (setq ret 'global-function-override)))
+             ;; Is there an local override function?
+             ((progn
+                (setq fn (ergoemacs-get-override-function key))
+                (condition-case err (interactive-form fn) nil))
+              (ergoemacs-read-key-call fn nil key))
              ;; Does this call a function?
              ((progn
                 (setq hash (gethash key ergoemacs-command-shortcuts-hash))
@@ -742,8 +747,6 @@ FORCE-KEY forces keys like <escape> to work properly.
              ;; Does this call an override or major/minor mode function?
              ((progn
                 (setq fn (or
-                          ;; Call an override key?
-                          (ergoemacs-get-override-function key)
                           ;; Call major/minor mode key?
                           (ergoemacs-with-major-and-minor-modes 
                            (key-binding key))
@@ -1331,6 +1334,11 @@ defined in the major/minor modes (by
     override))
 
 (defun ergoemacs-shortcut---internal ()
+  "Real shortcut function.
+This is used for the following functions: `ergoemacs-shortcut-movement'
+`ergoemacs-shortcut-movement-no-shift-select' and `ergoemacs-shortcut'.
+
+Basically, this gets the keys called and passes the arguments to`ergoemacs-read-key'."
   (let* ((keys (or ergoemacs-single-command-keys (this-single-command-keys)))
          (args (gethash keys ergoemacs-command-shortcuts-hash))
          (one (nth 0 args)) tmp override)
@@ -1338,39 +1346,7 @@ defined in the major/minor modes (by
       (setq keys (read-kbd-macro (key-description keys) t))
       (setq args (gethash keys ergoemacs-command-shortcuts-hash))
       (setq one (nth 0 args)))
-    (setq override (ergoemacs-get-override-function keys))
-    (cond
-     (override
-      (call-interactively override))
-     ((condition-case err
-          (interactive-form one)
-        (error nil))
-      (ergoemacs-shortcut-remap one))
-     ((and (eq 'string (type-of one))
-           (progn
-             (setq tmp (key-binding (read-kbd-macro one) t nil (point)))
-             tmp))
-      (cond
-       ((string-match "self-insert" (symbol-name tmp))
-        (setq ergoemacs-mark-active mark-active)
-        (setq prefix-arg current-prefix-arg)
-        (setq unread-command-events (append (read-kbd-macro one t) unread-command-events))
-        (reset-this-command-lengths))
-       ((memq tmp ergoemacs-send-fn-keys-fns)
-        (ergoemacs-send-fn (key-descripiton keys) tmp))
-       (t
-        (setq this-command (or (command-remapping tmp (point)) tmp))
-        (if (not ergoemacs-describe-key)
-            (progn
-              (call-interactively this-command))
-          (ergoemacs-shortcut-override-mode 1)
-          (describe-function this-command)
-          (ergoemacs-shortcut-override-mode -1)
-          (setq ergoemacs-describe-key nil)))))
-     ((eq 'string (type-of one))
-      (ergoemacs-read-key one (nth 1 args)))
-     (t 
-      (message "Keys: %s; Args: %s; One: %s" keys args one)))
+    (ergoemacs-read-key keys args)
     (setq ergoemacs-single-command-keys nil)))
 
 (defun ergoemacs-shortcut-movement (&optional opt-args)
@@ -1384,6 +1360,7 @@ Calls the function shortcut key defined in
 `ergoemacs-single-command-keys' or `this-single-command-keys'."
   (interactive "^P")
   (ergoemacs-shortcut-movement-no-shift-select opt-args))
+(put 'ergoemacs-shortcut-movement 'CUA 'move)
 
 (defun ergoemacs-shortcut-movement-no-shift-select (&optional opt-args)
   "Shortcut for other key/function in movement keys without shift-selection support.
@@ -1394,7 +1371,6 @@ Calls the function shortcut key defined in
 "
   (interactive "P")
   (ergoemacs-shortcut---internal))
-(put 'ergoemacs-shortcut-movement 'CUA 'move)
 
 (defun ergoemacs-shortcut (&optional opt-args)
   "Shortcut for other key/function for non-movement keys.
@@ -1782,13 +1758,16 @@ The keymaps are:
         (if lookup
             (setq overriding-terminal-local-map lookup) ;; input-keys
           (ergoemacs-install-shortcuts-map overriding-terminal-local-map)
-          (define-key overriding-terminal-local-map [ergoemacs] 'ignore)
           (setq override-read-map overriding-terminal-local-map)
           ;; Put ergoemacs-read-input-keymap on the current keymap
           (setq overriding-terminal-local-map
                 (make-composed-keymap
                  ergoemacs-read-input-keymap overriding-terminal-local-map))
+          (define-key overriding-terminal-local-map [ergoemacs] 'ignore)
+          ;; Put read-input map in hash for original map and read-map
           (puthash hashkey overriding-terminal-local-map
+                   ergoemacs-extract-map-hash)
+          (puthash (md5 (format "override-terminal:%s" override-read-map))
                    ergoemacs-extract-map-hash)
           ;; Save old map
           (setq hashkey (md5 (format "override-terminal-orig:%s"
@@ -1811,20 +1790,23 @@ The keymaps are:
         (if lookup
             (setq overriding-local-map lookup)
           (ergoemacs-install-shortcuts-map overriding-local-map)
-          (define-key overriding-local-map [ergoemacs] 'ignore)
-          (setq override-read-map overriding-terminal-local-map)
+          (setq override-read-map overriding-terminal-local-map) ;; Read map
           (setq overriding-local-map
                 (make-composed-keymap
-                 ergoemacs-read-input-keymap overriding-local-map))
+                 ergoemacs-read-input-keymap overriding-local-map)) ;; read-input-keymap
+          (define-key overriding-local-map [ergoemacs] 'ignore)
           (puthash hashkey overriding-local-map ergoemacs-extract-map-hash)
+          (puthash (md5 (format "override-local:%s"
+                                overriding-read-map)) overriding-local-map ergoemacs-extract-map-hash)
           ;; Save old map.
-          (setq hashkey (md5 (format "override-local-orig:%s"
-                                     overriding-local-map)))
           (puthash (md5
                     (format "override-local-read: %s"
                             overriding-local-map))
                    override-read-map ergoemacs-extract-map-hash)
-          (puthash hashkey orig-map ergoemacs-extract-map-hash))
+          (puthash (md5 (format "override-local-orig:%s"
+                                overriding-local-map)) orig-map ergoemacs-extract-map-hash)
+          (puthash (md5 (format "override-local-orig:%s"
+                                override-read-map)) orig-map ergoemacs-extract-map-hash))
         (ergoemacs-debug-keymap 'overriding-local-map)))
      ((progn
         (setq override-text-map (get-char-property (point) 'keymap))
@@ -1856,6 +1838,7 @@ The keymaps are:
           
           (define-key override-text-map [ergoemacs] 'ignore)
           (puthash hashkey override-text-map ergoemacs-extract-map-hash)
+          (puthash (md5 (format "char-map:%s" override-read-map)) override-text-map ergoemacs-extract-map-hash)
           ;; Save old map.
           
           ;; Lookup map on either the composed or non-composed map
