@@ -1427,7 +1427,8 @@ This is done by checking if this is a command that supports shift selection or c
                   (error nil))
                 (setq this-command key-binding))))
             (unless ergoemacs-modal
-              (when (eq saved-overriding-map t) 
+              (when (and (eq saved-overriding-map t)
+                         (not unread-command-events))
                 (ergoemacs-install-shortcuts-up)))
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
@@ -1493,8 +1494,9 @@ This is done by checking if this is a command that supports shift selection or c
                 (setq ergoemacs-default-cursor nil))
               (ergoemacs-mode-line))
             (unless ergoemacs-modal
-              (ergoemacs-install-shortcuts-up)
-              (ergoemacs-vars-sync)))
+              (when (not unread-command-events)
+                (ergoemacs-install-shortcuts-up)
+                (ergoemacs-vars-sync))))
           (when (not ergoemacs-mode)
             (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))
