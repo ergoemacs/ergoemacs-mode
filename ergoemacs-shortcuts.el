@@ -107,77 +107,15 @@
                 ;; M-o.
                 ;; Only works if ergoemacs-mode is on...
                 (setq cmd (nth 1 x))
-                
-                (if (and ergoemacs-fix-M-O
-                         (string= (ergoemacs-kbd trans-key t t) "M-O"))
-                    (progn
-                      ;; Add shortcut if available
-                      (cond
-                       ((ergoemacs-shortcut-function-binding cmd)
-                        (puthash (read-kbd-macro (key-description key) t)
-                                 (list cmd 'global) ergoemacs-command-shortcuts-hash)
-                        (define-key ergoemacs-shortcut-keymap key 'ergoemacs-M-O)
-                        (if (ergoemacs-is-movement-command-p cmd)
-                            (define-key ergoemacs-M-O-keymap [timeout] 'ergoemacs-shortcut-movement-no-shift-select)
-                          (define-key ergoemacs-M-O-keymap [timeout] 'ergoemacs-shortcut)))
-                       (t
-                        (define-key ,keymap key  'ergoemacs-M-O)
-                        (define-key ergoemacs-M-O-keymap [timeout] cmd)))
-                      (when (eq ',keymap 'ergoemacs-keymap)
-                        (ergoemacs-debug
-                         "Variable %s: %s (%s) -> %s %s via ergoemacs-M-O"
-                         (nth 0 x) trans-key
-                         (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)
-                        (when (string-match "^\\([^ ]+\\) " (ergoemacs-kbd trans-key t (nth 3 x)))
-                          (add-to-list
-                           'input-keys
-                           (match-string 1 (ergoemacs-kbd trans-key t (nth 3 x)))))))
-                  (if (and ergoemacs-fix-M-O
-                           (string= (ergoemacs-kbd trans-key t t) "M-o"))
-                      (progn
-                        (cond  ;; Use shortcut if available.
-                         ((ergoemacs-shortcut-function-binding cmd)
-                          (puthash (read-kbd-macro (key-description key) t)
-                                   (list cmd 'global) ergoemacs-command-shortcuts-hash)
-                          (define-key ergoemacs-shortcut-keymap key 'ergoemacs-M-o)
-                          (if (ergoemacs-is-movement-command-p cmd)
-                              (define-key ergoemacs-M-o-keymap [timeout] 'ergoemacs-shortcut-movement)
-                            (define-key ergoemacs-M-o-keymap [timeout] 'ergoemacs-shortcut)))
-                         (t
-                          (define-key ,keymap key  'ergoemacs-M-o)
-                          (define-key ergoemacs-M-o-keymap [timeout] cmd)))
-                        (when (eq ',keymap 'ergoemacs-keymap)
-                          (ergoemacs-debug "Variable: %s (%s) -> %s %s via ergoemacs-M-o" trans-key
-                                           (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)
-                          (when (string-match "^\\([^ ]+\\) " (ergoemacs-kbd trans-key t (nth 3 x)))
-                            (add-to-list
-                             'input-keys
-                             (match-string 1 (ergoemacs-kbd trans-key t (nth 3 x)))))))
-                    (when cmd
-                      (ergoemacs-define-key ,keymap key cmd)
-                      (when (eq ',keymap 'ergoemacs-keymap)
-                        (ergoemacs-debug "Variable: %s (%s) -> %s %s" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)
-                        (when (string-match "^\\([^ ]+\\) " (ergoemacs-kbd trans-key t (nth 3 x)))
-                          (add-to-list
-                           'input-keys
-                           (match-string 1 (ergoemacs-kbd trans-key t (nth 3 x))))))))))))
+                (when cmd
+                  (ergoemacs-define-key ,keymap key cmd)
+                  (when (eq ',keymap 'ergoemacs-keymap)
+                    (ergoemacs-debug "Variable: %s (%s) -> %s %s" trans-key (ergoemacs-kbd trans-key t (nth 3 x)) cmd key)
+                    (when (string-match "^\\([^ ]+\\) " (ergoemacs-kbd trans-key t (nth 3 x)))
+                      (add-to-list
+                       'input-keys
+                       (match-string 1 (ergoemacs-kbd trans-key t (nth 3 x))))))))))
           (symbol-value (ergoemacs-get-variable-layout)))
-         (when ergoemacs-fix-M-O
-           (let ((M-O (lookup-key ,keymap (read-kbd-macro "M-O")))
-                 (g-M-O (lookup-key global-map (read-kbd-macro "M-O")))
-                 (M-o (lookup-key ,keymap (read-kbd-macro "M-o")))
-                 (g-M-o (lookup-key global-map (read-kbd-macro "M-o"))))
-             (ergoemacs-debug "M-O %s; Global M-O: %s; M-o %s; Global M-o: %s" M-O g-M-O M-o g-M-o)
-             (when (and (not (functionp M-O))
-                        (functionp g-M-O))
-               (ergoemacs-debug "Fixed M-O")
-               (define-key ,keymap (read-kbd-macro "M-O") 'ergoemacs-M-O)
-               (define-key ergoemacs-M-O-keymap [timeout] g-M-O))
-             (when (and (not (functionp M-o))
-                        (functionp g-M-o))
-               (ergoemacs-debug "Fixed M-o")
-               (define-key ,keymap (read-kbd-macro "M-o") 'ergoemacs-M-o)
-               (define-key ergoemacs-M-o-keymap [timeout] g-M-o))))
          (ergoemacs-debug-keymap ',keymap)
          (when input-keys
            (ergoemacs-debug-heading "Setup Read Input Layer")
@@ -1655,21 +1593,7 @@ Setup C-c and C-x keys to be described properly.")
             (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
           ;; Create keymap
           (ergoemacs-debug-heading "Turn on `ergoemacs-shortcut-override-mode'")
-          (setq ergoemacs-shortcut-override-keymap (ergoemacs-install-shortcuts-map))
-          ;; Add M-O and M-o key-bindings; Pretend they are the actual
-          ;; bindings instead of the M-O and M-o work-rounds.
-          (when (eq (key-binding (read-kbd-macro "M-O"))
-                    'ergoemacs-M-O)
-            (define-key ergoemacs-shortcut-override-keymap
-              (read-kbd-macro "M-O")
-              (lookup-key ergoemacs-M-O-keymap [timeout])))
-          
-          (when (eq (key-binding (read-kbd-macro "M-o"))
-                    'ergoemacs-M-o)
-            (define-key ergoemacs-shortcut-override-keymap
-              (read-kbd-macro "M-o")
-              (lookup-key ergoemacs-M-o-keymap [timeout])))
-          
+          (setq ergoemacs-shortcut-override-keymap (ergoemacs-install-shortcuts-map)) 
           (ergoemacs-debug-keymap 'ergoemacs-shortcut-override-keymap)
           (push (cons 'ergoemacs-shortcut-override-mode
                       ergoemacs-shortcut-override-keymap)
