@@ -368,9 +368,12 @@ This is done for ctl-to-alt and unchorded translations."
            (sexp :tag "Translated Type")))
   :group 'ergoemacs-read)
 
-(defcustom ergoemacs-echo-function t
+(defcustom ergoemacs-echo-function 'on-translation
   "Shows the function evaluated with a key."
-  :type 'boolean
+  :type '(choice
+          (const :tag "Always echo" t)
+          (const :tag "Echo on translations" 'on-translation)
+          (const :tag "Don't Echo"))
   :group 'ergoemacs-read)
 
 (defun ergoemacs-read-key-swap (&optional first-type current-type)
@@ -605,9 +608,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                            (boundp 'pretty-key-undefined))
                   (let (message-log-max)
                     (if (string= pretty-key-undefined pretty-key)
-                        (message "%s%s%s" pretty-key
+                        (when (eq ergoemacs-echo-function t)
+                          (message "%s%s%s" pretty-key
                                  (ergoemacs-unicode-char "→" "->")
-                                 (ergoemacs-pretty-key (key-description tmp)))
+                                 (ergoemacs-pretty-key (key-description tmp))))
                       (message "%s%s%s (from %s)"
                                pretty-key
                                (ergoemacs-unicode-char "→" "->")
@@ -634,9 +638,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                            (boundp 'pretty-key-undefined))
                   (let (message-log-max)
                     (if (string= pretty-key-undefined pretty-key)
-                        (message "%s%s%s" pretty-key
-                                 (ergoemacs-unicode-char "→" "->")
-                                 (symbol-name fn))
+                        (when (eq ergoemacs-echo-function t)
+                          (message "%s%s%s" pretty-key
+                                   (ergoemacs-unicode-char "→" "->")
+                                   (symbol-name fn)))
                       (message "%s%s%s (from %s)"
                                pretty-key
                                (ergoemacs-unicode-char "→" "->")
@@ -684,9 +689,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                            (boundp 'pretty-key-undefined))
                   (let (message-log-max)
                     (if (string= pretty-key-undefined pretty-key)
-                        (message "%s%s%s" pretty-key
-                                 (ergoemacs-unicode-char "→" "->")
-                                 (symbol-name (nth 0 hash)))
+                        (when (eq ergoemacs-echo-function t)
+                          (message "%s%s%s" pretty-key
+                                   (ergoemacs-unicode-char "→" "->")
+                                   (symbol-name (nth 0 hash))))
                       (message "%s%s%s (from %s)"
                                pretty-key
                                (ergoemacs-unicode-char "→" "->")
@@ -705,9 +711,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                       (setq fn (key-binding key))
                       (setq fn (or (command-remapping fn (point)) fn)))
                     (if (string= pretty-key-undefined pretty-key)
-                        (message "%s%s%s;" pretty-key
-                                 (ergoemacs-unicode-char "→" "->")
-                                 fn)
+                        (when (eq ergoemacs-echo-function t)
+                          (message "%s%s%s;" pretty-key
+                                   (ergoemacs-unicode-char "→" "->")
+                                   fn))
                       (message "%s%s%s (from %s);"
                                pretty-key
                                (ergoemacs-unicode-char "→" "->")
@@ -733,9 +740,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                            (boundp 'pretty-key-undefined))
                   (let (message-log-max)
                     (if (string= pretty-key-undefined pretty-key)
-                        (message "%s%s%s" pretty-key
-                                 (ergoemacs-unicode-char "→" "->")
-                                 (symbol-name fn))
+                        (when (eq ergoemacs-echo-function t)
+                          (message "%s%s%s" pretty-key
+                                   (ergoemacs-unicode-char "→" "->")
+                                   (symbol-name fn)))
                       (message "%s%s%s (from %s)"
                                pretty-key
                                (ergoemacs-unicode-char "→" "->")
