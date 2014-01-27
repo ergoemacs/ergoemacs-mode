@@ -1446,6 +1446,9 @@ user-defined keys.
         (setq ret (append ret2 ret)))
       (symbol-value 'ret))))
 
+(defvar ergoemacs-send-fn-keys-fns '(ergoemacs-undefined ergoemacs-shortcut)
+  "List of functions where `unread-command-events' are sent with `ergoemacs-send-fn'.")
+
 (defun ergoemacs-shortcut-remap (function &optional keys)
   "Runs the FUNCTION or whatever `ergoemacs-shortcut-remap-list' returns.
 Will use KEYS or `this-single-command-keys', if cannot find the
