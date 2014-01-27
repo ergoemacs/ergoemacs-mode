@@ -272,7 +272,7 @@ This sequence is compatible with `listify-key-sequence'."
                  (or extra-txt
                      (if (eq type 'unchorded)
                          ergoemacs-ctl-text ""))
-                 (if blink-on "-" "")
+                 (if blink-on (ergoemacs-unicode-char "•" "-") "")
                  (if help-text
                      (concat "\nTranslations:" (substring help-text 1)) "")))
       (setq blink-on (not blink-on))
@@ -1166,48 +1166,6 @@ DEF can be:
   (ergoemacs-setup-backward-compatability))
 
 (defvar ergoemacs-extract-map-hash (make-hash-table :test 'equal))
-
-(defvar ergoemacs-send-fn-keys-fns '(ergoemacs-undefined ergoemacs-shortcut)
-  "List of functions where `unread-command-events' are sent with `ergoemacs-send-fn'.")
-
-(defun ergoemacs-send-fn (key fn &optional message)
-  "Sends the function."
-  (setq ergoemacs-shortcut-send-key nil
-        ergoemacs-shortcut-send-fn nil
-        ergoemacs-shortcut-send-timer nil)
-  (setq ergoemacs-shortcut-send-fn (or (command-remapping fn (point)) fn))
-  (cond
-   ((and ergoemacs-describe-key ergoemacs-shortcut-send-fn
-         (or ergoemacs-show-true-bindings
-             (and (not ergoemacs-show-true-bindings)
-                  (not (memq ergoemacs-shortcut-send-fn '(ergoemacs-shortcut ergoemacs-shortcut-movement ergoemacs-shortcut-movement-no-shift-select))))))
-    (let ((desc-fn ergoemacs-shortcut-send-fn))
-      (ergoemacs-shortcut-override-mode 1)
-      (describe-function desc-fn)
-      (ergoemacs-shortcut-override-mode -1))
-    (setq ergoemacs-describe-key nil))
-   ((memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns)
-    (let ((old-unread (listify-key-sequence (or ergoemacs-single-command-keys (this-command-keys))))
-          new-unread)
-      ;; Force emacs to send the correct keys.  Workaround for emacs
-      ;; bug.
-      (eval
-       (macroexpand
-        `(flet
-             ((this-command-keys () (if (equal this-command ',ergoemacs-shortcut-send-fn) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys))))
-              (this-single-command-keys () (if (equal this-command ',ergoemacs-shortcut-send-fn) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-single-command-keys))))
-              (this-command-keys-vector () (if (equal this-command ',ergoemacs-shortcut-send-fn) ,(read-kbd-macro key t) (funcall ,(symbol-function 'this-command-keys-vector)))))
-           (setq new-unread (listify-key-sequence (this-command-keys)))
-           (ergoemacs-with-global
-            (call-interactively ergoemacs-shortcut-send-fn nil ,(read-kbd-macro key t))))))
-      ;; Some commands, like isearch, put commands in
-      ;; `unread-command-events'; Try to handle these.
-      (when (and unread-command-events
-                 (equal unread-command-events new-unread))
-        (setq unread-command-events old-unread))))
-   (t
-    (ergoemacs-with-global
-     (call-interactively ergoemacs-shortcut-send-fn)))))
 
 (defvar ergoemacs-prefer-shortcuts t ;; Prefer shortcuts.
   "Prefer shortcuts")
