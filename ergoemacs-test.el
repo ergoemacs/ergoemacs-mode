@@ -537,46 +537,40 @@ See Issue #140."
     (should (equal ret t))))
 
 
-(defvar ergoemacs-test-misspelled-mark-should-fail
-  (condition-case err
-      (with-temp-buffer
-        (insert "mart")
-        (with-timeout (2 ':failed)
-          (flyspell-buffer)
-          ':passed))
-    (error ':failed)))
-
 (ert-deftest ergoemacs-test-misspelled-mark ()
-  "Test for mark working with flyspell misspelled word.
+  "Test for mark working with overlays.
 Should test issue #142"
-  :expected-result ergoemacs-test-misspelled-mark-should-fail
-  (if (eq ergoemacs-test-misspelled-mark-should-fail ':failed)
-      (should nil)
-    (let ((old-ergoemacs-theme ergoemacs-theme)
-          (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-          (macro (edmacro-parse-keys (format "M-SPC M-y M-x"
-                                             (if (eq system-type 'windows-nt)
-                                                 "apps" "menu")) t))
-          (ret nil))
-      (ergoemacs-mode -1)
-      (setq ergoemacs-theme nil)
-      (setq ergoemacs-keyboard-layout "colemak")
-      (ergoemacs-mode 1)
-      (save-excursion
-        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-        (insert ergoemacs-test-lorem-ipsum)
-        (flyspell-buffer)
-        (goto-char (point-max))
-        (beginning-of-line)
-        (execute-kbd-macro macro)
-        (when (looking-at " in culpa qui")
-          (setq ret t))
-        (kill-buffer (current-buffer)))
-      (ergoemacs-mode -1)
-      (setq ergoemacs-theme old-ergoemacs-theme)
-      (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
-      (ergoemacs-mode 1)
-      (should (equal ret t)))))
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (macro (edmacro-parse-keys (format "M-SPC M-y M-x"
+                                           (if (eq system-type 'windows-nt)
+                                               "apps" "menu")) t))
+        (ret nil)
+        tmp (tmp-key (make-sparse-keymap)))
+    (define-key tmp-key [ergoemacs-test] 'ignore)
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme nil)
+    (setq ergoemacs-keyboard-layout "colemak")
+    (ergoemacs-mode 1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-min))
+      ;; Put in dummy overlay
+      (while (re-search-forward "[A-Za-z]+" nil t)
+        (setq tmp (make-overlay (match-beginning 0) (match-end 0)))
+        (overlay-put tmp 'keymap tmp-key))
+      (goto-char (point-max))
+      (beginning-of-line)
+      (execute-kbd-macro macro)
+      (when (looking-at " in culpa qui")
+        (setq ret t))
+      (kill-buffer (current-buffer)))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should (equal ret t))))
 
 (ert-deftest ergoemacs-test-shift-select-subword ()
   "Test for mark working with shift-selection of `subword-forward'."
