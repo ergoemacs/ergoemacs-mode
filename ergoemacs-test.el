@@ -542,9 +542,7 @@ See Issue #140."
 Should test issue #142"
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-        (macro (edmacro-parse-keys (format "M-SPC M-y M-x"
-                                           (if (eq system-type 'windows-nt)
-                                               "apps" "menu")) t))
+        (macro (edmacro-parse-keys "M-SPC M-y M-x" t))
         (ret nil)
         tmp (tmp-key (make-sparse-keymap)))
     (define-key tmp-key [ergoemacs-test] 'ignore)
@@ -669,6 +667,40 @@ Part of addressing Issue #147."
       (ergoemacs-test-major-mode)
       (setq ret (ergoemacs-shortcut-remap-list 'isearch-forward)))
     (eq (nth 0 (nth 0 ret)) 'save-buffer)))
+
+
+(ert-deftest ergoemacs-test-overlay-paren ()
+  "Test that overlays will send the appropriate parenthesis"
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (ret nil)
+        (macro (edmacro-parse-keys (format "M-i <%s> e e"
+                                           (if (eq system-type 'windows-nt)
+                                               "apps" "menu")) t))
+        tmp (tmp-key (make-sparse-keymap)))
+    (define-key tmp-key [ergoemacs-test] 'ignore)
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme nil)
+    (setq ergoemacs-keyboard-layout "colemak")
+    (ergoemacs-mode 1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-min))
+      ;; Put in dummy overlay
+      (while (re-search-forward "[A-Za-z]+" nil t)
+        (setq tmp (make-overlay (match-beginning 0) (match-end 0)))
+        (overlay-put tmp 'keymap tmp-key))
+      (goto-char (point-min))
+      (execute-kbd-macro macro)
+      (when (looking-at ")")
+        (setq ret t))
+      (kill-buffer (current-buffer)))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should (equal ret t))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
