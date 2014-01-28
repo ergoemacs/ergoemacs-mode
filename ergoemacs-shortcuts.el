@@ -496,6 +496,7 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
    (t (call-interactively function record-flag keys))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
+(defvar ergoemacs-read-key-overriding-overlay-save nil)
 (defun ergoemacs-read-key-lookup (prior-key prior-pretty-key key pretty-key force-key)
   "Lookup KEY and run if necessary.
 
@@ -519,7 +520,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (lookup-key ergoemacs-read-input-keymap prior-key)
                 nil))
              lookup
-             tmp-overlay
+             tmp-overlay use-override 
              tmp ret fn hash)
         ;; Install overriding-terminal-local-map without
         ;; ergoemacs-read-key The composed map with ergoemacs-read-key
@@ -531,6 +532,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                                 overriding-terminal-local-map))
                         ergoemacs-extract-map-hash))
           (when lookup
+            (setq use-override t)
             (setq overriding-terminal-local-map lookup)))
         
         ;; Install overriding-local-map
@@ -541,6 +543,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                                  overriding-local-map))
                         ergoemacs-extract-map-hash))
           (when lookup
+            (setq use-override t)
             (setq overriding-local-map lookup)))
         (when (get-char-property (point) 'keymap)
           (setq lookup (gethash
@@ -664,8 +667,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events))
                   (when lookup
                     (define-key lookup [ergoemacs-single-command-keys] 'ignore)
-                    (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-                    (setq overriding-terminal-local-map lookup))
+                    (if (not use-override)
+                        (setq ergoemacs-read-key-overriding-overlay-save tmp-overlay)
+                      (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
+                      (setq overriding-terminal-local-map lookup)))
                   (setq ret 'kbd-shortcut))
                  ((and hash
                        (condition-case err
@@ -716,8 +721,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                         (append (listify-key-sequence key) unread-command-events))
                   (when lookup
                     (define-key lookup [ergoemacs-single-command-keys] 'ignore)
-                    (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-                    (setq overriding-terminal-local-map lookup))
+                    (if (not use-override)
+                        (setq ergoemacs-read-key-overriding-overlay-save tmp-overlay)
+                      (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
+                      (setq overriding-terminal-local-map lookup)))
                   (setq ret 'shortcut-workaround))
                  (t
                   (setq fn (or (command-remapping fn (point)) fn))
@@ -772,7 +779,7 @@ FORCE-KEY forces keys like <escape> to work properly.
               (ergoemacs-read-key-call fn nil key)
               (setq ergoemacs-single-command-keys nil)
               (setq ret 'function-global-or-override)))
-          (when tmp-overlay
+          (when (and tmp-overlay (not ergoemacs-read-key-overriding-overlay-save))
             (delete-overlay tmp-overlay)))
         (symbol-value 'ret))
     ;; Turn off read-input-keys for shortcuts

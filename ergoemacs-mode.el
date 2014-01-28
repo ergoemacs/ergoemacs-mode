@@ -1000,7 +1000,10 @@ bindings the keymap is:
         (setq ergoemacs-read-input-keys t) ; Hasn't completely been
                                              ; fixed.
         (when (key-binding [ergoemacs-single-command-keys])
-          (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save))
+          (if (not ergoemacs-read-key-overriding-overlay-save)
+              (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
+            (delete-overlay ergoemacs-read-key-overriding-overlay-save)
+            (setq ergoemacs-read-key-overriding-overlay-save nil)))
         (setq ergoemacs-unbind-keys t)
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
         (add-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
@@ -1277,7 +1280,10 @@ This is done by checking if this is a command that supports shift selection or c
                      (not unread-command-events))
             (setq ergoemacs-read-input-keys t)
             (when (key-binding [ergoemacs-single-command-keys])
-              (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)))
+              (if (not ergoemacs-read-key-overriding-overlay-save)
+                  (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
+                (delete-overlay ergoemacs-read-key-overriding-overlay-save)
+                (setq ergoemacs-read-key-overriding-overlay-save nil))))
           (setq ergoemacs-this-command this-command)
           (when ergoemacs-mode
             ;; Raise shortcuts and modal modes.
@@ -1367,7 +1373,10 @@ This is done by checking if this is a command that supports shift selection or c
       (error (message "Error %s" err))))
   (unless unread-command-events
     (when (key-binding [ergoemacs-single-command-keys])
-      (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save))
+      (if (not ergoemacs-read-key-overriding-overlay-save)
+          (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
+        (delete-overlay ergoemacs-read-key-overriding-overlay-save)
+        (setq ergoemacs-read-key-overriding-overlay-save nil)))
     (setq ergoemacs-read-input-keys t)
     (setq ergoemacs-single-command-keys nil))
   t)
