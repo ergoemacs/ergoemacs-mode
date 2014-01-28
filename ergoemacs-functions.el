@@ -989,8 +989,10 @@ the last misspelled word with
                     (filter-buffer-substring (car bds) (cdr bds)))))
         (cond
          
-         ((or (memq (get-text-property (car bds) 'face) '(font-lock-string-face font-lock-doc-face font-lock-comment-face))
-              (memq (get-text-property (car bds) 'face) '(font-lock-string-face font-lock-doc-face font-lock-comment-face)))
+         ((or (and (car bds)
+                   (memq (get-text-property (car bds) 'face) '(font-lock-string-face font-lock-doc-face font-lock-comment-face)))
+              (and (car bds)
+                   (memq (get-text-property (car bds) 'face) '(font-lock-string-face font-lock-doc-face font-lock-comment-face))))
           ;; In comment/string.
           (setq bds (bounds-of-thing-at-point 'word)))
          ((and txt (or (string-match (format "^%s" (regexp-opt ccc t)) txt)
