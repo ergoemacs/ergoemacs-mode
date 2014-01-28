@@ -848,24 +848,25 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
         (setq tmp "<escape>"))
       (if (string= tmp (key-description
                         (ergoemacs-key-fn-lookup 'keyboard-quit)))
-          (if (minibufferp)
+          (if (and (not key) (minibufferp))
               (minibuffer-keyboard-quit)
-            (let (message-log-max)
-              (message "%s%s%s Canceled with %s"
-                       (if ergoemacs-describe-key
-                           "Help for: " "")
-                       (cond
-                        ((eq type 'ctl-to-alt)
-                         (format "<Ctl%sAlt> " 
-                                 (ergoemacs-unicode-char "↔" " to ")))
-                        ((eq type 'unchorded)
-                         "<Unchorded> ")
-                        (t
-                         ""))
-                       pretty-key 
-                       (if ergoemacs-use-ergoemacs-key-descriptions
-                           (plist-get next-key ':normal-pretty)
-                         (plist-get next-key ':normal))))
+            (unless (minibufferp)
+              (let (message-log-max)
+                (message "%s%s%s Canceled with %s"
+                         (if ergoemacs-describe-key
+                             "Help for: " "")
+                         (cond
+                          ((eq type 'ctl-to-alt)
+                           (format "<Ctl%sAlt> " 
+                                   (ergoemacs-unicode-char "↔" " to ")))
+                          ((eq type 'unchorded)
+                           "<Unchorded> ")
+                          (t
+                           ""))
+                         pretty-key 
+                         (if ergoemacs-use-ergoemacs-key-descriptions
+                             (plist-get next-key ':normal-pretty)
+                           (plist-get next-key ':normal)))))
             (setq ergoemacs-describe-key nil))
         (setq tmp (plist-get next-key ':normal-key))
         ;; See if there is a local equivalent of this...
