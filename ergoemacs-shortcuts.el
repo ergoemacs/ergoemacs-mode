@@ -1345,7 +1345,7 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
       (setq keys (read-kbd-macro (key-description keys) t))
       (setq args (gethash keys ergoemacs-command-shortcuts-hash))
       (setq one (nth 0 args)))
-    (ergoemacs-read-key (nth 0 args))
+    (ergoemacs-read-key keys)
     (setq ergoemacs-single-command-keys nil)))
 
 (defun ergoemacs-shortcut-movement (&optional opt-args)
