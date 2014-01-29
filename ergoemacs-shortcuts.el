@@ -260,34 +260,57 @@ This sequence is compatible with `listify-key-sequence'."
 (defvar ergoemacs-alt-text (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "M-q")))
 (defvar ergoemacs-alt-ctl-text (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "C-M-q")))
 
-(defun ergoemacs-read-event (type &optional pretty-key extra-txt)
+(defun ergoemacs-read-event (type &optional pretty-key extra-txt universal)
   "Reads a single event of TYPE."
-  (let ((local-keymap
+  (let ((universal universal)
+        (local-keymap
          (if type (symbol-value
                    (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))) nil))
         ret message-log-max (blink-on nil) tmp
         help-text)
-    (when type
-      (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-alt local-keymap t))
-      (when tmp
-        (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-alt-text)))
-      (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-ctl local-keymap t))
-      (when tmp
-        (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-ctl-text)))
-      (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-alt-ctl local-keymap t))
-      (when tmp
-        (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-alt-ctl-text)))
-      (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-quoted local-keymap t))
-      (when tmp
-        (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") "Quote")))      )
+    (unless universal
+      (when type
+        (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-alt local-keymap t))
+        (when tmp
+          (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-alt-text)))
+        (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-ctl local-keymap t))
+        (when tmp
+          (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-ctl-text)))
+        (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-alt-ctl local-keymap t))
+        (when tmp
+          (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-alt-ctl-text)))
+        (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-quoted local-keymap t))
+        (when tmp
+          (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") "Quote")))))
     (while (not ret)
       (unless (minibufferp)
         (message "%s%s%s%s%s%s\t%s"
                  (if ergoemacs-describe-key
                      "Describe key: " "")
                  (if current-prefix-arg
-                     (format "%s " current-prefix-arg)
-                   "")
+                     (format
+                      "%s%s %s "
+                      (cond
+                       ((listp current-prefix-arg)
+                        (make-string (round (log (nth 0 current-prefix-arg) 4)) ?u))
+                       (t current-prefix-arg))
+                      (if universal
+                          (if blink-on
+                              (if ergoemacs-read-blink
+                                  (ergoemacs-unicode-char
+                                   ergoemacs-read-blink "-")
+                                " ") " ") "")
+                      (ergoemacs-unicode-char "▸" ">"))
+                   (if universal
+                       (format "%s %s "
+                               (if universal
+                                   (if blink-on
+                                       (if ergoemacs-read-blink
+                                           (ergoemacs-unicode-char
+                                            ergoemacs-read-blink "-")
+                                         " ") " ") "")
+                               (ergoemacs-unicode-char "▸" ">"))
+                     ""))
                  (cond
                   ((eq type 'ctl-to-alt)
                    (format "<Ctl%sAlt> " 
@@ -300,15 +323,58 @@ This sequence is compatible with `listify-key-sequence'."
                  (or extra-txt
                      (if (eq type 'unchorded)
                          ergoemacs-ctl-text ""))
-                 (if blink-on
-                     (if ergoemacs-read-blink
-                         (ergoemacs-unicode-char
-                          ergoemacs-read-blink "-")
-                       "") "")
+                 (if universal ""
+                     (if blink-on
+                         (if ergoemacs-read-blink
+                             (ergoemacs-unicode-char
+                              ergoemacs-read-blink "-")
+                           "") ""))
                  (if help-text
                      (concat "\nTranslations:" (substring help-text 1)) "")))
       (setq blink-on (not blink-on))
-      (setq ret (with-timeout (0.4 nil) (read-key))))
+      (setq ret (with-timeout (0.4 nil) (read-key)))
+      (when (and ret universal)
+        (cond
+         ((eq ret 45) ;; Negative argument
+          (cond
+           ((integerp current-prefix-arg)
+            (setq current-prefix-arg (- current-prefix-arg)))
+           ((eq current-prefix-arg '-)
+            (setq current-prefix-arg nil))
+           (t
+            (setq current-prefix-arg '-)))
+          (setq ret nil))
+         ((memq ret (number-sequence 48 57)) ;; Number
+          (setq ret (- ret 48)) ;; Actual Number.
+          (cond
+           ((and (integerp current-prefix-arg) (< 0 current-prefix-arg))
+            (setq current-prefix-arg (+ ret (* current-prefix-arg 10))))
+           ((and (integerp current-prefix-arg) (> 0 current-prefix-arg))
+            (setq current-prefix-arg (+ (- ret) (* current-prefix-arg 10))))
+           ((and (eq current-prefix-arg '-) (> ret 0))
+            (setq current-prefix-arg (- ret))
+            (setq ret nil))
+           (t
+            (setq current-prefix-arg ret)))
+          (setq ret nil))
+         ((member (key-description (vector ret)) (list "DEL" "<backspace>"))
+          (cond
+           ((and (integerp current-prefix-arg)
+                 (= 0 (truncate current-prefix-arg 10))
+                 (< 0 current-prefix-arg))
+            (setq current-prefix-arg nil)
+            (setq ret nil))
+           ((and (integerp current-prefix-arg)
+                 (= 0 (truncate current-prefix-arg 10))
+                 (> 0 current-prefix-arg))
+            (setq current-prefix-arg '-)
+            (setq ret nil))
+           ((integerp current-prefix-arg)
+            (setq current-prefix-arg (truncate current-prefix-arg 10))
+            (setq ret nil)))
+          )
+         )
+        ))
     (symbol-value 'ret)))
 
 (defgroup ergoemacs-read nil
