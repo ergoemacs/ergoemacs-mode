@@ -482,9 +482,32 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
     map)
   "Local keymap for `ergoemacs-read-key' with unchorded translation enabled.")
 
-(defun ergoemacs-read-key-call (function record-flag keys)
-  "Use `call-interactively' unless the function matches \"self-insert\"."
+(defun ergoemacs-read-key-call (function &optional record-flag keys)
+  "`ergoemacs-mode' replacement for `call-interactively'.
+
+This will call the function with the standard `call-interactively' unless:
+
+- `ergoemacs-describe-key' is non-nil.  In this case,
+   `describe-function' is called instead.
+
+-  The function name matches \"self-insert\", then it will send the keys
+   by `unread-command-events'.
+
+In addition, when the function is called:
+
+- Add the function count to `keyfreq-table' when `keyfreq-mode'
+  is enabled.
+
+- Remove `ergoemacs-this-command' count from `keyfreq-table' when
+  `keyfreq-mode' is enabled.
+
+- set `this-command' to the function called.
+
+"
   (cond
+   (ergoemacs-describe-key
+    (describe-function function)
+    (setq ergoemacs-describe-key nil))
    ((condition-case err
         (string-match "self-insert" (symbol-name function))
       (error nil))
@@ -493,7 +516,23 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
     (setq prefix-arg current-prefix-arg)
     (setq unread-command-events (append (listify-key-sequence keys) unread-command-events))
     (reset-this-command-lengths))
-   (t (call-interactively function record-flag keys))))
+   (t (call-interactively function record-flag keys)
+      (when (featurep 'keyfreq)
+        (when keyfreq-mode
+          (let ((command ergoemacs-this-command) count)
+            (setq count (gethash (cons major-mode command) keyfreq-table))
+            (cond
+             ((not count))
+             ((= count 1)
+              (remhash (cons major-mode command) keyfreq-table))
+             (count
+              (puthash (cons major-mode command) (- count 1)
+                       keyfreq-table)))
+            ;; Add local-fn to counter.
+            (setq count (gethash (cons major-mode function) keyfreq-table))
+            (puthash (cons major-mode function) (if count (+ count 1) 1)
+                     keyfreq-table))))
+      (setq this-command function))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
 (defvar ergoemacs-read-key-overriding-overlay-save nil)
@@ -919,7 +958,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
               (setq force-key t)
               (setq local-fn nil))
             (if local-fn
-                (call-interactively local-fn)
+                (ergoemacs-read-key-call local-fn)
               (setq pretty-key-undefined nil)
               ;; Now we have the 'next-key, try to find a function/keymap
               ;; completion.
@@ -1344,21 +1383,26 @@ Calls the function shortcut key defined in
 (defvar ergoemacs-shortcut-send-timer nil)
 
 (defvar ergoemacs-debug-shortcuts nil)
-
+(defvar ergoemacs-shortcut-function-binding-hash (make-hash-table :test 'equal))
 (defun ergoemacs-shortcut-function-binding (function &optional dont-ignore-menu)
   "Determine the global bindings for FUNCTION.
 
 This also considers archaic emacs bindings by looking at
 `ergoemacs-where-is-global-hash' (ie bindings that are no longer
 in effect)."
-  (or
-   (if dont-ignore-menu
-       (where-is-internal function (current-global-map))
-     (remove-if
-      '(lambda(x)
-         (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
-      (where-is-internal function (current-global-map))))
-   (gethash function ergoemacs-where-is-global-hash)))
+  (let ((ret (gethash (list function dont-ignore-menu) ergoemacs-shortcut-function-binding-hash)))
+    (if ret
+        (symbol-value 'ret)
+      (setq ret (or
+                 (if dont-ignore-menu
+                     (where-is-internal function (current-global-map))
+                   (remove-if
+                    '(lambda(x)
+                       (or (eq 'menu-bar (elt x 0)))) ; Ignore menu-bar functions
+                    (where-is-internal function (current-global-map))))
+                 (gethash function ergoemacs-where-is-global-hash)))
+      (puthash (list function dont-ignore-menu) ret ergoemacs-shortcut-function-binding-hash)
+      (symbol-value 'ret))))
 
 (defcustom ergoemacs-use-function-remapping t
   "Uses function remapping.
