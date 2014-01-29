@@ -1369,7 +1369,27 @@ Calls the function shortcut key defined in
 `ergoemacs-single-command-keys' or `this-single-command-keys'.
 "
   (interactive "P")
-  (ergoemacs-shortcut---internal))
+  (ergoemacs-shortcut---internal)
+  (when (and ergoemacs-mode ergoemacs-repeat-movement-commands
+             (called-interactively-p 'any)
+             (not cua--rectangle-overlays))
+    (set-temporary-overlay-map
+     (cond
+      ((eq ergoemacs-repeat-movement-commands 'single)
+       (unless (where-is-internal last-command (list (intern (concat "ergoemacs-fast-" (symbol-name this-command) "-keymap"))) t)
+         (setq ergoemacs-check-mode-line-change (list (intern (concat "ergoemacs-fast-" (symbol-name this-command) "-keymap"))))
+         (message (format "Repeat last movement(%s) key: %%s" (symbol-name this-command))
+                  (replace-regexp-in-string
+                   "M-" "" (key-description (this-single-command-keys))))
+         (ergoemacs-mode-line (format " %sSingle" (ergoemacs-unicode-char "↔" "<->"))))
+       ,(intern (concat "ergoemacs-fast-" (symbol-name this-command) "-keymap")))
+      ((eq ergoemacs-repeat-movement-commands 'all)
+       (unless (where-is-internal last-command (list ergoemacs-full-fast-keys-keymap) t)
+         (setq ergoemacs-check-mode-line-change (list ergoemacs-full-fast-keys-keymap))
+         ;; (message "Repeating movement keys installed")
+         (ergoemacs-mode-line (format " %sFull" (ergoemacs-unicode-char "↔" "<->"))))
+       ergoemacs-full-fast-keys-keymap)
+      (t (intern (concat "ergoemacs-fast-" (symbol-name this-command) "-keymap")))) t)))
 
 (defun ergoemacs-shortcut (&optional opt-args)
   "Shortcut for other key/function for non-movement keys.
@@ -1535,9 +1555,6 @@ user-defined keys.
         (setq ret (append ret2 ret)))
       (symbol-value 'ret))))
 
-(defvar ergoemacs-send-fn-keys-fns '(ergoemacs-undefined ergoemacs-shortcut)
-  "List of functions where `unread-command-events' are sent with `ergoemacs-send-fn'.")
-
 (defun ergoemacs-shortcut-remap (function &optional keys)
   "Runs the FUNCTION or whatever `ergoemacs-shortcut-remap-list' returns.
 Will use KEYS or `this-single-command-keys', if cannot find the
@@ -1550,18 +1567,7 @@ original key binding.
     (when fn-lst
       (setq send-keys (nth 2 (nth 0 fn-lst)))
       (setq fn (nth 0 (nth 0 fn-lst))))
-    (setq send-fn (memq ergoemacs-shortcut-send-fn ergoemacs-send-fn-keys-fns))
-    (cond
-     (send-fn
-      (ergoemacs-send-fn send-keys fn))
-     (t
-      (setq this-command (or (command-remapping fn (point)) fn))
-      (if (not ergoemacs-describe-key)
-          (call-interactively this-command)
-        (ergoemacs-shortcut-override-mode 1)
-        (describe-function this-command)
-        (ergoemacs-shortcut-override-mode -1)
-        (setq ergoemacs-describe-key nil))))))
+    (ergoemacs-read-key-call (or (command-remapping fn (point)) fn))))
 
 (defun ergoemacs-install-shortcuts-map (&optional map dont-complete)
   "Returns a keymap with shortcuts installed.
