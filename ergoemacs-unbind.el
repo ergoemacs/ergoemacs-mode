@@ -637,7 +637,8 @@
 (defun ergoemacs-undefined (&optional arg)
   "Ergoemacs Undefined key, tells where to perform the old action."
   (interactive "P")
-  (let* ((key (key-description (or ergoemacs-single-command-keys (this-single-command-keys))))
+  (let* ((key-kbd (or ergoemacs-single-command-keys (this-single-command-keys)))
+         (key (key-description key-kbd))
          (fn (assoc key ergoemacs-emacs-default-bindings))
          tmp
          (local-fn nil)
@@ -652,14 +653,14 @@
     (cond
      ((progn
         ;; See if this is present in the `ergoemacs-shortcut-keymap'
-        (setq local-fn (lookup-key ergoemacs-shortcut-keymap (read-kbd-macro key)))
+        (setq local-fn (lookup-key ergoemacs-shortcut-keymap key-kbd))
         (unless (functionp local-fn)
           ;; Lookup in ergoemacs-keymap
-          (setq local-fn (lookup-key ergoemacs-keymap (read-kbd-macro key))))
+          (setq local-fn (lookup-key ergoemacs-keymap key-kbd)))
         (functionp local-fn))
       (ergoemacs-debug "WARNING: The command %s is undefined when if shouldn't be..." local-fn)
       (ergoemacs-vars-sync) ;; Try to fix issue.
-      (setq tmp (key-binding (read-kbd-macro key)))
+      (setq tmp (key-binding key-kbd))
       (when (and tmp (not (equal tmp 'ergoemacs-undefined)))
         (setq local-fn tmp))
       (when (featurep 'keyfreq)
@@ -690,11 +691,9 @@
                  (condition-case err
                      (keymapp local-fn)
                    (error nil)))
-            (setq local-fn (lookup-key local-fn
-                                       (read-kbd-macro key)))
+            (setq local-fn (lookup-key local-fn key-kbd))
           (if (current-local-map)
-              (setq local-fn (lookup-key (current-local-map)
-                                         (read-kbd-macro key)))
+              (setq local-fn (lookup-key (current-local-map) key-kbd))
             (setq local-fn nil)))
         (functionp local-fn))
       (setq this-command local-fn) ; Don't record this command.
@@ -720,7 +719,7 @@
      (t
       ;; Not locally defined, complain.
       (beep)
-      (ergoemacs-where-is-old-binding (this-single-command-keys)))))
+      (ergoemacs-where-is-old-binding key-kbd))))
   (setq ergoemacs-describe-key nil))
 
 (defun ergoemacs-unbind-setup-keymap ()
