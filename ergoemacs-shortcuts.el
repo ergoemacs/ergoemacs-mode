@@ -405,7 +405,7 @@ universal argument can be entered.
             (setq current-prefix-arg ret)))
           (setq ret nil))
          ((and local-keymap (not current-prefix-arg)
-               (memq (lookup-key local-keymap (vector ret))()
+               (memq (lookup-key local-keymap (vector ret))
                      ergoemacs-universal-fns)) ;; Toggle to key-sequence.
           (setq ret nil)
           (setq universal nil))
@@ -688,6 +688,37 @@ In addition, when the function is called:
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
 (defvar ergoemacs-read-key-overriding-overlay-save nil)
+(defun ergoemacs-read-key-lookup-get-ret (fn)
+  "Get ret type for FN.
+Returns 'keymap for FN that is a keymap.
+If FN is a member of `ergoemacs-universal-fns', return 'universal
+
+If universal is returned, and type first-type is bound, set these
+to the appropriate values for `ergoemacs-read-key'.
+"
+  (let (ret)
+    (when (condition-case err (keymapp fn) nil)
+      ;; If keymap, continue.
+      (setq ret 'keymap))
+    (when (memq fn ergoemacs-universal-fns)
+      (setq ret 'universal)
+      (when (and (boundp 'type)
+                 (boundp 'first-type)
+                 (memq fn '(universal-argument ergoemacs-universal-argument)))
+        (setq type 'normal
+              first-type 'normal))
+      (when (and (boundp 'type)
+                 (boundp 'first-type)
+                 (memq fn '(ergoemacs-unchorded-universal-argument)))
+        (setq type 'unchorded
+              first-type 'unchorded))
+      (when (and (boundp 'type)
+                 (boundp 'first-type)
+                 (memq fn '(ergoemacs-ctl-to-alt-universal-argument)))
+        (setq type 'ctl-to-alt
+              first-type 'unchorded)))
+    (symbol-value 'ret)))
+
 (defun ergoemacs-read-key-lookup (prior-key prior-pretty-key key pretty-key force-key)
   "Lookup KEY and run if necessary.
 
@@ -806,26 +837,7 @@ FORCE-KEY forces keys like <escape> to work properly.
              ;; Global override
              ((progn
                 (setq fn (lookup-key ergoemacs-global-override-keymap key))
-                (when (condition-case err (keymapp fn) nil)
-                  ;; If keymap, continue.
-                  (setq ret 'keymap))
-                (when (memq fn ergoemacs-universal-fns)
-                  (setq ret 'universal)
-                  (when (and (boundp 'type)
-                             (boundp 'first-type)
-                             (memq fn '(universal-argument ergoemacs-universal-argument)))
-                    (setq type 'normal
-                          first-type 'normal))
-                  (when (and (boundp 'type)
-                             (boundp 'first-type)
-                             (memq fn '(ergoemacs-unchorded-universal-argument)))
-                    (setq type 'unchorded
-                          first-type 'unchorded))
-                  (when (and (boundp 'type)
-                             (boundp 'first-type)
-                             (memq fn '(ergoemacs-ctl-to-alt-universal-argument)))
-                    (setq type 'ctl-to-alt
-                          first-type 'unchorded)))
+                (setq ret (ergoemacs-read-key-lookup-get-ret fn))
                 (or ret (condition-case err
                             (interactive-form fn)
                           nil)))
@@ -851,26 +863,7 @@ FORCE-KEY forces keys like <escape> to work properly.
              ;; Is there an local override function?
              ((progn
                 (setq fn (ergoemacs-get-override-function key))
-                (when (condition-case err (keymapp fn) nil)
-                  ;; If keymap, continue.
-                  (setq ret 'keymap))
-                (when (memq fn ergoemacs-universal-fns)
-                  (setq ret 'universal)
-                  (when (and (boundp 'type)
-                             (boundp 'first-type)
-                             (memq fn '(universal-argument ergoemacs-universal-argument)))
-                    (setq type 'normal
-                          first-type 'normal))
-                  (when (and (boundp 'type)
-                             (boundp 'first-type)
-                             (memq fn '(ergoemacs-unchorded-universal-argument)))
-                    (setq type 'unchorded
-                          first-type 'unchorded))
-                  (when (and (boundp 'type)
-                             (boundp 'first-type)
-                             (memq fn '(ergoemacs-ctl-to-alt-universal-argument)))
-                    (setq type 'ctl-to-alt
-                          first-type 'unchorded)))
+                (setq ret (ergoemacs-read-key-lookup-get-ret fn))
                 (or ret (condition-case err (interactive-form fn) nil)))
               (unless ret
                 (ergoemacs-read-key-call fn nil key)
@@ -879,26 +872,7 @@ FORCE-KEY forces keys like <escape> to work properly.
              ((progn
                 (setq hash (gethash key ergoemacs-command-shortcuts-hash))
                 (setq fn (key-binding key))
-                (when (condition-case err (keymapp fn) nil)
-                  ;; If keymap, continue.
-                  (setq ret 'keymap))
-                (when (memq fn ergoemacs-universal-fns)
-                  (setq ret 'universal)
-                  (when (and (boundp 'type)
-                             (boundp 'first-type)
-                             (memq fn '(universal-argument ergoemacs-universal-argument)))
-                    (setq type 'normal
-                          first-type 'normal))
-                  (when (and (boundp 'type)
-                             (boundp 'first-type)
-                             (memq fn '(ergoemacs-unchorded-universal-argument)))
-                    (setq type 'unchorded
-                          first-type 'unchorded))
-                  (when (and (boundp 'type)
-                             (boundp 'first-type)
-                             (memq fn '(ergoemacs-ctl-to-alt-universal-argument)))
-                    (setq type 'ctl-to-alt
-                          first-type 'unchorded)))
+                (setq ret (ergoemacs-read-key-lookup-get-ret fn))
                 (or ret
                     (condition-case err
                         (interactive-form fn)
@@ -1026,29 +1000,27 @@ FORCE-KEY forces keys like <escape> to work properly.
                                   (setq ret 'keymap)
                                 (ergoemacs-with-global
                                  (key-binding key)))))))
-                (when (condition-case err (keymapp fn) nil)
-                  ;; If keymap, continue.
-                  (setq ret 'keymap))
-                (when (memq fn ergoemacs-universal-fns)
-                  (setq ret 'universal))
-                (condition-case err
-                    (interactive-form fn)
-                  nil))
-              (setq fn (or (command-remapping fn (point)) fn))
-              (setq ergoemacs-single-command-keys key)
-              (let (message-log-max)
-                (if (string= pretty-key-undefined pretty-key)
-                    (message "%s%s%s" pretty-key
+                (setq ret (ergoemacs-read-key-lookup-get-ret fn))
+                (or ret
+                    (condition-case err
+                        (interactive-form fn)
+                      nil)))
+              (unless ret
+                (setq fn (or (command-remapping fn (point)) fn))
+                (setq ergoemacs-single-command-keys key)
+                (let (message-log-max)
+                  (if (string= pretty-key-undefined pretty-key)
+                      (message "%s%s%s" pretty-key
+                               (ergoemacs-unicode-char "→" "->")
+                               fn)
+                    (message "%s%s%s (from %s)"
+                             pretty-key
                              (ergoemacs-unicode-char "→" "->")
-                             fn)
-                  (message "%s%s%s (from %s)"
-                           pretty-key
-                           (ergoemacs-unicode-char "→" "->")
-                           fn
-                           pretty-key-undefined)))
-              (ergoemacs-read-key-call fn nil key)
-              (setq ergoemacs-single-command-keys nil)
-              (setq ret 'function-global-or-override)))
+                             fn
+                             pretty-key-undefined)))
+                (ergoemacs-read-key-call fn nil key)
+                (setq ergoemacs-single-command-keys nil)
+                (setq ret 'function-global-or-override))))
           (when (and tmp-overlay (not ergoemacs-read-key-overriding-overlay-save))
             (delete-overlay tmp-overlay)))
         (symbol-value 'ret))
@@ -1180,6 +1152,7 @@ argument prompt.
                 (setq local-keymap
                       (symbol-value
                        (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map")))))
+            (setq curr-universal nil)
             (when (or (not (condition-case err (interactive-form local-fn) (error nil)))
                       (eq local-fn 'ergoemacs-read-key-swap))
               ;; Either the `ergoemacs-read-key-swap' is not applicable,
@@ -1275,6 +1248,9 @@ argument prompt.
                               key-trials nil
                               pretty-key-trial nil
                               current-prefix-arg '(4))
+                        (setq base (concat ":" (symbol-name type)
+                                           (if ergoemacs-read-shift-to-alt "-shift"
+                                             "")))
                         (throw 'ergoemacs-key-trials t))
                        ((and (eq local-fn 'universal)
                              (listp current-prefix-arg))
@@ -1286,6 +1262,9 @@ argument prompt.
                               key-trials nil
                               pretty-key-trial nil
                               current-prefix-arg (list (* 4 (nth 0 current-prefix-arg))))
+                        (setq base (concat ":" (symbol-name type)
+                                           (if ergoemacs-read-shift-to-alt "-shift"
+                                             "")))
                         (throw 'ergoemacs-key-trials t))
                        (local-fn
                         ;; Found exit
