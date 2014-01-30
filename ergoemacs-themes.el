@@ -202,7 +202,7 @@
     ("<apps> C-s" write-file "Save As")
     ("<apps> o" find-file "Open")
 
-    ("<apps> g" universal-argument "C-u")
+    ("<apps> g" ergoemacs-unchorded-universal-argument "Arg U")
     ("<apps> w" ergoemacs-close-current-buffer "Close")
     ("<apps> x" ergoemacs-cut-line-or-region "✂ region")
     ("<apps> c" ergoemacs-copy-line-or-region "copy")
@@ -343,6 +343,9 @@
 
 (defcustom ergoemacs-fixed-layout
   `(
+    ;; Ergoemacs-mode replacements
+    ("C-u" ergoemacs-universal-argument "Arg")
+    
     ;; General Shortcuts
     ("<M-backspace>" (undo-tree-undo undo) "↶ undo")
     ("<f5>" undo "↶ undo")

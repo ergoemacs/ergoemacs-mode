@@ -260,6 +260,31 @@ This sequence is compatible with `listify-key-sequence'."
 (defvar ergoemacs-alt-text (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "M-q")))
 (defvar ergoemacs-alt-ctl-text (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "C-M-q")))
 
+(defun ergoemacs-universal-argument (&optional type)
+  "Ergoemacs universal argument.
+This is called through `ergoemacs-read-key'"
+  (interactive)
+  (setq current-prefix-arg '(4))
+  (ergoemacs-read-key nil type nil t))
+
+(defun ergoemacs-unchorded-universal-argument (&optional type)
+  "Ergoemacs universal argument with unchorded translation setup
+This is called through `ergoemacs-read-key'"
+  (interactive)
+  (ergoemacs-universal-argument 'unchorded))
+
+(defun ergoemacs-ctl-to-alt-universal-argument (&optional type)
+  "Ergoemacs universal argument, with ctl-to-alt translation setup.
+This is called through `ergoemacs-read-key'"
+  (interactive)
+  (ergoemacs-universal-argument 'ctl-to-alt))
+(defvar ergoemacs-universal-fns
+  '(universal-argument
+    ergoemacs-universal-argument
+    ergoemacs-unchorded-universal-argument
+    ergoemacs-ctl-to-alt-universal-argument)
+  "Universal argument functions")
+
 (defun ergoemacs-read-event (type &optional pretty-key extra-txt universal)
   "Reads a single event of TYPE.
 
@@ -275,22 +300,24 @@ universal argument can be entered.
         (local-keymap
          (if type (symbol-value
                    (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))) nil))
+        (key-tag (intern (concat ":" (symbol-name type)
+                                 (if ergoemacs-read-shift-to-alt "-shift"
+                                   "") "-key")))
         ret message-log-max (blink-on nil) tmp
         help-text)
-    (unless universal
-      (when type
-        (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-alt local-keymap t))
-        (when tmp
-          (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-alt-text)))
-        (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-ctl local-keymap t))
-        (when tmp
-          (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-ctl-text)))
-        (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-alt-ctl local-keymap t))
-        (when tmp
-          (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-alt-ctl-text)))
-        (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-quoted local-keymap t))
-        (when tmp
-          (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") "Quote")))))
+    (when type
+      (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-alt local-keymap t))
+      (when tmp
+        (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-alt-text)))
+      (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-ctl local-keymap t))
+      (when tmp
+        (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-ctl-text)))
+      (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-alt-ctl local-keymap t))
+      (when tmp
+        (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-alt-ctl-text)))
+      (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-quoted local-keymap t))
+      (when tmp
+        (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") "Quote"))))
     (while (not ret)
       (unless (minibufferp)
         (message "%s%s%s%s%s%s\t%s"
@@ -342,11 +369,18 @@ universal argument can be entered.
                              (ergoemacs-unicode-char
                               ergoemacs-read-blink "-")
                            "") ""))
-                 (if help-text
+                 (if (and help-text (not universal))
                      (concat "\nTranslations:" (substring help-text 1)) "")))
       (setq blink-on (not blink-on))
       (setq ret (with-timeout (0.4 nil) (read-key)))
-      (when (and ret universal) ;; Handle universal arguments.
+      (cond
+       ((and ret (not universal)
+             (and local-keymap
+                  (memq (lookup-key local-keymap (vector ret))
+                        ergoemacs-universal-fns)))
+        (setq universal t)
+        (setq ret nil))
+       ((and ret universal) ;; Handle universal arguments.
         (cond
          ((eq ret 45) ;; Negative argument
           (cond
@@ -370,8 +404,38 @@ universal argument can be entered.
            (t
             (setq current-prefix-arg ret)))
           (setq ret nil))
-         ((member (key-description (vector ret)) (list "DEL" "<backspace>"))
+         ((and local-keymap (not current-prefix-arg)
+               (memq (lookup-key local-keymap (vector ret))()
+                     ergoemacs-universal-fns)) ;; Toggle to key-sequence.
+          (setq ret nil)
+          (setq universal nil))
+         ((let (ergoemacs-read-input-keys)
+            (or (memq (key-binding
+                       (plist-get
+                        (ergoemacs-translate (vector ret))
+                        key-tag))
+                      ergoemacs-universal-fns)
+                (and local-keymap
+                     (memq (lookup-key local-keymap (vector ret))
+                           ergoemacs-universal-fns))))
+          ;; Universal argument called.
           (cond
+           ((not current-prefix-arg)
+            (setq current-prefix-arg '(4))
+            (setq ret nil))
+           ((listp current-prefix-arg)
+            (setq current-prefix-arg (list (* (nth 0 current-prefix-arg) 4)))
+            (setq ret nil))
+           (t
+            (setq universal nil)
+            (setq ret nil))))
+         ((member (vector ret)
+                  (where-is-internal
+                   'ergoemacs-read-key-undo-last
+                   local-keymap))
+          ;; Allow backspace to edit universal arguments.
+          (cond
+           ((not current-prefix-arg)) ;; Exit  universal argument
            ((and (integerp current-prefix-arg)
                  (= 0 (truncate current-prefix-arg 10))
                  (< 0 current-prefix-arg))
@@ -390,7 +454,10 @@ universal argument can be entered.
                   (list (expt 4 (- (round (log (nth 0 current-prefix-arg) 4)) 1))))
             (if (equal current-prefix-arg '(1))
                 (setq current-prefix-arg nil))
-            (setq ret nil)))))))
+            (setq ret nil))
+           ((eq current-prefix-arg '-)
+            (setq current-prefix-arg nil)
+            (setq ret nil))))))))
     (symbol-value 'ret)))
 
 (defgroup ergoemacs-read nil
@@ -538,6 +605,7 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
         (no-ergoemacs-advice t))
     (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
     (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
+    (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
     map)
   "Local keymap for `ergoemacs-read-key' with normal translation enabled")
 
@@ -548,6 +616,7 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
     (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-alt)
     (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
     (define-key map (read-kbd-macro "DEL")  'ergoemacs-read-key-undo-last)
+    (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
     (define-key map "g" 'ergoemacs-read-key-next-key-is-quoted)
     map)
   "Local keymap for `ergoemacs-read-key' with ctl-to-alt translation enabled.")
@@ -560,6 +629,7 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
     (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
     (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
     (define-key map "G" 'ergoemacs-read-key-next-key-is-alt-ctl)
+    (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
     (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
     map)
   "Local keymap for `ergoemacs-read-key' with unchorded translation enabled.")
@@ -739,6 +809,23 @@ FORCE-KEY forces keys like <escape> to work properly.
                 (when (condition-case err (keymapp fn) nil)
                   ;; If keymap, continue.
                   (setq ret 'keymap))
+                (when (memq fn ergoemacs-universal-fns)
+                  (setq ret 'universal)
+                  (when (and (boundp 'type)
+                             (boundp 'first-type)
+                             (memq fn '(universal-argument ergoemacs-universal-argument)))
+                    (setq type 'normal
+                          first-type 'normal))
+                  (when (and (boundp 'type)
+                             (boundp 'first-type)
+                             (memq fn '(ergoemacs-unchorded-universal-argument)))
+                    (setq type 'unchorded
+                          first-type 'unchorded))
+                  (when (and (boundp 'type)
+                             (boundp 'first-type)
+                             (memq fn '(ergoemacs-ctl-to-alt-universal-argument)))
+                    (setq type 'ctl-to-alt
+                          first-type 'unchorded)))
                 (or ret (condition-case err
                             (interactive-form fn)
                           nil)))
@@ -767,6 +854,23 @@ FORCE-KEY forces keys like <escape> to work properly.
                 (when (condition-case err (keymapp fn) nil)
                   ;; If keymap, continue.
                   (setq ret 'keymap))
+                (when (memq fn ergoemacs-universal-fns)
+                  (setq ret 'universal)
+                  (when (and (boundp 'type)
+                             (boundp 'first-type)
+                             (memq fn '(universal-argument ergoemacs-universal-argument)))
+                    (setq type 'normal
+                          first-type 'normal))
+                  (when (and (boundp 'type)
+                             (boundp 'first-type)
+                             (memq fn '(ergoemacs-unchorded-universal-argument)))
+                    (setq type 'unchorded
+                          first-type 'unchorded))
+                  (when (and (boundp 'type)
+                             (boundp 'first-type)
+                             (memq fn '(ergoemacs-ctl-to-alt-universal-argument)))
+                    (setq type 'ctl-to-alt
+                          first-type 'unchorded)))
                 (or ret (condition-case err (interactive-form fn) nil)))
               (unless ret
                 (ergoemacs-read-key-call fn nil key)
@@ -778,6 +882,23 @@ FORCE-KEY forces keys like <escape> to work properly.
                 (when (condition-case err (keymapp fn) nil)
                   ;; If keymap, continue.
                   (setq ret 'keymap))
+                (when (memq fn ergoemacs-universal-fns)
+                  (setq ret 'universal)
+                  (when (and (boundp 'type)
+                             (boundp 'first-type)
+                             (memq fn '(universal-argument ergoemacs-universal-argument)))
+                    (setq type 'normal
+                          first-type 'normal))
+                  (when (and (boundp 'type)
+                             (boundp 'first-type)
+                             (memq fn '(ergoemacs-unchorded-universal-argument)))
+                    (setq type 'unchorded
+                          first-type 'unchorded))
+                  (when (and (boundp 'type)
+                             (boundp 'first-type)
+                             (memq fn '(ergoemacs-ctl-to-alt-universal-argument)))
+                    (setq type 'ctl-to-alt
+                          first-type 'unchorded)))
                 (or ret
                     (condition-case err
                         (interactive-form fn)
@@ -857,23 +978,41 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq ret 'shortcut-workaround))
                  (t
                   (setq fn (or (command-remapping fn (point)) fn))
-                  (setq ergoemacs-single-command-keys key)
-                  (when (and ergoemacs-echo-function
-                             (boundp 'pretty-key-undefined))
-                    (let (message-log-max)
-                      (if (string= pretty-key-undefined pretty-key)
-                          (when (eq ergoemacs-echo-function t)
-                            (message "%s%s%s" pretty-key
-                                     (ergoemacs-unicode-char "→" "->")
-                                     (symbol-name fn)))
-                        (message "%s%s%s (from %s)"
-                                 pretty-key
-                                 (ergoemacs-unicode-char "→" "->")
-                                 (symbol-name fn)
-                                 pretty-key-undefined))))
-                  (ergoemacs-read-key-call fn nil key)
-                  (setq ergoemacs-single-command-keys nil)
-                  (setq ret 'function)))))
+                  (when (memq fn ergoemacs-universal-fns)
+                    (setq ret 'universal)
+                    (when (and (boundp 'type)
+                               (boundp 'first-type)
+                               (memq fn '(universal-argument ergoemacs-universal-argument)))
+                      (setq type 'normal
+                            first-type 'normal))
+                    (when (and (boundp 'type)
+                               (boundp 'first-type)
+                               (memq fn '(ergoemacs-unchorded-universal-argument)))
+                      (setq type 'unchorded
+                            first-type 'unchorded))
+                    (when (and (boundp 'type)
+                               (boundp 'first-type)
+                               (memq fn '(ergoemacs-ctl-to-alt-universal-argument)))
+                      (setq type 'ctl-to-alt
+                            first-type 'unchorded)))
+                  (unless ret
+                    (setq ergoemacs-single-command-keys key)
+                    (when (and ergoemacs-echo-function
+                               (boundp 'pretty-key-undefined))
+                      (let (message-log-max)
+                        (if (string= pretty-key-undefined pretty-key)
+                            (when (eq ergoemacs-echo-function t)
+                              (message "%s%s%s" pretty-key
+                                       (ergoemacs-unicode-char "→" "->")
+                                       (symbol-name fn)))
+                          (message "%s%s%s (from %s)"
+                                   pretty-key
+                                   (ergoemacs-unicode-char "→" "->")
+                                   (symbol-name fn)
+                                   pretty-key-undefined))))
+                    (ergoemacs-read-key-call fn nil key)
+                    (setq ergoemacs-single-command-keys nil)
+                    (setq ret 'function))))))
              ;; Does this call an override or major/minor mode function?
              ((progn
                 (setq fn (or
@@ -890,6 +1029,8 @@ FORCE-KEY forces keys like <escape> to work properly.
                 (when (condition-case err (keymapp fn) nil)
                   ;; If keymap, continue.
                   (setq ret 'keymap))
+                (when (memq fn ergoemacs-universal-fns)
+                  (setq ret 'universal))
                 (condition-case err
                     (interactive-form fn)
                   nil))
@@ -915,7 +1056,7 @@ FORCE-KEY forces keys like <escape> to work properly.
     (when ergoemacs-single-command-keys
       (setq ergoemacs-read-input-keys nil))))
 
-(defun ergoemacs-read-key (&optional key type initial-key-type)
+(defun ergoemacs-read-key (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
 read the whole keymap.
@@ -925,6 +1066,9 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
 
 INITIAL-KEY-TYPE represents the translation type for the initial KEY.
 It can be: 'ctl-to-alt 'unchorded 'normal.
+
+UNIVERSAL allows ergoemacs-read-key to start with universal
+argument prompt.
 "
   (let ((continue-read t)
         (real-type (or type 'normal))
@@ -943,6 +1087,8 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
         force-key
         key-trials
         real-read
+        (first-universal universal)
+        (curr-universal nil)
         input tmp)
     (setq input (ergoemacs-to-sequence key)
           key nil)
@@ -957,6 +1103,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
             force-key nil)
       (when (and (not input) real-type)
         (setq type real-type)
+        (setq curr-universal first-universal)
         (setq base (concat ":" (symbol-name type)
                            (if ergoemacs-read-shift-to-alt "-shift"
                              "")))
@@ -965,13 +1112,12 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
                (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
         (setq real-type nil))
       (setq real-read (not input))
-      (setq next-key
-                (ergoemacs-translate
-                 (vector
-                  (or (pop input)
-                      ;; Echo key sequence
-                      ;; get next key
-                      (ergoemacs-read-event type pretty-key)))))
+      (setq next-key (vector
+                      (or (pop input)
+                          ;; Echo key sequence
+                          ;; get next key
+                          (ergoemacs-read-event type pretty-key nil curr-universal))))
+      (setq next-key (ergoemacs-translate next-key))
       (setq tmp (plist-get next-key ':normal))
       (when (string= tmp "ESC")
         (setq tmp "<escape>"))
@@ -992,7 +1138,7 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
                            "<Unchorded> ")
                           (t
                            ""))
-                         pretty-key 
+                         (or pretty-key "") 
                          (if ergoemacs-use-ergoemacs-key-descriptions
                              (plist-get next-key ':normal-pretty)
                            (plist-get next-key ':normal)))))
@@ -1022,7 +1168,8 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
                     local-keymap
                     (symbol-value
                      (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map")))))
-          (if (eq local-fn 'ergoemacs-read-key-swap)
+          (if (and (eq local-fn 'ergoemacs-read-key-swap)
+                   (or (not curr-universal) key))
               (progn
                 ;; Swap translation
                 (setq type (ergoemacs-read-key-swap first-type type)
@@ -1117,6 +1264,28 @@ It can be: 'ctl-to-alt 'unchorded 'normal.
                                            (if ergoemacs-read-shift-to-alt "-shift"
                                              "")))
                         ;; Found, exit
+                        (throw 'ergoemacs-key-trials t))
+                       ((and (eq local-fn 'universal)
+                             (not current-prefix-arg))
+                        (setq curr-universal t
+                              continue-read t
+                              key nil
+                              pretty-key nil
+                              key-trial nil
+                              key-trials nil
+                              pretty-key-trial nil
+                              current-prefix-arg '(4))
+                        (throw 'ergoemacs-key-trials t))
+                       ((and (eq local-fn 'universal)
+                             (listp current-prefix-arg))
+                        (setq curr-universal t
+                              continue-read t
+                              key nil
+                              pretty-key nil
+                              key-trial nil
+                              key-trials nil
+                              pretty-key-trial nil
+                              current-prefix-arg (list (* 4 (nth 0 current-prefix-arg))))
                         (throw 'ergoemacs-key-trials t))
                        (local-fn
                         ;; Found exit
