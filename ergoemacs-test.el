@@ -706,6 +706,7 @@ Part of addressing Issue #147."
   "Page up/down keys hidden bug. (Issue #161)"
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (scroll-error-top-bottom t)
         (ret nil)
         (macro (edmacro-parse-keys "M-U" t))
         tmp (tmp-key (make-sparse-keymap)))
