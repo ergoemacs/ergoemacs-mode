@@ -289,7 +289,7 @@ This sequence is compatible with `listify-key-sequence'."
                      "Describe key: " "")
                  (if current-prefix-arg
                      (format
-                      "%s%s %s "
+                      "%s%s%s %s "
                       (cond
                        ((listp current-prefix-arg)
                         (make-string (round (log (nth 0 current-prefix-arg) 4)) ?u))
@@ -300,6 +300,9 @@ This sequence is compatible with `listify-key-sequence'."
                                   (ergoemacs-unicode-char
                                    ergoemacs-read-blink "-")
                                 " ") " ") "")
+                      (if (listp current-prefix-arg)
+                          (format " %s" current-prefix-arg)
+                        "")
                       (ergoemacs-unicode-char "▸" ">"))
                    (if universal
                        (format "%s %s "
@@ -632,6 +635,8 @@ FORCE-KEY forces keys like <escape> to work properly.
              tmp-overlay use-override
              ergoemacs-read-key-recursive
              tmp ret fn hash)
+        (when (or (equal key [3]) (equal key [24])) ;; C-c or C-x
+          (setq ergoemacs-shortcut-keys nil))
         (setq ergoemacs-read-key-recursive t)
         ;; Install overriding-terminal-local-map without
         ;; ergoemacs-read-key The composed map with ergoemacs-read-key
