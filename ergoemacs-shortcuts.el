@@ -628,7 +628,6 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (lookup-key ergoemacs-read-input-keymap prior-key)
                 (not (and (boundp 'ergoemacs-read-key-recursive)
                    ergoemacs-read-key-recursive))))
-             ;;; (progn (require 'ergoemacs-test) (ert "ergoemacs-test-page-up-down"))
              lookup
              tmp-overlay use-override
              ergoemacs-read-key-recursive
