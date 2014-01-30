@@ -713,32 +713,6 @@ Part of addressing Issue #147."
     (ergoemacs-mode 1)
     (should (equal ret t))))
 
-(ert-deftest ergoemacs-test-page-up-down ()
-  "Page up/down keys hidden bug. (Issue #161)"
-  (let ((old-ergoemacs-theme ergoemacs-theme)
-        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-        (scroll-error-top-bottom t)
-        (ret nil)
-        (macro (edmacro-parse-keys "M-U" t))
-        tmp)
-    (ergoemacs-mode -1)
-    (setq ergoemacs-theme "lvl3")
-    (setq ergoemacs-keyboard-layout "colemak")
-    (ergoemacs-mode 1)
-    (save-excursion
-      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-      (insert ergoemacs-test-lorem-ipsum)
-      (goto-char (point-max))
-      (execute-kbd-macro macro)
-      (when (looking-at "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed")
-        (setq ret t))
-      (kill-buffer (current-buffer)))
-    (ergoemacs-mode -1)
-    (setq ergoemacs-theme old-ergoemacs-theme)
-    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
-    (ergoemacs-mode 1)
-    (should (equal ret t))))
-
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
