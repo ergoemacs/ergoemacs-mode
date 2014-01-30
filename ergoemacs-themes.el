@@ -1177,6 +1177,14 @@ Some exceptions we don't want to unset.
          :set 'ergoemacs-set-default
          :group 'ergoemacs-mode))))
 
+(ergoemacs-deftheme lvl0
+  "Level 0 Ergoemacs, Emacs keys only."
+  nil
+  (setq ergoemacs-fixed-layout-tmp '())
+  (setq ergoemacs-variable-layout-tmp
+        '(("<apps>" 'execute-extended-command)))
+  (setq ergoemacs-redundant-keys-tmp '()))
+
 
 (ergoemacs-deftheme lvl1
   "Level 1 Ergoemacs, just arrow keys."
