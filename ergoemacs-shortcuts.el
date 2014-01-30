@@ -261,7 +261,16 @@ This sequence is compatible with `listify-key-sequence'."
 (defvar ergoemacs-alt-ctl-text (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "C-M-q")))
 
 (defun ergoemacs-read-event (type &optional pretty-key extra-txt universal)
-  "Reads a single event of TYPE."
+  "Reads a single event of TYPE.
+
+PRETTY-KEY represents the previous keys pressed in
+`ergoemacs-pretty-key' format.
+
+EXTRA-TXT changes the text before the prompt.
+
+UNIVERSAL tells that a universal argument has been pressed, or a
+universal argument can be entered.
+"
   (let ((universal universal)
         (local-keymap
          (if type (symbol-value
@@ -301,7 +310,8 @@ This sequence is compatible with `listify-key-sequence'."
                                    ergoemacs-read-blink "-")
                                 " ") " ") "")
                       (if (listp current-prefix-arg)
-                          (format " %s" current-prefix-arg)
+                          (format "%s" 
+                                  current-prefix-arg)
                         "")
                       (ergoemacs-unicode-char "▸" ">"))
                    (if universal
@@ -374,10 +384,13 @@ This sequence is compatible with `listify-key-sequence'."
             (setq ret nil))
            ((integerp current-prefix-arg)
             (setq current-prefix-arg (truncate current-prefix-arg 10))
-            (setq ret nil)))
-          )
-         )
-        ))
+            (setq ret nil))
+           ((listp current-prefix-arg)
+            (setq current-prefix-arg
+                  (list (expt 4 (- (round (log (nth 0 current-prefix-arg) 4)) 1))))
+            (if (equal current-prefix-arg '(1))
+                (setq current-prefix-arg nil))
+            (setq ret nil)))))))
     (symbol-value 'ret)))
 
 (defgroup ergoemacs-read nil
