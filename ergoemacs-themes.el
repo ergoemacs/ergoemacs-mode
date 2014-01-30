@@ -64,8 +64,8 @@
     ("M-H" ergoemacs-end-of-line-or-what "→ line/*")
     
     ;; Move by screen (page up/down)
-    ("M-I" scroll-down "↑ page")
-    ("M-K" scroll-up "↓ page")
+    ("M-I" (scroll-down-command scroll-down) "↑ page")
+    ("M-K" (scroll-up-command scroll-up) "↓ page")
     
     ;; Move to beginning/ending of file
     ("M-n" ergoemacs-beginning-or-end-of-buffer "↑ Top*")
