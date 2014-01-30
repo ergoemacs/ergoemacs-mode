@@ -333,7 +333,7 @@ This sequence is compatible with `listify-key-sequence'."
                      (concat "\nTranslations:" (substring help-text 1)) "")))
       (setq blink-on (not blink-on))
       (setq ret (with-timeout (0.4 nil) (read-key)))
-      (when (and ret universal)
+      (when (and ret universal) ;; Handle universal arguments.
         (cond
          ((eq ret 45) ;; Negative argument
           (cond
@@ -615,18 +615,25 @@ FORCE-KEY forces keys like <escape> to work properly.
   (prog1
       (let* (ergoemacs-read-input-keys
              ergoemacs-shortcut-override-mode
-             ;; Only turn on `ergoemacs-shortcut-keys' layer when the
+             ;; Turn on `ergoemacs-shortcut-keys' layer when the
              ;; prior-key is defined on `ergoemacs-read-input-keymap'.
              ;; This way keys like <apps> will read the from the
              ;; `ergoemacs-shortcut-keys' layer and then discontinue
              ;; reading from that layer.
+             ;;
+             ;; Also turn on ergoemacs-shortcut-keys as long as this
+             ;; isn't a recursive call.
              (ergoemacs-shortcut-keys
               (if prior-key
                   (lookup-key ergoemacs-read-input-keymap prior-key)
-                nil))
+                (not (and (boundp 'ergoemacs-read-key-recursive)
+                   ergoemacs-read-key-recursive))))
+             ;;; (progn (require 'ergoemacs-test) (ert "ergoemacs-test-page-up-down"))
              lookup
-             tmp-overlay use-override 
+             tmp-overlay use-override
+             ergoemacs-read-key-recursive
              tmp ret fn hash)
+        (setq ergoemacs-read-key-recursive t)
         ;; Install overriding-terminal-local-map without
         ;; ergoemacs-read-key The composed map with ergoemacs-read-key
         ;; will be installed on the ergoemacs-post-command-hook
