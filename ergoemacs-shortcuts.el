@@ -2069,11 +2069,11 @@ The keymaps are:
         (ergoemacs-debug-heading "Install shortcuts into overriding-local-map")
         (setq hashkey (md5 (format "override-local:%s"
                                    overriding-local-map)))
-        (setq orig-map (copy-keymap overriding-local-map))
+        (setq orig-map overriding-local-map)
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (if lookup
             (setq overriding-local-map lookup)
-          (ergoemacs-debug-keymap orig-map)
+          (ergoemacs-debug-keymap 'orig-map)
           (ergoemacs-install-shortcuts-map overriding-local-map)
           (setq override-read-map overriding-terminal-local-map) ;; Read map
           (define-key override-read-map [ergoemas-read] 'ignore)
