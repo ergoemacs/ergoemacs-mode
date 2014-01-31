@@ -223,11 +223,24 @@ installing the original keymap above the ergoemacs-mode installed keymap.
        (when ergoemacs-mode
          (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)))))
 
+(defgroup ergoemacs-read nil
+  "Options for ergoemacs-read-key."
+  :group 'ergoemacs-mode)
+
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined
 look for the command with or without modifiers."
   :type 'boolean
-  :group 'ergoemacs-mode)
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-translate-emacs-keys t
+  "When key is undefined, translate to an emacish key.
+
+For example in `org-mode' C-c C-n performs
+`outline-next-visible-heading'.  A QWERTY `ergoemacs-mode' key
+equivalent is <apps> f M-k.  When enabled, pressing this should also perfomr `outline-next-visible-heading'"
+  :type 'boolean
+  :group 'ergoemacs-read)
 
 (defvar ergoemacs-first-variant nil
   "First variant of `ergoemacs-read' key.")
@@ -459,10 +472,6 @@ universal argument can be entered.
             (setq current-prefix-arg nil)
             (setq ret nil))))))))
     (symbol-value 'ret)))
-
-(defgroup ergoemacs-read nil
-  "Options for ergoemacs-read-key."
-  :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-read-shift-to-alt t
   "When enabled, ergoemacs-mode translates Shift to Alt.
@@ -1178,6 +1187,35 @@ argument prompt.
               (when ergoemacs-read-shift-to-alt
                 (push (replace-regexp-in-string "-shift" "" base) key-trials))
               (push ":shift-translated" key-trials)
+              (when (and key ergoemacs-translate-emacs-keys)
+                (setq tmp (gethash (plist-get next-key
+                                              (intern (concat base "-key")))
+                                   ergoemacs-command-shortcuts-hash))
+                (when (and tmp
+                           (condition-case err
+                               (interactive-form (nth 0 tmp))
+                             (error nil)))
+                  (mapc
+                   (lambda(key)
+                     (let ((key-base (concat ":" (md5 (format "%s" key))))
+                           (ergoemacs-use-ergoemacs-key-descriptions t))
+                       ;; First add translation to next-key
+                       (setq next-key
+                             (plist-put next-key
+                                        (intern (concat key-base "-key"))
+                                        key))
+                       (setq next-key
+                             (plist-put next-key
+                                        (intern key-base)
+                                        (key-description key)))
+                       (setq next-key
+                             (plist-put next-key
+                                        (intern (concat key-base "-pretty"))
+                                        (ergoemacs-pretty-key
+                                         (plist-get next-key (intern key-base)))))
+                       ;; Now add to list to check.
+                       (push key-base key-trials)))
+                   (ergoemacs-shortcut-function-binding (nth 0 tmp)))))
               (when ergoemacs-translate-keys
                 (push ":raw" key-trials)
                 (push ":ctl" key-trials)
