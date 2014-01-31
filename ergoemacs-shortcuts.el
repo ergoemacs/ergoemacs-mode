@@ -271,6 +271,7 @@ This sequence is compatible with `listify-key-sequence'."
 
 (defvar ergoemacs-ctl-text (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "C-q")))
 (defvar ergoemacs-alt-text (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "M-q")))
+(defvar ergoemacs-shift-text (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "S-q")))
 (defvar ergoemacs-alt-ctl-text (replace-regexp-in-string "[qQ]" "" (ergoemacs-pretty-key "C-M-q")))
 
 (defun ergoemacs-universal-argument (&optional type)
@@ -319,6 +320,12 @@ universal argument can be entered.
         ret message-log-max (blink-on nil) tmp
         help-text)
     (when type
+      (cond
+       ((eq type 'unchorded)
+        (setq help-text (concat ", " ergoemacs-alt-text (ergoemacs-unicode-char "→" "->") (ergoemacs-pretty-key "")
+                                ", " ergoemacs-ctl-text (ergoemacs-unicode-char "→" "->") ergoemacs-alt-text))))
+      (when ergoemacs-read-shift-to-alt
+        (setq help-text (concat help-text ", " ergoemacs-shift-text (ergoemacs-unicode-char "→" "->") ergoemacs-alt-text)))
       (setq tmp (where-is-internal 'ergoemacs-read-key-next-key-is-alt local-keymap t))
       (when tmp
         (setq help-text (concat help-text ", " (ergoemacs-pretty-key (key-description tmp)) (ergoemacs-unicode-char "→" "->") ergoemacs-alt-text)))
