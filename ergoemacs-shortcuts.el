@@ -774,7 +774,7 @@ FORCE-KEY forces keys like <escape> to work properly.
         (when overriding-terminal-local-map
           (setq lookup (gethash
                         (md5
-                         (format "override-terminal-read: %s"
+                         (format "override-terminal-read:%s"
                                 overriding-terminal-local-map))
                         ergoemacs-extract-map-hash))
           (when lookup
@@ -785,7 +785,7 @@ FORCE-KEY forces keys like <escape> to work properly.
         (when overriding-local-map 
           (setq lookup (gethash
                         (md5
-                         (format "override-local-read: %s"
+                         (format "override-local-read:%s"
                                  overriding-local-map))
                         ergoemacs-extract-map-hash))
           (when lookup
@@ -2016,6 +2016,39 @@ Setup C-c and C-x keys to be described properly.")
                'keymap override-text-map)))
           (ergoemacs-debug-keymap 'override-text-map)))))))
 
+(defun ergoemacs-install-shortcut-up--internal (text keymap &optional dont-complete)
+  (let* ((keymap keymap)
+         read-map
+         (hashkey (md5 (format "%s:%s" text keymap)))
+         (orig-map (copy-keymap keymap))
+         (lookup (gethash hashkey ergoemacs-extract-map-hash)))
+    (if lookup
+        (progn
+          (setq keymap lookup))
+      (ergoemacs-install-shortcuts-map keymap dont-complete)
+      (setq read-map (copy-keymap keymap))
+      (define-key read-map [ergoemacs-read] 'ignore)
+      (setq keymap
+            (copy-keymap
+             (make-composed-keymap
+              (list ergoemacs-read-input-keymap keymap))))
+      
+      (define-key keymap [ergoemacs] 'ignore)
+      (puthash hashkey keymap ergoemacs-extract-map-hash)
+      (puthash (md5 (format "%s:%s" text read-map)) keymap ergoemacs-extract-map-hash)
+      ;; Save old map.
+      ;; Lookup map on either the composed or non-composed map
+      ;; gives the same original map
+      (setq hashkey (md5 (format "%s-orig:%s" text keymap)))
+      (puthash hashkey orig-map ergoemacs-extract-map-hash)
+      (setq hashkey (md5 (format "%s-orig:%s" text read-map)))
+      (puthash hashkey orig-map ergoemacs-extract-map-hash)
+      (setq hashkey (md5 (format "%s-read:%s" text keymap)))
+      (puthash hashkey read-map ergoemacs-extract-map-hash)
+      (setq hashkey (md5 (format "%s-read:%s" text read-map)))
+      (puthash hashkey read-map ergoemacs-extract-map-hash))
+    (symbol-value 'keymap)))
+
 (defun ergoemacs-install-shortcuts-up ()
   "Installs ergoemacs shortcuts into overriding keymaps.
 The keymaps are:
@@ -2034,68 +2067,16 @@ The keymaps are:
                   overriding-terminal-local-map [ergoemacs])
                  'ignore))
         (ergoemacs-debug-heading "Install shortcuts into overriding-terminal-local-map")
-        (setq hashkey (md5 (format "override-terminal:%s"
-                                   overriding-terminal-local-map)))
-        (setq orig-map (copy-keymap overriding-terminal-local-map))
-        (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
-        (if lookup
-            (setq overriding-terminal-local-map lookup) ;; input-keys
-          (ergoemacs-install-shortcuts-map overriding-terminal-local-map)
-          (setq override-read-map overriding-terminal-local-map)
-          (define-key override-read-map [ergoemacs-read] 'ignore)
-          ;; Put ergoemacs-read-input-keymap on the current keymap
-          (setq overriding-terminal-local-map
-                (make-composed-keymap
-                 ergoemacs-read-input-keymap overriding-terminal-local-map))
-          (define-key overriding-terminal-local-map [ergoemacs] 'ignore)
-          ;; Put read-input map in hash for original map and read-map
-          (puthash hashkey overriding-terminal-local-map
-                   ergoemacs-extract-map-hash)
-          (puthash (md5 (format "override-terminal:%s" override-read-map))
-                   ergoemacs-extract-map-hash)
-          ;; Save old map
-          (setq hashkey (md5 (format "override-terminal-orig:%s"
-                                     overriding-terminal-local-map)))
-          (puthash hashkey orig-map ergoemacs-extract-map-hash)
-          ;; Save the keymap without the read-input-keymap
-          (puthash (md5
-                    (format "override-terminal-read: %s"
-                            overriding-terminal-local-map))
-                   override-read-map ergoemacs-extract-map-hash))
-        (ergoemacs-debug-keymap 'overriding-terminal-local-map)))
+        (setq overriding-terminal-local-map 
+              (ergoemacs-install-shortcut-up--internal
+               "override-terminal" overriding-terminal-local-map))))
      (overriding-local-map
       (when  (not (eq (lookup-key overriding-local-map [ergoemacs])
                       'ignore))
         (ergoemacs-debug-heading "Install shortcuts into overriding-local-map")
-        (setq hashkey (md5 (format "override-local:%s"
-                                   overriding-local-map)))
-        (setq orig-map overriding-local-map)
-        (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
-        (if lookup
-            (setq overriding-local-map lookup)
-          (ergoemacs-debug-keymap 'orig-map)
-          (ergoemacs-install-shortcuts-map overriding-local-map)
-          (setq override-read-map overriding-terminal-local-map) ;; Read map
-          (define-key override-read-map [ergoemas-read] 'ignore)
-          (ergoemacs-debug-keymap override-read-map)
-          (setq overriding-local-map
-                (make-composed-keymap
-                 ergoemacs-read-input-keymap overriding-local-map)) ;; read-input-keymap
-          (define-key overriding-local-map [ergoemacs] 'ignore)
-          (ergoemacs-debug-keymap overriding-local-map)
-          (puthash hashkey overriding-local-map ergoemacs-extract-map-hash)
-          (puthash (md5 (format "override-local:%s"
-                                overriding-read-map)) overriding-local-map ergoemacs-extract-map-hash)
-          ;; Save old map.
-          (puthash (md5
-                    (format "override-local-read: %s"
-                            overriding-local-map))
-                   override-read-map ergoemacs-extract-map-hash)
-          (puthash (md5 (format "override-local-orig:%s"
-                                overriding-local-map)) orig-map ergoemacs-extract-map-hash)
-          (puthash (md5 (format "override-local-orig:%s"
-                                override-read-map)) orig-map ergoemacs-extract-map-hash))
-        (ergoemacs-debug-keymap 'overriding-local-map)))
+        (setq overriding-local-map
+              (ergoemacs-install-shortcut-up--internal
+               "override-local" overriding-local-map))))
      ((progn
         (setq override-text-map (get-char-property (point) 'keymap))
         (and (keymapp override-text-map)
@@ -2111,35 +2092,9 @@ The keymaps are:
                 (setq overlays (cdr overlays))
               (setq found overlay)
               (setq overlays nil))))
-        (setq hashkey (md5 (format "char-map:%s" override-text-map)))
-        (setq orig-map (copy-keymap override-text-map))
-        (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
-        (if lookup
-            (progn
-              (setq override-text-map lookup))
-          (ergoemacs-install-shortcuts-map override-text-map t)
-          (setq override-read-map (copy-keymap override-text-map))
-          (define-key override-read-map [ergoemacs-read] 'ignore)
-          (setq override-text-map
-                (copy-keymap
-                 (make-composed-keymap
-                  (list ergoemacs-read-input-keymap override-text-map))))
-          
-          (define-key override-text-map [ergoemacs] 'ignore)
-          (puthash hashkey override-text-map ergoemacs-extract-map-hash)
-          (puthash (md5 (format "char-map:%s" override-read-map)) override-text-map ergoemacs-extract-map-hash)
-          ;; Save old map.
-          
-          ;; Lookup map on either the composed or non-composed map
-          ;; gives the same original map
-          (setq hashkey (md5 (format "char-map-orig:%s" override-text-map)))
-          (puthash hashkey orig-map ergoemacs-extract-map-hash)
-          (setq hashkey (md5 (format "char-map-orig:%s" override-read-map)))
-          (puthash hashkey orig-map ergoemacs-extract-map-hash)
-          (setq hashkey (md5 (format "char-map-read:%s" override-text-map)))
-          (puthash hashkey override-read-map ergoemacs-extract-map-hash)
-          (setq hashkey (md5 (format "char-map-read:%s" override-read-map)))
-          (puthash hashkey override-read-map ergoemacs-extract-map-hash))
+        (setq override-text-map
+              (ergoemacs-install-shortcut-up--internal
+               "char-map" override-text-map t))
         (if found
             (overlay-put found 'keymap override-text-map)
           ;; Overlay not found; change text property
