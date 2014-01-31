@@ -1125,6 +1125,9 @@ argument prompt.
                                    ""))
                     local-keymap
                     (symbol-value
+                     (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
+              (setq local-keymap
+                    (symbol-value
                      (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map")))))
           (if (and (eq local-fn 'ergoemacs-read-key-swap)
                    (or (not curr-universal) key))
@@ -1139,7 +1142,11 @@ argument prompt.
                       (symbol-value
                        (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map")))))
             (setq curr-universal nil)
-            (when (or (not (condition-case err (interactive-form local-fn) (error nil)))
+            (when (or
+                   (not
+                    (condition-case err
+                        (interactive-form local-fn)
+                      (error nil)))
                       (eq local-fn 'ergoemacs-read-key-swap))
               ;; Either the `ergoemacs-read-key-swap' is not applicable,
               ;; or not specified correctly.  Therefore set local-fn to
@@ -1251,6 +1258,9 @@ argument prompt.
                         (setq base (concat ":" (symbol-name type)
                                            (if ergoemacs-read-shift-to-alt "-shift"
                                              "")))
+                        (setq local-keymap
+                              (symbol-value
+                               (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
                         ;; Found, exit
                         (throw 'ergoemacs-key-trials t))
                        ((and (eq local-fn 'universal)
@@ -1266,6 +1276,9 @@ argument prompt.
                         (setq base (concat ":" (symbol-name type)
                                            (if ergoemacs-read-shift-to-alt "-shift"
                                              "")))
+                        (setq local-keymap
+                              (symbol-value
+                               (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
                         (throw 'ergoemacs-key-trials t))
                        ((and (eq local-fn 'universal)
                              (listp current-prefix-arg))
@@ -1280,6 +1293,9 @@ argument prompt.
                         (setq base (concat ":" (symbol-name type)
                                            (if ergoemacs-read-shift-to-alt "-shift"
                                              "")))
+                        (setq local-keymap
+                              (symbol-value
+                               (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
                         (throw 'ergoemacs-key-trials t))
                        (local-fn
                         ;; Found exit
