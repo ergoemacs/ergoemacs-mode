@@ -559,6 +559,7 @@
       ("<f12>" isearch-ring-advance isearch-mode-map)
       ("S-<f11>" isearch-ring-advance isearch-mode-map)
       ("S-<f12>" isearch-ring-retreat isearch-mode-map)
+      ("<f2>" isearch-edit-string isearch-mode-map)
       ("C-S-f" isearch-occur isearch-mode-map)
       ("C-M-f" isearch-occur isearch-mode-map)
       (ergoemacs-paste isearch-yank-kill isearch-mode-map)
