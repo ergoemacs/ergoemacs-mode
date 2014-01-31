@@ -184,39 +184,9 @@ installing the original keymap above the ergoemacs-mode installed keymap.
      (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
      (unwind-protect
          (progn
-           ;; Remove ergoemacs-mode changes to
-           ;; overriding-terminal-local-map.
-           (when (and overriding-terminal-local-map
-                      (eq saved-overriding-map t)
-                      (or (eq (lookup-key
-                           overriding-terminal-local-map [ergoemacs]) 'ignore)
-                          (eq (lookup-key
-                               overriding-terminal-local-map [ergoemacs-read]) 'ignore)))
-             (setq hashkey (md5 (format "override-terminal-orig:%s" overriding-terminal-local-map)))
-             (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
-             (when lookup
-               (setq overriding-terminal-local-map lookup)))
-           
-           ;; Remove ergoemacs-mode changes to overriding-local-map
-           (when (and overriding-local-map
-                      (or (eq (lookup-key overriding-local-map [ergoemacs]) 'ignore)
-                          (eq (lookup-key overriding-local-map [ergoemacs-read]) 'ignore)))
-             (setq lookup (gethash (md5 (format "override-local-orig:%s" overriding-local-map)) ergoemacs-extract-map-hash))
-             (when lookup
-               (setq overriding-local-map lookup)))
-           
            ;; Install override-text-map changes above anything already
            ;; installed.
-           (setq override-text-map (get-char-property (point) 'keymap))
-           (when (and (keymapp override-text-map)
-                      (or (eq (lookup-key override-text-map [ergoemacs]) 'ignore)
-                          (eq (lookup-key override-text-map [ergoemacs-read]) 'ignore)))
-             (setq lookup (gethash (md5 (format "char-map-orig:%s" override-text-map)) ergoemacs-extract-map-hash))
-             (when lookup
-               (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
-                                               (min (+ (point) 1) (point-max))))
-               (overlay-put tmp-overlay 'keymap lookup)
-               (overlay-put tmp-overlay 'priority 536870911)))
+           (setq tmp-overlay (ergoemacs-remove-shortcuts t))
            ,@body)
        (when tmp-overlay
          (delete-overlay tmp-overlay))
@@ -1958,10 +1928,11 @@ Setup C-c and C-x keys to be described properly.")
         (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
       (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist))))
 
-(defun ergoemacs-remove-shortcuts ()
+(defun ergoemacs-remove-shortcuts (&optional create-overlay)
   "Removes ergoemacs shortcuts from keymaps."
   (let ((inhibit-read-only t)
-        hashkey lookup override-text-map override orig-map)
+        hashkey lookup override-text-map override orig-map
+        tmp-overlay)
     (cond
      ((and overriding-terminal-local-map
            (eq saved-overriding-map t))
@@ -1993,7 +1964,7 @@ Setup C-c and C-x keys to be described properly.")
                  (eq (lookup-key override-text-map [ergoemacs-read]) 'ignore))))
       (let ((overlays (overlays-at (point)))
             found)
-        (while overlays
+        (while (and overlays (not create-overlay))
           (let* ((overlay (car overlays))
                  (overlay-keymap (overlay-get overlay 'keymap)))
             (if (not (equal overlay-keymap override-text-map))
@@ -2005,16 +1976,22 @@ Setup C-c and C-x keys to be described properly.")
         (when lookup
           (ergoemacs-debug-heading "Remove ergoemacs from (get-char-property (point) 'keymap)")
           (setq override-text-map lookup)
-          (if found
-              (overlay-put found 'keymap override-text-map)
-            (when (and (previous-single-property-change (point) 'keymap)
-                       (next-single-property-change (point) 'keymap))
-              (ergoemacs-debug "Put into text properties")
-              (put-text-property
-               (previous-single-property-change (point) 'keymap)
-               (next-single-property-change (point) 'keymap)
-               'keymap override-text-map)))
-          (ergoemacs-debug-keymap 'override-text-map)))))))
+          (if (not create-overlay)
+              (if found
+                  (overlay-put found 'keymap override-text-map)
+                (when (and (previous-single-property-change (point) 'keymap)
+                           (next-single-property-change (point) 'keymap))
+                  (ergoemacs-debug "Put into text properties")
+                  (put-text-property
+                   (previous-single-property-change (point) 'keymap)
+                   (next-single-property-change (point) 'keymap)
+                   'keymap override-text-map)))
+            (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
+                                            (min (+ (point) 1) (point-max))))
+            (overlay-put tmp-overlay 'keymap lookup)
+            (overlay-put tmp-overlay 'priority 536870911))
+          (ergoemacs-debug-keymap 'override-text-map)))))
+    (symbol-value 'tmp-overlay)))
 
 (defun ergoemacs-install-shortcut-up--internal (text keymap &optional dont-complete)
   (let* ((keymap keymap)
