@@ -394,7 +394,7 @@ universal argument can be entered.
            (t
             (setq current-prefix-arg ret)))
           (setq ret nil))
-         ((and local-keymap (not current-prefix-arg)
+         ((and local-keymap
                (memq (lookup-key local-keymap (vector ret))
                      ergoemacs-universal-fns)) ;; Toggle to key-sequence.
           (setq ret nil)
