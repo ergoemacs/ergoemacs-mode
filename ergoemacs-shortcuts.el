@@ -1054,27 +1054,18 @@ argument prompt.
         input tmp)
     (setq input (ergoemacs-to-sequence key)
           key nil)
-    (setq local-keymap
-          (symbol-value
-           (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
-    (setq base (concat ":" (symbol-name type)
-                       (if ergoemacs-read-shift-to-alt "-shift"
-                         "")))
     (while continue-read
       (setq continue-read nil
             force-key nil)
       (when (and (not input) real-type)
         (setq type real-type)
         (setq curr-universal first-universal)
-        (setq base (concat ":" (symbol-name type)
-                           (if ergoemacs-read-shift-to-alt "-shift"
-                             "")))
-        (setq local-keymap
-              (symbol-value
-               (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
         (setq real-type nil))
-      (setq real-read (not input))
-      (setq next-key (vector
+      (setq real-read (not input)
+            base (concat ":" (symbol-name type)
+                         (if ergoemacs-read-shift-to-alt "-shift"
+                           ""))
+            next-key (vector
                       (or (pop input)
                           ;; Echo key sequence
                           ;; get next key
@@ -1107,6 +1098,9 @@ argument prompt.
             (setq ergoemacs-describe-key nil))
         (setq tmp (plist-get next-key ':normal-key))
         ;; See if there is a local equivalent of this...
+        (setq local-keymap
+              (symbol-value
+               (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
         (if real-read
             (setq local-fn (lookup-key local-keymap tmp))
           (setq local-fn nil))
@@ -1123,28 +1117,13 @@ argument prompt.
                     key-trial nil
                     key-trials nil
                     pretty-key-trial nil
-                    pretty-key nil)
-              (setq base (concat ":" (symbol-name type)
-                                 (if ergoemacs-read-shift-to-alt "-shift"
-                                   ""))
-                    local-keymap
-                    (symbol-value
-                     (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
-              (setq local-keymap
-                    (symbol-value
-                     (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map")))))
+                    pretty-key nil))
           (if (and (eq local-fn 'ergoemacs-read-key-swap)
                    (or (not curr-universal) key))
               (progn
                 ;; Swap translation
                 (setq type (ergoemacs-read-key-swap first-type type)
-                      continue-read t)
-                (setq base (concat ":" (symbol-name type)
-                                   (if ergoemacs-read-shift-to-alt "-shift"
-                                     "")))
-                (setq local-keymap
-                      (symbol-value
-                       (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map")))))
+                      continue-read t))
             (setq curr-universal nil)
             (when (or
                    (not
@@ -1259,12 +1238,6 @@ argument prompt.
                               key-trials nil
                               pretty-key-trial nil
                               first-type (nth 2 local-fn))
-                        (setq base (concat ":" (symbol-name type)
-                                           (if ergoemacs-read-shift-to-alt "-shift"
-                                             "")))
-                        (setq local-keymap
-                              (symbol-value
-                               (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
                         ;; Found, exit
                         (throw 'ergoemacs-key-trials t))
                        ((and (eq local-fn 'universal)
@@ -1277,12 +1250,6 @@ argument prompt.
                               key-trials nil
                               pretty-key-trial nil
                               current-prefix-arg '(4))
-                        (setq base (concat ":" (symbol-name type)
-                                           (if ergoemacs-read-shift-to-alt "-shift"
-                                             "")))
-                        (setq local-keymap
-                              (symbol-value
-                               (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
                         (throw 'ergoemacs-key-trials t))
                        ((and (eq local-fn 'universal)
                              (listp current-prefix-arg))
@@ -1294,12 +1261,6 @@ argument prompt.
                               key-trials nil
                               pretty-key-trial nil
                               current-prefix-arg (list (* 4 (nth 0 current-prefix-arg))))
-                        (setq base (concat ":" (symbol-name type)
-                                           (if ergoemacs-read-shift-to-alt "-shift"
-                                             "")))
-                        (setq local-keymap
-                              (symbol-value
-                               (intern (concat "ergoemacs-read-key-" (symbol-name type) "-local-map"))))
                         (throw 'ergoemacs-key-trials t))
                        (local-fn
                         ;; Found exit
