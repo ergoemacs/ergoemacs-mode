@@ -599,7 +599,7 @@ Currently will replace the :normal :unchorded and :ctl-to-alt properties."
   (let ((map (make-sparse-keymap))
         (no-ergoemacs-advice t))
     (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
-    (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-alt)
+    (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-ctl)
     (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
     (define-key map (read-kbd-macro "DEL")  'ergoemacs-read-key-undo-last)
     (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
