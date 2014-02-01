@@ -1043,11 +1043,12 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
             (replace-match (format "%sTab"
                                    (ergoemacs-unicode-char "↹" "")) t))
           (goto-char (point-min))
-          (while (re-search-forward "\\(menu\\|apps\\)>" nil t)
+          (while (re-search-forward "\\(menu\\|apps\\)" nil t)
             (unless (or (save-match-data (looking-at "-bar"))
-                        (save-match-data (not (looking-back "-"))))
-              (replace-match (format "%sMenu>"
-                                     (ergoemacs-unicode-char "▤" "")) t)))
+                        ;; (save-match-data (not (looking-back "-")))
+                        )
+              (replace-match (format "%s"
+                                     (ergoemacs-unicode-char "▤" "Menu")) t)))
           (goto-char (point-min))
           (while (re-search-forward "prior>" nil t)
             (replace-match "PgUp>" t))
