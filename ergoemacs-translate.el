@@ -299,7 +299,6 @@ and `ergoemacs-pretty-key' descriptions.
           (setq ret (plist-put ret ':alt-ctl-shift-key (read-kbd-macro (plist-get ret ':alt-ctl-shift) t)))
           (setq ret (plist-put ret ':alt-ctl-shift-pretty (ergoemacs-pretty-key (plist-get ret ':alt-ctl-shift))))
           (puthash orig-key (symbol-value 'ret) ergoemacs-translate-hash)
-          (puthash (plist-get ret ':normal-key) (symbol-value 'ret) ergoemacs-translate-hash)
           (symbol-value 'ret)))))
 
 (defun ergoemacs-setup-translation (layout &optional base-layout)
