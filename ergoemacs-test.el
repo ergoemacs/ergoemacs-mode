@@ -717,7 +717,6 @@ Part of addressing Issue #147."
   "Test that shift selection works properly in reduction."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-        (macro (edmacro-parse-keys "M-E M-E" t))
         (ret nil))
     (ergoemacs-mode -1)
     (setq ergoemacs-theme "reduction")
@@ -727,7 +726,7 @@ Part of addressing Issue #147."
       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
       (insert ergoemacs-test-lorem-ipsum)
       (goto-char (point-min))
-      (execute-kbd-macro (edmacro-parse-keys macro t))
+      (execute-kbd-macro (edmacro-parse-keys "M-E M-E" t))
       (call-interactively 'ergoemacs-cut-line-or-region)
       (setq ret (= (point) (point-min)))
       (kill-buffer (current-buffer)))
