@@ -1604,7 +1604,8 @@ Calls the function shortcut key defined in
 `ergoemacs-single-command-keys' or `this-single-command-keys'.
 "
   (interactive "P")
-  (ergoemacs-shortcut---internal)
+  (let (ergoemacs-read-shift-to-alt)
+    (ergoemacs-shortcut---internal))
   (when (and ergoemacs-mode ergoemacs-repeat-movement-commands
              (called-interactively-p 'any)
              (not cua--rectangle-overlays))
