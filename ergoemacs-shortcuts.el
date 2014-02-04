@@ -801,7 +801,33 @@ FORCE-KEY forces keys like <escape> to work properly.
                          (ergoemacs-pretty-key (key-description tmp)))
                 (setq ergoemacs-describe-key nil)
                 (setq ret 'translate))
+               ((and (vectorp tmp)
+                     (progn
+                       (setq fn (key-binding tmp))
+                       (condition-case err
+                           (interactive-form fn)
+                         (error nil))))
+                (setq fn (or (command-remapping fn (point)) fn))
+                (setq ergoemacs-single-command-keys key)
+                (when (and ergoemacs-echo-function
+                           (boundp 'pretty-key-undefined))
+                  (let (message-log-max)
+                    (if (string= pretty-key-undefined pretty-key)
+                        (when (eq ergoemacs-echo-function t)
+                          (message "%s%s%s" pretty-key
+                                   (ergoemacs-unicode-char "→" "->")
+                                   (symbol-name fn)))
+                      (message "%s%s%s (from %s)"
+                               pretty-key
+                               (ergoemacs-unicode-char "→" "->")
+                               (symbol-name fn)
+                               pretty-key-undefined))))
+                (ergoemacs-read-key-call fn nil key)
+                (setq ergoemacs-single-command-keys nil)
+                (setq ret 'translate-fn))
                ((vectorp tmp)
+                (setq ergoemacs-mark-active
+                      (or (and mark-active transient-mark-mode) mark-active))
                 (setq ergoemacs-single-command-keys nil)
                 (setq last-input-event tmp)
                 (setq prefix-arg current-prefix-arg)
@@ -876,7 +902,8 @@ FORCE-KEY forces keys like <escape> to work properly.
                   ;; List in form of key type first-type
                   (setq ret (list (nth 0 hash) (nth 1 hash) (nth 1 hash))))
                  ((and hash (eq 'string (type-of (nth 0 hash))))
-                  (setq ergoemacs-mark-active mark-active)
+                  (setq ergoemacs-mark-active
+                        (or (and mark-active transient-mark-mode) mark-active))
                   (setq ergoemacs-single-command-keys key)
                   (setq prefix-arg current-prefix-arg)
                   (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events))
@@ -929,7 +956,8 @@ FORCE-KEY forces keys like <escape> to work properly.
                   ;; There is some issue with these keys.  Read-key thinks it
                   ;; is in a minibuffer, so the recurive minibuffer error is
                   ;; raised unless these are put into unread-command-events.
-                  (setq ergoemacs-mark-active mark-active)
+                  (setq ergoemacs-mark-active
+                        (or (and mark-active transient-mark-mode) mark-active))
                   (setq ergoemacs-single-command-keys key)
                   (setq prefix-arg current-prefix-arg)
                   (setq unread-command-events
