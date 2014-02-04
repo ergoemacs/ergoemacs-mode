@@ -714,8 +714,7 @@ Part of addressing Issue #147."
     (should (equal ret t))))
 
 (ert-deftest ergoemacs-test-shift-selection-reduction ()
-  "Test that shift selection works properly.
-Issue #137."
+  "Test that shift selection works properly in reduction."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
         (macro (edmacro-parse-keys "M-E M-E" t))
