@@ -804,6 +804,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                ((and (vectorp tmp)
                      (progn
                        (setq fn (key-binding tmp))
+                       (when (condition-case err
+                                 (string-match "self-insert" (symbol-name fn))
+                               (error nil))
+                         (setq fn nil))
                        (condition-case err
                            (interactive-form fn)
                          (error nil))))
