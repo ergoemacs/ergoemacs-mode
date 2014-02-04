@@ -658,8 +658,9 @@ In addition, when the function is called:
     (setq prefix-arg current-prefix-arg)
     (setq unread-command-events (append (listify-key-sequence keys) unread-command-events))
     (reset-this-command-lengths))
-   (t (call-interactively function record-flag keys)
-      (when (featurep 'keyfreq)
+   (t
+    (setq this-command function)
+    (when (featurep 'keyfreq)
         (when keyfreq-mode
           (let ((command ergoemacs-this-command) count)
             (setq count (gethash (cons major-mode command) keyfreq-table))
@@ -674,7 +675,7 @@ In addition, when the function is called:
             (setq count (gethash (cons major-mode function) keyfreq-table))
             (puthash (cons major-mode function) (if count (+ count 1) 1)
                      keyfreq-table))))
-      (setq this-command function))))
+    (call-interactively function record-flag keys))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
 (defvar ergoemacs-read-key-overriding-overlay-save nil)
