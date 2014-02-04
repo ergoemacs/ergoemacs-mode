@@ -154,10 +154,8 @@ RET-PLIST is  the plist that the translation will be installed into."
      ((string-match (format "M%s" ergoemacs-shifted-regexp) orig-key)
       (if (plist-get trans-plist ':alt-shift)
           (setq new-key
-                (concat (plist-get trans-plist ':alt-shift)
-                        (replace-match
-                         (concat (plist-get trans-plist ':alt-shift)
-                                 (cdr (assoc (match-string 2 orig-key) ergoemacs-shifted-assoc))) t t)))
+                  (concat (plist-get trans-plist ':alt-shift)
+                          (cdr (assoc (match-string 2 orig-key) ergoemacs-shifted-assoc))))
         (setq new-key orig-key)))
      ;; Single Key combinations
      ((string-match "C-" orig-key)
