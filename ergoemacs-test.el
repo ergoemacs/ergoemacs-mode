@@ -713,6 +713,31 @@ Part of addressing Issue #147."
     (ergoemacs-mode 1)
     (should (equal ret t))))
 
+(ert-deftest ergoemacs-test-shift-selection-reduction ()
+  "Test that shift selection works properly.
+Issue #137."
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (macro (edmacro-parse-keys "M-E M-E" t))
+        (ret nil))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme "reduction")
+    (setq ergoemacs-keyboard-layout "colemak")
+    (ergoemacs-mode 1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-min))
+      (execute-kbd-macro (edmacro-parse-keys macro t))
+      (call-interactively 'ergoemacs-cut-line-or-region)
+      (setq ret (= (point) (point-min)))
+      (kill-buffer (current-buffer)))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should (equal ret t))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
