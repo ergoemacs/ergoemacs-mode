@@ -583,7 +583,9 @@ It will replace anything defined by `ergoemacs-translation'"
 
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
-  (if (minibufferp)
+  (if ergoemacs-modal ;; Exit modal 
+      (ergoemacs-modal-toggle ergoemacs-modal)
+    (if (minibufferp)
       (minibuffer-keyboard-quit)
     (let (defined-fn
            ergoemacs-shortcut-keys
@@ -597,7 +599,7 @@ It will replace anything defined by `ergoemacs-translation'"
        (defined-fn
          (ergoemacs-read-key-call defined-fn))
        (t
-        (keyboard-quit))))))
+        (keyboard-quit)))))))
 
 (defun ergoemacs-read-key-call (function &optional record-flag keys)
   "`ergoemacs-mode' replacement for `call-interactively'.
@@ -628,7 +630,7 @@ In addition, when the function is called:
    ((condition-case err
         (string-match "self-insert" (symbol-name function))
       (error nil))
-    (setq ergoemacs-single-command-keys nil)
+    (setq ergoemacs-single-command-keys keys)
     (setq last-input-event keys)
     (setq prefix-arg current-prefix-arg)
     (setq unread-command-events (append (listify-key-sequence keys) unread-command-events))
@@ -808,7 +810,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                ((vectorp tmp)
                 (setq ergoemacs-mark-active
                       (or (and mark-active transient-mark-mode) mark-active))
-                (setq ergoemacs-single-command-keys nil)
+                (setq ergoemacs-single-command-keys tmp)
                 (setq last-input-event tmp)
                 (setq prefix-arg current-prefix-arg)
                 (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
@@ -1012,6 +1014,10 @@ FORCE-KEY forces keys like <escape> to work properly.
             (delete-overlay tmp-overlay)))
         (symbol-value 'ret))
     ;; Turn off read-input-keys for shortcuts
+    (when unread-command-events
+      (setq ergoemacs-modal-save ergoemacs-modal)
+      (setq erogemacs-modal nil)
+      (set-default 'ergoemacs-modal nil))
     (when ergoemacs-single-command-keys
       (setq ergoemacs-read-input-keys nil))))
 
@@ -1378,7 +1384,6 @@ DEF can be:
   (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal))
   (let ((setup-ergoemacs-keymap t))
     (ergoemacs-setup-keys-for-keymap ergoemacs-keymap))
-  (ergoemacs-setup-fast-keys)
   (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
     ;; Install keymap
     (if x

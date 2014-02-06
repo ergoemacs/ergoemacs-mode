@@ -49,16 +49,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Code:
-(defvar ergoemacs-full-fast-keys-keymap (make-sparse-keymap)
-  "Ergoemacs full fast keys keymap")
-
-(defvar ergoemacs-full-alt-keymap (make-sparse-keymap)
-  "Ergoemacs full Alt+ keymap.  Alt is removed from all these keys so that no key chord is necessary.")
-
-(defvar ergoemacs-full-alt-shift-keymap (make-sparse-keymap)
-  "Ergoemacs full Alt+Shift+ keymap.
-Alt+shift is removed from all these keys so that no key chord is
-necessary.  Unshifted keys are changed to shifted keys.")
 
 (defgroup ergoemacs-modal nil
   "Modal ergoemacs"
@@ -214,137 +204,7 @@ modal state is currently enabled."
   :type  '(repeat symbol)
   :group 'ergoemacs-modal)
 
-(defcustom ergoemacs-modal-translated-shifted-to-alt-commands nil
-  "Translate Shifted Commands to Alt+ commands.  For example, on QWERTY ! becomes M-1."
-  :type 'boolean
-  :group 'ergoemacs-modal)
 
-(defun ergoemacs-setup-fast-keys ()
-  "Setup an array listing the fast keys."
-  (interactive)
-  (ergoemacs-debug-heading "Start ergoemacs-setup-fast-keys")
-  (ergoemacs-create-undo-apps-keymap)
-  (setq ergoemacs-full-fast-keys-keymap (make-sparse-keymap))
-  (setq ergoemacs-full-alt-keymap (make-sparse-keymap))
-  (setq ergoemacs-full-alt-shift-keymap (make-sparse-keymap))
-  (define-key ergoemacs-full-alt-keymap
-    (read-kbd-macro "RET")
-    'ergoemacs-toggle-full-alt)
-  (define-key ergoemacs-full-alt-shift-keymap
-    (read-kbd-macro "RET")
-    'ergoemacs-toggle-full-alt-shift)
-  (ergoemacs-debug-heading "Setup Fast/Modal Keys")
-  (mapc
-   (lambda(var)
-     (let* ((key (ergoemacs-kbd (nth 0 var) t))
-            (cmd (nth 1 var))
-            (stripped-key (replace-regexp-in-string
-                           (format "\\<[%s]-"
-                                   (if ergoemacs-swap-alt-and-control
-                                       "C"
-                                     "M"))
-                           "" key))
-            (new-cmd (nth 1 var)) tmp)
-       (when (eq 'cons (type-of cmd))
-         (mapc
-          (lambda(fn)
-            (when (and (not tmp)
-                       (condition-case err
-                           (interactive-form fn)
-                         (error nil)))
-              (setq tmp fn)))
-          (reverse cmd))
-         (setq cmd tmp)
-         (setq new-cmd tmp)
-         (setq tmp nil))
-       (ergoemacs-debug "Key:%s stripped-key: %s" key stripped-key)
-       (when (string-match "^\\([[:ascii:]]\\|SPC\\)$" stripped-key)
-         (eval
-          (macroexpand
-           `(defun ,(intern (format "%s-ergoemacs" (symbol-name cmd))) (&optional arg)
-              ,(format "Run `%s' or whatever this mode remaps the command to be using `ergoemacs-shortcut-remap'." (symbol-name cmd))
-              (interactive "P")
-              (setq this-command ',cmd)
-              ;; (setq prefix-arg current-prefix-arg)
-              (ergoemacs-shortcut-remap ',cmd))))
-         (setq new-cmd (intern (format "%s-ergoemacs" (symbol-name cmd))))
-         (ergoemacs-debug "Created %s" new-cmd)
-         (ergoemacs-debug "Unshifted regular expression: %s" ergoemacs-unshifted-regexp)
-         (if (save-match-data
-               (let (case-fold-search)
-                 (string-match ergoemacs-unshifted-regexp stripped-key)))
-             (progn ;; Lower case
-               (define-key ergoemacs-full-alt-keymap
-                 (read-kbd-macro stripped-key) new-cmd)
-               (define-key ergoemacs-full-alt-keymap
-                 (read-kbd-macro (concat "<override> " stripped-key))
-                 cmd)
-               (setq tmp (assoc stripped-key ergoemacs-shifted-assoc))
-               (when tmp
-                 ;; M-lower case key for shifted map.
-                 (define-key ergoemacs-full-alt-shift-keymap
-                   (read-kbd-macro (concat "M-" stripped-key))
-                   new-cmd)
-                 (define-key ergoemacs-full-alt-keymap
-                   (read-kbd-macro (concat "<override> M-" stripped-key))
-                   cmd)
-                 ;; Upper case for shifted map
-                 (define-key ergoemacs-full-alt-shift-keymap
-                   (read-kbd-macro (cdr tmp)) new-cmd)
-                 (define-key ergoemacs-full-alt-keymap
-                   (read-kbd-macro (concat "<override> " (cdr tmp)))
-                   cmd)))
-           ;; Upper case
-           (setq tmp (assoc stripped-key ergoemacs-shifted-assoc))
-           (when tmp
-             ;; Install lower case on shifted map.
-             (define-key ergoemacs-full-alt-shift-keymap
-               (read-kbd-macro (cdr tmp)) new-cmd)
-             (define-key ergoemacs-full-alt-shift-keymap
-               (read-kbd-macro (concat "<override> " (cdr tmp)))
-               cmd)
-             ;; Install M-lower for alt map.
-             (define-key ergoemacs-full-alt-keymap
-               (read-kbd-macro (concat "M-" (cdr tmp))) new-cmd)
-             (define-key ergoemacs-full-alt-keymap
-               (read-kbd-macro (concat "<override> M-" (cdr tmp)))
-               cmd))
-           (define-key ergoemacs-full-alt-keymap
-             (read-kbd-macro stripped-key) new-cmd)
-           (define-key ergoemacs-full-alt-keymap
-             (read-kbd-macro (concat "<override> M-" stripped-key))
-             cmd)))
-       (when (member cmd ergoemacs-movement-functions)
-         (set (intern (concat "ergoemacs-fast-" (symbol-name cmd) "-keymap"))
-              (make-sparse-keymap))
-         (eval `(define-key ,(intern (concat "ergoemacs-fast-" (symbol-name cmd) "-keymap"))
-                  ,(read-kbd-macro stripped-key) new-cmd))
-         (define-key ergoemacs-full-fast-keys-keymap
-           (read-kbd-macro stripped-key)
-           new-cmd))))
-   (symbol-value (ergoemacs-get-variable-layout)))
-  (mapc
-   (lambda(key)
-     (unless (string= "" key)
-       (unless (lookup-key ergoemacs-full-alt-keymap (read-kbd-macro key))
-         (define-key ergoemacs-full-alt-keymap
-           (read-kbd-macro key)
-           '(lambda() (interactive)
-              (let (message-log-max)
-                (message "[Alt+] keymap active.")))))
-       (unless (lookup-key ergoemacs-full-alt-shift-keymap (read-kbd-macro key))
-         (define-key ergoemacs-full-alt-shift-keymap
-           (read-kbd-macro key)
-           '(lambda() (interactive)
-              (let (message-log-max)
-                (message "[Alt+Shift] keymap active.")))))))
-   (symbol-value (intern (concat "ergoemacs-layout-" (or ergoemacs-keyboard-layout "us")))))
-  
-  (ergoemacs-debug-keymap 'ergoemacs-full-alt-keymap)
-  (ergoemacs-debug-keymap 'ergoemacs-full-alt-shift-keymap)
-  (ergoemacs-debug-keymap 'ergoemacs-full-fast-keys-keymap)
-  (ergoemacs-debug-heading "Stop ergoemacs-setup-fast-keys")
-  (ergoemacs-debug-flush))
 
 (defvar ergoemacs-exit-temp-map-var nil)
 
@@ -369,66 +229,58 @@ modal state is currently enabled."
   (ergoemacs-debug "ergoemacs-unbind-keys: %s" ergoemacs-unbind-keys))
 
 
-(defvar ergoemacs-modal nil
-  "Weather modal ergoemacs is active.")
+(defun ergoemacs-modal-default ()
+  "The default command for `ergoemacs-mode' modal.
+It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation type defined by `ergoemacs-modal'"
+  (interactive)
+  (ergoemacs-read-key (or ergoemacs-single-command-keys (this-single-command-keys))
+                      ergoemacs-modal ergoemacs-modal))
 
-(defun ergoemacs-modal-toggle (mode-text keymap exit-fn)
+(defvar ergoemacs-modal-save nil)
+(defvar ergoemacs-modal nil
+  "If ergoemacs modal and what translation is active.")
+
+(defun ergoemacs-modal-toggle (&optional type)
   "Toggle ergoemacs command modes."
-  (let ((alt mode-text)
-        (x (assq 'ergoemacs-modal
-                 ergoemacs-emulation-mode-map-alist)))
-    (if x
-        (progn
-          (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist))
-          (set-cursor-color ergoemacs-default-cursor)
-          (let (message-log-max)
-            (message "Full %s command mode removed." alt))
-          (set-default 'ergoemacs-modal nil)
-          (setq ergoemacs-modal nil)
-          (ergoemacs-mode-line))
-      ;; Turn on full alt command mode.
-      (push (cons 'ergoemacs-modal
-                  keymap)
+  (interactive)
+  (let* ((x (assq 'ergoemacs-modal ergoemacs-emulation-mode-map-alist))
+         (keymap (make-sparse-keymap))
+         (help-list (if type (gethash type ergoemacs-translation-text) nil))
+         (no-ergoemacs-advice t))
+    (cond
+     ((or x (not type))
+       (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist))
+       (when ergoemacs-default-cursor
+         (set-cursor-color ergoemacs-default-cursor))
+       (let (message-log-max)
+         (message "Full %s command mode removed." (if help-list (nth 5 help-list) "")))
+       (set-default 'ergoemacs-modal nil)
+       (setq ergoemacs-modal nil)
+       (setq ergoemacs-modal-save nil)
+       (ergoemacs-mode-line))
+     (t
+      (define-key keymap [t] 'ergoemacs-modal-default)
+      (push (cons 'ergoemacs-modal keymap)
             ergoemacs-emulation-mode-map-alist)
-      (set-default 'ergoemacs-modal mode-text)
-      (setq ergoemacs-modal mode-text)
-      (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-       (concat " " mode-text))
+      (set-default 'ergoemacs-modal type)
+      (setq ergoemacs-modal type)
       (unless ergoemacs-default-cursor
         (setq ergoemacs-default-cursor
               (or (frame-parameter nil 'cursor-color) "black"))
-        (set-cursor-color ergoemacs-modal-cursor))
+        (when ergoemacs-modal-cursor
+          (set-cursor-color ergoemacs-modal-cursor))
+        (if help-list
+            (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+             (concat " " (nth 5 help-list)))
+          (ergoemacs-mode-line)))
       (let (message-log-max)
-        (message "%s command move installed. Exit by %s"
-               alt
-               (mapconcat
-                (lambda(key)
-                  (ergoemacs-pretty-key (key-description key)))
-                (where-is-internal exit-fn keymap)
-                ", "))))
-    (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s" (mapcar (lambda(x) (nth 0 x)) ergoemacs-emulation-mode-map-alist))))
+        (if help-list
+            (message "%s command mode installed" (nth 5 help-list))))))))
 
 (defun ergoemacs-toggle-full-alt ()
   "Toggles full Alt+ keymap"
   (interactive)
-  (let (deactivate-mark)
-    (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt'")
-    (ergoemacs-modal-toggle
-     (replace-regexp-in-string
-      "!" "" (ergoemacs-pretty-key "M-!")) ergoemacs-full-alt-keymap 'ergoemacs-toggle-full-alt)
-    (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt'")
-    (ergoemacs-debug-flush)))
-
-(defun ergoemacs-toggle-full-alt-shift ()
-  "Toggles full Alt+Shift+ keymap"
-  (interactive)
-  (let (deactivate-mark)
-    (ergoemacs-debug-heading "Start `ergoemacs-toggle-full-alt-shift'")
-    (ergoemacs-modal-toggle
-     (replace-regexp-in-string
-      "~" "" (ergoemacs-pretty-key "M-S-~")) ergoemacs-full-alt-shift-keymap 'ergoemacs-toggle-full-alt-shift)
-    (ergoemacs-debug-heading "Finish `ergoemacs-toggle-full-alt-shift'")
-    (ergoemacs-debug-flush)))
+  (ergoemacs-modal-toggle 'modal-alt))
 
 (provide 'ergoemacs-modal)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

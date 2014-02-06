@@ -289,7 +289,7 @@ remove the keymap depends on user input and KEEP-PRED:
 (defvar ergoemacs-undo-apps-keymap nil
   "Keymap for repeating undo/redo commands in apps menu.")
 
-(defun ergoemacs-undo-apps-text nil
+(defvar ergoemacs-undo-apps-text nil
   "Text for repeat undo/redo commands in apps menu.")
 
 (defun ergoemacs-create-undo-apps-keymap ()
@@ -1352,14 +1352,16 @@ This is done by checking if this is a command that supports shift selection or c
                    (set (make-local-variable 'ergoemacs-modal)
                         nil)))
                ergoemacs-modal-ignored-buffers))
-            (if ergoemacs-modal
-                (progn
+            (if (or ergoemacs-modal ergoemacs-modal-save)
+                (let ((help-list (gethash (or ergoemacs-modal ergoemacs-modal-save) ergoemacs-translation-text)))
                   (unless ergoemacs-default-cursor
                     (setq ergoemacs-default-cursor
                           (or (frame-parameter nil 'cursor-color) "black"))
                     (set-cursor-color ergoemacs-modal-cursor)
-                    (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-                     (concat " " ergoemacs-modal))))
+                    (if help-list
+                        (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+                         (concat " " (nth 5 help-list)))
+                      (ergoemacs-mode-line))))
               (when ergoemacs-default-cursor
                 (set-cursor-color ergoemacs-default-cursor)
                 (setq ergoemacs-default-cursor nil))
@@ -1378,6 +1380,10 @@ This is done by checking if this is a command that supports shift selection or c
         (delete-overlay ergoemacs-read-key-overriding-overlay-save)
         (setq ergoemacs-read-key-overriding-overlay-save nil)))
     (setq ergoemacs-read-input-keys t)
+    (when ergoemacs-modal-save
+      (setq ergoemacs-modal ergoemacs-modal-save)
+      (set-default 'ergoemacs-modal ergoemacs-modal-save)
+      (setq ergoemacs-modal-save nil))
     (setq ergoemacs-single-command-keys nil))
   t)
 

@@ -285,6 +285,13 @@ This function is made in `ergoemacs-translation'")
            (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
            map))
 
+(ergoemacs-translation
+ :name 'modal-alt
+ :text "<Alt+>"
+ :unchorded "M-"
+ :shift "M-S-"
+ :alt "M-S-")
+
 (defun ergoemacs-translate-shifted (kbd)
   "Translates anything with S- and no C- in it to an upper-case character."
   (if (not kbd) nil
