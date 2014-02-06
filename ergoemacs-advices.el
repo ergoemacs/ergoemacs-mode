@@ -231,26 +231,6 @@ This require `ergoemacs-mode' to be enabled as well as
     (ad-activate 'helm-ff-auto-expand-to-home-or-root)))
 
 
-(defadvice keyboard-quit (around ergoemacs-keyboard-quit)
-  "Ergoemacs keyboard-quit advice.
-Performs `keyboard-quit' in most circumstances unless a minor
-mode defines a more appropriate quit key like `browse-kill-ring'.  The default ergoemacs-theme defines `keyboard-quit' to be `browse-kill-ring-quit'."
-  (let (defined-fn
-         ergoemacs-shortcut-keys
-         ergoemacs-read-input-keys
-         ergoemacs-shortcut-override-mode
-         ergoemacs-mode)
-    (setq defined-fn (ergoemacs-key-fn-lookup 'keyboard-quit))
-    (setq defined-fn (condition-case err (key-binding defined-fn)
-                       (error nil)))
-    (cond
-     (defined-fn
-       (call-interactively defined-fn))
-     (t
-      ad-do-it))))
-(add-to-list 'ergoemacs-advices 'keyboard-quit)
-
-
 (defadvice run-mode-hooks (around ergoemacs-run-hooks)
   "`ergoemacs-mode' run-hooks advice helps user define keys properly.
 This assumes any key defined while running a hook is a user-defined hook."

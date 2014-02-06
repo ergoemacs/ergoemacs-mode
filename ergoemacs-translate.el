@@ -74,8 +74,217 @@
 (defvar ergoemacs-shifted-assoc nil
   "Translation alist.")
 
+(defvar ergoemacs-universal-fns
+  '(universal-argument)
+  "Universal argument functions")
+(defvar ergoemacs-translate-hash (make-hash-table :test 'equal))
+(defvar ergoemacs-translation-names nil)
+(defvar ergoemacs-translations nil)
+(defvar ergoemacs-translation-keymaps (make-hash-table :test 'equal))
+(defvar ergoemacs-translation-text (make-hash-table :test 'equal))
 
-(defvar ergoemacs-translate-hash (make-hash-table :test 'equal)) 
+(defun ergoemacs-reset-translations ()
+  "Resets translations."
+  (setq ergoemacs-translate-hash (make-hash-table :test 'equal))
+  (setq ergoemacs-translation-names nil)
+  (setq ergoemacs-translations nil)
+  (setq ergoemacs-translation-keymaps (make-hash-table :test 'equal))
+  (setq ergoemacs-translation-text (make-hash-table :test 'equal))
+  (setq ergoemacs-universal-fns '(universal-argument)))
+
+
+(defun ergoemacs-translation (&rest arg-plist)
+  "Add or modifies an ergoemacs-translation.
+
+The argument ARG-PLIST should be a plist with the following properties:
+
+:name -- name of translation, should be a symbol
+:text -- Text to display while completing this translation
+:keymap -- Keymap for translation
+The following arguments allow the keyboard presses to be translated:
+ - :alt
+ - :ctl
+ - :shift
+ - :alt-ctl
+ - :alt-shift
+ - :ctl-shift
+ - :alt-ctl-shift
+ - :unchorded (no modifiers)
+
+This will be called by `ergoemacs-translate'.
+
+The translations plists are stored in `ergoemacs-translations'.
+The translation keymaps are store in `ergoemacs-translation-keymaps'.
+The keymap translation text is stored in `ergoemacs-translation-text'
+
+This also creates functions ergoemacs-NAME-universal-argument
+function and adds it to `ergoemacs-universal-fns'.
+
+"
+  ;; Take off all the `ergoemacs-translate' hashes
+  ;; (setq ergoemacs-translate-hash (make-hash-table :test 'equal))
+  (let ((ret-plist arg-plist)
+        (keymap (plist-get arg-plist ':keymap))
+        tmp
+        (trans-text '())
+        (pretty-trans '())
+        (key-text '())
+        (key-pretty '()))
+    (setq ret-plist (plist-put ret-plist ':keymap nil))
+    (puthash (plist-get arg-plist ':name) keymap ergoemacs-translation-keymaps)
+    ;; Create the universal argument functions.
+    (eval (macroexpand
+           `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")) ()
+              ,(concat "Ergoemacs universal argument, with "
+                       (symbol-name (plist-get arg-plist ':name))
+                       " translation setup.
+This is called through `ergoemacs-universal-argument'.
+This function is made in `ergoemacs-translation'")
+              (interactive)
+              (ergoemacs-universal-argument ',(plist-get arg-plist ':name)))))
+
+    (eval (macroexpand
+           `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-digit-argument")) ()
+              ,(concat "Ergoemacs digit argument, with "
+                       (symbol-name (plist-get arg-plist ':name))
+                       " translation setup.
+This is called through `ergoemacs-digit-argument'.
+This function is made in `ergoemacs-translation'")
+              (interactive)
+              (ergoemacs-digit-argument ',(plist-get arg-plist ':name)))))
+
+    (eval (macroexpand
+           `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-negative-argument")) ()
+              ,(concat "Ergoemacs digit argument, with "
+                       (symbol-name (plist-get arg-plist ':name))
+                       " translation setup.
+This is called through `ergoemacs-negative-argument'.
+This function is made in `ergoemacs-translation'")
+              (interactive)
+              (ergoemacs-negative-argument ',(plist-get arg-plist ':name)))))
+    
+    ;; Now put the translation text together as a list.
+    (mapc
+     (lambda(x)
+       (let ((trans (plist-get arg-plist (nth 0 x)))
+             (orig (nth 1 x))
+             case-fold-search)
+         (when trans
+           (push (concat orig (ergoemacs-unicode-char "→" "->") trans)
+                 trans-text)
+           (push (concat
+                  (replace-regexp-in-string
+                   "[Qq]" ""
+                   (ergoemacs-pretty-key (concat orig "q")))
+                  (ergoemacs-unicode-char "→" "->")
+                  (replace-regexp-in-string
+                   "[Qq]" ""
+                   (ergoemacs-pretty-key (concat trans "q"))))
+                 pretty-trans))))
+     '((:alt "M-")
+       (:ctl "C-")
+       (:shift "S-")
+       (:alt-ctl "M-C-")
+       (:alt-shift "M-S-")
+       (:ctl-shift "C-S-")
+       (:alt-ctl-shift "C-M-S-")))
+    ;; Now get keys that change the next key's behavior
+    (when keymap
+      (mapc
+       (lambda(x)
+         (let ((key (where-is-internal (nth 0 x) keymap t))
+               (trans (nth 1 x)))
+           (when key
+             (setq key (key-description key))
+             (push (concat key (ergoemacs-unicode-char "→" "->") trans)
+                   key-text)
+             (push (concat
+                    (ergoemacs-pretty-key key)
+                    (ergoemacs-unicode-char "→" "->")
+                    (replace-regexp-in-string
+                     "[Qq]" ""
+                     (ergoemacs-pretty-key (concat trans "q"))))
+                   key-pretty))))
+       '((ergoemacs-read-key-next-key-is-alt "M-")
+         (ergoemacs-read-key-next-key-is-ctl "C-")
+         (ergoemacs-read-key-next-key-is-alt-ctl "C-M-")
+         (ergoemacs-read-key-next-key-is-quoted ""))))
+    (setq tmp '("" ""))
+    (when (plist-get arg-plist ':unchorded)
+      (setq tmp (list (plist-get arg-plist ':unchorded)
+                      (replace-regexp-in-string
+                       "[Qq]" ""
+                       (ergoemacs-pretty-key
+                        (concat (plist-get arg-plist ':unchorded) "q"))))))
+    (puthash (plist-get arg-plist ':name)
+             (list trans-text pretty-trans
+                   key-text key-pretty tmp (or (plist-get arg-plist ':text) ""))
+             ergoemacs-translation-text)
+    ;; Replace/Add translation
+    (setq tmp nil)
+    (setq ergoemacs-translations
+          (mapcar
+           (lambda(elt-plist)
+             (if (not (eq (plist-get elt-plist ':name) (plist-get arg-plist ':name)))
+                 (symbol-value 'elt-plist)
+               (setq tmp t)
+               (symbol-value 'ret-plist)))
+           ergoemacs-translations))
+    (unless tmp
+      (push ret-plist ergoemacs-translations))))
+
+;; Reset translations in case this is re-sourced
+(ergoemacs-reset-translations)
+
+;; Add ergoemacs-mode default translations
+(ergoemacs-translation
+ :name 'normal
+ :keymap (let ((map (make-sparse-keymap))
+               (no-ergoemacs-advice t))
+           (define-key map [f1] 'ergoemacs-read-key-help)
+           (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
+           (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
+           (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
+           map))
+
+(ergoemacs-translation
+ :name 'ctl-to-alt
+ :text (format "<Ctl%sAlt> " (ergoemacs-unicode-char "↔" " to "))
+ :alt "C-"
+ :ctl "M-"
+ :keymap (let ((map (make-sparse-keymap))
+               (no-ergoemacs-advice t))
+           (define-key map [f1] 'ergoemacs-read-key-help)
+           (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
+           (define-key map (if (eq system-type 'windows-nt) [M-apps] [M-menu]) 'ergoemacs-read-key-next-key-is-quoted)
+           (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-ctl)
+           (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt)
+           (define-key map (read-kbd-macro "DEL")  'ergoemacs-read-key-undo-last)
+           (define-key map [f2] 'ergoemacs-universal-argument) ; Allows
+                                        ; editing
+           
+           ;; (define-key map "G" 'ergoemacs-read-key-next-key-is-quoted)
+           ;; (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
+           map))
+
+(ergoemacs-translation
+ :name 'unchorded
+ :text "<Ctl+>"
+ :unchorded "C-"
+ :alt ""
+ :ctl "M-"
+ :keymap (let ((map (make-sparse-keymap))
+               (no-ergoemacs-advice t))
+           (define-key map [f1] 'ergoemacs-read-key-help)
+           (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
+           (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-quoted)
+           (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
+           (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
+           (define-key map "G" 'ergoemacs-read-key-next-key-is-alt-ctl)
+           (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
+           (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
+           map))
+
 (defun ergoemacs-translate-shifted (kbd)
   "Translates anything with S- and no C- in it to an upper-case character."
   (if (not kbd) nil
@@ -87,43 +296,20 @@
                             (upcase (match-string 3 ret))))))
       (symbol-value 'ret))))
 
-(defvar ergoemacs-translations
-  `((:name :ctl-to-alt
-           :text ,(format "<Ctl%sAlt> " (ergoemacs-unicode-char "↔" " to "))
-           :alt "C-"
-           :ctl "M-")
-    (:name :ctl-to-alt-shift
-           :text ,(format "<Ctl%sAlt> " (ergoemacs-unicode-char "↔" " to "))
-           :alt "C-"
-           :ctl "M-"
-           :shift "M-"
-           :alt-shift "C-M-"
-           :ctl-shift "C-M-")
-    (:name :unchorded
-           :text "<Ctl+>"
-           :unchorded "C-"
-           :alt ""
-           :ctl "M-")
-    (:name :unchorded-shift
-           :text "<Ctl+>"
-           :unchorded "C-"
-           :alt ""
-           :ctl "M-"
-           :shift "M-"
-           :alt-shift "C-M-"
-           :ctl-shift "C-S-"))
-  "Ergoemacs-mode translations")
-
-(defvar ergoemacs-translation-names nil)
-  
 (defun ergoemacs-translation-install (trans-plist orig-key ret-plist)
   "Installs the translation.
 TRANS-PLIST is the plist defining the translation.
 ORIG-KEY is the original kbd-code
-RET-PLIST is  the plist that the translation will be installed into."
-  (let* ((name (plist-get trans-plist ':name))
-         (key (intern (concat (symbol-name name) "-key")))
-         (pretty (intern (concat (symbol-name name) "-pretty")))
+RET-PLIST is  the plist that the translation will be installed into.
+
+Should install
+ - :translation-name kbd-code
+ - :translation-name-key [key-vector]
+ - :translation-name-pretty ergoemacs-pretty-key
+"
+  (let ((name (intern (concat ":" (symbol-name (plist-get trans-plist ':name)))))
+         (key (intern (concat ":" (symbol-name (plist-get trans-plist ':name)) "-key")))
+         (pretty (intern (concat ":" (symbol-name (plist-get trans-plist ':name)) "-pretty")))
          (ret ret-plist)
          case-fold-search
          new-key)
@@ -191,12 +377,6 @@ RET-PLIST is  the plist that the translation will be installed into."
 (defun ergoemacs-translate (key)
   "Translates KEY and returns a plist of the translations.
 
-:normal
-   No translation
-
-:normal-shift
-   No translation
-
 :shift-translated
     S-a    -> a
     M-S-a  -> M-a
@@ -217,8 +397,6 @@ and `ergoemacs-pretty-key' descriptions.
          only-key
          shift-translated
          (ergoemacs-use-ergoemacs-key-descriptions t)
-         ctl-to-alt
-         unchorded
          unshifted-key)
     (or ret
         (progn
@@ -250,12 +428,6 @@ and `ergoemacs-pretty-key' descriptions.
                 (setq unshifted-key (concat "S-" (downcase unshifted-key))))))
           (when (string-match "S-" key)
             (setq shift-translated (replace-regexp-in-string "S-" "" key t)))
-          (setq ret (plist-put ret ':normal (ergoemacs-translate-shifted key)))
-          (setq ret (plist-put ret ':normal-key (read-kbd-macro (ergoemacs-translate-shifted key) t)))
-          (setq ret (plist-put ret ':normal-pretty (ergoemacs-pretty-key key)))
-          (setq ret (plist-put ret ':normal-shift (ergoemacs-translate-shifted key)))
-          (setq ret (plist-put ret ':normal-shift-key (read-kbd-macro (ergoemacs-translate-shifted key) t)))
-          (setq ret (plist-put ret ':normal-shift-pretty (ergoemacs-pretty-key key)))
           
           (if shift-translated
               (progn
