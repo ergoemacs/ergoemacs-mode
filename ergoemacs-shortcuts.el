@@ -288,7 +288,7 @@ universal argument can be entered.
 "
   (let* ((universal universal)
          (type (or type 'normal))
-         (local-keymap (gethash type ergoemacs-translation-keymaps))
+         (local-keymap (ergoemacs-local-map type))
          (key-tag (intern (concat ":" (symbol-name type) "-key")))
          ret message-log-max (blink-on nil) tmp
          (help-list (gethash type ergoemacs-translation-text))
@@ -583,9 +583,7 @@ It will replace anything defined by `ergoemacs-translation'"
 
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
-  (if ergoemacs-modal ;; Exit modal 
-      (ergoemacs-modal-toggle ergoemacs-modal)
-    (if (minibufferp)
+  (if (minibufferp)
       (minibuffer-keyboard-quit)
     (let (defined-fn
            ergoemacs-shortcut-keys
@@ -598,8 +596,11 @@ It will replace anything defined by `ergoemacs-translation'"
       (cond
        (defined-fn
          (ergoemacs-read-key-call defined-fn))
+       (ergoemacs-modal ;; Exit modal 
+        (ergoemacs-modal-toggle ergoemacs-modal))
        (t
-        (keyboard-quit)))))))
+        (keyboard-quit)))))
+  (setq ergoemacs-describe-key nil))
 
 (defun ergoemacs-read-key-call (function &optional record-flag keys)
   "`ergoemacs-mode' replacement for `call-interactively'.
@@ -625,7 +626,9 @@ In addition, when the function is called:
 "
   (cond
    (ergoemacs-describe-key
-    (describe-function function)
+    (ergoemacs-shortcut-override-mode 1)
+    (describe-key key)
+    (ergoemacs-shortcut-override-mode -1)
     (setq ergoemacs-describe-key nil))
    ((condition-case err
         (string-match "self-insert" (symbol-name function))
@@ -1072,8 +1075,11 @@ argument prompt.
                           (ergoemacs-read-event type pretty-key nil curr-universal))))
       (setq next-key (ergoemacs-translate next-key))
       (setq tmp (plist-get next-key ':normal))
-      (when (string= tmp "ESC")
+      (cond
+       ((string= tmp "ESC")
         (setq tmp "<escape>"))
+       ((string-match tmp "RET")
+        (setq tmp "<return>")))
       (if (string= tmp (key-description
                         (ergoemacs-key-fn-lookup 'keyboard-quit)))
           (if (and (not key))
@@ -1092,7 +1098,7 @@ argument prompt.
             (setq ergoemacs-describe-key nil))
         (setq tmp (plist-get next-key ':normal-key))
         ;; See if there is a local equivalent of this...
-        (setq local-keymap (gethash type ergoemacs-translation-keymaps))
+        (setq local-keymap (ergoemacs-local-map type))
         (if (and real-read local-keymap)
             (setq local-fn (lookup-key local-keymap tmp))
           (setq local-fn nil))
