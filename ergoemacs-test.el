@@ -367,10 +367,10 @@ Test next and prior translation."
   (with-temp-buffer
     (insert ergoemacs-test-lorem-ipsum)
     (goto-char (point-min))
-    (ergoemacs-toggle-full-alt)
+    (ergoemacs-unchorded-alt-modal)
     (set-mark (point))
     (forward-char 3)
-    (ergoemacs-toggle-full-alt)
+    (ergoemacs-unchorded-alt-modal)
     (should mark-active)))
 
 (ert-deftest ergoemacs-test-issue-114 ()
