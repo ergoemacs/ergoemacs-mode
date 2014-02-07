@@ -303,11 +303,6 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
         (if help-list
             (message "%s command mode installed" (nth 5 help-list))))))))
 
-(defun ergoemacs-toggle-full-alt ()
-  "Toggles full Alt+ keymap"
-  (interactive)
-  (ergoemacs-modal-toggle 'modal-alt))
-
 (provide 'ergoemacs-modal)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-modal.el ends here
