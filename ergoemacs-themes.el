@@ -449,7 +449,7 @@
     ("<f3>" ergoemacs-copy-line-or-region "copy")
     
     
-    ("<f6>" ergoemacs-toggle-full-alt "Alt mode")
+    ("<f6>" ergoemacs-unchorded-alt-modal "Alt mode")
     ("C-+" text-scale-increase "+Font Size")
     ("C--" text-scale-decrease "-Font Size")
     ("C-." keyboard-quit "Quit")
