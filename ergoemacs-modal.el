@@ -285,7 +285,9 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
        (setq ergoemacs-modal-save nil)
        (ergoemacs-mode-line))
      (t
-      (setq keymap (make-composed-keymap (list (ergoemacs-modal-mouse-keymap) ergoemacs-modal-keymap)))
+      (setq keymap (make-composed-keymap (list (ergoemacs-modal-mouse-keymap)
+                                               (ergoemacs-local-map type t)
+                                               ergoemacs-modal-keymap)))
       (push (cons 'ergoemacs-modal keymap)
             ergoemacs-emulation-mode-map-alist)
       (set-default 'ergoemacs-modal type)
