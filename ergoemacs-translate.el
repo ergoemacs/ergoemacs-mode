@@ -80,7 +80,6 @@
 (defvar ergoemacs-translate-hash (make-hash-table :test 'equal))
 (defvar ergoemacs-translation-names nil)
 (defvar ergoemacs-translations nil)
-(defvar ergoemacs-translation-keymaps (make-hash-table :test 'equal))
 (defvar ergoemacs-translation-text (make-hash-table :test 'equal))
 
 (defun ergoemacs-reset-translations ()
@@ -88,10 +87,15 @@
   (setq ergoemacs-translate-hash (make-hash-table :test 'equal))
   (setq ergoemacs-translation-names nil)
   (setq ergoemacs-translations nil)
-  (setq ergoemacs-translation-keymaps (make-hash-table :test 'equal))
   (setq ergoemacs-translation-text (make-hash-table :test 'equal))
   (setq ergoemacs-universal-fns '(universal-argument)))
 
+(defun ergoemacs-local-map (type &optional modal)
+  "Gets local keymap for TYPE, or returns nil.
+If MODAL is true, get the modal override map."
+  (let ((map (intern-soft (concat "ergoemacs-" (symbol-name type) (if modal "-modal-map" "-translation-local-map")))))
+    (if (not map) nil
+      (symbol-value map))))
 
 (defun ergoemacs-translation (&rest arg-plist)
   "Add or modifies an ergoemacs-translation.
@@ -100,7 +104,8 @@ The argument ARG-PLIST should be a plist with the following properties:
 
 :name -- name of translation, should be a symbol
 :text -- Text to display while completing this translation
-:keymap -- Keymap for translation
+:keymap -- Local Keymap for translation
+:keymap-modal -- Modal keymap for overrides.
 The following arguments allow the keyboard presses to be translated:
  - :alt
  - :ctl
@@ -117,21 +122,41 @@ The translations plists are stored in `ergoemacs-translations'.
 The translation keymaps are store in `ergoemacs-translation-keymaps'.
 The keymap translation text is stored in `ergoemacs-translation-text'
 
-This also creates functions ergoemacs-NAME-universal-argument
-function and adds it to `ergoemacs-universal-fns'.
-
+This also creates functions:
+- ergoemacs-NAME-universal-argument
+- ergoemacs-NAME-digit-argument
+- ergoemacs-NAME-negative-argument
+- ergoemacs-NAME-modal
 "
   ;; Take off all the `ergoemacs-translate' hashes
   ;; (setq ergoemacs-translate-hash (make-hash-table :test 'equal))
   (let ((ret-plist arg-plist)
         (keymap (plist-get arg-plist ':keymap))
+        (keymap-modal (plist-get arg-plist ':keymap-modal))
         tmp
         (trans-text '())
         (pretty-trans '())
         (key-text '())
         (key-pretty '()))
+    (setq ret-plist (plist-put ret-plist ':keymap-modal nil))
     (setq ret-plist (plist-put ret-plist ':keymap nil))
-    (puthash (plist-get arg-plist ':name) keymap ergoemacs-translation-keymaps)
+
+    (eval (macroexpand
+           `(defvar ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-modal-map"))
+              ',(symbol-value 'keymap-modal)
+              (concat "Ergoemacs modal override map for "
+                      (symbol-name (plist-get arg-plist ':name))
+                      " translation.
+This keymap is made in `ergoemacs-translation'"))))
+
+    (eval (macroexpand
+           `(defvar ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-translation-local-map"))
+              ',(symbol-value 'keymap)
+              (concat "Ergoemacs translation local map for "
+                      (symbol-name (plist-get arg-plist ':name))
+                      " translation setup.
+This keymap is made in `ergoemacs-translation'"))))
+    
     ;; Create the universal argument functions.
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")) ()
@@ -162,6 +187,16 @@ This is called through `ergoemacs-negative-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
               (ergoemacs-negative-argument ',(plist-get arg-plist ':name)))))
+
+    (eval (macroexpand
+           `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-modal")) ()
+              ,(concat "Toggle modal "
+                       (symbol-name (plist-get arg-plist ':name))
+                       " translation.
+This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-toggle'.")
+              (interactive)
+              (ergoemacs-modal-toggle ',(plist-get arg-plist ':name)))))
+    
     
     ;; Now put the translation text together as a list.
     (mapc
@@ -286,11 +321,15 @@ This function is made in `ergoemacs-translation'")
            map))
 
 (ergoemacs-translation
- :name 'modal-alt
+ :name 'unchorded-alt
  :text "<Alt+>"
  :unchorded "M-"
  :shift "M-S-"
- :alt "M-S-")
+ :alt "M-S-"
+ :keymap (let ((map (make-sparse-keymap))
+               (no-ergoemacs-advice t))
+           (define-key map (read-kbd-macro "RET") 'ergoemacs-toggle-full-alt)
+           map))
 
 (defun ergoemacs-translate-shifted (kbd)
   "Translates anything with S- and no C- in it to an upper-case character."
