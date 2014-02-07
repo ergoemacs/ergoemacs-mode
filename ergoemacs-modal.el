@@ -228,7 +228,6 @@ modal state is currently enabled."
   (ergoemacs-debug "ergoemacs-mode: %s" ergoemacs-mode)
   (ergoemacs-debug "ergoemacs-unbind-keys: %s" ergoemacs-unbind-keys))
 
-
 (defun ergoemacs-modal-default ()
   "The default command for `ergoemacs-mode' modal.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation type defined by `ergoemacs-modal'"
@@ -240,12 +239,39 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
 (defvar ergoemacs-modal nil
   "If ergoemacs modal and what translation is active.")
 
+(defvar ergoemacs-modal-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map [t] 'ergoemacs-modal-default)
+    map))
+
+(defun ergoemacs-modal-mouse-keymap ()
+  "Returns the mouse-bindings keymap"
+  (let ((map (make-sparse-keymap)))
+    (mapc
+     (lambda (other)
+       (mapc
+        (lambda(mod)
+          (mapc
+           (lambda(event)
+             (mapc
+              (lambda(num)
+                (let* ((key (read-kbd-macro (concat other "<" mod event "mouse-" num ">")))
+                       (def (key-binding key)))
+                  (when def
+                    (define-key map key def))))
+              '("1" "2" "3" "4" "5" "6" "7")))
+           '("" "drag-" "down-" "double-" "triple-")))
+        '("" "C-" "C-S-" "M-" "M-S-" "C-M-" "C-M-S-" "S-")))
+     '("" "<header-line> " "<left-fringe> " "<right-fringe> " "<vertical-line> " "<vertical-scroll-bar> "))
+    (symbol-value 'map)))
+
 (defun ergoemacs-modal-toggle (&optional type)
   "Toggle ergoemacs command modes."
   (interactive)
   (let* ((x (assq 'ergoemacs-modal ergoemacs-emulation-mode-map-alist))
-         (keymap (make-sparse-keymap))
          (help-list (if type (gethash type ergoemacs-translation-text) nil))
+         (cb (current-buffer))
+         keymap
          (no-ergoemacs-advice t))
     (cond
      ((or x (not type))
@@ -259,7 +285,7 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
        (setq ergoemacs-modal-save nil)
        (ergoemacs-mode-line))
      (t
-      (define-key keymap [t] 'ergoemacs-modal-default)
+      (setq keymap (make-composed-keymap (list (ergoemacs-modal-mouse-keymap) ergoemacs-modal-keymap)))
       (push (cons 'ergoemacs-modal keymap)
             ergoemacs-emulation-mode-map-alist)
       (set-default 'ergoemacs-modal type)
