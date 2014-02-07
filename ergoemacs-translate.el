@@ -326,10 +326,11 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :unchorded "M-"
  :shift "M-S-"
  :alt "M-S-"
- :keymap (let ((map (make-sparse-keymap))
-               (no-ergoemacs-advice t))
-           (define-key map (read-kbd-macro "RET") 'ergoemacs-toggle-full-alt)
-           map))
+ :keymap-modal (let ((map (make-sparse-keymap))
+                     (no-ergoemacs-advice t))
+                 (define-key map (read-kbd-macro "<return>") 'ergoemacs-unchorded-alt-modal)
+                 (define-key map (read-kbd-macro "RET") 'ergoemacs-unchorded-alt-modal)
+                 map))
 
 (defun ergoemacs-translate-shifted (kbd)
   "Translates anything with S- and no C- in it to an upper-case character."
