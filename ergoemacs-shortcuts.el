@@ -1144,7 +1144,7 @@ argument prompt.
             (if (eq local-fn 'ergoemacs-read-key-help)
                 (progn
                   (ergoemacs-read-key-help key)
-                  (setq contiue-read t))
+                  (setq continue-read t))
               (if local-fn
                   (ergoemacs-read-key-call local-fn)
                 (setq pretty-key-undefined nil)
