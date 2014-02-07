@@ -1018,7 +1018,8 @@ FORCE-KEY forces keys like <escape> to work properly.
         (symbol-value 'ret))
     ;; Turn off read-input-keys for shortcuts
     (when unread-command-events
-      (setq ergoemacs-modal-save ergoemacs-modal)
+      (when ergoemacs-modal
+        (setq ergoemacs-modal-save ergoemacs-modal))
       (setq erogemacs-modal nil)
       (set-default 'ergoemacs-modal nil))
     (when ergoemacs-single-command-keys
