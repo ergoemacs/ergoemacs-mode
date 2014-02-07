@@ -144,7 +144,7 @@ This also creates functions:
     (eval (macroexpand
            `(defvar ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-modal-map"))
               ',(symbol-value 'keymap-modal)
-              (concat "Ergoemacs modal override map for "
+              ,(concat "Ergoemacs modal override map for "
                       (symbol-name (plist-get arg-plist ':name))
                       " translation.
 This keymap is made in `ergoemacs-translation'"))))
@@ -152,7 +152,7 @@ This keymap is made in `ergoemacs-translation'"))))
     (eval (macroexpand
            `(defvar ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-translation-local-map"))
               ',(symbol-value 'keymap)
-              (concat "Ergoemacs translation local map for "
+              ,(concat "Ergoemacs translation local map for "
                       (symbol-name (plist-get arg-plist ':name))
                       " translation setup.
 This keymap is made in `ergoemacs-translation'"))))
