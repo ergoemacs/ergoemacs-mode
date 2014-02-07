@@ -264,17 +264,16 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
         '("" "C-" "C-S-" "M-" "M-S-" "C-M-" "C-M-S-" "S-")))
      '("" "<header-line> " "<left-fringe> " "<right-fringe> " "<vertical-line> " "<vertical-scroll-bar> "))
     (symbol-value 'map)))
-
-(defun ergoemacs-modal-toggle (&optional type)
+(defvar ergoemacs-modal-list '())
+(defun ergoemacs-modal-toggle (type)
   "Toggle ergoemacs command modes."
-  (interactive)
   (let* ((x (assq 'ergoemacs-modal ergoemacs-emulation-mode-map-alist))
          (help-list (if type (gethash type ergoemacs-translation-text) nil))
          (cb (current-buffer))
          keymap
          (no-ergoemacs-advice t))
     (cond
-     ((or x (not type))
+     (x
        (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist))
        (when ergoemacs-default-cursor
          (set-cursor-color ergoemacs-default-cursor))
