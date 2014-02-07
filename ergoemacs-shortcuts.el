@@ -1508,12 +1508,6 @@ DEF can be:
 (defvar ergoemacs-repeat-shortcut-msg ""
   "Message for repeating keyboard shortcuts like C-c C-c")
 
-(defun ergoemacs-shortcut-timeout ()
-  (let (message-log-max)
-    (unless (current-message)
-      (message ergoemacs-repeat-shortcut-msg)))
-  (set-temporary-overlay-map ergoemacs-repeat-shortcut-keymap))
-
 (defvar ergoemacs-current-extracted-map nil
   "Current extracted map for `ergoemacs-shortcut' defined functions")
 
@@ -1582,6 +1576,45 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
     (ergoemacs-read-key keys)
     (setq ergoemacs-single-command-keys nil)))
 
+
+(defvar ergoemacs-repeat-keymap nil)
+(defun ergoemacs-install-repeat-keymap (keymap &optional mode-line)
+  "Installs repeat KEYMAP."
+  (let* ((x (assq 'ergoemacs-repeat-keys ergoemacs-emulation-mode-map-alist)))
+    (setq ergoemacs-repeat-keymap keymap)
+    (setq ergoemacs-repeat-keys t)
+    (when x
+      (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+    (push (cons 'ergoemacs-repeat-keys ergoemacs-repeat-keymap)
+          ergoemacs-emulation-mode-map-alist))
+  (when mode-line
+    (ergoemacs-mode-line mode-line)))
+
+(defun ergoemacs-repeat-movement-full-keymap (&optional cmds)
+  "Allow movement commands to be repeated without pressing the ALT key"
+  (let (ergoemacs-modal
+        ergoemacs-repeat-keys
+        ergoemacs-read-input-keys
+        ergoemacs-shortcut-override-mode
+        (keymap (make-sparse-keymap)))
+    (mapc
+     (lambda(key)
+       (when (= 1 (length key))
+         (let ((mods (event-modifiers (elt key 0))))
+           (when (memq 'meta mods)
+             (define-key keymap
+               (vector
+                (event-convert-list
+                 (append (delete 'meta mods)
+                         (list (event-basic-type (elt key 0))))))
+               `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
+     (apply 'append
+            (mapcar
+              (lambda (cmd)
+                (where-is-internal cmd))
+              (or cmds '(ergoemacs-shortcut-movement ergoemacs-shortcut-movement-no-shift-select)))))
+    keymap))
+
 (defun ergoemacs-shortcut-movement (&optional opt-args)
   "Shortcut for other key/function for movement keys.
 
@@ -1595,6 +1628,7 @@ Calls the function shortcut key defined in
   (ergoemacs-shortcut-movement-no-shift-select opt-args))
 (put 'ergoemacs-shortcut-movement 'CUA 'move)
 
+
 (defun ergoemacs-shortcut-movement-no-shift-select (&optional opt-args)
   "Shortcut for other key/function in movement keys without shift-selection support.
 
@@ -1603,27 +1637,20 @@ Calls the function shortcut key defined in
 `ergoemacs-single-command-keys' or `this-single-command-keys'.
 "
   (interactive "P")
-  (ergoemacs-shortcut---internal)
-  (when (and ergoemacs-mode ergoemacs-repeat-movement-commands
-             (called-interactively-p 'any)
-             (not cua--rectangle-overlays))
-    (set-temporary-overlay-map
-     (cond
-      ((eq ergoemacs-repeat-movement-commands 'single)
-       (unless (where-is-internal last-command (list (intern (concat "ergoemacs-fast-" (symbol-name this-command) "-keymap"))) t)
-         (setq ergoemacs-check-mode-line-change (list (intern (concat "ergoemacs-fast-" (symbol-name this-command) "-keymap"))))
-         (message (format "Repeat last movement(%s) key: %%s" (symbol-name this-command))
-                  (replace-regexp-in-string
-                   "M-" "" (key-description (this-single-command-keys))))
-         (ergoemacs-mode-line (format " %sSingle" (ergoemacs-unicode-char "↔" "<->"))))
-       ,(intern (concat "ergoemacs-fast-" (symbol-name this-command) "-keymap")))
-      ((eq ergoemacs-repeat-movement-commands 'all)
-       (unless (where-is-internal last-command (list ergoemacs-full-fast-keys-keymap) t)
-         (setq ergoemacs-check-mode-line-change (list ergoemacs-full-fast-keys-keymap))
-         ;; (message "Repeating movement keys installed")
-         (ergoemacs-mode-line (format " %sFull" (ergoemacs-unicode-char "↔" "<->"))))
-       ergoemacs-full-fast-keys-keymap)
-      (t (intern (concat "ergoemacs-fast-" (symbol-name this-command) "-keymap")))) t)))
+  (let ((ck (this-single-command-keys)))
+    (ergoemacs-shortcut---internal)
+    ;; Now optionally install the repeatable movements.
+    (cond
+     ((and (eq ergoemacs-repeat-movement-commands 'single) (= (length ck) 1))
+      (ergoemacs-install-repeat-keymap
+       (let ((map (make-sparse-keymap)))
+         (define-key map (vector (event-basic-type (elt ck 0))) this-command)
+         map)
+       (format " %sSingle" (ergoemacs-unicode-char "↔" "<->"))))
+     ((eq ergoemacs-repeat-movement-commands 'all)
+      (ergoemacs-install-repeat-keymap
+       (ergoemacs-repeat-movement-full-keymap)
+       (format " %sFull" (ergoemacs-unicode-char "↔" "<->")))))))
 
 (defun ergoemacs-shortcut (&optional opt-args)
   "Shortcut for other key/function for non-movement keys.

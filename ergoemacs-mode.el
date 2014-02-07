@@ -241,12 +241,27 @@ Valid values are:
           (const :tag "Allow fast repeat command of the current movement command" 'single)
           (const :tag "Allow fast repeat of all movement commands" 'all)))
 
-(defcustom ergoemacs-repeat-undo-commands 'apps
-  "Allow undo commands to be repeated without pressing the entire key.  For example if <apps> z is undo, then <apps> z z sould be undo twice if enabled."
-  :group 'ergoemacs-mode
-  :type '(choce
-          (const :tag "Do not allow fast repeat commands." nil)
-          (const :tag "Allow fast repeat for <apps> menu." 'apps)))
+(defun ergoemacs-repeat-movement-full-keymap ()
+  "Allow movement commands to be repeated without pressing the ALT key"
+  (let (ergoemacs-modal
+        ergoemacs-repeat-keys
+        ergoemacs-read-input-keys
+        ergoemacs-shortcut-override-mode
+        (keymap (make-sparse-keymap)))
+    (mapc
+     (lambda(key)
+       (when (= 1 (length key))
+         (let ((mods (event-modifiers (elt key 0))))
+           (when (memq 'meta mods)
+             (define-key keymap
+               (vector
+                (event-convert-list
+                 (append (delete 'meta mods)
+                         (list (event-basic-type (elt key 0))))))
+               `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
+     (append (where-is-internal 'ergoemacs-shortcut-movement)
+             (where-is-internal 'ergoemacs-shortcut-movement-no-shift-select)))
+    keymap))
 
 
 (when (not (fboundp 'set-temporary-overlay-map))
@@ -286,91 +301,8 @@ remove the keymap depends on user input and KEEP-PRED:
       
       (push alist emulation-mode-map-alists))))
 
-(defvar ergoemacs-undo-apps-keymap nil
-  "Keymap for repeating undo/redo commands in apps menu.")
-
-(defvar ergoemacs-undo-apps-text nil
-  "Text for repeat undo/redo commands in apps menu.")
-
-(defun ergoemacs-create-undo-apps-keymap ()
-  "Create `ergoemacs-undo-apps-keymap', based on current ergoemacs keybindings."
-  (let ((ergoemacs-undo-key
-         (replace-regexp-in-string "<\\(apps\\|menu\\)> " "" (key-description (ergoemacs-key-fn-lookup 'undo t))))
-        (ergoemacs-redo-key
-         (replace-regexp-in-string "<\\(apps\\|menu\\)> " "" (key-description (ergoemacs-key-fn-lookup 'redo t)))))
-    (setq ergoemacs-undo-apps-text (format "Undo repeat key `%s'; Redo repeat key `%s'"
-                                           ergoemacs-undo-key ergoemacs-redo-key))
-    (setq ergoemacs-undo-apps-keymap (make-keymap))
-    (define-key ergoemacs-undo-apps-keymap (read-kbd-macro ergoemacs-undo-key) 'undo)
-    (define-key ergoemacs-undo-apps-keymap (read-kbd-macro ergoemacs-redo-key) 'redo)))
-
-(defmacro ergoemacs-create-undo-advices (command)
-  "Creates repeat advices for undo/redo commands defined in `ergoemacs-undo-redo-functions'. The repeat behavior is defined by `ergoemacs-repeat-undo-commands'.ergoemacs-repeat-undo-commands"
-  `(defadvice ,(intern (symbol-name command)) (around ergoemacs-undo-redo-advice activate)
-     ,(format "ErgoEmacs fast keymap for `%s'" (symbol-name command))
-     ad-do-it
-     (when (and ergoemacs-mode (eq ergoemacs-repeat-undo-commands 'apps))
-       (message
-        "%s" ergoemacs-undo-apps-text)
-         (set-temporary-overlay-map ergoemacs-undo-apps-keymap t))))
-
-(mapc
- (lambda(x)
-   (eval `(ergoemacs-create-undo-advices ,x)))
- ergoemacs-undo-redo-functions)
-
-(defvar ergoemacs-check-mode-line-change nil)
-(defmacro ergoemacs-create-movement-commands (command)
-  "Creates a shifted and repeat advices and isearch commands."
-  `(progn
-     ,(if (eq 'backward-char command)
-          `(defun ,(intern (concat "ergoemacs-isearch-" (symbol-name command))) (&optional arg)
-             ,(format "Ergoemacs isearch movement command for `%s'.  Behviour controlled with `ergoemacs-isearch-backward-char-to-edit'.  A prefix command will temporarily toggle if the keyboard will edit the item." (symbol-name command))
-             (interactive "^P")
-             (if (or (and arg (not ergoemacs-isearch-backward-char-to-edit))
-                     (and (not arg) ergoemacs-isearch-backward-char-to-edit))
-                 (isearch-edit-string)
-               (isearch-exit)
-               (condition-case err
-                   (call-interactively (or (command-remapping ',command (point)) ',command))
-                 (error
-                  (beep)
-                  (message "%s" err)))
-               
-               (setq this-command ',command))))
-     (defvar ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")) (make-sparse-keymap)
-       ,(format "Ergoemacs fast keymap for `%s'." (symbol-name command)))
-     ;; Change to advices
-     (defadvice ,(intern (symbol-name command)) (around ergoemacs-movement-advice activate)
-       ,(format "Ergoemacs advice for command for `%s'.
-May install a fast repeat key based on `ergoemacs-repeat-movement-commands',  `ergoemacs-full-fast-keys-keymap' and `ergoemacs-fast-%s-keymap'.
-" (symbol-name command) (symbol-name command))
-       ad-do-it
-       (when (and ergoemacs-mode ergoemacs-repeat-movement-commands
-                  (called-interactively-p 'any)
-                  (not cua--rectangle-overlays)) ;; Don't add overlays to rectangles
-         (set-temporary-overlay-map (cond
-                                     ((eq ergoemacs-repeat-movement-commands 'single)
-                                      (unless (where-is-internal last-command (list ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap"))) t)
-                                        (setq ergoemacs-check-mode-line-change (list ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap"))))
-                                        (message ,(format "Repeat last movement(%s) key: %%s" (symbol-name command))
-                                                 (replace-regexp-in-string
-                                                  "M-" "" (key-description (this-single-command-keys))))
-                                        (ergoemacs-mode-line (format " %sSingle" (ergoemacs-unicode-char "↔" "<->"))))
-                                      ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))
-                                     ((eq ergoemacs-repeat-movement-commands 'all)
-                                      (unless (where-is-internal last-command (list ergoemacs-full-fast-keys-keymap) t)
-                                        (setq ergoemacs-check-mode-line-change (list ergoemacs-full-fast-keys-keymap))
-                                        ;; (message "Repeating movement keys installed")
-                                        (ergoemacs-mode-line (format " %sFull" (ergoemacs-unicode-char "↔" "<->"))))
-                                      ergoemacs-full-fast-keys-keymap)
-                                     (t ,(intern (concat "ergoemacs-fast-" (symbol-name command) "-keymap")))) t)))))
-(mapc
- (lambda(x)
-   (eval `(ergoemacs-create-movement-commands ,x)))
- ergoemacs-movement-functions)
-
 (defvar ergoemacs-curr-prefix-arg nil)
+(defvar ergoemacs-repeat-keys nil)
 (defvar ergoemacs-shortcut-keys nil)
 (defvar ergoemacs-unbind-keys nil)
 (defvar ergoemacs-read-input-keys nil)
@@ -1249,6 +1181,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
    '(ergoemacs-shortcut-keys
      ergoemacs-shortcut-override-mode
      ergoemacs-modal
+     ergoemacs-repeat-keys
      ergoemacs-read-input-keys))
   ;; Demote
   (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
@@ -1276,6 +1209,10 @@ This is done by checking if this is a command that supports shift selection or c
     (condition-case err
         (progn
           (ergoemacs-vars-sync)
+          (when (and ergoemacs-repeat-keys (keymapp ergoemacs-repeat-keymap)
+                     (not (lookup-key ergoemacs-repeat-keymap (this-single-command-keys))))
+            (setq ergoemacs-repeat-keys nil)
+            (ergoemacs-mode-line))
           (when (and (not ergoemacs-read-input-keys)
                      (not unread-command-events))
             (setq ergoemacs-read-input-keys t)
@@ -1331,12 +1268,6 @@ This is done by checking if this is a command that supports shift selection or c
         (progn
           (when ergoemacs-mode
             (ergoemacs-shuffle-keys)
-            ;; Reset mode-line
-            (when ergoemacs-check-mode-line-change
-              (unless (where-is-internal this-command  ergoemacs-check-mode-line-change)
-                ;; (message "Restored normal ergoemacs keys.")
-                (ergoemacs-mode-line)
-                (setq ergoemacs-check-mode-line-change nil)))
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (ergoemacs-shortcut-override-mode -1))
@@ -1361,11 +1292,13 @@ This is done by checking if this is a command that supports shift selection or c
                     (if help-list
                         (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
                          (concat " " (nth 5 help-list)))
-                      (ergoemacs-mode-line))))
-              (when ergoemacs-default-cursor
-                (set-cursor-color ergoemacs-default-cursor)
-                (setq ergoemacs-default-cursor nil))
-              (ergoemacs-mode-line))
+                      (unless ergoemacs-repeat-keys
+                        (ergoemacs-mode-line)))))
+              (unless ergoemacs-repeat-keys
+                (when ergoemacs-default-cursor
+                  (set-cursor-color ergoemacs-default-cursor)
+                  (setq ergoemacs-default-cursor nil))
+                (ergoemacs-mode-line)))
             (unless ergoemacs-modal
               (when (not unread-command-events)
                 (ergoemacs-install-shortcuts-up)
