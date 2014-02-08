@@ -262,8 +262,9 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
               '("1" "2" "3" "4" "5" "6" "7")))
            '("" "drag-" "down-" "double-" "triple-")))
         '("" "C-" "C-S-" "M-" "M-S-" "C-M-" "C-M-S-" "S-")))
-     '("" "<header-line> " "<left-fringe> " "<right-fringe> " "<vertical-line> " "<vertical-scroll-bar> "))
+     '("" "<mode-line>" "<header-line> " "<left-fringe> " "<right-fringe> " "<vertical-line> " "<vertical-scroll-bar> "))
     (symbol-value 'map)))
+
 (defvar ergoemacs-modal-list '())
 (defun ergoemacs-modal-toggle (type)
   "Toggle ergoemacs command modes."
