@@ -683,12 +683,6 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
                      ergoemacs-kbd-hash)
             new-key))))))
 
-(defcustom ergoemacs-swap-alt-and-control nil
-  "Swaps Alt and Ctrl keys"
-  :type 'boolean
-  :set 'ergoemacs-set-default
-  :group 'ergoemacs-mode)
-
 (defcustom ergoemacs-change-fixed-layout-to-variable-layout nil
   "Change the fixed layout to variable layout keys.
 For example, on dvorak, change C-j to C-c (copy/command)."
@@ -702,26 +696,6 @@ For example, on dvorak, change C-j to C-c (copy/command)."
               "[Cc]\\(?:on\\)?tro?l[+-]" "C-"
               (replace-regexp-in-string
                "[Aa]lt[+-]" "M-" pre-kbd-code))))
-    (when (and ergoemacs-swap-alt-and-control (not dont-swap))
-      (with-temp-buffer
-        (insert ret)
-        (goto-char (point-min))
-        (while (re-search-forward "[MC]-" nil t)
-          (cond
-           ((string= "M-" (match-string 0)) ; M-A to C-S-a or M-a to C-a
-            (replace-match "C-")
-            (when (looking-at "[[:upper:]]\\( \\|$\\)")
-              (replace-match (format "S-%s" (downcase (match-string 0))) t)))
-           (t ; C-S-a to M-A or C-a to M-a
-            (replace-match "M-")
-            (cond
-             ((looking-at "S-\\(.\\)\\( \\|$\\)")
-              (replace-match
-               (format "%s%s" (upcase (match-string 1)) (match-string 2)) t))
-             ((looking-at "\\(.\\)\\( \\|$\\)")
-              (replace-match
-               (format "%s%s" (downcase (match-string 1)) (match-string 2)) t))))))
-        (setq ret (buffer-string))))
     (symbol-value 'ret)))
 
 (defun ergoemacs-key-fn-lookup (function &optional use-apps)
