@@ -278,6 +278,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :text (format "<Ctl%sAlt> " (ergoemacs-unicode-char "↔" " to "))
  :alt "C-"
  :ctl "M-"
+ :modal-color "blue"
  :modal-always t
  :keymap (let ((map (make-sparse-keymap))
                (no-ergoemacs-advice t))

@@ -1387,7 +1387,8 @@ DEF can be:
     t)
    (t nil)))
 
-(defvar ergoemacs-ignored-prefixes '("C-h" "<f1>" "C-x" "C-c" "ESC" "<escape>"))
+(defvar ergoemacs-ignored-prefixes '(;; "C-h" "<f1>"
+                                     "C-x" "C-c" "ESC" "<escape>"))
 
 (defun ergoemacs-setup-keys-for-layout (layout &optional base-layout)
   "Setup keys based on a particular LAYOUT. All the keys are based on QWERTY layout."
@@ -1954,7 +1955,11 @@ Setup C-c and C-x keys to be described properly.")
                   overriding-terminal-local-map [ergoemacs]) 'ignore)
              (eq (lookup-key
                   overriding-terminal-local-map [ergoemacs-read]) 'ignore))
-        (setq hashkey (md5 (format "override-terminal-orig:%s" overriding-terminal-local-map)))
+        (setq hashkey (md5 (format "override-terminal-orig%s:%s"
+                                   (if ergoemacs-modal
+                                       (concat "-modal-" (symbol-name (nth 0 ergoemacs-modal-list)))
+                                     "")
+                                   overriding-terminal-local-map)))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (when lookup
           (setq overriding-terminal-local-map lookup)
@@ -1964,7 +1969,11 @@ Setup C-c and C-x keys to be described properly.")
      (overriding-local-map
       (when (or (eq (lookup-key overriding-local-map [ergoemacs]) 'ignore)
                 (eq (lookup-key overriding-local-map [ergoemacs-read]) 'ignore))
-        (setq hashkey (md5 (format "override-local-orig:%s" overriding-local-map)))
+        (setq hashkey (md5 (format "override-local-orig%s:%s"
+                                   (if ergoemacs-modal
+                                       (concat "-modal-" (symbol-name (nth 0 ergoemacs-modal-list)))
+                                     "")
+                                   overriding-local-map)))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (when lookup
           (ergoemacs-debug-heading "Remove ergoemacs from `overriding-local-map'")
@@ -1984,7 +1993,11 @@ Setup C-c and C-x keys to be described properly.")
                 (setq overlays (cdr overlays))
               (setq found overlay)
               (setq overlays nil))))
-        (setq hashkey (md5 (format "char-map-orig:%s" override-text-map)))
+        (setq hashkey (md5 (format "char-map-orig%s:%s"
+                                   (if ergoemacs-modal
+                                       (concat "-modal-" (symbol-name (nth 0 ergoemacs-modal-list)))
+                                     "")
+                                   override-text-map)))
         (setq lookup (gethash hashkey ergoemacs-extract-map-hash))
         (when lookup
           (ergoemacs-debug-heading "Remove ergoemacs from (get-char-property (point) 'keymap)")
@@ -2009,7 +2022,11 @@ Setup C-c and C-x keys to be described properly.")
 (defun ergoemacs-install-shortcut-up--internal (text keymap &optional dont-complete)
   (let* ((keymap keymap)
          read-map
-         (hashkey (md5 (format "%s:%s" text keymap)))
+         (hashkey (md5 (format "%s%s:%s"
+                               (if ergoemacs-modal
+                                   (concat "-modal-" (symbol-name (nth 0 ergoemacs-modal-list)))
+                                 "")
+                               text keymap)))
          (orig-map (copy-keymap keymap))
          (lookup (gethash hashkey ergoemacs-extract-map-hash)))
     (if lookup
@@ -2018,24 +2035,59 @@ Setup C-c and C-x keys to be described properly.")
       (ergoemacs-install-shortcuts-map keymap dont-complete)
       (setq read-map (copy-keymap keymap))
       (define-key read-map [ergoemacs-read] 'ignore)
-      (setq keymap
-            (copy-keymap
-             (make-composed-keymap
-              (list ergoemacs-read-input-keymap keymap))))
-      
+      (if ergoemacs-modal
+          (setq keymap
+                (let ((map (make-sparse-keymap)))
+                  (define-key map [t]
+                    `(lambda() (interactive)
+                       (let ((orig-hash ,hashkey))
+                         (call-interactively 'ergoemacs-modal-default))))
+                  (setq map
+                        (make-composed-keymap
+                         (list
+                          (ergoemacs-modal-mouse-keymap)
+                          (ergoemacs-local-map
+                           (nth 0 ergoemacs-modal-list)
+                           t)
+                          map)))
+                  map))
+        (setq keymap
+              (copy-keymap
+               (make-composed-keymap
+                (list ergoemacs-read-input-keymap keymap)))))
       (define-key keymap [ergoemacs] 'ignore)
       (puthash hashkey keymap ergoemacs-extract-map-hash)
-      (puthash (md5 (format "%s:%s" text read-map)) keymap ergoemacs-extract-map-hash)
+      (puthash (md5 (format "%s%s:%s" text
+                            (if ergoemacs-modal
+                                (concat "-modal-" (symbol-name (nth 0 ergoemacs-modal-list)))
+                              "")
+                            read-map)) keymap ergoemacs-extract-map-hash)
       ;; Save old map.
       ;; Lookup map on either the composed or non-composed map
       ;; gives the same original map
-      (setq hashkey (md5 (format "%s-orig:%s" text keymap)))
+      (setq hashkey (md5 (format "%s-orig%s:%s" text
+                                 (if ergoemacs-modal
+                                     (concat "-modal-" (symbol-name (nth 0 ergoemacs-modal-list)))
+                                   "")
+                                 keymap)))
       (puthash hashkey orig-map ergoemacs-extract-map-hash)
-      (setq hashkey (md5 (format "%s-orig:%s" text read-map)))
+      (setq hashkey (md5 (format "%s-orig%s:%s" text
+                                 (if ergoemacs-modal
+                                     (concat "-modal-" (symbol-name (nth 0 ergoemacs-modal-list)))
+                                   "")
+                                 read-map)))
       (puthash hashkey orig-map ergoemacs-extract-map-hash)
-      (setq hashkey (md5 (format "%s-read:%s" text keymap)))
+      (setq hashkey (md5 (format "%s-read%s:%s" text
+                                 (if ergoemacs-modal
+                                     (concat "-modal-" (symbol-name (nth 0 ergoemacs-modal-list)))
+                                   "")
+                                 keymap)))
       (puthash hashkey read-map ergoemacs-extract-map-hash)
-      (setq hashkey (md5 (format "%s-read:%s" text read-map)))
+      (setq hashkey (md5 (format "%s-read%s:%s" text
+                                 (if ergoemacs-modal
+                                     (concat "-modal-" (symbol-name (nth 0 ergoemacs-modal-list)))
+                                   "")
+                                 read-map)))
       (puthash hashkey read-map ergoemacs-extract-map-hash))
     (symbol-value 'keymap)))
 
