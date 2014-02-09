@@ -1222,9 +1222,12 @@ argument prompt.
                                                                        "-pretty" ""))))))))
                         (unless pretty-key-undefined
                           (setq pretty-key-undefined pretty-key-trial))
-                        (setq local-fn (ergoemacs-read-key-lookup key pretty-key
-                                                                  key-trial pretty-key-trial
-                                                                  force-key))
+                        (setq local-fn
+                              (if key-trial
+                                  (ergoemacs-read-key-lookup
+                                   key pretty-key
+                                   key-trial pretty-key-trial
+                                   force-key) nil))
                         (cond
                          ((eq local-fn 'keymap)
                           (setq continue-read t
