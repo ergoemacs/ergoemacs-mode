@@ -104,6 +104,9 @@ The argument ARG-PLIST should be a plist with the following properties:
 :text -- Text to display while completing this translation
 :keymap -- Local Keymap for translation
 :keymap-modal -- Modal keymap for overrides.
+:modal-always -- If the modal state is always on, regardless of
+                 the values of  `ergoemacs-modal-ignored-buffers',
+                `ergoemacs-modal-emacs-state-modes' `minibufferp'
 The following arguments allow the keyboard presses to be translated:
  - :alt
  - :ctl
@@ -275,6 +278,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :text (format "<Ctl%sAlt> " (ergoemacs-unicode-char "↔" " to "))
  :alt "C-"
  :ctl "M-"
+ :modal-always t
  :keymap (let ((map (make-sparse-keymap))
                (no-ergoemacs-advice t))
            (define-key map [f1] 'ergoemacs-read-key-help)
@@ -314,6 +318,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :unchorded "M-"
  :shift "M-S-"
  :alt "M-S-"
+ :modal-color "red"
  :keymap-modal (let ((map (make-sparse-keymap))
                      (no-ergoemacs-advice t))
                  (define-key map (read-kbd-macro "<return>") 'ergoemacs-unchorded-alt-modal)

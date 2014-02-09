@@ -595,8 +595,11 @@ It will replace anything defined by `ergoemacs-translation'"
       (cond
        (defined-fn
          (ergoemacs-read-key-call defined-fn))
-       (ergoemacs-modal ;; Exit modal 
-        (ergoemacs-modal-toggle ergoemacs-modal))
+       ((and ergoemacs-modal
+             (let ((hash (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translations)))
+               (and hash
+                    (not (plist-get hash ':modal-always))))) ;; Exit modal 
+        (ergoemacs-modal-toggle (nth 0 ergoemacs-modal-list)))
        (t
         (keyboard-quit)))))
   (setq ergoemacs-describe-key nil))

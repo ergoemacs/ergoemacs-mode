@@ -67,13 +67,6 @@ enabled."
 This should be reset every time that the modal cursor changes color.  Otherwise this will be nil
 A color string as passed to `set-cursor-color'.")
 
-(defcustom ergoemacs-modal-cursor ;; Adapted from evil-mode
-  "red"
-  "The default cursor.
-A color string as passed to `set-cursor-color'."
-  :type 'string
-  :group 'ergoemacs-modal)
-
 (defcustom ergoemacs-modal-emacs-state-modes
   '(archive-mode
     bbdb-mode
@@ -204,14 +197,17 @@ modal state is currently enabled."
   :type  '(repeat symbol)
   :group 'ergoemacs-modal)
 
-
-
 (defvar ergoemacs-exit-temp-map-var nil)
 
 (defun ergoemacs-minibuffer-setup ()
   "Exit temporary overlay maps."
   ;; (setq ergoemacs-exit-temp-map-var t)
   (set (make-local-variable 'ergoemacs-modal) nil)
+  (when (and ergoemacs-modal-list
+             (let ((hash (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translations)))
+               (and hash
+                    (plist-get hash ':modal-always))))
+    (setq ergoemacs-modal (nth 0 ergoemacs-modal-list)))
   (ergoemacs-debug-heading "ergoemacs-minibuffer-setup")
   (ergoemacs-debug "emulation-mode-map-alists: %s" emulation-mode-map-alists)
   (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s"
@@ -293,13 +289,17 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
       (setq ergoemacs-modal type)
       (unless ergoemacs-default-cursor
         (setq ergoemacs-default-cursor
-              (or (frame-parameter nil 'cursor-color) "black"))
-        (when ergoemacs-modal-cursor
-          (set-cursor-color ergoemacs-modal-cursor))
-        (if help-list
-            (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-             (concat " " (nth 5 help-list)))
-          (ergoemacs-mode-line)))
+              (or (frame-parameter nil 'cursor-color) "black")))
+      (let ((hash (gethash type ergoemacs-translations))
+            tmp)
+        (when hash
+          (setq tmp (plist-get hash ':modal-color))
+          (when tmp
+            (set-cursor-color tmp))))
+      (if help-list
+          (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+           (concat " " (nth 5 help-list)))
+        (ergoemacs-mode-line))
       (let (message-log-max)
         (if help-list
             (message "%s command mode installed" (nth 5 help-list)))))
@@ -323,9 +323,13 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
             (setq ergoemacs-modal type)
             (unless ergoemacs-default-cursor
               (setq ergoemacs-default-cursor
-                    (or (frame-parameter nil 'cursor-color) "black"))
-              (when ergoemacs-modal-cursor
-                (set-cursor-color ergoemacs-modal-cursor)))
+                    (or (frame-parameter nil 'cursor-color) "black")))
+            (let ((hash (gethash type ergoemacs-translations))
+                  tmp)
+              (when hash
+                (setq tmp (plist-get hash ':modal-color))
+                (when tmp
+                  (set-cursor-color tmp))))
             (if help-list
                 (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
                  (concat " " (nth 5 help-list)))
