@@ -1294,7 +1294,12 @@ This is done by checking if this is a command that supports shift selection or c
                   (unless ergoemacs-default-cursor
                     (setq ergoemacs-default-cursor
                           (or (frame-parameter nil 'cursor-color) "black"))
-                    (set-cursor-color ergoemacs-modal-cursor)
+                    (let ((hash (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translations))
+                          tmp)
+                      (when hash
+                        (setq tmp (plist-get hash ':modal-color))
+                        (when tmp
+                          (set-cursor-color tmp))))
                     (if help-list
                         (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
                          (concat " " (nth 5 help-list)))
