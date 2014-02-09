@@ -965,8 +965,12 @@ bindings the keymap is:
                  `(,(nth 0 x) ,val ,val2)))
              ergoemacs-save-variables-actual))
       (ergoemacs-debug "Old ergoemacs-save-variables: %s" ergoemacs-save-variables-actual)
-      (setq ergoemacs-save-variables-actual nil)
-      (setq ergoemacs-save-variables-state nil))    
+      (setq ergoemacs-save-variables-actual nil
+            ergoemacs-save-variables-state  nil
+            ergoemacs-modal                 nil
+            ergoemacs-modal-list            '()
+            ergoemacs-modal-save            nil)
+      (set-default 'ergoemacs-modal nil))
     (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
     (when (featurep 'ergoemacs-menus)
       (ergoemacs-menus-off))
