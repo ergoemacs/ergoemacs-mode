@@ -1284,7 +1284,7 @@ This is done by checking if this is a command that supports shift selection or c
                         nil)))
                ergoemacs-modal-ignored-buffers))
             (if (or ergoemacs-modal ergoemacs-modal-save)
-                (let ((help-list (gethash (or ergoemacs-modal ergoemacs-modal-save) ergoemacs-translation-text)))
+                (let ((help-list (if ergoemacs-modal-list (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translation-text) nil)))
                   (unless ergoemacs-default-cursor
                     (setq ergoemacs-default-cursor
                           (or (frame-parameter nil 'cursor-color) "black"))

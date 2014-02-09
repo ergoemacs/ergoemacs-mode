@@ -232,8 +232,10 @@ modal state is currently enabled."
   "The default command for `ergoemacs-mode' modal.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation type defined by `ergoemacs-modal'"
   (interactive)
-  (ergoemacs-read-key (or ergoemacs-single-command-keys (this-single-command-keys))
-                      ergoemacs-modal ergoemacs-modal))
+  (ergoemacs-read-key
+   (or ergoemacs-single-command-keys (this-single-command-keys))
+   (nth 0 ergoemacs-modal-list)
+   (nth 0 ergoemacs-modal-list)))
 
 (defvar ergoemacs-modal-save nil)
 (defvar ergoemacs-modal nil
@@ -269,25 +271,22 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
 (defun ergoemacs-modal-toggle (type)
   "Toggle ergoemacs command modes."
   (let* ((x (assq 'ergoemacs-modal ergoemacs-emulation-mode-map-alist))
-         (help-list (if type (gethash type ergoemacs-translation-text) nil))
-         (cb (current-buffer))
+         (help-list (gethash type ergoemacs-translation-text))
          keymap
+         (type type)
+         tmp
          (no-ergoemacs-advice t))
+    (setq ergoemacs-emulation-mode-map-alist
+          (delq x ergoemacs-emulation-mode-map-alist))
     (cond
-     (x
-       (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist))
-       (when ergoemacs-default-cursor
-         (set-cursor-color ergoemacs-default-cursor))
-       (let (message-log-max)
-         (message "Full %s command mode removed." (if help-list (nth 5 help-list) "")))
-       (set-default 'ergoemacs-modal nil)
-       (setq ergoemacs-modal nil)
-       (setq ergoemacs-modal-save nil)
-       (ergoemacs-mode-line))
-     (t
-      (setq keymap (make-composed-keymap (list (ergoemacs-modal-mouse-keymap)
-                                               (ergoemacs-local-map type t)
-                                               ergoemacs-modal-keymap)))
+     ((or (not ergoemacs-modal-list) ;; First time to turn on
+          (not (eq (nth 0 ergoemacs-modal-list) type)) ;; New modal 
+          )
+      (push type ergoemacs-modal-list)
+      (setq keymap (make-composed-keymap
+                    (list (ergoemacs-modal-mouse-keymap)
+                          (ergoemacs-local-map type t)
+                          ergoemacs-modal-keymap)))
       (push (cons 'ergoemacs-modal keymap)
             ergoemacs-emulation-mode-map-alist)
       (set-default 'ergoemacs-modal type)
@@ -303,7 +302,46 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
           (ergoemacs-mode-line)))
       (let (message-log-max)
         (if help-list
-            (message "%s command mode installed" (nth 5 help-list))))))))
+            (message "%s command mode installed" (nth 5 help-list)))))
+     (t ;; Turn off.
+      (setq tmp (pop ergoemacs-modal-list))
+      (when (eq tmp type)
+        (if (not ergoemacs-modal-list)
+            (setq type nil)
+          (setq type (nth 0 ergoemacs-modal-list))))
+      (if type
+          (progn ;; Turn off current modal, turn on last modal.
+            (setq help-list (gethash type ergoemacs-translation-text))
+            (setq keymap
+                  (make-composed-keymap
+                   (list (ergoemacs-modal-mouse-keymap)
+                         (ergoemacs-local-map type t)
+                         ergoemacs-modal-keymap)))
+            (push (cons 'ergoemacs-modal keymap)
+                  ergoemacs-emulation-mode-map-alist)
+            (set-default 'ergoemacs-modal type)
+            (setq ergoemacs-modal type)
+            (unless ergoemacs-default-cursor
+              (setq ergoemacs-default-cursor
+                    (or (frame-parameter nil 'cursor-color) "black"))
+              (when ergoemacs-modal-cursor
+                (set-cursor-color ergoemacs-modal-cursor)))
+            (if help-list
+                (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+                 (concat " " (nth 5 help-list)))
+              (ergoemacs-mode-line))
+            (let (message-log-max)
+              (if help-list
+                  (message "%s command mode resumed." (nth 5 help-list)))))
+        ;; Turn of ergoemacs-modal
+        (when ergoemacs-default-cursor
+          (set-cursor-color ergoemacs-default-cursor))
+        (let (message-log-max)
+          (message "Full %s command mode removed." (if help-list (nth 5 help-list) "")))
+        (set-default 'ergoemacs-modal nil)
+        (setq ergoemacs-modal nil)
+        (setq ergoemacs-modal-save nil)
+        (ergoemacs-mode-line))))))
 
 (provide 'ergoemacs-modal)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
