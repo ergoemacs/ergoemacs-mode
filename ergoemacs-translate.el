@@ -78,15 +78,13 @@
   '(universal-argument)
   "Universal argument functions")
 (defvar ergoemacs-translate-hash (make-hash-table :test 'equal))
-(defvar ergoemacs-translation-names nil)
-(defvar ergoemacs-translations nil)
+(defvar ergoemacs-translations (make-hash-table :test 'equal))
 (defvar ergoemacs-translation-text (make-hash-table :test 'equal))
 
 (defun ergoemacs-reset-translations ()
   "Resets translations."
   (setq ergoemacs-translate-hash (make-hash-table :test 'equal))
-  (setq ergoemacs-translation-names nil)
-  (setq ergoemacs-translations nil)
+  (setq ergoemacs-translations (make-hash-table :test 'equal))
   (setq ergoemacs-translation-text (make-hash-table :test 'equal))
   (setq ergoemacs-universal-fns '(universal-argument)))
 
@@ -119,7 +117,6 @@ The following arguments allow the keyboard presses to be translated:
 This will be called by `ergoemacs-translate'.
 
 The translations plists are stored in `ergoemacs-translations'.
-The translation keymaps are store in `ergoemacs-translation-keymaps'.
 The keymap translation text is stored in `ergoemacs-translation-text'
 
 This also creates functions:
@@ -256,17 +253,8 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
                    key-text key-pretty tmp (or (plist-get arg-plist ':text) ""))
              ergoemacs-translation-text)
     ;; Replace/Add translation
-    (setq tmp nil)
-    (setq ergoemacs-translations
-          (mapcar
-           (lambda(elt-plist)
-             (if (not (eq (plist-get elt-plist ':name) (plist-get arg-plist ':name)))
-                 (symbol-value 'elt-plist)
-               (setq tmp t)
-               (symbol-value 'ret-plist)))
-           ergoemacs-translations))
-    (unless tmp
-      (push ret-plist ergoemacs-translations))))
+    (puthash (plist-get arg-plist ':name) ret-plist
+             ergoemacs-translations)))
 
 ;; Reset translations in case this is re-sourced
 (ergoemacs-reset-translations)
@@ -544,8 +532,8 @@ and `ergoemacs-pretty-key' descriptions.
                                                     (concat "M-C-" shifted-key))))
           (setq ret (plist-put ret ':alt-ctl-shift-key (read-kbd-macro (plist-get ret ':alt-ctl-shift) t)))
           (setq ret (plist-put ret ':alt-ctl-shift-pretty (ergoemacs-pretty-key (plist-get ret ':alt-ctl-shift))))
-          (mapc
-           (lambda(plist)
+          (maphash
+           (lambda(key plist)
              (setq ret (ergoemacs-translation-install plist orig-key ret)))
            ergoemacs-translations)
           (puthash orig-key (symbol-value 'ret) ergoemacs-translate-hash)

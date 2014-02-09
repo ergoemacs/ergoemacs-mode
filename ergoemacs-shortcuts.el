@@ -497,8 +497,8 @@ This is actually a dummy function.  The actual work is done in `ergoemacs-read-k
   "Installs KEY PRETTY-KEY and KBD into NEXT-KEY plist.
 It will replace anything defined by `ergoemacs-translation'"
   (let ((next-key next-key))
-    (mapc
-     (lambda(var-plist)
+    (maphash 
+     (lambda(key var-plist)
        (let* ((variant (concat ":" (symbol-name (plist-get var-plist ':name))))
               (var-kbd (intern variant))
               (var-key (intern (concat variant "-key")))
@@ -577,9 +577,8 @@ It will replace anything defined by `ergoemacs-translation'"
 (defun ergoemacs-read-key-help (&optional key)
   "Show help for the current sequence KEY."
   (interactive)
-  (when key
-    (message "Key bindings for %s will eventually be shown."
-             (key-description key))))
+  ;; Eventually...
+  )
 
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
@@ -883,9 +882,12 @@ FORCE-KEY forces keys like <escape> to work properly.
                 (cond
                  ((and hash (eq 'string (type-of (nth 0 hash)))
                        (memq (nth 1 hash)
-                             (mapcar
-                              (lambda(x) (plist-get x ':name))
-                              ergoemacs-translations)))
+                             (let ((ret '()))
+                               (maphash
+                                (lambda(key x)
+                                  (push key ret))
+                                ergoemacs-translations)
+                               ret)))
                   ;; Reset the `ergoemacs-read-key'
                   ;; List in form of key type first-type
                   (setq ret (list (nth 0 hash) (nth 1 hash) (nth 1 hash))))
