@@ -1105,9 +1105,7 @@ argument prompt.
         (setq tmp (plist-get next-key ':normal-key))
         ;; See if there is a local equivalent of this...
         (setq local-keymap (ergoemacs-local-map type))
-        (if (and (or real-read
-                     (and (boundp 'ergoemacs-modal-read)
-                          ergoemacs-modal-read)) local-keymap)
+        (if (and real-read local-keymap)
             (setq local-fn (lookup-key local-keymap tmp))
           (setq local-fn nil))
         (if (eq local-fn 'ergoemacs-read-key-undo-last)
@@ -1224,13 +1222,9 @@ argument prompt.
                                                                        "-pretty" ""))))))))
                         (unless pretty-key-undefined
                           (setq pretty-key-undefined pretty-key-trial))
-                        (setq local-fn
-                              (if key
-                                  (ergoemacs-read-key-lookup
-                                   key pretty-key
-                                   key-trial pretty-key-trial
-                                   force-key)
-                                nil))
+                        (setq local-fn (ergoemacs-read-key-lookup key pretty-key
+                                                                  key-trial pretty-key-trial
+                                                                  force-key))
                         (cond
                          ((eq local-fn 'keymap)
                           (setq continue-read t
