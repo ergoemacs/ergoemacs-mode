@@ -278,8 +278,6 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :text (format "<Ctl%sAlt> " (ergoemacs-unicode-char "↔" " to "))
  :alt "C-"
  :ctl "M-"
- :modal-color "blue"
- :modal-always t
  :keymap (let ((map (make-sparse-keymap))
                (no-ergoemacs-advice t))
            (define-key map [f1] 'ergoemacs-read-key-help)
@@ -325,6 +323,44 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
                  (define-key map (read-kbd-macro "<return>") 'ergoemacs-unchorded-alt-modal)
                  (define-key map (read-kbd-macro "RET") 'ergoemacs-unchorded-alt-modal)
                  map))
+
+
+(ergoemacs-translation
+ :name 'gaia
+ :text "<G>"
+ :unchorded "C-"
+ :modal-color "red"
+ :keymap-modal
+ (let ((map (make-sparse-keymap))
+       (no-ergoemacs-advice t))
+   (define-key map (read-kbd-macro "1") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "2") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "3") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "4") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "5") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "6") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "7") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "8") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "9") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "0") 'ergoemacs-gaia-digit-argument)
+   (define-key map (read-kbd-macro "-") 'ergoemacs-gaia-negative-argument)
+   (define-key map (if (eq system-type 'windows-nt) [apps] [menu])
+     'ergoemacs-gaia-modal)
+   map))
+
+(defvar ergoemacs-gaia-mode nil)
+(defun ergoemacs-gaia-mode ()
+  "Gaia-mode"
+  (interactive)
+  (cond
+   (ergoemacs-gaia-mode
+    (setq ergoemacs-theme "lvl0")
+    (ergoemacs-mode -1))
+   ((not ergoemacs-gaia-mode)
+    (setq ergoemacs-theme "lvl0")
+    (ergoemacs-mode 1)
+    (ergoemacs-gaia-modal)))
+  (setq ergoemacs-gaia-mode (not ergoemacs-gaia-mode)))
 
 (defun ergoemacs-translate-shifted (kbd)
   "Translates anything with S- and no C- in it to an upper-case character."
