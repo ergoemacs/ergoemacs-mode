@@ -498,7 +498,7 @@ This is actually a dummy function.  The actual work is done in `ergoemacs-read-k
 It will replace anything defined by `ergoemacs-translation'"
   (let ((next-key next-key))
     (maphash 
-     (lambda(key var-plist)
+     (lambda(yyy var-plist)
        (let* ((variant (concat ":" (symbol-name (plist-get var-plist ':name))))
               (var-kbd (intern variant))
               (var-key (intern (concat variant "-key")))
@@ -514,6 +514,18 @@ It will replace anything defined by `ergoemacs-translation'"
          (setq next-key (plist-put next-key var-s-pretty pretty))))
      ergoemacs-translations)
     (symbol-value 'next-key)))
+
+(defvar ergoemacs-alt-text
+  (replace-regexp-in-string
+   "[Qq]" "" (ergoemacs-pretty-key "M-q")))
+
+(defvar ergoemacs-ctl-text
+  (replace-regexp-in-string
+   "[Qq]" "" (ergoemacs-pretty-key "C-q")))
+
+(defvar ergoemacs-alt-ctl-text
+  (replace-regexp-in-string
+   "[Qq]" "" (ergoemacs-pretty-key "C-q")))
 
 (defun ergoemacs-read-key-next-key-is-alt (&optional type pretty-key)
   "The next key read is an Alt+ key. (or M- )"
@@ -887,8 +899,8 @@ FORCE-KEY forces keys like <escape> to work properly.
                        (memq (nth 1 hash)
                              (let ((ret '()))
                                (maphash
-                                (lambda(key x)
-                                  (push key ret))
+                                (lambda(yyy x)
+                                  (push yyy ret))
                                 ergoemacs-translations)
                                ret)))
                   ;; Reset the `ergoemacs-read-key'
@@ -1105,7 +1117,9 @@ argument prompt.
         (setq tmp (plist-get next-key ':normal-key))
         ;; See if there is a local equivalent of this...
         (setq local-keymap (ergoemacs-local-map type))
-        (if (and real-read local-keymap)
+        (if (and (or real-read
+                     (and (boundp 'modal-default) modal-default))
+                 local-keymap)
             (setq local-fn (lookup-key local-keymap tmp))
           (setq local-fn nil))
         (if (eq local-fn 'ergoemacs-read-key-undo-last)

@@ -330,6 +330,16 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :text "<G>"
  :unchorded "C-"
  :modal-color "red"
+ :keymap (let ((map (make-sparse-keymap)))
+           (define-key map [f1] 'ergoemacs-read-key-help)
+           (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
+           (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-quoted)
+           (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
+           (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
+           (define-key map "G" 'ergoemacs-read-key-next-key-is-alt-ctl)
+           (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
+           (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
+           map)
  :keymap-modal
  (let ((map (make-sparse-keymap))
        (no-ergoemacs-advice t))
@@ -344,6 +354,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
    (define-key map (read-kbd-macro "9") 'ergoemacs-gaia-digit-argument)
    (define-key map (read-kbd-macro "0") 'ergoemacs-gaia-digit-argument)
    (define-key map (read-kbd-macro "-") 'ergoemacs-gaia-negative-argument)
+   (define-key map (read-kbd-macro "u") 'ergoemacs-gaia-universal-argument)
    (define-key map (if (eq system-type 'windows-nt) [apps] [menu])
      'ergoemacs-gaia-modal)
    map))

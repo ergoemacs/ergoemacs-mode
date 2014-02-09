@@ -228,10 +228,11 @@ modal state is currently enabled."
   "The default command for `ergoemacs-mode' modal.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation type defined by `ergoemacs-modal'"
   (interactive)
-  (ergoemacs-read-key
-   (or ergoemacs-single-command-keys (this-single-command-keys))
-   (nth 0 ergoemacs-modal-list)
-   (nth 0 ergoemacs-modal-list)))
+  (let ((modal-default t))
+    (ergoemacs-read-key
+     (or ergoemacs-single-command-keys (this-single-command-keys))
+     (nth 0 ergoemacs-modal-list)
+     (nth 0 ergoemacs-modal-list))))
 
 (defvar ergoemacs-modal-save nil)
 (defvar ergoemacs-modal nil
