@@ -1275,26 +1275,6 @@ This is done by checking if this is a command that supports shift selection or c
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (ergoemacs-shortcut-override-mode -1))
-            (if (or ergoemacs-modal ergoemacs-modal-save)
-                (let ((help-list (if ergoemacs-modal-list (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translation-text) nil)))
-                  (unless ergoemacs-default-cursor
-                    (setq ergoemacs-default-cursor
-                          (or (frame-parameter nil 'cursor-color) "black"))
-                    (let ((hash (ergoemacs-modal-p)))
-                      (when hash
-                        (setq tmp (plist-get hash ':modal-color))
-                        (when tmp
-                          (set-cursor-color tmp))))
-                    (if help-list
-                        (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-                         (concat " " (nth 5 help-list)))
-                      (unless ergoemacs-repeat-keys
-                        (ergoemacs-mode-line)))))
-              (unless ergoemacs-repeat-keys
-                (when ergoemacs-default-cursor
-                  (set-cursor-color ergoemacs-default-cursor)
-                  (setq ergoemacs-default-cursor nil))
-                (ergoemacs-mode-line)))
             (unless ergoemacs-modal
               (when (not unread-command-events)
                 (ergoemacs-install-shortcuts-up)
