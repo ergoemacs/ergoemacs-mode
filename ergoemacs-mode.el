@@ -1280,6 +1280,10 @@ This is done by checking if this is a command that supports shift selection or c
           (when (not ergoemacs-mode)
             (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))
+  (when ergoemacs-modal-save
+    (setq ergoemacs-modal ergoemacs-modal-save)
+    (set-default 'ergoemacs-modal ergoemacs-modal-save)
+    (setq ergoemacs-modal-save nil))
   (unless unread-command-events
     (when (key-binding [ergoemacs-single-command-keys])
       (if (not ergoemacs-read-key-overriding-overlay-save)
@@ -1287,10 +1291,6 @@ This is done by checking if this is a command that supports shift selection or c
         (delete-overlay ergoemacs-read-key-overriding-overlay-save)
         (setq ergoemacs-read-key-overriding-overlay-save nil)))
     (setq ergoemacs-read-input-keys t)
-    (when ergoemacs-modal-save
-      (setq ergoemacs-modal ergoemacs-modal-save)
-      (set-default 'ergoemacs-modal ergoemacs-modal-save)
-      (setq ergoemacs-modal-save nil))
     (setq ergoemacs-single-command-keys nil))
   t)
 
