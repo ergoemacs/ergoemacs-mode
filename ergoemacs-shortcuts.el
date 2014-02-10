@@ -585,15 +585,18 @@ It will replace anything defined by `ergoemacs-translation'"
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
   (if (minibufferp)
       (progn
-        (minibuffer-keyboard-quit)
-        (ergoemacs-install-shortcuts-up))
+        (ergoemacs-move-cursor-next-pane)
+        (ergoemacs-post-command-hook)
+        (ergoemacs-move-cursor-previous-pane)
+        (minibuffer-keyboard-quit))
     (let (defined-fn
            ergoemacs-shortcut-keys
            ergoemacs-read-input-keys
            ergoemacs-shortcut-override-mode
            ergoemacs-mode)
       (setq defined-fn (ergoemacs-key-fn-lookup 'keyboard-quit))
-      (setq defined-fn (condition-case err (key-binding defined-fn)
+      (setq defined-fn (condition-case err
+                           (key-binding defined-fn)
                          (error nil)))
       (cond
        (defined-fn
@@ -2135,14 +2138,18 @@ The keymaps are:
         (ergoemacs-debug-heading "Install shortcuts into overriding-terminal-local-map")
         (setq overriding-terminal-local-map 
               (ergoemacs-install-shortcut-up--internal
-               "override-terminal" overriding-terminal-local-map))))
+               "override-terminal" overriding-terminal-local-map)))
+      (let (overriding-terminal-local-map)
+        (ergoemacs-install-shortcuts-up)))
      (overriding-local-map
       (when  (not (eq (lookup-key overriding-local-map [ergoemacs])
                       'ignore))
         (ergoemacs-debug-heading "Install shortcuts into overriding-local-map")
         (setq overriding-local-map
               (ergoemacs-install-shortcut-up--internal
-               "override-local" overriding-local-map))))
+               "override-local" overriding-local-map)))
+      (let (overriding-local-map)
+        (ergoemacs-install-shortcuts-up)))
      ((progn
         (setq override-text-map (get-char-property (point) 'keymap))
         (and (keymapp override-text-map)
