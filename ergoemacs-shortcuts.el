@@ -247,19 +247,8 @@ This is called through `ergoemacs-read-key'"
   (setq current-prefix-arg '(4))
   (ergoemacs-read-key nil type nil t))
 
-(defun ergoemacs-digit-argument (&optional)
-  "Ergoemacs digit argument
- This is called through `ergoemacs-read-key'"
-  (interactive)
-  (let* ((char (if (integerp last-command-event)
-                   last-command-event
-                 (get last-command-event 'ascii-character)))
-         (digit (- (logand char ?\177) ?0)))
-    (setq current-prefix-arg digit))
-  (ergoemacs-read-key nil type nil t))
-
 (defun ergoemacs-digit-argument (&optional type)
-  "Ergoemacs digit argument
+  "Ergoemacs digit argument.
  This is called through `ergoemacs-read-key'"
   (interactive)
   (let* ((char (if (integerp last-command-event)
@@ -815,7 +804,9 @@ FORCE-KEY forces keys like <escape> to work properly.
                 (setq fn (or (command-remapping fn (point)) fn))
                 (setq ergoemacs-single-command-keys key)
                 (when (and ergoemacs-echo-function
-                           (boundp 'pretty-key-undefined))
+                           (boundp 'pretty-key-undefined)
+                           (not (or this-command-keys-shift-translated
+                                    ergoemacs-shift-translated)))
                   (let (message-log-max)
                     (if (string= pretty-key-undefined pretty-key)
                         (when (eq ergoemacs-echo-function t)
@@ -839,7 +830,9 @@ FORCE-KEY forces keys like <escape> to work properly.
                 (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
                 (reset-this-command-lengths)
                 (when (and ergoemacs-echo-function
-                           (boundp 'pretty-key-undefined))
+                           (boundp 'pretty-key-undefined)
+                           (not (or this-command-keys-shift-translated
+                                    ergoemacs-shift-translated)))
                   (let (message-log-max)
                     (if (string= pretty-key-undefined pretty-key)
                         (when (eq ergoemacs-echo-function t)
@@ -867,7 +860,9 @@ FORCE-KEY forces keys like <escape> to work properly.
                 (setq fn (or (command-remapping fn (point)) fn))
                 (setq ergoemacs-single-command-keys key)
                 (when (and ergoemacs-echo-function
-                           (boundp 'pretty-key-undefined))
+                           (boundp 'pretty-key-undefined)
+                           (not (or this-command-keys-shift-translated
+                                    ergoemacs-shift-translated)))
                   (let (message-log-max)
                     (if (string= pretty-key-undefined pretty-key)
                         (when (eq ergoemacs-echo-function t)
@@ -930,7 +925,9 @@ FORCE-KEY forces keys like <escape> to work properly.
                            (interactive-form (nth 0 hash))
                          (error nil)))
                   (when (and ergoemacs-echo-function
-                             (boundp 'pretty-key-undefined))
+                             (boundp 'pretty-key-undefined)
+                             (not (or this-command-keys-shift-translated
+                                      ergoemacs-shift-translated)))
                     (let (message-log-max)
                       (if (string= pretty-key-undefined pretty-key)
                           (when (eq ergoemacs-echo-function t)
@@ -948,7 +945,9 @@ FORCE-KEY forces keys like <escape> to work properly.
                  ((and ergoemacs-shortcut-keys (not ergoemacs-describe-key)
                        (not ergoemacs-single-command-keys))
                   (when (and ergoemacs-echo-function
-                             (boundp 'pretty-key-undefined))
+                             (boundp 'pretty-key-undefined)
+                             (not (or this-command-keys-shift-translated
+                                      ergoemacs-shift-translated)))
                     (let (message-log-max)
                       (if (nth 0 hash)
                           (setq fn (nth 0 hash))
@@ -987,7 +986,9 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (unless ret
                     (setq ergoemacs-single-command-keys key)
                     (when (and ergoemacs-echo-function
-                               (boundp 'pretty-key-undefined))
+                               (boundp 'pretty-key-undefined)
+                               (not (or this-command-keys-shift-translated
+                                        ergoemacs-shift-translated)))
                       (let (message-log-max)
                         (if (string= pretty-key-undefined pretty-key)
                             (when (eq ergoemacs-echo-function t)
