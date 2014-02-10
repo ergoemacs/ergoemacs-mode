@@ -280,8 +280,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
      (t
       (when ergoemacs-default-cursor
         (set-cursor-color ergoemacs-default-cursor))
-      (ergoemacs-mode-line)))
-    ))
+      (ergoemacs-mode-line)))))
 (put 'ergoemacs-modal-default 'CUA 'move) ;; Fake movement command
 
 (defvar ergoemacs-modal-save nil)
