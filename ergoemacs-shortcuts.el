@@ -654,7 +654,10 @@ In addition, when the function is called:
     (reset-this-command-lengths))
    (t
     (setq this-command function)
-    (when (featurep 'keyfreq)
+    (let ((this-command-keys-shift-translated
+           (or this-command-keys-shift-translated
+               (if ergoemacs-shift-translated t nil))))
+      (when (featurep 'keyfreq)
         (when keyfreq-mode
           (let ((command ergoemacs-this-command) count)
             (setq count (gethash (cons major-mode command) keyfreq-table))
@@ -669,7 +672,7 @@ In addition, when the function is called:
             (setq count (gethash (cons major-mode function) keyfreq-table))
             (puthash (cons major-mode function) (if count (+ count 1) 1)
                      keyfreq-table))))
-    (call-interactively function record-flag keys))))
+      (call-interactively function record-flag keys)))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
 (defvar ergoemacs-read-key-overriding-overlay-save nil)
@@ -1042,7 +1045,7 @@ FORCE-KEY forces keys like <escape> to work properly.
       (set-default 'ergoemacs-modal nil))
     (when ergoemacs-single-command-keys
       (setq ergoemacs-read-input-keys nil))))
-
+(defvar ergoemacs-shift-translated nil)
 (defun ergoemacs-read-key (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -1174,7 +1177,7 @@ argument prompt.
                 (setq key-trials nil)
                 ;; This is the order that ergoemacs-read-key tries keys:
                 (push base key-trials)
-                (push ":shift-translated" key-trials)
+                (push (concat base "-shift-translated") key-trials)
                 (when (and key ergoemacs-translate-emacs-keys)
                   (setq tmp (gethash (plist-get next-key
                                                 (intern (concat base "-key")))
@@ -1237,6 +1240,7 @@ argument prompt.
                                                                        "-pretty" ""))))))))
                         (unless pretty-key-undefined
                           (setq pretty-key-undefined pretty-key-trial))
+                        (setq ergoemacs-shift-translated (string-match "-shift-translated" tmp))
                         (setq local-fn
                               (if key-trial
                                   (ergoemacs-read-key-lookup
