@@ -1275,31 +1275,12 @@ This is done by checking if this is a command that supports shift selection or c
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (ergoemacs-shortcut-override-mode -1))
-            (when (and ergoemacs-modal ergoemacs-modal-list
-                       (let ((hash (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translations)))
-                         (and hash
-                              (not (plist-get hash ':modal-always))))
-                       (memq major-mode ergoemacs-modal-emacs-state-modes))
-              (set (make-local-variable 'ergoemacs-modal)
-                   nil))
-            (when (and ergoemacs-modal
-                       (let ((hash (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translations)))
-                         (and hash
-                              (not (plist-get hash ':modal-always)))))
-              (mapc
-               (lambda(reg)
-                 (when (and ergoemacs-modal
-                            (string-match reg (buffer-name)))
-                   (set (make-local-variable 'ergoemacs-modal)
-                        nil)))
-               ergoemacs-modal-ignored-buffers))
             (if (or ergoemacs-modal ergoemacs-modal-save)
                 (let ((help-list (if ergoemacs-modal-list (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translation-text) nil)))
                   (unless ergoemacs-default-cursor
                     (setq ergoemacs-default-cursor
                           (or (frame-parameter nil 'cursor-color) "black"))
-                    (let ((hash (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translations))
-                          tmp)
+                    (let ((hash (ergoemacs-modal-p)))
                       (when hash
                         (setq tmp (plist-get hash ':modal-color))
                         (when tmp

@@ -5,7 +5,7 @@
 ;; Author: Matthew L. Fidler
 ;; Maintainer: 
 ;; Created: Sat Sep 28 20:03:23 2013 (-0500)
-;; Version: 
+;; Version:
 ;; Last-Updated: 
 ;;           By: 
 ;;     Update #: 0
@@ -202,12 +202,6 @@ modal state is currently enabled."
 (defun ergoemacs-minibuffer-setup ()
   "Exit temporary overlay maps."
   ;; (setq ergoemacs-exit-temp-map-var t)
-  (set (make-local-variable 'ergoemacs-modal) nil)
-  (when (and ergoemacs-modal-list
-             (let ((hash (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translations)))
-               (and hash
-                    (plist-get hash ':modal-always))))
-    (setq ergoemacs-modal (nth 0 ergoemacs-modal-list)))
   (ergoemacs-debug-heading "ergoemacs-minibuffer-setup")
   (ergoemacs-debug "emulation-mode-map-alists: %s" emulation-mode-map-alists)
   (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s"
@@ -224,45 +218,146 @@ modal state is currently enabled."
   (ergoemacs-debug "ergoemacs-mode: %s" ergoemacs-mode)
   (ergoemacs-debug "ergoemacs-unbind-keys: %s" ergoemacs-unbind-keys))
 
+(defun ergoemacs-modal-p ()
+  "Determine if the command should be modal.
+If so return the hash of translation values."
+  (if (not ergoemacs-modal-list) nil
+    (let* ((type (nth 0 ergoemacs-modal-list))
+           (hash (gethash type ergoemacs-translations))
+           (always (plist-get hash ':modal-always))
+           (ret hash))
+      (cond
+       ((and (minibufferp)
+             (not always))
+        (setq ret nil))
+       ((and (not always)
+             (memq major-mode ergoemacs-modal-emacs-state-modes))
+        (setq ret nil))
+       ((and (not always)
+             (catch 'match-modal
+               (mapc
+                (lambda(reg)
+                  (when (string-match reg (buffer-name))
+                    (throw 'match-modal t)))
+                ergoemacs-modal-ignored-buffers)
+               nil))
+        (setq ret nil))
+       ((and (not always)
+             (lookup-key ergoemacs-modal-ignored-keymap
+                         (or ergoemacs-single-command-keys (this-single-command-keys))))
+        (setq ret nil)))
+      (symbol-value 'ret))))
+
 (defun ergoemacs-modal-default ()
   "The default command for `ergoemacs-mode' modal.
-It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation type defined by `ergoemacs-modal'"
+It sends `this-single-command-keys' to `ergoemacs-read-key' with
+the translation type defined by `ergoemacs-modal-list' as long as it should."
   (interactive)
-  (let ((modal-default t))
+  (let* ((type (nth 0 ergoemacs-modal-list))
+         (hash (gethash type ergoemacs-translations))
+         (always (plist-get hash ':modal-always)))
+    (when (not (ergoemacs-modal-p))
+      (setq type nil))
     (ergoemacs-read-key
      (or ergoemacs-single-command-keys (this-single-command-keys))
-     (nth 0 ergoemacs-modal-list)
-     (nth 0 ergoemacs-modal-list))))
+     type
+     type)))
 
 (defvar ergoemacs-modal-save nil)
 (defvar ergoemacs-modal nil
   "If ergoemacs modal and what translation is active.")
 
-(defvar ergoemacs-modal-keymap
-  (let ((map (make-sparse-keymap)))
-    (define-key map [t] 'ergoemacs-modal-default)
-    map))
-
-(defun ergoemacs-modal-mouse-keymap ()
-  "Returns the mouse-bindings keymap"
-  (let ((map (make-sparse-keymap)))
+(defvar ergoemacs-modal-ignored-keymap
+  (let ((ret (make-sparse-keymap)))
     (mapc
-     (lambda (other)
+     (lambda(char)
        (mapc
         (lambda(mod)
-          (mapc
-           (lambda(event)
-             (mapc
-              (lambda(num)
-                (let* ((key (read-kbd-macro (concat other "<" mod event "mouse-" num ">")))
-                       (def (key-binding key)))
-                  (when def
-                    (define-key map key def))))
-              '("1" "2" "3" "4" "5" "6" "7")))
-           '("" "drag-" "down-" "double-" "triple-")))
-        '("" "C-" "C-S-" "M-" "M-S-" "C-M-" "C-M-S-" "S-")))
-     '("" "<mode-line>" "<header-line> " "<left-fringe> " "<right-fringe> " "<vertical-line> " "<vertical-scroll-bar> "))
-    (symbol-value 'map)))
+          (let ((key (read-kbd-macro (concat mod char))))
+            (unless (lookup-key ret key)
+              (define-key ret key 'ergoemacs-modal-default))))
+        '("" "C-" "C-S-" "M-" "M-S-" "C-M-" "C-M-S-")))
+     '("<f1>" 
+       "<f2>" 
+       "<f3>" 
+       "<f4>" 
+       "<f5>" 
+       "<f6>" 
+       "<f7>" 
+       "<f8>" 
+       "<f9>" 
+       "<f10>"
+       "<f11>"
+       "<f12>"
+       "<apps>" "<menu>"
+       "RET" "ESC" "DEL" "TAB"
+       "<home>" 
+       "<next>" 
+       "<prior>"
+       "<end>"
+       "<insert>"
+       "<deletechar>"))
+    ret)
+  "`ergoemacs-mode' keys to ignore the modal translation.
+Typically function keys")
+
+(defvar ergoemacs-modal-keymap nil
+  "`ergoemacs-mode' modal keymap.  Attempts to capture ALL keystrokes.")
+
+(defun ergoemacs-modal-keymap  (&optional map)
+  "Returns the ergoemacs-modal keymap"
+  (if ergoemacs-modal-keymap
+      (if map
+          (make-composed-map (list map ergoemacs-modal-keymap))
+        ergoemacs-modal-keymap)
+    (let ((ret (make-sparse-keymap)))
+      (unless ret
+        (setq ret (make-sparse-keymap)))
+      (mapc
+       (lambda(lay)
+         (mapc
+          (lambda(char)
+            (unless (string= char "")
+              (mapc
+               (lambda(mod)
+                 (let ((key (read-kbd-macro
+                             (ergoemacs-translate-shifted
+                              (concat mod char)))))
+                   (unless (lookup-key ret key)
+                     (define-key ret key 'ergoemacs-modal-default))))
+               '("" "C-" "M-" "C-M-"))))
+          (symbol-value (intern (concat "ergoemacs-layout-" lay)))))
+       (ergoemacs-get-layouts))
+      (mapc
+       (lambda(char)
+         (mapc
+          (lambda(mod)
+            (let ((key (read-kbd-macro (concat mod char))))
+              (unless (lookup-key ret key)
+                (define-key ret key 'ergoemacs-modal-default))))
+          '("" "C-" "C-S-" "M-" "M-S-" "C-M-" "C-M-S-")))
+       '("<f1>" 
+         "<f2>" 
+         "<f3>" 
+         "<f4>" 
+         "<f5>" 
+         "<f6>" 
+         "<f7>" 
+         "<f8>" 
+         "<f9>" 
+         "<f10>"
+         "<f11>"
+         "<f12>"
+         "<apps>" "<menu>"
+         "SPC" "RET" "ESC" "DEL" "TAB"
+         "<home>" 
+         "<next>" 
+         "<prior>"
+         "<end>"
+         "<insert>"
+         "<deletechar>"))
+      (setq ergoemacs-modal-keymap ret))
+    (ergoemacs-modal-keymap map)))
 
 (defvar ergoemacs-modal-list '())
 (defun ergoemacs-modal-toggle (type)
@@ -281,9 +376,8 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
           )
       (push type ergoemacs-modal-list)
       (setq keymap (make-composed-keymap
-                    (list (ergoemacs-modal-mouse-keymap)
-                          (ergoemacs-local-map type t)
-                          ergoemacs-modal-keymap)))
+                    (list (ergoemacs-local-map type t)
+                          (ergoemacs-modal-keymap))))
       (push (cons 'ergoemacs-modal keymap)
             ergoemacs-emulation-mode-map-alist)
       (set-default 'ergoemacs-modal type)
@@ -315,9 +409,8 @@ It sends `this-single-command-keys' to `ergoemacs-read-key' with the translation
             (setq help-list (gethash type ergoemacs-translation-text))
             (setq keymap
                   (make-composed-keymap
-                   (list (ergoemacs-modal-mouse-keymap)
-                         (ergoemacs-local-map type t)
-                         ergoemacs-modal-keymap)))
+                   (list (ergoemacs-local-map type t)
+                         (ergoemacs-modal-keymap))))
             (push (cons 'ergoemacs-modal keymap)
                   ergoemacs-emulation-mode-map-alist)
             (set-default 'ergoemacs-modal type)
