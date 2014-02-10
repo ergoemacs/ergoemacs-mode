@@ -262,6 +262,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
      (or ergoemacs-single-command-keys (this-single-command-keys))
      type
      type)))
+(put 'ergoemacs-modal-default 'CUA 'move) ;; Fake movement command
 
 (defvar ergoemacs-modal-save nil)
 (defvar ergoemacs-modal nil
