@@ -657,6 +657,8 @@ In addition, when the function is called:
     (let ((this-command-keys-shift-translated
            (or this-command-keys-shift-translated
                (if ergoemacs-shift-translated t nil))))
+      (when (and (boundp 'cua-mode) cua-mode)
+        (cua--pre-command-handler))
       (when (featurep 'keyfreq)
         (when keyfreq-mode
           (let ((command ergoemacs-this-command) count)
