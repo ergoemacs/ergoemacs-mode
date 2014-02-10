@@ -584,7 +584,9 @@ It will replace anything defined by `ergoemacs-translation'"
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
   (if (minibufferp)
-      (minibuffer-keyboard-quit)
+      (progn
+        (minibuffer-keyboard-quit)
+        (ergoemacs-install-shortcuts-up))
     (let (defined-fn
            ergoemacs-shortcut-keys
            ergoemacs-read-input-keys
@@ -602,6 +604,7 @@ It will replace anything defined by `ergoemacs-translation'"
                     (not (plist-get hash ':modal-always))))) ;; Exit modal 
         (ergoemacs-modal-toggle (nth 0 ergoemacs-modal-list)))
        (t
+        (ergoemacs-install-shortcuts-up)
         (keyboard-quit)))))
   (setq ergoemacs-describe-key nil))
 
