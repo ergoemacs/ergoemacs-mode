@@ -374,14 +374,25 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
   (setq ergoemacs-gaia-mode (not ergoemacs-gaia-mode)))
 
 (defun ergoemacs-translate-shifted (kbd)
-  "Translates anything with S- and no C- in it to an upper-case character."
+  "Translates anything with S- and no C- in it to an upper-case character.
+Translates C-A into C-S-a."
   (if (not kbd) nil
-    (let ((ret kbd))
-      (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<DEL\\>\\|\\<ESC\\>\\|\\<RET\\>\\|\\<TAB\\>\\|C-\\)" ret)
-        (when (string-match "^\\(.*\\)S-\\(.*\\)\\(.\\)$" ret)
-          (setq ret (concat (match-string 1 ret)
-                            (match-string 2 ret)
-                            (upcase (match-string 3 ret))))))
+    (let ((ret kbd)
+          case-fold-match)
+      (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<DEL\\>\\|\\<ESC\\>\\|\\<RET\\>\\|\\<TAB\\>\\)" ret)
+        (if (string-match "C-" ret)
+            (when (and (string-match "\\(.\\)$" ret)
+                       (string= (upcase (match-string 1 ret))
+                                (match-string 1 ret))
+                       (not (string= (downcase (match-string 1 ret))
+                                     (match-string 1 ret))))
+              (setq ret
+                    (replace-match
+                     (concat "S-" (downcase (match-string 1 ret))) t t ret)))
+          (when (string-match "^\\(.*\\)S-\\(.*\\)\\(.\\)$" ret)
+            (setq ret (concat (match-string 1 ret)
+                              (match-string 2 ret)
+                              (upcase (match-string 3 ret)))))))
       (symbol-value 'ret))))
 
 (defun ergoemacs-translation-install (trans-plist orig-key ret-plist)
