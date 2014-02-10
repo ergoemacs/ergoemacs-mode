@@ -214,6 +214,7 @@
 
     ("<apps> n a" org-agenda "agenda")
     ("<apps> n A" org-capture "capture")
+    ("<apps> n C-a" org-capture "capture")
     ("<apps> n c" calc "calc" t)
     ("<apps> n d" dired-jump "dired" t)
     ("<apps> n e" eshell "eshell" t)
