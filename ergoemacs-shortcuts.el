@@ -717,6 +717,7 @@ FORCE-KEY forces keys like <escape> to work properly.
 "
   (prog1
       (let* (ergoemacs-read-input-keys
+             ergoemacs-modal 
              ergoemacs-shortcut-override-mode
              ;; Turn on `ergoemacs-shortcut-keys' layer when the
              ;; prior-key is defined on `ergoemacs-read-input-keymap'.
@@ -2055,14 +2056,10 @@ Setup C-c and C-x keys to be described properly.")
       (if ergoemacs-modal
           (setq keymap
                 (let ((map (make-sparse-keymap)))
-                  (define-key map [t]
-                    `(lambda() (interactive)
-                       (let ((orig-hash ,hashkey))
-                         (call-interactively 'ergoemacs-modal-default))))
+                  (setq map (ergoemacs-modal-keymap map))
                   (setq map
                         (make-composed-keymap
                          (list
-                          (ergoemacs-modal-mouse-keymap)
                           (ergoemacs-local-map
                            (nth 0 ergoemacs-modal-list)
                            t)
