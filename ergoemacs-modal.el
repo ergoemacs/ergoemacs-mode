@@ -255,13 +255,33 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
   (interactive)
   (let* ((type (nth 0 ergoemacs-modal-list))
          (hash (gethash type ergoemacs-translations))
+         tmp
          (always (plist-get hash ':modal-always)))
     (when (not (ergoemacs-modal-p))
       (setq type nil))
+    ;; Actual call
     (ergoemacs-read-key
      (or ergoemacs-single-command-keys (this-single-command-keys))
      type
-     type)))
+     type)
+    ;; Fix cursor color and mode-line
+    (cond
+     ((ergoemacs-modal-p)
+      (setq tmp (plist-get hash ':modal-color))
+      (if tmp
+          (set-cursor-color tmp)
+        (when ergoemacs-default-cursor
+          (set-cursor-color ergoemacs-default-cursor)))
+      (setq tmp (if ergoemacs-modal-list (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translation-text) nil))
+      (if tmp
+          (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+           (concat " " (nth 5 tmp)))
+        (ergoemacs-mode-line)))
+     (t
+      (when ergoemacs-default-cursor
+        (set-cursor-color ergoemacs-default-cursor))
+      (ergoemacs-mode-line)))
+    ))
 (put 'ergoemacs-modal-default 'CUA 'move) ;; Fake movement command
 
 (defvar ergoemacs-modal-save nil)
