@@ -395,6 +395,31 @@ Translates C-A into C-S-a."
                               (upcase (match-string 3 ret)))))))
       (symbol-value 'ret))))
 
+(defun ergoemacs-shift-translate-install (trans-plist ret-plist)
+  "Install shift translation"
+  (let (shift-translated
+        (name (intern (concat ":" (symbol-name (plist-get trans-plist ':name)) "-shift-translated")))
+        (k (intern (concat ":" (symbol-name (plist-get trans-plist ':name)) "-shift-translated-key")))
+        (p (intern (concat ":" (symbol-name (plist-get trans-plist ':name)) "-shift-translated-pretty")))
+        (key (plist-get ret-plist (intern (concat ":" (symbol-name (plist-get trans-plist ':name))))))
+        (ret ret-plist))
+    (unless (stringp key)
+      (setq key (key-description key)))
+    (setq shift-translated key)
+    (cond
+     ((string-match "S-" key)
+      (setq shift-translated (replace-regexp-in-string "S-" "" key t)))
+     ((string-match "-\\(.\\)$" key)
+      (setq shift-translated
+            (replace-match
+             (concat "-"
+                     (downcase (match-string 1 key))) t t key))))
+    (unless (string= shift-translated key)
+      (setq ret (plist-put ret name shift-translated))
+      (setq ret (plist-put ret k (read-kbd-macro shift-translated t)))
+      (setq ret (plist-put ret p (ergoemacs-pretty-key shift-translated))))
+    (symbol-value 'ret)))
+
 (defun ergoemacs-translation-install (trans-plist orig-key ret-plist)
   "Installs the translation.
 TRANS-PLIST is the plist defining the translation.
@@ -405,6 +430,13 @@ Should install
  - :translation-name kbd-code
  - :translation-name-key [key-vector]
  - :translation-name-pretty ergoemacs-pretty-key
+
+If the command can be shift translated, then the following
+properties are also added:
+
+ - :translation-name-shift-translated kbd
+ - :translation-name-shift-translated-key [key-vector]
+ - :translation-name-shift-translated-pretty ergoemacs-pretty-key
 "
   (let ((name (intern (concat ":" (symbol-name (plist-get trans-plist ':name)))))
          (key (intern (concat ":" (symbol-name (plist-get trans-plist ':name)) "-key")))
@@ -471,6 +503,7 @@ Should install
     (setq ret (plist-put ret name new-key))
     (setq ret (plist-put ret key (read-kbd-macro new-key t)))
     (setq ret (plist-put ret pretty (ergoemacs-pretty-key new-key)))
+    (setq ret (ergoemacs-shift-translate-install trans-plist ret))
     (symbol-value 'ret)))
 
 (defun ergoemacs-translate (key)
