@@ -477,7 +477,8 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
                ;; Only generate keymap if it hasn't previously been
                ;; generated.
                (ergoemacs-vars-sync)
-               (let ((ergoemacs-run-mode-hooks nil))
+               (let ((ergoemacs-run-mode-hooks nil)
+                     deactivate-mark)
                  (if (not ergoemacs-mode)
                      (progn
                        (ergoemacs-debug ,(format "WARNING: %s not removed."
@@ -525,72 +526,73 @@ This is an automatically generated function derived from `ergoemacs-create-hook-
 This is an automatically generated function derived from `ergoemacs-create-hook-function'.")
            ;; Only generate keymap if it hasn't previously been
            ;; generated.
-           (ergoemacs-vars-sync)
-           (let ((ergoemacs-run-mode-hooks nil)
-                 (ergoemacs-is-emulation-p ,is-emulation-p))
-             (if  (not ergoemacs-mode)
-                 (progn
-                   (ergoemacs-debug ,(format "WARNING: %s not removed."
-                                             (intern (concat "ergoemacs-" (symbol-name hook))))))
-               (unless ,(if is-emulation-p
-                            `(assq ,(if is-major-mode-p
-                                        '(intern (format "ergoemacs--emulation-for-%s" major-mode))
-                                      `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))
-                                   ergoemacs-emulation-mode-map-alist)
-                          (if always nil
-                            (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))))
-                 (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
-                 ,(if  is-emulation-p
-                      `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) (make-sparse-keymap))
-                    `(progn
-                       (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
-                             (copy-keymap ,(nth 2 (nth 0 keys))))
-                       (ergoemacs-install-shortcuts-map ,(nth 2 (nth 0 keys)) (not (memq ',(nth 2 (nth 0 keys)) ergoemacs-full-maps)))
-                       (define-key ,(nth 2 (nth 0 keys))
-                         (read-kbd-macro  "<ergoemacs>") 'ignore)))
-                 ,@(mapcar
-                    (lambda(def)
-                      `(ergoemacs-hook-define-key
-                        ,(if (and is-emulation-p
-                                  (or (not (nth 2 (nth 0 keys)))
-                                      (equal (nth 2 def)
-                                             'emulation-mode-map-alists)))
-                             (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
-                           (nth 2 def))
-                        ,(if (eq (type-of (nth 0 def)) 'string)
-                             `,(nth 0 def)
-                           `(quote ,(nth 0 def)))
-                        ',(nth 1 def)
-                        ',(nth 3 def)))
-                    keys)
-                 ,(if (not  is-emulation-p)
-                      `(ergoemacs-debug-keymap ',(nth 2 (nth 0 keys))))
-                 ;;(set-default ',(nth 2 (nth 0 keys)) ,(nth 2 (nth 0 keys)))
-                 ,(when is-emulation-p
-                    `(progn
-                       (let ((name ,(if is-major-mode-p
+           (let (deactivate-mark)
+             (ergoemacs-vars-sync)
+             (let ((ergoemacs-run-mode-hooks nil)
+                   (ergoemacs-is-emulation-p ,is-emulation-p))
+               (if  (not ergoemacs-mode)
+                   (progn
+                     (ergoemacs-debug ,(format "WARNING: %s not removed."
+                                               (intern (concat "ergoemacs-" (symbol-name hook))))))
+                 (unless ,(if is-emulation-p
+                              `(assq ,(if is-major-mode-p
+                                          '(intern (format "ergoemacs--emulation-for-%s" major-mode))
+                                        `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))
+                                     ergoemacs-emulation-mode-map-alist)
+                            (if always nil
+                              (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))))
+                   (ergoemacs-debug-heading ,(concat "Run ergoemacs-" (symbol-name hook)))
+                   ,(if  is-emulation-p
+                        `(setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")) (make-sparse-keymap))
+                      `(progn
+                         (setq ,(intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap"))
+                               (copy-keymap ,(nth 2 (nth 0 keys))))
+                         (ergoemacs-install-shortcuts-map ,(nth 2 (nth 0 keys)) (not (memq ',(nth 2 (nth 0 keys)) ergoemacs-full-maps)))
+                         (define-key ,(nth 2 (nth 0 keys))
+                           (read-kbd-macro  "<ergoemacs>") 'ignore)))
+                   ,@(mapcar
+                      (lambda(def)
+                        `(ergoemacs-hook-define-key
+                          ,(if (and is-emulation-p
+                                    (or (not (nth 2 (nth 0 keys)))
+                                        (equal (nth 2 def)
+                                               'emulation-mode-map-alists)))
+                               (intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))
+                             (nth 2 def))
+                          ,(if (eq (type-of (nth 0 def)) 'string)
+                               `,(nth 0 def)
+                             `(quote ,(nth 0 def)))
+                          ',(nth 1 def)
+                          ',(nth 3 def)))
+                      keys)
+                   ,(if (not  is-emulation-p)
+                        `(ergoemacs-debug-keymap ',(nth 2 (nth 0 keys))))
+                   ;;(set-default ',(nth 2 (nth 0 keys)) ,(nth 2 (nth 0 keys)))
+                   ,(when is-emulation-p
+                      `(progn
+                         (let ((name ,(if is-major-mode-p
+                                          '(intern (format "ergoemacs--emulation-for-%s" major-mode))
+                                        `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))))
+                           (ergoemacs-debug-keymap ',(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
+                           (let ((x (assq name ergoemacs-emulation-mode-map-alist)))
+                             ;; Delete keymap.
+                             (if x
+                                 (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+                             ;; Put at the end of the list
+                             (setq ergoemacs-emulation-mode-map-alist
+                                   (append ergoemacs-emulation-mode-map-alist
+                                           (list (cons name ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))))))
+                           (ergoemacs-debug-keymap ',(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))))
+                   (ergoemacs-debug-heading ,(concat "Finish ergoemacs-" (symbol-name hook)))
+                   (ergoemacs-vars-sync)
+                   (ergoemacs-debug-flush)
+                   t)
+                 ,(if is-emulation-p
+                      `(let ((name ,(if is-major-mode-p
                                         '(intern (format "ergoemacs--emulation-for-%s" major-mode))
                                       `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))))
-                         (ergoemacs-debug-keymap ',(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))
-                         (let ((x (assq name ergoemacs-emulation-mode-map-alist)))
-                           ;; Delete keymap.
-                           (if x
-                               (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-                           ;; Put at the end of the list
-                           (setq ergoemacs-emulation-mode-map-alist
-                                 (append ergoemacs-emulation-mode-map-alist
-                                         (list (cons name ,(intern (concat "ergoemacs-" (symbol-name hook) "-keymap")))))))
-                         (ergoemacs-debug-keymap ',(intern (concat "ergoemacs-" (symbol-name hook) "-keymap"))))))
-                 (ergoemacs-debug-heading ,(concat "Finish ergoemacs-" (symbol-name hook)))
-                 (ergoemacs-vars-sync)
-                 (ergoemacs-debug-flush)
-                 t)
-               ,(if is-emulation-p
-                    `(let ((name ,(if is-major-mode-p
-                                      '(intern (format "ergoemacs--emulation-for-%s" major-mode))
-                                    `(intern ,(concat "ergoemacs--emulation-for-" (symbol-name hook))))))
-                       (set-default name nil)
-                       (set (make-local-variable name) t))))))
+                         (set-default name nil)
+                         (set (make-local-variable name) t)))))))
          (ergoemacs-add-hook ',hook ',(intern (concat "ergoemacs-" (symbol-name hook))) ',(if always nil (if old-keymap (intern (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))) ',override-keymap)))))
 
 (defun ergoemacs-pre-command-install-minor-mode-overriding-map-alist ()
