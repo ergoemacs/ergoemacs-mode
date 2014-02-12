@@ -652,8 +652,6 @@ In addition, when the function is called:
     (let ((this-command-keys-shift-translated
            (or this-command-keys-shift-translated
                (if ergoemacs-shift-translated t nil))))
-      (when (and (boundp 'cua-mode) cua-mode)
-        (cua--pre-command-handler))
       (when (featurep 'keyfreq)
         (when keyfreq-mode
           (let ((command ergoemacs-this-command) count)
@@ -669,7 +667,13 @@ In addition, when the function is called:
             (setq count (gethash (cons major-mode function) keyfreq-table))
             (puthash (cons major-mode function) (if count (+ count 1) 1)
                      keyfreq-table))))
-      (call-interactively function record-flag keys)))))
+      ;; At this point nothing should have deactivated the mark.
+      (setq deactivate-mark nil)
+      (when (and (boundp 'cua-mode) cua-mode)
+        (cua--pre-command-handler))
+      
+      (call-interactively function record-flag keys)
+      (setq ergoemacs-deactivate-mark deactivate-mark)))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
 (defvar ergoemacs-read-key-overriding-overlay-save nil)
@@ -1055,6 +1059,7 @@ FORCE-KEY forces keys like <escape> to work properly.
     (when ergoemacs-single-command-keys
       (setq ergoemacs-read-input-keys nil))))
 (defvar ergoemacs-shift-translated nil)
+(defvar ergoemacs-deactivate-mark nil)
 (defun ergoemacs-read-key (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -1068,9 +1073,11 @@ INITIAL-KEY-TYPE represents the translation type for the initial KEY.
 UNIVERSAL allows ergoemacs-read-key to start with universal
 argument prompt.
 "
+  (setq ergoemacs-deactivate-mark nil)
   (let ((continue-read t)
         (real-type (or type 'normal))
         (first-type (or type 'normal))
+        deactivate-mark
         pretty-key
         pretty-key-undefined
         next-key
@@ -1311,6 +1318,7 @@ argument prompt.
                   (unless (minibufferp)
                     (let (message-log-max)
                       (message "%s is undefined!" pretty-key-undefined)))))))))))
+  (setq deactivate-mark ergoemacs-deactivate-mark)
   (setq ergoemacs-describe-key nil))
 
 (defun ergoemacs-define-key (keymap key def)
@@ -1976,6 +1984,7 @@ Setup C-c and C-x keys to be described properly.")
 (defun ergoemacs-remove-shortcuts (&optional create-overlay)
   "Removes ergoemacs shortcuts from keymaps."
   (let ((inhibit-read-only t)
+        deactivate-mark
         hashkey lookup override-text-map override orig-map
         tmp-overlay)
     (cond
@@ -2126,6 +2135,7 @@ The keymaps are:
 - overlays with :keymap property
 - text property with :keymap property."
   (let ((inhibit-read-only t)
+        deactivate-mark
         hashkey hashkey-read lookup override-text-map override-read-map
         override orig-map)
     (cond
