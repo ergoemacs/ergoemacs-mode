@@ -634,6 +634,8 @@ In addition, when the function is called:
 
 "
   (cond
+   ((and (boundp 'ergoemacs-test-fn) ergoemacs-test-fn)
+    (setq ergoemacs-test-fn function))
    (ergoemacs-describe-key
     (ergoemacs-shortcut-override-mode 1)
     (describe-key key)
@@ -667,11 +669,9 @@ In addition, when the function is called:
             (setq count (gethash (cons major-mode function) keyfreq-table))
             (puthash (cons major-mode function) (if count (+ count 1) 1)
                      keyfreq-table))))
-      ;; At this point nothing should have deactivated the mark.
       (setq deactivate-mark nil)
-      (when (and (boundp 'cua-mode) cua-mode)
-        (cua--pre-command-handler))
-      
+      (if (and (boundp 'cua-mode) cua-mode)
+          (cua--pre-command-handler))
       (call-interactively function record-flag keys)
       (setq ergoemacs-deactivate-mark deactivate-mark)))))
 
