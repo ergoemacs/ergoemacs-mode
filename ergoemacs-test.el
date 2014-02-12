@@ -777,7 +777,7 @@ Issue #168."
     (ergoemacs-mode 1)
     (with-timeout (0.2 nil) (ergoemacs-read-key "M-g"))
     (message "Test FN: %s" ergoemacs-test-fn)
-    (setq ret (= ergoemacs-test-fn (or (command-remapping 'execute-extended-command (point)) 'execute-extended-command)))
+    (setq ret (eq ergoemacs-test-fn (or (command-remapping 'execute-extended-command (point)) 'execute-extended-command)))
     (ergoemacs-mode -1)
     (setq ergoemacs-theme old-ergoemacs-theme)
     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
