@@ -765,6 +765,25 @@ Issue #168."
     (ergoemacs-mode 1)
     (should (equal ret t))))
 
+(ert-deftest ergoemacs-test-reduction-M-g-works ()
+  "Test Ergoemacs M-g works correctly (Issue #171)."
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (ergoemacs-test-fn t)
+        (ret nil))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme "reduction")
+    (setq ergoemacs-keyboard-layout "colemak")
+    (ergoemacs-mode 1)
+    (with-timeout (0.2 nil) (ergoemacs-read-key "M-g"))
+    (message "Test FN: %s" ergoemacs-test-fn)
+    (setq ret (= ergoemacs-test-fn (or (command-remapping 'execute-extended-command (point)) 'execute-extended-command)))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
