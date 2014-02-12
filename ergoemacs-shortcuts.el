@@ -734,8 +734,9 @@ FORCE-KEY forces keys like <escape> to work properly.
              (ergoemacs-shortcut-keys
               (if prior-key
                   (lookup-key ergoemacs-read-input-keymap prior-key)
-                (not (and (boundp 'ergoemacs-read-key-recursive)
-                   ergoemacs-read-key-recursive))))
+                (if (= 1 (length key)) t
+                  (not (and (boundp 'ergoemacs-read-key-recursive)
+                            ergoemacs-read-key-recursive)))))
              lookup
              tmp-overlay use-override
              ergoemacs-read-key-recursive
@@ -743,9 +744,9 @@ FORCE-KEY forces keys like <escape> to work properly.
         (when (or (equal key [3]) (equal key [24])) ;; C-c or C-x
           (setq ergoemacs-shortcut-keys nil))
         (setq ergoemacs-read-key-recursive t)
-        ;; Install overriding-terminal-local-map without
-        ;; ergoemacs-read-key The composed map with ergoemacs-read-key
-        ;; will be installed on the ergoemacs-post-command-hook
+        ;; Install `overriding-terminal-local-map' without
+        ;; `ergoemacs-read-key' The composed map with ergoemacs-read-key
+        ;; will be installed on the `ergoemacs-post-command-hook'
         (when overriding-terminal-local-map
           (setq lookup (gethash
                         (md5
