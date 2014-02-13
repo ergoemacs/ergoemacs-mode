@@ -1215,7 +1215,8 @@ This is done by checking if this is a command that supports shift selection or c
     (condition-case err
         (progn
           (ergoemacs-vars-sync)
-          (when (and ergoemacs-repeat-keys (keymapp ergoemacs-repeat-keymap)
+          (when (and ergoemacs-repeat-keys
+                     (keymapp ergoemacs-repeat-keymap)
                      (not (lookup-key ergoemacs-repeat-keymap (this-single-command-keys))))
             (setq ergoemacs-repeat-keys nil)
             (ergoemacs-mode-line))

@@ -976,9 +976,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                                    (ergoemacs-unicode-char "→" "->")
                                    fn
                                    pretty-key-undefined))))
-                    ;; There is some issue with these keys.  Read-key thinks it
-                    ;; is in a minibuffer, so the recurive minibuffer error is
-                    ;; raised unless these are put into unread-command-events.
+                    ;; There is some issue with these keys.  Read-key
+                    ;; thinks it is in a minibuffer, so the recursive 
+                    ;; minibuffer error is raised unless these are put
+                    ;; into unread-command-events.
                     (setq ergoemacs-mark-active
                           (or (and mark-active transient-mark-mode) mark-active))
                     (setq ergoemacs-single-command-keys key)
