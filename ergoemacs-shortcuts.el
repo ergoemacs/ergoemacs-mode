@@ -585,9 +585,6 @@ It will replace anything defined by `ergoemacs-translation'"
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
   (cond
    ((minibufferp)
-    (ergoemacs-move-cursor-next-pane)
-    (ergoemacs-post-command-hook)
-    (ergoemacs-move-cursor-previous-pane)
     (minibuffer-keyboard-quit))
    ((and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode)
     (cua-clear-rectangle-mark))
@@ -598,9 +595,10 @@ It will replace anything defined by `ergoemacs-translation'"
            ergoemacs-shortcut-override-mode
            ergoemacs-mode)
       (setq defined-fn (ergoemacs-key-fn-lookup 'keyboard-quit))
-      (setq defined-fn (condition-case err
-                           (key-binding defined-fn)
-                         (error nil)))
+      (setq defined-fn
+            (condition-case err
+                (key-binding defined-fn)
+              (error nil)))
       (cond
        (defined-fn
          (ergoemacs-read-key-call defined-fn))
@@ -610,7 +608,6 @@ It will replace anything defined by `ergoemacs-translation'"
                     (not (plist-get hash ':modal-always))))) ;; Exit modal 
         (ergoemacs-modal-toggle (nth 0 ergoemacs-modal-list)))
        (t
-        (ergoemacs-install-shortcuts-up)
         (keyboard-quit))))))
   (setq ergoemacs-describe-key nil))
 
@@ -747,198 +744,78 @@ FORCE-KEY forces keys like <escape> to work properly.
         (when (or (equal key [3]) (equal key [24])) ;; C-c or C-x
           (setq ergoemacs-shortcut-keys nil))
         (setq ergoemacs-read-key-recursive t)
-        ;; Install `overriding-terminal-local-map' without
-        ;; `ergoemacs-read-key' The composed map with ergoemacs-read-key
-        ;; will be installed on the `ergoemacs-post-command-hook'
-        (when overriding-terminal-local-map
-          (setq lookup (gethash
-                        (md5
-                         (format "override-terminal-read:%s"
-                                overriding-terminal-local-map))
-                        ergoemacs-extract-map-hash))
-          (when lookup
-            (setq use-override t)
-            (setq overriding-terminal-local-map lookup)))
-        
-        ;; Install overriding-local-map
-        (when overriding-local-map 
-          (setq lookup (gethash
-                        (md5
-                         (format "override-local-read:%s"
-                                 overriding-local-map))
-                        ergoemacs-extract-map-hash))
-          (when lookup
-            (setq use-override t)
-            (setq overriding-local-map lookup)))
-        (when (get-char-property (point) 'keymap)
-          (setq lookup (gethash
-                        (md5
-                         (format "char-map-read:%s" (get-char-property (point) 'keymap)))
-                        ergoemacs-extract-map-hash))
-          (let (deactivate-mark)
-            (when lookup
-              (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
-                                              (min (+ (point) 1) (point-max))))
-              (overlay-put tmp-overlay 'keymap lookup)
-              (overlay-put tmp-overlay 'priority 536870910))))
         (unwind-protect
-            (cond
-             ((progn
-                (setq tmp (lookup-key input-decode-map key))
-                (when (and tmp (integerp tmp))
-                  (setq tmp nil))
-                (unless tmp
-                  (setq tmp (lookup-key local-function-key-map key))
+            (progn
+              ;; Install `overriding-terminal-local-map' without
+              ;; `ergoemacs-read-key' The composed map with ergoemacs-read-key
+              ;; will be installed on the `ergoemacs-post-command-hook'
+              (when overriding-terminal-local-map
+                (setq lookup (gethash
+                              (md5
+                               (format "override-terminal-read:%s"
+                                       overriding-terminal-local-map))
+                              ergoemacs-extract-map-hash))
+                (when lookup
+                  (setq use-override t)
+                  (setq overriding-terminal-local-map lookup)))
+              
+              ;; Install overriding-local-map
+              (when overriding-local-map 
+                (setq lookup (gethash
+                              (md5
+                               (format "override-local-read:%s"
+                                       overriding-local-map))
+                              ergoemacs-extract-map-hash))
+                (when lookup
+                  (setq use-override t)
+                  (setq overriding-local-map lookup)))
+              (when (get-char-property (point) 'keymap)
+                (setq lookup (gethash
+                              (md5
+                               (format "char-map-read:%s" (get-char-property (point) 'keymap)))
+                              ergoemacs-extract-map-hash))
+                (let (deactivate-mark)
+                  (when lookup
+                    (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
+                                                    (min (+ (point) 1) (point-max))))
+                    (overlay-put tmp-overlay 'keymap lookup)
+                    (overlay-put tmp-overlay 'priority 536870910))))
+              (cond
+               ((progn
+                  (setq tmp (lookup-key input-decode-map key))
                   (when (and tmp (integerp tmp))
                     (setq tmp nil))
                   (unless tmp
-                    (setq tmp (lookup-key key-translation-map key))
+                    (setq tmp (lookup-key local-function-key-map key))
                     (when (and tmp (integerp tmp))
-                      (setq tmp nil))))
-                tmp)
-              ;; Should use emacs key translation.
-              (cond
-               ((keymapp tmp)
-                (setq ret 'keymap))
-               ((and ergoemacs-describe-key (vectorp tmp))
-                (setq ergoemacs-single-command-keys nil)
-                (message "%s translates to %s" pretty-key
-                         (ergoemacs-pretty-key (key-description tmp)))
-                (setq ergoemacs-describe-key nil)
-                (setq ret 'translate))
-               ((and (vectorp tmp)
-                     (progn
-                       (setq fn (key-binding tmp))
-                       (when (condition-case err
-                                 (string-match "self-insert" (symbol-name fn))
-                               (error nil))
-                         (setq fn nil))
-                       (condition-case err
-                           (interactive-form fn)
-                         (error nil))))
-                (setq fn (or (command-remapping fn (point)) fn))
-                (setq ergoemacs-single-command-keys key)
-                (when (and ergoemacs-echo-function
-                           (boundp 'pretty-key-undefined)
-                           (not (or this-command-keys-shift-translated
-                                    ergoemacs-shift-translated)))
-                  (let (message-log-max)
-                    (if (string= pretty-key-undefined pretty-key)
-                        (when (eq ergoemacs-echo-function t)
-                          (message "%s%s%s" pretty-key
-                                   (ergoemacs-unicode-char "→" "->")
-                                   (symbol-name fn)))
-                      (message "%s%s%s (from %s)"
-                               pretty-key
-                               (ergoemacs-unicode-char "→" "->")
-                               (symbol-name fn)
-                               pretty-key-undefined))))
-                (ergoemacs-read-key-call fn nil key)
-                (setq ergoemacs-single-command-keys nil)
-                (setq ret 'translate-fn))
-               ((vectorp tmp)
-                (setq ergoemacs-mark-active
-                      (or (and mark-active transient-mark-mode) mark-active))
-                (setq ergoemacs-single-command-keys tmp)
-                (setq last-input-event tmp)
-                (setq prefix-arg current-prefix-arg)
-                (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
-                (reset-this-command-lengths)
-                (when (and ergoemacs-echo-function
-                           (boundp 'pretty-key-undefined)
-                           (not (or this-command-keys-shift-translated
-                                    ergoemacs-shift-translated)))
-                  (let (message-log-max)
-                    (if (string= pretty-key-undefined pretty-key)
-                        (when (eq ergoemacs-echo-function t)
-                          (message "%s%s%s" pretty-key
-                                 (ergoemacs-unicode-char "→" "->")
-                                 (ergoemacs-pretty-key (key-description tmp))))
-                      (message "%s%s%s (from %s)"
-                               pretty-key
-                               (ergoemacs-unicode-char "→" "->")
-                               (ergoemacs-pretty-key (key-description tmp))
-                               pretty-key-undefined))))
-                (when lookup
-                  (define-key lookup [ergoemacs-single-command-keys] 'ignore)
-                  (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-                  (setq overriding-terminal-local-map lookup))
-                (setq ret 'translate))))
-             ;; Global override
-             ((progn
-                (setq fn (lookup-key ergoemacs-global-override-keymap key))
-                (setq ret (ergoemacs-read-key-lookup-get-ret fn))
-                (or ret (condition-case err
-                            (interactive-form fn)
-                          nil)))
-              (unless ret
-                (setq fn (or (command-remapping fn (point)) fn))
-                (setq ergoemacs-single-command-keys key)
-                (when (and ergoemacs-echo-function
-                           (boundp 'pretty-key-undefined)
-                           (not (or this-command-keys-shift-translated
-                                    ergoemacs-shift-translated)))
-                  (let (message-log-max)
-                    (if (string= pretty-key-undefined pretty-key)
-                        (when (eq ergoemacs-echo-function t)
-                          (message "%s%s%s" pretty-key
-                                   (ergoemacs-unicode-char "→" "->")
-                                   (symbol-name fn)))
-                      (message "%s%s%s (from %s)"
-                               pretty-key
-                               (ergoemacs-unicode-char "→" "->")
-                               (symbol-name fn)
-                               pretty-key-undefined))))
-                (ergoemacs-read-key-call fn nil key)
-                (setq ergoemacs-single-command-keys nil)
-                (setq ret 'global-function-override)))
-             ;; Is there an local override function?
-             ((progn
-                (setq fn (ergoemacs-get-override-function key))
-                (setq ret (ergoemacs-read-key-lookup-get-ret fn))
-                (or ret (condition-case err (interactive-form fn) nil)))
-              (unless ret
-                (ergoemacs-read-key-call fn nil key)
-                (setq ret 'local-function-override)))
-             ;; Does this call a function?
-             ((progn
-                (setq hash (gethash key ergoemacs-command-shortcuts-hash))
-                (setq fn (key-binding key))
-                (setq ret (ergoemacs-read-key-lookup-get-ret fn))
-                (or ret
-                    (condition-case err
-                        (interactive-form fn)
-                      nil)))
-              (unless ret
+                      (setq tmp nil))
+                    (unless tmp
+                      (setq tmp (lookup-key key-translation-map key))
+                      (when (and tmp (integerp tmp))
+                        (setq tmp nil))))
+                  tmp)
+                ;; Should use emacs key translation.
                 (cond
-                 ((and hash (eq 'string (type-of (nth 0 hash)))
-                       (memq (nth 1 hash)
-                             (let ((ret '()))
-                               (maphash
-                                (lambda(yyy x)
-                                  (push yyy ret))
-                                ergoemacs-translations)
-                               ret)))
-                  ;; Reset the `ergoemacs-read-key'
-                  ;; List in form of key type first-type
-                  (setq ret (list (nth 0 hash) (nth 1 hash) (nth 1 hash))))
-                 ((and hash (eq 'string (type-of (nth 0 hash))))
-                  (setq ergoemacs-mark-active
-                        (or (and mark-active transient-mark-mode) mark-active))
+                 ((keymapp tmp)
+                  (setq ret 'keymap))
+                 ((and ergoemacs-describe-key (vectorp tmp))
+                  (setq ergoemacs-single-command-keys nil)
+                  (message "%s translates to %s" pretty-key
+                           (ergoemacs-pretty-key (key-description tmp)))
+                  (setq ergoemacs-describe-key nil)
+                  (setq ret 'translate))
+                 ((and (vectorp tmp)
+                       (progn
+                         (setq fn (key-binding tmp))
+                         (when (condition-case err
+                                   (string-match "self-insert" (symbol-name fn))
+                                 (error nil))
+                           (setq fn nil))
+                         (condition-case err
+                             (interactive-form fn)
+                           (error nil))))
+                  (setq fn (or (command-remapping fn (point)) fn))
                   (setq ergoemacs-single-command-keys key)
-                  (setq prefix-arg current-prefix-arg)
-                  (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events))
-                  (when lookup
-                    (define-key lookup [ergoemacs-single-command-keys] 'ignore)
-                    (if (not use-override)
-                        (setq ergoemacs-read-key-overriding-overlay-save tmp-overlay)
-                      (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-                      (setq overriding-terminal-local-map lookup)))
-                  (setq ret 'kbd-shortcut))
-                 ((and hash
-                       (condition-case err
-                           (interactive-form (nth 0 hash))
-                         (error nil)))
                   (when (and ergoemacs-echo-function
                              (boundp 'pretty-key-undefined)
                              (not (or this-command-keys-shift-translated
@@ -948,58 +825,118 @@ FORCE-KEY forces keys like <escape> to work properly.
                           (when (eq ergoemacs-echo-function t)
                             (message "%s%s%s" pretty-key
                                      (ergoemacs-unicode-char "→" "->")
-                                     (symbol-name (nth 0 hash))))
+                                     (symbol-name fn)))
                         (message "%s%s%s (from %s)"
                                  pretty-key
                                  (ergoemacs-unicode-char "→" "->")
-                                 (symbol-name (nth 0 hash))
+                                 (symbol-name fn)
                                  pretty-key-undefined))))
-                  (ergoemacs-shortcut-remap (nth 0 hash))
+                  (ergoemacs-read-key-call fn nil key)
                   (setq ergoemacs-single-command-keys nil)
-                  (setq ret 'function-remap))
-                 ((and ergoemacs-shortcut-keys (not ergoemacs-describe-key)
-                       (not ergoemacs-single-command-keys))
+                  (setq ret 'translate-fn))
+                 ((vectorp tmp)
+                  (setq ergoemacs-mark-active
+                        (or (and mark-active transient-mark-mode) mark-active))
+                  (setq ergoemacs-single-command-keys tmp)
+                  (setq last-input-event tmp)
+                  (setq prefix-arg current-prefix-arg)
+                  (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
+                  (reset-this-command-lengths)
                   (when (and ergoemacs-echo-function
                              (boundp 'pretty-key-undefined)
                              (not (or this-command-keys-shift-translated
                                       ergoemacs-shift-translated)))
                     (let (message-log-max)
-                      (if (nth 0 hash)
-                          (setq fn (nth 0 hash))
-                        (setq fn (key-binding key))
-                        (setq fn (or (command-remapping fn (point)) fn)))
                       (if (string= pretty-key-undefined pretty-key)
                           (when (eq ergoemacs-echo-function t)
-                            (message "%s%s%s;" pretty-key
+                            (message "%s%s%s" pretty-key
                                      (ergoemacs-unicode-char "→" "->")
-                                     fn))
-                        (message "%s%s%s (from %s);"
+                                     (ergoemacs-pretty-key (key-description tmp))))
+                        (message "%s%s%s (from %s)"
                                  pretty-key
                                  (ergoemacs-unicode-char "→" "->")
-                                 fn
+                                 (ergoemacs-pretty-key (key-description tmp))
                                  pretty-key-undefined))))
-                  ;; There is some issue with these keys.  Read-key thinks it
-                  ;; is in a minibuffer, so the recurive minibuffer error is
-                  ;; raised unless these are put into unread-command-events.
-                  (setq ergoemacs-mark-active
-                        (or (and mark-active transient-mark-mode) mark-active))
-                  (setq ergoemacs-single-command-keys key)
-                  (setq prefix-arg current-prefix-arg)
-                  (setq unread-command-events
-                        (append (listify-key-sequence key) unread-command-events))
                   (when lookup
                     (define-key lookup [ergoemacs-single-command-keys] 'ignore)
-                    (if (not use-override)
-                        (setq ergoemacs-read-key-overriding-overlay-save tmp-overlay)
-                      (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-                      (setq overriding-terminal-local-map lookup)))
-                  (setq ret 'shortcut-workaround))
-                 (t
+                    (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
+                    (setq overriding-terminal-local-map lookup))
+                  (setq ret 'translate))))
+               ;; Global override
+               ((progn
+                  (setq fn (lookup-key ergoemacs-global-override-keymap key))
+                  (setq ret (ergoemacs-read-key-lookup-get-ret fn))
+                  (or ret (condition-case err
+                              (interactive-form fn)
+                            nil)))
+                (unless ret
                   (setq fn (or (command-remapping fn (point)) fn))
-                  (when (memq fn ergoemacs-universal-fns)
-                    (setq ret (ergoemacs-read-key-lookup-get-ret---universal)))
-                  (unless ret
+                  (setq ergoemacs-single-command-keys key)
+                  (when (and ergoemacs-echo-function
+                             (boundp 'pretty-key-undefined)
+                             (not (or this-command-keys-shift-translated
+                                      ergoemacs-shift-translated)))
+                    (let (message-log-max)
+                      (if (string= pretty-key-undefined pretty-key)
+                          (when (eq ergoemacs-echo-function t)
+                            (message "%s%s%s" pretty-key
+                                     (ergoemacs-unicode-char "→" "->")
+                                     (symbol-name fn)))
+                        (message "%s%s%s (from %s)"
+                                 pretty-key
+                                 (ergoemacs-unicode-char "→" "->")
+                                 (symbol-name fn)
+                                 pretty-key-undefined))))
+                  (ergoemacs-read-key-call fn nil key)
+                  (setq ergoemacs-single-command-keys nil)
+                  (setq ret 'global-function-override)))
+               ;; Is there an local override function?
+               ((progn
+                  (setq fn (ergoemacs-get-override-function key))
+                  (setq ret (ergoemacs-read-key-lookup-get-ret fn))
+                  (or ret (condition-case err (interactive-form fn) nil)))
+                (unless ret
+                  (ergoemacs-read-key-call fn nil key)
+                  (setq ret 'local-function-override)))
+               ;; Does this call a function?
+               ((progn
+                  (setq hash (gethash key ergoemacs-command-shortcuts-hash))
+                  (setq fn (key-binding key))
+                  (setq ret (ergoemacs-read-key-lookup-get-ret fn))
+                  (or ret
+                      (condition-case err
+                          (interactive-form fn)
+                        nil)))
+                (unless ret
+                  (cond
+                   ((and hash (eq 'string (type-of (nth 0 hash)))
+                         (memq (nth 1 hash)
+                               (let ((ret '()))
+                                 (maphash
+                                  (lambda(yyy x)
+                                    (push yyy ret))
+                                  ergoemacs-translations)
+                                 ret)))
+                    ;; Reset the `ergoemacs-read-key'
+                    ;; List in form of key type first-type
+                    (setq ret (list (nth 0 hash) (nth 1 hash) (nth 1 hash))))
+                   ((and hash (eq 'string (type-of (nth 0 hash))))
+                    (setq ergoemacs-mark-active
+                          (or (and mark-active transient-mark-mode) mark-active))
                     (setq ergoemacs-single-command-keys key)
+                    (setq prefix-arg current-prefix-arg)
+                    (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events))
+                    (when lookup
+                      (define-key lookup [ergoemacs-single-command-keys] 'ignore)
+                      (if (not use-override)
+                          (setq ergoemacs-read-key-overriding-overlay-save tmp-overlay)
+                        (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
+                        (setq overriding-terminal-local-map lookup)))
+                    (setq ret 'kbd-shortcut))
+                   ((and hash
+                         (condition-case err
+                             (interactive-form (nth 0 hash))
+                           (error nil)))
                     (when (and ergoemacs-echo-function
                                (boundp 'pretty-key-undefined)
                                (not (or this-command-keys-shift-translated
@@ -1009,49 +946,111 @@ FORCE-KEY forces keys like <escape> to work properly.
                             (when (eq ergoemacs-echo-function t)
                               (message "%s%s%s" pretty-key
                                        (ergoemacs-unicode-char "→" "->")
-                                       (symbol-name fn)))
+                                       (symbol-name (nth 0 hash))))
                           (message "%s%s%s (from %s)"
                                    pretty-key
                                    (ergoemacs-unicode-char "→" "->")
-                                   (symbol-name fn)
+                                   (symbol-name (nth 0 hash))
                                    pretty-key-undefined))))
-                    (ergoemacs-read-key-call fn nil key)
+                    (ergoemacs-shortcut-remap (nth 0 hash))
                     (setq ergoemacs-single-command-keys nil)
-                    (setq ret 'function))))))
-             ;; Does this call an override or major/minor mode function?
-             ((progn
-                (setq fn (or
-                          ;; Call major/minor mode key?
-                          (ergoemacs-with-major-and-minor-modes 
-                           (key-binding key))
-                          ;; Call unbound or global key?
-                          (if (eq (lookup-key ergoemacs-unbind-keymap key) 'ergoemacs-undefined) 'ergoemacs-undefined
-                            (let (ergoemacs-read-input-keys)
-                              (if (keymapp (key-binding key))
-                                  (setq ret 'keymap)
-                                (ergoemacs-with-global
-                                 (key-binding key)))))))
-                (setq ret (ergoemacs-read-key-lookup-get-ret fn))
-                (or ret
-                    (condition-case err
-                        (interactive-form fn)
-                      nil)))
-              (unless ret
-                (setq fn (or (command-remapping fn (point)) fn))
-                (setq ergoemacs-single-command-keys key)
-                (let (message-log-max)
-                  (if (string= pretty-key-undefined pretty-key)
-                      (message "%s%s%s" pretty-key
+                    (setq ret 'function-remap))
+                   ((and ergoemacs-shortcut-keys (not ergoemacs-describe-key)
+                         (not ergoemacs-single-command-keys))
+                    (when (and ergoemacs-echo-function
+                               (boundp 'pretty-key-undefined)
+                               (not (or this-command-keys-shift-translated
+                                        ergoemacs-shift-translated)))
+                      (let (message-log-max)
+                        (if (nth 0 hash)
+                            (setq fn (nth 0 hash))
+                          (setq fn (key-binding key))
+                          (setq fn (or (command-remapping fn (point)) fn)))
+                        (if (string= pretty-key-undefined pretty-key)
+                            (when (eq ergoemacs-echo-function t)
+                              (message "%s%s%s;" pretty-key
+                                       (ergoemacs-unicode-char "→" "->")
+                                       fn))
+                          (message "%s%s%s (from %s);"
+                                   pretty-key
+                                   (ergoemacs-unicode-char "→" "->")
+                                   fn
+                                   pretty-key-undefined))))
+                    ;; There is some issue with these keys.  Read-key thinks it
+                    ;; is in a minibuffer, so the recurive minibuffer error is
+                    ;; raised unless these are put into unread-command-events.
+                    (setq ergoemacs-mark-active
+                          (or (and mark-active transient-mark-mode) mark-active))
+                    (setq ergoemacs-single-command-keys key)
+                    (setq prefix-arg current-prefix-arg)
+                    (setq unread-command-events
+                          (append (listify-key-sequence key) unread-command-events))
+                    (when lookup
+                      (define-key lookup [ergoemacs-single-command-keys] 'ignore)
+                      (if (not use-override)
+                          (setq ergoemacs-read-key-overriding-overlay-save tmp-overlay)
+                        (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
+                        (setq overriding-terminal-local-map lookup)))
+                    (setq ret 'shortcut-workaround))
+                   (t
+                    (setq fn (or (command-remapping fn (point)) fn))
+                    (when (memq fn ergoemacs-universal-fns)
+                      (setq ret (ergoemacs-read-key-lookup-get-ret---universal)))
+                    (unless ret
+                      (setq ergoemacs-single-command-keys key)
+                      (when (and ergoemacs-echo-function
+                                 (boundp 'pretty-key-undefined)
+                                 (not (or this-command-keys-shift-translated
+                                          ergoemacs-shift-translated)))
+                        (let (message-log-max)
+                          (if (string= pretty-key-undefined pretty-key)
+                              (when (eq ergoemacs-echo-function t)
+                                (message "%s%s%s" pretty-key
+                                         (ergoemacs-unicode-char "→" "->")
+                                         (symbol-name fn)))
+                            (message "%s%s%s (from %s)"
+                                     pretty-key
+                                     (ergoemacs-unicode-char "→" "->")
+                                     (symbol-name fn)
+                                     pretty-key-undefined))))
+                      (ergoemacs-read-key-call fn nil key)
+                      (setq ergoemacs-single-command-keys nil)
+                      (setq ret 'function))))))
+               ;; Does this call an override or major/minor mode function?
+               ((progn
+                  (setq fn (or
+                            ;; Call major/minor mode key?
+                            (ergoemacs-with-major-and-minor-modes 
+                             (key-binding key))
+                            ;; Call unbound or global key?
+                            (if (eq (lookup-key ergoemacs-unbind-keymap key) 'ergoemacs-undefined) 'ergoemacs-undefined
+                              (let (ergoemacs-read-input-keys)
+                                (if (keymapp (key-binding key))
+                                    (setq ret 'keymap)
+                                  (ergoemacs-with-global
+                                   (key-binding key)))))))
+                  (setq ret (ergoemacs-read-key-lookup-get-ret fn))
+                  (or ret
+                      (condition-case err
+                          (interactive-form fn)
+                        nil)))
+                (unless ret
+                  (setq fn (or (command-remapping fn (point)) fn))
+                  (setq ergoemacs-single-command-keys key)
+                  (let (message-log-max)
+                    (if (string= pretty-key-undefined pretty-key)
+                        (message "%s%s%s" pretty-key
+                                 (ergoemacs-unicode-char "→" "->")
+                                 fn)
+                      (message "%s%s%s (from %s)"
+                               pretty-key
                                (ergoemacs-unicode-char "→" "->")
-                               fn)
-                    (message "%s%s%s (from %s)"
-                             pretty-key
-                             (ergoemacs-unicode-char "→" "->")
-                             fn
-                             pretty-key-undefined)))
-                (ergoemacs-read-key-call fn nil key)
-                (setq ergoemacs-single-command-keys nil)
-                (setq ret 'function-global-or-override))))
+                               fn
+                               pretty-key-undefined)))
+                  (ergoemacs-read-key-call fn nil key)
+                  (setq ergoemacs-single-command-keys nil)
+                  (setq ret 'function-global-or-override)))))
+          ;; Fix tempoary over
           (when (and tmp-overlay (not ergoemacs-read-key-overriding-overlay-save))
             (delete-overlay tmp-overlay)))
         (symbol-value 'ret))
