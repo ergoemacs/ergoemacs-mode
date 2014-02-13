@@ -583,13 +583,16 @@ It will replace anything defined by `ergoemacs-translation'"
 
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
-  (if (minibufferp)
-      (progn
-        (ergoemacs-move-cursor-next-pane)
-        (ergoemacs-post-command-hook)
-        (ergoemacs-move-cursor-previous-pane)
-        (minibuffer-keyboard-quit))
-    (let (defined-fn
+  (cond
+   ((minibufferp)
+    (ergoemacs-move-cursor-next-pane)
+    (ergoemacs-post-command-hook)
+    (ergoemacs-move-cursor-previous-pane)
+    (minibuffer-keyboard-quit))
+   ((and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode)
+    (cua-clear-rectangle-mark))
+   (t
+     (let (defined-fn
            ergoemacs-shortcut-keys
            ergoemacs-read-input-keys
            ergoemacs-shortcut-override-mode
@@ -608,7 +611,7 @@ It will replace anything defined by `ergoemacs-translation'"
         (ergoemacs-modal-toggle (nth 0 ergoemacs-modal-list)))
        (t
         (ergoemacs-install-shortcuts-up)
-        (keyboard-quit)))))
+        (keyboard-quit))))))
   (setq ergoemacs-describe-key nil))
 
 (defun ergoemacs-read-key-call (function &optional record-flag keys)
@@ -669,11 +672,11 @@ In addition, when the function is called:
             (setq count (gethash (cons major-mode function) keyfreq-table))
             (puthash (cons major-mode function) (if count (+ count 1) 1)
                      keyfreq-table))))
-      (setq deactivate-mark nil)
-      (if (and (boundp 'cua-mode) cua-mode)
-          (cua--pre-command-handler))
-      (call-interactively function record-flag keys)
-      (setq ergoemacs-deactivate-mark deactivate-mark)))))
+      (let (deactivate-mark)
+        (if (and (boundp 'cua-mode) cua-mode)
+            (cua--pre-command-handler))
+        (call-interactively function record-flag keys)
+        (setq ergoemacs-deactivate-mark deactivate-mark))))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
 (defvar ergoemacs-read-key-overriding-overlay-save nil)
@@ -772,11 +775,12 @@ FORCE-KEY forces keys like <escape> to work properly.
                         (md5
                          (format "char-map-read:%s" (get-char-property (point) 'keymap)))
                         ergoemacs-extract-map-hash))
-          (when lookup
-            (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
-                                            (min (+ (point) 1) (point-max))))
-            (overlay-put tmp-overlay 'keymap lookup)
-            (overlay-put tmp-overlay 'priority 536870910)))
+          (let (deactivate-mark)
+            (when lookup
+              (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
+                                              (min (+ (point) 1) (point-max))))
+              (overlay-put tmp-overlay 'keymap lookup)
+              (overlay-put tmp-overlay 'priority 536870910))))
         (unwind-protect
             (cond
              ((progn
