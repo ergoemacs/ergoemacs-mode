@@ -127,7 +127,7 @@
       (ergoemacs-read-key key 'normal))
      ((and ergoemacs-ctl-c-or-ctl-x-delay
            (or (region-active-p)
-               (and cua--rectangle (boundp 'cua-mode) cua-mode)))
+               (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode)))
       ;; Wait for next key...
       (let ((next-key
              (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
