@@ -75,7 +75,7 @@
   "Translation alist.")
 
 (defvar ergoemacs-universal-fns
-  '(universal-argument)
+  '(universal-argument ergoemacs-universal-argument)
   "Universal argument functions")
 (defvar ergoemacs-translate-hash (make-hash-table :test 'equal))
 (defvar ergoemacs-translations (make-hash-table :test 'equal))
@@ -86,7 +86,7 @@
   (setq ergoemacs-translate-hash (make-hash-table :test 'equal))
   (setq ergoemacs-translations (make-hash-table :test 'equal))
   (setq ergoemacs-translation-text (make-hash-table :test 'equal))
-  (setq ergoemacs-universal-fns '(universal-argument)))
+  (setq ergoemacs-universal-fns '(universal-argument ergoemacs-universal-argument)))
 
 (defun ergoemacs-local-map (type &optional modal)
   "Gets local keymap for TYPE, or returns nil.
@@ -167,6 +167,7 @@ This is called through `ergoemacs-universal-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
               (ergoemacs-universal-argument ',(plist-get arg-plist ':name)))))
+    (add-to-list 'ergoemacs-universal-fns (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")))
 
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-digit-argument")) ()
