@@ -706,7 +706,7 @@ to the appropriate values for `ergoemacs-read-key'.
       ;; If keymap, continue.
       (setq ret 'keymap))
     (when (memq fn ergoemacs-universal-fns)
-      (setq ret (ergoemacs-read-key-lookup-get-ret---universal)))
+      (setq ret (ergoemacs-read-key-lookup-get-ret---universal fn)))
     (symbol-value 'ret)))
 
 (defun ergoemacs-read-key-lookup (prior-key prior-pretty-key key pretty-key force-key)
@@ -996,7 +996,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                    (t
                     (setq fn (or (command-remapping fn (point)) fn))
                     (when (memq fn ergoemacs-universal-fns)
-                      (setq ret (ergoemacs-read-key-lookup-get-ret---universal)))
+                      (setq ret (ergoemacs-read-key-lookup-get-ret---universal fn)))
                     (unless ret
                       (setq ergoemacs-single-command-keys key)
                       (when (and ergoemacs-echo-function
