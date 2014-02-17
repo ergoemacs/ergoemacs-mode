@@ -1063,6 +1063,24 @@ FORCE-KEY forces keys like <escape> to work properly.
       (set-default 'ergoemacs-modal nil))
     (when ergoemacs-single-command-keys
       (setq ergoemacs-read-input-keys nil))))
+
+(defun ergoemacs-read-key-add-translation (key-plist trans)
+  "Adds `ergoemacs-translation-keymap' to KEY-PLIST for TRANS translation.
+Otherwise add new translation to key-plist and return it."
+  (let* ((key (plist-get key-plist (intern (concat trans "-key"))))
+         (new-key (if key (lookup-key ergoemacs-translation-keymap key) nil))
+         kd
+         (new-trans (concat trans "-et"))
+         (key-plist key-plist))
+    (if (not new-key)
+        (setq key-plist (setq key-plist (plist-put key-plist (intern new-trans) nil)))
+      (setq key-plist (plist-put key-plist (intern (concat new-trans "-key")) new-key))
+      (setq kd (key-description new-key))
+      (setq key-plist (plist-put key-plist (intern new-trans) kd))
+      (setq kd (ergoemacs-pretty-key kd))
+      (setq key-plist (plist-put key-plist (intern (concat new-trans "-pretty")) kd)))
+    (symbol-value 'key-plist)))
+
 (defvar ergoemacs-shift-translated nil)
 (defvar ergoemacs-deactivate-mark nil)
 (defun ergoemacs-read-key (&optional key type initial-key-type universal)
@@ -1198,7 +1216,12 @@ argument prompt.
                 (setq key-trials nil)
                 ;; This is the order that ergoemacs-read-key tries keys:
                 (push base key-trials)
+                (setq next-key  (ergoemacs-read-key-add-translation next-key base))
+                (push (concat base "-et") key-trials)
                 (push (concat base "-shift-translated") key-trials)
+                (setq next-key (ergoemacs-read-key-add-translation next-key (concat base "-shift-translated")))
+                (push (concat base "-shift-translated-et") key-trials)
+                
                 (when (and key ergoemacs-translate-emacs-keys)
                   (setq tmp (gethash (plist-get next-key
                                                 (intern (concat base "-key")))
@@ -1226,17 +1249,18 @@ argument prompt.
                                           (ergoemacs-pretty-key
                                            (plist-get next-key (intern key-base)))))
                          ;; Now add to list to check.
-                         (push key-base key-trials)))
+                         (push key-base key-trials)
+                         ;; Add ergoemacs translation
+                         (setq next-key (ergoemacs-read-key-add-translation next-key key-base))
+                         (push (concat key-base "-et") key-trials)))
                      (ergoemacs-shortcut-function-binding (nth 0 tmp)))))
                 (when ergoemacs-translate-keys
-                  (push ":raw" key-trials)
-                  (push ":ctl" key-trials)
-                  (push ":alt" key-trials)
-                  (push ":alt-ctl" key-trials)
-                  (push ":raw-shift" key-trials)
-                  (push ":ctl-shift" key-trials)
-                  (push ":alt-shift" key-trials)
-                  (push ":alt-ctl-shift" key-trials))
+                  (mapc
+                   (lambda(trial)
+                     (push trial key-trials)
+                     (setq next-key (ergoemacs-read-key-add-translation next-key trial))
+                     (push (concat trial "-et") key-trials))
+                   '(":raw" ":ctl" ":alt" ":alt-ctl" ":raw-shift" ":ctl-shift" ":alt-shift" ":alt-ctl-shift")))
                 (setq key-trials (reverse key-trials))
                 (unless
                     (catch 'ergoemacs-key-trials
