@@ -463,6 +463,11 @@ universal argument can be entered.
           (const :tag "No cursor" nil))
   :group 'ergoemacs-read)
 
+(defcustom ergoemacs-backspace-will-undo-swap-translation t
+  "Backspace will undo a swapped keyboard translation."
+  :type 'boolean
+  :group 'ergoemacs-read)
+
 (defun ergoemacs-read-key-swap (&optional first-type current-type)
   "Function to swap key translation.
 
@@ -1117,7 +1122,8 @@ argument prompt.
         real-read
         (first-universal universal)
         (curr-universal nil)
-        input tmp)
+        input tmp
+        history)
     (setq input (ergoemacs-to-sequence key)
           key nil)
     (while continue-read
@@ -1127,8 +1133,8 @@ argument prompt.
         (setq type real-type)
         (setq curr-universal first-universal)
         (setq real-type nil))
-      (setq real-read (not input)
-            base (concat ":" (symbol-name type))
+      (setq real-read (not input))
+      (setq base (concat ":" (symbol-name type))
             next-key (vector
                       (or (pop input)
                           ;; Echo key sequence
@@ -1166,12 +1172,14 @@ argument prompt.
             (setq local-fn (lookup-key local-keymap tmp))
           (setq local-fn nil))
         (if (eq local-fn 'ergoemacs-read-key-undo-last)
-            (if (= 0 (length key))
+            (if (= 0 (length history))
                 (setq continue-read nil) ;; Exit read-key
+              (setq tmp (pop history))
+              (message "%s" tmp)
               (setq continue-read t ;; Undo last key
-                    input (ergoemacs-to-sequence (substring key 0 (- (length key) 1)))
+                    input (nth 1 tmp)
                     real-read nil
-                    real-type type)
+                    real-type (nth 0 tmp))
               (setq key nil
                     pretty-key nil
                     type 'normal
@@ -1183,6 +1191,10 @@ argument prompt.
                    (or (not curr-universal) key))
               (progn
                 ;; Swap translation
+                (when (and real-read ergoemacs-backspace-will-undo-swap-translation)
+                  (push (list type
+                              (listify-key-sequence key))
+                        history))
                 (setq type (ergoemacs-read-key-swap first-type type)
                       continue-read t))
             (setq curr-universal nil)
@@ -1294,12 +1306,20 @@ argument prompt.
                                    force-key) nil))
                         (cond
                          ((eq local-fn 'keymap)
+                          (when real-read
+                            (push (list type
+                                        (listify-key-sequence key))
+                                  history))
                           (setq continue-read t
                                 key key-trial
                                 pretty-key pretty-key-trial)
                           ;; Found, exit
                           (throw 'ergoemacs-key-trials t))
                          ((eq (type-of local-fn) 'cons)
+                          (when real-read
+                            (push (list type
+                                        (listify-key-sequence key))
+                                  history))
                           ;; ergoemacs-shortcut reset ergoemacs-read-key
                           (setq continue-read t
                                 input (ergoemacs-to-sequence (nth 0 local-fn))
