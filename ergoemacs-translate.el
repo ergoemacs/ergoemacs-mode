@@ -50,6 +50,12 @@
 ;; 
 ;;; Code:
 
+(defvar ergoemacs-translation-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map (read-kbd-macro "<deletechar>") (read-kbd-macro "DEL"))
+    map)
+  "Map of defined translations that are applied if the original key wasn't found.")
+
 (defvar ergoemacs-needs-translation nil
   "Tells if ergoemacs keybindings need a translation")
 
