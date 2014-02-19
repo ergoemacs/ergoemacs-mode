@@ -1077,7 +1077,7 @@ Otherwise add new translation to key-plist and return it."
          kd
          (new-trans (concat trans "-et"))
          (key-plist key-plist))
-    (if (not new-key)
+    (if (or (not new-key) (integerp new-key))
         (setq key-plist (setq key-plist (plist-put key-plist (intern new-trans) nil)))
       (setq key-plist (plist-put key-plist (intern (concat new-trans "-key")) new-key))
       (setq kd (key-description new-key))
