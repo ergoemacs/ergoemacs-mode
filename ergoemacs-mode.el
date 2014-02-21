@@ -1241,8 +1241,9 @@ This is done by checking if this is a command that supports shift selection or c
                     (interactive-form key-binding)
                   (error nil))
                 (setq this-command key-binding))))
-            (when (and (eq saved-overriding-map t)
-                       (not unread-command-events))
+            (when (and
+                   (or (not (boundp 'saved-overriding-map)) (eq saved-overriding-map t))
+                   (not unread-command-events))
               (ergoemacs-install-shortcuts-up))
             (when (and (not ergoemacs-show-true-bindings)
                        (memq this-command ergoemacs-describe-keybindings-functions))
