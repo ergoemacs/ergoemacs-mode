@@ -2016,8 +2016,7 @@ Setup C-c and C-x keys to be described properly.")
         tmp-overlay)
     (cond
      ((and overriding-terminal-local-map
-           (boundp 'saved-overriding-map)
-           (eq saved-overriding-map t))
+           (or (not (boundp 'saved-overriding-map)) (eq saved-overriding-map t)))
       (when (or
              (eq (lookup-key
                   overriding-terminal-local-map [ergoemacs]) 'ignore)
@@ -2168,8 +2167,7 @@ The keymaps are:
         override orig-map)
     (cond
      ((and overriding-terminal-local-map
-           (boundp 'saved-overriding-map)
-           (eq saved-overriding-map t))
+           (or (not (boundp 'saved-overriding-map)) (eq saved-overriding-map t)))
       (when (not
              (eq (lookup-key
                   overriding-terminal-local-map [ergoemacs])
