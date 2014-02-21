@@ -1590,23 +1590,8 @@ DEF can be:
 
 (defvar ergoemacs-extract-map-hash (make-hash-table :test 'equal))
 
-(defvar ergoemacs-prefer-shortcuts t ;; Prefer shortcuts.
-  "Prefer shortcuts")
-
 (defvar ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
   "List of command shortcuts.")
-
-(defvar ergoemacs-repeat-shortcut-keymap (make-sparse-keymap)
-  "Keymap for repeating often used shortcuts like C-c C-c.")
-
-(defvar ergoemacs-repeat-shortcut-msg ""
-  "Message for repeating keyboard shortcuts like C-c C-c")
-
-(defvar ergoemacs-current-extracted-map nil
-  "Current extracted map for `ergoemacs-shortcut' defined functions")
-
-(defvar ergoemacs-first-extracted-variant nil
-  "Current extracted variant")
 
 (defcustom ergoemacs-shortcut-ignored-functions
   '(undo-tree-visualize)
@@ -1614,13 +1599,6 @@ DEF can be:
   :group 'ergoemacs-mode
   :type '(repeat
           (symbol :tag "Function to ignore:")))
-
-(defcustom ergoemacs-shortcuts-do-not-lookup
-  '(execute-extended-command)
-  "Functions that `ergoemacs-mode' does not lookup equivalent key-bindings for. "
-  :group 'ergoemacs-mode
-  :type '(repeat
-          (symbol :tag "Function to call literally:")))
 
 (defun ergoemacs-get-override-function (keys)
   "See if KEYS has an overriding function.
