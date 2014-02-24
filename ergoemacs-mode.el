@@ -757,20 +757,21 @@ depending the state of `ergoemacs-mode' variable."
                (not ergoemacs-theme) ;; Ergoemacs default used.
                (or (not ergoemacs-mode-used)
                    (not (string= ver-used ver))))
-          (if (yes-or-no-p
-               (format "Ergoemacs keybindings changed, %s; Would you like to change as well?"
-                       ergoemacs-mode-changes))
-              (progn
-                (setq ergoemacs-mode-used ergoemacs-mode-version)
-                (customize-save-variable 'ergoemacs-mode-used (symbol-value 'ergoemacs-mode-used))
-                (customize-save-variable 'ergoemacs-theme (symbol-value 'ergoemacs-theme))
-                (customize-save-customized))
-            (when (not ergoemacs-mode-used)
-              (setq ergoemacs-mode-used "5.7.5"))
-            (setq ergoemacs-theme ergoemacs-mode-used)
-            (customize-save-variable 'ergoemacs-mode-used (symbol-value 'ergoemacs-mode-used))
-            (customize-save-variable 'ergoemacs-theme (symbol-value 'ergoemacs-theme))
-            (customize-save-customized))))
+          ;; (if (yes-or-no-p
+          ;;      (format "Ergoemacs keybindings changed, %s; Would you like to change as well?"
+          ;;              ergoemacs-mode-changes))
+          ;;     (progn
+          ;;       (setq ergoemacs-mode-used ergoemacs-mode-version)
+          ;;       (customize-save-variable 'ergoemacs-mode-used (symbol-value 'ergoemacs-mode-used))
+          ;;       (customize-save-variable 'ergoemacs-theme (symbol-value 'ergoemacs-theme))
+          ;;       (customize-save-customized))
+          ;;   (when (not ergoemacs-mode-used)
+          ;;     (setq ergoemacs-mode-used "5.7.5"))
+          ;;   (setq ergoemacs-theme ergoemacs-mode-used)
+          ;;   (customize-save-variable 'ergoemacs-mode-used (symbol-value 'ergoemacs-mode-used))
+          ;;   (customize-save-variable 'ergoemacs-theme (symbol-value 'ergoemacs-theme))
+          ;;   (customize-save-customized))
+          ))
     (error nil)))
 
 (add-hook 'emacs-startup-hook 'ergoemacs-check-for-new-version)
