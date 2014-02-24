@@ -1679,6 +1679,73 @@ can press [Return] or [F6].
   :PAGE:     faq.html
   :TEMPLATE: blog_static_no_title.html
   :END:
+*** Whats the difference between ergoemacs and ergoemacs-mode?
+[[http://ergoemacs.org/][Ergoemacs]] is a set of customizations that make emacs easier to use.
+It also includes [[file:index.html][ergoemacs-mode]].  The minor mode, [[file:index.html][ergoemacs-mode]],
+implements the keybindings (and some other features) via a minor-mode
+that can be toggled to get back to standard emacs.
+*** How do you select text when using ergoemacs-mode and ergoemacs-arrow keys
+You can hold the left @@html:<kbd class="dark">@@Alt@@html:</kbd>@@,
+then right hand press space to mark, then right hand using any of
+QWERTY 
+@@html:<kbd class="dark">@@i@@html:</kbd>@@ 
+@@html:<kbd class="dark">@@j@@html:</kbd>@@ 
+@@html:<kbd class="dark">@@k@@html:</kbd>@@ 
+@@html:<kbd class="dark">@@l@@html:</kbd>@@ to move by char, line, or 
+@@html:<kbd class="dark">@@u@@html:</kbd>@@ 
+@@html:<kbd class="dark">@@o@@html:</kbd>@@  to move
+by word. ⇧ Shift+U and ⇧ Shift+O to move by paragraph/block.
+
+Of course, you can also use the [[file:standard-shortcuts.html][standard shortcuts]].  For example, 
+to select all, you can press Ctrl+a.  To move up, you can press ⇧
+Shift+↓ to select text downward.
+
+Another option is to use the ergoemacs reduction key theme.  Then the
+shift-movement keys work. 
+
+*** Some of my backspace keys have been muted by ergoemacs-mode
+Ergoemacs-mode allows key sequences to be changed with a backspace
+key.  This masks some of the delete key sequences like C-x Backspace which
+runs backward-kill-sentence.  You can turn this off by the following
+
+#+BEGIN_SRC emacs-lisp
+(define-key ergoemacs-normal-translation-local-map (kbd "DEL") nil)
+
+#+END_SRC
+
+If you wish to remove it from the other specialized translations you can do that as well:
+
+#+BEGIN_SRC emacs-lisp
+(define-key ergoemacs-ctl-to-alt-translation-local-map (kbd "DEL") nil)
+(define-key ergoemacs-unchordedl-translation-local-map (kbd "DEL") nil)
+#+END_SRC
+
+You can also allow ergoemacs-mode to translate the Delete key to
+backspace, so Ctl+x backspace can be typed as Ctrl+x Delete key
+
+*** How do you get a 【▤ Menu】 key in Mac OS X
+Some of ergoemacs keys make use of the 【▤ Menu】 key.
+One way to set this up in a mac is to replace the Caps Lock key with
+F13 or above, and tell emacs that F13 is actually the menu key.  This
+is done by:
+
+1. Downloading and installing [[https://pqrs.org/macosx/keyremap4macbook/pckeyboardhack.html][PCKeyboardHack]]
+2. Going to the system prefences and PCKeyboardHack
+3. Change the caps lock mapping to F13
+4. Adding the translation to emacs startup script (like ~/.emacs or
+   ~/.emacs.d/init.el) as follows:
+
+#+BEGIN_SRC emacs-lisp
+(define-key key-translation-map (kbd "<f13>") (kbd "<menu>"))
+#+END_SRC
+
+*** Why don't you use the standard emacs key notation?
+The [[http://www.emacswiki.org/emacs/EmacsKeyNotation][emacs key notation]] is common across emacs, but not common for new
+users.  One of the goals of ergoemacs-mode is to allow new emacs users
+to not have to learn anything about the keys to start using emacs.
+Therefore, all keys are defined in Ctrl+s notation instead of =C-s=
+notation.
+
 *** I was expecting C-j to be mapped to copy but instead it's C-c on my dvorak 
 You have some options to get to copy and paste:
 - You can Alt + the normal key positions for undo cut copy paste
@@ -1699,50 +1766,6 @@ You have some options to get to copy and paste:
 (ergoemacs-mode 1)
 #+END_SRC
 
-
-*** How do you get a 【▤ Menu】 key in Mac OS X
-Some of ergoemacs keys make use of the 【▤ Menu】 key.
-One way to set this up in a mac is to replace the Caps Lock key with
-F13 or above, and tell emacs that F13 is actually the menu key.  This
-is done by:
-
-1. Downloading and installing [[https://pqrs.org/macosx/keyremap4macbook/pckeyboardhack.html][PCKeyboardHack]]
-2. Going to the system prefences and PCKeyboardHack
-3. Change the caps lock mapping to F13
-4. Adding the translation to emacs startup script (like ~/.emacs or
-   ~/.emacs.d/init.el) as follows:
-
-#+BEGIN_SRC emacs-lisp
-(define-key key-translation-map (kbd "<f13>") (kbd "<menu>"))
-#+END_SRC
-
-*** How do you select text when using ergoemacs-mode and ergoemacs-arrow keys
-You can hold the left @@html:<kbd class="dark">@@Alt@@html:</kbd>@@,
-then right hand press space to mark, then right hand using any of
-QWERTY 
-@@html:<kbd class="dark">@@i@@html:</kbd>@@ 
-@@html:<kbd class="dark">@@j@@html:</kbd>@@ 
-@@html:<kbd class="dark">@@k@@html:</kbd>@@ 
-@@html:<kbd class="dark">@@l@@html:</kbd>@@ to move by char, line, or 
-@@html:<kbd class="dark">@@u@@html:</kbd>@@ 
-@@html:<kbd class="dark">@@o@@html:</kbd>@@  to move
-by word. ⇧ Shift+U and ⇧ Shift+O to move by paragraph/block.
-
-Of course, you can also use the [[file:standard-shortcuts.html][standard shortcuts]].  For example, 
-to select all, you can press Ctrl+a.  To move up, you can press ⇧
-Shift+↓ to select text downward.
-
-*** Whats the difference between ergoemacs and ergoemacs-mode?
-[[http://ergoemacs.org/][Ergoemacs]] is a set of customizations that make emacs easier to use.
-It also includes [[file:index.html][ergoemacs-mode]].  The minor mode, [[file:index.html][ergoemacs-mode]],
-implements the keybindings (and some other features) via a minor-mode
-that can be toggled to get back to standard emacs.
-*** Why don't you use the standard emacs key notation?
-The [[http://www.emacswiki.org/emacs/EmacsKeyNotation][emacs key notation]] is common across emacs, but not common for new
-users.  One of the goals of ergoemacs-mode is to allow new emacs users
-to not have to learn anything about the keys to start using emacs.
-Therefore, all keys are defined in Ctrl+s notation instead of =C-s=
-notation.
 
 * Tips
 ** Gradual Adoption
