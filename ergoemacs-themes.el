@@ -524,6 +524,9 @@
 
 (defcustom ergoemacs-minor-mode-layout
   `(;; Key/variable command x-hook
+    (compilation-mode-hook
+     (("<f11>" previous-error)
+      ("<f12>" next-error)))
     
     (org-mode-hook
      (;; (move-beginning-of-line org-beginning-of-line nil remap)
