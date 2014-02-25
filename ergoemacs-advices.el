@@ -28,6 +28,12 @@
 
 ;;; Code:
 
+(defmacro ergoemacs-define-overrides (&rest body)
+  "Force the define-keys to work"
+  `(let ((ergoemacs-run-mode-hooks t))
+     ,@body))
+  
+
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def))
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
