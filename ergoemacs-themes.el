@@ -32,19 +32,128 @@
 (autoload 'wdired-exit "wdired" "ergoemacs-autoload." t)
 
 (defvar ergoemacs-full-maps '(helm-map)
-  "List of keymaps where the full ergoemacs keymap is fully installed (ie they use an overriding keymap).")
+  "List of keymaps where the full ergoemacs keymap is fully
+ installed (ie they use an overriding keymap).")
+
+(defgroup ergoemacs-themes nil
+  "Default Ergoemacs Layout"
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-function-short-names
+  '((backward-char  "← char")
+    (forward-char "→ char")
+    (previous-line "↑ line")
+    (next-line "↓ line")
+    (left-word  "← word")
+    (right-word "→ word")
+    (backward-paragraph "↑ ¶")
+    (forward-paragraph "↓ ¶")
+    (backward-word "← word")
+    (forward-word "→ word")
+    (ergoemacs-backward-block "← ¶")
+    (ergoemacs-forward-block  "→ ¶")
+    (ergoemacs-beginning-of-line-or-what "← line/*")
+    (ergoemacs-end-of-line-or-what "→ line/*")
+    (scroll-down "↑ page")
+    (scroll-down-command "↑ page")
+    (scroll-up-command "↓ page")
+    (scroll-up "↓ page")
+    (ergoemacs-beginning-or-end-of-buffer "↑ Top*")
+    (ergoemacs-end-or-beginning-of-buffer "↓ Bottom*")
+    (ergoemacs-backward-open-bracket "← bracket")
+    (ergoemacs-forward-close-bracket "→ bracket")
+    (isearch-forward "→ isearch")
+    (isearch-backward "← isearch")
+    (recenter-top-bottom "recenter")
+    (delete-backward-char "⌫ char")
+    (delete-char "⌦ char")
+    (backward-kill-word "⌫ word")
+    (kill-word "⌦ word")
+    (ergoemacs-cut-line-or-region "✂ region")
+    (ergoemacs-copy-line-or-region "copy")
+    (ergoemacs-paste "paste")
+    (ergoemacs-paste-cycle "paste ↑")
+    (ergoemacs-copy-all "copy all")
+    (ergoemacs-cut-all "✂ all")
+    (undo-tree-redo "↷ redo")
+    (redo "↷ redo")
+    (undo "↶ undo")
+    (kill-line "⌦ line")
+    (ergoemacs-kill-line-backward "⌫ line")
+    (mark-paragraph "Mark Paragraph")
+    (ergoemacs-shrink-whitespaces "⌧ white")
+    (comment-dwim "cmt dwim")
+    (ergoemacs-toggle-camel-case "tog. camel")
+    (ergoemacs-toggle-letter-case "tog. case")
+    (ergoemacs-call-keyword-completion "↯ compl")
+    (flyspell-auto-correct-word "flyspell")
+    (ergoemacs-compact-uncompact-block "fill/unfill ¶")
+    (set-mark-command "Set Mark")
+    (execute-extended-command "M-x")
+    (shell-command "shell cmd")
+    (ergoemacs-move-cursor-next-pane "next pane")
+    (ergoemacs-move-cursor-previous-pane "prev pane")
+    (ergoemacs-switch-to-previous-frame "prev frame")
+    (ergoemacs-switch-to-next-frame "next frame")
+    (query-replace "rep")
+    (vr/query-replace "rep reg")
+    (query-replace-regexp "rep reg")
+    (delete-other-windows "x other pane")
+    (delete-window "x pane")
+    (split-window-vertically "split |")
+    (split-window-horizontally "split —")
+    (er/expand-region "←region→")
+    (ergoemacs-extend-selection "←region→")
+    (er/expand-region "←region→")
+    (ergoemacs-extend-selection "←region→")
+    (er/mark-outside-quotes "←quote→")
+    (ergoemacs-select-text-in-quote "←quote→")
+    (ergoemacs-select-current-block "Sel. Block")
+    (ergoemacs-select-current-line "Sel. Line")
+    (ace-jump-mode "Ace Jump")
+    (delete-window "x pane")
+    (delete-other-windows "x other pane")
+    (split-window-vertically "split —")
+    (query-replace "rep")
+    (ergoemacs-cut-all "✂ all")
+    (ergoemacs-copy-all "copy all")
+    (execute-extended-command "M-x")
+    (execute-extended-command "M-x")
+    (indent-region "indent-region")  ;; Already in CUA
+    (set-mark-command "Set Mark")
+    (mark-whole-buffer "Sel All"))
+  "Ergoemacs short command names"
+  :group 'ergoemacs-themes
+  :type '(repeat :tag "Command abbreviation"
+          (list (sexp :tag "Command")
+                (string :tag "Short Name"))))
+
+(defun ergoemacs-theme-component (&rest arg-plist)
+  "A component of an ergoemacs-theme."
+  (let ((name (plist-get arg-plist ':name))
+        (desc (plist-get arg-plist ':description))
+        (layout (plist-get arg-plist ':layout)))
+    (flet ((global-set-key (key command)
+                         ))
+    )))
+
+(ergoemacs-theme-component
+ :name "arrow"
+ :description "Arrow Keys Only"
+ :layout "us"
+ (global-set-key (kbd "M-j") 'backward-char)
+ (global-set-key (kbd "M-l") 'forward-char)
+ (global-set-key (kbd "M-i") 'previous-line)
+ (global-set-key (kbd "M-k") 'next-line))
+
 
 ;; Ergoemacs keys
-
 (defgroup ergoemacs-standard-layout nil
   "Default Ergoemacs Layout"
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-variable-layout
-  '(("M-j" backward-char  "← char")
-    ("M-l" forward-char "→ char")
-    ("M-i" previous-line "↑ line")
-    ("M-k" next-line "↓ line")
+  '(
 
     ("M-C-j" left-word  "← word")
     ("M-C-l" right-word "→ word")
