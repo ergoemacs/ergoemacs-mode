@@ -154,7 +154,10 @@
 
 (defcustom ergoemacs-variable-layout
   '(
-
+    ("M-j" backward-char  "← char")
+    ("M-l" forward-char "→ char")
+    ("M-i" previous-line "↑ line")
+    ("M-k" next-line "↓ line")
     ("M-C-j" left-word  "← word")
     ("M-C-l" right-word "→ word")
     ("M-C-i" backward-paragraph "↑ ¶")
