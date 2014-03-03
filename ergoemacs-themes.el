@@ -131,8 +131,6 @@
           (list (sexp :tag "Command")
                 (string :tag "Short Name"))))
 
-
-
 (defun ergoemacs--parse-keys-and-body (keys-and-body)
   "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
 
@@ -172,7 +170,9 @@ particular it:
              (cond
               ((condition-case err
                    (eq (nth 0 elt) 'define-key))
-               `(define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)))
+               (if (equal (nth 1 elt) '(current-global-map))
+                   `(define-key 'global-map ,(nth 2 elt) ,(nth 3 elt))
+                 `(define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt))))
               ((condition-case err
                    (eq (nth 0 elt) 'with-hook))
                (let ((tmp (ergoemacs--parse-keys-and-body (cdr (cdr elt)))))
@@ -239,20 +239,22 @@ particular it:
                                     (setq kd (ergoemacs-kbd kd t jf))
                                     (push (list kd command cd jf) variable-layout)))))
               (define-key (keymap key def)
-                (let ((hook (or
-                             (and (boundp 'ergoemacs-hook) ergoemacs-hook)
-                             (intern (if (string-match "mode" (symbol-name keymap))
-                                         (replace-regexp-in-string "mode.*" "mode-hook" (symbol-name keymap))
-                                       ;; Assume -keymap or -map defines -mode-hook
-                                       (string-match "(key)?map" "mode-hook" (symbol-name keymap))))))
-                      (modify-keymap
-                       (and (boundp 'ergoemacs-hook-modify-keymap)
-                            ergoemacs-hook-modify-keymap))
-                      (always (and (boundp 'ergoemacs-hook-always)
-                                   ergoemacs-hook-always)))
-                  (push (list keymap (key-description key) def hook
-                              modify-keymap always)
-                        defered-minor-modes))))
+                (if (memq keymap '(global-map ergoemacs-keymap))
+                    (global-set-key key def)
+                  (let ((hook (or
+                               (and (boundp 'ergoemacs-hook) ergoemacs-hook)
+                               (intern (if (string-match "mode" (symbol-name keymap))
+                                           (replace-regexp-in-string "mode.*" "mode-hook" (symbol-name keymap))
+                                         ;; Assume -keymap or -map defines -mode-hook
+                                         (string-match "(key)?map" "mode-hook" (symbol-name keymap))))))
+                        (modify-keymap
+                         (and (boundp 'ergoemacs-hook-modify-keymap)
+                              ergoemacs-hook-modify-keymap))
+                        (always (and (boundp 'ergoemacs-hook-always)
+                                     ergoemacs-hook-always)))
+                    (push (list keymap (key-description key) def hook
+                                modify-keymap always)
+                          defered-minor-modes)))))
          ,@(nth 1 kb))
        ;; Now Setup the minor mode lists.
        (mapc
@@ -290,31 +292,60 @@ particular it:
        (puthash (concat name "-variable") variable-layout ergoemacs-theme-component-hash)
        (puthash (concat name "-minor") minor-mode-layout ergoemacs-theme-component-hash))))
 
+;;; Fixed components
+(ergoemacs-theme-component
+ :name "standard"
+ :description "Standard Shortcuts"
+ :layout "us"
+ (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
+ 
+ (global-set-key (kbd "C-x C-f") nil) ;; Remove Emacs Method
+ (global-set-key (kbd "C-o") 'find-file)
+ (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-desktop)
+
+ (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
+ (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
+
+ (global-set-key (kbd "C-s") nil) ;; Search Forward
+ (global-set-key (kbd "C-f") 'isearch-forward)
+
+ (global-set-key (kbd "C-x C-s") nil) ;; Save File
+ (global-set-key (kbd "C-s") 'save-buffer)
+ 
+ (global-set-key (kbd "C-x C-w") nil) ;; Write File
+ (global-set-key (kbd "C-S-s") 'write-file)
+
+ (global-set-key (kbd "C-p") 'ergoemacs-print-buffer-confirm)
+
+ (global-set-key (kbd "C-x h") nil) ;; Mark whole buffer
+ (global-set-key (kbd "C-a") 'mark-whole-buffer))
+
+
+;;; Variable Components
 (ergoemacs-theme-component
  :name "arrow"
  :description "Arrow Keys Only"
  :layout "us"
- 
  (global-set-key (kbd "C-b") nil) 
  (global-set-key (kbd "M-j") 'backward-char)
  
-
  (global-set-key (kbd "C-f") nil) 
- (global-set-key (kbd "M-l") 'forward-char)
-
- (global-set-key (kbd "C-p") nil)
- (global-set-key (kbd "M-i") 'previous-line)
- (define-key browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-previous)
+ (define-key global-map (kbd "M-l") 'forward-char)
  
+ (global-set-key (kbd "C-p") nil)
+ (define-key (current-global-map) (kbd "M-i") 'previous-line)
  (global-set-key (kbd "C-n") nil)
- (global-set-key (kbd "M-k") 'next-line)
- (define-key browse-kill-ring-mode-map (kbd "M-k")  'browse-kill-ring-forward)
- (with-hook iswitchb-minibuffer-setup-hook
-            :always t
-            :modify-keymap t
-            (define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
-            (define-key iswitchb-mode-map (kbd "M-l") 'iswitchb-next-match)))
+ (define-key ergoemacs-keymap (kbd "M-k") 'next-line)
+ ;; Mode specific changes
+ (define-key browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-previous)
 
+ (define-key browse-kill-ring-mode-map (kbd "M-k")  'browse-kill-ring-forward)
+ (with-hook
+  iswitchb-minibuffer-setup-hook
+  :always t
+  :modify-keymap t
+  (define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
+  (define-key iswitchb-mode-map (kbd "M-l") 'iswitchb-next-match)))
 
 ;; Ergoemacs keys
 (defgroup ergoemacs-standard-layout nil
