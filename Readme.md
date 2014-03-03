@@ -217,7 +217,7 @@ This is also done in the test suite.  This can be accessed by
 ErgoEmacs is a collaborative project and we encourage contributions
 from anyone and everyone.  If you want to contribute in the way that
 will help us most, we recommend fixing reported bugs and implementing
-the feature ideas in [Issues](https:__github.com_ergoemacs_ergoemacs-mode/issues).  However, if you think of new features to
+the feature ideas in [Issues](https://github.com/ergoemacs/ergoemacs-mode/issues).  However, if you think of new features to
 add, please suggest them too -- we might like your idea.
 
 ### Coding Style and conventions
