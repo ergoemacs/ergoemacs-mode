@@ -263,7 +263,7 @@ major-modes like `org-mode'. "
     (ergoemacs-shortcut-remap 'kill-region)
     (deactivate-mark))
    (t
-    (when (not (= (point) (point-at-bol)))
+    (when (not (bolp))
       (beginning-of-line))
     ;; Keep prefix args.
     (let ((kill-whole-line t))
@@ -528,7 +528,7 @@ the prefix arguments of `beginning-of-buffer',
            (or (not ergoemacs-use-beginning-or-end-of-line-only)
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                     (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
-           (= (point) (point-at-bol)))
+           (bolp))
       (progn
         (cond
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
@@ -632,14 +632,14 @@ the prefix arguments of `end-of-buffer',
            (or (not ergoemacs-use-beginning-or-end-of-line-only)
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                     (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
-           (or (= (point) (point-at-eol))
+           (or (eolp)
                (and
                 (or
                  (eq
                   (ergoemacs-with-global
                    (key-binding (read-kbd-macro "<next>")))
                   last-command))
-                    (= (point) (point-at-bol)))))
+                    (bolp))))
       (progn 
         (cond
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)

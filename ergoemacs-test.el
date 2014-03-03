@@ -168,9 +168,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (setq sk
           (format "(%s '(lambda() (interactive) (with-temp-file \"%s\" (insert \"Ok\"))))"
-                  (if ergoemacs
-                      (format "ergoemacs-key \"%s\" " test-key)
-                    (format "global-set-key (kbd \"%s\") " test-key))
+                  (cond
+                   ((eq ergoemacs 'define-key)
+                    (format "define-key global-map (kbd \"%s\") " test-key))
+                   (ergoemacs
+                    (format "ergoemacs-key \"%s\" " test-key))
+                   (t
+                    (format "global-set-key (kbd \"%s\") " test-key)))
                   w-file))
     (with-temp-file temp-file
       (insert "(condition-case err (progn ")
@@ -211,9 +215,17 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   "Test global set key before ergoemacs-mode loads."
   (should (equal (ergoemacs-test-global-key-set-before) t)))
 
+(ert-deftest ergoemacs-test-global-key-set-before-2 ()
+  "Test global set key before ergoemacs-mode loads (define-key)."
+  (should (equal (ergoemacs-test-global-key-set-before nil nil 'define-key) t)))
+
 (ert-deftest ergoemacs-test-global-key-set-after ()
   "Test global set key after ergoemacs loads."
   (should (equal (ergoemacs-test-global-key-set-before 'after) t)))
+
+(ert-deftest ergoemacs-test-global-key-set-after-2 ()
+  "Test global set key after ergoemacs loads (define-key)."
+  (should (equal (ergoemacs-test-global-key-set-before 'after nil 'define-key) t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
   "Test setting <apps> m c before loading."
@@ -221,6 +233,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                                                        (if (eq system-type 'windows-nt)
                                                            "<apps> m c"
                                                          "<menu> m c") nil nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-c-before-2 ()
+  "Test setting <apps> m c before loading (define-key)."
+  (should (equal (ergoemacs-test-global-key-set-before nil
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m c"
+                                                         "<menu> m c") 'define-key nil "<menu>") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-before ()
   "Test setting <apps> before loading."
@@ -232,12 +251,30 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
          "<apps>"
        "<menu>")) t)))
 
+
+(ert-deftest ergoemacs-test-global-key-set-apps-before-2 ()
+  "Test setting <apps> before loading (define-key)."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps>"
+       "<menu>") 'define-key) t)))
+
 (ert-deftest ergoemacs-test-global-key-set-apps-m-before ()
   "Test setting <apps> m before loading."
   (should (equal (ergoemacs-test-global-key-set-before nil
                                                        (if (eq system-type 'windows-nt)
                                                            "<apps> m"
                                                          "<menu> m") nil nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-before-2 ()
+  "Test setting <apps> m before loading (define-key)."
+  (should (equal (ergoemacs-test-global-key-set-before nil
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m"
+                                                         "<menu> m") 'define-key nil "<menu>") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-after ()
   "Test setting <apps> m after loading"
@@ -246,12 +283,27 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                                                            "<apps> m"
                                                          "<menu> m") nil nil "<menu>") t)))
 
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-after-2 ()
+  "Test setting <apps> m after loading (define-key)"
+  (should (equal (ergoemacs-test-global-key-set-before 'after
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m"
+                                                         "<menu> m") 'define-key nil "<menu>") t)))
+
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-after ()
   "Test setting <apps> m c after loading."
   (should (equal (ergoemacs-test-global-key-set-before 'after
                                                        (if (eq system-type 'windows-nt)
                                                            "<apps> m c"
                                                          "<menu> m c") nil nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-c-after-2 ()
+  "Test setting <apps> m c after loading (define-key)."
+  (should (equal (ergoemacs-test-global-key-set-before 'after
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m c"
+                                                         "<menu> m c") 'define-key nil "<menu>") t)))
 
 (ert-deftest ergoemast-test-global-key-set-after-c-e ()
   "Test C-e after"
@@ -580,9 +632,7 @@ Should test issue #142"
   "Test for mark working with shift-selection of `subword-forward'."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-        (macro (edmacro-parse-keys (format "M-Y M-x"
-                                           (if (eq system-type 'windows-nt)
-                                               "apps" "menu")) t))
+        (macro (edmacro-parse-keys "M-Y M-x" t))
         (ret nil))
     (ergoemacs-mode -1)
     (setq ergoemacs-theme "reduction")

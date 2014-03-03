@@ -86,14 +86,15 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
         (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
           (let ((no-ergoemacs-advice t))
             (define-key ergoemacs-keymap key def))))
-    ad-do-it))
+    ad-do-it)
+  (when (or (equal keymap (current-global-map ))
+            (equal keymap global-map))
+    (ergoemacs-global-set-key-after key def)))
 (ad-activate 'define-key)
 
 (defvar ergoemacs-global-override-keymap (make-sparse-keymap))
 ;;; Advices enabled or disabled with ergoemacs-mode
-(defadvice global-set-key (around ergoemacs-global-set-key-advice (key command))
-  "This let you use `global-set-key' as usual when `ergoemacs-mode' is enabled."
-  ad-do-it
+(defun ergoemacs-global-set-key-after (key command)
   (add-to-list 'ergoemacs-global-changed-cache (key-description key))
   (when ergoemacs-global-not-changed-cache
     (delete (key-description key) ergoemacs-global-not-changed-cache))
@@ -105,11 +106,16 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
             (error nil))
       (define-key ergoemacs-unbind-keymap key nil)
       (unless (string-match "^C-[xc]" (key-description key))
-        (define-key ergoemacs-shortcut-keymap key nil))))
+        (define-key ergoemacs-shortcut-keymap key nil)))
+    (define-key ergoemacs-keymap key nil))
   (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
     (when x
       (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
     (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)))
+(defadvice global-set-key (around ergoemacs-global-set-key-advice (key command))
+  "This let you use `global-set-key' as usual when `ergoemacs-mode' is enabled."
+  ad-do-it
+  (ergoemacs-global-set-key-after key command))
 
 (add-to-list 'ergoemacs-advices 'ergoemacs-global-set-key-advice)
 
@@ -117,12 +123,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   "This let you use `global-unset-key' as usual when `ergoemacs-mode' is enabled."
   ;; the global-unset-key will remove the key from ergoemacs as well.
   ad-do-it
-  (add-to-list 'ergoemacs-global-changed-cache (key-description key))
-  (when ergoemacs-global-not-changed-cache
-    (delete (key-description key) ergoemacs-global-not-changed-cache))
-  (let ((no-ergoemacs-advice t))
-    (define-key ergoemacs-global-override-keymap key nil)
-    (define-key ergoemacs-keymap key nil)))
+  (ergoemacs-global-set-key-after key nil))
 
 (add-to-list 'ergoemacs-advices 'ergoemacs-global-unset-key-advice)
 

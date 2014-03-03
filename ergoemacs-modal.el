@@ -328,7 +328,7 @@ Typically function keys")
   "Returns the ergoemacs-modal keymap"
   (if ergoemacs-modal-keymap
       (if map
-          (make-composed-map (list map ergoemacs-modal-keymap))
+          (make-composed-keymap (list map ergoemacs-modal-keymap))
         ergoemacs-modal-keymap)
     (let ((ret (make-sparse-keymap)))
       (unless ret
