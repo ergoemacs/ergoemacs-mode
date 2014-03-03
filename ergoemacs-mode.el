@@ -894,7 +894,8 @@ bindings the keymap is:
         (setq ergoemacs-shortcut-keymap (make-sparse-keymap))
         (ergoemacs-setup-keys t)
         (ergoemacs-debug-heading "Ergoemacs Keys have loaded.")
-        (when (eq system-type 'darwin)
+        (when (and ergoemacs-use-mac-command-as-meta
+                   (eq system-type 'darwin))
           (let ((cm (or (intern-soft "ns-command-modifier")
                         (intern-soft "mac-command-modifier")))
                 (am (or (intern-soft "ns-alternate-modifier")
@@ -977,7 +978,7 @@ bindings the keymap is:
     (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
     (when (featurep 'ergoemacs-menus)
       (ergoemacs-menus-off))
-    (when (and (eq system-type 'darwin))
+    (when (and ergoemacs-use-mac-command-as-meta (eq system-type 'darwin))
       (let ((cm (or (intern-soft "ns-command-modifier")
                     (intern-soft "mac-command-modifier")))
             (am (or (intern-soft "ns-alternate-modifier")
