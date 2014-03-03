@@ -386,14 +386,14 @@
       (insert (mapconcat
                #'(lambda(var)
                    (let* ((key (ergoemacs-pretty-key (nth 0 var)))
-                          (command (condition-case err
+                          (command (condition-case nil
                                        (symbol-name (nth 1 var))
                                      (error "")))
                           (desc (nth 2 var))
                           emacs-key)
                      (setq desc
                            (replace-regexp-in-string "[+]" "\\\\+" desc))
-                     (setq emacs-key (condition-case err
+                     (setq emacs-key (condition-case nil
                                           (key-description
                                            (where-is-internal
                                             (nth 1 var)
@@ -425,7 +425,7 @@
     (setq full-exe (expand-file-name emacs-exe emacs-dir))
     (if current-prefix-arg
         (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --eval \"(ergoemacs-publish-blog 1)\" &"
-                               full-exe o-blog htmlize ergoemacs-dir ergoemacs-dir))
+                               full-exe o-blog htmlize ergoemacs-dir))
       (shell-command (format "%s -Q --batch -L \"%s\" -L \"%s\" -L \"%s\" -l \"htmlize\" -l \"o-blog\" -l \"ergoemacs-mode\" -l \"ergoemacs-extras\" --funcall ergoemacs-publish-blog &"
                                full-exe o-blog htmlize ergoemacs-dir)))))
 
@@ -1357,7 +1357,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
           (concat "ergoemacs-layout-" layout)))
         (fix (mapcar
               (lambda(x)
-                `(,(if (condition-case err
+                `(,(if (condition-case nil
                            (string-match "-S-\\([a-z]\\)\\>" (nth 0 x))
                          (error nil))
                        (replace-match (format "-%s" (upcase (match-string 1 (nth 0 x)))) t t (nth 0 x))
