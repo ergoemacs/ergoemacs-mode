@@ -31,6 +31,9 @@
 (autoload 'wdired-change-to-wdired-mode "wdired" "ergoemacs-autoload." t)
 (autoload 'wdired-exit "wdired" "ergoemacs-autoload." t)
 
+(require 'ergoemacs-unbind)
+(require 'ergoemacs-translate)
+
 (defvar ergoemacs-full-maps '(helm-map)
   "List of keymaps where the full ergoemacs keymap is fully
  installed (ie they use an overriding keymap).")
@@ -128,23 +131,123 @@
           (list (sexp :tag "Command")
                 (string :tag "Short Name"))))
 
-(defun ergoemacs-theme-component (&rest arg-plist)
+
+(defun ergoemacs--parse-keys-and-body (keys-and-body)
+  "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
+
+KEYS-AND-BODY should have the form of a property list, with the
+exception that only keywords are permitted as keys and that the
+tail -- the body -- is a list of forms that does not start with a
+keyword.
+
+Returns a two-element list containing the keys-and-values plist
+and the body.
+
+This is stole directly from ert by Christian Ohler <ohler@gnu.org>
+
+Afterward it was modified for use with `ergoemacs-mode'. In
+particular it quotes keymaps for when the body calls `define-key'.
+"
+  (let ((extracted-key-accu '())
+        (remaining keys-and-body))
+    (while (and (consp remaining) (keywordp (first remaining)))
+      (let ((keyword (pop remaining)))
+        (unless (consp remaining)
+          (error "Value expected after keyword %S in %S"
+                 keyword keys-and-body))
+        (when (assoc keyword extracted-key-accu)
+          (warn "Keyword %S appears more than once in %S" keyword
+                keys-and-body))
+        (push (cons keyword (pop remaining)) extracted-key-accu)))
+    (setq extracted-key-accu (nreverse extracted-key-accu))
+    ;; Now change remaining (define-key keymap key def) to
+    ;; (define-key 'keymap key def)
+    (setq remaining
+          (mapcar
+           (lambda(elt)
+             (if (not (condition-case err
+                          (eq (nth 0 elt) 'define-key)))
+                 elt
+               `(define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt))))
+           remaining))
+    (list (loop for (key . value) in extracted-key-accu
+                collect key
+                collect value)
+          remaining)))
+
+(defmacro ergoemacs-theme-component (&rest body-and-plist)
   "A component of an ergoemacs-theme."
-  (let ((name (plist-get arg-plist ':name))
-        (desc (plist-get arg-plist ':description))
-        (layout (plist-get arg-plist ':layout)))
-    (flet ((global-set-key (key command)
-                         ))
-    )))
+  (let ((kb (make-symbol "body-and-plist")))
+    (setq kb (ergoemacs--parse-keys-and-body body-and-plist))
+  `(let ((name ,(plist-get (nth 0 kb) ':name))
+         (desc ,(or (plist-get (nth 0 kb) ':description) ""))
+         (layout ,(or (plist-get (nth 0 kb) ':layout) "us"))
+         (variable-reg ,(or (plist-get (nth 0 kb) ':variable-reg)
+                           (regexp-opt '("M-" "<apps>" "<menu>"))))
+         (just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-variable-reg)
+                              nil))
+         (variable-layout '())
+         (fixed-layout '())
+         (defined-commands '())
+         (defered-minor-modes '())
+         (minor-mode-layout '())
+         (redundant-keys '())
+         (ergoemacs-translation-from ergoemacs-translation-from)
+         (ergoemacs-translation-to ergoemacs-translation-to)
+         (ergoemacs-shifted-assoc ergoemacs-shifted-assoc)
+         (ergoemacs-needs-translation ergoemacs-needs-translation)
+         (ergoemacs-translation-assoc ergoemacs-translation-assoc)
+         (ergoemacs-translation-regexp ergoemacs-translation-regexp))
+     (ergoemacs-setup-translation "us" layout) ; Make sure keys are
+                                        ; stored in QWERTY
+                                        ; notation.
+     (flet ((global-set-key (key command)
+                            ;; Make global-set-key produce ergoemacs-theme type lists.
+                            (let ((kd (key-description key)) cd jf)
+                              (if (not command) ; redundant key
+                                  (push kd redundant-keys)
+                                (setq cd (assoc command ergoemacs-function-short-names)) ; Short key description
+                                (when cd
+                                  (setq cd (car (cdr cd))))
+                                (if (not (condition-case err
+                                             (string-match variable-reg kd)
+                                           (error nil)))
+                                    (push `(,kd ,command ,cd) fixed-layout) ;; Fixed layout component
+                                  (setq jf (and just-first-reg
+                                                (condition-case err
+                                                    (string-match just-first-reg kd)
+                                                  (error nil))))
+                                  (setq kd (ergoemacs-kbd kd t jf))
+                                  (push `(,kd ,command ,cd ,jf) variable-layout)))))
+            (define-key (keymap key def)
+              (push `(,keymap ,(key-description key) ,def) defered-minor-modes)))
+       ,@(nth 1 kb))
+     ;; Now Setup the minor mode lists.
+     (message "%s;%s;%s"
+              fixed-layout variable-layout defered-minor-modes)
+     )))
 
 (ergoemacs-theme-component
  :name "arrow"
  :description "Arrow Keys Only"
  :layout "us"
+ 
+ (global-set-key (kbd "C-b") nil) 
  (global-set-key (kbd "M-j") 'backward-char)
+ ;;(define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
+
+ (global-set-key (kbd "C-f") nil) 
  (global-set-key (kbd "M-l") 'forward-char)
+ (define-key iswitchb-mode-map (kbd "M-l") 'iswitchb-next-match)
+
+ (global-set-key (kbd "C-p") nil)
  (global-set-key (kbd "M-i") 'previous-line)
- (global-set-key (kbd "M-k") 'next-line))
+ (define-key browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-previous)
+ 
+ (global-set-key (kbd "C-n") nil)
+ (global-set-key (kbd "M-k") 'next-line)
+ (define-key browse-kill-ring-mode-map (kbd "M-k")  'browse-kill-ring-forward)
+ )
 
 
 ;; Ergoemacs keys
@@ -158,6 +261,7 @@
     ("M-l" forward-char "→ char")
     ("M-i" previous-line "↑ line")
     ("M-k" next-line "↓ line")
+    
     ("M-C-j" left-word  "← word")
     ("M-C-l" right-word "→ word")
     ("M-C-i" backward-paragraph "↑ ¶")
