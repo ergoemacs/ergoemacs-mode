@@ -132,6 +132,7 @@
                 (string :tag "Short Name"))))
 
 
+
 (defun ergoemacs--parse-keys-and-body (keys-and-body)
   "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
 
@@ -146,7 +147,9 @@ and the body.
 This is stole directly from ert by Christian Ohler <ohler@gnu.org>
 
 Afterward it was modified for use with `ergoemacs-mode'. In
-particular it quotes keymaps for when the body calls `define-key'.
+particular it:
+-  Quotes keymaps for when the body calls `define-key'.
+- Adds with-hook syntax
 "
   (let ((extracted-key-accu '())
         (remaining keys-and-body))
@@ -162,70 +165,130 @@ particular it quotes keymaps for when the body calls `define-key'.
     (setq extracted-key-accu (nreverse extracted-key-accu))
     ;; Now change remaining (define-key keymap key def) to
     ;; (define-key 'keymap key def)
+    ;; Also change (with-hook hook-name ) to (let ((ergoemacs-hook 'hook-name)))
     (setq remaining
           (mapcar
            (lambda(elt)
-             (if (not (condition-case err
-                          (eq (nth 0 elt) 'define-key)))
-                 elt
-               `(define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt))))
+             (cond
+              ((condition-case err
+                   (eq (nth 0 elt) 'define-key))
+               `(define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)))
+              ((condition-case err
+                   (eq (nth 0 elt) 'with-hook))
+               (let ((tmp (ergoemacs--parse-keys-and-body (cdr (cdr elt)))))
+                 `(let ((ergoemacs-hook (quote ,(nth 1 elt)))
+                        (ergoemacs-hook-modify-keymap
+                         ,(plist-get (nth 0 tmp)
+                                     ':modify-keymap))
+                        (ergoemacs-hook-always ,(plist-get (nth 0 tmp)
+                                                           ':always)))
+                    ,@(nth 1 tmp)
+                    (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt))))
+              (t elt)))
            remaining))
     (list (loop for (key . value) in extracted-key-accu
                 collect key
                 collect value)
           remaining)))
 
+(defvar ergoemacs-theme-component-hash (make-hash-table :test 'equal))
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
   "A component of an ergoemacs-theme."
   (let ((kb (make-symbol "body-and-plist")))
     (setq kb (ergoemacs--parse-keys-and-body body-and-plist))
-  `(let ((name ,(plist-get (nth 0 kb) ':name))
-         (desc ,(or (plist-get (nth 0 kb) ':description) ""))
-         (layout ,(or (plist-get (nth 0 kb) ':layout) "us"))
-         (variable-reg ,(or (plist-get (nth 0 kb) ':variable-reg)
-                           (regexp-opt '("M-" "<apps>" "<menu>"))))
-         (just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-variable-reg)
-                              nil))
-         (variable-layout '())
-         (fixed-layout '())
-         (defined-commands '())
-         (defered-minor-modes '())
-         (minor-mode-layout '())
-         (redundant-keys '())
-         (ergoemacs-translation-from ergoemacs-translation-from)
-         (ergoemacs-translation-to ergoemacs-translation-to)
-         (ergoemacs-shifted-assoc ergoemacs-shifted-assoc)
-         (ergoemacs-needs-translation ergoemacs-needs-translation)
-         (ergoemacs-translation-assoc ergoemacs-translation-assoc)
-         (ergoemacs-translation-regexp ergoemacs-translation-regexp))
-     (ergoemacs-setup-translation "us" layout) ; Make sure keys are
+    `(let ((name ,(plist-get (nth 0 kb) ':name))
+           (desc ,(or (plist-get (nth 0 kb) ':description) ""))
+           (layout ,(or (plist-get (nth 0 kb) ':layout) "us"))
+           (variable-reg ,(or (plist-get (nth 0 kb) ':variable-reg)
+                              (regexp-opt '("M-" "<apps>" "<menu>"))))
+           (just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-variable-reg)
+                                nil))
+           (defined-keys '())
+           (variable-layout '())
+           (fixed-layout '())
+           (defined-commands '())
+           (defered-minor-modes '())
+           (minor-mode-layout '())
+           (redundant-keys '())
+           (ergoemacs-translation-from ergoemacs-translation-from)
+           (ergoemacs-translation-to ergoemacs-translation-to)
+           (ergoemacs-shifted-assoc ergoemacs-shifted-assoc)
+           (ergoemacs-needs-translation ergoemacs-needs-translation)
+           (ergoemacs-translation-assoc ergoemacs-translation-assoc)
+           (ergoemacs-translation-regexp ergoemacs-translation-regexp))
+       (ergoemacs-setup-translation "us" layout) ; Make sure keys are
                                         ; stored in QWERTY
                                         ; notation.
-     (flet ((global-set-key (key command)
-                            ;; Make global-set-key produce ergoemacs-theme type lists.
-                            (let ((kd (key-description key)) cd jf)
-                              (if (not command) ; redundant key
-                                  (push kd redundant-keys)
-                                (setq cd (assoc command ergoemacs-function-short-names)) ; Short key description
-                                (when cd
-                                  (setq cd (car (cdr cd))))
-                                (if (not (condition-case err
-                                             (string-match variable-reg kd)
-                                           (error nil)))
-                                    (push `(,kd ,command ,cd) fixed-layout) ;; Fixed layout component
-                                  (setq jf (and just-first-reg
-                                                (condition-case err
-                                                    (string-match just-first-reg kd)
-                                                  (error nil))))
-                                  (setq kd (ergoemacs-kbd kd t jf))
-                                  (push `(,kd ,command ,cd ,jf) variable-layout)))))
-            (define-key (keymap key def)
-              (push `(,keymap ,(key-description key) ,def) defered-minor-modes)))
-       ,@(nth 1 kb))
-     ;; Now Setup the minor mode lists.
-     (message "%s;%s;%s"
-              fixed-layout variable-layout defered-minor-modes)
-     )))
+       (flet ((global-set-key (key command)
+                              ;; Make global-set-key produce ergoemacs-theme type lists.
+                              (let ((kd (key-description key)) cd jf)
+                                (if (not command) ; redundant key
+                                    (push kd redundant-keys)
+                                  (setq cd (assoc command ergoemacs-function-short-names)) ; Short key description
+                                  (when cd
+                                    (setq cd (car (cdr cd))))
+                                  (if (not (condition-case nil
+                                               (string-match variable-reg kd)
+                                             (error nil)))
+                                      (push (list kd command cd) fixed-layout) ;; Fixed layout component
+                                    (push (list kd command) defined-keys)
+                                    (setq jf (and just-first-reg
+                                                  (condition-case nil
+                                                      (string-match just-first-reg kd)
+                                                    (error nil))))
+                                    (setq kd (ergoemacs-kbd kd t jf))
+                                    (push (list kd command cd jf) variable-layout)))))
+              (define-key (keymap key def)
+                (let ((hook (or
+                             (and (boundp 'ergoemacs-hook) ergoemacs-hook)
+                             (intern (if (string-match "mode" (symbol-name keymap))
+                                         (replace-regexp-in-string "mode.*" "mode-hook" (symbol-name keymap))
+                                       ;; Assume -keymap or -map defines -mode-hook
+                                       (string-match "(key)?map" "mode-hook" (symbol-name keymap))))))
+                      (modify-keymap
+                       (and (boundp 'ergoemacs-hook-modify-keymap)
+                            ergoemacs-hook-modify-keymap))
+                      (always (and (boundp 'ergoemacs-hook-always)
+                                   ergoemacs-hook-always)))
+                  (push (list keymap (key-description key) def hook
+                              modify-keymap always)
+                        defered-minor-modes))))
+         ,@(nth 1 kb))
+       ;; Now Setup the minor mode lists.
+       (mapc
+        (lambda(k)
+          (let ((keymap (nth 0 k))
+                (kd (nth 1 k))
+                (def (nth 2 k))
+                (hook (nth 3 k))
+                (use-keymap-p (nth 4 k))
+                (always-p (nth 5 k))
+                (variable-p nil)
+                tmp ret)
+            ;;; `define-minor-mode' minor mode defines MODE-hook and MODE-map
+            ;;; `define-derived-mode' defines MODE-hook and MODE-map
+            (setq tmp (assoc kd defined-keys))
+            (when tmp
+              (setq kd (car (cdr tmp))))
+            (setq variable-p (condition-case nil
+                                 (string-match variable-reg kd)
+                               (error nil)))
+            (setq ret (list (list kd def (if use-keymap-p keymap nil) variable-p)))
+            (setq tmp (assoc hook minor-mode-layout))
+            (when tmp
+              (setq minor-mode-layout (delete tmp minor-mode-layout))
+              (setq tmp (nth 1 tmp))
+              (setq always-p (or always-p (nth 2 tmp)))
+              (setq ret (append tmp ret)))
+            (push (list hook ret always-p) minor-mode-layout)))
+        defered-minor-modes)
+       ;; (message "%s;%s\n%s\n%s"
+       ;;          fixed-layout variable-layout defered-minor-modes
+       ;;          minor-mode-layout)
+
+       (puthash (concat name "-fixed") fixed-layout ergoemacs-theme-component-hash)
+       (puthash (concat name "-variable") variable-layout ergoemacs-theme-component-hash)
+       (puthash (concat name "-minor") minor-mode-layout ergoemacs-theme-component-hash))))
 
 (ergoemacs-theme-component
  :name "arrow"
@@ -234,11 +297,10 @@ particular it quotes keymaps for when the body calls `define-key'.
  
  (global-set-key (kbd "C-b") nil) 
  (global-set-key (kbd "M-j") 'backward-char)
- ;;(define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
+ 
 
  (global-set-key (kbd "C-f") nil) 
  (global-set-key (kbd "M-l") 'forward-char)
- (define-key iswitchb-mode-map (kbd "M-l") 'iswitchb-next-match)
 
  (global-set-key (kbd "C-p") nil)
  (global-set-key (kbd "M-i") 'previous-line)
@@ -247,7 +309,11 @@ particular it quotes keymaps for when the body calls `define-key'.
  (global-set-key (kbd "C-n") nil)
  (global-set-key (kbd "M-k") 'next-line)
  (define-key browse-kill-ring-mode-map (kbd "M-k")  'browse-kill-ring-forward)
- )
+ (with-hook iswitchb-minibuffer-setup-hook
+            :always t
+            :modify-keymap t
+            (define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
+            (define-key iswitchb-mode-map (kbd "M-l") 'iswitchb-next-match)))
 
 
 ;; Ergoemacs keys
@@ -875,7 +941,7 @@ particular it quotes keymaps for when the body calls `define-key'.
       (eshell-pcomplete helm-esh-pcomplete nil remap)
       (occur helm-occur nil remap)
       (info helm-info nil remap)
-      (ac-isearch ac-complete-with-helm nil reamp)
+      (ac-isearch ac-complete-with-helm nil remap)
       (grep helm-do-grep nil remap)))
     
     (helm-before-initialize-hook
