@@ -1679,6 +1679,7 @@ can press [Return] or [F6].
   :PAGE:     faq.html
   :TEMPLATE: blog_static_no_title.html
   :END:
+
 *** Whats the difference between ergoemacs and ergoemacs-mode?
 [[http://ergoemacs.org/][Ergoemacs]] is a set of customizations that make emacs easier to use.
 It also includes [[file:index.html][ergoemacs-mode]].  The minor mode, [[file:index.html][ergoemacs-mode]],
@@ -1766,6 +1767,14 @@ You have some options to get to copy and paste:
 (ergoemacs-mode 1)
 #+END_SRC
 
+
+*** I want to modify my modifiers to work differently on a mac
+Ergoemacs-mode uses the option as an alt key because you can press it
+with a thumb.  If you want a different option, set:
+
+#+BEGIN_SRC emacs-lisp
+(setq ergoemacs-use-mac-command-as-meta nil)
+#+END_SRC
 
 * Tips
 ** Gradual Adoption
