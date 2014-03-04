@@ -294,8 +294,8 @@ particular it:
 
 ;;; Fixed components
 (ergoemacs-theme-component
- :name "standard"
- :description "Standard Shortcuts"
+ :name "standard-fixed"
+ :description "Standard Fixed Shortcuts"
  :layout "us"
  (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
  
@@ -323,8 +323,8 @@ particular it:
 
 ;;; Variable Components
 (ergoemacs-theme-component
- :name "arrow"
- :description "Arrow Keys Only"
+ :name "level-v1"
+ :description "Movement by Characters & Set Mark"
  :layout "us"
  (global-set-key (kbd "C-b") nil) 
  (global-set-key (kbd "M-j") 'backward-char)
@@ -334,11 +334,15 @@ particular it:
  
  (global-set-key (kbd "C-p") nil)
  (define-key (current-global-map) (kbd "M-i") 'previous-line)
+ 
  (global-set-key (kbd "C-n") nil)
  (define-key ergoemacs-keymap (kbd "M-k") 'next-line)
+
+ (global-set-key (kbd "C-SPC") nil) ;; Set Mark
+ (global-set-key (kbd "M-SPC") 'set-mark-command)
+ 
  ;; Mode specific changes
  (define-key browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-previous)
-
  (define-key browse-kill-ring-mode-map (kbd "M-k")  'browse-kill-ring-forward)
  (with-hook
   iswitchb-minibuffer-setup-hook
@@ -347,6 +351,84 @@ particular it:
   (define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
   (define-key iswitchb-mode-map (kbd "M-l") 'iswitchb-next-match)))
 
+(ergoemacs-theme-component
+ :name "level-v2"
+ :description "Moving around and deleting words"
+ (global-set-key (kbd "M-b") nil)
+ (global-set-key (kbd "M-u") 'backward-word)
+
+ (global-set-key (kbd "M-f") nil)
+ (global-set-key (kbd "M-o") 'forward-word)
+
+ ;; Delete previous/next char.
+ 
+ (global-set-key (kbd "M-d") 'delete-backward-char)
+
+ (global-set-key (kbd "C-d") nil)
+ (global-set-key (kbd "M-f") 'delete-char)
+ 
+ ;; Delete previous/next word.
+ ;; C-backspace is standard; don't change
+ (global-set-key (kbd "M-e") 'backward-kill-word)
+ 
+ (global-set-key (kbd "M-d") nil)
+ (global-set-key (kbd "M-r") 'kill-word))
+
+(ergoemacs-theme-component
+ :name "level-v3"
+ :description "Copy, Cut, Paste and Undo"
+ (global-set-key (kbd "C-w") nil) ;; Kill region = Cut
+ (global-set-key (kbd "M-x") 'ergoemacs-cut-line-or-region)
+ 
+ (global-set-key (kbd "M-w") nil) ;; Kill ring save = Copy
+ (global-set-key (kbd "M-c") 'ergoemacs-copy-line-or-region)
+
+ (global-set-key (kbd "C-y") nil) ;; Yank = paste
+ (global-set-key (kbd "M-v") 'ergoemacs-paste)
+
+ (global-set-key (kbd "M-y") nil) ;; Yank-pop = paste cycle
+ (global-set-key (kbd "M-V") 'ergoemacs-paste-cycle)
+ 
+ (global-set-key (kbd "M-C") 'ergoemacs-copy-all)
+ (global-set-key (kbd "M-X") 'ergoemacs-cut-all)
+ (global-set-key (kbd "M-Z") '(undo-tree-redo redo))
+
+ ;; Undo
+ (global-set-key (kbd "C-_") nil)
+ (global-set-key (kbd "C-/") nil)
+ (global-set-key (kbd "C-x u") nil)
+ (global-set-key (kbd "M-z") 'undo))
+
+(ergoemacs-theme-component
+ :name "level-v4"
+ :description "Search and Replace"
+ (global-set-key (kbd "C-s") nil)
+ (global-set-key (kbd "M-y") 'isearch-forward)
+ 
+ (global-set-key (kbd "C-r") nil)
+ (global-set-key (kbd "M-Y") 'isearch-backward)
+ 
+ (global-set-key (kbd "M-%") nil)
+ (global-set-key (kbd "M-5") 'query-replace)
+ 
+ (global-set-key (kbd "C-M-%") nil)
+ (global-set-key (kbd "M-%") '(vr/query-replace query-replace-regexp)))
+
+(ergoemacs-theme-component
+ :name "level-v5"
+ :descripiton "Window/Frame/Tab Switching"
+ 
+ (global-set-key (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
+ (global-set-key (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
+ 
+ (global-set-key (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
+ (global-set-key (kbd "M-`") 'ergoemacs-switch-to-next-frame)
+ 
+ (global-set-key (kbd "M-3") 'delete-other-windows)
+ (global-set-key (kbd "M-2") 'delete-window)
+ 
+ (global-set-key (kbd "M-4") 'split-window-vertically)
+ (global-set-key (kbd "M-$") 'split-window-horizontally))
 ;; Ergoemacs keys
 (defgroup ergoemacs-standard-layout nil
   "Default Ergoemacs Layout"
