@@ -112,20 +112,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     (when x
       (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
     (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)))
-(defadvice global-set-key (around ergoemacs-global-set-key-advice (key command))
-  "This let you use `global-set-key' as usual when `ergoemacs-mode' is enabled."
-  ad-do-it
-  (ergoemacs-global-set-key-after key command))
 
-(add-to-list 'ergoemacs-advices 'ergoemacs-global-set-key-advice)
-
-(defadvice global-unset-key (around ergoemacs-global-unset-key-advice (key))
-  "This let you use `global-unset-key' as usual when `ergoemacs-mode' is enabled."
-  ;; the global-unset-key will remove the key from ergoemacs as well.
-  ad-do-it
-  (ergoemacs-global-set-key-after key nil))
-
-(add-to-list 'ergoemacs-advices 'ergoemacs-global-unset-key-advice)
 
 (defadvice local-set-key (around ergoemacs-local-set-key-advice (key command))
   "This let you use `local-set-key' as usual when `ergoemacs-mode' is enabled."
