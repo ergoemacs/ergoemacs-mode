@@ -105,7 +105,9 @@
     (delete-other-windows "x other pane")
     (delete-window "x pane")
     (split-window-vertically "split |")
+    (split-window-right "split |")
     (split-window-horizontally "split —")
+    (split-window-below "split —")
     (er/expand-region "←region→")
     (ergoemacs-extend-selection "←region→")
     (er/expand-region "←region→")
@@ -442,12 +444,19 @@ When fixed-layout and variable-layout are bound"
  
  (global-set-key (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
  (global-set-key (kbd "M-`") 'ergoemacs-switch-to-next-frame)
- 
+
+ (global-unset-key (kbd "C-x 1"))
  (global-set-key (kbd "M-3") 'delete-other-windows)
+ 
+ (global-unset-key (kbd "C-x 0"))
  (global-set-key (kbd "M-2") 'delete-window)
  
- (global-set-key (kbd "M-4") 'split-window-vertically)
- (global-set-key (kbd "M-$") 'split-window-horizontally))
+ (global-unset-key (kbd "C-x 3"))
+ (global-set-key (kbd "M-4") '(split-window-right split-window-vertically))
+ 
+ (global-unset-key (kbd "C-x 2"))
+ (global-set-key (kbd "M-$") '(split-window-below split-window-horizontally)))
+
 ;; Ergoemacs keys
 (defgroup ergoemacs-standard-layout nil
   "Default Ergoemacs Layout"
