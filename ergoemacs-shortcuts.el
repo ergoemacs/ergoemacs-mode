@@ -1145,7 +1145,7 @@ argument prompt.
       (cond
        ((string= tmp "ESC")
         (setq tmp "<escape>"))
-       ((string-match tmp "RET")
+       ((string= tmp "RET")
         (setq tmp "<return>")))
       (if (string= tmp (key-description
                         (ergoemacs-key-fn-lookup 'keyboard-quit)))
