@@ -293,9 +293,10 @@ When fixed-layout and variable-layout are bound"
             (setq tmp (assoc kd defined-keys))
             (when tmp
               (setq kd (car (cdr tmp))))
-            (setq variable-p (condition-case nil
-                                 (string-match variable-reg kd)
-                               (error nil)))
+            (setq variable-p (and variable-reg
+                                  (condition-case nil
+                                      (string-match variable-reg kd)
+                                    (error nil))))
             (setq ret (list (list kd def (if use-keymap-p keymap nil) variable-p)))
             (setq tmp (assoc hook minor-mode-layout))
             (when tmp
