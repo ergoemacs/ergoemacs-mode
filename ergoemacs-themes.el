@@ -353,147 +353,171 @@ DEF can be:
   "Gets the keymaps for COMPONENT.
 If the COMPONENT has the suffix :fixed, just get the fixed component.
 If the COMPONENT has the suffix :variable, just get the variable component.
+
+If COMPONENT is a list, return the composite keymaps of all the
+components listed.
+
 Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
 "
-  (let (fixed-shortcut
-        fixed-read
-        fixed-shortcut-list
-        variable-shortcut
-        variable-read
-        fixed variable
-        key-list
-        (no-ergoemacs-advice t)
-        (case-fold-search t)
-        key
-        trans-key input-keys
-        cmd cmd-tmp
-        (shortcut-list '())
-        (true-component (replace-regexp-in-string ":\\(fixed\\|variable\\)" ""
-                                                  (or (and (stringp component) component)
-                                                      (symbol-name component))))
-        (only-variable (string-match ":variable" (or (and (stringp component) component)
-                                                     (symbol-name component))))
-        (only-fixed (string-match ":fixed" (or (and (stringp component) component)
-                                               (symbol-name component)))))
-    ;; (let ((tmp-map (nth 1 (ergoemacs-theme-component-keymaps 'copy))))
-    ;;   (substitute-command-keys "\\{tmp-map}"))
-    (unless only-fixed
-      (setq fixed-shortcut (gethash (concat true-component ":fixed:shortcut") ergoemacs-theme-component-hash))
-      (setq fixed-read (gethash (concat true-component ":fixed:read") ergoemacs-theme-component-hash))
-      (setq fixed (gethash (concat true-component ":fixed:map") ergoemacs-theme-component-hash))
-      (setq fixed-shortcut-list (gethash (concat true-component ":fixed:shortcut:list")
-                                         ergoemacs-theme-component-hash))
-      (unless (or fixed fixed-shortcut fixed-read fixed-shortcut-list)
+  (if (eq (type-of component) 'cons)
+      (let ((ret nil)
+            (l0 '())
+            (l1 '())
+            (l2 '())
+            (l3 '())) ;; List of components.
+        (mapc
+         (lambda(comp)
+           (let ((new-ret (ergoemacs-theme-component-keymaps comp)))
+             (push (nth 0 new-ret) l0)
+             (push (nth 1 new-ret) l1)
+             (push (nth 2 new-ret) l2)
+             (setq l3 (append l3 (nth 3 new-ret)))))
+         (reverse component))
+        (setq ret
+              (list
+               (make-composed-keymap l0)
+               (make-composed-keymap l1)
+               (make-composed-keymap l2)
+               l3)))
+    (let (fixed-shortcut
+          fixed-read
+          fixed-shortcut-list
+          variable-shortcut
+          variable-read
+          fixed variable
+          key-list
+          (no-ergoemacs-advice t)
+          (case-fold-search t)
+          key
+          trans-key input-keys
+          cmd cmd-tmp
+          (shortcut-list '())
+          (true-component (replace-regexp-in-string ":\\(fixed\\|variable\\)" ""
+                                                    (or (and (stringp component) component)
+                                                        (symbol-name component))))
+          (only-variable (string-match ":variable" (or (and (stringp component) component)
+                                                       (symbol-name component))))
+          (only-fixed (string-match ":fixed" (or (and (stringp component) component)
+                                                 (symbol-name component)))))
+      ;; (let ((tmp-map (nth 1 (ergoemacs-theme-component-keymaps 'copy))))
+      ;;   (substitute-command-keys "\\{tmp-map}"))
+      (unless only-fixed
+        (setq fixed-shortcut (gethash (concat true-component ":fixed:shortcut") ergoemacs-theme-component-hash))
+        (setq fixed-read (gethash (concat true-component ":fixed:read") ergoemacs-theme-component-hash))
+        (setq fixed (gethash (concat true-component ":fixed:map") ergoemacs-theme-component-hash))
+        (setq fixed-shortcut-list (gethash (concat true-component ":fixed:shortcut:list")
+                                           ergoemacs-theme-component-hash))
+        (unless (or fixed fixed-shortcut fixed-read fixed-shortcut-list)
           ;; Setup fixed fixed-keymap for this component.
-        (setq key-list (gethash (concat true-component ":fixed") ergoemacs-theme-component-hash))
-        (when key-list
-          (setq fixed-shortcut (make-sparse-keymap))
-          (setq fixed (make-sparse-keymap))
-          (setq fixed-read (make-sparse-keymap))
-          (mapc
-           (lambda(x)
-             (when (and (eq 'string (type-of (nth 0 x))))
-               (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))
-               (setq key (read-kbd-macro trans-key))
-               (when (string-match "^\\([^ ]+\\) " (nth 0 x))
-                 (add-to-list 'input-keys (match-string 1 (nth 0 x))))
-               (when (ergoemacs-global-changed-p key) ;; Override
-                 (define-key ergoemacs-global-override-keymap key
-                   (lookup-key (current-global-map) key)))
-               (setq cmd (nth 1 x))
-               (ergoemacs-theme-component--define-key-in-keymaps fixed fixed-shortcut key cmd)))
-           key-list)
-          (when input-keys
+          (setq key-list (gethash (concat true-component ":fixed") ergoemacs-theme-component-hash))
+          (when key-list
+            (setq fixed-shortcut (make-sparse-keymap))
+            (setq fixed (make-sparse-keymap))
+            (setq fixed-read (make-sparse-keymap))
             (mapc
-             (lambda(key)
-               (unless (member key ergoemacs-ignored-prefixes)
-                 (define-key fixed-read (read-kbd-macro key)
-                   `(lambda()
-                      (interactive)
-                      (ergoemacs-read-key ,key 'normal)))))
-             input-keys))
-          (setq fixed-shortcut-list shortcut-list
-                input-keys '())
-          (setq shortcut-list '())
-          (puthash (concat true-component ":fixed:shortcut") fixed-shortcut
-                   ergoemacs-theme-component-hash)
-          (puthash (concat true-component ":fixed:read") fixed-read
-                   ergoemacs-theme-component-hash)
-          (puthash (concat true-component ":fixed:map") fixed
-                   ergoemacs-theme-component-hash)
-          (puthash (concat true-component ":fixed:shortcut:list") fixed-shortcut-list
-                   ergoemacs-theme-component-hash))))
+             (lambda(x)
+               (when (and (eq 'string (type-of (nth 0 x))))
+                 (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))
+                 (setq key (read-kbd-macro trans-key))
+                 (when (string-match "^\\([^ ]+\\) " (nth 0 x))
+                   (add-to-list 'input-keys (match-string 1 (nth 0 x))))
+                 (when (ergoemacs-global-changed-p key) ;; Override
+                   (define-key ergoemacs-global-override-keymap key
+                     (lookup-key (current-global-map) key)))
+                 (setq cmd (nth 1 x))
+                 (ergoemacs-theme-component--define-key-in-keymaps fixed fixed-shortcut key cmd)))
+             key-list)
+            (when input-keys
+              (mapc
+               (lambda(key)
+                 (unless (member key ergoemacs-ignored-prefixes)
+                   (define-key fixed-read (read-kbd-macro key)
+                     `(lambda()
+                        (interactive)
+                        (ergoemacs-read-key ,key 'normal)))))
+               input-keys))
+            (setq fixed-shortcut-list shortcut-list
+                  input-keys '())
+            (setq shortcut-list '())
+            (puthash (concat true-component ":fixed:shortcut") fixed-shortcut
+                     ergoemacs-theme-component-hash)
+            (puthash (concat true-component ":fixed:read") fixed-read
+                     ergoemacs-theme-component-hash)
+            (puthash (concat true-component ":fixed:map") fixed
+                     ergoemacs-theme-component-hash)
+            (puthash (concat true-component ":fixed:shortcut:list") fixed-shortcut-list
+                     ergoemacs-theme-component-hash))))
 
-    (unless only-variable
-      (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  ":variable:shortcut") ergoemacs-theme-component-hash))
-      (setq variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout  ":variable:read") ergoemacs-theme-component-hash))
-      (setq variable (gethash (concat true-component ":" ergoemacs-keyboard-layout ":variable:map") ergoemacs-theme-component-hash))
-      (setq variable-shortcut-list (gethash (concat true-component  ":variable:shortcut:list")
-                                         ergoemacs-theme-component-hash))
-      (unless (or variable variable-shortcut variable-read variable-shortcut-list)
-        ;; Setup variable variable-keymap for this component.
-        (setq key-list (gethash (concat true-component ":" ergoemacs-keyboard-layout  ":variable") ergoemacs-theme-component-hash))
-        (when key-list
-          (setq variable-shortcut (make-sparse-keymap))
-          (setq variable (make-sparse-keymap))
-          (setq variable-read (make-sparse-keymap))
-          (mapc
-           (lambda(x)
-             (when (and (eq 'string (type-of (nth 0 x))))
-               (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))
-               (setq key (ergoemacs-kbd trans-key nil (nth 3 x)))
-               (when (string-match "^\\([^ ]+\\) " (nth 0 x))
-                 (add-to-list 'input-keys (match-string 1 (nth 0 x))))
-               (when (ergoemacs-global-changed-p key) ;; Override
-                 (define-key ergoemacs-global-override-keymap key
-                   (lookup-key (current-global-map) key)))
-               (setq cmd (nth 1 x))
-               (ergoemacs-theme-component--define-key-in-keymaps variable variable-shortcut key cmd)))
-           key-list)
-          (when input-keys
+      (unless only-variable
+        (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  ":variable:shortcut") ergoemacs-theme-component-hash))
+        (setq variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout  ":variable:read") ergoemacs-theme-component-hash))
+        (setq variable (gethash (concat true-component ":" ergoemacs-keyboard-layout ":variable:map") ergoemacs-theme-component-hash))
+        (setq variable-shortcut-list (gethash (concat true-component  ":variable:shortcut:list")
+                                              ergoemacs-theme-component-hash))
+        (unless (or variable variable-shortcut variable-read variable-shortcut-list)
+          ;; Setup variable variable-keymap for this component.
+          (setq key-list (gethash (concat true-component ":" ergoemacs-keyboard-layout  ":variable") ergoemacs-theme-component-hash))
+          (when key-list
+            (setq variable-shortcut (make-sparse-keymap))
+            (setq variable (make-sparse-keymap))
+            (setq variable-read (make-sparse-keymap))
             (mapc
-             (lambda(key)
-               (unless (member key ergoemacs-ignored-prefixes)
-                 (define-key variable-read (read-kbd-macro key)
-                   `(lambda()
-                      (interactive)
-                      (ergoemacs-read-key ,key 'normal)))))
-             input-keys))
-          (setq variable-shortcut-list shortcut-list
-                input-keys '())
-          (setq shortcut-list '())
-          (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:shortcut") variable-shortcut
-                   ergoemacs-theme-component-hash)
-          (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:read") variable-read
-                   ergoemacs-theme-component-hash)
-          (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:map") variable
-                   ergoemacs-theme-component-hash)
-          (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:shortcut:list") variable-shortcut-list
-                   ergoemacs-theme-component-hash))))
-    (cond
-     (only-fixed
-      (list fixed-read fixed-shortcut fixed fixed-shortcut-list))
-     (only-variable
-      (list variable-read variable-shortcut variable variable-shortcut-list))
-     (t
-      (list (or (and variable-read fixed-read
-                     (make-composed-keymap (if ergoemacs-prefer-variable-keybindings
-                                               (list variable-read fixed-read)
-                                             (list fixed-read variable-read))))
-                variable-read fixed-read)
-            (or (and variable-shortcut fixed-shortcut
-                     (make-composed-keymap (if ergoemacs-prefer-variable-keybindings
-                                               (list variable-shortcut fixed-shortcut)
-                                             (list fixed-shortcut variable-shortcut))))
-                variable-shortcut fixed-shortcut)
-            (or (and variable fixed
-                     (make-composed-keymap (if ergoemacs-prefer-variable-keybindings
-                                               (list variable fixed)
-                                             (list fixed variable))))
-                variable fixed)
-            (if ergoemacs-prefer-variable-keybindings
-                (append variable-shortcut-list fixed-shortcut-list)
-              (append fixed-shortcut-list variable-shortcut-list)))))))
+             (lambda(x)
+               (when (and (eq 'string (type-of (nth 0 x))))
+                 (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))
+                 (setq key (ergoemacs-kbd trans-key nil (nth 3 x)))
+                 (when (string-match "^\\([^ ]+\\) " (nth 0 x))
+                   (add-to-list 'input-keys (match-string 1 (nth 0 x))))
+                 (when (ergoemacs-global-changed-p key) ;; Override
+                   (define-key ergoemacs-global-override-keymap key
+                     (lookup-key (current-global-map) key)))
+                 (setq cmd (nth 1 x))
+                 (ergoemacs-theme-component--define-key-in-keymaps variable variable-shortcut key cmd)))
+             key-list)
+            (when input-keys
+              (mapc
+               (lambda(key)
+                 (unless (member key ergoemacs-ignored-prefixes)
+                   (define-key variable-read (read-kbd-macro key)
+                     `(lambda()
+                        (interactive)
+                        (ergoemacs-read-key ,key 'normal)))))
+               input-keys))
+            (setq variable-shortcut-list shortcut-list
+                  input-keys '())
+            (setq shortcut-list '())
+            (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:shortcut") variable-shortcut
+                     ergoemacs-theme-component-hash)
+            (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:read") variable-read
+                     ergoemacs-theme-component-hash)
+            (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:map") variable
+                     ergoemacs-theme-component-hash)
+            (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:shortcut:list") variable-shortcut-list
+                     ergoemacs-theme-component-hash))))
+      (cond
+       (only-fixed
+        (list fixed-read fixed-shortcut fixed fixed-shortcut-list))
+       (only-variable
+        (list variable-read variable-shortcut variable variable-shortcut-list))
+       (t
+        (list (or (and variable-read fixed-read
+                       (make-composed-keymap (if ergoemacs-prefer-variable-keybindings
+                                                 (list variable-read fixed-read)
+                                               (list fixed-read variable-read))))
+                  variable-read fixed-read)
+              (or (and variable-shortcut fixed-shortcut
+                       (make-composed-keymap (if ergoemacs-prefer-variable-keybindings
+                                                 (list variable-shortcut fixed-shortcut)
+                                               (list fixed-shortcut variable-shortcut))))
+                  variable-shortcut fixed-shortcut)
+              (or (and variable fixed
+                       (make-composed-keymap (if ergoemacs-prefer-variable-keybindings
+                                                 (list variable fixed)
+                                               (list fixed variable))))
+                  variable fixed)
+              (if ergoemacs-prefer-variable-keybindings
+                  (append variable-shortcut-list fixed-shortcut-list)
+                (append fixed-shortcut-list variable-shortcut-list))))))))
 
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
   "A component of an ergoemacs-theme."
