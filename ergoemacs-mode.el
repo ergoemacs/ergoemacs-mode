@@ -105,7 +105,7 @@
                                (apply 'format arg)
                              (eurror (format "Bad format string: %s" arg)))))
   (ergoemacs-debug "Time Since Start ergoemacs-mode: %1f sec" (- (float-time) ergoemacs-debug-heading-start-time))
-  (ergoemacs-debug "Time Sincuue Last Heading: %1f sec" (- (float-time) ergoemacs-debug-heading-last-time))
+  (ergoemacs-debug "Time Since Last Heading: %1f sec" (- (float-time) ergoemacs-debug-heading-last-time))
   (setq ergoemacs-debug-heading-last-time (float-time)))
 
 (defun ergoemacs-debug (&rest arg)
