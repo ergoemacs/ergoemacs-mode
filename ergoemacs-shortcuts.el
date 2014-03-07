@@ -580,11 +580,16 @@ It will replace anything defined by `ergoemacs-translation'"
       (setq next-key (ergoemacs-read-key-install-next-key next-key key pretty kbd))
       (symbol-value 'next-key))))
 
-(defun ergoemacs-read-key-help (&optional key)
+(defun ergoemacs-read-key-help ()
   "Show help for the current sequence KEY."
   (interactive)
   ;; Eventually...
-  )
+  (let ((cb (current-buffer))
+        (key (and (boundp 'key) key)))
+    (save-excursion
+      (with-help-window (help-buffer)
+        (set-buffer (help-buffer))
+        (describe-buffer-bindings cb key)))))
 
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
@@ -1218,8 +1223,8 @@ argument prompt.
               (setq local-fn nil))
             (if (eq local-fn 'ergoemacs-read-key-help)
                 (progn
-                  (ergoemacs-read-key-help key)
-                  (setq continue-read t))
+                  (ergoemacs-read-key-help)
+                  (setq continue-read nil))
               (if local-fn
                   (ergoemacs-read-key-call local-fn)
                 (setq pretty-key-undefined nil)
