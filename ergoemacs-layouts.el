@@ -138,6 +138,19 @@
     "" "|"  ":" "Q" "J" "K" "X" "B" "M" "W" "V" "Z" "" "" "")
   "UK Dvorak layout.")
 
+;; Thanks to Diego Efe
+(defvar ergoemacs-layout-es-dv-1
+  '("" "º" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "'" "¡" ""
+    "" ""  "." "," "ñ" "p" "y" "f" "g" "c" "h" "l" "`" "+" "\\"
+    "" ""  "a" "o" "e" "u" "i" "d" "r" "t" "n" "s" "'" "ç"  ""
+    "" "<" "-" "q" "j" "k" "x" "b" "m" "w" "v" "z" ""  ""  ""
+    ;; Shifted
+    "" "ª" "!" "\"" "·" "$" "%" "&" "/" "(" ")" "=" "?" "¿"  ""
+    "" ""  ":"" ";" "Ñ" "P" "Y" "F" "G" "C" "H" "L" "^" "*" "|"
+    "" ""  "A" "O" "E" "U" "I" "D" "R" "T" "N" "S" "¨" "Ç" ""
+    "" ">" "_" "Q" "J" "K" "X" "B" "M" "W" "V" "Z" "" "" "")
+  "Spanish Dvorak layout.  URL `http://djelibeibi.unex.es/dvorak'.")
+
 (defvar ergoemacs-layout-colemak
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
     "" ""  "q" "w" "f" "p" "g" "j" "l" "u" "y" ";" "[" "]" "\\"
