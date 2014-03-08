@@ -152,16 +152,20 @@ particular it:
 - `define-key' is converted to `ergoemacs-theme-component--define-key' and keymaps are quoted
 - `global-set-key' is converted to `ergoemacs-theme-component--global-set-key'
 - `global-unset-key' is converted to `ergoemacs-theme-component--global-set-key'
+- Allows :version statement expansion
 - Adds with-hook syntax
 "
   (let ((extracted-key-accu '())
         (debug-on-error t)
+        last-was-version
         plist
         (remaining keys-and-body))
     ;; Allow
     ;; (component name)
     (unless (or (keywordp (first remaining)) (boundp 'skip-first))
-      (if (stringp (first remaining))
+      (if (condition-case nil
+              (stringp (first remaining))
+            (error nil))
           (push `(:name . ,(pop remaining)) extracted-key-accu)
         (push `(:name . ,(symbol-name (pop remaining))) extracted-key-accu))
       (when (stringp (first remaining))
@@ -183,6 +187,16 @@ particular it:
           (mapcar
            (lambda(elt)
              (cond
+              (last-was-version
+               (setq last-was-version nil)
+               (if (stringp elt)
+                   `(when (boundp 'component-version) (setq component-version ,elt))
+                 `(when (boundp 'component-version) (setq component-version ,(symbol-name elt)))))
+              ((condition-case nil
+                   (eq elt ':version)
+                 (error nil))
+               (setq last-was-version t)
+               nil)
               ((condition-case err
                    (eq (nth 0 elt) 'global-unset-key))
                `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) nil))
@@ -225,11 +239,73 @@ particular it:
 (defun ergoemacs-theme-component--global-set-key (key command)
   "Setup ergoemacs theme component internally.
 When fixed-layout and variable-layout are bound"
-  (when (and (boundp 'fixed-layout) (boundp 'variable-layout)
-             (boundp 'redundant-keys) (boundp 'defined-keys)
-             (boundp 'just-first-reg))
-    (let ((kd (key-description key)) cd jf
-          (debug-on-error t))
+  (cond
+   ((and (boundp 'component-version)
+         component-version
+         (boundp 'component-version-curr)
+         (boundp 'fixed-layout) (boundp 'variable-layout)
+         (boundp 'redundant-keys) (boundp 'defined-keys)
+         (boundp 'just-first-reg))
+    ;; Create/Update component-version fixed or variable layouts.
+    (when (not (equal component-version-curr component-version))
+      (when component-version-curr
+        (push (list component-version-curr
+                    component-version-fixed-layout
+                    component-version-variable-layout) component-version-list))
+      (setq component-version-curr component-version)
+      (unless component-version-fixed-layout
+        (setq component-version-fixed-layout fixed-layout))
+      (unless component-version-fixed-layout
+        (setq component-version-variable-layout variable-layout)))
+    (let ((kd (key-description key)) cd jf removed)
+      (setq cd (assoc command ergoemacs-function-short-names)) ; Short key description
+      (when cd
+        (setq cd (car (cdr cd))))
+      (if (not command)
+          (progn
+            ;; Remove command from lists.
+            (setq component-version-fixed-layout
+                  (delete-if
+                   (lambda(x) (equal (nth 0 x) kd))
+                   component-version-fixed-layout))
+            (setq component-version-variable-layout
+                  (delete-if
+                   (lambda(x) (equal (nth 0 x) kd))
+                   component-version-variable-layout)))
+          (if (not (condition-case nil
+                   (string-match variable-reg kd)
+                 (error nil)))
+          (progn ;; Fixed Layout component
+            (setq component-version-fixed-layout
+                  (mapcar
+                   (lambda(x)
+                     (if (not (equal (nth 0 x) kd))
+                         x
+                       (setq removed t)
+                       (list kd command cd)))
+                   component-version-fixed-layout))
+            (unless removed
+              (push (list kd command cd) component-version-fixed-layout)))
+        ;; (push (list kd command) defined-keys)
+        (setq jf (and just-first-reg
+                      (condition-case nil
+                          (string-match just-first-reg kd)
+                        (error nil))))
+        (setq kd (ergoemacs-kbd kd t jf))
+        (setq component-version-variable-layout
+              (mapcar
+               (lambda(x)
+                 (if (not (equal (nth 0 x) kd))
+                     x
+                   (setq removed t)
+                   (list kd command cd jf)))
+               component-version-variable-layout))
+        (unless removed
+          (push (list kd command cd jf) component-version-variable-layout))))
+      ))
+   ((and (boundp 'fixed-layout) (boundp 'variable-layout)
+         (boundp 'redundant-keys) (boundp 'defined-keys))
+    (let ((kd (key-description key)) cd jf)
       (if (not command) ; redundant key
           (push kd redundant-keys)
         (setq cd (assoc command ergoemacs-function-short-names)) ; Short key description
@@ -245,7 +321,7 @@ When fixed-layout and variable-layout are bound"
                             (string-match just-first-reg kd)
                           (error nil))))
           (setq kd (ergoemacs-kbd kd t jf))
-          (push (list kd command cd jf) variable-layout))))))
+          (push (list kd command cd jf) variable-layout)))))))
 
 (defun ergoemacs-theme-component--define-key (keymap key def)
   "Setup mode-specific information."
@@ -532,6 +608,11 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
                               (regexp-opt '("M-" "<apps>" "<menu>"))))
            (just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-variable-reg)
                                 nil))
+           (component-version nil)
+           (component-version-variable-layout nil)
+           (component-version-fixed-layout nil)
+           (component-version-curr nil)
+           (component-version-list '())
            (defined-keys '())
            (variable-layout '())
            (fixed-layout '())
@@ -544,13 +625,19 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
            (ergoemacs-shifted-assoc ergoemacs-shifted-assoc)
            (ergoemacs-needs-translation ergoemacs-needs-translation)
            (ergoemacs-translation-assoc ergoemacs-translation-assoc)
-           (ergoemacs-translation-regexp ergoemacs-translation-regexp))
+           (ergoemacs-translation-regexp ergoemacs-translation-regexp)
+           (case-fold-search nil))
        (when (ad-is-advised 'define-key)
          (ad-disable-advice 'define-key 'around 'ergoemacs-define-key-advice))
        (ergoemacs-setup-translation "us" layout) ; Make sure keys are
                                         ; stored in QWERTY
                                         ; notation.
        ,@(nth 1 kb)
+       ;; Finalize version setup
+       (when component-version-curr
+         (push (list component-version-curr
+                     component-version-fixed-layout
+                     component-version-variable-layout) component-version-list))
        ;; Now Setup the minor mode lists.
        (mapc
         (lambda(k)
@@ -586,6 +673,14 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
 
        (puthash (concat name ":fixed") fixed-layout ergoemacs-theme-component-hash)
        (puthash (concat name ":variable") variable-layout ergoemacs-theme-component-hash)
+       (mapc
+        (lambda(x)
+          (let ((ver (nth 0 x))
+                (fixed (nth 1 x))
+                (var (nth 2 x)))
+            (puthash (concat name "::" ver ":fixed") fixed ergoemacs-theme-component-hash)
+            (puthash (concat name "::" ver ":variable") var ergoemacs-theme-component-hash)))
+        component-version-list)
        (puthash (concat name ":minor") minor-mode-layout ergoemacs-theme-component-hash))))
 
 ;;; Fixed components
@@ -975,7 +1070,10 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
  (global-unset-key (kbd "M->"))
  (global-unset-key (kbd "M-<"))
  (global-set-key (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
- (global-set-key (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer))
+ (global-set-key (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
+ :version 5.7.5
+ (global-unset-key (kbd "M-n"))
+ (global-unset-key (kbd "M-N")))
 
 (ergoemacs-theme-component move-bracket
  "Move By Bracket"
@@ -1044,7 +1142,10 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
 
  ;; Mode specific changes
  (define-key browse-kill-ring-mode-map (kbd "M-y") 'browse-kill-ring-search-forward)
- (define-key browse-kill-ring-mode-map (kbd "M-Y") 'browse-kill-ring-search-backward))
+ (define-key browse-kill-ring-mode-map (kbd "M-Y") 'browse-kill-ring-search-backward)
+ :version 5.7.5
+ (global-set-key (kbd "M-;") 'isearch-forward)
+ (global-set-key (kbd "M-:") 'isearch-backward))
 
 (ergoemacs-theme-component switch
  "Window/Frame/Tab Switching"
@@ -1064,7 +1165,9 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
  (global-set-key (kbd "M-4") '(split-window-right split-window-vertically))
  
  (global-unset-key (kbd "C-x 2"))
- (global-set-key (kbd "M-$") '(split-window-below split-window-horizontally)))
+ (global-set-key (kbd "M-$") '(split-window-below split-window-horizontally))
+ :version 5.7.5
+ (global-set-key (kbd "M-0") 'delete-window))
 
 (ergoemacs-theme-component execute
   "Execute Commands"
@@ -1121,8 +1224,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
  (global-set-key (kbd "M-6") 'ergoemacs-select-current-block)
  (global-set-key (kbd "M-7") 'ergoemacs-select-current-line))
 
-(ergoemacs-theme-component escape-quit
- "Escape is quit"
+(ergoemacs-theme-component quit
+ "Ergoemacs quit"
  (global-set-key (kbd "<escape>") 'keyboard-quit)
  (define-key browse-kill-ring-mode-map (kbd "<escape>") 'browse-kill-ring-quit)
  (with-hook
@@ -1136,7 +1239,9 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
   (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
  (with-hook
   minibuffer-setup-hook
-  (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit)))
+  (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
+ :version 5.3.7
+ (global-set-key (kbd "M-n") 'keyboard-quit))
 
 (ergoemacs-theme-component apps
  "Apps key"
