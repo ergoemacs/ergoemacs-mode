@@ -847,7 +847,8 @@ Issue #168."
       (ergoemacs-copy-line-or-region)
       (mark-whole-buffer)
       (ergoemacs-paste)
-      (setq ret (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed"
+      (message "`%s`" (buffer-string))
+      (setq ret (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed\n"
                          (buffer-string))))
     (should ret)))
 
