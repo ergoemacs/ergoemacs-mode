@@ -834,6 +834,23 @@ Issue #168."
     (ergoemacs-mode 1)
     (should ret)))
 
+
+(ert-deftest ergoemacs-test-issue-183-paste ()
+  "Issue #183; Not replace the \"selected all\" by paste."
+  (let ((ret t)
+        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
+    (with-temp-buffer
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-min))
+      (push-mark)
+      (end-of-line)
+      (ergoemacs-copy-line-or-region)
+      (mark-whole-buffer)
+      (ergoemacs-paste)
+      (setq ret (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed"
+                         (buffer-string))))
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
