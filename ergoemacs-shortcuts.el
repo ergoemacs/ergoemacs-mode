@@ -682,7 +682,12 @@ In addition, when the function is called:
       (let (deactivate-mark)
         (if (and (boundp 'cua-mode) cua-mode)
             (cua--pre-command-handler))
-        (call-interactively function record-flag keys)
+        (unwind-protect
+            (progn
+              (remove-hook 'pre-command-hook 'erogemacs-pre-command-hook)
+              (run-hooks 'pre-command-hook)
+              (call-interactively function record-flag keys))
+          (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook))
         (setq ergoemacs-deactivate-mark deactivate-mark))))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
@@ -1107,6 +1112,7 @@ UNIVERSAL allows ergoemacs-read-key to start with universal
 argument prompt.
 "
   (setq ergoemacs-deactivate-mark nil)
+  
   (let ((continue-read t)
         (real-type (or type 'normal))
         (first-type (or type 'normal))
