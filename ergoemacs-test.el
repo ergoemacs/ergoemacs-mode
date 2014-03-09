@@ -835,8 +835,8 @@ Issue #168."
     (should ret)))
 
 
-(ert-deftest ergoemacs-test-issue-183-paste ()
-  "Issue #183; Not replace the \"selected all\" by paste."
+(ert-deftest ergoemacs-test-issue-184-paste ()
+  "Issue #184; Not replace the \"selected all\" by paste."
   (let ((ret t)
         (ergoemacs-handle-ctl-c-or-ctl-x 'both))
     (with-temp-buffer
