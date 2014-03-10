@@ -239,6 +239,8 @@ particular it:
 (defun ergoemacs-theme-component--global-set-key (key command)
   "Setup ergoemacs theme component internally.
 When fixed-layout and variable-layout are bound"
+  (when (and (boundp 'print-me) print-me)
+    (message "pre global %s %s;%s; %s; %s" component-version (key-description key) command variable-layout component-version-variable-layout))
   (cond
    ((and (boundp 'component-version)
          component-version
@@ -254,56 +256,59 @@ When fixed-layout and variable-layout are bound"
                     component-version-variable-layout) component-version-list))
       (setq component-version-curr component-version)
       (unless component-version-fixed-layout
-        (setq component-version-fixed-layout fixed-layout))
+        (setq component-version-fixed-layout (symbol-value 'fixed-layout)))
       (unless component-version-fixed-layout
-        (setq component-version-variable-layout variable-layout)))
+        (setq component-version-variable-layout (symbol-value 'variable-layout))))
     (let ((kd (key-description key)) cd jf removed)
-      (setq cd (assoc command ergoemacs-function-short-names)) ; Short key description
       (when cd
         (setq cd (car (cdr cd))))
       (if (not command)
           (progn
             ;; Remove command from lists.
-            (setq component-version-fixed-layout
-                  (delete-if
-                   (lambda(x) (equal (nth 0 x) kd))
-                   component-version-fixed-layout))
-            (setq component-version-variable-layout
-                  (delete-if
-                   (lambda(x) (equal (nth 0 x) kd))
-                   component-version-variable-layout)))
-          (if (not (condition-case nil
-                   (string-match variable-reg kd)
-                 (error nil)))
-          (progn ;; Fixed Layout component
-            (setq component-version-fixed-layout
-                  (mapcar
-                   (lambda(x)
-                     (if (not (equal (nth 0 x) kd))
-                         x
-                       (setq removed t)
-                       (list kd command cd)))
-                   component-version-fixed-layout))
-            (unless removed
-              (push (list kd command cd) component-version-fixed-layout)))
-        ;; (push (list kd command) defined-keys)
-        (setq jf (and just-first-reg
-                      (condition-case nil
-                          (string-match just-first-reg kd)
-                        (error nil))))
-        (setq kd (ergoemacs-kbd kd t jf))
-        (setq component-version-variable-layout
-              (mapcar
-               (lambda(x)
-                 (if (not (equal (nth 0 x) kd))
-                     x
-                   (setq removed t)
-                   (list kd command cd jf)))
-               component-version-variable-layout))
-        (unless removed
-          (push (list kd command cd jf) component-version-variable-layout))))
-      ))
+            (mapc
+             (lambda(y)
+               (let (tmp '())
+                 (mapc
+                  (lambda(x)
+                    (unless (equal (nth 0 x) kd)
+                      (push x tmp)))
+                  (symbol-value y))
+                 (set y tmp)))
+             '(component-version-fixed-layout component-version-variable-layout)))
+        (if (not (condition-case nil
+                     (string-match variable-reg kd)
+                   (error nil)))
+            (progn ;; Fixed Layout component
+              (message "Change/Add Fixed")
+              (setq component-version-fixed-layout
+                    (mapcar
+                     (lambda(x)
+                       (if (not (equal (nth 0 x) kd))
+                           x
+                         (setq removed t)
+                         (list kd command cd)))
+                     component-version-fixed-layout))
+              (unless removed
+                (push (list kd command cd) component-version-fixed-layout)))
+          ;; (push (list kd command) defined-keys)
+          (setq jf (and just-first-reg
+                        (condition-case nil
+                            (string-match just-first-reg kd)
+                          (error nil))))
+          (setq kd (ergoemacs-kbd kd t jf))
+          (setq component-version-variable-layout
+                (mapcar
+                 (lambda(x)
+                   (if (not (equal (nth 0 x) kd))
+                       x
+                     (setq removed t)
+                     (list kd command cd jf)))
+                 component-version-variable-layout))
+          (unless removed
+            (push (list kd command cd jf) component-version-variable-layout))))))
    ((and (boundp 'fixed-layout) (boundp 'variable-layout)
+         (boundp 'component-version)
+         (not component-version)
          (boundp 'redundant-keys) (boundp 'defined-keys))
     (let ((kd (key-description key)) cd jf)
       (if (not command) ; redundant key
@@ -321,7 +326,9 @@ When fixed-layout and variable-layout are bound"
                             (string-match just-first-reg kd)
                           (error nil))))
           (setq kd (ergoemacs-kbd kd t jf))
-          (push (list kd command cd jf) variable-layout)))))))
+          (push (list kd command cd jf) variable-layout))))))
+  (when (and (boundp 'print-me) print-me)
+    (message "post global %s;%s; %s; %s" (key-description key) command variable-layout component-version-variable-layout)))
 
 (defun ergoemacs-theme-component--define-key (keymap key def)
   "Setup mode-specific information."
@@ -620,6 +627,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
            (defered-minor-modes '())
            (minor-mode-layout '())
            (redundant-keys '())
+           (print-me nil)
            (ergoemacs-translation-from ergoemacs-translation-from)
            (ergoemacs-translation-to ergoemacs-translation-to)
            (ergoemacs-shifted-assoc ergoemacs-shifted-assoc)
@@ -632,6 +640,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
        (ergoemacs-setup-translation "us" layout) ; Make sure keys are
                                         ; stored in QWERTY
                                         ; notation.
+       ,(if (string= (plist-get (nth 0 kb) ':name) "move-buffer")
+            `(setq print-me t))
        ,@(nth 1 kb)
        ;; Finalize version setup
        (when component-version-curr
@@ -667,12 +677,12 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
               (setq ret (append tmp ret)))
             (push (list hook ret always-p) minor-mode-layout)))
         defered-minor-modes)
-       ;; (message "%s;%s\n%s\n%s"
-       ;;          fixed-layout variable-layout defered-minor-modes
-       ;;          minor-mode-layout)
+       (when print-me
+         (message "%s;%s"
+                  name variable-layout))
 
-       (puthash (concat name ":fixed") fixed-layout ergoemacs-theme-component-hash)
-       (puthash (concat name ":variable") variable-layout ergoemacs-theme-component-hash)
+       (puthash (concat name ":fixed") (symbol-value 'fixed-layout) ergoemacs-theme-component-hash)
+       (puthash (concat name ":variable") (symbol-value 'variable-layout) ergoemacs-theme-component-hash)
        (mapc
         (lambda(x)
           (let ((ver (nth 0 x))
@@ -1077,8 +1087,6 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
 
 (ergoemacs-theme-component move-bracket
  "Move By Bracket"
- (global-unset-key (kbd "M->"))
- (global-unset-key (kbd "M-<"))
  (global-set-key (kbd "M-J") 'ergoemacs-backward-open-bracket)
  (global-set-key (kbd "M-L") 'ergoemacs-forward-close-bracket))
 
