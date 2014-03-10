@@ -263,18 +263,16 @@ When fixed-layout and variable-layout are bound"
       (when cd
         (setq cd (car (cdr cd))))
       (if (not command)
-          (progn
-            ;; Remove command from lists.
-            (mapc
-             (lambda(y)
-               (let (tmp '())
-                 (mapc
-                  (lambda(x)
-                    (unless (equal (nth 0 x) kd)
-                      (push x tmp)))
-                  (symbol-value y))
-                 (set y tmp)))
-             '(component-version-fixed-layout component-version-variable-layout)))
+          (mapc ;; Remove command from lists.
+           (lambda(y)
+             (let (tmp '())
+               (mapc
+                (lambda(x)
+                  (unless (equal (nth 0 x) kd)
+                    (push x tmp)))
+                (symbol-value y))
+               (set y tmp)))
+           '(component-version-fixed-layout component-version-variable-layout))
         (if (not (condition-case nil
                      (string-match variable-reg kd)
                    (error nil)))
