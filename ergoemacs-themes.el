@@ -152,6 +152,7 @@ particular it:
 - `define-key' is converted to `ergoemacs-theme-component--define-key' and keymaps are quoted
 - `global-set-key' is converted to `ergoemacs-theme-component--global-set-key'
 - `global-unset-key' is converted to `ergoemacs-theme-component--global-set-key'
+- `global-reset-key' is converted `ergoemacs-theme-component--global-reset-key'
 - Allows :version statement expansion
 - Adds with-hook syntax
 "
@@ -199,6 +200,9 @@ particular it:
                  (setq last-was-version t)
                  nil)
                 ((condition-case err
+                     (eq (nth 0 elt) 'global-reset-key))
+                 `(ergoemacs-theme-component--global-reset-key ,(nth 1 elt)))
+                ((condition-case err
                      (eq (nth 0 elt) 'global-unset-key))
                  `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) nil))
                 ((condition-case err
@@ -237,6 +241,52 @@ particular it:
     (list plist remaining)))
 
 (defvar ergoemacs-theme-component-hash (make-hash-table :test 'equal))
+(defun ergoemacs-theme-component--version-bump ()
+  (when (and (boundp 'component-version)
+        component-version
+        (boundp 'component-version-curr)
+        (boundp 'fixed-layout) (boundp 'variable-layout)
+        (boundp 'redundant-keys) (boundp 'defined-keys)
+        (boundp 'versions)
+        (boundp 'just-first-reg)
+        (not (equal component-version-curr component-version)))
+   ;; Create/Update component-version fixed or variable layouts.
+    (when component-version-curr
+      (push (list component-version-curr
+                  component-version-fixed-layout
+                  component-version-variable-layout
+                  component-version-redundant-keys) component-version-list))
+    (setq component-version-curr component-version)
+    (push component-version-curr versions)
+    (unless component-version-fixed-layout
+      (setq component-version-fixed-layout (symbol-value 'fixed-layout)))
+    (unless component-version-fixed-layout
+      (setq component-version-variable-layout (symbol-value 'variable-layout)))
+    (unless component-version-redundant-keys
+      (setq component-version-redundant-keys (symbol-value 'redundant-keys)))))
+
+(defun ergoemacs-theme-component--global-reset-key (key)
+  "Reset KEY.
+will take out KEY from `component-version-redundant-keys'"
+  (when (and (boundp 'component-version)
+             component-version
+             (boundp 'component-version-curr)
+             (boundp 'fixed-layout) (boundp 'variable-layout)
+             (boundp 'redundant-keys) (boundp 'defined-keys)
+             (boundp 'versions)
+             (boundp 'component-version-redundant-keys)
+             (boundp 'just-first-reg))
+    (ergoemacs-theme-component--version-bump)
+    (let ((kd (key-description key))
+          tmp)
+      (setq tmp '())
+      (mapc
+       (lambda(x)
+         (unless (string= x kd)
+           (push x tmp)))
+       component-version-redundant-keys)
+      (setq component-version-redundant-keys tmp))))
+  
 (defun ergoemacs-theme-component--global-set-key (key command)
   "Setup ergoemacs theme component internally.
 When fixed-layout and variable-layout are bound"
@@ -248,18 +298,7 @@ When fixed-layout and variable-layout are bound"
          (boundp 'redundant-keys) (boundp 'defined-keys)
          (boundp 'versions)
          (boundp 'just-first-reg))
-    ;; Create/Update component-version fixed or variable layouts.
-    (when (not (equal component-version-curr component-version))
-      (when component-version-curr
-        (push (list component-version-curr
-                    component-version-fixed-layout
-                    component-version-variable-layout) component-version-list))
-      (setq component-version-curr component-version)
-      (push component-version-curr versions)
-      (unless component-version-fixed-layout
-        (setq component-version-fixed-layout (symbol-value 'fixed-layout)))
-      (unless component-version-fixed-layout
-        (setq component-version-variable-layout (symbol-value 'variable-layout))))
+    (ergoemacs-theme-component--version-bump)
     (let ((kd (key-description key)) cd jf removed)
       (when cd
         (setq cd (car (cdr cd))))
@@ -484,31 +523,40 @@ If the COMPONENT has the suffix ::version, just get the closest specified versio
 If COMPONENT is a list, return the composite keymaps of all the
 components listed.
 
-Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
+Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
 "
   (if (eq (type-of component) 'cons)
       (let ((ret nil)
             (l0 '())
             (l1 '())
             (l2 '())
-            (l3 '())) ;; List of components.
+            (l3 '())
+            (l4 '())) ;; List of components.
         (mapc
          (lambda(comp)
            (let ((new-ret (ergoemacs-theme-component-keymaps comp version)))
-             (push (nth 0 new-ret) l0)
-             (push (nth 1 new-ret) l1)
-             (push (nth 2 new-ret) l2)
-             (setq l3 (append l3 (nth 3 new-ret)))))
+             (when (and (nth 0 new-ret) (not (equal (nth 0 new-ret) '(keymap))))
+               (push (nth 0 new-ret) l0))
+             (when (and (nth 1 new-ret) (not (equal (nth 1 new-ret) '(keymap))))
+               (push (nth 1 new-ret) l1))
+             (when (and (nth 2 new-ret) (not (equal (nth 2 new-ret) '(keymap))))
+               (push (nth 2 new-ret) l2))
+             (when (nth 3 new-ret)
+               (setq l3 (append l3 (nth 3 new-ret))))
+             (when (and (nth 4 new-ret) (not (equal (nth 4 new-ret) '(keymap))))
+               (push (nth 4 new-ret) l4))))
          (reverse component))
         (setq ret
               (list
                (make-composed-keymap l0)
                (make-composed-keymap l1)
                (make-composed-keymap l2)
-               l3)))
+               l3
+               (make-composed-keymap l4))))
     (let (fixed-shortcut
           fixed-read
           fixed-shortcut-list
+          unbind
           variable-shortcut
           variable-read
           fixed variable
@@ -539,6 +587,14 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
       
       ;; (let ((tmp-map (nth 1 (ergoemacs-theme-component-keymaps 'copy))))
       ;;   (substitute-command-keys "\\{tmp-map}"))
+      (setq unbind (gethash (concat true-component version ":unbind") ergoemacs-theme-component-hash))
+      (unless unbind
+        (setq unbind (make-sparse-keymap))
+        (mapc
+         (lambda(x)
+           (define-key unbind (read-kbd-macro x) 'ergoemacs-undefined))
+         (gethash (concat true-component version ":redundant") ergoemacs-theme-component-hash))
+        (puthash (concat true-component version ":unbind") unbind ergoemacs-theme-component-hash))
       (unless only-fixed
         (setq fixed-shortcut (gethash (concat true-component version ":fixed:shortcut") ergoemacs-theme-component-hash))
         (setq fixed-read (gethash (concat true-component version ":fixed:read") ergoemacs-theme-component-hash))
@@ -634,9 +690,9 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
                      ergoemacs-theme-component-hash))))
       (cond
        (only-fixed
-        (list fixed-read fixed-shortcut fixed fixed-shortcut-list))
+        (list fixed-read fixed-shortcut fixed fixed-shortcut-list nil))
        (only-variable
-        (list variable-read variable-shortcut variable variable-shortcut-list))
+        (list variable-read variable-shortcut variable variable-shortcut-list nil))
        (t
         (list (or (and variable-read fixed-read
                        (make-composed-keymap (if ergoemacs-prefer-variable-keybindings
@@ -655,7 +711,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
                   variable fixed)
               (if ergoemacs-prefer-variable-keybindings
                   (append variable-shortcut-list fixed-shortcut-list)
-                (append fixed-shortcut-list variable-shortcut-list))))))))
+                (append fixed-shortcut-list variable-shortcut-list))
+              unbind))))))
 
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
   "A component of an ergoemacs-theme."
@@ -674,6 +731,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
            (component-version nil)
            (component-version-variable-layout nil)
            (component-version-fixed-layout nil)
+           (component-version-redundant-keys nil)
            (component-version-curr nil)
            (component-version-list '())
            (defined-keys '())
@@ -734,13 +792,16 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
        (puthash (concat name ":fixed") (symbol-value 'fixed-layout) ergoemacs-theme-component-hash)
        (puthash (concat name ":variable") (symbol-value 'variable-layout) ergoemacs-theme-component-hash)
        (puthash (concat name ":version") versions ergoemacs-theme-component-hash)
+       (puthash (concat name ":redundant") redundant-keys ergoemacs-theme-component-hash)
        (mapc
         (lambda(x)
           (let ((ver (nth 0 x))
                 (fixed (nth 1 x))
-                (var (nth 2 x)))
+                (var (nth 2 x))
+                (red (nth 3 x)))
             (puthash (concat name "::" ver ":fixed") fixed ergoemacs-theme-component-hash)
-            (puthash (concat name "::" ver ":variable") var ergoemacs-theme-component-hash)))
+            (puthash (concat name "::" ver ":variable") var ergoemacs-theme-component-hash)
+            (puthash (concat name "::" ver ":redundant") var ergoemacs-theme-component-hash)))
         component-version-list)
        (puthash (concat name ":minor") minor-mode-layout ergoemacs-theme-component-hash))))
 
@@ -1200,6 +1261,8 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME---
  (global-set-key (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
  (global-set-key (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
  :version 5.7.5
+ (global-reset-key (kbd "M->"))
+ (global-reset-key (kbd "M-<"))
  (global-unset-key (kbd "M-n"))
  (global-unset-key (kbd "M-N")))
 
