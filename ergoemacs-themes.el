@@ -239,14 +239,13 @@ particular it:
 (defun ergoemacs-theme-component--global-set-key (key command)
   "Setup ergoemacs theme component internally.
 When fixed-layout and variable-layout are bound"
-  (when (and (boundp 'print-me) print-me)
-    (message "pre global %s %s;%s; %s; %s" component-version (key-description key) command variable-layout component-version-variable-layout))
   (cond
    ((and (boundp 'component-version)
          component-version
          (boundp 'component-version-curr)
          (boundp 'fixed-layout) (boundp 'variable-layout)
          (boundp 'redundant-keys) (boundp 'defined-keys)
+         (boundp 'versions)
          (boundp 'just-first-reg))
     ;; Create/Update component-version fixed or variable layouts.
     (when (not (equal component-version-curr component-version))
@@ -255,6 +254,7 @@ When fixed-layout and variable-layout are bound"
                     component-version-fixed-layout
                     component-version-variable-layout) component-version-list))
       (setq component-version-curr component-version)
+      (push component-version-curr versions)
       (unless component-version-fixed-layout
         (setq component-version-fixed-layout (symbol-value 'fixed-layout)))
       (unless component-version-fixed-layout
@@ -324,9 +324,7 @@ When fixed-layout and variable-layout are bound"
                             (string-match just-first-reg kd)
                           (error nil))))
           (setq kd (ergoemacs-kbd kd t jf))
-          (push (list kd command cd jf) variable-layout))))))
-  (when (and (boundp 'print-me) print-me)
-    (message "post global %s;%s; %s; %s" (key-description key) command variable-layout component-version-variable-layout)))
+          (push (list kd command cd jf) variable-layout)))))))
 
 (defun ergoemacs-theme-component--define-key (keymap key def)
   "Setup mode-specific information."
@@ -430,10 +428,57 @@ DEF can be:
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defun ergoemacs-theme-component-keymaps (component)
-  "Gets the keymaps for COMPONENT.
+(defun ergoemacs-theme-component-get-closest-version (version version-list)
+  "Return the closest version to VERSION in VERSION-LIST.
+Formatted for use with `ergoemacs-theme-component-hash' it will return ::version or an empty string"
+  (if version-list
+      (let ((use-version (version-to-list version))
+            biggest-version
+            biggest-version-list
+            smallest-version
+            smallest-version-list
+            best-version
+            best-version-list
+            test-version-list
+            ret)
+        (mapc
+         (lambda (v)
+           (setq test-version-list (version-to-list v))
+           (if (not biggest-version)
+               (setq biggest-version v
+                     biggest-version-list test-version-list)
+             (when (version-list-< biggest-version-list test-version-list)
+               (setq biggest-version v
+                     biggest-version-list test-version-list)))
+           (if (not smallest-version)
+               (setq smallest-version v
+                     smallest-version-list test-version-list)
+             (when (version-list-< test-version-list smallest-version-list)
+               (setq smallest-version v
+                     smallest-version-list test-version-list)))
+           (cond
+            ((and (not best-version)
+                  (version-list-<= test-version-list use-version))
+             (setq best-version v
+                   best-version-list test-version-list))
+            ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
+                  (version-list-<= test-version-list use-version))
+             (setq best-version v
+                   best-version-list test-version-list))))
+         version-list)
+        (if (version-list-< biggest-version-list use-version)
+            (setq ret "")
+          (if best-version
+              (setq ret (concat "::" best-version))
+            (setq ret (concat "::" smallest-version))))
+        (symbol-value 'ret))
+    ""))
+
+(defun ergoemacs-theme-component-keymaps (component &optional version)
+  "Gets the keymaps for COMPONENT for component VERSION.
 If the COMPONENT has the suffix :fixed, just get the fixed component.
 If the COMPONENT has the suffix :variable, just get the variable component.
+If the COMPONENT has the suffix ::version, just get the closest specified version.
 
 If COMPONENT is a list, return the composite keymaps of all the
 components listed.
@@ -448,7 +493,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
             (l3 '())) ;; List of components.
         (mapc
          (lambda(comp)
-           (let ((new-ret (ergoemacs-theme-component-keymaps comp)))
+           (let ((new-ret (ergoemacs-theme-component-keymaps comp version)))
              (push (nth 0 new-ret) l0)
              (push (nth 1 new-ret) l1)
              (push (nth 2 new-ret) l2)
@@ -472,6 +517,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
           key
           trans-key input-keys
           cmd cmd-tmp
+          (version version)
           (shortcut-list '())
           (true-component (replace-regexp-in-string ":\\(fixed\\|variable\\)" ""
                                                     (or (and (stringp component) component)
@@ -480,17 +526,27 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
                                                        (symbol-name component))))
           (only-fixed (string-match ":fixed" (or (and (stringp component) component)
                                                  (symbol-name component)))))
+      (when (string-match "::\\([0-9.]+\\)$" true-component)
+        (setq version (match-string 1 true-component))
+        (setq true-component (replace-match "" nil nil true-component)))
+      (if (not version)
+          (setq version "")
+        (setq version (ergoemacs-theme-component-get-closest-version
+                       version
+                       (gethash (concat true-component ":version")
+                                ergoemacs-theme-component-hash))))
+      
       ;; (let ((tmp-map (nth 1 (ergoemacs-theme-component-keymaps 'copy))))
       ;;   (substitute-command-keys "\\{tmp-map}"))
       (unless only-fixed
-        (setq fixed-shortcut (gethash (concat true-component ":fixed:shortcut") ergoemacs-theme-component-hash))
-        (setq fixed-read (gethash (concat true-component ":fixed:read") ergoemacs-theme-component-hash))
-        (setq fixed (gethash (concat true-component ":fixed:map") ergoemacs-theme-component-hash))
-        (setq fixed-shortcut-list (gethash (concat true-component ":fixed:shortcut:list")
+        (setq fixed-shortcut (gethash (concat true-component version ":fixed:shortcut") ergoemacs-theme-component-hash))
+        (setq fixed-read (gethash (concat true-component version ":fixed:read") ergoemacs-theme-component-hash))
+        (setq fixed (gethash (concat true-component version ":fixed:map") ergoemacs-theme-component-hash))
+        (setq fixed-shortcut-list (gethash (concat true-component version ":fixed:shortcut:list")
                                            ergoemacs-theme-component-hash))
         (unless (or fixed fixed-shortcut fixed-read fixed-shortcut-list)
           ;; Setup fixed fixed-keymap for this component.
-          (setq key-list (gethash (concat true-component ":fixed") ergoemacs-theme-component-hash))
+          (setq key-list (gethash (concat true-component version ":fixed") ergoemacs-theme-component-hash))
           (when key-list
             (setq fixed-shortcut (make-sparse-keymap))
             (setq fixed (make-sparse-keymap))
@@ -520,24 +576,26 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
             (setq fixed-shortcut-list shortcut-list
                   input-keys '())
             (setq shortcut-list '())
-            (puthash (concat true-component ":fixed:shortcut") fixed-shortcut
-                     ergoemacs-theme-component-hash)
-            (puthash (concat true-component ":fixed:read") fixed-read
-                     ergoemacs-theme-component-hash)
-            (puthash (concat true-component ":fixed:map") fixed
-                     ergoemacs-theme-component-hash)
-            (puthash (concat true-component ":fixed:shortcut:list") fixed-shortcut-list
-                     ergoemacs-theme-component-hash))))
+            ;; (puthash (concat true-component version ":fixed:shortcut") fixed-shortcut
+            ;;          ergoemacs-theme-component-hash)
+            ;; (puthash (concat true-component version ":fixed:read") fixed-read
+            ;;          ergoemacs-theme-component-hash)
+            ;; (puthash (concat true-component version ":fixed:map") fixed
+            ;;          ergoemacs-theme-component-hash)
+            ;; (puthash (concat true-component version ":fixed:shortcut:list") fixed-shortcut-list
+            ;;          ergoemacs-theme-component-hash)
+            )))
 
       (unless only-variable
-        (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  ":variable:shortcut") ergoemacs-theme-component-hash))
-        (setq variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout  ":variable:read") ergoemacs-theme-component-hash))
-        (setq variable (gethash (concat true-component ":" ergoemacs-keyboard-layout ":variable:map") ergoemacs-theme-component-hash))
-        (setq variable-shortcut-list (gethash (concat true-component  ":variable:shortcut:list")
+        (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  version ":variable:shortcut") ergoemacs-theme-component-hash))
+        (setq variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:read") ergoemacs-theme-component-hash))
+        (setq variable (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") ergoemacs-theme-component-hash))
+        (setq variable-shortcut-list (gethash (concat true-component version ":variable:shortcut:list")
                                               ergoemacs-theme-component-hash))
         (unless (or variable variable-shortcut variable-read variable-shortcut-list)
           ;; Setup variable variable-keymap for this component.
-          (setq key-list (gethash (concat true-component ":" ergoemacs-keyboard-layout  ":variable") ergoemacs-theme-component-hash))
+          (setq key-list (gethash (concat true-component version ":variable") ergoemacs-theme-component-hash))
+          (message "KL: %s;version: %s" key-list version)
           (when key-list
             (setq variable-shortcut (make-sparse-keymap))
             (setq variable (make-sparse-keymap))
@@ -567,14 +625,15 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
             (setq variable-shortcut-list shortcut-list
                   input-keys '())
             (setq shortcut-list '())
-            (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:shortcut") variable-shortcut
-                     ergoemacs-theme-component-hash)
-            (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:read") variable-read
-                     ergoemacs-theme-component-hash)
-            (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:map") variable
-                     ergoemacs-theme-component-hash)
-            (puthash (concat true-component ":" ergoemacs-keyboard-layout ":variable:shortcut:list") variable-shortcut-list
-                     ergoemacs-theme-component-hash))))
+            ;; (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut") variable-shortcut
+            ;;          ergoemacs-theme-component-hash)
+            ;; (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:read") variable-read
+            ;;          ergoemacs-theme-component-hash)
+            ;; (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") variable
+            ;;          ergoemacs-theme-component-hash)
+            ;; (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut:list") variable-shortcut-list
+            ;;          ergoemacs-theme-component-hash)
+            )))
       (cond
        (only-fixed
         (list fixed-read fixed-shortcut fixed fixed-shortcut-list))
@@ -613,6 +672,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
                               (regexp-opt '("M-" "<apps>" "<menu>"))))
            (just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-variable-reg)
                                 nil))
+           (versions '())
            (component-version nil)
            (component-version-variable-layout nil)
            (component-version-fixed-layout nil)
@@ -625,7 +685,6 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
            (defered-minor-modes '())
            (minor-mode-layout '())
            (redundant-keys '())
-           (print-me nil)
            (ergoemacs-translation-from ergoemacs-translation-from)
            (ergoemacs-translation-to ergoemacs-translation-to)
            (ergoemacs-shifted-assoc ergoemacs-shifted-assoc)
@@ -638,8 +697,6 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
        (ergoemacs-setup-translation "us" layout) ; Make sure keys are
                                         ; stored in QWERTY
                                         ; notation.
-       ,(if (string= (plist-get (nth 0 kb) ':name) "move-buffer")
-            `(setq print-me t))
        ,@(nth 1 kb)
        ;; Finalize version setup
        (when component-version-curr
@@ -675,12 +732,10 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
               (setq ret (append tmp ret)))
             (push (list hook ret always-p) minor-mode-layout)))
         defered-minor-modes)
-       (when print-me
-         (message "%s;%s"
-                  name variable-layout))
-
+       (puthash (concat name ":plist") ',(nth 0 kb) ergoemacs-theme-component-hash)
        (puthash (concat name ":fixed") (symbol-value 'fixed-layout) ergoemacs-theme-component-hash)
        (puthash (concat name ":variable") (symbol-value 'variable-layout) ergoemacs-theme-component-hash)
+       (puthash (concat name ":version") versions ergoemacs-theme-component-hash)
        (mapc
         (lambda(x)
           (let ((ver (nth 0 x))
