@@ -303,7 +303,12 @@ When fixed-layout and variable-layout are bound"
          (boundp 'versions)
          (boundp 'just-first-reg))
     (ergoemacs-theme-component--version-bump)
-    (let ((kd (key-description key)) cd jf removed)
+    (let* ((kd (key-description key)) cd jf removed
+           (variable-p (and (boundp 'variable-reg)
+                            variable-reg
+                            (condition-case nil
+                                (string-match variable-reg kd)
+                              (error nil)))))
       (when cd
         (setq cd (car (cdr cd))))
       (if (not command)
@@ -317,9 +322,7 @@ When fixed-layout and variable-layout are bound"
                 (symbol-value y))
                (set y tmp)))
            '(component-version-fixed-layout component-version-variable-layout))
-        (if (not (condition-case nil
-                     (string-match variable-reg kd)
-                   (error nil)))
+        (if (not variable-p)
             (progn ;; Fixed Layout component
               (message "Change/Add Fixed")
               (setq component-version-fixed-layout
@@ -333,7 +336,7 @@ When fixed-layout and variable-layout are bound"
               (unless removed
                 (push (list kd command cd) component-version-fixed-layout)))
           ;; (push (list kd command) defined-keys)
-          (setq jf (and just-first-reg
+          (setq jf (and (boundp 'just-first-reg) just-first-reg
                         (condition-case nil
                             (string-match just-first-reg kd)
                           (error nil))))
@@ -381,15 +384,74 @@ When fixed-layout and variable-layout are bound"
                                (replace-regexp-in-string "mode.*" "mode-hook" (symbol-name keymap))
                              ;; Assume -keymap or -map defines -mode-hook
                              (string-match "(key)?map" "mode-hook" (symbol-name keymap))))))
-            (modify-keymap
+            (modify-keymap-p
              (and (boundp 'ergoemacs-hook-modify-keymap)
                   ergoemacs-hook-modify-keymap))
-            (always (and (boundp 'ergoemacs-hook-always)
-                         ergoemacs-hook-always)))
-      ;; (push (list keymap (key-description key) def hook
-      ;;             modify-keymap always)
-      ;;       defered-minor-modes)
-      ))))
+            (always-run-p (and (boundp 'ergoemacs-hook-always)
+                               ergoemacs-hook-always))
+            (kd (key-description key))
+            (variable-p (and (boundp 'variable-reg)
+                             variable-reg
+                             (condition-case nil
+                                 (string-match variable-reg kd)
+                               (error nil))))
+            a-key
+            jf found-1-p found-2-p)
+        (when variable-p
+          (setq jf (and just-first-reg
+                        (condition-case nil
+                            (string-match just-first-reg kd)
+                          (error nil))))
+          (setq kd (ergoemacs-kbd kd t jf)))
+        (cond
+         ((and (boundp 'component-version)
+               component-version
+               (boundp 'component-version-curr)
+               (boundp 'fixed-layout) (boundp 'variable-layout)
+               (boundp 'redundant-keys) (boundp 'defined-keys)
+               (boundp 'versions)
+               (boundp 'just-first-reg))
+          (ergoemacs-theme-component--version-bump) ;; Change version information
+          )
+         ((and (boundp 'fixed-layout) (boundp 'variable-layout)
+               (boundp 'component-version)
+               (not component-version)
+               (boundp 'redundant-keys) (boundp 'defined-keys))
+          ;; Keymaps modified are stored as (hook (keymaps))
+          ;; Keys are stored as ((hook keymap/t variable-p) ((key def)))
+          (setq a-key (list hook (if modify-keymap-p keymap t) variable-p))
+          (setq minor-mode-layout
+                (mapcar
+                 (lambda(elt)
+                   (cond
+                    ((equal (car elt) hook)
+                     (let ((lst (car (cdr elt))))
+                       (add-to-list 'lst (if modify-keymap-p keymap t) nil 'eq)
+                       (setq found-1-p t)
+                       (list hook lst)))
+                    ((eq (car elt) a-key)
+                     (let ((lst (car (cdr elt))) new-lst)
+                       (mapc
+                        (lambda(elt-2)
+                          (cond
+                           ((equal (car elt-2) kd)
+                            (setq found-2-p t)
+                            (when def
+                              (push (list kd def) new-lst)))
+                           (t
+                            (push elt-2 new-lst))))
+                        lst)
+                       (unless found-2-p
+                         (push (list kd def) new-lst))
+                       (setq found-2-p t)
+                       (list a-key new-lst)))
+                    (t
+                     elt)))
+                 minor-mode-layout))
+          (unless found-1-p
+            (push (list hook (list (if modify-keymap-p keymap t))) minor-mode-layout))
+          (unless found-2-p
+            (push (list a-key (list (list kd def))) minor-mode-layout))))))))
 
 
 (defun ergoemacs-theme-component--define-key-in-keymaps (keymap keymap-shortcut key def)
@@ -768,6 +830,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
        (puthash (concat name ":variable") (symbol-value 'variable-layout) ergoemacs-theme-component-hash)
        (puthash (concat name ":version") versions ergoemacs-theme-component-hash)
        (puthash (concat name ":redundant") redundant-keys ergoemacs-theme-component-hash)
+       (puthash (concat name ":minor") minor-mode-layout ergoemacs-theme-component-hash)
        (mapc
         (lambda(x)
           (let ((ver (nth 0 x))
@@ -777,8 +840,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
             (puthash (concat name "::" ver ":fixed") fixed ergoemacs-theme-component-hash)
             (puthash (concat name "::" ver ":variable") var ergoemacs-theme-component-hash)
             (puthash (concat name "::" ver ":redundant") var ergoemacs-theme-component-hash)))
-        component-version-list)
-       (puthash (concat name ":minor") minor-mode-layout ergoemacs-theme-component-hash))))
+        component-version-list))))
 
 (defcustom ergoemacs-theme-options
   '()
@@ -833,7 +895,7 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
 :optional-on -- list of components that are optional and are on by default
 :optional-off -- list of components that are optional and off by default
 
-The rest of the body is an `ergoemacs-theme-component' named THEME-NAME---
+The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
 "
   (declare (doc-string 2)
            (indent 2))
@@ -841,10 +903,10 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME---
         (tmp (make-symbol "tmp")))
     (setq kb (ergoemacs--parse-keys-and-body body-and-plist))
     (setq tmp (eval (plist-get (nth 0 kb) ':components)))
-    (push (intern (concat (plist-get (nth 0 kb) ':name) "---")) tmp)
+    (push (intern (concat (plist-get (nth 0 kb) ':name) "-theme")) tmp)
     (setq tmp (plist-put (nth 0 kb) ':components tmp))
     (puthash (plist-get (nth 0 kb) ':name) tmp ergoemacs-theme-hash)
-    `(ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) ':name) "---"))
+    `(ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme"))
          "Generated theme component"
        ,@(nth 1 kb))))
 
