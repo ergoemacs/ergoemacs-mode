@@ -38,7 +38,7 @@
 If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
   (cond
    ((and ergoemacs-mode (eq hook 'pre-command-hook)
-         (not (memq hook ergoemacs-hook-exception-functions)))
+         (memq hook ergoemacs-hook-functions))
     (add-hook 'ergoemacs-pre-command-hook function append local))
    (t
     ad-do-it)))
@@ -49,7 +49,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
 If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre-command-hook' instead."
   (cond
    ((and ergoemacs-mode (eq hook 'pre-command-hook)
-         (not (memq hook ergoemacs-hook-exception-functions)))
+         (memq hook ergoemacs-hook-functions))
     (remove-hook 'ergoemacs-pre-command-hook function local))
    (t
     ad-do-it)))

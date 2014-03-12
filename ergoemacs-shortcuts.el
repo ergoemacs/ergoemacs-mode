@@ -682,6 +682,8 @@ In addition, when the function is called:
       (let (deactivate-mark)
         (if (and (boundp 'cua-mode) cua-mode)
             (cua--pre-command-handler))
+	(remove-hook 'ergoemacs-pre-command-hook 'ergoemacs-pre-command-hook)
+	(remove-hook 'ergoemacs-pre-command-hook 'ergoemacs-pre-command-hook t)
         (run-hooks 'ergoemacs-pre-command-hook)
         (call-interactively function record-flag keys)
         (setq ergoemacs-deactivate-mark deactivate-mark))))))
