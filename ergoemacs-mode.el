@@ -942,6 +942,7 @@ bindings the keymap is:
             (setq ergoemacs-read-key-overriding-overlay-save nil)))
         (setq ergoemacs-unbind-keys t)
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
+        (ergoemacs-populate-pre-command-hook)
         (add-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
         (ergoemacs-debug-heading "Ergoemacs-mode turned ON."))
     ;; turn off ergoemacs-mode
@@ -1015,6 +1016,7 @@ bindings the keymap is:
     (ergoemacs-hook-modes) ;; Remove hooks and advices.
     (remove-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
     (remove-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
+    (ergoemacs-populate-pre-command-hook t)
     (ergoemacs-debug-heading "Ergoemacs-mode turned OFF."))
   ;; Always have `ergoemacs-post-command-hook' on so that it will
   ;; uninstall ergoemacs keymaps that were installed to overlays and
@@ -1205,6 +1207,41 @@ This is done by checking if this is a command that supports shift selection or c
              (string-match "^[@*]*\\^" intf)))))
 
 (defvar ergoemacs-this-command nil)
+(defvar ergoemacs-pre-command-hook nil
+  "Pre-command hook for `ergoemacs-mode'")
+
+(defvar ergoemacs-hook-exception-functions '(auto-indent-mode-pre-command-hook ergoemacs-pre-command-hook)
+  "Hooks that are not moved to `ergoemacs-pre-command-hook'.")
+
+(defun ergoemacs-populate-pre-command-hook (&optional depopulate)
+  "Populate `ergoemacs-pre-command-hook' with `pre-command-hook' values."
+  (let (do-append ergoemacs-mode)
+    (mapc
+     (lambda(item)
+       (if (eq item t)
+           (setq do-append t)
+         (unless (or depopulate (memq item ergoemacs-hook-exception-functions))
+           (add-hook 'ergoemacs-pre-command-hook item do-append nil)
+           (remove-hook 'pre-command-hook item nil))
+         (when depopulate
+           (add-hook 'pre-command-hook item do-append nil)
+           (remove-hook 'ergoemacs-pre-command-hook item do-append))))
+     (default-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook)))
+    (unless (equal (default-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook))
+                   (symbol-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook)))
+      (setq do-append nil)
+      (mapc
+       (lambda(item)
+         (if (eq item t)
+             (setq do-append t)
+           (unless (or depopulate (memq item ergoemacs-hook-exception-functions))
+             (add-hook 'ergoemacs-pre-command-hook item do-append t)
+             (remove-hook 'pre-command-hook item t))
+           (when depopulate
+             (add-hook 'pre-command-hook item do-append t)
+             (remove-hook 'ergoemacs-pre-command-hook item t))))
+       (symbol-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook))))))
+
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
   (when (and ergoemacs-mark-active
@@ -1251,6 +1288,8 @@ This is done by checking if this is a command that supports shift selection or c
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (ergoemacs-shortcut-override-mode 1))))
       (error nil)))
+  (unless (memq this-command '(ergoemacs-shortcut ergoemacs-shortcut-movement-no-shift-select ergoemacs-shortcut-movement ergoemacs-read-key))
+    (run-hooks 'ergoemacs-pre-command-hook))
   t)
 
 (defun ergoemacs-post-command-hook ()

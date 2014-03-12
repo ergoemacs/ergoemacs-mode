@@ -682,12 +682,8 @@ In addition, when the function is called:
       (let (deactivate-mark)
         (if (and (boundp 'cua-mode) cua-mode)
             (cua--pre-command-handler))
-        (unwind-protect
-            (progn
-              (remove-hook 'pre-command-hook 'erogemacs-pre-command-hook)
-              (run-hooks 'pre-command-hook)
-              (call-interactively function record-flag keys))
-          (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook))
+        (run-hooks 'ergoemacs-pre-command-hook)
+        (call-interactively function record-flag keys)
         (setq ergoemacs-deactivate-mark deactivate-mark))))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)

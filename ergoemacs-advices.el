@@ -32,6 +32,28 @@
   "Force the define-keys to work"
   `(let ((ergoemacs-run-mode-hooks t))
      ,@body))
+
+(defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local))
+  "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
+If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
+  (cond
+   ((and ergoemacs-mode (eq hook 'pre-command-hook)
+         (not (memq hook ergoemacs-hook-exception-functions)))
+    (add-hook 'ergoemacs-pre-command-hook function append local))
+   (t
+    ad-do-it)))
+(ad-activate 'add-hook)
+
+(defadvice remove-hook (around ergoemacs-remove-hook-advice (hook function &optional local))
+  "Advice to allow `this-command' to be set correctly before running `pre-command-hook'.
+If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre-command-hook' instead."
+  (cond
+   ((and ergoemacs-mode (eq hook 'pre-command-hook)
+         (not (memq hook ergoemacs-hook-exception-functions)))
+    (remove-hook 'ergoemacs-pre-command-hook function local))
+   (t
+    ad-do-it)))
+(ad-activate 'remove-hook)
   
 
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def))
