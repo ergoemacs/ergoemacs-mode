@@ -244,6 +244,7 @@ particular it:
 (defun ergoemacs-theme-component--version-bump ()
   (when (and (boundp 'component-version)
         component-version
+        (boundp 'component-version-minor-mode-layout)
         (boundp 'component-version-curr)
         (boundp 'fixed-layout) (boundp 'variable-layout)
         (boundp 'redundant-keys) (boundp 'defined-keys)
@@ -255,9 +256,12 @@ particular it:
       (push (list component-version-curr
                   component-version-fixed-layout
                   component-version-variable-layout
-                  component-version-redundant-keys) component-version-list))
+                  component-version-redundant-keys
+                  component-version-minor-mode-layout) component-version-list))
     (setq component-version-curr component-version)
     (push component-version-curr versions)
+    (unless component-version-minor-mode-layout
+      (setq component-version-minor-mode-layout (symbol-value 'component-version-minor-mode-layout)))
     (unless component-version-fixed-layout
       (setq component-version-fixed-layout (symbol-value 'fixed-layout)))
     (unless component-version-fixed-layout
@@ -368,8 +372,7 @@ When fixed-layout and variable-layout are bound"
 
 (defun ergoemacs-theme-component--define-key (keymap key def)
   "Setup mode-specific information."
-  (when (and (boundp 'fixed-layout) (boundp 'variable-layout)
-             (boundp 'defered-minor-modes))
+  (when (and (boundp 'fixed-layout) (boundp 'variable-layout))
     (if (memq keymap '(global-map ergoemacs-keymap))
         (ergoemacs-theme-component--global-set-key key def)
       (let ((hook (or
@@ -383,9 +386,10 @@ When fixed-layout and variable-layout are bound"
                   ergoemacs-hook-modify-keymap))
             (always (and (boundp 'ergoemacs-hook-always)
                          ergoemacs-hook-always)))
-      (push (list keymap (key-description key) def hook
-                  modify-keymap always)
-            defered-minor-modes)))))
+      ;; (push (list keymap (key-description key) def hook
+      ;;             modify-keymap always)
+      ;;       defered-minor-modes)
+      ))))
 
 
 (defun ergoemacs-theme-component--define-key-in-keymaps (keymap keymap-shortcut key def)
@@ -732,13 +736,13 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
            (component-version-variable-layout nil)
            (component-version-fixed-layout nil)
            (component-version-redundant-keys nil)
+           (component-version-minor-mode-layout nil)
            (component-version-curr nil)
            (component-version-list '())
            (defined-keys '())
            (variable-layout '())
            (fixed-layout '())
            (defined-commands '())
-           (defered-minor-modes '())
            (minor-mode-layout '())
            (redundant-keys '())
            (ergoemacs-translation-from ergoemacs-translation-from)
@@ -759,35 +763,6 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
          (push (list component-version-curr
                      component-version-fixed-layout
                      component-version-variable-layout) component-version-list))
-       ;; Now Setup the minor mode lists.
-       (mapc
-        (lambda(k)
-          (let ((keymap (nth 0 k))
-                (kd (nth 1 k))
-                (def (nth 2 k))
-                (hook (nth 3 k))
-                (use-keymap-p (nth 4 k))
-                (always-p (nth 5 k))
-                (variable-p nil)
-                tmp ret)
-            ;;; `define-minor-mode' minor mode defines MODE-hook and MODE-map
-            ;;; `define-derived-mode' defines MODE-hook and MODE-map
-            (setq tmp (assoc kd defined-keys))
-            (when tmp
-              (setq kd (car (cdr tmp))))
-            (setq variable-p (and variable-reg
-                                  (condition-case nil
-                                      (string-match variable-reg kd)
-                                    (error nil))))
-            (setq ret (list (list kd def (if use-keymap-p keymap nil) variable-p)))
-            (setq tmp (assoc hook minor-mode-layout))
-            (when tmp
-              (setq minor-mode-layout (delete tmp minor-mode-layout))
-              (setq tmp (nth 1 tmp))
-              (setq always-p (or always-p (nth 2 tmp)))
-              (setq ret (append tmp ret)))
-            (push (list hook ret always-p) minor-mode-layout)))
-        defered-minor-modes)
        (puthash (concat name ":plist") ',(nth 0 kb) ergoemacs-theme-component-hash)
        (puthash (concat name ":fixed") (symbol-value 'fixed-layout) ergoemacs-theme-component-hash)
        (puthash (concat name ":variable") (symbol-value 'variable-layout) ergoemacs-theme-component-hash)
