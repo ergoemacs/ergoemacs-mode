@@ -1210,8 +1210,10 @@ This is done by checking if this is a command that supports shift selection or c
 (defvar ergoemacs-pre-command-hook nil
   "Pre-command hook for `ergoemacs-mode'")
 
-(defvar ergoemacs-hook-exception-functions '(auto-indent-mode-pre-command-hook ergoemacs-pre-command-hook)
-  "Hooks that are not moved to `ergoemacs-pre-command-hook'.")
+(defvar ergoemacs-hook-functions '(delete-selection-pre-hook 
+                                   ac-handle-pre-command)
+  "Hooks that are moved to `ergoemacs-pre-command-hook'.
+These hooks are deferred to make sure `this-command' is set appropriately.")
 
 (defun ergoemacs-populate-pre-command-hook (&optional depopulate)
   "Populate `ergoemacs-pre-command-hook' with `pre-command-hook' values."
@@ -1220,7 +1222,7 @@ This is done by checking if this is a command that supports shift selection or c
      (lambda(item)
        (if (eq item t)
            (setq do-append t)
-         (unless (or depopulate (memq item ergoemacs-hook-exception-functions))
+         (unless (or depopulate (not (memq item ergoemacs-hook-functions)))
            (add-hook 'ergoemacs-pre-command-hook item do-append nil)
            (remove-hook 'pre-command-hook item nil))
          (when depopulate
@@ -1234,7 +1236,7 @@ This is done by checking if this is a command that supports shift selection or c
        (lambda(item)
          (if (eq item t)
              (setq do-append t)
-           (unless (or depopulate (memq item ergoemacs-hook-exception-functions))
+           (unless (or depopulate (not (memq item ergoemacs-hook-functions)))
              (add-hook 'ergoemacs-pre-command-hook item do-append t)
              (remove-hook 'pre-command-hook item t))
            (when depopulate
