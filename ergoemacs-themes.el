@@ -424,20 +424,19 @@ When fixed-layout and variable-layout are bound"
                 (mapcar
                  (lambda(elt)
                    (cond
-                    ((equal (car elt) hook)
+                    ((eq (car elt) hook)
                      (let ((lst (car (cdr elt))))
                        (add-to-list 'lst (if modify-keymap-p keymap t) nil 'eq)
                        (setq found-1-p t)
                        (list hook lst)))
-                    ((eq (car elt) a-key)
+                    ((equal (car elt) a-key)
                      (let ((lst (car (cdr elt))) new-lst)
                        (mapc
                         (lambda(elt-2)
                           (cond
                            ((equal (car elt-2) kd)
                             (setq found-2-p t)
-                            (when def
-                              (push (list kd def) new-lst)))
+                            (push (list kd def) new-lst))
                            (t
                             (push elt-2 new-lst))))
                         lst)
