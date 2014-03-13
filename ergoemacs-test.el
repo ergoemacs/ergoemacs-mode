@@ -865,7 +865,7 @@ Selected mark would not be cleared after paste."
       (ergoemacs-copy-line-or-region)
       (mark-whole-buffer)
       (ergoemacs-paste)
-      (setq ret (not mark-active)))
+      (setq ret (or deactivate-mark (not mark-active))))
     (should ret)))
 
 (provide 'ergoemacs-test)
