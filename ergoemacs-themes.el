@@ -378,7 +378,7 @@ When fixed-layout and variable-layout are bound"
   (when (and (boundp 'fixed-layout) (boundp 'variable-layout))
     (if (memq keymap '(global-map ergoemacs-keymap))
         (ergoemacs-theme-component--global-set-key key def)
-      (let ((hook (or
+      (let* ((hook (or
                    (and (boundp 'ergoemacs-hook) ergoemacs-hook)
                    (intern (if (string-match "mode" (symbol-name keymap))
                                (replace-regexp-in-string "mode.*" "mode-hook" (symbol-name keymap))
