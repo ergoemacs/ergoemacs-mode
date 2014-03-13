@@ -398,6 +398,7 @@ When fixed-layout and variable-layout are bound"
             a-key
             jf found-1-p found-2-p)
         (when variable-p
+          (setq variable-p t)
           (setq jf (and just-first-reg
                         (condition-case nil
                             (string-match just-first-reg kd)
@@ -436,7 +437,7 @@ When fixed-layout and variable-layout are bound"
                           (cond
                            ((equal (car elt-2) kd)
                             (setq found-2-p t)
-                            (push (list kd def) new-lst))
+                            (push (list kd def jf) new-lst))
                            (t
                             (push elt-2 new-lst))))
                         lst)
@@ -600,7 +601,7 @@ components listed.
           (only-fixed (string-match ":fixed" (or (and (stringp component) component)
                                                  (symbol-name component))))
           fixed-maps variable-maps version minor-alist keymap-list
-          always-p modify-keymap-p)
+          always-p modify-keymap-p ret already-done-list)
       (when (string-match "::\\([0-9.]+\\)$" true-component)
         (setq version (match-string 1 true-component))
         (setq true-component (replace-match "" nil nil true-component)))
@@ -610,7 +611,7 @@ components listed.
                        version
                        (gethash (concat true-component ":version")
                                 ergoemacs-theme-component-hash))))
-      (unless only-fixed
+      (unless only-variable
         (setq fixed-maps (gethash (concat true-component version ":maps") ergoemacs-theme-component-hash))
         (unless fixed-maps
           ;; Setup fixed fixed-keymap for this component.
@@ -631,18 +632,83 @@ components listed.
                      (setq keys (nth 1 keys))
                      (mapc
                       (lambda(key-list)
-                        (define-key map (read-kbd-macro (nth 0 key-list) t)
-                          (nth 1 key-list)))
+                        (cond
+                         ((stringp (nth 1 key-list))
+                          (define-key map (read-kbd-macro (nth 0 key-list) t)
+                            `(lambda() (interactive) (ergoemacs-read-key ,(nth 1 key-list)))))
+                         (t
+                          (define-key map (read-kbd-macro (nth 0 key-list) t)
+                            (nth 1 key-list)))))
                       keys))
                    (unless (equal map '(keymap))
                      (push (list map-name always-p map) fixed-maps))))
                keymap-list)
               (unless (equal fixed-maps '())
-                (puthash (concat true-component version ":minor") fixed-maps
+                (puthash (concat true-component version ":maps") fixed-maps
                          ergoemacs-theme-component-hash))))))
+
+      (unless only-fixed
+        (setq variable-maps (gethash (concat true-component version ":" ergoemacs-keyboard-layout ":maps") ergoemacs-theme-component-hash))
+        (unless variable-maps
+          ;; Setup variable keymaps for this component.
+          (setq minor-alist
+                (gethash (concat true-component version ":minor") ergoemacs-theme-component-hash))
+          (when minor-alist
+            (setq keymap-list (assoc hook minor-alist))
+            (when keymap-list
+              (setq keymap-list (car (cdr keymap-list))
+                    variable-maps '())
+              (mapc
+               (lambda(map-name)
+                 (let ((keys (assoc (list hook map-name t) minor-alist))
+                       (map (make-sparse-keymap))
+                       always-p)
+                   (when keys
+                     (setq always-p (nth 2 keys))
+                     (setq keys (nth 1 keys))
+                     (mapc
+                      (lambda(key-list)
+                        (cond
+                         ((stringp (nth 1 key-list))
+                          (define-key map (ergoemacs-kbd (nth 0 key-list) nil (nth 3 key-list))
+                            `(lambda() (interactive) (ergoemacs-read-key ,(nth 1 key-list)))))
+                         (t
+                          (define-key map (ergoemacs-kbd (nth 0 key-list) nil (nth 3 key-list))
+                            (nth 1 key-list)))))
+                      keys))
+                   (unless (equal map '(keymap))
+                     (push (list map-name always-p map) variable-maps))))
+               keymap-list)
+              (unless (equal variable-maps '())
+                (puthash (concat true-component version ":" ergoemacs-keyboard-layout ":maps")
+                         variable-maps ergoemacs-theme-component-hash))))))
       ;; Now variable maps
-      (symbol-value 'fixed-maps)
-      )))
+      (symbol-value 'variable-maps)
+      (setq already-done-list '())
+      (setq ret
+            (mapcar
+             (lambda(keymap-list)
+               (let ((map-name (nth 0 keymap-list))
+                     fixed-map)
+                 (setq fixed-map (assoc map-name fixed-maps))
+                 (if (not fixed-map)
+                     keymap-list
+                   (push map-name already-done-list)
+                   (list map-name (or (nth 1 keymap-list) (nth 1 fixed-map))
+                         (if ergoemacs-prefer-variable-keybindings
+                             (make-composed-keymap
+                              (nth 2 keymap-list)
+                              (nth 2 fixed-map))
+                           (make-composed-keymap
+                            (nth 2 fixed-map)
+                            (nth 2 keymap-list)))))))
+             variable-maps))
+      (mapc
+       (lambda(keymap-list)
+         (unless (member (nth 9 keymap-list) already-done-list)
+           (push keymap-list ret)))
+       fixed-maps)
+      (symbol-value 'ret))))
 (defun ergoemacs-theme-component-keymaps (component &optional version)
   "Gets the keymaps for COMPONENT for component VERSION.
 If the COMPONENT has the suffix :fixed, just get the fixed component.
@@ -724,7 +790,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
            (define-key unbind (read-kbd-macro x) 'ergoemacs-undefined))
          (gethash (concat true-component version ":redundant") ergoemacs-theme-component-hash))
         (puthash (concat true-component version ":unbind") unbind ergoemacs-theme-component-hash))
-      (unless only-fixed
+      (unless only-variable
         (setq fixed-shortcut (gethash (concat true-component version ":fixed:shortcut") ergoemacs-theme-component-hash))
         (setq fixed-read (gethash (concat true-component version ":fixed:read") ergoemacs-theme-component-hash))
         (setq fixed (gethash (concat true-component version ":fixed:map") ergoemacs-theme-component-hash))
@@ -771,7 +837,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
             (puthash (concat true-component version ":fixed:shortcut:list") fixed-shortcut-list
                      ergoemacs-theme-component-hash))))
 
-      (unless only-variable
+      (unless only-fixed
         (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  version ":variable:shortcut") ergoemacs-theme-component-hash))
         (setq variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:read") ergoemacs-theme-component-hash))
         (setq variable (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") ergoemacs-theme-component-hash))
@@ -853,7 +919,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
            (desc ,(or (plist-get (nth 0 kb) ':description) ""))
            (layout ,(or (plist-get (nth 0 kb) ':layout) "us"))
            (variable-reg ,(or (plist-get (nth 0 kb) ':variable-reg)
-                              (regexp-opt '("M-" "<apps>" "<menu>"))))
+                              (concat "\\(?:^\\|<\\)" (regexp-opt '("M-" "<apps>" "<menu>")))))
            (just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-variable-reg)
                                 nil))
            (versions '())
