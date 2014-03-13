@@ -443,14 +443,14 @@ When fixed-layout and variable-layout are bound"
                        (unless found-2-p
                          (push (list kd def) new-lst))
                        (setq found-2-p t)
-                       (list a-key new-lst)))
+                       (list a-key new-lst always-run-p)))
                     (t
                      elt)))
                  minor-mode-layout))
           (unless found-1-p
             (push (list hook (list (if modify-keymap-p keymap t))) minor-mode-layout))
           (unless found-2-p
-            (push (list a-key (list (list kd def))) minor-mode-layout))))))))
+            (push (list a-key (list (list kd def)) always-run-p) minor-mode-layout))))))))
 
 
 (defun ergoemacs-theme-component--define-key-in-keymaps (keymap keymap-shortcut key def)
@@ -579,6 +579,70 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
         (symbol-value 'ret))
     ""))
 
+(defun ergoemacs-theme-component-keymaps-for-hook (hook component &optional version)
+  "Gets the keymaps for COMPONENT and component VERSION for HOOK.
+If the COMPONENT has the suffix :fixed, just get the fixed component.
+If the COMPONENT has the suffix :variable, just get the variable component.
+If the COMPONENT has the suffix ::version, just get the closest specified version.
+
+If COMPONENT is a list, return the composite keymaps of all the
+components listed.
+"
+  (if (eq (type-of component) 'cons)
+      (let ((ret nil)) ;; List of components.
+        )
+    ;; Single component
+    (let ((true-component (replace-regexp-in-string ":\\(fixed\\|variable\\)" ""
+                                                    (or (and (stringp component) component)
+                                                        (symbol-name component))))
+          (only-variable (string-match ":variable" (or (and (stringp component) component)
+                                                       (symbol-name component))))
+          (only-fixed (string-match ":fixed" (or (and (stringp component) component)
+                                                 (symbol-name component))))
+          fixed-maps variable-maps version minor-alist keymap-list
+          always-p modify-keymap-p)
+      (when (string-match "::\\([0-9.]+\\)$" true-component)
+        (setq version (match-string 1 true-component))
+        (setq true-component (replace-match "" nil nil true-component)))
+      (if (not version)
+          (setq version "")
+        (setq version (ergoemacs-theme-component-get-closest-version
+                       version
+                       (gethash (concat true-component ":version")
+                                ergoemacs-theme-component-hash))))
+      (unless only-fixed
+        (setq fixed-maps (gethash (concat true-component version ":maps") ergoemacs-theme-component-hash))
+        (unless fixed-maps
+          ;; Setup fixed fixed-keymap for this component.
+          (setq minor-alist
+                (gethash (concat true-component version ":minor") ergoemacs-theme-component-hash))
+          (when minor-alist
+            (setq keymap-list (assoc hook minor-alist))
+            (when keymap-list
+              (setq keymap-list (car (cdr keymap-list))
+                    fixed-maps '())
+              (mapc
+               (lambda(map-name)
+                 (let ((keys (assoc (list hook map-name nil) minor-alist))
+                       (map (make-sparse-keymap))
+                       always-p)
+                   (when keys
+                     (setq always-p (nth 2 keys))
+                     (setq keys (nth 1 keys))
+                     (mapc
+                      (lambda(key-list)
+                        (define-key map (read-kbd-macro (nth 0 key-list) t)
+                          (nth 1 key-list)))
+                      keys))
+                   (unless (equal map '(keymap))
+                     (push (list map-name always-p map) fixed-maps))))
+               keymap-list)
+              (unless (equal fixed-maps '())
+                (puthash (concat true-component version ":minor") fixed-maps
+                         ergoemacs-theme-component-hash))))))
+      ;; Now variable maps
+      (symbol-value 'fixed-maps)
+      )))
 (defun ergoemacs-theme-component-keymaps (component &optional version)
   "Gets the keymaps for COMPONENT for component VERSION.
 If the COMPONENT has the suffix :fixed, just get the fixed component.
@@ -1041,6 +1105,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
   (define-key org-mode-map (kbd "<M-up>") 'ergoemacs-org-metaup)
   (define-key org-mode-map (kbd "<M-left>") 'ergoemacs-org-metaleft)
   (define-key org-mode-map (kbd "<M-right>") 'ergoemacs-org-metaright)
+  (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-mode-paste)
   (define-key org-mode-map (kbd "C-v") 'ergoemacs-org-mode-paste)
 
   (define-key browse-kill-ring-mode-map (kbd "C-f") 'browse-kill-ring-search-forward)
@@ -1061,6 +1126,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
    (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
    (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
    (define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
+   (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
    (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)))
 
 (ergoemacs-theme-component fixed-bold-italic
@@ -1347,7 +1413,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
   :modify-keymap t
   (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
   (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill))
- 
+ (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-mode-paste)
  (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-mode-paste)
  (define-key browse-kill-ring-mode-map (kbd "M-z") 'browse-kill-ring-undo-other-window))
 
