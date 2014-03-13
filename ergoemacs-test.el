@@ -852,6 +852,22 @@ Issue #168."
                          (buffer-string))))
     (should ret)))
 
+(ert-deftest ergoemacs-test-issue-184-paste-should-clear-mark ()
+  "Issue #186.
+Selected mark would not be cleared after paste."
+  (let ((ret t)
+        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
+    (with-temp-buffer
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-min))
+      (push-mark)
+      (end-of-line)
+      (ergoemacs-copy-line-or-region)
+      (mark-whole-buffer)
+      (ergoemacs-paste)
+      (setq ret (or deactivate-mark (not mark-active))))
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
