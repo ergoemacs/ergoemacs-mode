@@ -1909,7 +1909,9 @@ original key binding.
     (when fn-lst
       (setq send-keys (nth 2 (nth 0 fn-lst)))
       (setq fn (nth 0 (nth 0 fn-lst))))
-    (ergoemacs-read-key-call (or (command-remapping fn (point)) fn))))
+    (ergoemacs-read-key-call (or (command-remapping fn (point)) fn))
+    (setq deactivate-mark ergoemacs-deactivate-mark
+          ergoemacs-deactivate-mark nil)))
 
 (defun ergoemacs-install-shortcuts-map (&optional map dont-complete)
   "Returns a keymap with shortcuts installed.
