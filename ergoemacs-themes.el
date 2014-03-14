@@ -720,8 +720,10 @@ components listed.
 
 Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
 "
+  ;;; (let ((tmp (nth 1 (ergoemacs-theme-component-keymaps '(move-char help))))) (message "%s" (substitute-command-keys "\\{tmp}")))
   (if (eq (type-of component) 'cons)
       (let ((ret nil)
+            k-l
             (l0 '())
             (l1 '())
             (l2 '())
@@ -731,15 +733,35 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
          (lambda(comp)
            (let ((new-ret (ergoemacs-theme-component-keymaps comp version)))
              (when (and (nth 0 new-ret) (not (equal (nth 0 new-ret) '(keymap))))
-               (push (nth 0 new-ret) l0))
+               (if (not (keymapp (nth 1 (nth 0 new-ret))))
+                   (push (nth 0 new-ret) l0) ;; Not a composed keymap.
+                 (setq k-l (nth 0 new-ret)) ;; Composed keymap.
+                 ;; Decompose keymaps.
+                 (pop k-l)
+                 (setq l0 (append (reverse k-l) l0))))
              (when (and (nth 1 new-ret) (not (equal (nth 1 new-ret) '(keymap))))
-               (push (nth 1 new-ret) l1))
+               (if (not (keymapp (nth 1 (nth 1 new-ret))))
+                   (push (nth 1 new-ret) l1) ;; Not a composed keymap.
+                 (setq k-l (nth 1 new-ret)) ;; Composed keymap.
+                 ;; Decompose keymaps.
+                 (pop k-l)
+                 (setq l1 (append (reverse k-l) l1))))
              (when (and (nth 2 new-ret) (not (equal (nth 2 new-ret) '(keymap))))
-               (push (nth 2 new-ret) l2))
+               (if (not (keymapp (nth 1 (nth 2 new-ret))))
+                   (push (nth 2 new-ret) l2) ;; Not a composed keymap.
+                 (setq k-l (nth 2 new-ret)) ;; Composed keymap.
+                 ;; Decompose keymaps.
+                 (pop k-l)
+                 (setq l2 (append (reverse k-l) l2))))
              (when (nth 3 new-ret)
                (setq l3 (append l3 (nth 3 new-ret))))
              (when (and (nth 4 new-ret) (not (equal (nth 4 new-ret) '(keymap))))
-               (push (nth 4 new-ret) l4))))
+               (if (not (keymapp (nth 1 (nth 4 new-ret))))
+                   (push (nth 4 new-ret) l4) ;; Not a composed keymap.
+                 (setq k-l (nth 4 new-ret)) ;; Composed keymap.
+                 ;; Decompose keymaps.
+                 (pop k-l)
+                 (setq l4 (append (reverse k-l) l4))))))
          (reverse component))
         (setq ret
               (list
@@ -853,8 +875,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
             (mapc
              (lambda(x)
                (when (and (eq 'string (type-of (nth 0 x))))
-                 (setq trans-key (ergoemacs-get-kbd-translation (nth 0 x)))
-                 (setq key (ergoemacs-kbd trans-key nil (nth 3 x)))
+                 (setq key (ergoemacs-kbd (nth 0 x) nil (nth 3 x)))
                  (when (string-match "^\\([^ ]+\\) " (nth 0 x))
                    (add-to-list 'input-keys (match-string 1 (nth 0 x))))
                  (when (ergoemacs-global-changed-p key) ;; Override
@@ -883,6 +904,17 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                      ergoemacs-theme-component-hash)
             (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut:list") variable-shortcut-list
                      ergoemacs-theme-component-hash))))
+      (mapc
+       (lambda(var)
+         (when (equal (symbol-value var) '(keymap))
+           (set var nil)))
+       '(fixed-read
+         fixed-shortcut
+         fixed
+         variable-read
+         variable-shortcut
+         variable
+         unbind))
       (cond
        (only-fixed
         (list fixed-read fixed-shortcut fixed fixed-shortcut-list nil))
