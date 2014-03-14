@@ -1479,6 +1479,7 @@ When in `browse-kill-ring-mode', cycle backward through the key ring.
           (ergoemacs-shortcut-remap 'yank)
         (ergoemacs-shortcut-remap 'yank-pop)))))
 
+(put 'ergoemacs-paste 'delete-selection 'yank)
 (defun ergoemacs-paste (&optional arg)
   "Run `yank' or `yank-pop' if this command is repeated.
 This is `yank' if `ergoemacs-smart-paste' is nil.
@@ -1504,6 +1505,7 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
    (t
     (ergoemacs-shortcut-remap 'yank))))
 
+(put 'ergoemacs-org-yank 'delete-selection 'yank)
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
   (let ((regtxt (and cua--register (get-register cua--register))))

@@ -1211,7 +1211,8 @@ This is done by checking if this is a command that supports shift selection or c
   "Pre-command hook for `ergoemacs-mode'")
 
 (defvar ergoemacs-hook-functions '(delete-selection-pre-hook 
-                                   ac-handle-pre-command)
+                                   ac-handle-pre-command
+                                   cua--pre-command-handler)
   "Hooks that are moved to `ergoemacs-pre-command-hook'.
 These hooks are deferred to make sure `this-command' is set appropriately.")
 
