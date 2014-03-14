@@ -738,21 +738,21 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                  (setq k-l (nth 0 new-ret)) ;; Composed keymap.
                  ;; Decompose keymaps.
                  (pop k-l)
-                 (setq l0 (append (reverse k-l) l0))))
+                 (setq l0 (append k-l l0))))
              (when (and (nth 1 new-ret) (not (equal (nth 1 new-ret) '(keymap))))
                (if (not (keymapp (nth 1 (nth 1 new-ret))))
                    (push (nth 1 new-ret) l1) ;; Not a composed keymap.
                  (setq k-l (nth 1 new-ret)) ;; Composed keymap.
                  ;; Decompose keymaps.
                  (pop k-l)
-                 (setq l1 (append (reverse k-l) l1))))
+                 (setq l1 (append k-l l1))))
              (when (and (nth 2 new-ret) (not (equal (nth 2 new-ret) '(keymap))))
                (if (not (keymapp (nth 1 (nth 2 new-ret))))
                    (push (nth 2 new-ret) l2) ;; Not a composed keymap.
                  (setq k-l (nth 2 new-ret)) ;; Composed keymap.
                  ;; Decompose keymaps.
                  (pop k-l)
-                 (setq l2 (append (reverse k-l) l2))))
+                 (setq l2 (append k-l l2))))
              (when (nth 3 new-ret)
                (setq l3 (append l3 (nth 3 new-ret))))
              (when (and (nth 4 new-ret) (not (equal (nth 4 new-ret) '(keymap))))
@@ -761,7 +761,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                  (setq k-l (nth 4 new-ret)) ;; Composed keymap.
                  ;; Decompose keymaps.
                  (pop k-l)
-                 (setq l4 (append (reverse k-l) l4))))))
+                 (setq l4 (append k-l l4))))))
          (reverse component))
         (setq ret
               (list
