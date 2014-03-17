@@ -665,7 +665,7 @@ If COMPONENT is a list, return the composite keymaps of all the
 components listed.
 
 The return value is an alist of keymaps needed for this hook.  The format is:
-  ((map-name always-modify-p keymap-stub read-key-stub))
+  ((map-name always-modify-p keymap-stub full-map))
 
 map-name is the map name that will be modified
 always-modify-p is a flag that will modify the keymap every time the hook is run.
@@ -690,10 +690,7 @@ This function does not finalize maps by installing them into the original maps.
                      (mapcar
                       (lambda(keymap-list)
                         (let ((map-name (nth 0 keymap-list))
-                              old-map
-                              new-map
-                              old-read
-                              new-read)
+                              full-map-p)
                           (setq new-map (assoc map-name new-ret))
                           (if (not new-map)
                               keymap-list
@@ -706,8 +703,8 @@ This function does not finalize maps by installing them into the original maps.
                             (setq always-modify-p (or (nth 1 keymap-list) (nth 1 new-map)))
                             (setq new-map (nth 2 new-map)
                                   old-map (nth 2 keymap-list)
-                                  new-read (nth 3 new-map)
-                                  old-read (nth 3 keymap-list))
+                                  full-map-p (or (nth 3 keymap-list)
+                                                 (nth 3 new-map)))
                             (cond
                              ((and (keymapp (nth 1 new-map)) ; 2 composed.
                                    (keymapp (nth 1 old-map)))
@@ -724,31 +721,11 @@ This function does not finalize maps by installing them into the original maps.
                               (push 'keymap new-map))
                              (t ;; decomposed maps.
                               (setq new-map (make-composed-keymap (list new-map old-map)))))
-                            (cond
-                             ((and (not new-read) (not old-read)))
-                             ((and new-read (not old-read)))
-                             ((and old-read (not new-read))
-                              (setq new-read old-read))
-                             ((and (keymapp (nth 1 new-read)) ; 2 composed.
-                                   (keymapp (nth 1 old-read)))
-                              (pop new-read)
-                              (pop old-read)
-                              (setq new-read (append new-read old-read)))
-                             ((keymapp (nth 1 old-read))
-                              (pop old-read)
-                              (setq new-read (append (list new-read) old-read))
-                              (push 'keymap new-read))
-                             ((keymapp (nth 1 new-read)) ;; New map is composed.
-                              (pop new-read)
-                              (setq new-read (append new-read (list old-read)))
-                              (push 'keymap new-read))
-                             (t ;; decomposed maps.
-                              (setq new-read (make-composed-keymap (list new-read old-read)))))
-                            (list map-name always-modify-p new-map new-read))))
+                            (list map-name always-modify-p new-map full-map-p))))
                       ret))
                (mapc
                 (lambda(keymap-list)
-                  (unless (member (nth 9 keymap-list) already-done-list)
+                  (unless (member (nth 0 keymap-list) already-done-list)
                     (push keymap-list ret)))
                 new-ret))))
          (reverse component))
@@ -785,23 +762,15 @@ This function does not finalize maps by installing them into the original maps.
             (setq keymap-list (assoc hook minor-alist))
             (when keymap-list
               (setq keymap-list (car (cdr keymap-list))
-                    fixed-maps '()
-                    shortcut-list (gethash (concat true-component version ":fixed:shortcut:list") ergoemacs-theme-component-hash))
+                    fixed-maps '())
               (mapc
                (lambda(map-name)
                  (let ((keys (assoc (list hook map-name nil) minor-alist))
                        (map (make-sparse-keymap))
-                       full-map
-                       read-map
                        always-p)
                    (when keys
                      (setq always-p (nth 2 keys))
                      (setq full-shortcut-map-p (nth 3 keys))
-                     (unless (eq map-name 't)
-                       (setq full-map (ergoemacs-theme-component-keymaps (concat true-component ":fixed") true-version))
-                       (ergoemacs-theme--install-shortcuts-list
-                        shortcut-list map (symbol-value map-name)
-                        full-shortcut-map-p))
                      (setq keys (nth 1 keys))
                      (mapc
                       (lambda(key-list)
@@ -814,15 +783,7 @@ This function does not finalize maps by installing them into the original maps.
                             (nth 1 key-list)))))
                       keys))
                    (unless (equal map '(keymap))
-                     (when full-map ;; Compose full map into map.
-                       (setq read-map (nth 0 full-map))
-                       (setq full-map (nth 2 full-map))
-                       (if (not (keymapp (nth 1 full-map)))
-                           (setq map (list 'keymap map full-map))
-                         (pop full-map)
-                         (setq map (append (list map) full-map))
-                         (push 'keymap map)))
-                     (push (list map-name always-p map read-map) fixed-maps))))
+                     (push (list map-name always-p map full-shortcut-map-p) fixed-maps))))
                keymap-list)
               (unless (equal fixed-maps '())
                 (puthash (concat true-component version ":maps") fixed-maps
@@ -838,23 +799,16 @@ This function does not finalize maps by installing them into the original maps.
             (setq keymap-list (assoc hook minor-alist))
             (when keymap-list
               (setq keymap-list (car (cdr keymap-list))
-                    variable-maps '()
-                    shortcut-list (gethash (concat true-component ":" ergoemacs-keyboard-layout  version ":variable:shortcut:list") ergoemacs-theme-component-hash))
+                    variable-maps '())
               (mapc
                (lambda(map-name)
                  (let ((keys (assoc (list hook map-name t) minor-alist))
                        (map (make-sparse-keymap))
                        full-map
-                       read-map
                        always-p)
                    (when keys
                      (setq always-p (nth 2 keys))
                      (setq full-shortcut-map-p (nth 3 keys))
-                     (unless (eq map-name 't)
-                       (setq full-map (ergoemacs-theme-component-keymaps (concat true-component ":variable") true-version))
-                       (ergoemacs-theme--install-shortcuts-list
-                        shortcut-list map (symbol-value map-name)
-                        full-shortcut-map-p))
                      (setq keys (nth 1 keys))
                      (mapc
                       (lambda(key-list)
@@ -867,15 +821,7 @@ This function does not finalize maps by installing them into the original maps.
                             (nth 1 key-list)))))
                       keys))
                    (unless (equal map '(keymap))
-                     (when full-map ;; Compose full map into map.
-                       (setq read-map (nth 0 full-map))
-                       (setq full-map (nth 2 full-map))
-                       (if (not (keymapp (nth 1 full-map)))
-                           (setq map (list 'keymap map full-map))
-                         (pop full-map)
-                         (setq map (append (list map) full-map))
-                         (push 'keymap map)))
-                     (push (list map-name always-p map read-map) variable-maps))))
+                     (push (list map-name always-p map full-shortcut-map-p) variable-maps))))
                keymap-list)
               (unless (equal variable-maps '())
                 (puthash (concat true-component version ":" ergoemacs-keyboard-layout ":maps")
@@ -886,11 +832,12 @@ This function does not finalize maps by installing them into the original maps.
             (mapcar
              (lambda(keymap-list)
                (let ((map-name (nth 0 keymap-list))
-                     fixed-map composed-map read-map tmp)
+                     fixed-map composed-map tmp full-shortcut-map-p)
                  (setq fixed-map (assoc map-name fixed-maps))
                  (if (not fixed-map)
                      keymap-list
                    (push map-name already-done-list)
+                   (setq full-shortcut-map-p (or (nth 3 keymap-list) (nth 2 fixed-map)))
                    ;; Need to decompose if needed...
                    (cond
                     ((and (keymapp (nth 1 (nth 2 keymap-list)))
@@ -915,32 +862,8 @@ This function does not finalize maps by installing them into the original maps.
                              (append composed-map tmp)
                            (append tmp composed-map)))
                    (push 'keymap composed-map)
-                   (cond
-                    ((and (not (nth 3 keymap-list)) (not (nth 3 fixed-map))))
-                    ((and (nth 3 keymap-list) (not (nth 3 fixed-map)))
-                     (setq read-map (nth 3 keymap-list)))
-                    ((and (nth 3 fixed-map) (not (nth 3 keymap-list)))
-                     (setq read-map (nth 3 fixed-map)))
-                    ((and (keymapp (nth 1 (nth 3 keymap-list)))
-                          (keymapp (nth 1 (nth 3 fixed-map))))
-                     (setq read-map (nth 3 keymap-list))
-                     (pop read-map)
-                     (setq tmp (nth 3 fixed-map))
-                     (pop tmp))
-                    ((keymapp (nth 1 (nth 3 keymap-list)))
-                     (setq read-map (nth 3 keymap-list))
-                     (pop read-map)
-                     (setq tmp (list (nth 3 fixed-map))))
-                    ((keymapp (nth 1 (nth 3 fixed-map)))
-                     (setq read-map (list (nth 3 keymap-list)))
-                     (setq tmp (nth 3 fixed-map))
-                     (pop tmp))
-                    (t
-                     (setq read-map (list (nth 3 keymap-list)))
-                     (setq tmp (list (nth 3 fixed-map)))))
-                   
                    (list map-name (or (nth 1 keymap-list) (nth 1 fixed-map))
-                         composed-map read-map))))
+                         composed-map full-shortcut-map-p))))
              variable-maps))
       (mapc
        (lambda(keymap-list)
@@ -1296,30 +1219,107 @@ keymaps-stub is the keymap overrides that will be installed.
 When map-name is t, it is for a keymap put in `ergoemacs-emulation-mode-map-alist'
 
 Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-components'"
-  ;;(let* ((tm0 (ergoemacs-theme-keymaps 'standard))(tmp (nth 2 (nth 0 (ergoemacs-theme-keymaps-for-hook 'isearch-mode-hook 'standard))))) (substitute-command-keys "\\{tmp}"))
-  (mapcar
-   (lambda(c)
-     (if (eq (nth 0 c) 't)
-         (list 't (nth 1 c) (nth 2 c))
-       (let ((map-name (nth 0 c))
-             (always-modify-p (nth 1 c))
-             (base-keymap (nth 2 c))
-             (read-keymap (nth 3 c)))
-         (if (keymapp (nth 1 base-keymap))
-             (pop base-keymap)
-           (setq base-keymap (list base-keymap)))
-         (when read-keymap
-           (setq base-keymap (append (list read-keymap) base-keymap)))
-         ;; Set parent to original keymap and compose read-keymap.
-         (setq base-keymap (make-composed-keymap base-keymap (symbol-value map-name)))
-         (list map-name always-modify-p base-keymap))))
-   (ergoemacs-theme-component-keymaps-for-hook hook (ergoemacs-theme-components theme) version)))
+  ;;  (let* ((tm0 (ergoemacs-theme-keymaps 'standard))(tmp (nth 2 (nth 0 (ergoemacs-theme-keymaps-for-hook 'isearch-mode-hook 'standard))))) (message "%s" tmp) (substitute-command-keys "\\{tmp}"))
+  
+  (let ((theme-components (ergoemacs-theme-components theme))
+        overall-keymaps)
+    (setq overall-keymaps (ergoemacs-theme-keymaps theme version))
+    ;; 0:read-keymap 1:shortcut-keymap 2:keymap 3:shortcut-list 4:unbind-keymap.
+    (mapcar
+     (lambda(c)
+       (if (eq (nth 0 c) 't)
+           (list 't (nth 1 c) (nth 2 c))
+         (let ((map-name (nth 0 c))
+               (always-modify-p (nth 1 c))
+               (base-keymap (nth 2 c))
+               (full-keymap-p (nth 3 c))
+               (shortcut-map (make-sparse-keymap))
+               orig-map
+               final-map)
+           (setq orig-map (gethash (concat (symbol-name map-name) ":original-map") ergoemacs-theme-component-hash))
+           (unless orig-map
+             (setq orig-map (copy-keymap (symbol-value map-name)))
+             (puthash (concat (symbol-name map-name) ":original-map") (symbol-value map-name) ergoemacs-theme-component-hash))
+           (ergoemacs-theme--install-shortcuts-list
+            (nth 3 overall-keymaps) shortcut-map
+            orig-map full-keymap-p)
+           (if (not full-keymap-p)
+               (setq final-map (make-composed-keymap
+                                (if (not (keymapp (nth 1 shortcut-map)))
+                                    (append base-keymap (list shortcut-map))
+                                  (pop shortcut-map)
+                                  (append base-keymap shortcut-map)) orig-map))
+             (if (keymapp (nth 1 base-keymap))
+                 (pop base-keymap)
+               (setq base-keymap (list base-keymap)))
+             (setq base-keymap
+                   (if (not (keymapp (nth 1 shortcut-map)))
+                       (append base-keymap (list shortcut-map))
+                     (pop shortcut-map)
+                     (append base-keymap shortcut-map)))
+             (when (nth 0 overall-keymaps)
+               (setq base-keymap (append (nth 0 overall-keymaps)  base-keymap)))
+             ;; Set parent to original keymap and compose read-keymap.
+             (setq final-map (make-composed-keymap base-keymap orig-map)))
+           (list map-name always-modify-p final-map))))
+     (ergoemacs-theme-component-keymaps-for-hook hook theme-components version))))
 
 (defun ergoemacs-theme-keymaps (theme &optional version)
   "Gets the keymaps for THEME for VERSION.
 Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
 Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
   (ergoemacs-theme-component-keymaps (ergoemacs-theme-components theme) version))
+
+(defun ergoemacs-theme-install (theme &optional version)
+  "Installs ergoemacs-theme into appropriate keymaps."
+  (let ((tc (ergoemacs-theme-keymaps theme version)))
+    (setq ergoemacs-read-input-keymap (nth 0 tc)
+          ergoemacs-shortcut-keymap (nth 1 tc)
+          ergoemacs-keymap (nth 2 tc)
+          ergoemacs-unbind-keymap (nth 4 tc))
+    ;; Reset Shortcut hash.
+    (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal))
+    (mapc
+     (lambda(c)
+       (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash))
+     (nth 3 tc))
+
+    (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+    ;; `ergoemacs-keymap' top in `minor-mode-map-alist'
+    (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
+      (when x
+        (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+      (push (cons 'ergoemacs-mode ergoemacs-keymap) minor-mode-map-alist))
+
+    ;; `ergoemacs-unbind-keys' at the bottom in `minor-mode-map-alist'
+    (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
+      (when x
+        (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+      ;; Put at the END of the list.
+      (setq minor-mode-map-alist
+            (append minor-mode-map-alist
+                    (list (cons 'ergoemacs-unbind-keys ergoemacs-unbind-keymap)))))
+
+    ;; `ergoemacs-read-input-keymap', then `ergoemacs-shortcut-keymap'
+    ;; in `ergoemacs-emulation-mode-map-alist'
+    (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
+      (when x
+        (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+      (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist))
+    
+    (let ((x (assq 'ergoemacs-read-input-keys ergoemacs-emulation-mode-map-alist)))
+      (when x
+        (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+      (push (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap) ergoemacs-emulation-mode-map-alist)
+      (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+      (set-default 'ergoemacs-mode t)
+      (set-default 'ergoemacs-shortcut-keys t)
+      (set-default 'ergoemacs-read-input-keys t)
+      (set-default 'ergoemacs-unbind-keys t)
+      (setq ergoemacs-mode t
+            ergoemacs-shortcut-keys t
+            ergoemacs-read-input-keys t
+            ergoemacs-unbind-keys t))))
 
 (defvar ergoemacs-theme-hash (make-hash-table :test 'equal))
 (defmacro ergoemacs-theme (&rest body-and-plist)
@@ -1493,7 +1493,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
   
   (with-hook
    isearch-mode-hook
-   :modify-map t
+   :modify-map 
    (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
    (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
    (define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
@@ -2087,7 +2087,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
   "No Backspace!"
   (global-unset-key (kbd "<backspace>")))
 
-(ergoemacs-theme standard
+(ergoemacs-theme standared
  "Standard Ergoemacs Theme"
  :components '(
                backspace-is-back
@@ -2100,6 +2100,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
                misc
                move-bracket
                move-buffer
+               move-char
                move-line
                move-page
                move-paragraph
