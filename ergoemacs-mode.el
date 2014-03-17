@@ -1186,7 +1186,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
    (lambda(what)
      (let ((x (assq what ergoemacs-emulation-mode-map-alist)))
        (and x (setq ergoemacs-emulation-mode-map-alist
-                    (cons x (delq x ergoemacs-emulation-mode-map-alist ))))))
+                    (cons x (delq x ergoemacs-emulation-mode-map-alist))))))
    ;; Promoted from least to most important
    '(ergoemacs-shortcut-keys
      ergoemacs-shortcut-override-mode
@@ -1195,7 +1195,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
      ergoemacs-read-input-keys))
   ;; Demote
   (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
-    (setq minor-mode-map-alist (append (delete x minor-mode-map-alist) (list x)))))
+    (setq minor-mode-map-alist (append (delq x minor-mode-map-alist) (list x)))))
 
 (defun ergoemacs-is-movement-command-p (command)
   "Determines if COMMAND is a movement command.
