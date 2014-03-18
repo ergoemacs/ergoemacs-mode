@@ -622,38 +622,7 @@ FULL-SHORTCUT-MAP-P "
        (ergoemacs-theme--install-shortcut-item
         key args keymap lookup-keymap
         full-shortcut-map-p)))
-   shortcut-list)
-  ;; (let ((true-component
-  ;;        (replace-regexp-in-string
-  ;;         ":\\(fixed\\|variable\\)" ""
-  ;;         (or (and (stringp component) component)
-  ;;             (symbol-name component))))
-  ;;       (only-variable
-  ;;        (string-match
-  ;;         ":variable"
-  ;;         (or (and (stringp component) component)
-  ;;             (symbol-name component))))
-  ;;       (only-fixed
-  ;;        (string-match
-  ;;         ":fixed"
-  ;;         (or (and (stringp component) component)
-  ;;             (symbol-name component))))
-  ;;       (version version)
-  ;;       fixed-shortcut )
-  ;;   (if (not version)
-  ;;       (setq version "")
-  ;;     (setq version (ergoemacs-theme-component-get-closest-version
-  ;;                    version
-  ;;                    (gethash (concat true-component ":version")
-  ;;                             ergoemacs-theme-component-hash))))
-    
-  ;;   (unless only-variable
-  ;;     (setq fixed-shortcut (gethash (concat true-component version ":fixed:shortcut") ergoemacs-theme-component-hash))
-  ;;     )
-  ;;   (unless only-fixed
-  ;;     (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  version ":variable:shortcut") ergoemacs-theme-component-hash))
-  ;;     ))
-  )
+   shortcut-list))
 
 (defun ergoemacs-theme-component-keymaps-for-hook (hook component &optional version)
   "Gets the keymaps for COMPONENT and component VERSION for HOOK.
@@ -1219,8 +1188,7 @@ keymaps-stub is the keymap overrides that will be installed.
 When map-name is t, it is for a keymap put in `ergoemacs-emulation-mode-map-alist'
 
 Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-components'"
-  ;;  (let* ((tm0 (ergoemacs-theme-keymaps 'standard))(tmp (nth 2 (nth 0 (ergoemacs-theme-keymaps-for-hook 'isearch-mode-hook 'standard))))) (message "%s" tmp) (substitute-command-keys "\\{tmp}"))
-  
+  ;;
   (let ((theme-components (ergoemacs-theme-components theme))
         overall-keymaps)
     (setq overall-keymaps (ergoemacs-theme-keymaps theme version))
@@ -1233,22 +1201,28 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
                (always-modify-p (nth 1 c))
                (base-keymap (nth 2 c))
                (full-keymap-p (nth 3 c))
-               (shortcut-map (make-sparse-keymap))
+               (shortcut-map (make-sparse-keymap)) tmp
                orig-map
                final-map)
            (setq orig-map (gethash (concat (symbol-name map-name) ":original-map") ergoemacs-theme-component-hash))
            (unless orig-map
-             (setq orig-map (copy-keymap (symbol-value map-name)))
+             (setq tmp (intern-soft (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
+             (if (and tmp (symbol-value tmp)) ;; In case old `ergoemacs-mode' already modified it...
+                 (setq orig-map (copy-keymap (symbol-value tmp)))
+               (setq orig-map (copy-keymap (symbol-value map-name))))
              (puthash (concat (symbol-name map-name) ":original-map") (symbol-value map-name) ergoemacs-theme-component-hash))
            (ergoemacs-theme--install-shortcuts-list
             (nth 3 overall-keymaps) shortcut-map
             orig-map full-keymap-p)
+           (message "Full Keymap: %s\n%s" full-keymap-p
+                    (nth 3 overall-keymaps))
            (if (not full-keymap-p)
                (setq final-map (make-composed-keymap
                                 (if (not (keymapp (nth 1 shortcut-map)))
                                     (append base-keymap (list shortcut-map))
                                   (pop shortcut-map)
-                                  (append base-keymap shortcut-map)) orig-map))
+                                  (append base-keymap shortcut-map)) ;; orig-map
+                                  ))
              (if (keymapp (nth 1 base-keymap))
                  (pop base-keymap)
                (setq base-keymap (list base-keymap)))
@@ -1258,9 +1232,10 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
                      (pop shortcut-map)
                      (append base-keymap shortcut-map)))
              (when (nth 0 overall-keymaps)
-               (setq base-keymap (append (nth 0 overall-keymaps)  base-keymap)))
+               (setq base-keymap (append (nth 0 overall-keymaps) base-keymap)))
              ;; Set parent to original keymap and compose read-keymap.
-             (setq final-map (make-composed-keymap base-keymap orig-map)))
+             (setq final-map (make-composed-keymap base-keymap ;; orig-map
+                                                   )))
            (list map-name always-modify-p final-map))))
      (ergoemacs-theme-component-keymaps-for-hook hook theme-components version))))
 
@@ -1493,7 +1468,8 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
   
   (with-hook
    isearch-mode-hook
-   :modify-map 
+   :modify-map t
+   :full-shortcut-map t
    (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
    (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
    (define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
@@ -1589,6 +1565,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (with-hook
   isearch-mode-hook
   :modify-map t
+  :full-shortcut-map t
   (define-key isearch-mode-map (kbd "<S-f3>") 'isearch-toggle-regexp)
   (define-key isearch-mode-map (kbd "<f11>") 'isearch-ring-retreat)
   (define-key isearch-mode-map (kbd "<f12>") 'isearch-ring-advance)
@@ -1608,6 +1585,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (with-hook
   isearch-mode-hook
   :modify-map t
+  :full-shortcut-map t
   (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)))
 
 (ergoemacs-theme-component help
@@ -2087,10 +2065,9 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
   "No Backspace!"
   (global-unset-key (kbd "<backspace>")))
 
-(ergoemacs-theme standared
+(ergoemacs-theme standard
  "Standard Ergoemacs Theme"
- :components '(
-               backspace-is-back
+ :components '(backspace-is-back
                copy
                dired-to-wdired
                execute
@@ -2109,17 +2086,14 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
                search
                select-items
                switch
-               text-transform
-               )
- :optional-on '(
-                apps-punctuation
+               text-transform)
+ :optional-on '(apps-punctuation
                 apps-apps
                 apps
                 fn-keys
                 f2-edit
                 fixed-bold-italic
-                standard-fixed
-                )
+                standard-fixed)
  :optional-off '(guru no-backspace))
 
 ;; Ergoemacs keys
