@@ -1168,7 +1168,7 @@ argument prompt.
                          (or pretty-key "") 
                          (if ergoemacs-use-ergoemacs-key-descriptions
                              (plist-get next-key ':normal-pretty)
-                           (plist-get next-key ':normal)))))
+                           (concat (plist-get next-key ':normal) " ")))))
             (setq ergoemacs-describe-key nil))
         (setq tmp (plist-get next-key ':normal-key))
         ;; See if there is a local equivalent of this...
@@ -1296,12 +1296,16 @@ argument prompt.
                                   pretty-key-trial
                                   (if pretty-key
                                       (concat pretty-key
-                                              (plist-get next-key
-                                                         (intern (concat tmp (if ergoemacs-use-ergoemacs-key-descriptions
-                                                                                 "-pretty" "")))))
-                                    (plist-get next-key
-                                               (intern (concat tmp (if ergoemacs-use-ergoemacs-key-descriptions
-                                                                       "-pretty" ""))))))))
+                                              (concat
+                                               (plist-get next-key
+                                                          (intern (concat tmp (if ergoemacs-use-ergoemacs-key-descriptions
+                                                                                  "-pretty" ""))))
+                                               (if ergoemacs-use-ergoemacs-key-descriptions "" " ")))
+                                    (concat
+                                     (plist-get next-key
+                                                (intern (concat tmp (if ergoemacs-use-ergoemacs-key-descriptions
+                                                                        "-pretty" ""))))
+                                     (if ergoemacs-use-ergoemacs-key-descriptions "" " "))))))
                         (unless pretty-key-undefined
                           (setq pretty-key-undefined pretty-key-trial))
                         (setq ergoemacs-shift-translated (string-match "-shift-translated" tmp))
