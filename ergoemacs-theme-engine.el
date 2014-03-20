@@ -58,6 +58,18 @@
   "Default Ergoemacs Layout"
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-theme-options
+  '()
+  "List of theme options"
+  :type '(repeat
+          (list
+           (sexp :tag "Theme Component")
+           (choice
+            (const :tag "Force Off" 'off)
+            (const :tag "Force On" 'on)
+            (const :tag "Let theme decide" nil))))
+  :group 'ergoemacs-themes)
+
 (defcustom ergoemacs-function-short-names
   '((backward-char  "← char")
     (forward-char "→ char")
@@ -131,8 +143,7 @@
     (ergoemacs-select-text-in-quote "←quote→")
     (ergoemacs-select-current-block "Sel. Block")
     (ergoemacs-select-current-line "Sel. Line")
-    (ace-jump-mode "Ace Jump")
-    (delete-window "x pane")
+    (ace-jump-mode "Ace Jump")    (delete-window "x pane")
     (delete-other-windows "x other pane")
     (split-window-vertically "split —")
     (query-replace "rep")
@@ -432,6 +443,8 @@ When fixed-layout and variable-layout are bound"
                                 (error nil))))
              a-key
              jf found-1-p found-2-p)
+        (when (boundp 'minor-mode-hook-list)
+          (add-to-list 'minor-mode-hook-list hook nil 'eq))
         (when variable-p
           (setq variable-p t)
           (setq jf (and just-first-reg
@@ -1096,6 +1109,41 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                 (append fixed-shortcut-list variable-shortcut-list))
               unbind))))))
 
+(defun ergoemacs-theme-hook (hook)
+  "Run `ergoemacs-mode' HOOK."
+  )
+
+(defun ergoemacs-theme-component-make-hooks (component &optional remove-p)
+  "Make ergoemacs-mode hooks for COMPONENT.
+COMPONENT may also be a list of components.
+
+When REMOVE-P, remove the created ergoemacs-mode hook functions
+from the appropriate startup hooks.  Otherwise the hooks are
+added to the appropriate startup hooks.
+"
+  (if (eq (type-of component) 'cons)
+      (mapc
+       (lambda(c)
+         (ergoemacs-theme-component-make-hooks c remove-p))
+       component)
+    (let ((true-component (replace-regexp-in-string ":\\(fixed\\|variable\\|:[0-9.]+\\)" ""
+                                                    (or (and (stringp component) component)
+                                                        (symbol-name component)))))
+      (mapc
+       (lambda(hook)
+         (eval (macroexpand
+                `(defun ,(intern (concat "ergoemacs-for-" (symbol-name hook))) ()
+                   ,(format "Runs `ergoemacs-theme-hook' for `%s'" (symbol-name hook))
+                   (ergoemacs-theme-hook ',hook))))
+         (if remove-p
+             (eval
+              (macroexpand
+               `(remove-hook ',hook ',(intern (concat "ergoemacs-for-" (symbol-name hook))))))
+           (eval
+            (macroexpand
+             `(add-hook ',hook ',(intern (concat "ergoemacs-for-" (symbol-name hook))))))))
+       (gethash (concat true-component ":minor-list") ergoemacs-theme-component-hash)))))
+
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
   "A component of an ergoemacs-theme."
   (declare (doc-string 2)
@@ -1122,6 +1170,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
            (fixed-layout '())
            (defined-commands '())
            (minor-mode-layout '())
+           (minor-mode-hook-list '())
            (redundant-keys '())
            (ergoemacs-translation-from ergoemacs-translation-from)
            (ergoemacs-translation-to ergoemacs-translation-to)
@@ -1147,6 +1196,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
        (puthash (concat name ":version") versions ergoemacs-theme-component-hash)
        (puthash (concat name ":redundant") redundant-keys ergoemacs-theme-component-hash)
        (puthash (concat name ":minor") minor-mode-layout ergoemacs-theme-component-hash)
+       (puthash (concat name ":minor-list") minor-mode-hook-list ergoemacs-theme-component-hash)
        (mapc
         (lambda(x)
           (let ((ver (nth 0 x))
@@ -1157,18 +1207,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
             (puthash (concat name "::" ver ":variable") var ergoemacs-theme-component-hash)
             (puthash (concat name "::" ver ":redundant") var ergoemacs-theme-component-hash)))
         component-version-list))))
-
-(defcustom ergoemacs-theme-options
-  '()
-  "List of theme options"
-  :type '(repeat
-          (list
-           (sexp :tag "Theme Component")
-           (choice
-            (const :tag "Force Off" 'off)
-            (const :tag "Force On" 'on)
-            (const :tag "Let theme decide" nil))))
-  :group 'ergoemacs-mode)
+;;; Theme functions
 
 (defun ergoemacs-theme-components (theme)
   "Get of list of components used for the current theme.
@@ -1197,6 +1236,15 @@ This respects `ergoemacs-theme-options'."
      (reverse (eval (plist-get theme-plist ':optional-off))))
     (setq components (reverse components))
     (symbol-value 'components)))
+
+(defun ergoemacs-theme-make-hooks (theme &optional remove-p)
+  "Creates hooks for THEME.
+
+When REMOVE-P, remove the created ergoemacs-mode hook functions
+from the appropriate startup hooks.  Otherwise the hooks are
+added to the appropriate startup hooks.
+"
+  (ergoemacs-theme-component-make-hooks (ergoemacs-theme-components theme) remove-p))
 
 (defun ergoemacs-theme-keymaps-for-hook (hook theme &optional version)
   "Gets the keymaps for the HOOK specific to the THEME and VERSION specified.
@@ -1261,7 +1309,6 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
                                                    )))
            (list map-name always-modify-p final-map))))
      (ergoemacs-theme-component-keymaps-for-hook hook theme-components version))))
-
 (defun ergoemacs-theme-keymaps (theme &optional version)
   "Gets the keymaps for THEME for VERSION.
 Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
@@ -1269,7 +1316,7 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
   (ergoemacs-theme-component-keymaps (ergoemacs-theme-components theme) version))
 
 (defun ergoemacs-theme-install (theme &optional version)
-  "Installs ergoemacs-theme into appropriate keymaps."
+  "Installs `ergoemacs-theme' THEME into appropriate keymaps."
   (let ((tc (ergoemacs-theme-keymaps theme version)))
     (setq ergoemacs-read-input-keymap (nth 0 tc)
           ergoemacs-shortcut-keymap (nth 1 tc)
