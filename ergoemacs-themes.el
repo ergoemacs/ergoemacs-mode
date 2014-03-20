@@ -154,7 +154,7 @@ particular it:
 - `global-unset-key' is converted to `ergoemacs-theme-component--global-set-key'
 - `global-reset-key' is converted `ergoemacs-theme-component--global-reset-key'
 - Allows :version statement expansion
-- Adds with-hook syntax
+- Adds with-hook syntax or (when -hook)
 "
   (let ((extracted-key-accu '())
         (debug-on-error t)
@@ -219,8 +219,12 @@ particular it:
                    (if (keymapp (nth 3 elt))
                        `(ergoemacs-theme-component--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
                      `(ergoemacs-theme-component--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)))))
-                ((condition-case err
-                     (eq (nth 0 elt) 'with-hook))
+                ((or (condition-case err
+                         (eq (nth 0 elt) 'with-hook))
+                     (and (condition-case err
+                              (eq (nth 0 elt) 'when))
+                          (condition-case err
+                              (string-match "-hook$" (symbol-name (nth 1 elt))))))
                  (let (tmp skip-first)
                    (setq tmp (ergoemacs--parse-keys-and-body (cdr (cdr elt))))
                    `(let ((ergoemacs-hook (quote ,(nth 1 elt)))
@@ -1459,15 +1463,13 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
   (define-key eshell-mode-map (kbd "<home>") 'eshell-bol)
   (define-key comint-mode-map (kbd "<home>") 'comint-bol)
 
-  (with-hook
-   helm-before-initialize-hook
+  (when helm-before-initialize-hook
    :modify-map t
    :full-shortcut-keymap t
    (define-key helm-map (kbd "C-w") 'helm-keyboard-quit)
    (define-key helm-map (kbd "C-z") nil))
   
-  (with-hook
-   isearch-mode-hook
+  (when isearch-mode-hook
    :modify-map t
    :full-shortcut-map t
    (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
@@ -1489,8 +1491,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
 (ergoemacs-theme-component fixed-newline
  "Newline and indent"
  (global-set-key (kbd "M-RET") 'newline-and-indent)
- (with-hook
-  helm-before-initialize-hook
+ (when helm-before-initialize-hook
   :modify-map t
   :full-shortcut-keymap t
   (define-key helm-map (kbd "M-RET") 'helm-execute-persistent-action)
@@ -1554,31 +1555,28 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (define-key eshell-mode-map (kbd "S-<f12>") 'eshell-next-matching-input-from-input)
  (define-key eshell-mode-map (kbd "<M-f12>") 'eshell-next-matching-input-from-input)
  
- (with-hook
-  minibuffer-setup-hook
-  (define-key minibuffer-local-map (kbd "<f11>") 'previous-history-element)
-  (define-key minibuffer-local-map (kbd "<f12>") 'next-history-element)
-  (define-key minibuffer-local-map (kbd "<M-f11>") 'previous-matching-history-element)
-  (define-key minibuffer-local-map (kbd "S-<f11>") 'previous-matching-history-element)
-  (define-key minibuffer-local-map (kbd "<M-f12>") 'next-matching-history-element)
-  (define-key minibuffer-local-map (kbd "S-<f12>") 'next-matching-history-element))
- (with-hook
-  isearch-mode-hook
-  :modify-map t
-  :full-shortcut-map t
-  (define-key isearch-mode-map (kbd "<S-f3>") 'isearch-toggle-regexp)
-  (define-key isearch-mode-map (kbd "<f11>") 'isearch-ring-retreat)
-  (define-key isearch-mode-map (kbd "<f12>") 'isearch-ring-advance)
-  (define-key isearch-mode-map (kbd "S-<f11>") 'isearch-ring-advance)
-  (define-key isearch-mode-map (kbd "S-<f12>") 'isearch-ring-retreat))
- (with-hook
-  iswitchb-minibuffer-setup-hook
-  :always t
-  :modify-map t
-  (define-key iswitchb-mode-map (kbd "<f11>") 'iswitchb-prev-match)
-  (define-key iswitchb-mode-map (kbd "<f12>") 'iswitchb-next-match)
-  (define-key iswitchb-mode-map (kbd "S-<f11>") 'iswitchb-prev-match)
-  (define-key iswitchb-mode-map (kbd "S-<f12>") 'iswitchb-next-match)))
+ (when minibuffer-setup-hook
+   (define-key minibuffer-local-map (kbd "<f11>") 'previous-history-element)
+   (define-key minibuffer-local-map (kbd "<f12>") 'next-history-element)
+   (define-key minibuffer-local-map (kbd "<M-f11>") 'previous-matching-history-element)
+   (define-key minibuffer-local-map (kbd "S-<f11>") 'previous-matching-history-element)
+   (define-key minibuffer-local-map (kbd "<M-f12>") 'next-matching-history-element)
+   (define-key minibuffer-local-map (kbd "S-<f12>") 'next-matching-history-element))
+ (when isearch-mode-hook
+   :modify-map t
+   :full-shortcut-map t
+   (define-key isearch-mode-map (kbd "<S-f3>") 'isearch-toggle-regexp)
+   (define-key isearch-mode-map (kbd "<f11>") 'isearch-ring-retreat)
+   (define-key isearch-mode-map (kbd "<f12>") 'isearch-ring-advance)
+   (define-key isearch-mode-map (kbd "S-<f11>") 'isearch-ring-advance)
+   (define-key isearch-mode-map (kbd "S-<f12>") 'isearch-ring-retreat))
+ (when iswitchb-minibuffer-setup-hook
+   :always t
+   :modify-map t
+   (define-key iswitchb-mode-map (kbd "<f11>") 'iswitchb-prev-match)
+   (define-key iswitchb-mode-map (kbd "<f12>") 'iswitchb-next-match)
+   (define-key iswitchb-mode-map (kbd "S-<f11>") 'iswitchb-prev-match)
+   (define-key iswitchb-mode-map (kbd "S-<f12>") 'iswitchb-next-match)))
 
 (ergoemacs-theme-component f2-edit
  "Have <f2> edit"
