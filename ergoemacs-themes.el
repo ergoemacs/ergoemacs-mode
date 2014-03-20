@@ -169,6 +169,8 @@ particular it:
             (error nil))
           (push `(:name . ,(pop remaining)) extracted-key-accu)
         (push `(:name . ,(symbol-name (pop remaining))) extracted-key-accu))
+      (when (memq (type-of (first remaining)) '(symbol cons))
+        (pop remaining))
       (when (stringp (first remaining))
         (push `(:description . ,(pop remaining)) extracted-key-accu)))
     (while (and (consp remaining) (keywordp (first remaining)))
@@ -1318,12 +1320,12 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
     (push (intern (concat (plist-get (nth 0 kb) ':name) "-theme")) tmp)
     (setq tmp (plist-put (nth 0 kb) ':components tmp))
     (puthash (plist-get (nth 0 kb) ':name) tmp ergoemacs-theme-hash)
-    `(ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme"))
-         "Generated theme component"
+    `(ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme")) ()
+       "Generated theme component"
        ,@(nth 1 kb))))
 
 ;;; Fixed components
-(ergoemacs-theme-component standard-fixed
+(ergoemacs-theme-component standard-fixed ()
   "Standard Fixed Shortcuts"
   :variable-reg nil ;; No variable keys
   (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
@@ -1478,18 +1480,18 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
    (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
    (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)))
 
-(ergoemacs-theme-component fixed-bold-italic
- "Fixed keys for bold and italic"
+(ergoemacs-theme-component fixed-bold-italic ()
+  "Fixed keys for bold and italic"
  (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
  (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic))
 
-(ergoemacs-theme-component backspace-is-back
- "Backspace is back, as in browsers..."
+(ergoemacs-theme-component backspace-is-back ()
+  "Backspace is back, as in browsers..."
  (define-key Info-mode-map (kbd "<backspace>") 'Info-history-back)
  (define-key Info-mode-map (kbd "<S-backspace>") 'Info-history-forward))
 
-(ergoemacs-theme-component fixed-newline
- "Newline and indent"
+(ergoemacs-theme-component fixed-newline ()
+  "Newline and indent"
  (global-set-key (kbd "M-RET") 'newline-and-indent)
  (when helm-before-initialize-hook
   :modify-map t
@@ -1503,8 +1505,8 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
   (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
   (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)))
 
-(ergoemacs-theme-component fn-keys
- "Function Keys"
+(ergoemacs-theme-component fn-keys ()
+  "Function Keys"
  ;; Modernize isearch and add back search-map to ergoemacs-mode
  (global-set-key (kbd "<C-f2>") 'ergoemacs-cut-all)
  (global-set-key (kbd "<C-f3>") 'ergoemacs-copy-all)
@@ -1578,16 +1580,15 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
    (define-key iswitchb-mode-map (kbd "S-<f11>") 'iswitchb-prev-match)
    (define-key iswitchb-mode-map (kbd "S-<f12>") 'iswitchb-next-match)))
 
-(ergoemacs-theme-component f2-edit
- "Have <f2> edit"
- (with-hook
-  isearch-mode-hook
+(ergoemacs-theme-component f2-edit ()
+  "Have <f2> edit"
+ (when isearch-mode-hook
   :modify-map t
   :full-shortcut-map t
   (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)))
 
-(ergoemacs-theme-component help
- "Help changes for ergoemacs-mode"
+(ergoemacs-theme-component help ()
+  "Help changes for ergoemacs-mode"
  (global-set-key (kbd "C-h '") 'ergoemacs-display-current-svg)
  (global-set-key (kbd "C-h 1") 'describe-function)
  (global-set-key (kbd "C-h 2") 'describe-variable)
@@ -1615,8 +1616,8 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
 
 
 ;;; Variable Components
-(ergoemacs-theme-component move-char
- "Movement by Characters & Set Mark"
+(ergoemacs-theme-component move-char ()
+  "Movement by Characters & Set Mark"
  (global-set-key (kbd "C-b") nil) 
  (global-set-key (kbd "M-j") 'backward-char)
  
@@ -1658,15 +1659,14 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (define-key browse-kill-ring-mode-map (kbd "M-k") 'browse-kill-ring-forward)
  (define-key browse-kill-ring-mode-map (kbd "M-f") 'browse-kill-ring-delete)
  
- (with-hook
-  iswitchb-minibuffer-setup-hook
+ (when iswitchb-minibuffer-setup-hook
   :always t
   :modify-keymap t
   (define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
   (define-key iswitchb-mode-map (kbd "M-l") 'iswitchb-next-match)))
 
-(ergoemacs-theme-component move-word
- "Moving around and deleting words"
+(ergoemacs-theme-component move-word ()
+  "Moving around and deleting words"
  (global-set-key (kbd "M-b") nil)
  (global-set-key (kbd "M-u") 'backward-word)
 
@@ -1680,15 +1680,15 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (global-set-key (kbd "M-d") nil)
  (global-set-key (kbd "M-r") 'kill-word))
 
-(ergoemacs-theme-component move-paragraph
- "Move by Paragraph"
+(ergoemacs-theme-component move-paragraph ()
+  "Move by Paragraph"
  (global-unset-key (kbd "M-{"))
  (global-unset-key (kbd "M-}"))
  (global-set-key (kbd "M-U") 'ergoemacs-backward-block)
  (global-set-key (kbd "M-O") 'ergoemacs-forward-block))
 
-(ergoemacs-theme-component move-line
- "Move by Line"
+(ergoemacs-theme-component move-line ()
+  "Move by Line"
  (global-unset-key (kbd "C-a"))
  (global-unset-key (kbd "C-e"))
  (global-set-key (kbd "M-h") 'ergoemacs-beginning-of-line-or-what)
@@ -1697,15 +1697,15 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (define-key eshell-mode-map (kbd "M-h") 'eshell-bol)
  (define-key comint-mode-map (kbd "M-H") 'comint-bol))
 
-(ergoemacs-theme-component move-page
- "Move by Page"
+(ergoemacs-theme-component move-page ()
+  "Move by Page"
  (global-unset-key (kbd "M-v"))
  (global-unset-key (kbd "C-v"))
  (global-set-key (kbd "M-I") '(scroll-down-command scroll-down))
  (global-set-key (kbd "M-K") '(scroll-up-command scroll-up)))
 
-(ergoemacs-theme-component move-buffer
- "Move Beginning/End of buffer"
+(ergoemacs-theme-component move-buffer ()
+  "Move Beginning/End of buffer"
  (global-unset-key (kbd "M->"))
  (global-unset-key (kbd "M-<"))
  (global-set-key (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
@@ -1716,13 +1716,13 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (global-unset-key (kbd "M-n"))
  (global-unset-key (kbd "M-N")))
 
-(ergoemacs-theme-component move-bracket
- "Move By Bracket"
+(ergoemacs-theme-component move-bracket ()
+  "Move By Bracket"
  (global-set-key (kbd "M-J") 'ergoemacs-backward-open-bracket)
  (global-set-key (kbd "M-L") 'ergoemacs-forward-close-bracket))
 
-(ergoemacs-theme-component copy
- "Copy, Cut, Paste, Redo and Undo"
+(ergoemacs-theme-component copy ()
+  "Copy, Cut, Paste, Redo and Undo"
  (global-set-key (kbd "C-w") nil) ;; Kill region = Cut
  (global-set-key (kbd "M-x") 'ergoemacs-cut-line-or-region)
  
@@ -1755,9 +1755,8 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (global-set-key (kbd "C-y") '(undo-tree-redo redo))
 
  ;; Mode specific changes
- (with-hook
-  isearch-mode-hook
-  :always t
+ (when isearch-mode-hook
+   :always t
   :modify-keymap t
   :full-shortcut-keymap t
   (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
@@ -1766,8 +1765,8 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-mode-paste)
  (define-key browse-kill-ring-mode-map (kbd "M-z") 'browse-kill-ring-undo-other-window))
 
-(ergoemacs-theme-component search
- "Search and Replace"
+(ergoemacs-theme-component search ()
+  "Search and Replace"
  (global-set-key (kbd "C-s") nil)
  (global-set-key (kbd "M-y") 'isearch-forward)
  
@@ -1787,8 +1786,8 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (global-set-key (kbd "M-;") 'isearch-forward)
  (global-set-key (kbd "M-:") 'isearch-backward))
 
-(ergoemacs-theme-component switch
- "Window/Frame/Tab Switching"
+(ergoemacs-theme-component switch ()
+  "Window/Frame/Tab Switching"
  (global-set-key (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
  (global-set-key (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
  
@@ -1809,27 +1808,27 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  :version 5.7.5
  (global-set-key (kbd "M-0") 'delete-window))
 
-(ergoemacs-theme-component execute
+(ergoemacs-theme-component execute ()
   "Execute Commands"
   (global-unset-key (kbd "M-x"))
   (global-set-key (kbd "M-a") 'execute-extended-command)
   (global-unset-key (kbd "M-!"))
   (global-set-key (kbd "M-A") 'shell-command))
 
-(ergoemacs-theme-component  misc
+(ergoemacs-theme-component  misc ()
  "Misc Commands"
  (global-unset-key (kbd "C-l"))
  (global-set-key (kbd "M-p") 'recenter-top-bottom)
  (global-set-key (kbd "M-b") 'ace-jump-mode))
 
-(ergoemacs-theme-component kill-line
- "Kill Line"
+(ergoemacs-theme-component kill-line ()
+  "Kill Line"
  (global-unset-key (kbd "C-k"))
  (global-set-key (kbd "M-g") 'kill-line)
  (global-set-key (kbd "M-G") 'ergoemacs-kill-line-backward))
 
-(ergoemacs-theme-component text-transform
- "Text Transformation"
+(ergoemacs-theme-component text-transform ()
+  "Text Transformation"
  (global-unset-key (kbd "M-;"))
  (global-set-key (kbd "M-'") 'comment-dwim)
  
@@ -1844,49 +1843,44 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
 
  ;; ;; Hard-wrap/un-hard-wrap paragraph
  (global-set-key (kbd "M-q") 'ergoemacs-compact-uncompact-block)
- (with-hook
-  isearch-mode-hook
+ (when isearch-mode-hook
   :modify-map t
   :full-shortcut-keymap t
   (define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
   (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold))
- (with-hook
-  iswitchb-minibuffer-setup-hook
+ (when iswitchb-minibuffer-setup-hook
   :modify-map t
   :always t
   (define-key iswitchb-mode-map (kbd "M-?") 'iswitchb-toggle-case)
   (define-key iswitchb-mode-map (kbd "M-/") 'iswitchb-toggle-regexp)))
 
-(ergoemacs-theme-component select-items
- "Select Items"
+(ergoemacs-theme-component select-items ()
+  "Select Items"
  (global-set-key (kbd "M-S-SPC") 'mark-paragraph)
  (global-set-key (kbd "M-8") '(er/expand-region ergoemacs-extend-selection))
  (global-set-key (kbd "M-*") '(er/mark-outside-quotes ergoemacs-select-text-in-quote))
  (global-set-key (kbd "M-6") 'ergoemacs-select-current-block)
  (global-set-key (kbd "M-7") 'ergoemacs-select-current-line))
 
-(ergoemacs-theme-component quit
+(ergoemacs-theme-component quit ()
  "Ergoemacs quit"
  (global-set-key (kbd "<escape>") 'keyboard-quit)
  (define-key browse-kill-ring-mode-map (kbd "<escape>") 'browse-kill-ring-quit)
- (with-hook
-  isearch-mode-hook
+ (when isearch-mode-hook
   :modify-map t
   :full-shortcut-keymap t
   (define-key isearch-mode-map (kbd "<escape>") 'isearch-abort))
- (with-hook
-  org-read-date-minibuffer-setup-hook
-  :always t
+ (when org-read-date-minibuffer-setup-hook
+   :always t
   :modify-map t
   (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
- (with-hook
-  minibuffer-setup-hook
+ (when minibuffer-setup-hook
   (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
  :version 5.3.7
  (global-set-key (kbd "M-n") 'keyboard-quit))
 
-(ergoemacs-theme-component apps
- "Apps key"
+(ergoemacs-theme-component apps ()
+  "Apps key"
  (global-set-key (kbd "<apps> 2") 'delete-window)
  (global-set-key (kbd "<apps> 3") 'delete-other-windows)
  (global-set-key (kbd "<apps> 4") 'split-window-vertically)
@@ -1929,7 +1923,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (global-set-key (kbd "<apps> z") 'undo)
  (global-set-key (kbd "<apps> r") goto-map))
 
-(ergoemacs-theme-component apps-apps
+(ergoemacs-theme-component apps-apps ()
  "Applications"
  :first-is-variable-reg "<\\(apps\\|menu\\)> n"
  (global-set-key (kbd "<apps> n a") 'org-agenda)
@@ -1948,7 +1942,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (global-set-key (kbd "<apps> n C-t") 'org-agenda)
  (global-set-key (kbd "<apps> n T") 'org-agenda))
 
-(ergoemacs-theme-component apps-punctuation
+(ergoemacs-theme-component apps-punctuation ()
  "Punctuation"
  ;; Smart punctuation
  ;; `http://xahlee.info/comp/computer_language_char_distribution.html'
@@ -2022,18 +2016,16 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
  (global-set-key (kbd "<apps> k g") '("|" nil))
  (global-set-key (kbd "<apps> k b") '("!" nil)))
 
-(ergoemacs-theme-component dired-to-wdired
- "C-c C-c enters wdired, <escape> exits."
- (with-hook
-  wdired-mode-hook
+(ergoemacs-theme-component dired-to-wdired ()
+  "C-c C-c enters wdired, <escape> exits."
+ (when wdired-mode-hook
   :modify-map t
   (define-key wdired-mode-map (kbd "<escape>") 'wdired-exit))
- (with-hook
-  dired-mode-hook
+ (when dired-mode-hook
   :modify-map t
   (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode)))
 
-(ergoemacs-theme-component guru
+(ergoemacs-theme-component guru ()
   "Unbind some commonly used keys such as <left> and <right> to get in the habit of using ergoemacs keybindings."
   (global-unset-key (kbd "<left>"))
   (global-unset-key (kbd "<right>"))
@@ -2059,11 +2051,11 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
   (global-unset-key (kbd "<end>"))
   (global-unset-key (kbd "<C-end>")))
 
-(ergoemacs-theme-component no-backspace
+(ergoemacs-theme-component no-backspace ()
   "No Backspace!"
   (global-unset-key (kbd "<backspace>")))
 
-(ergoemacs-theme standard
+(ergoemacs-theme standard ()
  "Standard Ergoemacs Theme"
  :components '(backspace-is-back
                copy
