@@ -1283,6 +1283,7 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
      (nth 3 tc))
 
     (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+    (setq ergoemacs-emulation-mode-map-alist '())
     ;; `ergoemacs-keymap' top in `minor-mode-map-alist'
     (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
       (when x
@@ -1300,24 +1301,17 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
 
     ;; `ergoemacs-read-input-keymap', then `ergoemacs-shortcut-keymap'
     ;; in `ergoemacs-emulation-mode-map-alist'
-    (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
-      (when x
-        (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-      (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist))
-    
-    (let ((x (assq 'ergoemacs-read-input-keys ergoemacs-emulation-mode-map-alist)))
-      (when x
-        (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-      (push (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap) ergoemacs-emulation-mode-map-alist)
-      (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-      (set-default 'ergoemacs-mode t)
-      (set-default 'ergoemacs-shortcut-keys t)
-      (set-default 'ergoemacs-read-input-keys t)
-      (set-default 'ergoemacs-unbind-keys t)
-      (setq ergoemacs-mode t
-            ergoemacs-shortcut-keys t
-            ergoemacs-read-input-keys t
-            ergoemacs-unbind-keys t))))
+    (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)
+    (push (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap) ergoemacs-emulation-mode-map-alist)
+    (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+    (set-default 'ergoemacs-mode t)
+    (set-default 'ergoemacs-shortcut-keys t)
+    (set-default 'ergoemacs-read-input-keys t)
+    (set-default 'ergoemacs-unbind-keys t)
+    (setq ergoemacs-mode t
+          ergoemacs-shortcut-keys t
+          ergoemacs-read-input-keys t
+          ergoemacs-unbind-keys t)))
 
 (defvar ergoemacs-theme-hash (make-hash-table :test 'equal))
 (defmacro ergoemacs-theme (&rest body-and-plist)
