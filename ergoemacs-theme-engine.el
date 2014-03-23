@@ -1109,9 +1109,44 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                 (append fixed-shortcut-list variable-shortcut-list))
               unbind))))))
 
+
+(defvar ergoemacs-theme-hook-installed '()
+  "Installed hooks")
 (defun ergoemacs-theme-hook (hook)
   "Run `ergoemacs-mode' HOOK."
-  )
+  (let (deactivate-mark
+        ;; Emulation variable for map.
+        (emulation-var (intern (concat "ergoemacs--emulation-for-" (symbol-name hook))))
+        (all-always-p t)
+        x)
+    (set-default emulation-var nil)
+    (set (make-local-variable emulation-var) t)
+    (unless (member hook ergoemacs-theme-hook-installed)
+      (mapc
+       (lambda(x)
+         (let ((map-name (nth 0 x))
+               (always-modify-p (nth 1 x))
+               (replace (nth 2 x)))
+           (cond
+            ((and (eq map-name 't)
+                  (not (member (list hook t) ergoemacs-theme-hook-installed)))
+             (setq x (assq emulation-var ergoemacs-emulation-mode-map-alist))
+             (when x
+               (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+             (setq ergoemacs-emulation-mode-map-alist
+                   (append ergoemacs-emulation-mode-map-alist
+                           (list (cons emulation-var replace))))
+             (if (not always-modify-p)
+                 (setq all-always-p nil)
+               (push (list hook t) ergoemacs-theme-hook-installed)))
+            ((not (member (list hook map-name) ergoemacs-theme-hook-installed))
+             (set map-name (copy-keymap replace))
+             (if (not always-modify-p)
+                 (setq all-always-p nil)
+               (push (list hook t) ergoemacs-theme-hook-installed))))))
+       (ergoemacs-theme-keymaps-for-hook hook ergoemacs-theme))
+      (when all-always-p
+        (push hook ergoemacs-theme-hook-installed)))))
 
 (defun ergoemacs-theme-component-make-hooks (component &optional remove-p)
   "Make ergoemacs-mode hooks for COMPONENT.
@@ -1322,6 +1357,7 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
           ergoemacs-shortcut-keymap (nth 1 tc)
           ergoemacs-keymap (nth 2 tc)
           ergoemacs-unbind-keymap (nth 4 tc))
+    (ergoemacs-theme-make-hooks ergoemacs-theme 'remove-hooks)
     ;; Reset Shortcut hash.
     (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal))
     (mapc
@@ -1351,6 +1387,7 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
     (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)
     (push (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap) ergoemacs-emulation-mode-map-alist)
     (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+    (ergoemacs-theme-make-hooks theme)
     (set-default 'ergoemacs-mode t)
     (set-default 'ergoemacs-shortcut-keys t)
     (set-default 'ergoemacs-read-input-keys t)
@@ -1358,7 +1395,9 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
     (setq ergoemacs-mode t
           ergoemacs-shortcut-keys t
           ergoemacs-read-input-keys t
-          ergoemacs-unbind-keys t)))
+          ergoemacs-unbind-keys t
+          ergoemacs-theme (or (and (stringp theme) theme)
+                              (symbol-name theme)))))
 
 (defvar ergoemacs-theme-hash (make-hash-table :test 'equal))
 (defmacro ergoemacs-theme (&rest body-and-plist)
