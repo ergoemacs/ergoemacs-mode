@@ -722,16 +722,6 @@
       (ergoemacs-where-is-old-binding key-kbd))))
   (setq ergoemacs-describe-key nil))
 
-(defun ergoemacs-unbind-setup-keymap ()
-  "Setup `ergoemacs-unbind-keymap' based on current layout."
-  (setq ergoemacs-unbind-keymap (make-sparse-keymap))
-  (mapc
-   (lambda(x)
-     (unless (ergoemacs-global-changed-p x)
-       (define-key ergoemacs-unbind-keymap (read-kbd-macro x) 'ergoemacs-undefined
-         )))
-   (symbol-value (ergoemacs-get-redundant-keys))))
-
 
 (defvar ergoemacs-where-is-global-hash (make-hash-table :test 'equal)
   "Hash for ergoemacs lookup of global functions.")

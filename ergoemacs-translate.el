@@ -593,18 +593,18 @@ and `ergoemacs-pretty-key' descriptions.
           (setq ret (plist-put ret ':ctl-pretty (ergoemacs-pretty-key (plist-get ret ':ctl))))
 
           (setq ret (plist-put ret ':raw (ergoemacs-translate-shifted
-                                      (replace-regexp-in-string
-                                       "\\<[CSMS]-" "" key))))
+                                          (replace-regexp-in-string
+                                           "\\<[CSMS]-" "" key))))
           (setq ret (plist-put ret ':raw-key  (read-kbd-macro (plist-get ret ':raw) t)))
           (setq ret (plist-put ret ':raw-pretty (ergoemacs-pretty-key
-                                             (plist-get ret ':raw))))
+                                                 (plist-get ret ':raw))))
           (if (assoc (plist-get ret ':raw) ergoemacs-shifted-assoc)
               (progn
                 (setq ret (plist-put ret ':raw-shift
-                               (ergoemacs-translate-shifted
-                                (replace-regexp-in-string
-                                 "\\<[CSM]-" ""
-                                 (cdr (assoc (plist-get ret ':raw) ergoemacs-shifted-assoc))))))
+                                     (ergoemacs-translate-shifted
+                                      (replace-regexp-in-string
+                                       "\\<[CSM]-" ""
+                                       (cdr (assoc (plist-get ret ':raw) ergoemacs-shifted-assoc))))))
                 (setq ret (plist-put ret ':raw-shift-key
                                      (read-kbd-macro (plist-get ret ':raw-shift) t)))
                 (setq ret (plist-put ret ':raw-shift-pretty
@@ -643,6 +643,7 @@ and `ergoemacs-pretty-key' descriptions.
              (setq ret (ergoemacs-translation-install plist orig-key ret)))
            ergoemacs-translations)
           (puthash orig-key (symbol-value 'ret) ergoemacs-translate-hash)
+          (puthash key (symbol-value 'ret) ergoemacs-translate-hash)
           (symbol-value 'ret)))))
 
 (defun ergoemacs-setup-translation (layout &optional base-layout)

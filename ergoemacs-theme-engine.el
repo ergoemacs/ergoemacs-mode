@@ -1,5 +1,5 @@
 ;;; ergoemacs-theme-engine.el --- Engine for ergoemacs-themes
-;; 
+;;
 ;; Filename: ergoemacs-theme-engine.el
 ;; Description: 
 ;; Author: Matthew L. Fidler
@@ -183,7 +183,6 @@ particular it:
 - Adds with-hook syntax or (when -hook)
 "
   (let ((extracted-key-accu '())
-        (debug-on-error t)
         last-was-version
         plist
         (remaining keys-and-body))
@@ -365,7 +364,6 @@ When fixed-layout and variable-layout are bound"
            '(component-version-fixed-layout component-version-variable-layout))
         (if (not variable-p)
             (progn ;; Fixed Layout component
-              (message "Change/Add Fixed")
               (setq component-version-fixed-layout
                     (mapcar
                      (lambda(x)
@@ -419,7 +417,7 @@ When fixed-layout and variable-layout are bound"
   (when (and (boundp 'fixed-layout) (boundp 'variable-layout))
     (if (memq keymap '(global-map ergoemacs-keymap))
         (if (and (eq keymap 'ergoemacs-keymap) (not def))
-            (ergoemacs-theme-component--global-set-key key 'ignore)
+            (ergoemacs-theme-component--global-set-key key 'ignore-nil)
           (ergoemacs-theme-component--global-set-key key def))
       (let* ((hook (or
                     (and (boundp 'ergoemacs-hook) ergoemacs-hook)
@@ -501,7 +499,15 @@ When fixed-layout and variable-layout are bound"
           (unless found-2-p
             (push (list a-key (list (list kd def)) always-run-p full-shortcut-p) minor-mode-layout))))))))
 
-
+(defun ergoemacs-theme-component--ignore-globally-defined-key (key)
+  "Defines KEY in `ergoemacs-global-override-keymap'"
+  (unless (condition-case err
+              (commandp (lookup-key ergoemacs-global-override-keymap key) t)
+            (error nil))
+    (when (ergoemacs-global-changed-p key)
+      (let ((no-ergoemacs-advice t))
+        (define-key ergoemacs-global-override-keymap key
+          (lookup-key (current-global-map) key))))))
 (defun ergoemacs-theme-component--define-key-in-keymaps (keymap keymap-shortcut key def)
   "Defines KEY in KEYMAP or KEYMAP-SHORTCUT to be DEF.
 Similar to `define-key'.
@@ -525,6 +531,7 @@ DEF can be:
               (push (list (read-kbd-macro (key-description key) t)
                           `(,(nth 0 def) ,(nth 1 def)))
                     shortcut-list))
+            (ergoemacs-theme-component--ignore-globally-defined-key key)
             (define-key keymap-shortcut key 'ergoemacs-shortcut))
         (mapc
          (lambda(new-def)
@@ -533,7 +540,8 @@ DEF can be:
                        (interactive-form new-def)
                      (error nil))
                (setq found
-                     (ergoemacs-define-key keymap key new-def)))))
+                     (ergoemacs-theme-component--define-key-in-keymaps
+                      keymap keymap-shortcut key new-def)))))
          def))
       (symbol-value 'found)))
    ((condition-case err
@@ -543,6 +551,7 @@ DEF can be:
      ;; only setup on `ergoemacs-shortcut-keymap' when setting up
      ;; ergoemacs default keymap.
      ((memq def '(ergoemacs-ctl-c ergoemacs-ctl-x))
+      (ergoemacs-theme-component--ignore-globally-defined-key key)
       (define-key keymap-shortcut key def))
      ((and (not (string-match "\\(mouse\\|wheel\\)" (key-description key)))
            (ergoemacs-shortcut-function-binding def))
@@ -551,15 +560,21 @@ DEF can be:
                     (list def 'global)) shortcut-list))
       (if (ergoemacs-is-movement-command-p def)
           (if (let (case-fold-search) (string-match "\\(S-\\|[A-Z]$\\)" (key-description key)))
-              (define-key keymap-shortcut key 'ergoemacs-shortcut-movement-no-shift-select)
+              (progn
+                (ergoemacs-theme-component--ignore-globally-defined-key key)
+                (define-key keymap-shortcut key 'ergoemacs-shortcut-movement-no-shift-select))
+            (ergoemacs-theme-component--ignore-globally-defined-key key)
             (define-key keymap-shortcut key 'ergoemacs-shortcut-movement))
+        (ergoemacs-theme-component--ignore-globally-defined-key key)
         (define-key keymap-shortcut key 'ergoemacs-shortcut)))
      (t
+      (ergoemacs-theme-component--ignore-globally-defined-key key)
       (define-key keymap key def)))
     t)
    ((condition-case err
         (keymapp (symbol-value def))
       (error nil))
+    (ergoemacs-theme-component--ignore-globally-defined-key key)
     (define-key keymap key (symbol-value def))
     t)
    ((condition-case err
@@ -571,8 +586,12 @@ DEF can be:
                     `(,def nil)) shortcut-list))
       (if (ergoemacs-is-movement-command-p def)
           (if (let (case-fold-search) (string-match "\\(S-\\|[A-Z]$\\)" (key-description key)))
-              (define-key keymap-shortcut key 'ergoemacs-shortcut-movement-no-shift-select)
+              (progn
+                (ergoemacs-theme-component--ignore-globally-defined-key key)
+                (define-key keymap-shortcut key 'ergoemacs-shortcut-movement-no-shift-select))
+            (ergoemacs-theme-component--ignore-globally-defined-key key)
             (define-key keymap-shortcut key 'ergoemacs-shortcut-movement))
+        (ergoemacs-theme-component--ignore-globally-defined-key key)
         (define-key keymap-shortcut key 'ergoemacs-shortcut)))
     t)
    (t nil)))
@@ -638,14 +657,23 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
       (setq fn-lst (ergoemacs-shortcut-remap-list
                     (nth 0 args) lookup-keymap))
       (if fn-lst
-          (define-key keymap key (nth 0 (nth 0 fn-lst)))
+          (condition-case nil
+              (progn
+                (ergoemacs-theme-component--ignore-globally-defined-key key)
+                (define-key keymap key (nth 0 (nth 0 fn-lst)))))
         (when full-shortcut-map-p
-          (define-key keymap key (nth 0 args)))))
+          (condition-case nil
+              (progn
+                (ergoemacs-theme-component--ignore-globally-defined-key key)
+                (define-key keymap key (nth 0 args)))))))
      (t
-      (define-key keymap key
-        `(lambda(&optional arg)
-           (interactive "P")
-           (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args))))))))
+      (condition-case nil
+          (progn
+            (ergoemacs-theme-component--ignore-globally-defined-key key)
+            (define-key keymap key
+              `(lambda(&optional arg)
+                 (interactive "P")
+                 (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args))))))))))
 
 (defun ergoemacs-theme--install-shortcuts-list (shortcut-list keymap lookup-keymap full-shortcut-map-p)
   "Install shortcuts for SHORTCUT-LIST into KEYMAP.
@@ -781,9 +809,11 @@ This function does not finalize maps by installing them into the original maps.
                       (lambda(key-list)
                         (cond
                          ((stringp (nth 1 key-list))
+                          (ergoemacs-theme-component--ignore-globally-defined-key (read-kbd-macro (nth 0 key-list) t))
                           (define-key map (read-kbd-macro (nth 0 key-list) t)
                             `(lambda() (interactive) (ergoemacs-read-key ,(nth 1 key-list)))))
                          (t
+                          (ergoemacs-theme-component--ignore-globally-defined-key (read-kbd-macro (nth 0 key-list) t))
                           (define-key map (read-kbd-macro (nth 0 key-list) t)
                             (nth 1 key-list)))))
                       keys))
@@ -819,9 +849,11 @@ This function does not finalize maps by installing them into the original maps.
                       (lambda(key-list)
                         (cond
                          ((stringp (nth 1 key-list))
+                          (ergoemacs-theme-component--ignore-globally-defined-key (ergoemacs-kbd (nth 0 key-list) nil (nth 3 key-list)))
                           (define-key map (ergoemacs-kbd (nth 0 key-list) nil (nth 3 key-list))
                             `(lambda() (interactive) (ergoemacs-read-key ,(nth 1 key-list)))))
                          (t
+                          (ergoemacs-theme-component--ignore-globally-defined-key (ergoemacs-kbd (nth 0 key-list) nil (nth 3 key-list)))
                           (define-key map (ergoemacs-kbd (nth 0 key-list) nil (nth 3 key-list))
                             (nth 1 key-list)))))
                       keys))
@@ -977,6 +1009,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
         (setq unbind (make-sparse-keymap))
         (mapc
          (lambda(x)
+           (ergoemacs-theme-component--ignore-globally-defined-key (read-kbd-macro x))
            (define-key unbind (read-kbd-macro x) 'ergoemacs-undefined))
          (gethash (concat true-component version ":redundant") ergoemacs-theme-component-hash))
         (puthash (concat true-component version ":unbind") unbind ergoemacs-theme-component-hash))
@@ -984,7 +1017,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
         (setq fixed-shortcut (gethash (concat true-component version ":fixed:shortcut") ergoemacs-theme-component-hash))
         (setq fixed-read (gethash (concat true-component version ":fixed:read") ergoemacs-theme-component-hash))
         (setq fixed (gethash (concat true-component version ":fixed:map") ergoemacs-theme-component-hash))
-        (setq fixed-shortcut-list (gethash (concat true-component version ":fixed:shortcut:list")
+        (setq fixed-shortcut-list (gethash (concat true-component version
+                                                   ":fixed:shortcut:list")
                                            ergoemacs-theme-component-hash))
         (unless (or fixed fixed-shortcut fixed-read fixed-shortcut-list)
           ;; Setup fixed fixed-keymap for this component.
@@ -1000,9 +1034,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                  (setq key (read-kbd-macro trans-key))
                  (when (string-match "^\\([^ ]+\\) " (nth 0 x))
                    (add-to-list 'input-keys (match-string 1 (nth 0 x))))
-                 (when (ergoemacs-global-changed-p key) ;; Override
-                   (define-key ergoemacs-global-override-keymap key
-                     (lookup-key (current-global-map) key)))
+                 (ergoemacs-theme-component--ignore-globally-defined-key key)
                  (setq cmd (nth 1 x))
                  (ergoemacs-theme-component--define-key-in-keymaps fixed fixed-shortcut key cmd)))
              key-list)
@@ -1010,13 +1042,14 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
               (mapc
                (lambda(key)
                  (unless (member key ergoemacs-ignored-prefixes)
+                   (ergoemacs-theme-component--ignore-globally-defined-key key)
                    (define-key fixed-read (read-kbd-macro key)
                      `(lambda()
                         (interactive)
                         (ergoemacs-read-key ,key 'normal)))))
                input-keys))
-            (setq fixed-shortcut-list shortcut-list
-                  input-keys '())
+            (setq fixed-shortcut-list shortcut-list)
+            (setq input-keys '())
             (setq shortcut-list '())
             (puthash (concat true-component version ":fixed:shortcut") fixed-shortcut
                      ergoemacs-theme-component-hash)
@@ -1024,14 +1057,14 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                      ergoemacs-theme-component-hash)
             (puthash (concat true-component version ":fixed:map") fixed
                      ergoemacs-theme-component-hash)
-            (puthash (concat true-component version ":fixed:shortcut:list") fixed-shortcut-list
-                     ergoemacs-theme-component-hash))))
+            (puthash (concat true-component version ":fixed:shortcut:list")
+                     fixed-shortcut-list ergoemacs-theme-component-hash))))
 
       (unless only-fixed
         (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  version ":variable:shortcut") ergoemacs-theme-component-hash))
         (setq variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:read") ergoemacs-theme-component-hash))
         (setq variable (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") ergoemacs-theme-component-hash))
-        (setq variable-shortcut-list (gethash (concat true-component version ":variable:shortcut:list")
+        (setq variable-shortcut-list (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut:list")
                                               ergoemacs-theme-component-hash))
         (unless (or variable variable-shortcut variable-read variable-shortcut-list)
           ;; Setup variable variable-keymap for this component.
@@ -1046,9 +1079,6 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                  (setq key (ergoemacs-kbd (nth 0 x) nil (nth 3 x)))
                  (when (string-match "^\\([^ ]+\\) " (nth 0 x))
                    (add-to-list 'input-keys (match-string 1 (nth 0 x))))
-                 (when (ergoemacs-global-changed-p key) ;; Override
-                   (define-key ergoemacs-global-override-keymap key
-                     (lookup-key (current-global-map) key)))
                  (setq cmd (nth 1 x))
                  (ergoemacs-theme-component--define-key-in-keymaps variable variable-shortcut key cmd)))
              key-list)
@@ -1143,7 +1173,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
              (set map-name (copy-keymap replace))
              (if (not always-modify-p)
                  (setq all-always-p nil)
-               (push (list hook t) ergoemacs-theme-hook-installed))))))
+               (push (list hook map-name) ergoemacs-theme-hook-installed))))))
        (ergoemacs-theme-keymaps-for-hook hook ergoemacs-theme))
       (when all-always-p
         (push hook ergoemacs-theme-hook-installed)))))
@@ -1320,15 +1350,12 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
            (ergoemacs-theme--install-shortcuts-list
             (nth 3 overall-keymaps) shortcut-map
             orig-map full-keymap-p)
-           (message "Full Keymap: %s\n%s" full-keymap-p
-                    (nth 3 overall-keymaps))
            (if (not full-keymap-p)
                (setq final-map (make-composed-keymap
                                 (if (not (keymapp (nth 1 shortcut-map)))
                                     (append base-keymap (list shortcut-map))
                                   (pop shortcut-map)
-                                  (append base-keymap shortcut-map)) ;; orig-map
-                                ))
+                                  (append base-keymap shortcut-map)) orig-map))
              (if (keymapp (nth 1 base-keymap))
                  (pop base-keymap)
                (setq base-keymap (list base-keymap)))
@@ -1340,26 +1367,52 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
              (when (nth 0 overall-keymaps)
                (setq base-keymap (append (nth 0 overall-keymaps) base-keymap)))
              ;; Set parent to original keymap and compose read-keymap.
-             (setq final-map (make-composed-keymap base-keymap ;; orig-map
-                                                   )))
+             (setq final-map (make-composed-keymap base-keymap orig-map)))
+           (when full-keymap-p  ; Don't install shortcuts up.
+             (define-key final-map '[ergoemacs] 'ignore))
            (list map-name always-modify-p final-map))))
      (ergoemacs-theme-component-keymaps-for-hook hook theme-components version))))
+
 (defun ergoemacs-theme-keymaps (theme &optional version)
   "Gets the keymaps for THEME for VERSION.
 Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
 Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
   (ergoemacs-theme-component-keymaps (ergoemacs-theme-components theme) version))
 
+(defun ergoemacs-theme-remove ()
+  "Remove the currently installed theme and reset to emacs keys."
+  (ergoemacs-theme-make-hooks ergoemacs-theme 'remove-hooks)
+  (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+  (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
+        ergoemacs-extract-map-hash (make-hash-table :test 'equal)
+        ergoemacs-shortcut-function-binding-hash (make-hash-table :test 'equal)
+        ergoemacs-read-input-keymap (make-sparse-keymap)
+        ergoemacs-shortcut-keymap (make-sparse-keymap) 
+        ergoemacs-keymap (make-sparse-keymap) 
+        ergoemacs-unbind-keymap (make-sparse-keymap)
+        ergoemacs-emulation-mode-map-alist '()
+        ergoemacs-shortcut-keys nil
+        ergoemacs-shortcut-override-mode nil
+        ergoemacs-modal nil
+        ergoemacs-repeat-keys nil
+        ergoemacs-read-input-keys nil)
+  (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
+    ;; Remove keymap
+    (when x
+      (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+    (setq x (assq 'ergoemacs-unbind-keys minor-mode-map-alist))
+    (when x
+      (setq minor-mode-map-alist (delq x minor-mode-map-alist)))))
+
 (defun ergoemacs-theme-install (theme &optional version)
   "Installs `ergoemacs-theme' THEME into appropriate keymaps."
   (let ((tc (ergoemacs-theme-keymaps theme version)))
+    (ergoemacs-theme-remove)
     (setq ergoemacs-read-input-keymap (nth 0 tc)
           ergoemacs-shortcut-keymap (nth 1 tc)
           ergoemacs-keymap (nth 2 tc)
           ergoemacs-unbind-keymap (nth 4 tc))
-    (ergoemacs-theme-make-hooks ergoemacs-theme 'remove-hooks)
     ;; Reset Shortcut hash.
-    (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal))
     (mapc
      (lambda(c)
        (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash))

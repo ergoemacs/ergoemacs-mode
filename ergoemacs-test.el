@@ -135,7 +135,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   "Test the shifted selection bug."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-        (macro (edmacro-parse-keys "C-SPC M-h M-S-i" t))
+        (macro (edmacro-parse-keys "M-SPC M-h M-I" t))
         (ret))
     (ergoemacs-mode -1)
     (setq ergoemacs-theme nil)
@@ -435,7 +435,7 @@ Test next and prior translation."
     (setq ergoemacs-theme nil)
     (setq ergoemacs-keyboard-layout "colemak")
     (ergoemacs-mode 1)
-    (ergoemacs-isearch-mode-hook)
+    (ergoemacs-for-isearch-mode-hook)
     (setq ret (lookup-key isearch-mode-map (read-kbd-macro
                                   (format "<%s> s"
                                   (if (eq system-type 'windows-nt)
