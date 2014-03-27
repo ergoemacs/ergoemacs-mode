@@ -417,7 +417,7 @@ When fixed-layout and variable-layout are bound"
   (when (and (boundp 'fixed-layout) (boundp 'variable-layout))
     (if (memq keymap '(global-map ergoemacs-keymap))
         (if (and (eq keymap 'ergoemacs-keymap) (not def))
-            (ergoemacs-theme-component--global-set-key key 'ignore-nil)
+            (ergoemacs-theme-component--global-set-key key 'ignore)
           (ergoemacs-theme-component--global-set-key key def))
       (let* ((hook (or
                     (and (boundp 'ergoemacs-hook) ergoemacs-hook)
@@ -501,13 +501,11 @@ When fixed-layout and variable-layout are bound"
 
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key)
   "Defines KEY in `ergoemacs-global-override-keymap'"
-  (unless (condition-case err
-              (commandp (lookup-key ergoemacs-global-override-keymap key) t)
-            (error nil))
-    (when (ergoemacs-global-changed-p key)
-      (let ((no-ergoemacs-advice t))
-        (define-key ergoemacs-global-override-keymap key
-          (lookup-key (current-global-map) key))))))
+  (when (ergoemacs-global-changed-p key)
+    (let ((no-ergoemacs-advice t))
+      (define-key ergoemacs-global-override-keymap key
+        (lookup-key (current-global-map) key)))))
+
 (defun ergoemacs-theme-component--define-key-in-keymaps (keymap keymap-shortcut key def)
   "Defines KEY in KEYMAP or KEYMAP-SHORTCUT to be DEF.
 Similar to `define-key'.
