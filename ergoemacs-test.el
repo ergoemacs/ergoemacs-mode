@@ -177,7 +177,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                     (format "global-set-key (kbd \"%s\") " test-key)))
                   w-file))
     (with-temp-file temp-file
-      (insert "(condition-case err (progn ")
+      (if (boundp 'wait-for-me)
+          (insert "(setq debug-on-error t)")
+        (insert "(condition-case err (progn "))
       (unless after
         (when delete-def
           (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
@@ -198,8 +200,8 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
         (insert sk))
       (insert "(execute-kbd-macro ergoemacs-test-macro)")
       (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
-      (insert ") (error (message \"Error %s\" err)))")
       (unless (boundp 'wait-for-me)
+        (insert ") (error (message \"Error %s\" err)))")
         (insert "(kill-emacs)")))
     (message
      "%s"
@@ -243,13 +245,14 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-global-key-set-apps-before ()
   "Test setting <apps> before loading."
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     nil
-     (if (eq system-type 'windows-nt)
-         "<apps>"
-       "<menu>")) t)))
+  (let (wait-for-me)
+    (should
+     (equal
+      (ergoemacs-test-global-key-set-before
+       nil
+       (if (eq system-type 'windows-nt)
+           "<apps>"
+         "<menu>")) t))))
 
 
 (ert-deftest ergoemacs-test-global-key-set-apps-before-2 ()
