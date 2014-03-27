@@ -171,7 +171,7 @@ keyword.
 Returns a two-element list containing the keys-and-values plist
 and the body.
 
-This is stole directly from ert by Christian Ohler <ohler@gnu.org>
+This has been stolen directly from ert by Christian Ohler <ohler@gnu.org>
 
 Afterward it was modified for use with `ergoemacs-mode'. In
 particular it:
