@@ -792,6 +792,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                ;; Global override
                ((progn
                   (setq fn (lookup-key ergoemacs-global-override-keymap key))
+                  (when (condition-case err
+                            (integerp fn)
+                          (error nil))
+                    (setq fn nil))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
                   (or ret (condition-case err
                               (interactive-form fn)
