@@ -313,6 +313,7 @@
  (global-set-key (kbd "C-h `") 'elisp-index-search)
  (global-set-key (kbd "C-h m") 'ergoemacs-describe-major-mode)
  (global-set-key (kbd "C-h o") 'ergoemacs-where-is-old-binding)
+ (global-set-key (kbd "C-h z") 'ergoemacs-clean)
  (global-set-key (kbd "<f1> '") 'ergoemacs-display-current-svg)
  (global-set-key (kbd "<f1> 1") 'describe-function)
  (global-set-key (kbd "<f1> 2") 'describe-variable)
@@ -513,10 +514,10 @@
  (global-set-key (kbd "M-2") 'delete-window)
  
  (global-unset-key (kbd "C-x 3"))
- (global-set-key (kbd "M-4") '(split-window-right split-window-vertically))
+ (global-set-key (kbd "M-4") '(split-window-below split-window-horizontally))
  
  (global-unset-key (kbd "C-x 2"))
- (global-set-key (kbd "M-$") '(split-window-below split-window-horizontally))
+ (global-set-key (kbd "M-$") '(split-window-right split-window-vertically))
  :version 5.7.5
  (global-set-key (kbd "M-0") 'delete-window))
 
