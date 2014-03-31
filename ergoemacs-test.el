@@ -198,6 +198,8 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
         (when delete-def
           (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
         (insert sk))
+      (when (boundp 'wait-for-me)
+        (insert "(switch-to-buffer (get-buffer-create \"*ergoemacs-test*\")) (insert (substitute-command-keys \"\\\\{ergoemacs-global-override-keymap}\")) (goto-char (point-min))"))
       (insert "(execute-kbd-macro ergoemacs-test-macro)")
       (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
       (unless (boundp 'wait-for-me)
@@ -231,10 +233,11 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
   "Test setting <apps> m c before loading."
-  (should (equal (ergoemacs-test-global-key-set-before nil
-                                                       (if (eq system-type 'windows-nt)
-                                                           "<apps> m c"
-                                                         "<menu> m c") nil nil "<menu>") t)))
+  (let (wait-for-me)
+    (should (equal (ergoemacs-test-global-key-set-before nil
+                                                         (if (eq system-type 'windows-nt)
+                                                             "<apps> m c"
+                                                           "<menu> m c") nil nil "<menu>") t))))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before-2 ()
   "Test setting <apps> m c before loading (define-key)."
@@ -245,14 +248,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-global-key-set-apps-before ()
   "Test setting <apps> before loading."
-  (let (wait-for-me)
-    (should
-     (equal
-      (ergoemacs-test-global-key-set-before
-       nil
-       (if (eq system-type 'windows-nt)
-           "<apps>"
-         "<menu>")) t))))
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps>"
+       "<menu>")) t)))
 
 
 (ert-deftest ergoemacs-test-global-key-set-apps-before-2 ()

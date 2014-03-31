@@ -178,7 +178,7 @@ particular it:
 - `define-key' is converted to `ergoemacs-theme-component--define-key' and keymaps are quoted
 - `global-set-key' is converted to `ergoemacs-theme-component--global-set-key'
 - `global-unset-key' is converted to `ergoemacs-theme-component--global-set-key'
-- `global-reset-key' is converted `ergoemacs-theme-component--global-reset-key'
+- `globall-reset-key' is converted `ergoemacs-theme-component--global-reset-key'
 - Allows :version statement expansion
 - Adds with-hook syntax or (when -hook)
 "
@@ -499,12 +499,17 @@ When fixed-layout and variable-layout are bound"
           (unless found-2-p
             (push (list a-key (list (list kd def)) always-run-p full-shortcut-p) minor-mode-layout))))))))
 
+
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key)
   "Defines KEY in `ergoemacs-global-override-keymap'"
-  (when (ergoemacs-global-changed-p key)
-    (let ((no-ergoemacs-advice t))
-      (define-key ergoemacs-global-override-keymap key
-        (lookup-key (current-global-map) key)))))
+  (let ((no-ergoemacs-advice t)
+        (key (read-kbd-macro (key-description key) t)))
+    (while (>= (length key) 1)
+      (when (and (ergoemacs-global-changed-p key)
+                 (commandp (lookup-key (current-global-map) key)))
+        (define-key ergoemacs-global-override-keymap key
+          (lookup-key (current-global-map) key)))
+      (setq key (substring key 0 (- (length key) 1))))))
 
 (defun ergoemacs-theme-component--define-key-in-keymaps (keymap keymap-shortcut key def)
   "Defines KEY in KEYMAP or KEYMAP-SHORTCUT to be DEF.
