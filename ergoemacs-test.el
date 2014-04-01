@@ -233,11 +233,10 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
   "Test setting <apps> m c before loading."
-  (let (wait-for-me)
-    (should (equal (ergoemacs-test-global-key-set-before nil
-                                                         (if (eq system-type 'windows-nt)
-                                                             "<apps> m c"
-                                                           "<menu> m c") nil nil "<menu>") t))))
+  (should (equal (ergoemacs-test-global-key-set-before nil
+                                                       (if (eq system-type 'windows-nt)
+                                                           "<apps> m c"
+                                                         "<menu> m c") nil nil "<menu>") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before-2 ()
   "Test setting <apps> m c before loading (define-key)."

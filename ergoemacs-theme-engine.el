@@ -503,13 +503,16 @@ When fixed-layout and variable-layout are bound"
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key)
   "Defines KEY in `ergoemacs-global-override-keymap'"
   (let ((no-ergoemacs-advice t)
-        (key (read-kbd-macro (key-description key) t)))
-    (while (>= (length key) 1)
-      (when (and (ergoemacs-global-changed-p key)
-                 (commandp (lookup-key (current-global-map) key)))
-        (define-key ergoemacs-global-override-keymap key
-          (lookup-key (current-global-map) key)))
-      (setq key (substring key 0 (- (length key) 1))))))
+        (key (read-kbd-macro (key-description key) t)) lk)
+    (catch 'found-global-command
+      (while (>= (length key) 1)
+        (setq lk (lookup-key (current-global-map) key))
+        (when (and (ergoemacs-global-changed-p key)
+                   (or (commandp lk t)
+                       (keymapp lk)))
+          (define-key ergoemacs-global-override-keymap key lk)
+          (throw 'found-global-command t))
+        (setq key (substring key 0 (- (length key) 1)))))))
 
 (defun ergoemacs-theme-component--define-key-in-keymaps (keymap keymap-shortcut key def)
   "Defines KEY in KEYMAP or KEYMAP-SHORTCUT to be DEF.
@@ -1045,7 +1048,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
               (mapc
                (lambda(key)
                  (unless (member key ergoemacs-ignored-prefixes)
-                   (ergoemacs-theme-component--ignore-globally-defined-key key)
+                   (ergoemacs-theme-component--ignore-globally-defined-key (read-kbd-macro key))
                    (define-key fixed-read (read-kbd-macro key)
                      `(lambda()
                         (interactive)
