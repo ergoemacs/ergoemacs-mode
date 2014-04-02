@@ -62,79 +62,70 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (if (and (boundp 'ergoemacs-run-mode-hooks) ergoemacs-run-mode-hooks
            (not (equal keymap (current-global-map)))
            (not (equal keymap ergoemacs-keymap)))
-      (let ((no-ergoemacs-advice t)
-            (ergoemacs-run-mode-hooks nil)
+      (let ((ergoemacs-run-mode-hooks nil)
             (new-key (read-kbd-macro
                       (format "<ergoemacs-user> %s"
                               (key-description key)))))
         (unwind-protect
             (define-key keymap new-key def))))
-  (if (and (equal keymap 'ergoemacs-keymap)
-           (or (not (boundp 'no-ergoemacs-advice))
-               (and (boundp 'no-ergoemacs-advice) (not no-ergoemacs-advice))))
-      (progn
-        (message "Define Key Advice %s %s" key def)
-        (let ((found))
-          (set (ergoemacs-get-fixed-layout)
-               (mapcar
-                (lambda(x)
-                  (if (not (or (and (type-of (nth 0 x) 'string)
-                                    (string= (key-description
-                                              (condition-case err
-                                                  (read-kbd-macro (nth 0 x))
-                                                (error
-                                                 (read-kbd-macro (encode-coding-string (nth 0 x) locale-coding-system)))))
-                                             (key-description key)))
-                               (and (not (type-of (nth 0 x) 'string))
-                                    (string= (key-description (nth 0 x)) (key-description key)))))
-                      x
-                    (setq found t)
-                    `(,(nth 0 x) ,command "")))
-                (symbol-value (ergoemacs-get-fixed-layout))))
-          (unless found
-            (set (ergoemacs-get-variable-layout)
-                 (mapcar
-                  (lambda(x)
-                    (if (not (and (type-of (nth 0 x) 'string)
-                                  (string= (key-description (ergoemacs-kbd (nth 0 x) nil (nth 3 x))) (key-description key))))
-                        x
-                      (setq found t)
-                      ;; Assume the complete sequence is translated?
-                      `(,(nth 0 x) ,command "")))
-                  (symbol-value (ergoemacs-get-variable-layout)))))
-          (unless found
-            (add-to-list (ergoemacs-get-fixed-layout) `(,(key-description key) ,command ""))))
-        (message "Only changed ergoemacs-keybinding for current theme, %s" (or ergoemacs-theme "which happens to be the default key-binding"))
-        (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
-          (let ((no-ergoemacs-advice t))
-            (define-key ergoemacs-keymap key def))))
-    ad-do-it)
-  (when (or (equal keymap (current-global-map ))
-            (equal keymap global-map))
-    (ergoemacs-global-set-key-after key def)))
+  ad-do-it
+  (when (or (equal keymap (current-global-map))
+            (equal keymap global-map)
+            (equal keymap ergoemacs-keymap))
+    (let ((vk key))
+      (ergoemacs-global-set-key-after key def)
+      (unless (vectorp vk) ;; Do vector def too.
+        (setq vk (read-kbd-macro (key-description key) t))
+        (ergoemacs-global-set-key-after vk def)))))
 (ad-activate 'define-key)
 
+(defvar ergoemacs-global-override-rm-keys '())
 (defvar ergoemacs-global-override-keymap (make-sparse-keymap))
 ;;; Advices enabled or disabled with ergoemacs-mode
 (defun ergoemacs-global-set-key-after (key command)
-  (add-to-list 'ergoemacs-global-changed-cache (key-description key))
-  (when ergoemacs-global-not-changed-cache
-    (delete (key-description key) ergoemacs-global-not-changed-cache))
-  (let ((no-ergoemacs-advice t))
+  (if (and (boundp 'no-ergoemacs-advice) no-ergoemacs-advice) nil
+    (let ((no-ergoemacs-advice t))
+    (add-to-list 'ergoemacs-global-changed-cache (key-description key))
+    (when ergoemacs-global-not-changed-cache
+      (delete (key-description key) ergoemacs-global-not-changed-cache))
     ;; Put in the overriding keymap
-    (define-key ergoemacs-global-override-keymap key command)
-    (when (condition-case err
-              (interactive-form (lookup-key ergoemacs-unbind-keymap key))
-            (error nil))
-      (define-key ergoemacs-unbind-keymap key nil)
-      (unless (string-match "^C-[xc]" (key-description key))
-        (define-key ergoemacs-shortcut-keymap key nil)))
-    (define-key ergoemacs-keymap key nil))
-  (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
-    (when x
-      (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-    (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)))
-
+    (cond
+     ((or (commandp command t) (keymapp command)) ;; Command
+      (let ((rm-keys '()))
+        (mapc
+         (lambda(rm-key)
+           (unless (equal rm-key key)
+             (push rm-key rm-keys)))
+         ergoemacs-global-override-rm-keys)
+        (setq ergoemacs-global-override-rm-keys rm-keys))
+      (define-key ergoemacs-global-override-keymap key command))
+     (t
+      (push key ergoemacs-global-override-rm-keys)
+      (setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
+      (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key))
+      (setq ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key))
+      (setq ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-unbind-keymap key))
+      ;; Update Maps.
+      (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
+        (when x
+          (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
+        (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist))
+      
+      (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
+        (when x
+          (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+        (push (cons 'ergoemacs-mode ergoemacs-keymap) minor-mode-map-alist))
+      
+      (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
+        (when x
+          (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+        ;; Put at the END of the list.
+        (setq minor-mode-map-alist
+              (append minor-mode-map-alist
+                      (list (cons 'ergoemacs-unbind-keys ergoemacs-unbind-keymap))))))))))
+    
+    
+  
 
 (defadvice local-set-key (around ergoemacs-local-set-key-advice (key command))
   "This let you use `local-set-key' as usual when `ergoemacs-mode' is enabled."

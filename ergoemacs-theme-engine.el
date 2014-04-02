@@ -1410,6 +1410,25 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
     (when x
       (setq minor-mode-map-alist (delq x minor-mode-map-alist)))))
 
+(defun ergoemacs-rm-key (keymap key)
+  "Removes KEY from KEYMAP even if it is an ergoemacs composed keymap.
+Returns new keymap"
+  (let ((new-keymap (copy-keymap keymap)))
+    (cond
+     ((keymapp (nth 1 new-keymap))
+      (pop new-keymap)
+      (setq new-keymap
+            (mapcar
+             (lambda(map)
+               (define-key map key nil)
+               map)
+             new-keymap))
+      (push 'keymap new-keymap)
+      (symbol-value 'new-keymap))
+     (t
+      (define-key new-keymap key nil)
+      (symbol-value 'new-keymap)))))
+
 (defun ergoemacs-theme-install (theme &optional version)
   "Installs `ergoemacs-theme' THEME into appropriate keymaps."
   (let ((tc (ergoemacs-theme-keymaps theme version)))
@@ -1418,6 +1437,14 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
           ergoemacs-shortcut-keymap (nth 1 tc)
           ergoemacs-keymap (nth 2 tc)
           ergoemacs-unbind-keymap (nth 4 tc))
+    ;; Remove unneeded shortcuts.
+    (mapc
+     (lambda(key)
+       (setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
+       (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key))
+       (setq ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key))
+       (setq ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-unbind-keymap key)))
+     ergoemacs-global-override-rm-keys)
     ;; Reset Shortcut hash.
     (mapc
      (lambda(c)
