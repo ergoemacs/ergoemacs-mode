@@ -1141,6 +1141,7 @@ Emacs buffers are those whose name starts with *."
          (myFileList
           (cond
            ((string-equal major-mode "dired-mode") (dired-get-marked-files))
+           ((string-equal major-mode "locate-mode") (dired-get-marked-files))
            ((not file) (list (buffer-file-name)))
            (file (list file)))))
     
