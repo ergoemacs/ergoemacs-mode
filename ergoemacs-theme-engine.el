@@ -287,6 +287,7 @@ particular it:
              (boundp 'component-version-minor-mode-layout)
              (boundp 'component-version-curr)
              (boundp 'fixed-layout) (boundp 'variable-layout)
+             (boundp 'fixed-layout-rm) (boundp 'variable-layout-rm)
              (boundp 'redundant-keys) (boundp 'defined-keys)
              (boundp 'versions)
              (boundp 'just-first-reg)
@@ -297,17 +298,44 @@ particular it:
                   component-version-fixed-layout
                   component-version-variable-layout
                   component-version-redundant-keys
-                  component-version-minor-mode-layout) component-version-list))
+                  component-version-minor-mode-layout
+                  component-version-fixed-layout-rm
+                  component-version-variable-layout-rm)
+            component-version-list))
     (setq component-version-curr component-version)
     (push component-version-curr versions)
     (unless component-version-minor-mode-layout
       (setq component-version-minor-mode-layout (symbol-value 'component-version-minor-mode-layout)))
     (unless component-version-fixed-layout
       (setq component-version-fixed-layout (symbol-value 'fixed-layout)))
+    (unless component-version-fixed-layout-rm
+      (setq component-version-fixed-layout-rm (symbol-value 'fixed-layout-rm)))
     (unless component-version-fixed-layout
       (setq component-version-variable-layout (symbol-value 'variable-layout)))
+    (unless component-version-fixed-layout-rm
+      (setq component-version-variable-layout-rm (symbol-value 'variable-layout-rm)))
     (unless component-version-redundant-keys
       (setq component-version-redundant-keys (symbol-value 'redundant-keys)))))
+
+(defun ergoemacs-theme-component--rm-key (key)
+  "Remove KEY from `ergoemacs-mode' keymaps"
+  (let* ((kd (key-description key))  jf 
+         (variable-p (and (boundp 'variable-reg)
+                          variable-reg
+                          (condition-case nil
+                              (string-match variable-reg kd)
+                            (error nil)))))
+    (when variable-p
+      (setq jf (and (boundp 'just-first-reg) just-first-reg
+                    (condition-case nil
+                        (string-match just-first-reg kd)
+                      (error nil)))))
+    (cond
+     ((and variable-p (boundp 'variable-layout-rm))
+      (setq kd (ergoemacs-kbd kd t jf))
+      (push (list kd jf) variable-layout-rm))
+     ((boundp 'fixed-layout-rm)
+      (push key fixed-layout-rm)))))
 
 (defun ergoemacs-theme-component--global-reset-key (key)
   "Reset KEY.
@@ -417,7 +445,7 @@ When fixed-layout and variable-layout are bound"
   (when (and (boundp 'fixed-layout) (boundp 'variable-layout))
     (if (memq keymap '(global-map ergoemacs-keymap))
         (if (and (eq keymap 'ergoemacs-keymap) (not def))
-            (ergoemacs-theme-component--global-set-key key 'ignore)
+            (ergoemacs-theme-component--rm-key key)
           (ergoemacs-theme-component--global-set-key key def))
       (let* ((hook (or
                     (and (boundp 'ergoemacs-hook) ergoemacs-hook)
@@ -924,7 +952,7 @@ If the COMPONENT has the suffix ::version, just get the closest specified versio
 If COMPONENT is a list, return the composite keymaps of all the
 components listed.
 
-Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
+Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap rm-keys.
 "
   ;;; (let ((tmp (nth 1 (ergoemacs-theme-component-keymaps '(move-char help))))) (message "%s" (substitute-command-keys "\\{tmp}")))
   (if (eq (type-of component) 'cons)
@@ -934,7 +962,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
             (l1 '())
             (l2 '())
             (l3 '())
-            (l4 '())) ;; List of components.
+            (l4 '())
+            (l5 '())) ;; List of components.
         (mapc
          (lambda(comp)
            (let ((new-ret (ergoemacs-theme-component-keymaps comp version)))
@@ -967,7 +996,9 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                  (setq k-l (nth 4 new-ret)) ;; Composed keymap.
                  ;; Decompose keymaps.
                  (pop k-l)
-                 (setq l4 (append k-l l4))))))
+                 (setq l4 (append k-l l4))))
+             (when (nth 5 new-ret)
+               (setq l5 (append l5 (nth 5 new-ret))))))
          (reverse component))
         (setq ret
               (list
@@ -975,7 +1006,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                (make-composed-keymap l1)
                (make-composed-keymap l2)
                l3
-               (make-composed-keymap l4))))
+               (make-composed-keymap l4)
+               l5)))
     (let (fixed-shortcut
           fixed-read
           fixed-shortcut-list
@@ -983,6 +1015,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
           variable-shortcut
           variable-read
           fixed variable
+          fixed-rm variable-rm
+          rm-lst
           key-list
           (no-ergoemacs-advice t)
           (case-fold-search t)
@@ -1020,10 +1054,11 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
          (gethash (concat true-component version ":redundant") ergoemacs-theme-component-hash))
         (puthash (concat true-component version ":unbind") unbind ergoemacs-theme-component-hash))
       (unless only-variable
-        (setq fixed-shortcut (gethash (concat true-component version ":fixed:shortcut") ergoemacs-theme-component-hash))
-        (setq fixed-read (gethash (concat true-component version ":fixed:read") ergoemacs-theme-component-hash))
-        (setq fixed (gethash (concat true-component version ":fixed:map") ergoemacs-theme-component-hash))
-        (setq fixed-shortcut-list (gethash (concat true-component version
+        (setq fixed-shortcut (gethash (concat true-component version ":fixed:shortcut") ergoemacs-theme-component-hash)
+              fixed-read (gethash (concat true-component version ":fixed:read") ergoemacs-theme-component-hash)
+              fixed (gethash (concat true-component version ":fixed:map") ergoemacs-theme-component-hash)
+              fixed-rm (gethash (concat true-component version ":fixed-rm") ergoemacs-theme-component-hash)
+              fixed-shortcut-list (gethash (concat true-component version
                                                    ":fixed:shortcut:list")
                                            ergoemacs-theme-component-hash))
         (unless (or fixed fixed-shortcut fixed-read fixed-shortcut-list)
@@ -1068,11 +1103,16 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
 
       (unless only-fixed
         (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  version ":variable:shortcut") ergoemacs-theme-component-hash))
-        (setq variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:read") ergoemacs-theme-component-hash))
-        (setq variable (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") ergoemacs-theme-component-hash))
-        (setq variable-shortcut-list (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut:list")
-                                              ergoemacs-theme-component-hash))
+        (setq variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:read") ergoemacs-theme-component-hash)
+              variable (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") ergoemacs-theme-component-hash)
+              variable-rm (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable-rm") ergoemacs-theme-component-hash)
+              variable-shortcut-list (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut:list") ergoemacs-theme-component-hash))
         (unless (or variable variable-shortcut variable-read variable-shortcut-list)
+          (setq variable-rm
+                (mapcar
+                 (lambda(x)
+                   (ergoemacs-kbd (nth 0 x) nil (nth 1 x)))
+                 (gethash (concat true-component version ":variable-rm") ergoemacs-theme-component-hash)))
           ;; Setup variable variable-keymap for this component.
           (setq key-list (gethash (concat true-component version ":variable") ergoemacs-theme-component-hash))
           (when key-list
@@ -1106,6 +1146,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
                      ergoemacs-theme-component-hash)
             (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") variable
                      ergoemacs-theme-component-hash)
+            (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable-rm") variable-rm ergoemacs-theme-component-hash)
             (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut:list") variable-shortcut-list
                      ergoemacs-theme-component-hash))))
       (mapc
@@ -1120,10 +1161,17 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
          variable
          unbind))
       (cond
+       ((and variable-rm fixed-rm)
+        (setq rm-lst (append variable-rm fixed-rm)))
+       (variable-rm
+        (setq rm-lst variable-rm))
+       (fixed-rm
+        (setq rm-lst fixed-rm)))
+      (cond
        (only-fixed
-        (list fixed-read fixed-shortcut fixed fixed-shortcut-list nil))
+        (list fixed-read fixed-shortcut fixed fixed-shortcut-list nil rm-lst))
        (only-variable
-        (list variable-read variable-shortcut variable variable-shortcut-list nil))
+        (list variable-read variable-shortcut variable variable-shortcut-list nil rm-lst))
        (t
         (list (or (and variable-read fixed-read
                        (make-composed-keymap (if ergoemacs-prefer-variable-keybindings
@@ -1143,7 +1191,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap.
               (if ergoemacs-prefer-variable-keybindings
                   (append variable-shortcut-list fixed-shortcut-list)
                 (append fixed-shortcut-list variable-shortcut-list))
-              unbind))))))
+              unbind rm-lst))))))
 
 
 (defvar ergoemacs-theme-hook-installed '()
@@ -1231,14 +1279,18 @@ added to the appropriate startup hooks.
            (versions '())
            (component-version nil)
            (component-version-variable-layout nil)
+           (component-version-variable-layout-rm nil)
            (component-version-fixed-layout nil)
+           (component-version-fixed-layout-rm nil)
            (component-version-redundant-keys nil)
            (component-version-minor-mode-layout nil)
            (component-version-curr nil)
            (component-version-list '())
            (defined-keys '())
            (variable-layout '())
+           (variable-layout-rm '())
            (fixed-layout '())
+           (fixed-layout-rm '())
            (defined-commands '())
            (minor-mode-layout '())
            (minor-mode-hook-list '())
@@ -1260,10 +1312,17 @@ added to the appropriate startup hooks.
        (when component-version-curr
          (push (list component-version-curr
                      component-version-fixed-layout
-                     component-version-variable-layout) component-version-list))
+                     component-version-variable-layout
+                     component-version-redundant-keys
+                     component-version-minor-mode-layout
+                     component-version-fixed-layout-rm
+                     component-version-variable-layout-rm)
+               component-version-list))
        (puthash (concat name ":plist") ',(nth 0 kb) ergoemacs-theme-component-hash)
        (puthash (concat name ":fixed") (symbol-value 'fixed-layout) ergoemacs-theme-component-hash)
+       (puthash (concat name ":fixed-rm") (symbol-value 'fixed-layout-rm) ergoemacs-theme-component-hash)
        (puthash (concat name ":variable") (symbol-value 'variable-layout) ergoemacs-theme-component-hash)
+       (puthash (concat name ":variable-rm") (symbol-value 'variable-layout-rm) ergoemacs-theme-component-hash)
        (puthash (concat name ":version") versions ergoemacs-theme-component-hash)
        (puthash (concat name ":redundant") redundant-keys ergoemacs-theme-component-hash)
        (puthash (concat name ":minor") minor-mode-layout ergoemacs-theme-component-hash)
@@ -1273,10 +1332,14 @@ added to the appropriate startup hooks.
           (let ((ver (nth 0 x))
                 (fixed (nth 1 x))
                 (var (nth 2 x))
-                (red (nth 3 x)))
+                (red (nth 3 x))
+                (fixed-rm (nth 4 x))
+                (var-rm (nth 5 x)))
             (puthash (concat name "::" ver ":fixed") fixed ergoemacs-theme-component-hash)
             (puthash (concat name "::" ver ":variable") var ergoemacs-theme-component-hash)
-            (puthash (concat name "::" ver ":redundant") var ergoemacs-theme-component-hash)))
+            (puthash (concat name "::" ver ":redundant") var ergoemacs-theme-component-hash)
+            (puthash (concat name "::" ver ":fixed-rm") fixed-rm ergoemacs-theme-component-hash)
+            (puthash (concat name "::" ver ":variable-rm") var-rm ergoemacs-theme-component-hash)))
         component-version-list))))
 ;;; Theme functions
 
@@ -1381,7 +1444,7 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
 
 (defun ergoemacs-theme-keymaps (theme &optional version)
   "Gets the keymaps for THEME for VERSION.
-Returns list of: read-keymap shortcut-keymap keymap shortcut-list.
+Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap rm-keys.
 Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
   (ergoemacs-theme-component-keymaps (ergoemacs-theme-components theme) version))
 
@@ -1444,7 +1507,9 @@ Returns new keymap"
        (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key))
        (setq ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key))
        (setq ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-unbind-keymap key)))
-     ergoemacs-global-override-rm-keys)
+     (if (nth 5 tc)
+         (append (nth 5 tc) ergoemacs-global-override-rm-keys)
+       ergoemacs-global-override-rm-keys))
     ;; Reset Shortcut hash.
     (mapc
      (lambda(c)
