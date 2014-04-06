@@ -51,6 +51,31 @@
 ;;; Code:
 (require 'guide-key nil t)
 
+(defmacro ergoemacs-with-ergoemacs (&rest body)
+  "With basic `ergoemacs-mode' mode keys.
+major-mode, minor-mode, and global keys are ignored."
+  `(let ((ergoemacs-mode t)
+         (ergoemacs-unbind-keys t)
+         (ergoemacs-shortcut-keys t)
+         ergoemacs-modal
+         ergoemacs-read-input-keys
+         (minor-mode-map-alist
+          `((ergoemacs-mode ,@ergoemacs-keymap)
+            (ergoemacs-unbind-keys ,@ergoemacs-unbind-keymap)))
+         (ergoemacs-emulation-mode-map-alist
+          `((ergoemacs-shortcut-keys ,@ergoemacs-shortcut-keymap)))
+         (old-global-map (current-global-map))
+         (old-local-map (current-local-map))
+         (new-local-map (make-sparse-keymap))
+         (new-global-map (make-sparse-keymap)))
+     (unwind-protect
+         (progn
+           (use-global-map new-global-map)
+           (use-local-map new-local-map)
+           ,@body)
+       (use-global-map old-global-map)
+       (use-local-map old-local-map))))
+
 (defmacro ergoemacs-with-overrides (&rest body)
   "With the `ergoemacs-mode' mode overrides.
 The global map is ignored, but major/minor modes keymaps are included."
@@ -1559,9 +1584,8 @@ DEF can be:
     (if existing
         (setcdr existing ergoemacs-keymap)
       (push (cons 'ergoemacs-mode ergoemacs-keymap) minor-mode-map-alist)))
-  (ergoemacs-mode-line)
   ;; Set appropriate mode-line indicator
-  (ergoemacs-setup-backward-compatability))
+  (ergoemacs-mode-line))
 
 (defvar ergoemacs-extract-map-hash (make-hash-table :test 'equal))
 
