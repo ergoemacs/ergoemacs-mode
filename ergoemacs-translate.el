@@ -794,31 +794,23 @@ For example, on dvorak, change C-j to C-c (copy/command)."
     (symbol-value 'ret)))
 
 (defun ergoemacs-key-fn-lookup (function &optional use-apps)
-  "Looks up the key binding for FUNCTION based on `ergoemacs-get-variable-layout'."
-  (let ((ret nil))
-    (mapc
-     (lambda(x)
-       (when (and (equal (nth 1 x) function)
-                  (if use-apps
-                      (string-match "<\\(apps\\|menu\\)>" (nth 0 x))
-                    (not (string-match "<\\(apps\\|menu\\)>" (nth 0 x)))))
-         (setq ret (ergoemacs-kbd (nth 0 x) nil (nth 3 x)))))
-     (symbol-value (ergoemacs-get-variable-layout)))
-    (unless ret
-      (mapc
-       (lambda(x)
-         (when (and (equal (nth 1 x) function)
-                    (if use-apps
-                        (string-match "<\\(apps\\|menu\\)>" (nth 0 x))
-                      (not (string-match "<\\(apps\\|menu\\)>" (nth 0 x)))))
-           (setq ret (read-kbd-macro
-                      (ergoemacs-get-kbd-translation (nth 0 x))))))
-       (symbol-value (ergoemacs-get-fixed-layout))))
-    (unless ret ;; Attempt to do a function translation.
-      (let ((new-fn (ergoemacs-translate-current-function function)))
-        (unless (eq new-fn function)
-          (setq ret (ergoemacs-key-fn-lookup new-fn use-apps)))))
-    (symbol-value 'ret)))
+  "Looks up the key binding for FUNCTION based on.
+Based on `ergoemacs-with-ergoemacs'"
+  (ergoemacs-with-ergoemacs
+   (let ((ret (where-is-internal function)))
+     (maphash
+      (lambda (key val)
+        (let ((fn (nth 0 val)))
+          (when (eq fn function)
+            (push key ret))))
+      ergoemacs-command-shortcuts-hash)
+     (if (not use-apps)
+         (while (and ret (eq (elt (nth 0 ret) 0) 'apps))
+           (pop ret))
+       (while (and ret (not (eq (elt (nth 0 ret) 0) 'apps)))
+         (pop ret)))
+     (setq ret (nth 0 ret))
+     (symbol-value 'ret))))
 
 
 (provide 'ergoemacs-translate)
