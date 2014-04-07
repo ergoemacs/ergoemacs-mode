@@ -336,32 +336,6 @@ remove the keymap depends on user input and KEEP-PRED:
 (unless (featurep 'ergoemacs-shortcuts)
   (load "ergoemacs-shortcuts"))
 
-
-(defvar ergoemacs-backward-compatability-variables
-  '((ergoemacs-backward-paragraph-key            backward-block)
-    (ergoemacs-forward-paragraph-key             forward-block)
-    (ergoemacs-recenter-key                      recenter-top-bottom)
-    (ergoemacs-kill-region-key                   cut-line-or-region)
-    (ergoemacs-kill-ring-save-key                copy-line-or-region))
-  "Backward compatible variables that do not follow the convention ergoemacs-FUNCTION-key")
-
-(defun ergoemacs-setup-backward-compatability ()
-  "Set up backward-compatible variables"
-  (mapc
-   (lambda(var)
-     (condition-case err
-         (eval `(setq ,(intern (concat "ergoemacs-" (symbol-name (nth 1 var)) "-key")) (ergoemacs-kbd (nth 0 var))))
-       (error (ergoemacs-debug "Ignored backward compatability for %s" (nth 1 var)))))
-   (symbol-value (ergoemacs-get-variable-layout)))
-  (mapc
-   (lambda(var)
-     (let ((saved-var (intern-soft (concat "ergoemacs-" (symbol-name (nth 1 var)) "-key"))))
-       (when saved-var
-         (set (nth 0 var) (symbol-value saved-var)))))
-   ergoemacs-backward-compatability-variables))
-
-
-
 (defun ergoemacs-mode-line (&optional text)
   "Set ergoemacs-mode-line"
   ;; (ergoemacs-debug-heading "Set Mode Line to %s" (or text "Default"))
