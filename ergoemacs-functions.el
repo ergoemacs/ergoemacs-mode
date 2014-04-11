@@ -1187,14 +1187,19 @@ Similar to (kill-buffer (current-buffer)) with the following addition:
 A emacs buffer is one who's name starts with *.
 Else it is a user buffer."
   (interactive)
-  (let (emacsBuff-p
+  (let ((override-fn (ergoemacs-get-override-function (or ergoemacs-single-command-keys (this-single-command-keys))))
+        emacsBuff-p
         isEmacsBufferAfter
         (org-p (string-match "^*Org Src" (buffer-name))))
     
     (setq emacsBuff-p (if (string-match "^*" (buffer-name)) t nil) )
     
     (if (string= major-mode "minibuffer-inactive-mode")
-        (minibuffer-keyboard-quit) ; if the buffer is minibuffer
+        (progn
+          (if override-fn
+              (progn
+                (call-interactively override-fn))
+            (minibuffer-keyboard-quit)))
       (progn
         ;; offer to save buffers that are non-empty and modified, even
         ;; for non-file visiting buffer. (because kill-buffer does not
