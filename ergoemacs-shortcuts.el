@@ -1899,7 +1899,10 @@ original key binding.
     (when fn-lst
       (setq send-keys (nth 2 (nth 0 fn-lst)))
       (setq fn (nth 0 (nth 0 fn-lst))))
-    (ergoemacs-read-key-call (or (command-remapping fn (point)) fn))
+    (setq send-fn (or (command-remapping fn (point)) fn))
+    (unless (commandp send-fn t)
+      (setq send-fn fn))
+    (ergoemacs-read-key-call send-fn)
     (setq deactivate-mark ergoemacs-deactivate-mark
           ergoemacs-deactivate-mark nil)))
 
