@@ -1198,7 +1198,6 @@ Else it is a user buffer."
         (progn
           (if override-fn
               (progn
-                (message "Call Override: %s" override-fn)
                 (call-interactively override-fn))
             (minibuffer-keyboard-quit)))
       (progn
