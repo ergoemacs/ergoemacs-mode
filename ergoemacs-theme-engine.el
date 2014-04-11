@@ -271,8 +271,7 @@ particular it:
                                            ':full-keymap)))
                           (ergoemacs-hook-always ,(plist-get (nth 0 tmp)
                                                              ':always)))
-                      ,@(nth 1 tmp)
-                      (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt))))
+                      ,@(nth 1 tmp))))
                 (t elt)))
              remaining)))
     (setq plist (loop for (key . value) in extracted-key-accu
@@ -616,7 +615,7 @@ DEF can be:
             (define-key keymap-shortcut key 'ergoemacs-shortcut-movement))
         (ergoemacs-theme-component--ignore-globally-defined-key key)
         (define-key keymap-shortcut key 'ergoemacs-shortcut)))
-     (t
+     ((or (commandp def t) (keymapp def))
       (ergoemacs-theme-component--ignore-globally-defined-key key)
       (define-key keymap key def)))
     t)
@@ -714,7 +713,9 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
           (condition-case nil
               (progn
                 (ergoemacs-theme-component--ignore-globally-defined-key key)
-                (define-key keymap key (nth 0 args)))))))
+                (when (or (commandp (nth 0 args) t)
+                          (keymapp (nth 0 args)))
+                  (define-key keymap key (nth 0 args))))))))
      (t
       (condition-case nil
           (progn
@@ -812,17 +813,6 @@ This function does not finalize maps by installing them into the original maps.
                     (push keymap-list ret)))
                 new-ret))))
          (reverse component))
-        ;; It appears this is called every time the run hook is called.
-        ;; (message "%s;%s\n%s" hook component
-        ;;          (mapconcat 
-        ;;           (lambda(elt)
-        ;;             ;;((map-name always-modify-p keymap-stub full-map))
-        ;;             (let ((tmp (nth 2 elt)))
-        ;;               (concat (format "\t%s %s %s"
-        ;;                               (nth 0 elt) (nth 1 elt)
-        ;;                               (nth 3 elt)) "\n"
-        ;;                               (substitute-command-keys "\\{tmp}"))))
-        ;;           ret "\n"))
         (symbol-value 'ret))
     ;; Single component
     (let ((true-component (replace-regexp-in-string ":\\(fixed\\|variable\\)" ""
@@ -873,7 +863,8 @@ This function does not finalize maps by installing them into the original maps.
                           (ergoemacs-theme-component--ignore-globally-defined-key (read-kbd-macro (nth 0 key-list) t))
                           (define-key map (read-kbd-macro (nth 0 key-list) t)
                             `(lambda() (interactive) (ergoemacs-read-key ,(nth 1 key-list)))))
-                         (t
+                         ((or (commandp (nth 1 key-list) t)
+                              (keymapp (nth 1 key-list)))
                           (ergoemacs-theme-component--ignore-globally-defined-key (read-kbd-macro (nth 0 key-list) t))
                           (define-key map (read-kbd-macro (nth 0 key-list) t)
                             (nth 1 key-list)))))
