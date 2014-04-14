@@ -178,7 +178,7 @@ particular it:
 - `define-key' is converted to `ergoemacs-theme-component--define-key' and keymaps are quoted
 - `global-set-key' is converted to `ergoemacs-theme-component--global-set-key'
 - `global-unset-key' is converted to `ergoemacs-theme-component--global-set-key'
-- `globall-reset-key' is converted `ergoemacs-theme-component--global-reset-key'
+- `global-reset-key' is converted `ergoemacs-theme-component--global-reset-key'
 - Allows :version statement expansion
 - Adds with-hook syntax or (when -hook) or (when -mode)
 "
@@ -1222,17 +1222,19 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
   "Installed hooks")
 (defun ergoemacs-theme-hook (hook)
   "Run `ergoemacs-mode' HOOK."
+  (message "ergoemacs-theme-hook call for %s" hook)
   (let (deactivate-mark
+        (inhibit-read-only t)
         ;; Emulation variable for map.
         (emulation-var (if (not (string-match "mode$" (symbol-name hook)))
                            (intern (concat "ergoemacs--emulation-for-" (symbol-name hook)))
                          hook))
         (all-always-p t)
         x)
-    (unless (boundp hook)
-      (set-default hook nil)
-      (set hook nil))
     (unless (string-match "mode$" (symbol-name hook))
+      (unless (boundp hook)
+        (set-default hook nil)
+        (set hook nil))
       (set-default emulation-var nil)
       (set (make-local-variable emulation-var) t))
     (unless (member hook ergoemacs-theme-hook-installed)
@@ -1257,7 +1259,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
                  (setq all-always-p nil)
                (push (list hook map-name) ergoemacs-theme-hook-installed)))
             ((not (member (list hook map-name) ergoemacs-theme-hook-installed))
-             (set map-name (copy-keymap replace))
+             (unless (string-match "mode$" (symbol-name map-name))
+               (set map-name (copy-keymap replace)))
              (if (not always-modify-p)
                  (setq all-always-p nil)
                (push (list hook map-name) ergoemacs-theme-hook-installed))))))
