@@ -1181,6 +1181,7 @@ Similar to (kill-buffer (current-buffer)) with the following addition:
 • Prompt user to save if the buffer has been modified even if the buffer is not associated with a file.
 • Make sure the buffer shown after closing is a user buffer.
 • If the buffer is editing a source file in an org-mode file, prompt the user to save before closing.
+• If the buffer is editing a CAPTUREd task in an org-mode file, prompt the user to save before closing.
 • If the buffer is a file, add the path to the list `ergoemacs-recently-closed-buffers'.
 • If it is the minibuffer, exit the minibuffer
 
@@ -1188,11 +1189,11 @@ A emacs buffer is one who's name starts with *.
 Else it is a user buffer."
   (interactive)
   (let ((override-fn (ergoemacs-get-override-function (or ergoemacs-single-command-keys (this-single-command-keys))))
-        emacsBuff-p
-        isEmacsBufferAfter
-        (org-p (string-match "^*Org Src" (buffer-name))))
-    
-    (setq emacsBuff-p (if (string-match "^*" (buffer-name)) t nil) )
+        emacs-buff-p
+        is-emacs-buffer-after-p
+        (org-p (string-match "^[*]Org Src" (buffer-name)))
+        (org-capture-p (string-match "CAPTURE-.*\\.org" (buffer-name))))
+    (setq emacs-buff-p (if (string-match "^*" (buffer-name)) t nil) )
     
     (if (string= major-mode "minibuffer-inactive-mode")
         (progn
@@ -1200,12 +1201,15 @@ Else it is a user buffer."
               (progn
                 (call-interactively override-fn))
             (minibuffer-keyboard-quit)))
-      (progn
+      (if org-capture-p
+          (if (y-or-n-p "Capture not saved, do you want to save?")
+              (call-interactively 'org-capture-finalize)
+            (call-interactively 'org-capture-kill))
         ;; offer to save buffers that are non-empty and modified, even
         ;; for non-file visiting buffer. (because kill-buffer does not
         ;; offer to save buffers that are not associated with files)
         (when (and (buffer-modified-p)
-                   (not emacsBuff-p)
+                   (not emacs-buff-p)
                    (not (string-equal major-mode "dired-mode"))
                    (if (equal (buffer-file-name) nil)
                        (if (string-equal "" (save-restriction (widen) (buffer-string))) nil t)
@@ -1233,9 +1237,9 @@ Else it is a user buffer."
         
         ;; if emacs buffer, switch to a user buffer
         (if (string-match "^*" (buffer-name))
-            (setq isEmacsBufferAfter t)
-          (setq isEmacsBufferAfter nil))
-        (when isEmacsBufferAfter
+            (setq is-emacs-buffer-after-p t)
+          (setq is-emacs-buffer-after-p nil))
+        (when is-emacs-buffer-after-p
           (ergoemacs-next-user-buffer) ) ))))
 
 (defun ergoemacs-open-last-closed ()
