@@ -1459,9 +1459,9 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
              (setq tmp (intern-soft (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
              (if (and tmp (symbol-value tmp)) ;; In case old `ergoemacs-mode' already modified it...
                  (setq orig-map (copy-keymap (symbol-value tmp)))
-               (when (and orig-map (keymapp (symbol-value map-name)))
+               (when (keymapp (symbol-value map-name))
                  (setq orig-map (copy-keymap (symbol-value map-name)))))
-             (when (keymapp (symbol-value map-name))
+             (when orig-map
                (puthash (concat (symbol-name map-name) (symbol-name hook) ":original-map") (symbol-value map-name) ergoemacs-theme-component-hash)))
            (if orig-map
                (ergoemacs-theme--install-shortcuts-list
