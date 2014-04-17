@@ -607,7 +607,7 @@
  (global-set-key (kbd "<apps> a") 'mark-whole-buffer)
  (global-set-key (kbd "<apps> d") '("C-x" ctl-to-alt))
  (global-set-key (kbd "<apps> f") '("C-c" unchorded))
- (global-set-key (kbd "<apps> h") 'help-map)
+ (global-set-key (kbd "<apps> h") help-map)
  (global-set-key (kbd "<apps> h '") 'ergoemacs-display-current-svg)
  (global-set-key (kbd "<apps> h 1") 'describe-function)
  (global-set-key (kbd "<apps> h 2") 'describe-variable)
