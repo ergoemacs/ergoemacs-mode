@@ -280,6 +280,7 @@ particular it:
     (list plist remaining)))
 
 (defvar ergoemacs-theme-component-hash (make-hash-table :test 'equal))
+(defvar ergoemacs-theme-component-cache (make-hash-table :test 'equal))
 (defun ergoemacs-theme-component--version-bump ()
   (when (and (boundp 'component-version)
              component-version
@@ -837,7 +838,7 @@ This function does not finalize maps by installing them into the original maps.
                        (gethash (concat true-component ":version")
                                 ergoemacs-theme-component-hash))))
       (unless only-variable
-        (setq fixed-maps (gethash (concat true-component version ":maps") ergoemacs-theme-component-hash))
+        (setq fixed-maps (gethash (concat true-component version ":maps") ergoemacs-theme-component-cache))
         (unless fixed-maps
           ;; Setup fixed fixed-keymap for this component.
           (setq minor-alist
@@ -874,10 +875,10 @@ This function does not finalize maps by installing them into the original maps.
                keymap-list)
               (unless (equal fixed-maps '())
                 (puthash (concat true-component version ":maps") fixed-maps
-                         ergoemacs-theme-component-hash))))))
+                         ergoemacs-theme-component-cache))))))
 
       (unless only-fixed
-        (setq variable-maps (gethash (concat true-component version ":" ergoemacs-keyboard-layout ":maps") ergoemacs-theme-component-hash))
+        (setq variable-maps (gethash (concat true-component version ":" ergoemacs-keyboard-layout ":maps") ergoemacs-theme-component-cache))
         (unless variable-maps
           ;; Setup variable keymaps for this component.
           (setq minor-alist
@@ -914,7 +915,7 @@ This function does not finalize maps by installing them into the original maps.
                keymap-list)
               (unless (equal variable-maps '())
                 (puthash (concat true-component version ":" ergoemacs-keyboard-layout ":maps")
-                         variable-maps ergoemacs-theme-component-hash))))))
+                         variable-maps ergoemacs-theme-component-cache))))))
       ;; Now variable maps
       (setq already-done-list '())
       (setq ret
@@ -1064,8 +1065,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
                        (gethash (concat true-component ":version")
                                 ergoemacs-theme-component-hash))))
       
-      (setq unbind (gethash (concat true-component version ":unbind") ergoemacs-theme-component-hash))
-      (setq emulation-setup (gethash (concat true-component ":emulation") ergoemacs-theme-component-hash))
+      (setq unbind (gethash (concat true-component version ":unbind") ergoemacs-theme-component-cache))
+      (setq emulation-setup (gethash (concat true-component ":emulation") ergoemacs-theme-component-cache))
       (unless unbind
         (setq unbind (make-sparse-keymap))
         (mapc
@@ -1073,15 +1074,15 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
            (ergoemacs-theme-component--ignore-globally-defined-key (read-kbd-macro x))
            (define-key unbind (read-kbd-macro x) 'ergoemacs-undefined))
          (gethash (concat true-component version ":redundant") ergoemacs-theme-component-hash))
-        (puthash (concat true-component version ":unbind") unbind ergoemacs-theme-component-hash))
+        (puthash (concat true-component version ":unbind") unbind ergoemacs-theme-component-cache))
       (unless only-variable
-        (setq fixed-shortcut (gethash (concat true-component version ":fixed:shortcut") ergoemacs-theme-component-hash)
-              fixed-read (gethash (concat true-component version ":fixed:read") ergoemacs-theme-component-hash)
-              fixed (gethash (concat true-component version ":fixed:map") ergoemacs-theme-component-hash)
-              fixed-rm (gethash (concat true-component version ":fixed-rm") ergoemacs-theme-component-hash)
+        (setq fixed-shortcut (gethash (concat true-component version ":fixed:shortcut") ergoemacs-theme-component-cache)
+              fixed-read (gethash (concat true-component version ":fixed:read") ergoemacs-theme-component-cache)
+              fixed (gethash (concat true-component version ":fixed:map") ergoemacs-theme-component-cache)
+              fixed-rm (gethash (concat true-component version ":fixed-rm") ergoemacs-theme-component-cache)
               fixed-shortcut-list (gethash (concat true-component version
                                                    ":fixed:shortcut:list")
-                                           ergoemacs-theme-component-hash))
+                                           ergoemacs-theme-component-cache))
         (unless (or fixed fixed-shortcut fixed-read fixed-shortcut-list)
           ;; Setup fixed fixed-keymap for this component.
           (setq key-list (gethash (concat true-component version ":fixed") ergoemacs-theme-component-hash))
@@ -1114,20 +1115,20 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
             (setq input-keys '())
             (setq shortcut-list '())
             (puthash (concat true-component version ":fixed:shortcut") fixed-shortcut
-                     ergoemacs-theme-component-hash)
+                     ergoemacs-theme-component-cache)
             (puthash (concat true-component version ":fixed:read") fixed-read
-                     ergoemacs-theme-component-hash)
+                     ergoemacs-theme-component-cache)
             (puthash (concat true-component version ":fixed:map") fixed
-                     ergoemacs-theme-component-hash)
+                     ergoemacs-theme-component-cache)
             (puthash (concat true-component version ":fixed:shortcut:list")
-                     fixed-shortcut-list ergoemacs-theme-component-hash))))
+                     fixed-shortcut-list ergoemacs-theme-component-cache))))
 
       (unless only-fixed
-        (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  version ":variable:shortcut") ergoemacs-theme-component-hash))
-        (setq variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:read") ergoemacs-theme-component-hash)
-              variable (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") ergoemacs-theme-component-hash)
-              variable-rm (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable-rm") ergoemacs-theme-component-hash)
-              variable-shortcut-list (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut:list") ergoemacs-theme-component-hash))
+        (setq variable-shortcut (gethash (concat true-component ":" ergoemacs-keyboard-layout  version ":variable:shortcut") ergoemacs-theme-component-cache)
+              variable-read (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:read") ergoemacs-theme-component-cache)
+              variable (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") ergoemacs-theme-component-cache)
+              variable-rm (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable-rm") ergoemacs-theme-component-cache)
+              variable-shortcut-list (gethash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut:list") ergoemacs-theme-component-cache))
         (unless (or variable variable-shortcut variable-read variable-shortcut-list)
           (setq variable-rm
                 (mapcar
@@ -1162,14 +1163,14 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
                   input-keys '())
             (setq shortcut-list '())
             (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut") variable-shortcut
-                     ergoemacs-theme-component-hash)
+                     ergoemacs-theme-component-cache)
             (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:read") variable-read
-                     ergoemacs-theme-component-hash)
+                     ergoemacs-theme-component-cache)
             (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:map") variable
-                     ergoemacs-theme-component-hash)
-            (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable-rm") variable-rm ergoemacs-theme-component-hash)
+                     ergoemacs-theme-component-cache)
+            (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable-rm") variable-rm ergoemacs-theme-component-cache)
             (puthash (concat true-component ":" ergoemacs-keyboard-layout version ":variable:shortcut:list") variable-shortcut-list
-                     ergoemacs-theme-component-hash))))
+                     ergoemacs-theme-component-cache))))
       (mapc
        (lambda(var)
          (when (equal (symbol-value var) '(keymap))
@@ -1363,7 +1364,7 @@ added to the appropriate startup hooks.
        (puthash (concat name ":redundant") redundant-keys ergoemacs-theme-component-hash)
        (puthash (concat name ":minor") minor-mode-layout ergoemacs-theme-component-hash)
        (puthash (concat name ":minor-list") minor-mode-hook-list ergoemacs-theme-component-hash)
-       (puthash (concat name ":emulation") emulation-setup ergoemacs-theme-component-hash)
+       (puthash (concat name ":emulation") emulation-setup ergoemacs-theme-component-cache)
        (mapc
         (lambda(x)
           (let ((ver (nth 0 x))
@@ -1448,7 +1449,7 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
                (shortcut-map (make-sparse-keymap)) tmp
                orig-map
                final-map)
-           (setq orig-map (gethash (concat (symbol-name map-name) (symbol-name hook) ":original-map") ergoemacs-theme-component-hash))
+           (setq orig-map (gethash (concat (symbol-name map-name) (symbol-name hook) ":original-map") ergoemacs-theme-component-cache))
            (unless orig-map
              (setq tmp (intern-soft (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
              (if (and tmp (symbol-value tmp)) ;; In case old `ergoemacs-mode' already modified it...
@@ -1456,7 +1457,7 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
                (when (keymapp (symbol-value map-name))
                  (setq orig-map (copy-keymap (symbol-value map-name)))))
              (when orig-map
-               (puthash (concat (symbol-name map-name) (symbol-name hook) ":original-map") (symbol-value map-name) ergoemacs-theme-component-hash)))
+               (puthash (concat (symbol-name map-name) (symbol-name hook) ":original-map") (symbol-value map-name) ergoemacs-theme-component-cache)))
            (if orig-map
                (ergoemacs-theme--install-shortcuts-list
                 (nth 3 overall-keymaps) shortcut-map
