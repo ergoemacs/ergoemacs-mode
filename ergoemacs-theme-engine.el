@@ -809,17 +809,22 @@ This function does not finalize maps by installing them into the original maps.
                                    (keymapp (nth 1 old-map)))
                               (pop new-map)
                               (pop old-map)
-                              (setq new-map (append new-map old-map)))
-                             ((keymapp (nth 1 old-map))
+                              (setq new-map (append new-map old-map))
+                              (push 'keymap new-map))
+                             ((and (keymapp (nth 1 old-map)) (keymapp new-map))
                               (pop old-map)
                               (setq new-map (append (list new-map) old-map))
                               (push 'keymap new-map))
-                             ((keymapp (nth 1 new-map)) ;; New map is composed.
+                             ((and (keymapp (nth 1 new-map)) (keymapp old-map)) ;; New map is composed.
                               (pop new-map)
                               (setq new-map (append new-map (list old-map)))
                               (push 'keymap new-map))
-                             (t ;; decomposed maps.
-                              (setq new-map (make-composed-keymap (list new-map old-map)))))
+                             ((and (keymapp new-map) (keymapp old-map))
+                              ;; decomposed maps.
+                              (setq new-map (make-composed-keymap (list new-map old-map))))
+                             ((keymapp old-map)
+                              (setq new-map old-map))
+                             ((keymapp new-map)))
                             (list map-name always-modify-p new-map full-map-p))))
                       ret))
                (mapc
@@ -1485,7 +1490,8 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
                                     (append base-keymap (list shortcut-map))
                                   (pop shortcut-map)
                                   (append base-keymap shortcut-map)) orig-map))
-             (if (keymapp (nth 1 base-keymap))
+             (if (and (keymapp (nth 1 base-keymap))
+                      (eq 'keymap (nth 0 base-keymap)))
                  (pop base-keymap)
                (setq base-keymap (list base-keymap)))
              (setq base-keymap
@@ -1496,8 +1502,14 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-component
              (when (nth 0 overall-keymaps)
                (setq base-keymap (append (nth 0 overall-keymaps) base-keymap)))
              ;; Set parent to original keymap and compose read-keymap.
+             (if (= (length base-keymap) 1)
+                 ;; ((keymap)) to (keymap)
+                 (setq base-keymap (nth 0 base-keymap)))
              (setq final-map (make-composed-keymap base-keymap orig-map)))
-           (when (= 2 (length final-map))
+           (when (and (= 2 (length final-map))
+                      (eq (nth 0 final-map) 'keymap)
+                      (keymapp (nth 1 final-map)))
+             ;; Take care of (keymap (keymap ...))
              (setq final-map (nth 1 final-map)))
            (when full-keymap-p  ; Don't install shortcuts up.
              (define-key final-map '[ergoemacs] 'ignore))
