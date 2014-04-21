@@ -872,6 +872,28 @@ Selected mark would not be cleared after paste."
       (setq ret (or deactivate-mark (not mark-active))))
     (should ret)))
 
+(ert-deftest ergoemacs-test-apps-h-v ()
+  "Make Sure <apps> h v works correctly"
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (ergoemacs-test-fn t)
+        (ret nil))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme "reduction")
+    (setq ergoemacs-keyboard-layout "colemak")
+    (ergoemacs-mode 1)
+    (with-timeout (0.2 nil)
+      (ergoemacs-read-key
+       (format "<%s> h v"
+               (or (and (eq system-type 'windows-nt) "apps") "menu"))))
+    (message "Test FN: %s" ergoemacs-test-fn)
+    (setq ret (eq ergoemacs-test-fn (or (command-remapping 'describe-variable (point)) 'describe-variable)))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
