@@ -227,31 +227,45 @@ particular it:
                  (setq last-was-version t)
                  nil)
                 ((condition-case err
-                     (eq (nth 0 elt) 'global-reset-key))
+                     (eq (nth 0 elt) 'global-reset-key)
+                   (error nil))
                  `(ergoemacs-theme-component--global-reset-key ,(nth 1 elt)))
                 ((condition-case err
-                     (eq (nth 0 elt) 'global-unset-key))
+                     (eq (nth 0 elt) 'global-unset-key)
+                   (error nil))
                  `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) nil))
                 ((condition-case err
-                     (eq (nth 0 elt) 'global-set-key))
-                 (if (keymapp (nth 2 elt))
-                     `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) (quote ,(nth 2 elt)))
+                     (eq (nth 0 elt) 'global-set-key)
+                   (error nil))
+                 (if (condition-case nil
+                         (keymapp (symbol-value (nth 2 elt)))
+                       (error nil))
+                     (progn
+                       `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) (quote ,(nth 2 elt))))
                    `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) ,(nth 2 elt))))
                 ((condition-case err
-                     (eq (nth 0 elt) 'define-key))
+                     (eq (nth 0 elt) 'define-key)
+                   (error nil))
                  (if (equal (nth 1 elt) '(current-global-map))
-                     (if (keymapp (nth 3 elt))
+                     (if (condition-case nil
+                             (keymapp (symbol-value (nth 3 elt)))
+                           (error nil))
                          `(ergoemacs-theme-component--global-set-key ,(nth 2 elt) (quote ,(nth 3 elt)))
                        `(ergoemacs-theme-component--global-set-key ,(nth 2 elt) ,(nth 3 elt)))
-                   (if (keymapp (nth 3 elt))
+                   (if (condition-case nil
+                           (keymapp (symbol-value (nth 3 elt)))
+                         (error nil))
                        `(ergoemacs-theme-component--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
                      `(ergoemacs-theme-component--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)))))
                 ((or (condition-case err
-                         (eq (nth 0 elt) 'with-hook))
+                         (eq (nth 0 elt) 'with-hook)
+                       (error nil))
                      (and (condition-case err
-                              (eq (nth 0 elt) 'when))
+                              (eq (nth 0 elt) 'when)
+                            (error nil))
                           (condition-case err
-                              (string-match "-\\(hook\\|mode\\)$" (symbol-name (nth 1 elt))))))
+                              (string-match "-\\(hook\\|mode\\)$" (symbol-name (nth 1 elt)))
+                            (error nil))))
                  (let (tmp skip-first)
                    (setq tmp (ergoemacs--parse-keys-and-body (cdr (cdr elt))))
                    `(let ((ergoemacs-hook (quote ,(nth 1 elt)))
