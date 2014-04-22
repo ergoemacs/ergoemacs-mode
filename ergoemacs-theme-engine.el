@@ -1119,7 +1119,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
                  (ergoemacs-theme-component--ignore-globally-defined-key key)
                  (setq cmd (nth 1 x))
                  (ergoemacs-theme-component--define-key-in-keymaps fixed fixed-shortcut key cmd)))
-             key-list)
+             (reverse key-list))
             (when input-keys
               (mapc
                (lambda(key)
@@ -1129,7 +1129,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
                      `(lambda()
                         (interactive)
                         (ergoemacs-read-key ,key 'normal)))))
-               input-keys))
+               (reverse input-keys)))
             (setq fixed-shortcut-list shortcut-list)
             (setq input-keys '())
             (setq shortcut-list '())
@@ -1168,7 +1168,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
                    (add-to-list 'input-keys (match-string 1 (nth 0 x))))
                  (setq cmd (nth 1 x))
                  (ergoemacs-theme-component--define-key-in-keymaps variable variable-shortcut key cmd)))
-             key-list)
+             (reverse key-list))
             (when input-keys
               (mapc
                (lambda(key)
@@ -1177,7 +1177,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
                      `(lambda()
                         (interactive)
                         (ergoemacs-read-key ,key 'normal)))))
-               input-keys))
+               (reverse input-keys)))
             (setq variable-shortcut-list shortcut-list
                   input-keys '())
             (setq shortcut-list '())
