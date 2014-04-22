@@ -50,9 +50,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Code:
-(defvar ergoemacs-full-maps '(helm-map)
-  "List of keymaps where the full ergoemacs keymap is fully
- installed (ie they use an overriding keymap).")
 
 (defgroup ergoemacs-themes nil
   "Default Ergoemacs Layout"
@@ -857,11 +854,13 @@ This function does not finalize maps by installing them into the original maps.
                        (gethash (concat true-component ":version")
                                 ergoemacs-theme-component-hash))))
       (unless only-variable
-        (setq fixed-maps (gethash (concat true-component version ":maps") ergoemacs-theme-component-cache))
+        (setq fixed-maps (gethash (concat true-component version ":" (symbol-name hook) ":maps")
+                                  ergoemacs-theme-component-cache))
         (unless fixed-maps
           ;; Setup fixed fixed-keymap for this component.
           (setq minor-alist
-                (gethash (concat true-component version ":minor") ergoemacs-theme-component-hash))
+                (gethash (concat true-component version ":minor")
+                         ergoemacs-theme-component-hash))
           (when minor-alist
             (setq keymap-list (assoc hook minor-alist))
             (when keymap-list
@@ -888,16 +887,17 @@ This function does not finalize maps by installing them into the original maps.
                           (ergoemacs-theme-component--ignore-globally-defined-key (read-kbd-macro (nth 0 key-list) t))
                           (define-key map (read-kbd-macro (nth 0 key-list) t)
                             (nth 1 key-list)))))
-                      keys))
-                   (unless (equal map '(keymap))
-                     (push `(,map-name ,always-p ,map ,full-shortcut-map-p) fixed-maps))))
+                      (reverse keys))
+                     (unless (equal map '(keymap))
+                       (push `(,map-name ,always-p ,map
+                                         ,full-shortcut-map-p) fixed-maps)))))
                keymap-list)
               (unless (equal fixed-maps '())
-                (puthash (concat true-component version ":maps") fixed-maps
+                (puthash (concat true-component version ":" (symbol-name hook) ":maps") fixed-maps
                          ergoemacs-theme-component-cache))))))
 
       (unless only-fixed
-        (setq variable-maps (gethash (concat true-component version ":" ergoemacs-keyboard-layout ":maps") ergoemacs-theme-component-cache))
+        (setq variable-maps (gethash (concat true-component version ":" ergoemacs-keyboard-layout ":" (symbol-name hook) ":maps") ergoemacs-theme-component-cache))
         (unless variable-maps
           ;; Setup variable keymaps for this component.
           (setq minor-alist
@@ -928,12 +928,12 @@ This function does not finalize maps by installing them into the original maps.
                           (ergoemacs-theme-component--ignore-globally-defined-key (ergoemacs-kbd (nth 0 key-list) nil (nth 3 key-list)))
                           (define-key map (ergoemacs-kbd (nth 0 key-list) nil (nth 3 key-list))
                             (nth 1 key-list)))))
-                      keys))
-                   (unless (equal map '(keymap))
-                     (push `(,map-name ,always-p ,map ,full-shortcut-map-p) variable-maps))))
+                      (reverse keys))
+                     (unless (equal map '(keymap))
+                       (push `(,map-name ,always-p ,map ,full-shortcut-map-p) variable-maps)))))
                keymap-list)
               (unless (equal variable-maps '())
-                (puthash (concat true-component version ":" ergoemacs-keyboard-layout ":maps")
+                (puthash (concat true-component version ":" ergoemacs-keyboard-layout ":" (symbol-name hook) ":maps")
                          variable-maps ergoemacs-theme-component-cache))))))
       ;; Now variable maps
       (setq already-done-list '())
@@ -1273,17 +1273,17 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
              (setq ergoemacs-emulation-mode-map-alist
                    (append ergoemacs-emulation-mode-map-alist
                            (list (cons emulation-var replace))))
-             (if (not always-modify-p)
+             (if always-modify-p
                  (setq all-always-p nil)
                (push (list hook map-name) ergoemacs-theme-hook-installed)))
             ((not (member (list hook map-name) ergoemacs-theme-hook-installed))
              (unless (string-match "mode$" (symbol-name map-name))
                (set map-name (copy-keymap replace)))
-             (if (not always-modify-p)
+             (if always-modify-p
                  (setq all-always-p nil)
                (push (list hook map-name) ergoemacs-theme-hook-installed))))))
        (ergoemacs-theme-keymaps-for-hook hook ergoemacs-theme))
-      (when all-always-p
+      (unless all-always-p
         (push hook ergoemacs-theme-hook-installed)))))
 
 (defun ergoemacs-theme-component-make-hooks (component &optional remove-p)
@@ -1440,25 +1440,31 @@ added to the appropriate startup hooks.
 (defun ergoemacs-theme-keymaps-for-hook (hook theme &optional version)
   "Gets the keymaps for the HOOK specific to the THEME and VERSION specified.
 
-The return value is an alist of keymaps needed for this hook.  The format is:
+The return value is an alist of keymaps needed for this hook.
+The format is:
+
   ((map-name always-modify-p keymap-replacement))
 
 map-name is the map name that will be modified
 always-modify-p is a flag that will modify the keymap every time the hook is run.
 keymaps-stub is the keymap overrides that will be installed.
 
-When map-name is t, it is for a keymap put in `ergoemacs-emulation-mode-map-alist'
+When map-name is t, it is for a keymap put in
+`ergoemacs-emulation-mode-map-alist'
 
-Uses `ergoemacs-theme-component-keymaps-for-hook' and `ergoemacs-theme-components'"
+Uses `ergoemacs-theme-component-keymaps-for-hook' and
+`ergoemacs-theme-components'"
   ;;
   (let ((theme-components (ergoemacs-theme-components theme))
         overall-keymaps)
     (setq overall-keymaps (ergoemacs-theme-keymaps theme version))
     ;; 0:read-keymap 1:shortcut-keymap 2:keymap 3:shortcut-list 4:unbind-keymap.
+
     (mapcar
      (lambda(c)
        (if (or (eq (nth 0 c) 't)
-               (string-match "mode$" (symbol-name (nth 0 c))))
+               (and (string-match "mode$" (symbol-name (nth 0 c)))
+                    (eq (nth 0 c) hook)))
            (progn
              (list (nth 0 c) (nth 1 c) (nth 2 c)))
          (let ((map-name (nth 0 c))
