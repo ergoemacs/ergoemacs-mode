@@ -1,4 +1,4 @@
-;;; ergoemacs-extras.el --- generate extras for ErgoEmacs -*- lexical-binding:t -*-
+;;; ergoemacs-extras.el --- generate extras for ErgoEmacs 
 
 ;; Copyright (C) 2013 Matthew L. Fidler
 
