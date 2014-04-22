@@ -469,7 +469,6 @@
 
   ;; Mode specific changes
   (when isearch-mode-hook
-    :always t
     :modify-keymap t
     :full-shortcut-keymap t
     (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
