@@ -1541,8 +1541,8 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
        (let ((hook (nth 0 x))
              (map-name (nth 1 x))
              orig-map)
-         (unless (string-match "-mode$" (symbol-name map))
-           (unless (eq map 't)
+         (unless (string-match "-mode$" (symbol-name map-name))
+           (unless (eq map-name 't)
              (setq orig-map
                    (gethash (concat (symbol-name map-name) (symbol-name hook) ":original-map") ergoemacs-theme-component-cache))
              (when orig-map
