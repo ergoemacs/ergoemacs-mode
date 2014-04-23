@@ -786,6 +786,7 @@ This function does not finalize maps by installing them into the original maps.
                      (mapcar
                       (lambda(keymap-list)
                         (let ((map-name (nth 0 keymap-list))
+                              old-map new-map
                               full-map-p)
                           (setq new-map (assoc map-name new-ret))
                           (if (not new-map)
@@ -1663,7 +1664,7 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
 "
   (declare (doc-string 2)
            (indent 2))
-  (let ((kd (make-symbol "body-and-plist"))
+  (let ((kb (make-symbol "body-and-plist"))
         (tmp (make-symbol "tmp")))
     (setq kb (ergoemacs--parse-keys-and-body body-and-plist))
     (setq tmp (eval (plist-get (nth 0 kb) ':components)))
