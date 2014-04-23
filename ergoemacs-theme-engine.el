@@ -1477,19 +1477,18 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and
                final-map)
            (setq orig-map (gethash (concat (symbol-name map-name) (symbol-name hook) ":original-map") ergoemacs-theme-component-cache))
            (unless orig-map
-             (setq tmp (intern-soft (concat "ergoemacs-" (symbol-name hook) "-old-keymap")))
-             (if (and tmp (symbol-value tmp)) ;; In case old `ergoemacs-mode' already modified it...
-                 (setq orig-map (copy-keymap (symbol-value tmp)))
-               (when (keymapp (symbol-value map-name))
-                 (setq orig-map (copy-keymap (symbol-value map-name)))))
+             (when (boundp map-name)
+               (unwind-protect
+                   (setq orig-map (copy-keymap (symbol-value map-name)))))
              (when orig-map
-               (puthash (concat (symbol-name map-name) (symbol-name hook) ":original-map") (symbol-value map-name) ergoemacs-theme-component-cache)))
-           (if orig-map
-               (ergoemacs-theme--install-shortcuts-list
-                (nth 3 overall-keymaps) shortcut-map
-                orig-map full-keymap-p)
-             (setq orig-map (make-sparse-keymap)))
-           (setq orig-map (copy-keymap orig-map))
+               (puthash (concat (symbol-name map-name) (symbol-name hook) ":original-map") orig-map ergoemacs-theme-component-cache)))
+           (if (not orig-map)
+               (setq orig-map (make-sparse-keymap))
+             (setq orig-map (copy-keymap orig-map))
+             (ergoemacs-theme--install-shortcuts-list
+              (nth 3 overall-keymaps) shortcut-map
+              orig-map full-keymap-p))
+           
            (if (and (keymapp (nth 1 base-keymap))
                     (eq 'keymap (nth 0 base-keymap)))
                (pop base-keymap)
@@ -1546,7 +1545,8 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
              (setq orig-map
                    (gethash (concat (symbol-name map-name) (symbol-name hook) ":original-map") ergoemacs-theme-component-cache))
              (when orig-map
-               (set map-name orig-map)))))))
+               (message "Restoring %s" map-name)
+               (set map-name (copy-keymap orig-map))))))))
    ergoemacs-theme-hook-installed)
   (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
         ergoemacs-extract-map-hash (make-hash-table :test 'equal)
