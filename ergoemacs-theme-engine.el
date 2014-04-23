@@ -1261,7 +1261,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
            (cond
             ((or (and (eq hook map-name)
                       (string-match "mode$" (symbol-name map-name))
-                      (not (member (list hook map-name) ergoemacs-theme-hook-installed)))
+                      (not (member (list hook map-name)
+                                   ergoemacs-theme-hook-installed)))
                  (and (eq map-name 't)
                       (not (member (list hook t) ergoemacs-theme-hook-installed))))
              (unless (boundp emulation-var)
@@ -1489,28 +1490,29 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and
                 orig-map full-keymap-p)
              (setq orig-map (make-sparse-keymap)))
            (setq orig-map (copy-keymap orig-map))
-           
+           (if (and (keymapp (nth 1 base-keymap))
+                    (eq 'keymap (nth 0 base-keymap)))
+               (pop base-keymap)
+             (setq base-keymap (list base-keymap)))
            (if (not full-keymap-p)
                (setq final-map (make-composed-keymap
-                                (if (not (keymapp (nth 1 shortcut-map)))
+                                (if (not (and (eq 'keymap (nth 0 shortcut-map))
+                                              (keymapp (nth 1 shortcut-map))))
                                     (append base-keymap (list shortcut-map))
                                   (pop shortcut-map)
                                   (append base-keymap shortcut-map)) orig-map))
-             (if (and (keymapp (nth 1 base-keymap))
-                      (eq 'keymap (nth 0 base-keymap)))
-                 (pop base-keymap)
-               (setq base-keymap (list base-keymap)))
              (setq base-keymap
-                   (if (not (keymapp (nth 1 shortcut-map)))
+                   (if (not (and (eq 'keymap (nth 0 shortcut-map))
+                                 (keymapp (nth 1 shortcut-map))))
                        (append base-keymap (list shortcut-map))
                      (pop shortcut-map)
                      (append base-keymap shortcut-map)))
              (when (nth 0 overall-keymaps)
                (setq base-keymap (append (nth 0 overall-keymaps) base-keymap)))
              ;; Set parent to original keymap and compose read-keymap.
-             (if (= (length base-keymap) 1)
-                 ;; ((keymap)) to (keymap)
-                 (setq base-keymap (nth 0 base-keymap)))
+             (when (= (length base-keymap) 1)
+               ;; ((keymap)) to (keymap)
+               (setq base-keymap (nth 0 base-keymap)))
              (setq final-map (make-composed-keymap base-keymap orig-map)))
            (when (and (= 2 (length final-map))
                       (eq (nth 0 final-map) 'keymap)
@@ -1532,6 +1534,20 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
   "Remove the currently installed theme and reset to emacs keys."
   (ergoemacs-theme-make-hooks ergoemacs-theme 'remove-hooks)
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+  ;;; Restore maps
+  (mapc
+   (lambda(x)
+     (when (eq 'cons (type-of x))
+       (let ((hook (nth 0 x))
+             (map-name (nth 1 x))
+             orig-map)
+         (unless (string-match "-mode$" (symbol-name map))
+           (unless (eq map 't)
+             (setq orig-map
+                   (gethash (concat (symbol-name map-name) (symbol-name hook) ":original-map") ergoemacs-theme-component-cache))
+             (when orig-map
+               (set map-name orig-map)))))))
+   ergoemacs-theme-hook-installed)
   (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
         ergoemacs-extract-map-hash (make-hash-table :test 'equal)
         ergoemacs-shortcut-function-binding-hash (make-hash-table :test 'equal)
@@ -1544,7 +1560,8 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
         ergoemacs-shortcut-override-mode nil
         ergoemacs-modal nil
         ergoemacs-repeat-keys nil
-        ergoemacs-read-input-keys nil)
+        ergoemacs-read-input-keys nil
+        ergoemacs-theme-hook-installed '())
   (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
     ;; Remove keymap
     (when x
