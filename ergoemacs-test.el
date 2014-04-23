@@ -872,6 +872,10 @@ Selected mark would not be cleared after paste."
       (setq ret (or deactivate-mark (not mark-active))))
     (should ret)))
 
+(ert-deftest ergoemacs-test-command-remapping ()
+  "Test to make sure remapping for `ergoemacs-commands' are applied."
+  (should (eq 'ergoemacs-describe-key (command-remapping 'describe-key))))
+
 ;; Fixed, but tests dont work.  Not sure why ergoemacs-test-fn goes to nil
 
 ;; (ert-deftest ergoemacs-test-apps-h-v ()
