@@ -660,10 +660,10 @@ In addition, when the function is called:
     (setq unread-command-events (append (listify-key-sequence keys) unread-command-events))
     (reset-this-command-lengths))
    (t
-    (setq this-command function)
     (mapc
-     (lambda(var)
-       (set var function))
+     (lambda(var) ;; should include `this-command' and `this-original-command'
+       (when (memq (symbol-value var) ergoemacs-smart-functions)
+         (set var function)))
      ergoemacs-this-command-fake)
     (let ((this-command-keys-shift-translated
            (or this-command-keys-shift-translated
