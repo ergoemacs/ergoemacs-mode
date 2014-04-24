@@ -602,6 +602,10 @@ In addition, when the function is called:
     (reset-this-command-lengths))
    (t
     (setq this-command function)
+    (mapc
+     (lambda(var)
+       (set var function))
+     ergoemacs-this-command-fake)
     (let ((this-command-keys-shift-translated
            (or this-command-keys-shift-translated
                (if ergoemacs-shift-translated t nil))))

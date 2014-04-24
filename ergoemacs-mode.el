@@ -827,6 +827,9 @@ This is done by checking if this is a command that supports shift selection or c
 (defvar ergoemacs-pre-command-hook nil
   "Pre-command hook for `ergoemacs-mode'")
 
+(defvar ergoemacs-this-command-fake '(mc--this-command)
+  "Commands to set `this-command' to the command run by `ergoemacs-shortcut'")
+
 (defvar ergoemacs-hook-functions '(delete-selection-pre-hook 
                                    ac-handle-pre-command
                                    cua--pre-command-handler)
