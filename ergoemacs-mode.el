@@ -827,12 +827,15 @@ This is done by checking if this is a command that supports shift selection or c
 (defvar ergoemacs-pre-command-hook nil
   "Pre-command hook for `ergoemacs-mode'")
 
-(defvar ergoemacs-this-command-fake '(mc--this-command)
+(defvar ergoemacs-this-command-fake '(this-command
+                                      this-original-command
+                                      mc--this-command)
   "Commands to set `this-command' to the command run by `ergoemacs-shortcut'")
 
 (defvar ergoemacs-hook-functions '(delete-selection-pre-hook 
                                    ac-handle-pre-command
-                                   cua--pre-command-handler)
+                                   cua--pre-command-handler
+                                   mc/make-a-note-of-the-command-being-run)
   "Hooks that are moved to `ergoemacs-pre-command-hook'.
 These hooks are deferred to make sure `this-command' is set appropriately.")
 
@@ -864,7 +867,8 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
              (add-hook 'pre-command-hook item do-append t)
              (remove-hook 'ergoemacs-pre-command-hook item t))))
        (symbol-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook))))))
-
+(defvar ergoemacs-smart-functions
+  '(ergoemacs-shortcut ergoemacs-shortcut-movement-no-shift-select ergoemacs-shortcut-movement ergoemacs-read-key))
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
   (when (and ergoemacs-mark-active
@@ -911,7 +915,7 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
                        (memq this-command ergoemacs-describe-keybindings-functions))
               (ergoemacs-shortcut-override-mode 1))))
       (error nil)))
-  (unless (memq this-command '(ergoemacs-shortcut ergoemacs-shortcut-movement-no-shift-select ergoemacs-shortcut-movement ergoemacs-read-key))
+  (unless (memq this-command ergoemacs-smart-functions)
     (run-hooks 'ergoemacs-pre-command-hook))
   t)
 
