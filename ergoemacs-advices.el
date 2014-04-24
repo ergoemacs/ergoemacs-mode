@@ -252,21 +252,6 @@ This assumes any key defined while running a hook is a user-defined hook."
    ad-do-it))
 (ad-activate 'turn-on-undo-tree-mode)
 
-(defadvice mc/execute-command (around ergoemacs-mode-advice (cmd))
-  "Fix `mc/execute-command' to run correctly under `ergoemacs-mode'"
-  (if (not ergoemacs-mode)
-      ad-do-it
-    (setq this-command cmd)
-    (run-hooks 'pre-command-hook)
-    (run-hooks 'ergoemacs-pre-command-hook)
-    (unless (eq this-command 'ignore)
-      (call-interactively cmd))
-    (run-hooks 'ergoemacs-post-command-hook)
-    (run-hooks 'post-command-hook)
-    (when deactivate-mark (deactivate-mark))))
-
-(ad-activate 'mc/execute-command)
-
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
