@@ -308,24 +308,28 @@
   (ergoemacs-set-default 'ergoemacs-keyboard-layout layout))
 
 (defun ergoemacs-get-layouts-menu ()
-  "Gets the easymenu entry for ergoemacs-layouts."
-  `("Keyboard Layouts"
-    ,@(mapcar
-       (lambda(lay)
-         (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
-                (alias (condition-case nil
-                           (indirect-variable variable)
-                         (error variable)))
-                (is-alias nil)
-                (doc nil))
-           (setq doc (or (documentation-property variable 'variable-documentation)
-                         (progn
-                           (setq is-alias t)
-                           (documentation-property alias 'variable-documentation))))
-           `[,(concat lay " - " doc)
-             (lambda() (interactive)
-               (ergoemacs-set-layout ,lay)) :style radio :selected (string= ergoemacs-keyboard-layout ,lay)]))
-       (sort (ergoemacs-get-layouts) 'string<))))
+  "Gets the keymap entry for ergoemacs-layouts."
+  `(ergoemacs-keyboard-layout
+    menu-item "Keyboard Layouts"
+    (keymap
+     ,@(mapcar
+        (lambda(lay)
+          (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
+                 (alias (condition-case nil
+                            (indirect-variable variable)
+                          (error variable)))
+                 (is-alias nil)
+                 (doc nil))
+            (setq doc (or (documentation-property variable 'variable-documentation)
+                          (progn
+                            (setq is-alias t)
+                            (documentation-property alias 'variable-documentation))))
+            `(,variable
+              menu-item ,(concat lay " - " doc)
+              (lambda() (interactive)
+                (ergoemacs-set-layout ,lay))
+              :button (:radio . (string= ergoemacs-keyboard-layout ,lay)))))
+        (sort (ergoemacs-get-layouts) 'string<)))))
 
 (defun ergoemacs-get-layouts-doc ()
   "Gets the list of all known layouts and the documentation associated with the layouts."

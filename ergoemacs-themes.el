@@ -788,6 +788,15 @@
   (when ergoemacs-mode
     (global-set-key [remap describe-key] 'ergoemacs-describe-key)))
 
+(ergoemacs-theme lvl1 ()
+  "Arrow Key Movements Only"
+  :components '(move-char))
+
+(ergoemacs-theme lvl2 ()
+  "Arrow Key Movements, Moving/Deleting Words"
+  :components '(move-char
+                move-word))
+
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
   :components '(backspace-is-back
@@ -820,7 +829,12 @@
                  standard-fixed
                  ido-remaps
                  helm-remaps)
-  :optional-off '(guru no-backspace))
+  :optional-off '(guru no-backspace)
+  :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
+                  ("Function Keys" (fn-keys f2-edit))
+                  ("Remaps" (ido-remaps helm-remaps))
+                  ("Extreme ErgoEmacs" (guru no-backspace))
+                  ("Standard Keys" (standard-fixed fixed-bold-italic))))
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
@@ -855,6 +869,11 @@
                  ido-remaps
                  helm-remaps)
   :optional-off '(guru no-backspace)
+  :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
+                  ("Function Keys" (fn-keys f2-edit))
+                  ("Remaps" (ido-remaps helm-remaps))
+                  ("Extreme ErgoEmacs" (guru no-backspace))
+                  ("Standard Keys" (standard-fixed fixed-bold-italic)))
   
   (global-set-key (kbd "M-*") 'mc/mark-next-like-this)
   (global-set-key (kbd "M-&") 'mc/edit-lines)
@@ -886,8 +905,6 @@
   (define-key ergoemacs-keymap (kbd "M-J") nil)
   (define-key ergoemacs-keymap (kbd "M-L") nil))
 
-;; Ergoemacs keys
-
 (defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
                                ergoemacs-variant
                              (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
@@ -899,142 +916,8 @@
   :type '(choice
           (const :tag "Standard" :value nil)
           (symbol :tag "Other"))
+  :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
-
-
-(defun ergoemacs-get-themes-menu ()
-  "Gets the list of all known themes and the documentation associated with the themes."
-  `("ErgoEmacs Themes"
-    ["Standard" (lambda() (interactive)
-                  (ergoemacs-set-default 'ergoemacs-theme nil))
-     :style radio :selected (not ergoemacs-theme)]
-    ,@(let ((lays (sort (ergoemacs-get-themes) 'string<)))
-        (mapcar
-         (lambda(lay)
-           (let* ((variable (intern (concat "ergoemacs-" lay "-theme")))
-                  (alias (condition-case nil
-                             (indirect-variable variable)
-                           (error variable)))
-                  (is-alias nil)
-                  (doc nil))
-             (setq doc (or (documentation-property variable 'group-documentation)
-                           (progn
-                             (setq is-alias t)
-                             (documentation-property alias 'group-documentation))))
-             `[,(concat lay " -" doc)
-               (lambda() (interactive)
-                 (ergoemacs-set-default 'ergoemacs-theme ,lay))
-               :style radio :selected (and ergoemacs-theme (string= ergoemacs-theme ,lay))]))
-         lays ))))
-
-(defun ergoemacs-get-themes-doc ()
-  "Gets the list of all known themes and the documentation associated with the themes."
-  (let ((lays (sort (ergoemacs-get-themes) 'string<)))
-    (mapconcat
-     (lambda(lay)
-       (let* ((variable (intern (concat "ergoemacs-" lay "-theme")))
-              (alias (condition-case nil
-                         (indirect-variable variable)
-                       (error variable)))
-              (is-alias nil)
-              (doc nil))
-         (setq doc (or (documentation-property variable 'group-documentation)
-                       (progn
-                         (setq is-alias t)
-                         (documentation-property alias 'group-documentation))))
-         (concat "\""lay "\" (" doc ")" (if is-alias ", alias" ""))))
-     lays "\n")))
-
-(defun ergoemacs-get-themes (&optional ob)
-  "Gets the list of all known themes."
-  (let (ret)
-    (mapatoms
-     (lambda(s)
-       (let ((sn (symbol-name s)))
-         (and (string-match "^ergoemacs-\\(.*?\\)-theme$" sn)
-              (setq ret (cons (match-string 1 sn) ret)))))
-     ob)
-    ret))
-
-(defun ergoemacs-get-themes-type ()
-  "Gets the customization types for `ergoemacs-keyboard-layout'"
-  `(choice
-    (const :tag "Standard" :value nil)
-    ,@(mapcar
-       (lambda(elt)
-         `(const :tag ,elt :value ,elt))
-       (sort (ergoemacs-get-themes) 'string<))
-    (symbol :tag "Other")))
-
-;;;###autoload
-(defun ergoemacs-key (key function &optional desc only-first fixed-key)
-  "Defines KEY in ergoemacs keyboard based on QWERTY and binds to FUNCTION.
-Optionally provides DESC for a description of the key."
-  (let* (found
-         (str-key (replace-regexp-in-string ;; <menu> variant
-                   "<apps>" "<menu>"
-                   (or
-                    (and (eq (type-of key) 'string) key)
-                    (key-description key))))
-         (str-key2 (replace-regexp-in-string ;; <apps> variant
-                    "<menu>" "<apps>" str-key))
-         (cur-key str-key)
-         (no-ergoemacs-advice t))
-    (set (if fixed-key (ergoemacs-get-fixed-layout)
-           (ergoemacs-get-variable-layout))
-         (remove-if
-          #'(lambda(x) (not x))
-          (mapcar
-           #'(lambda(x)
-               (if (not (or (string= str-key (nth 0 x))
-                            (string= str-key2 (nth 0 x))))
-                   (if (string-match
-                        (format "^\\(%s\\|%s\\) "
-                                (regexp-quote str-key)
-                                (regexp-quote str-key2))
-                        (nth 0 x)) nil
-                     x)
-                 (setq found t)
-                 (if fixed-key
-                     `(,str-key ,function ,desc)
-                   `(,str-key ,function ,desc ,only-first))))
-           (symbol-value (if fixed-key
-                             (ergoemacs-get-fixed-layout)
-                           (ergoemacs-get-variable-layout))))))
-    (unless found
-      (add-to-list (if fixed-key
-                       (ergoemacs-get-fixed-layout)
-                     (ergoemacs-get-variable-layout))
-                   (if fixed-key
-                       `(,str-key ,function ,desc)
-                     `(,str-key ,function ,desc ,only-first))))
-    (unless (and (boundp 'ergoemacs-theme)
-                 (string= ergoemacs-theme "tmp"))
-      (if fixed-key
-          (condition-case err
-              (setq cur-key (read-kbd-macro str-key))
-            (error
-             (setq cur-key (read-kbd-macro (encode-coding-string str-key locale-coding-system)))))
-        (setq cur-key (ergoemacs-kbd str-key nil only-first)))
-      (cond
-       ((eq 'cons (type-of function))
-        (let (found)
-          (mapc
-           (lambda(new-fn)
-             (when (and (not found)
-                        (condition-case err
-                            (interactive-form new-fn)
-                          (error nil)))
-               (define-key ergoemacs-keymap cur-key new-fn)
-               (setq found t)))
-           function)
-          (unless found
-            (ergoemacs-debug "Could not find any defined functions: %s" function))))
-       (t
-        (define-key ergoemacs-keymap cur-key function))))))
-
-(make-obsolete-variable 'ergoemacs-variant 'ergoemacs-theme
-                        "ergoemacs-mode 5.8.0.1")
 
 (provide 'ergoemacs-themes)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
