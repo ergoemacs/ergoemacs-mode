@@ -1772,7 +1772,8 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
           `(,(nth 0 ret) ,(nth 1 ret)
             ,keys ,(nth 3 ret)
             ,(nth 4 ret)
-            ,(nth 5 ret)))
+            ,(nth 5 ret)
+            ,(nth 6 ret)))
     (symbol-value 'ret)))
 
 (defun ergoemacs-theme-remove ()
