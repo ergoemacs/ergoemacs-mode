@@ -753,7 +753,7 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
                 (when (or (commandp (nth 0 args) t)
                           (keymapp (nth 0 args)))
                   (define-key keymap key (nth 0 args))))))))
-     (t
+     (full-shortcut-map-p
       (condition-case nil
           (progn
             (ergoemacs-theme-component--ignore-globally-defined-key key)
