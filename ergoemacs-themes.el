@@ -752,6 +752,19 @@
   (global-set-key (kbd "<apps> k g") '("|" nil))
   (global-set-key (kbd "<apps> k b") '("!" nil)))
 
+(ergoemacs-theme-component apps-swap ()
+  "Apps/Menu swaps key sequence translations"
+  (when ergoemacs-read-key-begin-hook
+    :modify-map t
+    (define-key ergoemacs-ctl-to-alt-translation-local-map (if (eq system-type 'windows-nt) [apps] [menu])
+      'ergoemacs-read-key-swap)
+    (define-key ergoemacs-unchorded-translation-local-map (if (eq system-type 'windows-nt) [apps] [menu])
+      'ergoemacs-read-key-swap)
+    (define-key ergoemacs-unchorded-translation-local-map (if (eq system-type 'windows-nt) [apps] [menu])
+      'ergoemacs-read-key-swap)
+    (define-key ergoemacs-normal-translation-local-map (if (eq system-type 'windows-nt) [apps] [menu])
+      'ergoemacs-read-key-swap)))
+
 (ergoemacs-theme-component dired-to-wdired ()
   "C-c C-c enters wdired, <escape> exits."
   (when wdired-mode-hook
@@ -853,13 +866,15 @@
                  ido-remaps
                  helm-remaps
                  backspace-del-seq
-                 quit)
+                 quit
+                 apps-swap)
   :optional-off '(guru no-backspace)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps))
                   ("Extreme ErgoEmacs" (guru no-backspace))
-                  ("Standard Keys" (standard-fixed fixed-bold-italic quit))))
+                  ("Standard Keys" (standard-fixed fixed-bold-italic quit))
+                  ("Keys during Key Sequence" (apps-swap backspace-del-seq))))
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
@@ -882,8 +897,7 @@
                 select-items
                 switch
                 text-transform
-                ergoemacs-remaps
-                quit)
+                ergoemacs-remaps)
   :optional-on '(apps-punctuation
                  apps-apps
                  apps
@@ -893,13 +907,16 @@
                  standard-fixed
                  ido-remaps
                  helm-remaps
-                 backspace-del-seq)
+                 backspace-del-seq
+                 quit
+                 apps-swap)
   :optional-off '(guru no-backspace)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps))
                   ("Extreme ErgoEmacs" (guru no-backspace))
-                  ("Standard Keys" (standard-fixed fixed-bold-italic quit)))
+                  ("Standard Keys" (standard-fixed fixed-bold-italic quit))
+                  ("Keys during Key Sequence" (apps-swap backspace-del-seq)))
   
   (global-set-key (kbd "M-*") 'mc/mark-next-like-this)
   (global-set-key (kbd "M-&") 'mc/edit-lines)

@@ -276,7 +276,6 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
                (no-ergoemacs-advice t))
            (define-key map [f1] 'ergoemacs-read-key-help)
            (define-key map (read-kbd-macro "C-h") 'ergoemacs-read-key-help)
-           (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
            map))
 
 (ergoemacs-translation
@@ -290,7 +289,6 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
                (no-ergoemacs-advice t))
            (define-key map [f1] 'ergoemacs-read-key-help)
            (define-key map (read-kbd-macro "M-h") 'ergoemacs-read-key-help)
-           (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
            (define-key map (if (eq system-type 'windows-nt) [M-apps] [M-menu]) 'ergoemacs-read-key-next-key-is-quoted)
            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-ctl)
            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt)
@@ -308,7 +306,6 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :keymap (let ((map (make-sparse-keymap))
                (no-ergoemacs-advice t))
            (define-key map [f1] 'ergoemacs-read-key-help)
-           (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-quoted)
            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
            (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
@@ -336,7 +333,6 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :modal-color "red"
  :keymap (let ((map (make-sparse-keymap)))
            (define-key map [f1] 'ergoemacs-read-key-help)
-           (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-quoted)
            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
            (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)

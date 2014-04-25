@@ -1361,7 +1361,8 @@ This requires `ergoemacs-mode' to be enabled with
   "Inserts a matched pair like ().
 If a smart-punctuation mode is active, use it by placing the initial pair in the unread command events."
   (if (ergoemacs-smart-punctuation-mode-p)
-      (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (substring pair 0 1))) unread-command-events))
+      (progn
+        (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (substring pair 0 1))) unread-command-events)))
     (if (region-active-p)
         (let ((p1 (region-beginning))
               (p2 (region-end)))
