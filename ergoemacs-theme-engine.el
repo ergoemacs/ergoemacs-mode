@@ -175,7 +175,7 @@
       ergoemacs-component-version-minor-mode-layout nil
       ergoemacs-component-version-variable-layout-rm nil
       ergoemacs-component-version-variable-layout nil
-      )
+      ergoemacs-just-first-reg nil)
 
 (defun ergoemacs--parse-keys-and-body (keys-and-body &optional is-theme)
   "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
@@ -321,7 +321,7 @@ particular it:
              (boundp 'fixed-layout-rm) (boundp 'variable-layout-rm)
              (boundp 'redundant-keys) (boundp 'defined-keys)
              (boundp 'versions)
-             (boundp 'just-first-reg)
+             (boundp 'ergoemacs-just-first-reg)
              (not (equal ergoemacs-component-version-curr component-version)))
     ;; Create/Update component-version fixed or variable layouts.
     (when ergoemacs-component-version-curr
@@ -351,15 +351,16 @@ particular it:
 (defun ergoemacs-theme-component--rm-key (key)
   "Remove KEY from `ergoemacs-mode' keymaps"
   (let* ((kd (key-description key))  jf 
-         (variable-p (and (boundp 'variable-reg)
-                          variable-reg
-                          (condition-case nil
-                              (string-match variable-reg kd)
-                            (error nil)))))
+         (variable-p (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                       (and (boundp 'ergoemacs-variable-reg)
+                            ergoemacs-variable-reg
+                            (condition-case nil
+                                (string-match ergoemacs-variable-reg kd)
+                              (error nil))))))
     (when variable-p
-      (setq jf (and (boundp 'just-first-reg) just-first-reg
+      (setq jf (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
                     (condition-case nil
-                        (string-match just-first-reg kd)
+                        (string-match ergoemacs-just-first-reg kd)
                       (error nil)))))
     (cond
      ((and variable-p (boundp 'variable-layout-rm))
@@ -378,7 +379,7 @@ will take out KEY from `ergoemacs-component-version-redundant-keys'"
              (boundp 'redundant-keys) (boundp 'defined-keys)
              (boundp 'versions)
              (boundp 'ergoemacs-component-version-redundant-keys)
-             (boundp 'just-first-reg))
+             (boundp 'ergoemacs-just-first-reg))
     (ergoemacs-theme-component--version-bump)
     (let ((kd (key-description key))
           tmp)
@@ -403,14 +404,15 @@ When fixed-layout and variable-layout are bound"
          (boundp 'fixed-layout) (boundp 'variable-layout)
          (boundp 'redundant-keys) (boundp 'defined-keys)
          (boundp 'versions)
-         (boundp 'just-first-reg))
+         (boundp 'ergoemacs-just-first-reg))
     (ergoemacs-theme-component--version-bump)
     (let* ((kd (key-description key)) cd jf removed
-           (variable-p (and (boundp 'variable-reg)
-                            variable-reg
-                            (condition-case nil
-                                (string-match variable-reg kd)
-                              (error nil)))))
+           (variable-p (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                         (and (boundp 'ergoemacs-variable-reg)
+                              ergoemacs-variable-reg
+                              (condition-case nil
+                                  (string-match ergoemacs-variable-reg kd)
+                                (error nil))))))
       (when cd
         (setq cd (car (cdr cd))))
       (if (not command)
@@ -437,10 +439,12 @@ When fixed-layout and variable-layout are bound"
               (unless removed
                 (push (list kd command cd) ergoemacs-component-version-fixed-layout)))
           ;; (push (list kd command) defined-keys)
-          (setq jf (and (boundp 'just-first-reg) just-first-reg
-                        (condition-case nil
-                            (string-match just-first-reg kd)
-                          (error nil))))
+          (setq jf (if (boundp 'ergoemacs-force-just-first)
+                       ergoemacs-force-just-first
+                     (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
+                          (condition-case nil
+                              (string-match ergoemacs-just-first-reg kd)
+                            (error nil)))))
           (setq kd (ergoemacs-kbd kd t jf))
           (setq ergoemacs-component-version-variable-layout
                 (mapcar
@@ -462,14 +466,15 @@ When fixed-layout and variable-layout are bound"
         (setq cd (assoc command ergoemacs-function-short-names)) ; Short key description
         (when cd
           (setq cd (car (cdr cd))))
-        (if (not (condition-case nil
-                     (string-match variable-reg kd)
-                   (error nil)))
+        (if (not (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                   (condition-case nil
+                       (string-match ergoemacs-variable-reg kd)
+                     (error nil))))
             (push (list kd command cd) fixed-layout) ;; Fixed layout component
           (push (list kd command) defined-keys)
-          (setq jf (and just-first-reg
+          (setq jf (and ergoemacs-just-first-reg
                         (condition-case nil
-                            (string-match just-first-reg kd)
+                            (string-match ergoemacs-just-first-reg kd)
                           (error nil))))
           (setq kd (ergoemacs-kbd kd t jf))
           (push (list kd command cd jf) variable-layout)))))))
@@ -496,10 +501,10 @@ When fixed-layout and variable-layout are bound"
              (always-run-p (and (boundp 'ergoemacs-hook-always)
                                 ergoemacs-hook-always))
              (kd (key-description key))
-             (variable-p (and (boundp 'variable-reg)
-                              variable-reg
+             (variable-p (and (boundp 'ergoemacs-variable-reg)
+                              ergoemacs-variable-reg
                               (condition-case nil
-                                  (string-match variable-reg kd)
+                                  (string-match ergoemacs-variable-reg kd)
                                 (error nil))))
              a-key
              jf found-1-p found-2-p)
@@ -510,9 +515,9 @@ When fixed-layout and variable-layout are bound"
           (add-to-list 'minor-mode-hook-list hook nil 'eq))
         (when variable-p
           (setq variable-p t)
-          (setq jf (and just-first-reg
+          (setq jf (and ergoemacs-just-first-reg
                         (condition-case nil
-                            (string-match just-first-reg kd)
+                            (string-match ergoemacs-just-first-reg kd)
                           (error nil))))
           (setq kd (ergoemacs-kbd kd t jf)))
         (cond
@@ -522,7 +527,7 @@ When fixed-layout and variable-layout are bound"
                (boundp 'fixed-layout) (boundp 'variable-layout)
                (boundp 'redundant-keys) (boundp 'defined-keys)
                (boundp 'versions)
-               (boundp 'just-first-reg))
+               (boundp 'ergoemacs-just-first-reg))
           (ergoemacs-theme-component--version-bump) ;; Change version information
           )
          ((and (boundp 'fixed-layout) (boundp 'variable-layout)
@@ -1349,9 +1354,9 @@ added to the appropriate startup hooks.
     `(let ((name ,(plist-get (nth 0 kb) ':name))
            (desc ,(or (plist-get (nth 0 kb) ':description) ""))
            (layout ,(or (plist-get (nth 0 kb) ':layout) "us"))
-           (variable-reg ,(or (plist-get (nth 0 kb) ':variable-reg)
+           (ergoemacs-variable-reg ,(or (plist-get (nth 0 kb) ':ergoemacs-variable-reg)
                               (concat "\\(?:^\\|<\\)" (regexp-opt '("M-" "<apps>" "<menu>")))))
-           (just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-variable-reg)
+           (ergoemacs-just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-ergoemacs-variable-reg)
                                 nil))
            (versions '())
            (component-version nil)
@@ -2067,69 +2072,22 @@ When SILENT is true, also include silent themes"
 ;;;###autoload
 (defun ergoemacs-key (key function &optional desc only-first fixed-key)
   "Defines KEY in ergoemacs keyboard based on QWERTY and binds to FUNCTION.
-Optionally provides DESC for a description of the key."
-  (let* (found
-         (str-key (replace-regexp-in-string ;; <menu> variant
-                   "<apps>" "<menu>"
-                   (or
-                    (and (eq (type-of key) 'string) key)
-                    (key-description key))))
-         (str-key2 (replace-regexp-in-string ;; <apps> variant
-                    "<menu>" "<apps>" str-key))
-         (cur-key str-key)
-         (no-ergoemacs-advice t))
-    (set (if fixed-key (ergoemacs-get-fixed-layout)
-           (ergoemacs-get-variable-layout))
-         (remove-if
-          #'(lambda(x) (not x))
-          (mapcar
-           #'(lambda(x)
-               (if (not (or (string= str-key (nth 0 x))
-                            (string= str-key2 (nth 0 x))))
-                   (if (string-match
-                        (format "^\\(%s\\|%s\\) "
-                                (regexp-quote str-key)
-                                (regexp-quote str-key2))
-                        (nth 0 x)) nil
-                     x)
-                 (setq found t)
-                 (if fixed-key
-                     `(,str-key ,function ,desc)
-                   `(,str-key ,function ,desc ,only-first))))
-           (symbol-value (if fixed-key
-                             (ergoemacs-get-fixed-layout)
-                           (ergoemacs-get-variable-layout))))))
-    (unless found
-      (add-to-list (if fixed-key
-                       (ergoemacs-get-fixed-layout)
-                     (ergoemacs-get-variable-layout))
-                   (if fixed-key
-                       `(,str-key ,function ,desc)
-                     `(,str-key ,function ,desc ,only-first))))
-    (unless (and (boundp 'ergoemacs-theme)
-                 (string= ergoemacs-theme "tmp"))
-      (if fixed-key
-          (condition-case err
-              (setq cur-key (read-kbd-macro str-key))
-            (error
-             (setq cur-key (read-kbd-macro (encode-coding-string str-key locale-coding-system)))))
-        (setq cur-key (ergoemacs-kbd str-key nil only-first)))
-      (cond
-       ((eq 'cons (type-of function))
-        (let (found)
-          (mapc
-           (lambda(new-fn)
-             (when (and (not found)
-                        (condition-case err
-                            (interactive-form new-fn)
-                          (error nil)))
-               (define-key ergoemacs-keymap cur-key new-fn)
-               (setq found t)))
-           function)
-          (unless found
-            (ergoemacs-debug "Could not find any defined functions: %s" function))))
-       (t
-        (define-key ergoemacs-keymap cur-key function))))))
+DESC is ignored, as is FIXED-KEY."
+  (let* ((key (or
+               (and (vectorp key) key)
+               (read-kbd-macro key t)))
+         (ergoemacs-force-just-first only-first)
+         (ergoemacs-force-variable-reg t))
+    (ergoemacs-theme-component--global-set-key key function)))
+
+(defun ergoemacs-fixed-key (key function &optional desc)
+  "Defines fixed KEY in ergoemacs  and binds to FUNCTION."
+  (let* ((key (or
+               (and (vectorp key) key)
+               (read-kbd-macro key t)))
+         (ergoemacs-force-just-first nil)
+         (ergoemacs-force-variable-reg nil))
+    (ergoemacs-theme-component--global-set-key key function)))
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
