@@ -357,10 +357,11 @@ particular it:
                                 (string-match ergoemacs-variable-reg kd)
                               (error nil))))))
     (when variable-p
-      (setq jf (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
-                    (condition-case nil
-                        (string-match ergoemacs-just-first-reg kd)
-                      (error nil)))))
+      (setq jf (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                 (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
+                      (condition-case nil
+                          (string-match ergoemacs-just-first-reg kd)
+                        (error nil))))))
     (cond
      ((and variable-p (boundp 'variable-layout-rm))
       (setq kd (ergoemacs-kbd kd t jf))
@@ -439,10 +440,11 @@ When fixed-layout and variable-layout are bound"
               (unless removed
                 (push (list kd command cd) ergoemacs-component-version-fixed-layout)))
           ;; (push (list kd command) defined-keys)
-          (setq jf (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
-                        (condition-case nil
-                            (string-match ergoemacs-just-first-reg kd)
-                          (error nil))))
+          (setq jf (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                     (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
+                          (condition-case nil
+                              (string-match ergoemacs-just-first-reg kd)
+                            (error nil)))))
           (setq kd (ergoemacs-kbd kd t jf))
           (setq ergoemacs-component-version-variable-layout
                 (mapcar
@@ -470,10 +472,11 @@ When fixed-layout and variable-layout are bound"
                      (error nil))))
             (push (list kd command cd) fixed-layout) ;; Fixed layout component
           (push (list kd command) defined-keys)
-          (setq jf (and ergoemacs-just-first-reg
-                        (condition-case nil
-                            (string-match ergoemacs-just-first-reg kd)
-                          (error nil))))
+          (setq jf (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                     (and ergoemacs-just-first-reg
+                          (condition-case nil
+                              (string-match ergoemacs-just-first-reg kd)
+                            (error nil)))))
           (setq kd (ergoemacs-kbd kd t jf))
           (push (list kd command cd jf) variable-layout)))))))
 
@@ -513,10 +516,11 @@ When fixed-layout and variable-layout are bound"
           (add-to-list 'minor-mode-hook-list hook nil 'eq))
         (when variable-p
           (setq variable-p t)
-          (setq jf (and ergoemacs-just-first-reg
-                        (condition-case nil
-                            (string-match ergoemacs-just-first-reg kd)
-                          (error nil))))
+          (setq jf (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                     (and ergoemacs-just-first-reg
+                          (condition-case nil
+                              (string-match ergoemacs-just-first-reg kd)
+                            (error nil)))))
           (setq kd (ergoemacs-kbd kd t jf)))
         (cond
          ((and (boundp 'component-version)
@@ -1353,9 +1357,9 @@ added to the appropriate startup hooks.
            (desc ,(or (plist-get (nth 0 kb) ':description) ""))
            (layout ,(or (plist-get (nth 0 kb) ':layout) "us"))
            (ergoemacs-variable-reg ,(or (plist-get (nth 0 kb) ':variable-reg)
-                              (concat "\\(?:^\\|<\\)" (regexp-opt '("M-" "<apps>" "<menu>")))))
+                                        (concat "\\(?:^\\|<\\)" (regexp-opt '("M-" "<apps>" "<menu>")))))
            (ergoemacs-just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-variable-reg)
-                                nil))
+                                          nil))
            (versions '())
            (component-version nil)
            (ergoemacs-component-version-variable-layout nil)
@@ -1994,7 +1998,7 @@ Returns new keymap"
                                         (getenv "ERGOEMACS_THEME")
                                       nil)))
        ,(concat "Ergoemacs Themes\n"
-               (ergoemacs-get-themes-doc t))
+                (ergoemacs-get-themes-doc t))
        :type `,(ergoemacs-get-themes-type t)
        :set 'ergoemacs-set-default
        :group 'ergoemacs-mode))))
@@ -2024,8 +2028,8 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
        (push ,(plist-get (nth 0 kb) ':name) silent)
        (puthash ,(plist-get (nth 0 kb) ':name) ',tmp ergoemacs-theme-hash)
        (if ,(plist-get (nth 0 kb) ':silent)
-            (puthash "silent-themes" silent ergoemacs-theme-hash)
-          (puthash "defined-themes" themes ergoemacs-theme-hash))
+           (puthash "silent-themes" silent ergoemacs-theme-hash)
+         (puthash "defined-themes" themes ergoemacs-theme-hash))
        (ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme")) ()
          ,(format "Generated theme component for %s theme" (concat (plist-get (nth 0 kb) ':name) "-theme"))
          ,@(nth 1 kb)))))
