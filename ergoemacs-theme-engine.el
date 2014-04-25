@@ -1412,8 +1412,35 @@ added to the appropriate startup hooks.
         ergoemacs-component-version-list))))
 ;;; Theme functions
 
+(defun ergoemacs-theme-versions (theme)
+  "Get a list of versions for the current theme."
+  (let ((theme-plist (gethash (if (stringp theme) theme
+                                (symbol-name theme))
+                              ergoemacs-theme-hash))
+        versions)
+    (mapc
+     (lambda(component)
+       (let ((true-component
+              (replace-regexp-in-string
+               ":\\(fixed\\|variable\\)" ""
+               (or (and (stringp component) component)
+                   (symbol-name component))))
+             vers)
+         (when (string-match "::\\([0-9.]+\\)$" true-component)
+           (setq true-component (replace-match "" nil nil true-component)))
+         (mapc
+          (lambda(ver)
+            (add-to-list 'versions ver))
+          (gethash (concat true-component ":version")
+                   ergoemacs-theme-component-hash))))
+     (append (plist-get theme-plist ':components)
+             (eval (plist-get theme-plist ':optional-on))
+             (eval (plist-get theme-plist ':optional-off))))
+    (setq versions (sort versions 'string<))
+    (symbol-value 'versions)))
+
 (defun ergoemacs-theme-components (theme)
-  "Get of list of components used for the current theme.
+  "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."
   (let ((theme-plist (gethash (if (stringp theme) theme
                                 (symbol-name theme))
