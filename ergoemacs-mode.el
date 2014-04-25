@@ -880,6 +880,7 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
   (let (deactivate-mark)
     (condition-case err
         (progn
+          (ergoemacs-restore-post-command-hook)
           (ergoemacs-vars-sync)
           (when (and ergoemacs-repeat-keys
                      (keymapp ergoemacs-repeat-keymap)

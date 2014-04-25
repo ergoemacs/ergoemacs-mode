@@ -615,7 +615,8 @@
   (global-set-key (kbd "M-n") 'keyboard-quit))
 
 (ergoemacs-theme-component apps ()
-  "Apps key"
+  "General Apps Key Sequence"
+  :first-is-variable-reg "<\\(apps\\|menu\\)> h"
   (global-set-key (kbd "<apps> 2") 'delete-window)
   (global-set-key (kbd "<apps> 3") 'delete-other-windows)
   (global-set-key (kbd "<apps> 4") 'split-window-vertically)
@@ -673,7 +674,7 @@
   (global-set-key (kbd "<apps> n o") 'ergoemacs-open-in-external-app)
   (global-set-key (kbd "<apps> n r") 'R)
   (global-set-key (kbd "<apps> n s") 'shell)
-  (global-set-key (kbd "<apps> n t") 'org-capure)
+  (global-set-key (kbd "<apps> n t") 'org-capture)
   (global-set-key (kbd "<apps> n C-t") 'org-agenda)
   (global-set-key (kbd "<apps> n T") 'org-agenda))
 

@@ -562,6 +562,23 @@ It will replace anything defined by `ergoemacs-translation'"
         (keyboard-quit))))))
   (setq ergoemacs-describe-key nil))
 
+
+(setq ergoemacs-defer-post-command-hook nil)
+(defun ergoemacs-defer-post-command-hook ()
+  "Defers `post-command-hook'."
+  (set-default 'ergoemacs-defer-post-command-hook (default-value 'post-command-hook))
+  (set (make-local-variable 'ergoemacs-defer-post-command-hook) (symbol-value 'post-command-hook))
+  (set (make-local-variable 'post-command-hook) nil)
+  (set-default 'post-command-hook nil))
+
+(defun ergoemacs-restore-post-command-hook ()
+  (when (or (default-value 'ergoemacs-defer-post-command-hook)
+            (symbol-value 'ergoemacs-defer-post-command-hook))
+    (set-default 'post-command-hook (default-value 'ergoemacs-defer-post-command-hook))
+    (set (make-local-variable 'post-command-hook) (symbol-value 'ergoemacs-defer-post-command-hook))
+    (set (make-local-variable 'ergoemacs-defer-post-command-hook) nil)
+    (set-default 'ergoemacs-defer-post-command-hook nil)))
+
 (defun ergoemacs-read-key-call (function &optional record-flag keys)
   "`ergoemacs-mode' replacement for `call-interactively'.
 
@@ -599,6 +616,7 @@ In addition, when the function is called:
     (setq last-input-event keys)
     (setq prefix-arg current-prefix-arg)
     (setq unread-command-events (append (listify-key-sequence keys) unread-command-events))
+    (ergoemacs-defer-post-command-hook)
     (reset-this-command-lengths))
    (t
     (mapc
@@ -798,6 +816,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq last-input-event tmp)
                   (setq prefix-arg current-prefix-arg)
                   (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
+                  (ergoemacs-defer-post-command-hook)
                   (reset-this-command-lengths)
                   (when (and ergoemacs-echo-function
                              (boundp 'pretty-key-undefined)
@@ -884,9 +903,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                    ((and hash (eq 'string (type-of (nth 0 hash))))
                     (setq ergoemacs-mark-active
                           (or (and mark-active transient-mark-mode) mark-active))
-                    (setq ergoemacs-single-command-keys key)
+                    (setq ergoemacs-single-command-keys (read-kbd-macro (nth 0 hash)))
                     (setq prefix-arg current-prefix-arg)
                     (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events))
+                    (ergoemacs-defer-post-command-hook)
                     (when lookup
                       (define-key lookup [ergoemacs-single-command-keys] 'ignore)
                       (if (not use-override)

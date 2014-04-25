@@ -174,8 +174,7 @@
       ergoemacs-component-version-redundant-keys nil
       ergoemacs-component-version-minor-mode-layout nil
       ergoemacs-component-version-variable-layout-rm nil
-      ergoemacs-component-version-variable-layout nil
-      ergoemacs-just-first-reg nil)
+      ergoemacs-component-version-variable-layout nil)
 
 (defun ergoemacs--parse-keys-and-body (keys-and-body &optional is-theme)
   "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
@@ -407,7 +406,8 @@ When fixed-layout and variable-layout are bound"
          (boundp 'ergoemacs-just-first-reg))
     (ergoemacs-theme-component--version-bump)
     (let* ((kd (key-description key)) cd jf removed
-           (variable-p (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+           (variable-p (if (boundp 'ergoemacs-force-variable-reg)
+                           ergoemacs-force-variable-reg
                          (and (boundp 'ergoemacs-variable-reg)
                               ergoemacs-variable-reg
                               (condition-case nil
@@ -439,12 +439,10 @@ When fixed-layout and variable-layout are bound"
               (unless removed
                 (push (list kd command cd) ergoemacs-component-version-fixed-layout)))
           ;; (push (list kd command) defined-keys)
-          (setq jf (if (boundp 'ergoemacs-force-just-first)
-                       ergoemacs-force-just-first
-                     (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
-                          (condition-case nil
-                              (string-match ergoemacs-just-first-reg kd)
-                            (error nil)))))
+          (setq jf (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
+                        (condition-case nil
+                            (string-match ergoemacs-just-first-reg kd)
+                          (error nil))))
           (setq kd (ergoemacs-kbd kd t jf))
           (setq ergoemacs-component-version-variable-layout
                 (mapcar
@@ -1354,9 +1352,9 @@ added to the appropriate startup hooks.
     `(let ((name ,(plist-get (nth 0 kb) ':name))
            (desc ,(or (plist-get (nth 0 kb) ':description) ""))
            (layout ,(or (plist-get (nth 0 kb) ':layout) "us"))
-           (ergoemacs-variable-reg ,(or (plist-get (nth 0 kb) ':ergoemacs-variable-reg)
+           (ergoemacs-variable-reg ,(or (plist-get (nth 0 kb) ':variable-reg)
                               (concat "\\(?:^\\|<\\)" (regexp-opt '("M-" "<apps>" "<menu>")))))
-           (ergoemacs-just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-ergoemacs-variable-reg)
+           (ergoemacs-just-first-reg ,(or (plist-get (nth 0 kb) ':first-is-variable-reg)
                                 nil))
            (versions '())
            (component-version nil)
