@@ -598,7 +598,7 @@
   (global-set-key (kbd "M-7") 'ergoemacs-select-current-line))
 
 (ergoemacs-theme-component quit ()
-  "Ergoemacs quit"
+  "Escape exits"
   (global-set-key (kbd "<escape>") 'keyboard-quit)
   (define-key browse-kill-ring-mode-map (kbd "<escape>") 'browse-kill-ring-quit)
   (when isearch-mode-hook
@@ -838,7 +838,6 @@
                 move-page
                 move-paragraph
                 move-word
-                quit
                 search
                 select-items
                 switch
@@ -853,13 +852,14 @@
                  standard-fixed
                  ido-remaps
                  helm-remaps
-                 backspace-del-seq)
+                 backspace-del-seq
+                 quit)
   :optional-off '(guru no-backspace)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps))
                   ("Extreme ErgoEmacs" (guru no-backspace))
-                  ("Standard Keys" (standard-fixed fixed-bold-italic))))
+                  ("Standard Keys" (standard-fixed fixed-bold-italic quit))))
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
@@ -878,12 +878,12 @@
                 move-page
                 move-paragraph
                 move-word
-                quit
                 search
                 select-items
                 switch
                 text-transform
-                ergoemacs-remaps)
+                ergoemacs-remaps
+                quit)
   :optional-on '(apps-punctuation
                  apps-apps
                  apps
@@ -899,7 +899,7 @@
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps))
                   ("Extreme ErgoEmacs" (guru no-backspace))
-                  ("Standard Keys" (standard-fixed fixed-bold-italic)))
+                  ("Standard Keys" (standard-fixed fixed-bold-italic quit)))
   
   (global-set-key (kbd "M-*") 'mc/mark-next-like-this)
   (global-set-key (kbd "M-&") 'mc/edit-lines)
