@@ -294,10 +294,33 @@
 
 (ergoemacs-theme-component f2-edit ()
   "Have <f2> edit"
+  (when ergoemacs-read-key-begin-hook
+    :modify-map t
+    (define-key ergoemacs-ctl-to-alt-translation-local-map [f2]
+      'ergoemacs-universal-argument)
+    (define-key ergoemacs-unchorded-translation-local-map [f2]
+      'ergoemacs-universal-argument)
+    (define-key ergoemacs-unchorded-translation-local-map [f2]
+      'ergoemacs-universal-argument)
+    (define-key ergoemacs-normal-translation-local-map [f2]
+      'ergoemacs-universal-argument))
   (when isearch-mode-hook
     :modify-map t
     :full-shortcut-map t
     (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)))
+
+(ergoemacs-theme-component backspace-del-seq ()
+  "Backspace deletes last key entered in command sequence"
+  (when ergoemacs-read-key-begin-hook
+    :modify-map t
+    (define-key ergoemacs-ctl-to-alt-translation-local-map (read-kbd-macro "DEL")
+      'ergoemacs-read-key-undo-last)
+    (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
+      'ergoemacs-read-key-undo-last)
+    (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
+      'ergoemacs-read-key-undo-last)
+    (define-key ergoemacs-normal-translation-local-map (read-kbd-macro "DEL")
+      'ergoemacs-read-key-undo-last)))
 
 (ergoemacs-theme-component help ()
   "Help changes for ergoemacs-mode"
@@ -828,7 +851,8 @@
                  fixed-bold-italic
                  standard-fixed
                  ido-remaps
-                 helm-remaps)
+                 helm-remaps
+                 backspace-del-seq)
   :optional-off '(guru no-backspace)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))
@@ -867,7 +891,8 @@
                  fixed-bold-italic
                  standard-fixed
                  ido-remaps
-                 helm-remaps)
+                 helm-remaps
+                 backspace-del-seq)
   :optional-off '(guru no-backspace)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))

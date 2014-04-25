@@ -277,8 +277,6 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
            (define-key map [f1] 'ergoemacs-read-key-help)
            (define-key map (read-kbd-macro "C-h") 'ergoemacs-read-key-help)
            (define-key map (if (eq system-type 'windows-nt) [apps] [menu]) 'ergoemacs-read-key-swap)
-           (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
-           (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
            map))
 
 (ergoemacs-translation
@@ -296,9 +294,6 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
            (define-key map (if (eq system-type 'windows-nt) [M-apps] [M-menu]) 'ergoemacs-read-key-next-key-is-quoted)
            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-ctl)
            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt)
-           (define-key map (read-kbd-macro "DEL")  'ergoemacs-read-key-undo-last)
-           (define-key map [f2] 'ergoemacs-universal-argument) ; Allows
-                                        ; editing
            
            ;; (define-key map "G" 'ergoemacs-read-key-next-key-is-quoted)
            ;; (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
@@ -318,8 +313,6 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
            (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
            (define-key map "G" 'ergoemacs-read-key-next-key-is-alt-ctl)
-           (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
-           (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
            map))
 
 (ergoemacs-translation
