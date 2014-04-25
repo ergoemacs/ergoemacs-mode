@@ -67,6 +67,16 @@
             (const :tag "Let theme decide" nil))))
   :group 'ergoemacs-themes)
 
+(defcustom ergoemacs-theme-version
+  '()
+  "Each themes set version"
+  :type '(repeat
+          (string :tag "Theme Component")
+          (choice
+           (const :tag "Latest Version" 'nil)
+           (string :tag "Version")))
+  :group 'ergoemacs-theme)
+
 (defcustom ergoemacs-function-short-names
   '((backward-char  "← char")
     (forward-char "→ char")
@@ -852,7 +862,7 @@ This function does not finalize maps by installing them into the original maps.
                                                  (symbol-name component))))
           fixed-maps variable-maps
           (true-version version)
-          (version version)
+          (version (or version (ergoemacs-theme-get-version)))
           minor-alist keymap-list shortcut-list
           always-p full-shortcut-map-p ret already-done-list)
       (when (string-match "::\\([0-9.]+\\)$" true-component)
@@ -1076,7 +1086,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
           trans-key input-keys
           cmd cmd-tmp
           emulation-setup
-          (version version)
+          (version (or version (ergoemacs-theme-get-version)))
           (shortcut-list '())
           (true-component (replace-regexp-in-string ":\\(fixed\\|variable\\)" ""
                                                     (or (and (stringp component) component)
@@ -1412,6 +1422,26 @@ added to the appropriate startup hooks.
         ergoemacs-component-version-list))))
 ;;; Theme functions
 
+(defun ergoemacs-theme-set-version (version)
+  "Sets the current themes default VERSION"
+  (let (found)
+    (setq ergoemacs-theme-version
+          (mapcar
+           (lambda(elt)
+             (if (not (equal ergoemacs-theme (nth 0 elt)))
+                 elt
+               (setq found t)
+               (list ergoemacs-theme version)))
+           ergoemacs-theme-version))
+    (unless found
+      (push (list ergoemacs-theme version) ergoemacs-theme-version))))
+
+(defun ergoemacs-theme-get-version ()
+  "Gets the current version for the current theme"
+  (let ((theme-ver (assoc ergoemacs-theme ergoemacs-theme-version)))
+    (if (not theme-ver) nil
+      (car (cdr theme-ver)))))
+
 (defun ergoemacs-theme-versions (theme)
   "Get a list of versions for the current theme."
   (let ((theme-plist (gethash (if (stringp theme) theme
@@ -1590,7 +1620,6 @@ If OFF is non-nil, turn off the options instead."
         (push (if off (list option 'off) (list option 'on))
               ergoemacs-theme-options)))))
 
-
 (defun ergoemacs-theme-toggle-option (option)
   "Toggles theme OPTION."
   (if (ergoemacs-theme-option-enabled-p option)
@@ -1680,6 +1709,31 @@ If OFF is non-nil, turn off the options instead."
                   :button (:toggle . (ergoemacs-theme-option-enabled-p ',option)))))
             (sort options-list 'string<)))))))
 
+(defun ergoemacs-keymap-menu-theme-version (theme)
+  "Gets version menu for THEME"
+  (let ((theme-versions (ergoemacs-theme-versions theme)))
+    (if (not theme-versions) nil
+      `(ergoemacs-versions
+        menu-item "Theme Versions"
+        (keymap
+         (ergoemacs-current-version
+          menu-item "Current Version"
+          (lambda()
+            (interactive)
+            (ergoemacs-theme-set-version nil)
+            (ergoemacs-mode -1)
+            (ergoemacs-mode 1))
+          :button (:radio . (equal (ergoemacs-theme-get-version) nil)))
+         ,@(mapcar
+            (lambda(version)
+              `(,(intern version) menu-item ,version
+                (lambda() (interactive)
+                  (ergoemacs-theme-set-version ,version)
+                  (ergoemacs-mode -1)
+                  (ergoemacs-mode 1))
+                :button (:radio . (equal (ergoemacs-theme-get-version) ,version))))
+            theme-versions))))))
+
 (defun ergoemacs-keymap-menu (theme)
   "Defines menus for current THEME."
   `(keymap
@@ -1694,10 +1748,8 @@ If OFF is non-nil, turn off the options instead."
                (ergoemacs-set-default 'ergoemacs-theme ,theme))
              :button (:radio . (string= ergoemacs-theme ,theme))))
          (sort (ergoemacs-get-themes) 'string<))))
-    ;; (ergoemacs-theme-version
-    ;;  menu-item "Theme Version"
-    ;;  )
     ,(ergoemacs-keymap-menu-theme-options theme)
+    ,(ergoemacs-keymap-menu-theme-version theme)
     (ergoemacs-c-x-c-c
      menu-item "Ctrl+C and Ctrl+X behavior"
      (keymap
