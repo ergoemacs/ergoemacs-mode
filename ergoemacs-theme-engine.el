@@ -2006,6 +2006,8 @@ Returns new keymap"
 :components -- list of components that this theme uses. These can't be seen or toggled
 :optional-on -- list of components that are optional and are on by default
 :optional-off -- list of components that are optional and off by default
+:menu -- Menu options list
+:silent -- If this theme is \"silent\", i.e. doesn't show up in the Themes menu.
 
 The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
 "
@@ -2088,6 +2090,33 @@ DESC is ignored, as is FIXED-KEY."
          (ergoemacs-force-just-first nil)
          (ergoemacs-force-variable-reg nil))
     (ergoemacs-theme-component--global-set-key key function)))
+
+(defmacro ergoemacs-deftheme (name desc based-on &rest differences)
+  "Creates a theme layout for Ergoemacs keybindings -- Compatability layer.
+
+NAME is the theme name.
+DESC is the theme description
+BASED-ON is the base name theme that the new theme is based on.
+
+DIFFERENCES are the differences from the layout based on the functions.  These are based on the following functions:
+
+`ergoemacs-key' = defines/replaces variable key with function by (ergoemacs-key QWERTY-KEY FUNCTION DESCRIPTION ONLY-FIRST)
+`ergoemacs-fixed-key' = defines/replace fixed key with function by (ergoemacs-fixed-key KEY FUNCTION DESCRIPTION)
+"
+  (declare (indent 1))
+  `(let (silent pl tmp)
+     (setq pl (gethash (or ,based-on "standard") ergoemacs-theme-hash))
+     (plist-put pl ':name ,(symbol-name name))
+     (setq tmp (eval (plist-get pl ':components)))
+     (push (intern (concat ,(symbol-name name) "-theme")) tmp)
+     (setq tmp (plist-put pl ':components tmp))
+     (setq silent (gethash "silent-themes" ergoemacs-theme-hash))
+     (push ,(symbol-name name) silent)
+     (puthash "silent-themes" silent ergoemacs-theme-hash)
+     (puthash ,(symbol-name name) tmp ergoemacs-theme-hash)
+     (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
+       ,(format "Generated theme component for %s theme" (concat (plist-get (nth 0 kb) ':name) "-theme"))
+       ,@(nth 1 kb))))
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
