@@ -967,6 +967,8 @@ FORCE-KEY forces keys like <escape> to work properly.
                     (setq prefix-arg current-prefix-arg)
                     (setq unread-command-events
                           (append (listify-key-sequence key) unread-command-events))
+                    (ergoemacs-defer-post-command-hook)
+                    (reset-this-command-lengths)
                     (when lookup
                       (define-key lookup [ergoemacs-single-command-keys] 'ignore)
                       (if (not use-override)
