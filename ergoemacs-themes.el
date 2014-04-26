@@ -815,6 +815,12 @@
     (global-set-key [remap info] 'helm-info)
     (global-set-key [remap ac-isearch] 'ac-complete-with-helm)))
 
+(ergoemacs-theme-component multiple-cursors-remaps ()
+  "Multiple Cursors phi-search remaps"
+  (when multiple-cursors-mode
+    (global-set-key [remap isearch-forward] 'phi-search)
+    (global-set-key [remap isearch-backward] 'phi-search-backward)))
+
 (ergoemacs-theme-component ido-remaps ()
   "Remaps for ido-mode"
   (when ido-mode
@@ -865,13 +871,14 @@
                  standard-fixed
                  ido-remaps
                  helm-remaps
+                 multiple-cursors-remaps
                  backspace-del-seq
                  quit
                  apps-swap)
   :optional-off '(guru no-backspace)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))
-                  ("Remaps" (ido-remaps helm-remaps))
+                  ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))
                   ("Extreme ErgoEmacs" (guru no-backspace))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit))
                   ("Keys during Key Sequence" (apps-swap backspace-del-seq))))
@@ -907,13 +914,14 @@
                  standard-fixed
                  ido-remaps
                  helm-remaps
+                 multiple-cursors-remaps
                  backspace-del-seq
                  quit
                  apps-swap)
   :optional-off '(guru no-backspace)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))
-                  ("Remaps" (ido-remaps helm-remaps))
+                  ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))
                   ("Extreme ErgoEmacs" (guru no-backspace))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit))
                   ("Keys during Key Sequence" (apps-swap backspace-del-seq)))
