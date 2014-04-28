@@ -204,7 +204,9 @@
 (defun ergoemacs-call-keyword-completion ()
   "Call the command that has keyboard shortcut M-TAB."
   (interactive)
-  (call-interactively (key-binding (kbd "M-TAB"))))
+  (call-interactively
+   (ergoemacs-with-global
+    (key-binding (kbd "M-TAB")))))
 
 
 
