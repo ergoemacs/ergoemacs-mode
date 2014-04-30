@@ -205,6 +205,30 @@ This is called through `ergoemacs-read-key'"
   (setq current-prefix-arg '-)
   (ergoemacs-read-key nil type nil t))
 
+(defun ergoemacs-read-event-change (event keymap)
+  "Change EVENT based on KEYMAP.
+Used to help with translation keymaps like `input-decode-map'"
+  (let ((ret event)
+        current-key next-key)
+    (setq current-key (vector ret))
+    (while (and current-key
+                (keymapp (lookup-key keymap current-key)))
+      (setq next-key
+            (with-timeout (ergoemacs-read-key-delay nil)
+              (or (and (boundp 'ergoemacs-input)
+                       (pop ergoemacs-input))
+                  (read-key))))
+      (if (not next-key)
+          (setq current-key nil)
+        (setq current-key (vconcat current-key
+                                   (vector next-key)))))
+    (when current-key
+      (setq current-key (lookup-key keymap current-key))
+      (when (and (vectorp current-key)
+                 (= 1 (length current-key)))
+        (setq ret (elt current-key 0))))
+    (symbol-value 'ret)))
+
 (defun ergoemacs-read-event (type &optional pretty-key extra-txt universal)
   "Reads a single event of TYPE.
 
@@ -220,7 +244,7 @@ universal argument can be entered.
          (type (or type 'normal))
          (local-keymap (ergoemacs-local-map type))
          (key-tag (intern (concat ":" (symbol-name type) "-key")))
-         ret message-log-max (blink-on nil) tmp
+         ret (blink-on nil) tmp
          (help-list (gethash type ergoemacs-translation-text))
          help-text)
     (when help-list
@@ -238,53 +262,63 @@ universal argument can be entered.
                                      (nth (+ 2 off) help-list) ", ")) "")))))
     (while (not ret)
       (unless (minibufferp)
-        (message "%s%s%s%s%s%s\t%s"
-                 (if ergoemacs-describe-key
-                     "Describe key: " "")
-                 (if current-prefix-arg
-                     (format
-                      "%s%s%s %s "
-                      (cond
-                       ((listp current-prefix-arg)
-                        (make-string (round (log (nth 0 current-prefix-arg) 4)) ?u))
-                       (t current-prefix-arg))
-                      (if universal
-                          (if blink-on
-                              (if ergoemacs-read-blink
-                                  (ergoemacs-unicode-char
-                                   ergoemacs-read-blink "-")
-                                " ") " ") "")
-                      (if (listp current-prefix-arg)
-                          (format "%s" 
-                                  current-prefix-arg)
-                        "")
-                      (ergoemacs-unicode-char "▸" ">"))
-                   (if universal
-                       (format "%s %s "
-                               (if universal
-                                   (if blink-on
-                                       (if ergoemacs-read-blink
-                                           (ergoemacs-unicode-char
-                                            ergoemacs-read-blink "-")
-                                         " ") " ") "")
-                               (ergoemacs-unicode-char "▸" ">"))
-                     ""))
-                 (if help-list (nth 5 help-list) "")
-                 (or pretty-key "")
-                 (or extra-txt (if help-list
-                                   (nth
-                                    (if ergoemacs-use-ergoemacs-key-descriptions
-                                        1 0) (nth 4 help-list)) ""))
-                 (if universal ""
+        (let (message-log-max)
+          (message "%s%s%s%s%s%s\t%s"
+                   (if ergoemacs-describe-key
+                       "Describe key: " "")
+                   (if current-prefix-arg
+                       (format
+                        "%s%s%s %s "
+                        (cond
+                         ((listp current-prefix-arg)
+                          (make-string (round (log (nth 0 current-prefix-arg) 4)) ?u))
+                         (t current-prefix-arg))
+                        (if universal
+                            (if blink-on
+                                (if ergoemacs-read-blink
+                                    (ergoemacs-unicode-char
+                                     ergoemacs-read-blink "-")
+                                  " ") " ") "")
+                        (if (listp current-prefix-arg)
+                            (format "%s" 
+                                    current-prefix-arg)
+                          "")
+                        (ergoemacs-unicode-char "▸" ">"))
+                     (if universal
+                         (format "%s %s "
+                                 (if universal
+                                     (if blink-on
+                                         (if ergoemacs-read-blink
+                                             (ergoemacs-unicode-char
+                                              ergoemacs-read-blink "-")
+                                           " ") " ") "")
+                                 (ergoemacs-unicode-char "▸" ">"))
+                       ""))
+                   (if help-list (nth 5 help-list) "")
+                   (or pretty-key "")
+                   (or extra-txt (if help-list
+                                     (nth
+                                      (if ergoemacs-use-ergoemacs-key-descriptions
+                                          1 0) (nth 4 help-list)) ""))
+                   (if universal ""
                      (if blink-on
                          (if ergoemacs-read-blink
                              (ergoemacs-unicode-char
                               ergoemacs-read-blink "-")
                            "") ""))
-                 (if (and help-text (not universal))
-                     help-text "")))
+                   (if (and help-text (not universal))
+                       help-text ""))))
+      
       (setq blink-on (not blink-on))
-      (setq ret (with-timeout (0.4 nil) (read-key)))
+      (setq ret (with-timeout (ergoemacs-read-blink-timeout nil)
+                  (or (and (boundp 'ergoemacs-input)
+                           (pop ergoemacs-input))
+                      (read-key))))
+      ;; Now try to fix issues with `input-decode-map'
+      (when ret
+        (setq ret (ergoemacs-read-event-change ret input-decode-map))
+        (setq ret (ergoemacs-read-event-change ret local-function-key-map))
+        (setq ret (ergoemacs-read-event-change ret key-translation-map)))
       (cond
        ((and ret (not universal)
              (and local-keymap
@@ -402,6 +436,17 @@ universal argument can be entered.
   :type '(choice
           (string :tag "Cursor")
           (const :tag "No cursor" nil))
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-read-blink-timeout 0.4
+  "Timeout for `ergoemacs-read' blinking cursor."
+  :type 'number
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-read-key-delay 0.01
+  "Timeout for `ergoemacs-read-event'.
+This is to distinguish events in a terminal, like PuTTy."
+  :type 'number
   :group 'ergoemacs-read)
 
 (defcustom ergoemacs-backspace-will-undo-swap-translation t
@@ -757,17 +802,13 @@ FORCE-KEY forces keys like <escape> to work properly.
                     (overlay-put tmp-overlay 'priority 536870910))))
               (cond
                ((progn
-                  (setq tmp (lookup-key input-decode-map key))
+                  (setq tmp (lookup-key local-function-key-map key))
                   (when (and tmp (integerp tmp))
                     (setq tmp nil))
                   (unless tmp
-                    (setq tmp (lookup-key local-function-key-map key))
+                    (setq tmp (lookup-key key-translation-map key))
                     (when (and tmp (integerp tmp))
-                      (setq tmp nil))
-                    (unless tmp
-                      (setq tmp (lookup-key key-translation-map key))
-                      (when (and tmp (integerp tmp))
-                        (setq tmp nil))))
+                      (setq tmp nil)))
                   tmp)
                 ;; Should use emacs key translation.
                 (cond
@@ -1103,24 +1144,21 @@ argument prompt.
         real-read
         (first-universal universal)
         (curr-universal nil)
-        input tmp
+        ergoemacs-input tmp
         history)
-    (setq input (ergoemacs-to-sequence key)
+    (setq ergoemacs-input (ergoemacs-to-sequence key)
           key nil)
     (while continue-read
       (setq continue-read nil
             force-key nil)
-      (when (and (not input) real-type)
+      (when (and (not ergoemacs-input) real-type)
         (setq type real-type)
         (setq curr-universal first-universal)
         (setq real-type nil))
-      (setq real-read (not input))
+      (setq real-read (not ergoemacs-input))
       (setq base (concat ":" (symbol-name type))
             next-key (vector
-                      (or (pop input)
-                          ;; Echo key sequence
-                          ;; get next key
-                          (ergoemacs-read-event type pretty-key nil curr-universal))))
+                      (ergoemacs-read-event type pretty-key nil curr-universal)))
       (setq next-key (ergoemacs-translate next-key))
       (setq tmp (plist-get next-key ':normal))
       (cond
@@ -1157,7 +1195,7 @@ argument prompt.
                 (setq continue-read nil) ;; Exit read-key
               (setq tmp (pop history))
               (setq continue-read t ;; Undo last key
-                    input (nth 1 tmp)
+                    ergoemacs-input (nth 1 tmp)
                     real-read nil
                     real-type (nth 0 tmp))
               (setq key nil
@@ -1188,7 +1226,7 @@ argument prompt.
               ;; or not specified correctly.  Therefore set local-fn to
               ;; nil.
               (setq local-fn nil))
-            ;; Change input type for next key press.
+            ;; Change ergoemacs-input type for next key press.
             (when (memq local-fn '(ergoemacs-read-key-next-key-is-alt
                                    ergoemacs-read-key-next-key-is-ctl
                                    ergoemacs-read-key-next-key-is-alt-ctl
@@ -1306,7 +1344,7 @@ argument prompt.
                                   history))
                           ;; ergoemacs-shortcut reset ergoemacs-read-key
                           (setq continue-read t
-                                input (ergoemacs-to-sequence (nth 0 local-fn))
+                                ergoemacs-input (ergoemacs-to-sequence (nth 0 local-fn))
                                 key nil
                                 pretty-key nil
                                 type 'normal
@@ -1360,7 +1398,7 @@ argument prompt.
                                   history))
                           ;; ergoemacs-shortcut reset ergoemacs-read-key
                           (setq continue-read t
-                                input (ergoemacs-to-sequence (nth 0 local-fn))
+                                ergoemacs-input (ergoemacs-to-sequence (nth 0 local-fn))
                                 key nil
                                 pretty-key nil
                                 type 'normal
