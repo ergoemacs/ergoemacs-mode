@@ -151,27 +151,31 @@
       (ergoemacs-read-key key 'normal)))))
 
 (defun ergoemacs-clean-recompile-then-run (&optional terminal)
-  "Recompile `ergoemacs-mode' for a bootstrap environment"
+  "Recompile `ergoemacs-mode' for a bootstrap environment."
   (interactive)
   (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-clean*"))
   (set (make-local-variable 'ergoemacs-terminal) terminal)
   (delete-region (point-min) (point-max))
-  (insert "Delete Byte Compiled Files:\n")
-  (mapc
-   (lambda(file)
-     (insert "\tDelete " file)
-     (delete-file file)
-     (insert "\n"))
-   (directory-files (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) t "[.]elc$"))
-  (insert "\n")
-  (let* ((emacs-exe (ergoemacs-emacs-exe))
-         (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
-         (process (start-process-shell-command "ergoemacs-byte-compile"
-                                               "*ergoemacs-clean*"
-                                               (format "%s -Q --batch -f batch-byte-compile *.el" emacs-exe))))
-    (set-process-sentinel process 'ergoemacs-run-clean)))
+  (when (or (equal current-prefix-arg '(4))
+            (equal current-prefix-arg '(16)))
+    (insert "Delete Byte Compiled Files:\n")
+    (mapc
+     (lambda(file)
+       (insert "\tDelete " file)
+       (delete-file file)
+       (insert "\n"))
+     (directory-files (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) t "[.]elc$"))
+    (insert "\n"))
+  (if (equal  current-prefix-arg '(16))
+      (let* ((emacs-exe (ergoemacs-emacs-exe))
+             (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
+             (process (start-process-shell-command "ergoemacs-byte-compile"
+                                                   "*ergoemacs-clean*"
+                                                   (format "%s -Q --batch -f batch-byte-compile *.el" emacs-exe))))
+        (set-process-sentinel process 'ergoemacs-run-clean))
+    (ergoemacs-run-clean)))
 
-(defun ergoemacs-run-clean (p e)
+(defun ergoemacs-run-clean (&rest ignore)
   "Run the clean environment"
   (let ((emacs-exe (ergoemacs-emacs-exe))
         cmd process rm-batch)
@@ -180,7 +184,9 @@
     (when ergoemacs-theme
       (setenv "ERGOEMACS_THEME" ergoemacs-theme))
     (cond
-     ((not ergoemacs-terminal)
+     ((save-excursion
+        (set-buffer (get-buffer-create "*ergoemacs-clean*"))
+        (and (boundp 'ergoemacs-terminal) (not ergoemacs-terminal)))
       (setq cmd (format "%s --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\"  --eval \"(ergoemacs-mode 1)\"" emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))))
      ((and (eq system-type 'windows-nt) (executable-find "cmd"))
@@ -214,12 +220,16 @@
     (delete-file ergoemacs-batch-file)))
 
 (defun ergoemacs-clean ()
-  "Run ergoemacs in a bootstrap environment."
+  "Run ergoemacs in a bootstrap environment.
+C-u deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
+C-u C=u deletes old byte compilde `ergoemacs-mode' files."
   (interactive)
   (ergoemacs-clean-recompile-then-run))
 
 (defun ergoemacs-clean-nw ()
-  "Run ergoemacs in bootstrap environment in terminal."
+  "Run ergoemacs in bootstrap environment in terminal.
+C-u deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
+C-u C=u deletes old byte compilde `ergoemacs-mode' files."
   (interactive)
   (ergoemacs-clean-recompile-then-run t))
 
