@@ -49,17 +49,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Code:
-
-(eval-when-compile
-  ;; Required for shortcuts to work...
-  (defvar ergoemacs-dir
-    (file-name-directory
-     (or
-      load-file-name
-      (buffer-file-name)))
-    "Ergoemacs directory.")
-  (add-to-list 'load-path ergoemacs-dir)
-  (require 'ergoemacs-shortcuts))
+(defvar ergoemacs-dir
+  (file-name-directory
+   (or
+    load-file-name
+    (buffer-file-name)))
+  "Ergoemacs directory.")
+(add-to-list 'load-path ergoemacs-dir)
+(require 'ergoemacs-shortcuts)
 
 (defvar ergoemacs-translation-keymap
   (let ((map (make-sparse-keymap)))

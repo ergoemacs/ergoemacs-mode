@@ -31,17 +31,15 @@
 ;;; Code:
 
 (require 'redo "redo.elc" t) ; for redo shortcut
+(defvar ergoemacs-dir
+  (file-name-directory
+   (or
+    load-file-name
+    (buffer-file-name)))
+  "Ergoemacs directory.")
+(add-to-list 'load-path ergoemacs-dir)
+(require 'ergoemacs-shortcuts)
 
-(eval-when-compile
-  ;; Required for shortcuts to work...
-  (defvar ergoemacs-dir
-    (file-name-directory
-     (or
-      load-file-name
-      (buffer-file-name)))
-    "Ergoemacs directory.")
-  (add-to-list 'load-path ergoemacs-dir)
-  (require 'ergoemacs-shortcuts))
 
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
   "Backward char will edit isearch."

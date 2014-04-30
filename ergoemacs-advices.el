@@ -27,16 +27,14 @@
 ;; 
 
 ;;; Code:
-
-(eval-when-compile
-  (defvar ergoemacs-dir
-    (file-name-directory
-     (or
-      load-file-name
-      (buffer-file-name)))
-    "Ergoemacs directory.")
-  (add-to-list 'load-path ergoemacs-dir)
-  (require 'ergoemacs-shortcuts))
+(defvar ergoemacs-dir
+  (file-name-directory
+   (or
+    load-file-name
+    (buffer-file-name)))
+  "Ergoemacs directory.")
+(add-to-list 'load-path ergoemacs-dir)
+(require 'ergoemacs-shortcuts)
 
 (defmacro ergoemacs-define-overrides (&rest body)
   "Force the define-keys to work"
