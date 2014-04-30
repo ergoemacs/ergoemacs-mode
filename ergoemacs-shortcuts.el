@@ -210,11 +210,13 @@ This is called through `ergoemacs-read-key'"
 Used to help with translation keymaps like `input-decode-map'"
   (let ((ret event)
         current-key next-key
+        test-ret
         (old-ergoemacs-input (and (boundp 'ergoemacs-input)
                                   ergoemacs-input)))
     (setq current-key (vector ret))
+    (setq test-ret (lookup-key keymap current-key))
     (while (and current-key
-                (keymapp (lookup-key keymap current-key)))
+                (keymapp test-ret))
       (setq next-key
             (with-timeout (ergoemacs-read-key-delay nil)
               (or (and (boundp 'ergoemacs-input)
@@ -222,18 +224,18 @@ Used to help with translation keymaps like `input-decode-map'"
                   (read-key))))
       (if (not next-key)
           (setq current-key nil)
-        (setq current-key (vconcat current-key
-                                   (vector next-key)))))
+        (setq current-key (vconcat current-key (vector next-key)))
+        (setq test-ret (lookup-key keymap current-key))))
     (if (not current-key)
         (when old-ergoemacs-input
           (setq ergoemacs-input old-ergoemacs-input))
-      (setq current-key (lookup-key keymap current-key))
-      (if (and (vectorp current-key)
-                 (= 1 (length current-key)))
-        (setq ret (elt current-key 0))
+      (if (and (vectorp test-ret)
+                 (= 1 (length test-ret)))
+          (progn
+            (setq ret (elt test-ret 0)))
         (when old-ergoemacs-input
           (setq ergoemacs-input old-ergoemacs-input))))
-    (symbol-value 'ret)))
+    ret))
 
 (defun ergoemacs-read-event (type &optional pretty-key extra-txt universal)
   "Reads a single event of TYPE.
