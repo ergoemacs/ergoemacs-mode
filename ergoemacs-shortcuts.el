@@ -209,7 +209,9 @@ This is called through `ergoemacs-read-key'"
   "Change EVENT based on KEYMAP.
 Used to help with translation keymaps like `input-decode-map'"
   (let ((ret event)
-        current-key next-key)
+        current-key next-key
+        (old-ergoemacs-input (and (boundp 'ergoemacs-input)
+                                  ergoemacs-input)))
     (setq current-key (vector ret))
     (while (and current-key
                 (keymapp (lookup-key keymap current-key)))
@@ -222,11 +224,15 @@ Used to help with translation keymaps like `input-decode-map'"
           (setq current-key nil)
         (setq current-key (vconcat current-key
                                    (vector next-key)))))
-    (when current-key
+    (if (not current-key)
+        (when old-ergoemacs-input
+          (setq ergoemacs-input old-ergoemacs-input))
       (setq current-key (lookup-key keymap current-key))
-      (when (and (vectorp current-key)
+      (if (and (vectorp current-key)
                  (= 1 (length current-key)))
-        (setq ret (elt current-key 0))))
+        (setq ret (elt current-key 0))
+        (when old-ergoemacs-input
+          (setq ergoemacs-input old-ergoemacs-input))))
     (symbol-value 'ret)))
 
 (defun ergoemacs-read-event (type &optional pretty-key extra-txt universal)
