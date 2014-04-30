@@ -922,6 +922,43 @@ Selected mark would not be cleared after paste."
 ;;     (ergoemacs-mode 1)
 ;;     (should ret)))
 
+(ert-deftest ergoemacs-test-terminal-M-O-fight ()
+  "Tests Issue #188"
+  (let ((old-map (copy-keymap input-decode-map))
+        (old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (ret nil))
+    ;; Setup input decode map just like `xterm' for some common keys.
+    (setq input-decode-map (make-sparse-keymap)
+          ergoemacs-theme nil
+          ergoemacs-keyboard-layout "us")
+    (define-key input-decode-map "\eOA" [up])
+    (define-key input-decode-map "\eOB" [down])
+    (define-key input-decode-map "\eOC" [right])
+    (define-key input-decode-map "\eOD" [left])
+    (define-key input-decode-map "\eOF" [end])
+    (define-key input-decode-map "\eOH" [home])
+    (ergoemacs-mode -1)
+    (ergoemacs-mode 1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (delete-region (point-min) (point-max))
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-max))
+      (beginning-of-line)
+      (with-timeout (0.2 nil)
+        (read-key "M-O A"))
+      (message "Decode: %s" (lookup-key input-decode-map (kbd "M-O A")))
+      (setq ret (looking-at "nulla pariatur. Excepteur sint occaecat cupidatat non proident,"))
+      (kill-buffer (current-buffer)))
+    ;; Restore old `input-decode-map'
+    (setq input-decode-map (copy-keymap old-map)
+          ergoemacs-theme old-ergoemacs-theme
+          ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode -1)
+    (ergoemacs-mode 1)
+    (should ret)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
