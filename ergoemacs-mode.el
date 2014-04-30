@@ -796,18 +796,25 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
       (setq ergoemacs-shortcut-override-mode nil)
       (ergoemacs-debug "WARNING: ergoemacs-shortcut-override-mode was turned on; Turning off."))))
 
-(defun ergoemacs-shuffle-keys ()
-  "Shuffle ergoemacs keymaps"
+(defun ergoemacs-shuffle-keys (&optional var keymap)
+  "Shuffle ergoemacs keymaps.
+When VAR and KEYMAP are specified, replace the keymap in the
+`ergoemacs-emulation-mode-map-alist'."
   ;; Promotes keymaps in `ergoemacs-emulation-mode-map-alist'
   (mapc
    (lambda(what)
-     (let ((x (assq what ergoemacs-emulation-mode-map-alist)))
-       (and x (setq ergoemacs-emulation-mode-map-alist
-                    (cons x (delq x ergoemacs-emulation-mode-map-alist))))))
+     (if (and keymap (eq var what))
+         (let ((x (assq what ergoemacs-emulation-mode-map-alist)))
+           (when x
+             (delq x ergoemacs-emulation-mode-map-alist))
+           (push (cons var keymap) ergoemacs-emulation-mode-map-alist))
+       (let ((x (assq what ergoemacs-emulation-mode-map-alist)))
+         (and x (setq ergoemacs-emulation-mode-map-alist
+                      (cons x (delq x ergoemacs-emulation-mode-map-alist)))))))
    ;; Promoted from least to most important
-   '(ergoemacs-shortcut-keys
+   '(ergoemacs-global-override-p
+     ergoemacs-shortcut-keys
      ergoemacs-shortcut-override-mode
-     ergoemacs-global-override-p
      ergoemacs-modal
      ergoemacs-repeat-keys
      ergoemacs-read-input-keys))

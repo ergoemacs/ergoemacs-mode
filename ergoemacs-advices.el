@@ -109,9 +109,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
              ergoemacs-global-override-rm-keys)
             (setq ergoemacs-global-override-rm-keys rm-keys))
           (define-key ergoemacs-global-override-keymap key command)
-          (when ergoemacs-mode
-            (ergoemacs-mode -1)
-            (ergoemacs-mode 1)))
+          (ergoemacs-shuffle-keys 'ergoemacs-global-overridep ergoemacs-global-override-keymap))
          (t
           (push key ergoemacs-global-override-rm-keys)
           ;; Update Maps.
