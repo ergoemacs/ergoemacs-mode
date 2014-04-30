@@ -578,14 +578,14 @@ and `ergoemacs-pretty-key' descriptions.
             (setq ret (plist-put ret ':shift-translated-key nil))
             (setq ret (plist-put ret ':shift-translated-pretty nil)))
           
-          (setq ret (plist-put ret ':shifted (ergoemacs-translate-shifted shifted-key)))
-          (setq ret (plist-put ret ':shifted-key (read-kbd-macro (ergoemacs-translate-shifted shifted-key) t)))
-          (setq ret (plist-put ret ':shifted-pretty (ergoemacs-pretty-key shifted-key)))
-          
-          (setq ret (plist-put ret ':unshifted (ergoemacs-translate-shifted unshifted-key)))
-          (setq ret (plist-put ret ':unshifted-key (read-kbd-macro (ergoemacs-translate-shifted unshifted-key) t)))
-          (setq ret (plist-put ret ':unshifted-pretty (ergoemacs-pretty-key unshifted-key)))
-          
+          (when shifted-key
+            (setq ret (plist-put ret ':shifted (ergoemacs-translate-shifted shifted-key)))
+            (setq ret (plist-put ret ':shifted-key (read-kbd-macro (ergoemacs-translate-shifted shifted-key) t)))
+            (setq ret (plist-put ret ':shifted-pretty (ergoemacs-pretty-key shifted-key))))
+          (when unshifted-key
+            (setq ret (plist-put ret ':unshifted (ergoemacs-translate-shifted unshifted-key)))
+            (setq ret (plist-put ret ':unshifted-key (read-kbd-macro (ergoemacs-translate-shifted unshifted-key) t)))
+            (setq ret (plist-put ret ':unshifted-pretty (ergoemacs-pretty-key unshifted-key))))
           (setq ret (plist-put ret ':ctl (ergoemacs-translate-shifted
                                           (concat "C-" unshifted-key))))
           (setq ret (plist-put ret ':ctl-key (read-kbd-macro (plist-get ret ':ctl) t)))
@@ -618,25 +618,25 @@ and `ergoemacs-pretty-key' descriptions.
           (setq ret (plist-put ret ':alt-key (read-kbd-macro (plist-get ret ':alt) t)))
           (setq ret (plist-put ret ':alt-pretty (ergoemacs-pretty-key (plist-get ret ':alt))))
           
-          (setq ret (plist-put ret ':alt-ctl (ergoemacs-translate-shifted
-                                              (concat "M-C-" unshifted-key))))
-          (setq ret (plist-put ret ':alt-ctl-key (read-kbd-macro (plist-get ret ':alt-ctl) t)))
-          (setq ret (plist-put ret ':alt-ctl-pretty (ergoemacs-pretty-key (plist-get ret ':alt-ctl))))
-          
-          (setq ret (plist-put ret ':ctl-shift (ergoemacs-translate-shifted
-                                                (concat "C-" shifted-key))))
-          (setq ret (plist-put ret ':ctl-shift-key (read-kbd-macro (plist-get ret ':ctl-shift) t)))
-          (setq ret (plist-put ret ':ctl-shift-pretty (ergoemacs-pretty-key (plist-get ret ':ctl-shift))))
-          
-          (setq ret (plist-put ret ':alt-shift (ergoemacs-translate-shifted
-                                                (concat "M-" shifted-key))))
-          (setq ret (plist-put ret ':alt-shift-key (read-kbd-macro (plist-get ret ':alt-shift) t)))
-          (setq ret (plist-put ret ':alt-shift-pretty (ergoemacs-pretty-key (plist-get ret ':alt-shift))))
-          
-          (setq ret (plist-put ret ':alt-ctl-shift (ergoemacs-translate-shifted
-                                                    (concat "M-C-" shifted-key))))
-          (setq ret (plist-put ret ':alt-ctl-shift-key (read-kbd-macro (plist-get ret ':alt-ctl-shift) t)))
-          (setq ret (plist-put ret ':alt-ctl-shift-pretty (ergoemacs-pretty-key (plist-get ret ':alt-ctl-shift))))
+          (when unshifted-key
+            (setq ret (plist-put ret ':alt-ctl (ergoemacs-translate-shifted
+                                                (concat "M-C-" unshifted-key))))
+            (setq ret (plist-put ret ':alt-ctl-key (read-kbd-macro (plist-get ret ':alt-ctl) t)))
+            (setq ret (plist-put ret ':alt-ctl-pretty (ergoemacs-pretty-key (plist-get ret ':alt-ctl)))))
+
+          (when shifted-key
+            (setq ret (plist-put ret ':ctl-shift (ergoemacs-translate-shifted
+                                                  (concat "C-" shifted-key))))
+            (setq ret (plist-put ret ':ctl-shift-key (read-kbd-macro (plist-get ret ':ctl-shift) t)))
+            (setq ret (plist-put ret ':ctl-shift-pretty (ergoemacs-pretty-key (plist-get ret ':ctl-shift))))
+            (setq ret (plist-put ret ':alt-shift (ergoemacs-translate-shifted
+                                                  (concat "M-" shifted-key))))
+            (setq ret (plist-put ret ':alt-shift-key (read-kbd-macro (plist-get ret ':alt-shift) t)))
+            (setq ret (plist-put ret ':alt-shift-pretty (ergoemacs-pretty-key (plist-get ret ':alt-shift))))
+            (setq ret (plist-put ret ':alt-ctl-shift (ergoemacs-translate-shifted
+                                                      (concat "M-C-" shifted-key))))
+            (setq ret (plist-put ret ':alt-ctl-shift-key (read-kbd-macro (plist-get ret ':alt-ctl-shift) t)))
+            (setq ret (plist-put ret ':alt-ctl-shift-pretty (ergoemacs-pretty-key (plist-get ret ':alt-ctl-shift)))))
           (maphash
            (lambda(key plist)
              (setq ret (ergoemacs-translation-install plist orig-key ret)))
