@@ -1970,6 +1970,7 @@ Returns new keymap"
     ;; `ergoemacs-read-input-keymap', then `ergoemacs-shortcut-keymap'
     ;; in `ergoemacs-emulation-mode-map-alist'
     (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)
+    (push (cons 'ergoemacs-global-override-p ergoemacs-global-override-keymap) ergoemacs-emulation-mode-map-alist)
     (push (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap) ergoemacs-emulation-mode-map-alist)
     (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
     (ergoemacs-theme-make-hooks theme)

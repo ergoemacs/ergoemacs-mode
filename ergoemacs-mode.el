@@ -807,6 +807,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
    ;; Promoted from least to most important
    '(ergoemacs-shortcut-keys
      ergoemacs-shortcut-override-mode
+     ergoemacs-global-override-p
      ergoemacs-modal
      ergoemacs-repeat-keys
      ergoemacs-read-input-keys))
