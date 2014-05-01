@@ -1130,8 +1130,6 @@ UNIVERSAL allows ergoemacs-read-key to start with universal
 argument prompt.
 "
   (setq ergoemacs-deactivate-mark nil)
-  (unwind-protect
-      (run-hooks 'ergoemacs-read-key-begin-hook))
   (let ((continue-read t)
         (real-type (or type 'normal))
         (first-type (or type 'normal))

@@ -1983,7 +1983,10 @@ Returns new keymap"
           ergoemacs-read-input-keys t
           ergoemacs-unbind-keys t
           ergoemacs-theme (or (and (stringp theme) theme)
-                              (symbol-name theme)))))
+                              (symbol-name theme)))
+    
+    (unwind-protect
+        (run-hooks 'ergoemacs-read-key-begin-hook))))
 
 (defvar ergoemacs-theme-hash (make-hash-table :test 'equal))
 

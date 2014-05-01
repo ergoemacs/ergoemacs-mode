@@ -956,7 +956,7 @@ Selected mark would not be cleared after paste."
       (goto-char (point-max))
       (beginning-of-line)
       (with-timeout (0.2 nil)
-        (ergoemacs-read-key "M-O A"))
+        (ergoemacs-read-key "M-O A")) ; by looking at `ergoemacs-read-key' this seems to be translating correctly, but... it doesn't run in this context.
       (message "Decode: %s" (lookup-key input-decode-map (kbd "M-O A")))
       (setq ret (looking-at "nulla pariatur. Excepteur sint occaecat cupidatat non proident,"))
       (kill-buffer (current-buffer)))
