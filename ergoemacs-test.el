@@ -803,7 +803,7 @@ Part of addressing Issue #147."
 already selected, isearch-ing would expand or shrink selection.
 Currently ergoemacs-mode discards selection as soon as isearch key is
 pressed. Reproducible with ergoemacs-clean.
-Issue #168."
+Issue #186."
   (let ((old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
         (macro (edmacro-parse-keys "C-f lab" t))
@@ -968,6 +968,33 @@ Selected mark would not be cleared after paste."
     (ergoemacs-mode 1)
     ;; (progn (require 'ergoemacs-test) (ert "ergoemacs-test-terminal-M-O-fight"))
     (should ret)))
+
+(ert-deftest ergoemacs-test-comment-dwim-deactivate-region ()
+  "Makes sure that `comment-dwim' deactivates the region.
+Issue #203"
+  (let ((old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (macro (edmacro-parse-keys "M-o" t))
+        (ret t))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme nil)
+    (setq ergoemacs-keyboard-layout "colemak")
+    (ergoemacs-mode 1)
+    (cua-mode 1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (emacs-lisp-mode)
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-min))
+      (mark-word)
+      (execute-kbd-macro macro)
+      (setq ret (not mark-active))
+      (kill-buffer (current-buffer)))
+    (ergoemacs-mode -1)
+    (setq ergoemacs-theme old-ergoemacs-theme)
+    (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode 1)
+    (should (equal ret t))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
