@@ -529,10 +529,10 @@ bindings the keymap is:
         (ergoemacs-debug-heading "Ergoemacs Keys have loaded.")
         (when (and ergoemacs-use-mac-command-as-meta
                    (eq system-type 'darwin))
-          (let ((cm (or (intern-soft "ns-command-modifier")
-                        (intern-soft "mac-command-modifier")))
-                (am (or (intern-soft "ns-alternate-modifier")
-                        (intern-soft "mac-command-modifier"))))
+          (let ((cm (or (and (boundp 'ns-command-modifier) 'ns-command-modifier)
+                        (and (boundp 'mac-command-modifier) 'mac-command-modifier)))
+                (am (or (and (boundp 'ns-alternate-modifier) 'ns-alternate-modifier)
+                        (and (boundp 'mac-alternate-modifier) 'mac-alternate-modifier))))
             (when cm
               (setq ergoemacs-old-ns-command-modifier (symbol-value cm))
               (set cm 'meta))
