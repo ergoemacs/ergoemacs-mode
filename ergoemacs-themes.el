@@ -195,7 +195,9 @@
 (ergoemacs-theme-component fixed-bold-italic ()
   "Fixed keys for bold and italic"
   (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
-  (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic))
+  ;; (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
+  ;; C-i is TAB... This seems to cause issues?
+  )
 
 (ergoemacs-theme-component backspace-is-back ()
   "Backspace is back, as in browsers..."
