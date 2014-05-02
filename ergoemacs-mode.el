@@ -2,7 +2,7 @@
 
 ;; Copyright © 2007, 2008, 2009 by Xah Lee
 ;; Copyright © 2009, 2010 by David Capello
-;; Copyright © 2012, 2013 by Matthew Fidler
+;; Copyright © 2012, 2013, 2014 by Matthew Fidler
 
 ;; Author: Xah Lee <xah@xahlee.org>
 ;;         David Capello <davidcapello@gmail.com>
@@ -879,6 +879,11 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
   '(ergoemacs-shortcut ergoemacs-shortcut-movement-no-shift-select ergoemacs-shortcut-movement ergoemacs-read-key))
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
+  (when (and ergoemacs-deactivate-mark (not ergoemacs-read-input-keys))
+    (setq ergoemacs-deactivate-mark nil
+          ergoemacs-mark-active nil)
+    (when mark-active
+      (deactivate-mark t)))
   (when (and ergoemacs-mark-active
              (not ergoemacs-read-input-keys)
              (not mark-active))
@@ -930,6 +935,9 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
 
 (defun ergoemacs-post-command-hook ()
   "Ergoemacs post-command-hook"
+  (when ergoemacs-deactivate-mark
+    (setq deactivate-mark ergoemacs-deactivate-mark
+          ergoemacs-mark-active nil))
   (when ergoemacs-read-input-keys
     (if (and mark-active deactivate-mark
                (or (ergoemacs-is-movement-command-p this-command)

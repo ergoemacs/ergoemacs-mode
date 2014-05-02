@@ -701,7 +701,9 @@ In addition, when the function is called:
 	(remove-hook 'ergoemacs-pre-command-hook 'ergoemacs-pre-command-hook t)
         (run-hooks 'ergoemacs-pre-command-hook)
         (call-interactively function record-flag keys)
-        (setq ergoemacs-deactivate-mark deactivate-mark))))))
+        (setq ergoemacs-deactivate-mark deactivate-mark)
+        (when ergoemacs-deactivate-mark
+          (setq ergoemacs-mark-active nil)))))))
 
 (defvar ergoemacs-read-key-overriding-terminal-local-save nil)
 (defvar ergoemacs-read-key-overriding-overlay-save nil)
@@ -1129,7 +1131,6 @@ INITIAL-KEY-TYPE represents the translation type for the initial KEY.
 UNIVERSAL allows ergoemacs-read-key to start with universal
 argument prompt.
 "
-  (setq ergoemacs-deactivate-mark nil)
   (let ((continue-read t)
         (real-type (or type 'normal))
         (first-type (or type 'normal))
@@ -1449,7 +1450,6 @@ argument prompt.
                   (unless (minibufferp)
                     (let (message-log-max)
                       (message "%s is undefined!" pretty-key-undefined)))))))))))
-  (setq deactivate-mark ergoemacs-deactivate-mark)
   (setq ergoemacs-describe-key nil))
 
 (defun ergoemacs-define-key (keymap key def)
@@ -1881,9 +1881,7 @@ original key binding.
     (setq send-fn (or (command-remapping fn (point)) fn))
     (unless (commandp send-fn t)
       (setq send-fn fn))
-    (ergoemacs-read-key-call send-fn)
-    (setq deactivate-mark ergoemacs-deactivate-mark
-          ergoemacs-deactivate-mark nil)))
+    (ergoemacs-read-key-call send-fn)))
 
 (defun ergoemacs-install-shortcuts-map (&optional map dont-complete)
   "Returns a keymap with shortcuts installed.
