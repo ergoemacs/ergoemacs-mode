@@ -398,6 +398,12 @@ When fixed-layout and variable-layout are bound"
    ((and (boundp 'ergoemacs-hook)
          (string-match "mode$" (symbol-name ergoemacs-hook)))
     (ergoemacs-theme-component--define-key ergoemacs-hook key command))
+   ((and (vectorp key) (eq (elt key 0) 'remap))
+    (let ((ergoemacs-hook 'ergoemacs-mode)
+          (ergoemacs-hook-modify-keymap nil)
+          (ergoemacs-hook-full-shortcut-map nil)
+          (ergoemacs-hook-always nil))
+      (ergoemacs-theme-component--define-key 'ergoemacs-mode key command)))
    ((and (boundp 'component-version)
          component-version
          (boundp 'ergoemacs-component-version-curr)
