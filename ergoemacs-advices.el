@@ -88,8 +88,6 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 (ad-activate 'define-key)
 
 (defvar ergoemacs-global-override-rm-keys '())
-(defvar ergoemacs-global-override-p t)
-(defvar ergoemacs-global-override-keymap (make-sparse-keymap))
 ;;; Advices enabled or disabled with ergoemacs-mode
 (defun ergoemacs-global-set-key-after (key command)
   (if (and (boundp 'no-ergoemacs-advice) no-ergoemacs-advice) nil
@@ -98,28 +96,10 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
         (add-to-list 'ergoemacs-global-changed-cache (key-description key))
         (when ergoemacs-global-not-changed-cache
           (delete (key-description key) ergoemacs-global-not-changed-cache))
-        ;; Put in the overriding keymap
-        (cond
-         ((or (commandp command t) (keymapp command)) ;; Command
-          (let ((rm-keys '()))
-            (mapc
-             (lambda(rm-key)
-               (unless (equal rm-key key)
-                 (push rm-key rm-keys)))
-             ergoemacs-global-override-rm-keys)
-            (setq ergoemacs-global-override-rm-keys rm-keys))
-          (define-key ergoemacs-global-override-keymap key command)
-          (ergoemacs-shuffle-keys 'ergoemacs-global-overridep ergoemacs-global-override-keymap))
-         (t
-          (push key ergoemacs-global-override-rm-keys)
-          ;; Update Maps.
-          (when ergoemacs-mode
-            (ergoemacs-mode -1)
-            (ergoemacs-mode 1))))))))
+        (add-to-list 'ergoemacs-global-override-rm-keys key)
+        (when ergoemacs-mode
+          (ergoemacs-theme-remove-key-list (list key) t))))))
     
-    
-  
-
 (defadvice local-set-key (around ergoemacs-local-set-key-advice (key command))
   "This let you use `local-set-key' as usual when `ergoemacs-mode' is enabled."
   (if (and (fboundp 'ergoemacs-mode) ergoemacs-mode)

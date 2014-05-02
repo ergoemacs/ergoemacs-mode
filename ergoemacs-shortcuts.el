@@ -887,38 +887,6 @@ FORCE-KEY forces keys like <escape> to work properly.
                     (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
                     (setq overriding-terminal-local-map lookup))
                   (setq ret 'translate))))
-               ;; Global override
-               ((progn
-                  (setq fn (lookup-key ergoemacs-global-override-keymap key))
-                  (when (condition-case err
-                            (integerp fn)
-                          (error nil))
-                    (setq fn nil))
-                  (setq ret (ergoemacs-read-key-lookup-get-ret fn))
-                  (or ret (condition-case err
-                              (interactive-form fn)
-                            nil)))
-                (unless ret
-                  (setq fn (or (command-remapping fn (point)) fn))
-                  (setq ergoemacs-single-command-keys key)
-                  (when (and ergoemacs-echo-function
-                             (boundp 'pretty-key-undefined)
-                             (not (or this-command-keys-shift-translated
-                                      ergoemacs-shift-translated)))
-                    (let (message-log-max)
-                      (if (string= pretty-key-undefined pretty-key)
-                          (when (eq ergoemacs-echo-function t)
-                            (message "%s%s%s" pretty-key
-                                     (ergoemacs-unicode-char "→" "->")
-                                     (symbol-name fn)))
-                        (message "%s%s%s (from %s)"
-                                 pretty-key
-                                 (ergoemacs-unicode-char "→" "->")
-                                 (symbol-name fn)
-                                 pretty-key-undefined))))
-                  (ergoemacs-read-key-call fn nil key)
-                  (setq ergoemacs-single-command-keys nil)
-                  (setq ret 'global-function-override)))
                ;; Is there an local override function?
                ((progn
                   (setq fn (ergoemacs-get-override-function key))

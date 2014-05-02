@@ -198,8 +198,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
         (when delete-def
           (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
         (insert sk))
-      (when (boundp 'wait-for-me)
-        (insert "(switch-to-buffer (get-buffer-create \"*ergoemacs-test*\")) (insert (substitute-command-keys \"\\\\{ergoemacs-global-override-keymap}\")) (goto-char (point-min))"))
       (insert "(execute-kbd-macro ergoemacs-test-macro)")
       (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
       (unless (boundp 'wait-for-me)

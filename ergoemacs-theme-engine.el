@@ -582,7 +582,7 @@ When fixed-layout and variable-layout are bound"
 
 
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key)
-  "Defines KEY in `ergoemacs-global-override-keymap'"
+  "Adds KEY to `ergoemacs-global-override-rm-keys' and `ergoemacs-global-override-map' if globally redefined."
   (let ((no-ergoemacs-advice t)
         (key (read-kbd-macro (key-description key) t)) lk)
     (catch 'found-global-command
@@ -591,7 +591,7 @@ When fixed-layout and variable-layout are bound"
         (when (and (ergoemacs-global-changed-p key)
                    (or (commandp lk t)
                        (keymapp lk)))
-          (define-key ergoemacs-global-override-keymap key lk)
+          (add-to-list 'ergoemacs-global-override-rm-keys key)
           (throw 'found-global-command t))
         (setq key (substring key 0 (- (length key) 1)))))))
 
@@ -1861,11 +1861,9 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
     (setq ret`(,@prior ,keys ,@ret))
     (symbol-value 'ret)))
 
-(defun ergoemacs-theme-remove ()
-  "Remove the currently installed theme and reset to emacs keys."
-  (ergoemacs-theme-make-hooks ergoemacs-theme 'remove-hooks)
-  (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-  ;;; Restore maps
+(defun ergoemacs-theme-restore-maps (&optional no-message)
+  "Restore original keymaps.
+When NO-MESSAGE is true, don't tell the user."
   (mapc
    (lambda(x)
      (when (eq 'cons (type-of x))
@@ -1877,16 +1875,21 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
              (setq orig-map
                    (gethash (concat (symbol-name map-name) (symbol-name hook) ":original-map") ergoemacs-theme-component-cache))
              (when orig-map
-               (message "Restoring %s" map-name)
+               (unless no-message
+                 (message "Restoring %s" map-name))
                (set map-name (copy-keymap orig-map))))))))
-   ergoemacs-theme-hook-installed)
+   ergoemacs-theme-hook-installed))
+
+(defun ergoemacs-theme-remove (&optional no-message)
+  "Remove the currently installed theme and reset to emacs keys.
+When NO-MESSAGE is true, don't tell the user."
+  (ergoemacs-theme-make-hooks ergoemacs-theme 'remove-hooks)
+  (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+  ;;; Restore maps
+  (ergoemacs-theme-restore-maps no-message)
   (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
         ergoemacs-extract-map-hash (make-hash-table :test 'equal)
         ergoemacs-shortcut-function-binding-hash (make-hash-table :test 'equal)
-        ergoemacs-read-input-keymap (make-sparse-keymap)
-        ergoemacs-shortcut-keymap (make-sparse-keymap) 
-        ergoemacs-keymap (make-sparse-keymap) 
-        ergoemacs-unbind-keymap (make-sparse-keymap)
         ergoemacs-emulation-mode-map-alist '()
         ergoemacs-shortcut-keys nil
         ergoemacs-shortcut-override-mode nil
@@ -1904,7 +1907,8 @@ Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
 
 (defun ergoemacs-rm-key (keymap key)
   "Removes KEY from KEYMAP even if it is an ergoemacs composed keymap.
-Returns new keymap"
+Also add global overrides from the current global map, if necessary.
+Returns new keymap."
   (let ((new-keymap (copy-keymap keymap)))
     (cond
      ((keymapp (nth 1 new-keymap))
@@ -1912,7 +1916,15 @@ Returns new keymap"
       (setq new-keymap
             (mapcar
              (lambda(map)
-               (define-key map key nil)
+               (let ((lk (lookup-key map key)) lk2 lk3)
+                 (cond
+                  ((integerp lk)
+                   (setq lk2 (lookup-key (current-global-map) key))
+                   (setq lk3 (lookup-key map (substring key 0 lk)))
+                   (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
+                     (define-key map key lk2)))
+                  (lk
+                   (define-key map key nil))))
                map)
              new-keymap))
       (push 'keymap new-keymap)
@@ -1921,37 +1933,41 @@ Returns new keymap"
       (define-key new-keymap key nil)
       (symbol-value 'new-keymap)))))
 
-(defun ergoemacs-theme-install (theme &optional version)
-  "Installs `ergoemacs-theme' THEME into appropriate keymaps."
-  (let ((tc (ergoemacs-theme-keymaps theme version)))
-    (ergoemacs-theme-remove)
-    (setq ergoemacs-read-input-keymap (nth 0 tc)
-          ergoemacs-shortcut-keymap (nth 1 tc)
-          ergoemacs-keymap (nth 2 tc)
-          ergoemacs-unbind-keymap (nth 4 tc))
-    ;; Remove unneeded shortcuts.
-    (mapc
-     (lambda(key)
-       (setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
-       (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key))
-       (setq ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key))
-       (setq ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-unbind-keymap key)))
-     (if (nth 5 tc)
-         (append (nth 5 tc) ergoemacs-global-override-rm-keys)
-       ergoemacs-global-override-rm-keys))
+(defun ergoemacs-theme-remove-key-list (list &optional no-message dont-install)
+  "Removes shortcuts keys in LIST from:
+- `ergoemacs-read-input-keymap'
+- `ergoemacs-shortcut-keymap'
+- `ergoemacs-keymap'
+- `ergoemacs-unbind-keymap'
+
+This also:
+- Restores all changed keymaps with `ergoemacs-theme-restore-maps'
+- Blanks out ergoemacs-mode changes by resetting `ergoemacs-emulation-mode-map-alist'
+- Reapplies maps to either `minor-mode-map-alist' or `ergoemacs-emulation-mode-map-alist'
+- Set-up persistent remaps defined in `ergoemacs-theme-mode-based-remaps'
+- Sets up read-key maps by running `ergoemacs-read-key-begin-hook'.
+
+"
+  (mapc
+   (lambda(key)
+     (setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
+     (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key))
+     (setq ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key))
+     (setq ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-unbind-keymap key)))
+   list)
+  (unless dont-install
+    (ergoemacs-theme-remove no-message)
     ;; Reset Shortcut hash.
     (mapc
      (lambda(c)
        (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash))
-     (nth 3 tc))
-
-    (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+     ergoemacs-theme-shortcut-reset-list)
     (setq ergoemacs-emulation-mode-map-alist '())
     ;; Install persistent mode-based remaps.
     (mapc
      (lambda(mode)
        (ergoemacs-theme-hook mode))
-     (nth 6 tc))
+     ergoemacs-theme-mode-based-remaps)
     ;; `ergoemacs-keymap' top in `minor-mode-map-alist'
     (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
       (when x
@@ -1969,11 +1985,10 @@ Returns new keymap"
 
     ;; `ergoemacs-read-input-keymap', then `ergoemacs-shortcut-keymap'
     ;; in `ergoemacs-emulation-mode-map-alist'
-    (push (cons 'ergoemacs-global-override-p ergoemacs-global-override-keymap) ergoemacs-emulation-mode-map-alist)
     (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)
     (push (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap) ergoemacs-emulation-mode-map-alist)
     (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
-    (ergoemacs-theme-make-hooks theme)
+    (ergoemacs-theme-make-hooks ergoemacs-theme)
     (set-default 'ergoemacs-mode t)
     (set-default 'ergoemacs-shortcut-keys t)
     (set-default 'ergoemacs-read-input-keys t)
@@ -1981,12 +1996,29 @@ Returns new keymap"
     (setq ergoemacs-mode t
           ergoemacs-shortcut-keys t
           ergoemacs-read-input-keys t
-          ergoemacs-unbind-keys t
+          ergoemacs-unbind-keys t)
+    (unwind-protect
+        (run-hooks 'ergoemacs-read-key-begin-hook))))
+
+(defvar ergoemacs-theme-mode-based-remaps nil)
+(defvar ergoemacs-theme-shortcut-reset-list nil)
+(defun ergoemacs-theme-install (theme &optional version)
+  "Installs `ergoemacs-theme' THEME into appropriate keymaps."
+  (let ((tc (ergoemacs-theme-keymaps theme version)))
+    (setq ergoemacs-read-input-keymap (nth 0 tc)
+          ergoemacs-shortcut-keymap (nth 1 tc)
+          ergoemacs-keymap (nth 2 tc)
+          ergoemacs-theme-shortcut-reset-list (nth 3 tc)
+          ergoemacs-unbind-keymap (nth 4 tc)
+          ergoemacs-theme-mode-based-remaps (nth 6 tc)
           ergoemacs-theme (or (and (stringp theme) theme)
                               (symbol-name theme)))
     
-    (unwind-protect
-        (run-hooks 'ergoemacs-read-key-begin-hook))))
+    ;; Remove unneeded shortcuts & setup `ergoemacs-mode'
+    (ergoemacs-theme-remove-key-list
+     (if (nth 5 tc)
+         (append (nth 5 tc) ergoemacs-global-override-rm-keys)
+       ergoemacs-global-override-rm-keys))))
 
 (defvar ergoemacs-theme-hash (make-hash-table :test 'equal))
 
