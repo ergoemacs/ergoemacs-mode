@@ -372,7 +372,6 @@ remove the keymap depends on user input and KEEP-PRED:
 (defun ergoemacs-setup-keys (&optional no-check)
   "Setups keys based on a particular layout. Based on `ergoemacs-keyboard-layout'."
   (interactive)
-  (setq debug-on-error t)
   (ergoemacs-debug "Ergoemacs layout: %s" ergoemacs-keyboard-layout)
   (ergoemacs-debug "Ergoemacs theme: %s" ergoemacs-theme)
   (ergoemacs-debug "Emacs Version: %s" (emacs-version))
