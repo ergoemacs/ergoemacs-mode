@@ -1090,7 +1090,6 @@ Otherwise add new translation to key-plist and return it."
 
 (defvar ergoemacs-shift-translated nil)
 (defvar ergoemacs-deactivate-mark nil)
-(defvar ergoemacs-read-key-begin-hook nil)
 (defun ergoemacs-read-key (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,

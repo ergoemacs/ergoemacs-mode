@@ -296,7 +296,7 @@
 
 (ergoemacs-theme-component f2-edit ()
   "Have <f2> edit"
-  (when ergoemacs-read-key-begin-hook
+  (when ergoemacs-theme-hook
     :modify-map t
     (define-key ergoemacs-ctl-to-alt-translation-local-map [f2]
       'ergoemacs-universal-argument)
@@ -313,7 +313,7 @@
 
 (ergoemacs-theme-component backspace-del-seq ()
   "Backspace deletes last key entered in command sequence"
-  (when ergoemacs-read-key-begin-hook
+  (when ergoemacs-theme-hook
     :modify-map t
     (define-key ergoemacs-ctl-to-alt-translation-local-map (read-kbd-macro "DEL")
       'ergoemacs-read-key-undo-last)
@@ -767,7 +767,7 @@
 
 (ergoemacs-theme-component apps-swap ()
   "Apps/Menu swaps key sequence translations"
-  (when ergoemacs-read-key-begin-hook
+  (when ergoemacs-theme-hook
     :modify-map t
     (define-key ergoemacs-ctl-to-alt-translation-local-map (if (eq system-type 'windows-nt) [apps] [menu])
       'ergoemacs-read-key-swap)

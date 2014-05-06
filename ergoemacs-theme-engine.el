@@ -1968,6 +1968,7 @@ Returns new keymap."
       (define-key new-keymap key nil)
       (symbol-value 'new-keymap)))))
 
+(defvar ergoemacs-theme-hook nil)
 (defun ergoemacs-theme-remove-key-list (list &optional no-message dont-install)
   "Removes shortcuts keys in LIST from:
 - `ergoemacs-read-input-keymap'
@@ -1980,7 +1981,7 @@ This also:
 - Blanks out ergoemacs-mode changes by resetting `ergoemacs-emulation-mode-map-alist'
 - Reapplies maps to either `minor-mode-map-alist' or `ergoemacs-emulation-mode-map-alist'
 - Set-up persistent remaps defined in `ergoemacs-theme-mode-based-remaps'
-- Sets up read-key maps by running `ergoemacs-read-key-begin-hook'.
+- Sets up read-key maps by running `ergoemacs-theme-hook'.
 
 "
   (mapc
@@ -2042,7 +2043,7 @@ This also:
           ergoemacs-read-input-keys t
           ergoemacs-unbind-keys t)
     (unwind-protect
-        (run-hooks 'ergoemacs-read-key-begin-hook))))
+        (run-hooks 'ergoemacs-theme-hook))))
 
 (defvar ergoemacs-theme-mode-based-remaps nil)
 (defvar ergoemacs-theme-shortcut-reset-list nil)
