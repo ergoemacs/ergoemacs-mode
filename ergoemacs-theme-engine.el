@@ -195,6 +195,7 @@ particular it:
 - `global-set-key' is converted to `ergoemacs-theme-component--global-set-key'
 - `global-unset-key' is converted to `ergoemacs-theme-component--global-set-key'
 - `global-reset-key' is converted `ergoemacs-theme-component--global-reset-key'
+- `setq' and `set' is converted to `ergoemacs-theme-component--set'
 - Allows :version statement expansion
 - Adds with-hook syntax or (when -hook) or (when -mode)
 "
@@ -250,6 +251,19 @@ particular it:
                      (eq (nth 0 elt) 'global-unset-key)
                    (error nil))
                  `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) nil))
+                ((condition-case err
+                     (eq (nth 0 elt) 'setq)
+                   (error nil))
+                 ;; Currently doesn't support (setq a b c d ), but it should.
+                 `(ergoemacs-theme-component--set (quote ,(nth 1 elt)) ,(nth 2 elt)))
+                ((condition-case err
+                     (eq (nth 0 elt) 'set)
+                   (error nil))
+                 `(ergoemacs-theme-component--set (nth 1 elt) ,(nth 2 elt)))
+                ((condition-case err
+                     (string-match "-mode$" (symbol-name (nth 0 elt)))
+                   (error nil))
+                 `(ergoemacs-theme-component--mode (quote ,(nth 0 elt)) ,(nth 1 elt)))
                 ((condition-case err
                      (eq (nth 0 elt) 'global-set-key)
                    (error nil))
@@ -688,6 +702,15 @@ DEF can be:
         (define-key keymap-shortcut key 'ergoemacs-shortcut)))
     t)
    (t nil)))
+
+(defun ergoemacs-theme-component--set (elt value)
+  "Direct `ergoemacs-mode' to set quoted ELT to VALUE when enabling a theme-component.
+Will attempt to restore the value when turning off the component/theme."
+  )
+(defun ergoemacs-theme-component--mode (mode &optional value)
+  "Direct `ergoemacs-mode' to turn on/off a minor-mode MODE with the optional argument VALUE.
+Will attempt to restore the mode state when turning off the component/theme."
+  )
 
 (defcustom ergoemacs-prefer-variable-keybindings t
   "Prefer Variable keybindings over fixed keybindings."
@@ -1616,7 +1639,7 @@ If OFF is non-nil, turn off the options instead."
   (if (eq (type-of option) 'cons)
       (mapc
        (lambda(new-option)
-         (ergoemacs-theme-option-on option off))
+         (ergoemacs-theme-option-on new-option off))
        option)
     (let (found)
       (setq ergoemacs-theme-options
