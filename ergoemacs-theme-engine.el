@@ -1639,7 +1639,8 @@ If OFF is non-nil, turn off the options instead."
   (if (eq (type-of option) 'cons)
       (mapc
        (lambda(new-option)
-         (ergoemacs-theme-option-on new-option off))
+         (let (ergoemacs-mode)
+           (ergoemacs-theme-option-on new-option off)))
        option)
     (let (found)
       (setq ergoemacs-theme-options
@@ -1654,7 +1655,10 @@ If OFF is non-nil, turn off the options instead."
              ergoemacs-theme-options))
       (unless found
         (push (if off (list option 'off) (list option 'on))
-              ergoemacs-theme-options)))))
+              ergoemacs-theme-options))))
+  (when ergoemacs-mode
+    (ergoemacs-mode -1)
+    (ergoemacs-mode 1)))
 
 (defun ergoemacs-theme-toggle-option (option)
   "Toggles theme OPTION."
