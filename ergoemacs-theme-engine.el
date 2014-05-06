@@ -1986,7 +1986,7 @@ This also:
   (mapc
    (lambda(key)
      ;; Read input keymap shouldn't interfere with global map needs.
-     ;;(setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
+     (setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
      ;;
      (let ((vector-key (or (and (vectorp key) key)
                            (read-kbd-macro  (key-description key) t))))
