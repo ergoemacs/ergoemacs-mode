@@ -1985,8 +1985,17 @@ This also:
 "
   (mapc
    (lambda(key)
-     (setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
-     (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key))
+     ;; Read input keymap shouldn't interfere with global map needs.
+     ;;(setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
+     ;;
+     (let ((vector-key (or (and (vectorp key) key)
+                           (read-kbd-macro  (key-description key) t))))
+       ;; ergoemacs-shortcut-keymap should always have `ergoemacs-ctl-c'
+       ;; and `ergoemacs-ctl-x' for C-c and C-x, don't unbind here.
+       (unless (and (memq (elt vector-key 0) '(3 24))
+                    (memq (lookup-key ergoemacs-shortcut-keymap (vector (elt vector-key 0)))
+                          '(ergoemacs-ctl-x ergoemacs-ctl-c)))
+         (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key))))
      (setq ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key))
      (setq ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-unbind-keymap key)))
    list)
