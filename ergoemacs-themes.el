@@ -36,6 +36,18 @@
 (require 'advice)
 (require 'ergoemacs-theme-engine)
 
+
+(ergoemacs-theme-component standard-vars ()
+  "Enabled/changed variables/modes"
+  (setq org-CUA-compatible t)
+  (setq org-support-shift-select t)
+  (shift-select-mode t)
+  (delete-selection-mode 1)
+  (setq set-mark-command-repeat-pop t)
+  (setq org-special-ctrl-a/e t)
+  (setq ido-vertical-define-keys 'C-n-C-p-up-down-left-right)
+  (setq scroll-error-top-bottom t))
+
 ;;; Fixed components
 (ergoemacs-theme-component standard-fixed ()
   "Standard Fixed Shortcuts"
@@ -873,7 +885,8 @@
                 select-items
                 switch
                 text-transform
-                ergoemacs-remaps)
+                ergoemacs-remaps
+                standard-vars)
   :optional-on '(apps-punctuation
                  apps-apps
                  apps
@@ -916,7 +929,8 @@
                 select-items
                 switch
                 text-transform
-                ergoemacs-remaps)
+                ergoemacs-remaps
+                standard-vars)
   :optional-on '(apps-punctuation
                  apps-apps
                  apps

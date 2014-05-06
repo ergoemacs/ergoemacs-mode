@@ -1,4 +1,4 @@
-;;; ergoemacs-theme-engine.el --- Engine for ergoemacs-themes
+;; ergoemacs-theme-engine.el --- Engine for ergoemacs-themes
 ;;
 ;; Filename: ergoemacs-theme-engine.el
 ;; Description: 
@@ -196,6 +196,9 @@ particular it:
 - `global-unset-key' is converted to `ergoemacs-theme-component--global-set-key'
 - `global-reset-key' is converted `ergoemacs-theme-component--global-reset-key'
 - `setq' and `set' is converted to `ergoemacs-theme-component--set'
+- Mode initialization like (delete-selection-mode 1)
+  or (delete-selection) is converted to
+  `ergoemacs-theme-component--mode'
 - Allows :version statement expansion
 - Adds with-hook syntax or (when -hook) or (when -mode)
 "
@@ -706,11 +709,12 @@ DEF can be:
 (defun ergoemacs-theme-component--set (elt value)
   "Direct `ergoemacs-mode' to set quoted ELT to VALUE when enabling a theme-component.
 Will attempt to restore the value when turning off the component/theme."
-  )
+  (push (list elt value) ergoemacs-theme-save-variables))
+
 (defun ergoemacs-theme-component--mode (mode &optional value)
   "Direct `ergoemacs-mode' to turn on/off a minor-mode MODE with the optional argument VALUE.
 Will attempt to restore the mode state when turning off the component/theme."
-  )
+  (push (list mode (or value 1)) ergoemacs-theme-save-variables))
 
 (defcustom ergoemacs-prefer-variable-keybindings t
   "Prefer Variable keybindings over fixed keybindings."
@@ -1048,7 +1052,7 @@ If the COMPONENT has the suffix ::version, just get the closest specified versio
 If COMPONENT is a list, return the composite keymaps of all the
 components listed.
 
-Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap rm-keys emulation-setup.
+Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap rm-keys emulation-setup vars.
 "
   (if (eq (type-of component) 'cons)
       (let ((ret nil)
@@ -1059,7 +1063,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
             (l3 '())
             (l4 '())
             (l5 '())
-            (l6 '())) ;; List of components.
+            (l6 '())
+            (l7 '())) ;; List of components.
         (mapc
          (lambda(comp)
            (let ((new-ret (ergoemacs-theme-component-keymaps comp version)))
@@ -1096,7 +1101,9 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
              (when (nth 5 new-ret)
                (setq l5 (append l5 (nth 5 new-ret))))
              (when (nth 6 new-ret)
-               (setq l6 (append l6 (nth 6 new-ret))))))
+               (setq l6 (append l6 (nth 6 new-ret))))
+             (when (nth 7 new-ret)
+               (setq l7 (append l7 (nth 7 new-ret))))))
          (reverse component))
         (setq ret
               (list
@@ -1105,7 +1112,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
                (make-composed-keymap l2)
                l3
                (make-composed-keymap l4)
-               l5 l6)))
+               l5 l6 l7)))
     (let (fixed-shortcut
           fixed-read
           fixed-shortcut-list
@@ -1122,6 +1129,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
           trans-key input-keys
           cmd cmd-tmp
           emulation-setup
+          vars
           (version (or version (ergoemacs-theme-get-version)))
           (shortcut-list '())
           (true-component (replace-regexp-in-string ":\\(fixed\\|variable\\)" ""
@@ -1142,7 +1150,8 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
                                 ergoemacs-theme-component-hash))))
       
       (setq unbind (gethash (concat true-component version ":unbind") ergoemacs-theme-component-cache))
-      (setq emulation-setup (gethash (concat true-component ":emulation") ergoemacs-theme-component-cache))
+      (setq emulation-setup (gethash (concat true-component ":emulation") ergoemacs-theme-component-hash))
+      (setq vars (gethash (concat true-component ":vars") ergoemacs-theme-component-hash))
       (unless unbind
         (setq unbind (make-sparse-keymap))
         (mapc
@@ -1267,9 +1276,9 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
         (setq rm-lst fixed-rm)))
       (cond
        (only-fixed
-        (list fixed-read fixed-shortcut fixed fixed-shortcut-list nil rm-lst emulation-setup))
+        (list fixed-read fixed-shortcut fixed fixed-shortcut-list nil rm-lst emulation-setup vars))
        (only-variable
-        (list variable-read variable-shortcut variable variable-shortcut-list nil rm-lst emulation-setup))
+        (list variable-read variable-shortcut variable variable-shortcut-list nil rm-lst emulation-setup vars))
        (t
         (list (or (and variable-read fixed-read
                        (make-composed-keymap (if ergoemacs-prefer-variable-keybindings
@@ -1289,7 +1298,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
               (if ergoemacs-prefer-variable-keybindings
                   (append variable-shortcut-list fixed-shortcut-list)
                 (append fixed-shortcut-list variable-shortcut-list))
-              unbind rm-lst emulation-setup))))))
+              unbind rm-lst emulation-setup vars))))))
 
 
 (defvar ergoemacs-theme-hook-installed '()
@@ -1415,7 +1424,8 @@ added to the appropriate startup hooks.
            (ergoemacs-needs-translation ergoemacs-needs-translation)
            (ergoemacs-translation-assoc ergoemacs-translation-assoc)
            (ergoemacs-translation-regexp ergoemacs-translation-regexp)
-           (case-fold-search nil))
+           (case-fold-search nil)
+           (ergoemacs-theme-save-variables '()))
        (when (ad-is-advised 'define-key)
          (ad-disable-advice 'define-key 'around 'ergoemacs-define-key-advice))
        (ergoemacs-setup-translation "us" layout) ; Make sure keys are
@@ -1441,7 +1451,8 @@ added to the appropriate startup hooks.
        (puthash (concat name ":redundant") redundant-keys ergoemacs-theme-component-hash)
        (puthash (concat name ":minor") minor-mode-layout ergoemacs-theme-component-hash)
        (puthash (concat name ":minor-list") minor-mode-hook-list ergoemacs-theme-component-hash)
-       (puthash (concat name ":emulation") emulation-setup ergoemacs-theme-component-cache)
+       (puthash (concat name ":emulation") emulation-setup ergoemacs-theme-component-hash)
+       (puthash (concat name ":vars") ergoemacs-theme-save-variables ergoemacs-theme-component-hash)
        (mapc
         (lambda(x)
           (let ((ver (nth 0 x))
@@ -1878,7 +1889,7 @@ If OFF is non-nil, turn off the options instead."
 
 (defun ergoemacs-theme-keymaps (theme &optional version)
   "Gets the keymaps for THEME for VERSION.
-Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap rm-keys.
+Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap rm-keys emulation-setup vars.
 Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
   (let* ((ret (ergoemacs-theme-component-keymaps (ergoemacs-theme-components theme) version))
          (menu-keymap (make-sparse-keymap))
@@ -2047,6 +2058,52 @@ This also:
 
 (defvar ergoemacs-theme-mode-based-remaps nil)
 (defvar ergoemacs-theme-shortcut-reset-list nil)
+(defvar ergoemacs-theme-save-variables-actual nil)
+(defvar ergoemacs-theme-save-variables-state nil)
+(defun ergoemacs-theme-apply-variables (var-list)
+  "Apply the themes' modes and variables, defined in VAR-LIST"
+  (unless ergoemacs-theme-save-variables-state
+    (setq ergoemacs-theme-save-variables-actual var-list)
+    (setq ergoemacs-theme-save-variables-actual
+          (mapcar
+           (lambda(x)
+             (let (val val2)
+               (if (condition-case err (or (= 1 (nth 1 x)) (= -1 (nth 1 x))) (error nil))
+                   (progn
+                     (funcall (nth 0 x) (nth 1 x))
+                     (setq val (if (= (nth 1 x) 1) -1 1)))
+                 (set (nth 0 x) (nth 1 x))
+                 (set-default (nth 0 x) (nth 1 x))
+                 (if (not (nth 2 x))
+                     (setq val (not (nth 1 x)))
+                   (setq val (nth 2 x))
+                   (setq val2 (nth 1 x))))
+               `(,(nth 0 x) ,val ,val2)))
+           ergoemacs-theme-save-variables-actual))
+    (setq ergoemacs-theme-save-variables-state t)))
+
+(defun ergoemacs-theme-revert-variables ()
+  "Revert the theme's variables/modes"
+  (when ergoemacs-theme-save-variables-state
+    (setq ergoemacs-theme-save-variables-actual
+          (mapcar
+           (lambda(x)
+             (let (val val2)
+               (if (condition-case err (or (= 1 (nth 1 x)) (= -1 (nth 1 x))) (error nil))
+                   (progn
+                     (funcall (nth 0 x) (nth 1 x))
+                     (setq val (if (= 1 (nth 1 x)) -1 1)))
+                 (set (nth 0 x) (nth 1 x))
+                 (if (not (nth 2 x))
+                     (setq val (not (nth 1 x)))
+                   (setq val (nth 2 x))
+                   (setq val2 (nth 1 x)))
+                 (set-default (nth 0 x) (nth 1 x)))
+               `(,(nth 0 x) ,val ,val2)))
+           ergoemacs-theme-save-variables-actual))
+    (setq ergoemacs-theme-save-variables-actual  nil
+          ergoemacs-theme-save-variables-state   nil)))
+
 (defun ergoemacs-theme-install (theme &optional version)
   "Installs `ergoemacs-theme' THEME into appropriate keymaps."
   (let ((tc (ergoemacs-theme-keymaps theme version)))
@@ -2058,7 +2115,8 @@ This also:
           ergoemacs-theme-mode-based-remaps (nth 6 tc)
           ergoemacs-theme (or (and (stringp theme) theme)
                               (symbol-name theme)))
-    
+    (ergoemacs-theme-revert-variables)
+    (ergoemacs-theme-apply-variables (nth 7 tc))
     ;; Remove unneeded shortcuts & setup `ergoemacs-mode'
     (ergoemacs-theme-remove-key-list
      (if (nth 5 tc)
