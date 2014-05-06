@@ -1627,11 +1627,13 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and
            (list map-name always-modify-p final-map))))
      (ergoemacs-theme-component-keymaps-for-hook hook theme-components version))))
 
+;;;###autoload
 (defun ergoemacs-theme-option-off (option)
   "Turns OPTION off.
 Uses `ergoemacs-theme-option-on'."
   (ergoemacs-theme-option-on option 'off))
 
+;;;###autoload
 (defun ergoemacs-theme-option-on (option &optional off)
   "Turns OPTION on.
 When OPTION is a list turn on all the options in the list
