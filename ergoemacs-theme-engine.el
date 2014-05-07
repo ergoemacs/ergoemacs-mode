@@ -1645,13 +1645,27 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and
 Uses `ergoemacs-theme-option-on'."
   (ergoemacs-theme-option-on option 'off))
 
-(defun ergoemacs-require (option)
-  "Requires an option on all themes."
+(defun ergoemacs-require (option &optional theme type)
+  "Requires an OPTION on ergoemacs themes.
+
+THEME can be a single theme or list of themes to apply the option
+to.  If unspecified, it is all themes.
+
+TYPE can be nil, where the option will be turned on by default
+but shown as something that can be toggled in the ergoemacs-mode
+menu.
+
+TYPE can also be 'required-hidden, where the option is turned on,
+and it dosen't show up on the ergoemacs-mode menu.
+
+TYPE can also be 'off, where the option will be included in the
+theme, but assumed to be disabled by default.
+"
   (if (eq (type-of option) 'cons)
       (mapc
        (lambda(new-option)
          (let (ergoemacs-mode)
-           (ergoemacs-require new-option)))
+           (ergoemacs-require new-option theme type)))
        option)
     (mapc
      (lambda(theme)
@@ -1665,13 +1679,20 @@ Uses `ergoemacs-theme-option-on'."
          (setq comp (delete option comp)
                on (delete option on)
                off (delete optioff off))
-         (push option on)
+         (cond
+          ((eq type 'required-hidden)
+           (push option comp))
+          ((eq type 'off)
+           (push option off))
+          (t
+           (push option on)))
          (setq theme-plist (plist-put theme-plist ':components comp))
          (setq theme-plist (plist-put theme-plist ':optional-on on))
          (setq theme-plist (plist-put theme-plist ':optional-off off))
          (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
                   ergoemacs-theme-hash)))
-     (ergoemacs-get-themes)))
+     (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
+         (ergoemacs-get-themes))))
   (ergoemacs-theme-option-on option))
 
 ;;;###autoload
