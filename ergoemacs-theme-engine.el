@@ -1671,8 +1671,8 @@ Uses `ergoemacs-theme-option-on'."
          (setq theme-plist (plist-put theme-plist ':optional-off off))
          (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
                   ergoemacs-theme-hash)))
-     (ergoemacs-get-themes))
-    (ergoemacs-theme-option-on option)))
+     (ergoemacs-get-themes)))
+  (ergoemacs-theme-option-on option))
 
 ;;;###autoload
 (defun ergoemacs-theme-option-on (option &optional off)
