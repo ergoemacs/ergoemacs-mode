@@ -1645,6 +1645,35 @@ Uses `ergoemacs-theme-component-keymaps-for-hook' and
 Uses `ergoemacs-theme-option-on'."
   (ergoemacs-theme-option-on option 'off))
 
+(defun ergoemacs-require (option)
+  "Requires an option on all themes."
+  (if (eq (type-of option) 'cons)
+      (mapc
+       (lambda(new-option)
+         (let (ergoemacs-mode)
+           (ergoemacs-require new-option)))
+       option)
+    (mapc
+     (lambda(theme)
+       (let ((theme-plist (gethash (if (stringp theme) theme
+                                     (symbol-name theme))
+                                   ergoemacs-theme-hash))
+             comp on off)
+         (setq comp (plist-get theme-plist ':components)
+               on (plist-get theme-plist ':optional-on)
+               off (plist-get theme-plist ':optional-off))
+         (setq comp (delete option comp)
+               on (delete option on)
+               off (delete optioff off))
+         (push option on)
+         (setq theme-plist (plist-put theme-plist ':components comp))
+         (setq theme-plist (plist-put theme-plist ':optional-on on))
+         (setq theme-plist (plist-put theme-plist ':optional-off off))
+         (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
+                  ergoemacs-theme-hash)))
+     (ergoemacs-get-themes))
+    (ergoemacs-theme-option-on option)))
+
 ;;;###autoload
 (defun ergoemacs-theme-option-on (option &optional off)
   "Turns OPTION on.
