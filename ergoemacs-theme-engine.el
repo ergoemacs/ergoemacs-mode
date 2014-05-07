@@ -174,7 +174,8 @@
       ergoemacs-component-version-redundant-keys nil
       ergoemacs-component-version-minor-mode-layout nil
       ergoemacs-component-version-variable-layout-rm nil
-      ergoemacs-component-version-variable-layout nil)
+      ergoemacs-component-version-variable-layout nil
+      ergoemacs-theme-save-variable '())
 
 (defun ergoemacs--parse-keys-and-body (keys-and-body &optional is-theme)
   "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
