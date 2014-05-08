@@ -2006,29 +2006,30 @@ When NO-MESSAGE is true, don't tell the user."
   "Removes KEY from KEYMAP even if it is an ergoemacs composed keymap.
 Also add global overrides from the current global map, if necessary.
 Returns new keymap."
-  (let ((new-keymap (copy-keymap keymap)))
-    (cond
-     ((keymapp (nth 1 new-keymap))
-      (pop new-keymap)
-      (setq new-keymap
-            (mapcar
-             (lambda(map)
-               (let ((lk (lookup-key map key)) lk2 lk3)
-                 (cond
-                  ((integerp lk)
-                   (setq lk2 (lookup-key (current-global-map) key))
-                   (setq lk3 (lookup-key map (substring key 0 lk)))
-                   (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
-                     (define-key map key lk2)))
-                  (lk
-                   (define-key map key nil))))
-               map)
-             new-keymap))
-      (push 'keymap new-keymap)
-      (symbol-value 'new-keymap))
-     (t
-      (define-key new-keymap key nil)
-      (symbol-value 'new-keymap)))))
+  (if keymap
+      (let ((new-keymap (copy-keymap keymap)))
+        (cond
+         ((keymapp (nth 1 new-keymap))
+          (pop new-keymap)
+          (setq new-keymap
+                (mapcar
+                 (lambda(map)
+                   (let ((lk (lookup-key map key)) lk2 lk3)
+                     (cond
+                      ((integerp lk)
+                       (setq lk2 (lookup-key (current-global-map) key))
+                       (setq lk3 (lookup-key map (substring key 0 lk)))
+                       (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
+                         (define-key map key lk2)))
+                      (lk
+                       (define-key map key nil))))
+                   map)
+                 new-keymap))
+          (push 'keymap new-keymap)
+          (symbol-value 'new-keymap))
+         (t
+          (define-key new-keymap key nil)
+          (symbol-value 'new-keymap))))))
 
 (defvar ergoemacs-theme-hook nil)
 (defun ergoemacs-theme-remove-key-list (list &optional no-message dont-install)
