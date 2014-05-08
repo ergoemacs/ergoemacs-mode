@@ -1512,8 +1512,8 @@ added to the appropriate startup hooks.
           (gethash (concat true-component ":version")
                    ergoemacs-theme-component-hash))))
      (append (plist-get theme-plist ':components)
-             (eval (plist-get theme-plist ':optional-on))
-             (eval (plist-get theme-plist ':optional-off))))
+             (plist-get theme-plist ':optional-on)
+             (plist-get theme-plist ':optional-off)))
     (setq versions (sort versions 'string<))
     (symbol-value 'versions)))
 
@@ -1533,7 +1533,7 @@ This respects `ergoemacs-theme-options'."
            (setq a (car (cdr a)))
            (when (or (not a) (eq a 'on))
              (push x components)))))
-     (reverse (eval (plist-get theme-plist ':optional-on))))
+     (reverse (plist-get theme-plist ':optional-on)))
     (mapc
      (lambda(x)
        (let ((a (assoc x ergoemacs-theme-options)))
@@ -1541,7 +1541,7 @@ This respects `ergoemacs-theme-options'."
            (setq a (car (cdr a)))
            (when (eq a 'on)
              (push x components)))))
-     (reverse (eval (plist-get theme-plist ':optional-off))))
+     (reverse (plist-get theme-plist ':optional-off)))
     (setq components (reverse components))
     (symbol-value 'components)))
 
@@ -1667,7 +1667,9 @@ theme, but assumed to be disabled by default.
          (let (ergoemacs-mode)
            (ergoemacs-require new-option theme type)))
        option)
-    (mapc
+    (let ((option-sym
+           (or (and (stringp option) (intern option)) option)))
+      (mapc
      (lambda(theme)
        (let ((theme-plist (gethash (if (stringp theme) theme
                                      (symbol-name theme))
@@ -1676,23 +1678,23 @@ theme, but assumed to be disabled by default.
          (setq comp (plist-get theme-plist ':components)
                on (plist-get theme-plist ':optional-on)
                off (plist-get theme-plist ':optional-off))
-         (setq comp (delete option comp)
-               on (delete option on)
-               off (delete option off))
+         (setq comp (delq option-sym comp)
+               on (delq option-sym on)
+               off (delq option-sym off))
          (cond
           ((eq type 'required-hidden)
-           (push option comp))
+           (push option-sym comp))
           ((eq type 'off)
-           (push option off))
+           (push option-sym off))
           (t
-           (push option on)))
+           (push option-sym on)))
          (setq theme-plist (plist-put theme-plist ':components comp))
          (setq theme-plist (plist-put theme-plist ':optional-on on))
          (setq theme-plist (plist-put theme-plist ':optional-off off))
          (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
                   ergoemacs-theme-hash)))
      (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
-         (ergoemacs-get-themes))))
+         (ergoemacs-get-themes)))))
   (ergoemacs-theme-option-on option))
 
 ;;;###autoload
@@ -1734,8 +1736,8 @@ If OFF is non-nil, turn off the options instead."
   "Determines if OPTION is enabled."
   (let ((plist (gethash ergoemacs-theme ergoemacs-theme-hash))
         options-on options-off)
-    (setq options-on (eval (plist-get plist ':optional-on))
-          options-off (eval (plist-get plist ':optional-off)))
+    (setq options-on (plist-get plist ':optional-on)
+          options-off (plist-get plist ':optional-off))
     (or (and (member option options-on)
              (not (member (list option 'off) ergoemacs-theme-options)))
         (and (member option options-off)
@@ -1752,9 +1754,9 @@ If OFF is non-nil, turn off the options instead."
         (options-list '())
         (options-alist '())
         (i 0))
-    (setq options-on (eval (plist-get plist ':optional-on))
-          options-off (eval (plist-get plist ':optional-off))
-          menu-list (eval (plist-get plist ':options-menu)))
+    (setq options-on (plist-get plist ':optional-on)
+          options-off (plist-get plist ':optional-off)
+          menu-list (plist-get plist ':options-menu))
     (if (= 0 (length (append options-on options-off))) nil
       (mapc
        (lambda(elt)
@@ -2199,7 +2201,7 @@ This also:
 :components -- list of components that this theme uses. These can't be seen or toggled
 :optional-on -- list of components that are optional and are on by default
 :optional-off -- list of components that are optional and off by default
-:menu -- Menu options list
+:options-menu -- Menu options list
 :silent -- If this theme is \"silent\", i.e. doesn't show up in the Themes menu.
 
 The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
@@ -2212,6 +2214,12 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
     (setq tmp (eval (plist-get (nth 0 kb) ':components)))
     (push (intern (concat (plist-get (nth 0 kb) ':name) "-theme")) tmp)
     (setq tmp (plist-put (nth 0 kb) ':components tmp))
+    (mapc
+     (lambda(comp)
+       (setq tmp (plist-put (nth 0 kb) comp
+                            (eval (plist-get (nth 0 kb) comp)))))
+     '(:optional-on :optional-off :options-menu))
+    
     `(let (themes silent)
        (setq themes (gethash "defined-themes" ergoemacs-theme-hash)
              silent (gethash "silent-themes" ergoemacs-theme-hash))
