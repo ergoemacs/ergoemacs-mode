@@ -1678,7 +1678,7 @@ theme, but assumed to be disabled by default.
                off (plist-get theme-plist ':optional-off))
          (setq comp (delete option comp)
                on (delete option on)
-               off (delete optioff off))
+               off (delete option off))
          (cond
           ((eq type 'required-hidden)
            (push option comp))
