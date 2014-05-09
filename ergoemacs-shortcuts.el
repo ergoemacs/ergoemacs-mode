@@ -325,8 +325,11 @@ universal argument can be entered.
       ;; Now try to fix issues with `input-decode-map'
       (when ret
         (setq ret (ergoemacs-read-event-change ret input-decode-map))
-        (setq ret (ergoemacs-read-event-change ret local-function-key-map))
-        (setq ret (ergoemacs-read-event-change ret key-translation-map)))
+        ;; These should only be replaced if they are not bound.
+        (unless (commandp (key-binding (vector ret)) t)
+          (setq ret (ergoemacs-read-event-change ret local-function-key-map)))
+        (unless (commandp (key-binding (vector ret)) t)
+          (setq ret (ergoemacs-read-event-change ret key-translation-map))))
       (cond
        ((and ret (not universal)
              (and local-keymap
