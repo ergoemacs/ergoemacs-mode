@@ -858,6 +858,59 @@
   (when ergoemacs-mode
     (global-set-key [remap describe-key] 'ergoemacs-describe-key)))
 
+(ergoemacs-theme-component ergoemacs-banish-shift ()
+  "Banish Shift Combinations with <apps> SPC"
+  :variable-reg "Z"
+  (global-set-key (kbd "<menu> SPC SPC") (kbd "_")) ;low line (underscore)
+  (global-set-key (kbd "<menu> SPC RET") (kbd "-"))
+  (global-set-key (kbd "<menu> SPC '") (kbd "\""))
+  (global-set-key (kbd "<menu> SPC ,") (kbd "<"))
+  (global-set-key (kbd "<menu> SPC -") (kbd "_"))
+  (global-set-key (kbd "<menu> SPC .") (kbd ">"))
+  (global-set-key (kbd "<menu> SPC /") (kbd "?"))
+  (global-set-key (kbd "<menu> SPC ;") (kbd ":"))
+  (global-set-key (kbd "<menu> SPC =") (kbd "+"))
+  (global-set-key (kbd "<menu> SPC \\") (kbd "|"))
+  (global-set-key (kbd "<menu> SPC `") (kbd "~"))
+
+  (global-set-key (kbd "<menu> SPC 0") (kbd ")"))
+  (global-set-key (kbd "<menu> SPC 1") (kbd "!"))
+  (global-set-key (kbd "<menu> SPC 2") (kbd "@"))
+  (global-set-key (kbd "<menu> SPC 3") (kbd "#"))
+  (global-set-key (kbd "<menu> SPC 4") (kbd "$"))
+  (global-set-key (kbd "<menu> SPC 5") (kbd "%"))
+  (global-set-key (kbd "<menu> SPC 6") (kbd "^"))
+  (global-set-key (kbd "<menu> SPC 7") (kbd "&"))
+  (global-set-key (kbd "<menu> SPC 8") (kbd "*"))
+  (global-set-key (kbd "<menu> SPC 9") (kbd "("))
+
+  (global-set-key (kbd "<menu> SPC a") (kbd "A"))
+  (global-set-key (kbd "<menu> SPC b") (kbd "B"))
+  (global-set-key (kbd "<menu> SPC c") (kbd "C"))
+  (global-set-key (kbd "<menu> SPC d") (kbd "D"))
+  (global-set-key (kbd "<menu> SPC e") (kbd "E"))
+  (global-set-key (kbd "<menu> SPC f") (kbd "F"))
+  (global-set-key (kbd "<menu> SPC g") (kbd "G"))
+  (global-set-key (kbd "<menu> SPC h") (kbd "H"))
+  (global-set-key (kbd "<menu> SPC i") (kbd "I"))
+  (global-set-key (kbd "<menu> SPC j") (kbd "J"))
+  (global-set-key (kbd "<menu> SPC k") (kbd "K"))
+  (global-set-key (kbd "<menu> SPC l") (kbd "L"))
+  (global-set-key (kbd "<menu> SPC m") (kbd "M"))
+  (global-set-key (kbd "<menu> SPC n") (kbd "N"))
+  (global-set-key (kbd "<menu> SPC o") (kbd "O"))
+  (global-set-key (kbd "<menu> SPC p") (kbd "P"))
+  (global-set-key (kbd "<menu> SPC q") (kbd "Q"))
+  (global-set-key (kbd "<menu> SPC r") (kbd "R"))
+  (global-set-key (kbd "<menu> SPC s") (kbd "S"))
+  (global-set-key (kbd "<menu> SPC t") (kbd "T"))
+  (global-set-key (kbd "<menu> SPC u") (kbd "U"))
+  (global-set-key (kbd "<menu> SPC v") (kbd "V"))
+  (global-set-key (kbd "<menu> SPC w") (kbd "W"))
+  (global-set-key (kbd "<menu> SPC x") (kbd "X"))
+  (global-set-key (kbd "<menu> SPC y") (kbd "Y"))
+  (global-set-key (kbd "<menu> SPC z") (kbd "Z")))
+
 (ergoemacs-theme lvl1 ()
   "Arrow Key Movements Only"
   :components '(move-char))
@@ -903,11 +956,12 @@
                  multiple-cursors-remaps
                  quit
                  apps-swap)
-  :optional-off '(guru no-backspace search-reg)
+  :optional-off '(guru no-backspace search-reg
+                       ergoemacs-banish-shift)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))
-                  ("Extreme ErgoEmacs" (guru no-backspace))
+                  ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))))
 
@@ -947,11 +1001,12 @@
                  multiple-cursors-remaps
                  quit
                  apps-swap)
-  :optional-off '(guru no-backspace search-reg)
+  :optional-off '(guru no-backspace search-reg
+                       ergoemacs-banish-shift)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))
-                  ("Extreme ErgoEmacs" (guru no-backspace))
+                  ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq)))
   
