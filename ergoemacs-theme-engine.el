@@ -1511,9 +1511,9 @@ added to the appropriate startup hooks.
             (add-to-list 'versions ver))
           (gethash (concat true-component ":version")
                    ergoemacs-theme-component-hash))))
-     (append (plist-get theme-plist ':components)
+     (append (plist-get theme-plist ':optional-off)
              (plist-get theme-plist ':optional-on)
-             (plist-get theme-plist ':optional-off)))
+             (plist-get theme-plist ':components)))
     (setq versions (sort versions 'string<))
     (symbol-value 'versions)))
 
