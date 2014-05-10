@@ -248,11 +248,11 @@ If so return the hash of translation values."
         (setq ret nil)))
       (symbol-value 'ret))))
 
-(defun ergoemacs-modal-default ()
+(defun ergoemacs-modal-default (&optional arg)
   "The default command for `ergoemacs-mode' modal.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 the translation type defined by `ergoemacs-modal-list' as long as it should."
-  (interactive)
+  (interactive "^P")
   (let* ((type (nth 0 ergoemacs-modal-list))
          (hash (gethash type ergoemacs-translations))
          tmp
@@ -265,22 +265,24 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
      type
      type)
     ;; Fix cursor color and mode-line
-    (cond
-     ((ergoemacs-modal-p)
-      (setq tmp (plist-get hash ':modal-color))
-      (if tmp
-          (set-cursor-color tmp)
-        (when ergoemacs-default-cursor
-          (set-cursor-color ergoemacs-default-cursor)))
-      (setq tmp (if ergoemacs-modal-list (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translation-text) nil))
-      (if tmp
-          (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-           (concat " " (nth 5 tmp)))
-        (ergoemacs-mode-line)))
-     (t
-      (when ergoemacs-default-cursor
-        (set-cursor-color ergoemacs-default-cursor))
-      (ergoemacs-mode-line)))))
+    (save-excursion
+      (let (deactivate-mark)
+        (cond
+         ((ergoemacs-modal-p)
+          (setq tmp (plist-get hash ':modal-color))
+          (if tmp
+              (set-cursor-color tmp)
+            (when ergoemacs-default-cursor
+              (set-cursor-color ergoemacs-default-cursor)))
+          (setq tmp (if ergoemacs-modal-list (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translation-text) nil))
+          (if tmp
+              (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
+               (concat " " (nth 5 tmp)))
+            (ergoemacs-mode-line)))
+         (t
+          (when ergoemacs-default-cursor
+            (set-cursor-color ergoemacs-default-cursor))
+          (ergoemacs-mode-line)))))))
 (put 'ergoemacs-modal-default 'CUA 'move) ;; Fake movement command
 
 (defvar ergoemacs-modal-save nil)
