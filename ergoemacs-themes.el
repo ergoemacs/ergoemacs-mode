@@ -207,10 +207,10 @@
 (ergoemacs-theme-component fixed-bold-italic ()
   "Fixed keys for bold and italic"
   (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
+  ;; C-i is TAB... This seems to cause issues?
   (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
   (define-key org-mode-map (kbd "<tab>") 'org-cycle)
   (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle)
-  ;; C-i is TAB... This seems to cause issues?
   )
 
 (ergoemacs-theme-component backspace-is-back ()
