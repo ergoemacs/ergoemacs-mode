@@ -582,11 +582,14 @@ It will replace anything defined by `ergoemacs-translation'"
   (interactive)
   ;; Eventually...
   (let ((cb (current-buffer))
-        (key (and (boundp 'key) key)))
+        (key (and (boundp 'key) key))
+        (ergoemacs-shortcut-override-mode t))
+    (ergoemacs-shortcut-override-mode 1)
     (save-excursion
       (with-help-window (help-buffer)
         (set-buffer (help-buffer))
-        (describe-buffer-bindings cb key)))))
+        (describe-buffer-bindings cb key)))
+    (ergoemacs-shortcut-override-mode -1)))
 
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
