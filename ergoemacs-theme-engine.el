@@ -689,12 +689,13 @@ DEF can be:
     (define-key keymap key (symbol-value def))
     t)
    ((condition-case err
-        (stringp def)
+        (or (vectorp def) (stringp def))
       (error nil))
     (progn
       (when (boundp 'shortcut-list)
         (push (list (read-kbd-macro (key-description key) t)
-                    `(,def nil)) shortcut-list))
+                    `(,(if (stringp def) def
+                         (key-description def)) nil)) shortcut-list))
       (if (ergoemacs-is-movement-command-p def)
           (if (let (case-fold-search) (string-match "\\(S-\\|[A-Z]$\\)" (key-description key)))
               (progn
