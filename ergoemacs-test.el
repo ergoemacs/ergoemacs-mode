@@ -995,6 +995,39 @@ Issue #203"
     (ergoemacs-mode 1)
     (should (equal ret t))))
 
+(ert-deftest ergoemacs-test-alt-mode-horizontal-position ()
+  "Tests Issue #213"
+  (let ((old-map (copy-keymap input-decode-map))
+        (old-ergoemacs-theme ergoemacs-theme)
+        (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+        (macro (edmacro-parse-keys "c c" t))
+        (ret nil))
+    (setq input-decode-map (make-sparse-keymap)
+          ergoemacs-theme nil
+          ergoemacs-keyboard-layout "dv")
+    (ergoemacs-mode -1)
+    (ergoemacs-mode 1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (delete-region (point-min) (point-max))
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-max))
+      (beginning-of-line)
+      (forward-char 1)
+      (ergoemacs-unchorded-alt-modal)
+      (execute-kbd-macro macro)
+      (setq ret (looking-at "eprehenderit"))
+      (ergoemacs-unchorded-alt-modal)
+      (kill-buffer (current-buffer)))
+    ;; Restore old `input-decode-map' & ergoemacs-mode themes.
+    (setq ergoemacs-theme old-ergoemacs-theme
+          ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+    (ergoemacs-mode -1)
+    (ergoemacs-mode 1)
+    ;; (progn (require 'ergoemacs-test) (ert "ergoemacs-test-terminal-M-O-fight"))
+    (should ret)))
+
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
