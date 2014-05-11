@@ -224,6 +224,52 @@ This assumes any key defined while running a hook is a user-defined hook."
    ad-do-it))
 (ad-activate 'turn-on-undo-tree-mode)
 
+
+(defcustom ergoemacs-check-new-buffer-auto-mode 't
+  "Check `auto-mode-alist' for major mode for just created new buffer.
+If nil - use value of `major-mode'."
+  :group 'ergoemacs-mode
+  :type 'boolean)
+
+(defadvice set-buffer-major-mode (after ergoemacs-new-buffer-auto-mode activate compile)
+  "Select major mode for newly created buffer.
+Compare the `buffer-name' the entries in `auto-mode-alist'."
+  (when ergoemacs-check-new-buffer-auto-mode
+    (with-current-buffer (ad-get-arg 0)
+      (if (and (buffer-name) (not buffer-file-name))
+          (let ((name (buffer-name)))
+            ;; Remove backup-suffixes from file name.
+            (setq name (file-name-sans-versions name))
+            ;; Do not handle service buffers
+            (while (and name (not (string-match "^\\*.+\\*$" name)))
+              ;; Find first matching alist entry.
+              (setq mode
+                    (if (memq system-type '(windows-nt cygwin))
+                        ;; System is case-insensitive.
+                        (let ((case-fold-search t))
+                          (assoc-default name auto-mode-alist
+                                         'string-match))
+                      ;; System is case-sensitive.
+                      (or
+                       ;; First match case-sensitively.
+                       (let ((case-fold-search nil))
+                         (assoc-default name auto-mode-alist
+                                        'string-match))
+                       ;; Fallback to case-insensitive match.
+                       (and auto-mode-case-fold
+                            (let ((case-fold-search t))
+                              (assoc-default name auto-mode-alist
+                                             'string-match))))))
+              (if (and mode
+                       (consp mode)
+                       (cadr mode))
+                  (setq mode (car mode)
+                        name (substring name 0 (match-beginning 0)))
+                (setq name nil))
+              (when mode
+                (set-auto-mode-0 mode t))))))))
+
+
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
