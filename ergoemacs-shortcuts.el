@@ -269,7 +269,7 @@ universal argument can be entered.
                                      (lambda (x) x)
                                      (nth (+ 2 off) help-list) ", ")) "")))))
     (while (not ret)
-      (unless (minibufferp)
+      (unless (or (minibufferp) ergoemacs-modal)
         (let (message-log-max)
           (message "%s%s%s%s%s%s\t%s"
                    (if ergoemacs-describe-key
