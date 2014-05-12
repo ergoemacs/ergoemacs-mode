@@ -931,6 +931,7 @@ ergoemacs-mode engine.  This allows:
   - Applying your personalied ergoemacs-theme [[file:system-wide.html][everywhere]]
 
 *** Creating your own ergoemacs theme
+
 You can manually code your own ergoemacs theme.  I am currently
 working on a simlper method to theme keys.
 
@@ -1829,7 +1830,8 @@ file:ergoemacs-extras/lvl2/ergoemacs-layout-us.png
 **** Level 3
 Full ergoemacs keyset without the <apps>/<menu> unchorded keys.
 #+BEGIN_SRC emacs-lisp
-  (setq ergoemacs-theme "lvl3")
+  (setq ergoemacs-theme nil)
+  (ergoemacs-theme-option-off '(apps apps-apps apps-punctuation apps-swap))
   (ergoemacs-mode 1)
 #+END_SRC
 
@@ -1846,7 +1848,8 @@ file:ergoemacs-extras/ergo-layouts/ergoemacs-layout-us.png
 The guru theme takes away the arrow keys and page up/page down keys.
 
 #+BEGIN_SRC emacs-lisp
-  (setq ergoemacs-theme "guru")
+  (setq ergoemacs-theme nil)
+  (ergoemacs-theme-option-on '(guru))
   (ergoemacs-mode 1)
 #+END_SRC
 **** Hardcore
@@ -1854,7 +1857,8 @@ The hardcore theme takes away the backspace key as well as the arrow
 and page up/down keys. 
 
 #+BEGIN_SRC emacs-lisp
-  (setq ergoemacs-theme "hardcore")
+  (setq ergoemacs-theme nil)
+  (ergoemacs-theme-option-on '(guru no-backspace))
   (ergoemacs-mode 1)
 #+END_SRC
 
