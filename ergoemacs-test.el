@@ -1028,6 +1028,14 @@ Issue #203"
     (should ret)))
 
 
+(ert-deftest ergoemacs-test-global-key-set-after-220 ()
+  "Test global C-c b"
+  (should (equal (ergoemacs-test-global-key-set-before 'after "C-c b") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-220-before ()
+  "Test global C-c b"
+  (should (equal (ergoemacs-test-global-key-set-before nil "C-c b") t)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
