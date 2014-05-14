@@ -2317,8 +2317,8 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
      (puthash "silent-themes" silent ergoemacs-theme-hash)
      (puthash ,(symbol-name name) tmp ergoemacs-theme-hash)
      (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
-       ,(format "Generated theme component for %s theme" (concat (plist-get (nth 0 kb) ':name) "-theme"))
-       ,@(nth 1 kb))))
+       ,(format "Generated theme component for %s theme" (symbol-name name))
+       ,@differences)))
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
