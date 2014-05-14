@@ -2073,7 +2073,38 @@ See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
   (mapc (lambda (dictUrl) (ergoemacs-lookup-word-on-internet input-word dictUrl)) ergoemacs-all-dictionaries)) 
 
-
+(defun ergoemacs-state ()
+  "Debugging the state of `ergoemacs-mode'"
+  (interactive)
+  (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-state*"))
+  ;; (delete-region (point-min) (point-max))
+  (goto-char (point-max))
+  (org-mode)
+  (insert "** Variables\n")
+  (insert (format "ergoemacs-shortcut-keys: %s\n" ergoemacs-shortcut-keys))
+  (insert (format "ergoemacs-read-input-keys: %s\n"
+                   ergoemacs-read-input-keys))
+  (insert (format "ergoemacs-unbind-keys: %s\n" ergoemacs-unbind-keys))
+  (insert (format "ergoemacs-mode %s\n" ergoemacs-mode))
+  (insert (format "ergoemacs-save-variables-state %s\n" ergoemacs-save-variables-state))
+  (insert (format "emulation-mode-map-alists: %s\n" emulation-mode-map-alists))
+  (insert (format "ergoemacs-emulation-mode-map-alist: %s\n"
+                   (mapcar
+                    (lambda(x) (nth 0 x))
+                    ergoemacs-emulation-mode-map-alist)))
+  (insert (format "minor-mode-map-alist: %s\n"
+                   (mapcar
+                    (lambda(x) (nth 0 x))
+                    minor-mode-map-alist)))
+  (insert "** Maps\n")
+  (mapc
+   (lambda(x)
+     (let ((tmp (cdr x)))
+       (insert (format "*** %s: %s\n%s\n"
+                       (nth 0 x) (symbol-value (nth 0 x))
+                       (substitute-command-keys "\\{tmp}")
+                       ))))
+   ergoemacs-emulation-mode-map-alist))
 
 
 (provide 'ergoemacs-functions)
