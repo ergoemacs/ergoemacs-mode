@@ -62,7 +62,6 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
    (t
     ad-do-it)))
 (ad-activate 'remove-hook)
-  
 
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def))
   "This does the right thing when modifying `ergoemacs-keymap'.
@@ -90,7 +89,8 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 (defvar ergoemacs-global-override-rm-keys '())
 ;;; Advices enabled or disabled with ergoemacs-mode
 (defun ergoemacs-global-set-key-after (key command)
-  (if (and (boundp 'no-ergoemacs-advice) no-ergoemacs-advice) nil
+  (if (or (and (boundp 'no-ergoemacs-advice) no-ergoemacs-advice)
+          ergoemacs-global-map) nil
     (unless (and (vectorp key) (eq (elt key 0) 'menu-bar))
       (let ((no-ergoemacs-advice t))
         (add-to-list 'ergoemacs-global-changed-cache (key-description key))
@@ -99,6 +99,22 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
         (add-to-list 'ergoemacs-global-override-rm-keys key)
         (when ergoemacs-mode
           (ergoemacs-theme-remove-key-list (list key) t))))))
+
+
+(defvar ergoemacs-global-map nil)
+(defadvice use-global-map (around ergoemacs-define-key-advice (keymap))
+  "Allows functions to use `use-global-map' without affecting `ergoemacs-mode'.
+It saves the default global map to `ergoemacs-global-map'.
+After it checks to see if the map was restored.  When restored, it sets
+`ergoemacs-global-map' to nil"
+  (unless ergoemacs-global-map
+    (setq ergoemacs-global-map (copy-keymap (current-global-map))))
+  ad-do-it
+  (when (and ergoemacs-global-map
+             (equal ergoemacs-global-map (current-global-map)))
+    (setq ergoemacs-global-map nil)))
+(ad-activate 'use-global-map)
+
     
 (defadvice local-set-key (around ergoemacs-local-set-key-advice (key command))
   "This let you use `local-set-key' as usual when `ergoemacs-mode' is enabled."
