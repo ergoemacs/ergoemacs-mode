@@ -1845,6 +1845,7 @@ If OFF is non-nil, turn off the options instead."
   "Defines menus for current THEME."
   `(keymap
     ,(ergoemacs-get-layouts-menu)
+    (ergoemacs-theme-sep "--")
     (ergoemacs-themes
      menu-item "Themes"
      (keymap
@@ -1857,6 +1858,7 @@ If OFF is non-nil, turn off the options instead."
          (sort (ergoemacs-get-themes) 'string<))))
     ,(ergoemacs-keymap-menu-theme-options theme)
     ,(ergoemacs-keymap-menu-theme-version theme)
+    (ergoemacs-c-x-sep "--")
     (ergoemacs-c-x-c-c
      menu-item "Ctrl+C and Ctrl+X behavior"
      (keymap
@@ -1905,10 +1907,21 @@ If OFF is non-nil, turn off the options instead."
        :enable (condition-case err (interactive-form 'browse-kill-ring)
                  (error nil))
        :button (:radio . (eq ergoemacs-smart-paste 'browse-kill-ring)))))
+    (ergoemacs-sep-bash "--")
     (ergoemacs-bash
      menu-item "Make Bash aware of ergoemacs keys"
      (lambda () (interactive)
        (call-interactively 'ergoemacs-bash)))
+    (ergoemacs-ahk
+     menu-item "Make Windows aware of ergoemacs keys (Requires Autohotkey)"
+     (lambda () (interactive)
+       (call-interactively 'ergoemacs-gen-ahk)))
+    (ergoemacs-sep-menu "--")
+    (ergoemacs-cheat
+     menu-item "Generate/Open Key binding Cheat Sheet"
+     (lambda()
+       (interactive)
+       (call-interactively 'ergoemacs-display-current-svg)))
     (ergoemacs-menus
      menu-item "Use Menus"
      (lambda() (interactive)
