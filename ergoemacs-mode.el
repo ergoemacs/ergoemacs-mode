@@ -757,7 +757,6 @@ This is done by checking if this is a command that supports shift selection or c
 (defvar ergoemacs-this-command nil)
 (defvar ergoemacs-pre-command-hook nil
   "Pre-command hook for `ergoemacs-mode'")
-
 (defvar ergoemacs-this-command-fake '(this-command
                                       this-original-command
                                       mc--this-command)
@@ -799,7 +798,10 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
              (remove-hook 'ergoemacs-pre-command-hook item t))))
        (symbol-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook))))))
 (defvar ergoemacs-smart-functions
-  '(ergoemacs-shortcut ergoemacs-shortcut-movement-no-shift-select ergoemacs-shortcut-movement ergoemacs-read-key))
+  '(ergoemacs-shortcut
+    ergoemacs-shortcut-movement-no-shift-select ergoemacs-shortcut-movement ergoemacs-read-key
+    ergoemacs-modal-default))
+(defvar ergoemacs-last-command nil)
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
   (when (and ergoemacs-mark-active
