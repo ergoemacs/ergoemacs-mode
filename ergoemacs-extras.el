@@ -1,4 +1,4 @@
-;;; ergoemacs-extras.el --- generate extras for ErgoEmacs 
+;;; ergoemacs-extras.el --- generate extras for ErgoEmacs
 
 ;; Copyright (C) 2013 Matthew L. Fidler
 
@@ -815,24 +815,11 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
   "Gets the list of all known themes and the documentation associated with the themes."
   (with-temp-buffer
     (insert "[Themes]\n")
-    (insert "Standard=Standard Theme\n")
     (let ((lays (sort (ergoemacs-get-themes) 'string<)))
       (mapc
        (lambda(lay)
-         (let* ((variable (intern (concat "ergoemacs-" lay "-theme")))
-                (alias (condition-case nil
-                           (indirect-variable variable)
-                         (error variable)))
-                (is-alias nil)
-                (doc nil))
-           (setq doc (or (documentation-property variable 'group-documentation)
-                         (progn
-                           (setq is-alias t)
-                           (documentation-property alias 'group-documentation))))
-           (insert lay)
-           (insert "=")
-           (insert doc)
-           (insert "\n")))
+         (insert lay "="
+                 (plist-get (gethash lay ergoemacs-theme-hash) ':description)))
        lays))
     (buffer-string)))
 
