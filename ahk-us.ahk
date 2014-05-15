@@ -75,7 +75,7 @@ If (CurrLayout == "ERROR"){
 
 IniRead CurrTheme, ergoemacs-settings.ini, Curr, Theme
 If (CurrTheme == "ERROR"){
-  CurrTheme=Standard
+  CurrTheme=standard
 } 
 
 IniRead CurrTrans, ergoemacs-settings.ini, Curr, Trans
@@ -625,15 +625,26 @@ ergoemacs-beginning-or-end-of-buffer:
 
 
 ergoemacs-cut-line-or-region:
+ lastClip = %clipboard%
  SendKey("{Ctrl down}{x}{Ctrl up}",0)
+ thisClip = %clipboard%
+ if (thisClip == lastClip){
+    SendKey("{Home}{Shift down}{End}{Shift up}{Ctrl down}{x}{Ctrl up}",0)
+    clipboard = %lastClip%%clipboard%
+ }
  return
 
 
 ergoemacs-copy-line-or-region:
+ lastClip = %clipboard%
  SendKey("{Ctrl down}{c}{Ctrl up}",0)
+ thisClip = %clipboard%
+ if (thisClip == lastClip){
+    SendKey("{Home}{Shift down}{End}{Shift up}{Ctrl down}{c}{Ctrl up}",0)
+ }
  return
 
-
+ergoemacs-paste:
 yank:
  SendKey("{Ctrl down}{v}{Ctrl up}",0)
  return
