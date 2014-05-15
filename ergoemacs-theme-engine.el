@@ -1941,6 +1941,60 @@ If OFF is non-nil, turn off the options instead."
      menu-item "Exit ergoemacs-mode"
      (lambda() (interactive) (ergoemacs-mode -1)))))
 
+(defvar ergoemacs-get-variable-layout  nil)
+(defun ergoemacs-get-variable-layout ()
+  "Get the old-style variable layout list for `ergoemacs-extras'."
+  (let ((ret '()))
+    (mapc
+     (lambda(c)
+       (let ((variable (gethash (concat (or (and (stringp c) c) (symbol-name c)) ":variable") ergoemacs-theme-component-hash)))
+         (mapc
+          (lambda(k)
+            (let (desc (fun (nth 1 k)))
+              (if (not (listp fun))
+                  (progn
+                    (setq desc (assoc fun ergoemacs-function-short-names))
+                    (when desc
+                      (setq desc (nth 1 desc))))
+                (mapc
+                 (lambda(d)
+                   (let ((tmp (assoc d ergoemacs-function-short-names)))
+                     (when tmp
+                       (setq desc (nth 1 tmp)))))
+                 fun))
+              (push `(,(nth 0 k) ,fun ,desc ,(nth 3 k)) ret)))
+          variable)))
+     (ergoemacs-theme-components ergoemacs-theme))
+    (setq ergoemacs-get-variable-layout ret)
+    'ergoemacs-get-variable-layout))
+
+(defvar ergoemacs-get-fixed-layout nil)
+(defun ergoemacs-get-fixed-layout ()
+  "Get the old-style fixed layout list for `ergoemacs-extras'."
+  (let ((ret '()))
+    (mapc
+     (lambda(c)
+       (let ((fixed (gethash (concat (or (and (stringp c) c) (symbol-name c)) ":fixed") ergoemacs-theme-component-hash)))
+         (mapc
+          (lambda(k)
+            (let (desc (fun (nth 1 k)))
+              (if (not (listp fun))
+                  (progn
+                    (setq desc (assoc fun ergoemacs-function-short-names))
+                    (when desc
+                      (setq desc (nth 1 desc))))
+                (mapc
+                 (lambda(d)
+                   (let ((tmp (assoc d ergoemacs-function-short-names)))
+                     (when tmp
+                       (setq desc (nth 1 tmp)))))
+                 fun))
+              (push `(,(nth 0 k) ,fun ,desc) ret)))
+          fixed)))
+     (ergoemacs-theme-components ergoemacs-theme))
+    (setq ergoemacs-get-fixed-layout ret)
+    'ergoemacs-get-fixed-layout))
+
 (defun ergoemacs-theme-keymaps (theme &optional version)
   "Gets the keymaps for THEME for VERSION.
 Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap rm-keys emulation-setup vars.
