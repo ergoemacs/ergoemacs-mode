@@ -89,7 +89,10 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 ;;; Advices enabled or disabled with ergoemacs-mode
 (defun ergoemacs-global-set-key-after (key command)
   (if (and (boundp 'no-ergoemacs-advice) no-ergoemacs-advice) nil
-    (unless (and (vectorp key) (eq (elt key 0) 'menu-bar))
+    (unless (or (and (vectorp key)
+                     (memq (elt key 0) '(menu-bar 27 remap)))
+                (and (not (vectorp key))
+                     (string= "ESC" (key-description key))))
       (let ((no-ergoemacs-advice t))
         (add-to-list 'ergoemacs-global-changed-cache (key-description key))
         (when ergoemacs-global-not-changed-cache
