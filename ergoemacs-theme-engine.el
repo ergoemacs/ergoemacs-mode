@@ -1931,6 +1931,7 @@ If OFF is non-nil, turn off the options instead."
        (customize-save-variable 'ergoemacs-ctl-c-or-ctl-x-delay ergoemacs-ctl-c-or-ctl-x-delay)
        (customize-save-variable 'ergoemacs-handle-ctl-c-or-ctl-x ergoemacs-handle-ctl-c-or-ctl-x)
        (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
+       (customize-save-variable 'ergoemacs-theme-options ergoemacs-theme-options)
        (customize-save-customized)))
     (ergoemacs-customize
      menu-item "Customize ErgoEmacs"
