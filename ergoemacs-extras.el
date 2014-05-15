@@ -819,7 +819,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
       (mapc
        (lambda(lay)
          (insert lay "="
-                 (plist-get (gethash lay ergoemacs-theme-hash) ':description)))
+                 (plist-get (gethash lay ergoemacs-theme-hash) ':description) "\n"))
        lays))
     (buffer-string)))
 
@@ -836,25 +836,6 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
     (setq re (format "^%s$" (regexp-opt lst 't)))
     (with-temp-buffer
       (let ((old-lay ergoemacs-theme))
-        (ergoemacs-set-default 'ergoemacs-theme nil)
-        (mapc
-         (lambda(x)
-           (ergoemacs-setup-keys-for-layout x)
-           (insert (concat "[" x "-Standard]\n"))
-           (mapc
-            (lambda(y)
-              (message "Generating AHK ini for %s Standard" x)
-              (when (string-match re (format "%s"(nth 1 y)))
-                (unless (string-match
-                         "\\(<apps>\\|<menu>\\|<home>\\|<end>\\)"
-                         (ergoemacs-trans-ahk
-                          (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
-                  (insert (symbol-name (nth 1 y)))
-                  (insert "=")
-                  (insert (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
-                  (insert "\n"))))
-            (symbol-value (ergoemacs-get-variable-layout))))
-         (ergoemacs-get-layouts))
         (mapc
          (lambda(z)
            (ergoemacs-set-default 'ergoemacs-theme z)
@@ -866,11 +847,9 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
               (mapc
                (lambda(y)
                  (when (string-match re (format "%s" (nth 1 y)))
-                   (unless (string-match "\\(<apps>\\|<menu>\\|<home>\\|<end>\\)" (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
-                     (insert (symbol-name (nth 1 y)))
-                     (insert "=")
-                     (insert (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t))
-                     (insert "\n"))))
+                   (let ((trans (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t)))
+                     (when (string-match "^[0-9]+$" trans)
+                       (insert (symbol-name (nth 1 y)) "=" trans "\n")))))
                (symbol-value (ergoemacs-get-variable-layout))))
             (ergoemacs-get-layouts)))
          (ergoemacs-get-themes))
