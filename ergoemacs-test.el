@@ -1000,11 +1000,11 @@ Issue #203"
   (let ((old-map (copy-keymap input-decode-map))
         (old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-        (macro (edmacro-parse-keys "c c" t))
+        (macro (edmacro-parse-keys "i u u" t))
         (ret nil))
     (setq input-decode-map (make-sparse-keymap)
           ergoemacs-theme nil
-          ergoemacs-keyboard-layout "dv")
+          ergoemacs-keyboard-layout "colemak")
     (ergoemacs-mode -1)
     (ergoemacs-mode 1)
     (save-excursion
@@ -1013,7 +1013,6 @@ Issue #203"
       (insert ergoemacs-test-lorem-ipsum)
       (goto-char (point-max))
       (beginning-of-line)
-      (forward-char 1)
       (ergoemacs-unchorded-alt-modal)
       (execute-kbd-macro macro)
       (setq ret (looking-at "eprehenderit"))
