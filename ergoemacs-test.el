@@ -1,6 +1,6 @@
 ;;; ergoemacs-test.el --- tests for ErgoEmacs issues
 
-;; Copyright (C) 2013 Matthew L. Fidler
+;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience

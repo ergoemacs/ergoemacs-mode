@@ -1,5 +1,7 @@
 ;;; ergoemacs-shortcuts.el --- Ergoemacs shortcuts interface
-;;
+
+;; Copyright © 2013-2014  Free Software Foundation, Inc.
+
 ;; Filename: ergoemacs-shortcuts.el
 ;; Description:
 ;; Author: Matthew L. Fidler
@@ -42,9 +44,7 @@
 ;; General Public License for more details.
 ;; 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; see the file COPYING.  If not, write to
-;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-;; Floor, Boston, MA 02110-1301, USA.
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 

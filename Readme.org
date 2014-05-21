@@ -14,7 +14,6 @@ bundles many Emacs Lisp functions that are not in GNU Emacs by default.
 #+BEGIN_SRC emacs-lisp
   (setq ergoemacs-theme nil)
   (setq ergoemacs-keyboard-layout "us")
-  (require 'ergoemacs-mode)
   (ergoemacs-mode 1)
 #+END_SRC
 
