@@ -366,9 +366,6 @@ remove the keymap depends on user input and KEEP-PRED:
 
 ;; ErgoEmacs hooks
 
-(defvar ergoemacs-advices '()
-  "List of advices to enable and disable when ergoemacs is running.")
-
 (defun ergoemacs-setup-keys (&optional no-check)
   "Setups keys based on a particular layout. Based on `ergoemacs-keyboard-layout'."
   (interactive)
@@ -771,7 +768,9 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
 
 (defun ergoemacs-populate-pre-command-hook (&optional depopulate)
   "Populate `ergoemacs-pre-command-hook' with `pre-command-hook' values."
-  (let (do-append ergoemacs-mode)
+  (let ((from-hook (if depopulate 'ergoemacs-pre-command-hook
+                     'pre-command-hook))
+        do-append ergoemacs-mode)
     (mapc
      (lambda(item)
        (if (eq item t)
@@ -781,10 +780,11 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
            (remove-hook 'pre-command-hook item nil))
          (when depopulate
            (add-hook 'pre-command-hook item do-append nil)
-           (remove-hook 'ergoemacs-pre-command-hook item do-append))))
-     (default-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook)))
-    (unless (equal (default-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook))
-                   (symbol-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook)))
+           (remove-hook 'ergoemacs-pre-command-hook item nil))))
+     (default-value from-hook))
+    ;; FIXME: This should be done in every buffer!
+    (unless (equal (default-value from-hook)
+                   (symbol-value from-hook))
       (setq do-append nil)
       (mapc
        (lambda(item)
@@ -796,7 +796,7 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
            (when depopulate
              (add-hook 'pre-command-hook item do-append t)
              (remove-hook 'ergoemacs-pre-command-hook item t))))
-       (symbol-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook))))))
+       (symbol-value from-hook)))))
 (defvar ergoemacs-smart-functions
   '(ergoemacs-shortcut
     ergoemacs-shortcut-movement-no-shift-select ergoemacs-shortcut-movement ergoemacs-read-key

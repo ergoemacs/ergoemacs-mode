@@ -246,7 +246,7 @@ If so return the hash of translation values."
              (lookup-key ergoemacs-modal-ignored-keymap
                          (or ergoemacs-single-command-keys (this-single-command-keys))))
         (setq ret nil)))
-      (symbol-value 'ret))))
+      ret)))
 
 (defun ergoemacs-modal-default (&optional arg)
   "The default command for `ergoemacs-mode' modal.

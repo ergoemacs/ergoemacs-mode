@@ -35,60 +35,67 @@
   "Ergoemacs directory.")
 (add-to-list 'load-path ergoemacs-dir)
 (require 'ergoemacs-shortcuts)
+(require 'ergoemacs-unbind)
+
+(defvar ergoemacs-advices '()
+  "List of advices to enable and disable when ergoemacs is running.")
+
+(defvar ergoemacs-run-mode-hooks ())
 
 (defmacro ergoemacs-define-overrides (&rest body)
   "Force the define-keys to work"
   `(let ((ergoemacs-run-mode-hooks t))
      ,@body))
 
-(defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local))
+(defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local) activate)
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
 If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
   (cond
    ((and ergoemacs-mode (eq hook 'pre-command-hook)
+         (boundp 'ergoemacs-hook-functions)
          (memq hook ergoemacs-hook-functions))
     (add-hook 'ergoemacs-pre-command-hook function append local))
    (t
     ad-do-it)))
-(ad-activate 'add-hook)
 
-(defadvice remove-hook (around ergoemacs-remove-hook-advice (hook function &optional local))
+(defadvice remove-hook (around ergoemacs-remove-hook-advice (hook function &optional local) activate)
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'.
 If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre-command-hook' instead."
   (cond
    ((and ergoemacs-mode (eq hook 'pre-command-hook)
+         (boundp 'ergoemacs-hook-functions)
          (memq hook ergoemacs-hook-functions))
     (remove-hook 'ergoemacs-pre-command-hook function local))
    (t
     ad-do-it)))
-(ad-activate 'remove-hook)
 
-(defadvice define-key (around ergoemacs-define-key-advice (keymap key def))
+(defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
-  (let ((is-global-p (equal keymap (current-global-map))))
-    (if (and (boundp 'ergoemacs-run-mode-hooks) ergoemacs-run-mode-hooks
-             (not (equal keymap (current-global-map)))
-             (not (equal keymap ergoemacs-keymap)))
+  (let ((is-global-p (eq keymap (current-global-map))))
+    (if (and ergoemacs-run-mode-hooks
+             (not is-global-p)
+             (not (and (boundp 'ergoemacs-keymap)
+                       (eq keymap ergoemacs-keymap))))
         (let ((ergoemacs-run-mode-hooks nil)
               (new-key (read-kbd-macro
                         (format "<ergoemacs-user> %s"
                                 (key-description key)))))
-          (unwind-protect
-              (define-key keymap new-key def))))
+          (define-key keymap new-key def)))
     ad-do-it
     (when is-global-p
       (let ((vk key))
-        (ergoemacs-global-set-key-after key def)
+        (ergoemacs-global-set-key-after key)
         (unless (vectorp vk) ;; Do vector def too.
           (setq vk (read-kbd-macro (key-description key) t))
-          (ergoemacs-global-set-key-after vk def))))))
-(ad-activate 'define-key)
+          (ergoemacs-global-set-key-after vk))))))
 
 (defvar ergoemacs-global-override-rm-keys '())
+
+(defvar no-ergoemacs-advice nil)
 ;;; Advices enabled or disabled with ergoemacs-mode
-(defun ergoemacs-global-set-key-after (key command)
-  (if (and (boundp 'no-ergoemacs-advice) no-ergoemacs-advice) nil
+(defun ergoemacs-global-set-key-after (key)
+  (if no-ergoemacs-advice nil
     (unless (or (and (vectorp key)
                      (memq (elt key 0) '(menu-bar 27 remap)))
                 (and (not (vectorp key))
@@ -212,18 +219,16 @@ This require `ergoemacs-mode' to be enabled as well as
     (ad-activate 'helm-ff-auto-expand-to-home-or-root)))
 
 
-(defadvice run-mode-hooks (around ergoemacs-run-hooks)
+(defadvice run-mode-hooks (around ergoemacs-run-hooks activate)
   "`ergoemacs-mode' run-hooks advice helps user define keys properly.
 This assumes any key defined while running a hook is a user-defined hook."
   (let ((ergoemacs-run-mode-hooks t))
     ad-do-it))
-(ad-activate 'run-mode-hooks)
 
-(defadvice turn-on-undo-tree-mode (around ergoemacs-undo-tree-mode)
+(defadvice turn-on-undo-tree-mode (around ergoemacs-undo-tree-mode activate)
   "Make `ergoemacs-mode' and undo-tree compatible."
   (ergoemacs-with-global
    ad-do-it))
-(ad-activate 'turn-on-undo-tree-mode)
 
 
 (defcustom ergoemacs-check-new-buffer-auto-mode 't
