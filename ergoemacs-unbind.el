@@ -754,7 +754,7 @@
                  elt
 	       ;; FIXME: Use `push' or `cl-pushnew' instead of
                ;; `add-to-list'.
-               (pushnew 'last fn)
+               (pushnew 'last fn :test #'equal)
                `(,first ,last))))
          ergoemacs-emacs-default-bindings))
   (ergoemacs-reset-global-where-is))

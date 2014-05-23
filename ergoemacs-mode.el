@@ -60,12 +60,15 @@
 
 ;;; Code:
 
-;; (eval-when-compile (require 'cl))
+(setq debug-on-error t)
+
+(eval-when-compile (require 'cl))
 ;; FIXME: Use cl-lib when available.
-(require 'cl)
+;;(require 'cl)
 (require 'easymenu)
 (require 'cua-base)
 (require 'cua-rect)
+(defvar ergoemacs-mode)
 
 (defvar ergoemacs-debug ""
   "Debugging for `ergoemacs-mode'.")

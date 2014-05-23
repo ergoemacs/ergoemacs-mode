@@ -1372,13 +1372,13 @@ added to the appropriate startup hooks.
       (mapc
        (lambda(hook)
          (when (string-match "hook\\'" (symbol-name hook))
-           (let ((fsym (intern (concat "ergoemacs-for-" (symbol-name hook)))))
-             (fset fsym
-                  `(lambda ()
-                     ,(format "Run `ergoemacs-theme-hook' for `%s'"
-                              (symbol-name hook))
-                     (ergoemacs-theme-hook ',hook))))
-           (funcall (if remove-p #'remove-hook #'add-hook) hook fsym)))
+           (fset (intern (concat "ergoemacs-for-" (symbol-name hook)))
+                 `(lambda ()
+                    ,(format "Run `ergoemacs-theme-hook' for `%s'"
+                             (symbol-name hook))
+                    (ergoemacs-theme-hook ',hook)))
+           (funcall (if remove-p #'remove-hook #'add-hook) hook
+                    (intern (concat "ergoemacs-for-" (symbol-name hook))))))
        (gethash (concat true-component ":minor-list")
                 ergoemacs-theme-component-hash)))))
 

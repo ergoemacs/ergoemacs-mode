@@ -51,7 +51,8 @@
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
 If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
   (cond
-   ((and ergoemacs-mode (eq hook 'pre-command-hook)
+   ((and (boundp 'ergoemacs-mode)
+         ergoemacs-mode (eq hook 'pre-command-hook)
          (boundp 'ergoemacs-hook-functions)
          (memq hook ergoemacs-hook-functions))
     (add-hook 'ergoemacs-pre-command-hook function append local))
@@ -62,7 +63,8 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'.
 If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre-command-hook' instead."
   (cond
-   ((and ergoemacs-mode (eq hook 'pre-command-hook)
+   ((and (boundp 'ergoemacs-mode)
+         ergoemacs-mode (eq hook 'pre-command-hook)
          (boundp 'ergoemacs-hook-functions)
          (memq hook ergoemacs-hook-functions))
     (remove-hook 'ergoemacs-pre-command-hook function local))
@@ -105,7 +107,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
         (when ergoemacs-global-not-changed-cache
           (delete (key-description key) ergoemacs-global-not-changed-cache))
         (add-to-list 'ergoemacs-global-override-rm-keys key)
-        (when ergoemacs-mode
+        (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
           (ergoemacs-theme-remove-key-list (list key) t))))))
 
 (defadvice local-set-key (around ergoemacs-local-set-key-advice (key command))
@@ -163,17 +165,17 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 
 (defadvice cua-mode (around ergoemacs-activate-only-selection-mode (arg))
   "When `ergoemacs-mode' is enabled, enable `cua-selection-mode' instead of plain `cua-mode'."
-  (when ergoemacs-mode
+  (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
     (setq-default cua-enable-cua-keys nil))
   ad-do-it
-  (when ergoemacs-mode
+  (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
     (customize-mark-as-set 'cua-enable-cua-keys)))
 
 (ad-activate 'cua-mode)
 
 (defadvice icicle-mode (around ergoemacs-icicle-play (arg))
   "Allow `ergoemacs-mode' to play nicely with `icicle-mode'."
-  (let ((oee ergoemacs-mode))
+  (let ((oee (and (boundp 'ergoemacs-mode) ergoemacs-mode)))
     (when oee ;; Remove key bindings
       (ergoemacs-mode -1))
     ad-do-it
@@ -200,6 +202,7 @@ This require `ergoemacs-mode' to be enabled as well as
 "
       (cond
        ((and ergoemacs-helm-expand-user-dirs
+             (boundp 'ergoemacs-mode)
              ergoemacs-mode
              (helm-file-completion-source-p)
              (string-match "/\\(~[^/]*/\\)$" helm-pattern)
