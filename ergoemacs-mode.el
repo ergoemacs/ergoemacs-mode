@@ -771,32 +771,34 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
 
 (defun ergoemacs-populate-pre-command-hook (&optional depopulate)
   "Populate `ergoemacs-pre-command-hook' with `pre-command-hook' values."
-  (let (do-append ergoemacs-mode)
-    (mapc
-     (lambda(item)
-       (if (eq item t)
-           (setq do-append t)
-         (unless (or depopulate (not (memq item ergoemacs-hook-functions)))
-           (add-hook 'ergoemacs-pre-command-hook item do-append nil)
-           (remove-hook 'pre-command-hook item nil))
-         (when depopulate
-           (add-hook 'pre-command-hook item do-append nil)
-           (remove-hook 'ergoemacs-pre-command-hook item do-append))))
-     (default-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook)))
-    (unless (equal (default-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook))
-                   (symbol-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook)))
-      (setq do-append nil)
-      (mapc
-       (lambda(item)
-         (if (eq item t)
-             (setq do-append t)
-           (unless (or depopulate (not (memq item ergoemacs-hook-functions)))
-             (add-hook 'ergoemacs-pre-command-hook item do-append t)
-             (remove-hook 'pre-command-hook item t))
-           (when depopulate
-             (add-hook 'pre-command-hook item do-append t)
-             (remove-hook 'ergoemacs-pre-command-hook item t))))
-       (symbol-value (if depopulate 'ergoemacs-pre-command-hook 'pre-command-hook))))))
+  (let ((from-hook (or (and depopulate 'ergoemacs-pre-command-hook)
+                       'pre-command-hook))
+        do-append ergoemacs-mode)
+    (dolist (item (default-value from-hook))
+      (if (eq item t)
+          (setq do-append t)
+        (unless (or depopulate (not (memq item ergoemacs-hook-functions)))
+          (add-hook 'ergoemacs-pre-command-hook item do-append nil)
+          (remove-hook 'pre-command-hook item nil))
+        (when depopulate
+          (add-hook 'pre-command-hook item do-append nil)
+          (remove-hook 'ergoemacs-pre-command-hook item do-append))))
+    (save-excursion
+      (dolist (buf (buffer-list))
+        (with-current-buffer buf
+          (unless (equal (default-value from-hook)
+                         (symbol-value from-hook))
+            (setq do-append nil)
+            (dolist (item (symbol-value from-hook))
+              (if (eq item t)
+                  (setq do-append t)
+                (unless (or depopulate (not (memq item ergoemacs-hook-functions)))
+                  (add-hook 'ergoemacs-pre-command-hook item do-append t)
+                  (remove-hook 'pre-command-hook item t))
+                (when depopulate
+                  (add-hook 'pre-command-hook item do-append t)
+                  (remove-hook 'ergoemacs-pre-command-hook item t))))))))))
+
 (defvar ergoemacs-smart-functions
   '(ergoemacs-shortcut
     ergoemacs-shortcut-movement-no-shift-select ergoemacs-shortcut-movement ergoemacs-read-key
