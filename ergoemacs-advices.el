@@ -27,6 +27,9 @@
 ;; 
 
 ;;; Code:
+(defvar ergoemacs-advices '()
+  "List of advices to enable and disable when ergoemacs is running.")
+
 (defvar ergoemacs-dir
   (file-name-directory
    (or

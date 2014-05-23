@@ -369,9 +369,6 @@ remove the keymap depends on user input and KEEP-PRED:
 
 ;; ErgoEmacs hooks
 
-(defvar ergoemacs-advices '()
-  "List of advices to enable and disable when ergoemacs is running.")
-
 (defun ergoemacs-setup-keys (&optional no-check)
   "Setups keys based on a particular layout. Based on `ergoemacs-keyboard-layout'."
   (interactive)
