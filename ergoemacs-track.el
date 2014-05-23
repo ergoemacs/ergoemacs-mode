@@ -1,6 +1,6 @@
 ;;; ergoemacs-track.el --- minor mode to track layout-based distances typed
 
-;; Copyright (C) 2013 Matthew L. Fidler
+;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience

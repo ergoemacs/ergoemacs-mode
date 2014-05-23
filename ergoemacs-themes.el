@@ -1,6 +1,6 @@
 ;;; ergoemacs-themes.el --- ErgoEmacs keybindings and themes
 
-;; Copyright (C) 2013 Matthew L. Fidler
+;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
