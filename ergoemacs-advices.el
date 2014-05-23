@@ -85,14 +85,14 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ad-do-it
     (when is-global-p
       (let ((vk key))
-        (ergoemacs-global-set-key-after key def)
+        (ergoemacs-global-set-key-after key)
         (unless (vectorp vk) ;; Do vector def too.
           (setq vk (read-kbd-macro (key-description key) t))
-          (ergoemacs-global-set-key-after vk def))))))
+          (ergoemacs-global-set-key-after vk))))))
 
 (defvar ergoemacs-global-override-rm-keys '())
 ;;; Advices enabled or disabled with ergoemacs-mode
-(defun ergoemacs-global-set-key-after (key command)
+(defun ergoemacs-global-set-key-after (key)
   (if (and (boundp 'no-ergoemacs-advice) no-ergoemacs-advice) nil
     (unless (or (and (vectorp key)
                      (memq (elt key 0) '(menu-bar 27 remap)))
