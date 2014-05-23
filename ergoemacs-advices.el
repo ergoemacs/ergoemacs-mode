@@ -158,7 +158,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
      ))
 
 
-(defadvice cua-mode (around ergoemacs-activate-only-selection-mode (arg))
+(defadvice cua-mode (around ergoemacs-activate-only-selection-mode (arg) activate)
   "When `ergoemacs-mode' is enabled, enable `cua-selection-mode' instead of plain `cua-mode'."
   (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
     (setq-default cua-enable-cua-keys nil))
@@ -166,9 +166,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
     (customize-mark-as-set 'cua-enable-cua-keys)))
 
-(ad-activate 'cua-mode)
-
-(defadvice icicle-mode (around ergoemacs-icicle-play (arg))
+(defadvice icicle-mode (around ergoemacs-icicle-play (arg) activate)
   "Allow `ergoemacs-mode' to play nicely with `icicle-mode'."
   (let ((oee (and (boundp 'ergoemacs-mode) ergoemacs-mode)))
     (when oee ;; Remove key bindings
@@ -176,8 +174,6 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ad-do-it
     (when oee ;; Add them back.  Now icy-mode should play nice.
       (ergoemacs-mode 1))))
-
-(ad-activate 'icicle-mode)
 
 (defcustom ergoemacs-helm-expand-user-dirs 't
   "Expand user directories under helm.
@@ -187,7 +183,7 @@ This makes helm behave more like `ido-find-file'"
 
 (eval-after-load "helm-files"
   '(progn
-    (defadvice helm-ff-auto-expand-to-home-or-root (around ergoemacs-helm-ido-user-dirs)
+     (defadvice helm-ff-auto-expand-to-home-or-root (around ergoemacs-helm-ido-user-dirs activate)
       "Allow `helm-find-files' to expand user directories.
 For example ~ergoemacs/ would expand to /usr/ergoemacs or
 whatever that points to...
@@ -213,8 +209,7 @@ This require `ergoemacs-mode' to be enabled as well as
             (helm-set-pattern input)
             (helm-check-minibuffer-input))))
        (t
-        ad-do-it)))
-    (ad-activate 'helm-ff-auto-expand-to-home-or-root)))
+        ad-do-it)))))
 
 
 (defadvice run-mode-hooks (around ergoemacs-run-hooks activate)
