@@ -389,7 +389,7 @@ Typically function keys")
          keymap
          (type type)
          tmp
-         (no-ergoemacs-advice t))
+         (ergoemacs-ignore-advice t))
     (setq ergoemacs-emulation-mode-map-alist
           (delq x ergoemacs-emulation-mode-map-alist))
     (cond

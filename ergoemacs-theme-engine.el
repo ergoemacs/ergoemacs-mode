@@ -607,7 +607,7 @@ When fixed-layout and variable-layout are bound"
 
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key)
   "Adds KEY to `ergoemacs-global-override-rm-keys' and `ergoemacs-global-override-map' if globally redefined."
-  (let ((no-ergoemacs-advice t)
+  (let ((ergoemacs-ignore-advice t)
         (key (read-kbd-macro (key-description key) t)) lk)
     (catch 'found-global-command
       (while (>= (length key) 1)
@@ -1125,7 +1125,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
           fixed-rm variable-rm
           rm-lst
           key-list
-          (no-ergoemacs-advice t)
+          (ergoemacs-ignore-advice t)
           (case-fold-search t)
           key
           trans-key input-keys
@@ -2095,7 +2095,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
 Uses `ergoemacs-theme-component-keymaps' and `ergoemacs-theme-components'"
   (let* ((ret (ergoemacs-theme-component-keymaps (ergoemacs-theme-components theme) version))
          (menu-keymap (make-sparse-keymap))
-         (no-ergoemacs-advice t)
+         (ergoemacs-ignore-advice t)
          prior keys)
     (push (pop ret) prior)
     (push (pop ret) prior)

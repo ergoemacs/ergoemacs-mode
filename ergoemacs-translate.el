@@ -489,7 +489,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
 (ergoemacs-translation
  :name 'normal
  :keymap (let ((map (make-sparse-keymap))
-               (no-ergoemacs-advice t))
+               (ergoemacs-ignore-advice t))
            (define-key map [f1] 'ergoemacs-read-key-help)
            (define-key map (read-kbd-macro "C-h") 'ergoemacs-read-key-help)
            map))
@@ -502,7 +502,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :modal-color "blue"
  :modal-always t
  :keymap (let ((map (make-sparse-keymap))
-               (no-ergoemacs-advice t))
+               (ergoemacs-ignore-advice t))
            (define-key map [f1] 'ergoemacs-read-key-help)
            (define-key map (read-kbd-macro "M-h") 'ergoemacs-read-key-help)
            (define-key map (if (eq system-type 'windows-nt) [M-apps] [M-menu]) 'ergoemacs-read-key-next-key-is-quoted)
@@ -520,7 +520,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :alt ""
  :ctl "M-"
  :keymap (let ((map (make-sparse-keymap))
-               (no-ergoemacs-advice t))
+               (ergoemacs-ignore-advice t))
            (define-key map [f1] 'ergoemacs-read-key-help)
            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-quoted)
            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
@@ -536,7 +536,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
  :alt "M-S-"
  :modal-color "red"
  :keymap-modal (let ((map (make-sparse-keymap))
-                     (no-ergoemacs-advice t))
+                     (ergoemacs-ignore-advice t))
                  (define-key map (read-kbd-macro "<return>") 'ergoemacs-unchorded-alt-modal)
                  (define-key map (read-kbd-macro "RET") 'ergoemacs-unchorded-alt-modal)
                  map))
@@ -558,7 +558,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
            map)
  :keymap-modal
  (let ((map (make-sparse-keymap))
-       (no-ergoemacs-advice t))
+       (ergoemacs-ignore-advice t))
    (define-key map (read-kbd-macro "1") 'ergoemacs-gaia-digit-argument)
    (define-key map (read-kbd-macro "2") 'ergoemacs-gaia-digit-argument)
    (define-key map (read-kbd-macro "3") 'ergoemacs-gaia-digit-argument)

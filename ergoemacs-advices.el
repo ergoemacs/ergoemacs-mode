@@ -91,13 +91,14 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 
 (defvar ergoemacs-global-override-rm-keys '())
 ;;; Advices enabled or disabled with ergoemacs-mode
+(defvar ergoemacs-ignore-advice nil)
 (defun ergoemacs-global-set-key-after (key)
-  (if (and (boundp 'no-ergoemacs-advice) no-ergoemacs-advice) nil
+  (if ergoemacs-ignore-advice nil
     (unless (or (and (vectorp key)
                      (memq (elt key 0) '(menu-bar 27 remap)))
                 (and (not (vectorp key))
                      (string= "ESC" (key-description key))))
-      (let ((no-ergoemacs-advice t))
+      (let ((ergoemacs-ignore-advice t))
         (add-to-list 'ergoemacs-global-changed-cache (key-description key))
         (when ergoemacs-global-not-changed-cache
           (delete (key-description key) ergoemacs-global-not-changed-cache))
