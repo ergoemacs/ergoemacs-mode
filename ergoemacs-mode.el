@@ -8,7 +8,7 @@
 ;; Maintainer: Matthew L. Fidler <matthew.fidler@gmail.com>
 ;; Created: August 01 2007
 ;; Keywords: convenience
-;; Version: -1
+;; Version: 0
 ;; URL: https://github.com/ergoemacs/ergoemacs-mode
 
 ;; ErgoEmacs is free software: you can redistribute it and/or modify
