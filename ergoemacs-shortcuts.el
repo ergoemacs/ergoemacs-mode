@@ -49,7 +49,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Code:
-(require 'guide-key nil t)
+;; (require 'guide-key nil t)
+
+(unless (fboundp 'ergoemacs-pretty-key)
+  (require 'ergoemacs-translate))
 
 (defmacro ergoemacs-with-ergoemacs (&rest body)
   "With basic `ergoemacs-mode' mode keys.
@@ -173,11 +176,11 @@ This sequence is compatible with `listify-key-sequence'."
   (let (input)
     (cond
      ((not key)) ;; Not specified.
-     ((eq (type-of key) 'vector) ;; Actual key sequence
+     ((vectorp key) ;; Actual key sequence
       (setq input (listify-key-sequence key)))
-     ((eq (type-of key) 'cons) ;; Listified key sequence
+     ((consp key) ;; Listified key sequence
       (setq input key))
-     ((eq (type-of key) 'string) ;; Kbd code
+     ((stringp key) ;; Kbd code
       (setq input (listify-key-sequence (read-kbd-macro key t)))))
     input))
 
