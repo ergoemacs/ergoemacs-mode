@@ -4,3 +4,5 @@ out/*
 \#*\#
 .\#*
 /out/
+*-autoloads.el
+*-pkg.el
