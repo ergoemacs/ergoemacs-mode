@@ -134,7 +134,7 @@ Tries to get the value from `ergoemacs-mode-names'.  If not guess the language n
       (setq ret (car (cdr ret))))
     (setq ret (concat (upcase (substring ret 0 1))
                       (substring ret 1)))
-    (symbol-value 'ret)))
+    ret))
 
 ;; `Languages'  
 (defun ergoemacs-get-major-modes ()
@@ -683,9 +683,9 @@ All other modes are assumed to be minor modes or unimportant.
                            (:toggle and
                                     (boundp 'speedbar-frame)
                                     (frame-live-p
-                                     (symbol-value 'speedbar-frame))
+                                     speedbar-frame)
                                     (frame-visible-p
-                                     (symbol-value 'speedbar-frame)))
+                                     speedbar-frame))
                            :keys "")
         ;; (datetime-separator)
         ;; (showhide-date-time)

@@ -179,7 +179,7 @@ This sequence is compatible with `listify-key-sequence'."
       (setq input key))
      ((eq (type-of key) 'string) ;; Kbd code
       (setq input (listify-key-sequence (read-kbd-macro key t)))))
-    (symbol-value 'input)))
+    input))
 
 (defun ergoemacs-universal-argument (&optional type)
   "Ergoemacs universal argument.
@@ -415,7 +415,7 @@ universal argument can be entered.
            ((eq current-prefix-arg '-)
             (setq current-prefix-arg nil)
             (setq ret nil))))))))
-    (symbol-value 'ret)))
+    ret))
 
 (defcustom ergoemacs-read-swaps
   '(((normal normal) unchorded)
@@ -504,7 +504,7 @@ It will replace anything defined by `ergoemacs-translation'"
          (setq next-key (plist-put next-key var-pretty pretty))
          (setq next-key (plist-put next-key var-s-pretty pretty))))
      ergoemacs-translations)
-    (symbol-value 'next-key)))
+    next-key))
 
 (defvar ergoemacs-alt-text
   (replace-regexp-in-string
@@ -531,7 +531,7 @@ It will replace anything defined by `ergoemacs-translation'"
     (setq pretty (plist-get next-key ':alt-pretty))
     (setq kbd (plist-get next-key ':alt))
     (setq next-key (ergoemacs-read-key-install-next-key next-key key pretty kbd))
-    (symbol-value 'next-key)))
+    next-key))
 
 (defun ergoemacs-read-key-next-key-is-ctl (&optional type pretty-key)
   "The next key read is an Ctrl+ key. (or C- )"
@@ -546,7 +546,7 @@ It will replace anything defined by `ergoemacs-translation'"
     (setq pretty (plist-get next-key ':ctl-pretty))
     (setq kbd (plist-get next-key ':ctl))
     (setq next-key (ergoemacs-read-key-install-next-key next-key key pretty kbd))
-    (symbol-value 'next-key)))
+    next-key))
 
 (defun ergoemacs-read-key-next-key-is-alt-ctl (&optional type pretty-key)
   "The next key read is an Alt+Ctrl+ key. (or C-M- )"
@@ -575,7 +575,7 @@ It will replace anything defined by `ergoemacs-translation'"
       (setq pretty (plist-get next-key ':normal-pretty))
       (setq kbd (plist-get next-key ':normal))
       (setq next-key (ergoemacs-read-key-install-next-key next-key key pretty kbd))
-      (symbol-value 'next-key))))
+      next-key)))
 
 (defun ergoemacs-read-key-help ()
   "Show help for the current sequence KEY."
@@ -626,15 +626,15 @@ It will replace anything defined by `ergoemacs-translation'"
 (defun ergoemacs-defer-post-command-hook ()
   "Defers `post-command-hook'."
   (set-default 'ergoemacs-defer-post-command-hook (default-value 'post-command-hook))
-  (set (make-local-variable 'ergoemacs-defer-post-command-hook) (symbol-value 'post-command-hook))
+  (set (make-local-variable 'ergoemacs-defer-post-command-hook) post-command-hook)
   (set (make-local-variable 'post-command-hook) nil)
   (set-default 'post-command-hook nil))
 
 (defun ergoemacs-restore-post-command-hook ()
   (when (or (default-value 'ergoemacs-defer-post-command-hook)
-            (symbol-value 'ergoemacs-defer-post-command-hook))
+            ergoemacs-defer-post-command-hook)
     (set-default 'post-command-hook (default-value 'ergoemacs-defer-post-command-hook))
-    (set (make-local-variable 'post-command-hook) (symbol-value 'ergoemacs-defer-post-command-hook))
+    (set (make-local-variable 'post-command-hook) ergoemacs-defer-post-command-hook)
     (set (make-local-variable 'ergoemacs-defer-post-command-hook) nil)
     (set-default 'ergoemacs-defer-post-command-hook nil)))
 
@@ -732,7 +732,7 @@ In addition, when the function is called:
       (setq tmp (intern (match-string 1 tmp)))
       (setq type tmp
             first-type tmp))
-    (symbol-value 'ret)))
+    ret))
 
 (defun ergoemacs-read-key-lookup-get-ret (fn)
   "Get ret type for FN.
@@ -748,7 +748,7 @@ to the appropriate values for `ergoemacs-read-key'.
       (setq ret 'keymap))
     (when (memq fn ergoemacs-universal-fns)
       (setq ret (ergoemacs-read-key-lookup-get-ret---universal fn)))
-    (symbol-value 'ret)))
+    ret))
 
 (defun ergoemacs-read-key-lookup (prior-key prior-pretty-key key pretty-key force-key)
   "Lookup KEY and run if necessary.
@@ -1067,7 +1067,7 @@ FORCE-KEY forces keys like <escape> to work properly.
           ;; Fix tempoary over
           (when (and tmp-overlay (not ergoemacs-read-key-overriding-overlay-save))
             (delete-overlay tmp-overlay)))
-        (symbol-value 'ret))
+        ret)
     ;; Turn off read-input-keys for shortcuts
     (when unread-command-events
       (when ergoemacs-modal
@@ -1092,7 +1092,7 @@ Otherwise add new translation to key-plist and return it."
       (setq key-plist (plist-put key-plist (intern new-trans) kd))
       (setq kd (ergoemacs-pretty-key kd))
       (setq key-plist (plist-put key-plist (intern (concat new-trans "-pretty")) kd)))
-    (symbol-value 'key-plist)))
+    key-plist))
 
 (defvar ergoemacs-shift-translated nil)
 (defvar ergoemacs-deactivate-mark nil)
@@ -1488,7 +1488,7 @@ DEF can be:
                (setq found
                      (ergoemacs-define-key keymap key new-def)))))
          def))
-      (symbol-value 'found)))
+      found))
    ((condition-case err
         (interactive-form def)
       (error nil))
@@ -1707,7 +1707,7 @@ This also considers archaic emacs bindings by looking at
 in effect)."
   (let ((ret (gethash (list function dont-ignore-menu) ergoemacs-shortcut-function-binding-hash)))
     (if ret
-        (symbol-value 'ret)
+        ret
       (setq ret (or
                  (if dont-ignore-menu
                      (where-is-internal function (current-global-map))
@@ -1717,7 +1717,7 @@ in effect)."
                     (where-is-internal function (current-global-map))))
                  (gethash function ergoemacs-where-is-global-hash)))
       (puthash (list function dont-ignore-menu) ret ergoemacs-shortcut-function-binding-hash)
-      (symbol-value 'ret))))
+      ret)))
 
 (defcustom ergoemacs-use-function-remapping t
   "Uses function remapping.
@@ -1848,7 +1848,7 @@ user-defined keys.
         (use-global-map old-global-map))
       (when ret2
         (setq ret (append ret2 ret)))
-      (symbol-value 'ret))))
+      ret)))
 
 (defun ergoemacs-shortcut-remap (function &optional keys)
   "Runs the FUNCTION or whatever `ergoemacs-shortcut-remap-list' returns.
@@ -2013,7 +2013,7 @@ Setup C-c and C-x keys to be described properly.")
             (overlay-put tmp-overlay 'priority 536870911))
           ;; (ergoemacs-debug-keymap 'override-text-map)
           ))))
-    (symbol-value 'tmp-overlay)))
+    tmp-overlay))
 
 (defun ergoemacs-install-shortcut-up--internal (text keymap &optional dont-complete)
   (let* ((keymap keymap)
@@ -2081,7 +2081,7 @@ Setup C-c and C-x keys to be described properly.")
                                    "")
                                  read-map)))
       (puthash hashkey read-map ergoemacs-extract-map-hash))
-    (symbol-value 'keymap)))
+    keymap))
 
 (defun ergoemacs-install-shortcuts-up ()
   "Installs ergoemacs shortcuts into overriding keymaps.

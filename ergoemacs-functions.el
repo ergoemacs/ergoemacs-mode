@@ -239,7 +239,7 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
         (emacs-dir (invocation-directory))
         (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
                           "\"")))
-    (symbol-value 'full-exe)))
+    full-exe))
 
 (defun ergoemacs-cheat-sheet-file ()
   "Cheet sheet file for ergoemacs."
@@ -252,7 +252,7 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
     (setq extra-dir (expand-file-name (concat "ergoemacs-layout-" ergoemacs-keyboard-layout ".svg")))
     (when (not (file-exists-p extra-dir))
       (ergoemacs-gen-svg ergoemacs-theme "kbd-ergo.svg" (concat var-dir "ergo-layouts")))
-    (symbol-value 'extra-dir)))
+    extra-dir))
 
 (defun ergoemacs-open-line ()
   "Inserts an indented newline after the current line and moves the point to it."
@@ -1886,7 +1886,7 @@ With a prefix, force regeneration. "
             (browse-url-of-file file)
           (error
            (ergoemacs-open-in-external-app file)))))
-    (symbol-value 'file)))
+    file))
 
 ;;; Unaccent region taken and modified from Drew Adam's unaccent.el
 

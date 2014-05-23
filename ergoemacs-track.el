@@ -215,7 +215,7 @@
                         'home)
                        ((= 4 (nth i ergoemacs-track-row))
                         'bottom))))
-     (symbol-value 'ret))))
+     ret)))
 
 (defvar ergoemacs-key-hash nil
   "Key hash")
@@ -249,7 +249,7 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
   (if layout
       (let ((ret (gethash (cons (cons key1 key2) (cons last-plist layout)) ergoemacs-key-hash)))
         (if ret
-            (symbol-value 'ret)
+            ret
           (let ((kp1 (gethash (cons layout key1) ergoemacs-key-hash))
                 (kp2 (gethash (cons layout key2) ergoemacs-key-hash))
                 kpl kpl1
@@ -411,7 +411,7 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
                              :finger-n ,(plist-get kp2 :finger-n)
                              :key ,key2)))))
           (puthash (cons (cons key1 key2) (cons last-plist layout)) ret ergoemacs-key-hash)
-          (symbol-value 'ret)))
+          ret))
     (let (ret)
       (setq ret
             (mapcar
@@ -427,7 +427,7 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
                  (puthash lay (+ dist (plist-get ret :d)) ergoemacs-distance-hash)
                  `(,lay ,ret)))
              (ergoemacs-get-layouts)))
-      (symbol-value 'ret))))
+      ret)))
 
 (defvar ergoemacs-last-distance-plist nil
   "Last distance plist")

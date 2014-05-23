@@ -900,7 +900,7 @@ This should only be run when no global keys have been set.
                         (ergoemacs-global-fix-defualt-bindings key-kbd trans-function))))
                   (add-to-list 'ergoemacs-global-changed-cache key-kbd))
               (add-to-list 'ergoemacs-global-not-changed-cache key-kbd))
-            (symbol-value 'has-changed)))))))
+            has-changed))))))
 
 (defun ergoemacs-warn-globally-changed-keys (&optional fix)
   "Warns about globally changed keys. If FIX is true, fix the ergoemacs-unbind file."
