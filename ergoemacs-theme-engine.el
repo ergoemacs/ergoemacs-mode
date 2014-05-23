@@ -1373,7 +1373,6 @@ added to the appropriate startup hooks.
                                                         (symbol-name component)))))
       (mapc
        (lambda(hook)
-<<<<<<< HEAD
          (when (string-match "hook\\'" (symbol-name hook))
            (fset (intern (concat "ergoemacs-for-" (symbol-name hook)))
                  `(lambda ()
@@ -1467,21 +1466,6 @@ added to the appropriate startup hooks.
         (puthash (concat name "::" ver ":fixed-rm") fixed-rm ergoemacs-theme-component-hash)
         (puthash (concat name "::" ver ":variable-rm") var-rm ergoemacs-theme-component-hash)))
      ergoemacs-component-version-list)))
-=======
-         (when (string-match "hook$" (symbol-name hook))
-           (eval (macroexpand
-                  `(defun ,(intern (concat "ergoemacs-for-" (symbol-name hook))) ()
-                     ,(format "Runs `ergoemacs-theme-hook' for `%s'" (symbol-name hook))
-                     (ergoemacs-theme-hook ',hook))))
-           (if remove-p
-               (eval
-                (macroexpand
-                 `(remove-hook ',hook ',(intern (concat "ergoemacs-for-" (symbol-name hook))))))
-             (eval
-              (macroexpand
-               `(add-hook ',hook ',(intern (concat "ergoemacs-for-" (symbol-name hook)))))))))
-       (gethash (concat true-component ":minor-list") ergoemacs-theme-component-hash)))))
->>>>>>> parent of 8e95ab1... Stefan Monnier's Patch
 
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
   "A component of an ergoemacs-theme."

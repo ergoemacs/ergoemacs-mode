@@ -45,13 +45,9 @@
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
 If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
   (cond
-<<<<<<< HEAD
    ((and (boundp 'ergoemacs-mode)
          ergoemacs-mode (eq hook 'pre-command-hook)
          (boundp 'ergoemacs-hook-functions)
-=======
-   ((and ergoemacs-mode (eq hook 'pre-command-hook)
->>>>>>> parent of 8e95ab1... Stefan Monnier's Patch
          (memq hook ergoemacs-hook-functions))
     (add-hook 'ergoemacs-pre-command-hook function append local))
    (t
@@ -62,13 +58,9 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'.
 If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre-command-hook' instead."
   (cond
-<<<<<<< HEAD
    ((and (boundp 'ergoemacs-mode)
          ergoemacs-mode (eq hook 'pre-command-hook)
          (boundp 'ergoemacs-hook-functions)
-=======
-   ((and ergoemacs-mode (eq hook 'pre-command-hook)
->>>>>>> parent of 8e95ab1... Stefan Monnier's Patch
          (memq hook ergoemacs-hook-functions))
     (remove-hook 'ergoemacs-pre-command-hook function local))
    (t

@@ -755,11 +755,7 @@
                  elt
 	       ;; FIXME: Use `push' or `cl-pushnew' instead of
                ;; `add-to-list'.
-<<<<<<< HEAD
-               (pushnew 'last fn :test #'equal)
-=======
                (add-to-list 'last fn)
->>>>>>> parent of 8e95ab1... Stefan Monnier's Patch
                `(,first ,last))))
          ergoemacs-emacs-default-bindings))
   (ergoemacs-reset-global-where-is))
