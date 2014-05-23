@@ -80,8 +80,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
               (new-key (read-kbd-macro
                         (format "<ergoemacs-user> %s"
                                 (key-description key)))))
-          (unwind-protect
-              (define-key keymap new-key def))))
+          (define-key keymap new-key def)))
     ad-do-it
     (when is-global-p
       (let ((vk key))
