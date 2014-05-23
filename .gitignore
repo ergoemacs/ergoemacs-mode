@@ -1,7 +1,5 @@
 *~
 out/*
-*-autoloads.el
-*-pkg.el
 *.elc
 \#*\#
 .\#*

@@ -363,10 +363,10 @@
   "Get the list of all known layouts."
   (if (and ergoemacs-get-layouts-no-aliases
            (not aliases))
-      ergoemacs-get-layouts-no-aliases
+      (symbol-value 'ergoemacs-get-layouts-no-aliases)
     (if (and ergoemacs-get-layouts-aliases
              aliases)
-        ergoemacs-get-layouts-aliases
+        (symbol-value 'ergoemacs-get-layouts-aliases)
       (let (ret)
         (mapatoms
          (lambda(s)

@@ -211,7 +211,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (when (file-exists-p w-file)
       (setq ret 't)
       (delete-file w-file))
-    ret))
+    (symbol-value 'ret)))
 
 (ert-deftest ergoemacs-test-global-key-set-before-1 ()
   "Test global set key before ergoemacs-mode loads."

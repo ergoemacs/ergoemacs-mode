@@ -80,7 +80,7 @@
           ;; Save it so the user doesn't see the buffer popup very much
           ;; (if at all).
           (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
-          ret))
+          (symbol-value 'ret)))
     (error nil)))
 
 (defvar ergoemacs-use-unicode-char t
@@ -103,7 +103,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   (if (not code) ""
     (let (deactivate-mark
           (ret (replace-regexp-in-string
-                " +\\'" "" (replace-regexp-in-string "\\` +" "" code)))
+                " +$" "" (replace-regexp-in-string "^ +" "" code)))
           (case-fold-search nil)) 
       (when ergoemacs-use-ergoemacs-key-descriptions
         (save-match-data
@@ -197,7 +197,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
               (while (re-search-forward "Ctl[+]" nil t)
                 (replace-match "^")))
             (setq ret (buffer-string)))))
-      ret)))
+      (symbol-value 'ret))))
 
 (defun ergoemacs-pretty-key-rep-internal ()
   (let (case-fold-search)
@@ -227,7 +227,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
               (insert code)
               (ergoemacs-pretty-key-rep-internal)
               (setq ret (buffer-string)))))
-        ret)
+        (symbol-value 'ret))
     (when ergoemacs-use-ergoemacs-key-descriptions
       (ergoemacs-pretty-key-rep-internal))))
 
@@ -253,7 +253,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
           ;; Save it so the user doesn't see the buffer popup very much
           ;; (if at all).
           (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
-          ret))
+          (symbol-value 'ret)))
     (error nil)))
 
 ;;; Actual Translations
@@ -365,7 +365,7 @@ This also creates functions:
 
     (eval (macroexpand
            `(defvar ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-modal-map"))
-              ',keymap-modal
+              ',(symbol-value 'keymap-modal)
               ,(concat "Ergoemacs modal override map for "
                       (symbol-name (plist-get arg-plist ':name))
                       " translation.
@@ -373,7 +373,7 @@ This keymap is made in `ergoemacs-translation'"))))
 
     (eval (macroexpand
            `(defvar ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-translation-local-map"))
-              ',keymap
+              ',(symbol-value 'keymap)
               ,(concat "Ergoemacs translation local map for "
                       (symbol-name (plist-get arg-plist ':name))
                       " translation setup.
@@ -609,7 +609,7 @@ Translates C-A into C-S-a."
             (setq ret (concat (match-string 1 ret)
                               (match-string 2 ret)
                               (upcase (match-string 3 ret)))))))
-      ret)))
+      (symbol-value 'ret))))
 
 (defun ergoemacs-shift-translate-install (trans-plist ret-plist)
   "Install shift translation"
@@ -634,7 +634,7 @@ Translates C-A into C-S-a."
       (setq ret (plist-put ret name shift-translated))
       (setq ret (plist-put ret k (read-kbd-macro shift-translated t)))
       (setq ret (plist-put ret p (ergoemacs-pretty-key shift-translated))))
-    ret))
+    (symbol-value 'ret)))
 
 (defun ergoemacs-translation-install (trans-plist orig-key ret-plist)
   "Installs the translation.
@@ -720,7 +720,7 @@ properties are also added:
     (setq ret (plist-put ret key (read-kbd-macro new-key t)))
     (setq ret (plist-put ret pretty (ergoemacs-pretty-key new-key)))
     (setq ret (ergoemacs-shift-translate-install trans-plist ret))
-    ret))
+    (symbol-value 'ret)))
 
 (defun ergoemacs-translate (key)
   "Translates KEY and returns a plist of the translations.
@@ -849,9 +849,9 @@ and `ergoemacs-pretty-key' descriptions.
            (lambda(key plist)
              (setq ret (ergoemacs-translation-install plist orig-key ret)))
            ergoemacs-translations)
-          (puthash orig-key ret ergoemacs-translate-hash)
-          (puthash key ret ergoemacs-translate-hash)
-          ret))))
+          (puthash orig-key (symbol-value 'ret) ergoemacs-translate-hash)
+          (puthash key (symbol-value 'ret) ergoemacs-translate-hash)
+          (symbol-value 'ret)))))
 
 (defun ergoemacs-setup-translation (layout &optional base-layout)
   "Setup translation from BASE-LAYOUT to LAYOUT."
@@ -946,7 +946,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
       (let ((new-key (gethash `(,key ,just-translate ,only-first ,ergoemacs-translation-from ,ergoemacs-translation-to)
                               ergoemacs-kbd-hash)))
         (if new-key
-            new-key
+            (symbol-value 'new-key)
           (setq new-key key)
           (cond
            ((eq system-type 'windows-nt)
@@ -990,7 +990,6 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
 For example, on dvorak, change C-j to C-c (copy/command)."
   :type 'boolean
   :set 'ergoemacs-set-default
-  :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-get-kbd-translation (pre-kbd-code &optional dont-swap)
@@ -999,7 +998,7 @@ For example, on dvorak, change C-j to C-c (copy/command)."
               "[Cc]\\(?:on\\)?tro?l[+-]" "C-"
               (replace-regexp-in-string
                "[Aa]lt[+-]" "M-" pre-kbd-code))))
-    ret))
+    (symbol-value 'ret)))
 
 (defun ergoemacs-key-fn-lookup (function &optional use-apps)
   "Looks up the key binding for FUNCTION based on.
@@ -1018,7 +1017,7 @@ Based on `ergoemacs-with-ergoemacs'"
        (while (and ret (not (eq (elt (nth 0 ret) 0) 'apps)))
          (pop ret)))
      (setq ret (nth 0 ret))
-     ret)))
+     (symbol-value 'ret))))
 
 (provide 'ergoemacs-translate)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

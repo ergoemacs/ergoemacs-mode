@@ -36,12 +36,6 @@
 (require 'advice)
 (require 'ergoemacs-theme-engine)
 
-;; (defvar skip-first)
-;; (defvar component-version)
-;; (defvar fixed-layout) (defvar variable-layout)
-;; (defvar fixed-layout-rm) (defvar variable-layout-rm)
-;; (defvar redundant-keys) (defvar defined-keys)
-;; (defvar versions)
 
 (ergoemacs-theme-component standard-vars ()
   "Enabled/changed variables/modes"
