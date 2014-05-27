@@ -51,6 +51,9 @@
 ;; 
 ;;; Code:
 
+(eval-when-compile (require 'cl))
+(require 'ergoemacs-advices)
+
 (defgroup ergoemacs-themes nil
   "Default Ergoemacs Layout"
   :group 'ergoemacs-mode)
