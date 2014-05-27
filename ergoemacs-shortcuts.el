@@ -740,6 +740,24 @@ to the appropriate values for `ergoemacs-read-key'.
       (setq ret (ergoemacs-read-key-lookup-get-ret---universal fn)))
     ret))
 
+(defun ergoemacs-read-key--echo-command (pretty-key command)
+  "Echo that PRETTY-KEY is COMMAND"
+  (when (and ergoemacs-echo-function
+             (boundp 'pretty-key-undefined)
+             (not (or this-command-keys-shift-translated
+                      ergoemacs-shift-translated)))
+    (let (message-log-max)
+      (if (string= pretty-key-undefined pretty-key)
+          (when (eq ergoemacs-echo-function t)
+            (message "%s%s%s" pretty-key
+                     (ergoemacs-unicode-char "→" "->")
+                     command))
+        (message "%s%s%s (from %s)"
+                 pretty-key
+                 (ergoemacs-unicode-char "→" "->")
+                 command
+                 pretty-key-undefined)))))
+
 (defun ergoemacs-read-key-lookup (prior-key prior-pretty-key key pretty-key force-key)
   "Lookup KEY and run if necessary.
 
@@ -834,30 +852,14 @@ FORCE-KEY forces keys like <escape> to work properly.
                  ((and (vectorp tmp)
                        (progn
                          (setq fn (key-binding tmp))
-                         (when (condition-case err
-                                   (string-match "self-insert" (symbol-name fn))
-                                 (error nil))
+                         (when (and (symbolp fn) (string-match "self-insert" (symbol-name fn)))
                            (setq fn nil))
-                         (condition-case err
-                             (interactive-form fn)
-                           (error nil))))
+                         (commandp fn t)))
                   (setq fn (or (command-remapping fn (point)) fn))
                   (setq ergoemacs-single-command-keys key)
-                  (when (and ergoemacs-echo-function
-                             (boundp 'pretty-key-undefined)
-                             (not (or this-command-keys-shift-translated
-                                      ergoemacs-shift-translated)))
-                    (let (message-log-max)
-                      (if (string= pretty-key-undefined pretty-key)
-                          (when (eq ergoemacs-echo-function t)
-                            (message "%s%s%s" pretty-key
-                                     (ergoemacs-unicode-char "→" "->")
-                                     (symbol-name fn)))
-                        (message "%s%s%s (from %s)"
-                                 pretty-key
-                                 (ergoemacs-unicode-char "→" "->")
-                                 (symbol-name fn)
-                                 pretty-key-undefined))))
+                  (ergoemacs-read-key--echo-command
+                   pretty-key (or (and (symbolp fn) (symbol-name fn))
+                                  (ergoemacs-unicode-char "λ" "lambda")))
                   (ergoemacs-read-key-call fn nil key)
                   (setq ergoemacs-single-command-keys nil)
                   (setq ret 'translate-fn))
@@ -870,21 +872,8 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
                   (ergoemacs-defer-post-command-hook)
                   (reset-this-command-lengths)
-                  (when (and ergoemacs-echo-function
-                             (boundp 'pretty-key-undefined)
-                             (not (or this-command-keys-shift-translated
-                                      ergoemacs-shift-translated)))
-                    (let (message-log-max)
-                      (if (string= pretty-key-undefined pretty-key)
-                          (when (eq ergoemacs-echo-function t)
-                            (message "%s%s%s" pretty-key
-                                     (ergoemacs-unicode-char "→" "->")
-                                     (ergoemacs-pretty-key (key-description tmp))))
-                        (message "%s%s%s (from %s)"
-                                 pretty-key
-                                 (ergoemacs-unicode-char "→" "->")
-                                 (ergoemacs-pretty-key (key-description tmp))
-                                 pretty-key-undefined))))
+                  (ergoemacs-read-key--echo-command
+                   pretty-key (ergoemacs-pretty-key (key-description tmp)))
                   (when lookup
                     (define-key lookup [ergoemacs-single-command-keys] 'ignore)
                     (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
@@ -894,7 +883,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                ((progn
                   (setq fn (ergoemacs-get-override-function key))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
-                  (or ret (condition-case err (interactive-form fn) nil)))
+                  (or ret (commandp fn t)))
                 (unless ret
                   (ergoemacs-read-key-call fn nil key)
                   (setq ret 'local-function-override)))
@@ -903,10 +892,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq hash (gethash key ergoemacs-command-shortcuts-hash))
                   (setq fn (key-binding key))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
-                  (or ret
-                      (condition-case err
-                          (interactive-form fn)
-                        nil)))
+                  (or ret (commandp fn t)))
                 (unless ret
                   (cond
                    ((and hash (eq 'string (type-of (nth 0 hash)))
@@ -934,49 +920,20 @@ FORCE-KEY forces keys like <escape> to work properly.
                         (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
                         (setq overriding-terminal-local-map lookup)))
                     (setq ret 'kbd-shortcut))
-                   ((and hash
-                         (condition-case err
-                             (interactive-form (nth 0 hash))
-                           (error nil)))
-                    (when (and ergoemacs-echo-function
-                               (boundp 'pretty-key-undefined)
-                               (not (or this-command-keys-shift-translated
-                                        ergoemacs-shift-translated)))
-                      (let (message-log-max)
-                        (if (string= pretty-key-undefined pretty-key)
-                            (when (eq ergoemacs-echo-function t)
-                              (message "%s%s%s" pretty-key
-                                       (ergoemacs-unicode-char "→" "->")
-                                       (symbol-name (nth 0 hash))))
-                          (message "%s%s%s (from %s)"
-                                   pretty-key
-                                   (ergoemacs-unicode-char "→" "->")
-                                   (symbol-name (nth 0 hash))
-                                   pretty-key-undefined))))
+                   ((and hash (commandp (nth 0 hash) t))
+                    (ergoemacs-read-key--echo-command
+                     pretty-key (or (and (symbolp (nth 0 hash)) (symbol-name (nth 0 hash)))
+                                    (ergoemacs-unicode-char "λ" "lambda")))
                     (ergoemacs-shortcut-remap (nth 0 hash))
                     (setq ergoemacs-single-command-keys nil)
                     (setq ret 'function-remap))
                    ((and ergoemacs-shortcut-keys (not ergoemacs-describe-key)
                          (not ergoemacs-single-command-keys))
-                    (when (and ergoemacs-echo-function
-                               (boundp 'pretty-key-undefined)
-                               (not (or this-command-keys-shift-translated
-                                        ergoemacs-shift-translated)))
-                      (let (message-log-max)
-                        (if (nth 0 hash)
-                            (setq fn (nth 0 hash))
-                          (setq fn (key-binding key))
-                          (setq fn (or (command-remapping fn (point)) fn)))
-                        (if (string= pretty-key-undefined pretty-key)
-                            (when (eq ergoemacs-echo-function t)
-                              (message "%s%s%s;" pretty-key
-                                       (ergoemacs-unicode-char "→" "->")
-                                       fn))
-                          (message "%s%s%s (from %s);"
-                                   pretty-key
-                                   (ergoemacs-unicode-char "→" "->")
-                                   fn
-                                   pretty-key-undefined))))
+                    (if (nth 0 hash)
+                        (setq fn (nth 0 hash))
+                      (setq fn (key-binding key))
+                      (setq fn (or (command-remapping fn (point)) fn)))
+                    (ergoemacs-read-key--echo-command pretty-key fn)
                     ;; There is some issue with these keys.  Read-key
                     ;; thinks it is in a minibuffer, so the recursive 
                     ;; minibuffer error is raised unless these are put
@@ -1002,21 +959,9 @@ FORCE-KEY forces keys like <escape> to work properly.
                       (setq ret (ergoemacs-read-key-lookup-get-ret---universal fn)))
                     (unless ret
                       (setq ergoemacs-single-command-keys key)
-                      (when (and ergoemacs-echo-function
-                                 (boundp 'pretty-key-undefined)
-                                 (not (or this-command-keys-shift-translated
-                                          ergoemacs-shift-translated)))
-                        (let (message-log-max)
-                          (if (string= pretty-key-undefined pretty-key)
-                              (when (eq ergoemacs-echo-function t)
-                                (message "%s%s%s" pretty-key
-                                         (ergoemacs-unicode-char "→" "->")
-                                         (symbol-name fn)))
-                            (message "%s%s%s (from %s)"
-                                     pretty-key
-                                     (ergoemacs-unicode-char "→" "->")
-                                     (symbol-name fn)
-                                     pretty-key-undefined))))
+                      (ergoemacs-read-key--echo-command
+                       pretty-key (or (and (symbolp fn) (symbol-name fn))
+                                      (ergoemacs-unicode-char "λ" "lambda")))
                       (ergoemacs-read-key-call fn nil key)
                       (setq ergoemacs-single-command-keys nil)
                       (setq ret 'function))))))
