@@ -187,11 +187,11 @@
      ((save-excursion
         (set-buffer (get-buffer-create "*ergoemacs-clean*"))
         (and (boundp 'ergoemacs-terminal) (not ergoemacs-terminal)))
-      (setq cmd (format "%s --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\"  --eval \"(ergoemacs-mode 1)\"" emacs-exe
+      (setq cmd (format "%s --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(ergoemacs-mode 1)\"" emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))))
      ((and (eq system-type 'windows-nt) (executable-find "cmd"))
       ; Needs some work....
-      (setq cmd (format "%s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\"  --eval \"(ergoemacs-mode 1)\""
+      (setq cmd (format "%s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\" --eval \"(ergoemacs-mode 1)\""
                         emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))
       (set (make-local-variable 'ergoemacs-batch-file)
@@ -200,7 +200,7 @@
         (insert cmd))
       (setq default-directory (file-name-directory ergoemacs-batch-file)))
      ((executable-find "xterm")
-      (setq cmd (format "%s -e %s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\"  --eval \"(ergoemacs-mode 1)\""
+      (setq cmd (format "%s -e %s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\" --eval \"(ergoemacs-mode 1)\""
                         (executable-find "xterm") emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))))
     (insert "Command\n" cmd "\n\n")
