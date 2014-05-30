@@ -855,23 +855,25 @@ and `ergoemacs-pretty-key' descriptions.
 
 (defun ergoemacs-setup-translation (layout &optional base-layout)
   "Setup translation from BASE-LAYOUT to LAYOUT."
-  (let ((orig-base (or base-layout "us"))
-        lay shifted-list unshifted-list base
-        len i)
-    (setq lay (symbol-value (intern (concat "ergoemacs-layout-" layout))))
-    (setq base (symbol-value (intern (concat "ergoemacs-layout-" orig-base))))
-    
-    (setq len (length base))
-    (setq i 0)
+  (let* ((orig-base (or base-layout "us"))
+         (lay (symbol-value (intern (concat "ergoemacs-layout-" layout))))
+        shifted-list unshifted-list
+        (base (symbol-value (intern (concat "ergoemacs-layout-" orig-base))))
+        (len (length base))
+        (i 0))
     (while (< i 60)
       (unless (or (string= "" (nth i lay))
                   (string= "" (nth (+ i 60) lay)))
-        (add-to-list 'ergoemacs-shifted-assoc
-                     `(,(nth i lay) . ,(nth (+ i 60) lay)))
-        (add-to-list 'ergoemacs-shifted-assoc
-                     `(,(nth (+ i 60) lay) . ,(nth i lay)))
-        (add-to-list 'unshifted-list (nth i lay))
-        (add-to-list 'shifted-list (nth (+ i 60) lay)))
+        (pushnew 'ergoemacs-shifted-assoc
+                 `(,(nth i lay) . ,(nth (+ i 60) lay))
+                 :test 'equal)
+        (pushnew 'ergoemacs-shifted-assoc
+                 `(,(nth (+ i 60) lay) . ,(nth i lay))
+                 :test 'equal)
+        (pushnew 'unshifted-list (nth i lay)
+                 :test 'equal)
+        (pushnew 'shifted-list (nth (+ i 60) lay)
+                 :test 'equal))
       (setq i (+ i 1)))
     (setq ergoemacs-shifted-regexp 
           (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
@@ -897,8 +899,9 @@ and `ergoemacs-pretty-key' descriptions.
         (while (< i len)
           (unless (or (string= "" (nth i base))
                       (string= "" (nth i lay)))
-            (add-to-list 'ergoemacs-translation-assoc
-                         `(,(nth i base) . ,(nth i lay))))
+            (pushnew 'ergoemacs-translation-assoc
+                     `(,(nth i base) . ,(nth i lay))
+                     :test 'equal))
           (setq i (+ i 1)))
         (setq ergoemacs-translation-regexp
               (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
