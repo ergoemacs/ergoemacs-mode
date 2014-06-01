@@ -653,7 +653,16 @@ Assumes maps are orthogonal."
            :type ergoemacs-composite-map)
    (maps :initarg :fixed
          :initform ()
-         :type list))
+         :type list)
+   (init :initarg :init
+         :initform ()
+         :type list)
+   (applied-init :initarg :applied-init
+                 :initform ()
+                 :type list)
+   (deferred-init :initarg :deferred-init
+     :initform ()
+     :type list))
   "`ergoemacs-mode' theme-component maps")
 
 (defmethod ergoemacs-theme-component-maps--ini ((obj ergoemacs-theme-component-maps))
@@ -737,7 +746,10 @@ Assumes maps are orthogonal."
   (if (not (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component))
       (warn "`ergoemacs-set' is meant to be called in a theme definition.")
     ;; ergoemacs-set definition.
-    ))
+    (with-slots (init) ergoemacs-theme-component-maps--curr-component
+      (push (list symbol newval) init)
+      (oset ergoemacs-theme-component-maps--curr-component
+            init init))))
 
 (defun ergoemacs-theme-component--with-hook (hook plist body)
   ;; Adapted from Stefan Monnier
@@ -785,7 +797,7 @@ Assumes maps are orthogonal."
                `(ergoemacs-define-key 'global-map ,(nth 1 elt) nil))
               ((ignore-errors (eq (nth 0 elt) 'set))
                ;; Currently doesn't support (setq a b c d ), but it should.
-               `(ergoemacs-theme-component--set ,(nth 1 elt) ,(nth 2 elt)))
+               `(ergoemacs-set ,(nth 1 elt) ,(nth 2 elt)))
               ((ignore-errors (eq (nth 0 elt) 'setq))
                (let ((tmp-elt elt)
                      (ret '()))
@@ -794,8 +806,8 @@ Assumes maps are orthogonal."
                    (push `(ergoemacs-set (quote ,(pop tmp-elt)) ,(pop tmp-elt)) ret))
                  (push 'progn ret)
                  ret))
-              ;; ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
-              ;;  `(ergoemacs-theme-component--mode (quote ,(nth 0 elt)) ,(nth 1 elt)))
+              ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
+               `(ergoemacs-set (quote ,(nth 0 elt)) ,(nth 1 elt)))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
                (if (keymapp (symbol-value (nth 2 elt)))
                    `(ergoemacs-define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
@@ -897,22 +909,21 @@ Afterward it was modified for use with `ergoemacs-mode' to use additional parsin
   (let ((kb (make-symbol "body-and-plist")))
     (setq kb (ergoemacs-theme-component--parse body-and-plist))
     
-    `(ergoemacs-theme-component--create-component
-      ,(nth 0 kb)
-      (lambda () ,@(nth 1 kb)))))
+    `(lambda() (ergoemacs-theme-component--create-component
+           ,(nth 0 kb)
+           (lambda () ,@(nth 1 kb))))))
 
-(message "%s"
-         (macroexpand `(ergoemacs-theme-comp standard-vars ()
-                                             "Enabled/changed variables/modes"
-                                             (setq org-CUA-compatible t
-                                                   org-support-shift-select t
-                                                   set-mark-command-repeat-pop t
-                                                   org-special-ctrl-a/e t
-                                                   ido-vertical-define-keys 'C-n-C-p-up-down-left-right
-                                                   scroll-error-top-bottom t)
-                                             (shift-select-mode t)
-                                             (delete-selection-mode 1)
-                                             (setq ))))
+;; (message "%s"
+;;          (macroexpand `(ergoemacs-theme-comp standard-vars ()
+;;                                              "Enabled/changed variables/modes"
+;;                                              (setq org-CUA-compatible t
+;;                                                    org-support-shift-select t
+;;                                                    set-mark-command-repeat-pop t
+;;                                                    org-special-ctrl-a/e t
+;;                                                    ido-vertical-define-keys 'C-n-C-p-up-down-left-right
+;;                                                    scroll-error-top-bottom t)
+;;                                              (shift-select-mode t)
+;;                                              (delete-selection-mode 1))))
 
 
 
