@@ -29,7 +29,7 @@
 ;;; Code:
 
 
-
+(eval-when-compile (require 'cl))
 (setq ergoemacs-dir (file-name-directory
                      (or load-file-name (buffer-file-name))))
 
