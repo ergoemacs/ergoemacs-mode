@@ -394,10 +394,10 @@ DEF is anything that can be a key's definition:
           (dolist (command def)
             (if (not (commandp command t))
                 (push command tmp)
-              (define-key map def)
+              (define-key map key-vect def)
               (ergoemacs-define-map--cmd-list obj key-desc def)
               (oset obj map map)
-              (throw 'found-command))))
+              (throw 'found-command t))))
         (when tmp
           ;; Add to deferred key list
           (ergoemacs-define-map--deferred-list obj key-vect tmp)))
@@ -559,8 +559,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
              :type ergoemacs-variable-map))
   "`ergoemacs-mode' composite-map class")
 
-(defmethod ergoemacs-define-map ((obj ergoemacs-composite-map) key def &optional no-unbind)
-  ;; Initialize classes
+(defmethod ergoemacs-composite-map--ini ((obj ergoemacs-composite-map))
   (unless (slot-boundp obj 'fixed)
     (let ((fixed (ergoemacs-fixed-map (oref obj object-name)
                                       :global-map-p (oref obj global-map-p)
@@ -581,7 +580,10 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                 :always (oref obj always))))
       (when (slot-boundp obj 'hook)
         (oset var hook (oref obj hook)))
-      (oset obj variable var)))
+      (oset obj variable var))))
+
+(defmethod ergoemacs-define-map ((obj ergoemacs-composite-map) key def &optional no-unbind)
+  (ergoemacs-composite-map--ini obj)
   (with-slots (object-name
                fixed
                variable
@@ -623,6 +625,7 @@ Assumes maps are orthogonal."
       map1))))
 
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-composite-map) &optional layout)
+  (ergoemacs-composite-map--ini obj)
   (with-slots (variable object-name fixed modify-map full-map always
                         global-map-p) obj
     (let* ((lay (or layout ergoemacs-keyboard-layout))
@@ -753,6 +756,7 @@ Assumes maps are orthogonal."
           (ergoemacs-define-map composite-map key def)))))))
 
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-theme-component-maps) &optional keymap layout)
+  (ergoemacs-theme-component-maps--ini obj)
   (with-slots (global) obj
     (cond
      ((not keymap) (ergoemacs-get-fixed-map global layout))
@@ -768,7 +772,7 @@ Assumes maps are orthogonal."
 
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-theme-component-map-list) &optional keymap layout)
   (with-slots (map-list) obj
-    (let ((fixed-maps (mapcar (lambda(map) (ergoemacs-get-fixed-map map keymap layout)) map-list))
+    (let ((fixed-maps (mapcar (lambda(map) (and map (ergoemacs-get-fixed-map map keymap layout))) map-list))
           new-global-map-p
           new-read-map
           new-shortcut-map
@@ -788,59 +792,65 @@ Assumes maps are orthogonal."
           (first t)
           ret)
       (dolist (map-obj fixed-maps)
-        (with-slots (global-map-p
-                     read-map
-                     shortcut-map
-                     no-shortcut-map
-                     map
-                     unbind-map
-                     shortcut-list
-                     shortcut-movement
-                     shortcut-shifted-movement
-                     rm-keys
-                     cmd-list
-                     modify-map
-                     full-map
-                     always
-                     deferred-keys) map-obj
-          (push read-map new-read-map)
-          (push shortcut-map new-shortcut-map)
-          (push no-shortcut-map new-no-shortcut-map)
-          (push map new-map)
-          (push unbind-map new-unbind-map)
-          (when (slot-boundp map 'hook)
-            (setq new-hook (oref map hook)))
-          (setq new-global-map-p global-map-p
-                new-modify-map modify-map
-                new-full-map full-map
-                new-always always)
-          (if first
-              (setq new-shortcut-list shortcut-list
-                    new-shortcut-movement shortcut-movement
-                    new-shortcut-shifted-movement shortcut-shifted-movement
-                    new-rm-keys rm-keys
-                    new-cmd-list cmd-list
-                    new-deferred-keys deferred-keys
-                    first nil)
+        (when (ergoemacs-fixed-map-p map-obj)
+          (with-slots (global-map-p
+                       read-map
+                       shortcut-map
+                       no-shortcut-map
+                       map
+                       unbind-map
+                       shortcut-list
+                       shortcut-movement
+                       shortcut-shifted-movement
+                       rm-keys
+                       cmd-list
+                       modify-map
+                       full-map
+                       always
+                       deferred-keys) map-obj
+            (unless (equal read-map '(keymap))
+              (push read-map new-read-map))
+            (unless (equal shortcut-map '(keymap))
+              (push shortcut-map new-shortcut-map))
+            (unless (equal no-shortcut-map '(keymap))
+              (push no-shortcut-map new-no-shortcut-map))
+            (unless (equal map '(keymap))
+              (push map new-map))
+            (unless (equal unbind-map '(keymap))
+              (push unbind-map new-unbind-map))
+            (when (slot-boundp map-obj 'hook)
+              (setq new-hook (oref map-obj hook)))
             (setq new-global-map-p global-map-p
                   new-modify-map modify-map
                   new-full-map full-map
-                  new-always always
-                  new-shortcut-list (append new-shortcut-list shortcut-list)
-                  new-shortcut-movement (append new-shortcut-movement shortcut-movement)
-                  new-shortcut-shifted-movement (append new-shortcut-shifted-movement shortcut-shifted-movement)
-                  new-rm-keys (append new-rm-keys rm-keys)
-                  new-cmd-list (append new-cmd-list cmd-list)
-                  new-deferred-keys (append new-deferred-keys deferred-keys)))))
+                  new-always always)
+            (if first
+                (setq new-shortcut-list shortcut-list
+                      new-shortcut-movement shortcut-movement
+                      new-shortcut-shifted-movement shortcut-shifted-movement
+                      new-rm-keys rm-keys
+                      new-cmd-list cmd-list
+                      new-deferred-keys deferred-keys
+                      first nil)
+              (setq new-global-map-p global-map-p
+                    new-modify-map modify-map
+                    new-full-map full-map
+                    new-always always
+                    new-shortcut-list (append new-shortcut-list shortcut-list)
+                    new-shortcut-movement (append new-shortcut-movement shortcut-movement)
+                    new-shortcut-shifted-movement (append new-shortcut-shifted-movement shortcut-shifted-movement)
+                    new-rm-keys (append new-rm-keys rm-keys)
+                    new-cmd-list (append new-cmd-list cmd-list)
+                    new-deferred-keys (append new-deferred-keys deferred-keys))))))
       (setq ret
             (ergoemacs-fixed-map
              "composite"
              :global-map-p new-global-map-p
-             :read-map (make-composed-keymap (reverse new-read-map))
-             :shortcut-map (make-composed-keymap (reverse new-shortcut-map))
-             :no-shortcut-map (make-composed-keymap (reverse new-no-shortcut-map))
-             :map (make-composed-keymap (reverse new-map))
-             :unbind-map (make-composed-keymap (reverse new-unbind-map))
+             :read-map (or (and new-read-map (make-composed-keymap (reverse new-read-map))) (make-sparse-keymap))
+             :shortcut-map (or (and new-shortcut-map (make-composed-keymap (reverse new-shortcut-map))) (make-sparse-keymap))
+             :no-shortcut-map (or (and new-no-shortcut-map (make-composed-keymap (reverse new-no-shortcut-map))) (make-sparse-keymap))
+             :map (or (and new-map (make-composed-keymap (reverse new-map))) (make-sparse-keymap))
+             :unbind-map (or (and new-unbind-map (make-composed-keymap (reverse new-unbind-map))) (make-sparse-keymap))
              :shortcut-list new-shortcut-list
              :shortcut-movement new-shortcut-movement
              :shortcut-shifted-movement new-shortcut-shifted-movement
@@ -1064,7 +1074,7 @@ additional parsing routines defined by PARSE-FUNCTION."
         (puthash (oref ergoemacs-theme-component-maps--curr-component object-name)
                  ergoemacs-theme-component-maps--curr-component
                  ergoemacs-theme-comp-hash)
-      (push ergoemacs-theme-component-maps--curr-componentr
+      (push ergoemacs-theme-component-maps--curr-component
             ergoemacs-theme-component-maps--versions)
       (dolist (comp ergoemacs-theme-component-maps--versions)
         (setq tmp (oref comp version))
@@ -1697,48 +1707,49 @@ Will attempt to restore the mode state when turning off the component/theme."
 (defun ergoemacs-theme-component-get-closest-version (version version-list)
   "Return the closest version to VERSION in VERSION-LIST.
 Formatted for use with `ergoemacs-theme-component-hash' it will return ::version or an empty string"
-  (if version-list
-      (let ((use-version (version-to-list version))
-            biggest-version
-            biggest-version-list
-            smallest-version
-            smallest-version-list
-            best-version
-            best-version-list
-            test-version-list
-            ret)
-        (mapc
-         (lambda (v)
-           (setq test-version-list (version-to-list v))
-           (if (not biggest-version)
-               (setq biggest-version v
-                     biggest-version-list test-version-list)
-             (when (version-list-< biggest-version-list test-version-list)
-               (setq biggest-version v
-                     biggest-version-list test-version-list)))
-           (if (not smallest-version)
-               (setq smallest-version v
-                     smallest-version-list test-version-list)
-             (when (version-list-< test-version-list smallest-version-list)
-               (setq smallest-version v
-                     smallest-version-list test-version-list)))
-           (cond
-            ((and (not best-version)
-                  (version-list-<= test-version-list use-version))
-             (setq best-version v
-                   best-version-list test-version-list))
-            ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
-                  (version-list-<= test-version-list use-version))
-             (setq best-version v
-                   best-version-list test-version-list))))
-         version-list)
-        (if (version-list-< biggest-version-list use-version)
-            (setq ret "")
-          (if best-version
-              (setq ret (concat "::" best-version))
-            (setq ret (concat "::" smallest-version))))
-        ret)
-    ""))
+  (if (or (not version) (string= "nil" version)) ""
+    (if version-list
+        (let ((use-version (version-to-list version))
+              biggest-version
+              biggest-version-list
+              smallest-version
+              smallest-version-list
+              best-version
+              best-version-list
+              test-version-list
+              ret)
+          (mapc
+           (lambda (v)
+             (setq test-version-list (version-to-list v))
+             (if (not biggest-version)
+                 (setq biggest-version v
+                       biggest-version-list test-version-list)
+               (when (version-list-< biggest-version-list test-version-list)
+                 (setq biggest-version v
+                       biggest-version-list test-version-list)))
+             (if (not smallest-version)
+                 (setq smallest-version v
+                       smallest-version-list test-version-list)
+               (when (version-list-< test-version-list smallest-version-list)
+                 (setq smallest-version v
+                       smallest-version-list test-version-list)))
+             (cond
+              ((and (not best-version)
+                    (version-list-<= test-version-list use-version))
+               (setq best-version v
+                     best-version-list test-version-list))
+              ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
+                    (version-list-<= test-version-list use-version))
+               (setq best-version v
+                     best-version-list test-version-list))))
+           version-list)
+          (if (version-list-< biggest-version-list use-version)
+              (setq ret "")
+            (if best-version
+                (setq ret (concat "::" best-version))
+              (setq ret (concat "::" smallest-version))))
+          ret)
+      "")))
 
 (defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
                                                    full-shortcut-map-p)
