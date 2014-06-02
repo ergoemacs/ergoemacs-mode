@@ -3428,7 +3428,7 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
   `(let (silent pl tmp)
      (setq pl (gethash (or ,based-on "standard") ergoemacs-theme-hash))
      (plist-put pl ':name ,(symbol-name name))
-     (setq tmp (eval (plist-get pl ':components)))
+     (setq tmp (plist-get pl ':components))
      (push (intern (concat ,(symbol-name name) "-theme")) tmp)
      (setq tmp (plist-put pl ':components tmp))
      (setq silent (gethash "silent-themes" ergoemacs-theme-hash))
