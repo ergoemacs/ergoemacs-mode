@@ -1205,12 +1205,12 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
           ret)
       "")))
 
-(defun ergoemacs-theme-get-component (component &optional version)
+(defun ergoemacs-theme-get-component (component &optional version name)
   "Gets the VERSION of COMPONENT from `ergoemacs-theme-comp-hash'.
 COMPONENT can be defined as component::version"
   (if (listp component)
-      (ergoemacs-theme-component-map-list "list"
-       :map-list (mapcar (lambda(comp) (ergoemacs-theme-get-component comp version)) component))    
+      (ergoemacs-theme-component-map-list
+       (or name "list") :map-list (mapcar (lambda(comp) (ergoemacs-theme-get-component comp version)) component))    
     (let* ((comp-name (or (and (symbolp component) (symbol-name component))
                           component))
            (version (or (and (symbolp version) (symbol-name version))
@@ -1239,7 +1239,34 @@ COMPONENT can be defined as component::version"
 
 (defun ergoemacs-theme-get-obj (&optional theme version)
   "Get the VERSION of THEME from `ergoemacs-theme-get-component' and `ergoemacs-theme-components'"
-  (ergoemacs-theme-get-component (ergoemacs-theme-components theme) version))
+  (ergoemacs-theme-get-component (ergoemacs-theme-components theme) version (or theme ergoemacs-theme)))
+
+(defun ergoemacs-keymap-empty-p (keymap &optional dont-collapse)
+  "Determines if the KEYMAP is an empty keymap.
+DONT-COLLAPSE doesn't collapse empty keymaps"
+  (let ((keymap (or (and dont-collapse keymap)
+                    (ergoemacs-keymap-collapse keymap))))
+    (or (equal keymap nil)
+        (equal keymap '(keymap))
+        (and (keymapp keymap) (stringp (nth 1 keymap)) (= 2 (length keymap))))))
+
+(defun ergoemacs-keymap-collapse (keymap)
+  "Takes out all empty keymaps from a composed keymap"
+  ;;(ergoemacs-keymap-collapse '(keymap (keymap 27 (keymap)) (keymap) (keymap "me")))
+  (let ((ret '()) tmp)
+    (dolist (item keymap)
+      (cond
+       ((eq item 'keymap) (push item ret))
+       ((ignore-errors (keymapp item))
+        (unless (ergoemacs-keymap-empty-p item t)
+          (setq tmp (ergoemacs-keymap-collapse item))
+          (when tmp
+            (push tmp ret))))
+       (t (push item ret))))
+    (setq ret (reverse ret))
+    (if (ergoemacs-keymap-empty-p ret t)
+        nil
+      ret)))
 
 (defun ergoemacs-theme-i (&optional theme  version)
   "Gets the keymaps for THEME for VERSION."
@@ -1250,7 +1277,9 @@ COMPONENT can be defined as component::version"
     (with-slots (read-map
                  shortcut-map
                  map
-                 shortcut-list) fixed-obj
+                 shortcut-list
+                 unbind-map
+                 rm-keys) fixed-obj
       ;; Add menu.
       (define-key menu-keymap [menu-bar ergoemacs-mode]
         `("ErgoEmacs" . ,(ergoemacs-keymap-menu theme)))
@@ -1258,24 +1287,25 @@ COMPONENT can be defined as component::version"
       (pop new-map)
       (push menu-keymap new-map)
       (push 'keymap new-map)
-      ;; (setq ergoemacs-read-input-keymap  read-map
-      ;;       ergoemacs-shortcut-keymap shortcut-map
-      ;;       ergoemacs-keymap new-map
-      ;;       ergoemacs-theme-shortcut-reset-list shortcut-list
-      ;;       ergoemacs-unbind-keymap unbind-map
-      ;;       ergoemacs-theme (or (and (stringp theme) theme)
-      ;;                           (symbol-name theme)))
-      ;; (dolist (remap (ergoemacs-get-hooks theme-obj "-mode\\'"))
-      ;;   (message "%s" remap)
-      ;;   (setq ergoemacs-emulation-mode-map-alist
-      ;;         (append ergoemacs-emulation-mode-map-alist
-      ;;                 (list (cons remap
-      ;;                             (oref (ergoemacs-get-fixed-map
-      ;;                                    theme-obj remap) map))))))
-      (message "%s" ergoemacs-emulation-mode-map-alist))))
+      
+      (setq ergoemacs-read-input-keymap  read-map
+            ergoemacs-shortcut-keymap shortcut-map
+            ergoemacs-keymap new-map
+            ergoemacs-theme-shortcut-reset-list shortcut-list
+            ergoemacs-unbind-keymap unbind-map
+            ergoemacs-theme (or (and (stringp theme) theme)
+                                (and (not (eq nil theme))(symbolp theme) (symbol-name theme))
+                                (and (stringp ergoemacs-theme) ergoemacs-theme)
+                                (and (not (eq nil ergoemacs-theme)) (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))))
+      
+      (setq ergoemacs-emulation-mode-map-alist
+            `(,(cons 'ergoemacs-read-input-keys read-map)
+              ,(cons 'ergoemacs-shortcut-keys shortcut-map)
+              ,@(mapcar
+                 (lambda(remap)
+                   (cons remap (oref (ergoemacs-get-fixed-map theme-obj remap) map)))
+                 (ergoemacs-get-hooks theme-obj "-mode\\'")))))))
 
-;; (message "%s"
-;;          (macroexpand `))
 
 
 
@@ -3273,35 +3303,28 @@ This also:
 - Sets up read-key maps by running `ergoemacs-theme-hook'.
 
 "
-  (mapc
-   (lambda(key)
-     ;; Read input keymap shouldn't interfere with global map needs.
-     (setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
-     ;;
-     (let ((vector-key (or (and (vectorp key) key)
-                           (read-kbd-macro  (key-description key) t))))
-       ;; ergoemacs-shortcut-keymap should always have `ergoemacs-ctl-c'
-       ;; and `ergoemacs-ctl-x' for C-c and C-x, don't unbind here.
-       (unless (and (memq (elt vector-key 0) '(3 24))
-                    (memq (lookup-key ergoemacs-shortcut-keymap (vector (elt vector-key 0)))
-                          '(ergoemacs-ctl-x ergoemacs-ctl-c)))
-         (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key))))
-     (setq ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key))
-     (setq ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-unbind-keymap key)))
-   list)
+  (dolist (key list)
+    ;; Read input keymap shouldn't interfere with global map needs.
+    (setq ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key))
+    (let ((vector-key (or (and (vectorp key) key)
+                          (read-kbd-macro  (key-description key) t))))
+      ;; ergoemacs-shortcut-keymap should always have `ergoemacs-ctl-c'
+      ;; and `ergoemacs-ctl-x' for C-c and C-x, don't unbind here.
+      (unless (and (memq (elt vector-key 0) '(3 24))
+                   (memq (lookup-key ergoemacs-shortcut-keymap (vector (elt vector-key 0)))
+                         '(ergoemacs-ctl-x ergoemacs-ctl-c)))
+        (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key))))
+    (setq ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key))
+    (setq ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-unbind-keymap key)))
   (unless dont-install
     (ergoemacs-theme-remove no-message)
     ;; Reset Shortcut hash.
-    (mapc
-     (lambda(c)
-       (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash))
-     ergoemacs-theme-shortcut-reset-list)
+    (dolist (c ergoemacs-theme-shortcut-reset-list)
+      (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash))
     (setq ergoemacs-emulation-mode-map-alist '())
     ;; Install persistent mode-based remaps.
-    (mapc
-     (lambda(mode)
-       (ergoemacs-theme-hook mode))
-     ergoemacs-theme-mode-based-remaps)
+    (dolist (mode ergoemacs-theme-mode-based-remaps)
+      (ergoemacs-theme-hook mode))
     ;; `ergoemacs-keymap' top in `minor-mode-map-alist'
     (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
       (when x
