@@ -60,7 +60,6 @@
 
 ;;; Code:
 
-(setq debug-on-error t)
 
 (eval-when-compile (require 'cl))
 ;; FIXME: Use cl-lib when available.
