@@ -735,8 +735,9 @@ Assumes maps are orthogonal."
                  :always ergoemacs-theme-component-maps--always
                  :full-map ergoemacs-theme-component-maps--full-map
                  :modify-map ergoemacs-theme-component-maps--modify-map))
-          (when ergoemacs-theme-component-maps--hook
-            (oset ret hook ergoemacs-theme-component-maps--hook))
+          (if ergoemacs-theme-component-maps--hook
+              (oset ret hook ergoemacs-theme-component-maps--hook)
+            (oset ret hook (intern (save-match-data (replace-regexp-in-string "-map.*\\'" "-hook" (symbol-name keymap))))))
           (push ret maps)
           (oset obj maps maps))
         ret)))
@@ -763,12 +764,31 @@ Assumes maps are orthogonal."
      (t (ergoemacs-get-fixed-map
          (ergoemacs-theme-component-maps--keymap obj keymap) layout)))))
 
+(defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-maps) &optional match ret)
+  (ergoemacs-theme-component-maps--ini obj)
+  (let ((ret (or ret '()))
+        (match (or match "-hook\\'")))
+    (with-slots (maps) obj
+      (dolist (map-obj maps)
+        (when (and (slot-boundp map-obj 'hook)
+                   (string-match-p match (symbol-name (oref map-obj hook))))
+          (pushnew (oref map-obj hook) ret))))
+    ret))
+
 
 (defclass ergoemacs-theme-component-map-list (eieio-named)
   ((map-list :initarg :map-list
              :initform ()
              :type list))
   "`ergoemacs-mode' theme-component maps")
+
+(defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-map-list) &optional match ret)
+  (with-slots (map-list) obj
+    (let ((ret (or ret '())))
+      (dolist (map map-list)
+        (when (ergoemacs-theme-component-maps-p map)
+          (setq ret (ergoemacs-get-hooks map match ret))))
+      ret)))
 
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-theme-component-map-list) &optional keymap layout)
   (with-slots (map-list) obj
@@ -1101,7 +1121,89 @@ additional parsing routines defined by PARSE-FUNCTION."
                     ',(nth 0 kb)
                     '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash)))
 
+(defmacro ergoemacs-t (&rest body-and-plist)
+  "Define an ergoemacs-theme.
+:components -- list of components that this theme uses. These can't be seen or toggled
+:optional-on -- list of components that are optional and are on by default
+:optional-off -- list of components that are optional and off by default
+:options-menu -- Menu options list
+:silent -- If this theme is \"silent\", i.e. doesn't show up in the Themes menu.
 
+The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
+"
+  (declare (doc-string 2)
+           (indent 2))
+  (let ((kb (make-symbol "body-and-plist"))
+        (tmp (make-symbol "tmp")))
+    (setq kb (ergoemacs--parse-keys-and-body body-and-plist))
+    (setq tmp (eval (plist-get (nth 0 kb) ':components)))
+    (push (intern (concat (plist-get (nth 0 kb) ':name) "-theme")) tmp)
+    (setq tmp (plist-put (nth 0 kb) ':components tmp))
+    (mapc
+     (lambda(comp)
+       (setq tmp (plist-put (nth 0 kb) comp
+                            (eval (plist-get (nth 0 kb) comp)))))
+     '(:optional-on :optional-off :options-menu))
+    
+    `(let (themes silent)
+       (setq themes (gethash "defined-themes" ergoemacs-theme-hash)
+             silent (gethash "silent-themes" ergoemacs-theme-hash))
+       (push ,(plist-get (nth 0 kb) ':name) themes)
+       (push ,(plist-get (nth 0 kb) ':name) silent)
+       (puthash ,(plist-get (nth 0 kb) ':name) ',tmp ergoemacs-theme-hash)
+       (if ,(plist-get (nth 0 kb) ':silent)
+           (puthash "silent-themes" silent ergoemacs-theme-hash)
+         (puthash "defined-themes" themes ergoemacs-theme-hash))
+       (ergoemacs-theme-comp ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme")) ()
+         ,(format "Generated theme component for %s theme" (concat (plist-get (nth 0 kb) ':name) "-theme"))
+         ,@(nth 1 kb)))))
+
+(defun ergoemacs-theme-component-get-closest-version (version version-list)
+  "Return the closest version to VERSION in VERSION-LIST.
+Formatted for use with `ergoemacs-theme-component-hash' it will return ::version or an empty string"
+  (if (or (not version) (string= "nil" version)) ""
+    (if version-list
+        (let ((use-version (version-to-list version))
+              biggest-version
+              biggest-version-list
+              smallest-version
+              smallest-version-list
+              best-version
+              best-version-list
+              test-version-list
+              ret)
+          (mapc
+           (lambda (v)
+             (setq test-version-list (version-to-list v))
+             (if (not biggest-version)
+                 (setq biggest-version v
+                       biggest-version-list test-version-list)
+               (when (version-list-< biggest-version-list test-version-list)
+                 (setq biggest-version v
+                       biggest-version-list test-version-list)))
+             (if (not smallest-version)
+                 (setq smallest-version v
+                       smallest-version-list test-version-list)
+               (when (version-list-< test-version-list smallest-version-list)
+                 (setq smallest-version v
+                       smallest-version-list test-version-list)))
+             (cond
+              ((and (not best-version)
+                    (version-list-<= test-version-list use-version))
+               (setq best-version v
+                     best-version-list test-version-list))
+              ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
+                    (version-list-<= test-version-list use-version))
+               (setq best-version v
+                     best-version-list test-version-list))))
+           version-list)
+          (if (version-list-< biggest-version-list use-version)
+              (setq ret "")
+            (if best-version
+                (setq ret (concat "::" best-version))
+              (setq ret (concat "::" smallest-version))))
+          ret)
+      "")))
 
 (defun ergoemacs-theme-get-component (component &optional version)
   "Gets the VERSION of COMPONENT from `ergoemacs-theme-comp-hash'.
@@ -1134,6 +1236,43 @@ COMPONENT can be defined as component::version"
           (setq comp (gethash (concat comp-name version)
                               ergoemacs-theme-comp-hash))))
       comp)))
+
+(defun ergoemacs-theme-get-obj (&optional theme version)
+  "Get the VERSION of THEME from `ergoemacs-theme-get-component' and `ergoemacs-theme-components'"
+  (ergoemacs-theme-get-component (ergoemacs-theme-components theme) version))
+
+(defun ergoemacs-theme-i (&optional theme  version)
+  "Gets the keymaps for THEME for VERSION."
+  (let* ((theme-obj (ergoemacs-theme-get-obj theme version))
+         (fixed-obj (ergoemacs-get-fixed-map theme-obj))
+         (menu-keymap (make-sparse-keymap))
+         (ergoemacs-emulation-mode-map-alist '()))
+    (with-slots (read-map
+                 shortcut-map
+                 map
+                 shortcut-list) fixed-obj
+      ;; Add menu.
+      (define-key menu-keymap [menu-bar ergoemacs-mode]
+        `("ErgoEmacs" . ,(ergoemacs-keymap-menu theme)))
+      (setq new-map (copy-keymap map))
+      (pop new-map)
+      (push menu-keymap new-map)
+      (push 'keymap new-map)
+      ;; (setq ergoemacs-read-input-keymap  read-map
+      ;;       ergoemacs-shortcut-keymap shortcut-map
+      ;;       ergoemacs-keymap new-map
+      ;;       ergoemacs-theme-shortcut-reset-list shortcut-list
+      ;;       ergoemacs-unbind-keymap unbind-map
+      ;;       ergoemacs-theme (or (and (stringp theme) theme)
+      ;;                           (symbol-name theme)))
+      ;; (dolist (remap (ergoemacs-get-hooks theme-obj "-mode\\'"))
+      ;;   (message "%s" remap)
+      ;;   (setq ergoemacs-emulation-mode-map-alist
+      ;;         (append ergoemacs-emulation-mode-map-alist
+      ;;                 (list (cons remap
+      ;;                             (oref (ergoemacs-get-fixed-map
+      ;;                                    theme-obj remap) map))))))
+      (message "%s" ergoemacs-emulation-mode-map-alist))))
 
 ;; (message "%s"
 ;;          (macroexpand `))
@@ -1703,53 +1842,6 @@ Will attempt to restore the mode state when turning off the component/theme."
   "Prefer Variable keybindings over fixed keybindings."
   :type 'boolean
   :group 'ergoemacs-mode)
-
-(defun ergoemacs-theme-component-get-closest-version (version version-list)
-  "Return the closest version to VERSION in VERSION-LIST.
-Formatted for use with `ergoemacs-theme-component-hash' it will return ::version or an empty string"
-  (if (or (not version) (string= "nil" version)) ""
-    (if version-list
-        (let ((use-version (version-to-list version))
-              biggest-version
-              biggest-version-list
-              smallest-version
-              smallest-version-list
-              best-version
-              best-version-list
-              test-version-list
-              ret)
-          (mapc
-           (lambda (v)
-             (setq test-version-list (version-to-list v))
-             (if (not biggest-version)
-                 (setq biggest-version v
-                       biggest-version-list test-version-list)
-               (when (version-list-< biggest-version-list test-version-list)
-                 (setq biggest-version v
-                       biggest-version-list test-version-list)))
-             (if (not smallest-version)
-                 (setq smallest-version v
-                       smallest-version-list test-version-list)
-               (when (version-list-< test-version-list smallest-version-list)
-                 (setq smallest-version v
-                       smallest-version-list test-version-list)))
-             (cond
-              ((and (not best-version)
-                    (version-list-<= test-version-list use-version))
-               (setq best-version v
-                     best-version-list test-version-list))
-              ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
-                    (version-list-<= test-version-list use-version))
-               (setq best-version v
-                     best-version-list test-version-list))))
-           version-list)
-          (if (version-list-< biggest-version-list use-version)
-              (setq ret "")
-            (if best-version
-                (setq ret (concat "::" best-version))
-              (setq ret (concat "::" smallest-version))))
-          ret)
-      "")))
 
 (defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
                                                    full-shortcut-map-p)
@@ -2580,13 +2672,14 @@ added to the appropriate startup hooks.
     (setq versions (sort versions 'string<))
     versions))
 
-(defun ergoemacs-theme-components (theme)
+(defun ergoemacs-theme-components (&optional theme)
   "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."
-  (let ((theme-plist (gethash (if (stringp theme) theme
-                                (symbol-name theme))
-                              ergoemacs-theme-hash))
-        components)
+  (let* ((theme (or theme ergoemacs-theme))
+         (theme-plist (gethash (if (stringp theme) theme
+                                 (symbol-name theme))
+                               ergoemacs-theme-hash))
+         components)
     (setq components (reverse (plist-get theme-plist ':components)))
     (mapc
      (lambda(x)
