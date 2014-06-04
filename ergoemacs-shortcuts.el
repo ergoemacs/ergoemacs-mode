@@ -162,7 +162,7 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perfomr `ou
 (defvar ergoemacs-describe-key nil)
 (defun ergoemacs-describe-key ()
   "Ergoemacs replacement for `describe-key'
-Uses `ergoemacs-read'"
+Uses `ergoemacs-read-key'"
   (interactive)
   (setq ergoemacs-describe-key t)
   (ergoemacs-read-key nil 'normal))
@@ -651,8 +651,44 @@ In addition, when the function is called:
    ((and (boundp 'ergoemacs-test-fn) ergoemacs-test-fn)
     (setq ergoemacs-test-fn function))
    (ergoemacs-describe-key
-    (describe-key key)
-    (setq ergoemacs-describe-key nil))
+    (let ((pt (point))
+          (buf (current-buffer))
+          (keys '())
+          test)
+      (unwind-protect
+          (save-excursion
+            (describe-function function)
+            (set-buffer (help-buffer))
+            (let ((inhibit-read-only t))
+              (goto-char (point-min))
+              (insert (format "%s runs the command "
+                              (ergoemacs-pretty-key (key-description key))))
+              (when (search-forward " is" nil t)
+                (replace-match ", which is"))
+              (fill-paragraph)
+              (when (search-forward "bound to" nil t)
+                (delete-region
+                 (point)
+                 (if (re-search-forward "\\.\n\n") (point) (point)))
+                (save-excursion
+                  (set-buffer buf)
+                  (goto-char pt)
+                  (ergoemacs-with-global
+                   (dolist (global-key (where-is-internal function))
+                     (setq test (gethash global-key ergoemacs-original-keys-to-shortcut-keys))
+                     (when test
+                       (unless (eq (elt test 0) 'menu-bar)
+                         (push (ergoemacs-pretty-key (key-description test))
+                             keys)))))
+                  (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
+                                        ergoemacs-shortcut-keys)
+                    (dolist (global-key (where-is-internal function))
+                      (unless (eq (elt global-key 0) 'menu-bar)
+                        (push (ergoemacs-pretty-key (key-description global-key))
+                            keys)))))
+                (insert (mapconcat (lambda(x) x) keys ", "))
+                (insert ".\n\n"))))
+        (setq ergoemacs-describe-key nil))))
    ((condition-case err
         (string-match "self-insert" (symbol-name function))
       (error nil))
