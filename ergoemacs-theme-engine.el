@@ -826,7 +826,7 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
               (set (make-local-variable emulation-var) t)
               (setq x (assq emulation-var ergoemacs-emulation-mode-map-alist))
               (when (or (not x) always)
-                (ergoemacs-shuffle-keys
+                (ergoemacs-add-emulation
                  emulation-var (oref (ergoemacs-get-fixed-map obj map-name) map))))))))))
 
 (defgeneric ergoemacs-create-hooks ()
@@ -1356,14 +1356,12 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
                                 (and (not (eq nil theme))(symbolp theme) (symbol-name theme))
                                 (and (stringp ergoemacs-theme) ergoemacs-theme)
                                 (and (not (eq nil ergoemacs-theme)) (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))))
-      (setq ergoemacs-emulation-mode-map-alist
-            `(,(cons 'ergoemacs-read-input-keys read-map)
-              ,()
-              ,(cons 'ergoemacs-shortcut-keys shortcut-map)
-              ,@(mapcar
-                 (lambda(remap)
-                   (cons remap (oref (ergoemacs-get-fixed-map theme-obj remap) map)))
-                 (ergoemacs-get-hooks theme-obj "-mode\\'")))))))
+      (ergoemacs-add-emulation
+       nil nil
+       (mapcar
+        (lambda(remap)
+          (cons remap (oref (ergoemacs-get-fixed-map theme-obj remap) map)))
+        (ergoemacs-get-hooks theme-obj "-mode\\'"))))))
 
 
 
@@ -2499,12 +2497,7 @@ Returns list of: read-keymap shortcut-keymap keymap shortcut-list unbind-keymap 
              (unless (boundp emulation-var)
                (set-default emulation-var nil)
                (set (make-local-variable emulation-var) t))
-             (setq x (assq emulation-var ergoemacs-emulation-mode-map-alist))
-             (when x
-               (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-             (setq ergoemacs-emulation-mode-map-alist
-                   (append ergoemacs-emulation-mode-map-alist
-                           (list (cons emulation-var replace))))
+             (ergoemacs-add-emulation emulation-var replace)
              (if always-modify-p
                  (setq all-always-p nil)
                (push (list hook map-name) ergoemacs-theme-hook-installed)))
@@ -3400,8 +3393,7 @@ This also:
 
     ;; `ergoemacs-read-input-keymap', then `ergoemacs-shortcut-keymap'
     ;; in `ergoemacs-emulation-mode-map-alist'
-    (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist)
-    (push (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap) ergoemacs-emulation-mode-map-alist)
+    (ergoemacs-add-emulation)
     (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
     (ergoemacs-theme-make-hooks ergoemacs-theme)
     (set-default 'ergoemacs-mode t)

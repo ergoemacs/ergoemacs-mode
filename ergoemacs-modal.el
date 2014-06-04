@@ -325,12 +325,15 @@ Typically function keys")
 (defvar ergoemacs-modal-keymap nil
   "`ergoemacs-mode' modal keymap.  Attempts to capture ALL keystrokes.")
 
-(defun ergoemacs-modal-keymap  (&optional map)
+(defvar ergoemacs-modal-base-keymap nil
+  "`ergoemacs-mode' modal keymap.  Attempts to capture ALL keystrokes.")
+
+(defun ergoemacs-modal-base-keymap  (&optional map)
   "Returns the ergoemacs-modal keymap"
-  (if ergoemacs-modal-keymap
+  (if ergoemacs-modal-base-keymap
       (if map
-          (make-composed-keymap (list map ergoemacs-modal-keymap))
-        ergoemacs-modal-keymap)
+          (make-composed-keymap (list map ergoemacs-modal-base-keymap))
+        ergoemacs-modal-base-keymap)
     (let ((ret (make-sparse-keymap)))
       (unless ret
         (setq ret (make-sparse-keymap)))
@@ -377,30 +380,27 @@ Typically function keys")
          "<end>"
          "<insert>"
          "<deletechar>"))
-      (setq ergoemacs-modal-keymap ret))
-    (ergoemacs-modal-keymap map)))
+      (setq ergoemacs-modal-base-keymap ret))
+    (ergoemacs-modal-base-keymap map)))
 
 (defvar ergoemacs-modal-list '())
 (defun ergoemacs-modal-toggle (type)
   "Toggle ergoemacs command modes."
-  (let* ((x (assq 'ergoemacs-modal ergoemacs-emulation-mode-map-alist))
-         (help-list (gethash type ergoemacs-translation-text))
+  (let* ((help-list (gethash type ergoemacs-translation-text))
          keymap
          (type type)
          tmp
          (ergoemacs-ignore-advice t))
-    (setq ergoemacs-emulation-mode-map-alist
-          (delq x ergoemacs-emulation-mode-map-alist))
     (cond
      ((or (not ergoemacs-modal-list) ;; First time to turn on
           (not (eq (nth 0 ergoemacs-modal-list) type)) ;; New modal 
           )
       (push type ergoemacs-modal-list)
-      (setq keymap (make-composed-keymap
-                    (list (ergoemacs-local-map type t)
-                          (ergoemacs-modal-keymap))))
-      (push (cons 'ergoemacs-modal keymap)
-            ergoemacs-emulation-mode-map-alist)
+      (setq ergoemacs-modal-keymap
+            (make-composed-keymap
+             (list (ergoemacs-local-map type t)
+                   (ergoemacs-modal-base-keymap))))
+      (ergoemacs-add-emulation)
       (set-default 'ergoemacs-modal type)
       (setq ergoemacs-modal type)
       (unless ergoemacs-default-cursor
@@ -428,12 +428,11 @@ Typically function keys")
       (if type
           (progn ;; Turn off current modal, turn on last modal.
             (setq help-list (gethash type ergoemacs-translation-text))
-            (setq keymap
+            (setq ergoemacs-modal-keymap
                   (make-composed-keymap
                    (list (ergoemacs-local-map type t)
-                         (ergoemacs-modal-keymap))))
-            (push (cons 'ergoemacs-modal keymap)
-                  ergoemacs-emulation-mode-map-alist)
+                         (ergoemacs-modal-base-keymap))))
+            (ergoemacs-add-emulation)
             (set-default 'ergoemacs-modal type)
             (setq ergoemacs-modal type)
             (unless ergoemacs-default-cursor

@@ -1440,13 +1440,9 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
 (defvar ergoemacs-repeat-keymap nil)
 (defun ergoemacs-install-repeat-keymap (keymap &optional mode-line)
   "Installs repeat KEYMAP."
-  (let* ((x (assq 'ergoemacs-repeat-keys ergoemacs-emulation-mode-map-alist)))
-    (setq ergoemacs-repeat-keymap keymap)
-    (setq ergoemacs-repeat-keys t)
-    (when x
-      (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-    (push (cons 'ergoemacs-repeat-keys ergoemacs-repeat-keymap)
-          ergoemacs-emulation-mode-map-alist))
+  (setq ergoemacs-repeat-keymap keymap)
+  (ergoemacs-add-emulation)
+  (setq ergoemacs-repeat-keys t)
   (when mode-line
     (ergoemacs-mode-line mode-line)))
 

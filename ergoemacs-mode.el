@@ -598,15 +598,7 @@ bindings the keymap is:
     (progn
       ;; add key
       (define-key ergoemacs-local-keymap key command)
-      (let ((x (assq major ergoemacs-emulation-mode-map-alist)))
-        ;; Delete keymap.
-        (if x
-            (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-        ;; Put at the top of the list
-        (setq ergoemacs-emulation-mode-map-alist
-              (append ergoemacs-emulation-mode-map-alist
-                      (list (cons major ergoemacs-local-keymap))))
-        (ergoemacs-shuffle-keys)))))
+      (ergoemacs-add-emulation major ergoemacs-local-keymap))))
 
 (defun ergoemacs-local-unset-key (key)
   "Unset a key in the ergoemacs local map."
@@ -706,30 +698,37 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
       (setq ergoemacs-shortcut-keys nil)
       (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned on; Turning off."))))
 
+(defun ergoemacs-add-emulation (&optional var keymap keymap-list)
+  "Add emulation map
+VAR is the emulation map variable
+KEYMAP is the emulation map keymap
+KEYMAP-LIST is a list of emulation maps.
+This is added to `ergoemacs-emulation-mode-map-alist' while keeping the order correct."
+  (let ((small-emulation ergoemacs-emulation-mode-map-alist))
+    (while (memq (car (car small-emulation))
+                 '(ergoemacs-modal
+                   ergoemacs-repeat-keys
+                   ergoemacs-read-input-keys))
+      (pop small-emulation))
+    (when (eq (car (nth (- (length small-emulation) 1) small-emulation))
+              'ergoemacs-shortcut-keys)
+      (setq small-emulation (nbutlast small-emulation 1)))
+    (when (and var keymap)
+      (setq x (assq var small-emulation))
+      (when x
+        (delq x small-emulation))
+      (push (cons var keymap) small-emulation))
+    (when (listp keymap-list)
+      (setq small-emulation (append keymap-list small-emulation)))
+    (setq ergoemacs-emulation-mode-map-alist
+          `((ergoemacs-modal ,@(or ergoemacs-modal-keymap (make-sparse-keymap)))
+            (ergoemacs-repeat-keys ,@(or ergoemacs-repeat-keymap (make-sparse-keymap)))
+            (ergoemacs-read-input-keys ,@(or ergoemacs-read-input-keymap (make-sparse-keymap)))
+            ,@small-emulation
+            (ergoemacs-shortcut-keys ,@(or ergoemacs-shortcut-keymap (make-sparse-keymap)))))))
+
 (defun ergoemacs-shuffle-keys (&optional var keymap keymap-list)
-  "Shuffle ergoemacs keymaps.
-When VAR and KEYMAP are specified, replace the keymap in the
-`ergoemacs-emulation-mode-map-alist'."
-  ;; Promotes keymaps in `ergoemacs-emulation-mode-map-alist'
-  (mapc
-   (lambda(what)
-     (if (and keymap (eq var what))
-         (let ((x (assq what ergoemacs-emulation-mode-map-alist)))
-           (when x
-             (delq x ergoemacs-emulation-mode-map-alist))
-           (push (cons var keymap) ergoemacs-emulation-mode-map-alist))
-       (let ((x (assq what ergoemacs-emulation-mode-map-alist)))
-         (and x (setq ergoemacs-emulation-mode-map-alist
-                      (cons x (delq x ergoemacs-emulation-mode-map-alist)))))))
-   ;; Promoted from least to most important
-   '(ergoemacs-shortcut-keys
-     ergoemacs-modal
-     ergoemacs-repeat-keys
-     ergoemacs-read-input-keys))
-  ;;
-  ;; ergoemacs-shortcut-keys should be at the bottom of the list
-  
-  ;; Demote
+  "Shuffle ergoemacs keymaps in `minor-mode-map-alist'."
   (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
     (setq minor-mode-map-alist (append (delq x minor-mode-map-alist) (list x)))))
 
