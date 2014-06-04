@@ -241,7 +241,8 @@ will add MAP to substitution."
       (if test-hash
           (progn
             (ergoemacs-pretty-key (key-description (nth 0 test-hash))))
-        (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys)
+        (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
+                              ergoemacs-shortcut-keys)
           (ergoemacs-pretty-key
            (ergoemacs-real-substitute-command-keys
             (or (and map (concat map string)) string))))))))
@@ -277,7 +278,8 @@ will add MAP to substitution."
         (push (match-string 0 test) shortcut-list)
         (setq test
               (replace-match "" nil nil test)))
-      (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys)
+      (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
+                            ergoemacs-shortcut-keys)
         (setq test (funcall function string))
         (while (string-match "^.*\\<ergoemacs-shortcut.*\n" test)
           (setq test (replace-match "" test)))
