@@ -253,8 +253,6 @@ will add MAP to substitution."
       (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
                             ergoemacs-shortcut-keys)
         (setq test (funcall function string))
-        (while (string-match "^.*\\<ergoemacs-shortcut.*\n" test)
-          (setq test (replace-match "" nil nil test)))
         (when (string-match ".*\n.*\n" test)
           (setq ret (ergoemacs-substitute-map--1
                      (concat (match-string 0 test)
@@ -262,6 +260,13 @@ will add MAP to substitution."
                              (replace-match "" nil nil test))))))
       (with-temp-buffer
         (insert ret)
+        (goto-char (point-min))
+        (while (re-search-forward ".*\\(ergoemacs-shortcut\\|Prefix Command\\).*" nil t)
+          (delete-region (point-at-bol) (point-at-eol))
+          (when (looking-at "\n+")
+            (replace-match "")))
+        (while (search-forward "`??'" nil t)
+          (replace-match (concat " " (ergoemacs-unicode-char "λ" "?") "  ")))
         (goto-char (point-min))
         (forward-line 2)
         (while (re-search-forward "^|\\(.*?\\)[ \t]+|" nil t)
