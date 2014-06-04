@@ -572,14 +572,11 @@ It will replace anything defined by `ergoemacs-translation'"
   (interactive)
   ;; Eventually...
   (let ((cb (current-buffer))
-        (key (and (boundp 'key) key))
-        (ergoemacs-shortcut-override-mode t))
-    (ergoemacs-shortcut-override-mode 1)
+        (key (and (boundp 'key) key)))
     (save-excursion
       (with-help-window (help-buffer)
         (set-buffer (help-buffer))
-        (describe-buffer-bindings cb key)))
-    (ergoemacs-shortcut-override-mode -1)))
+        (describe-buffer-bindings cb key)))))
 
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
@@ -592,7 +589,6 @@ It will replace anything defined by `ergoemacs-translation'"
      (let (defined-fn
            ergoemacs-shortcut-keys
            ergoemacs-read-input-keys
-           ergoemacs-shortcut-override-mode
            ergoemacs-mode)
       (setq defined-fn (ergoemacs-key-fn-lookup 'keyboard-quit))
       (setq defined-fn
@@ -655,9 +651,7 @@ In addition, when the function is called:
    ((and (boundp 'ergoemacs-test-fn) ergoemacs-test-fn)
     (setq ergoemacs-test-fn function))
    (ergoemacs-describe-key
-    (ergoemacs-shortcut-override-mode 1)
     (describe-key key)
-    (ergoemacs-shortcut-override-mode -1)
     (setq ergoemacs-describe-key nil))
    ((condition-case err
         (string-match "self-insert" (symbol-name function))
@@ -770,8 +764,7 @@ FORCE-KEY forces keys like <escape> to work properly.
 "
   (prog1
       (let* (ergoemacs-read-input-keys
-             ergoemacs-modal 
-             ergoemacs-shortcut-override-mode
+             ergoemacs-modal
              ;; Turn on `ergoemacs-shortcut-keys' layer when the
              ;; prior-key is defined on `ergoemacs-read-input-keymap'.
              ;; This way keys like <apps> will read the from the
@@ -1374,7 +1367,8 @@ argument prompt.
 
 
 (defvar ergoemacs-ignored-prefixes '(;; "C-h" "<f1>"
-                                     "C-x" "C-c" "ESC" "<escape>"))
+                                     "C-x" "C-c" "ESC" "<escape>"
+                                     "<remap>"))
 
 (defun ergoemacs-setup-keys-for-layout (layout &optional base-layout)
   "Setup keys based on a particular LAYOUT. All the keys are based on QWERTY layout."
@@ -1461,7 +1455,6 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
   (let (ergoemacs-modal
         ergoemacs-repeat-keys
         ergoemacs-read-input-keys
-        ergoemacs-shortcut-override-mode
         (keymap (make-sparse-keymap)))
     (mapc
      (lambda(key)
@@ -1731,41 +1724,6 @@ Setup C-c and C-x keys to be described properly.")
 
 (defvar ergoemacs-show-true-bindings nil
   "Show the true bindings.  Otherwise, show what the bindings translate to...")
-
-(define-minor-mode ergoemacs-shortcut-override-mode
-  "Lookup the functions for `ergoemacs-mode' shortcut keys and pretend they are currently bound."
-  nil
-  :lighter ""
-  :global t
-  :group 'ergoemacs-mode
-  (if ergoemacs-shortcut-override-mode
-      (progn
-        (let ((x (assq 'ergoemacs-shortcut-override-mode
-                       ergoemacs-emulation-mode-map-alist)))
-          (when x
-            (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-          ;; Remove shortcuts.
-          (setq x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist))
-          (when x
-            (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-          ;; Create keymap
-          ;; (ergoemacs-debug-heading "Turn on `ergoemacs-shortcut-override-mode'")
-          ;; (setq ergoemacs-shortcut-override-keymap (ergoemacs-install-shortcuts-map))
-          
-          ;; (ergoemacs-debug-keymap 'ergoemacs-shortcut-override-keymap)
-          (push (cons 'ergoemacs-shortcut-override-mode
-                      ergoemacs-shortcut-override-keymap)
-                ergoemacs-emulation-mode-map-alist)
-          
-          ;; (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s" (mapcar (lambda(x) (nth 0 x)) ergoemacs-emulation-mode-map-alist))
-          ;; (ergoemacs-debug-heading "Finish `ergoemacs-shortcut-override-mode'")
-          ;; (ergoemacs-debug-flush)
-          ))
-    ;; Add back shortcuts.
-    (let ((x (assq 'ergoemacs-shortcut-keys ergoemacs-emulation-mode-map-alist)))
-      (when x
-        (setq ergoemacs-emulation-mode-map-alist (delq x ergoemacs-emulation-mode-map-alist)))
-      (push (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap) ergoemacs-emulation-mode-map-alist))))
 
 (defun ergoemacs-remove-shortcuts (&optional create-overlay)
   "Removes ergoemacs shortcuts from keymaps."

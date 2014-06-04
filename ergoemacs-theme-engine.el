@@ -1356,9 +1356,9 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
                                 (and (not (eq nil theme))(symbolp theme) (symbol-name theme))
                                 (and (stringp ergoemacs-theme) ergoemacs-theme)
                                 (and (not (eq nil ergoemacs-theme)) (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))))
-      
       (setq ergoemacs-emulation-mode-map-alist
             `(,(cons 'ergoemacs-read-input-keys read-map)
+              ,()
               ,(cons 'ergoemacs-shortcut-keys shortcut-map)
               ,@(mapcar
                  (lambda(remap)
@@ -3304,7 +3304,6 @@ When NO-MESSAGE is true, don't tell the user."
         ergoemacs-shortcut-function-binding-hash (make-hash-table :test 'equal)
         ergoemacs-emulation-mode-map-alist '()
         ergoemacs-shortcut-keys nil
-        ergoemacs-shortcut-override-mode nil
         ergoemacs-modal nil
         ergoemacs-repeat-keys nil
         ergoemacs-read-input-keys nil

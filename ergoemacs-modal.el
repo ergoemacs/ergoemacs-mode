@@ -214,7 +214,6 @@ modal state is currently enabled."
                     minor-mode-map-alist))
   ;; (setq ergoemacs-shortcut-keys t)
   (ergoemacs-debug "ergoemacs-shortcut-keys: %s" ergoemacs-shortcut-keys)
-  (ergoemacs-debug "ergoemacs-shortcut-override-mode: %s" ergoemacs-shortcut-override-mode)
   (ergoemacs-debug "ergoemacs-mode: %s" ergoemacs-mode)
   (ergoemacs-debug "ergoemacs-unbind-keys: %s" ergoemacs-unbind-keys))
 

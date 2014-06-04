@@ -248,7 +248,6 @@ Valid values are:
   (let (ergoemacs-modal
         ergoemacs-repeat-keys
         ergoemacs-read-input-keys
-        ergoemacs-shortcut-override-mode
         (keymap (make-sparse-keymap)))
     (mapc
      (lambda(key)
@@ -325,9 +324,6 @@ remove the keymap depends on user input and KEEP-PRED:
 
 (defvar ergoemacs-read-input-keymap (make-sparse-keymap)
   "Ergoemacs minor mode shortcut input keymap.")
-
-(defvar ergoemacs-shortcut-override-keymap (make-sparse-keymap)
-  "Keymap for overriding keymap.")
 
 (unless (featurep 'ergoemacs-modal)
   (load "ergoemacs-modal"))
@@ -697,11 +693,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
         (unless ergoemacs-mode
           (setq ergoemacs-mode t)
           (ergoemacs-debug "WARNING: ergoemacs-mode was turned off; Turning on."))
-        (unless ergoemacs-shortcut-keys
-          (if ergoemacs-shortcut-override-mode
-              (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned off, but ergoemacs-shortcut-override-mode is on, keeping off.")
-            (setq ergoemacs-shortcut-keys t)
-            (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned off; Turning on.")))
         (unless ergoemacs-unbind-keys
           (setq ergoemacs-unbind-keys t)
           (ergoemacs-debug "WARNING: ergoemacs-unbind-keys was turned off; Turning on.")))
@@ -713,12 +704,9 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
       (ergoemacs-debug "WARNING: ergoemacs-unbind-keys was turned on; Turning off."))
     (unless ergoemacs-shortcut-keys
       (setq ergoemacs-shortcut-keys nil)
-      (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned on; Turning off."))
-    (unless ergoemacs-shortcut-override-mode
-      (setq ergoemacs-shortcut-override-mode nil)
-      (ergoemacs-debug "WARNING: ergoemacs-shortcut-override-mode was turned on; Turning off."))))
+      (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned on; Turning off."))))
 
-(defun ergoemacs-shuffle-keys (&optional var keymap)
+(defun ergoemacs-shuffle-keys (&optional var keymap keymap-list)
   "Shuffle ergoemacs keymaps.
 When VAR and KEYMAP are specified, replace the keymap in the
 `ergoemacs-emulation-mode-map-alist'."
@@ -735,10 +723,12 @@ When VAR and KEYMAP are specified, replace the keymap in the
                       (cons x (delq x ergoemacs-emulation-mode-map-alist)))))))
    ;; Promoted from least to most important
    '(ergoemacs-shortcut-keys
-     ergoemacs-shortcut-override-mode
      ergoemacs-modal
      ergoemacs-repeat-keys
      ergoemacs-read-input-keys))
+  ;;
+  ;; ergoemacs-shortcut-keys should be at the bottom of the list
+  
   ;; Demote
   (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
     (setq minor-mode-map-alist (append (delq x minor-mode-map-alist) (list x)))))
@@ -844,10 +834,7 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
             (when (and
                    (or (not (boundp 'saved-overriding-map)) (eq saved-overriding-map t))
                    (not unread-command-events))
-              (ergoemacs-install-shortcuts-up))
-            (when (and (not ergoemacs-show-true-bindings)
-                       (memq this-command ergoemacs-describe-keybindings-functions))
-              (ergoemacs-shortcut-override-mode 1))))
+              (ergoemacs-install-shortcuts-up))))
       (error nil)))
   (unless (memq this-command ergoemacs-smart-functions)
     (run-hooks 'ergoemacs-pre-command-hook))
@@ -877,9 +864,6 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
         (progn
           (when ergoemacs-mode
             (ergoemacs-shuffle-keys)
-            (when (and (not ergoemacs-show-true-bindings)
-                       (memq this-command ergoemacs-describe-keybindings-functions))
-              (ergoemacs-shortcut-override-mode -1))
             (when (not unread-command-events)
               (ergoemacs-install-shortcuts-up)
               (ergoemacs-vars-sync)))
