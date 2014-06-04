@@ -243,7 +243,7 @@
   (with-slots (deferred-keys) obj
     (let ((deferred-list deferred-list))
       (setq deferred-keys
-          (mapcar
+            (mapcar
            (lambda(x)
              (if (equal (nth 0 x) key)
                  (prog1 (list key deferred-list)
@@ -797,6 +797,12 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
 
 (defmethod ergoemacs-get-keymaps-for-hook ((obj ergoemacs-theme-component-map-list) hook &optional ret)
   (ergoemacs-get-hooks obj (concat "\\`" (regexp-quote (symbol-name hook)) "\\'") ret t))
+
+(defvar ergoemacs-original-keys-to-shortcut-keys-regexp ""
+  "Regular expression of original keys that have shortcuts.")
+
+(defvar ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
+  "Hash table of the original maps that `ergoemacs-mode' saves.")
 
 (defvar ergoemacs-original-map-hash (make-hash-table)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
@@ -3293,8 +3299,10 @@ When NO-MESSAGE is true, don't tell the user."
   ;;; Restore maps
   (ergoemacs-theme-restore-maps no-message)
   (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
+        ergoemacs-original-keys-to-shortcut-keys-regexp ""
+        ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
         ergoemacs-extract-map-hash (make-hash-table :test 'equal)
-        ergoemacs-shortcut-function-binding-hash (make-hash-table :test 'equal)
+        ;; ergoemacs-shortcut-function-binding-hash (make-hash-table :test 'equal)
         ergoemacs-emulation-mode-map-alist '()
         ergoemacs-shortcut-keys nil
         ergoemacs-modal nil
@@ -3370,8 +3378,17 @@ This also:
   (unless dont-install
     (ergoemacs-theme-remove no-message)
     ;; Reset Shortcut hash.
-    (dolist (c ergoemacs-theme-shortcut-reset-list)
-      (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash))
+    (let (tmp)
+      (dolist (c ergoemacs-theme-shortcut-reset-list)
+        (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash)
+        (when (eq (nth 1 (nth 1 c)) 'global)
+          (dolist (global-key (ergoemacs-shortcut-function-binding (nth 0 (nth 1 c))))
+            (if (not (gethash global-key ergoemacs-original-keys-to-shortcut-keys))
+                (puthash global-key (append (gethash global-key ergoemacs-original-keys-to-shortcut-keys) (list (nth 0 c))) ergoemacs-original-keys-to-shortcut-keys)
+              (push (key-description global-key) tmp)
+              (puthash global-key (list (nth 0 c)) ergoemacs-original-keys-to-shortcut-keys)))))
+      (setq ergoemacs-original-keys-to-shortcut-keys-regexp
+            (regexp-opt tmp t)))
     (setq ergoemacs-emulation-mode-map-alist '())
     ;; Install persistent mode-based remaps.
     (dolist (mode ergoemacs-theme-mode-based-remaps)

@@ -79,23 +79,7 @@
   "Print keymap bindings."
   (ergoemacs-debug-heading
    (format "Keymap Description: %s" (symbol-name keymap)))
-  (ergoemacs-debug
-   "|-\n%s"
-   (substring
-    (replace-regexp-in-string
-     "---|\n|-" "---|"
-     (replace-regexp-in-string
-      "^|[ \t]*|$" "|-"
-      (replace-regexp-in-string
-       ".*(that binding is.*\n" ""
-       (replace-regexp-in-string
-        "^" "|"
-        (replace-regexp-in-string
-         "$" "|"
-         (replace-regexp-in-string
-          "\\([ \t]\\{2,\\}\\|\t\\)" "\\1|"
-          (substitute-command-keys (format "\\{%s}" (symbol-name keymap)))))))))
-    0 -2)))
+  (ergoemacs-debug (substitute-command-keys (format "\\{%s}" (symbol-name keymap)))))
 
 (defvar ergoemacs-debug-heading-start-time (float-time))
 (defvar ergoemacs-debug-heading-last-time (float-time))

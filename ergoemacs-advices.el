@@ -40,6 +40,7 @@
 (require 'ergoemacs-shortcuts)
 (require 'ergoemacs-unbind)
 
+
 (defmacro ergoemacs-define-overrides (&rest body)
   "Force the define-keys to work"
   `(let ((ergoemacs-run-mode-hooks t))
@@ -222,6 +223,134 @@ This assumes any key defined while running a hook is a user-defined hook."
   "Make `ergoemacs-mode' and undo-tree compatible."
   (ergoemacs-with-global
    ad-do-it))
+
+;;; Unfortunately, the advice route doesn't seem to work :(
+
+(fset 'ergoemacs-real-substitute-command-keys (symbol-function 'substitute-command-keys))
+
+(defun ergoemacs-substitute-command (string &optional map)
+  "Substitutes command STRING
+will add MAP to substitution."
+  (save-match-data
+    (let* (ret
+           (test (ergoemacs-with-global
+                  (ergoemacs-real-substitute-command-keys
+                   (or (and map (concat map string)) string))))
+           (test-vect (read-kbd-macro test t))
+           (test-hash (gethash test-vect ergoemacs-original-keys-to-shortcut-keys)))
+      (if test-hash
+          (progn
+            (ergoemacs-pretty-key (key-description (nth 0 test-hash))))
+        (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys)
+          (ergoemacs-pretty-key
+           (ergoemacs-real-substitute-command-keys
+            (or (and map (concat map string)) string))))))))
+
+(defun ergoemacs-substitute-map--1 (string)
+  (substring
+   (replace-regexp-in-string
+    "`\\(binding\\|Prefix Command\\|-------\\)'" "\\1"
+    (replace-regexp-in-string
+     "---|\n|-" "---|"
+     (replace-regexp-in-string
+      "^|'[ \t]*|$" "|-"
+      (replace-regexp-in-string
+       "' |\n.*(that binding is.*\n|'" "' (shadowed)"
+       (replace-regexp-in-string
+        "^" "|"
+        (replace-regexp-in-string
+         "$" "' |"
+         (replace-regexp-in-string
+          "\\([ \t]\\{2,\\}\\|\t\\)" "\\1 | `"
+          string))))))) 0 -2))
+
+(defun ergoemacs-substitute-map (string &optional function)
+  (save-match-data
+    (let* (ret
+           ergoemacs-use-unicode-brackets
+           (max1 0) (max2 0)
+           (function (or function 'ergoemacs-real-substitute-command-keys))
+           (test (ergoemacs-with-global
+                  (funcall function string)))
+           (shortcut-list '()))
+      (while (string-match (format "^%s.*$"ergoemacs-original-keys-to-shortcut-keys-regexp) test)
+        (push (match-string 0 test) shortcut-list)
+        (setq test
+              (replace-match "" nil nil test)))
+      (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys)
+        (setq test (funcall function string))
+        (while (string-match "^.*\\<ergoemacs-shortcut.*\n" test)
+          (setq test (replace-match "" test)))
+        (when (string-match ".*\n.*\n" test)
+          (setq ret (ergoemacs-substitute-map--1
+                     (concat (match-string 0 test)
+                             (mapconcat (lambda(x) x) shortcut-list "\n")
+                             (replace-match "" nil nil test))))))
+      (with-temp-buffer
+        (insert ret)
+        (goto-char (point-min))
+        (forward-line 2)
+        (while (re-search-forward "^|\\(.*?\\)[ \t]+|" nil t)
+          (setq test (ergoemacs-pretty-key (match-string 1)))
+          (replace-match (format "| %s |" test))
+          (setq max1 (max max1 (length test))
+                max2 (max max2 (length (buffer-substring (point) (point-at-eol))))))
+        (setq test (concat "|"
+                           (make-string (+ max1 2) ?-)
+                           "+"
+                           (make-string (- max2 1) ?-)
+                           "|"))
+        (goto-char (point-min))
+        (insert test "\n")
+        (while (re-search-forward "|-.*\\(\n|-.*\\)*" nil t)
+          (replace-match test))
+        (goto-char (point-min))
+        (while (re-search-forward "^| *\\(.*?[^ ]\\) +| *\\(.*?[^ ]\\) +|$" nil t)
+          (replace-match (format "| \\1%s | \\2%s |"
+                                 (make-string (max 0 (- max1 (length (match-string 1)))) ? )
+                                 (make-string (max 0 (- max2 (+ 3 (length (match-string 2))))) ? ))))
+        (goto-char (point-max))
+        (insert "\n" test "\n\n")
+        (setq ret (buffer-string)))
+      ret)))
+
+
+
+(defun substitute-command-keys (string)
+  "Substitute key descriptions for command names in STRING.
+Each substring of the form \[COMMAND] is replaced by either a
+keystroke sequence that invokes COMMAND, or \"M-x COMMAND\" if COMMAND
+is not on any keys.
+
+Each substring of the form \{MAPVAR} is replaced by a summary of
+the value of MAPVAR as a keymap.  This summary is similar to the one
+produced by `describe-bindings'.  The summary ends in two newlines
+ (used by the helper function `help-make-xrefs' to find the end of the
+      summary).
+
+Each substring of the form \<MAPVAR> specifies the use of MAPVAR
+as the keymap for future \[COMMAND] substrings.
+\= quotes the following character and is discarded;
+thus, \=\= puts \= into the output, and \=\[ puts \[ into the output.
+
+Return the original STRING if no substitutions are made.
+Otherwise, return a new string, without any text properties.
+"
+  (let (ret str mapvar)
+    (if (not ergoemacs-mode)
+        (setq ret (ergoemacs-real-substitute-command-keys string))
+      (with-temp-buffer
+        (insert string)
+        (goto-char (point-min))
+        (while (re-search-forward "\\\\\\(\\[\\|<\\).*?\\(\\]\\|>\\)" nil t)
+          (if (string-match-p "\\`<" (match-string 0))
+              (setq mapvar (match-string 0))
+            (replace-match (ergoemacs-substitute-command (match-string 0) mapvar))))
+        (goto-char (point-min))
+        (while (re-search-forward "\\\\{.*?}" nil t)
+          (replace-match (ergoemacs-substitute-map (match-string 0))))
+        (setq ret (buffer-string))))
+    ret))
 
 
 

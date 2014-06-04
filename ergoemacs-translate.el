@@ -98,19 +98,26 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-use-unicode-brackets t
+  "Use unicode brackets."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
   (if (not code) ""
     (let (deactivate-mark
+          (ob (or (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "【" "[")) "["))
+          (cb (or (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "】" "]")) "]"))
           (ret (replace-regexp-in-string
                 " +$" "" (replace-regexp-in-string "^ +" "" code)))
           (case-fold-search nil)) 
       (when ergoemacs-use-ergoemacs-key-descriptions
         (save-match-data
           (with-temp-buffer
-            (insert (ergoemacs-unicode-char "【" "["))
+            (insert ob)
             (insert ret)
-            (insert (ergoemacs-unicode-char "】" "]"))
+            (insert cb)
             (goto-char (point-min))
             (while (re-search-forward "<f\\([0-9]+\\)>" nil t)
               (replace-match "<F\\1>"))
@@ -126,8 +133,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
               (replace-match "S-" t t))
             (goto-char (point-min))
             (while (re-search-forward " +" nil t)
-              (replace-match (format "%s%s"
-                                     (ergoemacs-unicode-char "】" "]") (ergoemacs-unicode-char "【" "["))))
+              (replace-match (format "%s%s" cb ob)))
             (goto-char (point-min))
             (while (search-forward "M-" nil t)
               (replace-match (if (eq system-type 'darwin)
