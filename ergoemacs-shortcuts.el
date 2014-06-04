@@ -1733,8 +1733,9 @@ If MAP is nil, base this on a sparse keymap."
         (ergoemacs-orig-keymap
          (if map
              (copy-keymap map) nil))
-        (overall-keymaps ergoemacs-theme-shortcut-reset-list)
+        overall-keymaps
         fn-lst)
+    (setq overall-keymaps (ergoemacs-theme-keymaps ergoemacs-theme))
     (ergoemacs-theme--install-shortcuts-list
      (nth 3 overall-keymaps) ergoemacs-shortcut-override-keymap 
      ergoemacs-orig-keymap (not dont-complete))

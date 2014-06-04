@@ -1416,12 +1416,12 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
         nil
       ret)))
 
-(defvar ergoemacs-M-x "M-x ")
-(defun ergoemacs-theme-install (&optional theme  version)
+(defun ergoemacs-theme-i (&optional theme  version)
   "Gets the keymaps for THEME for VERSION."
   (let* ((theme-obj (ergoemacs-theme-get-obj theme version))
          (fixed-obj (ergoemacs-get-fixed-map theme-obj))
-         (menu-keymap (make-sparse-keymap)))
+         (menu-keymap (make-sparse-keymap))
+         (ergoemacs-emulation-mode-map-alist '()))
     (with-slots (read-map
                  shortcut-map
                  map
@@ -1444,20 +1444,463 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
             ergoemacs-theme (or (and (stringp theme) theme)
                                 (and (not (eq nil theme))(symbolp theme) (symbol-name theme))
                                 (and (stringp ergoemacs-theme) ergoemacs-theme)
-                                (and (not (eq nil ergoemacs-theme)) (symbolp ergoemacs-theme)
-                                     (symbol-name ergoemacs-theme))))
+                                (and (not (eq nil ergoemacs-theme)) (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))))
       (ergoemacs-add-emulation
        nil nil
        (mapcar
         (lambda(remap)
           (cons remap (oref (ergoemacs-get-fixed-map theme-obj remap) map)))
-        (ergoemacs-get-hooks theme-obj "-mode\\'")))
-      (ergoemacs-theme-remove-key-list
-       (append rm-keys ergoemacs-global-override-rm-keys))
-      ))
-  (setq ergoemacs-M-x (substitute-command-keys "\\[execute-extended-command] ")))
+        (ergoemacs-get-hooks theme-obj "-mode\\'"))))))
 
 
+
+
+;; (setq ergoemacs-theme-component-maps--curr-component
+;;       (ergoemacs-theme-component-maps "test" :layout "colemak"))
+
+;; (ergoemacs-define-key 'global-map (kbd "M-u") 'previous-line)
+;; (ergoemacs-define-key 'global-map (kbd "C-o") 'find-file)
+
+;; Dummy variables
+(setq ergoemacs-component-version-curr nil
+      ergoemacs-component-version-list nil
+      ergoemacs-component-version-fixed-layout nil
+      ergoemacs-component-version-fixed-layout-rm nil
+      ergoemacs-component-version-redundant-keys nil
+      ergoemacs-component-version-minor-mode-layout nil
+      ergoemacs-component-version-variable-layout-rm nil
+      ergoemacs-component-version-variable-layout nil
+      ergoemacs-theme-save-variable '())
+
+
+(defun ergoemacs--parse-keys-and-body (keys-and-body &optional is-theme)
+  "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
+
+KEYS-AND-BODY should have the form of a property list, with the
+exception that only keywords are permitted as keys and that the
+tail -- the body -- is a list of forms that does not start with a
+keyword.
+
+Returns a two-element list containing the keys-and-values plist
+and the body.
+
+This has been stolen directly from ert by Christian Ohler <ohler@gnu.org>
+
+Afterward it was modified for use with `ergoemacs-mode'. In
+particular it:
+- `define-key' is converted to `ergoemacs-theme-component--define-key' and keymaps are quoted
+- `global-set-key' is converted to `ergoemacs-theme-component--global-set-key'
+- `global-unset-key' is converted to `ergoemacs-theme-component--global-set-key'
+- `global-reset-key' is converted `ergoemacs-theme-component--global-reset-key'
+- `setq' and `set' is converted to `ergoemacs-theme-component--set'
+- Mode initialization like (delete-selection-mode 1)
+  or (delete-selection) is converted to
+  `ergoemacs-theme-component--mode'
+- Allows :version statement expansion
+- Adds with-hook syntax or (when -hook) or (when -mode)
+"
+  (let ((extracted-key-accu '())
+        last-was-version
+        plist
+        (remaining keys-and-body))
+    ;; Allow
+    ;; (component name)
+    (unless (or (keywordp (first remaining)) (boundp 'skip-first))
+      (if (condition-case nil
+              (stringp (first remaining))
+            (error nil))
+          (push `(:name . ,(pop remaining)) extracted-key-accu)
+        (push `(:name . ,(symbol-name (pop remaining))) extracted-key-accu))
+      (when (memq (type-of (first remaining)) '(symbol cons))
+        (pop remaining))
+      (when (stringp (first remaining))
+        (push `(:description . ,(pop remaining)) extracted-key-accu)))
+    (while (and (consp remaining) (keywordp (first remaining)))
+      (let ((keyword (pop remaining)))
+        (unless (consp remaining)
+          (error "Value expected after keyword %S in %S"
+                 keyword keys-and-body))
+        (when (assoc keyword extracted-key-accu)
+          (warn "Keyword %S appears more than once in %S" keyword
+                keys-and-body))
+        (push (cons keyword (pop remaining)) extracted-key-accu)))
+    (setq extracted-key-accu (nreverse extracted-key-accu))
+    ;; Now change remaining (define-key keymap key def) to
+    ;; (define-key 'keymap key def)
+    ;; Also change (with-hook hook-name ) to (let ((ergoemacs-hook 'hook-name)))
+    (unless is-theme
+      (setq remaining
+            (mapcar
+             (lambda(elt)
+               (cond
+                (last-was-version
+                 (setq last-was-version nil)
+                 (if (stringp elt)
+                     `(when (boundp 'component-version) (setq component-version ,elt))
+                   `(when (boundp 'component-version) (setq component-version ,(symbol-name elt)))))
+                ((condition-case nil
+                     (eq elt ':version)
+                   (error nil))
+                 (setq last-was-version t)
+                 nil)
+                ((condition-case err
+                     (eq (nth 0 elt) 'global-reset-key)
+                   (error nil))
+                 `(ergoemacs-theme-component--global-reset-key ,(nth 1 elt)))
+                ((condition-case err
+                     (eq (nth 0 elt) 'global-unset-key)
+                   (error nil))
+                 `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) nil))
+                ((condition-case err
+                     (eq (nth 0 elt) 'setq)
+                   (error nil))
+                 ;; Currently doesn't support (setq a b c d ), but it should.
+                 `(ergoemacs-theme-component--set (quote ,(nth 1 elt)) ,(nth 2 elt)))
+                ((condition-case err
+                     (eq (nth 0 elt) 'set)
+                   (error nil))
+                 `(ergoemacs-theme-component--set (nth 1 elt) ,(nth 2 elt)))
+                ((condition-case err
+                     (string-match "-mode$" (symbol-name (nth 0 elt)))
+                   (error nil))
+                 `(ergoemacs-theme-component--mode (quote ,(nth 0 elt)) ,(nth 1 elt)))
+                ((condition-case err
+                     (eq (nth 0 elt) 'global-set-key)
+                   (error nil))
+                 (if (condition-case nil
+                         (keymapp (symbol-value (nth 2 elt)))
+                       (error nil))
+                     (progn
+                       `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) (quote ,(nth 2 elt))))
+                   `(ergoemacs-theme-component--global-set-key ,(nth 1 elt) ,(nth 2 elt))))
+                ((condition-case err
+                     (eq (nth 0 elt) 'define-key)
+                   (error nil))
+                 (if (equal (nth 1 elt) '(current-global-map))
+                     (if (condition-case nil
+                             (keymapp (symbol-value (nth 3 elt)))
+                           (error nil))
+                         `(ergoemacs-theme-component--global-set-key ,(nth 2 elt) (quote ,(nth 3 elt)))
+                       `(ergoemacs-theme-component--global-set-key ,(nth 2 elt) ,(nth 3 elt)))
+                   (if (condition-case nil
+                           (keymapp (symbol-value (nth 3 elt)))
+                         (error nil))
+                       `(ergoemacs-theme-component--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
+                     `(ergoemacs-theme-component--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)))))
+                ((or (condition-case err
+                         (eq (nth 0 elt) 'with-hook)
+                       (error nil))
+                     (and (condition-case err
+                              (eq (nth 0 elt) 'when)
+                            (error nil))
+                          (condition-case err
+                              (string-match "-\\(hook\\|mode\\)$" (symbol-name (nth 1 elt)))
+                            (error nil))))
+                 (let (tmp skip-first)
+                   (setq tmp (ergoemacs--parse-keys-and-body (cdr (cdr elt))))
+                   `(let ((ergoemacs-hook (quote ,(nth 1 elt)))
+                          (ergoemacs-hook-modify-keymap
+                           ,(or (plist-get (nth 0 tmp)
+                                           ':modify-keymap)
+                                (plist-get (nth 0 tmp)
+                                           ':modify-map)))
+                          (ergoemacs-hook-full-shortcut-map
+                           ,(or (plist-get (nth 0 tmp)
+                                           ':full-shortcut-keymap)
+                                (plist-get (nth 0 tmp)
+                                           ':full-shortcut-map)
+                                (plist-get (nth 0 tmp)
+                                           ':full-map)
+                                (plist-get (nth 0 tmp)
+                                           ':full-keymap)))
+                          (ergoemacs-hook-always ,(plist-get (nth 0 tmp)
+                                                             ':always)))
+                      ,@(nth 1 tmp))))
+                (t elt)))
+             remaining)))
+    (setq plist (loop for (key . value) in extracted-key-accu
+                      collect key
+                      collect value))
+    (list plist remaining)))
+
+(defvar ergoemacs-theme-component-hash (make-hash-table :test 'equal))
+(defvar ergoemacs-theme-component-cache (make-hash-table :test 'equal))
+(defun ergoemacs-theme-component--version-bump ()
+  (when (and (boundp 'component-version)
+             component-version
+             (boundp 'ergoemacs-component-version-minor-mode-layout)
+             (boundp 'ergoemacs-component-version-curr)
+             (boundp 'fixed-layout) (boundp 'variable-layout)
+             (boundp 'fixed-layout-rm) (boundp 'variable-layout-rm)
+             (boundp 'redundant-keys) (boundp 'defined-keys)
+             (boundp 'versions)
+             (boundp 'ergoemacs-just-first-reg)
+             (not (equal ergoemacs-component-version-curr component-version)))
+    ;; Create/Update component-version fixed or variable layouts.
+    (when ergoemacs-component-version-curr
+      (push (list ergoemacs-component-version-curr
+                  ergoemacs-component-version-fixed-layout
+                  ergoemacs-component-version-variable-layout
+                  ergoemacs-component-version-redundant-keys
+                  ergoemacs-component-version-minor-mode-layout
+                  ergoemacs-component-version-fixed-layout-rm
+                  ergoemacs-component-version-variable-layout-rm)
+            ergoemacs-component-version-list))
+    (setq ergoemacs-component-version-curr component-version)
+    (push ergoemacs-component-version-curr versions)
+    (unless ergoemacs-component-version-minor-mode-layout
+      (setq ergoemacs-component-version-minor-mode-layout ergoemacs-component-version-minor-mode-layout))
+    (unless ergoemacs-component-version-fixed-layout
+      (setq ergoemacs-component-version-fixed-layout fixed-layout))
+    (unless ergoemacs-component-version-fixed-layout-rm
+      (setq ergoemacs-component-version-fixed-layout-rm fixed-layout-rm))
+    (unless ergoemacs-component-version-fixed-layout
+      (setq ergoemacs-component-version-variable-layout variable-layout))
+    (unless ergoemacs-component-version-fixed-layout-rm
+      (setq ergoemacs-component-version-variable-layout-rm variable-layout-rm))
+    (unless ergoemacs-component-version-redundant-keys
+      (setq ergoemacs-component-version-redundant-keys redundant-keys))))
+
+(defun ergoemacs-theme-component--rm-key (key)
+  "Remove KEY from `ergoemacs-mode' keymaps"
+  (let* ((kd (key-description key))  jf 
+         (variable-p (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                       (and (boundp 'ergoemacs-variable-reg)
+                            ergoemacs-variable-reg
+                            (condition-case nil
+                                (string-match ergoemacs-variable-reg kd)
+                              (error nil))))))
+    (when variable-p
+      (setq jf (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                 (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
+                      (condition-case nil
+                          (string-match ergoemacs-just-first-reg kd)
+                        (error nil))))))
+    (cond
+     ((and variable-p (boundp 'variable-layout-rm))
+      (setq kd (ergoemacs-kbd kd t jf))
+      (push (list kd jf) variable-layout-rm))
+     ((boundp 'fixed-layout-rm)
+      (push key fixed-layout-rm)))))
+
+(defun ergoemacs-theme-component--global-reset-key (key)
+  "Reset KEY.
+will take out KEY from `ergoemacs-component-version-redundant-keys'"
+  (when (and (boundp 'component-version)
+             component-version
+             (boundp 'ergoemacs-component-version-curr)
+             (boundp 'fixed-layout) (boundp 'variable-layout)
+             (boundp 'redundant-keys) (boundp 'defined-keys)
+             (boundp 'versions)
+             (boundp 'ergoemacs-component-version-redundant-keys)
+             (boundp 'ergoemacs-just-first-reg))
+    (ergoemacs-theme-component--version-bump)
+    (let ((kd (key-description key))
+          tmp)
+      (setq tmp '())
+      (mapc
+       (lambda(x)
+         (unless (string= x kd)
+           (push x tmp)))
+       ergoemacs-component-version-redundant-keys)
+      (setq ergoemacs-component-version-redundant-keys tmp))))
+
+(defun ergoemacs-theme-component--global-set-key (key command)
+  "Setup ergoemacs theme component internally.
+When fixed-layout and variable-layout are bound"
+  (cond
+   ((and (boundp 'ergoemacs-hook)
+         (string-match "mode$" (symbol-name ergoemacs-hook)))
+    (ergoemacs-theme-component--define-key ergoemacs-hook key command))
+   ((and (vectorp key) (eq (elt key 0) 'remap))
+    (let ((ergoemacs-hook 'ergoemacs-mode)
+          (ergoemacs-hook-modify-keymap nil)
+          (ergoemacs-hook-full-shortcut-map nil)
+          (ergoemacs-hook-always nil))
+      (ergoemacs-theme-component--define-key 'ergoemacs-mode key command)))
+   ((and (boundp 'component-version)
+         component-version
+         (boundp 'ergoemacs-component-version-curr)
+         (boundp 'fixed-layout) (boundp 'variable-layout)
+         (boundp 'redundant-keys) (boundp 'defined-keys)
+         (boundp 'versions)
+         (boundp 'ergoemacs-just-first-reg))
+    (ergoemacs-theme-component--version-bump)
+    (let* ((kd (key-description key)) cd jf removed
+           (variable-p (if (boundp 'ergoemacs-force-variable-reg)
+                           ergoemacs-force-variable-reg
+                         (and (boundp 'ergoemacs-variable-reg)
+                              ergoemacs-variable-reg
+                              (condition-case nil
+                                  (string-match ergoemacs-variable-reg kd)
+                                (error nil))))))
+      (when cd
+        (setq cd (car (cdr cd))))
+      (if (not command)
+          (mapc ;; Remove command from lists.
+           (lambda(y)
+             (let (tmp '())
+               (mapc
+                (lambda(x)
+                  (unless (equal (nth 0 x) kd)
+                    (push x tmp)))
+                (symbol-value y))
+               (set y tmp)))
+           '(ergoemacs-component-version-fixed-layout ergoemacs-component-version-variable-layout))
+        (if (not variable-p)
+            (progn ;; Fixed Layout component
+              (setq ergoemacs-component-version-fixed-layout
+                    (mapcar
+                     (lambda(x)
+                       (if (not (equal (nth 0 x) kd))
+                           x
+                         (setq removed t)
+                         (list kd command cd)))
+                     ergoemacs-component-version-fixed-layout))
+              (unless removed
+                (push (list kd command cd) ergoemacs-component-version-fixed-layout)))
+          ;; (push (list kd command) defined-keys)
+          (setq jf (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                     (and (boundp 'ergoemacs-just-first-reg) ergoemacs-just-first-reg
+                          (condition-case nil
+                              (string-match ergoemacs-just-first-reg kd)
+                            (error nil)))))
+          (setq kd (ergoemacs-kbd kd t jf))
+          (setq ergoemacs-component-version-variable-layout
+                (mapcar
+                 (lambda(x)
+                   (if (not (equal (nth 0 x) kd))
+                       x
+                     (setq removed t)
+                     (list kd command cd jf)))
+                 ergoemacs-component-version-variable-layout))
+          (unless removed
+            (push (list kd command cd jf) ergoemacs-component-version-variable-layout))))))
+   ((and (boundp 'fixed-layout) (boundp 'variable-layout)
+         (boundp 'component-version)
+         (not component-version)
+         (boundp 'redundant-keys) (boundp 'defined-keys))
+    (let ((kd (key-description key)) cd jf)
+      (if (not command) ; redundant key
+          (push kd redundant-keys)
+        (setq cd (assoc command ergoemacs-function-short-names)) ; Short key description
+        (when cd
+          (setq cd (car (cdr cd))))
+        (if (not (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                   (condition-case nil
+                       (string-match ergoemacs-variable-reg kd)
+                     (error nil))))
+            (push (list kd command cd) fixed-layout) ;; Fixed layout component
+          (push (list kd command) defined-keys)
+          (setq jf (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                     (and ergoemacs-just-first-reg
+                          (condition-case nil
+                              (string-match ergoemacs-just-first-reg kd)
+                            (error nil)))))
+          (setq kd (ergoemacs-kbd kd t jf))
+          (push (list kd command cd jf) variable-layout)))))))
+
+(defun ergoemacs-theme-component--define-key (keymap key def)
+  "Setup mode-specific information."
+  (when (and (boundp 'fixed-layout) (boundp 'variable-layout))
+    (if (memq keymap '(global-map ergoemacs-keymap))
+        (if (and (eq keymap 'ergoemacs-keymap) (not def))
+            (ergoemacs-theme-component--rm-key key)
+          (ergoemacs-theme-component--global-set-key key def))
+      (let* ((hook (or
+                    (and (boundp 'ergoemacs-hook) ergoemacs-hook)
+                    (intern (if (string-match "mode" (symbol-name keymap))
+                                (replace-regexp-in-string "mode.*" "mode-hook" (symbol-name keymap))
+                              ;; Assume -keymap or -map defines -mode-hook
+                              (string-match "(key)?map" "mode-hook" (symbol-name keymap))))))
+             (modify-keymap-p
+              (and (boundp 'ergoemacs-hook-modify-keymap)
+                   ergoemacs-hook-modify-keymap))
+             (full-shortcut-p
+              (and (boundp 'ergoemacs-hook-full-shortcut-map)
+                   ergoemacs-hook-full-shortcut-map))
+             (always-run-p (and (boundp 'ergoemacs-hook-always)
+                                ergoemacs-hook-always))
+             (kd (key-description key))
+             (variable-p (and (boundp 'ergoemacs-variable-reg)
+                              ergoemacs-variable-reg
+                              (condition-case nil
+                                  (string-match ergoemacs-variable-reg kd)
+                                (error nil))))
+             a-key
+             jf found-1-p found-2-p)
+        (when (and (boundp 'emulation-setup) (boundp 'ergoemacs-hook)
+                   (string-match "mode$" (symbol-name ergoemacs-hook)))
+          (add-to-list 'emulation-setup ergoemacs-hook nil 'eq))
+        (when (boundp 'minor-mode-hook-list)
+          (add-to-list 'minor-mode-hook-list hook nil 'eq))
+        (when variable-p
+          (setq variable-p t)
+          (setq jf (if (boundp 'ergoemacs-force-variable-reg) ergoemacs-force-variable-reg
+                     (and ergoemacs-just-first-reg
+                          (condition-case nil
+                              (string-match ergoemacs-just-first-reg kd)
+                            (error nil)))))
+          (setq kd (ergoemacs-kbd kd t jf)))
+        (cond
+         ((and (boundp 'component-version)
+               component-version
+               (boundp 'ergoemacs-component-version-curr)
+               (boundp 'fixed-layout) (boundp 'variable-layout)
+               (boundp 'redundant-keys) (boundp 'defined-keys)
+               (boundp 'versions)
+               (boundp 'ergoemacs-just-first-reg))
+          (ergoemacs-theme-component--version-bump) ;; Change version information
+          )
+         ((and (boundp 'fixed-layout) (boundp 'variable-layout)
+               (boundp 'component-version)
+               (not component-version)
+               (boundp 'redundant-keys) (boundp 'defined-keys))
+          ;; Keymaps modified are stored as (hook (keymaps))
+          ;; Keys are stored as ((hook keymap/t variable-p) ((key def)))
+          (setq a-key (list hook (if modify-keymap-p keymap
+                                   (or (and (boundp 'ergoemacs-hook)
+                                            (string-match "mode$" (symbol-name ergoemacs-hook))
+                                            ergoemacs-hook) t)) variable-p))
+          (setq minor-mode-layout
+                (mapcar
+                 (lambda(elt)
+                   (cond
+                    ((eq (car elt) hook)
+                     (let ((lst (car (cdr elt))))
+                       (add-to-list 'lst (if modify-keymap-p keymap
+                                           (or (and (boundp 'ergoemacs-hook)
+                                                    (string-match "mode$" (symbol-name ergoemacs-hook))
+                                                    ergoemacs-hook) t))  nil 'eq)
+                       (setq found-1-p t)
+                       (list hook lst)))
+                    ((equal (car elt) a-key)
+                     (let ((lst (car (cdr elt))) new-lst)
+                       (mapc
+                        (lambda(elt-2)
+                          (cond
+                           ((equal (car elt-2) kd)
+                            (setq found-2-p t)
+                            (push (list kd def jf) new-lst))
+                           (t
+                            (push elt-2 new-lst))))
+                        lst)
+                       (unless found-2-p
+                         (push (list kd def) new-lst))
+                       (setq found-2-p t)
+                       (list a-key new-lst always-run-p full-shortcut-p)))
+                    (t
+                     elt)))
+                 minor-mode-layout))
+          (unless found-1-p
+            (push (list hook (list (if modify-keymap-p keymap
+                                     (or (and (boundp 'ergoemacs-hook)
+                                              (string-match "mode$" (symbol-name ergoemacs-hook))
+                                              ergoemacs-hook) t)))) minor-mode-layout))
+          (unless found-2-p
+            (push (list a-key (list (list kd def)) always-run-p full-shortcut-p) minor-mode-layout))))))))
+
+
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key)
   "Adds KEY to `ergoemacs-global-override-rm-keys' and `ergoemacs-global-override-map' if globally redefined."
   (let ((ergoemacs-ignore-advice t)
