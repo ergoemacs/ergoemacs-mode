@@ -272,7 +272,7 @@ will add MAP to substitution."
         (setq test (concat "|"
                            (make-string (+ max1 2) ?-)
                            "+"
-                           (make-string (- max2 1) ?-)
+                           (make-string (max 0 (- max2 1)) ?-)
                            "|"))
         (goto-char (point-min))
         (insert test "\n")
