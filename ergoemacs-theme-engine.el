@@ -251,7 +251,7 @@
                x))
            deferred-keys))
       (when deferred-list
-        (push (list key deferred-list) deferred-keys))
+        (push (list key (reverse deferred-list)) deferred-keys))
       (oset obj deferred-keys deferred-keys))))
 
 (defmethod ergoemacs-define-map--cmd-list ((obj ergoemacs-fixed-map) key-desc def &optional desc)
@@ -383,7 +383,7 @@ DEF is anything that can be a key's definition:
         (ergoemacs-define-map--cmd-list obj key-desc def)
         (define-key map key-vect def)
         (oset obj map map))
-       ((and (listp def) (stringp (nth 0 def)))
+       ((and (listp def) (or (stringp (nth 0 def))))
         ;; `ergoemacs-read-key' shortcut
         (ergoemacs-define-map--shortcut-list obj key-vect def)
         (ergoemacs-define-map--cmd-list obj key-desc def (nth 0 def))
@@ -652,9 +652,6 @@ Assumes maps are orthogonal."
         (oset ret hook (oref obj hook)))
       ret)))
 
-
-
-
 (defclass ergoemacs-theme-component-maps (eieio-named)
   ((variable-reg :initarg :variable-reg
                  :initform (concat "\\(?:^\\|<\\)" (regexp-opt '("M-" "<apps>" "<menu>")))
@@ -764,7 +761,7 @@ Assumes maps are orthogonal."
      (t (ergoemacs-get-fixed-map
          (ergoemacs-theme-component-maps--keymap obj keymap) layout)))))
 
-(defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-maps) &optional match ret)
+(defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-maps) &optional match ret keymaps)
   (ergoemacs-theme-component-maps--ini obj)
   (let ((ret (or ret '()))
         (match (or match "-hook\\'")))
@@ -772,7 +769,9 @@ Assumes maps are orthogonal."
       (dolist (map-obj maps)
         (when (and (slot-boundp map-obj 'hook)
                    (string-match-p match (symbol-name (oref map-obj hook))))
-          (pushnew (oref map-obj hook) ret))))
+          (if keymaps
+              (pushnew (oref map-obj object-name) ret)
+            (pushnew (oref map-obj hook) ret)))))
     ret))
 
 
@@ -782,13 +781,73 @@ Assumes maps are orthogonal."
              :type list))
   "`ergoemacs-mode' theme-component maps")
 
-(defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-map-list) &optional match ret)
+(defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-map-list) &optional match ret keymaps)
   (with-slots (map-list) obj
     (let ((ret (or ret '())))
       (dolist (map map-list)
         (when (ergoemacs-theme-component-maps-p map)
-          (setq ret (ergoemacs-get-hooks map match ret))))
+          (setq ret (ergoemacs-get-hooks map match ret keymaps))))
       ret)))
+
+(defgeneric ergoemacs-get-keymaps-for-hook (obj hook &optional ret)
+  "Gets the keymaps that will be modified for HOOK.
+
+Call:
+ergoemacs-get-keymaps-for-hook OBJ HOOK")
+
+(defmethod ergoemacs-get-keymaps-for-hook ((obj ergoemacs-theme-component-map-list) hook &optional ret)
+  (ergoemacs-get-hooks obj (concat "\\`" (regexp-quote (symbol-name hook)) "\\'") ret t))
+
+(defvar ergoemacs-original-map-hash (make-hash-table)
+  "Hash table of the original maps that `ergoemacs-mode' saves.")
+
+(defmethod ergoemacs-apply-keymaps-for-hook ((obj ergoemacs-theme-component-map-list) hook)
+  (with-slots (shortcut-list) (ergoemacs-get-fixed-map obj)
+      (dolist (map-name (ergoemacs-get-keymaps-for-hook obj hook))
+        (with-slots (map
+                     full-map
+                     always
+                     modify-map) (ergoemacs-get-fixed-map obj map-name)
+          (cond
+           (modify-map
+            (if (not (keymapp (symbol-value map-name)))
+                (warn "Keymap %s not found.  Ergoemacs-mode cannot correct." keymap-name)
+              (unless (gethash map-name ergoemacs-original-map-hash)
+                ;; Save original map.
+                (puthash map-name (copy-keymap (symbol-value map-name)) ergoemacs-original-map-hash))
+              ;; Now apply map changes.
+              ))
+           (t 
+            ;; Shortcuts are handled by the shortcut layer.
+            (let ((emulation-var (intern (concat "ergoemacs--for-" (symbol-name hook) "-with-" (symbol-name map-name))))
+                  x)
+              (unless (boundp emulation-var)
+                (set-default emulation-var nil))
+              (set (make-local-variable emulation-var) t)
+              (setq x (assq emulation-var ergoemacs-emulation-mode-map-alist))
+              (when (or (not x) always)
+                (ergoemacs-shuffle-keys
+                 emulation-var (oref (ergoemacs-get-fixed-map obj map-name) map))))))))))
+
+(defgeneric ergoemacs-create-hooks ()
+  "Create and add/remove hooks for `ergoemacs-theme-component-map-list' object.
+
+Call:
+ergoemacs-create-hooks OBJ REMOVE-P
+
+When REMOVE-P is non-nil, remove hooks
+
+")
+
+(defmethod ergoemacs-create-hooks ((obj ergoemacs-theme-component-map-list) remove-p)
+  (dolist (hook (ergoemacs-get-hooks obj))
+    (fset (intern (concat "ergoemacs-for-" (symbol-name hook)))
+          `(lambda ()
+             ,(format "Run `ergoemacs-theme-hook' for `%s'"
+                      (symbol-name hook))
+             (ergoemacs-theme-hook ',hook)))
+    (funcall (if remove-p #'remove-hook #'add-hook) hook
+             (intern (concat "ergoemacs-for-" (symbol-name hook))))))
 
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-theme-component-map-list) &optional keymap layout)
   (with-slots (map-list) obj
@@ -812,7 +871,7 @@ Assumes maps are orthogonal."
           (first t)
           ret)
       (dolist (map-obj fixed-maps)
-        (when (ergoemacs-fixed-map-p map-obj)
+	(when (ergoemacs-fixed-map-p map-obj)
           (with-slots (global-map-p
                        read-map
                        shortcut-map
