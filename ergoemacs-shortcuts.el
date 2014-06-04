@@ -701,8 +701,7 @@ In addition, when the function is called:
    (t
     (mapc
      (lambda(var) ;; should include `this-command' and `this-original-command'
-       (when (and (boundp var)
-                  (memq (symbol-value var) ergoemacs-smart-functions))
+       (when (ergoemacs-smart-function-p var)
          (set var function)))
      ergoemacs-this-command-fake)
     (let ((this-command-keys-shift-translated

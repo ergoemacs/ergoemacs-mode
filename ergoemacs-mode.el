@@ -772,8 +772,17 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
 
 (defvar ergoemacs-smart-functions
   '(ergoemacs-shortcut
-    ergoemacs-shortcut-movement-no-shift-select ergoemacs-shortcut-movement ergoemacs-read-key
+    ergoemacs-shortcut-movement-no-shift-select
+    ergoemacs-shortcut-movement
+    ergoemacs-read-key
     ergoemacs-modal-default))
+
+(defun ergoemacs-smart-function-p (var)
+  "Is VAR an `ergoemacs-mode' smart function?"
+  (or (not (symbolp var))
+      (and (boundp var)
+           (memq (symbol-value var) ergoemacs-smart-functions))))
+
 (defvar ergoemacs-last-command nil)
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
@@ -819,7 +828,7 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
                    (not unread-command-events))
               (ergoemacs-install-shortcuts-up))))
       (error nil)))
-  (unless (memq this-command ergoemacs-smart-functions)
+  (unless (ergoemacs-smart-function-p this-command)
     (run-hooks 'ergoemacs-pre-command-hook))
   t)
 

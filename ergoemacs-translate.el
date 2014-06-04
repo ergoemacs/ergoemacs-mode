@@ -103,10 +103,16 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defvar ergoemacs-use-M-x-p nil)
+
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
   (if (not code) ""
-    (let (deactivate-mark
+    (if (string-match "^M-x " code)
+        (if ergoemacs-use-M-x-p
+            code
+          (replace-match ergoemacs-M-x t t code))
+      (let (deactivate-mark
           (ob (or (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "【" "[")) "["))
           (cb (or (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "】" "]")) "]"))
           (ret (replace-regexp-in-string
@@ -203,7 +209,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
               (while (re-search-forward "Ctl[+]" nil t)
                 (replace-match "^")))
             (setq ret (buffer-string)))))
-      ret)))
+      ret))))
 
 (defun ergoemacs-pretty-key-rep-internal ()
   (let (case-fold-search)

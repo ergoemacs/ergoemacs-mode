@@ -807,6 +807,46 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
 (defvar ergoemacs-original-map-hash (make-hash-table)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
 
+
+(defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
+                                                   full-shortcut-map-p)
+  (let (fn-lst)
+    (cond
+     ((commandp (nth 0 args))
+      (setq fn-lst (ergoemacs-shortcut-remap-list
+                    (nth 0 args) lookup-keymap))
+      (if fn-lst
+          (ignore-errors
+            (ergoemacs-theme-component--ignore-globally-defined-key key)
+            (define-key keymap key (nth 0 (nth 0 fn-lst))))
+        (when full-shortcut-map-p
+          (ignore-errors
+            (ergoemacs-theme-component--ignore-globally-defined-key key)
+            (when (or (commandp (nth 0 args) t)
+                      (keymapp (nth 0 args)))
+              (define-key keymap key (nth 0 args)))))))
+     (full-shortcut-map-p
+      (ignore-errors
+        (ergoemacs-theme-component--ignore-globally-defined-key key)
+        (define-key keymap key
+          `(lambda(&optional arg)
+             (interactive "P")
+             (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args)))))))))
+
+(defun ergoemacs-theme--install-shortcuts-list (shortcut-list keymap lookup-keymap full-shortcut-map-p)
+  "Install shortcuts for SHORTCUT-LIST into KEYMAP.
+LOOKUP-KEYMAP
+FULL-SHORTCUT-MAP-P "
+  (dolist (y shortcut-list)
+    (let ((key (nth 0 y))
+          (args (nth 1 y)))
+      (ergoemacs-theme--install-shortcut-item
+       key args keymap lookup-keymap
+       full-shortcut-map-p))))
+
+(defvar ergoemacs-theme-hook-installed '()
+  "Installed hooks")
+
 (defmethod ergoemacs-apply-keymaps-for-hook ((obj ergoemacs-theme-component-map-list) hook)
   (with-slots (shortcut-list) (ergoemacs-get-fixed-map obj)
       (dolist (map-name (ergoemacs-get-keymaps-for-hook obj hook))
@@ -818,11 +858,22 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
            (modify-map
             (if (not (keymapp (symbol-value map-name)))
                 (warn "Keymap %s not found.  Ergoemacs-mode cannot correct." keymap-name)
-              (unless (gethash map-name ergoemacs-original-map-hash)
-                ;; Save original map.
-                (puthash map-name (copy-keymap (symbol-value map-name)) ergoemacs-original-map-hash))
-              ;; Now apply map changes.
-              ))
+              (unless (member (list hook map-name) ergoemacs-theme-hook-installed)
+                (let ((orig-map (gethash map-name ergoemacs-original-map-hash))
+                      (fix-map (copy-keymap fix))
+                      (shortcut-map (make-sparse-keymap)))
+                  (unless orig-map
+                    ;; Save original map.
+                    (puthash map-name (copy-keymap (symbol-value map-name)) ergoemacs-original-map-hash)
+                    (setq orig-map (copy-keymap (symbol-value map-name))))
+                  ;; Now apply map changes.
+                  (set map-name
+                       (make-composed-keymap 
+                        (list (ergoemacs-theme--install-shortcuts-list
+                               shortcut-list fix-map orig-map full-map)
+                              orig-map)))
+                  (unless always
+                    (push (list hook map-name) ergoemacs-theme-hook-installed))))))
            (t 
             ;; Shortcuts are handled by the shortcut layer.
             (let ((emulation-var (intern (concat "ergoemacs--for-" (symbol-name hook) "-with-" (symbol-name map-name))))
@@ -1936,48 +1987,6 @@ Will attempt to restore the mode state when turning off the component/theme."
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
-                                                   full-shortcut-map-p)
-  (let (fn-lst)
-    (cond
-     ((condition-case err
-          (interactive-form (nth 0 args))
-        (error nil))
-      (setq fn-lst (ergoemacs-shortcut-remap-list
-                    (nth 0 args) lookup-keymap))
-      (if fn-lst
-          (condition-case nil
-              (progn
-                (ergoemacs-theme-component--ignore-globally-defined-key key)
-                (define-key keymap key (nth 0 (nth 0 fn-lst)))))
-        (when full-shortcut-map-p
-          (condition-case nil
-              (progn
-                (ergoemacs-theme-component--ignore-globally-defined-key key)
-                (when (or (commandp (nth 0 args) t)
-                          (keymapp (nth 0 args)))
-                  (define-key keymap key (nth 0 args))))))))
-     (full-shortcut-map-p
-      (condition-case nil
-          (progn
-            (ergoemacs-theme-component--ignore-globally-defined-key key)
-            (define-key keymap key
-              `(lambda(&optional arg)
-                 (interactive "P")
-                 (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args))))))))))
-
-(defun ergoemacs-theme--install-shortcuts-list (shortcut-list keymap lookup-keymap full-shortcut-map-p)
-  "Install shortcuts for SHORTCUT-LIST into KEYMAP.
-LOOKUP-KEYMAP
-FULL-SHORTCUT-MAP-P "
-  (mapc
-   (lambda(y)
-     (let ((key (nth 0 y))
-           (args (nth 1 y)))
-       (ergoemacs-theme--install-shortcut-item
-        key args keymap lookup-keymap
-        full-shortcut-map-p)))
-   shortcut-list))
 
 (defun ergoemacs-theme-component-keymaps-for-hook (hook component &optional version)
   "Gets the keymaps for COMPONENT and component VERSION for HOOK.
@@ -3471,7 +3480,7 @@ This also:
            ergoemacs-theme-save-variables-actual))
     (setq ergoemacs-theme-save-variables-actual  nil
           ergoemacs-theme-save-variables-state   nil)))
-
+(defvar ergoemacs-M-x "M-x ")
 (defun ergoemacs-theme-install (theme &optional version)
   "Installs `ergoemacs-theme' THEME into appropriate keymaps."
   (let ((tc (ergoemacs-theme-keymaps theme version)))
@@ -3489,7 +3498,8 @@ This also:
     (ergoemacs-theme-remove-key-list
      (if (nth 5 tc)
          (append (nth 5 tc) ergoemacs-global-override-rm-keys)
-       ergoemacs-global-override-rm-keys))))
+       ergoemacs-global-override-rm-keys))
+    (setq ergoemacs-M-x (substitute-command-keys "\\[execute-extended-command] "))))
 
 (defvar ergoemacs-theme-hash (make-hash-table :test 'equal))
 

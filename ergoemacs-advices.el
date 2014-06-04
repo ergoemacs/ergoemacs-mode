@@ -124,39 +124,10 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 
 (eval-after-load "helm"
   '(progn
-     ;; (defadvice helm-M-x (around ergoemacs-helm-M-x-keys)
-;;        "Translates Helm M-x keys to ergoemacs style bindings."
-;;        (flet ((helm-M-x-transformer
-;;                (candidates sources)
-;;                "filtered-candidate-transformer to show bindings in emacs commands.
-;; Show global bindings and local bindings according to current `major-mode'."
-;;                (with-helm-current-buffer
-;;                  (loop with local-map = (helm-M-x-current-mode-map-alist)
-;;                        for cand in candidates
-;;                        for local-key  = (car (rassq cand local-map))
-     ;;                        for key        = (substitute-command-keys (format "\\[%s]" cand))
-;;                        collect
-;;                        (cons (cond ((and (string-match "^M-x" key) local-key)
-;;                                     (format "%s (%s)"
-;;                                             cand (propertize
-;;                                                   (if (and ergoemacs-use-ergoemacs-key-descriptions ergoemacs-mode)
-;;                                                       (ergoemacs-pretty-key local-key)
-;;                                                     local-key)
-;;                                                   'face 'helm-M-x-key)))
-;;                                    ((string-match "^M-x" key) cand)
-;;                                    (t (format "%s (%s)"
-;;                                               cand (propertize
-;;                                                     (if (and ergoemacs-use-ergoemacs-key-descriptions ergoemacs-mode)
-;;                                                         (ergoemacs-pretty-key key)
-;;                                                       key)
-;;                                                     'face 'helm-M-x-key))))
-;;                              cand) into ls
-;;                              finally return
-;;                              (sort ls #'helm-command-M-x-sort-fn)))))
-;;          ad-do-it))
-
-     ;; (ad-activate 'helm-M-x)
-     ))
+     (defadvice helm-M-x (around ergoemacs-helm-M-x-keys activate)
+       "Make ``helm-M-x' work correctly with `ergoemacs-mode' pretty keys"
+       (let ((ergoemacs-use-M-x-p t))
+         ad-do-it))))
 
 
 (defadvice cua-mode (around ergoemacs-activate-only-selection-mode (arg) activate)
@@ -240,7 +211,8 @@ will add MAP to substitution."
            (test-hash (gethash test-vect ergoemacs-original-keys-to-shortcut-keys)))
       (if test-hash
           (progn
-            (ergoemacs-pretty-key (key-description (nth 0 test-hash))))
+            (setq test (key-description (nth 0 test-hash)))
+            (ergoemacs-pretty-key test))
         (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
                               ergoemacs-shortcut-keys)
           (ergoemacs-pretty-key
@@ -304,6 +276,9 @@ will add MAP to substitution."
                            "|"))
         (goto-char (point-min))
         (insert test "\n")
+        (goto-char (point-max))
+        (insert "\n" test "\n\n")
+        (goto-char (point-min))
         (while (re-search-forward "|-.*\\(\n|-.*\\)*" nil t)
           (replace-match test))
         (goto-char (point-min))
@@ -311,8 +286,6 @@ will add MAP to substitution."
           (replace-match (format "| \\1%s | \\2%s |"
                                  (make-string (max 0 (- max1 (length (match-string 1)))) ? )
                                  (make-string (max 0 (- max2 (+ 3 (length (match-string 2))))) ? ))))
-        (goto-char (point-max))
-        (insert "\n" test "\n\n")
         (setq ret (buffer-string)))
       ret)))
 
@@ -338,24 +311,22 @@ thus, \=\= puts \= into the output, and \=\[ puts \[ into the output.
 Return the original STRING if no substitutions are made.
 Otherwise, return a new string, without any text properties.
 "
-  (let (ret str mapvar)
-    (if (not ergoemacs-mode)
-        (setq ret (ergoemacs-real-substitute-command-keys string))
-      (with-temp-buffer
-        (insert string)
-        (goto-char (point-min))
-        (while (re-search-forward "\\\\\\(\\[\\|<\\).*?\\(\\]\\|>\\)" nil t)
-          (if (string-match-p "\\`<" (match-string 0))
-              (setq mapvar (match-string 0))
-            (replace-match (ergoemacs-substitute-command (match-string 0) mapvar))))
-        (goto-char (point-min))
-        (while (re-search-forward "\\\\{.*?}" nil t)
-          (replace-match (ergoemacs-substitute-map (match-string 0))))
-        (setq ret (buffer-string))))
-    ret))
-
-
-
+  (if (not string) nil
+    (let (ret str mapvar)
+      (if (not ergoemacs-mode)
+          (setq ret (ergoemacs-real-substitute-command-keys string))
+        (with-temp-buffer
+          (insert string)
+          (goto-char (point-min))
+          (while (re-search-forward "\\\\\\(\\[\\|<\\).*?\\(\\]\\|>\\)" nil t)
+            (if (string-match-p "\\`<" (match-string 0))
+                (setq mapvar (match-string 0))
+              (replace-match (ergoemacs-substitute-command (match-string 0) mapvar))))
+          (goto-char (point-min))
+          (while (re-search-forward "\\\\{.*?}" nil t)
+            (replace-match (ergoemacs-substitute-map (match-string 0))))
+          (setq ret (buffer-string))))
+      ret)))
 
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
