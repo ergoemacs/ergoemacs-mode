@@ -1808,12 +1808,6 @@ If arg is a negative prefix, copy file path only"
         (let ((inhibit-read-only t))
           (ergoemacs-pretty-key-rep))))))
 
-(defun ergoemacs-help-refactor-keys-hook ()
-  "Changes keys to ergoemacs key descriptions."
-  (when ergoemacs-mode
-    (ergoemacs-translate-keybindings)))
-
-(add-hook 'temp-buffer-show-hook 'ergoemacs-help-refactor-keys-hook)
 
 (defun ergoemacs-describe-major-mode ()
   "Show inline doc for current major-mode."
