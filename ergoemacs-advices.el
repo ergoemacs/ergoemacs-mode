@@ -254,7 +254,7 @@ will add MAP to substitution."
                             ergoemacs-shortcut-keys)
         (setq test (funcall function string))
         (while (string-match "^.*\\<ergoemacs-shortcut.*\n" test)
-          (setq test (replace-match "" test)))
+          (setq test (replace-match "" nil nil test)))
         (when (string-match ".*\n.*\n" test)
           (setq ret (ergoemacs-substitute-map--1
                      (concat (match-string 0 test)
