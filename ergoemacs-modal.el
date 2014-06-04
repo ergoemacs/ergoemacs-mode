@@ -201,21 +201,8 @@ modal state is currently enabled."
 
 (defun ergoemacs-minibuffer-setup ()
   "Exit temporary overlay maps."
-  ;; (setq ergoemacs-exit-temp-map-var t)
-  (ergoemacs-debug-heading "ergoemacs-minibuffer-setup")
-  (ergoemacs-debug "emulation-mode-map-alists: %s" emulation-mode-map-alists)
-  (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s"
-                   (mapcar
-                    (lambda(x) (nth 0 x))
-                    ergoemacs-emulation-mode-map-alist))
-  (ergoemacs-debug "minor-mode-map-alist: %s"
-                   (mapcar
-                    (lambda(x) (nth 0 x))
-                    minor-mode-map-alist))
   ;; (setq ergoemacs-shortcut-keys t)
-  (ergoemacs-debug "ergoemacs-shortcut-keys: %s" ergoemacs-shortcut-keys)
-  (ergoemacs-debug "ergoemacs-mode: %s" ergoemacs-mode)
-  (ergoemacs-debug "ergoemacs-unbind-keys: %s" ergoemacs-unbind-keys))
+  )
 
 (defun ergoemacs-modal-p ()
   "Determine if the command should be modal.

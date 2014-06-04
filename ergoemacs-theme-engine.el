@@ -222,6 +222,30 @@
      :type list))
   "`ergoemacs-mode' fixed-map class")
 
+(defmethod ergoemacs-debug-obj ((obj ergoemacs-fixed-map))
+  (ergoemacs-debug-heading (oref obj object-name))
+  (with-slots (map
+               shortcut-map
+               no-shortcut-map
+               read-map
+               unbind-map) obj
+    (ergoemacs-debug "*** Read\n")
+    (ergoemacs-debug "%s\n" read-map)
+    (ergoemacs-debug-keymap read-map)
+    (ergoemacs-debug "*** Fixed\n")
+    (ergoemacs-debug "%s\n" map)
+    (ergoemacs-debug-keymap map)
+    (ergoemacs-debug "*** Shortcut\n")
+    (ergoemacs-debug "%s\n" shortcut-map)
+    (ergoemacs-debug-keymap shortcut-map)
+    (ergoemacs-debug "*** Shortcut Free\n")
+    (ergoemacs-debug "%s\n" no-shortcut-map)
+    (ergoemacs-debug-keymap no-shortcut-map)
+    (ergoemacs-debug "*** Unbind\n")
+    (ergoemacs-debug "%s\n" unbind-map)
+    (ergoemacs-debug-keymap unbind-map)
+    ))
+
 (defmethod ergoemacs-define-map--shortcut-list ((obj ergoemacs-fixed-map) key-vect def)
   "Define KEY-VECT with DEF in slot shortcut-list for OBJ."
   (with-slots (shortcut-list) obj
@@ -825,6 +849,19 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
 
 (defmethod ergoemacs-get-keymaps-for-hook ((obj ergoemacs-theme-component-map-list) hook &optional ret)
   (ergoemacs-get-hooks obj (concat "\\`" (regexp-quote (symbol-name hook)) "\\'") ret t))
+
+
+(defmethod ergoemacs-debug-obj ((obj ergoemacs-theme-component-map-list))
+  (with-slots (map-list object-name) obj
+    (ergoemacs-debug-obj (ergoemacs-get-fixed-map obj))
+    (ergoemacs-debug "* %s" object-name)
+    (dolist (map-obj map-list)
+      (when (ergoemacs-theme-component-maps-p map-obj)
+        (ergoemacs-debug-obj (ergoemacs-get-fixed-map map-obj)))))
+  (call-interactively 'ergoemacs-debug)
+  (org-hide-block-all))
+
+
 
 (defvar ergoemacs-original-keys-to-shortcut-keys-regexp ""
   "Regular expression of original keys that have shortcuts.")

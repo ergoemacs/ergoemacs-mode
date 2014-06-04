@@ -77,9 +77,12 @@
 
 (defun ergoemacs-debug-keymap (keymap)
   "Print keymap bindings."
-  (ergoemacs-debug-heading
-   (format "Keymap Description: %s" (symbol-name keymap)))
-  (ergoemacs-debug (substitute-command-keys (format "\\{%s}" (symbol-name keymap)))))
+  (if (not (ignore-errors (symbolp (symbol-name keymap))))
+      (let ((temp-map keymap))
+        (ergoemacs-debug "%s" (substitute-command-keys "\\{temp-map}")))
+    (ergoemacs-debug-heading "%s"
+     (format "Keymap Description: %s" (symbol-name keymap)))
+    (ergoemacs-debug "%s" (substitute-command-keys (format "\\{%s}" (symbol-name keymap))))))
 
 (defvar ergoemacs-debug-heading-start-time (float-time))
 (defvar ergoemacs-debug-heading-last-time (float-time))

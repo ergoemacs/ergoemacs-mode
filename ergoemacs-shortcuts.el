@@ -1794,7 +1794,8 @@ Setup C-c and C-x keys to be described properly.")
         (when lookup
           ;; (ergoemacs-debug-heading "Remove ergoemacs from `overriding-local-map'")
           (setq overriding-local-map lookup)
-          (ergoemacs-debug-keymap 'overriding-local-map))))
+          ;; (ergoemacs-debug-keymap 'overriding-local-map)
+          )))
      ((progn
         (setq override-text-map (get-char-property (point) 'keymap))
         (and (keymapp override-text-map)
