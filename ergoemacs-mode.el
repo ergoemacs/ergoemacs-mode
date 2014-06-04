@@ -734,8 +734,7 @@ When VAR and KEYMAP are specified, replace the keymap in the
          (and x (setq ergoemacs-emulation-mode-map-alist
                       (cons x (delq x ergoemacs-emulation-mode-map-alist)))))))
    ;; Promoted from least to most important
-   '(ergoemacs-global-override-p
-     ergoemacs-shortcut-keys
+   '(ergoemacs-shortcut-keys
      ergoemacs-shortcut-override-mode
      ergoemacs-modal
      ergoemacs-repeat-keys
