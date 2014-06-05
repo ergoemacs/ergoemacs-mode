@@ -115,6 +115,13 @@
                       (apply 'format arg)
                     (error (format "Bad Format String: %s" arg)))))))
 
+(defun ergoemacs-debug-clear ()
+  "Clears the variable `ergoemacs-debug' and `ergoemacs-debug-buffer'"
+  (setq ergoemacs-debug "")
+  (save-excursion
+    (with-current-buffer (get-buffer-create ergoemacs-debug-buffer) 
+      (delete-region (point-min) (point-max)))))
+
 (defun ergoemacs-debug-flush ()
   "Flushes ergoemacs debug to `ergoemacs-debug-buffer'"
   (save-excursion
