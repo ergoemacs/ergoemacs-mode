@@ -1126,10 +1126,22 @@ When REMOVE-P is non-nil, remove hooks
   "Defines KEY to be DEF in KEYMAP for object `ergoemacs-theme-component-maps--curr-component'."
   (if (not (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component))
       (warn "`ergoemacs-define-key' is meant to be called in a theme definition.")
-    (ergoemacs-define-map
-     ergoemacs-theme-component-maps--curr-component
-     (or (and (memq keymap '(global-map ergoemacs-keymap)) ergoemacs-theme-component-maps--global-map) keymap)
-     key def)))
+    (let* ((ergoemacs-theme-component-maps--hook
+            (or
+             ergoemacs-theme-component-maps--hook
+             (and (not (memq keymap '(global-map ergoemacs-keymap)))
+                  (string-match-p "\\(mode\\|\\(key\\)?map\\)" (symbol-name keymap))
+                  (intern (if (string-match "mode" (symbol-name keymap))
+                              (replace-regexp-in-string "mode.*" "mode-hook" (symbol-name keymap))
+                            (replace-regexp-in-string "\\(key\\)?map" "mode-hook" (symbol-name keymap)))))))
+           (map (or (and (memq keymap '(global-map ergoemacs-keymap))
+                         (or ergoemacs-theme-component-maps--global-map
+                             (and ergoemacs-theme-component-maps--hook
+                                  (string-match "-mode\\'" (symbol-name ergoemacs-theme-component-maps--hook))
+                                  ergoemacs-theme-component-maps--hook))) keymap)))
+      (ergoemacs-define-map
+       ergoemacs-theme-component-maps--curr-component
+       map key def))))
 
 (defun ergoemacs-set (symbol newval)
   (if (not (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component))
@@ -1155,12 +1167,12 @@ When REMOVE-P is non-nil, remove hooks
 (defun ergoemacs-theme-component--with-hook (hook plist body)
   ;; Adapted from Stefan Monnier
   (let ((ergoemacs-theme-component-maps--hook
-         (or (and (string-match-p "-hook\\'" (symbol-name hook)) hook)
-             (and (string-match-p "mode.*" (symbol-name hook))
+         (or (and (string-match-p "-\\(hook\\|mode\\)\\'" (symbol-name hook)) hook)
+             (and (string-match-p "mode-.*" (symbol-name hook))
                   (save-match-data
                     (intern-soft
                      (replace-regexp-in-string
-                      "-mode.*" "mode-hook"
+                      "-mode-.*" "mode-hook"
                       (symbol-name hook)))))
              (and (string-match-p "(key)?map" (symbol-name hook))
                   (save-match-data
@@ -1308,7 +1320,15 @@ additional parsing routines defined by PARSE-FUNCTION."
     (list plist remaining)))
 
 (defun ergoemacs-theme-component--create-component (plist body)
+  ;; Reset variables.
   (let* ((ergoemacs-theme-component-maps--versions '())
+         (ergoemacs-theme-component-maps--always nil)
+         (ergoemacs-theme-component-maps--full-map nil)
+         (ergoemacs-theme-component-maps--modify-map nil)
+         (ergoemacs-theme-component-maps--global-map nil)
+         (ergoemacs-theme-component-maps--curr-component nil)
+         (ergoemacs-theme-component-maps--versions '())
+         (ergoemacs-theme-component-maps--hook nil)
          (ergoemacs-theme-component-maps--curr-component
           (ergoemacs-theme-component-maps
            (plist-get plist ':name)
