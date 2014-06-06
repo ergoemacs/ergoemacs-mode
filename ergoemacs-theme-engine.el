@@ -893,27 +893,24 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
 (defvar ergoemacs-applied-inits '())
 
 (defmethod ergoemacs-apply-inits ((obj ergoemacs-theme-component-map-list))
-  (dolist (init (ergoemacs-apply-inits obj))
-    (let ((var (nth 0 init))
-          (fun (nth 1 init))
-          ret)
-      (cond
-       ((not (boundp var)) ;; Do nothing, not bound yet.
-        )
-       ((assq var ergoemacs-applied-inits)
-        ;; Already applied, Do nothing for now.
-        )
-       ((and (string-match-p "-mode$" (symbol-name var))
-             (ignore-errors (commandp var t)))
-        (push (list var (if (symbol-value var) 1 -1))
-              ergoemacs-applied-inits)
-        ;; Minor mode toggle... (minor-mode deferred-arg)
-        (funcall var (funcall fun)))
-       (t
-        ;; Variable state change
-        (push (list var (symbol-value var))
-              ergoemacs-applied-inits)
-        (set var (funcall fun)))))))
+  (dolist (init (ergoemacs-get-inits obj))
+    (cond
+     ((not (boundp (nth 0 init))) ;; Do nothing, not bound yet.
+      )
+     ((assq (nth 0 init) ergoemacs-applied-inits)
+      ;; Already applied, Do nothing for now.
+      )
+     ((and (string-match-p "-mode$" (symbol-name (nth 0 init)))
+           (ignore-errors (commandp (nth 0 init) t)))
+      (push (list (nth 0 init) (if (symbol-value (nth 0 init)) 1 -1))
+            ergoemacs-applied-inits)
+      ;; Minor mode toggle... (minor-mode deferred-arg)
+      (funcall (nth 0 init) (funcall (nth 1 init))))
+     (t
+      ;; (Nth 0 Init)iable state change
+      (push (list (nth 0 init) (symbol-value (nth 0 init)))
+            ergoemacs-applied-inits)
+      (set (nth 0 init) (funcall (nth 1 init)))))))
 
 (defun ergoemacs-remove-inits ()
   "Remove the applied initilizations of modes and variables.
