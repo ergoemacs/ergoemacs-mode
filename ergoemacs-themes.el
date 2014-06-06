@@ -851,7 +851,8 @@
 (ergoemacs-theme-component ido-remaps ()
   "Remaps for ido-mode"
   (when ido-mode
-    (global-set-key [remap execute-extended-command] 'smex)))
+    (global-set-key [remap execute-extended-command] 'smex))
+  (setq smex-prompt-string (substitute-command-keys "\\[execute-extended-command] ")))
 
 (ergoemacs-theme-component ergoemacs-remaps ()
   "Remaps for ergoemacs-mode"

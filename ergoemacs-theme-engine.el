@@ -998,8 +998,11 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-deferred-maps '()
   "List of keymaps that should be modified, but haven't been loaded.")
 
+(defvar ergoemacs-deferred-keys '()
+  "List of keys that have deferred bindings.")
+
 (defmethod ergoemacs-emulation-alists ((obj ergoemacs-theme-component-map-list) &optional remove-p)
-  ;; First call 8 sec; Second call 2 sec.
+  ;; First call 8 sec; Second call 2 sec.. Need to speed up?
   (with-slots (read-map
                map
                shortcut-map
@@ -1008,20 +1011,21 @@ FULL-SHORTCUT-MAP-P "
                shortcut-list
                rm-keys) (ergoemacs-get-fixed-map obj)
     (let ((hook-map-list '())
+          (i 0)
           ergoemacs-emulation-mode-map-alist
           ergoemacs-read-emulation-mode-map-alist)
       (setq ergoemacs-read-emulation-mode-map-alist
             `((ergoemacs-read-input-keys ,@(or read-map (make-sparse-keymap)))))
       (dolist (hook (ergoemacs-get-hooks obj))
         (let ((emulation-var (intern (concat "ergoemacs--for-" (symbol-name hook))))
-              (tmp '()) o-map n-map)
+              (tmp '()) o-map n-map
+              (defer '()))
           (dolist (map-name (ergoemacs-get-keymaps-for-hook obj hook))
-            
             (with-slots (map
                          modify-map
                          full-map
-                         always) (ergoemacs-get-fixed-map obj map-name)
-              
+                         always
+                         deferred-keys) (ergoemacs-get-fixed-map obj map-name)
               (cond
                ((and modify-map always)
                 ;; Maps that are always modified.
@@ -1029,7 +1033,7 @@ FULL-SHORTCUT-MAP-P "
                   (fset fn-name
                         `(lambda() ,(format "Turn on `ergoemacs-mode' for `%s' during the hook `%s'."
                                        (symbol-name map-name) (symbol-name hook))
-                           (let ((new-map (copy-keymap ,map)))
+                           (let ((new-map (copy-keymap (quote ,map))))
                              (set ',map-name
                                 (copy-keymap
                                  (make-composed-keymap
@@ -1038,48 +1042,59 @@ FULL-SHORTCUT-MAP-P "
                   (funcall (if remove-p #'remove-hook #'add-hook) hook
                            emulation-var)))
                ((and modify-map (not (boundp map-name)))
-                (pushnew (list map-name full-map map) ergoemacs-deferred-maps))
+                (pushnew (list map-name full-map map deferred-keys) ergoemacs-deferred-maps))
                ((and modify-map (boundp map-name))
                 ;; Maps that are modified once (modify NOW if bound);
-                ;; no need for hooks.
-                (setq o-map (gethash map-name ergoemacs-original-map-hash))
-                (if remove-p
-                    (progn
-                      (message "Restore %s"  map-name)
-                      (when o-map
-                        (set map-name (copy-keymap o-map))))
-                  (message "Modify %s"  map-name)
-                  (unless o-map
-                    (setq o-map (copy-keymap (symbol-value map-name)))
-                    (puthash map-name o-map ergoemacs-original-map-hash))
-                  (setq n-map (copy-keymap map))
-                  (set map-name (copy-keymap
-                                 (make-composed-keymap
-                                  (ergoemacs-theme--install-shortcuts-list
-                                   shortcut-list n-map o-map full-map)
-                                  o-map)))))
+                ;; no need for hooks?
+                ;; (setq defer (append defer (cons map-name deferred-keys)))
+                ;; (setq o-map (gethash map-name ergoemacs-original-map-hash))
+                ;; (if remove-p
+                ;;     (when o-map
+                ;;       (message "Restore %s"  map-name)
+                ;;       (set map-name (copy-keymap o-map)))
+                ;;   (message "Modify %s"  map-name)
+                ;;   (unless o-map
+                ;;     (setq o-map (copy-keymap (symbol-value map-name)))
+                ;;     (puthash map-name o-map ergoemacs-original-map-hash))
+                ;;   (setq n-map (copy-keymap map))
+                ;;   (set map-name (copy-keymap
+                ;;                  (make-composed-keymap
+                ;;                   (ergoemacs-theme--install-shortcuts-list
+                ;;                    shortcut-list n-map o-map full-map)
+                ;;                   o-map))))
+                )
                (t ;; Maps that are not modified.
                 (unless remove-p
                   (message "Setup %s"  hook)
-                  (unless (fboundp emulation-var)
-                    (set-default emulation-var nil)
-                    (fset emulation-var
-                          `(lambda() ,(format "Turn on `ergoemacs-mode' keymaps for `%s'.
+                  (fset emulation-var
+                        `(lambda() ,(format "Turn on `ergoemacs-mode' keymaps for `%s'.
 This is done by locally setting `ergoemacs--for-%s' to be non-nil.
 The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'." (symbol-name hook) (symbol-name hook))
-                             (set (make-local-variable ,emulation-var) t))))
+                           (set (make-local-variable #',emulation-var) t)))
+                  (set emulation-var nil)
+                  (set-default emulation-var nil)
                   (push map tmp))
                 (funcall (if remove-p #'remove-hook #'add-hook) hook
                          emulation-var)))))
           (unless (equal tmp '())
+            (unless (eq defer '())
+              (push (cons i defer) ergoemacs-deferred-keys))
+            (setq i (+ i 1))
             (push (cons emulation-var (ergoemacs-get-fixed-map--composite tmp))
                   hook-map-list))))
       (setq ergoemacs-emulation-mode-map-alist
-            `(,@hook-map-list
-              ,@(mapcar
-                 (lambda(remap)
-                   (cons remap (oref (ergoemacs-get-fixed-map obj remap) map)))
-                 (ergoemacs-get-hooks obj "-mode\\'"))
+            `(,@(reverse
+                 (append
+                  hook-map-list
+                  (mapcar
+                   (lambda(remap)
+                     (with-slots (map
+                                  deferred-keys) (ergoemacs-get-fixed-map obj remap)
+                       (when deferred-keys
+                         (push (cons i (cons remap deferred-keys)) ergoemacs-deferred-keys))
+                       (setq i (+ i 1))
+                       (cons remap map)))
+                   (ergoemacs-get-hooks obj "-mode\\'"))))
               (ergoemacs-shortcut-keys ,@(or shortcut-map (make-sparse-keymap)))))
       ergoemacs-emulation-mode-map-alist)))
 
