@@ -234,7 +234,8 @@
                  modify-map
                  deferred-keys
                  full-map) obj
-      (ergoemacs-debug "%s %s" stars object-name)
+      (ergoemacs-debug "%s %s" (or (and (string= stars "") "Keymap:")
+                                   stars) object-name)
       (ergoemacs-debug "Deferred Keys: %s" deferred-keys)
       (cond
        ((ergoemacs-keymap-empty-p read-map)
@@ -898,9 +899,12 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
       (ergoemacs-debug "*** Hooks")
       (dolist (hook (ergoemacs-get-hooks obj))
         (ergoemacs-debug "**** %s" hook)
-        (dolist (map (ergoemacs-get-keymaps-for-hook obj hook))
-          (ergoemacs-debug-obj (ergoemacs-get-fixed-map obj map)
-                               "*****")))
+        (setq tmp (ergoemacs-get-keymaps-for-hook obj hook))
+        (if (= 1 (length tmp))
+            (ergoemacs-debug-obj (ergoemacs-get-fixed-map obj (nth 0 tmp)) "")
+          (dolist (map tmp)
+            (ergoemacs-debug-obj (ergoemacs-get-fixed-map obj map)
+                                 "*****"))))
       (ergoemacs-debug "*** Emulations" )
       (dolist (mode (ergoemacs-get-hooks obj "-mode\\'"))
         (ergoemacs-debug-obj (ergoemacs-get-fixed-map obj mode) "****"))
