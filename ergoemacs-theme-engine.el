@@ -957,8 +957,46 @@ This assumes the variables are stored in `ergoemacs-applied-inits'"
         (set var val)))))
   (setq ergoemacs-applied-inits '()))
 
+(defun ergoemacs-theme--install-shortcuts-list (shortcut-list keymap lookup-keymap full-shortcut-map-p)
+  "Install shortcuts for SHORTCUT-LIST into KEYMAP.
+LOOKUP-KEYMAP
+FULL-SHORTCUT-MAP-P "
+  (dolist (y shortcut-list)
+    (let ((key (nth 0 y))
+          (args (nth 1 y)))
+      (ergoemacs-theme--install-shortcut-item
+       key args keymap lookup-keymap
+       full-shortcut-map-p))))
+
+(defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
+                                                   full-shortcut-map-p)
+  (let (fn-lst)
+    (cond
+     ((commandp (nth 0 args))
+      (setq fn-lst (ergoemacs-shortcut-remap-list (nth 0 args) lookup-keymap))
+      (if fn-lst
+          (ignore-errors
+            (ergoemacs-theme-component--ignore-globally-defined-key key)
+            (define-key keymap key (nth 0 (nth 0 fn-lst))))
+        (when full-shortcut-map-p
+          (ignore-errors
+            (ergoemacs-theme-component--ignore-globally-defined-key key)
+            (when (or (commandp (nth 0 args) t)
+                      (keymapp (nth 0 args)))
+              (define-key keymap key (nth 0 args)))))))
+     (full-shortcut-map-p
+      (ignore-errors
+        (ergoemacs-theme-component--ignore-globally-defined-key key)
+        (define-key keymap key
+          `(lambda(&optional arg)
+             (interactive "P")
+             (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args)))))))))
+
 (defvar ergoemacs-original-map-hash (make-hash-table)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
+
+(defvar ergoemacs-deferred-maps '()
+  "List of keymaps that should be modified, but haven't been loaded.")
 
 (defmethod ergoemacs-emulation-alists ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   ;; First call 8 sec; Second call 2 sec.
@@ -976,7 +1014,7 @@ This assumes the variables are stored in `ergoemacs-applied-inits'"
             `((ergoemacs-read-input-keys ,@(or read-map (make-sparse-keymap)))))
       (dolist (hook (ergoemacs-get-hooks obj))
         (let ((emulation-var (intern (concat "ergoemacs--for-" (symbol-name hook))))
-              (tmp '()))
+              (tmp '()) o-map n-map)
           (dolist (map-name (ergoemacs-get-keymaps-for-hook obj hook))
             
             (with-slots (map
@@ -988,15 +1026,38 @@ This assumes the variables are stored in `ergoemacs-applied-inits'"
                ((and modify-map always)
                 ;; Maps that are always modified.
                 (let ((fn-name (intern (concat (symbol-name emulation-var) "-and-" (symbol-name map-name)))))
-                  
-                  ))
+                  (fset fn-name
+                        `(lambda() ,(format "Turn on `ergoemacs-mode' for `%s' during the hook `%s'."
+                                       (symbol-name map-name) (symbol-name hook))
+                           (let ((new-map (copy-keymap ,map)))
+                             (set ',map-name
+                                (copy-keymap
+                                 (make-composed-keymap
+                                  (ergoemacs-theme--install-shortcuts-list
+                                   ,shortcut-list new-map ,map-name ,full-map) ,map-name))))))
+                  (funcall (if remove-p #'remove-hook #'add-hook) hook
+                           emulation-var)))
+               ((and modify-map (not (boundp map-name)))
+                (pushnew (list map-name full-map map) ergoemacs-deferred-maps))
                ((and modify-map (boundp map-name))
                 ;; Maps that are modified once (modify NOW if bound);
                 ;; no need for hooks.
+                (setq o-map (gethash map-name ergoemacs-original-map-hash))
                 (if remove-p
                     (progn
-                      (message "Restore %s"  map-name))
-                  (message "Modify %s")))
+                      (message "Restore %s"  map-name)
+                      (when o-map
+                        (set map-name (copy-keymap o-map))))
+                  (message "Modify %s"  map-name)
+                  (unless o-map
+                    (setq o-map (copy-keymap (symbol-value map-name)))
+                    (puthash map-name o-map ergoemacs-original-map-hash))
+                  (setq n-map (copy-keymap map))
+                  (set map-name (copy-keymap
+                                 (make-composed-keymap
+                                  (ergoemacs-theme--install-shortcuts-list
+                                   shortcut-list n-map o-map full-map)
+                                  o-map)))))
                (t ;; Maps that are not modified.
                 (unless remove-p
                   (message "Setup %s"  hook)
@@ -1061,43 +1122,6 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
 
 (defvar ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
-
-
-(defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
-                                                   full-shortcut-map-p)
-  (let (fn-lst)
-    (cond
-     ((commandp (nth 0 args))
-      (setq fn-lst (ergoemacs-shortcut-remap-list
-                    (nth 0 args) lookup-keymap))
-      (if fn-lst
-          (ignore-errors
-            (ergoemacs-theme-component--ignore-globally-defined-key key)
-            (define-key keymap key (nth 0 (nth 0 fn-lst))))
-        (when full-shortcut-map-p
-          (ignore-errors
-            (ergoemacs-theme-component--ignore-globally-defined-key key)
-            (when (or (commandp (nth 0 args) t)
-                      (keymapp (nth 0 args)))
-              (define-key keymap key (nth 0 args)))))))
-     (full-shortcut-map-p
-      (ignore-errors
-        (ergoemacs-theme-component--ignore-globally-defined-key key)
-        (define-key keymap key
-          `(lambda(&optional arg)
-             (interactive "P")
-             (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args)))))))))
-
-(defun ergoemacs-theme--install-shortcuts-list (shortcut-list keymap lookup-keymap full-shortcut-map-p)
-  "Install shortcuts for SHORTCUT-LIST into KEYMAP.
-LOOKUP-KEYMAP
-FULL-SHORTCUT-MAP-P "
-  (dolist (y shortcut-list)
-    (let ((key (nth 0 y))
-          (args (nth 1 y)))
-      (ergoemacs-theme--install-shortcut-item
-       key args keymap lookup-keymap
-       full-shortcut-map-p))))
 
 ;; (defvar ergoemacs-theme-hook-installed '()
 ;;   "Installed hooks")
