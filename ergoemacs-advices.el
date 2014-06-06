@@ -195,10 +195,6 @@ This assumes any key defined while running a hook is a user-defined hook."
   (ergoemacs-with-global
    ad-do-it))
 
-;;; Unfortunately, the advice route doesn't seem to work :(
-
-(fset 'ergoemacs-real-substitute-command-keys (symbol-function 'substitute-command-keys))
-
 (defun ergoemacs-substitute-command (string &optional map)
   "Substitutes command STRING
 will add MAP to substitution."
@@ -296,26 +292,9 @@ will add MAP to substitution."
 
 
 
-(defun substitute-command-keys (string)
-  "Substitute key descriptions for command names in STRING.
-Each substring of the form \[COMMAND] is replaced by either a
-keystroke sequence that invokes COMMAND, or \"M-x COMMAND\" if COMMAND
-is not on any keys.
-
-Each substring of the form \{MAPVAR} is replaced by a summary of
-the value of MAPVAR as a keymap.  This summary is similar to the one
-produced by `describe-bindings'.  The summary ends in two newlines
- (used by the helper function `help-make-xrefs' to find the end of the
-      summary).
-
-Each substring of the form \<MAPVAR> specifies the use of MAPVAR
-as the keymap for future \[COMMAND] substrings.
-\= quotes the following character and is discarded;
-thus, \=\= puts \= into the output, and \=\[ puts \[ into the output.
-
-Return the original STRING if no substitutions are made.
-Otherwise, return a new string, without any text properties.
-"
+(defun ergoemacs-substitute-command-keys (string)
+  "`ergoemacs-mode' replacement for substitute-command-keys.
+Actual substitute-command-keys is always in `ergoemacs-real-substitute-command-keys'"
   (if (not string) nil
     (let (ret str mapvar)
       (if (not ergoemacs-mode)
@@ -323,16 +302,47 @@ Otherwise, return a new string, without any text properties.
         (with-temp-buffer
           (insert string)
           (goto-char (point-min))
-          (while (re-search-forward "\\\\\\(\\[\\|<\\).*?\\(\\]\\|>\\)" nil t)
-            (if (string-match-p "\\`<" (match-string 0))
-                (setq mapvar (match-string 0))
-              (replace-match (ergoemacs-substitute-command (match-string 0) mapvar) t t)))
+          (while (re-search-forward "\\<M-x " nil t)
+            (replace-match (ergoemacs-substitute-command "\\[execute-extended-command] " "\\<global-map>") t t))
           (goto-char (point-min))
-          (while (re-search-forward "\\\\{.*?}" nil t)
-            (replace-match (ergoemacs-substitute-map (match-string 0)) t t))
+          (while (re-search-forward "\\(\\(?:\\\\=\\)?\\)\\\\\\(\\[\\|<\\|{\\)\\(.*?\\)\\(\\]\\|>\\|}\\)" nil t)
+            (cond
+             ((string-match-p "\\\\=" (match-string 1))
+              (replace-match "\\\\\\2\\3\\4" t nil))
+             ((and (string-match-p "<" (match-string 2))
+                   (string-match-p ">" (match-string 4)))
+              (setq mapvar (match-string 3))
+              (replace-match ""))
+             ((and (string-match-p "{" (match-string 2))
+                   (string-match-p "}" (match-string 4)))
+              (replace-match (ergoemacs-substitute-map (match-string 0)) t t))
+             ((and (string-match-p "\\[" (match-string 2))
+                   (string-match-p "\\]" (match-string 4)))
+              (replace-match (ergoemacs-substitute-command (match-string 0) mapvar) t t))))
+          (goto-char (point-min))
+          (while (re-search-forward "\\\\=" nil t)
+            (replace-match "" t t)
+            (re-search-forward "\\=\\\\=" nil t))
           (setq ret (buffer-string))))
       ret)))
 
+;;; Unfortunately, the advice route doesn't seem to work :(
+
+(fset 'ergoemacs-real-substitute-command-keys (symbol-function 'substitute-command-keys))
+
+(fset 'ergoemacs-real-completing-read (symbol-function 'completing-read))
+(defun ergoemacs-completing-read (prompt collection &optional
+                                         predicate require-match
+                                         initial-input hist def inherit-input-method)
+  "Ergoemacs replacement of `completing-read'.
+Allows `execute-extended-command' to show the proper keys.
+The real command is always `ergoemacs-real-completing-read'.
+"
+  (ergoemacs-real-completing-read
+   (substitute-command-keys
+    (replace-regexp-in-string "\\<M-x " "\\[execute-extended-command] " prompt t t))
+   collection predicate require-match
+   initial-input hist def inherit-input-method))
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here

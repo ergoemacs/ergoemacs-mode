@@ -510,6 +510,9 @@ bindings the keymap is:
               (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
             (delete-overlay ergoemacs-read-key-overriding-overlay-save)
             (setq ergoemacs-read-key-overriding-overlay-save nil)))
+        ;; Fix `substitute-command-keys'
+        (fset 'substitute-command-keys (symbol-function 'ergoemacs-substitute-command-keys))
+        (fset 'completing-read (symbol-function 'ergoemacs-completing-read))
         (setq ergoemacs-unbind-keys t)
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
         (ergoemacs-populate-pre-command-hook)
@@ -550,6 +553,10 @@ bindings the keymap is:
     (remove-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
     (remove-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
     (ergoemacs-populate-pre-command-hook t)
+    ;; Revert `substitute-command-keys' and `completing-read'
+    (fset 'completing-read (symbol-function 'ergoemacs-real-completing-read))
+    (fset 'substitute-command-keys (symbol-function 'ergoemacs-real-substitute-command-keys))        
+
     (ergoemacs-debug-heading "Ergoemacs-mode turned OFF."))
   ;; Always have `ergoemacs-post-command-hook' on so that it will
   ;; uninstall ergoemacs keymaps that were installed to overlays and
