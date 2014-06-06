@@ -891,6 +891,7 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
     ret))
 
 (defvar ergoemacs-applied-inits '())
+
 (defmethod ergoemacs-apply-inits ((obj ergoemacs-theme-component-map-list))
   (dolist (init (ergoemacs-apply-inits obj))
     (let ((var (nth 0 init))
@@ -906,13 +907,13 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
              (ignore-errors (commandp var t)))
         (push (list var (if (symbol-value var) 1 -1))
               ergoemacs-applied-inits)
-        ;; Minor mode toggle...
-        (funcall var (funcall fun)) ;; (minor-mode deferred-arg))
+        ;; Minor mode toggle... (minor-mode deferred-arg)
+        (funcall var (funcall fun)))
        (t
         ;; Variable state change
         (push (list var (symbol-value var))
               ergoemacs-applied-inits)
-        (set var (funcall fun))))))))
+        (set var (funcall fun)))))))
 
 (defun ergoemacs-remove-inits ()
   "Remove the applied initilizations of modes and variables.
