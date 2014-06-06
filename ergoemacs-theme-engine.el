@@ -742,18 +742,12 @@ Assumes maps are orthogonal."
    (init :initarg :init
          :initform ()
          :type list)
-   (applied-init :initarg :applied-init
-                 :initform ()
-                 :type list)
    (version :initarg :version ;; "" is default version
             :initform ""
             :type string)
    (versions :initarg :versions
              :initform ()
-             :type list)
-   (deferred-init :initarg :deferred-init
-     :initform ()
-     :type list))
+             :type list))
   "`ergoemacs-mode' theme-component maps")
 
 (defmethod ergoemacs-theme-component-maps--ini ((obj ergoemacs-theme-component-maps))
@@ -889,12 +883,60 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
 (defmethod ergoemacs-get-keymaps-for-hook ((obj ergoemacs-theme-component-map-list) hook &optional ret)
   (ergoemacs-get-hooks obj (concat "\\`" (regexp-quote (symbol-name hook)) "\\'") ret t))
 
+(defmethod ergoemacs-get-inits ((obj ergoemacs-theme-component-map-list))
+  (let (ret '())
+    (with-slots (map-list) obj
+      (dolist (map map-list)
+        (setq ret (append ret (oref map init)))))
+    ret))
+
+(defvar ergoemacs-applied-inits '())
+(defmethod ergoemacs-apply-inits ((obj ergoemacs-theme-component-map-list))
+  (dolist (init (ergoemacs-apply-inits obj))
+    (let ((var (nth 0 init))
+          (fun (nth 1 init))
+          ret)
+      (cond
+       ((not (boundp var)) ;; Do nothing, not bound yet.
+        )
+       ((assq var ergoemacs-applied-inits)
+        ;; Already applied, Do nothing for now.
+        )
+       ((and (string-match-p "-mode$" (symbol-name var))
+             (ignore-errors (commandp var t)))
+        (push (list var (if (symbol-value var) 1 -1))
+              ergoemacs-applied-inits)
+        ;; Minor mode toggle...
+        (funcall var (funcall fun)) ;; (minor-mode deferred-arg))
+       (t
+        ;; Variable state change
+        (push (list var (symbol-value var))
+              ergoemacs-applied-inits)
+        (set var (funcall fun))))))))
+
+(defun ergoemacs-remove-inits ()
+  "Remove the applied initilizations of modes and variables.
+This assumes the variables are stored in `ergoemacs-applied-inits'"
+  (dolist (init ergoemacs-applied-inits)
+    (let ((var (nth 0 init))
+          (val (nth 1 init)))
+      (cond
+       ((and (string-match-p "-mode$" (symbol-name var))
+             (ignore-errors (commandp var t)))
+        (funcall var val))
+       (t
+        (set var val)))))
+  (setq ergoemacs-applied-inits '()))
+
 
 (defmethod ergoemacs-debug-obj ((obj ergoemacs-theme-component-map-list))
   (ergoemacs-debug-clear)
   (let (tmp)
     (with-slots (map-list object-name) obj
       (ergoemacs-debug "* %s" object-name)
+      (ergoemacs-debug "** Variables and Modes")
+      (dolist (init (ergoemacs-get-inits obj))
+        (ergoemacs-debug "%s = %s" (nth 0 init) (nth 1 init)))
       (ergoemacs-debug-obj (ergoemacs-get-fixed-map obj))
       (ergoemacs-debug "*** Hooks")
       (dolist (hook (ergoemacs-get-hooks obj))
@@ -1229,17 +1271,17 @@ When REMOVE-P is non-nil, remove hooks
                `(ergoemacs-define-key 'global-map ,(nth 1 elt) nil))
               ((ignore-errors (eq (nth 0 elt) 'set))
                ;; Currently doesn't support (setq a b c d ), but it should.
-               `(ergoemacs-set ,(nth 1 elt) ,(nth 2 elt)))
+               `(ergoemacs-set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
               ((ignore-errors (eq (nth 0 elt) 'setq))
                (let ((tmp-elt elt)
                      (ret '()))
                  (pop tmp-elt)
                  (while (and (= 0 (mod (length tmp-elt) 2)) (< 0 (length tmp-elt)))
-                   (push `(ergoemacs-set (quote ,(pop tmp-elt)) ,(pop tmp-elt)) ret))
+                   (push `(ergoemacs-set (quote ,(pop tmp-elt)) '(lambda() ,(pop tmp-elt))) ret))
                  (push 'progn ret)
                  ret))
               ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
-               `(ergoemacs-set (quote ,(nth 0 elt)) ,(nth 1 elt)))
+               `(ergoemacs-set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
                (if (ignore-errors (keymapp (symbol-value (nth 2 elt))))
                    `(ergoemacs-define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
