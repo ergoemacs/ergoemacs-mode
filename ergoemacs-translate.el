@@ -108,7 +108,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
   (if (not code) ""
-    (if (string-match "^M-x " code)
+    (if (string-match "^\\(M-x\\|<execute>\\) " code)
         (if ergoemacs-use-M-x-p
             code
           (replace-match ergoemacs-M-x t t code))
