@@ -387,7 +387,8 @@ Typically function keys")
             (make-composed-keymap
              (list (ergoemacs-local-map type t)
                    (ergoemacs-modal-base-keymap))))
-      (ergoemacs-add-emulation)
+      (setq ergoemacs-modal-emulation-mode-map-alist
+            `((ergoemacs-modal ,@ergoemacs-modal-keymap)))
       (set-default 'ergoemacs-modal type)
       (setq ergoemacs-modal type)
       (unless ergoemacs-default-cursor
@@ -419,7 +420,8 @@ Typically function keys")
                   (make-composed-keymap
                    (list (ergoemacs-local-map type t)
                          (ergoemacs-modal-base-keymap))))
-            (ergoemacs-add-emulation)
+            (setq ergoemacs-modal-emulation-mode-map-alist
+                  `((ergoemacs-modal ,@ergoemacs-modal-keymap)))
             (set-default 'ergoemacs-modal type)
             (setq ergoemacs-modal type)
             (unless ergoemacs-default-cursor

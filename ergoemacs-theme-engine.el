@@ -219,6 +219,9 @@ a set type."
    (read-map :initarg :read-map
              :initform (make-sparse-keymap)
              :type keymap)
+   (read-list :initarg :read-list
+              :initform ()
+              :type list)
    (shortcut-map :initarg :shortcut-map
                  :initform (make-sparse-keymap)
                  :type keymap)
@@ -323,12 +326,12 @@ a set type."
     (let ((deferred-list deferred-list))
       (setq deferred-keys
             (mapcar
-           (lambda(x)
-             (if (equal (nth 0 x) key)
-                 (prog1 (list key deferred-list)
-                   (setq deferred-list nil))
-               x))
-           deferred-keys))
+             (lambda(x)
+               (if (equal (nth 0 x) key)
+                   (prog1 (list key deferred-list)
+                     (setq deferred-list nil))
+                 x))
+             deferred-keys))
       (when deferred-list
         (push (list key (reverse deferred-list)) deferred-keys))
       (oset obj deferred-keys deferred-keys))))
@@ -362,15 +365,15 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
 (defmethod ergoemacs-define-map--read-map ((obj ergoemacs-fixed-map) key)
   "Defines KEY in the OBJ read-key slot if it is a vector over 2.
 Key sequences starting with `ergoemacs-ignored-prefixes' are not added."
-  (with-slots (read-map) obj
+  (with-slots (read-map
+               read-list) obj
     (when (< 1 (length key))
       (let* ((new-key (substring key 0 1))
              (kd (key-description new-key)))
         (unless (member kd ergoemacs-ignored-prefixes)
-          (define-key read-map new-key
-            `(lambda()
-               (interactive)
-               (ergoemacs-read-key ,kd 'normal)))
+          (push new-key read-list)
+          (oset obj read-list read-list)
+          (define-key read-map new-key #'ergoemacs-read-key-default)
           (oset obj read-map read-map))))))
 
 (defgeneric ergoemacs-define-map (obj key def &optional no-unbind)
@@ -423,7 +426,9 @@ DEF is anything that can be a key's definition:
                rm-keys
                shortcut-movement
                global-map-p
-               shortcut-shifted-movement) obj
+               shortcut-shifted-movement
+               read-list
+               read-map) obj
     (let* ((key-desc (key-description key))
            (key-vect (read-kbd-macro key-desc t))
            swapped
@@ -472,8 +477,10 @@ DEF is anything that can be a key's definition:
         ;; Normal command
         (if (memq def '(ergoemacs-ctl-c ergoemacs-ctl-x))
             (progn
-              (define-key shortcut-map key-vect def)
-              (oset obj shortcut-map shortcut-map))
+              (push (list key-vect def) read-list)
+              (define-key read-map key-vect def)
+              (oset obj read-map read-map)
+              (oset obj read-list read-list))
           (define-key map key-vect def)
           (oset obj map map))
         (ergoemacs-define-map--cmd-list obj key-desc def))
@@ -730,18 +737,28 @@ Assumes maps are orthogonal."
   (with-slots (variable object-name fixed modify-map full-map always
                         global-map-p keymap-hash) obj
     (let* ((lay (or layout ergoemacs-keyboard-layout))
+           read
            (ilay (intern lay))
            (ret (gethash ilay keymap-hash))
            (fix fixed) map1 map2 var)
       (unless ret ;; Calculate
         (setq var (ergoemacs-get-fixed-map variable lay))
+        (setq read (copy-keymap (oref fix read-map)))
+        ;; This way the read-map is not a composite map.
+        (dolist (key (oref var read-list)) 
+          (cond
+           ((vectorp key)
+            (define-key read key #'ergoemacs-read-key-default))
+           ((and (listp key) (vectorp (nth 0 key)))
+            (define-key read (nth 0 key) (nth 1 key)))))
         (setq ret (ergoemacs-fixed-map
                    lay
                    :global-map-p global-map-p
                    :modify-map modify-map
                    :full-map full-map
                    :always always
-                   :read-map (ergoemacs-get-fixed-map--combine-maps (oref var read-map) (oref fix read-map))
+                   :read-map read
+                   :read-list (append (oref var read-list) (oref fix read-list))
                    :shortcut-map (ergoemacs-get-fixed-map--combine-maps (oref var shortcut-map) (oref fix shortcut-map))
                    :no-shortcut-map (ergoemacs-get-fixed-map--combine-maps (oref var no-shortcut-map) (oref fix no-shortcut-map))
                    :map (ergoemacs-get-fixed-map--combine-maps (oref var map) (oref fix map))
@@ -1214,6 +1231,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
     (let ((fixed-maps (mapcar (lambda(map) (and map (ergoemacs-get-fixed-map map keymap layout))) map-list))
           new-global-map-p
           new-read-map
+          new-read-list
           new-shortcut-map
           new-no-shortcut-map
           new-map
@@ -1234,6 +1252,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
 	(when (ergoemacs-fixed-map-p map-obj)
           (with-slots (global-map-p
                        read-map
+                       read-list
                        shortcut-map
                        no-shortcut-map
                        map
@@ -1263,6 +1282,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                 (setq new-shortcut-list shortcut-list
                       new-shortcut-movement shortcut-movement
                       new-shortcut-shifted-movement shortcut-shifted-movement
+                      new-read-list read-list
                       new-rm-keys rm-keys
                       new-cmd-list cmd-list
                       new-deferred-keys deferred-keys
@@ -1275,6 +1295,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                     new-modify-map (or new-modify-map modify-map)
                     new-full-map (or new-full-map full-map)
                     new-always (or new-always always)
+                    new-read-list (append new-read-list read-list)
                     new-shortcut-list (append new-shortcut-list shortcut-list)
                     new-shortcut-movement (append new-shortcut-movement shortcut-movement)
                     new-shortcut-shifted-movement (append new-shortcut-shifted-movement shortcut-shifted-movement)
@@ -1287,6 +1308,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                                  (and (symbolp keymap) (symbol-name keymap))))
                  "composite")
              :global-map-p new-global-map-p
+             :read-list new-read-list
              :read-map (ergoemacs-get-fixed-map--composite new-read-map)
              :shortcut-map  (ergoemacs-get-fixed-map--composite new-shortcut-map) 
              :no-shortcut-map (ergoemacs-get-fixed-map--composite new-no-shortcut-map)
@@ -3626,11 +3648,13 @@ When NO-MESSAGE is true, don't tell the user."
                (set map-name (copy-keymap orig-map))))))))
    ergoemacs-theme-hook-installed))
 
+
+
 (defun ergoemacs-theme-remove (&optional no-message)
   "Remove the currently installed theme and reset to emacs keys.
 When NO-MESSAGE is true, don't tell the user."
   (ergoemacs-theme-make-hooks ergoemacs-theme 'remove-hooks)
-  (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+  (ergoemacs-emulations 'remove)
   ;;; Restore maps
   (ergoemacs-theme-restore-maps no-message)
   (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
@@ -3746,6 +3770,9 @@ This also:
     ;; `ergoemacs-read-input-keymap', then `ergoemacs-shortcut-keymap'
     ;; in `ergoemacs-emulation-mode-map-alist'
     (ergoemacs-add-emulation)
+    (add-hook 'emulation-mode-map-alists 'ergoemacs-modal-emulation-mode-map-alist)
+    (add-hook 'emulation-mode-map-alists 'ergoemacs-repeat-emulation-mode-map-alist)
+    (add-hook 'emulation-mode-map-alists 'ergoemacs-read-emulation-mode-map-alist)
     (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
     (ergoemacs-theme-make-hooks ergoemacs-theme)
     (set-default 'ergoemacs-mode t)
@@ -3824,8 +3851,7 @@ This also:
     (ergoemacs-theme-remove-key-list
      (if (nth 5 tc)
          (append (nth 5 tc) ergoemacs-global-override-rm-keys)
-       ergoemacs-global-override-rm-keys))
-    (setq ergoemacs-M-x (substitute-command-keys "\\[execute-extended-command] "))))
+       ergoemacs-global-override-rm-keys))))
 
 (defvar ergoemacs-theme-hash (make-hash-table :test 'equal))
 

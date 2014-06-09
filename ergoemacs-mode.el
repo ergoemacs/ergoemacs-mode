@@ -243,58 +243,18 @@ Valid values are:
         ergoemacs-repeat-keys
         ergoemacs-read-input-keys
         (keymap (make-sparse-keymap)))
-    (mapc
-     (lambda(key)
-       (when (= 1 (length key))
-         (let ((mods (event-modifiers (elt key 0))))
-           (when (memq 'meta mods)
-             (define-key keymap
-               (vector
-                (event-convert-list
-                 (append (delete 'meta mods)
-                         (list (event-basic-type (elt key 0))))))
-               `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
-     (append (where-is-internal 'ergoemacs-shortcut-movement)
-             (where-is-internal 'ergoemacs-shortcut-movement-no-shift-select)))
+    (dolist (key (append (where-is-internal 'ergoemacs-shortcut-movement)
+                         (where-is-internal 'ergoemacs-shortcut-movement-no-shift-select)))
+      (when (= 1 (length key))
+        (let ((mods (event-modifiers (elt key 0))))
+          (when (memq 'meta mods)
+            (define-key keymap
+              (vector
+               (event-convert-list
+                (append (delete 'meta mods)
+                        (list (event-basic-type (elt key 0))))))
+              `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
     keymap))
-
-
-(when (not (fboundp 'set-temporary-overlay-map))
-  ;; Backport this function from newer emacs versions
-  (defun set-temporary-overlay-map (map &optional keep-pred)
-    "Set a new keymap that will only exist for a short period of time.
-The new keymap to use must be given in the MAP variable. When to
-remove the keymap depends on user input and KEEP-PRED:
-
-- if KEEP-PRED is nil (the default), the keymap disappears as
-  soon as any key is pressed, whether or not the key is in MAP;
-
-- if KEEP-PRED is t, the keymap disappears as soon as a key *not*
-  in MAP is pressed;
-
-- otherwise, KEEP-PRED must be a 0-arguments predicate that will
-  decide if the keymap should be removed (if predicate returns
-  nil) or kept (otherwise). The predicate will be called after
-  each key sequence."    
-    (let* ((clearfunsym (make-symbol "clear-temporary-overlay-map"))
-           (overlaysym (make-symbol "t"))
-           (alist (list (cons overlaysym map)))
-           (clearfun
-            `(lambda ()
-               (unless ,(cond ((null keep-pred) nil)
-                              ((eq t keep-pred)
-                               `(eq this-command
-                                    (lookup-key ',map
-                                                (this-command-keys-vector))))
-                              (t `(funcall ',keep-pred)))
-                 (remove-hook 'pre-command-hook ',clearfunsym)
-                 (setq emulation-mode-map-alists
-                       (delq ',alist emulation-mode-map-alists))))))
-      (set overlaysym overlaysym)
-      (fset clearfunsym clearfun)
-      (add-hook 'pre-command-hook clearfunsym)
-      
-      (push alist emulation-mode-map-alists))))
 
 (defvar ergoemacs-curr-prefix-arg nil)
 (defvar ergoemacs-repeat-keys nil)
@@ -412,8 +372,26 @@ remove the keymap depends on user input and KEEP-PRED:
 (defvar ergoemacs-save-variables-actual nil)
 (defvar ergoemacs-save-variables-state nil)
 
+(defvar ergoemacs-modal-emulation-mode-map-alist nil
+  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+
+(defvar ergoemacs-repeat-emulation-mode-map-alist nil
+  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+
+(defvar ergoemacs-read-emulation-mode-map-alist nil
+  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+
 (defvar ergoemacs-emulation-mode-map-alist nil
-  "Override keys in ergoemacs-mode for `emulation-mode-map-alist'")
+  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+
+(defun ergoemacs-emulations (&optional remove)
+  "Add ergoemacs emulations to `emulation-mode-map-alist'.
+When REMOVE is true, remove the emulations."
+  (dolist (hook (reverse '(ergoemacs-modal-emulation-mode-map-alist
+                           ergoemacs-read-emulation-mode-map-alist
+                           ergoemacs-repeat-emulation-mode-map-alist
+                           ergoemacs-emulation-mode-map-alist)))
+    (funcall (if remove #'remove-hook #'add-hook) #'emulation-mode-map-alists hook)))
 
 ;; ErgoEmacs minor mode
 ;;;###autoload
@@ -454,12 +432,7 @@ bindings the keymap is:
         ;; (if (boundp 'org-CUA-compatible)
         ;;     (setq ergoemacs-org-CUA-compatible nil)
         ;;   (setq ergoemacs-org-CUA-compatible org-CUA-compatible))
-        ;; From yasnippet:
-        ;; Install the direct keymaps in `emulation-mode-map-alists'
-        ;; (we use `add-hook' even though it's not technically a hook,
-        ;; but it works). Then define variables named after modes to
-        ;; index `ergoemacs-emulation-mode-map-alist'.
-        (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+        (ergoemacs-emulations)
         ;; Setup keys
         (setq ergoemacs-shortcut-keymap (make-sparse-keymap))
         (ergoemacs-setup-keys t)
@@ -722,10 +695,7 @@ This is added to `ergoemacs-emulation-mode-map-alist' while keeping the order co
     (when (listp keymap-list)
       (setq small-emulation (append keymap-list small-emulation)))
     (setq ergoemacs-emulation-mode-map-alist
-          `((ergoemacs-modal ,@(or ergoemacs-modal-keymap (make-sparse-keymap)))
-            (ergoemacs-repeat-keys ,@(or ergoemacs-repeat-keymap (make-sparse-keymap)))
-            (ergoemacs-read-input-keys ,@(or ergoemacs-read-input-keymap (make-sparse-keymap)))
-            ,@small-emulation
+          `(,@small-emulation
             (ergoemacs-shortcut-keys ,@(or ergoemacs-shortcut-keymap (make-sparse-keymap)))))))
 
 (defun ergoemacs-shuffle-keys (&optional var keymap keymap-list)

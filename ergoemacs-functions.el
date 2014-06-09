@@ -2083,10 +2083,23 @@ See also `ergoemacs-lookup-word-on-internet'."
   (insert (format "ergoemacs-mode %s\n" ergoemacs-mode))
   (insert (format "ergoemacs-save-variables-state %s\n" ergoemacs-save-variables-state))
   (insert (format "emulation-mode-map-alists: %s\n" emulation-mode-map-alists))
+  (insert (format "ergoemacs-read-emulation-mode-map-alist: %s\n"
+                  (mapcar
+                   (lambda(x) (nth 0 x))
+                   ergoemacs-read-emulation-mode-map-alist)))
+  (insert (format "ergoemacs-modal-emulation-mode-map-alist: %s\n"
+                  (mapcar
+                   (lambda(x) (nth 0 x))
+                   ergoemacs-modal-emulation-mode-map-alist)))
+  (insert (format "ergoemacs-repeat-emulation-mode-map-alist: %s\n"
+                  (mapcar
+                   (lambda(x) (nth 0 x))
+                   ergoemacs-repeat-emulation-mode-map-alist)))
   (insert (format "ergoemacs-emulation-mode-map-alist: %s\n"
                    (mapcar
                     (lambda(x) (nth 0 x))
                     ergoemacs-emulation-mode-map-alist)))
+  
   (insert (format "minor-mode-map-alist: %s\n"
                    (mapcar
                     (lambda(x) (nth 0 x))

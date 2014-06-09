@@ -113,7 +113,7 @@ The global map is ignored, but major/minor modes keymaps are included."
        (use-global-map old-global-map))))
 
 (defmacro ergoemacs-without-emulation (&rest body)
-  "Without keys defined at `ergoemacs-emulation-mode-map-alist'.
+  "Without keys defined at `emulation-mode-map-alists'.
 
 Also temporarily remove any changes ergoemacs-mode made to:
 - `overriding-terminal-local-map'
@@ -126,7 +126,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
          (overriding-local-map overriding-local-map)
          lookup tmp-overlay override-text-map)
      ;; Remove most of ergoemacs-mode's key bindings
-     (remove-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)
+     (ergoemacs-emulations 'remove)
      (unwind-protect
          (progn
            ;; Install override-text-map changes above anything already
@@ -136,7 +136,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
        (when tmp-overlay
          (delete-overlay tmp-overlay))
        (when ergoemacs-mode
-         (add-hook 'emulation-mode-map-alists 'ergoemacs-emulation-mode-map-alist)))))
+         (ergoemacs-emulations)))))
 
 (defgroup ergoemacs-read nil
   "Options for ergoemacs-read-key."
@@ -1234,12 +1234,10 @@ argument prompt.
                          (push (concat key-base "-et") key-trials)))
                      (ergoemacs-shortcut-function-binding (nth 0 tmp)))))
                 (when ergoemacs-translate-keys
-                  (mapc
-                   (lambda(trial)
-                     (push trial key-trials)
-                     (setq next-key (ergoemacs-read-key-add-translation next-key trial))
-                     (push (concat trial "-et") key-trials))
-                   '(":raw" ":ctl" ":alt" ":alt-ctl" ":raw-shift" ":ctl-shift" ":alt-shift" ":alt-ctl-shift")))
+                  (dolist (trial '(":raw" ":ctl" ":alt" ":alt-ctl" ":raw-shift" ":ctl-shift" ":alt-shift" ":alt-ctl-shift"))
+                    (push trial key-trials)
+                    (setq next-key (ergoemacs-read-key-add-translation next-key trial))
+                    (push (concat trial "-et") key-trials)))
                 (setq key-trials (reverse key-trials))
                 (unless
                     (catch 'ergoemacs-key-trials
@@ -1399,6 +1397,14 @@ argument prompt.
           ergoemacs-mark-active nil))
   (setq ergoemacs-describe-key nil))
 
+(defun ergoemacs-read-key-default (&optional arg)
+  "The default command for `ergoemacs-mode' read-key.
+It sends `this-single-command-keys' to `ergoemacs-read-key' with
+no translation listed."
+  (interactive "^P")
+  (ergoemacs-read-key
+   (or ergoemacs-single-command-keys (this-single-command-keys))))
+
 
 
 (defvar ergoemacs-ignored-prefixes '(;; "C-h" "<f1>"
@@ -1476,7 +1482,8 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
 (defun ergoemacs-install-repeat-keymap (keymap &optional mode-line)
   "Installs repeat KEYMAP."
   (setq ergoemacs-repeat-keymap keymap)
-  (ergoemacs-add-emulation)
+  (setq ergoemacs-repeat-emulation-mode-map-alist
+        (list (cons 'ergoemacs-repeat-keys ergoemacs-repeat-keymap)))
   (setq ergoemacs-repeat-keys t)
   (when mode-line
     (ergoemacs-mode-line mode-line)))
