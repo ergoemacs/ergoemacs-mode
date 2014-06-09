@@ -302,16 +302,13 @@ Actual substitute-command-keys is always in `ergoemacs-real-substitute-command-k
         (with-temp-buffer
           (insert string)
           (goto-char (point-min))
-          (while (re-search-forward "\\<M-x " nil t)
-            (replace-match (ergoemacs-substitute-command "\\[execute-extended-command] " "\\<global-map>") t t))
-          (goto-char (point-min))
           (while (re-search-forward "\\(\\(?:\\\\=\\)?\\)\\\\\\(\\[\\|<\\|{\\)\\(.*?\\)\\(\\]\\|>\\|}\\)" nil t)
             (cond
              ((string-match-p "\\\\=" (match-string 1))
               (replace-match "\\\\\\2\\3\\4" t nil))
              ((and (string-match-p "<" (match-string 2))
                    (string-match-p ">" (match-string 4)))
-              (setq mapvar (match-string 3))
+              (setq mapvar (concat "\\<" (match-string 3) ">"))
               (replace-match ""))
              ((and (string-match-p "{" (match-string 2))
                    (string-match-p "}" (match-string 4)))
@@ -323,6 +320,9 @@ Actual substitute-command-keys is always in `ergoemacs-real-substitute-command-k
           (while (re-search-forward "\\\\=" nil t)
             (replace-match "" t t)
             (re-search-forward "\\=\\\\=" nil t))
+          (goto-char (point-min))
+          (while (re-search-forward "\\(\\<M-x\\|<execute>\\) " nil t)
+            (replace-match (ergoemacs-substitute-command "\\[execute-extended-command] " "\\<global-map>") t t))
           (setq ret (buffer-string))))
       ret)))
 
