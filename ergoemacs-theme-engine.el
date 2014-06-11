@@ -1141,10 +1141,22 @@ FULL-SHORTCUT-MAP-P "
                   (setq n-map (copy-keymap map))
                   (ergoemacs-theme--install-shortcuts-list
                    shortcut-list n-map o-map full-map)
-                  (set map-name (copy-keymap
-                                 (make-composed-keymap
-                                  n-map
-                                  o-map)))))
+                  (cond
+                   ((ignore-errors
+                          (and (eq (nth 0 (nth 1 n-map)) 'keymap)
+                               (not (keymap-parent n-map))))
+                    (pop n-map)
+                    ;; (push (make-sparse-keymap "ergoemacs-modified") n-map)
+                    )
+                   (t
+                    ;; (setq n-map (list (make-sparse-keymap "ergoemacs-modified") n-map))
+                    ))
+                  (setq n-map (copy-keymap
+                               (make-composed-keymap
+                                n-map
+                                o-map)))
+                  (define-key n-map [ergoemacs] 'ignore)
+                  (set map-name n-map)))
                (t ;; Maps that are not modified.
                 (unless remove-p
                   (message "Setup %s"  hook)
@@ -1290,7 +1302,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
 (defun ergoemacs-get-fixed-map--composite (map-list)
   (or (and map-list
            (or (and (= 1 (length map-list)) (nth 0 map-list))
-               (make-composed-keymap (reverse map-list))))
+               (make-composed-keymap map-list)))
       (make-sparse-keymap)))
 
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-theme-component-map-list) &optional keymap layout)
