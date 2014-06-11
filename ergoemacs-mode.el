@@ -81,7 +81,7 @@
       (let ((temp-map keymap))
         (ergoemacs-debug "%s" (substitute-command-keys "\\{temp-map}")))
     (ergoemacs-debug-heading "%s"
-     (format "Keymap Description: %s" (symbol-name keymap)))
+                             (format "Keymap Description: %s" (symbol-name keymap)))
     (ergoemacs-debug "%s" (substitute-command-keys (format "\\{%s}" (symbol-name keymap))))))
 
 (defvar ergoemacs-debug-heading-start-time (float-time))
@@ -127,9 +127,10 @@
   (save-excursion
     (with-current-buffer (get-buffer-create ergoemacs-debug-buffer) 
       (goto-char (point-max))
+      (unless (looking-back "\n")
+        (insert "\n"))
       (insert ergoemacs-debug)
-      (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point))
-      (insert "\n")))
+      (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point))))
   (setq ergoemacs-debug ""))
 
 ;; Include extra files
@@ -560,24 +561,6 @@ bindings the keymap is:
 (defvar ergoemacs-local-keymap nil
   "Local ergoemacs keymap")
 
-(defun ergoemacs-local-set-key (key command)
-  "Set a key in the ergoemacs local map."
-  ;; install keymap if not already installed
-  (interactive)
-  (unless ergoemacs-local-keymap
-    (set (make-local-variable 'ergoemacs-local-keymap) (make-sparse-keymap)))
-  (let (major)
-    (eval (macroexpand `(setq major ',(intern (format "ergoemacs--emulation-for-%s-local" major-mode)))))
-    (set (make-local-variable major) t)
-    (progn
-      ;; add key
-      (define-key ergoemacs-local-keymap key command)
-      (ergoemacs-add-emulation major ergoemacs-local-keymap))))
-
-(defun ergoemacs-local-unset-key (key)
-  "Unset a key in the ergoemacs local map."
-  (ergoemacs-local-set-key key nil))
-
 
 
 (unless (featurep 'ergoemacs-advices)
@@ -672,36 +655,19 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
       (setq ergoemacs-shortcut-keys nil)
       (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned on; Turning off."))))
 
-(defun ergoemacs-add-emulation (&optional var keymap keymap-list)
-  "Add emulation map
-VAR is the emulation map variable
-KEYMAP is the emulation map keymap
-KEYMAP-LIST is a list of emulation maps.
-This is added to `ergoemacs-emulation-mode-map-alist' while keeping the order correct."
-  (let ((small-emulation ergoemacs-emulation-mode-map-alist))
-    (while (memq (car (car small-emulation))
-                 '(ergoemacs-modal
-                   ergoemacs-repeat-keys
-                   ergoemacs-read-input-keys))
-      (pop small-emulation))
-    (when (eq (car (nth (- (length small-emulation) 1) small-emulation))
-              'ergoemacs-shortcut-keys)
-      (setq small-emulation (nbutlast small-emulation 1)))
-    (when (and var keymap)
-      (setq x (assq var small-emulation))
-      (when x
-        (delq x small-emulation))
-      (push (cons var keymap) small-emulation))
-    (when (listp keymap-list)
-      (setq small-emulation (append keymap-list small-emulation)))
-    (setq ergoemacs-emulation-mode-map-alist
-          `(,@small-emulation
-            (ergoemacs-shortcut-keys ,@(or ergoemacs-shortcut-keymap (make-sparse-keymap)))))))
-
-(defun ergoemacs-shuffle-keys (&optional var keymap keymap-list)
+(defun ergoemacs-shuffle-keys (&optional force-update)
   "Shuffle ergoemacs keymaps in `minor-mode-map-alist'."
-  (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
-    (setq minor-mode-map-alist (append (delq x minor-mode-map-alist) (list x)))))
+  (when (or force-update (not (eq (car (nth 0 minor-mode-map-alist)) 'ergoemacs-mode)))
+    (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
+      (when x
+        (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+      (push (cons 'ergoemacs-mode ergoemacs-keymap) minor-mode-map-alist)))
+  (when (or force-update (not (eq (car (nth (- 1 (length minor-mode-map-alist)) minor-mode-map-alist)) 'ergoemacs-unbind-keys)))
+    (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
+      (when x
+        (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+      (setq minor-mode-map-alist (append minor-mode-map-alist
+                                         (list (cons 'ergoemacs-unbind-keys ergoemacs-unbind-keymap)))))))
 
 (defun ergoemacs-is-movement-command-p (command)
   "Determines if COMMAND is a movement command.

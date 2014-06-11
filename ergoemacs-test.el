@@ -445,7 +445,6 @@ Test next and prior translation."
     (setq ergoemacs-theme nil)
     (setq ergoemacs-keyboard-layout "colemak")
     (ergoemacs-mode 1)
-    (ergoemacs-for-isearch-mode-hook)
     (setq ret (lookup-key isearch-mode-map (read-kbd-macro
                                   (format "<%s> s"
                                   (if (eq system-type 'windows-nt)

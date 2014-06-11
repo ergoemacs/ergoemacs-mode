@@ -1740,11 +1740,14 @@ If MAP is nil, base this on a sparse keymap."
         (ergoemacs-orig-keymap
          (if map
              (copy-keymap map) nil))
-        overall-keymaps
+        shortcut-list
         fn-lst)
-    (setq overall-keymaps (ergoemacs-theme-keymaps ergoemacs-theme))
+    (maphash
+     (lambda (key item)
+       (push (list key item) shortcut-list))
+     ergoemacs-command-shortcuts-hash)
     (ergoemacs-theme--install-shortcuts-list
-     (nth 3 overall-keymaps) ergoemacs-shortcut-override-keymap 
+     shortcut-list ergoemacs-shortcut-override-keymap 
      ergoemacs-orig-keymap (not dont-complete))
     ergoemacs-shortcut-override-keymap))
 

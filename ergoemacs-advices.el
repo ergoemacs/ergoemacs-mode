@@ -105,7 +105,16 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
           (delete (key-description key) ergoemacs-global-not-changed-cache))
         (add-to-list 'ergoemacs-global-override-rm-keys key)
         (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
-          (ergoemacs-theme-remove-key-list (list key) t))))))
+          (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key)
+                ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key)
+                ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key)
+                ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-keymap key))
+          (setq ergoemacs-read-emulation-mode-map-alist
+                (list (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap))
+                ergoemacs-emulation-mode-map-alist
+                (append (nbutlast ergoemacs-emulation-mode-map-alist 1)
+                        (list (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap))))
+          (ergoemacs-shuffle-keys t))))))
 
 (defadvice local-set-key (around ergoemacs-local-set-key-advice (key command) activate)
   "This let you use `local-set-key' as usual when `ergoemacs-mode' is enabled."
