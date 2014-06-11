@@ -1095,7 +1095,6 @@ FULL-SHORTCUT-MAP-P "
           (menu-keymap (make-sparse-keymap))
           final-map final-shortcut-map final-read-map
           (i 0))
-
       ;; Get all the major-mode hooks that will be called or modified
       (setq ergoemacs-deferred-maps '()
             ergoemacs-deferred-keys '())
@@ -1117,11 +1116,11 @@ FULL-SHORTCUT-MAP-P "
                         `(lambda() ,(format "Turn on `ergoemacs-mode' for `%s' during the hook `%s'."
                                        (symbol-name map-name) (symbol-name hook))
                            (let ((new-map ',map))
+                             (ergoemacs-theme--install-shortcuts-list 
+                              ',shortcut-list new-map ,map-name ,full-map)
                              (set ',map-name
                                   (copy-keymap
-                                   (make-composed-keymap
-                                    (ergoemacs-theme--install-shortcuts-list 
-                                     ',shortcut-list new-map ,map-name ,full-map) ,map-name))))))
+                                   (make-composed-keymap new-map ,map-name))))))
                   (funcall (if remove-p #'remove-hook #'add-hook) hook
                            fn-name)))
                ((and modify-map (not (boundp map-name)))
@@ -1140,10 +1139,11 @@ FULL-SHORTCUT-MAP-P "
                     (setq o-map (copy-keymap (symbol-value map-name)))
                     (puthash map-name o-map ergoemacs-original-map-hash))
                   (setq n-map (copy-keymap map))
+                  (ergoemacs-theme--install-shortcuts-list
+                   shortcut-list n-map o-map full-map)
                   (set map-name (copy-keymap
                                  (make-composed-keymap
-                                  (ergoemacs-theme--install-shortcuts-list
-                                   shortcut-list n-map o-map full-map)
+                                  n-map
                                   o-map)))))
                (t ;; Maps that are not modified.
                 (unless remove-p
