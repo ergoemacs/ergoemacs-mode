@@ -958,7 +958,11 @@ FORCE-KEY forces keys like <escape> to work properly.
                    ((and ergoemacs-shortcut-keys (not ergoemacs-describe-key)
                          (not ergoemacs-single-command-keys))
                     (if (nth 0 hash)
-                        (setq fn (nth 0 hash))
+                        (progn
+                          (setq fn (nth 0 hash))
+                          ;; Send Shortcut key directly
+                          (when (ignore-errors (stringp (nth 0 fn)))
+                            (setq key (read-kbd-macro (nth 0 fn) t))))
                       (setq fn (key-binding key))
                       (setq fn (or (command-remapping fn (point)) fn)))
                     (ergoemacs-read-key--echo-command pretty-key fn)
