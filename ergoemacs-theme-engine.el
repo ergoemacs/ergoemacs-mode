@@ -1120,7 +1120,6 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
 
-
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   (with-slots (read-map
                map
@@ -1882,7 +1881,8 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key)
   "Adds KEY to `ergoemacs-global-override-rm-keys' and `ergoemacs-global-override-map' if globally redefined."
   (let ((ergoemacs-ignore-advice t)
-        (key (read-kbd-macro (key-description key) t)) lk)
+        (key (or (and (vectorp key) key) (read-kbd-macro (key-description key) t)))
+        lk)
     (catch 'found-global-command
       (while (>= (length key) 1)
         (setq lk (lookup-key (current-global-map) key))
