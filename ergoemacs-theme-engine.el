@@ -978,7 +978,8 @@ Assumes maps are orthogonal."
                (push (oref map-obj hook) append-ret))))
          maps)
         (puthash (list match ret) append-ret hooks)
-        (oset obj hooks hooks))
+        (oset obj hooks hooks)
+        (ergoemacs-theme-component-maps--save-hash obj))
       (setq ret (append append-ret ret))
       ret)))
 
@@ -1135,6 +1136,7 @@ FULL-SHORTCUT-MAP-P "
           ;; (map (or map (make-sparse-keymap)))
           (menu-keymap (make-sparse-keymap))
           final-map final-shortcut-map final-read-map
+          (rm-list (append rm-keys ergoemacs-global-override-rm-keys)) 
           (i 0))
       ;; Get all the major-mode hooks that will be called or modified
       (setq ergoemacs-deferred-maps '()
@@ -1231,13 +1233,13 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
               final-unbind-map (copy-keymap unbind-map)
               final-read-map (copy-keymap read-map)
               final-map (copy-keymap map))
-        (dolist (key (append rm-keys ergoemacs-global-override-rm-keys))
+        (dolist (key rm-list)
           (let ((vector-key (or (and (vectorp key) key)
                                 (read-kbd-macro (key-description key) t))))
             (setq final-read-map (or (and (memq (elt vector-key 0) '(3 24)) ;; Keep `C-c' and `C-x'.
                                           (memq (lookup-key final-read-map (vector (elt vector-key 0))) '(ergoemacs-ctl-x ergoemacs-ctl-c))
                                     final-read-map)
-                               (ergoemacs-rm-key final-read-map key))
+                                     (ergoemacs-rm-key final-read-map key))
                   final-shortcut-map (ergoemacs-rm-key final-shortcut-map key)
                   final-map (ergoemacs-rm-key final-map key)
                   final-unbind-map (ergoemacs-rm-key final-unbind-map key))))
@@ -1253,13 +1255,14 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
         ;; Rebuild Shortcut hash
         (let (tmp)
           (dolist (c (reverse shortcut-list))
-            (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash)
-            (when (eq (nth 1 (nth 1 c)) 'global)
-              (dolist (global-key (ergoemacs-shortcut-function-binding (nth 0 (nth 1 c))))
-                (if (not (gethash global-key ergoemacs-original-keys-to-shortcut-keys))
-                    (puthash global-key (append (gethash global-key ergoemacs-original-keys-to-shortcut-keys) (list (nth 0 c))) ergoemacs-original-keys-to-shortcut-keys)
-                  (push (key-description global-key) tmp)
-                  (puthash global-key (list (nth 0 c)) ergoemacs-original-keys-to-shortcut-keys)))))
+            (unless (member (nth 0 c) rm-list)
+              (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash)
+              (when (eq (nth 1 (nth 1 c)) 'global)
+                (dolist (global-key (ergoemacs-shortcut-function-binding (nth 0 (nth 1 c))))
+                  (if (not (gethash global-key ergoemacs-original-keys-to-shortcut-keys))
+                      (puthash global-key (append (gethash global-key ergoemacs-original-keys-to-shortcut-keys) (list (nth 0 c))) ergoemacs-original-keys-to-shortcut-keys)
+                    (push (key-description global-key) tmp)
+                    (puthash global-key (list (nth 0 c)) ergoemacs-original-keys-to-shortcut-keys))))))
           (setq ergoemacs-original-keys-to-shortcut-keys-regexp
                 (regexp-opt tmp t))))
       ;; Turn on/off ergoemacs-mode
