@@ -1247,9 +1247,13 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
         ;; Coaleasing the keymaps needs to be done after removing the
         ;; keys, otherwise the keys are not removed...  Probably
         ;; playing with pointers in C.
-        ;; (setq final-map (ergoemacs-get-fixed-map--combine-maps menu-keymap final-map))
+        ;;(setq final-map (ergoemacs-get-fixed-map--combine-maps menu-keymap final-map))
         ;; Use a combined keymap instead
-        (setq final-map (make-composed-keymap (list menu-keymap final-map)))
+        (if (not (ignore-errors (nth 0 (nth 1 final-map))))
+            (setq final-map (list final-map))
+          (pop final-map))
+        (push menu-keymap final-map)
+        (setq final-map (make-composed-keymap final-map))
         ;; Rebuild Shortcut hash
         (let (tmp)
           (dolist (c (reverse shortcut-list))
