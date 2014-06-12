@@ -846,6 +846,9 @@ Assumes maps are orthogonal."
    (fixed-maps :initarg :fixed-maps
                :initform (make-hash-table)
                :type hash-table)
+   (hooks :initarg :hooks
+          :initform (make-hash-table :test 'equal)
+          :type hash-table)
    (init :initarg :init
          :initform ()
          :type list)
@@ -871,13 +874,12 @@ Assumes maps are orthogonal."
        maps)
       (oset obj global global)
       (oset obj fixed-maps (make-hash-table))
+      (oset obj hooks (make-hash-table :test 'equal))
       (oset obj init (copy-list init))
       (oset obj maps newmaps))))
 
 (defmethod ergoemacs-theme-component-maps--save-hash ((obj ergoemacs-theme-component-maps))
   (with-slots (object-name version) obj
-    (when (not (string= version ""))
-      (message "Save %s" (object-name-string obj)))
     (puthash (object-name-string obj)
              obj ergoemacs-theme-comp-hash)))
 
@@ -962,18 +964,23 @@ Assumes maps are orthogonal."
 
 (defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-maps) &optional match ret keymaps)
   (ergoemacs-theme-component-maps--ini obj)
-  (let ((ret (or ret '()))
-        (match (or match "-hook\\'")))
-    (with-slots (maps) obj
-      (maphash
-       (lambda (ignore-key map-obj)
-         (when (and (slot-boundp map-obj 'hook)
-                    (string-match-p match (symbol-name (oref map-obj hook))))
-           (if keymaps
-               (pushnew (oref map-obj object-symbol) ret)
-             (pushnew (oref map-obj hook) ret))))
-       maps))
-    ret))
+  (with-slots (maps hooks) obj
+    (let* ((ret (or ret '()))
+           (match (or match "-hook\\'"))
+           (append-ret (gethash (list match ret) hooks)))
+      (unless append-ret
+        (maphash
+         (lambda (ignore-key map-obj)
+           (when (and (slot-boundp map-obj 'hook)
+                      (string-match-p match (symbol-name (oref map-obj hook))))
+             (if keymaps
+                 (push (oref map-obj object-symbol) append-ret)
+               (push (oref map-obj hook) append-ret))))
+         maps)
+        (puthash (list match ret) append-ret hooks)
+        (oset obj hooks hooks))
+      (setq ret (append append-ret ret))
+      ret)))
 
 (defvar ergoemacs-theme-component-map-list-fixed-hash (make-hash-table :test 'equal))
 (defclass ergoemacs-theme-component-map-list (ergoemacs-named)
@@ -982,7 +989,10 @@ Assumes maps are orthogonal."
              :type list)
    (components :initarg :components
                :initform ()
-               :type list))
+               :type list)
+   (hooks :initarg :hooks
+          :initform (make-hash-table :test 'equal)
+          :type hash-table))
   "`ergoemacs-mode' theme-component maps")
 
 (defmethod ergoemacs-get-versions ((obj ergoemacs-theme-component-map-list) )
@@ -995,13 +1005,17 @@ Assumes maps are orthogonal."
               (pushnew ver ret :test 'equal)))))
       (sort ret 'string<))))
 
-(defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-map-list) &optional match ret keymaps)
-  (with-slots (map-list) obj
-    (let ((ret (or ret '())))
-      (dolist (map map-list)
-        (when (ergoemacs-theme-component-maps-p map)
-          (setq ret (ergoemacs-get-hooks map match ret keymaps))))
-      ret)))
+(defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-map-list) &optional match keymaps)
+  (with-slots (map-list hooks) obj
+    (let* ((final (gethash (list match keymaps) hooks))
+           ret test)
+      (unless final
+        (dolist (map map-list)
+          (when (ergoemacs-theme-component-maps-p map)
+            (setq ret (ergoemacs-get-hooks map match ret keymaps))))
+        (setq final (remove-duplicates ret))
+        (puthash (list match keymaps) final hooks))
+      final)))
 
 (defgeneric ergoemacs-get-keymaps-for-hook (obj hook &optional ret)
   "Gets the keymaps that will be modified for HOOK.
@@ -1009,8 +1023,8 @@ Assumes maps are orthogonal."
 Call:
 ergoemacs-get-keymaps-for-hook OBJ HOOK")
 
-(defmethod ergoemacs-get-keymaps-for-hook ((obj ergoemacs-theme-component-map-list) hook &optional ret)
-  (ergoemacs-get-hooks obj (concat "\\`" (regexp-quote (symbol-name hook)) "\\'") ret t))
+(defmethod ergoemacs-get-keymaps-for-hook ((obj ergoemacs-theme-component-map-list) hook)
+  (ergoemacs-get-hooks obj (concat "\\`" (regexp-quote (symbol-name hook)) "\\'") t))
 
 (defmethod ergoemacs-get-inits ((obj ergoemacs-theme-component-map-list))
   (let (ret '())
