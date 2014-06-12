@@ -1122,7 +1122,6 @@ FULL-SHORTCUT-MAP-P "
 
 
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
-  ;; First call 8 sec; Second call 2 sec.. Need to speed up?
   (with-slots (read-map
                map
                shortcut-map

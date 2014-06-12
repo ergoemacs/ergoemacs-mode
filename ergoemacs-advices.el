@@ -109,6 +109,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
                 ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key)
                 ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key)
                 ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-keymap key))
+          (remhash key ergoemacs-command-shortcuts-hash)
           (setq ergoemacs-read-emulation-mode-map-alist
                 (list (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap))
                 ergoemacs-emulation-mode-map-alist

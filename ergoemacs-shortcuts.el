@@ -960,8 +960,10 @@ FORCE-KEY forces keys like <escape> to work properly.
                     (if (nth 0 hash)
                         (progn
                           (setq fn (nth 0 hash))
-                          ;; Send Shortcut key directly
-                          (when (ignore-errors (stringp (nth 0 fn)))
+                          ;;  Send Shortcut key directly
+                          (when (ignore-errors (and (stringp (nth 0 fn))
+                                                    (or (not (nth 1 fn))
+                                                        (eq (nth 1 fn) 'normal))))
                             (setq key (read-kbd-macro (nth 0 fn) t))))
                       (setq fn (key-binding key))
                       (setq fn (or (command-remapping fn (point)) fn)))
