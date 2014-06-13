@@ -1036,7 +1036,7 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
 
 (defvar ergoemacs-applied-inits '())
 
-(defmethod ergoemacs-apply-inits ((obj ergoemacs-theme-component-map-list))
+(defmethod ergoemacs-apply-inits-obj ((obj ergoemacs-theme-component-map-list))
   (dolist (init (ergoemacs-get-inits obj))
     (cond
      ((not (boundp (nth 0 init))) ;; Do nothing, not bound yet.
@@ -1310,13 +1310,15 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
               (let ((x (assq item minor-mode-map-alist)))
                 (when x
                   (setq minor-mode-map-alist (delq x minor-mode-map-alist)))))
-            (ergoemacs-remove-inits))
+            (ergoemacs-remove-inits)
+            (remove-hook 'after-load-functions 'ergoemacs-apply-inits))
         ;; Setup `ergoemacs-mode' and `ergoemacs-unbind-keys'
         (setq minor-mode-map-alist
               `((ergoemacs-mode ,@final-map)
                 ,@minor-mode-map-alist
                 (ergoemacs-unbind-keys ,@final-unbind-map)))
-        (ergoemacs-apply-inits obj)
+        (ergoemacs-apply-inits-obj obj)
+        (add-hook 'after-load-functions 'ergoemacs-apply-inits)
         (unwind-protect
             (run-hooks 'ergoemacs-theme-hook)))
       t)))
@@ -1876,22 +1878,30 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
         nil
       ret)))
 
-(defun ergoemacs-theme-debug (&optional theme version)
-  "Prints debugging information about the theme object."
-  (interactive)
-  (let* ((theme-obj (ergoemacs-theme-get-obj (or theme ergoemacs-theme) version)))
-    (ergoemacs-debug-obj theme-obj)))
-
-
+(defvar ergoemacs-theme--object nil
+  "Current `ergoemacs-mode' theme object")
 (defun ergoemacs-theme-install (&optional theme  version)
   "Gets the keymaps for THEME for VERSION."
-  (ergoemacs-theme-obj-install (ergoemacs-theme-get-obj (or theme ergoemacs-theme) (or version (ergoemacs-theme-get-version)))))
+  (setq ergoemacs-theme--object (ergoemacs-theme-get-obj (or theme ergoemacs-theme) (or version (ergoemacs-theme-get-version))))
+  (ergoemacs-theme-obj-install ergoemacs-theme--object))
+
+(defun ergoemacs-apply-inits (&rest ignore)
+  "Applies any deferred initializations."
+  (when ergoemacs-theme--object
+    (ergoemacs-apply-inits-obj ergoemacs-theme--object)))
+
+(defun ergoemacs-theme-debug ()
+  "Prints debugging information about the currently installed theme object."
+  (interactive)
+  (if ergoemacs-theme--object
+      (ergoemacs-debug-obj ergoemacs-theme--object)
+    (message "`ergoemacs-mode' isn't running a theme.")))
 
 (defun ergoemacs-theme-remove ()
   "Remove the currently installed theme and reset to emacs keys."
-  (ergoemacs-theme-obj-install
-   (ergoemacs-theme-get-obj
-    ergoemacs-theme (ergoemacs-theme-get-version)) 'remove))
+  (when ergoemacs-theme--object
+    (ergoemacs-theme-obj-install ergoemacs-theme--object 'remove)
+    (setq ergoemacs-theme-object nil)))
 
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key)
   "Adds KEY to `ergoemacs-global-override-rm-keys' and `ergoemacs-global-override-map' if globally redefined."
