@@ -1895,7 +1895,9 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
         (when (and (ergoemacs-global-changed-p key)
                    (or (commandp lk t)
                        (keymapp lk)))
-          (add-to-list 'ergoemacs-global-override-rm-keys key)
+          ;; Remove from shortcuts, if present
+          (remhash key ergoemacs-command-shortcuts-hash)
+          (push key ergoemacs-global-override-rm-keys)
           (throw 'found-global-command t))
         (setq key (substring key 0 (- (length key) 1)))))))
 
