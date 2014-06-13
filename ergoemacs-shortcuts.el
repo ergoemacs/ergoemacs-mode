@@ -1133,7 +1133,7 @@ argument prompt.
                     (condition-case err
                         (interactive-form local-fn)
                       (error nil)))
-                      (eq local-fn 'ergoemacs-read-key-swap))
+                   (eq local-fn 'ergoemacs-read-key-swap))
               ;; Either the `ergoemacs-read-key-swap' is not applicable,
               ;; or not specified correctly.  Therefore set local-fn to
               ;; nil.
@@ -1409,14 +1409,14 @@ defined in the major/minor modes (by
   (let ((override (key-binding (read-kbd-macro (format "<ergoemacs-user> %s" (key-description keys)))))
         cmd1 cmd2)
     (unless (condition-case err
-              (interactive-form override)
-            (error nil))
+                (interactive-form override)
+              (error nil))
       (setq override nil))
     (unless override
       (setq cmd1 (ergoemacs-with-overrides
                   (key-binding keys)))
       (when (condition-case err
-                  (interactive-form cmd1)
+                (interactive-form cmd1)
               (error nil))
         (setq cmd2 (ergoemacs-with-major-and-minor-modes
                     (key-binding keys)))
@@ -1470,9 +1470,9 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
                `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
      (apply 'append
             (mapcar
-              (lambda (cmd)
-                (where-is-internal cmd))
-              (or cmds '(ergoemacs-shortcut-movement ergoemacs-shortcut-movement-no-shift-select)))))
+             (lambda (cmd)
+               (where-is-internal cmd))
+             (or cmds '(ergoemacs-shortcut-movement ergoemacs-shortcut-movement-no-shift-select)))))
     keymap))
 
 (defun ergoemacs-shortcut-movement (&optional opt-args)

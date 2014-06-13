@@ -1290,19 +1290,20 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             ergoemacs-read-emulation-mode-map-alist `((ergoemacs-read-input-keys ,@final-read-map))
             ergoemacs-shortcut-keymap final-shortcut-map
             ergoemacs-emulation-mode-map-alist
-            `(,@(reverse
-                 (append
-                  hook-map-list
-                  (mapcar ;; Get the minor-mode maps that will be added.
-                   (lambda(remap)
-                     (with-slots (map
-                                  deferred-keys) (ergoemacs-get-fixed-map obj remap)
-                       (when deferred-keys
-                         (push (cons i (cons remap deferred-keys)) ergoemacs-deferred-keys))
-                       (setq i (+ i 1))
-                       (cons remap map)))
-                   (ergoemacs-get-hooks obj "-mode\\'"))))
-              (ergoemacs-shortcut-keys ,@final-shortcut-map)))
+            (reverse
+             (append
+              hook-map-list
+              (mapcar ;; Get the minor-mode maps that will be added.
+               (lambda(remap)
+                 (with-slots (map
+                              deferred-keys) (ergoemacs-get-fixed-map obj remap)
+                   (when deferred-keys
+                     (push (cons i (cons remap deferred-keys)) ergoemacs-deferred-keys))
+                   (setq i (+ i 1))
+                   (cons remap map)))
+               (ergoemacs-get-hooks obj "-mode\\'"))))
+            ergoemacs-shortcut-emulation-mode-map-alist
+            `((ergoemacs-shortcut-keys ,@final-shortcut-map)))
       ;; Apply variables and mode changes.
       (if remove-p
           (progn
@@ -1937,9 +1938,8 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
             ;; Setup emulation maps.
             (setq ergoemacs-read-emulation-mode-map-alist
                   (list (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap))
-                  ergoemacs-emulation-mode-map-alist
-                  (append (nbutlast ergoemacs-emulation-mode-map-alist 1)
-                          (list (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap))))
+                  ergoemacs-shortcut-emulation-mode-map-alist
+                  (list (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap)))
             ;;Put maps in `minor-mode-map-alist'
             (ergoemacs-shuffle-keys t))
           (when (and (or (commandp lk t)

@@ -385,13 +385,17 @@ Valid values are:
 (defvar ergoemacs-emulation-mode-map-alist nil
   "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
 
+(defvar ergoemacs-shortcut-emulation-mode-map-alist nil
+  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+
 (defun ergoemacs-emulations (&optional remove)
   "Add ergoemacs emulations to `emulation-mode-map-alist'.
 When REMOVE is true, remove the emulations."
   (dolist (hook (reverse '(ergoemacs-modal-emulation-mode-map-alist
                            ergoemacs-read-emulation-mode-map-alist
                            ergoemacs-repeat-emulation-mode-map-alist
-                           ergoemacs-emulation-mode-map-alist)))
+                           ergoemacs-emulation-mode-map-alist
+                           ergoemacs-shortcut-emulation-mode-map-alist)))
     (funcall (if remove #'remove-hook #'add-hook) #'emulation-mode-map-alists hook)))
 
 ;; ErgoEmacs minor mode
