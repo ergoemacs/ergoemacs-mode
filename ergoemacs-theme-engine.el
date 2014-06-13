@@ -1236,7 +1236,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                                 (read-kbd-macro (key-description key) t))))
             (setq final-read-map (or (and (memq (elt vector-key 0) '(3 24)) ;; Keep `C-c' and `C-x'.
                                           (memq (lookup-key final-read-map (vector (elt vector-key 0))) '(ergoemacs-ctl-x ergoemacs-ctl-c))
-                                    final-read-map)
+                                          final-read-map)
                                      (ergoemacs-rm-key final-read-map key))
                   final-shortcut-map (ergoemacs-rm-key final-shortcut-map key)
                   final-map (ergoemacs-rm-key final-map key)
@@ -1353,7 +1353,9 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
 
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-theme-component-map-list) &optional keymap layout)
   (with-slots (map-list components) obj
-    (let* ((key (append (list keymap (or layout ergoemacs-keyboard-layout)) components))
+    (let* ((key (append (list keymap
+                              (or layout ergoemacs-keyboard-layout)
+                              (ergoemacs-theme-get-version)) components))
            (ret (gethash key ergoemacs-theme-component-map-list-fixed-hash)))
       (unless ret
         (let ((fixed-maps (mapcar (lambda(map) (and map (ergoemacs-get-fixed-map map keymap layout))) map-list))
@@ -1874,7 +1876,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 
 (defun ergoemacs-theme-install (&optional theme  version)
   "Gets the keymaps for THEME for VERSION."
-  (ergoemacs-theme-obj-install (ergoemacs-theme-get-obj (or theme ergoemacs-theme) version)))
+  (ergoemacs-theme-obj-install (ergoemacs-theme-get-obj (or theme ergoemacs-theme) (or version (ergoemacs-theme-get-version)))))
 
 (defun ergoemacs-theme-remove ()
   "Remove the currently installed theme and reset to emacs keys."
@@ -1898,33 +1900,9 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
         (setq key (substring key 0 (- (length key) 1)))))))
 
 
-;; FIXME
-(defun ergoemacs-theme-versions (theme)
+(defun ergoemacs-theme-versions (&optional theme version)
   "Get a list of versions for the current theme."
-  (let ((theme-plist (gethash (if (stringp theme) theme
-                                (symbol-name theme))
-                              ergoemacs-theme-hash))
-        versions)
-    (mapc
-     (lambda(component)
-       (let ((true-component
-              (replace-regexp-in-string
-               ":\\(fixed\\|variable\\)" ""
-               (or (and (stringp component) component)
-                   (symbol-name component))))
-             vers)
-         (when (string-match "::\\([0-9.]+\\)$" true-component)
-           (setq true-component (replace-match "" nil nil true-component)))
-         (mapc
-          (lambda(ver)
-            (add-to-list 'versions ver))
-          (gethash (concat true-component ":version")
-                   ergoemacs-theme-component-hash))))
-     (append (plist-get theme-plist ':optional-off)
-             (plist-get theme-plist ':optional-on)
-             (plist-get theme-plist ':components)))
-    (setq versions (sort versions 'string<))
-    versions))
+  (ergoemacs-get-versions (ergoemacs-theme-get-obj theme version)))
 
 (defun ergoemacs-theme-set-version (version)
   "Sets the current themes default VERSION"
@@ -2191,7 +2169,7 @@ If OFF is non-nil, turn off the options instead."
              :button (:radio . (string= ergoemacs-theme ,theme))))
          (sort (ergoemacs-get-themes) 'string<))))
     ,(ergoemacs-keymap-menu-theme-options theme)
-    ;; ,(ergoemacs-keymap-menu-theme-version theme)
+    ,(ergoemacs-keymap-menu-theme-version theme)
     (ergoemacs-c-x-sep "--")
     (ergoemacs-c-x-c-c
      menu-item "Ctrl+C and Ctrl+X behavior"
