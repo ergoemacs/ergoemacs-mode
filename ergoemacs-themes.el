@@ -861,7 +861,7 @@
 
 (ergoemacs-theme-component ergoemacs-banish-shift ()
   "Banish Shift Combinations with <apps> SPC"
-  :variable-reg "Z"
+  :variable-reg ""
   (global-set-key (kbd "<menu> SPC SPC") (kbd "_")) ;low line (underscore)
   (global-set-key (kbd "<menu> SPC RET") (kbd "-"))
   (global-set-key (kbd "<menu> SPC '") (kbd "\""))
