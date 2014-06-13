@@ -1911,18 +1911,18 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
     (catch 'found-global-command
       (while (>= (length key) 1)
         (setq lk (lookup-key (current-global-map) key))
-        (when (and (ergoemacs-global-changed-p key)
-                   (or (commandp lk t)
-                       (keymapp lk)))
+        (when (ergoemacs-global-changed-p key)
           (when reset ;; Reset keymaps
             ;; Reset keymaps.
             (dolist (map '(ergoemacs-shortcut-keymap ergoemacs-read-input-keymap ergoemacs-keymap ergoemacs-unbind-keymap))
               (set map (ergoemacs-rm-key (symbol-value map) key))
               (setq lk (lookup-key (symbol-value map) key))
+              (message "%s;%s" map lk)
               (if (not (integerp lk))
                   (setq test-key key)
                 (setq test-key (substring key 0 lk))
                 (setq lk (lookup-key (symbol-value map) test-key)))
+              (message "%s#2;%s" map lk)
               (when (commandp lk t)
                 (set map (ergoemacs-rm-key (symbol-value map) test-key))))
             ;; Remove from shortcuts, if present
@@ -1935,7 +1935,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
                  (pushnew (substring key 0 -1)
                           ergoemacs-shortcut-prefix-keys
                           :test 'equal)))
-	     ergoemacs-command-shortcuts-hash)
+             ergoemacs-command-shortcuts-hash)
             ;; Setup emulation maps.
             (setq ergoemacs-read-emulation-mode-map-alist
                   (list (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap))
@@ -1944,8 +1944,10 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
                           (list (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap))))
             ;;Put maps in `minor-mode-map-alist'
             (ergoemacs-shuffle-keys t))
-          (push key ergoemacs-global-override-rm-keys)
-          (throw 'found-global-command t))
+          (when (and (or (commandp lk t)
+                         (keymapp lk)))
+            (push key ergoemacs-global-override-rm-keys)
+            (throw 'found-global-command t)))
         (setq key (substring key 0 (- (length key) 1)))))))
 
 
