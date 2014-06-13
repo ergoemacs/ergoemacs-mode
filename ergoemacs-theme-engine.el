@@ -1903,19 +1903,47 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
     (ergoemacs-theme-obj-install ergoemacs-theme--object 'remove)
     (setq ergoemacs-theme-object nil)))
 
-(defun ergoemacs-theme-component--ignore-globally-defined-key (key)
+(defun ergoemacs-theme-component--ignore-globally-defined-key (key &optional reset)
   "Adds KEY to `ergoemacs-global-override-rm-keys' and `ergoemacs-global-override-map' if globally redefined."
   (let ((ergoemacs-ignore-advice t)
         (key (or (and (vectorp key) key) (read-kbd-macro (key-description key) t)))
-        lk)
+        test-key lk)
     (catch 'found-global-command
       (while (>= (length key) 1)
         (setq lk (lookup-key (current-global-map) key))
         (when (and (ergoemacs-global-changed-p key)
                    (or (commandp lk t)
                        (keymapp lk)))
-          ;; Remove from shortcuts, if present
-          (remhash key ergoemacs-command-shortcuts-hash)
+          (when reset ;; Reset keymaps
+            ;; Reset keymaps.
+            (dolist (map '(ergoemacs-shortcut-keymap ergoemacs-read-input-keymap ergoemacs-keymap ergoemacs-unbind-keymap))
+              (set map (ergoemacs-rm-key (symbol-value map) key))
+              (setq lk (lookup-key (symbol-value map) key))
+              (if (not (integerp lk))
+                  (setq test-key key)
+                (setq test-key (substring key 0 lk))
+                (setq lk (lookup-key (symbol-value map) test-key)))
+              (when (commandp lk t)
+                (set map (ergoemacs-rm-key (symbol-value map) test-key))))
+            ;; Remove from shortcuts, if present
+            (remhash key ergoemacs-command-shortcuts-hash)
+            ;; Reset `ergoemacs-shortcut-prefix-keys'
+            (setq ergoemacs-shortcut-prefix-keys '())
+            (maphash
+             (lambda(key ignore)
+               (when (< 1 (length key))
+                 (pushnew (substring key 0 -1)
+                          ergoemacs-shortcut-prefix-keys
+                          :test 'equal)))
+	     ergoemacs-command-shortcuts-hash)
+            ;; Setup emulation maps.
+            (setq ergoemacs-read-emulation-mode-map-alist
+                  (list (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap))
+                  ergoemacs-emulation-mode-map-alist
+                  (append (nbutlast ergoemacs-emulation-mode-map-alist 1)
+                          (list (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap))))
+            ;;Put maps in `minor-mode-map-alist'
+            (ergoemacs-shuffle-keys t))
           (push key ergoemacs-global-override-rm-keys)
           (throw 'found-global-command t))
         (setq key (substring key 0 (- (length key) 1)))))))

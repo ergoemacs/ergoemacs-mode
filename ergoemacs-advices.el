@@ -95,27 +95,16 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 (defvar ergoemacs-ignore-advice nil)
 (defun ergoemacs-global-set-key-after (key)
   (if ergoemacs-ignore-advice nil
-    (unless (or (and (vectorp key)
-                     (memq (elt key 0) '(menu-bar 27 remap)))
-                (and (not (vectorp key))
-                     (string= "ESC" (key-description key))))
-      (let ((ergoemacs-ignore-advice t))
-        (add-to-list 'ergoemacs-global-changed-cache (key-description key))
-        (when ergoemacs-global-not-changed-cache
-          (delete (key-description key) ergoemacs-global-not-changed-cache))
-        (add-to-list 'ergoemacs-global-override-rm-keys (or (and (vectorp key) key)
-                                                            (read-kbd-macro (key-description key) t)))
-        (setq ergoemacs-shortcut-keymap (ergoemacs-rm-key ergoemacs-shortcut-keymap key)
-              ergoemacs-read-input-keymap (ergoemacs-rm-key ergoemacs-read-input-keymap key)
-              ergoemacs-keymap (ergoemacs-rm-key ergoemacs-keymap key)
-              ergoemacs-unbind-keymap (ergoemacs-rm-key ergoemacs-keymap key))
-        (remhash key ergoemacs-command-shortcuts-hash)
-        (setq ergoemacs-read-emulation-mode-map-alist
-              (list (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap))
-              ergoemacs-emulation-mode-map-alist
-              (append (nbutlast ergoemacs-emulation-mode-map-alist 1)
-                      (list (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap))))
-        (ergoemacs-shuffle-keys t)))))
+    (let ((kd (key-description key)))
+      (unless (or (and (vectorp key)
+                       (memq (elt key 0) '(menu-bar 27 remap)))
+                  (and (not (vectorp key))
+                       (string= "ESC" kd)))
+        ;; Let `ergoemacs-mode' know these keys have changed.
+        (pushnew kd ergoemacs-global-changed-cache :test 'equal)
+        (setq ergoemacs-global-not-changed-cache (delete kd ergoemacs-global-not-changed-cache))
+        ;; Remove the key from `ergoemacs-mode' bindings
+        (ergoemacs-theme-component--ignore-globally-defined-key key t)))))
 
 (defadvice local-set-key (around ergoemacs-local-set-key-advice (key command) activate)
   "This let you use `local-set-key' as usual when `ergoemacs-mode' is enabled."
