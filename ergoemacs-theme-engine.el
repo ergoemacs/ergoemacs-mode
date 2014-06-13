@@ -666,7 +666,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                    :full-map full-map
                    :always always))
         (ergoemacs-setup-translation lay "us")
-        (dolist (cmd cmd-list)
+        (dolist (cmd (reverse cmd-list))
           (ergoemacs-define-map ret (ergoemacs-kbd (nth 0 cmd) nil (nth 3 cmd))
                                 (nth 1 cmd) (nth 4 cmd)))
         (puthash ilay ret keymap-hash)
