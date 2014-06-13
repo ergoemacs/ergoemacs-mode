@@ -1117,6 +1117,9 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-original-keys-to-shortcut-keys-regexp ""
   "Regular expression of original keys that have shortcuts.")
 
+(defvar ergoemacs-shortcut-prefix-keys '()
+  "List of prefix keys")
+
 (defvar ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
 
@@ -1220,6 +1223,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
       
       ;; Reset shortcut hash
       (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
+            ergoemacs-shortcut-prefix-keys '()
             ergoemacs-original-keys-to-shortcut-keys-regexp ""
             ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal))
       (unless remove-p
@@ -1260,6 +1264,10 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
           (dolist (c (reverse shortcut-list))
             (unless (member (nth 0 c) rm-list)
               (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash)
+              (when (< 1 (length (nth 0 c)))
+                (pushnew (substring (nth 0 c) 0 -1)
+                         ergoemacs-shortcut-prefix-keys
+                         :test 'equal))
               (when (eq (nth 1 (nth 1 c)) 'global)
                 (dolist (global-key (ergoemacs-shortcut-function-binding (nth 0 (nth 1 c))))
                   (if (not (gethash global-key ergoemacs-original-keys-to-shortcut-keys))
