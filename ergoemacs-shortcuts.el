@@ -819,27 +819,11 @@ FORCE-KEY forces keys like <escape> to work properly.
   (prog1
       (let* (ergoemacs-read-input-keys
              ergoemacs-modal
-             ;; Turn on `ergoemacs-shortcut-keys' layer when the
-             ;; prior-key is defined on `ergoemacs-read-input-keymap'.
-             ;; This way keys like <apps> will read the from the
-             ;; `ergoemacs-shortcut-keys' layer and then discontinue
-             ;; reading from that layer.
-             ;;
-             ;; Also turn on ergoemacs-shortcut-keys as long as this
-             ;; isn't a recursive call.
-             (ergoemacs-shortcut-keys
-              (if prior-key
-                  (lookup-key ergoemacs-read-input-keymap prior-key)
-                (if (= 1 (length key)) t
-                  (not (and (boundp 'ergoemacs-read-key-recursive)
-                            ergoemacs-read-key-recursive)))))
+             ergoemacs-shortcut-keys
+             (hash (and key (gethash key ergoemacs-command-shortcuts-hash)))
              lookup
              tmp-overlay use-override
-             ergoemacs-read-key-recursive
-             tmp ret fn hash)
-        (when (or (equal key [3]) (equal key [24])) ;; C-c or C-x
-          (setq ergoemacs-shortcut-keys nil))
-        (setq ergoemacs-read-key-recursive t)
+             tmp ret fn)
         (unwind-protect
             (progn
               ;; Install `overriding-terminal-local-map' without
@@ -877,7 +861,27 @@ FORCE-KEY forces keys like <escape> to work properly.
                     (overlay-put tmp-overlay 'keymap lookup)
                     (overlay-put tmp-overlay 'priority 536870910))))
               (cond
-               ((progn
+               ;; Apply shortcuts (even though masked).
+               ((and key (member key ergoemacs-shortcut-prefix-keys))
+                ;; Shortcut prefix key, wait for more.
+                (setq ret 'keymap))
+               ((and hash (commandp (nth 0 hash) t))
+                ;; Shorcut command
+                (ergoemacs-read-key--echo-command
+                 pretty-key (or (and (symbolp (nth 0 hash)) (symbol-name (nth 0 hash)))
+                                (ergoemacs-unicode-char "λ" "lambda")))
+                (ergoemacs-shortcut-remap (nth 0 hash))
+                (setq ergoemacs-single-command-keys nil)
+                (setq ret 'function-remap))
+               ((and hash (stringp (nth 0 (nth 0 hash))) (not (nth 1 (nth 0 hash))))
+                ;; Shortcut character.
+                (ergoemacs-read-key--send-unread (read-kbd-macro (nth 0 (nth 0 hash)) t) lookup use-override)
+                (setq ret 'unread))
+               ((and hash (stringp (nth 0 (nth 0 hash))))
+                ;; Shorcut to another key combination/translation
+                ;; Reset `ergoemacs-read-key'
+                (setq ret (list (nth 0 (nth 0 hash)) (nth 1 (nth 0 hash)) (nth 1 (nth 0 hash)))))
+               ((progn ;; key translations first, just like emacs.
                   (setq tmp (lookup-key local-function-key-map key))
                   (when (and tmp (integerp tmp))
                     (setq tmp nil))
@@ -888,7 +892,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                   tmp)
                 ;; Should use emacs key translation.
                 (cond
-                 ((keymapp tmp)
+                 ((or (keymapp tmp))
                   (setq ret 'keymap))
                  ((and ergoemacs-describe-key (vectorp tmp))
                   (setq ergoemacs-single-command-keys nil)
@@ -923,54 +927,16 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq ret 'local-function-override)))
                ;; Does this call a function?
                ((progn
-                  (setq hash (gethash key ergoemacs-command-shortcuts-hash))
                   (setq fn (key-binding key))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
                   (or ret (commandp fn t)))
                 (unless ret
                   (cond
-                   ((and hash (eq 'string (type-of (nth 0 hash)))
-                         (memq (nth 1 hash)
-                               (let ((ret '()))
-                                 (maphash
-                                  (lambda(yyy x)
-                                    (push yyy ret))
-                                  ergoemacs-translations)
-                                 ret)))
-                    ;; Reset the `ergoemacs-read-key'
-                    ;; List in form of key type first-type
-                    (setq ret (list (nth 0 hash) (nth 1 hash) (nth 1 hash))))
-                   ((and hash (eq 'string (type-of (nth 0 hash))))
-                    (setq ergoemacs-mark-active
-                          (or (and mark-active transient-mark-mode) mark-active))
-                    (setq ergoemacs-single-command-keys (read-kbd-macro (nth 0 hash)))
-                    (setq prefix-arg current-prefix-arg)
-                    (setq unread-command-events (append (listify-key-sequence (read-kbd-macro (nth 0 hash))) unread-command-events))
-                    (ergoemacs-defer-post-command-hook)
-                    (when lookup
-                      (define-key lookup [ergoemacs-single-command-keys] 'ignore)
-                      (if (not use-override)
-                          (setq ergoemacs-read-key-overriding-overlay-save tmp-overlay)
-                        (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-                        (setq overriding-terminal-local-map lookup)))
-                    (setq ret 'kbd-shortcut))
-                   ((and hash (commandp (nth 0 hash) t))
-                    (ergoemacs-read-key--echo-command
-                     pretty-key (or (and (symbolp (nth 0 hash)) (symbol-name (nth 0 hash)))
-                                    (ergoemacs-unicode-char "λ" "lambda")))
-                    (ergoemacs-shortcut-remap (nth 0 hash))
-                    (setq ergoemacs-single-command-keys nil)
-                    (setq ret 'function-remap))
                    ((and ergoemacs-shortcut-keys (not ergoemacs-describe-key)
                          (not ergoemacs-single-command-keys))
                     (if (nth 0 hash)
                         (progn
-                          (setq fn (nth 0 hash))
-                          ;;  Send Shortcut key directly
-                          (when (ignore-errors (and (stringp (nth 0 fn))
-                                                    (or (not (nth 1 fn))
-                                                        (eq (nth 1 fn) 'normal))))
-                            (setq key (read-kbd-macro (nth 0 fn) t))))
+                          (setq fn (nth 0 hash)))
                       (setq fn (key-binding key))
                       (setq fn (or (command-remapping fn (point)) fn)))
                     (ergoemacs-read-key--echo-command pretty-key fn)
@@ -1006,10 +972,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                                   (ergoemacs-with-global
                                    (key-binding key)))))))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
-                  (or ret
-                      (condition-case err
-                          (interactive-form fn)
-                        nil)))
+                  (or ret (commandp fn t)))
                 (unless ret
                   (setq fn (or (command-remapping fn (point)) fn))
                   (setq ergoemacs-single-command-keys key)
@@ -1026,7 +989,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (ergoemacs-read-key-call fn nil key)
                   (setq ergoemacs-single-command-keys nil)
                   (setq ret 'function-global-or-override)))))
-          ;; Fix tempoary over
+          ;; Fix tempoary overlay
           (when (and tmp-overlay (not ergoemacs-read-key-overriding-overlay-save))
             (delete-overlay tmp-overlay)))
         ret)
