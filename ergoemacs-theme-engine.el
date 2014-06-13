@@ -1917,12 +1917,10 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
             (dolist (map '(ergoemacs-shortcut-keymap ergoemacs-read-input-keymap ergoemacs-keymap ergoemacs-unbind-keymap))
               (set map (ergoemacs-rm-key (symbol-value map) key))
               (setq lk (lookup-key (symbol-value map) key))
-              (message "%s;%s" map lk)
               (if (not (integerp lk))
                   (setq test-key key)
                 (setq test-key (substring key 0 lk))
                 (setq lk (lookup-key (symbol-value map) test-key)))
-              (message "%s#2;%s" map lk)
               (when (commandp lk t)
                 (set map (ergoemacs-rm-key (symbol-value map) test-key))))
             ;; Remove from shortcuts, if present
