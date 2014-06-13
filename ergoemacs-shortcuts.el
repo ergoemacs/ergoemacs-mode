@@ -762,7 +762,7 @@ If universal is returned, and type first-type is bound, set these
 to the appropriate values for `ergoemacs-read-key'.
 "
   (let (ret tmp)
-    (when (condition-case err (keymapp fn) nil)
+    (when (ignore-errors (keymapp fn))
       ;; If keymap, continue.
       (setq ret 'keymap))
     (when (memq fn ergoemacs-universal-fns)
@@ -786,6 +786,25 @@ to the appropriate values for `ergoemacs-read-key'.
                  (ergoemacs-unicode-char "→" "->")
                  command
                  pretty-key-undefined)))))
+
+(defun ergoemacs-read-key--send-unread (unread-vector lookup use-overrride)
+  "Send `unread-command-events' inside `ergoemacs-read-key-lookup'"
+  (setq ergoemacs-mark-active
+        (or (and mark-active transient-mark-mode) mark-active))
+  (setq ergoemacs-single-command-keys unread-vector)
+  (setq last-input-event unread-vector)
+  (setq prefix-arg current-prefix-arg)
+  (setq unread-command-events (append (listify-key-sequence unread-vector) unread-command-events))
+  (ergoemacs-defer-post-command-hook)
+  (reset-this-command-lengths)
+  (ergoemacs-read-key--echo-command
+   pretty-key (ergoemacs-pretty-key (key-description unread-vector)))
+  (when lookup
+    (define-key lookup [ergoemacs-single-command-keys] 'ignore)
+    (if (not use-override)
+        (setq ergoemacs-read-key-overriding-overlay-save tmp-overlay)
+      (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
+      (setq overriding-terminal-local-map lookup))))
 
 (defun ergoemacs-read-key-lookup (prior-key prior-pretty-key key pretty-key force-key)
   "Lookup KEY and run if necessary.
@@ -892,20 +911,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq ergoemacs-single-command-keys nil)
                   (setq ret 'translate-fn))
                  ((vectorp tmp)
-                  (setq ergoemacs-mark-active
-                        (or (and mark-active transient-mark-mode) mark-active))
-                  (setq ergoemacs-single-command-keys tmp)
-                  (setq last-input-event tmp)
-                  (setq prefix-arg current-prefix-arg)
-                  (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
-                  (ergoemacs-defer-post-command-hook)
-                  (reset-this-command-lengths)
-                  (ergoemacs-read-key--echo-command
-                   pretty-key (ergoemacs-pretty-key (key-description tmp)))
-                  (when lookup
-                    (define-key lookup [ergoemacs-single-command-keys] 'ignore)
-                    (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-                    (setq overriding-terminal-local-map lookup))
+                  (ergoemacs-read-key--send-unread tmp lookup use-override)
                   (setq ret 'translate))))
                ;; Is there an local override function?
                ((progn
@@ -972,20 +978,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                     ;; thinks it is in a minibuffer, so the recursive 
                     ;; minibuffer error is raised unless these are put
                     ;; into unread-command-events.
-                    (setq ergoemacs-mark-active
-                          (or (and mark-active transient-mark-mode) mark-active))
-                    (setq ergoemacs-single-command-keys key)
-                    (setq prefix-arg current-prefix-arg)
-                    (setq unread-command-events
-                          (append (listify-key-sequence key) unread-command-events))
-                    (ergoemacs-defer-post-command-hook)
-                    (reset-this-command-lengths)
-                    (when lookup
-                      (define-key lookup [ergoemacs-single-command-keys] 'ignore)
-                      (if (not use-override)
-                          (setq ergoemacs-read-key-overriding-overlay-save tmp-overlay)
-                        (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-                        (setq overriding-terminal-local-map lookup)))
+                    (ergoemacs-read-key--send-unread key lookup use-override)
                     (setq ret 'shortcut-workaround))
                    (t
                     (setq fn (or (command-remapping fn (point)) fn))
