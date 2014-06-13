@@ -677,9 +677,10 @@ In addition, when the function is called:
                    (dolist (global-key (where-is-internal function))
                      (setq test (gethash global-key ergoemacs-original-keys-to-shortcut-keys))
                      (when test
-                       (unless (eq (elt test 0) 'menu-bar)
-                         (push (ergoemacs-pretty-key (key-description test))
-                             keys)))))
+                       (dolist (global-key test)
+                         (unless (eq (elt global-key 0) 'menu-bar)
+                           (push (ergoemacs-pretty-key (key-description global-key))
+                                 keys))))))
                   (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
                                         ergoemacs-shortcut-keys)
                     (dolist (global-key (where-is-internal function))
