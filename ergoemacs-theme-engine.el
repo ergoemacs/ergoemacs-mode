@@ -1235,7 +1235,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
           (let ((vector-key (or (and (vectorp key) key)
                                 (read-kbd-macro (key-description key) t))))
             (setq final-read-map (or (and (memq (elt vector-key 0) '(3 24)) ;; Keep `C-c' and `C-x'.
-                                          (memq (lookup-key final-read-map (vector (elt vector-key 0))) '(ergoemacs-ctl-x ergoemacs-ctl-c))
+                                          (memq (lookup-key final-read-map (vector (elt vector-key 0)))
+                                                '(ergoemacs-ctl-x ergoemacs-ctl-c))
                                           final-read-map)
                                      (ergoemacs-rm-key final-read-map key))
                   final-shortcut-map (ergoemacs-rm-key final-shortcut-map key)
@@ -2330,29 +2331,32 @@ If OFF is non-nil, turn off the options instead."
 Also add global overrides from the current global map, if necessary.
 Returns new keymap."
   (if keymap
-      (let ((new-keymap (copy-keymap keymap)))
-        (cond
-         ((keymapp (nth 1 new-keymap))
-          (pop new-keymap)
-          (setq new-keymap
-                (mapcar
-                 (lambda(map)
-                   (let ((lk (lookup-key map key)) lk2 lk3)
-                     (cond
-                      ((integerp lk)
-                       (setq lk2 (lookup-key (current-global-map) key))
-                       (setq lk3 (lookup-key map (substring key 0 lk)))
-                       (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
-                         (define-key map key lk2)))
-                      (lk
-                       (define-key map key nil))))
-                   map)
-                 new-keymap))
-          (push 'keymap new-keymap)
-          new-keymap)
-         (t
-          (define-key new-keymap key nil)
-          new-keymap)))))
+      (if (listp key)
+          (dolist (rm-key key)
+            (ergoemacs-rm-key keymap rm-key))
+        (let ((new-keymap (copy-keymap keymap)))
+          (cond
+           ((keymapp (nth 1 new-keymap))
+            (pop new-keymap)
+            (setq new-keymap
+                  (mapcar
+                   (lambda(map)
+                     (let ((lk (lookup-key map key)) lk2 lk3)
+                       (cond
+                        ((integerp lk)
+                         (setq lk2 (lookup-key (current-global-map) key))
+                         (setq lk3 (lookup-key map (substring key 0 lk)))
+                         (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
+                           (define-key map key lk2)))
+                        (lk
+                         (define-key map key nil))))
+                     map)
+                   new-keymap))
+            (push 'keymap new-keymap)
+            new-keymap)
+           (t
+            (define-key new-keymap key nil)
+            new-keymap))))))
 
 (defvar ergoemacs-M-x "M-x ")
 
