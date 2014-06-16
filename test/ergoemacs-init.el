@@ -1,4 +1,4 @@
-;;; ergoemacs-test.el --- tests for ErgoEmacs issues
+;;; ergoemacs-test.el --- tests for ErgoEmacs Key binding issues
 
 ;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
@@ -28,10 +28,32 @@
 
 ;;; Code:
 
-(setq ergoemacs-dir (file-name-directory (or load-file-name (buffer-file-name))))
+;; Init file for test suite.
+(require 'ergoemacs-mode)
+(require 'keyfreq-mode)
+(require 'f)
+(require 's)
+(require 'dash)
+(require 'el-mock)
+(require 'cask)
 
-(require 'ert)
-(require 'elp)
+(defvar ergoemacs-test--test-path
+  (f-dirname (f-this-file)))
+
+(defvar ergoemacs-test--root-path
+  (f-parent ergoemacs-test--test-path))
+
+(defvar ergoemacs-test--vendor-path
+  (f-expand "vendor" ergoemacs-test--root-path))
+
+
+(load (f-expand "ergoemacs-mode" ergoemacs-test--root-path))
+
+(unless (require 'ert nil 'noerror)
+  (require 'ert (f-expand "ert" ergoemacs-test--vendor-path)))
+
+(add-to-list 'load-path ergoemacs-test--root-path)
+
 (defvar ergoemacs-test-lorem-ipsum
   "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
 do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
@@ -40,25 +62,3 @@ nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
 reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est laborum.")
-
-;;;###autoload
-(defun ergoemacs-test ()
-  "Test ergoemacs issues."
-  (interactive)
-  (let ((ret t)
-        (test))
-    (when nil
-      (message "Updating for the current version of emacs")
-      (ergoemacs-warn-globally-changed-keys t))
-    (dolist (f (directory-files (concat ergoemacs-dir "test") nil "ergoemacs-test-.*el$"))
-      (load (concat ergoemacs-dir "test/" (replace-regexp-in-string "\\.el$" "" f))))
-    (elp-instrument-package "ergoemacs-")
-    (ert "^ergoemacs-test-")
-    (call-interactively 'elp-results)))
-
-(provide 'ergoemacs-test)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; ergoemacs-test.el ends here
-;; Local Variables:
-;; coding: utf-8-emacs
-;; End:
