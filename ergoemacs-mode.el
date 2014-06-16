@@ -808,9 +808,6 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
     (setq ergoemacs-single-command-keys nil))
   t)
 
-(unless (fboundp 'ergoemacs-test)
-  (autoload 'ergoemacs-test (expand-file-name "ergoemacs-test.el" ergoemacs-dir) nil t))
-
 (provide 'ergoemacs-mode)
 
 ;;; ergoemacs-mode.el ends here
