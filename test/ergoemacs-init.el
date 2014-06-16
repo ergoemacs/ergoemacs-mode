@@ -29,30 +29,20 @@
 ;;; Code:
 
 ;; Init file for test suite.
-(require 'ergoemacs-mode)
-(require 'keyfreq-mode)
-(require 'f)
-(require 's)
-(require 'dash)
-(require 'el-mock)
-(require 'cask)
-
 (defvar ergoemacs-test--test-path
-  (f-dirname (f-this-file)))
+  (file-name-directory (or load-file-name (buffer-file-name))))
 
 (defvar ergoemacs-test--root-path
-  (f-parent ergoemacs-test--test-path))
+  (file-name-directory (substring ergoemacs-test--test-path 0 -1)))
 
 (defvar ergoemacs-test--vendor-path
-  (f-expand "vendor" ergoemacs-test--root-path))
-
-
-(load (f-expand "ergoemacs-mode" ergoemacs-test--root-path))
+  (expand-file-name "vendor" ergoemacs-test--root-path))
 
 (unless (require 'ert nil 'noerror)
-  (require 'ert (f-expand "ert" ergoemacs-test--vendor-path)))
+  (add-to-list 'load-path ergoemacs-test--vendor-path)
+  (require 'ert (expand-file-name "ert" ergoemacs-test--vendor-path)))
 
-(add-to-list 'load-path ergoemacs-test--root-path)
+(require 'ergoemacs-mode)
 
 (defvar ergoemacs-test-lorem-ipsum
   "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed

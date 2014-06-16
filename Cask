@@ -6,6 +6,7 @@
        "bash-us.txt" "os_x_qwerty.dict.txt")
 
 (development
+ (depends-on "keyfreq")
  (depends-on "f")
  (depends-on "ecukes")
  (depends-on "ert-runner")
