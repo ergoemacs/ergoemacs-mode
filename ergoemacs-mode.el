@@ -635,30 +635,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 (when ergoemacs-use-aliases
   (ergoemacs-load-aliases))
 
-(defun ergoemacs-vars-sync ()
-  "Sync variables.
-`ergoemacs-mode' `ergoemacs-shortcut-keys', `ergoemacs-read-input-keys'
-`ergoemacs-unbind-keys'."
-  (if (assq 'ergoemacs-mode minor-mode-map-alist)
-      (when (or ergoemacs-mode ergoemacs-shortcut-keys
-                ergoemacs-unbind-keys
-                ergoemacs-save-variables)
-        (unless ergoemacs-mode
-          (setq ergoemacs-mode t)
-          (ergoemacs-debug "WARNING: ergoemacs-mode was turned off; Turning on."))
-        (unless ergoemacs-unbind-keys
-          (setq ergoemacs-unbind-keys t)
-          (ergoemacs-debug "WARNING: ergoemacs-unbind-keys was turned off; Turning on.")))
-    (when ergoemacs-mode      
-      (setq ergoemacs-mode nil)
-      (ergoemacs-debug "WARNING: ergoemacs-mode was turned on; Turning off."))
-    (unless ergoemacs-unbind-keys
-      (setq ergoemacs-unbind-keys nil)
-      (ergoemacs-debug "WARNING: ergoemacs-unbind-keys was turned on; Turning off."))
-    (unless ergoemacs-shortcut-keys
-      (setq ergoemacs-shortcut-keys nil)
-      (ergoemacs-debug "WARNING: ergoemacs-shortcut-keys was turned on; Turning off."))))
-
 (defun ergoemacs-shuffle-keys (&optional force-update)
   "Shuffle ergoemacs keymaps in `minor-mode-map-alist'."
   (when (or force-update (not (eq (car (nth 0 minor-mode-map-alist)) 'ergoemacs-mode)))
@@ -753,7 +729,6 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
     (condition-case err
         (progn
           (ergoemacs-restore-post-command-hook)
-          (ergoemacs-vars-sync)
           (when (and ergoemacs-repeat-keys
                      (keymapp ergoemacs-repeat-keymap)
                      (not (lookup-key ergoemacs-repeat-keymap (this-single-command-keys))))
@@ -812,10 +787,10 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
     (condition-case err
         (progn
           (when ergoemacs-mode
+            (setq ergoemacs-shortcut-keys t)
             (ergoemacs-shuffle-keys)
             (when (not unread-command-events)
-              (ergoemacs-install-shortcuts-up)
-              (ergoemacs-vars-sync)))
+              (ergoemacs-install-shortcuts-up)))
           (when (not ergoemacs-mode)
             (ergoemacs-remove-shortcuts)))
       (error (message "Error %s" err))))

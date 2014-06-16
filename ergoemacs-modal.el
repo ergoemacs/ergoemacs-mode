@@ -201,7 +201,6 @@ modal state is currently enabled."
 
 (defun ergoemacs-minibuffer-setup ()
   "Exit temporary overlay maps."
-  ;; (setq ergoemacs-shortcut-keys t)
   )
 
 (defun ergoemacs-modal-p ()

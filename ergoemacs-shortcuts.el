@@ -65,7 +65,8 @@ major-mode, minor-mode, and global keys are ignored."
          (minor-mode-map-alist
           `((ergoemacs-mode ,@ergoemacs-keymap)
             (ergoemacs-unbind-keys ,@ergoemacs-unbind-keymap)))
-         (ergoemacs-emulation-mode-map-alist
+         (ergoemacs-emulation-mode-map-alist '())
+         (ergoemacs-shortcut-emulation-mode-map-alist
           `((ergoemacs-shortcut-keys ,@ergoemacs-shortcut-keymap)))
          (old-global-map (current-global-map))
          (old-local-map (current-local-map))
@@ -932,33 +933,17 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
                   (or ret (commandp fn t)))
                 (unless ret
-                  (cond
-                   ((and ergoemacs-shortcut-keys (not ergoemacs-describe-key)
-                         (not ergoemacs-single-command-keys))
-                    (if (nth 0 hash)
-                        (progn
-                          (setq fn (nth 0 hash)))
-                      (setq fn (key-binding key))
-                      (setq fn (or (command-remapping fn (point)) fn)))
-                    (ergoemacs-read-key--echo-command pretty-key fn)
-                    ;; There is some issue with these keys.  Read-key
-                    ;; thinks it is in a minibuffer, so the recursive 
-                    ;; minibuffer error is raised unless these are put
-                    ;; into unread-command-events.
-                    (ergoemacs-read-key--send-unread key lookup use-override)
-                    (setq ret 'shortcut-workaround))
-                   (t
-                    (setq fn (or (command-remapping fn (point)) fn))
-                    (when (memq fn ergoemacs-universal-fns)
-                      (setq ret (ergoemacs-read-key-lookup-get-ret---universal fn)))
-                    (unless ret
-                      (setq ergoemacs-single-command-keys key)
-                      (ergoemacs-read-key--echo-command
-                       pretty-key (or (and (symbolp fn) (symbol-name fn))
-                                      (ergoemacs-unicode-char "λ" "lambda")))
-                      (ergoemacs-read-key-call fn nil key)
-                      (setq ergoemacs-single-command-keys nil)
-                      (setq ret 'function))))))
+                  (setq fn (or (command-remapping fn (point)) fn))
+                  (when (memq fn ergoemacs-universal-fns)
+                    (setq ret (ergoemacs-read-key-lookup-get-ret---universal fn)))
+                  (unless ret
+                    (setq ergoemacs-single-command-keys key)
+                    (ergoemacs-read-key--echo-command
+                     pretty-key (or (and (symbolp fn) (symbol-name fn))
+                                    (ergoemacs-unicode-char "λ" "lambda")))
+                    (ergoemacs-read-key-call fn nil key)
+                    (setq ergoemacs-single-command-keys nil)
+                    (setq ret 'function))))
                ;; Does this call an override or major/minor mode function?
                ((progn
                   (setq fn (or
