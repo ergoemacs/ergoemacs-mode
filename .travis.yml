@@ -18,6 +18,5 @@ before_install:
 env:
   - EMACS=emacs-snapshot
   - EMACS=emacs24
-  - EMACS=emacs23
 script:
   make

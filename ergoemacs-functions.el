@@ -2116,31 +2116,8 @@ See also `ergoemacs-lookup-word-on-internet'."
 
 
 ;; Ergoemacs Test suite
-
-(defvar ergoemacs-test-lorem-ipsum
-  "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
-do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-enim ad minim veniam, quis nostrud exercitation ullamco laboris
-nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-reprehenderit in voluptate velit esse cillum dolore eu fugiat
-nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-sunt in culpa qui officia deserunt mollit anim id est laborum.")
-
-(defun ergoemacs-test ()
-  "Test ergoemacs issues."
-  (interactive)
-  (require 'ert)
-  (require 'elp)
-  (let ((ret t)
-        (test))
-    (when nil
-      (message "Updating for the current version of emacs")
-      (ergoemacs-warn-globally-changed-keys t))
-    (dolist (f (directory-files (concat ergoemacs-dir "test") nil "ergoemacs-test-.*el$"))
-      (load (concat ergoemacs-dir "test/" (replace-regexp-in-string "\\.el$" "" f))))
-    (elp-instrument-package "ergoemacs-")
-    (ert "^ergoemacs-test-")
-    (call-interactively 'elp-results)))
+(unless (fboundp 'ergoemacs-test)
+  (autoload 'ergoemacs-test (expand-file-name "ergoemacs-test.el" ergoemacs-dir) nil t))
 
 (provide 'ergoemacs-functions)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

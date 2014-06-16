@@ -559,11 +559,6 @@ bindings the keymap is:
                     minor-mode-map-alist))
   (ergoemacs-debug-flush))
 
-
-;; ErgoEmacs replacements for local-set-key
-
-(defvar ergoemacs-local-keymap nil
-  "Local ergoemacs keymap")
 
 
 

@@ -94,6 +94,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 ;;; Advices enabled or disabled with ergoemacs-mode
 (defvar ergoemacs-ignore-advice nil)
 (defun ergoemacs-global-set-key-after (key)
+  
   (if ergoemacs-ignore-advice nil
     (let ((kd (key-description key)))
       (unless (or (and (vectorp key)
@@ -105,19 +106,6 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
         (setq ergoemacs-global-not-changed-cache (delete kd ergoemacs-global-not-changed-cache))
         ;; Remove the key from `ergoemacs-mode' bindings
         (ergoemacs-theme-component--ignore-globally-defined-key key t)))))
-
-(defadvice local-set-key (around ergoemacs-local-set-key-advice (key command) activate)
-  "This let you use `local-set-key' as usual when `ergoemacs-mode' is enabled."
-  (if (and (fboundp 'ergoemacs-mode) ergoemacs-mode)
-      (ergoemacs-local-set-key key command)
-    ad-do-it))
-(add-to-list 'ergoemacs-advices 'ergoemacs-local-set-key-advice)
-
-(defadvice local-unset-key (around ergoemacs-local-unset-key-advice (key))
-  "This let you use `local-unset-key' as usual when `ergoemacs-mode' is enabled."
-  (if (fboundp 'ergoemacs-mode)
-      (ergoemacs-local-unset-key key)
-    ad-do-it))
 
 (add-to-list 'ergoemacs-advices 'ergoemacs-local-unset-key-advice)
 

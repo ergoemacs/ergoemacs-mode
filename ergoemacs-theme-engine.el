@@ -1176,9 +1176,9 @@ FULL-SHORTCUT-MAP-P "
                 (setq o-map (gethash map-name ergoemacs-original-map-hash))
                 (if remove-p
                     (when o-map
-                      (message "Restore %s"  map-name)
+                      ;; (message "Restore %s"  map-name)
                       (set map-name (copy-keymap o-map)))
-                  (message "Modify %s"  map-name)
+                  ;; (message "Modify %s"  map-name)
                   (unless o-map
                     (setq o-map (copy-keymap (symbol-value map-name)))
                     (puthash map-name o-map ergoemacs-original-map-hash))
@@ -1203,7 +1203,7 @@ FULL-SHORTCUT-MAP-P "
                   (set map-name n-map)))
                (t ;; Maps that are not modified.
                 (unless remove-p
-                  (message "Setup %s"  hook)
+                  ;; (message "Setup %s"  hook)
                   (fset emulation-var
                         `(lambda() ,(format "Turn on `ergoemacs-mode' keymaps for `%s'.
 This is done by locally setting `ergoemacs--for-%s' to be non-nil.
