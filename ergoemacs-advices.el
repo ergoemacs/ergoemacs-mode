@@ -208,9 +208,8 @@ will add MAP to substitution."
           (progn
             (setq test (key-description (nth 0 test-hash)))
             (ergoemacs-pretty-key test))
-        (let (ergoemacs-modal
-              ergoemacs-repeat-keys ergoemacs-read-input-keys
-              ergoemacs-shortcut-keys)
+        (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
+                              ergoemacs-shortcut-keys)
           (ergoemacs-pretty-key
            (ergoemacs-real-substitute-command-keys
             (or (and map (concat map string)) string))))))))
