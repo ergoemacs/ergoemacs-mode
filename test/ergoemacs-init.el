@@ -28,6 +28,12 @@
 
 ;;; Code:
 
+(require 'f)
+(require 's)
+(require 'dash)
+(require 'el-mock)
+(require 'cask)
+
 ;; Init file for test suite.
 (defvar ergoemacs-test--test-path
   (file-name-directory (or load-file-name (buffer-file-name))))
