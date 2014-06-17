@@ -274,6 +274,20 @@ a set type."
 (defgeneric ergoemacs-copy-obj (obj)
   "Copies OBJECTS so they are not shared beteween instances.")
 
+(declare-function ergoemacs-shortcut-function-binding "ergoemacs-shortcuts.el")
+(declare-function ergoemacs-is-movement-command-p "ergoemacs-mode.el")
+(declare-function ergoemacs-setup-translation "ergoemacs-translate.el")
+(declare-function ergoemacs-kbd "ergoemacs-translate.el")
+(defun ergoemacs-copy-list (list)
+  "Return a copy of LIST, which may be a dotted list.
+The elements of LIST are not copied, just the list structure itself."
+  ;; Taken from cl, to remove warnings
+  (if (consp list)
+      (let ((res nil))
+        (while (consp list) (push (pop list) res))
+        (prog1 (nreverse res) (setcdr res list)))
+    (car list)))
+
 (defmethod ergoemacs-copy-obj ((obj ergoemacs-fixed-map))
   (with-slots (read-map
                shortcut-map
@@ -291,13 +305,15 @@ a set type."
     (oset obj no-shortcut-map (copy-keymap no-shortcut-map))
     (oset obj map (copy-keymap map))
     (oset obj unbind-map (copy-keymap unbind-map))
-    (oset obj deferred-keys (copy-list deferred-keys))
-    (oset obj cmd-list (copy-list cmd-list))
-    (oset obj rm-keys (copy-list rm-keys))
-    (oset obj shortcut-shifted-movement (copy-list shortcut-shifted-movement))
-    (oset obj shortcut-movement (copy-list shortcut-movement))
-    (oset obj shortcut-list (copy-list shortcut-list))))
+    (oset obj deferred-keys (ergoemacs-copy-list deferred-keys))
+    (oset obj cmd-list (ergoemacs-copy-list cmd-list))
+    (oset obj rm-keys (ergoemacs-copy-list rm-keys))
+    (oset obj shortcut-shifted-movement (ergoemacs-copy-list shortcut-shifted-movement))
+    (oset obj shortcut-movement (ergoemacs-copy-list shortcut-movement))
+    (oset obj shortcut-list (ergoemacs-copy-list shortcut-list))))
 
+(declare-function ergoemacs-debug "ergoemacs-debug.el")
+(declare-function ergoemacs-debug-keymap "ergoemacs-debug.el")
 (defmethod ergoemacs-debug-obj ((obj ergoemacs-fixed-map) &optional stars)
   (let ((stars (or stars "**")))
     (with-slots (object-name
@@ -395,6 +411,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
         (push tmp cmd-list))
       (oset obj cmd-list cmd-list))))
 
+(defvar ergoemacs-ignored-prefixes)
 (defmethod ergoemacs-define-map--read-map ((obj ergoemacs-fixed-map) key)
   "Defines KEY in the OBJ read-key slot if it is a vector over 2.
 Key sequences starting with `ergoemacs-ignored-prefixes' are not added."
@@ -645,9 +662,10 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
   (with-slots (cmd-list) obj
     (oset obj keymap-hash (make-hash-table))
     ;; Translation should remain the same
-    ;; (oset obj translation-assoc (copy-list translation-assoc))
-    (oset obj cmd-list (copy-list cmd-list))))
+    ;; (oset obj translation-assoc (ergoemacs-copy-list translation-assoc))
+    (oset obj cmd-list (ergoemacs-copy-list cmd-list))))
 
+(defvar ergoemacs-keyboard-layout)
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-variable-map) &optional layout)
   (with-slots (keymap-list
                cmd-list
@@ -881,8 +899,11 @@ Assumes maps are orthogonal."
       (oset obj global global)
       (oset obj fixed-maps (make-hash-table))
       (oset obj hooks (make-hash-table :test 'equal))
-      (oset obj init (copy-list init))
+      (oset obj init (ergoemacs-copy-list init))
       (oset obj maps newmaps))))
+
+(defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
+  "Hash of ergoemacs theme components")
 
 (defmethod ergoemacs-theme-component-maps--save-hash ((obj ergoemacs-theme-component-maps))
   (with-slots (object-name version) obj
@@ -1087,6 +1108,7 @@ FULL-SHORTCUT-MAP-P "
        key args keymap lookup-keymap
        full-shortcut-map-p))))
 
+(declare-function ergoemacs-shortcut-remap-list "ergoemacs-shortcuts.el")
 (defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
                                                    full-shortcut-map-p)
   (let (fn-lst)
@@ -1129,6 +1151,19 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
 
+(defvar ergoemacs-global-override-rm-keys)
+(defvar ergoemacs-command-shortcuts-hash)
+(defvar ergoemacs-theme)
+(defvar ergoemacs-keymap)
+(defvar ergoemacs-shortcut-keys)
+(defvar ergoemacs-read-input-keys)
+(defvar ergoemacs-unbind-keys)
+(defvar ergoemacs-read-input-keymap)
+(defvar ergoemacs-read-emulation-mode-map-alist)
+(defvar ergoemacs-shortcut-keymap)
+(defvar ergoemacs-emulation-mode-map-alist)
+(defvar ergoemacs-shortcut-emulation-mode-map-alist)
+(defvar ergoemacs-mode)
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   (with-slots (read-map
                map
@@ -1142,7 +1177,7 @@ FULL-SHORTCUT-MAP-P "
           ;; (shortcut-map (or shortcut-map (make-sparse-keymap)))
           ;; (map (or map (make-sparse-keymap)))
           (menu-keymap (make-sparse-keymap))
-          final-map final-shortcut-map final-read-map
+          final-map final-shortcut-map final-read-map final-unbind-map
           (rm-list (append rm-keys ergoemacs-global-override-rm-keys)) 
           (i 0))
       ;; Get all the major-mode hooks that will be called or modified
@@ -1330,6 +1365,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             (run-hooks 'ergoemacs-theme-hook)))
       t)))
 
+(declare-function ergoemacs-debug-clear "ergoemacs-mode.el")
 (defmethod ergoemacs-debug-obj ((obj ergoemacs-theme-component-map-list))
   (ergoemacs-debug-clear)
   (let (tmp)
@@ -1709,9 +1745,6 @@ additional parsing routines defined by PARSE-FUNCTION."
           (oset comp versions ver-list)
           (ergoemacs-theme-component-maps--save-hash comp))))))
 
-(defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
-  "Hash of ergoemacs theme components")
-
 (defun ergoemacs-theme-component-get-closest-version (version version-list)
   "Return the closest version to VERSION in VERSION-LIST.
 Formatted for use with `ergoemacs-theme-component-hash' it will return ::version or an empty string"
@@ -1858,8 +1891,10 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
   "Remove the currently installed theme and reset to emacs keys."
   (when ergoemacs-theme--object
     (ergoemacs-theme-obj-install ergoemacs-theme--object 'remove)
-    (setq ergoemacs-theme-object nil)))
+    (setq ergoemacs-theme--object nil)))
 
+(declare-function ergoemacs-global-changed-p "ergoemacs-unbind.el")
+(declare-function ergoemacs-shuffle-keys "ergoemacs-mode.el")
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key &optional reset)
   "Adds KEY to `ergoemacs-global-override-rm-keys' and `ergoemacs-global-override-map' if globally redefined."
   (let ((ergoemacs-ignore-advice t)
@@ -1929,6 +1964,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
     (if (not theme-ver) nil
       (car (cdr theme-ver)))))
 
+(defvar ergoemacs-theme-hash)
 (defun ergoemacs-theme-components (&optional theme)
   "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."
@@ -2016,6 +2052,7 @@ theme, but assumed to be disabled by default.
          (ergoemacs-get-themes)))))
   (ergoemacs-theme-option-on option))
 
+(declare-function ergoemacs-mode "ergoemacs-mode.el")
 ;;;###autoload
 (defun ergoemacs-theme-option-on (option &optional off)
   "Turns OPTION on.
@@ -2158,6 +2195,7 @@ If OFF is non-nil, turn off the options instead."
                 :button (:radio . (equal (ergoemacs-theme-get-version) ,version))))
             theme-versions))))))
 
+(declare-function ergoemacs-get-layouts-menu "ergoemacs-layouts.el")
 (defun ergoemacs-keymap-menu (theme)
   "Defines menus for current THEME."
   `(keymap
@@ -2273,6 +2311,7 @@ If OFF is non-nil, turn off the options instead."
      (lambda() (interactive) (ergoemacs-mode -1)))))
 
 (defvar ergoemacs-get-variable-layout  nil)
+(defvar ergoemacs-theme-component-hash)
 ;; FIXME:
 (defun ergoemacs-get-variable-layout ()
   "Get the old-style variable layout list for `ergoemacs-extras'."
@@ -2422,25 +2461,28 @@ When SILENT is true, also include silent themes"
        (sort (ergoemacs-get-themes silent) 'string<))
     (symbol :tag "Other")))
 
+;; FIXME
 ;;;###autoload
 (defun ergoemacs-key (key function &optional desc only-first fixed-key)
   "Defines KEY in ergoemacs keyboard based on QWERTY and binds to FUNCTION.
 DESC is ignored, as is FIXED-KEY."
-  (let* ((key (or
-               (and (vectorp key) key)
-               (read-kbd-macro key t)))
-         (ergoemacs-force-just-first only-first)
-         (ergoemacs-force-variable-reg t))
-    (ergoemacs-theme-component--global-set-key key function)))
+  ;; (let* ((key (or
+  ;;              (and (vectorp key) key)
+  ;;              (read-kbd-macro key t)))
+  ;;        (ergoemacs-force-just-first only-first)
+  ;;        (ergoemacs-force-variable-reg t))
+  ;;   (ergoemacs-theme-component--global-set-key key function))
+  )
 
 (defun ergoemacs-fixed-key (key function &optional desc)
   "Defines fixed KEY in ergoemacs  and binds to FUNCTION."
-  (let* ((key (or
-               (and (vectorp key) key)
-               (read-kbd-macro key t)))
-         (ergoemacs-force-just-first nil)
-         (ergoemacs-force-variable-reg nil))
-    (ergoemacs-theme-component--global-set-key key function)))
+  ;; (let* ((key (or
+  ;;              (and (vectorp key) key)
+  ;;              (read-kbd-macro key t)))
+  ;;        (ergoemacs-force-just-first nil)
+  ;;        (ergoemacs-force-variable-reg nil))
+  ;;   (ergoemacs-theme-component--global-set-key key function))
+  )
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
