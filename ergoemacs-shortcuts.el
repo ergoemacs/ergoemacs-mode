@@ -1359,12 +1359,6 @@ no translation listed."
                                      "C-x" "C-c" "ESC" "<escape>"
                                      "<remap>"))
 
-(defun ergoemacs-setup-keys-for-layout (layout &optional base-layout)
-  "Setup keys based on a particular LAYOUT. All the keys are based on QWERTY layout."
-  (ergoemacs-setup-translation layout base-layout)
-  ;; Set appropriate mode-line indicator
-  (ergoemacs-mode-line))
-
 (defvar ergoemacs-extract-map-hash (make-hash-table :test 'equal))
 
 (defvar ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)

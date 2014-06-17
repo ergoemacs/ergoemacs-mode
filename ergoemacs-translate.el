@@ -945,6 +945,12 @@ and `ergoemacs-pretty-key' descriptions.
                      "<insert>" "<S-insert>"
                      "<deletechar>" "<S-deletechar>"))))))
 
+(defun ergoemacs-setup-keys-for-layout (layout &optional base-layout)
+  "Setup keys based on a particular LAYOUT. All the keys are based on QWERTY layout."
+  (ergoemacs-setup-translation layout base-layout)
+  ;; Set appropriate mode-line indicator
+  (ergoemacs-mode-line))
+
 (defvar ergoemacs-kbd-hash (make-hash-table :test 'equal))
 ;; This is called so frequently make a hash-table of the results.
 
