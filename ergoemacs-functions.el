@@ -30,17 +30,10 @@
 
 ;;; Code:
 (eval-when-compile (require 'cl))
+(eval-when-compile
+  (require 'ergoemacs-macros (expand-file-name "ergoemacs-macros" default-directory)))
 
 (require 'redo "redo.elc" t) ; for redo shortcut
-(defvar ergoemacs-dir
-  (file-name-directory
-   (or
-    load-file-name
-    (buffer-file-name)))
-  "Ergoemacs directory.")
-(add-to-list 'load-path ergoemacs-dir)
-(require 'ergoemacs-shortcuts)
-
 
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
   "Backward char will edit isearch."
@@ -117,6 +110,9 @@
   (interactive "P")
   (ergoemacs-ctl-c-or-ctl-x "C-x" arg))
 
+(defvar cua--rectangle)
+
+(declare-function ergoemacs-read-key "ergoemacs-shortcuts.el")
 (defun ergoemacs-ctl-c-or-ctl-x (key &optional arg)
   "Ergoemacs C-c or C-x defined by KEY."
   (let (fn-cp fn-cx fn-both)
@@ -151,6 +147,11 @@
      (t
       (ergoemacs-read-key key 'normal)))))
 
+(defvar ergoemacs-terminal
+  "Local variable to determine if `ergoemacs-clean' is running a terminal `ergoemacs-mode'")
+(defvar ergoemacs-batch-file
+  "Ergoemacs batch file to run `ergoemacs-mode' in a terminal")
+
 (defun ergoemacs-clean-recompile-then-run (&optional terminal)
   "Recompile `ergoemacs-mode' for a bootstrap environment."
   (interactive)
@@ -176,6 +177,8 @@
         (set-process-sentinel process 'ergoemacs-run-clean))
     (ergoemacs-run-clean)))
 
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-theme)
 (defun ergoemacs-run-clean (&rest ignore)
   "Run the clean environment"
   (let ((emacs-exe (ergoemacs-emacs-exe))
@@ -185,13 +188,12 @@
     (when ergoemacs-theme
       (setenv "ERGOEMACS_THEME" ergoemacs-theme))
     (cond
-     ((save-excursion
-        (set-buffer (get-buffer-create "*ergoemacs-clean*"))
-        (and (boundp 'ergoemacs-terminal) (not ergoemacs-terminal)))
+     ((with-current-buffer (get-buffer-create "*ergoemacs-clean*")
+        (not ergoemacs-terminal))
       (setq cmd (format "%s --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\"" emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))))
      ((and (eq system-type 'windows-nt) (executable-find "cmd"))
-      ; Needs some work....
+                                        ; Needs some work....
       (setq cmd (format "%s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\" --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\""
                         emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))
@@ -242,6 +244,7 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
                           "\"")))
     full-exe))
 
+(declare-function ergoemacs-gen-svg "ergoemacs-extras.el")
 (defun ergoemacs-cheat-sheet-file ()
   "Cheet sheet file for ergoemacs."
   (let ((var-dir "") extra-dir)
@@ -268,6 +271,9 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
       (y-or-n-p "Print current buffer? ")
     (print-buffer)))
 
+(defvar ergoemacs-mode)
+(declare-function ergoemacs-emulations "ergoemacs-mode.el")
+(declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
 (defun ergoemacs-call-keyword-completion ()
   "Call the command that has keyboard shortcut M-TAB."
   (interactive)
@@ -291,14 +297,17 @@ If narrow-to-region is in effect, then cut that region only."
   (kill-region (point-min) (point-max))
   (message "Buffer content cut"))
 
+(defvar cua-mode)
+(declare-function cua-copy-rectangle "cua-rect.el")
+(declare-function cua-copy-region "cua-base.el")
 (defun ergoemacs-copy-line-or-region (&optional arg)
   "Copy current line, or current text selection."
   (interactive "P")
   (cond
    ;;; cua-copy-rectangle
-   ((and cua--rectangle (boundp 'cua-mode) cua-mode)
+   ((and cua--rectangle cua-mode)
     (cua-copy-rectangle arg))
-   ((and (region-active-p) (boundp 'cua-mode) cua-mode)
+   ((and (region-active-p) cua-mode)
     (cua-copy-region arg))
    ((region-active-p)
     (kill-ring-save (region-beginning) (region-end)))
@@ -306,6 +315,8 @@ If narrow-to-region is in effect, then cut that region only."
     (kill-ring-save (line-beginning-position) (line-beginning-position 2))))
   (deactivate-mark))
 
+(declare-function cua-cut-region "cua-base.el")
+(declare-function ergoemacs-shortcut-remap "ergoemacs-shortcuts.el")
 (defun ergoemacs-cut-line-or-region (&optional arg)
   "Cut the current line, or current text selection.
 Use `cua-cut-rectangle' or `cua-cut-region' when `cua-mode' is
@@ -339,7 +350,6 @@ major-modes like `org-mode'. "
       (ergoemacs-shortcut-remap 'kill-line)))))
 
 ;;; CURSOR MOVEMENT
-
 (defun ergoemacs-forward-open-bracket (&optional number)
   "Move cursor to the next occurrence of left bracket or quotation mark.
 
@@ -515,6 +525,7 @@ This will not honor `shift-select-mode'."
 ;; Extends behavior of
 ;; http://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/
 
+(defvar font-lock)
 (defvar ergoemacs-beginning-of-line-or-what-last-command nil)
 (defun ergoemacs-beginning-of-line-or-what (&optional N)
   "Move cursor to beginning of indentation, line, or text block, or beginning of buffer.
@@ -611,7 +622,7 @@ the prefix arguments of `beginning-of-buffer',
     (when (not (= 1 N))
       (let ((line-move-visual nil))
         (forward-line (- N 1))))
-    (let (pts)
+    (let (pts tmp)
       (push (point-at-bol) pts)
       (save-excursion
         ;; (setq prefix-arg nil)
@@ -646,7 +657,10 @@ the prefix arguments of `beginning-of-buffer',
         (call-interactively 'move-beginning-of-line))
        (t
         (setq pts (sort pts '>))
-        (setq pts (remove-if (lambda(x) (>= x (point))) pts))
+        (dolist (x pts)
+          (unless (>= x (point))
+            (push x tmp)))
+        (setq pts tmp)
         (when pts
           (goto-char (nth 0 pts)))))))
   ;; ergoemacs shortcut changes this-command
@@ -722,7 +736,7 @@ the prefix arguments of `end-of-buffer',
     (when (not (= 1 N))
       (let ((line-move-visual nil))
         (forward-line (- N 1))))
-    (let (pts)
+    (let (pts tmp)
       (setq current-prefix-arg nil)
       (save-excursion
         (call-interactively 'move-end-of-line)
@@ -742,7 +756,10 @@ the prefix arguments of `end-of-buffer',
         (call-interactively 'move-end-of-line))
        (t
 	(setq pts (sort pts '<))
-	(setq pts (remove-if (lambda(x) (<= x (point))) pts))
+        (dolist (x pts)
+          (unless (<= x (point))
+            (push x tmp)))
+	(setq pts (reverse tmp))
         (when pts
           (goto-char (nth 0 pts)))))))
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
@@ -1202,6 +1219,7 @@ Emacs buffers are those whose name starts with *."
 ;; status to offer save
 ;; This custome kill buffer is close-current-buffer.
 
+(declare-function dired-get-marked-files "dired.el")
 (defun ergoemacs-open-in-external-app (&optional file)
   "Open the current file or dired marked files in external app."
   (interactive)
@@ -1241,6 +1259,10 @@ Emacs buffers are those whose name starts with *."
 (defvar ergoemacs-recently-closed-buffers (cons nil nil) "A list of recently closed buffers. The max number to track is controlled by the variable `ergoemacs-recently-closed-buffers-max'.")
 (defvar ergoemacs-recently-closed-buffers-max 30 "The maximum length for `ergoemacs-recently-closed-buffers'.")
 
+(defvar ergoemacs-single-command-keys)
+(declare-function ergoemacs-get-override-function "ergoemacs-shortcuts.el")
+(declare-function minibuffer-keyboard-quit "delsel.el")
+(declare-function org-edit-src-save "org-src.el")
 (defun ergoemacs-close-current-buffer ()
   "Close the current buffer.
 
@@ -1273,7 +1295,7 @@ Else it is a user buffer."
      (org-capture-p
       (if (y-or-n-p "Capture not saved, do you want to save?")
           (call-interactively 'org-capture-finalize)
-        (call-interuactively 'org-capture-kill)))
+        (call-interactively 'org-capture-kill)))
      (git-commit-p
       (if (y-or-n-p  "Not commited yet, do you want to commit?")
           (call-interactively 'git-commit-commit)
@@ -1331,6 +1353,14 @@ Else it is a user buffer."
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defvar helm-buffer)
+(defvar helm-ff-default-directory)
+(defvar helm-ff-last-expanded)
+(defvar ergoemacs-mode)
+(declare-function helm-basename "helm-utils.el")
+(declare-function helm-exit-minibuffer "helm.el")
+(declare-function helm-attrset "helm.el")
+(declare-function helm-execute-persistent-action "helm.el")
 (defun ergoemacs-helm-ff-expand-dir (candidate)
   "Allows return to expand a directory like in `ido-find-file'.
 This requires `ergoemacs-mode' to be non-nil and
@@ -1394,6 +1424,7 @@ This requires `ergoemacs-mode' to be enabled with
 
 ;;; org-mode functions.
 
+(declare-function org-emphasize "org.el")
 (defun ergoemacs-org-bold ()
   "Call `org-emphasize' with *"
   (interactive)
@@ -1427,6 +1458,7 @@ This requires `ergoemacs-mode' to be enabled with
       (and (boundp 'paredit-mode)
            paredit-mode)))
 
+(declare-function ergoemacs-defer-post-command-hook "ergoemacs-shortcuts.el")
 (defun ergoemacs-smart-punctuation-insert-pair (pair)
   "Inserts a matched pair like ().
 If a smart-punctuation mode is active, use it by placing the initial pair in the unread command events."
@@ -1487,6 +1519,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (defun ergoemacs-smart-punctuation ()
   "Smart Punctuation Function for `ergoemacs-mode'."
   (interactive) 
@@ -1522,11 +1555,14 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
         (when (eq (key-binding (read-kbd-macro repeat-key) t) this-command)
           (message "Cycle with %s" (ergoemacs-pretty-key repeat-key)))))))
 
+(defvar org-table-any-line-regexp)
+(declare-function cua-set-rectangle-mark "cua-rect.el")
+(declare-function org-insert-heading-respect-content "org.el")
 (defun ergoemacs-org-insert-heading-respect-content (&optional reopen-or-invisible-ok)
   "When in an `org-mode' table, use `cua-set-rectangle-mark', otherwise use `org-insert-heading-respect-content'"
   (interactive "P")
   (cond
-   ((save-excursion (beginning-of-line) (looking-at org-table-any-line-regexp))
+   ((and cua-mode (save-excursion (beginning-of-line) (looking-at org-table-any-line-regexp)))
     ;; (setq prefix-arg current-prefix-arg)
     (cua-set-rectangle-mark reopen-or-invisible-ok))
    (t
@@ -1591,7 +1627,11 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
    (t
     (ergoemacs-shortcut-remap 'yank))))
 
+(defvar cua--register)
+(defvar cua--last-killed-rectangle)
 (put 'ergoemacs-org-yank 'delete-selection 'yank)
+(declare-function cua-paste "cua-base.el")
+(declare-function org-yank "org.el")
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
   (let ((regtxt (and cua--register (get-register cua--register))))
@@ -1607,11 +1647,17 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
       ;; Call org-yank.
       (org-yank arg)))))
 
+(defvar ergoemacs-keymap)
 (defun ergoemacs-lookup-key-and-run (key)
-  "Looks up KEY in `ergoemacs-map' and runs the function"
+  "Looks up KEY in `ergoemacs-keymap' and runs the function"
   (let ((fun (lookup-key ergoemacs-keymap (read-kbd-macro key))))
     (call-interactively fun)))
 
+(declare-function org-at-heading-p "org.el")
+(declare-function org-at-item-p "org.el")
+(declare-function org-at-table-p "org.el")
+(declare-function org-region-active-p "org-compat.el")
+(declare-function org-with-limited-levels "org-macs.el")
 (defmacro ergoemacs-define-org-meta (direction &optional disable)
   "Defines org-mode meta-direction keys.
 DIRECTION defines the `org-mode' and `ergoemacs-mode' direction.
@@ -1800,6 +1846,7 @@ If arg is a negative prefix, copy file path only"
     (set-buffer-file-coding-system new-coding t)))
 
 ;;; ergoemacs help functions.
+(declare-function ergoemacs-pretty-key-rep "ergoemacs-translate.el")
 (defun ergoemacs-translate-keybindings ()
   "Fix keybindings"
   (let ((help (get-buffer "*Help*")))
@@ -1828,6 +1875,7 @@ If arg is a negative prefix, copy file path only"
   :type 'string
   :group 'ergoemacs-mode)
 
+(defvar ergoemacs-dir)
 (defun ergoemacs-display-current-svg (&optional arg)
   "Generates the current ergoemacs layout, unless it already exists and opens it in a browser.
 With a prefix, force regeneration. "
@@ -1974,6 +2022,8 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
                         "http://www.etymonline.com/index.php?search=�" ; etymology
                         ] )
 
+(declare-function browse-url-default-windows-browser "browse-url.el")
+
 (defun ergoemacs-lookup-word-on-internet (&optional input-word site-to-use)
   "Look up current word or text selection in a online reference site.
 This command launches/switches you to default browser.
@@ -2068,6 +2118,13 @@ See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
   (mapc (lambda (dictUrl) (ergoemacs-lookup-word-on-internet input-word dictUrl)) ergoemacs-all-dictionaries)) 
 
+(defvar ergoemacs-shortcut-keys)
+(defvar ergoemacs-read-input-keys)
+(defvar ergoemacs-unbind-keys)
+(defvar ergoemacs-read-emulation-mode-map-alist)
+(defvar ergoemacs-modal-emulation-mode-map-alist)
+(defvar ergoemacs-repeat-emulation-mode-map-alist)
+(defvar ergoemacs-emulation-mode-map-alist)
 (defun ergoemacs-state ()
   "Debugging the state of `ergoemacs-mode'"
   (interactive)
@@ -2081,7 +2138,6 @@ See also `ergoemacs-lookup-word-on-internet'."
                    ergoemacs-read-input-keys))
   (insert (format "ergoemacs-unbind-keys: %s\n" ergoemacs-unbind-keys))
   (insert (format "ergoemacs-mode %s\n" ergoemacs-mode))
-  (insert (format "ergoemacs-save-variables-state %s\n" ergoemacs-save-variables-state))
   (insert (format "emulation-mode-map-alists: %s\n" emulation-mode-map-alists))
   (insert (format "ergoemacs-read-emulation-mode-map-alist: %s\n"
                   (mapcar
