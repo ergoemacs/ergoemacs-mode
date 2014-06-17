@@ -1041,7 +1041,8 @@ Assumes maps are orthogonal."
         (dolist (map map-list)
           (when (ergoemacs-theme-component-maps-p map)
             (setq ret (ergoemacs-get-hooks map match ret keymaps))))
-        (setq final (remove-duplicates ret))
+        (dolist (item ret)
+          (pushnew item final :test 'equal))
         (puthash (list match keymaps) final hooks))
       final)))
 
