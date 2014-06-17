@@ -30,8 +30,7 @@
 
 
 (eval-when-compile (require 'cl))
-(setq ergoemacs-dir (file-name-directory
-                     (or load-file-name (buffer-file-name))))
+
 
 (defgroup ergoemacs-extras nil
   "Documentation and script generation"
@@ -65,6 +64,7 @@
                    (insert char)
                    (char-before)) 'unicode)))))))
 
+(defvar keyfreq-file)
 (defun ergoemacs-fix-keyfreq ()
   "Fixes ergoemacs induced keyfreq bug..."
   (interactive)
@@ -102,6 +102,11 @@
     ergoemacs-next-user-buffer)
   "Window/Tab switching functions.")
 
+(defvar ergoemacs-deletion-functions)
+(defvar ergoemacs-movement-functions)
+(declare-function ergoemacs-mode "ergoemacs-mode.el")
+(declare-function ergoemacs-get-fixed-layout "ergoemacs-theme-engine.el")
+(declare-function ergoemacs-get-variable-layout "ergoemacs-theme-engine.el")
 (defun ergoemacs-get-html-key-table ()
   "Gets the key table for the current layout."
   (ergoemacs-mode -1)
@@ -307,6 +312,12 @@
       (sort-lines nil (point-min) (point-max))
       (buffer-string))))
 
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-theme)
+(declare-function ergoemacs-get-layouts "ergoemacs-layouts.el")
+(declare-function ergoemacs-set-default "ergoemacs-mode.el")
+(declare-function ergoemacs-get-themes "ergoemacs-theme-engine.el")
+
 (defun ergoemacs-get-html-key-tables ()
   "Get key table and convert to HTML"
   (let* ((lay (ergoemacs-get-layouts))
@@ -380,6 +391,8 @@
     (ergoemacs-mode 1)
     t))
 
+(defvar ergoemacs-fixed-layout)
+(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (defun ergoemacs-ghpages-standard-keys ()
   "Generate org-mode table for standard keys."
     (with-temp-buffer
@@ -413,6 +426,7 @@
       (insert "\n|-\n")
       (buffer-string)))
 
+(defvar ergoemacs-dir)
 ;;;###autoload
 (defun ergoemacs-ghpages (&optional arg)
   "Generate github pages with o-blog."
@@ -495,6 +509,7 @@
       (make-directory extra-dir t))
     (ergoemacs-get-html-select)))
 
+(declare-function ergoemacs-emacs-exe "ergoemacs-functions.el")
 (defun ergoemacs-get-html ()
   "Gets a HTML description of ErgoEmacs"
   (interactive)
@@ -589,6 +604,8 @@ function change_layout() {
       (setq ret (buffer-string)))
     ret))
 
+(declare-function ergoemacs-setup-keys-for-layout "ergoemacs-translate.el")
+(declare-function ergoemacs-kbd "ergoemacs-translate.el")
 (defun ergoemacs-gen-mac-osx (layout &optional file-name extra swap-opiton-and-control)
   "Generates an Autohotkey Script for Ergoemacs Keybindings.
 Currently only supports two modifier plus key."
@@ -810,7 +827,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
       (insert lay-ini)
       (insert "\n")
       (buffer-string))))
-
+(defvar ergoemacs-theme-hash)
 (defun ergoemacs-get-themes-ahk-ini ()
   "Gets the list of all known themes and the documentation associated with the themes."
   (with-temp-buffer
@@ -889,7 +906,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
         (shell-command (format "ahk2exe /in %s" file-temp))
         (message "Generated ergoemacs.exe")))))
 
-
+(defvar ergoemacs-mode)
 ;;;###autoload
 (defun ergoemacs-extras ( &optional layouts)
   "Generate layout diagram, and other scripts for system-wide ErgoEmacs keybinding.
@@ -917,6 +934,9 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
     ;; (find-file (expand-file-name "ergoemacs-extras" user-emacs-directory))
     ))
 
+;;FIXME
+(defvar ergoemacs-select)
+(defvar ergoemacs-html-table)
 (defun ergoemacs-keyfreq-gen-img (file prefix text shift lay ergoemacs-keyfreq-gen-img cmd-freq-ergo)
   "Ergoemacs keyfreq generate image."
   (let (ret i tmp)
@@ -997,9 +1017,9 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                                    (format "%s%s" text
                                            (nth (+ (if shift 60 0) i) lay)) nil lay cmd-freq-ergo)
                           (progn
-                            (setq select
+                            (setq ergoemacs-select
                                   (format "%s<option value=\"%s\">%s</option>"
-                                          select
+                                          ergoemacs-select
                                           (file-name-nondirectory new-file)
                                           (format "%s%s" text
                                                   (nth (+ (if shift 60 0) i) lay)))))
@@ -1016,9 +1036,9 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                                    (format "%s%s ⇧Shift+" text
                                            (nth (+ (if shift 60 0) i) lay)) t lay cmd-freq-ergo)
                           (progn
-                            (setq select
+                            (setq ergoemacs-select
                                   (format "%s<option value=\"%s\">%s</option>"
-                                          select
+                                          ergoemacs-select
                                           (file-name-nondirectory new-file)
                                           (format "%s%s ⇧Shift+" text
                                                   (nth (+ (if shift 60 0) i) lay)))))
@@ -1035,7 +1055,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
           (push `(,(nth 2 tmp) ,(format "<tr><td style=\"background-color: %s\">%s</td><td style=\"background-color: %s\"><input type=\"text\" value=\"%s\"></td><td style=\"background-color: %s\">%s</td></tr>"
                                         (nth 6 tmp) (nth 2 tmp)
                                         (nth 6 tmp) (nth 1 tmp)
-                                        (nth 6 tmp) (nth 4 tmp))) html-table)
+                                        (nth 6 tmp) (nth 4 tmp))) ergoemacs-html-table)
           (when (search-forward (format "id=\"key%s\"" i) nil t)
             (when (re-search-backward "fill:.*?;" nil t)
               (replace-match (format "fill:%s;" (nth 6 tmp)))))
@@ -1132,24 +1152,28 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
         (push (car a) cmds)))
     ;; Also lookup based on any compatibility fixes with
     ;; made by ergoemacs.
-    (mapc
-     (lambda(minor-list)
-       (when (eq (type-of (nth 1 minor-list)) 'cons)
-         (mapc
-          (lambda(translation-list)
-            (when (eq (nth 1 x) (nth 1 translation-list))
-              (setq a (assoc (nth 1 translation-list) (cdr list)))
-              (when a
-                (setq num (+ num (cdr a)))
-                (push (car a) cmds))))
-          (nth 1 minor-list))))
-     (symbol-value (ergoemacs-get-minor-mode-layout)))
+    ;; (mapc
+    ;;  (lambda(minor-list)
+    ;;    (when (eq (type-of (nth 1 minor-list)) 'cons)
+    ;;      (mapc
+    ;;       (lambda(translation-list)
+    ;;         (when (eq (nth 1 x) (nth 1 translation-list))
+    ;;           (setq a (assoc (nth 1 translation-list) (cdr list)))
+    ;;           (when a
+    ;;             (setq num (+ num (cdr a)))
+    ;;             (push (car a) cmds))))
+    ;;       (nth 1 minor-list))))
+    ;;  (symbol-value (ergoemacs-get-minor-mode-layout)))
     (list (if var-layout
               (ergoemacs-kbd (nth 0 x) t (nth 3 x))
             (nth 0 x)) (nth 2 x)  num cmds
             (format "%6.2f%%" (/ (* 1e2 num) cmd-n))
             (format "%6.2f%%" (/ (* 1e2 num) total-n)))))
 
+(defvar keyfreq-table)
+(declare-function keyfreq-table-load "keyfreq.el")
+(declare-function keyfreq-list "keyfreq.el")
+(declare-function keyfreq-groups-major-modes "keyfreq.el")
 ;;;###autoload
 (defun ergoemacs-keyfreq-image ()
   "Create heatmap keyfreq images, based on the current layout."
@@ -1165,8 +1189,8 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
           i2
           cmd-freq-ergo
           tmp
-          (select "")
-          (html-table '())
+          (ergoemacs-select "")
+          (ergoemacs-html-table '())
           (lay (or (intern-soft (format "ergoemacs-layout-%s"
                                         ergoemacs-keyboard-layout))
                    'ergoemacs-layout-us))
@@ -1225,33 +1249,33 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
 ;;             (make-directory extra-dir t))
 ;;         (setq file (expand-file-name  "keyfreq-alt-map.svg" extra-dir))
 ;;         (when (ergoemacs-keyfreq-gen-img file "M-" "Alt+" nil lay cmd-freq-ergo)
-;;           (setq select
+;;           (setq ergoemacs-select
 ;;                 (format "%s<option value=\"%s\">Alt+</option>"
-;;                         select
+;;                         ergoemacs-select
 ;;                         (file-name-nondirectory file))))
 ;;         (message "Generated Alt+ frequency heatmap")
         
 ;;         (setq file (expand-file-name  "keyfreq-alt-shift-map.svg" extra-dir))
 ;;         (when (ergoemacs-keyfreq-gen-img file "M-" "Alt+⇧Shift+" t lay cmd-freq-ergo)
-;;           (setq select
+;;           (setq ergoemacs-select
 ;;                 (format "%s<option value=\"%s\">Alt+⇧Shift+</option>"
-;;                         select
+;;                         ergoemacs-select
 ;;                         (file-name-nondirectory file))))
 ;;         (message "Generated Alt+⇧Shift+ frequency heatmap")
         
 ;;         (setq file (expand-file-name  "keyfreq-ctrl-map.svg" extra-dir))
 ;;         (when (ergoemacs-keyfreq-gen-img file "C-" "Ctrl+" nil lay cmd-freq-ergo)
-;;           (setq select
+;;           (setq ergoemacs-select
 ;;                 (format "%s<option value=\"%s\">Ctrl+</option>"
-;;                         select
+;;                         ergoemacs-select
 ;;                         (file-name-nondirectory file))))
 ;;         (message "Generated Ctrl+ frequency heatmap")
         
 ;;         (setq file (expand-file-name  "keyfreq-ctrl-shift-map.svg" extra-dir))
 ;;         (when (ergoemacs-keyfreq-gen-img file "C-" "Ctrl+⇧Shift+" t lay cmd-freq-ergo)
-;;           (setq select
+;;           (setq ergoemacs-select
 ;;                 (format "%s<option value=\"%s\">Ctrl+⇧Shift+</option>"
-;;                         select
+;;                         ergoemacs-select
 ;;                         (file-name-nondirectory file))))
 ;;         (message "Generated Ctrl+⇧Shift+ frequency heatmap")
 
@@ -1259,14 +1283,14 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
 ;;         (when (ergoemacs-keyfreq-gen-img file (if (eq system-type 'windows-nt)
 ;;                                                   "<apps> "
 ;;                                                 "<menu> ") "▤ Menu/Apps " nil lay cmd-freq-ergo)
-;;           (setq select
+;;           (setq ergoemacs-select
 ;;                 (format "%s<option value=\"%s\">▤ Menu/Apps</option>"
-;;                         select
+;;                         ergoemacs-select
 ;;                         (file-name-nondirectory file))))
 ;;         (message "Generated ▤ Menu/Apps")
-;;         (setq html-table (sort html-table (lambda(x y) (>= (nth 0 x) (nth 0 y)))))
+;;         (setq ergoemacs-html-table (sort ergoemacs-html-table (lambda(x y) (>= (nth 0 x) (nth 0 y)))))
         
-;;         (setq select (format "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+;;         (setq ergoemacs-select (format "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
 ;; <html xmlns=\"http://www.w3.org/1999/xhtml\">
 ;;   <head>
 ;;     <meta name=\"keywords\" content=\"\" />
@@ -1284,16 +1308,16 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
 ;;                              select))
 ;;         (with-temp-file (expand-file-name "keyfreq.html"
 ;;                                           (expand-file-name "ergoemacs-extras" user-emacs-directory))
-;;           (insert select)
+;;           (insert ergoemacs-select)
 ;;           (mapc
 ;;            (lambda(x)
 ;;              (insert (nth 1 x)))
-;;            html-table)
+      ;;            ergoemacs-html-table)
 ;;           (insert "</table></form></body></html>")))
       )))
 
 ;; Allow the SVN prefixes to be specified by the following:
-(setq ergoemacs-svn-prefixes
+(defvar ergoemacs-svn-prefixes
       '(("M-"      "M" "MS" "Alt/⌘+⇧Shift+" "M-S-"     nil)
         ("M-"      "M" "MM" "Alt/⌘+"         "M-"       nil)
         ("C-"      "C" "CS" "Ctrl+⇧Shift+"  "C-S-"     nil)
@@ -1304,6 +1328,9 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
 ;;; prefix (3) Final text legend (4) Keyboard lookup (5) Treat
 ;;; variable-layout as fixed-layout
 
+(defvar ergoemacs-translation-from)
+(defvar ergoemacs-inkscape)
+(defvar ergoemacs-convert)
 (defun ergoemacs-gen-svg (layout &optional file-name extra is-prefix)
   "Generates a SVG picture of the layout
 FILE-NAME represents the SVG template
