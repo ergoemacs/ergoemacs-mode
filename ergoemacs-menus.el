@@ -54,7 +54,6 @@
       (if (catch 'found-keys
             (dolist (i item)
               (when (eq i ':keys)
-                (setq ret t)
                 (throw 'found-keys t))) nil)
           nil
         (ergoemacs-shortcut-for-command (cadddr item)))
