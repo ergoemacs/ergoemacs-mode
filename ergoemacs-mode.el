@@ -370,8 +370,6 @@ Valid values are:
   :type 'boolean
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
-(defvar ergoemacs-save-variables-actual nil)
-(defvar ergoemacs-save-variables-state nil)
 
 (defvar ergoemacs-modal-emulation-mode-map-alist nil
   "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
