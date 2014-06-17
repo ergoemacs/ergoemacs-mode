@@ -67,7 +67,6 @@
 (require 'easymenu)
 (require 'cua-base)
 (require 'cua-rect)
-(defvar ergoemacs-mode)
 
 (defvar ergoemacs-debug ""
   "Debugging for `ergoemacs-mode'.")
@@ -100,7 +99,7 @@
 (defun ergoemacs-debug (&rest arg)
   "Ergoemacs debugging facility."
   (interactive)
-  (if (interactive-p)
+  (if (called-interactively-p 'any)
       (progn
         (ergoemacs-debug-flush)
         (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer))
@@ -200,6 +199,8 @@ Will reload `ergoemacs-mode' after setting the values."
     (ergoemacs-mode -1)
     (ergoemacs-mode 1)))
 
+(declare-function ergoemacs-get-layouts-doc "ergoemacs-layouts.el")
+(declare-function ergoemacs-get-layouts-type "ergoemacs-layouts.el")
 (defcustom ergoemacs-keyboard-layout (or (getenv "ERGOEMACS_KEYBOARD_LAYOUT") "us")
   (concat "Specifies which keyboard layout to use.
 This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.
@@ -270,9 +271,11 @@ Valid values are:
 
 ;;; ergoemacs-keymap
 
-
 (defvar ergoemacs-keymap (make-sparse-keymap)
   "ErgoEmacs minor mode keymap.")
+
+(defvar ergoemacs-unbind-keymap (make-sparse-keymap)
+  "Keymap for `ergoemacs-unbind-keys'")
 
 (defvar ergoemacs-shortcut-keymap (make-sparse-keymap)
   "ErgoEmacs minor mode shortcut keymap")
@@ -289,6 +292,7 @@ Valid values are:
 (unless (featurep 'ergoemacs-shortcuts)
   (load "ergoemacs-shortcuts"))
 
+(defvar ergoemacs-theme)
 (defun ergoemacs-mode-line (&optional text)
   "Set ergoemacs-mode-line"
   ;; (ergoemacs-debug-heading "Set Mode Line to %s" (or text "Default"))
@@ -318,7 +322,8 @@ Valid values are:
   (load "ergoemacs-extras"))
 
 ;; ErgoEmacs hooks
-
+(declare-function ergoemacs-setup-keys-for-layout "ergoemacs-translate.el")
+(declare-function ergoemacs-theme-install "ergoemacs-theme-engine.el")
 (defun ergoemacs-setup-keys (&optional no-check)
   "Setups keys based on a particular layout. Based on `ergoemacs-keyboard-layout'."
   (interactive)
@@ -341,17 +346,7 @@ Valid values are:
     (ergoemacs-theme-install (or ergoemacs-theme 'standard))
     (unless no-check
       (when ergoemacs-state
-        (when (fboundp 'ergoemacs-mode)
-          (ergoemacs-mode 1))))))
-
-(defun ergoemacs-lookup-execute-extended-command ()
-  "Lookup the execute-extended-command"
-  (key-description
-   (or (ergoemacs-key-fn-lookup 'execute-extended-command)
-       (ergoemacs-key-fn-lookup 'smex)
-       (ergoemacs-key-fn-lookup 'helm-M-x))))
-
-
+        (ergoemacs-mode 1)))))
 
 
 (require 'cus-edit)
@@ -396,6 +391,16 @@ When REMOVE is true, remove the emulations."
                            ergoemacs-shortcut-emulation-mode-map-alist)))
     (funcall (if remove #'remove-hook #'add-hook) #'emulation-mode-map-alists hook)))
 
+(defvar ns-alternate-modifier)
+(defvar mac-alternate-modifier)
+(defvar ergoemacs-read-key-overriding-overlay-save)
+(defvar ergoemacs-read-key-overriding-terminal-local-save)
+(defvar ergoemacs-modal)
+(defvar ergoemacs-modal-list)
+(defvar ergoemacs-modal-save)
+(declare-function ergoemacs-menus-on "ergoemacs-menus.el")
+(declare-function ergoemacs-menus-off "ergoemacs-menus.el")
+(declare-function ergoemacs-theme-remove "ergoemacs-theme-engine.el")
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -408,7 +413,7 @@ If optional argument is 0, turn it off.
 
 Home page URL `http://ergoemacs.github.io/ergoemacs-mode/'
 
-For the standard layout, with A QWERTY keyboard the `execute-extended-command' M-x is now M-a.
+For the standard layout, with A QWERTY keyboard the `execute-extended-command' now \\[execute-extended-command].
 
 The layout and theme changes the bindings.  For the current
 bindings the keymap is:
@@ -442,15 +447,15 @@ bindings the keymap is:
         (ergoemacs-debug-heading "Ergoemacs Keys have loaded.")
         (when (and ergoemacs-use-mac-command-as-meta
                    (eq system-type 'darwin))
-          (let ((cm (or (and (boundp 'ns-command-modifier) 'ns-command-modifier)
-                        (and (boundp 'mac-command-modifier) 'mac-command-modifier)))
-                (am (or (and (boundp 'ns-alternate-modifier) 'ns-alternate-modifier)
-                        (and (boundp 'mac-alternate-modifier) 'mac-alternate-modifier))))
+          (let ((cm (or (intern-soft "ns-command-modifier")
+                        (intern-soft "mac-command-modifier")))
+                (am (or (intern-soft "ns-alternate-modifier")
+                        (intern-soft "mac-alternate-modifier"))))
             (when cm
               (setq ergoemacs-old-ns-command-modifier (symbol-value cm))
               (set cm 'meta))
             (when am
-              (setq ergoemacs-old-ns-alternate-modifier ns-alternate-modifier)
+              (setq ergoemacs-old-ns-alternate-modifier (symbol-value am))
               (set am nil))))
         ;; Turn on menu
         (if ergoemacs-use-menus
@@ -472,15 +477,7 @@ bindings the keymap is:
                 (cua--rectangle . ,cua--rectangle-keymap)
                 (cua--ena-region-keymap . ,cua--region-keymap)
                 (cua-mode . ,cua-global-keymap)))
-        (mapc ;; Now install hooks.
-         (lambda(buf)
-           (with-current-buffer buf
-             (when (and (intern-soft (format "ergoemacs-%s-hook" major-mode)))
-               (funcall (intern-soft (format "ergoemacs-%s-hook" major-mode))))))
-         (buffer-list))
-        (setq ergoemacs-shortcut-keys t)
-        (setq ergoemacs-read-input-keys t) ; Hasn't completely been
-                                             ; fixed.
+        
         (when (key-binding [ergoemacs-single-command-keys])
           (if (not ergoemacs-read-key-overriding-overlay-save)
               (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
@@ -567,6 +564,8 @@ bindings the keymap is:
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(declare-function ergoemacs-ignore-prev-global "ergoemacs-unbind.el")
+(declare-function ergoemacs-reset-global-where-is "ergoemacs-unbind.el")
 (if ergoemacs-ignore-prev-global
     (ergoemacs-ignore-prev-global)
   (ergoemacs-reset-global-where-is))
@@ -709,6 +708,12 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
            (memq (symbol-value var) ergoemacs-smart-functions))))
 
 (defvar ergoemacs-last-command nil)
+(defvar ergoemacs-mark-active)
+(defvar ergoemacs-repeat-keymap)
+(defvar ergoemacs-read-key-overriding-overlay-save)
+(defvar ergoemacs-read-key-overriding-terminal-local-save)
+(declare-function ergoemacs-restore-post-command-hook "ergoemacs-shortcuts.el")
+(declare-function ergoemacs-install-shortcuts-up "ergoemacs-shortcuts.el")
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
   (when (and ergoemacs-mark-active
@@ -756,6 +761,8 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
     (run-hooks 'ergoemacs-pre-command-hook))
   t)
 
+(defvar ergoemacs-single-command-keys)
+(declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
 (defun ergoemacs-post-command-hook ()
   "Ergoemacs post-command-hook"
   (when ergoemacs-read-input-keys
