@@ -545,7 +545,6 @@ bindings the keymap is:
                    ergoemacs-read-input-keys)
   (ergoemacs-debug "ergoemacs-unbind-keys: %s" ergoemacs-unbind-keys)
   (ergoemacs-debug "ergoemacs-mode %s" ergoemacs-mode)
-  (ergoemacs-debug "ergoemacs-save-variables-state %s" ergoemacs-save-variables-state)
   (ergoemacs-debug "emulation-mode-map-alists: %s" emulation-mode-map-alists)
   (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s"
                    (mapcar
