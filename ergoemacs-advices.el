@@ -27,18 +27,12 @@
 ;; 
 
 ;;; Code:
+
+(eval-when-compile (require 'cl))
+
+
 (defvar ergoemacs-advices '()
   "List of advices to enable and disable when ergoemacs is running.")
-
-(defvar ergoemacs-dir
-  (file-name-directory
-   (or
-    load-file-name
-    (buffer-file-name)))
-  "Ergoemacs directory.")
-(add-to-list 'load-path ergoemacs-dir)
-(require 'ergoemacs-shortcuts)
-(require 'ergoemacs-unbind)
 
 
 (defmacro ergoemacs-define-overrides (&rest body)
@@ -93,8 +87,12 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 (defvar ergoemacs-global-override-rm-keys '())
 ;;; Advices enabled or disabled with ergoemacs-mode
 (defvar ergoemacs-ignore-advice nil)
+
+(declare-function ergoemacs-theme-component--ignore-globally-defined-key
+                  "ergoemacs-theme-engine.el")
+(defvar ergoemacs-global-changed-cache)
+(defvar ergoemacs-global-not-changed-cache)
 (defun ergoemacs-global-set-key-after (key)
-  
   (if ergoemacs-ignore-advice nil
     (let ((kd (key-description key)))
       (unless (or (and (vectorp key)
@@ -177,11 +175,20 @@ This assumes any key defined while running a hook is a user-defined hook."
   (let ((ergoemacs-run-mode-hooks t))
     ad-do-it))
 
+(declare-function ergoemacs-with-global 
+                  "ergoemacs-shortcuts.el")
 (defadvice turn-on-undo-tree-mode (around ergoemacs-undo-tree-mode activate)
   "Make `ergoemacs-mode' and undo-tree compatible."
   (ergoemacs-with-global
    ad-do-it))
 
+;;; Unfortunately, the advice route doesn't seem to work :(
+(declare-function ergoemacs-real-substitute-command-keys "ergoemacs-advices.el" (string) t)
+(fset 'ergoemacs-real-substitute-command-keys (symbol-function 'substitute-command-keys))
+
+(defvar ergoemacs-original-keys-to-shortcut-keys-regexp)
+(defvar ergoemacs-original-keys-to-shortcut-keys)
+(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (defun ergoemacs-substitute-command (string &optional map)
   "Substitutes command STRING
 will add MAP to substitution."
@@ -220,6 +227,7 @@ will add MAP to substitution."
           "\\([ \t]\\{2,\\}\\|\t\\)" "\\1 | `"
           string))))))) 0 -2))
 
+(declare-function ergoemacs-unicode-char "ergoemacs-translate.el")
 (defun ergoemacs-substitute-map (string &optional function)
   (save-match-data
     (let* (ret
@@ -278,7 +286,7 @@ will add MAP to substitution."
       ret)))
 
 
-
+(defvar ergoemacs-mode)
 (defun ergoemacs-substitute-command-keys (string)
   "`ergoemacs-mode' replacement for substitute-command-keys.
 Actual substitute-command-keys is always in `ergoemacs-real-substitute-command-keys'"
@@ -313,10 +321,10 @@ Actual substitute-command-keys is always in `ergoemacs-real-substitute-command-k
           (setq ret (buffer-string))))
       ret)))
 
-;;; Unfortunately, the advice route doesn't seem to work :(
-
-(fset 'ergoemacs-real-substitute-command-keys (symbol-function 'substitute-command-keys))
-
+(declare-function ergoemacs-real-completing-read "ergoemacs-advices.el"
+                  (prompt collection &optional
+                          predicate require-match
+                          initial-input hist def inherit-input-method) t)
 (fset 'ergoemacs-real-completing-read (symbol-function 'completing-read))
 (defun ergoemacs-completing-read (prompt collection &optional
                                          predicate require-match
@@ -333,6 +341,4 @@ The real command is always `ergoemacs-real-completing-read'.
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
-;; Local Variables:
 ;; coding: utf-8-emacs
-;; End:
