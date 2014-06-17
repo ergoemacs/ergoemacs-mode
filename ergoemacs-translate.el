@@ -50,7 +50,11 @@
 ;; 
 ;;; Code:
 
+(eval-when-compile (require 'cl))
+(eval-when-compile (require 'ergoemacs-macros (expand-file-name "ergoemacs-macros" default-directory)))
+
 ;;; ergoemacs pretty keys
+
 
 (defvar ergoemacs-display-char-list nil
   "List of characters and fonts and if they display or not.")
@@ -60,28 +64,27 @@
 
 (defun ergoemacs-display-char-p (char)
   "Determines if CHAR can be displayed."
-  (condition-case err
-      (let* (ret
-             (buf (current-buffer))
-             (face (font-xlfd-name (face-attribute 'default :font)))
-             (found (assoc (list face char window-system) ergoemacs-display-char-list)))
-        (if found
-            (nth 0 (cdr found))
-          (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
-          (delete-region (point-min) (point-max))
-          (insert char)
-          (let ((display (describe-char-display (point-min) (char-after (point-min)))))
-            (if (display-graphic-p (selected-frame))
-                (if display
-                    (setq ret t))
+  (ignore-errors
+    (let* (ret
+           (buf (current-buffer))
+           (face (font-xlfd-name (face-attribute 'default :font)))
+           (found (assoc (list face char window-system) ergoemacs-display-char-list)))
+      (if found
+          (nth 0 (cdr found))
+        (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
+        (delete-region (point-min) (point-max))
+        (insert char)
+        (let ((display (describe-char-display (point-min) (char-after (point-min)))))
+          (if (display-graphic-p (selected-frame))
               (if display
-                  (setq ret t))))
-          (switch-to-buffer buf)
-          ;; Save it so the user doesn't see the buffer popup very much
-          ;; (if at all).
-          (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
-          ret))
-    (error nil)))
+                  (setq ret t))
+            (if display
+                (setq ret t))))
+        (switch-to-buffer buf)
+        ;; Save it so the user doesn't see the buffer popup very much
+        ;; (if at all).
+        (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
+        ret))))
 
 (defvar ergoemacs-use-unicode-char t
   "Use unicode characters when available.")
@@ -245,28 +248,27 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
 
 (defun ergoemacs-display-char-p (char)
   "Determines if CHAR can be displayed."
-  (condition-case err
-      (let* (ret
-             (buf (current-buffer))
-             (face (font-xlfd-name (face-attribute 'default :font)))
-             (found (assoc (list face char window-system) ergoemacs-display-char-list)))
-        (if found
-            (nth 0 (cdr found))
-          (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
-          (delete-region (point-min) (point-max))
-          (insert char)
-          (let ((display (describe-char-display (point-min) (char-after (point-min)))))
-            (if (display-graphic-p (selected-frame))
-                (if display
-                    (setq ret t))
+  (ignore-errors
+    (let* (ret
+           (buf (current-buffer))
+           (face (font-xlfd-name (face-attribute 'default :font)))
+           (found (assoc (list face char window-system) ergoemacs-display-char-list)))
+      (if found
+          (nth 0 (cdr found))
+        (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
+        (delete-region (point-min) (point-max))
+        (insert char)
+        (let ((display (describe-char-display (point-min) (char-after (point-min)))))
+          (if (display-graphic-p (selected-frame))
               (if display
-                  (setq ret t))))
-          (switch-to-buffer buf)
-          ;; Save it so the user doesn't see the buffer popup very much
-          ;; (if at all).
-          (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
-          ret))
-    (error nil)))
+                  (setq ret t))
+            (if display
+                (setq ret t))))
+        (switch-to-buffer buf)
+        ;; Save it so the user doesn't see the buffer popup very much
+        ;; (if at all).
+        (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
+        ret))))
 
 ;;; Actual Translations
 (defvar ergoemacs-dir
