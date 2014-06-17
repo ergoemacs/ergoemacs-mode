@@ -51,8 +51,14 @@
 ;; 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-(require 'ergoemacs-advices)
+(eval-when-compile 
+  (require 'cl)
+  (require 'ergoemacs-macros 
+           (expand-file-name "ergoemacs-macros" 
+                             (file-name-directory (or
+                                                   load-file-name
+                                                   (buffer-file-name)
+                                                   default-directory)))))
 
 (defgroup ergoemacs-themes nil
   "Default Ergoemacs Layout"
@@ -1705,56 +1711,6 @@ additional parsing routines defined by PARSE-FUNCTION."
 
 (defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
   "Hash of ergoemacs theme components")
-(defmacro ergoemacs-theme-component (&rest body-and-plist)
-  "A component of an ergoemacs-theme."
-  (declare (doc-string 2)
-           (indent 2))
-  (let ((kb (make-symbol "body-and-plist")))
-    (setq kb (ergoemacs-theme-component--parse body-and-plist))
-    `(puthash ,(plist-get (nth 0 kb) ':name)
-              (lambda() ,(plist-get (nth 0 kb) ':description)
-                (ergoemacs-theme-component--create-component
-                 ',(nth 0 kb)
-                 '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash)))
-
-(defmacro ergoemacs-theme (&rest body-and-plist)
-  "Define an ergoemacs-theme.
-:components -- list of components that this theme uses. These can't be seen or toggled
-:optional-on -- list of components that are optional and are on by default
-:optional-off -- list of components that are optional and off by default
-:options-menu -- Menu options list
-:silent -- If this theme is \"silent\", i.e. doesn't show up in the Themes menu.
-
-The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
-"
-  (declare (doc-string 2)
-           (indent 2))
-  (let ((kb (make-symbol "body-and-plist"))
-        (tmp (make-symbol "tmp")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body
-              body-and-plist
-              'ergoemacs-theme-component--parse-remaining))
-    (setq tmp (eval (plist-get (nth 0 kb) ':components)))
-    (push (intern (concat (plist-get (nth 0 kb) ':name) "-theme")) tmp)
-    (setq tmp (plist-put (nth 0 kb) ':components tmp))
-    (mapc
-     (lambda(comp)
-       (setq tmp (plist-put (nth 0 kb) comp
-                            (eval (plist-get (nth 0 kb) comp)))))
-     '(:optional-on :optional-off :options-menu))
-    
-    `(let (themes silent)
-       (setq themes (gethash "defined-themes" ergoemacs-theme-hash)
-             silent (gethash "silent-themes" ergoemacs-theme-hash))
-       (push ,(plist-get (nth 0 kb) ':name) themes)
-       (push ,(plist-get (nth 0 kb) ':name) silent)
-       (puthash ,(plist-get (nth 0 kb) ':name) ',tmp ergoemacs-theme-hash)
-       (if ,(plist-get (nth 0 kb) ':silent)
-           (puthash "silent-themes" silent ergoemacs-theme-hash)
-         (puthash "defined-themes" themes ergoemacs-theme-hash))
-       (ergoemacs-theme-comp ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme")) ()
-         ,(format "Generated theme component for %s theme" (concat (plist-get (nth 0 kb) ':name) "-theme"))
-         ,@(nth 1 kb)))))
 
 (defun ergoemacs-theme-component-get-closest-version (version version-list)
   "Return the closest version to VERSION in VERSION-LIST.
@@ -2425,42 +2381,7 @@ Returns new keymap."
        :set 'ergoemacs-set-default
        :group 'ergoemacs-mode))))
 
-(defmacro ergoemacs-theme (&rest body-and-plist)
-  "Define an ergoemacs-theme.
-:components -- list of components that this theme uses. These can't be seen or toggled
-:optional-on -- list of components that are optional and are on by default
-:optional-off -- list of components that are optional and off by default
-:options-menu -- Menu options list
-:silent -- If this theme is \"silent\", i.e. doesn't show up in the Themes menu.
 
-The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
-"
-  (declare (doc-string 2)
-           (indent 2))
-  (let ((kb (make-symbol "body-and-plist"))
-        (tmp (make-symbol "tmp")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body body-and-plist))
-    (setq tmp (eval (plist-get (nth 0 kb) ':components)))
-    (push (intern (concat (plist-get (nth 0 kb) ':name) "-theme")) tmp)
-    (setq tmp (plist-put (nth 0 kb) ':components tmp))
-    (mapc
-     (lambda(comp)
-       (setq tmp (plist-put (nth 0 kb) comp
-                            (eval (plist-get (nth 0 kb) comp)))))
-     '(:optional-on :optional-off :options-menu))
-    
-    `(let (themes silent)
-       (setq themes (gethash "defined-themes" ergoemacs-theme-hash)
-             silent (gethash "silent-themes" ergoemacs-theme-hash))
-       (push ,(plist-get (nth 0 kb) ':name) themes)
-       (push ,(plist-get (nth 0 kb) ':name) silent)
-       (puthash ,(plist-get (nth 0 kb) ':name) ',tmp ergoemacs-theme-hash)
-       (if ,(plist-get (nth 0 kb) ':silent)
-           (puthash "silent-themes" silent ergoemacs-theme-hash)
-         (puthash "defined-themes" themes ergoemacs-theme-hash))
-       (ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme")) ()
-         ,(format "Generated theme component for %s theme" (concat (plist-get (nth 0 kb) ':name) "-theme"))
-         ,@(nth 1 kb)))))
 
 (make-obsolete-variable 'ergoemacs-variant 'ergoemacs-theme
                         "ergoemacs-mode 5.8.0.1")
@@ -2520,33 +2441,6 @@ DESC is ignored, as is FIXED-KEY."
          (ergoemacs-force-just-first nil)
          (ergoemacs-force-variable-reg nil))
     (ergoemacs-theme-component--global-set-key key function)))
-
-(defmacro ergoemacs-deftheme (name desc based-on &rest differences)
-  "Creates a theme layout for Ergoemacs keybindings -- Compatability layer.
-
-NAME is the theme name.
-DESC is the theme description
-BASED-ON is the base name theme that the new theme is based on.
-
-DIFFERENCES are the differences from the layout based on the functions.  These are based on the following functions:
-
-`ergoemacs-key' = defines/replaces variable key with function by (ergoemacs-key QWERTY-KEY FUNCTION DESCRIPTION ONLY-FIRST)
-`ergoemacs-fixed-key' = defines/replace fixed key with function by (ergoemacs-fixed-key KEY FUNCTION DESCRIPTION)
-"
-  (declare (indent 1))
-  `(let (silent pl tmp)
-     (setq pl (gethash (or ,based-on "standard") ergoemacs-theme-hash))
-     (plist-put pl ':name ,(symbol-name name))
-     (setq tmp (plist-get pl ':components))
-     (push (intern (concat ,(symbol-name name) "-theme")) tmp)
-     (setq tmp (plist-put pl ':components tmp))
-     (setq silent (gethash "silent-themes" ergoemacs-theme-hash))
-     (push ,(symbol-name name) silent)
-     (puthash "silent-themes" silent ergoemacs-theme-hash)
-     (puthash ,(symbol-name name) tmp ergoemacs-theme-hash)
-     (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
-       ,(format "Generated theme component for %s theme" (symbol-name name))
-       ,@differences)))
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
