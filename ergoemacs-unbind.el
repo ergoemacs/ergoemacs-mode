@@ -631,9 +631,6 @@
     ("RET" (newline)))
   "Default Emacs Key Bindings")
 
-(defvar ergoemacs-unbind-keymap (make-sparse-keymap)
-  "Keymap for `ergoemacs-unbind-keys'")
-
 (defun ergoemacs-undefined (&optional arg)
   "Ergoemacs Undefined key, tells where to perform the old action."
   (interactive "P")

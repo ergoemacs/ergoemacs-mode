@@ -50,8 +50,14 @@
 ;; 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-(eval-when-compile (require 'ergoemacs-macros (expand-file-name "ergoemacs-macros" default-directory)))
+(eval-when-compile
+  (require 'cl)
+  (require 'ergoemacs-macros 
+	   (expand-file-name "ergoemacs-macros" 
+			     (file-name-directory (or
+			      load-file-name
+			      (buffer-file-name)
+			      default-directory)))))
 
 ;;; ergoemacs pretty keys
 

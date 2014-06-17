@@ -303,6 +303,7 @@
                 `(const :tag ,elt :value ,elt))
               (sort (ergoemacs-get-layouts t) 'string<))))
 
+(declare-function ergoemacs-set-default "ergoemacs-mode.el")
 (defun ergoemacs-set-layout (layout)
   "Set the ergoemacs layout to LAYOUT."
   (ergoemacs-set-default 'ergoemacs-keyboard-layout layout))
@@ -349,15 +350,14 @@
          (concat "\"" lay "\" (" doc ")" (if is-alias ", alias" ""))))
      lays "\n")))
 
+(defvar ergoemacs-get-layouts-no-aliases nil)
+(defvar ergoemacs-get-layouts-aliases nil)
 
 (defun ergoemacs-reset-layouts ()
   "Reset Layout information."
   (interactive)
   (setq ergoemacs-get-layouts-no-aliases nil)
   (setq ergoemacs-get-layouts-aliases nil))
-
-(defvar ergoemacs-get-layouts-no-aliases nil)
-(defvar ergoemacs-get-layouts-aliases nil)
 
 (defun ergoemacs-get-layouts (&optional aliases ob)
   "Get the list of all known layouts."

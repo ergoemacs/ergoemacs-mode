@@ -27,15 +27,24 @@
 ;; 
 
 ;;; Code:
+(eval-when-compile 
+  (require 'cl)
+  (require 'ergoemacs-macros 
+           (expand-file-name "ergoemacs-macros" 
+                             (file-name-directory (or
+                                                   load-file-name
+                                                   (buffer-file-name)
+                                                   default-directory)))))
+
 (autoload 'dired-jump "dired-x" "ergoemacs-autoload." t)
 (autoload 'wdired-change-to-wdired-mode "wdired" "ergoemacs-autoload." t)
 (autoload 'wdired-exit "wdired" "ergoemacs-autoload." t)
 
-(require 'ergoemacs-unbind)
-(require 'ergoemacs-translate)
 (require 'advice)
-(require 'ergoemacs-theme-engine)
 
+(defvar ergoemacs-theme-comp-hash)
+(defvar ergoemacs-theme-hash)
+(declare-function ergoemacs-theme-component--create-component "ergoemacs-theme-engine.el")
 
 (ergoemacs-theme-component standard-vars ()
   "Enabled/changed variables/modes"
@@ -46,7 +55,21 @@
   (setq set-mark-command-repeat-pop t)
   (setq org-special-ctrl-a/e t)
   (setq ido-vertical-define-keys 'C-n-C-p-up-down-left-right)
-  (setq scroll-error-top-bottom t))
+  (setq scroll-error-top-bottom t)
+  ;; (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
+  ;; (setq cua--rectangle-keymap (make-sparse-keymap))
+  ;; (setq cua--rectangle-initialized nil)
+  ;; (setq cua--keymap-alist
+  ;; 	(progn
+  ;; 	  (cua--init-rectangles)
+  ;; 	  `((cua--ena-prefix-override-keymap . ,cua--prefix-override-keymap)
+  ;; 	    (cua--ena-prefix-repeat-keymap . ,cua--prefix-repeat-keymap)
+  ;; 	    (cua--ena-cua-keys-keymap . ,cua--cua-keys-keymap)
+  ;; 	    (cua--ena-global-mark-keymap . ,cua--global-mark-keymap)
+  ;; 	    (cua--rectangle . ,cua--rectangle-keymap)
+  ;; 	    (cua--ena-region-keymap . ,cua--region-keymap)
+  ;; 	    (cua-mode . ,cua-global-keymap))))
+  )
 
 ;;; Fixed components
 (ergoemacs-theme-component standard-fixed ()

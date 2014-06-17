@@ -902,9 +902,7 @@ Assumes maps are orthogonal."
       (oset obj init (ergoemacs-copy-list init))
       (oset obj maps newmaps))))
 
-(defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
-  "Hash of ergoemacs theme components")
-
+(defvar ergoemacs-theme-comp-hash)
 (defmethod ergoemacs-theme-component-maps--save-hash ((obj ergoemacs-theme-component-maps))
   (with-slots (object-name version) obj
     (puthash (object-name-string obj)
@@ -1585,132 +1583,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
          (plist-get plist ':always)))
     (funcall body)))
 
-(defun ergoemacs-theme-component--parse-remaining (remaining)
-  "In parsing, this function converts
-- `define-key' is converted to `ergoemacs-define-key' and keymaps are quoted
-- `global-set-key' is converted to `ergoemacs-define-key' with keymap equal to `global-map'
-- `global-unset-key' is converted to `ergoemacs-define-key' with keymap equal to `global-map' and function definition is `nil'
-- `global-reset-key' is converted `ergoemacs-define-key'
-- `setq' and `set' is converted to `ergoemacs-set'
-- Mode initialization like (delete-selection-mode 1)
-  or (delete-selection) is converted to
-  `ergoemacs-set'
-- Allows :version statement expansion
-- Adds with-hook syntax or (when -hook) or (when -mode)
-"
-  (let* ((last-was-version nil)
-         (remaining
-          (mapcar
-           (lambda(elt)
-             (cond
-              (last-was-version
-               (setq last-was-version nil)
-               (if (stringp elt)
-                   `(ergoemacs-theme-component--version ,elt)
-                 `(ergoemacs-theme-component--version ,(symbol-name elt))))
-              ((ignore-errors (eq elt ':version))
-               (setq last-was-version t)
-               nil)
-              ((ignore-errors (eq (nth 0 elt) 'global-reset-key))
-               `(ergoemacs-define-key 'global-map ,(nth 1 elt) nil))
-              ((ignore-errors (eq (nth 0 elt) 'global-unset-key))
-               `(ergoemacs-define-key 'global-map ,(nth 1 elt) nil))
-              ((ignore-errors (eq (nth 0 elt) 'set))
-               ;; Currently doesn't support (setq a b c d ), but it should.
-               `(ergoemacs-set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
-              ((ignore-errors (eq (nth 0 elt) 'setq))
-               (let ((tmp-elt elt)
-                     (ret '()))
-                 (pop tmp-elt)
-                 (while (and (= 0 (mod (length tmp-elt) 2)) (< 0 (length tmp-elt)))
-                   (push `(ergoemacs-set (quote ,(pop tmp-elt)) '(lambda() ,(pop tmp-elt))) ret))
-                 (push 'progn ret)
-                 ret))
-              ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
-               `(ergoemacs-set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
-              ((ignore-errors (eq (nth 0 elt) 'global-set-key))
-               (if (ignore-errors (keymapp (symbol-value (nth 2 elt))))
-                   `(ergoemacs-define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
-                 `(ergoemacs-define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
-              ((ignore-errors (eq (nth 0 elt) 'define-key))
-               (if (equal (nth 1 elt) '(current-global-map))
-                   (if (ignore-errors (keymapp (symbol-value (nth 3 elt))))
-                       `(ergoemacs-define-key 'global-map ,(nth 2 elt) (quote ,(nth 3 elt)))
-                     `(ergoemacs-define-key 'global-map ,(nth 2 elt) ,(nth 3 elt)))
-                 (if (ignore-errors (keymapp (symbol-value (nth 3 elt))))
-                     `(ergoemacs-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
-                   `(ergoemacs-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)))))
-              ((or (ignore-errors (eq (nth 0 elt) 'with-hook))
-                   (and (ignore-errors (eq (nth 0 elt) 'when))
-                        (ignore-errors (string-match "-\\(hook\\|mode\\)$" (symbol-name (nth 1 elt))))))
-               (let ((tmp (ergoemacs-theme-component--parse (cdr (cdr elt)) t)))
-                 `(ergoemacs-theme-component--with-hook
-                   ',(nth 1 elt) ',(nth 0 tmp)
-                   '(lambda () ,@(nth 1 tmp)))))
-              (t elt)))
-           remaining)))
-    remaining))
-
-(defun ergoemacs-theme-component--parse (keys-and-body &optional skip-first)
-  "Parse KEYS-AND-BODY, optionally skipping the name and
-documentation with SKIP-FIRST.
-
-Uses `ergoemacs-theme-component--parse-keys-and-body' and
-  `ergoemacs-theme-component--parse-remaining'."
-  (ergoemacs-theme-component--parse-keys-and-body
-   keys-and-body
-   'ergoemacs-theme-component--parse-remaining
-   skip-first))
-
-(defun ergoemacs-theme-component--parse-keys-and-body (keys-and-body &optional parse-function  skip-first)
-  "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
-
-KEYS-AND-BODY should have the form of a property list, with the
-exception that only keywords are permitted as keys and that the
-tail -- the body -- is a list of forms that does not start with a
-keyword.
-
-Returns a two-element list containing the keys-and-values plist
-and the body.
-
-This has been stolen directly from ert by Christian Ohler <ohler@gnu.org>
-
-Afterward it was modified for use with `ergoemacs-mode' to use
-additional parsing routines defined by PARSE-FUNCTION."
-  (let ((extracted-key-accu '())
-        last-was-version
-        plist
-        (remaining keys-and-body))
-    ;; Allow
-    ;; (component name)
-    (unless (or (keywordp (first remaining)) skip-first)
-      (if (condition-case nil
-              (stringp (first remaining))
-            (error nil))
-          (push `(:name . ,(pop remaining)) extracted-key-accu)
-        (push `(:name . ,(symbol-name (pop remaining))) extracted-key-accu))
-      (when (memq (type-of (first remaining)) '(symbol cons))
-        (pop remaining))
-      (when (stringp (first remaining))
-        (push `(:description . ,(pop remaining)) extracted-key-accu)))
-    (while (and (consp remaining) (keywordp (first remaining)))
-      (let ((keyword (pop remaining)))
-        (unless (consp remaining)
-          (error "Value expected after keyword %S in %S"
-                 keyword keys-and-body))
-        (when (assoc keyword extracted-key-accu)
-          (warn "Keyword %S appears more than once in %S" keyword
-                keys-and-body))
-        (push (cons keyword (pop remaining)) extracted-key-accu)))
-    (setq extracted-key-accu (nreverse extracted-key-accu))
-    (when parse-function
-      (setq remaining
-            (funcall parse-function remaining)))
-    (setq plist (loop for (key . value) in extracted-key-accu
-                      collect key
-                      collect value))
-    (list plist remaining)))
-
+;;;###autoload
 (defun ergoemacs-theme-component--create-component (plist body)
   ;; Reset variables.
   (let* ((ergoemacs-theme-component-maps--versions '())

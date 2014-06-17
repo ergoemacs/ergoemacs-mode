@@ -391,40 +391,41 @@
     (ergoemacs-mode 1)
     t))
 
-(defvar ergoemacs-fixed-layout)
-(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
-(defun ergoemacs-ghpages-standard-keys ()
-  "Generate org-mode table for standard keys."
-    (with-temp-buffer
-      (insert (mapconcat
-               #'(lambda(var)
-                   (let* ((key (ergoemacs-pretty-key (nth 0 var)))
-                          (command (condition-case nil
-                                       (symbol-name (nth 1 var))
-                                     (error "")))
-                          (desc (nth 2 var))
-                          emacs-key)
-                     (setq desc
-                           (replace-regexp-in-string "[+]" "\\\\+" desc))
-                     (setq emacs-key (condition-case nil
-                                          (key-description
-                                           (where-is-internal
-                                            (nth 1 var)
-                                            (current-global-map) t))
-                                       (error "NA")))
-                     (if (string= emacs-key "")
-                         (setq emacs-key "NA")
-                       (setq emacs-key (ergoemacs-pretty-key emacs-key)))
-                     (concat "| " desc " | " key  " | "
-                             emacs-key " | =" command "= |")))
-               (remove-if #'(lambda(x) (not (nth 2 x)))
-                          ergoemacs-fixed-layout) "\n"))
-      (sort-lines nil (point-min) (point-max))
-      (goto-char (point-min))
-      (insert "|-\n| Standard Name | Ergoemacs Key | Emacs Key | Emacs Command Name |\n|-")
-      (goto-char (point-max))
-      (insert "\n|-\n")
-      (buffer-string)))
+;; (defvar ergoemacs-fixed-layout)
+;; (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
+;; (defun ergoemacs-ghpages-standard-keys ()
+;;   "Generate org-mode table for standard keys."
+;;   (require 'cl)
+;;   (with-temp-buffer
+;;     (insert (mapconcat
+;;              #'(lambda(var)
+;;                  (let* ((key (ergoemacs-pretty-key (nth 0 var)))
+;;                         (command (condition-case nil
+;;                                      (symbol-name (nth 1 var))
+;;                                    (error "")))
+;;                         (desc (nth 2 var))
+;;                         emacs-key)
+;;                    (setq desc
+;;                          (replace-regexp-in-string "[+]" "\\\\+" desc))
+;;                    (setq emacs-key (condition-case nil
+;;                                        (key-description
+;;                                         (where-is-internal
+;;                                          (nth 1 var)
+;;                                          (current-global-map) t))
+;;                                      (error "NA")))
+;;                    (if (string= emacs-key "")
+;;                        (setq emacs-key "NA")
+;;                      (setq emacs-key (ergoemacs-pretty-key emacs-key)))
+;;                    (concat "| " desc " | " key  " | "
+;;                            emacs-key " | =" command "= |")))
+;;              (remove-if #'(lambda(x) (not (nth 2 x)))
+;;                         ergoemacs-fixed-layout) "\n"))
+;;     (sort-lines nil (point-min) (point-max))
+;;     (goto-char (point-min))
+;;     (insert "|-\n| Standard Name | Ergoemacs Key | Emacs Key | Emacs Command Name |\n|-")
+;;     (goto-char (point-max))
+;;     (insert "\n|-\n")
+;;     (buffer-string)))
 
 (defvar ergoemacs-dir)
 ;;;###autoload
@@ -1693,62 +1694,64 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
        (ergoemacs-set-default 'ergoemacs-theme saved-theme))
      lay)))
 
-(require 'json nil t)
+;; (require 'json nil t)
 
-(defun ergoemacs-layouts-json ()
-  "Fixed layouts json string."
-  (concat "kbd_layout = "
-          (json-encode
-           (mapcar
-            (lambda(layout)
-              `(,layout ,@(symbol-value (intern (concat "ergoemacs-layout-" layout)))))
-            (ergoemacs-get-layouts))) ";"))
+;; (defun ergoemacs-layouts-json ()
+;;   "Fixed layouts json string."
+;;   (concat "kbd_layout = "
+;;           (json-encode
+;;            (mapcar
+;;             (lambda(layout)
+;;               `(,layout ,@(symbol-value (intern (concat "ergoemacs-layout-" layout)))))
+;;             (ergoemacs-get-layouts))) ";"))
 
-(defun ergoemacs-fixed-themes-json ()
-  "Fixed themes json string."
-  (concat "fixed_layouts = "
-          (json-encode
-           (mapcar
-            (lambda(theme)
-              `(,theme .
-                       ,(mapcar
-                         (lambda(x)
-                           `(,(with-temp-buffer
-                                (insert (ergoemacs-kbd (nth 0 x) t (nth 3 x)))
-                                (goto-char (point-min))
-                                (while (re-search-forward "S-\\(.\\)\\>" nil t)
-                                  (replace-match (upcase (match-string 1))))
-                                (buffer-string))  . ,(nth 2 x)))
-                         (remove-if (lambda(x) (not (nth 2 x)))
-                                    (symbol-value
-                                     (if (string= "" theme)
-                                         (intern "ergoemacs-fixed-layout")
-                                       (intern (concat "ergoemacs-fixed-layout-" theme))))))))
-            `("" ,@(ergoemacs-get-themes))))
-          ";"))
+;; (defun ergoemacs-fixed-themes-json ()
+;;   "Fixed themes json string."
+;;   (require 'cl)
+;;   (concat "fixed_layouts = "
+;;           (json-encode
+;;            (mapcar
+;;             (lambda(theme)
+;;               `(,theme .
+;;                        ,(mapcar
+;;                          (lambda(x)
+;;                            `(,(with-temp-buffer
+;;                                 (insert (ergoemacs-kbd (nth 0 x) t (nth 3 x)))
+;;                                 (goto-char (point-min))
+;;                                 (while (re-search-forward "S-\\(.\\)\\>" nil t)
+;;                                   (replace-match (upcase (match-string 1))))
+;;                                 (buffer-string))  . ,(nth 2 x)))
+;;                          (remove-if (lambda(x) (not (nth 2 x)))
+;;                                     (symbol-value
+;;                                      (if (string= "" theme)
+;;                                          (intern "ergoemacs-fixed-layout")
+;;                                        (intern (concat "ergoemacs-fixed-layout-" theme))))))))
+;;             `("" ,@(ergoemacs-get-themes))))
+;;           ";"))
 
-(defun ergoemacs-variable-themes-json ()
-  "Variable themes json string."
-  (concat "var_layouts = "
-          (json-encode
-           (mapcar
-            (lambda(theme)
-              `(,theme .
-                       ,(mapcar
-                         (lambda(x)
-                           `(,(with-temp-buffer
-                                (insert (ergoemacs-kbd (nth 0 x) t (nth 3 x)))
-                                (goto-char (point-min))
-                                (while (re-search-forward "S-\\(.\\)\\>" nil t)
-                                  (replace-match (upcase (match-string 1))))
-                                (buffer-string))  . ,(nth 2 x)))
-                         (remove-if (lambda(x) (not (nth 2 x)))
-                                    (symbol-value
-                                     (if (string= "" theme)
-                                         (intern "ergoemacs-variable-layout")
-                                       (intern (concat "ergoemacs-variable-layout-" theme))))))))
-            `("" ,@(ergoemacs-get-themes))))
-          ";"))
+;; (defun ergoemacs-variable-themes-json ()
+;;   "Variable themes json string."
+;;   (require 'cl)
+;;   (concat "var_layouts = "
+;;           (json-encode
+;;            (mapcar
+;;             (lambda(theme)
+;;               `(,theme .
+;;                        ,(mapcar
+;;                          (lambda(x)
+;;                            `(,(with-temp-buffer
+;;                                 (insert (ergoemacs-kbd (nth 0 x) t (nth 3 x)))
+;;                                 (goto-char (point-min))
+;;                                 (while (re-search-forward "S-\\(.\\)\\>" nil t)
+;;                                   (replace-match (upcase (match-string 1))))
+;;                                 (buffer-string))  . ,(nth 2 x)))
+;;                          (remove-if (lambda(x) (not (nth 2 x)))
+;;                                     (symbol-value
+;;                                      (if (string= "" theme)
+;;                                          (intern "ergoemacs-variable-layout")
+;;                                        (intern (concat "ergoemacs-variable-layout-" theme))))))))
+;;             `("" ,@(ergoemacs-get-themes))))
+;;           ";"))
 
 
 (provide 'ergoemacs-extras)

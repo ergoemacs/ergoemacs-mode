@@ -264,6 +264,12 @@ Valid values are:
 (defvar ergoemacs-unbind-keys nil)
 (defvar ergoemacs-read-input-keys nil)
 
+(unless (featurep 'ergoemacs-theme-engine)
+  (load "ergoemacs-theme-engine"))
+
+(defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
+  "Hash of ergoemacs theme components")
+
 (unless (featurep 'ergoemacs-themes)
   (load "ergoemacs-themes"))
 (unless (featurep 'ergoemacs-unbind)

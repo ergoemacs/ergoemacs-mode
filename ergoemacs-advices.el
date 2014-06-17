@@ -28,8 +28,14 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-
+(eval-when-compile 
+  (require 'cl)
+  (require 'ergoemacs-macros 
+	   (expand-file-name "ergoemacs-macros" 
+			     (file-name-directory (or
+                                                   load-file-name
+                                                   (buffer-file-name)
+                                                   default-directory)))))
 
 (defvar ergoemacs-advices '()
   "List of advices to enable and disable when ergoemacs is running.")
@@ -175,8 +181,7 @@ This assumes any key defined while running a hook is a user-defined hook."
   (let ((ergoemacs-run-mode-hooks t))
     ad-do-it))
 
-(declare-function ergoemacs-with-global 
-                  "ergoemacs-shortcuts.el")
+
 (defadvice turn-on-undo-tree-mode (around ergoemacs-undo-tree-mode activate)
   "Make `ergoemacs-mode' and undo-tree compatible."
   (ergoemacs-with-global
@@ -189,6 +194,9 @@ This assumes any key defined while running a hook is a user-defined hook."
 (defvar ergoemacs-original-keys-to-shortcut-keys-regexp)
 (defvar ergoemacs-original-keys-to-shortcut-keys)
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
+(defvar ergoemacs-mode)
+(declare-function ergoemacs-emulations "ergoemacs-mode.el")
+(declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
 (defun ergoemacs-substitute-command (string &optional map)
   "Substitutes command STRING
 will add MAP to substitution."
