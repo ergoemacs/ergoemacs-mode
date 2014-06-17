@@ -120,6 +120,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
        (when ergoemacs-mode
          (ergoemacs-emulations)))))
 
+(declare-function ergoemacs-theme-component--parse "ergoemacs-theme-engine.el")
 ;;;###autoload
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
   "A component of an ergoemacs-theme."
@@ -133,6 +134,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
                  ',(nth 0 kb)
                  '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash)))
 
+(declare-function ergoemacs-theme-component--parse-keys-and-body "ergoemacs-theme-engine.el")
 ;;;###autoload
 (defmacro ergoemacs-theme (&rest body-and-plist)
   "Define an ergoemacs-theme.
