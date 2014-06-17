@@ -28,10 +28,6 @@
 
 ;;; Code:
 
-(setq ergoemacs-dir (file-name-directory (or load-file-name (buffer-file-name))))
-(when (not (featurep 'ergoemacs-mode))
-  (load (expand-file-name "ergoemacs-mode" ergoemacs-dir)))
-
 (require 'ert)
 (require 'elp)
 (defvar ergoemacs-test-lorem-ipsum
@@ -56,6 +52,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (ert "^ergoemacs-test-")
     (call-interactively 'elp-results)))
 
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-theme)
+(declare-function ergoemacs-mode "ergoemacs-mode.el")
 (ert-deftest ergoemacs-test-google-code-145 ()
   "Backspace doesn't work in `isearch-mode'."
   (let ((old-ergoemacs-theme ergoemacs-theme)
@@ -158,8 +157,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (ergoemacs-mode 1)
     (should (equal ret t))))
 
-
-
+(defvar ergoemacs-dir)
+(declare-function ergoemacs-emacs-exe "ergoemacs-functions.el")
+(declare-function ergoemacs-shortcut-remap-list "ergoemacs-shortcuts.el")
 (defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global delete-def)
   "Test the global key set before ergoemacs-mode is loaded."
   (let* ((emacs-exe (ergoemacs-emacs-exe))
@@ -322,6 +322,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (should (equal (ergoemacs-test-global-key-set-before
                   'after "C-e" 'ergoemacs-key))))
 
+(declare-function ergoemacs-pretty-key-rep "ergoemacs-tranlate.el")
 (ert-deftest ergoemacs-test-ctl-c-ctl-c ()
   "Issue #64.  Should translate C-c C-c correctly."
   (let (ergoemacs-use-unicode-char)
@@ -332,6 +333,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (let (ergoemacs-use-unicode-char)
     (should (string= (ergoemacs-pretty-key-rep "helm-M-x test") "helm-M-x test"))))
 
+(declare-function ergoemacs-cut-line-or-region "ergoemacs-functions.el")
 (ert-deftest ergoemacs-test-cut-line-or-region ()
   "Issue #68.
 kill-ring function name is used and such doesn't exist. It errs when
@@ -354,6 +356,7 @@ Test next and prior translation."
   (should (string= (ergoemacs-pretty-key-rep "Test next and prior translation")
                    "Test next and prior translation")))
 
+(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (ert-deftest ergoemacs-test-issue-77 ()
   "Issue #77.
 Test \"C-x \" translating to \"[Ctl+X][]\", should be \"[Ctl+X]\""
@@ -425,6 +428,8 @@ Hyper Key mapping no longer works."
     (ergoemacs-mode 1)
     (should ret)))
 
+(declare-function ergoemacs-unchorded-alt-modal "ergoemacs-translate.el"
+                  nil t)
 (ert-deftest ergoemacs-test-modal-preserve-mark ()
   "Issue #101.
 Test next and prior translation."
@@ -457,7 +462,7 @@ Test next and prior translation."
     (ergoemacs-mode 1)
     (should ret)))
 
-
+(defvar ergoemacs-ctl-c-or-ctl-x-delay)
 (ert-deftest ergoemacs-test-issue-130-cut ()
   "Attempts to test Issue #130 -- Cut"
   (let ((ret t)
@@ -470,6 +475,7 @@ Test next and prior translation."
       (setq ret (string= "" (buffer-string))))
     (should ret)))
 
+(declare-function ergoemacs-paste "ergoemacs-functions.el")
 (ert-deftest ergoemacs-test-issue-130-copy ()
   "Attempts to test Issue #130 -- Copy"
   (let ((ret t)
@@ -554,6 +560,7 @@ Issue #137."
       (kill-buffer (current-buffer)))
     (should ret)))
 
+(declare-function ergoemacs-read-key "ergoemacs-shortcuts.el")
 (ert-deftest ergoemacs-test-translations ()
   "Test that unicode translations work.
 See Issue #138."
@@ -845,7 +852,7 @@ Issue #186."
     (ergoemacs-mode 1)
     (should ret)))
 
-
+(declare-function ergoemacs-copy-line-or-region "ergoemacs-functions.el")
 (ert-deftest ergoemacs-test-issue-184-paste ()
   "Issue #184; Not replace the \"selected all\" by paste."
   (let ((ret t)
