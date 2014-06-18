@@ -14,7 +14,7 @@
 ;;     Update #: 0
 ;; URL: 
 ;; Doc URL: 
-;; Keywords: 
+;; Keywords:
 ;; Compatibility: 
 ;; 
 ;; Features that might be required by this library:
@@ -1195,6 +1195,8 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
 
+(defvar ergoemacs-get-variable-layout  nil)
+(defvar ergoemacs-get-fixed-layout nil)
 (defvar ergoemacs-global-override-rm-keys)
 (defvar ergoemacs-command-shortcuts-hash)
 (defvar ergoemacs-theme)
@@ -2232,7 +2234,6 @@ If OFF is non-nil, turn off the options instead."
      menu-item "Exit ergoemacs-mode"
      (lambda() (interactive) (ergoemacs-mode -1)))))
 
-(defvar ergoemacs-get-variable-layout  nil)
 (defun ergoemacs-get-variable-layout ()
   "Get the old-style variable layout list for `ergoemacs-extras'."
   (if (and ergoemacs-theme--object (not ergoemacs-get-variable-layout))
@@ -2241,7 +2242,6 @@ If OFF is non-nil, turn off the options instead."
     (setq ergoemacs-get-variable-layout nil))  
   'ergoemacs-get-variable-layout)
 
-(defvar ergoemacs-get-fixed-layout nil)
 (defun ergoemacs-get-fixed-layout ()
   "Get the old-style fixed layout list for `ergoemacs-extras'."
   (if (and ergoemacs-theme--object (not ergoemacs-get-fixed-layout))
