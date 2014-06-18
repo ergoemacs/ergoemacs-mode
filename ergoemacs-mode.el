@@ -212,22 +212,16 @@ Valid values are:
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-change-smex-meta-x t
-  "Changes the `smex-prompt-string' to match the `execute-extended-command'"
-  :type 'boolean
-  :set 'ergoemacs-set-default
-  :group 'ergoemacs-mode)
-
 (defvar ergoemacs-cua-rect-modifier-orig cua--rectangle-modifier-key)
 
 (defcustom ergoemacs-cua-rect-modifier 'super
   "Change the CUA rectangle modifier to this key."
   :type '(choice
           (const :tag "Do not modify the cua-rectangle modifier" nil)
-          (const :tag "Meta Modifier" 'meta)
-          (const :tag "Super Modifier" 'super)
-          (const :tag "Hyper Modifier" 'hyper)
-          (const :tag "Alt Modifier" 'alt))
+          (const :tag "Meta Modifier" meta)
+          (const :tag "Super Modifier" super)
+          (const :tag "Hyper Modifier" hyper)
+          (const :tag "Alt Modifier" alt))
   :set 'ergoemacs-set-default
   :group 'ergoemacs-mode)
 

@@ -71,8 +71,8 @@
           (list
            (sexp :tag "Theme Component")
            (choice
-            (const :tag "Force Off" 'off)
-            (const :tag "Force On" 'on)
+            (const :tag "Force Off" off)
+            (const :tag "Force On" on)
             (const :tag "Let theme decide" nil))))
   :group 'ergoemacs-themes)
 
@@ -82,7 +82,7 @@
   :type '(repeat
           (string :tag "Theme Component")
           (choice
-           (const :tag "Latest Version" 'nil)
+           (const :tag "Latest Version" nil)
            (string :tag "Version")))
   :group 'ergoemacs-theme)
 

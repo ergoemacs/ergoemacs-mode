@@ -193,7 +193,7 @@ Used to help with translation keymaps like `input-decode-map'"
   "Shows the function evaluated with a key."
   :type '(choice
           (const :tag "Always echo" t)
-          (const :tag "Echo on translations" 'on-translation)
+          (const :tag "Echo on translations" on-translation)
           (const :tag "Don't Echo"))
   :group 'ergoemacs-read)
 

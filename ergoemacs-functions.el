@@ -59,9 +59,9 @@
 (defcustom ergoemacs-handle-ctl-c-or-ctl-x 'both
   "Type of C-c and C-x handling for `ergoemacs-mode'"
   :type '(choice
-          (const :tag "C-c/C-x only copy/cut" 'only-copy-cut)
-          (const :tag "C-c/C-x only Emacs C-c and C-x" 'only-C-c-and-C-x)
-          (const :tag "C-c/C-x copy/paste when region active, Emacs C-c/C-x otherwise." 'both))
+          (const :tag "C-c/C-x only copy/cut" only-copy-cut)
+          (const :tag "C-c/C-x only Emacs C-c and C-x" only-C-c-and-C-x)
+          (const :tag "C-c/C-x copy/paste when region active, Emacs C-c/C-x otherwise." both))
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-major-mode-p (value)
