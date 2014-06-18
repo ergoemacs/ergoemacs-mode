@@ -1076,6 +1076,7 @@
           (const :tag "Standard" :value nil)
           (symbol :tag "Other"))
   :set 'ergoemacs-set-default
+  :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
 (provide 'ergoemacs-themes)

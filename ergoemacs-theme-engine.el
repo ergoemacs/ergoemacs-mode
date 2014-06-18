@@ -2298,6 +2298,7 @@ Returns new keymap."
                 (ergoemacs-get-themes-doc t))
        :type `,(ergoemacs-get-themes-type t)
        :set 'ergoemacs-set-default
+       :initialize #'custom-initialize-default
        :group 'ergoemacs-mode))))
 
 
