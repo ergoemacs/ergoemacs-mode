@@ -631,6 +631,13 @@
     ("RET" (newline)))
   "Default Emacs Key Bindings")
 
+(defvar ergoemacs-single-command-keys)
+(defvar ergoemacs-shortcut-keymap)
+(defvar ergoemacs-keymap)
+(defvar keyfreq-mode)
+(defvar keyfreq-table)
+(defvar ergoemacs-describe-key)
+(declare-function ergoemacs-debug "ergoemacs-mode.el")
 (defun ergoemacs-undefined (&optional arg)
   "Ergoemacs Undefined key, tells where to perform the old action."
   (interactive "P")
@@ -656,7 +663,6 @@
           (setq local-fn (lookup-key ergoemacs-keymap key-kbd)))
         (functionp local-fn))
       (ergoemacs-debug "WARNING: The command %s is undefined when if shouldn't be..." local-fn)
-      (ergoemacs-vars-sync) ;; Try to fix issue.
       (setq tmp (key-binding key-kbd))
       (when (and tmp (not (equal tmp 'ergoemacs-undefined)))
         (setq local-fn tmp))
@@ -803,6 +809,7 @@
 (defvar ergoemacs-global-changed-cache '()
   "Cache of global variables that have changed.")
 
+(defvar ergoemacs-dir)
 (defun ergoemacs-global-fix-defualt-bindings (kbd-code function)
   "Helper function to fix `ergoemacs-emacs-default-bindings' based on currently running emacs."
   (interactive)
@@ -814,6 +821,7 @@
       (insert (format "%s " function)))
     (write-file (expand-file-name "ergoemacs-unbind.el" ergoemacs-dir))))
 
+(declare-function ergoemacs-kbd "ergoemacs-translate.el")
 (defun ergoemacs-global-changed-p (key &optional is-variable complain fix)
   "Returns if a global key has been changed.  If IS-VARIABLE is
 true and KEY is a string, then lookup the keyboard equivalent
@@ -899,6 +907,8 @@ This should only be run when no global keys have been set.
               (add-to-list 'ergoemacs-global-not-changed-cache key-kbd))
             has-changed))))))
 
+(declare-function ergoemacs-get-fixed-layout "ergoemacs-translate.el")
+(declare-function ergoemacs-get-variable-layout "ergoemacs-translate.el")
 (defun ergoemacs-warn-globally-changed-keys (&optional fix)
   "Warns about globally changed keys. If FIX is true, fix the ergoemacs-unbind file."
   (interactive)
@@ -921,6 +931,8 @@ This should only be run when no global keys have been set.
 
 
 ;; Based on describe-key-briefly
+(declare-function ergoemacs-key-fn-lookup "ergoemacs-translate.el")
+(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (defun ergoemacs-where-is-old-binding (&optional key only-new-key)
   "Print the name of the function KEY invoked before to start ErgoEmacs minor mode."
   (interactive
