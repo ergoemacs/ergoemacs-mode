@@ -617,6 +617,9 @@ DEF is anything that can be a key's definition:
   (with-slots (cmd-list) obj
     cmd-list))
 
+(defvar ergoemacs-force-just-first nil)
+(defvar ergoemacs-force-variable nil)
+(defvar ergoemacs-force-fixed nil)
 (defmethod ergoemacs-define-map--cmd-list ((obj ergoemacs-variable-map) key-desc def no-unbind &optional desc)
   "Add KEY-DESC for DEF to OBJ cmd-list slot.
 Optionally use DESC when another description isn't found in `ergoemacs-function-short-names'."
@@ -626,8 +629,9 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                translation-assoc
                just-first) obj
     (let* ((final-desc (assoc def ergoemacs-function-short-names))
-           (only-first (if (string= just-first "") nil
-                         (ignore-errors (string-match-p just-first key-desc))))
+           (only-first (or ergoemacs-force-just-first
+                           (if (string= just-first "") nil
+                             (ignore-errors (string-match-p just-first key-desc)))))
            (us-key
             (or (and (string= layout "us") key-desc) 
                 (let ((ergoemacs-translation-from layout)
@@ -783,8 +787,10 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                variable-reg) obj
     (let* ((key-desc (key-description key))
            (key-vect (read-kbd-macro key-desc t)))
-      (if (and (not (string= variable-reg ""))
-               (ignore-errors (string-match-p variable-reg key-desc)))
+      (if (and (not ergoemacs-force-fixed)
+               (or ergoemacs-force-variable
+                   (and (not (string= variable-reg ""))
+                        (ignore-errors (string-match-p variable-reg key-desc)))))
           (ergoemacs-define-map variable key def no-unbind)
         (ergoemacs-define-map fixed key def no-unbind))))
   (oset obj keymap-hash (make-hash-table)))
@@ -2349,23 +2355,22 @@ When SILENT is true, also include silent themes"
 (defun ergoemacs-key (key function &optional desc only-first fixed-key)
   "Defines KEY in ergoemacs keyboard based on QWERTY and binds to FUNCTION.
 DESC is ignored, as is FIXED-KEY."
-  ;; (let* ((key (or
-  ;;              (and (vectorp key) key)
-  ;;              (read-kbd-macro key t)))
-  ;;        (ergoemacs-force-just-first only-first)
-  ;;        (ergoemacs-force-variable-reg t))
-  ;;   (ergoemacs-theme-component--global-set-key key function))
-  )
+  (let* ((key (or
+               (and (vectorp key) key)
+               (read-kbd-macro key t)))
+         (ergoemacs-force-just-first only-first)
+         (ergoemacs-force-variable t))
+    (ergoemacs-define-key 'global-map key function)))
 
 (defun ergoemacs-fixed-key (key function &optional desc)
-  "Defines fixed KEY in ergoemacs  and binds to FUNCTION."
-  ;; (let* ((key (or
-  ;;              (and (vectorp key) key)
-  ;;              (read-kbd-macro key t)))
-  ;;        (ergoemacs-force-just-first nil)
-  ;;        (ergoemacs-force-variable-reg nil))
-  ;;   (ergoemacs-theme-component--global-set-key key function))
-  )
+  "Defines fixed KEY in ergoemacs and binds to FUNCTION.
+Ignores DESC."
+  (let* ((key (or
+               (and (vectorp key) key)
+               (read-kbd-macro key t)))
+         (ergoemacs-force-just-first nil)
+         (ergoemacs-force-fixed t))
+    (ergoemacs-define-key 'global-map key function)))
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
