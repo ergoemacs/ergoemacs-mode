@@ -258,6 +258,22 @@ Valid values are:
 (defvar ergoemacs-unbind-keys nil)
 (defvar ergoemacs-read-input-keys nil)
 
+(unless (fboundp 'make-composed-keymap)
+  ;; Backport `make-composed-keymap'
+  (defun make-composed-keymap (maps &optional parent)
+    "Construct a new keymap composed of MAPS and inheriting from PARENT.
+When looking up a key in the returned map, the key is looked in each
+keymap of MAPS in turn until a binding is found.
+If no binding is found in MAPS, the lookup continues in PARENT, if non-nil.
+As always with keymap inheritance, a nil binding in MAPS overrides
+any corresponding binding in PARENT, but it does not override corresponding
+bindings in other keymaps of MAPS.
+MAPS can be a list of keymaps or a single keymap.
+PARENT if non-nil should be a keymap."
+    `(keymap
+      ,@(if (keymapp maps) (list maps) maps)
+      ,@parent)))
+
 (unless (featurep 'ergoemacs-theme-engine)
   (load "ergoemacs-theme-engine"))
 
