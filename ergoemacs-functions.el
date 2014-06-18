@@ -1218,7 +1218,8 @@ Emacs buffers are those whose name starts with *."
     (setq buffer-offer-save t)))
 
 (defcustom ergoemacs-maximum-number-of-file-to-open 5
-  "Maximum number of files to open"
+  "Maximum number of files to open.
+If less than or equal to zero, there is no limit."
   :type 'integerp
   :group 'ergoemacs-mode)
 (declare-function dired-get-marked-files "dired.el")
