@@ -1216,39 +1216,38 @@ Emacs buffers are those whose name starts with *."
     (switch-to-buffer buf)
     (funcall (and initial-major-mode))
     (setq buffer-offer-save t)))
-;; note: emacs won't offer to save a buffer that's
-;; not associated with a file,
-;; even if buffer-modified-p is true.
-;; One work around is to define your own my-kill-buffer function
-;; that wraps around kill-buffer, and check on the buffer modification
-;; status to offer save
-;; This custome kill buffer is close-current-buffer.
 
+(defcustom ergoemacs-maximum-number-of-file-to-open 5
+  "Maximum number of files to open"
+  :type 'integerp
+  :group 'ergoemacs-mode)
 (declare-function dired-get-marked-files "dired.el")
 (declare-function w32-shell-execute "w32fns.c")
 (defun ergoemacs-open-in-external-app (&optional file)
   "Open the current file or dired marked files in external app."
   (interactive)
-  (let ( doIt
-         (myFileList
+  (let* ((my-file-list
           (cond
            ((string-equal major-mode "dired-mode") (dired-get-marked-files))
            ((string-equal major-mode "locate-mode") (dired-get-marked-files))
            ((not file) (list (buffer-file-name)))
-           (file (list file)))))
-    
-    (setq doIt (if (<= (length myFileList) 5)
-                   t
-                 (y-or-n-p "Open more than 5 files? ") ) )
-    
-    (when doIt
+           (file (list file))))
+         (do-it (or (<= (length my-file-list) ergoemacs-maximum-number-of-file-to-open)
+                    (>= 0 ergoemacs-maximum-number-of-file-to-open)
+                    (y-or-n-p (format "Open more than %s files? " ergoemacs-maximum-number-of-file-to-open)))))
+    (when do-it
       (cond
-       ((string-equal system-type "windows-nt")
-        (mapc (lambda (fPath) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" fPath t t)) ) myFileList))
-       ((string-equal system-type "darwin")
-        (mapc (lambda (fPath) (shell-command (format "open \"%s\"" fPath)) )  myFileList) )
-       ((string-equal system-type "gnu/linux")
-        (mapc (lambda (fPath) (let ((process-connection-type nil)) (start-process "" nil "xdg-open" fPath)) ) myFileList) ) ) ) ) )
+       ((eq system-type 'windows-nt)
+        (dolist (f-path my-file-list)
+          (w32-shell-execute
+           "open" (replace-regexp-in-string "/" "\\" f-path t t))))
+       ((eq system-type 'darwin)
+        (dolist (f-path my-file-list)
+          (shell-command (format "open \"%s\"" f-path))))
+       ((eq system-type 'gnu/linux)
+        (dolist (f-path my-file-list)
+          (let (process-connection-type)
+            (start-process "" nil "xdg-open" f-path))))))))
 
 (defun ergoemacs-open-in-desktop ()
   "Show current file in desktop (OS's file manager)."
@@ -1265,6 +1264,13 @@ Emacs buffers are those whose name starts with *."
 (defvar ergoemacs-recently-closed-buffers (cons nil nil) "A list of recently closed buffers. The max number to track is controlled by the variable `ergoemacs-recently-closed-buffers-max'.")
 (defvar ergoemacs-recently-closed-buffers-max 30 "The maximum length for `ergoemacs-recently-closed-buffers'.")
 
+;; note: emacs won't offer to save a buffer that's
+;; not associated with a file,
+;; even if buffer-modified-p is true.
+;; One work around is to define your own my-kill-buffer function
+;; that wraps around kill-buffer, and check on the buffer modification
+;; status to offer save
+;; This custome kill buffer is close-current-buffer.
 (defvar ergoemacs-single-command-keys)
 (declare-function ergoemacs-get-override-function "ergoemacs-shortcuts.el")
 (declare-function minibuffer-keyboard-quit "delsel.el")
