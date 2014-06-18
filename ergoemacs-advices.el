@@ -40,7 +40,7 @@
 (defvar ergoemacs-advices '()
   "List of advices to enable and disable when ergoemacs is running.")
 
-
+(defvar ergoemacs-run-mode-hooks nil)
 (defmacro ergoemacs-define-overrides (&rest body)
   "Force the define-keys to work"
   `(let ((ergoemacs-run-mode-hooks t))
@@ -50,9 +50,7 @@
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
 If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
   (cond
-   ((and (boundp 'ergoemacs-mode)
-         ergoemacs-mode (eq hook 'pre-command-hook)
-         (boundp 'ergoemacs-hook-functions)
+   ((and ergoemacs-mode (eq hook 'pre-command-hook)
          (memq hook ergoemacs-hook-functions))
     (add-hook 'ergoemacs-pre-command-hook function append local))
    (t
@@ -62,9 +60,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'.
 If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre-command-hook' instead."
   (cond
-   ((and (boundp 'ergoemacs-mode)
-         ergoemacs-mode (eq hook 'pre-command-hook)
-         (boundp 'ergoemacs-hook-functions)
+   ((and ergoemacs-mode (eq hook 'pre-command-hook)
          (memq hook ergoemacs-hook-functions))
     (remove-hook 'ergoemacs-pre-command-hook function local))
    (t
@@ -74,7 +70,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (let ((is-global-p (equal keymap (current-global-map))))
-    (if (and (boundp 'ergoemacs-run-mode-hooks) ergoemacs-run-mode-hooks
+    (if (and ergoemacs-run-mode-hooks
              (not (equal keymap (current-global-map)))
              (not (equal keymap ergoemacs-keymap)))
         (let ((ergoemacs-run-mode-hooks nil)
@@ -123,7 +119,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 
 (defadvice cua-mode (around ergoemacs-activate-only-selection-mode (arg) activate)
   "When `ergoemacs-mode' is enabled, enable `cua-selection-mode' instead of plain `cua-mode'."
-  (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
+  (when ergoemacs-mode 
     (setq-default cua-enable-cua-keys nil))
   ad-do-it
   (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
@@ -131,7 +127,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 
 (defadvice icicle-mode (around ergoemacs-icicle-play (arg) activate)
   "Allow `ergoemacs-mode' to play nicely with `icicle-mode'."
-  (let ((oee (and (boundp 'ergoemacs-mode) ergoemacs-mode)))
+  (let ((oee ergoemacs-mode))
     (when oee ;; Remove key bindings
       (ergoemacs-mode -1))
     ad-do-it
@@ -156,7 +152,6 @@ This require `ergoemacs-mode' to be enabled as well as
 "
       (cond
        ((and ergoemacs-helm-expand-user-dirs
-             (boundp 'ergoemacs-mode)
              ergoemacs-mode
              (helm-file-completion-source-p)
              (string-match "/\\(~[^/]*/\\)$" helm-pattern)
@@ -180,12 +175,6 @@ This require `ergoemacs-mode' to be enabled as well as
 This assumes any key defined while running a hook is a user-defined hook."
   (let ((ergoemacs-run-mode-hooks t))
     ad-do-it))
-
-
-(defadvice turn-on-undo-tree-mode (around ergoemacs-undo-tree-mode activate)
-  "Make `ergoemacs-mode' and undo-tree compatible."
-  (ergoemacs-with-global
-   ad-do-it))
 
 ;;; Unfortunately, the advice route doesn't seem to work :(
 (declare-function ergoemacs-real-substitute-command-keys "ergoemacs-advices.el" (string) t)
@@ -346,6 +335,25 @@ The real command is always `ergoemacs-real-completing-read'.
     (replace-regexp-in-string "\\<M-x " "\\[execute-extended-command] " prompt t t))
    collection predicate require-match
    initial-input hist def inherit-input-method))
+
+(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
+(fset 'ergoemacs-real-key-binding (symbol-function 'key-binding))
+(defun ergoemacs-key-binding (key &optional accept-default no-remap position)
+  "Return the binding for command KEY in the without `ergoemacs-mode' enabled.
+Uses `ergoemacs-real-key-binding' to get the key-binding."
+  (ergoemacs-with-global
+   (ergoemacs-real-key-binding key accept-default no-remap position)))
+
+(defun ergoemacs-enable-c-advices (&optional disable)
+  "Enabling advices for C code and complex changes to functions.
+DISABLE when non-nil.
+Assumes ergoemacs-real-FUNCTION and ergoemacs-FUNCTION as the two functions to toggle"
+  (dolist (ad '(completing-read substitute-command-keys key-binding))
+    (cond
+     (disable
+      (fset ad (symbol-function (intern (concat "ergoemacs-real-" (symbol-name ad))))))
+     (t
+      (fset ad (symbol-function (intern (concat "ergoemacs-" (symbol-name ad)))))))))
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here

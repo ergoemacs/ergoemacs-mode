@@ -638,6 +638,7 @@
 (defvar keyfreq-table)
 (defvar ergoemacs-describe-key)
 (declare-function ergoemacs-debug "ergoemacs-mode.el")
+(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
 (defun ergoemacs-undefined (&optional arg)
   "Ergoemacs Undefined key, tells where to perform the old action."
   (interactive "P")
@@ -663,7 +664,7 @@
           (setq local-fn (lookup-key ergoemacs-keymap key-kbd)))
         (functionp local-fn))
       (ergoemacs-debug "WARNING: The command %s is undefined when if shouldn't be..." local-fn)
-      (setq tmp (key-binding key-kbd))
+      (setq tmp (ergoemacs-real-key-binding key-kbd))
       (when (and tmp (not (equal tmp 'ergoemacs-undefined)))
         (setq local-fn tmp))
       (when (featurep 'keyfreq)

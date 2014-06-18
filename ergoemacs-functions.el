@@ -279,12 +279,13 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
 (defvar ergoemacs-mode)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
+(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
 (defun ergoemacs-call-keyword-completion ()
   "Call the command that has keyboard shortcut M-TAB."
   (interactive)
   (call-interactively
    (ergoemacs-with-global
-    (key-binding (kbd "M-TAB")))))
+    (ergoemacs-real-key-binding (kbd "M-TAB")))))
 
 
 
@@ -725,7 +726,7 @@ the prefix arguments of `end-of-buffer',
                 (or
                  (eq
                   (ergoemacs-with-global
-                   (key-binding (read-kbd-macro "<next>")))
+                   (ergoemacs-real-key-binding (read-kbd-macro "<next>")))
                   last-command))
                     (bolp))))
       (progn 
@@ -1264,13 +1265,12 @@ by `ergoemacs-maximum-number-of-files-to-open'.
   "Show current file in desktop (OS's file manager)."
   (interactive)
   (cond
-   ((string-equal system-type "windows-nt")
+   ((eq system-type 'windows-nt)
     (w32-shell-execute "explore" (replace-regexp-in-string "/" "\\" default-directory t t)))
-   ((string-equal system-type "darwin") (shell-command "open ."))
-   ((string-equal system-type "gnu/linux")
-    (let ((process-connection-type nil)) (start-process "" nil "xdg-open" "."))
-    ;; (shell-command "xdg-open .") ;; 2013-02-10 this sometimes froze emacs till the folder is closed. ℯℊ with nautilus
-    ) ))
+   ((eq system-type 'darwin) (shell-command "open ."))
+   ((eq system-type 'gnu/linux)
+    (let ((process-connection-type nil))
+      (start-process "" nil "xdg-open" ".")))))
 
 (defvar ergoemacs-recently-closed-buffers (cons nil nil) "A list of recently closed buffers. The max number to track is controlled by the variable `ergoemacs-recently-closed-buffers-max'.")
 (defvar ergoemacs-recently-closed-buffers-max 30 "The maximum length for `ergoemacs-recently-closed-buffers'.")
@@ -1575,7 +1575,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
         (setq repeat-key (substring repeat-key (- (length repeat-key) 1)))
         (define-key temp-map (read-kbd-macro repeat-key) this-command)
         (set-temporary-overlay-map temp-map)
-        (when (eq (key-binding (read-kbd-macro repeat-key) t) this-command)
+        (when (eq (ergoemacs-real-key-binding (read-kbd-macro repeat-key) t) this-command)
           (message "Cycle with %s" (ergoemacs-pretty-key repeat-key)))))))
 
 (defvar org-table-any-line-regexp)

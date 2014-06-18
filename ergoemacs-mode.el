@@ -407,6 +407,8 @@ When REMOVE is true, remove the emulations."
 (declare-function ergoemacs-menus-on "ergoemacs-menus.el")
 (declare-function ergoemacs-menus-off "ergoemacs-menus.el")
 (declare-function ergoemacs-theme-remove "ergoemacs-theme-engine.el")
+(declare-function ergoemacs-enable-c-advices "ergoemacs-advices.el")
+(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -484,14 +486,13 @@ bindings the keymap is:
                 (cua--ena-region-keymap . ,cua--region-keymap)
                 (cua-mode . ,cua-global-keymap)))
         
-        (when (key-binding [ergoemacs-single-command-keys])
+        (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
           (if (not ergoemacs-read-key-overriding-overlay-save)
               (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
             (delete-overlay ergoemacs-read-key-overriding-overlay-save)
             (setq ergoemacs-read-key-overriding-overlay-save nil)))
         ;; Fix `substitute-command-keys'
-        (fset 'substitute-command-keys (symbol-function 'ergoemacs-substitute-command-keys))
-        (fset 'completing-read (symbol-function 'ergoemacs-completing-read))
+        (ergoemacs-enable-c-advices)
         (setq ergoemacs-unbind-keys t)
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
         (ergoemacs-populate-pre-command-hook)
@@ -533,9 +534,7 @@ bindings the keymap is:
     (remove-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
     (ergoemacs-populate-pre-command-hook t)
     ;; Revert `substitute-command-keys' and `completing-read'
-    (fset 'completing-read (symbol-function 'ergoemacs-real-completing-read))
-    (fset 'substitute-command-keys (symbol-function 'ergoemacs-real-substitute-command-keys))        
-
+    (ergoemacs-enable-c-advices 'disable)
     (ergoemacs-debug-heading "Ergoemacs-mode turned OFF."))
   ;; Always have `ergoemacs-post-command-hook' on so that it will
   ;; uninstall ergoemacs keymaps that were installed to overlays and
@@ -740,7 +739,7 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
           (when (and (not ergoemacs-read-input-keys)
                      (not unread-command-events))
             (setq ergoemacs-read-input-keys t)
-            (when (key-binding [ergoemacs-single-command-keys])
+            (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
               (if (not ergoemacs-read-key-overriding-overlay-save)
                   (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
                 (delete-overlay ergoemacs-read-key-overriding-overlay-save)
@@ -749,15 +748,15 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
           (when ergoemacs-mode
             ;; Raise shortcuts and modal modes.
             (ergoemacs-shuffle-keys)
-            (let ((key-binding
+            (let ((ergoemacs-real-key-binding
                    (read-kbd-macro
                     (format
                      "<override> %s" (key-description (this-single-command-keys))))))
               (cond
                ((condition-case err
-                    (interactive-form key-binding)
+                    (interactive-form ergoemacs-real-key-binding)
                   (error nil))
-                (setq this-command key-binding))))
+                (setq this-command ergoemacs-real-key-binding))))
             (when (and
                    (or (not (boundp 'saved-overriding-map)) (eq saved-overriding-map t))
                    (not unread-command-events))
@@ -804,7 +803,7 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
     (set-default 'ergoemacs-modal ergoemacs-modal-save)
     (setq ergoemacs-modal-save nil))
   (unless unread-command-events
-    (when (key-binding [ergoemacs-single-command-keys])
+    (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
       (if (not ergoemacs-read-key-overriding-overlay-save)
           (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
         (delete-overlay ergoemacs-read-key-overriding-overlay-save)

@@ -1127,6 +1127,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
         (replace-match "><" t)))
     ret))
 
+(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
 (defun ergoemacs-keyfreq-calc-ergo (x list var-layout cmd-n total-n)
   "Calculate keyfreq based on ergoemacs positions."
   (let ((a (assoc (nth 1 x) (cdr list)))
@@ -1142,7 +1143,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
     ;; For example with subword-mode, backward-word
     ;; becomes subword-backward-word
     (setq curr-cmd
-          (key-binding (if var-layout
+          (ergoemacs-real-key-binding (if var-layout
                            (ergoemacs-kbd (nth 0 x) nil (nth 3 x))
                          (read-kbd-macro (nth 0 x))) t))
     

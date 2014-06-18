@@ -222,6 +222,7 @@ Used to help with translation keymaps like `input-decode-map'"
 (declare-function ergoemacs-unicode-char "ergoemacs-translate.el")
 (declare-function ergoemacs-translate "ergoemacs-translate.el")
 (declare-function ergoemacs-local-map "ergoemacs-translate.el")
+(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
 (defun ergoemacs-read-event (type &optional pretty-key extra-txt universal)
   "Reads a single event of TYPE.
 
@@ -310,9 +311,9 @@ universal argument can be entered.
       (when ret
         (setq ret (ergoemacs-read-event-change ret input-decode-map))
         ;; These should only be replaced if they are not bound.
-        (unless (commandp (key-binding (vector ret)) t)
+        (unless (commandp (ergoemacs-real-key-binding (vector ret)) t)
           (setq ret (ergoemacs-read-event-change ret local-function-key-map)))
-        (unless (commandp (key-binding (vector ret)) t)
+        (unless (commandp (ergoemacs-real-key-binding (vector ret)) t)
           (setq ret (ergoemacs-read-event-change ret key-translation-map))))
       (cond
        ((and ret (not universal)
@@ -351,7 +352,7 @@ universal argument can be entered.
           (setq ret nil)
           (setq universal nil))
          ((let (ergoemacs-read-input-keys)
-            (or (memq (key-binding
+            (or (memq (ergoemacs-real-key-binding
                        (plist-get
                         (ergoemacs-translate (vector ret))
                         key-tag))
@@ -533,7 +534,7 @@ It will replace anything defined by `ergoemacs-translation'"
       (setq defined-fn (ergoemacs-key-fn-lookup 'keyboard-quit))
       (setq defined-fn
             (condition-case err
-                (key-binding defined-fn)
+                (ergoemacs-real-key-binding defined-fn)
               (error nil)))
       (cond
        (defined-fn
@@ -865,7 +866,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq ret 'translate))
                  ((and (vectorp tmp)
                        (progn
-                         (setq fn (key-binding tmp))
+                         (setq fn (ergoemacs-real-key-binding tmp))
                          (when (and (symbolp fn) (string-match "self-insert" (symbol-name fn)))
                            (setq fn nil))
                          (commandp fn t)))
@@ -891,7 +892,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq ret 'local-function-override)))
                ;; Does this call a function?
                ((progn
-                  (setq fn (key-binding key))
+                  (setq fn (ergoemacs-real-key-binding key))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
                   (or ret (commandp fn t)))
                 (unless ret
@@ -911,14 +912,14 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq fn (or
                             ;; Call major/minor mode key?
                             (ergoemacs-with-major-and-minor-modes 
-                             (key-binding key))
+                             (ergoemacs-real-key-binding key))
                             ;; Call unbound or global key?
                             (if (eq (lookup-key ergoemacs-unbind-keymap key) 'ergoemacs-undefined) 'ergoemacs-undefined
                               (let (ergoemacs-read-input-keys)
-                                (if (keymapp (key-binding key))
+                                (if (keymapp (ergoemacs-real-key-binding key))
                                     (setq ret 'keymap)
                                   (ergoemacs-with-global
-                                   (key-binding key)))))))
+                                   (ergoemacs-real-key-binding key)))))))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
                   (or ret (commandp fn t)))
                 (unless ret
@@ -1347,7 +1348,7 @@ This is done by looking up the function for KEYS with
 If the overriding function is found make sure it isn't the key
 defined in the major/minor modes (by
 `ergoemacs-with-major-and-minor-modes'). "
-  (let ((override (key-binding (read-kbd-macro (format "<ergoemacs-user> %s" (key-description keys)))))
+  (let ((override (ergoemacs-real-key-binding (read-kbd-macro (format "<ergoemacs-user> %s" (key-description keys)))))
         cmd1 cmd2)
     (unless (condition-case err
                 (interactive-form override)
@@ -1355,12 +1356,12 @@ defined in the major/minor modes (by
       (setq override nil))
     (unless override
       (setq cmd1 (ergoemacs-with-overrides
-                  (key-binding keys)))
+                  (ergoemacs-real-key-binding keys)))
       (when (condition-case err
                 (interactive-form cmd1)
               (error nil))
         (setq cmd2 (ergoemacs-with-major-and-minor-modes
-                    (key-binding keys)))
+                    (ergoemacs-real-key-binding keys)))
         (unless (eq cmd1 cmd2)
           (setq override cmd1))))
     override))
@@ -1580,8 +1581,8 @@ user-defined keys.
                          (setq fn nil))))
                     (t
                      (ergoemacs-with-global
-                      (setq fn (key-binding key t nil (point)))
-                      (if (eq fn (key-binding user-key t nil (point)))
+                      (setq fn (ergoemacs-real-key-binding key t nil (point)))
+                      (if (eq fn (ergoemacs-real-key-binding user-key t nil (point)))
                           (setq fn nil)
                         (if (keymapp fn)
                             (setq fn nil))))))

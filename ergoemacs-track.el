@@ -227,18 +227,15 @@
 
 (setq ergoemacs-key-hash (make-hash-table :test 'equal))
 
-(mapc
- (lambda(layout)
-   (let ((lay (intern-soft (format "ergoemacs-layout-%s" layout))))
-     (when lay
-       (mapc
-        (lambda(key)
-          (unless (string= key "")
-            (puthash (cons layout key)
-                     (ergoemacs-key-properties key layout)
-                     ergoemacs-key-hash)))
-        (symbol-value lay)))))
- (ergoemacs-get-layouts t))
+(declare-function ergoemacs-get-layouts "ergoemacs-layouts.el")
+(dolist (layout (ergoemacs-get-layouts t))
+  (let ((lay (intern-soft (format "ergoemacs-layout-%s" layout))))
+    (when lay
+      (dolist (key (symbol-value lay))
+        (unless (string= key "")
+          (puthash (cons layout key)
+                   (ergoemacs-key-properties key layout)
+                   ergoemacs-key-hash))))))
 
 (defun ergoemacs-key-distance (key1 key2 &optional last-plist layout)
   "Gets the key distance based on the layout.
