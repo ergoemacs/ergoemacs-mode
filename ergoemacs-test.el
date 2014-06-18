@@ -208,7 +208,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (message
      "%s"
      (shell-command-to-string
-      (format "%s -nw -Q -l %s" emacs-exe temp-file)))
+      (format "%s --batch -Q -l %s" emacs-exe temp-file)))
     (delete-file temp-file)
     (when (file-exists-p w-file)
       (setq ret 't)
@@ -390,7 +390,7 @@ Hyper Key mapping no longer works."
         (insert "(kill-emacs)")))
     (message "%s"
              (shell-command-to-string
-              (format "%s -Q -l %s" emacs-exe temp-file)))
+              (format "%s --batch -Q -l %s" emacs-exe temp-file)))
     (delete-file temp-file)
     (should (file-exists-p w-file))
     (when (file-exists-p w-file)
