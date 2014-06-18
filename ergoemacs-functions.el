@@ -1225,7 +1225,7 @@ Emacs buffers are those whose name starts with *."
 ;; This custome kill buffer is close-current-buffer.
 
 (declare-function dired-get-marked-files "dired.el")
-;;;(declare-function w32-shell-execute ...)
+(declare-function w32-shell-execute "w32fns.c")
 (defun ergoemacs-open-in-external-app (&optional file)
   "Open the current file or dired marked files in external app."
   (interactive)
