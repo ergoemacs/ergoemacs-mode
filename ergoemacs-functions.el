@@ -249,7 +249,9 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
                           "\"")))
     full-exe))
 
+(defvar ergoemacs-theme--object)
 (declare-function ergoemacs-gen-svg "ergoemacs-extras.el")
+(declare-function ergoemacs-theme-component-map-list-md5 "ergoemacs-theme-engine.el")
 (defun ergoemacs-cheat-sheet-file ()
   "Cheet sheet file for ergoemacs."
   (let ((var-dir "") extra-dir)
@@ -258,7 +260,9 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
       (setq var-dir (concat ergoemacs-theme "/"))
       (setq extra-dir (expand-file-name ergoemacs-theme extra-dir)))
     (setq extra-dir (expand-file-name "ergo-layouts" extra-dir))
-    (setq extra-dir (expand-file-name (concat "ergoemacs-layout-" ergoemacs-keyboard-layout ".svg")))
+    (setq extra-dir (expand-file-name (concat "ergoemacs-layout-" ergoemacs-keyboard-layout (if ergoemacs-theme--object
+                                                                                                (concat "-" (ergoemacs-theme-component-map-list-md5 ergoemacs-theme--object))
+                                                                                              "")  ".svg")))
     (when (not (file-exists-p extra-dir))
       (ergoemacs-gen-svg ergoemacs-theme "kbd-ergo.svg" (concat var-dir "ergo-layouts")))
     extra-dir))

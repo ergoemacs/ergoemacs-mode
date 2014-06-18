@@ -1058,6 +1058,14 @@ Assumes maps are orthogonal."
           :type hash-table))
   "`ergoemacs-mode' theme-component maps")
 
+(defmethod ergoemacs-theme-component-map-list-md5 ((obj ergoemacs-theme-component-map-list))
+  (with-slots (map-list) obj
+    (let (ret)
+      (dolist (map map-list)
+        (with-slots (object-name) map
+          (push object-name ret)))
+      (md5 (mapconcat #'(lambda(x) x) ret ",")))))
+
 (defmethod ergoemacs-variable-layout-list ((obj ergoemacs-theme-component-map-list))
   (with-slots (map-list) obj
     (let (ret)

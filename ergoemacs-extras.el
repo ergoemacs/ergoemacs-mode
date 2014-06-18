@@ -1333,6 +1333,8 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
 (defvar ergoemacs-translation-from)
 (defvar ergoemacs-inkscape)
 (defvar ergoemacs-convert)
+(declare-function ergoemacs-theme-component-map-list-md5 "ergoemacs-theme-engine.el")
+(defvar ergoemacs-theme--object)
 (defun ergoemacs-gen-svg (layout &optional file-name extra is-prefix)
   "Generates a SVG picture of the layout
 FILE-NAME represents the SVG template
@@ -1376,7 +1378,10 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
       (setq lay (symbol-value lay))
       (setq file (expand-file-name
                   (concat "ergoemacs-layout-" layout
-                          (if is-prefix "-prefix" "") ".svg")
+                          (if is-prefix "-prefix" "")
+                          (if ergoemacs-theme--object
+                              (concat "-" (ergoemacs-theme-component-map-list-md5 ergoemacs-theme--object))
+                            "")".svg")
                   extra-dir))
       (with-temp-file file
         ;;(set-buffer-file-coding-system 'utf-8)
