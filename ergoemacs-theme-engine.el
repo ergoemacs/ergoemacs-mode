@@ -2256,15 +2256,16 @@ Returns new keymap."
             (setq new-keymap
                   (mapcar
                    (lambda(map)
-                     (let ((lk (lookup-key map key)) lk2 lk3)
-                       (cond
-                        ((integerp lk)
-                         (setq lk2 (lookup-key (current-global-map) key))
-                         (setq lk3 (lookup-key map (substring key 0 lk)))
-                         (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
-                           (define-key map key lk2)))
-                        (lk
-                         (define-key map key nil))))
+                     (if (not (ignore-errors (keymapp map))) map
+                       (let ((lk (lookup-key map key)) lk2 lk3)
+                         (cond
+                          ((integerp lk)
+                           (setq lk2 (lookup-key (current-global-map) key))
+                           (setq lk3 (lookup-key map (substring key 0 lk)))
+                           (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
+                             (define-key map key lk2)))
+                          (lk
+                           (define-key map key nil)))))
                      map)
                    new-keymap))
             (push 'keymap new-keymap)
