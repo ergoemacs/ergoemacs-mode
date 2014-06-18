@@ -1229,7 +1229,12 @@ If less than or equal to zero, there is no limit."
 FILE can be a list of files, or a single file.
 If FILE is not specified, it will be:
 - `dired-get-marked-files' for `dired-mode' or `locate-mode'
-- `buffer-file-name' for other files."
+- `buffer-file-name' for other files.
+
+This will function prompt if you are sure you want to open the
+set of files if there are many files to open.  This is controlled
+by `ergoemacs-maximum-number-of-files-to-open'.
+"
   (interactive)
   (let* ((my-file-list
           (cond
