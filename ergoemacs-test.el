@@ -473,7 +473,7 @@ Test next and prior translation."
           (ergoemacs-handle-ctl-c-or-ctl-x 'both))
       (with-temp-buffer
         (insert ergoemacs-test-lorem-ipsum)
-        (mark-whole-buffer)
+        (call-interactively 'mark-whole-buffer)
         (with-timeout (0.15 nil)
           (call-interactively 'ergoemacs-ctl-x))
         (setq ret (string= "" (buffer-string))))

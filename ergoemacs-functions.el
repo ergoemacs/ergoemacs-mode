@@ -1524,41 +1524,41 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
-(defun ergoemacs-smart-punctuation ()
-  "Smart Punctuation Function for `ergoemacs-mode'."
-  (interactive) 
-  (unless (run-hook-with-args-until-success 'ergoemacs-smart-punctuation-hooks)
-    (cond 
-     ((and (eq last-command this-command)
-           (looking-back (regexp-opt (mapcar (lambda(pair) (substring pair 0 1)) ergoemacs-smart-punctuation-pairs) t)))
-      (undo)
-      (when ergoemacs-smart-punctuation-last-mark
-        ;; I use set-mark because I don't want it to be added to the mark-stack.
-        (set-mark ergoemacs-smart-punctuation-last-mark))
-      (setq ergoemacs-smart-punctuation-last-mark (condition-case err
-                                                      (mark)
-                                                    (error nil)))
-      (ergoemacs-smart-punctuation-insert-pair (nth ergoemacs-smart-punctuation-next-pair
-                                                    ergoemacs-smart-punctuation-pairs)))
-     (t
-      (setq ergoemacs-smart-punctuation-last-mark (condition-case err
-                                                      (mark)
-                                                    (error nil)))
-      (ergoemacs-smart-punctuation-insert-pair (nth 0 ergoemacs-smart-punctuation-pairs))
-      (setq ergoemacs-smart-punctuation-next-pair 0)))
-    (setq ergoemacs-smart-punctuation-next-pair (+ ergoemacs-smart-punctuation-next-pair 1))
-    (unless (nth ergoemacs-smart-punctuation-next-pair ergoemacs-smart-punctuation-pairs)
-      (setq ergoemacs-smart-punctuation-next-pair 0))
-    (when ergoemacs-repeat-smart-punctuation
-      (let ((repeat-key (key-description (this-single-command-keys)))
-            (temp-map (make-sparse-keymap))
-            message-log-max)
-        (setq repeat-key (substring repeat-key (- (length repeat-key) 1)))
-        (define-key temp-map (read-kbd-macro repeat-key) this-command)
-        (set-temporary-overlay-map temp-map)
-        (when (eq (ergoemacs-real-key-binding (read-kbd-macro repeat-key) t) this-command)
-          (message "Cycle with %s" (ergoemacs-pretty-key repeat-key)))))))
+;; (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
+;; (defun ergoemacs-smart-punctuation ()
+;;   "Smart Punctuation Function for `ergoemacs-mode'."
+;;   (interactive) 
+;;   (unless (run-hook-with-args-until-success 'ergoemacs-smart-punctuation-hooks)
+;;     (cond 
+;;      ((and (eq last-command this-command)
+;;            (looking-back (regexp-opt (mapcar (lambda(pair) (substring pair 0 1)) ergoemacs-smart-punctuation-pairs) t)))
+;;       (undo)
+;;       (when ergoemacs-smart-punctuation-last-mark
+;;         ;; I use set-mark because I don't want it to be added to the mark-stack.
+;;         (set-mark ergoemacs-smart-punctuation-last-mark))
+;;       (setq ergoemacs-smart-punctuation-last-mark (condition-case err
+;;                                                       (mark)
+;;                                                     (error nil)))
+;;       (ergoemacs-smart-punctuation-insert-pair (nth ergoemacs-smart-punctuation-next-pair
+;;                                                     ergoemacs-smart-punctuation-pairs)))
+;;      (t
+;;       (setq ergoemacs-smart-punctuation-last-mark (condition-case err
+;;                                                       (mark)
+;;                                                     (error nil)))
+;;       (ergoemacs-smart-punctuation-insert-pair (nth 0 ergoemacs-smart-punctuation-pairs))
+;;       (setq ergoemacs-smart-punctuation-next-pair 0)))
+;;     (setq ergoemacs-smart-punctuation-next-pair (+ ergoemacs-smart-punctuation-next-pair 1))
+;;     (unless (nth ergoemacs-smart-punctuation-next-pair ergoemacs-smart-punctuation-pairs)
+;;       (setq ergoemacs-smart-punctuation-next-pair 0))
+;;     (when ergoemacs-repeat-smart-punctuation
+;;       (let ((repeat-key (key-description (this-single-command-keys)))
+;;             (temp-map (make-sparse-keymap))
+;;             message-log-max)
+;;         (setq repeat-key (substring repeat-key (- (length repeat-key) 1)))
+;;         (define-key temp-map (read-kbd-macro repeat-key) this-command)
+;;         (set-temporary-overlay-map temp-map)
+;;         (when (eq (ergoemacs-real-key-binding (read-kbd-macro repeat-key) t) this-command)
+;;           (message "Cycle with %s" (ergoemacs-pretty-key repeat-key)))))))
 
 (defvar org-table-any-line-regexp)
 (declare-function cua-set-rectangle-mark "cua-rect.el")
