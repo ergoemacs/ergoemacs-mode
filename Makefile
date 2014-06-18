@@ -14,7 +14,7 @@ WORK_DIR=$(subst $(BACKSLASH),$(SLASH),$(TMP1))
 PACKAGE_NAME=$(shell basename $(TMP1))
 AUTOLOADS_FILE=$(PACKAGE_NAME)-autoloads.el
 TRAVIS_FILE=.travis.yml
-TEST_DIR=$(WORK_DIR)/deps
+TEST_DIR=$(WORK_DIR)
 TEST_DEP_1=ert
 TEST_DEP_1_STABLE_URL=http://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/emacs-lisp/ert.el?h=emacs-24.3
 TEST_DEP_1_LATEST_URL=http://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/emacs-lisp/ert.el?h=master
@@ -24,7 +24,6 @@ TEST_DEP_1_LATEST_URL=http://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/emac
          test-dep-4 test-dep-5 test-dep-6 test-dep-7 test-dep-8 test-dep-9
 
 build :
-	@mkdir $(TEST_DIR)
 	$(EMACS) $(EMACS_BATCH) --eval             \
 	    "(progn                                \
 	      (setq byte-compile-error-on-warn t)  \
@@ -65,6 +64,4 @@ test : build test-dep-1 test-autoloads
 clean :
 	@rm -f $(AUTOLOADS_FILE) 
 	@rm -f *.elc 
-	@rm -f $(TEST_DIR)/*.*
-	@rmdir $(TEST_DIR)
 	@rm -f *~ 
