@@ -271,6 +271,14 @@ a set type."
      :type list))
   "`ergoemacs-mode' fixed-map class")
 
+(defgeneric ergoemacs-fixed-layout-list ()
+  "Retrieves the fixed layout list for `ergoemacs-mode'.")
+
+(defmethod ergoemacs-fixed-layout-list ((obj ergoemacs-fixed-map))
+  (with-slots (cmd-list) obj
+    cmd-list))
+
+
 (defgeneric ergoemacs-copy-obj (obj)
   "Copies OBJECTS so they are not shared beteween instances.")
 
@@ -602,6 +610,13 @@ DEF is anything that can be a key's definition:
            :type boolean))
   "`ergoemacs-mode' variable-map class")
 
+(defgeneric ergoemacs-variable-layout-list ()
+  "Retrieves the variable layout list for `ergoemacs-mode'.")
+
+(defmethod ergoemacs-variable-layout-list ((obj ergoemacs-variable-map))
+  (with-slots (cmd-list) obj
+    cmd-list))
+
 (defmethod ergoemacs-define-map--cmd-list ((obj ergoemacs-variable-map) key-desc def no-unbind &optional desc)
   "Add KEY-DESC for DEF to OBJ cmd-list slot.
 Optionally use DESC when another description isn't found in `ergoemacs-function-short-names'."
@@ -729,6 +744,14 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
    (variable :initarg :fixed
              :type ergoemacs-variable-map))
   "`ergoemacs-mode' composite-map class")
+
+(defmethod ergoemacs-variable-layout-list ((obj ergoemacs-composite-map))
+  (with-slots (variable) obj
+    (ergoemacs-variable-layout-list variable)))
+
+(defmethod ergoemacs-fixed-layout-list ((obj ergoemacs-composite-map))
+  (with-slots (fixed) obj
+    (ergoemacs-fixed-layout-list fixed)))
 
 (defmethod ergoemacs-composite-map--ini ((obj ergoemacs-composite-map))
   (unless (slot-boundp obj 'fixed)
@@ -884,6 +907,14 @@ Assumes maps are orthogonal."
              :type list))
   "`ergoemacs-mode' theme-component maps")
 
+(defmethod ergoemacs-variable-layout-list ((obj ergoemacs-theme-component-maps))
+  (with-slots (global) obj
+    (ergoemacs-variable-layout-list global)))
+
+(defmethod ergoemacs-fixed-layout-list ((obj ergoemacs-theme-component-maps))
+  (with-slots (global) obj
+    (ergoemacs-fixed-layout-list global)))
+
 (defmethod ergoemacs-copy-obj ((obj ergoemacs-theme-component-maps))
   (with-slots (global maps init) obj
     (let ((newmaps (make-hash-table)))
@@ -1020,6 +1051,20 @@ Assumes maps are orthogonal."
           :initform (make-hash-table :test 'equal)
           :type hash-table))
   "`ergoemacs-mode' theme-component maps")
+
+(defmethod ergoemacs-variable-layout-list ((obj ergoemacs-theme-component-map-list))
+  (with-slots (map-list) obj
+    (let (ret)
+      (dolist (map map-list)
+        (setq ret (append ret (ergoemacs-variable-layout-list map))))
+      (reverse ret))))
+
+(defmethod ergoemacs-fixed-layout-list ((obj ergoemacs-theme-component-map-list))
+  (with-slots (map-list) obj
+    (let (ret)
+      (dolist (map map-list)
+        (setq ret (append ret (ergoemacs-fixed-layout-list map))))
+      (reverse ret))))
 
 (defmethod ergoemacs-get-versions ((obj ergoemacs-theme-component-map-list) )
   (with-slots (map-list) obj
@@ -1274,7 +1319,9 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
         (setq final-shortcut-map (copy-keymap shortcut-map)
               final-unbind-map (copy-keymap unbind-map)
               final-read-map (copy-keymap read-map)
-              final-map (copy-keymap map))
+              final-map (copy-keymap map)
+              ergoemacs-get-fixed-layout nil
+              ergoemacs-get-variable-layout nil)
         (dolist (key rm-list)
           (let ((vector-key (or (and (vectorp key) key)
                                 (read-kbd-macro (key-description key) t))))
@@ -2186,61 +2233,21 @@ If OFF is non-nil, turn off the options instead."
      (lambda() (interactive) (ergoemacs-mode -1)))))
 
 (defvar ergoemacs-get-variable-layout  nil)
-(defvar ergoemacs-theme-component-hash)
-;; FIXME:
 (defun ergoemacs-get-variable-layout ()
   "Get the old-style variable layout list for `ergoemacs-extras'."
-  (let ((ret '()))
-    (mapc
-     (lambda(c)
-       (let ((variable (gethash (concat (or (and (stringp c) c) (symbol-name c)) ":variable") ergoemacs-theme-component-hash)))
-         (mapc
-          (lambda(k)
-            (let (desc (fun (nth 1 k)))
-              (if (not (listp fun))
-                  (progn
-                    (setq desc (assoc fun ergoemacs-function-short-names))
-                    (when desc
-                      (setq desc (nth 1 desc))))
-                (mapc
-                 (lambda(d)
-                   (let ((tmp (assoc d ergoemacs-function-short-names)))
-                     (when tmp
-                       (setq desc (nth 1 tmp)))))
-                 fun))
-              (push `(,(nth 0 k) ,fun ,desc ,(nth 3 k)) ret)))
-          variable)))
-     (ergoemacs-theme-components ergoemacs-theme))
-    (setq ergoemacs-get-variable-layout ret)
-    'ergoemacs-get-variable-layout))
+  (if (and ergoemacs-theme--object (not ergoemacs-get-variable-layout))
+      (setq ergoemacs-get-variable-layout
+            (ergoemacs-variable-layout-list ergoemacs-theme--object))
+    (setq ergoemacs-get-variable-layout nil))  
+  'ergoemacs-get-variable-layout)
 
-;; FIXME:
 (defvar ergoemacs-get-fixed-layout nil)
 (defun ergoemacs-get-fixed-layout ()
   "Get the old-style fixed layout list for `ergoemacs-extras'."
-  (let ((ret '()))
-    (mapc
-     (lambda(c)
-       (let ((fixed (gethash (concat (or (and (stringp c) c) (symbol-name c)) ":fixed") ergoemacs-theme-component-hash)))
-         (mapc
-          (lambda(k)
-            (let (desc (fun (nth 1 k)))
-              (if (not (listp fun))
-                  (progn
-                    (setq desc (assoc fun ergoemacs-function-short-names))
-                    (when desc
-                      (setq desc (nth 1 desc))))
-                (mapc
-                 (lambda(d)
-                   (let ((tmp (assoc d ergoemacs-function-short-names)))
-                     (when tmp
-                       (setq desc (nth 1 tmp)))))
-                 fun))
-              (push `(,(nth 0 k) ,fun ,desc) ret)))
-          fixed)))
-     (ergoemacs-theme-components ergoemacs-theme))
-    (setq ergoemacs-get-fixed-layout ret)
-    'ergoemacs-get-fixed-layout))
+  (if (and ergoemacs-theme--object (not ergoemacs-get-fixed-layout))
+      (setq ergoemacs-get-fixed-layout
+            (ergoemacs-fixed-layout-list ergoemacs-theme--object))
+    (setq ergoemacs-get-fixed-layout nil)))
 
 (defun ergoemacs-rm-key (keymap key)
   "Removes KEY from KEYMAP even if it is an ergoemacs composed keymap.
