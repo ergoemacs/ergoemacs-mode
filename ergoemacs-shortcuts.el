@@ -650,11 +650,10 @@ In addition, when the function is called:
     (ergoemacs-defer-post-command-hook)
     (reset-this-command-lengths))
    (t
-    (mapc
-     (lambda(var) ;; should include `this-command' and `this-original-command'
-       (when (ergoemacs-smart-function-p var)
-         (set var function)))
-     ergoemacs-this-command-fake)
+    (dolist (var ergoemacs-this-command-fake)
+      ;; should include `this-command' and `this-original-command'
+      (when (ergoemacs-smart-function-p var)
+        (set var function)))
     (let ((this-command-keys-shift-translated
            (or this-command-keys-shift-translated
                (if ergoemacs-shift-translated t nil))))
@@ -1120,30 +1119,28 @@ argument prompt.
                              (condition-case err
                                  (interactive-form (nth 0 tmp))
                                (error nil)))
-                    (mapc
-                     (lambda(key)
-                       (let ((key-base (concat ":" (md5 (format "%s" key))))
-                             (ergoemacs-use-ergoemacs-key-descriptions t))
-                         ;; First add translation to next-key
-                         (setq next-key
-                               (plist-put next-key
-                                          (intern (concat key-base "-key"))
-                                          key))
-                         (setq next-key
-                               (plist-put next-key
-                                          (intern key-base)
-                                          (key-description key)))
-                         (setq next-key
-                               (plist-put next-key
-                                          (intern (concat key-base "-pretty"))
-                                          (ergoemacs-pretty-key
-                                           (plist-get next-key (intern key-base)))))
-                         ;; Now add to list to check.
-                         (push key-base key-trials)
-                         ;; Add ergoemacs translation
-                         (setq next-key (ergoemacs-read-key-add-translation next-key key-base))
-                         (push (concat key-base "-et") key-trials)))
-                     (ergoemacs-shortcut-function-binding (nth 0 tmp)))))
+                    (dolist (key (ergoemacs-shortcut-function-binding (nth 0 tmp)))
+                      (let ((key-base (concat ":" (md5 (format "%s" key))))
+                            (ergoemacs-use-ergoemacs-key-descriptions t))
+                        ;; First add translation to next-key
+                        (setq next-key
+                              (plist-put next-key
+                                         (intern (concat key-base "-key"))
+                                         key))
+                        (setq next-key
+                              (plist-put next-key
+                                         (intern key-base)
+                                         (key-description key)))
+                        (setq next-key
+                              (plist-put next-key
+                                         (intern (concat key-base "-pretty"))
+                                         (ergoemacs-pretty-key
+                                          (plist-get next-key (intern key-base)))))
+                        ;; Now add to list to check.
+                        (push key-base key-trials)
+                        ;; Add ergoemacs translation
+                        (setq next-key (ergoemacs-read-key-add-translation next-key key-base))
+                        (push (concat key-base "-et") key-trials)))))
                 (when ergoemacs-translate-keys
                   (dolist (trial '(":raw" ":ctl" ":alt" ":alt-ctl" ":raw-shift" ":ctl-shift" ":alt-shift" ":alt-ctl-shift"))
                     (push trial key-trials)
@@ -1403,22 +1400,20 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
         ergoemacs-repeat-keys
         ergoemacs-read-input-keys
         (keymap (make-sparse-keymap)))
-    (mapc
-     (lambda(key)
-       (when (= 1 (length key))
-         (let ((mods (event-modifiers (elt key 0))))
-           (when (memq 'meta mods)
-             (define-key keymap
-               (vector
-                (event-convert-list
-                 (append (delete 'meta mods)
-                         (list (event-basic-type (elt key 0))))))
-               `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
-     (apply 'append
-            (mapcar
-             (lambda (cmd)
-               (where-is-internal cmd))
-             (or cmds '(ergoemacs-shortcut-movement ergoemacs-shortcut-movement-no-shift-select)))))
+    (dolist (key (apply 'append
+                        (mapcar
+                         (lambda (cmd)
+                           (where-is-internal cmd))
+                         (or cmds '(ergoemacs-shortcut-movement ergoemacs-shortcut-movement-no-shift-select)))))
+      (when (= 1 (length key))
+        (let ((mods (event-modifiers (elt key 0))))
+          (when (memq 'meta mods)
+            (define-key keymap
+              (vector
+               (event-convert-list
+                (append (delete 'meta mods)
+                        (list (event-basic-type (elt key 0))))))
+              `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
     keymap))
 
 (defun ergoemacs-shortcut-movement (&optional opt-args)
@@ -1562,60 +1557,58 @@ user-defined keys.
           (progn
             (use-global-map new-global-map)
             (when key-bindings-lst
-              (mapc
-               (lambda(key)
-                 (let* (fn
-                        (key-desc (key-description key))
-                        (user-key
-                         (read-kbd-macro
-                          (concat "<ergoemacs-user> " key-desc)))
-                        fn2)
-                   (cond
-                    (keymap
-                     (setq fn (lookup-key keymap key t))
-                     (if (eq fn (lookup-key keymap user-key))
+              (dolist (key key-bindings-lst)
+                (let* (fn
+                       (key-desc (key-description key))
+                       (user-key
+                        (read-kbd-macro
+                         (concat "<ergoemacs-user> " key-desc)))
+                       fn2)
+                  (cond
+                   (keymap
+                    (setq fn (lookup-key keymap key t))
+                    (if (eq fn (lookup-key keymap user-key))
+                        (setq fn nil)
+                      (unless (condition-case err
+                                  (interactive-form fn)
+                                (error nil))
+                        (setq fn nil))))
+                   (t
+                    (ergoemacs-with-global
+                     (setq fn (ergoemacs-real-key-binding key t nil (point)))
+                     (if (eq fn (ergoemacs-real-key-binding user-key t nil (point)))
                          (setq fn nil)
-                       (unless (condition-case err
-                                   (interactive-form fn)
-                                 (error nil))
-                         (setq fn nil))))
-                    (t
-                     (ergoemacs-with-global
-                      (setq fn (ergoemacs-real-key-binding key t nil (point)))
-                      (if (eq fn (ergoemacs-real-key-binding user-key t nil (point)))
-                          (setq fn nil)
-                        (if (keymapp fn)
-                            (setq fn nil))))))
-                   (when fn
-                     (cond
-                      ((eq ignore-desc t))
-                      ((eq (type-of ignore-desc) 'string)
-                       (when (string-match ignore-desc key-desc)
-                         (setq fn nil)))
-                      (t
-                       (when (string-match "[sAH]-" key-desc)
-                         (setq fn nil))))
-                     (when fn
-                       (unless dont-swap-for-ergoemacs-functions
-                         (setq fn2 (condition-case err
-                                       (intern-soft (concat "ergoemacs-" (symbol-name fn)))
-                                     (error nil)))
-                         (when (and fn2 (not (interactive-form fn2)))
-                           (setq fn2 nil)))
-                       (when (memq fn (append
-                                       `(,function ,(if keymap nil ergoemacs-this-command))
-                                       ergoemacs-shortcut-ignored-functions))
-                         (setq fn nil))
-                       (when (and fn2
-                                  (memq fn2 (append
-                                             `(,function ,(if keymap nil ergoemacs-this-command))
-                                             ergoemacs-shortcut-ignored-functions)))
-                         (setq fn2 nil))
-                       (cond
-                        (fn2
-                         (push (list fn2 key key-desc) ret2))
-                        (fn (push (list fn key key-desc) ret)))))))
-               key-bindings-lst)))
+                       (if (keymapp fn)
+                           (setq fn nil))))))
+                  (when fn
+                    (cond
+                     ((eq ignore-desc t))
+                     ((eq (type-of ignore-desc) 'string)
+                      (when (string-match ignore-desc key-desc)
+                        (setq fn nil)))
+                     (t
+                      (when (string-match "[sAH]-" key-desc)
+                        (setq fn nil))))
+                    (when fn
+                      (unless dont-swap-for-ergoemacs-functions
+                        (setq fn2 (condition-case err
+                                      (intern-soft (concat "ergoemacs-" (symbol-name fn)))
+                                    (error nil)))
+                        (when (and fn2 (not (interactive-form fn2)))
+                          (setq fn2 nil)))
+                      (when (memq fn (append
+                                      `(,function ,(if keymap nil ergoemacs-this-command))
+                                      ergoemacs-shortcut-ignored-functions))
+                        (setq fn nil))
+                      (when (and fn2
+                                 (memq fn2 (append
+                                            `(,function ,(if keymap nil ergoemacs-this-command))
+                                            ergoemacs-shortcut-ignored-functions)))
+                        (setq fn2 nil))
+                      (cond
+                       (fn2
+                        (push (list fn2 key key-desc) ret2))
+                       (fn (push (list fn key key-desc) ret)))))))))
         (use-global-map old-global-map))
       (when ret2
         (setq ret (append ret2 ret)))

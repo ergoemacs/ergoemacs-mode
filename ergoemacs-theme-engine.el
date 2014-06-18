@@ -1696,31 +1696,29 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
               best-version-list
               test-version-list
               ret)
-          (mapc
-           (lambda (v)
-             (setq test-version-list (version-to-list v))
-             (if (not biggest-version)
-                 (setq biggest-version v
-                       biggest-version-list test-version-list)
-               (when (version-list-< biggest-version-list test-version-list)
-                 (setq biggest-version v
-                       biggest-version-list test-version-list)))
-             (if (not smallest-version)
-                 (setq smallest-version v
-                       smallest-version-list test-version-list)
-               (when (version-list-< test-version-list smallest-version-list)
-                 (setq smallest-version v
-                       smallest-version-list test-version-list)))
-             (cond
-              ((and (not best-version)
-                    (version-list-<= test-version-list use-version))
-               (setq best-version v
-                     best-version-list test-version-list))
-              ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
-                    (version-list-<= test-version-list use-version))
-               (setq best-version v
-                     best-version-list test-version-list))))
-           version-list)
+          (dolist (v version-list)
+            (setq test-version-list (version-to-list v))
+            (if (not biggest-version)
+                (setq biggest-version v
+                      biggest-version-list test-version-list)
+              (when (version-list-< biggest-version-list test-version-list)
+                (setq biggest-version v
+                      biggest-version-list test-version-list)))
+            (if (not smallest-version)
+                (setq smallest-version v
+                      smallest-version-list test-version-list)
+              (when (version-list-< test-version-list smallest-version-list)
+                (setq smallest-version v
+                      smallest-version-list test-version-list)))
+            (cond
+             ((and (not best-version)
+                   (version-list-<= test-version-list use-version))
+              (setq best-version v
+                    best-version-list test-version-list))
+             ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
+                   (version-list-<= test-version-list use-version))
+              (setq best-version v
+                    best-version-list test-version-list))))
           (if (version-list-< biggest-version-list use-version)
               (setq ret "")
             (if best-version
@@ -1912,23 +1910,19 @@ This respects `ergoemacs-theme-options'."
                                ergoemacs-theme-hash))
          components)
     (setq components (reverse (plist-get theme-plist ':components)))
-    (mapc
-     (lambda(x)
-       (let ((a (assoc x ergoemacs-theme-options)))
-         (if (not a)
-             (push x components)
-           (setq a (car (cdr a)))
-           (when (or (not a) (eq a 'on))
-             (push x components)))))
-     (reverse (plist-get theme-plist ':optional-on)))
-    (mapc
-     (lambda(x)
-       (let ((a (assoc x ergoemacs-theme-options)))
-         (when a
-           (setq a (car (cdr a)))
-           (when (eq a 'on)
-             (push x components)))))
-     (reverse (plist-get theme-plist ':optional-off)))
+    (dolist (x (reverse (plist-get theme-plist ':optional-on)))
+      (let ((a (assoc x ergoemacs-theme-options)))
+        (if (not a)
+            (push x components)
+          (setq a (car (cdr a)))
+          (when (or (not a) (eq a 'on))
+            (push x components)))))
+    (dolist (x (reverse (plist-get theme-plist ':optional-off)))
+      (let ((a (assoc x ergoemacs-theme-options)))
+        (when a
+          (setq a (car (cdr a)))
+          (when (eq a 'on)
+            (push x components)))))
     (setq components (reverse components))
     components))
 
@@ -1955,39 +1949,35 @@ TYPE can also be 'off, where the option will be included in the
 theme, but assumed to be disabled by default.
 "
   (if (eq (type-of option) 'cons)
-      (mapc
-       (lambda(new-option)
-         (let (ergoemacs-mode)
-           (ergoemacs-require new-option theme type)))
-       option)
+      (dolist (new-option option)
+        (let (ergoemacs-mode)
+          (ergoemacs-require new-option theme type)))
     (let ((option-sym
            (or (and (stringp option) (intern option)) option)))
-      (mapc
-     (lambda(theme)
-       (let ((theme-plist (gethash (if (stringp theme) theme
-                                     (symbol-name theme))
-                                   ergoemacs-theme-hash))
-             comp on off)
-         (setq comp (plist-get theme-plist ':components)
-               on (plist-get theme-plist ':optional-on)
-               off (plist-get theme-plist ':optional-off))
-         (setq comp (delq option-sym comp)
-               on (delq option-sym on)
-               off (delq option-sym off))
-         (cond
-          ((eq type 'required-hidden)
-           (push option-sym comp))
-          ((eq type 'off)
-           (push option-sym off))
-          (t
-           (push option-sym on)))
-         (setq theme-plist (plist-put theme-plist ':components comp))
-         (setq theme-plist (plist-put theme-plist ':optional-on on))
-         (setq theme-plist (plist-put theme-plist ':optional-off off))
-         (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
-                  ergoemacs-theme-hash)))
-     (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
-         (ergoemacs-get-themes)))))
+      (dolist (theme (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
+                         (ergoemacs-get-themes)))
+        (let ((theme-plist (gethash (if (stringp theme) theme
+                                      (symbol-name theme))
+                                    ergoemacs-theme-hash))
+              comp on off)
+          (setq comp (plist-get theme-plist ':components)
+                on (plist-get theme-plist ':optional-on)
+                off (plist-get theme-plist ':optional-off))
+          (setq comp (delq option-sym comp)
+                on (delq option-sym on)
+                off (delq option-sym off))
+          (cond
+           ((eq type 'required-hidden)
+            (push option-sym comp))
+           ((eq type 'off)
+            (push option-sym off))
+           (t
+            (push option-sym on)))
+          (setq theme-plist (plist-put theme-plist ':components comp))
+          (setq theme-plist (plist-put theme-plist ':optional-on on))
+          (setq theme-plist (plist-put theme-plist ':optional-off off))
+          (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
+                   ergoemacs-theme-hash)))))
   (ergoemacs-theme-option-on option))
 
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
@@ -1997,11 +1987,9 @@ theme, but assumed to be disabled by default.
 When OPTION is a list turn on all the options in the list
 If OFF is non-nil, turn off the options instead."
   (if (eq (type-of option) 'cons)
-      (mapc
-       (lambda(new-option)
-         (let (ergoemacs-mode)
-           (ergoemacs-theme-option-on new-option off)))
-       option)
+      (dolist (new-option option)
+        (let (ergoemacs-mode)
+          (ergoemacs-theme-option-on new-option off)))
     (let (found)
       (setq ergoemacs-theme-options
             (mapcar
@@ -2052,45 +2040,39 @@ If OFF is non-nil, turn off the options instead."
           options-off (plist-get plist ':optional-off)
           menu-list (plist-get plist ':options-menu))
     (if (= 0 (length (append options-on options-off))) nil
-      (mapc
-       (lambda(elt)
-         (let ((menu-name (nth 0 elt))
-               (menu-items (nth 1 elt))
-               desc plist2
-               (ret '()))
-           (mapc
-            (lambda(option)
-              (when (memq option (append options-on options-off))
-                ;; (setq plist2 (gethash (concat (symbol-name option) ":plist") ergoemacs-theme-component-hash))
-                ;; (setq desc (plist-get plist2 ':description))
-                (setq desc (ergoemacs-theme-get-component-description (symbol-name option)))
-                (push option menu-options)
-                (push
-                 `(,option
-                   menu-item ,desc
-                   (lambda()
-                     (interactive)
-                     (ergoemacs-theme-toggle-option ',option)
-                     (ergoemacs-mode -1)
-                     (ergoemacs-mode 1))
-                   :button (:toggle . (ergoemacs-theme-option-enabled-p ',option)))
-                 ret)))
-            (reverse menu-items))
-           (unless (eq ret '())
-             (setq ret
-                   `(,(intern (format "options-menu-%s" i))
-                     menu-item ,menu-name
-                     (keymap ,@ret)))
-             (setq i (+ i 1))
-             (push ret menu-pre))))
-       (reverse menu-list))
-      (mapc
-       (lambda(option)
-         (unless (member option menu-options)
-           (let ((desc (ergoemacs-theme-get-component-description (symbol-name option))))
-             (push desc options-list)
-             (push (list desc option) options-alist))))
-       (append options-on options-off))
+      (dolist (elt (reverse menu-list))
+        (let ((menu-name (nth 0 elt))
+              (menu-items (nth 1 elt))
+              desc plist2
+              (ret '()))
+          (dolist (option (reverse menu-items))
+            (when (memq option (append options-on options-off))
+              ;; (setq plist2 (gethash (concat (symbol-name option) ":plist") ergoemacs-theme-component-hash))
+              ;; (setq desc (plist-get plist2 ':description))
+              (setq desc (ergoemacs-theme-get-component-description (symbol-name option)))
+              (push option menu-options)
+              (push
+               `(,option
+                 menu-item ,desc
+                 (lambda()
+                   (interactive)
+                   (ergoemacs-theme-toggle-option ',option)
+                   (ergoemacs-mode -1)
+                   (ergoemacs-mode 1))
+                 :button (:toggle . (ergoemacs-theme-option-enabled-p ',option)))
+               ret)))
+          (unless (eq ret '())
+            (setq ret
+                  `(,(intern (format "options-menu-%s" i))
+                    menu-item ,menu-name
+                    (keymap ,@ret)))
+            (setq i (+ i 1))
+            (push ret menu-pre))))
+      (dolist (option (append options-on options-off))
+        (unless (member option menu-options)
+          (let ((desc (ergoemacs-theme-get-component-description (symbol-name option))))
+            (push desc options-list)
+            (push (list desc option) options-alist))))
       `(ergoemacs-theme-options
         menu-item "Theme Options"
         (keymap

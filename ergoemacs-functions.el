@@ -166,12 +166,10 @@
   (when (or (equal current-prefix-arg '(4))
             (equal current-prefix-arg '(16)))
     (insert "Delete Byte Compiled Files:\n")
-    (mapc
-     (lambda(file)
-       (insert "\tDelete " file)
-       (delete-file file)
-       (insert "\n"))
-     (directory-files (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) t "[.]elc$"))
+    (dolist (file (directory-files (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) t "[.]elc$"))
+      (insert "\tDelete " file)
+      (delete-file file)
+      (insert "\n"))
     (insert "\n"))
   (if (equal  current-prefix-arg '(16))
       (let* ((emacs-exe (ergoemacs-emacs-exe))
@@ -1124,13 +1122,11 @@ the last misspelled word with
        (t ;; This cycles through the camel-case types.
         (let ((c-char (get this-command 'state))
               n-char)
-          (mapc
-           (lambda(char)
-             (when (eq n-char t)
-               (setq n-char char))
-             (when (string= c-char char)
-               (setq n-char t)))
-           ccc)
+          (dolist (char ccc)
+            (when (eq n-char t)
+              (setq n-char char))
+            (when (string= c-char char)
+              (setq n-char t)))
           (cond
            ((eq n-char t) ;; at last char. convert un_camel to unCamel
             (let ((txt (filter-buffer-substring p1 p2)))
@@ -2136,7 +2132,8 @@ The dictionaries used are in `ergoemacs-all-dictionaries'.
 
 See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
-  (mapc (lambda (dictUrl) (ergoemacs-lookup-word-on-internet input-word dictUrl)) ergoemacs-all-dictionaries)) 
+  (dolist (dict-url ergoemacs-all-dictionaries)
+    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
 
 (defvar ergoemacs-shortcut-keys)
 (defvar ergoemacs-read-input-keys)
@@ -2181,14 +2178,12 @@ See also `ergoemacs-lookup-word-on-internet'."
                     (lambda(x) (nth 0 x))
                     minor-mode-map-alist)))
   (insert "** Maps\n")
-  (mapc
-   (lambda(x)
-     (let ((tmp (cdr x)))
-       (insert (format "*** %s: %s\n%s\n"
-                       (nth 0 x) (symbol-value (nth 0 x))
-                       (substitute-command-keys "\\{tmp}")
-                       ))))
-   ergoemacs-emulation-mode-map-alist))
+  (dolist (x ergoemacs-emulation-mode-map-alist)
+    (let ((tmp (cdr x)))
+      (insert (format "*** %s: %s\n%s\n"
+                      (nth 0 x) (symbol-value (nth 0 x))
+                      (substitute-command-keys "\\{tmp}")
+                      )))))
 
 
 ;; Ergoemacs Test suite

@@ -283,11 +283,9 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
     (setq tmp (eval (plist-get (nth 0 kb) ':components)))
     (push (intern (concat (plist-get (nth 0 kb) ':name) "-theme")) tmp)
     (setq tmp (plist-put (nth 0 kb) ':components tmp))
-    (mapc
-     (lambda(comp)
-       (setq tmp (plist-put (nth 0 kb) comp
-                            (eval (plist-get (nth 0 kb) comp)))))
-     '(:optional-on :optional-off :options-menu))
+    (dolist (comp '(:optional-on :optional-off :options-menu))
+      (setq tmp (plist-put (nth 0 kb) comp
+                           (eval (plist-get (nth 0 kb) comp)))))
     
     `(let (themes silent)
        (setq themes (gethash "defined-themes" ergoemacs-theme-hash)

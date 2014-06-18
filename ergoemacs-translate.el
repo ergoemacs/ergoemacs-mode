@@ -414,51 +414,47 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
     
     
     ;; Now put the translation text together as a list.
-    (mapc
-     (lambda(x)
-       (let ((trans (plist-get arg-plist (nth 0 x)))
-             (orig (nth 1 x))
-             case-fold-search)
-         (when trans
-           (push (concat orig (ergoemacs-unicode-char "→" "->") trans)
-                 trans-text)
-           (push (concat
-                  (replace-regexp-in-string
-                   "[Qq]" ""
-                   (ergoemacs-pretty-key (concat orig "q")))
-                  (ergoemacs-unicode-char "→" "->")
-                  (replace-regexp-in-string
-                   "[Qq]" ""
-                   (ergoemacs-pretty-key (concat trans "q"))))
-                 pretty-trans))))
-     '((:alt "M-")
-       (:ctl "C-")
-       (:shift "S-")
-       (:alt-ctl "M-C-")
-       (:alt-shift "M-S-")
-       (:ctl-shift "C-S-")
-       (:alt-ctl-shift "C-M-S-")))
+    (dolist (x '((:alt "M-")
+                 (:ctl "C-")
+                 (:shift "S-")
+                 (:alt-ctl "M-C-")
+                 (:alt-shift "M-S-")
+                 (:ctl-shift "C-S-")
+                 (:alt-ctl-shift "C-M-S-")))
+      (let ((trans (plist-get arg-plist (nth 0 x)))
+            (orig (nth 1 x))
+            case-fold-search)
+        (when trans
+          (push (concat orig (ergoemacs-unicode-char "→" "->") trans)
+                trans-text)
+          (push (concat
+                 (replace-regexp-in-string
+                  "[Qq]" ""
+                  (ergoemacs-pretty-key (concat orig "q")))
+                 (ergoemacs-unicode-char "→" "->")
+                 (replace-regexp-in-string
+                  "[Qq]" ""
+                  (ergoemacs-pretty-key (concat trans "q"))))
+                pretty-trans))))
     ;; Now get keys that change the next key's behavior
     (when keymap
-      (mapc
-       (lambda(x)
-         (let ((key (where-is-internal (nth 0 x) keymap t))
-               (trans (nth 1 x)))
-           (when key
-             (setq key (key-description key))
-             (push (concat key (ergoemacs-unicode-char "→" "->") trans)
-                   key-text)
-             (push (concat
-                    (ergoemacs-pretty-key key)
-                    (ergoemacs-unicode-char "→" "->")
-                    (replace-regexp-in-string
-                     "[Qq]" ""
-                     (ergoemacs-pretty-key (concat trans "q"))))
-                   key-pretty))))
-       '((ergoemacs-read-key-next-key-is-alt "M-")
-         (ergoemacs-read-key-next-key-is-ctl "C-")
-         (ergoemacs-read-key-next-key-is-alt-ctl "C-M-")
-         (ergoemacs-read-key-next-key-is-quoted ""))))
+      (dolist (x '((ergoemacs-read-key-next-key-is-alt "M-")
+                   (ergoemacs-read-key-next-key-is-ctl "C-")
+                   (ergoemacs-read-key-next-key-is-alt-ctl "C-M-")
+                   (ergoemacs-read-key-next-key-is-quoted "")))
+        (let ((key (where-is-internal (nth 0 x) keymap t))
+              (trans (nth 1 x)))
+          (when key
+            (setq key (key-description key))
+            (push (concat key (ergoemacs-unicode-char "→" "->") trans)
+                  key-text)
+            (push (concat
+                   (ergoemacs-pretty-key key)
+                   (ergoemacs-unicode-char "→" "->")
+                   (replace-regexp-in-string
+                    "[Qq]" ""
+                    (ergoemacs-pretty-key (concat trans "q"))))
+                  key-pretty)))))
     (setq tmp '("" ""))
     (when (plist-get arg-plist ':unchorded)
       (setq tmp (list (plist-get arg-plist ':unchorded)
@@ -858,32 +854,30 @@ and `ergoemacs-pretty-key' descriptions.
                                           ergoemacs-translation-assoc) nil)))))
     ;; Pre-cache the translations...?  Takes too long to load :(
     (when nil
-      (mapc
-       (lambda(char)
-         (unless (string= "" char)
-           (ergoemacs-translate char)
-           (ergoemacs-translate (concat "C-" char))
-           (ergoemacs-translate (concat "M-" char))
-           (ergoemacs-translate (concat "M-C-" char))))
-       (append lay '("<f1>"  "<S-f1>"
-                     "<f2>"  "<S-f2>"
-                     "<f3>"  "<S-f3>"
-                     "<f4>"  "<S-f4>"
-                     "<f5>"  "<S-f5>"
-                     "<f6>"  "<S-f6>"
-                     "<f7>"  "<S-f7>"
-                     "<f8>"  "<S-f8>"
-                     "<f9>"  "<S-f9>"
-                     "<f10>" "<S-f10>"
-                     "<f11>" "<S-f11>"
-                     "<f12>" "<S-f12>"
-                     "SPC" "RET" "ESC" "DEL" "TAB"
-                     "<home>" "<S-home>"
-                     "<next>" "<S-next>"
-                     "<prior>" "<S-prior>"
-                     "<end>" "<S-end>"
-                     "<insert>" "<S-insert>"
-                     "<deletechar>" "<S-deletechar>"))))))
+      (dolist (char (append lay '("<f1>"  "<S-f1>"
+                                  "<f2>"  "<S-f2>"
+                                  "<f3>"  "<S-f3>"
+                                  "<f4>"  "<S-f4>"
+                                  "<f5>"  "<S-f5>"
+                                  "<f6>"  "<S-f6>"
+                                  "<f7>"  "<S-f7>"
+                                  "<f8>"  "<S-f8>"
+                                  "<f9>"  "<S-f9>"
+                                  "<f10>" "<S-f10>"
+                                  "<f11>" "<S-f11>"
+                                  "<f12>" "<S-f12>"
+                                  "SPC" "RET" "ESC" "DEL" "TAB"
+                                  "<home>" "<S-home>"
+                                  "<next>" "<S-next>"
+                                  "<prior>" "<S-prior>"
+                                  "<end>" "<S-end>"
+                                  "<insert>" "<S-insert>"
+                                  "<deletechar>" "<S-deletechar>")))
+        (unless (string= "" char)
+          (ergoemacs-translate char)
+          (ergoemacs-translate (concat "C-" char))
+          (ergoemacs-translate (concat "M-" char))
+          (ergoemacs-translate (concat "M-C-" char)))))))
 
 (declare-function ergoemacs-mode-line "ergoemacs-mode.el")
 (defun ergoemacs-setup-keys-for-layout (layout &optional base-layout)
@@ -949,6 +943,7 @@ If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key
 For example, on dvorak, change C-j to C-c (copy/command)."
   :type 'boolean
   :set 'ergoemacs-set-default
+  :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-get-kbd-translation (pre-kbd-code &optional dont-swap)

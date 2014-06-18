@@ -76,16 +76,15 @@
                   (cdr menu)))
 
   ;; Recurse sub menu items
-  (mapc (lambda (x)
-          (when (and (consp x)
-                     (consp (cdr x))
-                     (consp (cdr (cdr x)))
-                     (consp (cdr (cdr (cdr x))))
-                     (eq (car (cdr x)) 'menu-item)
-                     (keymapp (car (cdr (cdr (cdr x))))))
+  (dolist (x (cdr menu))
+    (when (and (consp x)
+               (consp (cdr x))
+               (consp (cdr (cdr x)))
+               (consp (cdr (cdr (cdr x))))
+               (eq (car (cdr x)) 'menu-item)
+               (keymapp (car (cdr (cdr (cdr x))))))
                                         ;(message "Submenu: %s" (car (cdr (cdr x))))
-            (ergoemacs-preprocess-menu-keybindings (car (cdr (cdr (cdr x)))))))
-        (cdr menu)))
+      (ergoemacs-preprocess-menu-keybindings (car (cdr (cdr (cdr x))))))))
 
 (defun ergoemacs-shortcut-for-command (cmd)
   (let ((key (key-description (where-is-internal cmd nil t nil t))))
@@ -155,58 +154,54 @@ All other modes are assumed to be minor modes or unimportant.
         all dups cur-let cur-lst current-letter
         added-modes
         (modes '()))
-    (mapc
-     (lambda(elt)
-       (unless (memq (cdr elt) modes)
-         (when (and (functionp (cdr elt))
-                    (string-match "-mode$" (condition-case err
-                                               (symbol-name (cdr elt))
-                                             (error ""))))
-           (unless (or (memq (cdr elt) ergoemacs-excluded-major-modes)
-                       (member (downcase (symbol-name (cdr elt))) added-modes))
-             (let* ((name (ergoemacs-get-major-mode-name (cdr elt)))
-                    (first (upcase (substring name 0 1))))
-               (if (member first all)
-                   (unless (member first dups)
-                     (push first dups))
-                 (push first all))
-               (push (list (cdr elt) 'menu-item
-                           name
-                           (cdr elt)) ret))
-             (push (downcase (symbol-name (cdr elt))) added-modes)
-             (push (cdr elt) modes)))))
-     (append
-      interpreter-mode-alist
-      magic-mode-alist
-      magic-fallback-mode-alist
-      auto-mode-alist))
+    (dolist (elt (append
+                  interpreter-mode-alist
+                  magic-mode-alist
+                  magic-fallback-mode-alist
+                  auto-mode-alist))
+      (unless (memq (cdr elt) modes)
+        (when (and (functionp (cdr elt))
+                   (string-match "-mode$" (condition-case err
+                                              (symbol-name (cdr elt))
+                                            (error ""))))
+          (unless (or (memq (cdr elt) ergoemacs-excluded-major-modes)
+                      (member (downcase (symbol-name (cdr elt))) added-modes))
+            (let* ((name (ergoemacs-get-major-mode-name (cdr elt)))
+                   (first (upcase (substring name 0 1))))
+              (if (member first all)
+                  (unless (member first dups)
+                    (push first dups))
+                (push first all))
+              (push (list (cdr elt) 'menu-item
+                          name
+                          (cdr elt)) ret))
+            (push (downcase (symbol-name (cdr elt))) added-modes)
+            (push (cdr elt) modes)))))
     (setq modes (sort ret (lambda(x1 x2) (string< (downcase (nth 2 x2))
                                              (downcase (nth 2 x1))))))
     (setq ret '())
-    (mapc
-     (lambda(elt)
-       (let ((this-letter (upcase (substring (nth 2 elt) 0 1))))
-         (cond
-          ((not (member this-letter dups))
-           ;; not duplicated -- add prior list and push current element.
-           (when cur-lst
-             (push `(,(intern current-letter) menu-item ,current-letter
-                     (keymap ,@cur-lst)) ret))
-           (push elt ret)
-           (setq current-letter this-letter)
-           (setq cur-lst nil))
-          ((not (equal this-letter current-letter))
-           ;; duplicated, but not last letter.
-           (when cur-lst
-             (push `(,(intern current-letter) menu-item ,current-letter
-                     (keymap ,@cur-lst)) ret))
-           (setq cur-lst nil)
-           (setq current-letter this-letter)
-           (push elt cur-lst))
-          (t
-           ;; duplicated and last letter
-           (push elt cur-lst)))))
-     modes)
+    (dolist (elt modes)
+      (let ((this-letter (upcase (substring (nth 2 elt) 0 1))))
+        (cond
+         ((not (member this-letter dups))
+          ;; not duplicated -- add prior list and push current element.
+          (when cur-lst
+            (push `(,(intern current-letter) menu-item ,current-letter
+                    (keymap ,@cur-lst)) ret))
+          (push elt ret)
+          (setq current-letter this-letter)
+          (setq cur-lst nil))
+         ((not (equal this-letter current-letter))
+          ;; duplicated, but not last letter.
+          (when cur-lst
+            (push `(,(intern current-letter) menu-item ,current-letter
+                    (keymap ,@cur-lst)) ret))
+          (setq cur-lst nil)
+          (setq current-letter this-letter)
+          (push elt cur-lst))
+         (t
+          ;; duplicated and last letter
+          (push elt cur-lst)))))
     (when cur-lst
       (push `(,(intern current-letter) menu-item ,current-letter
               (keymap ,@cur-lst)) ret))

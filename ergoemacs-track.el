@@ -158,12 +158,10 @@
     (when lay
       (if curr-i
           (setq wi curr-i)
-        (mapc
-         (lambda(x)
-           (when (string= key x)
-             (setq wi i))
-           (setq i (+ i 1)))
-         (symbol-value lay)))
+        (dolist (x (symbol-value lay))
+          (when (string= key x)
+            (setq wi i))
+          (setq i (+ i 1))))
       (setq i wi)
       (setq xh (nth (if (<= (nth i ergoemacs-track-finger) 3)
                         (+ 32 (nth i ergoemacs-track-finger))

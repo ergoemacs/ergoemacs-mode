@@ -259,36 +259,34 @@
               (progn
                 (setq shortcut-type "Unclassified")
                 (setq short-desc "")
-                (mapc
-                 (lambda(x)
-                   ;; (message "%s" (nth 1 x))
-                   ;; (message "%s" (nth 1 (nth 0 x)))
-                   (when (string= (format "%s" (nth 1 x))
-                                  (save-match-data
-                                    (replace-regexp-in-string
-                                     "---\\(standard\\(---cua\\)?\\|ergo\\|apps\\)" "" (match-string 1))))
-                     (setq shortcut-type
-                           (if (save-match-data (string-match "---apps" (match-string 1)))
-                               "Ergonomic Unchorded"
-                             (if (save-match-data (string-match "---standard---cua" (match-string 1)))
-                                 "Standard"
-                               (if (save-match-data (string-match "---standard" (match-string 1)))
-                                   "Fixed"
-                                 (if (save-match-data (string-match "---ergo" (match-string 1)))
-                                     (if (save-match-data (string-match movement-regexp (match-string 1)))
-                                         "Ergonomic Movement"
-                                       (if (save-match-data
-                                             (string-match deletion-regexp (match-string 1)))
-                                           "Ergonomic Deletion"
-                                         (if (save-match-data
-                                               (string-match tab-regexp (match-string 1)))
-                                             "Ergonomic Window/Frame"
-                                           "Ergonomic Misc")))
-                                   "Duplicate")))))
-                     (when (nth 2 x)
-                       (setq short-desc (nth 2 x)))))
-                 `(,@(symbol-value (ergoemacs-get-variable-layout))
-                   ,@(symbol-value (ergoemacs-get-fixed-layout))))
+                (dolist (x `(,@(symbol-value (ergoemacs-get-variable-layout))
+                             ,@(symbol-value (ergoemacs-get-fixed-layout))))
+                  ;; (message "%s" (nth 1 x))
+                  ;; (message "%s" (nth 1 (nth 0 x)))
+                  (when (string= (format "%s" (nth 1 x))
+                                 (save-match-data
+                                   (replace-regexp-in-string
+                                    "---\\(standard\\(---cua\\)?\\|ergo\\|apps\\)" "" (match-string 1))))
+                    (setq shortcut-type
+                          (if (save-match-data (string-match "---apps" (match-string 1)))
+                              "Ergonomic Unchorded"
+                            (if (save-match-data (string-match "---standard---cua" (match-string 1)))
+                                "Standard"
+                              (if (save-match-data (string-match "---standard" (match-string 1)))
+                                  "Fixed"
+                                (if (save-match-data (string-match "---ergo" (match-string 1)))
+                                    (if (save-match-data (string-match movement-regexp (match-string 1)))
+                                        "Ergonomic Movement"
+                                      (if (save-match-data
+                                            (string-match deletion-regexp (match-string 1)))
+                                          "Ergonomic Deletion"
+                                        (if (save-match-data
+                                              (string-match tab-regexp (match-string 1)))
+                                            "Ergonomic Window/Frame"
+                                          "Ergonomic Misc")))
+                                  "Duplicate")))))
+                    (when (nth 2 x)
+                      (setq short-desc (nth 2 x)))))
                 (save-restriction
                   (narrow-to-region (point-at-bol) (point-at-eol))
                   (when (re-search-backward "---\\(standard\\(---cua\\)?\\|ergo\\|apps\\)" nil t)
@@ -341,19 +339,18 @@
     (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
     (when (not (file-exists-p extra-dir))
       (make-directory extra-dir t))
-    (mapc
-     (lambda(x)
-       (message "Generate Kbd table for %s" x)
-       (ergoemacs-set-default 'ergoemacs-theme nil)
-       (ergoemacs-set-default 'ergoemacs-keyboard-layout x)
-       (ergoemacs-mode 1)
-       (setq curr-dir (expand-file-name "ergo-layouts" extra-dir))
-       (when (not (file-exists-p curr-dir))
-         (make-directory curr-dir t))
-       (with-temp-file (expand-file-name (format "ergoemacs-layout-%s.html" x) curr-dir)
-         (insert tbl)
-         (insert (ergoemacs-get-html-key-table))
-         (insert "</table><script language=\"javascript\" type=\"text/javascript\">
+    (dolist (x lay)
+      (message "Generate Kbd table for %s" x)
+      (ergoemacs-set-default 'ergoemacs-theme nil)
+      (ergoemacs-set-default 'ergoemacs-keyboard-layout x)
+      (ergoemacs-mode 1)
+      (setq curr-dir (expand-file-name "ergo-layouts" extra-dir))
+      (when (not (file-exists-p curr-dir))
+        (make-directory curr-dir t))
+      (with-temp-file (expand-file-name (format "ergoemacs-layout-%s.html" x) curr-dir)
+        (insert tbl)
+        (insert (ergoemacs-get-html-key-table))
+        (insert "</table><script language=\"javascript\" type=\"text/javascript\">
   //<![CDATA[
         var table_keys_Props =      {
                                                         col_0: \"select\", on_change: true, display_all_text: \" [ Show all ] \", rows_counter: true, alternate_rows: true
@@ -361,30 +358,25 @@
         setFilterGrid( \"table_keys\",table_keys_Props );
 //]]>
 </script></body></html>"))
-       (mapc
-        (lambda(y)
-          (condition-case err
-              (progn
-                (ergoemacs-set-default 'ergoemacs-theme y)
-                (ergoemacs-mode 1)
-                (message "\tTheme %s" y)
-                (setq curr-dir (expand-file-name y extra-dir))
-                (when (not (file-exists-p curr-dir))
-                  (make-directory curr-dir t))
-                (with-temp-file (expand-file-name (format "ergoemacs-layout-%s.html" x) curr-dir)
-                  (insert tbl)
-                  (insert (ergoemacs-get-html-key-table))
-                  (insert "</table><script language=\"javascript\" type=\"text/javascript\">
+      (dolist (y (sort (ergoemacs-get-themes) 'string<))
+        (ignore-errors
+          (ergoemacs-set-default 'ergoemacs-theme y)
+          (ergoemacs-mode 1)
+          (message "\tTheme %s" y)
+          (setq curr-dir (expand-file-name y extra-dir))
+          (when (not (file-exists-p curr-dir))
+            (make-directory curr-dir t))
+          (with-temp-file (expand-file-name (format "ergoemacs-layout-%s.html" x) curr-dir)
+            (insert tbl)
+            (insert (ergoemacs-get-html-key-table))
+            (insert "</table><script language=\"javascript\" type=\"text/javascript\">
   //<![CDATA[
         var table_keys_Props =      {
                                                         col_0: \"select\"
                                                 };
         setFilterGrid( \"table_keys\",table_keys_Props );
 //]]>
-</script></html>")))
-            (error (message "Error generating theme %s; %s" y err))))
-        (sort (ergoemacs-get-themes) 'string<)))
-     lay)
+</script></html>")))))
     (message "Setting theme back to %s" saved-theme)
     (ergoemacs-set-default 'ergoemacs-theme saved-theme)
     (ergoemacs-set-default 'ergoemacs-keyboard-layout saved-layout)
@@ -460,47 +452,45 @@
       (insert " id=\"dot_emacs\""))
     ;; Now add [K]ey type headers.
     (let (current-class)
-      (mapc
-       (lambda(file)
-         (find-file file)
-         (setq current-class "dark")
-         (goto-char (point-min))
-         (while (re-search-forward "\\<\\(Ctr?l\\|Alt\\|\\(?:.\\|&.*?;\\)? ?Shift\\|Shift\\)[+]\\(.\\)" nil t)
-           (replace-match "<kbd class=\"dark\">\\1</kbd>+\\2")
-           (backward-char)
-           (while (looking-at "\\(Ctr?l\\|Alt\\|\\(?:.\\|&.*?;\\)? ?Shift\\|Shift\\)[+]\\(.\\)")
-             (replace-match "<kbd class=\"dark\">\\1</kbd>+\\2")
-             (backward-char))
-           (when (looking-at "\\(.\\)")
-             (replace-match "<kbd class=\"dark\">\\1</kbd>")))
-         (goto-char (point-min))
-         (while (re-search-forward ">Shift</kbd>" nil t)
-           (replace-match ">⇧ Shift</kbd>"))
-         (goto-char (point-min))
-         (let (p1 p2)
-           (while (re-search-forward "@@html:" nil t)
-             (replace-match "")
-             (setq p1 (point))
-             (when (search-forward "@@" nil t)
-               (replace-match "")
-               (setq p2 (point))
-               (goto-char p1)
-               (while (search-forward "&lt;" p2 t)
-                 (replace-match "<"))
-               (goto-char p1)
-               (while (search-forward "&gt;" p2 t)
-                 (replace-match ">")))))
-         (goto-char (point-min))
-         (while (re-search-forward "\\(<h[1234].*?>\\)" nil t)
-           (re-search-forward "\\=<a.*?>" nil t)
-           (when (looking-at "About")
-             (goto-char (point-max)) ;; Not displaying properly.  Remove.
-             (setq current-class "light"))
-           (when (looking-at "\\([A-Za-z0-9]\\)")
-             (replace-match (format "<kbd class=\"%s\">\\1</kbd>" current-class) t)))
-         (save-buffer (current-buffer)))
-       (let ((default-directory (expand-file-name "out" ergoemacs-dir)))
-         (file-expand-wildcards "*.html" t))))
+      (dolist (file (let ((default-directory (expand-file-name "out" ergoemacs-dir)))
+                      (file-expand-wildcards "*.html" t)))
+        (find-file file)
+        (setq current-class "dark")
+        (goto-char (point-min))
+        (while (re-search-forward "\\<\\(Ctr?l\\|Alt\\|\\(?:.\\|&.*?;\\)? ?Shift\\|Shift\\)[+]\\(.\\)" nil t)
+          (replace-match "<kbd class=\"dark\">\\1</kbd>+\\2")
+          (backward-char)
+          (while (looking-at "\\(Ctr?l\\|Alt\\|\\(?:.\\|&.*?;\\)? ?Shift\\|Shift\\)[+]\\(.\\)")
+            (replace-match "<kbd class=\"dark\">\\1</kbd>+\\2")
+            (backward-char))
+          (when (looking-at "\\(.\\)")
+            (replace-match "<kbd class=\"dark\">\\1</kbd>")))
+        (goto-char (point-min))
+        (while (re-search-forward ">Shift</kbd>" nil t)
+          (replace-match ">⇧ Shift</kbd>"))
+        (goto-char (point-min))
+        (let (p1 p2)
+          (while (re-search-forward "@@html:" nil t)
+            (replace-match "")
+            (setq p1 (point))
+            (when (search-forward "@@" nil t)
+              (replace-match "")
+              (setq p2 (point))
+              (goto-char p1)
+              (while (search-forward "&lt;" p2 t)
+                (replace-match "<"))
+              (goto-char p1)
+              (while (search-forward "&gt;" p2 t)
+                (replace-match ">")))))
+        (goto-char (point-min))
+        (while (re-search-forward "\\(<h[1234].*?>\\)" nil t)
+          (re-search-forward "\\=<a.*?>" nil t)
+          (when (looking-at "About")
+            (goto-char (point-max)) ;; Not displaying properly.  Remove.
+            (setq current-class "light"))
+          (when (looking-at "\\([A-Za-z0-9]\\)")
+            (replace-match (format "<kbd class=\"%s\">\\1</kbd>" current-class) t)))
+        (save-buffer (current-buffer))))
     (save-buffer (current-buffer))))
 
 (defun ergoemacs-o-blog-html ()
@@ -639,21 +629,19 @@ Currently only supports two modifier plus key."
         (goto-char (point-min))
         (when (re-search-forward "QWERTY")
           (replace-match layout))
-        (mapc
-         (lambda(x)
-           (let ((from (nth 0 x))
-                 from-reg
-                 (to nil))
-             (setq to (ergoemacs-kbd from t))
-             (if (string= from to) nil
-               
-               (setq from (ergoemacs-trans-mac-osx from t))
-               (setq to (ergoemacs-trans-mac-osx to swap-opiton-and-control))
-               (setq from-reg (regexp-quote from))
-               (goto-char (point-min))
-               (when (re-search-forward from-reg nil t)
-                 (replace-match to t t)))))
-         (symbol-value (ergoemacs-get-variable-layout)))
+        (dolist (x (symbol-value (ergoemacs-get-variable-layout)))
+          (let ((from (nth 0 x))
+                from-reg
+                (to nil))
+            (setq to (ergoemacs-kbd from t))
+            (if (string= from to) nil
+              
+              (setq from (ergoemacs-trans-mac-osx from t))
+              (setq to (ergoemacs-trans-mac-osx to swap-opiton-and-control))
+              (setq from-reg (regexp-quote from))
+              (goto-char (point-min))
+              (when (re-search-forward from-reg nil t)
+                (replace-match to t t)))))
         (goto-char (point-min))
         (ergoemacs-setup-keys-for-layout ergoemacs-keyboard-layout)))))
 
@@ -661,12 +649,10 @@ Currently only supports two modifier plus key."
   "Generate Mac OS X dictionaries for all the defined layouts."
   (interactive)
   (let ((lay (or layouts (ergoemacs-get-layouts))))
-    (mapc
-     (lambda(x)
-       (message "Generate Mac Dictionary for %s" x)
-       (ergoemacs-gen-mac-osx x)
-       (ergoemacs-gen-mac-osx x nil "os_x_opt-ctl" t))
-     lay)))
+    (dolist (x lay)
+      (message "Generate Mac Dictionary for %s" x)
+      (ergoemacs-gen-mac-osx x)
+      (ergoemacs-gen-mac-osx x nil "os_x_opt-ctl" t))))
 
 (defun ergoemacs-trans-bash (key)
   "Translate Emacs kbd code KEY to bash kbd code"
@@ -735,21 +721,19 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
         (goto-char (point-min))
         (when (re-search-forward "QWERTY")
           (replace-match layout))
-        (mapc
-         (lambda(x)
-           (let ((from (nth 0 x))
-                 from-reg
-                 (to nil))
-             (setq to (ergoemacs-kbd from t))
-             (if (string= from to) nil
-               
-               (setq from (ergoemacs-trans-bash from))
-               (setq to (ergoemacs-trans-bash to))
-               (setq from-reg (regexp-quote from))
-               (goto-char (point-min))
-               (when (re-search-forward from-reg nil t)
-                 (replace-match to t t)))))
-         (symbol-value (ergoemacs-get-variable-layout)))
+        (dolist (x (symbol-value (ergoemacs-get-variable-layout)))
+          (let ((from (nth 0 x))
+                from-reg
+                (to nil))
+            (setq to (ergoemacs-kbd from t))
+            (if (string= from to) nil
+              
+              (setq from (ergoemacs-trans-bash from))
+              (setq to (ergoemacs-trans-bash to))
+              (setq from-reg (regexp-quote from))
+              (goto-char (point-min))
+              (when (re-search-forward from-reg nil t)
+                (replace-match to t t)))))
         (goto-char (point-min))
         (while (re-search-forward "\"\\\\M-" nil t)
           (replace-match "\"\\e" t t))
@@ -759,11 +743,9 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
   "Generate BASH scripts for all the defined layouts."
   (interactive)
   (let ((lay (or layouts (ergoemacs-get-layouts))))
-    (mapc
-     (lambda(x)
-       (message "Generate bash for %s" x)
-       (ergoemacs-gen-bash x))
-     lay)))
+    (dolist (x lay)
+      (message "Generate bash for %s" x)
+      (ergoemacs-gen-bash x))))
 
 (defun ergoemacs-trans-ahk (key &optional number)
   "Translates Emacs kbd code KEY to ahk kbd code. "
@@ -796,34 +778,30 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
         (i 0))
     (with-temp-buffer
       (insert "[Layouts]\n")
-      (mapc
-       (lambda(lay)
-         (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
-                (alias (condition-case nil
-                           (indirect-variable variable)
-                         (error variable)))
-                (is-alias nil)
-                (doc nil))
-           (setq doc (or (documentation-property variable 'variable-documentation)
-                         (progn
-                           (setq is-alias t)
-                           (documentation-property alias 'variable-documentation))))
-           (insert lay)
-           (insert "=")
-           (insert doc)
-           (insert "\n")
-           (setq i 1)
-           (setq lay-ini (format "%s\n[%s]" lay-ini lay))
-           (mapc
-            (lambda(x)
-              (unless (string-match "\\(<apps>\\|<menu>\\)" x) ;; Currently take out
-                ;; <apps> mapping.  Needs some work.
-                (let ((key (format "%s" (string-to-char x))))
-                  (push `(,x ,key) trans-keys)
-                  (setq lay-ini (format "%s\n%s=%s" lay-ini i key))))
-              (setq i (+ i 1)))
-            (symbol-value variable))))
-       (ergoemacs-get-layouts))
+      (dolist (lay (ergoemacs-get-layouts))
+        (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
+               (alias (condition-case nil
+                          (indirect-variable variable)
+                        (error variable)))
+               (is-alias nil)
+               (doc nil))
+          (setq doc (or (documentation-property variable 'variable-documentation)
+                        (progn
+                          (setq is-alias t)
+                          (documentation-property alias 'variable-documentation))))
+          (insert lay)
+          (insert "=")
+          (insert doc)
+          (insert "\n")
+          (setq i 1)
+          (setq lay-ini (format "%s\n[%s]" lay-ini lay))
+          (dolist (x (symbol-value variable))
+            (unless (string-match "\\(<apps>\\|<menu>\\)" x) ;; Currently take out
+              ;; <apps> mapping.  Needs some work.
+              (let ((key (format "%s" (string-to-char x))))
+                (push `(,x ,key) trans-keys)
+                (setq lay-ini (format "%s\n%s=%s" lay-ini i key))))
+            (setq i (+ i 1)))))
       (goto-char (point-max))
       (insert lay-ini)
       (insert "\n")
@@ -834,11 +812,9 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
   (with-temp-buffer
     (insert "[Themes]\n")
     (let ((lays (sort (ergoemacs-get-themes) 'string<)))
-      (mapc
-       (lambda(lay)
-         (insert lay "="
-                 (plist-get (gethash lay ergoemacs-theme-hash) ':description) "\n"))
-       lays))
+      (dolist (lay lays)
+        (insert lay "="
+                (plist-get (gethash lay ergoemacs-theme-hash) ':description) "\n")))
     (buffer-string)))
 
 (defun ergoemacs-get-ahk-keys-ini ()
@@ -854,23 +830,17 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
     (setq re (format "^%s$" (regexp-opt lst 't)))
     (with-temp-buffer
       (let ((old-lay ergoemacs-theme))
-        (mapc
-         (lambda(z)
-           (ergoemacs-set-default 'ergoemacs-theme z)
-           (mapc
-            (lambda(x)
-              (ergoemacs-setup-keys-for-layout x)
-              (insert (concat "[" x "-" z "]\n"))
-              (message "Generating AHK ini for %s %s" x z)
-              (mapc
-               (lambda(y)
-                 (when (string-match re (format "%s" (nth 1 y)))
-                   (let ((trans (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t)))
-                     (when (string-match "^[0-9]+$" trans)
-                       (insert (symbol-name (nth 1 y)) "=" trans "\n")))))
-               (symbol-value (ergoemacs-get-variable-layout))))
-            (ergoemacs-get-layouts)))
-         (ergoemacs-get-themes))
+        (dolist (z (ergoemacs-get-themes))
+          (ergoemacs-set-default 'ergoemacs-theme z)
+          (dolist (x (ergoemacs-get-layouts))
+            (ergoemacs-setup-keys-for-layout x)
+            (insert (concat "[" x "-" z "]\n"))
+            (message "Generating AHK ini for %s %s" x z)
+            (dolist (y (symbol-value (ergoemacs-get-variable-layout)))
+              (when (string-match re (format "%s" (nth 1 y)))
+                (let ((trans (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t)))
+                  (when (string-match "^[0-9]+$" trans)
+                    (insert (symbol-name (nth 1 y)) "=" trans "\n")))))))
         (ergoemacs-setup-keys-for-layout ergoemacs-keyboard-layout)
         (ergoemacs-set-default 'ergoemacs-theme old-lay))
       (buffer-string))))
@@ -1060,7 +1030,6 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
           (when (search-forward (format "id=\"key%s\"" i) nil t)
             (when (re-search-backward "fill:.*?;" nil t)
               (replace-match (format "fill:%s;" (nth 6 tmp)))))
-          ;;(add-to-list 'cmd-freq (cons (nth 2 tmp) (format "id=\"key%s\"" i)))
           (goto-char (point-min))
           (when (search-forward (format ">A%s<" i) nil t)
             (replace-match (format ">%s<" (nth 1 tmp)) t t))
@@ -1089,7 +1058,6 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
             (when (re-search-forward "id=\"keySPC\"" nil t)
               (when (re-search-backward "fill:.*?;" nil t)
                 (replace-match "fill:#FFFF00;"))))
-        ;;(add-to-list 'cmd-freq (cons (nth 2 tmp)
         ;;"id=\"keySPC\"")
         (setq ret t)
         (goto-char (point-min))
@@ -1201,12 +1169,10 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
       ;; Merge with the values in .emacs.keyfreq file
       (keyfreq-table-load table)
       (setq list (keyfreq-list (keyfreq-groups-major-modes table) 'no-sort))
-      (mapc
-       (lambda(x)
-         (setq total-n (+ total-n (cdr x)))
+      (dolist (x (cdr list))
+        (setq total-n (+ total-n (cdr x)))
          (unless (string-match "self-insert" (symbol-name (car x)))
            (setq cmd-n (+ cmd-n (cdr x)))))
-       (cdr list))
 
       ;; Get the frequencies for all the ergoemacs commands
       (setq cmd-freq-ergo
@@ -1424,196 +1390,191 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
             (replace-match
              (format ">%s<"
                      (ergoemacs-gen-svg-quote (nth i lay))) t t))
-          (mapc
-           (lambda(x)
-             (let ((key-pre (nth 0 x))
-                   (rep-pre (nth 1 x))
-                   (rep-sym-pre (nth 2 x))
-                   (final-txt (nth 3 x))
-                   (sym-pre (nth 4 x))
-                   (var-is-fixed-p (nth 5 x))
-                   curr-var)
-               ;; Variable Layout
-               (setq curr-var (nth i (symbol-value (intern (concat "ergoemacs-layout-" ergoemacs-translation-from)))))
-               
-               (if var-is-fixed-p
-                   (setq curr-var (nth i lay))
-                 (setq curr-var (nth i (symbol-value (intern (concat "ergoemacs-layout-" ergoemacs-translation-from))))))
-               
-               (unless (string= curr-var "")
-                 (setq txt (assoc (format "%s%s" key-pre curr-var)
-                                  (symbol-value (ergoemacs-get-variable-layout))))
-                 
-                 (if (not txt)
-                     (setq txt "")
-                   (if (>= (length txt) 3)
-                       (setq txt (nth 2 txt))
-                     (setq txt "")))
-                 (when (string= "" txt)
-                   (setq txt (all-completions (format "%s%s " key-pre curr-var)
-                                              (symbol-value (ergoemacs-get-variable-layout))))
-                   (if (= 0 (length txt))
-                       (setq txt "")
-                     (setq prefix-fixed (nth 3 (assoc (nth 0 txt) (symbol-value (ergoemacs-get-variable-layout)))))
-                     (setq txt "⌨")
-                     ;; Add to prefix list
-                     (setq prefix-lst
-                           (append prefix-lst
-                                   (list
-                                    (list
-                                     (format "%s%s " key-pre curr-var)
-                                     (format "%sA" prefix-num)
-                                     (format "%sAA" prefix-num)
-                                     (format "%s%s" final-txt (nth i lay))
-                                     (format "%sAA-" prefix-num)
-                                     prefix-fixed))))
-                     (setq prefix-num (+ prefix-num 1))))
-                 (goto-char (point-min))
-                 (unless (string= "" txt)
-                   (when (search-forward (format ">%s%s<" rep-pre i) nil t)
-                     (replace-match  (format ">%s<" txt) t t))))
-               
-               ;; Fixed layout
-               (goto-char (point-min))
-               (setq txt (assoc (format "%s%s" key-pre (nth i lay)) fix))
-               (if (not txt)
-                   (setq txt "")
-                 (if (>= (length txt) 3)
-                     (setq txt (nth 2 txt))
-                   (setq txt "")))
-               (when (string= txt "")
-                 (setq txt (all-completions (format "%s%s " key-pre (nth i lay)) fix))
-                 (if (= 0 (length txt))
-                     (setq txt "")
-                   (setq txt "⌨")))
-               (unless (string= "" txt)
-                 (when (search-forward (format ">%s%s<" rep-pre i) nil t)
-                   (replace-match  (format ">%s<" txt) t t)))
-               
-               ;; Space and other symbols
-               (mapc
-                (lambda(sym)
-                  (setq txt (assoc (format "%s%s" sym-pre sym) (symbol-value (ergoemacs-get-variable-layout))))
-                  (if (not txt)
+          (dolist (x ergoemacs-svn-prefixes)
+            (let ((key-pre (nth 0 x))
+                  (rep-pre (nth 1 x))
+                  (rep-sym-pre (nth 2 x))
+                  (final-txt (nth 3 x))
+                  (sym-pre (nth 4 x))
+                  (var-is-fixed-p (nth 5 x))
+                  curr-var)
+              ;; Variable Layout
+              (setq curr-var (nth i (symbol-value (intern (concat "ergoemacs-layout-" ergoemacs-translation-from)))))
+              
+              (if var-is-fixed-p
+                  (setq curr-var (nth i lay))
+                (setq curr-var (nth i (symbol-value (intern (concat "ergoemacs-layout-" ergoemacs-translation-from))))))
+              
+              (unless (string= curr-var "")
+                (setq txt (assoc (format "%s%s" key-pre curr-var)
+                                 (symbol-value (ergoemacs-get-variable-layout))))
+                
+                (if (not txt)
+                    (setq txt "")
+                  (if (>= (length txt) 3)
+                      (setq txt (nth 2 txt))
+                    (setq txt "")))
+                (when (string= "" txt)
+                  (setq txt (all-completions (format "%s%s " key-pre curr-var)
+                                             (symbol-value (ergoemacs-get-variable-layout))))
+                  (if (= 0 (length txt))
                       (setq txt "")
-                    (if (>= (length txt) 3)
-                        (setq txt (nth 2 txt))
-                      (setq txt "")))
-                  
-                  (when (string= "" txt)
-                    (setq txt
-                          (all-completions
-                           (format "%s%s " sym-pre sym)
-                           (symbol-value (ergoemacs-get-variable-layout))))
-                    (if (= 0 (length txt))
-                        (setq txt "")
-                      (setq txt "⌨")))
-                  (goto-char (point-min))
-                  (unless (string= "" txt)
-                    (when (search-forward (format ">%s-%s<" rep-sym-pre sym) nil t)
-                      (replace-match  (format ">%s<" (ergoemacs-gen-svg-quote txt)) t t))))
-                '("SPC"))
+                    (setq prefix-fixed (nth 3 (assoc (nth 0 txt) (symbol-value (ergoemacs-get-variable-layout)))))
+                    (setq txt "⌨")
+                    ;; Add to prefix list
+                    (setq prefix-lst
+                          (append prefix-lst
+                                  (list
+                                   (list
+                                    (format "%s%s " key-pre curr-var)
+                                    (format "%sA" prefix-num)
+                                    (format "%sAA" prefix-num)
+                                    (format "%s%s" final-txt (nth i lay))
+                                    (format "%sAA-" prefix-num)
+                                    prefix-fixed))))
+                    (setq prefix-num (+ prefix-num 1))))
+                (goto-char (point-min))
+                (unless (string= "" txt)
+                  (when (search-forward (format ">%s%s<" rep-pre i) nil t)
+                    (replace-match  (format ">%s<" txt) t t))))
+              
+              ;; Fixed layout
+              (goto-char (point-min))
+              (setq txt (assoc (format "%s%s" key-pre (nth i lay)) fix))
+              (if (not txt)
+                  (setq txt "")
+                (if (>= (length txt) 3)
+                    (setq txt (nth 2 txt))
+                  (setq txt "")))
+              (when (string= txt "")
+                (setq txt (all-completions (format "%s%s " key-pre (nth i lay)) fix))
+                (if (= 0 (length txt))
+                    (setq txt "")
+                  (setq txt "⌨")))
+              (unless (string= "" txt)
+                (when (search-forward (format ">%s%s<" rep-pre i) nil t)
+                  (replace-match  (format ">%s<" txt) t t)))
+              ;; Space and other symbols
+              (dolist (sym '("SPC"))
+                (setq txt (assoc (format "%s%s" sym-pre sym) (symbol-value (ergoemacs-get-variable-layout))))
+                (if (not txt)
+                    (setq txt "")
+                  (if (>= (length txt) 3)
+                      (setq txt (nth 2 txt))
+                    (setq txt "")))
+                
+                (when (string= "" txt)
+                  (setq txt
+                        (all-completions
+                         (format "%s%s " sym-pre sym)
+                         (symbol-value (ergoemacs-get-variable-layout))))
+                  (if (= 0 (length txt))
+                      (setq txt "")
+                    (setq txt "⌨")))
+                (goto-char (point-min))
+                (unless (string= "" txt)
+                  (when (search-forward (format ">%s-%s<" rep-sym-pre sym) nil t)
+                    (replace-match  (format ">%s<" (ergoemacs-gen-svg-quote txt)) t t))))
 
-               (mapc
-                (lambda(sym)
-                  (setq txt (assoc (format "<%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
-                  (if (not txt)
+              (dolist (sym '("F1" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9" "F10" "F11" "F12"))
+                (setq txt (assoc (format "<%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
+                (if (not txt)
+                    (progn
+                      (setq txt (assoc (format "<%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
+                      (if (not txt)
+                          (setq txt "")
+                        (if (>= (length txt) 3)
+                            (setq txt (nth 2 txt))
+                          (setq txt ""))))
+                  (if (>= (length txt) 3)
+                      (setq txt (nth 2 txt))
+                    (setq txt "")))
+                (when (string= "" txt)
+                  (setq txt
+                        (all-completions
+                         (format "<%s> " (downcase sym))
+                         (symbol-value (ergoemacs-get-variable-layout))))
+                  (if (= 0 (length txt))
                       (progn
-                        (setq txt (assoc (format "<%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
-                        (if (not txt)
+                        (setq txt
+                              (all-completions
+                               (format "<%s> " (downcase sym))
+                               (symbol-value (ergoemacs-get-fixed-layout))))
+                        (if (= 0 (length txt))
                             (setq txt "")
-                          (if (>= (length txt) 3)
-                              (setq txt (nth 2 txt))
-                            (setq txt ""))))
-                    (if (>= (length txt) 3)
-                        (setq txt (nth 2 txt))
-                      (setq txt "")))
-                  (when (string= "" txt)
-                    (setq txt
-                          (all-completions
-                           (format "<%s> " (downcase sym))
-                           (symbol-value (ergoemacs-get-variable-layout))))
-                    (if (= 0 (length txt))
-                        (progn
-                          (setq txt
-                                (all-completions
-                                 (format "<%s> " (downcase sym))
-                                 (symbol-value (ergoemacs-get-fixed-layout))))
-                          (if (= 0 (length txt))
-                              (setq txt "")
-                            (setq txt "⌨")))
-                      (setq txt "⌨")))
-                  (goto-char (point-min))
-                  (when (search-forward (format ">N%s<" (upcase sym)) nil t)
-                    (replace-match  (format ">%s<" txt) t t))
+                          (setq txt "⌨")))
+                    (setq txt "⌨")))
+                (goto-char (point-min))
+                (when (search-forward (format ">N%s<" (upcase sym)) nil t)
+                  (replace-match  (format ">%s<" txt) t t))
 
-                  (setq txt (assoc (format "<C-%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
-                  (if (not txt)
+                (setq txt (assoc (format "<C-%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
+                (if (not txt)
+                    (progn
+                      (setq txt (assoc (format "<C-%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
+                      (if (not txt)
+                          (setq txt "")
+                        (if (>= (length txt) 3)
+                            (setq txt (nth 2 txt))
+                          (setq txt ""))))
+                  (if (>= (length txt) 3)
+                      (setq txt (nth 2 txt))
+                    (setq txt "")))
+                (when (string= "" txt)
+                  (setq txt
+                        (all-completions
+                         (format "<C-%s> " (downcase sym))
+                         (symbol-value (ergoemacs-get-variable-layout))))
+                  (if (= 0 (length txt))
                       (progn
-                        (setq txt (assoc (format "<C-%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
-                        (if (not txt)
+                        (setq txt
+                              (all-completions
+                               (format "<C-%s> " (downcase sym))
+                               (symbol-value (ergoemacs-get-fixed-layout))))
+                        (if (= 0 (length txt))
                             (setq txt "")
-                          (if (>= (length txt) 3)
-                              (setq txt (nth 2 txt))
-                            (setq txt ""))))
-                    (if (>= (length txt) 3)
-                        (setq txt (nth 2 txt))
-                      (setq txt "")))
-                  (when (string= "" txt)
-                    (setq txt
-                          (all-completions
-                           (format "<C-%s> " (downcase sym))
-                           (symbol-value (ergoemacs-get-variable-layout))))
-                    (if (= 0 (length txt))
-                        (progn
-                          (setq txt
-                                (all-completions
-                                 (format "<C-%s> " (downcase sym))
-                                 (symbol-value (ergoemacs-get-fixed-layout))))
-                          (if (= 0 (length txt))
-                              (setq txt "")
-                            (setq txt "⌨")))
-                      (setq txt "⌨")))
-                  (goto-char (point-min))
-                  (when (search-forward (format ">CC%s<" (upcase sym)) nil t)
-                    (replace-match  (format ">%s<" txt) t t))
-                  
-                  (setq txt (assoc (format "<M-%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
-                  (if (not txt)
+                          (setq txt "⌨")))
+                    (setq txt "⌨")))
+                (goto-char (point-min))
+                (when (search-forward (format ">CC%s<" (upcase sym)) nil t)
+                  (replace-match  (format ">%s<" txt) t t))
+                
+                (setq txt (assoc (format "<M-%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
+                (if (not txt)
+                    (progn
+                      (setq txt (assoc (format "<M-%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
+                      (if (not txt)
+                          (setq txt "")
+                        (if (>= (length txt) 3)
+                            (setq txt (nth 2 txt))
+                          (setq txt ""))))
+                  (if (>= (length txt) 3)
+                      (setq txt (nth 2 txt))
+                    (setq txt "")))
+                (when (string= "" txt)
+                  (setq txt
+                        (all-completions
+                         (format "<M-%s> " (downcase sym))
+                         (symbol-value (ergoemacs-get-variable-layout))))
+                  (if (= 0 (length txt))
                       (progn
-                        (setq txt (assoc (format "<M-%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
-                        (if (not txt)
+                        (setq txt
+                              (all-completions
+                               (format "<M-%s> " (downcase sym))
+                               (symbol-value (ergoemacs-get-fixed-layout))))
+                        (if (= 0 (length txt))
                             (setq txt "")
-                          (if (>= (length txt) 3)
-                              (setq txt (nth 2 txt))
-                            (setq txt ""))))
-                    (if (>= (length txt) 3)
-                        (setq txt (nth 2 txt))
-                      (setq txt "")))
-                  (when (string= "" txt)
-                    (setq txt
-                          (all-completions
-                           (format "<M-%s> " (downcase sym))
-                           (symbol-value (ergoemacs-get-variable-layout))))
-                    (if (= 0 (length txt))
-                        (progn
-                          (setq txt
-                                (all-completions
-                                 (format "<M-%s> " (downcase sym))
-                                 (symbol-value (ergoemacs-get-fixed-layout))))
-                          (if (= 0 (length txt))
-                              (setq txt "")
-                            (setq txt "⌨")))
-                      (setq txt "⌨")))
-                  (goto-char (point-min))
-                  (when (search-forward (format ">MM%s<" (upcase sym)) nil t)
-                    (replace-match  (format ">%s<" txt) t t)))
-                '("F1" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9" "F10" "F11" "F12"))
-               ;; Legend/Key
-               (goto-char (point-min))
-               (when (search-forward (format ">%s<" rep-sym-pre) nil t)
-                 (replace-match (format ">%s<" (ergoemacs-gen-svg-quote final-txt)) t t))))
-           ergoemacs-svn-prefixes)
+                          (setq txt "⌨")))
+                    (setq txt "⌨")))
+                (goto-char (point-min))
+                (when (search-forward (format ">MM%s<" (upcase sym)) nil t)
+                  (replace-match  (format ">%s<" txt) t t))
+                
+                )
+              ;; Legend/Key
+              (goto-char (point-min))
+              (when (search-forward (format ">%s<" rep-sym-pre) nil t)
+                (replace-match (format ">%s<" (ergoemacs-gen-svg-quote final-txt)) t t))))
           (setq i (+ i 1)))
         (goto-char (point-min))
         (while (re-search-forward ">\\([0-4]?[CMAN][0-9]+\\|[0-4]?[CMAN]\\{2\\}[^\n<]*?\\|nil\\)<" nil t)
@@ -1679,26 +1640,22 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
   (interactive)
   (let* ((lay (or layouts (ergoemacs-get-layouts)))
          (saved-theme ergoemacs-theme))
-    (mapc
-     (lambda(x)
-       (message "Generate SVG for %s" x)
-       (condition-case err
-           (progn
-             (ergoemacs-gen-svg x)
-             (ergoemacs-set-default 'ergoemacs-theme nil)
-             (ergoemacs-gen-svg x "kbd-ergo.svg" "ergo-layouts"))
-         (error (message "Error generating base SVG for %s; %s" x err)))
-       (mapc
-        (lambda(y)
-          (condition-case err
-              (progn
-                (ergoemacs-set-default 'ergoemacs-theme y)
-                (ergoemacs-gen-svg x "kbd-ergo.svg" (concat y)))
-            (error (message "Error generating theme %s; %s" y err))))
-        (sort (ergoemacs-get-themes) 'string<))
-       (message "Setting theme back to %s" saved-theme)
-       (ergoemacs-set-default 'ergoemacs-theme saved-theme))
-     lay)))
+    (dolist (x lay)
+      (message "Generate SVG for %s" x)
+      (condition-case err
+          (progn
+            (ergoemacs-gen-svg x)
+            (ergoemacs-set-default 'ergoemacs-theme nil)
+            (ergoemacs-gen-svg x "kbd-ergo.svg" "ergo-layouts"))
+        (error (message "Error generating base SVG for %s; %s" x err)))
+      (dolist (y (sort (ergoemacs-get-themes) 'string<))
+        (condition-case err
+            (progn
+              (ergoemacs-set-default 'ergoemacs-theme y)
+              (ergoemacs-gen-svg x "kbd-ergo.svg" (concat y)))
+          (error (message "Error generating theme %s; %s" y err))))
+      (message "Setting theme back to %s" saved-theme)
+      (ergoemacs-set-default 'ergoemacs-theme saved-theme))))
 
 ;; (require 'json nil t)
 

@@ -617,10 +617,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (defun ergoemacs-load-aliases ()
   "Loads aliases defined in `ergoemacs-aliases'."
-  (mapc
-   (lambda(x)
-     (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x)))))
-   ergoemacs-aliases))
+  (dolist (x ergoemacs-aliases)
+    (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))))))
 
 (when ergoemacs-use-aliases
   (ergoemacs-load-aliases))

@@ -733,16 +733,12 @@
 (defun ergoemacs-reset-global-where-is ()
   "Reset `ergoemacs-where-is-global-hash'."
   (setq ergoemacs-where-is-global-hash (make-hash-table :test 'equal))
-  (mapc
-   (lambda(x)
-     (let ((key (read-kbd-macro (nth 0 x))))
-       (mapc
-        (lambda(fn)
-          (let ((keys (gethash fn ergoemacs-where-is-global-hash)))
-            (pushnew key keys :test equal)
-            (puthash fn keys ergoemacs-where-is-global-hash)))
-        (nth 1 x))))
-   ergoemacs-emacs-default-bindings))
+  (dolist (x ergoemacs-emacs-default-bindings)
+    (let ((key (read-kbd-macro (nth 0 x))))
+      (dolist (fn (nth 1 x))
+        (let ((keys (gethash fn ergoemacs-where-is-global-hash)))
+          (pushnew key keys :test equal)
+          (puthash fn keys ergoemacs-where-is-global-hash))))))
 
 
 ;;;###autoload
@@ -911,21 +907,15 @@ This should only be run when no global keys have been set.
 (defun ergoemacs-warn-globally-changed-keys (&optional fix)
   "Warns about globally changed keys. If FIX is true, fix the ergoemacs-unbind file."
   (interactive)
-  (mapc
-   (lambda(x)
-     (ergoemacs-global-changed-p (nth 0 x) nil t t))
-   ergoemacs-emacs-default-bindings)
+  (dolist (x ergoemacs-emacs-default-bindings)
+    (ergoemacs-global-changed-p (nth 0 x) nil t t))
   (message "Ergoemacs Keys warnings for this layout:")
-  (mapc
-   (lambda(x)
-     (and (eq 'string (type-of (nth 0 x)))
-          (ergoemacs-global-changed-p (nth 0 x) nil t t)))
-      (symbol-value (ergoemacs-get-fixed-layout)))
-  (mapc
-   (lambda(x)
-     (and (eq 'string (type-of (nth 0 x)))
-          (ergoemacs-global-changed-p (nth 0 x) t t)))
-   (symbol-value (ergoemacs-get-variable-layout))))
+  (dolist (x (symbol-value (ergoemacs-get-fixed-layout)))
+    (and (eq 'string (type-of (nth 0 x)))
+         (ergoemacs-global-changed-p (nth 0 x) nil t t)))
+  (dolist (x (symbol-value (ergoemacs-get-variable-layout)))
+    (and (eq 'string (type-of (nth 0 x)))
+         (ergoemacs-global-changed-p (nth 0 x) t t))))
 
 
 
