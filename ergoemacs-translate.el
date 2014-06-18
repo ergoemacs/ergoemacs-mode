@@ -68,6 +68,9 @@
 (require 'descr-text)
 (require 'faces)
 
+(defvar ergoemacs-use-unicode-char t
+  "Use unicode characters when available.")
+
 (defun ergoemacs-display-char-p (char)
   "Determines if CHAR can be displayed."
   (ignore-errors
@@ -92,8 +95,6 @@
         (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
         ret))))
 
-(defvar ergoemacs-use-unicode-char t
-  "Use unicode characters when available.")
 (defun ergoemacs-unicode-char (char alt-char)
   "Uses CHAR if it can be displayed, otherwise use ALT-CHAR.
 This assumes `ergoemacs-use-unicode-char' is non-nil.  When
@@ -114,6 +115,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
 
 (defvar ergoemacs-use-M-x-p nil)
 
+(defvar ergoemacs-M-x)
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
   (if (not code) ""
@@ -252,40 +254,9 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
     (when ergoemacs-use-ergoemacs-key-descriptions
       (ergoemacs-pretty-key-rep-internal))))
 
-(defun ergoemacs-display-char-p (char)
-  "Determines if CHAR can be displayed."
-  (ignore-errors
-    (let* (ret
-           (buf (current-buffer))
-           (face (font-xlfd-name (face-attribute 'default :font)))
-           (found (assoc (list face char window-system) ergoemacs-display-char-list)))
-      (if found
-          (nth 0 (cdr found))
-        (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
-        (delete-region (point-min) (point-max))
-        (insert char)
-        (let ((display (describe-char-display (point-min) (char-after (point-min)))))
-          (if (display-graphic-p (selected-frame))
-              (if display
-                  (setq ret t))
-            (if display
-                (setq ret t))))
-        (switch-to-buffer buf)
-        ;; Save it so the user doesn't see the buffer popup very much
-        ;; (if at all).
-        (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
-        ret))))
+
 
 ;;; Actual Translations
-(defvar ergoemacs-dir
-  (file-name-directory
-   (or
-    load-file-name
-    (buffer-file-name)))
-  "Ergoemacs directory.")
-(add-to-list 'load-path ergoemacs-dir)
-(require 'ergoemacs-shortcuts)
-
 (defvar ergoemacs-translation-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (read-kbd-macro "<deletechar>") (read-kbd-macro "DEL"))
@@ -561,54 +532,6 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
                  (define-key map (read-kbd-macro "RET") 'ergoemacs-unchorded-alt-modal)
                  map))
 
-
-(ergoemacs-translation
- :name 'gaia
- :text "<G>"
- :unchorded "C-"
- :modal-color "red"
- :keymap (let ((map (make-sparse-keymap)))
-           (define-key map [f1] 'ergoemacs-read-key-help)
-           (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-next-key-is-quoted)
-           (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-next-key-is-alt-ctl)
-           (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
-           (define-key map "G" 'ergoemacs-read-key-next-key-is-alt-ctl)
-           (define-key map [f2] 'ergoemacs-universal-argument) ;; Allows editing
-           (define-key map (read-kbd-macro "DEL") 'ergoemacs-read-key-undo-last)
-           map)
- :keymap-modal
- (let ((map (make-sparse-keymap))
-       (ergoemacs-ignore-advice t))
-   (define-key map (read-kbd-macro "1") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "2") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "3") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "4") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "5") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "6") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "7") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "8") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "9") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "0") 'ergoemacs-gaia-digit-argument)
-   (define-key map (read-kbd-macro "-") 'ergoemacs-gaia-negative-argument)
-   (define-key map (read-kbd-macro "u") 'ergoemacs-gaia-universal-argument)
-   (define-key map (if (eq system-type 'windows-nt) [apps] [menu])
-     'ergoemacs-gaia-modal)
-   map))
-
-(defvar ergoemacs-gaia-mode nil)
-(defun ergoemacs-gaia-mode ()
-  "Gaia-mode"
-  (interactive)
-  (cond
-   (ergoemacs-gaia-mode
-    (setq ergoemacs-theme "lvl0")
-    (ergoemacs-mode -1))
-   ((not ergoemacs-gaia-mode)
-    (setq ergoemacs-theme "lvl0")
-    (ergoemacs-mode 1)
-    (ergoemacs-gaia-modal)))
-  (setq ergoemacs-gaia-mode (not ergoemacs-gaia-mode)))
-
 (defun ergoemacs-translate-shifted (kbd)
   "Translates anything with S- and no C- in it to an upper-case character.
 Translates C-A into C-S-a."
@@ -765,6 +688,7 @@ and `ergoemacs-pretty-key' descriptions.
          only-key
          shift-translated
          (ergoemacs-use-ergoemacs-key-descriptions t)
+         shifted-key
          unshifted-key)
     (or ret
         (progn
@@ -953,6 +877,7 @@ and `ergoemacs-pretty-key' descriptions.
                      "<insert>" "<S-insert>"
                      "<deletechar>" "<S-deletechar>"))))))
 
+(declare-function ergoemacs-mode-line "ergoemacs-mode.el")
 (defun ergoemacs-setup-keys-for-layout (layout &optional base-layout)
   "Setup keys based on a particular LAYOUT. All the keys are based on QWERTY layout."
   (ergoemacs-setup-translation layout base-layout)
@@ -1026,6 +951,10 @@ For example, on dvorak, change C-j to C-c (copy/command)."
                "[Aa]lt[+-]" "M-" pre-kbd-code))))
     ret))
 
+(defvar ergoemacs-keymap)
+(defvar ergoemacs-unbind-keymap)
+(defvar ergoemacs-shortcut-keymap)
+(defvar ergoemacs-command-shortcuts-hash)
 (defun ergoemacs-key-fn-lookup (function &optional use-apps)
   "Looks up the key binding for FUNCTION based on.
 Based on `ergoemacs-with-ergoemacs'"
