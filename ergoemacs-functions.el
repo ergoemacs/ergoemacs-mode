@@ -1224,14 +1224,19 @@ Emacs buffers are those whose name starts with *."
 (declare-function dired-get-marked-files "dired.el")
 (declare-function w32-shell-execute "w32fns.c")
 (defun ergoemacs-open-in-external-app (&optional file)
-  "Open the current file or dired marked files in external app."
+  "Open the current file or dired marked files in external app.
+FILE can be a list of files, or a single file.
+If FILE is not specified, it will be:
+- `dired-get-marked-files' for `dired-mode' or `locate-mode'
+- `buffer-file-name' for other files."
   (interactive)
   (let* ((my-file-list
           (cond
-           ((string-equal major-mode "dired-mode") (dired-get-marked-files))
-           ((string-equal major-mode "locate-mode") (dired-get-marked-files))
-           ((not file) (list (buffer-file-name)))
-           (file (list file))))
+           ((listp file) file)
+           (file (list file))
+           ((eq major-mode 'dired-mode) (dired-get-marked-files))
+           ((eq major-mode 'locate-mode) (dired-get-marked-files))
+           ((not file) (list (buffer-file-name)))))
          (do-it (or (<= (length my-file-list) ergoemacs-maximum-number-of-file-to-open)
                     (>= 0 ergoemacs-maximum-number-of-file-to-open)
                     (y-or-n-p (format "Open more than %s files? " ergoemacs-maximum-number-of-file-to-open)))))
