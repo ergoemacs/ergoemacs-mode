@@ -381,7 +381,7 @@ This function is made in `ergoemacs-translation'")
               (interactive)
               (ergoemacs-universal-argument ',(plist-get arg-plist ':name)))))
     (pushnew (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument"))
-             :test 'equal)
+             ergoemacs-universal-fns)
 
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-digit-argument")) ()
@@ -844,7 +844,7 @@ and `ergoemacs-pretty-key' descriptions.
         (while (< i len)
           (unless (or (string= "" (nth i base))
                       (string= "" (nth i lay)))
-            (pusnew `(,(nth i base) . ,(nth i lay))
+            (pushnew `(,(nth i base) . ,(nth i lay))
                     ergoemacs-translation-assoc
                     :test 'equal))
           (setq i (+ i 1)))

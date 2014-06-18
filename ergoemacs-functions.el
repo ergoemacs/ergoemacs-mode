@@ -1884,6 +1884,7 @@ If arg is a negative prefix, copy file path only"
 (defvar ergoemacs-theme--object)
 (declare-function ergoemacs-gen-svg "ergoemacs-extras.el")
 (declare-function ergoemacs-theme-component-map-list-md5 "ergoemacs-theme-engine.el")
+(defvar ergoemacs-theme-options)
 (defun ergoemacs-display-current-svg (&optional arg)
   "Generates the current ergoemacs layout, unless it already exists and opens it in a browser.
 With a prefix, force regeneration. "
@@ -2087,43 +2088,43 @@ For a list of online reference sites, see:
   "Lookup urrent word or text selection in Google Search.
 See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
-  (let ((dictUrl "http://www.google.com/search?q=�"))
-    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+  (let ((dict-url "http://www.google.com/search?q=�"))
+    (ergoemacs-lookup-word-on-internet input-word dict-url)))
 
 (defun ergoemacs-lookup-wikipedia (&optional input-word)
   "Lookup current word or text selection in Wikipedia.
 See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
-  (let ((dictUrl "http://en.wikipedia.org/wiki/�"))
-    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+  (let ((dict-url "http://en.wikipedia.org/wiki/�"))
+    (ergoemacs-lookup-word-on-internet input-word dict-url)))
 
 (defun ergoemacs-lookup-word-dict-org (&optional input-word)
   "Lookup definition of current word or text selection in URL `http://dict.org/'.
 See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
-  (let ((dictUrl "http://www.dict.org/bin/Dict?Form=Dict2&Database=*&Query=�" ))
-    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+  (let ((dict-url "http://www.dict.org/bin/Dict?Form=Dict2&Database=*&Query=�" ))
+    (ergoemacs-lookup-word-on-internet input-word dict-url)))
 
 (defun ergoemacs-lookup-word-definition (&optional input-word)
   "Lookup definition of current word or text selection in URL `http://thefreedictionary.com/'.
 See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
-  (let ((dictUrl "http://www.thefreedictionary.com/�"))
-    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+  (let ((dict-url "http://www.thefreedictionary.com/�"))
+    (ergoemacs-lookup-word-on-internet input-word dict-url)))
 
 (defun ergoemacs-lookup-answers.com (&optional input-word)
   "Lookup current word or text selection in URL `http://answers.com/'.
 See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
-  (let ((dictUrl "http://www.answers.com/main/ntquery?s=�"))
-    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+  (let ((dict-url "http://www.answers.com/main/ntquery?s=�"))
+    (ergoemacs-lookup-word-on-internet input-word dict-url)))
 
 (defun ergoemacs-lookup-wiktionary (&optional input-word)
   "Lookup definition of current word or text selection in URL `http://en.wiktionary.org/'
 See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
-  (let ((dictUrl "http://en.wiktionary.org/wiki/�" ))
-    (ergoemacs-lookup-word-on-internet input-word dictUrl) ) )
+  (let ((dict-url "http://en.wiktionary.org/wiki/�" ))
+    (ergoemacs-lookup-word-on-internet input-word dict-url) ) )
 
 (defun ergoemacs-lookup-all-dictionaries (&optional input-word)
   "Lookup definition in many dictionaries.
@@ -2133,7 +2134,7 @@ The dictionaries used are in `ergoemacs-all-dictionaries'.
 See also `ergoemacs-lookup-word-on-internet'."
   (interactive)
   (dolist (dict-url ergoemacs-all-dictionaries)
-    (ergoemacs-lookup-word-on-internet input-word dictUrl)))
+    (ergoemacs-lookup-word-on-internet input-word dict-url)))
 
 (defvar ergoemacs-shortcut-keys)
 (defvar ergoemacs-read-input-keys)
