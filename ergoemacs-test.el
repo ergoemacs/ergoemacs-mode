@@ -526,7 +526,6 @@ Test next and prior translation."
 
 (ert-deftest ergoemacs-test-apps-copy ()
   "Tests <apps> c on QWERTY cutting a region, not just a line."
-  :expected-result (if noninteractive :failed :passed) ;; Not sure why
   (let ((ret nil)
         (old-ergoemacs-theme ergoemacs-theme)
         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
