@@ -202,7 +202,9 @@ a set type."
            (if (not (stringp new-value))
                (signal 'invalid-slot-type
                        (list obj slot-name 'string new-value)))
-           (object-set-name-string obj new-value))
+           (funcall (if (fboundp 'eieio-object-set-name-string)
+                        'eieio-object-set-name-string
+                      'object-set-name-string) obj new-value))
           (t (save-match-data (replace-regexp-in-string "::.*$" "" (object-name-string obj))))))
    ((or (eq slot-name 'object-symbol)
         (eq slot-name :object-symbol))
