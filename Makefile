@@ -24,6 +24,7 @@ TEST_DEP_1_LATEST_URL=http://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/emac
          test-dep-4 test-dep-5 test-dep-6 test-dep-7 test-dep-8 test-dep-9
 
 build :
+	@mkdir $(TEST_DIR)
 	$(EMACS) $(EMACS_BATCH) --eval             \
 	    "(progn                                \
 	      (setq byte-compile-error-on-warn t)  \
@@ -35,11 +36,9 @@ test-dep-1 :
 	(echo "Can't load test dependency $(TEST_DEP_1).el, run 'make downloads' to fetch it" ; exit 1)
 
 downloads :
-	@mkdir $(TEST_DIR)
 	$(CURL) '$(TEST_DEP_1_STABLE_URL)' > $(TEST_DIR)/$(TEST_DEP_1).el
 
 downloads-latest :
-	@mkdir $(TEST_DIR)
 	$(CURL) '$(TEST_DEP_1_LATEST_URL)' > $(TEST_DIR)/$(TEST_DEP_1).el
 
 autoloads :
