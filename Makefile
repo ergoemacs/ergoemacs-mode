@@ -65,10 +65,6 @@ test : build test-dep-1 test-autoloads
 clean :
 	@rm -f $(AUTOLOADS_FILE) 
 	@rm -f *.elc 
+	@rm -f $(TEST_DIR)/*.*
+	@rmdir $(TEST_DIR)
 	@rm -f *~ 
-	@rm -f */*.elc
-	@rm -f */*~
-	@rm -f $(TEST_DIR)/$(TEST_DEP_1).el            \
-        $(TEST_DIR)/$(TEST_DEP_2).el $(TEST_DIR)/$(TEST_DEP_3).el $(TEST_DIR)/$(TEST_DEP_4).el \
-        $(TEST_DIR)/$(TEST_DEP_5).el $(TEST_DIR)/$(TEST_DEP_6).el $(TEST_DIR)/$(TEST_DEP_7).el \
-        $(TEST_DIR)/$(TEST_DEP_8).el $(TEST_DIR)/$(TEST_DEP_9).el
