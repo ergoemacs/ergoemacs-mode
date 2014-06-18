@@ -92,7 +92,7 @@
         (switch-to-buffer buf)
         ;; Save it so the user doesn't see the buffer popup very much
         ;; (if at all).
-        (add-to-list 'ergoemacs-display-char-list (list (list face char window-system) ret))
+        (push (list (list face char window-system) ret) ergoemacs-display-char-list)
         ret))))
 
 (defun ergoemacs-unicode-char (char alt-char)
@@ -380,7 +380,8 @@ This is called through `ergoemacs-universal-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
               (ergoemacs-universal-argument ',(plist-get arg-plist ':name)))))
-    (add-to-list 'ergoemacs-universal-fns (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")))
+    (pushnew (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument"))
+             :test 'equal)
 
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-digit-argument")) ()
@@ -810,12 +811,18 @@ and `ergoemacs-pretty-key' descriptions.
     (while (< i 60)
       (unless (or (string= "" (nth i lay))
                   (string= "" (nth (+ i 60) lay)))
-        (add-to-list 'ergoemacs-shifted-assoc
-                     `(,(nth i lay) . ,(nth (+ i 60) lay)))
-        (add-to-list 'ergoemacs-shifted-assoc
-                     `(,(nth (+ i 60) lay) . ,(nth i lay)))
-        (add-to-list 'unshifted-list (nth i lay))
-        (add-to-list 'shifted-list (nth (+ i 60) lay)))
+        (pushnew `(,(nth i lay) . ,(nth (+ i 60) lay))
+                 ergoemacs-shifted-assoc
+                 :test 'equal)
+        (pushnew `(,(nth (+ i 60) lay) . ,(nth i lay))
+                 ergoemacs-shifted-assoc
+                 :test 'equal)
+        (pushnew (nth i lay)
+                 unshifted-list
+                 :test 'equal)
+        (pushnew (nth (+ i 60) lay)
+                 shifted-list
+                 :test 'equal))
       (setq i (+ i 1)))
     (setq ergoemacs-shifted-regexp 
           (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
@@ -841,8 +848,9 @@ and `ergoemacs-pretty-key' descriptions.
         (while (< i len)
           (unless (or (string= "" (nth i base))
                       (string= "" (nth i lay)))
-            (add-to-list 'ergoemacs-translation-assoc
-                         `(,(nth i base) . ,(nth i lay))))
+            (pusnew `(,(nth i base) . ,(nth i lay))
+                    ergoemacs-translation-assoc
+                    :test 'equal))
           (setq i (+ i 1)))
         (setq ergoemacs-translation-regexp
               (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"

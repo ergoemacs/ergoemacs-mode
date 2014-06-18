@@ -739,7 +739,7 @@
        (mapc
         (lambda(fn)
           (let ((keys (gethash fn ergoemacs-where-is-global-hash)))
-            (add-to-list 'keys key)
+            (pushnew key keys :test equal)
             (puthash fn keys ergoemacs-where-is-global-hash)))
         (nth 1 x))))
    ergoemacs-emacs-default-bindings))
@@ -757,9 +757,7 @@
              (setq fn (lookup-key global-map (read-kbd-macro first)))
              (if (not (functionp fn))
                  elt
-	       ;; FIXME: Use `push' or `cl-pushnew' instead of
-               ;; `add-to-list'.
-               (add-to-list 'last fn)
+               (pusnew fn last :test 'equal)
                `(,first ,last))))
          ergoemacs-emacs-default-bindings))
   (ergoemacs-reset-global-where-is))
@@ -904,8 +902,8 @@ This should only be run when no global keys have been set.
                     (when fix
                       (unless (integerp trans-function)
                         (ergoemacs-global-fix-defualt-bindings key-kbd trans-function))))
-                  (add-to-list 'ergoemacs-global-changed-cache key-kbd))
-              (add-to-list 'ergoemacs-global-not-changed-cache key-kbd))
+                  (pushnew key-kbd ergoemacs-global-changed-cache :test 'equal))
+              (pusnew key-kbd ergoemacs-global-not-changed-cache :test 'equal))
             has-changed))))))
 
 (declare-function ergoemacs-get-fixed-layout "ergoemacs-translate.el")

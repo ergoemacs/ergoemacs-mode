@@ -2261,7 +2261,8 @@ If OFF is non-nil, turn off the options instead."
   (if (and ergoemacs-theme--object (not ergoemacs-get-fixed-layout))
       (setq ergoemacs-get-fixed-layout
             (ergoemacs-fixed-layout-list ergoemacs-theme--object))
-    (setq ergoemacs-get-fixed-layout nil)))
+    (setq ergoemacs-get-fixed-layout nil))
+  'ergoemacs-get-fixed-layout)
 
 (defun ergoemacs-rm-key (keymap key)
   "Removes KEY from KEYMAP even if it is an ergoemacs composed keymap.
@@ -2358,7 +2359,6 @@ When SILENT is true, also include silent themes"
        (sort (ergoemacs-get-themes silent) 'string<))
     (symbol :tag "Other")))
 
-;; FIXME
 ;;;###autoload
 (defun ergoemacs-key (key function &optional desc only-first fixed-key)
   "Defines KEY in ergoemacs keyboard based on QWERTY and binds to FUNCTION.

@@ -249,24 +249,6 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
                           "\"")))
     full-exe))
 
-(defvar ergoemacs-theme--object)
-(declare-function ergoemacs-gen-svg "ergoemacs-extras.el")
-(declare-function ergoemacs-theme-component-map-list-md5 "ergoemacs-theme-engine.el")
-(defun ergoemacs-cheat-sheet-file ()
-  "Cheet sheet file for ergoemacs."
-  (let ((var-dir "") extra-dir)
-    (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
-    (when ergoemacs-theme
-      (setq var-dir (concat ergoemacs-theme "/"))
-      (setq extra-dir (expand-file-name ergoemacs-theme extra-dir)))
-    (setq extra-dir (expand-file-name "ergo-layouts" extra-dir))
-    (setq extra-dir (expand-file-name (concat "ergoemacs-layout-" ergoemacs-keyboard-layout (if ergoemacs-theme--object
-                                                                                                (concat "-" (ergoemacs-theme-component-map-list-md5 ergoemacs-theme--object))
-                                                                                              "")  ".svg")))
-    (when (not (file-exists-p extra-dir))
-      (ergoemacs-gen-svg ergoemacs-theme "kbd-ergo.svg" (concat var-dir "ergo-layouts")))
-    extra-dir))
-
 (defun ergoemacs-open-line ()
   "Inserts an indented newline after the current line and moves the point to it."
   (interactive "P")
@@ -1903,6 +1885,9 @@ If arg is a negative prefix, copy file path only"
   :group 'ergoemacs-mode)
 
 (defvar ergoemacs-dir)
+(defvar ergoemacs-theme--object)
+(declare-function ergoemacs-gen-svg "ergoemacs-extras.el")
+(declare-function ergoemacs-theme-component-map-list-md5 "ergoemacs-theme-engine.el")
 (defun ergoemacs-display-current-svg (&optional arg)
   "Generates the current ergoemacs layout, unless it already exists and opens it in a browser.
 With a prefix, force regeneration. "
@@ -1915,27 +1900,35 @@ With a prefix, force regeneration. "
         (png-tmp)
         (png-prefix "")
         (file-prefix "")
+        (md5 (if ergoemacs-theme--object
+                 (concat
+                  "-" (ergoemacs-theme-component-map-list-md5 ergoemacs-theme--object))
+               ""))
         (file ""))
     (when var
       (setq extra (concat var "/ergo-layouts")))
     (setq dir (expand-file-name extra
                                 (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-    (setq file (expand-file-name (concat "ergoemacs-layout-" layout ".svg") dir))
-    (setq file-prefix (expand-file-name (concat "ergoemacs-layout-" layout "-prefix.svg") dir))
+    (setq file (expand-file-name (concat "ergoemacs-layout-" layout md5 ".svg") dir))
+    (setq file-prefix (expand-file-name (concat "ergoemacs-layout-" layout md5 "-prefix.svg") dir))
     
-    (setq png (expand-file-name (concat "ergoemacs-layout-" layout ".png") dir))
-    (setq png-tmp (expand-file-name (concat "ergoemacs-layout-" layout "-tmp.png") dir))
-    (setq png-prefix (expand-file-name (concat "ergoemacs-layout-" layout "-prefix.png") dir))
+    (setq png (expand-file-name (concat "ergoemacs-layout-" layout md5 ".png") dir))
+    (setq png-tmp (expand-file-name (concat "ergoemacs-layout-" layout md5 "-tmp.png") dir))
+    (setq png-prefix (expand-file-name (concat "ergoemacs-layout-" layout md5 "-prefix.png") dir))
     
     (unless (and (not current-prefix-arg) (file-exists-p file))
       (if (called-interactively-p 'any)
           (let ((temp-file (make-temp-file "ergoemacs-gen" nil ".el")))
             (with-temp-file temp-file
-              (insert (format "(setq ergoemacs-theme %s)\n(setq ergoemacs-keyboard-layout \"%s\")\n(ergoemacs-mode 1)\n(ergoemacs-display-current-svg 1)"
+              (insert (format "(setq ergoemacs-theme %s)\n(setq ergoemacs-keyboard-layout \"%s\")\n(setq ergoemacs-theme-options '"
                               (if var
                                   (concat "\"" var "\"")
                                 "nil")
-                              layout)))
+                              layout))
+              (let ((print-level nil)
+                    (print-length nil))
+                (prin1 ergoemacs-theme-options (current-buffer)))
+              (insert ")\n(ergoemacs-mode 1)\n(ergoemacs-display-current-svg 1)"))
             
             (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode -l %s &"
                                    (ergoemacs-emacs-exe)
