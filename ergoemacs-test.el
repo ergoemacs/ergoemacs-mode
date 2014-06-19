@@ -1063,6 +1063,10 @@ Selected mark would not be cleared after paste."
   "Test global C-c b"
   (should (equal (ergoemacs-test-global-key-set-before nil "C-c b") t)))
 
+;;; Not sure why `cl-gensym' is called, probably from `ert'?
+;; Suppress: "the function `cl-gensym' might not be defined at
+;; runtime" warning.
+(declare-function cl-gensym (cl-gensym &optional prefix) t)
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
