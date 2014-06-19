@@ -1675,8 +1675,7 @@ Setup C-c and C-x keys to be described properly.")
         hashkey lookup override-text-map override orig-map
         tmp-overlay)
     (cond
-     ((and overriding-terminal-local-map
-           (or (not (boundp 'saved-overriding-map)) (eq saved-overriding-map t)))
+     ((and overriding-terminal-local-map nil) ;; Don't do this for now...
       (when (or
              (eq (lookup-key
                   overriding-terminal-local-map [ergoemacs]) 'ignore)
@@ -1831,8 +1830,7 @@ The keymaps are:
         hashkey hashkey-read lookup override-text-map override-read-map
         override orig-map)
     (cond
-     ((and overriding-terminal-local-map
-           (or (not (boundp 'saved-overriding-map)) (eq saved-overriding-map t)))
+     ((and overriding-terminal-local-map nil) ;; Don't do this for now
       (when (not
              (eq (lookup-key
                   overriding-terminal-local-map [ergoemacs])
