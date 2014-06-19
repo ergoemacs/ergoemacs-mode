@@ -373,7 +373,6 @@
   (global-set-key (kbd "C-h 8") 'ergoemacs-lookup-wikipedia)
   (global-set-key (kbd "C-h 9") 'ergoemacs-lookup-word-definition)
   (global-set-key (kbd "C-h `") 'elisp-index-search)
-  (global-set-key (kbd "C-h m") 'ergoemacs-describe-major-mode)
   (global-set-key (kbd "C-h o") 'ergoemacs-where-is-old-binding)
   (global-set-key (kbd "C-h z") 'ergoemacs-clean)
   (global-set-key (kbd "<f1> '") 'ergoemacs-display-current-svg)
@@ -386,7 +385,6 @@
   (global-set-key (kbd "<f1> 8") 'ergoemacs-lookup-wikipedia)
   (global-set-key (kbd "<f1> 9") 'ergoemacs-lookup-word-definition)
   (global-set-key (kbd "<f1> `") 'elisp-index-search)
-  (global-set-key (kbd "<f1> m") 'ergoemacs-describe-major-mode)
   (global-set-key (kbd "<f1> o") 'ergoemacs-where-is-old-binding))
 
 
@@ -691,7 +689,6 @@
   (global-set-key (kbd "<apps> h 8") 'ergoemacs-lookup-wikipedia)
   (global-set-key (kbd "<apps> h 9") 'ergoemacs-lookup-word-definition)
   (global-set-key (kbd "<apps> h `") 'elisp-index-search)
-  (global-set-key (kbd "<apps> h m") 'ergoemacs-describe-major-mode)
   (global-set-key (kbd "<apps> h o") 'ergoemacs-where-is-old-binding)
   (global-set-key (kbd "<apps> h z") 'ergoemacs-clean)
   (global-set-key (kbd "<apps> h Z") 'ergoemacs-clean-nw)
@@ -880,7 +877,8 @@
 (ergoemacs-theme-component ergoemacs-remaps ()
   "Remaps for ergoemacs-mode"
   (when ergoemacs-mode
-    (global-set-key [remap describe-key] 'ergoemacs-describe-key)))
+    (global-set-key [remap describe-key] 'ergoemacs-describe-key)
+    (global-set-key [remap describe-mode] 'ergoemacs-describe-major-mode)))
 
 (ergoemacs-theme-component ergoemacs-banish-shift ()
   "Banish Shift Combinations with <apps> SPC"
