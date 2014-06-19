@@ -30,6 +30,10 @@
 
 (require 'ert)
 (require 'elp)
+;;; Not sure why `cl-gensym' is called, probably from `ert'/`elp'?
+;; Suppress: "the function `cl-gensym' might not be defined at
+;; runtime" warning.
+(autoload 'cl-gensym "cl-macs.el")
 (defvar ergoemacs-test-lorem-ipsum
   "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
 do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
@@ -1063,13 +1067,6 @@ Selected mark would not be cleared after paste."
   "Test global C-c b"
   (should (equal (ergoemacs-test-global-key-set-before nil "C-c b") t)))
 
-;;; Not sure why `cl-gensym' is called, probably from `ert'?
-;; Suppress: "the function `cl-gensym' might not be defined at
-;; runtime" warning.
-(cond
- ((and (<= 24 emacs-major-version)
-       (<= 4 emacs-minor-version))
-  (autoload 'cl-gensym "cl-macs.el")))
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
