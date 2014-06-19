@@ -327,6 +327,15 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
      (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
        ,(format "Generated theme component for %s theme" (symbol-name name))
        ,@differences)))
+
+(defmacro ergoemacs-object-name-string (obj)
+  "Compatability fixes for `object-name-string' or `eieio-object-name-string'.
+"
+  `(,(cond
+      ((and (<= 24 emacs-major-version)
+            (<= 4 emacs-minor-version))
+       'eieio-object-name-string)
+      (t 'object-name-string)) ,obj))
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here

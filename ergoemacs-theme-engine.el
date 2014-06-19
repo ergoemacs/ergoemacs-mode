@@ -202,10 +202,8 @@ a set type."
            (if (not (stringp new-value))
                (signal 'invalid-slot-type
                        (list obj slot-name 'string new-value)))
-           (funcall (if (fboundp 'eieio-object-set-name-string)
-                        'eieio-object-set-name-string
-                      'object-set-name-string) obj new-value))
-          (t (save-match-data (replace-regexp-in-string "::.*$" "" (object-name-string obj))))))
+           (funcall  obj new-value))
+          (t (save-match-data (replace-regexp-in-string "::.*$" "" (ergoemacs-object-name-string obj))))))
    ((or (eq slot-name 'object-symbol)
         (eq slot-name :object-symbol))
     (cond ((eq operation 'oset)
@@ -213,7 +211,7 @@ a set type."
                (signal 'invalid-slot-type
                        (list obj slot-name 'symbol new-value)))
            (object-set-name-string obj (symbol-name new-value)))
-          (t (intern (save-match-data (replace-regexp-in-string "::.*$" "" (object-name-string obj)))))))
+          (t (intern (save-match-data (replace-regexp-in-string "::.*$" "" (ergoemacs-object-name-string obj)))))))
    (t
     (call-next-method))))
 
@@ -761,7 +759,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
 
 (defmethod ergoemacs-composite-map--ini ((obj ergoemacs-composite-map))
   (unless (slot-boundp obj 'fixed)
-    (let ((fixed (ergoemacs-fixed-map (object-name-string obj) 
+    (let ((fixed (ergoemacs-fixed-map (ergoemacs-object-name-string obj) 
                                       :global-map-p (oref obj global-map-p)
                                       :modify-map (oref obj modify-map)
                                       :full-map (oref obj full-map)
@@ -771,7 +769,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
       (oset obj fixed fixed)))
   (unless (slot-boundp obj 'variable)
     (let ((var (ergoemacs-variable-map
-                (object-name-string obj) 
+                (ergoemacs-object-name-string obj) 
                 :global-map-p (oref obj global-map-p)
                 :just-first (oref obj just-first)
                 :layout (oref obj layout)
@@ -877,7 +875,7 @@ Assumes maps are orthogonal."
           (oset ret hook (oref obj hook)))
         (puthash ilay ret keymap-hash)
         (oset obj keymap-hash keymap-hash))
-      (setq ret (clone ret (object-name-string obj))) ;; Reset name
+      (setq ret (clone ret (ergoemacs-object-name-string obj))) ;; Reset name
       ret)))
 
 (defclass ergoemacs-theme-component-maps (ergoemacs-named)
@@ -944,7 +942,7 @@ Assumes maps are orthogonal."
 (defvar ergoemacs-theme-comp-hash)
 (defmethod ergoemacs-theme-component-maps--save-hash ((obj ergoemacs-theme-component-maps))
   (with-slots (object-name version) obj
-    (puthash (object-name-string obj)
+    (puthash (ergoemacs-object-name-string obj)
              obj ergoemacs-theme-comp-hash)))
 
 (defmethod ergoemacs-theme-component-maps--ini ((obj ergoemacs-theme-component-maps))
@@ -954,7 +952,7 @@ Assumes maps are orthogonal."
     (unless (slot-boundp obj 'global)
       (oset obj global
             (ergoemacs-composite-map
-             (object-name-string obj)
+             (ergoemacs-object-name-string obj)
              :global-map-p t
              :variable-reg variable-reg
              :just-first just-first
