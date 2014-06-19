@@ -752,10 +752,10 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
                     (interactive-form ergoemacs-real-key-binding)
                   (error nil))
                 (setq this-command ergoemacs-real-key-binding))))
-            (when (and
-                   (or (not (boundp 'saved-overriding-map)) (eq saved-overriding-map t))
-                   (not unread-command-events))
-              (ergoemacs-install-shortcuts-up))))
+            ;; Used to check for `saved-overriding-map', but changed
+            ;; in emacs 24.4, and `ergoemacs-mode' deals with
+            ;; universal functions independent of emacs...
+            (ergoemacs-install-shortcuts-up)))
       (error nil)))
   (unless (ergoemacs-smart-function-p this-command)
     (run-hooks 'ergoemacs-pre-command-hook))
