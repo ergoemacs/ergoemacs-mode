@@ -197,12 +197,6 @@ modal state is currently enabled."
   :type  '(repeat symbol)
   :group 'ergoemacs-modal)
 
-(defvar ergoemacs-exit-temp-map-var nil)
-
-(defun ergoemacs-minibuffer-setup ()
-  "Exit temporary overlay maps."
-  )
-
 (defvar ergoemacs-modal-list '())
 (defvar ergoemacs-translations)
 (defvar ergoemacs-modal-ignored-keymap
