@@ -120,9 +120,30 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 
 (defadvice cua-mode (around ergoemacs-activate-only-selection-mode (arg) activate)
   "When `ergoemacs-mode' is enabled, enable `cua-selection-mode' instead of plain `cua-mode'."
-  (when ergoemacs-mode 
+  (when ergoemacs-mode
+    ;; Do NOT allow cua-mode to do the C-x and C-c
+    ;; hack, `ergoemacs-mode' needs to do a similar hack to allow
+    ;; backspace in key sequences.
     (setq-default cua-enable-cua-keys nil))
   ad-do-it
+  ;; Reset `cua--keymap-alist' -- make it compatible with
+  ;; `ergoemacs-mode'
+  (setq cua--rectangle-keymap (make-sparse-keymap))
+  (setq cua--rectangle-initialized nil)
+  (if ergoemacs-mode
+      (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
+    (setq cua--rectangle-modifier-key 'meta))
+  (cua--init-rectangles)
+  (setq cua--keymap-alist
+        (progn
+          (cua--init-rectangles)
+          `((cua--ena-prefix-override-keymap . ,cua--prefix-override-keymap)
+            (cua--ena-prefix-repeat-keymap . ,cua--prefix-repeat-keymap)
+            (cua--ena-cua-keys-keymap . ,cua--cua-keys-keymap)
+            (cua--ena-global-mark-keymap . ,cua--global-mark-keymap)
+            (cua--rectangle . ,cua--rectangle-keymap)
+            (cua--ena-region-keymap . ,cua--region-keymap)
+            (cua-mode . ,cua-global-keymap))))
   (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
     (customize-mark-as-set 'cua-enable-cua-keys)))
 

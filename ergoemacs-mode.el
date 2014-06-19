@@ -213,8 +213,6 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
-(defvar ergoemacs-cua-rect-modifier-orig cua--rectangle-modifier-key)
-
 (defcustom ergoemacs-cua-rect-modifier 'super
   "Change the CUA rectangle modifier to this key."
   :type '(choice
@@ -470,19 +468,6 @@ bindings the keymap is:
           (when (featurep 'ergoemacs-menus)
             (ergoemacs-menus-off)))
         (ergoemacs-debug-heading "Ergoemacs Menus have loaded.")
-        (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
-        (setq cua--rectangle-keymap (make-sparse-keymap))
-        (setq cua--rectangle-initialized nil)
-        (cua--init-rectangles)
-        (setq cua--keymap-alist
-              `((cua--ena-prefix-override-keymap . ,cua--prefix-override-keymap)
-                (cua--ena-prefix-repeat-keymap . ,cua--prefix-repeat-keymap)
-                (cua--ena-cua-keys-keymap . ,cua--cua-keys-keymap)
-                (cua--ena-global-mark-keymap . ,cua--global-mark-keymap)
-                (cua--rectangle . ,cua--rectangle-keymap)
-                (cua--ena-region-keymap . ,cua--region-keymap)
-                (cua-mode . ,cua-global-keymap)))
-        
         (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
           (if (not ergoemacs-read-key-overriding-overlay-save)
               (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
@@ -512,20 +497,6 @@ bindings the keymap is:
           (set cm ergoemacs-old-ns-command-modifier))
         (when am
           (set am ergoemacs-old-ns-alternate-modifier))))
-    ;; Change retangle modifier back.    
-    (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier-orig)
-    (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
-    (setq cua--rectangle-keymap (make-sparse-keymap))
-    (setq cua--rectangle-initialized nil)
-    (cua--init-rectangles)
-    (setq cua--keymap-alist
-          `((cua--ena-prefix-override-keymap . ,cua--prefix-override-keymap)
-            (cua--ena-prefix-repeat-keymap . ,cua--prefix-repeat-keymap)
-            (cua--ena-cua-keys-keymap . ,cua--cua-keys-keymap)
-            (cua--ena-global-mark-keymap . ,cua--global-mark-keymap)
-            (cua--rectangle . ,cua--rectangle-keymap)
-            (cua--ena-region-keymap . ,cua--region-keymap)
-            (cua-mode . ,cua-global-keymap)))
     (remove-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
     (ergoemacs-populate-pre-command-hook t)
     ;; Revert `substitute-command-keys' and `completing-read'
