@@ -210,7 +210,7 @@ a set type."
            (if (not (symbolp new-value))
                (signal 'invalid-slot-type
                        (list obj slot-name 'symbol new-value)))
-           (object-set-name-string obj (symbol-name new-value)))
+           (ergoemacs-object-set-name-string obj (symbol-name new-value)))
           (t (intern (save-match-data (replace-regexp-in-string "::.*$" "" (ergoemacs-object-name-string obj)))))))
    (t
     (call-next-method))))

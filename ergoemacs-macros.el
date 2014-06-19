@@ -336,6 +336,15 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
             (<= 4 emacs-minor-version))
        'eieio-object-name-string)
       (t 'object-name-string)) ,obj))
+
+(defmacro ergoemacs-object-set-name-string (obj name)
+  "Compatability fixes for `object-set-name-string' or `eieio-object-set-name-string'.
+"
+  `(,(cond
+      ((and (<= 24 emacs-major-version)
+            (<= 4 emacs-minor-version))
+       'eieio-object-set-name-string)
+      (t 'object-set-name-string)) ,obj ,string))
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here
