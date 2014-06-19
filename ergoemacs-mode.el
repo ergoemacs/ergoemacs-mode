@@ -392,7 +392,7 @@ When REMOVE is true, remove the emulations."
                            ergoemacs-repeat-emulation-mode-map-alist
                            ergoemacs-emulation-mode-map-alist
                            ergoemacs-shortcut-emulation-mode-map-alist)))
-    (funcall (if remove #'remove-hook #'add-hook) #'emulation-mode-map-alists hook)))
+    (funcall (if remove #'remove-hook #'add-hook) 'emulation-mode-map-alists hook)))
 
 (defvar ns-alternate-modifier)
 (defvar mac-alternate-modifier)
@@ -493,7 +493,6 @@ bindings the keymap is:
         (setq ergoemacs-unbind-keys t)
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
         (ergoemacs-populate-pre-command-hook)
-        (add-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
         (ergoemacs-debug-heading "Ergoemacs-mode turned ON."))
     ;; turn off ergoemacs-mode
     (ergoemacs-debug-heading "Ergoemacs-mode is turning OFF.")
