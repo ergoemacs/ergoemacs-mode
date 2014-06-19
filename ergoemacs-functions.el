@@ -517,6 +517,8 @@ This will not honor `shift-select-mode'."
 
 (defvar font-lock)
 (defvar ergoemacs-beginning-of-line-or-what-last-command nil)
+(declare-function comment-search-backward "newcomment.el")
+(declare-function comment-search-forward "newcomment.el")
 (defun ergoemacs-beginning-of-line-or-what (&optional N)
   "Move cursor to beginning of indentation, line, or text block, or beginning of buffer.
  (a text block is separated by empty lines).

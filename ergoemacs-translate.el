@@ -59,6 +59,7 @@
 			      (buffer-file-name)
 			      default-directory)))))
 
+
 ;;; ergoemacs pretty keys
 
 
@@ -380,7 +381,7 @@ This is called through `ergoemacs-universal-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
               (ergoemacs-universal-argument ',(plist-get arg-plist ':name)))))
-    (pushnew (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument"))
+    (ergoemacs-pushnew (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument"))
              ergoemacs-universal-fns)
 
     (eval (macroexpand
@@ -807,16 +808,16 @@ and `ergoemacs-pretty-key' descriptions.
     (while (< i 60)
       (unless (or (string= "" (nth i lay))
                   (string= "" (nth (+ i 60) lay)))
-        (pushnew `(,(nth i lay) . ,(nth (+ i 60) lay))
+        (ergoemacs-pushnew `(,(nth i lay) . ,(nth (+ i 60) lay))
                  ergoemacs-shifted-assoc
                  :test 'equal)
-        (pushnew `(,(nth (+ i 60) lay) . ,(nth i lay))
+        (ergoemacs-pushnew `(,(nth (+ i 60) lay) . ,(nth i lay))
                  ergoemacs-shifted-assoc
                  :test 'equal)
-        (pushnew (nth i lay)
+        (ergoemacs-pushnew (nth i lay)
                  unshifted-list
                  :test 'equal)
-        (pushnew (nth (+ i 60) lay)
+        (ergoemacs-pushnew (nth (+ i 60) lay)
                  shifted-list
                  :test 'equal))
       (setq i (+ i 1)))
@@ -844,7 +845,7 @@ and `ergoemacs-pretty-key' descriptions.
         (while (< i len)
           (unless (or (string= "" (nth i base))
                       (string= "" (nth i lay)))
-            (pushnew `(,(nth i base) . ,(nth i lay))
+            (ergoemacs-pushnew `(,(nth i base) . ,(nth i lay))
                     ergoemacs-translation-assoc
                     :test 'equal))
           (setq i (+ i 1)))

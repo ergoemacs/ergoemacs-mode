@@ -345,6 +345,17 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
             (<= 4 emacs-minor-version))
        'eieio-object-set-name-string)
       (t 'object-set-name-string)) ,obj ,name))
+
+(defmacro ergoemacs-pushnew (x place &rest plist)
+  "Fix byte-compile errors for emacs versions less than 24.3.
+It says that `adjoin' from `cl' may be called at runtime, so use
+`add-to-list' instead of `pushnew'"
+  (cond
+   ((and (<= 24 emacs-major-version)
+         (<= 3 emacs-minor-version))
+    `(pushnew ,x ,place ,@plist))
+   (t `(add-to-list ',place ,x ,(plist-get plist ':test)))))
+
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here

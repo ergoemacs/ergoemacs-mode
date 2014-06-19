@@ -609,11 +609,11 @@ All other modes are assumed to be minor modes or unimportant.
         (if (fboundp 'tabbar-install-faces)
             (tabbar-install-faces)
           (when (fboundp 'package-install)`
-            (pushnew '("melpa" . "http://melpa.milkbox.net/packages/")
+            (ergoemacs-pushnew '("melpa" . "http://melpa.milkbox.net/packages/")
                      package-archives
                      :test 'equal )
             (when (< emacs-major-version 24)
-              (pushnew '("melpa" . "http://melpa.milkbox.net/packages/")
+              (ergoemacs-pushnew '("melpa" . "http://melpa.milkbox.net/packages/")
                        package-archives
                        :test 'equal))
             (package-refresh-contents)

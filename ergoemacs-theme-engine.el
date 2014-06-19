@@ -60,6 +60,9 @@
                                                    (buffer-file-name)
                                                    default-directory)))))
 
+;;; Not sure why `adjoin' may be called at run-time; sigh.
+(autoload 'adjoin "cl.el")
+
 (defgroup ergoemacs-themes nil
   "Default Ergoemacs Layout"
   :group 'ergoemacs-mode)
@@ -492,6 +495,8 @@ DEF is anything that can be a key's definition:
     (let* ((key-desc (key-description key))
            (key-vect (read-kbd-macro key-desc t))
            swapped
+           (shift-list shortcut-shifted-movement)
+           (move-list shortcut-movement)
            tmp)
       ;; Swap out apps for menu on the appropriate system.
       (dotimes (number (length key-vect))
@@ -526,11 +531,11 @@ DEF is anything that can be a key's definition:
             (if (let (case-fold-search)
                   (string-match "\\(S-\\|[A-Z]$\\)" key-desc))
                 (progn
-                  (pushnew key-vect shortcut-shifted-movement :test 'equal)
-                  (oset obj shortcut-shifted-movement shortcut-shifted-movement)
+                  (ergoemacs-pushnew key-vect shift-list :test 'equal)
+                  (oset obj shortcut-shifted-movement shift-list)
                   (define-key shortcut-map key 'ergoemacs-shortcut-movement-no-shift-select))
-              (pushnew key-vect shortcut-movement :test 'equal)
-              (oset obj shortcut-movement shortcut-movement)
+              (ergoemacs-pushnew key-vect move-list :test 'equal)
+              (oset obj shortcut-movement move-list)
               (define-key shortcut-map key 'ergoemacs-shortcut-movement))
           (define-key shortcut-map key 'ergoemacs-shortcut))
         (oset obj no-shortcut-map no-shortcut-map)
@@ -1088,7 +1093,7 @@ Assumes maps are orthogonal."
         (when (ergoemacs-theme-component-maps-p map)
           (with-slots (versions) map
             (dolist (ver versions)
-              (pushnew ver ret :test 'equal)))))
+              (ergoemacs-pushnew ver ret :test 'equal)))))
       (sort ret 'string<))))
 
 (defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-map-list) &optional match keymaps)
@@ -1100,7 +1105,7 @@ Assumes maps are orthogonal."
           (when (ergoemacs-theme-component-maps-p map)
             (setq ret (ergoemacs-get-hooks map match ret keymaps))))
         (dolist (item ret)
-          (pushnew item final :test 'equal))
+          (ergoemacs-pushnew item final :test 'equal))
         (puthash (list match keymaps) final hooks))
       final)))
 
@@ -1270,7 +1275,7 @@ FULL-SHORTCUT-MAP-P "
                   (funcall (if remove-p #'remove-hook #'add-hook) hook
                            fn-name)))
                ((and modify-map (not (boundp map-name)))
-                (pushnew (list map-name full-map map deferred-keys) ergoemacs-deferred-maps))
+                (ergoemacs-pushnew (list map-name full-map map deferred-keys) ergoemacs-deferred-maps))
                ((and modify-map (boundp map-name))
                 ;; Maps that are modified once (modify NOW if bound);
                 ;; no need for hooks?
@@ -1369,7 +1374,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             (unless (member (nth 0 c) rm-list)
               (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash)
               (when (< 1 (length (nth 0 c)))
-                (pushnew (substring (nth 0 c) 0 -1)
+                (ergoemacs-pushnew (substring (nth 0 c) 0 -1)
                          ergoemacs-shortcut-prefix-keys
                          :test 'equal))
               (when (eq (nth 1 (nth 1 c)) 'global)
@@ -1859,7 +1864,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
             (maphash
              (lambda(key ignore)
                (when (< 1 (length key))
-                 (pushnew (substring key 0 -1)
+                 (ergoemacs-pushnew (substring key 0 -1)
                           ergoemacs-shortcut-prefix-keys
                           :test 'equal)))
              ergoemacs-command-shortcuts-hash)
