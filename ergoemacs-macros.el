@@ -344,7 +344,7 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
       ((and (<= 24 emacs-major-version)
             (<= 4 emacs-minor-version))
        'eieio-object-set-name-string)
-      (t 'object-set-name-string)) ,obj ,string))
+      (t 'object-set-name-string)) ,obj ,name))
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here

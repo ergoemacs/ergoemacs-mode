@@ -526,7 +526,6 @@ bindings the keymap is:
             (cua--rectangle . ,cua--rectangle-keymap)
             (cua--ena-region-keymap . ,cua--region-keymap)
             (cua-mode . ,cua-global-keymap)))
-    (remove-hook 'minibuffer-setup-hook #'ergoemacs-minibuffer-setup)
     (remove-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
     (ergoemacs-populate-pre-command-hook t)
     ;; Revert `substitute-command-keys' and `completing-read'
