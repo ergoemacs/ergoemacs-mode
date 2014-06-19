@@ -1815,7 +1815,9 @@ If arg is a negative prefix, copy file path only"
         (setq fn (file-name-nondirectory fn))))
     (with-temp-buffer
       (insert fn)
-      (mark-whole-buffer)
+      (push-mark (point))
+      (push-mark (point-max) nil t)
+      (goto-char (point-min))
       (ergoemacs-cut-line-or-region))))
 
 (defun ergoemacs-copy-file-name ()
