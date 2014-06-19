@@ -1066,7 +1066,7 @@ Selected mark would not be cleared after paste."
 ;;; Not sure why `cl-gensym' is called, probably from `ert'?
 ;; Suppress: "the function `cl-gensym' might not be defined at
 ;; runtime" warning.
-(declare-function cl-gensym "cl-macs.el" (cl-gensym &optional prefix) t)
+(autoload 'cl-gensym "cl-macs.el")
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
