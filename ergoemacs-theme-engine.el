@@ -420,6 +420,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
       (oset obj cmd-list cmd-list))))
 
 (defvar ergoemacs-ignored-prefixes)
+(declare-function ergoemacs-read-key-default "ergoemacs-shortcuts.el")
 (defmethod ergoemacs-define-map--read-map ((obj ergoemacs-fixed-map) key)
   "Defines KEY in the OBJ read-key slot if it is a vector over 2.
 Key sequences starting with `ergoemacs-ignored-prefixes' are not added."
