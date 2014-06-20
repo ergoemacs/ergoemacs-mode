@@ -230,8 +230,8 @@ Valid values are:
   :group 'ergoemacs-mode
   :type '(choice
           (const :tag "Do not allow fast repeat commands." nil)
-          (const :tag "Allow fast repeat command of the current movement command" 'single)
-          (const :tag "Allow fast repeat of all movement commands" 'all)))
+          (const :tag "Allow fast repeat command of the current movement command" single)
+          (const :tag "Allow fast repeat of all movement commands" all)))
 
 (defun ergoemacs-repeat-movement-full-keymap ()
   "Allow movement commands to be repeated without pressing the ALT key"
