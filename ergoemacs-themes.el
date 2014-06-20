@@ -98,7 +98,7 @@
   (global-set-key (kbd "C-x h") nil) ;; Mark whole buffer
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   
-  (global-set-key (kbd "C-u") 'ergoemacs-universal-argument)
+  ;; (global-set-key (kbd "C-u") 'ergoemacs-universal-argument)
   (global-set-key (kbd "<M-backspace>") '(undo-tree-undo undo))
   (global-set-key (kbd "C-z") 'undo)
 
@@ -696,7 +696,7 @@
   (global-set-key (kbd "<apps> s") 'save-buffer)
   (global-set-key (kbd "<apps> C-s") 'write-file)
   (global-set-key (kbd "<apps> o") 'find-file)
-  (global-set-key (kbd "<apps> g") 'ergoemacs-unchorded-universal-argument)
+  (global-set-key (kbd "<apps> g") 'ergoemacs-universal-argument)
   (global-set-key (kbd "<apps> w") 'ergoemacs-close-current-buffer)
   (global-set-key (kbd "<apps> x") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "<apps> c") 'ergoemacs-copy-line-or-region)
@@ -877,8 +877,12 @@
 (ergoemacs-theme-component ergoemacs-remaps ()
   "Remaps for ergoemacs-mode"
   (when ergoemacs-mode
-    (global-set-key [remap describe-key] 'ergoemacs-describe-key)
-    (global-set-key [remap describe-mode] 'ergoemacs-describe-major-mode)))
+    (global-set-key [remap universal-argument]
+                    'ergoemacs-universal-argument)
+    (global-set-key [remap describe-key]
+                    'ergoemacs-describe-key)
+    (global-set-key [remap describe-mode]
+                    'ergoemacs-describe-major-mode)))
 
 (ergoemacs-theme-component ergoemacs-banish-shift ()
   "Banish Shift Combinations with <apps> SPC"
