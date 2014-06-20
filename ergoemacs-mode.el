@@ -668,7 +668,8 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
     ergoemacs-shortcut-movement-no-shift-select
     ergoemacs-shortcut-movement
     ergoemacs-read-key
-    ergoemacs-modal-default))
+    ergoemacs-modal-default
+    ergoemacs-read-key-default))
 
 (defun ergoemacs-smart-function-p (var)
   "Is VAR an `ergoemacs-mode' smart function?"
