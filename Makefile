@@ -2,8 +2,9 @@ EMACS=emacs
 
 EMACS_CLEAN=-Q
 EMACS_BATCH=$(EMACS_CLEAN) --batch
-#TESTS=ergoemacs-test-sh
-TESTS=ergoemacs-
+TESTS=ergoemacs-test-apps-copy
+#TESTS=ergoemacs-test-issue-184-paste
+#TESTS=ergoemacs-
 
 CURL=curl --silent
 TMP1=$(shell pwd)
@@ -39,7 +40,9 @@ test-autoloads : autoloads
 test-travis :
 	@if test -z "$$TRAVIS" && test -e $(TRAVIS_FILE); then travis-lint $(TRAVIS_FILE); fi
 
-test : build test-dep-1 test-autoloads
+test : build test-dep-1 test-autoloads ert
+
+ert :
 	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
 	    "(progn                                          \
 	      (fset 'ert--print-backtrace 'ignore)           \
