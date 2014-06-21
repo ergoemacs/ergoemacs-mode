@@ -198,7 +198,24 @@ This assumes any key defined while running a hook is a user-defined hook."
   (let ((ergoemacs-run-mode-hooks t))
     ad-do-it))
 
-;;; Unfortunately, the advice route doesn't seem to work :(
+
+;;; Unfortunately, the advice route doesn't seem to work for these
+;;; functions :(
+
+;;; key-description
+(declare-function ergoemacs-real-key-description
+                  "ergoemacs-advices.el" (keys &optional prefix) t)
+(fset 'ergoemacs-real-key-description (symbol-function 'key-description))
+(defvar ergoemacs-key-description-commands '(describe-function))
+(defun ergoemacs-key-description (keys &optional prefix)
+  "Allows `describe-function' to show the `ergoemacs-pretty-key' bindings.
+Uses `ergoemacs-real-key-description'."
+  (let ((ret (ergoemacs-real-key-description keys prefix)))
+    (when (and ergoemacs-mode
+               (memq this-command ergoemacs-key-description-commands))
+      (setq ret (ergoemacs-pretty-key ret)))
+    ret))
+
 (declare-function ergoemacs-real-substitute-command-keys "ergoemacs-advices.el" (string) t)
 (fset 'ergoemacs-real-substitute-command-keys (symbol-function 'substitute-command-keys))
 
@@ -220,7 +237,7 @@ will add MAP to substitution."
            (test-hash (gethash test-vect ergoemacs-original-keys-to-shortcut-keys)))
       (if test-hash
           (progn
-            (setq test (key-description (nth 0 test-hash)))
+            (setq test (ergoemacs-real-key-description (nth 0 test-hash)))
             (ergoemacs-pretty-key test))
         (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
                               ergoemacs-shortcut-keys)
@@ -370,7 +387,7 @@ Uses `ergoemacs-real-key-binding' to get the key-binding."
   "Enabling advices for C code and complex changes to functions.
 DISABLE when non-nil.
 Assumes ergoemacs-real-FUNCTION and ergoemacs-FUNCTION as the two functions to toggle"
-  (dolist (ad '(completing-read substitute-command-keys key-binding))
+  (dolist (ad '(completing-read substitute-command-keys key-binding key-description))
     (cond
      (disable
       (fset ad (symbol-function (intern (concat "ergoemacs-real-" (symbol-name ad))))))
