@@ -179,46 +179,9 @@
                  (list (sexp :tag "Command")
                        (string :tag "Short Name"))))
 (require 'eieio)
+(require 'eieio-base)
 
-(defclass ergoemacs-named ()
-  ()
-  "Object with a name.
-Name access by slot :object-name
-Symbol access by slot :object-symbol"
-  :abstract t)
-
-(defmethod slot-missing ((obj ergoemacs-named)
-                         slot-name operation &optional new-value)
-  "Called when a non-existent slot is accessed.
-For variable `ergoemacs-named', provide an imaginary `object-name' slot, which is a string.
-Also provide imaginary `object-symbol' slot, which is a symbol.
-
-Argument OBJ is the named object.
-Argument SLOT-NAME is the slot that was attempted to be accessed.
-OPERATION is the type of access, such as `oref' or `oset'.
-NEW-VALUE is the value that was being set into SLOT if OPERATION were
-a set type."
-  (cond
-   ((or (eq slot-name 'object-name)
-        (eq slot-name :object-name))
-    (cond ((eq operation 'oset)
-           (if (not (stringp new-value))
-               (signal 'invalid-slot-type
-                       (list obj slot-name 'string new-value)))
-           (funcall  obj new-value))
-          (t (save-match-data (replace-regexp-in-string "::.*$" "" (ergoemacs-object-name-string obj))))))
-   ((or (eq slot-name 'object-symbol)
-        (eq slot-name :object-symbol))
-    (cond ((eq operation 'oset)
-           (if (not (symbolp new-value))
-               (signal 'invalid-slot-type
-                       (list obj slot-name 'symbol new-value)))
-           (ergoemacs-object-set-name-string obj (symbol-name new-value)))
-          (t (intern (save-match-data (replace-regexp-in-string "::.*$" "" (ergoemacs-object-name-string obj)))))))
-   (t
-    (call-next-method))))
-
-(defclass ergoemacs-fixed-map (ergoemacs-named)
+(defclass ergoemacs-fixed-map (eieio-named)
   ;; object-name is the object name.
   ((name :initarg :name
          :type symbol)
@@ -323,8 +286,8 @@ The elements of LIST are not copied, just the list structure itself."
     (oset obj shortcut-movement (ergoemacs-copy-list shortcut-movement))
     (oset obj shortcut-list (ergoemacs-copy-list shortcut-list))))
 
-(declare-function ergoemacs-debug "ergoemacs-debug.el")
-(declare-function ergoemacs-debug-keymap "ergoemacs-debug.el")
+(declare-function ergoemacs-debug "ergoemacs-mode.el")
+(declare-function ergoemacs-debug-keymap "ergoemacs-mode.el")
 (defmethod ergoemacs-debug-obj ((obj ergoemacs-fixed-map) &optional stars)
   (let ((stars (or stars "**")))
     (with-slots (object-name
@@ -581,7 +544,7 @@ DEF is anything that can be a key's definition:
         (ergoemacs-define-map--deferred-list obj key-vect (list def)))))))
 
 
-(defclass ergoemacs-variable-map (ergoemacs-named)
+(defclass ergoemacs-variable-map (eieio-named)
   ((global-map-p :initarg :global-map-p
                  :initform nil
                  :type boolean)
@@ -722,7 +685,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
         (oset obj keymap-hash keymap-hash))
       ret)))
 
-(defclass ergoemacs-composite-map (ergoemacs-named)
+(defclass ergoemacs-composite-map (eieio-named)
   ((global-map-p :initarg :global-map-p
                  :initform nil
                  :type boolean)
@@ -884,7 +847,7 @@ Assumes maps are orthogonal."
       (setq ret (clone ret (ergoemacs-object-name-string obj))) ;; Reset name
       ret)))
 
-(defclass ergoemacs-theme-component-maps (ergoemacs-named)
+(defclass ergoemacs-theme-component-maps (eieio-named)
   ((variable-reg :initarg :variable-reg
                  :initform (concat "\\(?:^\\|<\\)" (regexp-opt '("M-" "<apps>" "<menu>")))
                  :type string)
@@ -1042,7 +1005,7 @@ Assumes maps are orthogonal."
            (when (and (slot-boundp map-obj 'hook)
                       (string-match-p match (symbol-name (oref map-obj hook))))
              (if keymaps
-                 (push (oref map-obj object-symbol) append-ret)
+                 (push (intern (oref map-obj object-name)) append-ret)
                (push (oref map-obj hook) append-ret))))
          maps)
         (puthash (list match ret) append-ret hooks)
@@ -1051,8 +1014,9 @@ Assumes maps are orthogonal."
       (setq ret (append append-ret ret))
       ret)))
 
-(defvar ergoemacs-theme-component-map-list-fixed-hash (make-hash-table :test 'equal))
-(defclass ergoemacs-theme-component-map-list (ergoemacs-named)
+(defvar ergoemacs-theme-component-map-list-fixed-hash
+  (make-hash-table :test 'equal))
+(defclass ergoemacs-theme-component-map-list (eieio-named)
   ((map-list :initarg :map-list
              :initform ()
              :type list)
