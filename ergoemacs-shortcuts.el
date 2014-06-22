@@ -697,10 +697,10 @@ In addition, when the function is called:
                (boundp 'first-type))
       (if (not (string-match "^ergoemacs-\\(.*\\)-universal-argument" tmp))
           (setq type 'normal
-                first-type 'normal))
-      (setq tmp (intern (match-string 1 tmp)))
-      (setq type tmp
-            first-type tmp))
+                first-type 'normal)
+        (setq tmp (intern (match-string 1 tmp)))
+        (setq type tmp
+              first-type tmp)))
     ret))
 
 (defun ergoemacs-read-key-lookup-get-ret (fn)
@@ -1537,7 +1537,7 @@ This command also ignores anything that remaps to FUNCTION,
 by setting changed by setting DONT-IGNORE-COMMANDS to t.
 
 When KEYMAP is defined, `ergoemacs-this-command' is not included
-in the ignored commands.
+in the ignored commands.i
 
 Also this ignores anything that is changed in the global keymap.
 
