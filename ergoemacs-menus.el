@@ -328,10 +328,10 @@ All other modes are assumed to be minor modes or unimportant.
                                          :help "Capitalize (initial caps) words in the nonempty region"
                                          :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
                       (downcase-region menu-item
-                                       "Downcase" downcase-region
+                                       "downcase" downcase-region
                                        :help "Make words in the nonempty region lower-case"
                                        :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
-                      (upcase-region menu-item "Upcase" upcase-region
+                      (upcase-region menu-item "UPCASE" upcase-region
                                      :help "Make words in the nonempty region upper-case"
                                      :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
                       (toggle-case-region menu-item "Toggle Capitalization/Case"
