@@ -1267,6 +1267,14 @@ by `ergoemacs-maximum-number-of-files-to-open'.
 ;; status to offer save
 ;; This custome kill buffer is close-current-buffer.
 (defvar ergoemacs-single-command-keys)
+(defun ergoemacs-save-buffer-to-recently-closed ()
+  "If the buffer is a file, add the path to the list `ergoemacs-recently-closed-buffers'"
+  (when (not (equal buffer-file-name nil))
+    (setq ergoemacs-recently-closed-buffers
+          (cons (cons (buffer-name) (buffer-file-name)) ergoemacs-recently-closed-buffers))
+    (when (> (length ergoemacs-recently-closed-buffers) ergoemacs-recently-closed-buffers-max)
+      (setq ergoemacs-recently-closed-buffers (butlast ergoemacs-recently-closed-buffers 1)))))
+
 (declare-function ergoemacs-get-override-function "ergoemacs-shortcuts.el")
 (declare-function minibuffer-keyboard-quit "delsel.el")
 (declare-function org-edit-src-save "org-src.el")
@@ -1280,7 +1288,6 @@ Similar to (kill-buffer (current-buffer)) with the following addition:
 • If the buffer is editing a source file in an org-mode file, prompt the user to save before closing.
 • If the buffer is editing a CAPTUREd task in an org-mode file, prompt the user to save before closing.
 • If the buffer is editing a magit commit, prompt the user to save the commit before closing.
-• If the buffer is a file, add the path to the list `ergoemacs-recently-closed-buffers'.
 • If it is the minibuffer, exit the minibuffer
 
 A emacs buffer is one who's name starts with *.
@@ -1328,11 +1335,6 @@ Else it is a user buffer."
             (org-edit-src-save)
           (set-buffer-modified-p nil)))
       ;; save to a list of closed buffer
-      (when (not (equal buffer-file-name nil))
-        (setq ergoemacs-recently-closed-buffers
-              (cons (cons (buffer-name) (buffer-file-name)) ergoemacs-recently-closed-buffers))
-        (when (> (length ergoemacs-recently-closed-buffers) ergoemacs-recently-closed-buffers-max)
-          (setq ergoemacs-recently-closed-buffers (butlast ergoemacs-recently-closed-buffers 1))))
       (kill-buffer (current-buffer))
       ;; if emacs buffer, switch to a user buffer
       (if (string-match "^*" (buffer-name))
@@ -1344,7 +1346,12 @@ Else it is a user buffer."
 (defun ergoemacs-open-last-closed ()
   "Open the last closed file."
   (interactive)
-  (find-file (cdr (pop ergoemacs-recently-closed-buffers)) ) )
+  (let ((file (cdr (pop ergoemacs-recently-closed-buffers))))
+    (if file
+        (if (file-exists-p file)
+            (find-file file)
+          (error "File %s seems to have been deleted." file))
+      (error "No recent file has been closed"))))
 
 ;;; Text scaling functions
 (defun ergoemacs-text-scale-normal-size ()
