@@ -258,7 +258,7 @@ All other modes are assumed to be minor modes or unimportant.
                      (consp buffer-undo-list)))
           :help "Undo last operation"
           :keys "Ctrl+Z")
-    (redo menu-item "Redo" redo
+    (redo menu-item "Redo" ergoemacs-redo
           :keys "Ctrl+Y")
     (redo-sep menu-item "--")
     (cut menu-item "Cut" clipboard-kill-region
