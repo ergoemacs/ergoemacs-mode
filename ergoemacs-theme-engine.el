@@ -1832,7 +1832,6 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
             ;; Reset keymaps.
             (dolist (map '(ergoemacs-shortcut-keymap ergoemacs-read-input-keymap ergoemacs-keymap ergoemacs-unbind-keymap))
               (when (symbol-value map)
-                (message "Rm Key %s" (key-description key))
                 (set map (ergoemacs-rm-key (symbol-value map) key))
                 (setq lk (lookup-key (symbol-value map) key))
                 (if (not (integerp lk))
