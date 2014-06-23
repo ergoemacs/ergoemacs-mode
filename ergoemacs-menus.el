@@ -627,7 +627,7 @@ All other modes are assumed to be minor modes or unimportant.
                     (keymap
                      (zoom-in menu-item "Zoom In" text-scale-increase)
                      (zoom-out menu-item "Zoom Out" text-scale-decrease)
-                     (zoom-reset menu-item "Zoom Reset" text-scale-normal-size)))
+                     (zoom-reset menu-item "Zoom Reset" ergoemacs-text-scale-normal-size)))
     
     (menu-set-font menu-item "Set Default Font..." menu-set-font :visible
                    (display-multi-font-p)
