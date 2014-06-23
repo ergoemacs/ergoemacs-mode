@@ -603,20 +603,15 @@ All other modes are assumed to be minor modes or unimportant.
 (defun ergoemacs-menu-tabbar-toggle ()
   "Enables/Disables (and installs if not present) a tab-bar for emacs."
   (interactive)
+  (require 'package)
   (if (not (fboundp 'tabbar-mode))
-      (progn
+      (let ((package-archives '(("melpa" . "http://melpa.milkbox.net/packages/"))))
         (require 'tabbar-ruler nil t)
         (if (fboundp 'tabbar-install-faces)
             (tabbar-install-faces)
-          (when (fboundp 'package-install)`
-            (ergoemacs-pushnew '("melpa" . "http://melpa.milkbox.net/packages/")
-                     package-archives
-                     :test 'equal )
-            (when (< emacs-major-version 24)
-              (ergoemacs-pushnew '("melpa" . "http://melpa.milkbox.net/packages/")
-                       package-archives
-                       :test 'equal))
+          (when (fboundp 'package-install)
             (package-refresh-contents)
+            (package-initialize)
             (package-install 'tabbar-ruler)
             (require 'tabbar-ruler nil t)
             (tabbar-install-faces))))
