@@ -323,12 +323,11 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
          "<apps> m c"
        "<menu> m c") 'define-key nil "<menu>") t)))
 
-(ert-deftest ergoemast-test-global-key-set-after-c-e ()
+(ert-deftest ergoemacs-test-global-key-set-after-c-e ()
   "Test C-e after"
   (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     'after "C-e" 'ergoemacs-key))))
+   (ergoemacs-test-global-key-set-before
+    'after "C-e" 'ergoemacs-key)))
 
 (declare-function ergoemacs-pretty-key-rep "ergoemacs-tranlate.el")
 (ert-deftest ergoemacs-test-ctl-c-ctl-c ()
