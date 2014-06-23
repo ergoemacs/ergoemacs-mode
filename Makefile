@@ -2,7 +2,7 @@ EMACS=emacs
 
 EMACS_CLEAN=-Q
 EMACS_BATCH=$(EMACS_CLEAN) --batch
-TESTS=ergoemacs-test-apps-copy
+#TESTS=ergoemacs-test-apps-copy
 #TESTS=ergoemacs-test-issue-184-paste
 #TESTS=ergoemacs-
 
