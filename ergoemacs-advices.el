@@ -45,7 +45,7 @@
   "Force the define-keys to work"
   `(let ((ergoemacs-run-mode-hooks t))
      ,@body))
-
+(defvar ergoemacs-mode)
 (defvar ergoemacs-hook-functions nil)
 (defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local) activate)
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
@@ -203,6 +203,7 @@ This assumes any key defined while running a hook is a user-defined hook."
 ;;; functions :(
 
 ;;; key-description
+(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (declare-function ergoemacs-real-key-description
                   "ergoemacs-advices.el" (keys &optional prefix) t)
 (fset 'ergoemacs-real-key-description (symbol-function 'key-description))
@@ -221,8 +222,6 @@ Uses `ergoemacs-real-key-description'."
 
 (defvar ergoemacs-original-keys-to-shortcut-keys-regexp)
 (defvar ergoemacs-original-keys-to-shortcut-keys)
-(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
-(defvar ergoemacs-mode)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
 (defun ergoemacs-substitute-command (string &optional map)
@@ -395,6 +394,6 @@ Assumes ergoemacs-real-FUNCTION and ergoemacs-FUNCTION as the two functions to t
      (t
       (fset ad (symbol-function (intern (concat "ergoemacs-" (symbol-name ad)))))))))
 (provide 'ergoemacs-advices)
-;;;;;;;;;;;;;;;;;;;;;;;;`';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
 ;; coding: utf-8-emacs
