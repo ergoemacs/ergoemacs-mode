@@ -141,6 +141,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 - `global-unset-key' is converted to `ergoemacs-define-key' with keymap equal to `global-map' and function definition is `nil'
 - `global-reset-key' is converted `ergoemacs-define-key'
 - `setq' and `set' is converted to `ergoemacs-set'
+- `add-hook' and `remove-hook' is converted to `ergoemacs-set'
 - Mode initialization like (delete-selection-mode 1)
   or (delete-selection) is converted to
   `ergoemacs-set'
@@ -167,6 +168,12 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
               ((ignore-errors (eq (nth 0 elt) 'set))
                ;; Currently doesn't support (setq a b c d ), but it should.
                `(ergoemacs-set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
+              ((ignore-errors (eq (nth 0 elt) 'add-hook))
+               `(ergoemacs-set ,(nth 1 elt) ,(nth 2 elt)
+                               (list t ,(nth 3 elt) ,(nth 4 elt))))
+              ((ignore-errors (eq (nth 0 elt) 'remove-hook))
+               `(ergoemacs-set ,(nth 1 elt) ,(nth 2 elt)
+                               (list nil nil ,(nth 3 elt))))
               ((ignore-errors (eq (nth 0 elt) 'setq))
                (let ((tmp-elt elt)
                      (ret '()))

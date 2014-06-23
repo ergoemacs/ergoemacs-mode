@@ -105,6 +105,20 @@
                           nil)))
       t)))
 
+(defun ergoemacs-exit-customize-save-customized ()
+  "Call `customize-save-customized' on exit emacs.
+
+If an error occurs, display the error, and sit for 2 seconds before exiting"
+  (cond
+   ((not (or custom-file user-init-file))
+    (message "Not saving; \"emacs -q\" would overwrite customizations")
+    (sit-for 1))
+   ((and (null custom-file) init-file-had-error)
+    (message "Cannot save customizations; init file was not fully loaded")
+    (sit-for 1))
+   (t
+    (customize-save-customized))))
+
 (defun ergoemacs-ctl-c (&optional arg)
   "Ergoemacs C-c key."
   (interactive "P")

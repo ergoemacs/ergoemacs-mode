@@ -1099,6 +1099,17 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
      ((assq (nth 0 init) ergoemacs-applied-inits)
       ;; Already applied, Do nothing for now.
       )
+     ((nth 2 init)
+      ;; Hook
+      (let ((add-hook-p (nth 0 (nth 2 init)))
+            (append-p (nth 1 (nth 2 init)))
+            (local-p (nth 2 (nth 2 init))))
+        (if add-hook-p
+            (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
+          (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))
+        (push (list (nth 0 init) (nth 1 init)
+                    (list (not add-hook-p) append-p local-p))
+              ergoemacs-applied-inits)))
      ((and (string-match-p "-mode$" (symbol-name (nth 0 init)))
            (ignore-errors (commandp (nth 0 init) t)))
       (push (list (nth 0 init) (if (symbol-value (nth 0 init)) 1 -1))
@@ -1116,8 +1127,16 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
 This assumes the variables are stored in `ergoemacs-applied-inits'"
   (dolist (init ergoemacs-applied-inits)
     (let ((var (nth 0 init))
-          (val (nth 1 init)))
+          (val (nth 1 init))
+          (hook (nth 2 init)))
       (cond
+       (hook
+        (let ((add-hook-p (nth 0 hook))
+              (append-p (nth 1 hook))
+              (local-p (nth 2 hook)))
+          (if add-hook-p
+              (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
+            (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))))
        ((and (string-match-p "-mode$" (symbol-name var))
              (ignore-errors (commandp var t)))
         (funcall var val))
@@ -1565,12 +1584,12 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
        ergoemacs-theme-component-maps--curr-component
        map key def))))
 
-(defun ergoemacs-set (symbol newval)
+(defun ergoemacs-set (symbol newval &optional hook)
   (if (not (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component))
       (warn "`ergoemacs-set' is meant to be called in a theme definition.")
     ;; ergoemacs-set definition.
     (with-slots (init) ergoemacs-theme-component-maps--curr-component
-      (push (list symbol newval) init)
+      (push (list symbol newval hook) init)
       (oset ergoemacs-theme-component-maps--curr-component
             init init))))
 

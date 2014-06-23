@@ -72,6 +72,10 @@
   ;; 	    (cua-mode . ,cua-global-keymap))))
   )
 
+(ergoemacs-theme-component save-options-on-exit ()
+  "Save emacs options on exit"
+  (add-hook 'kill-emacs-hook 'ergoemacs-exit-customize-save-customized))
+
 ;;; Fixed components
 (ergoemacs-theme-component standard-fixed ()
   "Standard Fixed Shortcuts"
@@ -984,7 +988,8 @@
                  helm-remaps
                  multiple-cursors-remaps
                  quit
-                 apps-swap)
+                 apps-swap
+                 save-options-on-exit)
   :optional-off '(guru no-backspace search-reg
                        ergoemacs-banish-shift)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
@@ -1029,7 +1034,8 @@
                  helm-remaps
                  multiple-cursors-remaps
                  quit
-                 apps-swap)
+                 apps-swap
+                 save-options-on-exit)
   :optional-off '(guru no-backspace search-reg
                        ergoemacs-banish-shift)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
