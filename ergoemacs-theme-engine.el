@@ -2335,22 +2335,29 @@ When SILENT is true, also include silent themes"
 (defun ergoemacs-key (key function &optional desc only-first fixed-key)
   "Defines KEY in ergoemacs keyboard based on QWERTY and binds to FUNCTION.
 DESC is ignored, as is FIXED-KEY."
-  (let* ((key (or
-               (and (vectorp key) key)
-               (read-kbd-macro key t)))
-         (ergoemacs-force-just-first only-first)
-         (ergoemacs-force-variable t))
-    (ergoemacs-define-key 'global-map key function)))
+  (if (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component)
+      (let* ((key (or
+                   (and (vectorp key) key)
+                   (read-kbd-macro key t)))
+             (ergoemacs-force-just-first only-first)
+             (ergoemacs-force-variable t))
+        (ergoemacs-define-key 'global-map key function))
+    (warn "ergoemacs-key is depreciated, use global-set-key instead.")
+    (global-set-key (ergoemacs-kbd key nil only-first) function)))
 
 (defun ergoemacs-fixed-key (key function &optional desc)
   "Defines fixed KEY in ergoemacs and binds to FUNCTION.
 Ignores DESC."
-  (let* ((key (or
-               (and (vectorp key) key)
-               (read-kbd-macro key t)))
-         (ergoemacs-force-just-first nil)
-         (ergoemacs-force-fixed t))
-    (ergoemacs-define-key 'global-map key function)))
+  (if (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component)
+      (let* ((key (or
+                   (and (vectorp key) key)
+                   (read-kbd-macro key t)))
+             (ergoemacs-force-just-first nil)
+             (ergoemacs-force-fixed t))
+        (ergoemacs-define-key 'global-map key function))
+    (warn "ergoemacs-fixed-key is depreciated, use global-set-key instead.")
+    (global-set-key (if (vectorp key) key
+                      (read-kbd-macro key)) function)))
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
