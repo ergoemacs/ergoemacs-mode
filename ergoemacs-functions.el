@@ -1275,6 +1275,7 @@ by `ergoemacs-maximum-number-of-files-to-open'.
     (when (> (length ergoemacs-recently-closed-buffers) ergoemacs-recently-closed-buffers-max)
       (setq ergoemacs-recently-closed-buffers (butlast ergoemacs-recently-closed-buffers 1)))))
 
+(declare-function undo-tree-mode "undo-tree.el")
 (defun ergoemacs-redo (&optional arg)
   "Redo using either `redo' or `undo-tree-redo'.
 Installs `undo-tree' if not present."
