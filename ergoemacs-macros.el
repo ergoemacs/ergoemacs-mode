@@ -217,7 +217,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
   (let ((kb (make-symbol "body-and-plist"))
         (plist (make-symbol "plist"))
         (body (make-symbol "body")))
-    (setq kb (ergoemacs-theme-component--parse keys-and-body t)
+    (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
           plist (nth 0 kb)
           body (nth 1 kb))
     `(let ((old-ergoemacs-theme ergoemacs-theme)
