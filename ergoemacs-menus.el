@@ -235,7 +235,8 @@ All other modes are assumed to be minor modes or unimportant.
                       delete-other-windows)
           (separator5 menu-item "--")
           (execute-command menu-item "Execute Command" execute-extended-command)
-          (repeat-earlier-command "Repeat Earlier Command" repeat-complex-command)
+          (repeat-earlier-command menu-item "Repeat Earlier Command"
+                                  repeat-complex-command)
           (separator6 menu-item "--")
           (exit-emacs menu-item "Quit" save-buffers-kill-emacs)
           "File"))
