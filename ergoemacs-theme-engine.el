@@ -1832,6 +1832,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
             ;; Reset keymaps.
             (dolist (map '(ergoemacs-shortcut-keymap ergoemacs-read-input-keymap ergoemacs-keymap ergoemacs-unbind-keymap))
               (when (symbol-value map)
+                (message "Rm Key %s" (key-description key))
                 (set map (ergoemacs-rm-key (symbol-value map) key))
                 (setq lk (lookup-key (symbol-value map) key))
                 (if (not (integerp lk))
@@ -1859,8 +1860,10 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
             ;;Put maps in `minor-mode-map-alist'
             (ergoemacs-shuffle-keys t))
           (when (and (or (commandp lk t)
-                         (keymapp lk)))
-            (push key ergoemacs-global-override-rm-keys)
+                         (keymapp lk))
+                     (not (member key '([remap] ))))
+            (pushnew key ergoemacs-global-override-rm-keys
+                     :test 'equal)
             (throw 'found-global-command t)))
         (setq key (substring key 0 (- (length key) 1)))))))
 
