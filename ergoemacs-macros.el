@@ -213,7 +213,32 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                  ',(nth 0 kb)
                  '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash)))
 
-;;;###autoload
+(defmacro ergoemacs-test-layout (&rest keys-and-body)
+  (let ((kb (make-symbol "body-and-plist"))
+        (plist (make-symbol "plist"))
+        (body (make-symbol "body")))
+    (setq kb (ergoemacs-theme-component--parse keys-and-body t)
+          plist (nth 0 kb)
+          body (nth 1 kb))
+    `(let ((old-ergoemacs-theme ergoemacs-theme)
+           (macro
+            ,(if (plist-get plist ':macro)
+                 `(edmacro-parse-keys ,(plist-get plist ':macro) t)))
+           (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout))
+       (ergoemacs-mode -1)
+       (setq ergoemacs-theme ,(plist-get plist ':theme))
+       (setq ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us"))
+       (ergoemacs-mode 1)
+       ,(if (plist-get plist :cua)
+            `(cua-mode 1))
+       (unwind-protect
+           (progn
+             ,@body)
+         (ergoemacs-mode -1)
+         (setq ergoemacs-theme old-ergoemacs-theme)
+         (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+         (ergoemacs-mode 1)))))
+
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
           "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
