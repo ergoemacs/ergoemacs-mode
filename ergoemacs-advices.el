@@ -109,7 +109,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
         (ergoemacs-theme-component--ignore-globally-defined-key key t)))))
 
 (add-to-list 'ergoemacs-advices 'ergoemacs-local-unset-key-advice)
-
+(defvar ergoemacs-use-M-x-p)
 (eval-after-load "helm"
   '(progn
      (defadvice helm-M-x-transformer (around ergoemacs-helm-M-x-transformer activate)
