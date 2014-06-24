@@ -56,6 +56,7 @@ IniRead CurrCaps, ergoemacs-settings.ini, Caps, App
 IniRead CurrRAlt, ergoemacs-settings.ini, RAlt, App
 IniRead CurrLAlt, ergoemacs-settings.ini, LAlt, App
 IniRead CurrRAltLAlt, ergoemacs-settings.ini, RAltLAlt, App
+IniRead OutlookSave, ergoemacs-settings.ini, Outlook, Save
 LayLst=
 VarLst=
 CareL = 0
@@ -659,6 +660,43 @@ redo:
  SendKey("{Ctrl down}{y}{Ctrl up}",0)
  return
 
+execute-extended-command:
+  ;; Send to org-outlook if using outlook
+  If !WinActive("ahk_class Emacs"){
+       If WinActive("ahk_class rctrl_renwnd32"){
+          Clipboard=
+          SendKey("{Ctrl down}{c}{Ctrl up}")
+          ClipWait
+          EmailBody=%clipboard%
+          EmailBody:=uri_encode(EmailBody)
+          SendKey("{F12}",0)
+          Clipboard=
+          While !WinActive("Save As"){
+                Sleep 100
+          }
+          SendKey("{Ctrl down}{c}{Ctrl up}")
+          ClipWait 
+          Counter = 1
+          Title=%clipboard%
+          Title := uri_encode(Title)
+          fileName = %OutlookSave%\%clipboard%-%Counter%.msg
+          while FileExist(fileName)
+          {
+             Counter := Counter + 1
+             fileName = %OutlookSave%\%clipboard%-%Counter%.msg
+          }
+          Clipboard =
+          Clipboard := fileName
+          ClipWait
+          SendKey("{Backspace}")
+          SendInput, %Clipboard%
+          SendKey("{Enter}")
+          fileName := uri_encode(fileName)
+          fileName = "%OutlookEmacs%" org-protocol:/capture:/%OutlookTemplate%%fileName%/%Title%/%EmailBody%
+          Run, %fileName%
+          }
+  }
+  return
 
 comment-dwim:
  ;; Word Alt+Ctrl+M is insert comment
