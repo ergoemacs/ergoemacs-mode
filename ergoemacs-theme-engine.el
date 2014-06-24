@@ -1861,7 +1861,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
           (when (and (or (commandp lk t)
                          (keymapp lk))
                      (not (member key '([remap] ))))
-            (pushnew key ergoemacs-global-override-rm-keys
+            (ergoemacs-pushnew key ergoemacs-global-override-rm-keys
                      :test 'equal)
             (throw 'found-global-command t)))
         (setq key (substring key 0 (- (length key) 1)))))))

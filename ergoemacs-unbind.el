@@ -28,7 +28,14 @@
 ;; 
 
 ;;; Code:
-
+(eval-when-compile 
+  (require 'cl)
+  (require 'ergoemacs-macros 
+           (expand-file-name "ergoemacs-macros" 
+                             (file-name-directory (or
+                                                   load-file-name
+                                                   (buffer-file-name)
+                                                   default-directory)))))
 (require 'edmacro)
 
 (defvar ergoemacs-emacs-default-bindings

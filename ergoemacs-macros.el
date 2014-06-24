@@ -378,6 +378,7 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
        'eieio-object-set-name-string)
       (t 'object-set-name-string)) ,obj ,name))
 
+;;;###autoload
 (defmacro ergoemacs-pushnew (x place &rest plist)
   "Fix byte-compile errors for emacs versions less than 24.3.
 It says that `adjoin' from `cl' may be called at runtime, so use
