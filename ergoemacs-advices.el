@@ -112,7 +112,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
 
 (eval-after-load "helm"
   '(progn
-     (defadvice helm-M-x (around ergoemacs-helm-M-x-keys activate)
+     (defadvice helm-M-x-transformer (around ergoemacs-helm-M-x-transformer activate)
        "Make ``helm-M-x' work correctly with `ergoemacs-mode' pretty keys"
        (let ((ergoemacs-use-M-x-p t))
          ad-do-it))))
@@ -352,7 +352,7 @@ Actual substitute-command-keys is always in `ergoemacs-real-substitute-command-k
             (replace-match "" t t)
             (re-search-forward "\\=\\\\=" nil t))
           (goto-char (point-min))
-          (while (re-search-forward "\\(\\<M-x\\|<execute>\\) " nil t)
+          (while (and (not ergoemacs-use-M-x-p) (re-search-forward "\\(\\<M-x\\|<execute>\\) " nil t))
             (replace-match (ergoemacs-substitute-command "\\[execute-extended-command] " "\\<global-map>") t t))
           (setq ret (buffer-string))))
       ret)))
