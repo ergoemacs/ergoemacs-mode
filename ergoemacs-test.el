@@ -937,6 +937,37 @@ Selected mark would not be cleared after paste."
   "Test global C-c b"
   (should (equal (ergoemacs-test-global-key-set-before nil "C-c b") t)))
 
+(ert-deftest ergoemacs-test-issue-243 ()
+  "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
+  :expected-result :failed
+  (let ((emacs-exe (ergoemacs-emacs-exe))
+        (w-file (expand-file-name "global-test" ergoemacs-dir))
+        (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+    (with-temp-file temp-file
+      (insert "(condition-case err (progn ")
+      (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
+      (insert "(setq ergoemacs-theme nil)")
+      (insert "(setq ergoemacs-keyboard-layout \"us\")")
+      (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(ergoemacs-mode 1)")
+      (insert "(global-set-key (kbd \"C-c C-c M-x\") 'execute-extended-command)")
+      (insert (format "(define-key ergoemacs-test-major-mode-map (kbd \"C-c C-c\") #'(lambda() (interactive (with-temp-file \"%s\" (insert \"Ok\")))))" w-file))
+      (insert
+       "(setq ergoemacs-test-macro (edmacro-parse-keys \"C-c C-c\" t))(ergoemacs-test-major-mode)")
+      (insert "(with-timeout (1.5 nil) (execute-kbd-macro ergoemacs-test-macro))")
+      (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
+      (insert ") (error (message \"Error %s\" err)))")
+      (unless (boundp 'wait-for-me)
+        (insert "(kill-emacs)")))
+    (message "%s"
+             (shell-command-to-string
+              (format "%s %s -Q -l %s"
+                      (if (boundp 'wait-for-me) "" "--batch")
+                      emacs-exe temp-file)))
+    (delete-file temp-file)
+    (should (file-exists-p w-file))
+    (when (file-exists-p w-file)
+      (delete-file w-file))))
+
 
 
 (provide 'ergoemacs-test)
