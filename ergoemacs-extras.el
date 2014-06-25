@@ -806,6 +806,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
       (insert lay-ini)
       (insert "\n")
       (buffer-string))))
+
 (defvar ergoemacs-theme-hash)
 (defun ergoemacs-get-themes-ahk-ini ()
   "Gets the list of all known themes and the documentation associated with the themes."
@@ -826,7 +827,6 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
       (goto-char (point-min))
       (while (re-search-forward "^\\([^ \n]*\\):" nil t)
         (push (match-string 1) lst)))
-    ;; FIXME: Use `push' or `cl-pushnew' instead of `add-to-list'.
     (setq re (format "^%s$" (regexp-opt lst 't)))
     (with-temp-buffer
       (let ((old-lay ergoemacs-theme))
