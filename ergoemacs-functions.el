@@ -285,21 +285,19 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
    (ergoemacs-with-global
     (ergoemacs-real-key-binding (kbd "M-TAB")))))
 
-
-
 (defun ergoemacs-copy-all ()
-  "Put the whole buffer content into the kill-ring.
-If narrow-to-region is in effect, then copy that region only."
+  "Put the whole buffer content into the `kill-ring'.
+If `narrow-to-region' is in effect, then copy that region only."
   (interactive)
   (kill-new (buffer-string))
-  (message "Buffer content copied copy-region-as-kill"))
+  (message "Buffer content copied."))
 
 (defun ergoemacs-cut-all ()
-  "Cut the whole buffer content into the kill-ring.
-If narrow-to-region is in effect, then cut that region only."
+  "Cut the whole buffer content into the `kill-ring'.
+If `narrow-to-region' is in effect, then cut that region only."
   (interactive)
-  (kill-region (point-min) (point-max))
-  (message "Buffer content cut"))
+  (kill-new (buffer-string))
+  (delete-region (point-min) (point-max)))
 
 (defvar cua-mode)
 (declare-function cua-copy-rectangle "cua-rect.el")
