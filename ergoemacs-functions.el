@@ -444,7 +444,7 @@ See: `ergoemacs-forward-block'"
   :type 'boolean
   :group 'ergoemacs-mode) ;
 
-(defcustom ergoemacs-end-of-comment-line nil
+(defcustom ergoemacs-end-of-comment-line t
   "When non-nil, treat comments different for beginning/end of line.
 
  When non-nil `ergoemacs-end-of-line-or-what', the end of the line is the end of the code line first, then the end of the code + comment.
@@ -659,7 +659,7 @@ the prefix arguments of `beginning-of-buffer',
                              'font-lock-comment-face))
                 (goto-char (max (point-at-bol) (previous-single-property-change (point) 'face (current-buffer) (point-at-bol))))
                 (skip-syntax-backward " " (point-at-bol))
-                (push (point)  pts))))))   ;; Test
+                (push (point) pts))))))
       (cond
        ((not pts)
         (call-interactively 'move-beginning-of-line))
