@@ -1185,13 +1185,20 @@ argument prompt.
                         (setq ergoemacs-deactivate-mark deactivate-mark)
                         (cond
                          ((eq local-fn 'keymap)
-                          (when real-read
-                            (push (list type
-                                        (listify-key-sequence key))
-                                  history))
-                          (setq continue-read t
-                                key key-trial
-                                pretty-key pretty-key-trial)
+                          ;; Test to see if major/minor modes have an
+                          ;; override for this keymap, see Issue 243.
+                          (let ((new-fn (and key (ergoemacs-with-major-and-minor-modes (ergoemacs-real-key-binding key-trial)))))
+                            (if (ignore-errors (commandp new-fn t))
+                                (progn
+                                  (setq local-fn 'major-minor-override-fn)
+                                  (ergoemacs-read-key-call new-fn nil key))
+                              (when real-read
+                                (push (list type
+                                            (listify-key-sequence key))
+                                      history))
+                              (setq continue-read t
+                                    key key-trial
+                                    pretty-key pretty-key-trial)))
                           ;; Found, exit
                           (throw 'ergoemacs-key-trials t))
                          ((eq (type-of local-fn) 'cons)
