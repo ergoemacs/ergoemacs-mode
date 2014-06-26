@@ -652,7 +652,7 @@ the prefix arguments of `beginning-of-buffer',
           (when (not (eolp))
             (forward-char 1))
           (save-excursion
-            (when (comment-search-backward (point-at-bol) t)
+            (when (ignore-errors (comment-search-backward (point-at-bol) t))
               (push (point) pts)
               (when (and font-lock-mode
                          (eq (get-text-property (point) 'face)
