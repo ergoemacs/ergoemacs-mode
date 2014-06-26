@@ -126,6 +126,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ;; backspace in key sequences.
     (setq-default cua-enable-cua-keys nil))
   ad-do-it
+  (require 'cua-rect)
   ;; Reset `cua--keymap-alist' -- make it compatible with
   ;; `ergoemacs-mode'
   (setq cua--rectangle-keymap (make-sparse-keymap))
