@@ -107,6 +107,12 @@
   (global-set-key (kbd "<M-backspace>") '(undo-tree-undo undo))
   (global-set-key (kbd "C-z") 'undo)
 
+  ;; Take out undo-tree's redo bindings
+  (when ergoemacs-theme-hook
+    :modify-map t
+    (define-key undo-tree-map (kbd "C-?") nil) 
+    (define-key undo-tree-map (kbd "M-_") nil))
+  
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-c <timeout>") 'ergoemacs-copy-line-or-region)

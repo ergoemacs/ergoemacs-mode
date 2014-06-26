@@ -66,8 +66,7 @@
 ;; FIXME: Use cl-lib when available.
 ;;(require 'cl)
 (require 'easymenu)
-(require 'cua-base)
-(require 'cua-rect)
+(require 'undo-tree nil t)
 
 (defvar ergoemacs-debug ""
   "Debugging for `ergoemacs-mode'.")
