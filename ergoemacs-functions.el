@@ -161,7 +161,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
               (ergoemacs-read-key (concat key " " next-key) 'normal))
           (funcall fn-cp arg))))
      ((or (region-active-p)
-          (and cua--rectangle (boundp 'cua-mode) cua-mode))
+          (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode))
       (funcall fn-cp arg))
      (t
       (ergoemacs-read-key key 'normal)))))
@@ -302,12 +302,13 @@ If `narrow-to-region' is in effect, then cut that region only."
 (defvar cua-mode)
 (declare-function cua-copy-rectangle "cua-rect.el")
 (declare-function cua-copy-region "cua-base.el")
+(defvar cua--rectangle)
 (defun ergoemacs-copy-line-or-region (&optional arg)
   "Copy current line, or current text selection."
   (interactive "P")
   (cond
    ;;; cua-copy-rectangle
-   ((and cua--rectangle cua-mode)
+   ((and (boundp 'cua--rectangle) cua--rectangle cua-mode)
     (cua-copy-rectangle arg))
    ((and (region-active-p) cua-mode)
     (cua-copy-region arg))
@@ -1716,7 +1717,7 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
   "Ergoemacs org-mode paste."
   (let ((regtxt (and cua--register (get-register cua--register))))
     (cond
-     ((and mark-active cua--rectangle)
+     ((and mark-active (boundp 'cua--rectangle) cua--rectangle)
       ;; call cua-paste
       (cua-paste arg))
      ((and cua--last-killed-rectangle
