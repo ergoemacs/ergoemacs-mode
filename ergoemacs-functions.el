@@ -617,11 +617,14 @@ the prefix arguments of `beginning-of-buffer',
       (progn
         (cond
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
-          (ergoemacs-shortcut-remap 'beginning-of-buffer))
+          (ergoemacs-shortcut-remap 'beginning-of-buffer)
+          (setq this-command 'beginning-of-buffer))
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
-          (ergoemacs-shortcut-remap 'ergoemacs-backward-block))
+          (ergoemacs-shortcut-remap 'ergoemacs-backward-block)
+          (setq this-command 'ergoemacs-backward-block))
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
-          (ergoemacs-shortcut-remap 'scroll-down-command)))
+          (ergoemacs-shortcut-remap 'scroll-down-command)
+          (setq this-command 'scroll-down-command)))
         (beginning-of-line))
     (setq N (or N 1))
     (when (not (= 1 N))
@@ -633,6 +636,7 @@ the prefix arguments of `beginning-of-buffer',
         ;; (setq prefix-arg nil)
         (setq current-prefix-arg nil)
         (ergoemacs-shortcut-remap 'move-beginning-of-line)
+        (setq this-command 'move-beginning-of-line)
         (push (point) pts))
       (when ergoemacs-back-to-indentation
         (save-excursion
@@ -642,14 +646,13 @@ the prefix arguments of `beginning-of-buffer',
         (save-excursion
           (when (not (eolp))
             (forward-char 1))
-          (let ((cs (condition-case err
+          (let ((cs (ignore-errors
                         (let ((tmp (comment-search-backward (point-at-bol) t)))
                           (if (and font-lock
                                      (not
                                       (eq (get-text-property (point) 'face)
                                           'font-lock-comment-face))) nil
-                            tmp))
-                      (error nil))))
+                            tmp)))))
             (when cs
               (skip-syntax-forward " " (point-at-eol))
               (unless (looking-at "$")
@@ -661,8 +664,11 @@ the prefix arguments of `beginning-of-buffer',
        ((not pts)
         (call-interactively 'move-beginning-of-line))
        (t
-        (setq pts (sort pts '>))
+        (setq pts (sort pts '<))
         (dolist (x pts)
+          (save-excursion
+            (goto-char x)
+            (looking-at ".*"))
           (unless (>= x (point))
             (push x tmp)))
         (setq pts tmp)
@@ -731,11 +737,14 @@ the prefix arguments of `end-of-buffer',
       (progn 
         (cond
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
-          (ergoemacs-shortcut-remap 'end-of-buffer))
+          (ergoemacs-shortcut-remap 'end-of-buffer)
+          (setq this-command 'end-of-buffer))
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
-          (ergoemacs-shortcut-remap 'ergoemacs-forward-block))
+          (ergoemacs-shortcut-remap 'ergoemacs-forward-block)
+          (setq this-command 'ergoemacs-forward-block))
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
           (ergoemacs-shortcut-remap 'scroll-up-command)
+          (setq this-command 'scroll-up-command)
           (beginning-of-line))))
     (setq N (or N 1))
     (when (not (= 1 N))
@@ -745,6 +754,7 @@ the prefix arguments of `end-of-buffer',
       (setq current-prefix-arg nil)
       (save-excursion
         (call-interactively 'move-end-of-line)
+        (setq this-command 'move-end-of-line)
         (push (point) pts))
       (when ergoemacs-end-of-comment-line
         (save-excursion
@@ -758,7 +768,8 @@ the prefix arguments of `end-of-buffer',
               (push (point) pts)))))
       (cond
        ((not pts)
-        (call-interactively 'move-end-of-line))
+        (call-interactively 'move-end-of-line)
+        (setq this-command 'move-end-of-line))
        (t
 	(setq pts (sort pts '<))
         (dolist (x pts)
