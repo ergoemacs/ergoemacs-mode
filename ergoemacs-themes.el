@@ -107,7 +107,7 @@
   (global-set-key (kbd "<M-backspace>") '(undo-tree-undo undo))
   (global-set-key (kbd "C-z") 'undo)
 
-  (global-set-key (kbd "C-S-z") '(undo-tree-redo redo ergoemacs-redo))
+  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-c <timeout>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-c") 'ergoemacs-ctl-c)
@@ -197,7 +197,7 @@
   (global-set-key (kbd "C-x <timeout>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-x C-b") 'ibuffer)
   (global-set-key (kbd "C-x") 'ergoemacs-ctl-x "Cut")
-  (global-set-key (kbd "C-y") '(undo-tree-redo redo ergoemacs-redo) "↷ redo")
+  (global-set-key (kbd "C-y") '(redo undo-tree-redo ergoemacs-redo) "↷ redo")
   
   (global-set-key (kbd "M-S-<next>") 'forward-page)
   (global-set-key (kbd "M-S-<prior>") 'backward-page)
@@ -267,12 +267,12 @@
   (global-set-key (kbd "<C-f2>") 'ergoemacs-cut-all)
   (global-set-key (kbd "<C-f3>") 'ergoemacs-copy-all)
   (global-set-key (kbd "<C-f4>") 'ergoemacs-paste-cycle)
-  (global-set-key (kbd "<C-f5>") '(undo-tree-redo redo ergoemacs-redo))
+  (global-set-key (kbd "<C-f5>") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<C-f8>") 'highlight-symbol-prev)
   (global-set-key (kbd "<C-f9>") 'highlight-symbol-next)
   (global-set-key (kbd "<M-f2>") 'ergoemacs-cut-all)
   (global-set-key (kbd "<M-f3>") 'ergoemacs-copy-all)
-  (global-set-key (kbd "<M-f5>") '(undo-tree-redo redo ergoemacs-redo))
+  (global-set-key (kbd "<M-f5>") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<S-f3>") 'ergoemacs-toggle-letter-case)
   (global-set-key (kbd "<f11>") 'previous-line)
   (global-set-key (kbd "<f12>") 'next-line)
@@ -515,7 +515,7 @@
   
   (global-set-key (kbd "M-C") 'ergoemacs-copy-all)
   (global-set-key (kbd "M-X") 'ergoemacs-cut-all)
-  (global-set-key (kbd "M-Z") '(undo-tree-redo redo ergoemacs-redo))
+  (global-set-key (kbd "M-Z") '(redo undo-tree-redo ergoemacs-redo))
 
   ;; Undo
   (global-set-key (kbd "C-_") nil)
@@ -529,8 +529,8 @@
   (global-set-key (kbd "C-x <timeout>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-x") 'ergoemacs-ctl-x)
   (global-set-key (kbd "C-z") 'undo)
-  (global-set-key (kbd "C-S-z") '(undo-tree-redo redo ergoemacs-redo))
-  (global-set-key (kbd "C-y") '(undo-tree-redo redo ergoemacs-redo))
+  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
+  (global-set-key (kbd "C-y") '(redo undo-tree-redo ergoemacs-redo))
 
   ;; Mode specific changes
   (when isearch-mode-hook
@@ -706,7 +706,7 @@
   (global-set-key (kbd "<apps> x") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "<apps> c") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "<apps> v") 'ergoemacs-paste)
-  (global-set-key (kbd "<apps> b") '(undo-tree-redo redo ergoemacs-redo))
+  (global-set-key (kbd "<apps> b") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<apps> t") 'switch-to-buffer)
   (global-set-key (kbd "<apps> z") 'undo)
   (global-set-key (kbd "<apps> r") goto-map))

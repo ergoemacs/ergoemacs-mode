@@ -1327,10 +1327,10 @@ Installs `undo-tree' if not present."
   (interactive "*P")
   (require 'undo-tree nil t)
   (cond
-   ((fboundp 'undo-tree-redo)
-    (call-interactively 'undo-tree-redo))
    ((fboundp 'redo)
     (call-interactively 'redo))
+   ((fboundp 'undo-tree-redo)
+    (call-interactively 'undo-tree-redo))
    (t
     (if (not (yes-or-no-p "Redo command not found, install undo-tree for redo?"))
         (error "Redo not found, need undo-tree or redo commands present.")
