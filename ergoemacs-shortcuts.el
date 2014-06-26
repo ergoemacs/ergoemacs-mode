@@ -1743,10 +1743,11 @@ Setup C-c and C-x keys to be described properly.")
                 (when (and (previous-single-property-change (point) 'keymap)
                            (next-single-property-change (point) 'keymap))
                   ;; (ergoemacs-debug "Put into text properties")
-                  (put-text-property
-                   (previous-single-property-change (point) 'keymap)
-                   (next-single-property-change (point) 'keymap)
-                   'keymap override-text-map)))
+                  (ergoemacs-save-buffer-state
+                   (put-text-property
+                    (or (previous-single-property-change (point) 'keymap (current-buffer) (point-min)) (point-min))
+                    (or (next-single-property-change (point) 'keymap (current-buffer) (point-max)) (point-max))
+                    'keymap override-text-map))))
             (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
                                             (min (+ (point) 1) (point-max))))
             (overlay-put tmp-overlay 'keymap lookup)
@@ -1879,11 +1880,11 @@ The keymaps are:
             (overlay-put found 'keymap override-text-map)
           ;; Overlay not found; change text property
           ;; (ergoemacs-debug "Put into text properties")
-          (put-text-property
-           (previous-single-property-change (point) 'keymap)
-           (next-single-property-change (point) 'keymap)
-           'keymap
-           override-text-map))
+          (ergoemacs-save-buffer-state
+           (put-text-property
+            (or (previous-single-property-change (point) 'keymap (current-buffer) (point-min)) (point-min))
+            (or (next-single-property-change (point) 'keymap (current-buffer) (point-max)) (point-max))
+            'keymap override-text-map)))
         ;; (ergoemacs-debug-keymap 'override-text-map)
         )))))
 

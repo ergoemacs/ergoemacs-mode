@@ -389,6 +389,47 @@ It says that `adjoin' from `cl' may be called at runtime, so use
     `(pushnew ,x ,place ,@plist))
    (t `(add-to-list ',place ,x ,(plist-get plist ':test)))))
 
+;;;###autoload
+(defmacro ergoemacs-save-buffer-state (&rest body)
+  "Eval BODY,
+then restore the buffer state under the assumption that no significant
+modification has been made in BODY.  A change is considered
+significant if it affects the buffer text in any way that isn't
+completely restored again.  Changes in text properties like `face' or
+`syntax-table' are considered insignificant.  This macro allows text
+properties to be changed, even in a read-only buffer.
+
+This macro should be placed around all calculations which set
+\"insignificant\" text properties in a buffer, even when the buffer is
+known to be writeable.  That way, these text properties remain set
+even if the user undoes the command which set them.
+
+This macro should ALWAYS be placed around \"temporary\" internal buffer
+changes \(like adding a newline to calculate a text-property then
+deleting it again\), so that the user never sees them on his
+`buffer-undo-list'.  
+
+However, any user-visible changes to the buffer \(like auto-newlines\)
+must not be within a `ergoemacs-save-buffer-state', since the user then
+wouldn't be able to undo them.
+
+The return value is the value of the last form in BODY.
+
+This was stole/modified from `c-save-buffer-state'"
+  `(let* ((modified (buffer-modified-p)) (buffer-undo-list t)
+          (inhibit-read-only t) (inhibit-point-motion-hooks t)
+          before-change-functions after-change-functions
+          deactivate-mark
+          buffer-file-name buffer-file-truename ; Prevent primitives checking
+                                        ; for file modification
+          )
+     (unwind-protect
+         (progn ,@body)
+       (and (not modified)
+            (buffer-modified-p)
+            (set-buffer-modified-p nil)))))
+
+
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here
