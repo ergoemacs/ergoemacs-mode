@@ -771,9 +771,9 @@ the prefix arguments of `end-of-buffer',
 ;;; TEXT SELECTION RELATED
 
 (defun ergoemacs-select-current-line ()
-  "Select the current line"
+  "Select the current line."
   (interactive)
-  (end-of-line) ; move to end of line
+  (end-of-line)
   (set-mark (line-beginning-position)))
 
 (defun ergoemacs-select-current-block ()
@@ -791,17 +791,50 @@ the prefix arguments of `end-of-buffer',
         (setq p2 (point))))
     (set-mark p1)))
 
+(defun ergoemacs-select-text-in-ascii-quote ()
+  "Select text between ASCII quotes, single or double."
+  (interactive)
+  (let (p1 p2)
+    (if (nth 3 (syntax-ppss))
+        (progn
+          (backward-up-list 1 "ESCAPE-STRINGS" "NO-SYNTAX-CROSSING")
+          (setq p1 (point))
+          (forward-sexp 1)
+          (setq p2 (point))
+          (goto-char (1+ p1))
+          (set-mark (1- p2)))
+      (progn
+        (user-error "Cursor not inside quote")))))
+
+(defun ergoemacs-select-text-in-bracket ()
+  "Select text between the nearest brackets.
+Bracket here includes: () [] {} «» ‹› “” 〖〗 【】 「」 『』 （） 〈〉
+ 《》 〔〕 ⦗⦘ 〘〙 ⦅⦆ 〚〛 ⦃⦄ ⟨⟩."
+  (interactive)
+  (with-syntax-table (standard-syntax-table)
+    (modify-syntax-entry ?\« "(»")
+    (modify-syntax-entry ?\» ")«")
+    (modify-syntax-entry ?\‹ "(›")
+    (modify-syntax-entry ?\› ")‹")
+    (modify-syntax-entry ?\“ "(”")
+    (modify-syntax-entry ?\” ")“")
+    (modify-syntax-entry ?\‘ "(’")
+    (modify-syntax-entry ?\’ ")‘")
+    (let (pos p1 p2)
+      (setq pos (point))
+      (search-backward-regexp "\\s(" nil t )
+      (setq p1 (point))
+      (forward-sexp 1)
+      (setq p2 (point))
+      (goto-char (1+ p1))
+      (set-mark (1- p2)))))
+
 (defun ergoemacs-select-text-in-quote ()
-  "Select text between the nearest left and right delimiters.
-Delimiters are paired characters:
- () [] {} «» ‹› “” 〖〗 【】 「」 『』 （） 〈〉 《》 〔〕 ⦗⦘ 〘〙 ⦅⦆ 〚〛 ⦃⦄ ⟨⟩
- For practical purposes, also: \"\", but not single quotes."
- (interactive)
- (let (p1)
-   (skip-chars-backward "^<>([{“「『‹«（〈《〔【〖⦗〘⦅〚⦃⟨\"")
-   (setq p1 (point))
-   (skip-chars-forward "^<>)]}”」』›»）〉》〕】〗⦘〙⦆〛⦄⟩\"")
-   (set-mark p1)))
+  "Select text between the nearest brackets or quote."
+  (interactive)
+  (if (nth 3 (syntax-ppss))
+        (ergoemacs-select-text-in-ascii-quote)
+      (ergoemacs-select-text-in-bracket)))
 
 ;; by Nikolaj Schumacher, 2008-10-20. Released under GPL.
 (defun ergoemacs-semnav-up (arg)
