@@ -260,6 +260,13 @@ All other modes are assumed to be minor modes or unimportant.
           :help "Undo last operation"
           :keys "Ctrl+Z")
     (redo menu-item "Redo" ergoemacs-redo
+          :enable (and
+                   (not buffer-read-only)
+                   (not (eq t buffer-undo-list))
+                   (or
+                    (not (and (boundp 'undo-tree-mode) undo-tree-mode))
+                    (and (and (boundp 'undo-tree-mode) undo-tree-mode)
+                            (null (undo-tree-node-next (undo-tree-current buffer-undo-tree))))))
           :keys "Ctrl+Y")
     (redo-sep menu-item "--")
     (cut menu-item "Cut" clipboard-kill-region
