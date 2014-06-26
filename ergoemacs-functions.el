@@ -442,14 +442,17 @@ See: `ergoemacs-forward-block'"
 (defcustom ergoemacs-back-to-indentation t
   "Allow `ergoemacs-beginning-of-line-or-what' to move cursor back to the beginning of the indentation.  Otherwise, it is always beginning of line."
   :type 'boolean
-  :group 'ergoemacs-mode)
+  :group 'ergoemacs-mode) ;
 
-(defcustom ergoemacs-end-of-comment-line t
-  "Allow `ergoemacs-end-of-line-or-what' to move cursor to the
-end of line, but ignore comments.
+(defcustom ergoemacs-end-of-comment-line nil
+  "When non-nil, treat comments different for beginning/end of line.
 
-It also allows `ergoemacs-beginning-of-line-or-what' to move the
-cursor to the beginning of the comment line. 
+ When non-nil `ergoemacs-end-of-line-or-what', the end of the line is the end of the code line first, then the end of the code + comment.
+
+When non-nil `ergoemacs-beginning-of-line-or-what' to move the
+cursor to the beginning of the comment, then end of code,
+followed by the beginning of indentation (if
+`ergoemacs-back-to-indentation' is true) and beginning of line.
 "
   :type 'boolean
   :group 'ergoemacs-mode)
@@ -609,7 +612,9 @@ the prefix arguments of `beginning-of-buffer',
 `ergoemacs-backward-block' and `scroll-down-command'
 "
   (interactive "^p")
-  (if (and ergoemacs-beginning-or-end-of-line-and-what
+  (let ((N N)
+        (single-u-prefix-p (eq current-prefix-arg '(4))))
+    (if (and ergoemacs-beginning-or-end-of-line-and-what
            (or (not ergoemacs-use-beginning-or-end-of-line-only)
                (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                     (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
@@ -646,20 +651,15 @@ the prefix arguments of `beginning-of-buffer',
         (save-excursion
           (when (not (eolp))
             (forward-char 1))
-          (let ((cs (ignore-errors
-                        (let ((tmp (comment-search-backward (point-at-bol) t)))
-                          (if (and font-lock
-                                     (not
-                                      (eq (get-text-property (point) 'face)
-                                          'font-lock-comment-face))) nil
-                            tmp)))))
-            (when cs
-              (skip-syntax-forward " " (point-at-eol))
-              (unless (looking-at "$")
-                (push (point) pts))
-              (goto-char cs)
-              (skip-syntax-backward " " (point-at-bol))
-              (push (point) pts)))))   ;; Test
+          (save-excursion
+            (when (comment-search-backward (point-at-bol) t)
+              (push (point) pts)
+              (when (and font-lock-mode
+                         (eq (get-text-property (point) 'face)
+                             'font-lock-comment-face))
+                (goto-char (max (point-at-bol) (previous-single-property-change (point) 'face (current-buffer) (point-at-bol))))
+                (skip-syntax-backward " " (point-at-bol))
+                (push (point)  pts))))))   ;; Test
       (cond
        ((not pts)
         (call-interactively 'move-beginning-of-line))
@@ -673,7 +673,7 @@ the prefix arguments of `beginning-of-buffer',
             (push x tmp)))
         (setq pts tmp)
         (when pts
-          (goto-char (nth 0 pts)))))))
+          (goto-char (nth 0 pts))))))))
   ;; ergoemacs shortcut changes this-command
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
 
