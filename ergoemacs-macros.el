@@ -429,6 +429,18 @@ This was stole/modified from `c-save-buffer-state'"
             (buffer-modified-p)
             (set-buffer-modified-p nil)))))
 
+;;;###autoload
+
+(defmacro ergoemacs-backward-up-list (arg arg1 arg2)
+  "Allow the three argument list for emacs 24.4.
+
+See `backward-up-list' for more information on your emacs
+version's implementation of this function."
+  (cond
+   ((and (<= 24 emacs-major-version)
+         (<= 4 emacs-minor-version))
+    `(backward-up-list ,arg ,arg1 ,arg2))
+   (t `(backward-up-list ,arg))))
 
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

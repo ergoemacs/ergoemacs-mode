@@ -809,7 +809,7 @@ the prefix arguments of `end-of-buffer',
   (let (p1 p2)
     (if (nth 3 (syntax-ppss))
         (progn
-          (backward-up-list 1 "ESCAPE-STRINGS" "NO-SYNTAX-CROSSING")
+          (ergoemacs-backward-up-list 1 "ESCAPE-STRINGS" "NO-SYNTAX-CROSSING")
           (setq p1 (point))
           (forward-sexp 1)
           (setq p2 (point))
