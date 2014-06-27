@@ -662,19 +662,19 @@ All other modes are assumed to be minor modes or unimportant.
     (blink-cursor menu-item "Cursor Blink" blink-cursor-mode
                   :button (:toggle . blink-cursor-mode))
 
-    (auto-pair menu-item "Insert Matching Parentheses/Bracket"
-               (lambda() (interactive)
-                 (cond
-                  ((fboundp 'smartparens-mode)
-                   (smartparens-mode))
-                  ((fboundp 'autopair-global-mode)
-                   (autopair-global-mode))
-                  (t (electric-pair-mode))))
-               :button (:toggle . 
-                                (or
-                                 (and (boundp 'smartparens-mode) smartparens-mode)
-                                 (and (boundp 'auto-indent-mode) auto-indent-mode)
-                                 electric-pair-mode)))
+    ;; (auto-pair menu-item "Insert Matching Parentheses/Bracket"
+    ;;            (lambda() (interactive)
+    ;;              (cond
+    ;;               ((fboundp 'smartparens-mode)
+    ;;                (smartparens-mode))
+    ;;               ((fboundp 'autopair-global-mode)
+    ;;                (autopair-global-mode))
+    ;;               (t (electric-pair-mode))))
+    ;;            :button (:toggle . 
+    ;;                             (or
+    ;;                              (and (boundp 'smartparens-mode) smartparens-mode)
+    ;;                              (and (boundp 'auto-indent-mode) auto-indent-mode)
+    ;;                              electric-pair-mode)))
     
     (tabbar-mode menu-item "Tabbar" ergoemacs-menu-tabbar-toggle
                  :button (:toggle . (and (boundp 'tabbar-mode)
