@@ -4,7 +4,7 @@
 ;;
 ;;   Copyright © 2009 Milan Santosi
 ;;   Copyright © 2012 Benjamin Hansen
-;;   Copyright © 2013 Matthew Fidler
+;;   Copyright © 2013, 2014 Matthew Fidler
 ;;   This program is free software: you can redistribute it and/or modify
 ;;   it under the terms of the GNU General Public License as published by
 ;;   the Free Software Foundation, either version 3 of the License, or
@@ -57,6 +57,8 @@ IniRead CurrRAlt, ergoemacs-settings.ini, RAlt, App
 IniRead CurrLAlt, ergoemacs-settings.ini, LAlt, App
 IniRead CurrRAltLAlt, ergoemacs-settings.ini, RAltLAlt, App
 IniRead OutlookSave, ergoemacs-settings.ini, Outlook, Save
+IniRead EmacsClient, ergoemacs-settings.ini, Emacs, EmacsClient
+IniRead OutlookTemplate, ergoemacs-settings.ini, Outlook, Template
 LayLst=
 VarLst=
 CareL = 0
@@ -664,6 +666,19 @@ execute-extended-command:
   ;; Send to org-outlook if using outlook
   If !WinActive("ahk_class Emacs"){
        If WinActive("ahk_class rctrl_renwnd32"){
+          If !FileExist(OutlookSave){
+             FileSelectFolder, OutlookSave, ,3, Select Folder to Save Outlook Emails
+             IniWrite, %OutlookSave%, ergoemacs-settings.ini, Outlook, Save
+          }
+          If !FileExist(EmacsClient){
+             FileSelectFile, EmacsClient, 1, , Emacs Client, Emacs Client (emacs*.exe)
+             IniWrite, %EmacsClient%, ergoemacs-settings.ini, Emacs, EmacsClient
+          }
+          If (OutlookTemplate == "ERROR") {
+                InputBox OutlookTemplate, Org-mode capture template for emails (can't be blank)
+                IniWrite, %OutlookTemplate%, ergoemacs-settings.ini, Outlook, Template
+
+          }
           Clipboard=
           SendKey("{Ctrl down}{c}{Ctrl up}")
           ClipWait
@@ -688,11 +703,18 @@ execute-extended-command:
           Clipboard =
           Clipboard := fileName
           ClipWait
+          While !WinActive("Save As"){
+                Sleep 100
+          }
           SendKey("{Backspace}")
           SendInput, %Clipboard%
           SendKey("{Enter}")
+          While WinActive("Save As"){
+                Sleep 100
+          }
+          SendKey("{Del}")
           fileName := uri_encode(fileName)
-          fileName = "%OutlookEmacs%" org-protocol:/capture:/%OutlookTemplate%%fileName%/%Title%/%EmailBody%
+          fileName = "%EmacsClient%" org-protocol:/capture:/%OutlookTemplate%/%fileName%/%Title%/%EmailBody%
           Run, %fileName%
           }
   }
