@@ -346,6 +346,7 @@ major-modes like `org-mode'. "
     (ergoemacs-shortcut-remap 'kill-region)
     (deactivate-mark))
    (t
+    (ergoemacs-shortcut-remap 'move-beginning-of-line)
     (when (not (bolp))
       (beginning-of-line))
     ;; Keep prefix args.
