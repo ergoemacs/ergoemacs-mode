@@ -818,8 +818,8 @@ This function should select the whole string."
                                 '(font-lock-string-face font-lock-doc-face)))
       (setq p1 (or (previous-single-property-change (point) 'face (current-buffer) (point-min)) (point-min)))
       (setq p2 (or (next-single-property-change (point) 'face (current-buffer) (point-max)) (point-max)))
-      (goto-char p1)
-      (set-mark p2))
+      (goto-char (1+ p1))
+      (set-mark (1- p2)))
      (font-lock-mode
       (user-error "Cursor not inside quote"))
      ((and (<= 24 emacs-major-version)
