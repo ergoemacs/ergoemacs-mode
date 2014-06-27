@@ -814,14 +814,6 @@ This function should select the whole string."
   (interactive)
   (let (p1 p2)
     (cond
-     ((and font-lock-mode (memq (get-text-property (point) 'face)
-                                '(font-lock-string-face font-lock-doc-face)))
-      (setq p1 (or (previous-single-property-change (point) 'face (current-buffer) (point-min)) (point-min)))
-      (setq p2 (or (next-single-property-change (point) 'face (current-buffer) (point-max)) (point-max)))
-      (goto-char (1+ p1))
-      (set-mark (1- p2)))
-     (font-lock-mode
-      (user-error "Cursor not inside quote"))
      ((and (<= 24 emacs-major-version)
            (<= 4 emacs-minor-version))
       (if (nth 3 (syntax-ppss))
@@ -833,6 +825,14 @@ This function should select the whole string."
             (goto-char (1+ p1))
             (set-mark (1- p2)))
         (user-error "Cursor not inside quote")))
+     ((and font-lock-mode (memq (get-text-property (point) 'face)
+                                '(font-lock-string-face font-lock-doc-face)))
+      (setq p1 (or (previous-single-property-change (point) 'face (current-buffer) (point-min)) (point-min)))
+      (setq p2 (or (next-single-property-change (point) 'face (current-buffer) (point-max)) (point-max)))
+      (goto-char (1+ p1))
+      (set-mark (1- p2)))
+     (font-lock-mode
+      (user-error "Cursor not inside quote"))
      (t
       (let (p1)
         (skip-chars-backward "^“\"")
