@@ -518,13 +518,15 @@ It will replace anything defined by `ergoemacs-translation'"
 (declare-function minibuffer-keyboard-quit "delsel.el")
 (declare-function ergoemacs-key-fn-lookup "ergoemacs-translate.el")
 (declare-function ergoemacs-modal-toggle "ergoemacs-modal.el")
-
+(declare-function cua-clear-rectangle-mark "cua-rect.el")
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'."
   (cond
    ((minibufferp)
     (minibuffer-keyboard-quit))
-   ((and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode)
+   ((and (boundp 'cua--rectangle) cua--rectangle
+         (boundp 'cua-mode) cua-mode
+         (fboundp 'cua-clear-rectangle-mark))
     (cua-clear-rectangle-mark))
    (t
      (let (defined-fn
