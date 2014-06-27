@@ -532,7 +532,6 @@ This will not honor `shift-select-mode'."
 ;; Extends behavior of
 ;; http://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/
 
-(defvar font-lock)
 (defvar ergoemacs-beginning-of-line-or-what-last-command nil)
 (declare-function comment-search-backward "newcomment.el")
 (declare-function comment-search-forward "newcomment.el")
@@ -834,7 +833,12 @@ This function should select the whole string."
             (goto-char (1+ p1))
             (set-mark (1- p2)))
         (user-error "Cursor not inside quote")))
-     (t (user-error "This command requires `font-lock-mode' or emacs 24.4+")))))
+     (t
+      (let (p1)
+        (skip-chars-backward "^“\"")
+        (setq p1 (point))
+        (skip-chars-forward "^”\"")
+        (set-mark p1)))))))
 
 (defun ergoemacs-select-text-in-bracket-or-quote ()
   "Select text between the nearest brackets.
