@@ -804,7 +804,17 @@ the prefix arguments of `end-of-buffer',
     (set-mark p1)))
 
 (defun ergoemacs-select-text-in-ascii-quote ()
-  "Select text between ASCII quotes, single or double."
+  "Select text between ASCII quotes, single or double.
+
+In emacs 24.4, By putting your cursor at ▮ in the followin example:
+
+ \"some ▮ \\\"thing\\\" and another\"
+
+This function should select the whole string.
+
+In Emacs 24.3 and lower it will raise an unbalanced parenthesis error.
+"
+  "some ▮ \"thing\" and another"
   (interactive)
   (let (p1 p2)
     (if (nth 3 (syntax-ppss))
@@ -818,7 +828,7 @@ the prefix arguments of `end-of-buffer',
       (progn
         (user-error "Cursor not inside quote")))))
 
-(defun ergoemacs-select-text-in-bracket ()
+(defun ergoemacs-select-text-in-bracket-or-quote ()
   "Select text between the nearest brackets.
 Bracket here includes: () [] {} «» ‹› “” 〖〗 【】 「」 『』 （） 〈〉
  《》 〔〕 ⦗⦘ 〘〙 ⦅⦆ 〚〛 ⦃⦄ ⟨⟩."
@@ -846,7 +856,7 @@ Bracket here includes: () [] {} «» ‹› “” 〖〗 【】 「」 『』 �
   (interactive)
   (if (nth 3 (syntax-ppss))
         (ergoemacs-select-text-in-ascii-quote)
-      (ergoemacs-select-text-in-bracket)))
+      (ergoemacs-select-text-in-bracket-or-quote)))
 
 ;; by Nikolaj Schumacher, 2008-10-20. Released under GPL.
 (defun ergoemacs-semnav-up (arg)
