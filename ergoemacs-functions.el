@@ -315,7 +315,17 @@ If `narrow-to-region' is in effect, then cut that region only."
    ((region-active-p)
     (kill-ring-save (region-beginning) (region-end)))
    (t
-    (kill-ring-save (line-beginning-position) (line-beginning-position 2))))
+    ;; Hack away to support `org-mode' folded reg
+    (kill-ring-save
+     (save-excursion
+       (ergoemacs-shortcut-remap 'move-beginning-of-line)
+       (when (not (bolp))
+         (beginning-of-line))
+       (point))
+     (save-excursion
+       (ergoemacs-shortcut-remap 'move-end-of-line)
+       (call-interactively 'move-end-of-line)
+       (point)))))
   (deactivate-mark))
 
 (declare-function cua-cut-region "cua-base.el")
