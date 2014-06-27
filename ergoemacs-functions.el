@@ -806,27 +806,34 @@ the prefix arguments of `end-of-buffer',
 (defun ergoemacs-select-text-in-ascii-quote ()
   "Select text between ASCII quotes, single or double.
 
-In emacs 24.4, By putting your cursor at ▮ in the followin example:
+By putting your cursor at ▮ in the following example:
 
  \"some ▮ \\\"thing\\\" and another\"
 
-This function should select the whole string.
-
-In Emacs 24.3 and lower it will raise an unbalanced parenthesis error.
-"
-  "some ▮ \"thing\" and another"
+This function should select the whole string."
   (interactive)
   (let (p1 p2)
-    (if (nth 3 (syntax-ppss))
-        (progn
-          (ergoemacs-backward-up-list 1 "ESCAPE-STRINGS" "NO-SYNTAX-CROSSING")
-          (setq p1 (point))
-          (forward-sexp 1)
-          (setq p2 (point))
-          (goto-char (1+ p1))
-          (set-mark (1- p2)))
-      (progn
-        (user-error "Cursor not inside quote")))))
+    (cond
+     ((and font-lock-mode (memq (get-text-property (point) 'face)
+                                '(font-lock-string-face font-lock-doc-face)))
+      (setq p1 (or (previous-single-property-change (point) 'face (current-buffer) (point-min)) (point-min)))
+      (setq p2 (or (next-single-property-change (point) 'face (current-buffer) (point-max)) (point-max)))
+      (goto-char p1)
+      (set-mark p2))
+     (font-lock-mode
+      (user-error "Cursor not inside quote"))
+     ((and (<= 24 emacs-major-version)
+           (<= 4 emacs-minor-version))
+      (if (nth 3 (syntax-ppss))
+          (progn
+            (ergoemacs-backward-up-list 1 "ESCAPE-STRINGS" "NO-SYNTAX-CROSSING")
+            (setq p1 (point))
+            (forward-sexp 1)
+            (setq p2 (point))
+            (goto-char (1+ p1))
+            (set-mark (1- p2)))
+        (user-error "Cursor not inside quote")))
+     (t (user-error "This command requires `font-lock-mode' or emacs 24.4+")))))
 
 (defun ergoemacs-select-text-in-bracket-or-quote ()
   "Select text between the nearest brackets.
