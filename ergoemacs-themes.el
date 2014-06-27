@@ -653,7 +653,7 @@
   "Select Items"
   (global-set-key (kbd "M-S-SPC") 'mark-paragraph)
   (global-set-key (kbd "M-8") '(er/expand-region ergoemacs-extend-selection))
-  (global-set-key (kbd "M-*") '(er/mark-outside-quotes ergoemacs-select-text-in-quote))
+  (global-set-key (kbd "M-*") '(er/mark-inside-quotes ergoemacs-select-text-in-quote))
   (global-set-key (kbd "M-6") 'ergoemacs-select-current-block)
   (global-set-key (kbd "M-7") 'ergoemacs-select-current-line))
 

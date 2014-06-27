@@ -532,6 +532,7 @@ This will not honor `shift-select-mode'."
 ;; Extends behavior of
 ;; http://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/
 
+(defvar font-lock)
 (defvar ergoemacs-beginning-of-line-or-what-last-command nil)
 (declare-function comment-search-backward "newcomment.el")
 (declare-function comment-search-forward "newcomment.el")
@@ -783,9 +784,9 @@ the prefix arguments of `end-of-buffer',
 ;;; TEXT SELECTION RELATED
 
 (defun ergoemacs-select-current-line ()
-  "Select the current line."
+  "Select the current line"
   (interactive)
-  (end-of-line)
+  (end-of-line) ; move to end of line
   (set-mark (line-beginning-position)))
 
 (defun ergoemacs-select-current-block ()
@@ -803,72 +804,17 @@ the prefix arguments of `end-of-buffer',
         (setq p2 (point))))
     (set-mark p1)))
 
-(defun ergoemacs-select-text-in-ascii-quote ()
-  "Select text between ASCII quotes, single or double.
-
-By putting your cursor at ▮ in the following example:
-
- \"some ▮ \\\"thing\\\" and another\"
-
-This function should select the whole string."
-  (interactive)
-  (let (p1 p2)
-    (cond
-     ((and (<= 24 emacs-major-version)
-           (<= 4 emacs-minor-version))
-      (if (nth 3 (syntax-ppss))
-          (progn
-            (ergoemacs-backward-up-list 1 "ESCAPE-STRINGS" "NO-SYNTAX-CROSSING")
-            (setq p1 (point))
-            (forward-sexp 1)
-            (setq p2 (point))
-            (goto-char (1+ p1))
-            (set-mark (1- p2)))
-        (user-error "Cursor not inside quote")))
-     ((and font-lock-mode (memq (get-text-property (point) 'face)
-                                '(font-lock-string-face font-lock-doc-face)))
-      (setq p1 (or (previous-single-property-change (point) 'face (current-buffer) (point-min)) (point-min)))
-      (setq p2 (or (next-single-property-change (point) 'face (current-buffer) (point-max)) (point-max)))
-      (goto-char (1+ p1))
-      (set-mark (1- p2)))
-     (font-lock-mode
-      (user-error "Cursor not inside quote"))
-     (t
-      (let (p1)
-        (skip-chars-backward "^“\"")
-        (setq p1 (point))
-        (skip-chars-forward "^”\"")
-        (set-mark p1)))))))
-
-(defun ergoemacs-select-text-in-bracket-or-quote ()
-  "Select text between the nearest brackets.
-Bracket here includes: () [] {} «» ‹› “” 〖〗 【】 「」 『』 （） 〈〉
- 《》 〔〕 ⦗⦘ 〘〙 ⦅⦆ 〚〛 ⦃⦄ ⟨⟩."
-  (interactive)
-  (with-syntax-table (standard-syntax-table)
-    (modify-syntax-entry ?\« "(»")
-    (modify-syntax-entry ?\» ")«")
-    (modify-syntax-entry ?\‹ "(›")
-    (modify-syntax-entry ?\› ")‹")
-    (modify-syntax-entry ?\“ "(”")
-    (modify-syntax-entry ?\” ")“")
-    (modify-syntax-entry ?\‘ "(’")
-    (modify-syntax-entry ?\’ ")‘")
-    (let (pos p1 p2)
-      (setq pos (point))
-      (search-backward-regexp "\\s(" nil t )
-      (setq p1 (point))
-      (forward-sexp 1)
-      (setq p2 (point))
-      (goto-char (1+ p1))
-      (set-mark (1- p2)))))
-
 (defun ergoemacs-select-text-in-quote ()
-  "Select text between the nearest brackets or quote."
-  (interactive)
-  (if (nth 3 (syntax-ppss))
-        (ergoemacs-select-text-in-ascii-quote)
-      (ergoemacs-select-text-in-bracket-or-quote)))
+  "Select text between the nearest left and right delimiters.
+Delimiters are paired characters:
+ () [] {} «» ‹› “” 〖〗 【】 「」 『』 （） 〈〉 《》 〔〕 ⦗⦘ 〘〙 ⦅⦆ 〚〛 ⦃⦄ ⟨⟩
+ For practical purposes, also: \"\", but not single quotes."
+ (interactive)
+ (let (p1)
+   (skip-chars-backward "^<>([{“「『‹«（〈《〔【〖⦗〘⦅〚⦃⟨\"")
+   (setq p1 (point))
+   (skip-chars-forward "^<>)]}”」』›»）〉》〕】〗⦘〙⦆〛⦄⟩\"")
+   (set-mark p1)))
 
 ;; by Nikolaj Schumacher, 2008-10-20. Released under GPL.
 (defun ergoemacs-semnav-up (arg)
