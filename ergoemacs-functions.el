@@ -740,11 +740,8 @@ the prefix arguments of `end-of-buffer',
            (or (eolp)
                (and
                 (or
-                 (eq
-                  (ergoemacs-with-global
-                   (ergoemacs-real-key-binding (read-kbd-macro "<next>")))
-                  last-command))
-                    (bolp))))
+                 (memq last-command '(ergoemacs-forward-block scroll-up-command)))
+                (bolp))))
       (progn 
         (cond
          ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
