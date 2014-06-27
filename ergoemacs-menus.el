@@ -662,6 +662,9 @@ All other modes are assumed to be minor modes or unimportant.
     (blink-cursor menu-item "Cursor Blink" blink-cursor-mode
                   :button (:toggle . blink-cursor-mode))
 
+    (electric-pair menu-item "Insert Matching Parentheses/Bracket" electric-pair-mode
+                  :button (:toggle . electric-pair-mode))
+    
     (tabbar-mode menu-item "Tabbar" ergoemacs-menu-tabbar-toggle
                  :button (:toggle . (and (boundp 'tabbar-mode)
                                          tabbar-mode)))
