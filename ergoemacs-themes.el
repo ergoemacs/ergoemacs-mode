@@ -54,6 +54,7 @@
         org-special-ctrl-a/e t
         ido-vertical-define-keys 'C-n-C-p-up-down-left-right
         scroll-error-top-bottom t)
+  (add-hook 'kill-buffer-hook 'ergoemacs-save-buffer-to-recently-closed)
   (undo-tree-mode 1)
   (shift-select-mode t)
   (delete-selection-mode 1)

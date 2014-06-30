@@ -477,7 +477,6 @@ bindings the keymap is:
         (ergoemacs-enable-c-advices)
         (setq ergoemacs-unbind-keys t)
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
-        (add-hook 'kill-buffer-hook 'ergoemacs-save-buffer-to-recently-closed)
         (ergoemacs-populate-pre-command-hook)
         (ergoemacs-debug-heading "Ergoemacs-mode turned ON."))
     ;; turn off ergoemacs-mode
@@ -499,7 +498,6 @@ bindings the keymap is:
         (when am
           (set am ergoemacs-old-ns-alternate-modifier))))
     (remove-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
-    (remove-hook 'kill-buffer-hook 'ergoemacs-save-buffer-to-recently-closed)
     (ergoemacs-populate-pre-command-hook t)
     ;; Revert `substitute-command-keys' and `completing-read'
     (ergoemacs-enable-c-advices 'disable)
