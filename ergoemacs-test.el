@@ -511,19 +511,17 @@ Test next and prior translation."
 (ert-deftest ergoemacs-test-apps-copy ()
   "Tests <apps> c on QWERTY copying a region, not just a line."
   (ergoemacs-test-layout
-   :macro (format "C-a <%s> c"
+   :macro (format "C-a <%s> c C-v"
                   (if (eq system-type 'windows-nt)
                       "apps" "menu"))
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (insert ergoemacs-test-lorem-ipsum)
-     (execute-kbd-macro macro)
-     (goto-char (point-max))
-     (call-interactively 'ergoemacs-paste)
-     (should (string= (concat ergoemacs-test-lorem-ipsum
-                              ergoemacs-test-lorem-ipsum)
-                      (buffer-string)))
-     (kill-buffer (current-buffer)))))
+   (let ((test-string "1\n2\n3\n4"))
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (insert test-string)
+       (execute-kbd-macro macro)
+       (should (string= (concat test-string test-string)
+                        (buffer-string)))
+       (kill-buffer (current-buffer))))))
 
 (ert-deftest ergoemacs-test-shift-selection ()
   "Test that shift selection works properly.
