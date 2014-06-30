@@ -110,6 +110,7 @@
 
 If an error occurs, display the error, and sit for 2 seconds before exiting"
   (cond
+   (noninteractive)
    ((not (or custom-file user-init-file))
     (message "Not saving; \"emacs -q\" would overwrite customizations")
     (sit-for 1))
