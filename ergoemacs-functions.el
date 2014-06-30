@@ -771,18 +771,18 @@ the prefix arguments of `end-of-buffer',
               (goto-char cs)
               (skip-syntax-backward " " (point-at-bol))
               (push (point) pts)))))
+      (when pts
+        (setq pts (sort pts '<))
+        (dolist (x pts)
+          (unless (<= x (point))
+            (push x tmp)))
+        (setq pts (reverse tmp)))
       (cond
        ((not pts)
         (call-interactively 'move-end-of-line)
         (setq this-command 'move-end-of-line))
        (t
-	(setq pts (sort pts '<))
-        (dolist (x pts)
-          (unless (<= x (point))
-            (push x tmp)))
-	(setq pts (reverse tmp))
-        (when pts
-          (goto-char (nth 0 pts)))))))
+        (goto-char (nth 0 pts))))))
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
 
 ;;; TEXT SELECTION RELATED
