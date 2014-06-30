@@ -766,9 +766,7 @@ the prefix arguments of `end-of-buffer',
       (when ergoemacs-end-of-comment-line
         (save-excursion
           ;; See http://www.emacswiki.org/emacs/EndOfLineNoComments
-          (let ((cs (condition-case err
-                        (comment-search-forward (point-at-eol) t)
-                      (error nil))))
+          (let ((cs (ignore-errors (comment-search-forward (point-at-eol) t))))
             (when cs
               (goto-char cs)
               (skip-syntax-backward " " (point-at-bol))
