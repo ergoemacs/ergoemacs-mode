@@ -222,6 +222,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 
 (declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-theme-set-version "ergoemacs-theme-engine.el")
+;;;###autoload
 (defmacro ergoemacs-test-layout (&rest keys-and-body)
   (let ((kb (make-symbol "body-and-plist"))
         (plist (make-symbol "plist"))
