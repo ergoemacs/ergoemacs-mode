@@ -771,20 +771,25 @@ Issue #186."
   "Issue #184; Not replace the \"selected all\" by paste."
   (let ((ret t)
         (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-    (with-temp-buffer
-      (insert ergoemacs-test-lorem-ipsum)
-      (goto-char (point-min))
-      (push-mark)
-      (end-of-line)
-      (ergoemacs-copy-line-or-region)
-      (push-mark (point))
-      (push-mark (point-max) nil t)
-      (goto-char (point-min))
-      (ergoemacs-paste)
-      (message "`%s`" (buffer-string))
-      (setq ret (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed\n"
-                         (buffer-string))))
-    (should ret)))
+    (ergoemacs-test-layout
+     :macro "C-v"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-min))
+       (push-mark)
+       (end-of-line)
+       (ergoemacs-copy-line-or-region)
+       (push-mark (point))
+       (push-mark (point-max) nil t)
+       (goto-char (point-min))
+       ;; Make sure the `pre-command-hook' and `post-command-hook' is
+       ;; run by calling the macro.
+       (execute-kbd-macro macro) 
+       ;; (ergoemacs-paste)
+       (should (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed\n"
+                        (buffer-string)))
+       (kill-buffer (current-buffer))))))
 
 (ert-deftest ergoemacs-test-issue-184-paste-should-clear-mark ()
   "Issue #186.
