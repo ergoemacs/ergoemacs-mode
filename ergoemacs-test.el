@@ -968,7 +968,42 @@ Selected mark would not be cleared after paste."
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
+(ert-deftest ergoemacs-test-bol-or-what ()
+  "Test beginning of line functionality."
+  (let ((ergoemacs-end-of-comment-line t)
+        (ergoemacs-back-to-indentation t))
+    (with-temp-buffer
+      (emacs-lisp-mode) ; Turn on ergoemacs-mode 
+      (insert "(progn\n  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode")
+      (goto-char (point-max))
+      (call-interactively 'ergoemacs-beginning-of-line-or-what)
+      (should (string= "Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol))))
+      (call-interactively 'ergoemacs-beginning-of-line-or-what)
+      (should (string= " ; Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol))))
+      (call-interactively 'ergoemacs-beginning-of-line-or-what)
+      (should (string= "(ergoemacs-mode 1)) ; Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol))))
+      (call-interactively 'ergoemacs-beginning-of-line-or-what)
+      (should (string= "  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol)))))))
 
+(ert-deftest ergoemacs-test-eol-or-what ()
+  "Test beginning of line functionality."
+  (let ((ergoemacs-end-of-comment-line t)
+        (ergoemacs-back-to-indentation t))
+    (with-temp-buffer
+      (emacs-lisp-mode) ; Turn on ergoemacs-mode
+      (insert "(progn\n  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode")
+      (goto-char (point-max))
+      (beginning-of-line)
+      
+      (call-interactively 'ergoemacs-end-of-line-or-what)
+      (should (string= " ; Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol))))
+      (call-interactively 'ergoemacs-end-of-line-or-what)
+      (should (= (point) (point-at-eol))))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
