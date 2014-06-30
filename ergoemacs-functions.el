@@ -302,6 +302,7 @@ If `narrow-to-region' is in effect, then cut that region only."
 (defvar cua-mode)
 (declare-function cua-copy-rectangle "cua-rect.el")
 (declare-function cua-copy-region "cua-base.el")
+(declare-function ergoemacs-shortcut-remap "ergoemacs-shortcuts.el")
 (defvar cua--rectangle)
 (defun ergoemacs-copy-line-or-region (&optional arg)
   "Copy current line, or current text selection."
@@ -329,7 +330,6 @@ If `narrow-to-region' is in effect, then cut that region only."
   (deactivate-mark))
 
 (declare-function cua-cut-region "cua-base.el")
-(declare-function ergoemacs-shortcut-remap "ergoemacs-shortcuts.el")
 (defun ergoemacs-cut-line-or-region (&optional arg)
   "Cut the current line, or current text selection.
 Use `cua-cut-rectangle' or `cua-cut-region' when `cua-mode' is
@@ -665,10 +665,7 @@ the prefix arguments of `beginning-of-buffer',
           (save-excursion
             (when (ignore-errors (comment-search-backward (point-at-bol) t))
               (push (point) pts)
-              (when (and font-lock-mode
-                         (eq (get-text-property (point) 'face)
-                             'font-lock-comment-face))
-                (goto-char (max (point-at-bol) (previous-single-property-change (point) 'face (current-buffer) (point-at-bol))))
+              (when (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
                 (skip-syntax-backward " " (point-at-bol))
                 (push (point) pts))))))
       (cond
