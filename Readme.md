@@ -6,7 +6,7 @@
 
 
 
-ErgoEmacs keybindings improves GNU Emacs for people who did not grew
+ErgoEmacs keybindings improve GNU Emacs for people who did not grew
 up with Emacs. User interface is based on common modern software
 interface familiar to most people today, such as using 【Ctrl+C】 key
 for Copy,【Ctrl+Z】 for undo, 【Ctrl+O】 for Open file, and also
