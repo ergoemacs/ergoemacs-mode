@@ -327,6 +327,7 @@ If `narrow-to-region' is in effect, then cut that region only."
      (save-excursion
        (ergoemacs-shortcut-remap 'move-end-of-line)
        (call-interactively 'move-end-of-line)
+       (re-search-forward "\\=\n" nil t) ;; Include newline
        (point)))))
   (deactivate-mark))
 
