@@ -526,7 +526,12 @@ bindings the keymap is:
 
 
 
-
+(defvar ergoemacs-hook-functions '(delete-selection-pre-hook 
+                                   ac-handle-pre-command
+                                   cua--pre-command-handler
+                                   mc/make-a-note-of-the-command-being-run)
+  "Hooks that are moved to `ergoemacs-pre-command-hook'.
+These hooks are deferred to make sure `this-command' is set appropriately.")
 (unless (featurep 'ergoemacs-advices)
   (load "ergoemacs-advices"))
 
@@ -625,13 +630,6 @@ This is done by checking if this is a command that supports shift selection or c
                                       this-original-command
                                       mc--this-command)
   "Commands to set `this-command' to the command run by `ergoemacs-shortcut'")
-
-(defvar ergoemacs-hook-functions '(delete-selection-pre-hook 
-                                   ac-handle-pre-command
-                                   cua--pre-command-handler
-                                   mc/make-a-note-of-the-command-being-run)
-  "Hooks that are moved to `ergoemacs-pre-command-hook'.
-These hooks are deferred to make sure `this-command' is set appropriately.")
 
 (defun ergoemacs-populate-pre-command-hook (&optional depopulate)
   "Populate `ergoemacs-pre-command-hook' with `pre-command-hook' values."
