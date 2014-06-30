@@ -46,7 +46,7 @@
   `(let ((ergoemacs-run-mode-hooks t))
      ,@body))
 (defvar ergoemacs-mode)
-(defvar ergoemacs-hook-functions nil)
+(defvar ergoemacs-hook-functions)
 (defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local) activate)
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
 If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
