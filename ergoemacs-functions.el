@@ -668,7 +668,8 @@ the prefix arguments of `beginning-of-buffer',
             (when (ignore-errors (comment-search-backward (point-at-bol) t))
               (push (point) pts)
               (when (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
-                (skip-syntax-backward " " (point-at-bol))
+                (while (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
+                  (skip-syntax-backward " " (point-at-bol)))
                 (push (point) pts))))))
       (cond
        ((not pts)
