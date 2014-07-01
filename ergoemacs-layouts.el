@@ -129,7 +129,7 @@
     """ ""  "Z"" "Ĉ" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
   "Esperanto layout.")
 
-(defvar ergoemacs-layout-eo-diplaced
+(defvar ergoemacs-layout-eo-displaced
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
     "" ""  "ŝ" "ĵ" "e" "r" "t" "ĝ" "u" "i" "o" "p" "[" "]" "\\"
     "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" "ŭ" "ĥ" "" ""
