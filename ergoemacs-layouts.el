@@ -138,7 +138,7 @@
     "" "~" "!" "\"" "#" "$" "%" "'" "&" "*" "(" ")" "_" "+"  ""
     "" ""  "Ŝ" "Ĵ" "E" "R" "T" "Ĝ" "U" "I" "O" "P" "{" "}" "|"
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "Ŭ" "Ĥ" "" ""
-    """ ""  "Z" "Ĉ" "C" "V" "B" "N" "M" ";" ":" "?" "" "" "")
+    "" ""  "Z" "Ĉ" "C" "V" "B" "N" "M" ";" ":" "?" "" "" "")
   "Esperanto (displaced semicolon and quote, obsolete) layout.")
 
 (defvar ergoemacs-layout-es
