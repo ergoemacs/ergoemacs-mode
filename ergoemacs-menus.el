@@ -755,7 +755,7 @@ All other modes are assumed to be minor modes or unimportant.
     (apropos menu-item "Apropos (Find matching)"
              (keymap
               (commands menu-item "Commands..."
-                        apropos-commands
+                        apropos-command
                         :help "Find commands matching a regular expression")
               (user-options menu-item "User Options..."
                             ergoemacs-apropos-user-options
