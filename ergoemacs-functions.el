@@ -118,7 +118,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
     (message "Cannot save customizations; init file was not fully loaded")
     (sit-for 1))
    (t
-    (customize-save-customized))))
+    (ignore-errors (customize-save-customized)))))
 
 (defun ergoemacs-ctl-c (&optional arg)
   "Ergoemacs C-c key."
