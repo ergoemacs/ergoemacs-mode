@@ -1075,7 +1075,7 @@
   (global-set-key (kbd "M-H") 'isearch-forward-regexp)
   (global-set-key (kbd "M-a") 'ergoemacs-move-cursor-previous-pane)
   (global-set-key (kbd "M-9") 'er/contract-region)
-  (global-set-key (kbd "M-t") 'execute-extended-command)
+  (global-set-key (kbd "M-;") 'execute-extended-command)
   ;;
   ;; Overwrite previous global definitions in `ergoemacs-mode'
   ;;
