@@ -751,13 +751,13 @@ Issue #186."
        (kill-buffer (current-buffer))))
     (should (equal ret t))))
 
-(ert-deftest ergoemacs-test-reduction-M-g-works ()
-  "Test Ergoemacs M-g works correctly (Issue #171)."
+(ert-deftest ergoemacs-test-reduction-M-o-works ()
+  "Test Ergoemacs M-o works correctly (Issue #171)."
   (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
      :theme "reduction"
      :layout "colemak"
-     (with-timeout (0.2 nil) (ergoemacs-read-key "M-g"))
+     (with-timeout (0.2 nil) (ergoemacs-read-key "M-o"))
      (message "Test FN: %s" ergoemacs-test-fn)
      (should (eq ergoemacs-test-fn (or (command-remapping 'execute-extended-command (point)) 'execute-extended-command))))))
 
@@ -1006,6 +1006,14 @@ Selected mark would not be cleared after paste."
                        (buffer-substring (point) (point-at-eol))))
       (call-interactively 'ergoemacs-end-of-line-or-what)
       (should (= (point) (point-at-eol))))))
+
+;; (ert-deftest ergoemacs-test-5.3.7 ()
+;;   "Test Ergoemacs 5.3.7 keys"
+;;   (let ((ergoemacs-test-fn t))
+;;     (ergoemacs-test-layout
+;;      :version "5.3.7"
+;;      (with-timeout (0.2 nil) (ergoemacs-read-key "M-n"))
+;;      (should (eq ergoemacs-test-fn (or (command-remapping 'keyboard-quit (point)) 'keyboard-quit))))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
