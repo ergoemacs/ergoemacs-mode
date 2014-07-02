@@ -794,8 +794,11 @@ All other modes are assumed to be minor modes or unimportant.
                (coding menu-item "Coding System..."
                        describe-coding-system)
                (separator-curr-modes menu-item "--")
+               (curr-major-mode menu-item "Current Major Mode"
+                           ergoemacs-describe-major-mode
+                           :help "Describe this buffers major and minor modes.")
                (curr-modes menu-item "Current Modes"
-                           describe-modes
+                           (lambda() (interactive) (call-interactively 'describe-mode))
                            :help "Describe this buffers major and minor modes.")
                (curr-keys menu-item "Current Key Bindings"
                           describe-bindings
