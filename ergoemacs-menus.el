@@ -758,7 +758,7 @@ All other modes are assumed to be minor modes or unimportant.
                         apropos-commands
                         :help "Find commands matching a regular expression")
               (user-options menu-item "User Options..."
-                            apropos-user-options
+                            ergoemacs-apropos-user-options
                             :help "Find user options matching a regular expression")
               (all-vars menu-item "All Variables..."
                         apropos-variable

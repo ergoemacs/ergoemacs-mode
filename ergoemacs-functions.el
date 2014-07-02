@@ -2198,6 +2198,12 @@ See also `ergoemacs-lookup-word-on-internet'."
   (dolist (dict-url ergoemacs-all-dictionaries)
     (ergoemacs-lookup-word-on-internet input-word dict-url)))
 
+(defun ergoemacs-apropos-user-options (regexp)
+  "Show user variables that match REGEXP."
+  (interactive (list (read-string "Apropos user options (regexp): ")))
+  (let ((apropos-do-all nil))
+    (apropos-variable regexp)))
+
 (defvar ergoemacs-shortcut-keys)
 (defvar ergoemacs-read-input-keys)
 (defvar ergoemacs-unbind-keys)
@@ -2245,8 +2251,7 @@ See also `ergoemacs-lookup-word-on-internet'."
     (let ((tmp (cdr x)))
       (insert (format "*** %s: %s\n%s\n"
                       (nth 0 x) (symbol-value (nth 0 x))
-                      (substitute-command-keys "\\{tmp}")
-                      )))))
+                      (substitute-command-keys "\\{tmp}"))))))
 
 
 ;; Ergoemacs Test suite

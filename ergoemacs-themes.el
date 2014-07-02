@@ -228,6 +228,14 @@
     :full-shortcut-keymap t
     (define-key helm-map (kbd "C-w") 'helm-keyboard-quit)
     (define-key helm-map (kbd "C-z") nil))
+
+  ;; Compatibility with Icicle (allows the use of
+  ;; `icicle-read-string-completing' directly)
+  (when icicle-mode
+    (global-set-key [remap ergoemacs-apropos-user-options] 'apropos-user-options))
+  
+  (when icicle-ido-like-mode
+    (global-set-key [remap ergoemacs-apropos-user-options] 'apropos-user-options))
   
   (when isearch-mode-hook
     :modify-map t
