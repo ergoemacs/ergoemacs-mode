@@ -227,8 +227,7 @@ Uses `ergoemacs-real-key-description'."
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
 (defun ergoemacs-substitute-command (string &optional map)
-  "Substitutes command STRING
-will add MAP to substitution."
+  "Substitutes command STRING within MAP or currently bound keys."
   (save-match-data
     (let* (ret
            (test (ergoemacs-with-global
@@ -326,38 +325,67 @@ will add MAP to substitution."
 
 (defvar ergoemacs-mode)
 (defun ergoemacs-substitute-command-keys (string)
-  "`ergoemacs-mode' replacement for substitute-command-keys.
-Actual substitute-command-keys is always in `ergoemacs-real-substitute-command-keys'"
-  (if (not string) nil
-    (let (ret str mapvar)
-      (if (not ergoemacs-mode)
-          (setq ret (ergoemacs-real-substitute-command-keys string))
-        (with-temp-buffer
-          (insert string)
-          (goto-char (point-min))
-          (while (re-search-forward "\\(\\(?:\\\\=\\)?\\)\\\\\\(\\[\\|<\\|{\\)\\(.*?\\)\\(\\]\\|>\\|}\\)" nil t)
+  "Substitute key descriptions for command names in STRING.
+`ergoemacs-mode' replacement for substitute-command-keys.
+
+Actual substitute-command-keys is always in
+`ergoemacs-real-substitute-command-keys'.
+
+Each substring of the form \\=\\[COMMAND] is replaced by either a
+keystroke sequence that invokes COMMAND, or \"M-x COMMAND\" if COMMAND
+is not on any keys.
+
+Each substring of the form \\=\\\{MAPVAR} is replaced by a summary of
+the value of MAPVAR as a keymap.  This summary is similar to the one
+produced by `describe-bindings'.  The summary ends in two newlines
+ (used by the helper function `help-make-xrefs' to find the end of the
+      summary).
+
+Each substring of the form \\=\\<MAPVAR> specifies the use of MAPVAR
+as the keymap for future \\=\\[COMMAND] substrings.
+\\=\\= quotes the following character and is discarded;
+thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ into the output.
+
+Return the original STRING if no substitutions are made.
+Otherwise, return a new string, without any text properties."
+  (save-match-data
+    (if (not string) nil
+      (let (ret str mapvar (pt 0) tmp)
+        (if (not ergoemacs-mode)
+            (setq ret (ergoemacs-real-substitute-command-keys string))
+          (while (string-match "\\(\\(?:\\\\=\\)?\\)\\\\\\(\\[\\|<\\|{\\)\\(.*?\\)\\(\\]\\|>\\|}\\)" string pt)
             (cond
-             ((string-match-p "\\\\=" (match-string 1))
-              (replace-match "\\\\\\2\\3\\4" t nil))
-             ((and (string-match-p "<" (match-string 2))
-                   (string-match-p ">" (match-string 4)))
-              (setq mapvar (concat "\\<" (match-string 3) ">"))
-              (replace-match ""))
-             ((and (string-match-p "{" (match-string 2))
-                   (string-match-p "}" (match-string 4)))
-              (replace-match (ergoemacs-substitute-map (match-string 0)) t t))
-             ((and (string-match-p "\\[" (match-string 2))
-                   (string-match-p "\\]" (match-string 4)))
-              (replace-match (ergoemacs-substitute-command (match-string 0) mapvar) t t))))
-          (goto-char (point-min))
-          (while (re-search-forward "\\\\=" nil t)
-            (replace-match "" t t)
-            (re-search-forward "\\=\\\\=" nil t))
-          (goto-char (point-min))
-          (while (and (not ergoemacs-use-M-x-p) (re-search-forward "\\(\\<M-x\\|<execute>\\) " nil t))
-            (replace-match (ergoemacs-substitute-command "\\[execute-extended-command] " "\\<global-map>") t t))
-          (setq ret (buffer-string))))
-      ret)))
+             ((string-match-p "\\\\=" (match-string 1 string))
+              (setq pt (+ (length (match-string 2 string))
+                          (length (match-string 3 string))
+                          (length (match-string 4 string))
+                          (match-beginning 0)))
+              (setq string (replace-match "\\\\\\2\\3\\4" t nil string)))
+             ((and (string-match-p "<" (match-string 2 string))
+                   (string-match-p ">" (match-string 4 string)))
+              (setq mapvar (concat "\\<" (match-string 3 string) ">"))
+              (setq string (replace-match "" nil nil string))
+              (setq pt (match-beginning 0)))
+             ((and (string-match-p "{" (match-string 2 string))
+                   (string-match-p "}" (match-string 4 string)))
+              (setq tmp (ergoemacs-substitute-map (match-string 0 string)))
+              (setq string (replace-match tmp t t string))
+              (setq pt (+ (length tmp) (match-beginning 0))))
+             ((and (string-match-p "\\[" (match-string 2 string))
+                   (string-match-p "\\]" (match-string 4 string)))
+              (setq tmp (ergoemacs-substitute-command (match-string 0 string) mapvar))
+              (setq string (replace-match tmp t t string))
+              (setq pt (+ (length tmp) (match-beginning 0))))))
+	  (setq pt 0 ret string)
+	  (while (string-match "\\\\=" ret pt)
+	    (setq ret (replace-match "" nil t ret))
+	    (setq pt (match-beginning 0))
+	    (when (string=  "\\=" (substring ret pt (min (+ pt 2) (length ret))))
+	      (setq pt (+ pt 2))))
+	  (when (not ergoemacs-use-M-x-p)
+	    (setq ret (replace-regexp-in-string "\\(\\<M-x\\|<execute>\\) " (ergoemacs-substitute-command "\\[execute-extended-command] " "\\<global-map>")
+						ret t t))))
+        ret))))
 
 (declare-function ergoemacs-real-completing-read "ergoemacs-advices.el"
                   (prompt collection &optional
