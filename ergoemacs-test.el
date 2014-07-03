@@ -1016,6 +1016,7 @@ Selected mark would not be cleared after paste."
                     "\\[package-menu-mark-upgrades]")))
   (kill-buffer (current-buffer)))
 
+(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
 (ert-deftest ergoemacs-test-unbind-commands-active ()
   "Make sure the unbound keys work"
   (should (eq 'ergoemacs-undefined (ergoemacs-real-key-binding (read-kbd-macro "C-x C-s")))))
