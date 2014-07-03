@@ -1008,6 +1008,14 @@ Selected mark would not be cleared after paste."
       (call-interactively 'ergoemacs-end-of-line-or-what)
       (should (= (point) (point-at-eol))))))
 
+(ert-deftest ergoemacs-test-u-for-package-list-packages ()
+  "Test `package-list-packages' `substitute-command-keys'"
+  (package-list-packages-no-fetch)
+  (should (string= (ergoemacs-pretty-key "U")
+                   (substitute-command-keys
+                    "\\[package-menu-mark-upgrades]")))
+  (kill-buffer (current-buffer)))
+
 ;; (ert-deftest ergoemacs-test-5.3.7 ()
 ;;   "Test Ergoemacs 5.3.7 keys"
 ;;   (let ((ergoemacs-test-fn t))
