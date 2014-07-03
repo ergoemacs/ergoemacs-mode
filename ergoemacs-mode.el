@@ -8,7 +8,7 @@
 ;; Maintainer: Matthew L. Fidler <matthew.fidler@gmail.com>
 ;; Created: August 01 2007
 ;; Keywords: convenience
-;; Version: 5.14.07
+;; Version: 5.14.7
 ;; Package-Requires: ((emacs "24.1") (undo-tree "0.6.5"))
 ;; URL: https://github.com/ergoemacs/ergoemacs-mode
 
