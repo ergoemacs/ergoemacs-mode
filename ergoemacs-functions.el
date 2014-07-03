@@ -32,11 +32,12 @@
 (eval-when-compile 
   (require 'cl)
   (require 'ergoemacs-macros 
-	   (expand-file-name "ergoemacs-macros" 
-			     (file-name-directory (or
-						   load-file-name
-						   (buffer-file-name)
-						   default-directory)))))
+           (expand-file-name "ergoemacs-macros" 
+                             (or (and (boundp 'pkg-dir) pkg-dir)
+                                 (file-name-directory (or
+                                                       load-file-name
+                                                       (buffer-file-name)
+                                                       default-directory))))))
 
 (require 'redo "redo.elc" t) ; for redo shortcut
 

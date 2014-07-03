@@ -32,10 +32,11 @@
   (require 'cl)
   (require 'ergoemacs-macros 
            (expand-file-name "ergoemacs-macros" 
-                             (file-name-directory (or
-                                                   load-file-name
-                                                   (buffer-file-name)
-                                                   default-directory)))))
+                             (or (and (boundp 'pkg-dir) pkg-dir)
+                                 (file-name-directory (or
+                                                       load-file-name
+                                                       (buffer-file-name)
+                                                       default-directory))))))
 
 (declare-function ergoemacs-set "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-define-key "ergoemacs-theme-engine.el")

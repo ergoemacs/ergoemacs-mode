@@ -32,10 +32,11 @@
   (require 'cl)
   (require 'ergoemacs-macros 
 	   (expand-file-name "ergoemacs-macros" 
-			     (file-name-directory (or
+			     (or (and (boundp 'pkg-dir) pkg-dir)
+                                 (file-name-directory (or
                                                    load-file-name
                                                    (buffer-file-name)
-                                                   default-directory)))))
+                                                   default-directory))))))
 
 (defvar ergoemacs-advices '()
   "List of advices to enable and disable when ergoemacs is running.")

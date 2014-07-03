@@ -32,10 +32,12 @@
   (require 'cl)
   (require 'ergoemacs-macros 
            (expand-file-name "ergoemacs-macros" 
-                             (file-name-directory (or
-                                                   load-file-name
-                                                   (buffer-file-name)
-                                                   default-directory)))))
+                             (or (and (boundp 'pkg-dir) pkg-dir)
+                                 (file-name-directory (or
+                                                       load-file-name
+                                                       (buffer-file-name)
+                                                       default-directory))))))
+
 (require 'edmacro)
 
 (defvar ergoemacs-emacs-default-bindings
