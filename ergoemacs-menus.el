@@ -906,7 +906,8 @@ All other modes are assumed to be minor modes or unimportant.
     ,(if (eq system-type 'darwin) "Help" "?")))
 
 ;; Preprocess menu keybindings...
-
+(defvar recentf-mode)
+(declare-function recentf-show-menu "recentf.el")
 (defun ergoemacs-menus-on ()
   "Turn on ergoemacs menus instead of emacs menus."
   (interactive)
@@ -925,12 +926,16 @@ All other modes are assumed to be minor modes or unimportant.
   (define-key-after global-map [menu-bar view] (cons "View" ergoemacs-menu-bar-view-menu)
     'search)
   (define-key-after global-map [menu-bar languages]
-    (cons "Languages" (ergoemacs-get-major-modes)) 'view))
+    (cons "Languages" (ergoemacs-get-major-modes)) 'view)
+  (when recentf-mode
+    (recentf-show-menu)))
 
 (defun ergoemacs-menus-off ()
   "Turn off ergoemacs menus instead of emacs menus"
   (interactive)
   (define-key global-map [menu-bar file] (cons "File" ergoemacs-menu-bar-old-file-menu))
+  (when recentf-mode
+    (recentf-show-menu))
   (define-key global-map [menu-bar edit] (cons "Edit" ergoemacs-menu-bar-old-edit-menu))
   (define-key global-map [menu-bar search] nil)
   (define-key global-map [menu-bar view] nil)

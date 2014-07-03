@@ -58,6 +58,8 @@
   (undo-tree-mode 1)
   (shift-select-mode t)
   (delete-selection-mode 1)
+  (setq recentf-menu-before "Close")
+  (recentf-mode 1)
   ;; (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
   ;; (setq cua--rectangle-keymap (make-sparse-keymap))
   ;; (setq cua--rectangle-initialized nil)
