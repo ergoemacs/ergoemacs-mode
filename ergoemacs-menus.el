@@ -33,7 +33,7 @@
   "http://ergoemacs.org/emacs/elisp.html")
 
 (defvar ergoemacs-mode-web-page-url
-  "http://ergoemacs.github.io/ergoemacs-mode/")
+  "http://ergoemacs.github.io/")
 
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (defun ergoemacs-kbd-to-key (key)

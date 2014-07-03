@@ -31,7 +31,7 @@
 ;; shortcuts into the most easy-to-type spots.
 ;;
 ;; For complete detail, see:
-;; http://ergoemacs.github.io/ergoemacs-mode/
+;; http://ergoemacs.github.io/
 
 ;; Todo:
 
@@ -414,9 +414,9 @@ Without argument, toggles the minor mode.
 If optional argument is 1, turn it on.
 If optional argument is 0, turn it off.
 
-Home page URL `http://ergoemacs.github.io/ergoemacs-mode/'
+Home page URL `http://ergoemacs.github.io/'
 
-For the standard layout, with A QWERTY keyboard the `execute-extended-command' now \\[execute-extended-command].
+The `execute-extended-command' is now \\[execute-extended-command].
 
 The layout and theme changes the bindings.  For the current
 bindings the keymap is:
