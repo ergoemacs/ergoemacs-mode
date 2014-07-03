@@ -1008,8 +1008,10 @@ Selected mark would not be cleared after paste."
       (call-interactively 'ergoemacs-end-of-line-or-what)
       (should (= (point) (point-at-eol))))))
 
+(declare-function package-list-packages-no-fetch "package.el")
 (ert-deftest ergoemacs-test-u-for-package-list-packages ()
   "Test `package-list-packages' `substitute-command-keys'"
+  (require 'package)
   (package-list-packages-no-fetch)
   (should (string= (ergoemacs-pretty-key "U")
                    (substitute-command-keys
