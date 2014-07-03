@@ -575,7 +575,8 @@ All other modes are assumed to be minor modes or unimportant.
     (goto menu-item "Go To"
           (keymap
            (go-to-line menu-item "Goto Line..." goto-line
-                       :help "Read a line number and go to that line")
+                       :help "Read a line number and go to that line"
+                       :keys "Ctrl + L")
            (separator-tags menu-item "--")
            (find-tag menu-item "Find Tag..." find-tag
                      :help "Find definition of function or variable")
