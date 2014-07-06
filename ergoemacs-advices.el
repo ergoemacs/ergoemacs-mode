@@ -1,6 +1,6 @@
 ;;; ergoemacs-advices.el --- advices for ErgoEmacs
 
-;; Copyright (C) 2013, 2014  Free Software Foundation, Inc.
+;; Copyright © 2013, 2014  Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -68,7 +68,8 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (let ((is-global-p (equal keymap (current-global-map))))
     (if (and ergoemacs-run-mode-hooks
              (not (equal keymap (current-global-map)))
-             (not (equal keymap ergoemacs-keymap)))
+             (not (equal keymap ergoemacs
+                         -keymap)))
         (let ((ergoemacs-run-mode-hooks nil)
               (new-key (read-kbd-macro
                         (format "<ergoemacs-user> %s"
