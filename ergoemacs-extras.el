@@ -908,7 +908,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
 ;;FIXME
 (defvar ergoemacs-select)
 (defvar ergoemacs-html-table)
-(defun ergoemacs-keyfreq-gen-img (file prefix text shift lay ergoemacs-keyfreq-gen-img cmd-freq-ergo)
+(defun ergoemacs-keyfreq-gen-img (file prefix text shift lay cmd-freq-ergo)
   "Ergoemacs keyfreq generate image."
   (let (ret i tmp)
     (with-temp-file file
