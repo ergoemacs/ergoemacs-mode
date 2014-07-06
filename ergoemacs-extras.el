@@ -1153,6 +1153,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
     (message "Calculating key frequencies based on key-position")
     (let ((table (copy-hash-table keyfreq-table))
           list
+          fileg
           (total-n 0)
           (cmd-n 0)
           (i 0)
@@ -1211,77 +1212,77 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                  (append x (list color))))
              cmd-freq-ergo))
       
-      ;; (let (extra-dir)
-;;         (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
-;;         (if (not (file-exists-p extra-dir))
-;;             (make-directory extra-dir t))
-;;         (setq file (expand-file-name  "keyfreq-alt-map.svg" extra-dir))
-;;         (when (ergoemacs-keyfreq-gen-img file "M-" "Alt+" nil lay cmd-freq-ergo)
-;;           (setq ergoemacs-select
-;;                 (format "%s<option value=\"%s\">Alt+</option>"
-;;                         ergoemacs-select
-;;                         (file-name-nondirectory file))))
-;;         (message "Generated Alt+ frequency heatmap")
+      (let (extra-dir)
+        (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
+        (if (not (file-exists-p extra-dir))
+            (make-directory extra-dir t))
+        (setq file (expand-file-name  "keyfreq-alt-map.svg" extra-dir))
+        (when (ergoemacs-keyfreq-gen-img file "M-" "Alt+" nil lay cmd-freq-ergo)
+          (setq ergoemacs-select
+                (format "%s<option value=\"%s\">Alt+</option>"
+                        ergoemacs-select
+                        (file-name-nondirectory file))))
+        (message "Generated Alt+ frequency heatmap")
         
-;;         (setq file (expand-file-name  "keyfreq-alt-shift-map.svg" extra-dir))
-;;         (when (ergoemacs-keyfreq-gen-img file "M-" "Alt+⇧Shift+" t lay cmd-freq-ergo)
-;;           (setq ergoemacs-select
-;;                 (format "%s<option value=\"%s\">Alt+⇧Shift+</option>"
-;;                         ergoemacs-select
-;;                         (file-name-nondirectory file))))
-;;         (message "Generated Alt+⇧Shift+ frequency heatmap")
+        (setq file (expand-file-name  "keyfreq-alt-shift-map.svg" extra-dir))
+        (when (ergoemacs-keyfreq-gen-img file "M-" "Alt+⇧Shift+" t lay cmd-freq-ergo)
+          (setq ergoemacs-select
+                (format "%s<option value=\"%s\">Alt+⇧Shift+</option>"
+                        ergoemacs-select
+                        (file-name-nondirectory file))))
+        (message "Generated Alt+⇧Shift+ frequency heatmap")
         
-;;         (setq file (expand-file-name  "keyfreq-ctrl-map.svg" extra-dir))
-;;         (when (ergoemacs-keyfreq-gen-img file "C-" "Ctrl+" nil lay cmd-freq-ergo)
-;;           (setq ergoemacs-select
-;;                 (format "%s<option value=\"%s\">Ctrl+</option>"
-;;                         ergoemacs-select
-;;                         (file-name-nondirectory file))))
-;;         (message "Generated Ctrl+ frequency heatmap")
+        (setq file (expand-file-name  "keyfreq-ctrl-map.svg" extra-dir))
+        (when (ergoemacs-keyfreq-gen-img file "C-" "Ctrl+" nil lay cmd-freq-ergo)
+          (setq ergoemacs-select
+                (format "%s<option value=\"%s\">Ctrl+</option>"
+                        ergoemacs-select
+                        (file-name-nondirectory file))))
+        (message "Generated Ctrl+ frequency heatmap")
         
-;;         (setq file (expand-file-name  "keyfreq-ctrl-shift-map.svg" extra-dir))
-;;         (when (ergoemacs-keyfreq-gen-img file "C-" "Ctrl+⇧Shift+" t lay cmd-freq-ergo)
-;;           (setq ergoemacs-select
-;;                 (format "%s<option value=\"%s\">Ctrl+⇧Shift+</option>"
-;;                         ergoemacs-select
-;;                         (file-name-nondirectory file))))
-;;         (message "Generated Ctrl+⇧Shift+ frequency heatmap")
+        (setq file (expand-file-name  "keyfreq-ctrl-shift-map.svg" extra-dir))
+        (when (ergoemacs-keyfreq-gen-img file "C-" "Ctrl+⇧Shift+" t lay cmd-freq-ergo)
+          (setq ergoemacs-select
+                (format "%s<option value=\"%s\">Ctrl+⇧Shift+</option>"
+                        ergoemacs-select
+                        (file-name-nondirectory file))))
+        (message "Generated Ctrl+⇧Shift+ frequency heatmap")
 
-;;         (setq file (expand-file-name  "keyfreq-menu-map.svg" extra-dir))
-;;         (when (ergoemacs-keyfreq-gen-img file (if (eq system-type 'windows-nt)
-;;                                                   "<apps> "
-;;                                                 "<menu> ") "▤ Menu/Apps " nil lay cmd-freq-ergo)
-;;           (setq ergoemacs-select
-;;                 (format "%s<option value=\"%s\">▤ Menu/Apps</option>"
-;;                         ergoemacs-select
-;;                         (file-name-nondirectory file))))
-;;         (message "Generated ▤ Menu/Apps")
-;;         (setq ergoemacs-html-table (sort ergoemacs-html-table (lambda(x y) (>= (nth 0 x) (nth 0 y)))))
+        (setq file (expand-file-name  "keyfreq-menu-map.svg" extra-dir))
+        (when (ergoemacs-keyfreq-gen-img file (if (eq system-type 'windows-nt)
+                                                  "<apps> "
+                                                "<menu> ") "▤ Menu/Apps " nil lay cmd-freq-ergo)
+          (setq ergoemacs-select
+                (format "%s<option value=\"%s\">▤ Menu/Apps</option>"
+                        ergoemacs-select
+                        (file-name-nondirectory file))))
+        (message "Generated ▤ Menu/Apps")
+        (setq ergoemacs-html-table (sort ergoemacs-html-table (lambda(x y) (>= (nth 0 x) (nth 0 y)))))
         
-;;         (setq ergoemacs-select (format "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
-;; <html xmlns=\"http://www.w3.org/1999/xhtml\">
-;;   <head>
-;;     <meta name=\"keywords\" content=\"\" />
-;;     <meta name=\"description\" content=\"\" />
-;;     <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />
-;;     <title>Keyboard based key frequency</title>
-;; <script type=\"text/javascript\">
-;; function change_keyfreq_layout() {
-;;   var select = document.getElementById('keyfreq');
-;;   var selection = select.selectedIndex;
-;;   var img = select.options[selection].value;
-;;   document.getElementById('keyfreq_img').src =  img;
-;; }
-;;     </script><body><form><b>Keyboard Modifiers:</b>&nbsp;&nbsp;<select id=\"keyfreq\" onchange=\"change_keyfreq_layout()\">%s</select></form><image id=\"keyfreq_img\" src=\"keyfreq-alt-map.svg\"/><form><table>"
-;;                              select))
-;;         (with-temp-file (expand-file-name "keyfreq.html"
-;;                                           (expand-file-name "ergoemacs-extras" user-emacs-directory))
-;;           (insert ergoemacs-select)
-;;           (mapc
-;;            (lambda(x)
-;;              (insert (nth 1 x)))
-      ;;            ergoemacs-html-table)
-;;           (insert "</table></form></body></html>")))
+        (setq ergoemacs-select (format "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+<html xmlns=\"http://www.w3.org/1999/xhtml\">
+  <head>
+    <meta name=\"keywords\" content=\"\" />
+    <meta name=\"description\" content=\"\" />
+    <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />
+    <title>Keyboard based key frequency</title>
+<script type=\"text/javascript\">
+function change_keyfreq_layout() {
+  var select = document.getElementById('keyfreq');
+  var selection = select.selectedIndex;
+  var img = select.options[selection].value;
+  document.getElementById('keyfreq_img').src =  img;
+}
+    </script><body><form><b>Keyboard Modifiers:</b>&nbsp;&nbsp;<select id=\"keyfreq\" onchange=\"change_keyfreq_layout()\">%s</select></form><image id=\"keyfreq_img\" src=\"keyfreq-alt-map.svg\"/><form><table>"
+                                       ergoemacs-select))
+        (with-temp-file (expand-file-name "keyfreq.html"
+                                          (expand-file-name "ergoemacs-extras" user-emacs-directory))
+          (insert ergoemacs-select)
+          (mapc
+           (lambda(x)
+             (insert (nth 1 x)))
+                 ergoemacs-html-table)
+          (insert "</table></form></body></html>")))
       )))
 
 ;; Allow the SVN prefixes to be specified by the following:
