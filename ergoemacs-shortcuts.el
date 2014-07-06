@@ -53,13 +53,7 @@
 
 (eval-when-compile 
   (require 'cl)
-  (require 'ergoemacs-macros 
-           (expand-file-name "ergoemacs-macros" 
-                             (or (and (boundp 'pkg-dir) pkg-dir)
-                                 (file-name-directory (or
-                                                       load-file-name
-                                                       (buffer-file-name)
-                                                       default-directory))))))
+  (require 'ergoemacs-macros))
 
 (unless (fboundp 'ergoemacs-pretty-key)
   (require 'ergoemacs-translate))

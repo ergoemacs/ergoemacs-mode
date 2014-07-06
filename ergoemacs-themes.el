@@ -29,13 +29,7 @@
 ;;; Code:
 (eval-when-compile 
   (require 'cl)
-  (require 'ergoemacs-macros 
-           (expand-file-name "ergoemacs-macros" 
-                             (or (and (boundp 'pkg-dir) pkg-dir)
-                                 (file-name-directory (or
-                                                       load-file-name
-                                                       (buffer-file-name)
-                                                       default-directory))))))
+  (require 'ergoemacs-macros))
 
 (autoload 'dired-jump "dired-x" "ergoemacs-autoload." t)
 (autoload 'wdired-change-to-wdired-mode "wdired" "ergoemacs-autoload." t)

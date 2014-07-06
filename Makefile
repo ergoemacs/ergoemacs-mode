@@ -21,7 +21,7 @@ TRAVIS_FILE=.travis.yml
          test-dep-4 test-dep-5 test-dep-6 test-dep-7 test-dep-8 test-dep-9
 
 build :
-	$(EMACS) $(EMACS_BATCH) --eval             \
+	$(EMACS) $(EMACS_BATCH) -L . --eval             \
 	    "(progn                                \
 	      (setq byte-compile-error-on-warn t)  \
 	      (batch-byte-compile))" *.el
