@@ -233,25 +233,6 @@ Valid values are:
           (const :tag "Allow fast repeat command of the current movement command" single)
           (const :tag "Allow fast repeat of all movement commands" all)))
 
-(defun ergoemacs-repeat-movement-full-keymap ()
-  "Allow movement commands to be repeated without pressing the ALT key"
-  (let (ergoemacs-modal
-        ergoemacs-repeat-keys
-        ergoemacs-read-input-keys
-        (keymap (make-sparse-keymap)))
-    (dolist (key (append (where-is-internal 'ergoemacs-shortcut-movement)
-                         (where-is-internal 'ergoemacs-shortcut-movement-no-shift-select)))
-      (when (= 1 (length key))
-        (let ((mods (event-modifiers (elt key 0))))
-          (when (memq 'meta mods)
-            (define-key keymap
-              (vector
-               (event-convert-list
-                (append (delete 'meta mods)
-                        (list (event-basic-type (elt key 0))))))
-              `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
-    keymap))
-
 (defvar ergoemacs-curr-prefix-arg nil)
 (defvar ergoemacs-repeat-keys nil)
 (defvar ergoemacs-shortcut-keys nil)
