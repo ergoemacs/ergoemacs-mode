@@ -1228,6 +1228,7 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-shortcut-keys)
 (defvar ergoemacs-read-input-keys)
 (defvar ergoemacs-unbind-keys)
+(defvar ergoemacs-unbind-keymap)
 (defvar ergoemacs-read-input-keymap)
 (defvar ergoemacs-read-emulation-mode-map-alist)
 (defvar ergoemacs-shortcut-keymap)
