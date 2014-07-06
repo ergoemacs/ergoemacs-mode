@@ -216,26 +216,38 @@ All other modes are assumed to be minor modes or unimportant.
   "Creates Ergoemacs File Menu"
   (setq ergoemacs-menu-bar-file-menu
         '(keymap
-          (new-file menu-item "New" ergoemacs-new-empty-buffer)
-          (make-frame menu-item "New Frame" make-frame-command)
-          (open-file menu-item "Open..." find-file)
-          (open-last-closed menu-item "Open last closed" ergoemacs-open-last-closed)
-          (kill-buffer menu-item "Close" ergoemacs-close-current-buffer)
+          (new-file menu-item "New" ergoemacs-new-empty-buffer
+		    :keys "Ctl+N")
+          (make-frame menu-item "New Frame" make-frame-command
+		    :keys "Ctl+Shift+N")
+          (open-file menu-item "Open..." find-file
+		    :keys "Ctl+O")
+          (open-last-closed menu-item "Open last closed" ergoemacs-open-last-closed
+		    :keys "Ctl+Shift+T")
+          (kill-buffer menu-item "Close" ergoemacs-close-current-buffer
+		    :keys "Ctl+W")
           (separator1 menu-item "--")
-          (save-buffer menu-item "Save" save-buffer)
-          (write-file menu-item "Save As..." write-file)
-          (revert-buffer menu-item "Revert to Saved" revert-buffer)
-          (print-buffer menu-item "Print" print-buffer)
+          (save-buffer menu-item "Save" save-buffer
+		    :keys "Ctl+S")
+	  (write-file menu-item "Save As..." write-file
+		    :keys "Ctl+Shift+S")
+          (revert-buffer menu-item "Revert to Saved" revert-buffer
+  		    :keys "Ctl+R")
+	  (print-buffer menu-item "Print" print-buffer
+		    :keys "Ctl+P")
           (ps-print-buffer-faces menu-item "Print (font+color)" ps-print-buffer-faces)
           (separator4 menu-item "--")
           (split-window menu-item "Split Window"
-                        split-window-vertically)
+                        split-window-vertically
+		     :keys "Alt+}")
           (split-window-leftright menu-item "Split Window left/right"
                                   split-window-horizontally)
           (one-window menu-item "Unsplit Window"
-                      delete-other-windows)
+                      delete-other-windows
+		     :keys "Alt+{")
           (separator5 menu-item "--")
-          (execute-command menu-item "Execute Command" execute-extended-command)
+          (execute-command menu-item "Execute Command" execute-extended-command
+		     :keys "Alt+A")
           (repeat-earlier-command menu-item "Repeat Earlier Command"
                                   repeat-complex-command)
           (separator6 menu-item "--")
