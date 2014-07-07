@@ -81,15 +81,13 @@ type:
 
 #+HTML: <kbd class="dark">Alt</kbd>+<kbd class="dark">x</kbd> <code>list-packages</code>
 
-After, find the package `ergoemacs-mode` and install it with 
-
-#+HTML: <kbd class="dark">I</kbd><kbd class="dark">X</kbd>
+After, find the package `ergoemacs-mode` and install it with @@html:<kbd class="dark">i</kbd><kbd class="dark">x</kbd>@@
 
 Then add the following to your =~/.emacs= or =~/.emacs.d/init.el=
 file:
 
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/.emacs.d/ergoemacs-mode")
+  (package-initialize)
   (require 'ergoemacs-mode)
   
 #+end_src
@@ -108,7 +106,7 @@ git clone -b master --single-branch https://github.com/ergoemacs/ergoemacs-mode.
 And add following to your =~/.emacs= or =~/.emacs.d/init.el= file:
 
 #+begin_src emacs-lisp
-  (package-initialize)
+  (add-to-list 'load-path "~/.emacs.d/ergoemacs-mode")
   (require 'ergoemacs-mode)
   
 #+end_src
