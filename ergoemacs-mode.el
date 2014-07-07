@@ -449,14 +449,6 @@ bindings the keymap is:
             (when am
               (setq ergoemacs-old-ns-alternate-modifier (symbol-value am))
               (set am nil))))
-        ;; Turn on menu
-        (if ergoemacs-use-menus
-            (progn
-              (require 'ergoemacs-menus)
-              (ergoemacs-menus-on))
-          (when (featurep 'ergoemacs-menus)
-            (ergoemacs-menus-off)))
-        (ergoemacs-debug-heading "Ergoemacs Menus have loaded.")
         (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
           (if (not ergoemacs-read-key-overriding-overlay-save)
               (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
@@ -466,6 +458,14 @@ bindings the keymap is:
         (ergoemacs-enable-c-advices)
         (setq ergoemacs-unbind-keys t)
         (ergoemacs-setup-keys t)
+        ;; Turn on menu
+        (if ergoemacs-use-menus
+            (progn
+              (require 'ergoemacs-menus)
+              (ergoemacs-menus-on))
+          (when (featurep 'ergoemacs-menus)
+            (ergoemacs-menus-off)))
+        (ergoemacs-debug-heading "Ergoemacs Menus have loaded.")
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
         (ergoemacs-populate-pre-command-hook)
         (ergoemacs-debug-heading "Ergoemacs-mode turned ON."))
