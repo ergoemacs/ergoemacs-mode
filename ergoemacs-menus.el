@@ -28,6 +28,8 @@
 ;; 
 
 ;;; Code:
+(eval-when-compile
+  (require 'cl))
 
 (defvar ergoemacs-xah-emacs-lisp-tutorial-url
   "http://ergoemacs.org/emacs/elisp.html")
@@ -241,15 +243,27 @@ All other modes are assumed to be minor modes or unimportant.
 (defun ergoemacs-menu-bar-file-menu ()
   "Creates Ergoemacs File Menu"
   (setq ergoemacs-menu-bar-file-menu
-        '(keymap
+        `(keymap
           (new-file menu-item "New" ergoemacs-new-empty-buffer)
           (make-frame menu-item "New Frame" make-frame-command)
           (open-file menu-item "Open..." find-file)
+          (open-directory menu-item "Open Containing Folder"
+                          (keymap
+                           ;; FIXME add open in cmd/iTerm/xterm, etc
+                           (open-directory-in-dired menu-item "In Dired" dired-jump)
+                           (open-directory-in-desktop
+                            menu-item  ,(cond
+                                         ((eq system-type 'windows-nt) "In Explorer")
+                                         ((eq system-type 'darwin) "In Finder")
+                                         ((t "In File Manager")))
+                            ergoemacs-open-in-desktop)))
+          ;; FIXME -- Somehow put open last closed in recentf menu; It
+          ;; seems to fit there the best
           (open-last-closed menu-item "Open last closed" ergoemacs-open-last-closed)
           (kill-buffer menu-item "Close" ergoemacs-close-current-buffer)
           (separator1 menu-item "--")
           (save-buffer menu-item "Save" save-buffer)
-          (write-file menu-item "Save As..." write-file)
+          (write-file menu-item "Save As..." write-nfile)
           (revert-buffer menu-item "Revert to Saved" revert-buffer)
           (print-buffer menu-item "Print" ergoemacs-print-buffer-confirm)
           ;; (ps-print-buffer-faces menu-item "Print (font+color)" ps-print-buffer-faces)
