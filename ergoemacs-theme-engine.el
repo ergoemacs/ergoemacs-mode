@@ -1793,7 +1793,7 @@ COMPONENT can be defined as component::version"
 
 (defun ergoemacs-theme-get-obj (&optional theme version)
   "Get the VERSION of THEME from `ergoemacs-theme-get-component' and `ergoemacs-theme-components'"
-  (ergoemacs-theme-get-component (ergoemacs-theme-components (or theme ergoemacs-theme)) version (or theme ergoemacs-theme)))
+  (ergoemacs-theme-get-component (ergoemacs-theme-components (or theme ergoemacs-theme "standard")) version (or theme ergoemacs-theme "standard")))
 
 (defun ergoemacs-keymap-empty-p (keymap &optional dont-collapse)
   "Determines if the KEYMAP is an empty keymap.
@@ -1825,7 +1825,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
   "Current `ergoemacs-mode' theme object")
 (defun ergoemacs-theme-install (&optional theme  version)
   "Gets the keymaps for THEME for VERSION."
-  (setq ergoemacs-theme--object (ergoemacs-theme-get-obj (or theme ergoemacs-theme) (or version (ergoemacs-theme-get-version))))
+  (setq ergoemacs-theme--object (ergoemacs-theme-get-obj (or theme ergoemacs-theme "standard") (or version (ergoemacs-theme-get-version))))
   (ergoemacs-theme-obj-install ergoemacs-theme--object))
 
 (defun ergoemacs-apply-inits (&rest ignore)
@@ -1926,7 +1926,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 (defun ergoemacs-theme-components (&optional theme)
   "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."
-  (let* ((theme (or theme ergoemacs-theme))
+  (let* ((theme (or theme ergoemacs-theme "standard"))
          (theme-plist (gethash (if (stringp theme) theme
                                  (symbol-name theme))
                                ergoemacs-theme-hash))
