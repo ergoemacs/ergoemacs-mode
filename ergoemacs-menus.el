@@ -255,7 +255,7 @@ All other modes are assumed to be minor modes or unimportant.
                             menu-item  ,(cond
                                          ((eq system-type 'windows-nt) "In Explorer")
                                          ((eq system-type 'darwin) "In Finder")
-                                         ((t "In File Manager")))
+                                         (t "In File Manager"))
                             ergoemacs-open-in-desktop)))
           ;; FIXME -- Somehow put open last closed in recentf menu; It
           ;; seems to fit there the best
