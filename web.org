@@ -108,7 +108,7 @@ git clone -b master --single-branch https://github.com/ergoemacs/ergoemacs-mode.
 And add following to your =~/.emacs= or =~/.emacs.d/init.el= file:
 
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/.emacs.d/ergoemacs-mode")
+  (package-initialize)
   (require 'ergoemacs-mode)
   
 #+end_src
@@ -117,7 +117,7 @@ And add following to your =~/.emacs= or =~/.emacs.d/init.el= file:
 
 
 ** Enabling ergoemacs-mode
-To enable emacs, add the following to your =~/.emacs.d/init.el= file:
+To enable emacs, add the following to your =~/.emacs= or =~/.emacs.d/init.el= file:
 
 #+BEGIN_SRC emacs-lisp
   (setq ergoemacs-theme nil) ;; Uses Standard Ergoemacs keyboard theme
