@@ -48,7 +48,8 @@
         set-mark-command-repeat-pop t
         org-special-ctrl-a/e t
         ido-vertical-define-keys 'C-n-C-p-up-down-left-right
-        scroll-error-top-bottom t)
+        scroll-error-top-bottom t
+        initial-scratch-message (substitute-command-keys ";; This buffer is for notes you don't want to save, and for Lisp evaluation.\n;; If you want to create a file, visit that file with \\[find-file],\n;; then enter the text in that file's own buffer."))
   (add-hook 'kill-buffer-hook 'ergoemacs-save-buffer-to-recently-closed)
   (undo-tree-mode 1)
   (shift-select-mode t)

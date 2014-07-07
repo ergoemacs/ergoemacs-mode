@@ -234,6 +234,9 @@ Uses `ergoemacs-real-key-description'."
             (setq test (ergoemacs-real-key-description (nth 0 test-hash)))
             (ergoemacs-pretty-key test))
         (let (ergoemacs-modal
+              ;; (ergoemacs-shortcut-keys (not map))
+              ergoemacs-shortcut-keys
+              (ergoemacs-no-shortcut-keys (not map))
               ergoemacs-repeat-keys
               ergoemacs-read-input-keys)
           (ergoemacs-pretty-key

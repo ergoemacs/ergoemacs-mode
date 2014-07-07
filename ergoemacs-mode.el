@@ -436,7 +436,6 @@ bindings the keymap is:
         ;; Setup keys
         (setq ergoemacs-shortcut-keymap (make-sparse-keymap)
               ergoemacs-no-shortcut-keymap (make-sparse-keymap))
-        (ergoemacs-setup-keys t)
         (ergoemacs-debug-heading "Ergoemacs Keys have loaded.")
         (when (and ergoemacs-use-mac-command-as-meta
                    (eq system-type 'darwin))
@@ -466,6 +465,7 @@ bindings the keymap is:
         ;; Fix `substitute-command-keys'
         (ergoemacs-enable-c-advices)
         (setq ergoemacs-unbind-keys t)
+        (ergoemacs-setup-keys t)
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
         (ergoemacs-populate-pre-command-hook)
         (ergoemacs-debug-heading "Ergoemacs-mode turned ON."))
