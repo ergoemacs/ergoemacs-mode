@@ -580,6 +580,11 @@
   (define-key eshell-mode-map (kbd "M-h") 'eshell-bol)
   (define-key comint-mode-map (kbd "M-H") 'comint-bol))
 
+(ergoemacs-theme-component move-and-transpose-lines ()
+  "Move Current line/selection down or up with Alt+up or Alt+down"
+  (global-set-key [\M-up] 'ergoemacs-move-text-up)
+  (global-set-key [\M-down] 'ergoemacs-move-text-down))
+
 (ergoemacs-theme-component move-page ()
   "Move by Page"
   (global-unset-key (kbd "M-v"))
@@ -1103,7 +1108,7 @@
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
-                  ("Standard Keys" (standard-fixed fixed-bold-italic quit))
+                  ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))))
 
 (ergoemacs-theme reduction ()
@@ -1144,7 +1149,7 @@
                  apps-swap
                  save-options-on-exit)
   :optional-off '(guru no-backspace search-reg
-                       ergoemacs-banish-shift)
+                       ergoemacs-banish-shift move-and-transpose-lines)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))

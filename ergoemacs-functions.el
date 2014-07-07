@@ -4,7 +4,7 @@
 
 ;; Maintainer: Matthew L. Fidler
 ;; Authors: Xah Lee, Matthew Fidler, Drew Adams, Ting-Yu Lin, David
-;; Capello, Nikolaj Schumacher
+;; Capello, Nikolaj Schumacher, Andy Stewart
 ;; Keywords: convenience
 
 ;; ErgoEmacs is free software: you can redistribute it and/or modify
@@ -2198,6 +2198,51 @@ See also `ergoemacs-lookup-word-on-internet'."
   (interactive (list (read-string "Apropos user options (regexp): ")))
   (let ((apropos-do-all nil))
     (apropos-variable regexp)))
+
+(defun ergoemacs-move-text-internal (arg)
+  "Move region (transient-mark-mode active) or current line."
+  ;; From Andy Stewart, who signed the gnu emacs license since he has
+  ;; components within gnu emacs.
+  ;; See `http://www.emacswiki.org/emacs/basic-edit-toolkit.el'
+  (let ((remember-point (point)))
+    ;; Can't get correct effect of `transpose-lines'
+    ;; when `point-max' is not at beginning of line
+    ;; So fix this bug.
+    (goto-char (point-max))
+    (if (not (bolp)) (newline))         ;add newline to fix
+    (goto-char remember-point)
+    ;; logic code start
+    (cond ((and mark-active transient-mark-mode)
+           (if (> (point) (mark))
+               (exchange-point-and-mark))
+           (let ((column (current-column))
+                 (text (delete-and-extract-region (point) (mark))))
+             (forward-line arg)
+             (move-to-column column t)
+             (set-mark (point))
+             (insert text)
+             (exchange-point-and-mark)
+             (setq deactivate-mark nil)))
+          (t
+           (let ((column (current-column)))
+             (beginning-of-line)
+             (when (or (> arg 0) (not (bobp)))
+               (forward-line 1)
+               (when (or (< arg 0) (not (eobp)))
+                 (transpose-lines arg))
+               (forward-line -1))
+             (move-to-column column t))))))
+
+(defun ergoemacs-move-text-up (arg)
+  "Move region (transient-mark-mode active) or current line ARG lines up."
+  (interactive "*p")
+  (ergoemacs-move-text-internal (- arg)))
+
+(defun ergoemacs-move-text-down (arg)
+  "Move region (transient-mar-mode active) or current line (ARG lines) down."
+  (interactive "*p")
+  (ergoemacs-move-text-internal arg))
+
 
 (defvar ergoemacs-shortcut-keys)
 (defvar ergoemacs-no-shortcut-keys)
