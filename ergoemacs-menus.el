@@ -98,7 +98,7 @@
          (eq cmd 'ergoemacs-copy-line-or-region)) (ergoemacs-kbd-to-key "C-c"))
    (t
     (let ((key (key-description
-                (let ((ergoemacs-read-input-keys)
+                (let (ergoemacs-read-input-keys
                       ergoemacs-shortcut-keys
                       (ergoemacs-no-shortcut-keys t)
                       (min-len 1000)

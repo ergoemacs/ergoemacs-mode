@@ -423,8 +423,8 @@ bindings the keymap is:
   ;; This will possibly allow swapping of C-c and M-c.
   (if ergoemacs-mode
       (progn
-        (setq ergoemacs-debug-heading-start-time (float-time))
-        (setq ergoemacs-debug-heading-last-time (float-time))
+        (setq ergoemacs-debug-heading-start-time (float-time)
+              ergoemacs-debug-heading-last-time (float-time))
         (ergoemacs-debug "* Ergoemacs-mode is turning ON.")
         (when cua-mode
           (cua-mode -1)
