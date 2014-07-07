@@ -49,7 +49,100 @@
         org-special-ctrl-a/e t
         ido-vertical-define-keys 'C-n-C-p-up-down-left-right
         scroll-error-top-bottom t
-        initial-scratch-message (substitute-command-keys ";; This buffer is for notes you don't want to save, and for Lisp evaluation.\n;; If you want to create a file, visit that file with \\[find-file],\n;; then enter the text in that file's own buffer."))
+        initial-scratch-message (substitute-command-keys ";; This buffer is for notes you don't want to save, and for Lisp evaluation.\n;; If you want to create a file, visit that file with \\[find-file],\n;; then enter the text in that file's own buffer.")
+        ;; Remove tutorial and guided tour, since the keys don't apply...
+        fancy-startup-text
+        `((:face (variable-pitch font-lock-comment-face)
+                 "Welcome to "
+                 :link ("GNU Emacs"
+                        ,(lambda (_button) (browse-url "http://www.gnu.org/software/emacs/"))
+                        "Browse http://www.gnu.org/software/emacs/")
+                 ", one component of the "
+                 :link
+                 ,(lambda ()
+                    (if (eq system-type 'gnu/linux)
+                        `("GNU/Linux"
+                          ,(lambda (_button) (browse-url "http://www.gnu.org/gnu/linux-and-gnu.html"))
+                          "Browse http://www.gnu.org/gnu/linux-and-gnu.html")
+                      `("GNU" ,(lambda (_button) (describe-gnu-project))
+                        "Display info on the GNU project")))
+                 " operating system.\n\n"
+                 "\n"
+                 ;; :link ("Emacs Guided Tour"
+                 ;;        ,(lambda (_button)
+                 ;;           (browse-url "http://www.gnu.org/software/emacs/tour/"))
+                 ;;        "Browse http://www.gnu.org/software/emacs/tour/")
+                 ;; "\tOverview of Emacs features at gnu.org\n"
+                 :link ("View Emacs Manual" ,(lambda (_button) (info-emacs-manual)))
+                 "\tView the Emacs manual using Info\n"
+                 :link ("Absence of Warranty" ,(lambda (_button) (describe-no-warranty)))
+                 "\tGNU Emacs comes with "
+                 :face (variable-pitch (:slant oblique))
+                 "ABSOLUTELY NO WARRANTY\n"
+                 :face variable-pitch
+                 :link ("Copying Conditions" ,(lambda (_button) (describe-copying)))
+                 "\tConditions for redistributing and changing Emacs\n"
+                 :link ("Ordering Manuals" ,(lambda (_button) (view-order-manuals)))
+                 "\tPurchasing printed copies of manuals\n"
+                 "\n"))
+        ;;
+        fancy-about-text
+        `((:face (variable-pitch font-lock-comment-face)
+                 "This is "
+                 :link ("GNU Emacs"
+                        ,(lambda (_button) (browse-url "http://www.gnu.org/software/emacs/"))
+                        "Browse http://www.gnu.org/software/emacs/")
+                 ", one component of the "
+                 :link
+                 ,(lambda ()
+                    (if (eq system-type 'gnu/linux)
+                        `("GNU/Linux"
+                          ,(lambda (_button)
+                             (browse-url "http://www.gnu.org/gnu/linux-and-gnu.html"))
+                          "Browse http://www.gnu.org/gnu/linux-and-gnu.html")
+                      `("GNU" ,(lambda (_button) (describe-gnu-project))
+                        "Display info on the GNU project.")))
+                 " operating system.\n"
+                 :face (variable-pitch font-lock-builtin-face)
+                 "\n"
+                 ,(lambda () (emacs-version))
+                 "\n"
+                 :face (variable-pitch (:height 0.8))
+                 ,(lambda () emacs-copyright)
+                 "\n\n"
+                 :face variable-pitch
+                 :link ("Authors"
+                        ,(lambda (_button)
+                           (view-file (expand-file-name "AUTHORS" data-directory))
+                           (goto-char (point-min))))
+                 "\tMany people have contributed code included in GNU Emacs\n"
+                 :link ("Contributing"
+                        ,(lambda (_button)
+                           (view-file (expand-file-name "CONTRIBUTE" data-directory))
+                           (goto-char (point-min))))
+                 "\tHow to contribute improvements to Emacs\n"
+                 "\n"
+                 :link ("GNU and Freedom" ,(lambda (_button) (describe-gnu-project)))
+                 "\tWhy we developed GNU Emacs, and the GNU operating system\n"
+                 :link ("Absence of Warranty" ,(lambda (_button) (describe-no-warranty)))
+                 "\tGNU Emacs comes with "
+                 :face (variable-pitch (:slant oblique))
+                 "ABSOLUTELY NO WARRANTY\n"
+                 :face variable-pitch
+                 :link ("Copying Conditions" ,(lambda (_button) (describe-copying)))
+                 "\tConditions for redistributing and changing Emacs\n"
+                 :link ("Getting New Versions" ,(lambda (_button) (describe-distribution)))
+                 "\tHow to obtain the latest version of Emacs\n"
+                 :link ("Ordering Manuals" ,(lambda (_button) (view-order-manuals)))
+                 "\tBuying printed manuals from the FSF\n"
+                 "\n"
+                 ;; :link ("Emacs Guided Tour"
+                 ;;        ,(lambda (_button)
+                 ;;           (browse-url "http://www.gnu.org/software/emacs/tour/"))
+                 ;;        "Browse http://www.gnu.org/software/emacs/tour/")
+                 ;; "\tSee an overview of Emacs features at gnu.org"
+		 ))
+        )
   (add-hook 'kill-buffer-hook 'ergoemacs-save-buffer-to-recently-closed)
   (undo-tree-mode 1)
   (shift-select-mode t)

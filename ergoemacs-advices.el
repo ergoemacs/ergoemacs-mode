@@ -194,6 +194,94 @@ This assumes any key defined while running a hook is a user-defined hook."
   (let ((ergoemacs-run-mode-hooks t))
     ad-do-it))
 
+(defadvice fancy-startup-tail (around ergoemacs-fancy-startup-tail activate)
+  "Modify fancy startup to use ergoemacs-mode keys"
+  (if (not ergoemacs-mode) (progn ad-do-it)
+    (unless concise
+      (fancy-splash-insert
+       :face 'variable-pitch
+       "\nTo start...     "
+       :link `("Open a File"
+               ,(lambda (_button) (call-interactively 'find-file))
+               "Specify a new file's name, to edit the file")
+       "     "
+       :link `("Open Home Directory"
+               ,(lambda (_button) (dired "~"))
+               "Open your home directory, to operate on its files")
+       "     "
+       :link `("Customize Startup"
+               ,(lambda (_button) (customize-group 'initialization))
+               "Change initialization settings including this screen")
+       "\n"))
+    (fancy-splash-insert
+     :face 'variable-pitch "To quit a partially entered command, type "
+     :face 'default (substitute-command-keys "\\[keyboard-quit]")
+     :face 'variable-pitch ".\n")
+    (fancy-splash-insert :face `(variable-pitch font-lock-builtin-face)
+                         "\nThis is "
+                         (emacs-version)
+                         "\n"
+                         :face '(variable-pitch (:height 0.8))
+                         emacs-copyright
+                         "\n")
+    (and auto-save-list-file-prefix
+         ;; Don't signal an error if the
+         ;; directory for auto-save-list files
+         ;; does not yet exist.
+         (file-directory-p (file-name-directory
+                            auto-save-list-file-prefix))
+         (directory-files
+          (file-name-directory auto-save-list-file-prefix)
+          nil
+          (concat "\\`"
+                  (regexp-quote (file-name-nondirectory
+                                 auto-save-list-file-prefix)))
+          t)
+         (fancy-splash-insert :face '(variable-pitch font-lock-comment-face)
+                              "\nIf an Emacs session crashed recently, "
+                              "type "
+                              :face '(fixed-pitch font-lock-comment-face)
+                              (substitute-command-keys "\\[recover-session]")
+                              :face '(variable-pitch font-lock-comment-face)
+                              "\nto recover"
+                              " the files you were editing."))
+    (when concise
+      (fancy-splash-insert
+       :face 'variable-pitch "\n"
+       :link `("Dismiss this startup screen"
+               ,(lambda (_button)
+                  (when startup-screen-inhibit-startup-screen
+                    (customize-set-variable 'inhibit-startup-screen t)
+                    (customize-mark-to-save 'inhibit-startup-screen)
+                    (custom-save-all))
+                  (let ((w (get-buffer-window "*GNU Emacs*")))
+                    (and w (not (one-window-p)) (delete-window w)))
+                  (kill-buffer "*GNU Emacs*")))
+       "  ")
+      (when (or user-init-file custom-file)
+        (let ((checked (create-image "checked.xpm"
+                                     nil nil :ascent 'center))
+              (unchecked (create-image "unchecked.xpm"
+                                       nil nil :ascent 'center)))
+          (insert-button
+           " "
+           :on-glyph checked
+           :off-glyph unchecked
+           'checked nil 'display unchecked 'follow-link t
+           'action (lambda (button)
+                     (if (overlay-get button 'checked)
+                         (progn (overlay-put button 'checked nil)
+                                (overlay-put button 'display
+                                             (overlay-get button :off-glyph))
+                                (setq startup-screen-inhibit-startup-screen
+                                      nil))
+                       (overlay-put button 'checked t)
+                       (overlay-put button 'display
+                                    (overlay-get button :on-glyph))
+                       (setq startup-screen-inhibit-startup-screen t)))))
+        (fancy-splash-insert :face '(variable-pitch (:height 0.9))
+                             " Never show it again.")))))
+
 
 ;;; Unfortunately, the advice route doesn't seem to work for these
 ;;; functions :(
