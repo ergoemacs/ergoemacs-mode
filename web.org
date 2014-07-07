@@ -74,12 +74,25 @@ First you need to install [[http://www.gnu.org/s/emacs][Emacs]]. Then you have 2
 
 #+begin_o_blog_row 5
 
-#+HTML: <h4>Using melpa</h4>
+#+HTML: <h4>Using elpa</h4>
 
-If you are using emacs 24 and [[http://melpa.milkbox.net/#installing][melpa]] it would be very easy to install. 
+If you are using emacs 24 it should be very easy to install. 
 type:
 
-#+HTML: <kbd class="dark">Alt</kbd>+<kbd class="dark">x</kbd> <code>package-install</code> <code>ergoemacs-mode</code>
+#+HTML: <kbd class="dark">Alt</kbd>+<kbd class="dark">x</kbd> <code>list-packages</code>
+
+After, find the package `ergoemacs-mode` and install it with 
+#HTML: <kbd class="dark">I</kbd><kbd class="dark">X</kbd>
+
+Then add the following to your =~/.emacs= or =~/.emacs.d/init.el=
+file:
+
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/ergoemacs-mode")
+  (require 'ergoemacs-mode)
+  
+#+end_src
+
 #+o_blog_row_column  6
 
 #+HTML: <h4>Manual setup</h4>
@@ -91,7 +104,7 @@ cd ~/.emacs.d
 git clone -b master --single-branch https://github.com/ergoemacs/ergoemacs-mode.git
 #+end_src
 
-And add following to your =~/.emacs.d/init.el= file:
+And add following to your =~/.emacs= or =~/.emacs.d/init.el= file:
 
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/.emacs.d/ergoemacs-mode")
