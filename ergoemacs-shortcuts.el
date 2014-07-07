@@ -524,8 +524,9 @@ It will replace anything defined by `ergoemacs-translation'"
          (fboundp 'cua-clear-rectangle-mark))
     (cua-clear-rectangle-mark))
    (t
-     (let (defined-fn
+    (let (defined-fn
            ergoemacs-shortcut-keys
+           ergoemacs-no-shortcut-keys
            ergoemacs-read-input-keys
            ergoemacs-mode)
       (setq defined-fn (ergoemacs-key-fn-lookup 'keyboard-quit))
@@ -629,7 +630,7 @@ In addition, when the function is called:
                            (push (ergoemacs-pretty-key (key-description global-key))
                                  keys))))))
                   (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
-                                        ergoemacs-shortcut-keys)
+                                        ergoemacs-shortcut-keys ergoemacs-no-shortcut-keys)
                     (dolist (global-key (where-is-internal function))
                       (unless (eq (elt global-key 0) 'menu-bar)
                         (push (ergoemacs-pretty-key (key-description global-key))
@@ -778,6 +779,7 @@ FORCE-KEY forces keys like <escape> to work properly.
       (let* (ergoemacs-read-input-keys
              ergoemacs-modal
              ergoemacs-shortcut-keys
+             ergoemacs-no-shortcut-keys
              (hash (and key (gethash key ergoemacs-command-shortcuts-hash)))
              lookup
              tmp-overlay use-override

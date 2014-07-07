@@ -37,6 +37,7 @@ major-mode, minor-mode, and global keys are ignored."
   `(let ((ergoemacs-mode t)
          (ergoemacs-unbind-keys t)
          (ergoemacs-shortcut-keys t)
+         (ergoemacs-no-shortcut-keys nil)
          ergoemacs-modal
          ergoemacs-read-input-keys
          (minor-mode-map-alist
@@ -44,7 +45,9 @@ major-mode, minor-mode, and global keys are ignored."
             (ergoemacs-unbind-keys ,@ergoemacs-unbind-keymap)))
          (ergoemacs-emulation-mode-map-alist '())
          (ergoemacs-shortcut-emulation-mode-map-alist
-          `((ergoemacs-shortcut-keys ,@ergoemacs-shortcut-keymap)))
+          `())
+         (ergoemacs-no-shortcut-emulation-mode-map-alist
+          `((ergoemacs-no-shortcut-keys ,@ergoemacs-no-shortcut-keymap)))
          (old-global-map (current-global-map))
          (old-local-map (current-local-map))
          (new-local-map (make-sparse-keymap))
@@ -64,6 +67,7 @@ The global map is ignored, but major/minor modes keymaps are included."
   `(let (ergoemacs-mode
          ergoemacs-unbind-keys
          ergoemacs-shortcut-keys
+         ergoemacs-no-shortcut-keys
          ergoemacs-modal
          ergoemacs-read-input-keys
          (old-global-map (current-global-map))

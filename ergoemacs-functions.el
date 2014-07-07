@@ -2200,6 +2200,7 @@ See also `ergoemacs-lookup-word-on-internet'."
     (apropos-variable regexp)))
 
 (defvar ergoemacs-shortcut-keys)
+(defvar ergoemacs-no-shortcut-keys)
 (defvar ergoemacs-read-input-keys)
 (defvar ergoemacs-unbind-keys)
 (defvar ergoemacs-read-emulation-mode-map-alist)

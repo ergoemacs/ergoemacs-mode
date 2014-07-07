@@ -273,7 +273,7 @@ Uses `ergoemacs-real-key-description'."
         (setq test
               (replace-match "" nil nil test)))
       (let (ergoemacs-modal ergoemacs-repeat-keys ergoemacs-read-input-keys
-                            ergoemacs-shortcut-keys)
+                            ergoemacs-shortcut-keys ergoemacs-no-shortcut-keys)
         (setq test (funcall function string))
         (when (string-match ".*\n.*\n" test)
           (setq ret (ergoemacs-substitute-map--1

@@ -50,6 +50,7 @@
 ;; 
 ;;; Code:
 
+(defvar ergoemacs-handle-ctl-c-or-ctl-x)
 (defgroup ergoemacs-modal nil
   "Modal ergoemacs"
   :group 'ergoemacs-mode)

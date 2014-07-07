@@ -86,9 +86,35 @@
                                         ;(message "Submenu: %s" (car (cdr (cdr x))))
       (ergoemacs-preprocess-menu-keybindings (car (cdr (cdr (cdr x))))))))
 
+(defvar ergoemacs-handle-ctl-c-or-ctl-x)
 (defun ergoemacs-shortcut-for-command (cmd)
-  (let ((key (key-description (where-is-internal cmd nil t nil t))))
-    (ergoemacs-kbd-to-key key)))
+  "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
+  (cond
+   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
+         (eq cmd 'ergoemacs-cut-line-or-region)) (ergoemacs-kbd-to-key "C-x") )
+   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
+         (eq cmd 'ergoemacs-copy-line-or-region)) (ergoemacs-kbd-to-key "C-c"))
+   (t
+    (let ((key (key-description
+                (let ((ergoemacs-read-input-keys)
+                      ergoemacs-shortcut-keys
+                      (ergoemacs-no-shortcut-keys t)
+                      (min-len 1000)
+                      (ret ""))
+                  (dolist (item (where-is-internal cmd nil nil nil t))
+                    (cond
+                     ((and (< (length item) min-len) item
+                           (not (memq (elt item 0) '(menu-bar remap again redo cut copy paste help))))
+                      (setq ret item)
+                      (setq min-len (length item)))
+                     ((and item (= (length item) min-len)
+                           (string-match-p "^C-.$" (key-description item)))
+                      (setq ret item))
+                     ((and item (= (length item) min-len) (not (eq (elt item 0) 'help))
+                           (string-match-p "\\<[Ff]1\\>" (key-description item)))
+                      (setq ret item))))
+                  ret))))
+      (ergoemacs-kbd-to-key key)))))
 
 
 (defvar ergoemacs-menu-bar-old-file-menu (lookup-key global-map [menu-bar file]))
@@ -225,13 +251,13 @@ All other modes are assumed to be minor modes or unimportant.
           (save-buffer menu-item "Save" save-buffer)
           (write-file menu-item "Save As..." write-file)
           (revert-buffer menu-item "Revert to Saved" revert-buffer)
-          (print-buffer menu-item "Print" print-buffer)
-          (ps-print-buffer-faces menu-item "Print (font+color)" ps-print-buffer-faces)
+          (print-buffer menu-item "Print" ergoemacs-print-buffer-confirm)
+          ;; (ps-print-buffer-faces menu-item "Print (font+color)" ps-print-buffer-faces)
           (separator4 menu-item "--")
-          (split-window menu-item "Split Window"
-                        split-window-vertically)
-          (split-window-leftright menu-item "Split Window left/right"
-                                  split-window-horizontally)
+          (split-window-below menu-item "Split Window"
+                              split-window-below)
+          (split-window-right menu-item "Split Window right"
+                                  split-window-right)
           (one-window menu-item "Unsplit Window"
                       delete-other-windows)
           (separator5 menu-item "--")
@@ -257,8 +283,7 @@ All other modes are assumed to be minor modes or unimportant.
                        (eq last-command 'undo)
                        (listp pending-undo-list)
                      (consp buffer-undo-list)))
-          :help "Undo last operation"
-          :keys "Ctrl+Z")
+          :help "Undo last operation")
     (redo menu-item "Redo" ergoemacs-redo
           :enable (and
                    (not buffer-read-only)
@@ -266,18 +291,18 @@ All other modes are assumed to be minor modes or unimportant.
                    (or
                     (not (and (boundp 'undo-tree-mode) undo-tree-mode))
                     (and (and (boundp 'undo-tree-mode) undo-tree-mode)
-                            (null (undo-tree-node-next (undo-tree-current buffer-undo-tree))))))
-          :keys "Ctrl+Y")
+                            (null (undo-tree-node-next (undo-tree-current buffer-undo-tree)))))))
     (redo-sep menu-item "--")
-    (cut menu-item "Cut" clipboard-kill-region
-         :help "Delete text in region and copy it to the clipboard"
-         :keys "Ctrl+X")
-    (copy menu-item "Copy" clipboard-kill-ring-save
-          :help "Copy text in region to the clipboard"
-          :keys "Ctrl+C")
-    (paste menu-item "Paste" clipboard-yank
-           :help "Paste text from clipboard"
-           :keys "Ctrl+V")
+    (cut menu-item "Cut" ergoemacs-cut-line-or-region
+         :help "Delete text in Line/region and copy it to the clipboard"
+         :enable (or (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+                     (region-active-p)))
+    (copy menu-item "Copy" ergoemacs-copy-line-or-region
+          :help "Copy text in line/region to the clipboard"
+          :enable (or (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+                      (region-active-p)))
+    (paste menu-item "Paste" ergoemacs-paste
+           :help "Paste text from clipboard")
     (paste-from-menu menu-item "Paste from Kill Menu" yank-menu
                      :enable (and
                               (cdr yank-menu)
@@ -285,11 +310,9 @@ All other modes are assumed to be minor modes or unimportant.
                      :help "Choose a string from the kill ring and paste it")
     (clear menu-item "Clear" delete-region
            :enable (and mark-active (not buffer-read-only))
-           :help "Delete the text in region between mark and current position"
-           :keys "Del")
+           :help "Delete the text in region between mark and current position")
     (mark-whole-buffer menu-item "Select All" mark-whole-buffer
-                       :help "Mark the whole buffer for a subsequent cut/copy"
-                       :keys "Ctrl+A")
+                       :help "Mark the whole buffer for a subsequent cut/copy")
     (separator-search menu-item "--")
     (blank-operations menu-item "Blank/Whitespace Operations"
                       (keymap
@@ -524,10 +547,14 @@ All other modes are assumed to be minor modes or unimportant.
 ;;; `Search' menu
 (defvar ergoemacs-menu-bar-search-menu
   '(keymap
-    (search-forward menu-item "String Forward..." search-forward)
-    (search-backward menu-item "    Backward..." search-backward)
-    (re-search-forward menu-item "Regexp Forward..." re-search-forward)
-    (re-search-backward menu-item "    Backward..." re-search-backward)
+    (isearch-forward menu-item "String Forward..." isearch-forward
+                     :help "Search forward for a string as you type it")
+    (isearch-backward menu-item "    Backward..." isearch-backward
+                      :help "Search backwards for a string as you type it")
+    (re-isearch-forward menu-item "Regexp Forward..." isearch-forward-regexp
+                        :help "Search forward for a regular expression as you type it")
+    (re-isearch-backward menu-item "    Backward..." isearch-backward-regexp
+                         :help "Search backwards for a regular expression as you type it")
     (separator-repeat-search menu-item "--" )
     (repeat-forward menu-item "Repeat Forward" nonincremental-repeat-search-forward
                     :enable (or (and (memq menu-bar-last-search-type '(string word)) search-ring)
@@ -538,17 +565,13 @@ All other modes are assumed to be minor modes or unimportant.
                                  (and (eq menu-bar-last-search-type 'regexp) regexp-search-ring))
                      :help "Repeat last search forward")
     (separator-isearch menu-item "--")
-    (i-search menu-item "Incremental Search"
+    (i-search menu-item "String Search"
               (keymap
-               (isearch-forward menu-item "Forward String..." isearch-forward
-                                :help "Search forward for a string as you type it")
-               (isearch-backward menu-item "    Backward..." isearch-backward
-                                 :help "Search backwards for a string as you type it")
-               (isearch-forward-regexp menu-item "Forward Regexp..." isearch-forward-regexp
-                                       :help "Search forward for a regular expression as you type it")
-               (isearch-backward-regexp menu-item "    Backward..." isearch-backward-regexp
-                                        :help "Search backwards for a regular expression as you type it")
-               "Incremental Search"))
+               (search-forward menu-item "Forward String..." search-forward)
+               (search-backward menu-item "    Backward..." search-backward)
+               (search-forward-regexp menu-item "Forward Regexp..." re-search-forward)
+               (search-backward-regexp menu-item "    Backward..." re-search-backward)
+               "String Search"))
     
     (replace menu-item "Replace"
              (keymap
@@ -640,7 +663,7 @@ All other modes are assumed to be minor modes or unimportant.
     
     (menu-set-font menu-item "Set Default Font..." menu-set-font :visible
                    (display-multi-font-p)
-                   :help "Select a default font" :keys "")
+                   :help "Select a default font")
     
     ,(when (fboundp 'customize-themes)
        '(color-theme menu-item "Customize Color Themes" customize-themes
@@ -708,22 +731,18 @@ All other modes are assumed to be minor modes or unimportant.
                                 (frame-live-p
                                  speedbar-frame)
                                 (frame-visible-p
-                                 speedbar-frame))
-                       :keys "")
+                                 speedbar-frame)))
     ;; (datetime-separator)
     ;; (showhide-date-time)
     (linecolumn-separator "--")
     (line-number-mode menu-item "Line Numbers" line-number-mode :help "Show the current line number in the mode line" :button
                       (:toggle and
                                (default-boundp 'line-number-mode)
-                               (default-value 'line-number-mode))
-                      :keys "")
+                               (default-value 'line-number-mode)))
     (global-whitespace-mode menu-item "Show/Hide whitespaces" global-whitespace-mode :button
-                            (:toggle . global-whitespace-mode)
-                            :keys "")
+                            (:toggle . global-whitespace-mode))
     (global-linum-mode menu-item "Show/Hide line numbers in margin" global-linum-mode :button
-                       (:toggle . global-linum-mode)
-                       :keys "")))
+                       (:toggle . global-linum-mode))))
 
 
 ;;; `Help' menus

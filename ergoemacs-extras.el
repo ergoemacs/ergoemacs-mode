@@ -1153,7 +1153,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
     (message "Calculating key frequencies based on key-position")
     (let ((table (copy-hash-table keyfreq-table))
           list
-          fileg
+          file
           (total-n 0)
           (cmd-n 0)
           (i 0)

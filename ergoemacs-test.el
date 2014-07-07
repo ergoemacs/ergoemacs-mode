@@ -1017,6 +1017,26 @@ Selected mark would not be cleared after paste."
   "Make sure the unbound keys work"
   (should (eq 'ergoemacs-undefined (ergoemacs-real-key-binding (read-kbd-macro "C-x C-s")))))
 
+(declare-function ergoemacs-shortcut-for-command "ergoemacs-menus.el")
+(declare-function ergoemacs-kbd-to-key "ergoemacs-menus.el")
+(ert-deftest ergoemacs-test-keyboard-translations ()
+  "Should test Issue #265"
+  (ergoemacs-test-layout ;; Us/standard
+   (should (string= (ergoemacs-shortcut-for-command 'goto-line) (ergoemacs-kbd-to-key "C-l")))
+   (should (string= (ergoemacs-shortcut-for-command 'ergoemacs-new-empty-buffer) (ergoemacs-kbd-to-key "C-n")))
+   (should (string= (ergoemacs-shortcut-for-command 'make-frame-command) (ergoemacs-kbd-to-key "C-N")))
+   (should (string= (ergoemacs-shortcut-for-command 'find-file) (ergoemacs-kbd-to-key "C-o")))
+   (should (string= (ergoemacs-shortcut-for-command 'ergoemacs-open-last-closed) (ergoemacs-kbd-to-key "C-T")))
+   (should (string= (ergoemacs-shortcut-for-command 'ergoemacs-close-current-buffer) (ergoemacs-kbd-to-key "C-w")))
+   (should (string= (ergoemacs-shortcut-for-command 'revert-buffer) (ergoemacs-kbd-to-key "C-r")))
+   (should (string= (ergoemacs-shortcut-for-command 'ergoemacs-print-buffer-confirm) (ergoemacs-kbd-to-key "C-p")))
+   (should (string= (ergoemacs-shortcut-for-command 'save-buffer) (ergoemacs-kbd-to-key "C-s")))
+   (should (string= (ergoemacs-shortcut-for-command 'write-file) (ergoemacs-kbd-to-key "C-S")))
+   (should (string= (ergoemacs-shortcut-for-command 'split-window-below) (ergoemacs-kbd-to-key "M-4")))
+   (should (string= (ergoemacs-shortcut-for-command 'split-window-right) (ergoemacs-kbd-to-key "M-$")))
+   (should (string= (ergoemacs-shortcut-for-command 'delete-other-windows) (ergoemacs-kbd-to-key "M-3")))
+   (should (string= (ergoemacs-shortcut-for-command 'execute-extended-command) (ergoemacs-kbd-to-key "M-a")))))
+
 ;; (ert-deftest ergoemacs-test-5.3.7 ()
 ;;   "Test Ergoemacs 5.3.7 keys"
 ;;   (let ((ergoemacs-test-fn t))

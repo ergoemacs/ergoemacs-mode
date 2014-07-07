@@ -978,6 +978,7 @@ For example, on dvorak, change C-j to C-c (copy/command)."
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-unbind-keymap)
 (defvar ergoemacs-shortcut-keymap)
+(defvar ergoemacs-no-shortcut-keymap)
 (defvar ergoemacs-command-shortcuts-hash)
 (defun ergoemacs-key-fn-lookup (function &optional use-apps)
   "Looks up the key binding for FUNCTION based on.

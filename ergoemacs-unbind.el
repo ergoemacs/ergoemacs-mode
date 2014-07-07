@@ -636,6 +636,7 @@
 
 (defvar ergoemacs-single-command-keys)
 (defvar ergoemacs-shortcut-keymap)
+(defvar ergoemacs-no-shortcut-keymap)
 (defvar ergoemacs-keymap)
 (defvar keyfreq-mode)
 (defvar keyfreq-table)
