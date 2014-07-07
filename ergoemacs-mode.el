@@ -293,7 +293,7 @@ Valid values are:
                     (if (not (eq 'ergoemacs-mode (nth 0 x)))
                         x
                       `(ergoemacs-mode ,(concat
-                                         (if (not ergoemacs-theme)
+                                         (if (string= "standard" (or ergoemacs-theme "standard"))
                                              " ErgoEmacs"
                                            (concat " Ergo"
                                                    (upcase (substring ergoemacs-theme 0 1))
@@ -313,7 +313,7 @@ Valid values are:
   "Setups keys based on a particular layout. Based on `ergoemacs-keyboard-layout'."
   (interactive)
   (ergoemacs-debug "Ergoemacs layout: %s" ergoemacs-keyboard-layout)
-  (ergoemacs-debug "Ergoemacs theme: %s" ergoemacs-theme)
+  (ergoemacs-debug "Ergoemacs theme: %s" (or ergoemacs-theme "standard"))
   (ergoemacs-debug "Emacs Version: %s" (emacs-version))
   (let ((ergoemacs-state (if (boundp 'ergoemacs-mode) ergoemacs-mode nil))
         (layout

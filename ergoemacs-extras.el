@@ -335,7 +335,7 @@
     <table id=\"table_keys\"><tr><th>Type</th>><th>Key</th><th>Short Desc</th><th>Emacs Function</th></tr>")
          (extra-dir)
          (curr-dir)
-         (saved-theme ergoemacs-theme))
+         (saved-theme (or ergoemacs-theme "standard")))
     (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
     (when (not (file-exists-p extra-dir))
       (make-directory extra-dir t))
@@ -829,7 +829,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
         (push (match-string 1) lst)))
     (setq re (format "^%s$" (regexp-opt lst 't)))
     (with-temp-buffer
-      (let ((old-lay ergoemacs-theme))
+      (let ((old-lay (or ergoemacs-theme "standard")))
         (dolist (z (ergoemacs-get-themes))
           (ergoemacs-set-default 'ergoemacs-theme z)
           (dolist (x (ergoemacs-get-layouts))
@@ -1587,7 +1587,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
             (replace-match (format
                             ">Layout: %s; Theme %s<"
                             layout
-                            (or ergoemacs-theme "Standard"))))))
+                            (or ergoemacs-theme "standard"))))))
       (when ergoemacs-inkscape
         (message "Converting to png")
         (shell-command (format "%s -z -f \"%s\" -e \"%s\"" ergoemacs-inkscape
@@ -1615,7 +1615,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
 (defun ergoemacs-curr-svg ()
   "Generates the current ergoemacs layout, unless it already exists."
   (interactive)
-  (let ((var ergoemacs-theme)
+  (let ((var (or ergoemacs-theme "standard"))
         (layout ergoemacs-keyboard-layout)
         (extra "ergo-layouts")
         (dir "")
@@ -1640,7 +1640,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
   "Generate SVGs for all the defined layouts and themes."
   (interactive)
   (let* ((lay (or layouts (ergoemacs-get-layouts)))
-         (saved-theme ergoemacs-theme))
+         (saved-theme (or ergoemacs-theme "standard")))
     (dolist (x lay)
       (message "Generate SVG for %s" x)
       (condition-case err

@@ -1362,7 +1362,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                   final-unbind-map (ergoemacs-rm-key final-unbind-map key))))
         ;; Add `ergoemacs-mode' menu.
         (define-key menu-keymap [menu-bar ergoemacs-mode]
-          `("ErgoEmacs" . ,(ergoemacs-keymap-menu ergoemacs-theme)))
+          `("ErgoEmacs" . ,(ergoemacs-keymap-menu (or ergoemacs-theme "standard"))))
         ;; Coaleasing the keymaps needs to be done after removing the
         ;; keys, otherwise the keys are not removed...  Probably
         ;; playing with pointers in C.
@@ -1908,17 +1908,17 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
     (setq ergoemacs-theme-version
           (mapcar
            (lambda(elt)
-             (if (not (equal ergoemacs-theme (nth 0 elt)))
+             (if (not (equal (or ergoemacs-theme "standard") (nth 0 elt)))
                  elt
                (setq found t)
-               (list ergoemacs-theme version)))
+               (list (or ergoemacs-theme "standard") version)))
            ergoemacs-theme-version))
     (unless found
-      (push (list ergoemacs-theme version) ergoemacs-theme-version))))
+      (push (list (or ergoemacs-theme "standard") version) ergoemacs-theme-version))))
 
 (defun ergoemacs-theme-get-version ()
   "Gets the current version for the current theme"
-  (let ((theme-ver (assoc ergoemacs-theme ergoemacs-theme-version)))
+  (let ((theme-ver (assoc (or ergoemacs-theme "standard") ergoemacs-theme-version)))
     (if (not theme-ver) nil
       (car (cdr theme-ver)))))
 
@@ -2038,7 +2038,7 @@ If OFF is non-nil, turn off the options instead."
 
 (defun ergoemacs-theme-option-enabled-p (option)
   "Determines if OPTION is enabled."
-  (let ((plist (gethash ergoemacs-theme ergoemacs-theme-hash))
+  (let ((plist (gethash (or ergoemacs-theme "standard") ergoemacs-theme-hash))
         options-on options-off)
     (setq options-on (plist-get plist ':optional-on)
           options-off (plist-get plist ':optional-off))
@@ -2151,7 +2151,7 @@ If OFF is non-nil, turn off the options instead."
            `(,(intern theme) menu-item ,(concat theme " - " (plist-get (gethash theme ergoemacs-theme-hash) ':description))
              (lambda() (interactive)
                (ergoemacs-set-default 'ergoemacs-theme ,theme))
-             :button (:radio . (string= ergoemacs-theme ,theme))))
+             :button (:radio . (string= (or ergoemacs-theme "standard") ,theme))))
          (sort (ergoemacs-get-themes) 'string<))))
     ,(ergoemacs-keymap-menu-theme-options theme)
     ,(ergoemacs-keymap-menu-theme-version theme)
@@ -2236,7 +2236,7 @@ If OFF is non-nil, turn off the options instead."
        (interactive)
        (customize-save-variable 'ergoemacs-smart-paste ergoemacs-smart-paste)
        (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
-       (customize-save-variable 'ergoemacs-theme ergoemacs-theme)
+       (customize-save-variable 'ergoemacs-theme (or ergoemacs-theme "standard"))
        (customize-save-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
        (customize-save-variable 'ergoemacs-ctl-c-or-ctl-x-delay ergoemacs-ctl-c-or-ctl-x-delay)
        (customize-save-variable 'ergoemacs-handle-ctl-c-or-ctl-x ergoemacs-handle-ctl-c-or-ctl-x)

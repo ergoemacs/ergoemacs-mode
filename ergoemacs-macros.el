@@ -234,7 +234,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
     (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
           plist (nth 0 kb)
           body (nth 1 kb))
-    `(let ((old-ergoemacs-theme ergoemacs-theme)
+    `(let ((old-ergoemacs-theme (or ergoemacs-theme "standard"))
            (old-version (ergoemacs-theme-get-version))
            (macro
             ,(if (plist-get plist ':macro)
