@@ -613,6 +613,11 @@
   "Move by Page"
   (global-unset-key (kbd "M-v"))
   (global-unset-key (kbd "C-v"))
+  (global-unset-key (kbd "C-M-v"))
+  ;; Not sure I like the scroll other window placment... C+M+ argh.
+  (global-set-key (kbd "C-M-I") 'scroll-other-window-down)
+  (global-set-key (kbd "C-M-K") 'scroll-other-window)
+  ;; These are OK
   (global-set-key (kbd "M-I") '(scroll-down-command scroll-down))
   (global-set-key (kbd "M-K") '(scroll-up-command scroll-up)))
 
