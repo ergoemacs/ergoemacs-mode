@@ -953,6 +953,10 @@ All other modes are assumed to be minor modes or unimportant.
   (define-key global-map [menu-bar help-menu]
     (cons (if (eq system-type 'darwin) "Help" "?") ergoemacs-menu-bar-help-menu))
   (define-key global-map [menu-bar file] (cons "File" ergoemacs-menu-bar-file-menu))
+  ;; Add the Print options
+  (require 'printing nil t) ; Load Printing package
+  (when (featurep 'printing)
+    (pr-update-menus t))
   (define-key global-map [menu-bar edit] (cons "Edit" ergoemacs-menu-bar-edit-menu))
   (define-key-after global-map [menu-bar search] (cons "Search" ergoemacs-menu-bar-search-menu)
     'edit)
