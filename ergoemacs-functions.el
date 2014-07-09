@@ -543,6 +543,7 @@ This will not honor `shift-select-mode'."
 (defvar ergoemacs-beginning-of-line-or-what-last-command nil)
 (declare-function comment-search-backward "newcomment.el")
 (declare-function comment-search-forward "newcomment.el")
+(defvar comment-start-skip)
 (defun ergoemacs-beginning-of-line-or-what (&optional N)
   "Move cursor to beginning of indentation, line, or text block, or beginning of buffer.
  (a text block is separated by empty lines).
@@ -1219,6 +1220,8 @@ Emacs buffers are those whose name starts with *."
     (while (and (not (string-equal "*" (substring (buffer-name) 0 1))) (< i 20))
       (setq i (1+ i)) (previous-buffer) )))
 
+(defvar initial-major-mode)
+(defvar buffer-offer-save)
 (defun ergoemacs-new-empty-buffer ()
   "Opens a new empty buffer."
   (interactive)

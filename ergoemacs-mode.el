@@ -74,11 +74,13 @@
 (defvar ergoemacs-debug-buffer " *ErgoEmacs-mode Debug Log*"
   "Variable for ergoemacs debugging buffer.")
 
+(defvar ergoemacs-debug-keymap--temp-map nil)
 (defun ergoemacs-debug-keymap (keymap)
   "Print keymap bindings."
   (if (not (ignore-errors (symbolp (symbol-name keymap))))
-      (let ((temp-map keymap))
-        (ergoemacs-debug "%s" (substitute-command-keys "\\{temp-map}")))
+      (progn
+        (setq ergoemacs-debug-keymap--temp-map keymap)
+        (ergoemacs-debug "%s" (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")))
     (ergoemacs-debug-heading "%s"
                              (format "Keymap Description: %s" (symbol-name keymap)))
     (ergoemacs-debug "%s" (substitute-command-keys (format "\\{%s}" (symbol-name keymap))))))
@@ -91,7 +93,7 @@
   (ergoemacs-debug (concat "** "
                            (condition-case err
                                (apply 'format arg)
-                             (eurror (format "Bad format string: %s" arg)))))
+                             (error (format "Bad format string: %s (%s)" arg err)))))
   (ergoemacs-debug "Time Since Start ergoemacs-mode: %1f sec" (- (float-time) ergoemacs-debug-heading-start-time))
   (ergoemacs-debug "Time Since Last Heading: %1f sec" (- (float-time) ergoemacs-debug-heading-last-time))
   (setq ergoemacs-debug-heading-last-time (float-time)))
@@ -112,7 +114,7 @@
                   ergoemacs-debug
                   (condition-case err
                       (apply 'format arg)
-                    (error (format "Bad Format String: %s" arg)))))))
+                    (error (format "Bad Format String: %s (%s)" arg err)))))))
 
 (defun ergoemacs-debug-clear ()
   "Clears the variable `ergoemacs-debug' and `ergoemacs-debug-buffer'"
@@ -681,40 +683,37 @@ This is done by checking if this is a command that supports shift selection or c
     (when transient-mark-mode ;; restore transient-mark-mode state
       (setq transient-mark-mode ergoemacs-mark-active)))
   (let (deactivate-mark)
-    (condition-case err
-        (progn
-          (ergoemacs-restore-post-command-hook)
-          (when (and ergoemacs-repeat-keys
-                     (keymapp ergoemacs-repeat-keymap)
-                     (not (lookup-key ergoemacs-repeat-keymap (this-single-command-keys))))
-            (setq ergoemacs-repeat-keys nil)
-            (ergoemacs-mode-line))
-          (when (and (not ergoemacs-read-input-keys)
-                     (not unread-command-events))
-            (setq ergoemacs-read-input-keys t)
-            (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
-              (if (not ergoemacs-read-key-overriding-overlay-save)
-                  (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
-                (delete-overlay ergoemacs-read-key-overriding-overlay-save)
-                (setq ergoemacs-read-key-overriding-overlay-save nil))))
-          (setq ergoemacs-this-command this-command)
-          (when ergoemacs-mode
-            ;; Raise shortcuts and modal modes.
-            (ergoemacs-shuffle-keys)
-            (let ((ergoemacs-real-key-binding
-                   (read-kbd-macro
-                    (format
-                     "<override> %s" (key-description (this-single-command-keys))))))
-              (cond
-               ((condition-case err
-                    (interactive-form ergoemacs-real-key-binding)
-                  (error nil))
-                (setq this-command ergoemacs-real-key-binding))))
-            ;; Used to check for `saved-overriding-map', but changed
-            ;; in emacs 24.4, and `ergoemacs-mode' deals with
-            ;; universal functions independent of emacs...
-            (ergoemacs-install-shortcuts-up)))
-      (error nil)))
+    (ignore-errors
+      (progn
+        (ergoemacs-restore-post-command-hook)
+        (when (and ergoemacs-repeat-keys
+                   (keymapp ergoemacs-repeat-keymap)
+                   (not (lookup-key ergoemacs-repeat-keymap (this-single-command-keys))))
+          (setq ergoemacs-repeat-keys nil)
+          (ergoemacs-mode-line))
+        (when (and (not ergoemacs-read-input-keys)
+                   (not unread-command-events))
+          (setq ergoemacs-read-input-keys t)
+          (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
+            (if (not ergoemacs-read-key-overriding-overlay-save)
+                (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
+              (delete-overlay ergoemacs-read-key-overriding-overlay-save)
+              (setq ergoemacs-read-key-overriding-overlay-save nil))))
+        (setq ergoemacs-this-command this-command)
+        (when ergoemacs-mode
+          ;; Raise shortcuts and modal modes.
+          (ergoemacs-shuffle-keys)
+          (let ((ergoemacs-real-key-binding
+                 (read-kbd-macro
+                  (format
+                   "<override> %s" (key-description (this-single-command-keys))))))
+            (cond
+             ((commandp ergoemacs-real-key-binding t)
+              (setq this-command ergoemacs-real-key-binding))))
+          ;; Used to check for `saved-overriding-map', but changed
+          ;; in emacs 24.4, and `ergoemacs-mode' deals with
+          ;; universal functions independent of emacs...
+          (ergoemacs-install-shortcuts-up)))))
   (unless (ergoemacs-smart-function-p this-command)
     (run-hooks 'ergoemacs-pre-command-hook))
   t)
@@ -725,10 +724,9 @@ This is done by checking if this is a command that supports shift selection or c
   "Ergoemacs post-command-hook"
   (when ergoemacs-read-input-keys
     (if (and mark-active deactivate-mark
-               (or (ergoemacs-is-movement-command-p this-command)
-                   (condition-case err
-                       (string-match "\\<mark\\>" (symbol-name this-command))
-                     (error nil))))
+             (or (ergoemacs-is-movement-command-p this-command)
+                 (ignore-errors
+                   (string-match "\\<mark\\>" (symbol-name this-command)))))
         (progn
           (setq deactivate-mark nil))))
   (let (deactivate-mark)
@@ -767,7 +765,7 @@ This is done by checking if this is a command that supports shift selection or c
   t)
 
 (provide 'ergoemacs-mode)
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-mode.el ends here
 ;; Local Variables:
 ;; coding: utf-8-emacs

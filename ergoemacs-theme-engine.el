@@ -2395,3 +2395,6 @@ Ignores DESC."
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-theme-engine.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

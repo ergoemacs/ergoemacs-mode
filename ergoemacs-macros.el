@@ -443,3 +443,6 @@ This was stole/modified from `c-save-buffer-state'"
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

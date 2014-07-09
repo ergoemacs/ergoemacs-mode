@@ -402,8 +402,8 @@
                       (setq ret (cons (replace-regexp-in-string "ergoemacs-layout-" "" sn) ret))))))
          ob)
         (if aliases
-            (setq ergoemacs-get-layouts-aliases)
-          (setq ergoemacs-get-layouts-no-aliases))
+            (setq ergoemacs-get-layouts-aliases nil)
+          (setq ergoemacs-get-layouts-no-aliases nil))
         ret))))
 
 (provide 'ergoemacs-layouts)

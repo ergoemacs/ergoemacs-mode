@@ -306,6 +306,7 @@ Uses `ergoemacs-real-key-description'."
 
 (defvar ergoemacs-original-keys-to-shortcut-keys-regexp)
 (defvar ergoemacs-original-keys-to-shortcut-keys)
+(defvar ergoemacs-unbind-keys)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
 (defun ergoemacs-substitute-command (string &optional map)
@@ -511,4 +512,6 @@ Assumes ergoemacs-real-FUNCTION and ergoemacs-FUNCTION as the two functions to t
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
+;; Local Variables:
 ;; coding: utf-8-emacs
+;; End:

@@ -438,3 +438,6 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
 (provide 'ergoemacs-modal)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-modal.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:

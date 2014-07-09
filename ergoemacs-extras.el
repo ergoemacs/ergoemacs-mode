@@ -1723,4 +1723,4 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
 ;;; ergoemacs-extras.el ends here
 ;; Local Variables:
 ;; coding: utf-8-emacs
-;; End
+;; End:

@@ -632,7 +632,7 @@
     ("M-}" (forward-paragraph))
     ("M-~" (not-modified))
     ("RET" (newline)))
-  "Default Emacs Key Bindings")
+  "Default Emacs Key Bindings.")
 
 (defvar ergoemacs-single-command-keys)
 (defvar ergoemacs-shortcut-keymap)
@@ -643,17 +643,12 @@
 (defvar ergoemacs-describe-key)
 (declare-function ergoemacs-debug "ergoemacs-mode.el")
 (declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
-(defun ergoemacs-undefined (&optional arg)
-  "Ergoemacs Undefined key, tells where to perform the old action."
-  (interactive "P")
+(defun ergoemacs-undefined ()
+  "Ergoemacs Undefined key, echo new key for old action."
+  (interactive)
   (let* ((key-kbd (or ergoemacs-single-command-keys (this-single-command-keys)))
-         (key (key-description key-kbd))
-         (fn (assoc key ergoemacs-emacs-default-bindings))
          tmp
-         (local-fn nil)
-         (last (substring key -1))
-         (ergoemacs-where-is-skip t)
-         (curr-fn nil))
+         (local-fn nil))
     ;; Lookup local key, if present and then issue that
     ;; command instead...
     ;;
@@ -696,9 +691,7 @@
         ;; defined there.
         (setq local-fn (get-char-property (point) 'local-map))
         (if (and local-fn
-                 (condition-case err
-                     (keymapp local-fn)
-                   (error nil)))
+                 (ignore-errors (keymapp local-fn)))
             (setq local-fn (lookup-key local-fn key-kbd))
           (if (current-local-map)
               (setq local-fn (lookup-key (current-local-map) key-kbd))
@@ -747,7 +740,7 @@
 
 ;;;###autoload
 (defun ergoemacs-ignore-prev-global ()
-  "Ignores previously defined global keys."
+  "Ignore previously defined global keys."
   (setq ergoemacs-emacs-default-bindings
         (mapcar
          (lambda(elt)
@@ -762,39 +755,15 @@
          ergoemacs-emacs-default-bindings))
   (ergoemacs-reset-global-where-is))
 
-  
-(defun ergoemacs-format-where-is-buffer (&optional include-menu-bar include-alias)
-  "Format a buffer created from a `where-is' command."
-  (when (and (boundp 'fn)
-             (eq (nth 0 (nth 1 fn)) 'digit-argument))
-    (goto-char (point-min))
-    (while (re-search-forward "\\<\\([CMS]-\\)+" nil t)
-      (when (and (boundp 'last)
-                 (not (save-match-data (looking-at last))))
-        (replace-match "")
-        (delete-char 1)
-        (when (looking-at " *, *")
-          (replace-match "")))))
-  ;; Delete menu entires
-  (unless include-menu-bar
-    (goto-char (point-min))
-    (when (re-search-forward "\\(?:, *\\)?<menu-bar>.*\\([(,]\\)" nil t)
-      (replace-match "\\1")))
-  ;; Reformat aliases
-  (unless include-alias
-    (goto-char (point-min))
-    (when (re-search-forward " *([^)]*);\n.*alias *" nil t)
-      (replace-match ""))))
-
 (defun ergoemacs-translate-current-key (key)
-  "Translate the current key."
+  "Translate the current KEY."
   (cond
    ((string= (key-description key) "<backspace>")
     (read-kbd-macro "DEL" t))
    (t key)))
 
 (defun ergoemacs-translate-current-function (curr-fn)
-  "Translate the current function"
+  "Translate the current function CURR-FN."
   (cond
    ((eq 'delete-horizontal-space curr-fn)
     'ergoemacs-shrink-whitespaces)
@@ -836,11 +805,10 @@ This should only be run when no global keys have been set.
            ((eq (type-of key) 'string)
             (if is-variable
                 (ergoemacs-kbd key)
-              (condition-case err
-                  (read-kbd-macro key)
-                (error (read-kbd-macro
-                        (encode-coding-string
-                         key locale-coding-system))))))
+              (or (ignore-errors (read-kbd-macro key))
+                  (read-kbd-macro
+                   (encode-coding-string
+                    key locale-coding-system)))))
            (t key)))
          (key-kbd (key-description key-code)))
     (if (string-match "\\(mouse\\|wheel\\)" key-kbd)
@@ -850,9 +818,7 @@ This should only be run when no global keys have been set.
             (when (or fix complain)
               (let* ((key-function (lookup-key (current-global-map) key-code t))
                      (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
-                     (trans-function (if (condition-case err
-                                             (keymapp key-function)
-                                           (error nil))
+                     (trans-function (if (ignore-errors (keymapp key-function))
                                          'prefix
                                        key-function)))
                 (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
@@ -862,9 +828,7 @@ This should only be run when no global keys have been set.
             nil
           (let* ((key-function (lookup-key (current-global-map) key-code t))
                  (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
-                 (trans-function (if (condition-case err
-                                         (keymapp key-function)
-                                       (error nil))
+                 (trans-function (if (ignore-errors (keymapp key-function))
                                      'prefix
                                    key-function))
                  (has-changed nil))
@@ -878,11 +842,9 @@ This should only be run when no global keys have been set.
                 (while (< i trans-function)
                   (aset prefix-vector i (elt key-as-vector i))
                   (setq i (+ 1 i)))
-                (unless (condition-case err ; If it is a prefix vector,
-                                        ; assume not globally
-                                        ; changed
-                            (keymapp (lookup-key (current-global-map) prefix-vector))
-                          (error nil))
+                ;; If it is a prefix vector, assume not globally
+                ;; changed
+                (unless (ignore-errors (keymapp (lookup-key (current-global-map) prefix-vector)))
                   ;; Not a prefix, see if the key had actually changed
                   ;; by recursively calling `ergoemacs-global-changed-p'
                   (setq has-changed
@@ -912,20 +874,21 @@ This should only be run when no global keys have been set.
   "Warns about globally changed keys. If FIX is true, fix the ergoemacs-unbind file."
   (interactive)
   (dolist (x ergoemacs-emacs-default-bindings)
-    (ergoemacs-global-changed-p (nth 0 x) nil t t))
+    (ergoemacs-global-changed-p (nth 0 x) nil t fix))
   (message "Ergoemacs Keys warnings for this layout:")
   (dolist (x (symbol-value (ergoemacs-get-fixed-layout)))
     (and (eq 'string (type-of (nth 0 x)))
-         (ergoemacs-global-changed-p (nth 0 x) nil t t)))
+         (ergoemacs-global-changed-p (nth 0 x) nil t fix)))
   (dolist (x (symbol-value (ergoemacs-get-variable-layout)))
     (and (eq 'string (type-of (nth 0 x)))
-         (ergoemacs-global-changed-p (nth 0 x) t t))))
+         (ergoemacs-global-changed-p (nth 0 x) t t fix))))
 
 
 
 ;; Based on describe-key-briefly
 (declare-function ergoemacs-key-fn-lookup "ergoemacs-translate.el")
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
+(defvar yank-menu)
 (defun ergoemacs-where-is-old-binding (&optional key only-new-key)
   "Print the name of the function KEY invoked before to start ErgoEmacs minor mode."
   (interactive

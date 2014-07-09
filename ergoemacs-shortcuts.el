@@ -573,6 +573,9 @@ It will replace anything defined by `ergoemacs-translation'"
 (defvar keyfreq-table)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-smart-function-p "ergoemacs-model.el")
+(defvar ergoemacs-test-fn nil
+  "Flag to have `ergoemacs-read-key-call' assign the function to
+  this variable.")
 (defun ergoemacs-read-key-call (function &optional record-flag keys)
   "`ergoemacs-mode' replacement for `call-interactively'.
 
@@ -597,7 +600,7 @@ In addition, when the function is called:
 "
   (setq ergoemacs-deactivate-mark nil)
   (cond
-   ((and (boundp 'ergoemacs-test-fn) ergoemacs-test-fn)
+   (ergoemacs-test-fn
     (setq ergoemacs-test-fn function))
    (ergoemacs-describe-key
     (let ((pt (point))
@@ -1890,3 +1893,6 @@ The keymaps are:
 (provide 'ergoemacs-shortcuts)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-shortcuts.el ends here
+;; Local Variables:
+;; coding: utf-8-emacs
+;; End:
