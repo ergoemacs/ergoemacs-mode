@@ -941,6 +941,7 @@ All other modes are assumed to be minor modes or unimportant.
 ;; Preprocess menu keybindings...
 (defvar recentf-mode)
 (declare-function recentf-show-menu "recentf.el")
+(declare-function pr-update-menus "printing.el")
 (defun ergoemacs-menus-on ()
   "Turn on ergoemacs menus instead of emacs menus."
   (interactive)
