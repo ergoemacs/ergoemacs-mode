@@ -186,7 +186,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
              (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
              (process (start-process-shell-command "ergoemacs-byte-compile"
                                                    "*ergoemacs-clean*"
-                                                   (format "%s -Q --batch -f batch-byte-compile *.el" emacs-exe))))
+                                                   (format "%s -L %s -Q --batch -f batch-byte-compile *.el" emacs-exe default-directory))))
         (set-process-sentinel process 'ergoemacs-run-clean))
     (ergoemacs-run-clean)))
 
