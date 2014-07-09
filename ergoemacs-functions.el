@@ -488,6 +488,18 @@ When 'nil don't use a repeatable command
           (const nil :tag "Do nothing on repeat at beginning/end of line"))
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window t
+  "Turn on scrolling the other window.
+
+With a single prefix argument (called with \\[universal-argument]),
+
+`ergoemacs-end-of-line-or-what' and
+`ergoemacs-beginning-of-line-or-what' do a page up/down in the
+other window.
+"
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defcustom ergoemacs-repeatable-beginning-or-end-of-buffer t
   "Makes the beginning and end of buffer command repeatable.
   Calling it more than once changes the point from the beginning
@@ -612,6 +624,15 @@ changed by `ergoemacs-use-beginning-or-end-of-line-only'.
 Also this function tries to use whatever the specific mode wants
 for these functions by using `ergoemacs-shortcut-remap'.
 
+
+With
+`ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window'
+and a single universal argument called with
+\\[univeral-argument], this will do a page down in the other
+window `scroll-other-window'.  Repeated pressing will repeat
+`scroll-other-window'.
+
+
 When moving in steps #1 - #4 if N is not nil or 1, move forward
 N - 1 lines first.  If point reaches the beginning or end of
 the buffer, stop there.
@@ -621,69 +642,74 @@ the prefix arguments of `beginning-of-buffer',
 `ergoemacs-backward-block' and `scroll-down-command'
 "
   (interactive "^p")
-  (let ((N N)
-        (single-u-prefix-p (eq current-prefix-arg '(4))))
+  (if (and ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window
+           (or (memq last-command '(scroll-other-window scroll-other-window-down))
+               (equal current-prefix-arg '(4)))
+           (ignore-errors
+             (setq this-command 'scroll-other-window-down)
+             (ergoemacs-shortcut-remap 'scroll-other-window-down)
+             t)) nil
     (if (and ergoemacs-beginning-or-end-of-line-and-what
-           (or (not ergoemacs-use-beginning-or-end-of-line-only)
-               (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
-                    (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
-           (bolp))
-      (progn
+             (or (not ergoemacs-use-beginning-or-end-of-line-only)
+                 (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
+                      (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
+             (bolp))
+        (progn
+          (cond
+           ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
+            (ergoemacs-shortcut-remap 'beginning-of-buffer)
+            (setq this-command 'beginning-of-buffer))
+           ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
+            (ergoemacs-shortcut-remap 'ergoemacs-backward-block)
+            (setq this-command 'ergoemacs-backward-block))
+           ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
+            (ergoemacs-shortcut-remap 'scroll-down-command)
+            (setq this-command 'scroll-down-command)))
+          (beginning-of-line))
+      (setq N (or N 1))
+      (when (not (= 1 N))
+        (let ((line-move-visual nil))
+          (forward-line (- N 1))))
+      (let (pts tmp)
+        (push (point-at-bol) pts)
+        (save-excursion
+          ;; (setq prefix-arg nil)
+          (setq current-prefix-arg nil)
+          (ergoemacs-shortcut-remap 'move-beginning-of-line)
+          (setq this-command 'move-beginning-of-line)
+          (push (point) pts))
+        (when ergoemacs-back-to-indentation
+          (save-excursion
+            (back-to-indentation)
+            (push (point) pts)))
+        (when ergoemacs-end-of-comment-line
+          (save-excursion
+            (when (not (eolp))
+              (forward-char 1))
+            (save-excursion
+              (when (ignore-errors (comment-search-backward (point-at-bol) t))
+                (push (point) pts)
+                (when (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
+                  (while (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
+                    (skip-syntax-backward " " (point-at-bol)))
+                  (push (point) pts))))))
         (cond
-         ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
-          (ergoemacs-shortcut-remap 'beginning-of-buffer)
-          (setq this-command 'beginning-of-buffer))
-         ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
-          (ergoemacs-shortcut-remap 'ergoemacs-backward-block)
-          (setq this-command 'ergoemacs-backward-block))
-         ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
-          (ergoemacs-shortcut-remap 'scroll-down-command)
-          (setq this-command 'scroll-down-command)))
-        (beginning-of-line))
-    (setq N (or N 1))
-    (when (not (= 1 N))
-      (let ((line-move-visual nil))
-        (forward-line (- N 1))))
-    (let (pts tmp)
-      (push (point-at-bol) pts)
-      (save-excursion
-        ;; (setq prefix-arg nil)
-        (setq current-prefix-arg nil)
-        (ergoemacs-shortcut-remap 'move-beginning-of-line)
-        (setq this-command 'move-beginning-of-line)
-        (push (point) pts))
-      (when ergoemacs-back-to-indentation
-        (save-excursion
-          (back-to-indentation)
-          (push (point) pts)))
-      (when ergoemacs-end-of-comment-line
-        (save-excursion
-          (when (not (eolp))
-            (forward-char 1))
-          (save-excursion
-            (when (ignore-errors (comment-search-backward (point-at-bol) t))
-              (push (point) pts)
-              (when (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
-                (while (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
-                  (skip-syntax-backward " " (point-at-bol)))
-                (push (point) pts))))))
-      (cond
-       ((not pts)
-        (call-interactively 'move-beginning-of-line))
-       (t
-        (setq pts (sort pts '<))
-        (dolist (x pts)
-          (save-excursion
-            (goto-char x)
-            (looking-at ".*"))
-          (unless (>= x (point))
-            (push x tmp)))
-        (setq pts tmp)
-        (when pts
-          (goto-char (nth 0 pts))))))))
-  ;; ergoemacs shortcut changes this-command
+         ((not pts)
+          (call-interactively 'move-beginning-of-line))
+         (t
+          (setq pts (sort pts '<))
+          (dolist (x pts)
+            (save-excursion
+              (goto-char x)
+              (looking-at ".*"))
+            (unless (>= x (point))
+              (push x tmp)))
+          (setq pts tmp)
+          (when pts
+            (goto-char (nth 0 pts))))))))
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
 
+;; ergoemacs shortcut changes this-command
 (defun ergoemacs-end-of-line-or-what (&optional N )
   "Move cursor to end of line, or end of current or next text block or even end of buffer.
  (a text block is separated by empty lines).
@@ -717,6 +743,14 @@ To:
    c. A PgDown ('page)
 
 Move point to end of current line as displayed.
+
+With
+`ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window'
+and a single universal argument called with
+\\[univeral-argument], this will do a page down in the other
+window `scroll-other-window'.  Repeated pressing will repeat
+`scroll-other-window'.
+
 With argument ARG not nil or 1, move forward ARG - 1 lines first.
 If point reaches the beginning or end of buffer, it stops there.
 
@@ -729,57 +763,64 @@ the prefix arguments of `end-of-buffer',
 
 "
   (interactive "^p")
-  (if (and ergoemacs-beginning-or-end-of-line-and-what
-           (or (not ergoemacs-use-beginning-or-end-of-line-only)
-               (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
-                    (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
-           (or (eolp)
-               (and
-                (or
-                 (memq last-command '(ergoemacs-forward-block scroll-up-command)))
-                (bolp))))
-      (progn 
-        (cond
-         ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
-          (ergoemacs-shortcut-remap 'end-of-buffer)
-          (setq this-command 'end-of-buffer))
-         ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
-          (ergoemacs-shortcut-remap 'ergoemacs-forward-block)
-          (setq this-command 'ergoemacs-forward-block))
-         ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
-          (ergoemacs-shortcut-remap 'scroll-up-command)
-          (setq this-command 'scroll-up-command)
-          (beginning-of-line))))
-    (setq N (or N 1))
-    (when (not (= 1 N))
-      (let ((line-move-visual nil))
-        (forward-line (- N 1))))
-    (let (pts tmp)
-      (setq current-prefix-arg nil)
-      (save-excursion
-        (call-interactively 'move-end-of-line)
-        (setq this-command 'move-end-of-line)
-        (push (point) pts))
-      (when ergoemacs-end-of-comment-line
+  (if (and ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window
+           (or (memq last-command '(scroll-other-window scroll-other-window-down))
+               (equal current-prefix-arg '(4)))
+           (ignore-errors
+             (setq this-command 'scroll-other-window)
+             (ergoemacs-shortcut-remap 'scroll-other-window)
+             t)) nil
+    (if (and ergoemacs-beginning-or-end-of-line-and-what
+             (or (not ergoemacs-use-beginning-or-end-of-line-only)
+                 (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
+                      (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
+             (or (eolp)
+                 (and
+                  (or
+                   (memq last-command '(ergoemacs-forward-block scroll-up-command)))
+                  (bolp))))
+        (progn 
+          (cond
+           ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
+            (ergoemacs-shortcut-remap 'end-of-buffer)
+            (setq this-command 'end-of-buffer))
+           ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
+            (ergoemacs-shortcut-remap 'ergoemacs-forward-block)
+            (setq this-command 'ergoemacs-forward-block))
+           ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
+            (ergoemacs-shortcut-remap 'scroll-up-command)
+            (setq this-command 'scroll-up-command)
+            (beginning-of-line))))
+      (setq N (or N 1))
+      (when (not (= 1 N))
+        (let ((line-move-visual nil))
+          (forward-line (- N 1))))
+      (let (pts tmp)
+        (setq current-prefix-arg nil)
         (save-excursion
-          ;; See http://www.emacswiki.org/emacs/EndOfLineNoComments
-          (let ((cs (ignore-errors (comment-search-forward (point-at-eol) t))))
-            (when cs
-              (goto-char cs)
-              (skip-syntax-backward " " (point-at-bol))
-              (push (point) pts)))))
-      (when pts
-        (setq pts (sort pts '<))
-        (dolist (x pts)
-          (unless (<= x (point))
-            (push x tmp)))
-        (setq pts (reverse tmp)))
-      (cond
-       ((not pts)
-        (call-interactively 'move-end-of-line)
-        (setq this-command 'move-end-of-line))
-       (t
-        (goto-char (nth 0 pts))))))
+          (call-interactively 'move-end-of-line)
+          (setq this-command 'move-end-of-line)
+          (push (point) pts))
+        (when ergoemacs-end-of-comment-line
+          (save-excursion
+            ;; See http://www.emacswiki.org/emacs/EndOfLineNoComments
+            (let ((cs (ignore-errors (comment-search-forward (point-at-eol) t))))
+              (when cs
+                (goto-char cs)
+                (skip-syntax-backward " " (point-at-bol))
+                (push (point) pts)))))
+        (when pts
+          (setq pts (sort pts '<))
+          (dolist (x pts)
+            (unless (<= x (point))
+              (push x tmp)))
+          (setq pts (reverse tmp)))
+        (cond
+         ((not pts)
+          (call-interactively 'move-end-of-line)
+          (setq this-command 'move-end-of-line))
+         (t
+          (goto-char (nth 0 pts)))))))
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
 
 ;;; TEXT SELECTION RELATED
