@@ -147,7 +147,31 @@
   (undo-tree-mode 1)
   (shift-select-mode t)
   (delete-selection-mode 1)
-  (setq recentf-menu-before "Close")
+  (setq recentf-menu-before "Close"
+        recentf-menu-items-for-commands
+        (list
+         ["Open Last Closed"
+          ergoemacs-open-last-closed
+          :help "Remove duplicates, and obsoletes files from the recent list"
+          :keys (ergoemacs-shortcut-for-command 'ergoemacs-open-last-closed)
+          :active t]
+         ["Cleanup list"
+          recentf-cleanup
+          :help "Remove duplicates, and obsoletes files from the recent list"
+          :active t]
+         ["Edit list..."
+          recentf-edit-list
+          :help "Manually remove files from the recent list"
+          :active t]
+         ["Save list now"
+          recentf-save-list
+          :help "Save the list of recently opened files now"
+          :active t]
+         ["Options..."
+          (customize-group "recentf")
+          :help "Customize recently opened files menu and options"
+          :active t]
+         ))
   (recentf-mode 1)
   ;; (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
   ;; (setq cua--rectangle-keymap (make-sparse-keymap))

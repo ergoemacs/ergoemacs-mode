@@ -259,7 +259,7 @@ All other modes are assumed to be minor modes or unimportant.
                             ergoemacs-open-in-desktop)))
           ;; FIXME -- Somehow put open last closed in recentf menu; It
           ;; seems to fit there the best
-          (open-last-closed menu-item "Open last closed" ergoemacs-open-last-closed)
+          ;; (open-last-closed menu-item "Open last closed" ergoemacs-open-last-closed)
           (kill-buffer menu-item "Close" ergoemacs-close-current-buffer)
           (separator1 menu-item "--")
           (save-buffer menu-item "Save" save-buffer)
