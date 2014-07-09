@@ -81,7 +81,8 @@ type:
 
 #+HTML: <kbd class="dark">Alt</kbd>+<kbd class="dark">x</kbd> <code>list-packages</code>
 
-After, find the package `ergoemacs-mode` and install it with @@html:<kbd class="dark">i</kbd><kbd class="dark">x</kbd>@@
+After, find the package `ergoemacs-mode` and install it with
+@@html:<kbd class="dark">@@i@@html:</kbd>@@ @@html:<kbd class="dark">@@x@@html:</kbd>@@
 
 Then add the following to your =~/.emacs= or =~/.emacs.d/init.el=
 file:
