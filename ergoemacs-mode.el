@@ -659,6 +659,8 @@ This is done by checking if this is a command that supports shift selection or c
     ergoemacs-shortcut-movement
     ergoemacs-read-key
     ergoemacs-modal-default
+    ergoemacs-modal-movement
+    ergoemacs-modal-movement-no-shift-select
     ergoemacs-read-key-default))
 
 (defun ergoemacs-smart-function-p (var)

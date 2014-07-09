@@ -262,11 +262,11 @@ If so return the hash of translation values."
 (defvar ergoemacs-translation-text)
 (declare-function ergoemacs-read-key "ergoemacs-shortcuts.el")
 (declare-function ergoemacs-mode-line "ergoemacs-mode.el")
-(defun ergoemacs-modal-default (&optional arg)
+
+(defun ergoemacs-modal--internal (&optional arg)
   "The default command for `ergoemacs-mode' modal.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 the translation type defined by `ergoemacs-modal-list' as long as it should."
-  (interactive "^P")
   (let* ((type (nth 0 ergoemacs-modal-list))
          (hash (gethash type ergoemacs-translations))
          tmp
@@ -297,7 +297,29 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
           (when ergoemacs-default-cursor
             (set-cursor-color ergoemacs-default-cursor))
           (ergoemacs-mode-line)))))))
-(put 'ergoemacs-modal-default 'CUA 'move) ;; Fake movement command
+
+(defun ergoemacs-modal-default (&optional arg)
+  "The default command for `ergoemacs-mode' modal.
+It sends `this-single-command-keys' to `ergoemacs-read-key' with
+the translation type defined by `ergoemacs-modal-list' as long as it should."
+  (interactive "P")
+  (ergoemacs-modal--internal arg))
+
+(defun ergoemacs-modal-movement (&optional arg)
+  "The default command for `ergoemacs-mode' modal.
+It sends `this-single-command-keys' to `ergoemacs-read-key' with
+the translation type defined by `ergoemacs-modal-list' as long as it should."
+  (interactive "^P")
+  (ergoemacs-modal--internal arg))
+(put 'ergoemacs-modal-movement 'CUA 'move) ;; Fake movement command
+
+
+(defun ergoemacs-modal-movement-no-shift-select (&optional arg)
+  "The default command for `ergoemacs-mode' modal.
+It sends `this-single-command-keys' to `ergoemacs-read-key' with
+the translation type defined by `ergoemacs-modal-list' as long as it should."
+  (interactive "P")
+  (ergoemacs-modal--internal arg))
 
 (defvar ergoemacs-modal-save nil)
 (defvar ergoemacs-modal nil
