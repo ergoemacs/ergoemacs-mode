@@ -283,6 +283,14 @@ This assumes any key defined while running a hook is a user-defined hook."
                              " Never show it again.")))))
 
 
+(defadvice easy-menu-filter-return (around ergoemacs-easy-menu-filter-return activate)
+  "Makes sure that the keys are correct in the menu."
+  (let ((ret (ignore-errors ad-do-it)))
+    (when ergoemacs-mode
+      (ergoemacs-preprocess-menu-keybindings ret))
+    ret))
+
+
 ;;; Unfortunately, the advice route doesn't seem to work for these
 ;;; functions :(
 
