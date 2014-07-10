@@ -1033,7 +1033,9 @@
     (global-set-key [remap describe-key]
                     'ergoemacs-describe-key)
     (global-set-key [remap describe-mode]
-                    'ergoemacs-describe-major-mode)))
+                    'ergoemacs-describe-major-mode)
+    (global-set-key [remap ergoemacs-print-buffer-confirm]
+                    'pr-interface)))
 
 (ergoemacs-theme-component ergoemacs-banish-shift ()
   "Banish Shift Combinations with <apps> SPC"

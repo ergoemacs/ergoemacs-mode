@@ -264,11 +264,13 @@ C-u C=u deletes old byte compilde `ergoemacs-mode' files."
   (newline-and-indent))
 
 (defun ergoemacs-print-buffer-confirm ()
-  "Print current buffer, but ask for confirmation first."
+  "Print current buffer, but ask for confirmation first.
+If `pr-interface' is available, use that function instead."
   (interactive)
-  (when
-      (y-or-n-p "Print current buffer? ")
-    (print-buffer)))
+  (if (fboundp 'pr-interface)
+      (call-interactively 'pr-interface)
+    (when (y-or-n-p "Print current buffer? ")
+      (print-buffer))))
 
 (defvar ergoemacs-mode)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
