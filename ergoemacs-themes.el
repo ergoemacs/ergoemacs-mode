@@ -43,7 +43,10 @@
 
 (ergoemacs-theme-component standard-vars ()
   "Enabled/changed variables/modes"
-  (setq org-CUA-compatible t
+  (setq ergoemacs-alt-text (replace-regexp-in-string "[Qq]" "" (ergoemacs-pretty-key "M-q"))
+        ergoemacs-ctl-text (replace-regexp-in-string "[Qq]" "" (ergoemacs-pretty-key "C-q"))
+        ergoemacs-alt-ctl-text (replace-regexp-in-string "[Qq]" "" (ergoemacs-pretty-key "M-C-q"))
+        org-CUA-compatible t
         org-support-shift-select t
         set-mark-command-repeat-pop t
         org-special-ctrl-a/e t

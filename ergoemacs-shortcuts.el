@@ -440,17 +440,11 @@ It will replace anything defined by `ergoemacs-translation'"
     next-key))
 
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
-(defvar ergoemacs-alt-text
-  (replace-regexp-in-string
-   "[Qq]" "" (ergoemacs-pretty-key "M-q")))
+(defvar ergoemacs-alt-text "M-")
 
-(defvar ergoemacs-ctl-text
-  (replace-regexp-in-string
-   "[Qq]" "" (ergoemacs-pretty-key "C-q")))
+(defvar ergoemacs-ctl-text "C-")
 
-(defvar ergoemacs-alt-ctl-text
-  (replace-regexp-in-string
-   "[Qq]" "" (ergoemacs-pretty-key "C-q")))
+(defvar ergoemacs-alt-ctl-text "M-C-")
 
 (defun ergoemacs-read-key-next-key-is-alt (&optional type pretty-key)
   "The next key read is an Alt+ key. (or M- )"
@@ -479,14 +473,16 @@ It will replace anything defined by `ergoemacs-translation'"
 (defun ergoemacs-read-key-next-key-is-alt-ctl (&optional type pretty-key)
   "The next key read is an Alt+Ctrl+ key. (or C-M- )"
   (interactive)
-  (when (and type pretty-key)
-    (let* ((next-key (ergoemacs-translate
-                      (vector
-                       (ergoemacs-read-event nil pretty-key ergoemacs-alt-ctl-text))))
-           (key (plist-get next-key ':alt-ctl-key))
-           (pretty (plist-get next-key ':alt-ctl-pretty))
-           (kbd (plist-get next-key ':alt-ctl)))
-      (ergoemacs-read-key-install-next-key next-key key pretty kbd))))
+  (if (or type pretty-key)
+      (when (and type pretty-key)
+        (let* ((next-key (ergoemacs-translate
+                          (vector
+                           (ergoemacs-read-event nil pretty-key ergoemacs-alt-ctl-text))))
+               (key (plist-get next-key ':alt-ctl-key))
+               (pretty (plist-get next-key ':alt-ctl-pretty))
+               (kbd (plist-get next-key ':alt-ctl)))
+          (ergoemacs-read-key-install-next-key next-key key pretty kbd)))
+    (warn "This should be called from ergoemacs read key sequence only.")))
 
 (defun ergoemacs-read-key-next-key-is-quoted (&optional type pretty-key)
   "The next key read is quoted."
