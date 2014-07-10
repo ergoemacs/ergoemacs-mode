@@ -240,47 +240,54 @@ All other modes are assumed to be minor modes or unimportant.
              (package menu-item  "Manage Packages" list-packages))))
 
 ;;; `File' menu
+(declare-function pr-update-menus "printing.el")
 (defun ergoemacs-menu-bar-file-menu ()
   "Creates Ergoemacs File Menu"
-  (setq ergoemacs-menu-bar-file-menu
-        `(keymap
-          (new-file menu-item "New" ergoemacs-new-empty-buffer)
-          (make-frame menu-item "New Frame" make-frame-command)
-          (open-file menu-item "Open..." find-file)
-          (open-directory menu-item "Open Containing Folder"
-                          (keymap
-                           ;; FIXME add open in cmd/iTerm/xterm, etc
-                           (open-directory-in-dired menu-item "In Dired" dired-jump)
-                           (open-directory-in-desktop
-                            menu-item  ,(cond
-                                         ((eq system-type 'windows-nt) "In Explorer")
-                                         ((eq system-type 'darwin) "In Finder")
-                                         (t "In File Manager"))
-                            ergoemacs-open-in-desktop)))
-          ;; FIXME -- Somehow put open last closed in recentf menu; It
-          ;; seems to fit there the best
-          ;; (open-last-closed menu-item "Open last closed" ergoemacs-open-last-closed)
-          (kill-buffer menu-item "Close" ergoemacs-close-current-buffer)
-          (separator1 menu-item "--")
-          (save-buffer menu-item "Save" save-buffer)
-          (write-file menu-item "Save As..." write-nfile)
-          (revert-buffer menu-item "Revert to Saved" revert-buffer)
-          (print-buffer menu-item "Print" ergoemacs-print-buffer-confirm)
-          ;; (ps-print-buffer-faces menu-item "Print (font+color)" ps-print-buffer-faces)
-          (separator4 menu-item "--")
-          (split-window-below menu-item "Split Window"
-                              split-window-below)
-          (split-window-right menu-item "Split Window right"
-                                  split-window-right)
-          (one-window menu-item "Unsplit Window"
-                      delete-other-windows)
-          (separator5 menu-item "--")
-          (execute-command menu-item "Execute Command" execute-extended-command)
-          (repeat-earlier-command menu-item "Repeat Earlier Command"
-                                  repeat-complex-command)
-          (separator6 menu-item "--")
-          (exit-emacs menu-item "Quit" save-buffers-kill-emacs)
-          "File"))
+  (unless ergoemacs-menu-bar-file-menu
+    (setq ergoemacs-menu-bar-file-menu
+          `(keymap
+            (new-file menu-item "New" ergoemacs-new-empty-buffer)
+            (make-frame menu-item "New Frame" make-frame-command)
+            (open-file menu-item "Open..." find-file)
+            (open-directory menu-item "Open Containing Folder"
+                            (keymap
+                             ;; FIXME add open in cmd/iTerm/xterm, etc
+                             (open-directory-in-dired menu-item "In Dired" dired-jump)
+                             (open-directory-in-desktop
+                              menu-item  ,(cond
+                                           ((eq system-type 'windows-nt) "In Explorer")
+                                           ((eq system-type 'darwin) "In Finder")
+                                           (t "In File Manager"))
+                              ergoemacs-open-in-desktop)))
+            ;; FIXME -- Somehow put open last closed in recentf menu; It
+            ;; seems to fit there the best
+            ;; (open-last-closed menu-item "Open last closed" ergoemacs-open-last-closed)
+            (kill-buffer menu-item "Close" ergoemacs-close-current-buffer)
+            (separator1 menu-item "--")
+            (save-buffer menu-item "Save" save-buffer)
+            (write-file menu-item "Save As..." write-nfile)
+            (revert-buffer menu-item "Revert to Saved" revert-buffer)
+            (print-buffer menu-item "Print" ergoemacs-print-buffer-confirm)
+            ;; (ps-print-buffer-faces menu-item "Print (font+color)" ps-print-buffer-faces)
+            (separator4 menu-item "--")
+            (split-window-below menu-item "Split Window"
+                                split-window-below)
+            (split-window-right menu-item "Split Window right"
+                                split-window-right)
+            (one-window menu-item "Unsplit Window"
+                        delete-other-windows)
+            (separator5 menu-item "--")
+            (execute-command menu-item "Execute Command" execute-extended-command)
+            (repeat-earlier-command menu-item "Repeat Earlier Command"
+                                    repeat-complex-command)
+            (separator6 menu-item "--")
+            (exit-emacs menu-item "Quit" save-buffers-kill-emacs)
+            "File"))
+    (define-key global-map [menu-bar file] (cons "File" ergoemacs-menu-bar-file-menu))
+    (require 'printing nil t)
+    (when (featurep 'printing)
+      (pr-update-menus t))
+    (setq ergoemacs-menu-bar-file-menu (lookup-key global-map [menu-bar file])))
   (ergoemacs-preprocess-menu-keybindings ergoemacs-menu-bar-file-menu))
 
 ;;; `Edit' Menu
@@ -941,11 +948,11 @@ All other modes are assumed to be minor modes or unimportant.
 ;; Preprocess menu keybindings...
 (defvar recentf-mode)
 (declare-function recentf-show-menu "recentf.el")
-(declare-function pr-update-menus "printing.el")
 (defun ergoemacs-menus-on ()
   "Turn on ergoemacs menus instead of emacs menus."
   (interactive)
   (ergoemacs-menu-bar-file-menu )
+  (define-key global-map [menu-bar file] (cons "File" ergoemacs-menu-bar-file-menu))
   (ergoemacs-preprocess-menu-keybindings ergoemacs-menu-bar-edit-menu)
   (ergoemacs-preprocess-menu-keybindings ergoemacs-menu-bar-search-menu)
   (ergoemacs-preprocess-menu-keybindings ergoemacs-menu-bar-view-menu)
@@ -953,11 +960,7 @@ All other modes are assumed to be minor modes or unimportant.
   ;; Remove help menu
   (define-key global-map [menu-bar help-menu]
     (cons (if (eq system-type 'darwin) "Help" "?") ergoemacs-menu-bar-help-menu))
-  (define-key global-map [menu-bar file] (cons "File" ergoemacs-menu-bar-file-menu))
   ;; Add the Print options
-  (require 'printing nil t) ; Load Printing package
-  (when (featurep 'printing)
-    (pr-update-menus t))
   (define-key global-map [menu-bar edit] (cons "Edit" ergoemacs-menu-bar-edit-menu))
   (define-key-after global-map [menu-bar search] (cons "Search" ergoemacs-menu-bar-search-menu)
     'edit)
