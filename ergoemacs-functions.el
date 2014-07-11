@@ -1273,6 +1273,14 @@ Emacs buffers are those whose name starts with *."
     (funcall (and initial-major-mode))
     (setq buffer-offer-save t)))
 
+(defun ergoemacs-delete-frame ()
+  "Deletes frame or closes emacs (with prompt)."
+  (interactive)
+  (unless (ignore-errors (call-interactively 'delete-frame))
+    (when (yes-or-no-p "Do you wish to Close Emacs? ")
+      ;; Bound to C-x C-c
+      (save-buffers-kill-terminal))))
+
 (defcustom ergoemacs-maximum-number-of-file-to-open 5
   "Maximum number of files to open.
 If less than or equal to zero, there is no limit."
