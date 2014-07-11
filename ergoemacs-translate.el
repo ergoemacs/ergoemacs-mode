@@ -410,8 +410,8 @@ This is called through `ergoemacs-universal-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
               (ergoemacs-universal-argument ',(plist-get arg-plist ':name)))))
-    (ergoemacs-pushnew (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument"))
-             ergoemacs-universal-fns)
+    (add-to-list 'ergoemacs-universal-fns
+                 (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")))
 
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-digit-argument")) ()
@@ -834,16 +834,17 @@ and `ergoemacs-pretty-key' descriptions.
     (while (< i 60)
       (unless (or (string= "" (nth i lay))
                   (string= "" (nth (+ i 60) lay)))
-        (ergoemacs-pushnew `(,(nth i lay) . ,(nth (+ i 60) lay))
-                 ergoemacs-shifted-assoc
-                 :test 'equal)
-        (ergoemacs-pushnew `(,(nth (+ i 60) lay) . ,(nth i lay))
-                 ergoemacs-shifted-assoc
-                 :test 'equal)
-        (ergoemacs-pushnew (nth i lay)
+        ;; Add to list is incompatible with lexical scoping.  However
+        ;; this use is OK since `ergoemacs-shifted-assoc' is defined
+        ;; in a defvar statement.
+        (add-to-list 'ergoemacs-shifted-assoc
+                     `(,(nth i lay) . ,(nth (+ i 60) lay)))
+        (add-to-list 'ergoemacs-shifted-assoc
+                     `(,(nth (+ i 60) lay) . ,(nth i lay)))
+        (pushnew (nth i lay)
                  unshifted-list
                  :test 'equal)
-        (ergoemacs-pushnew (nth (+ i 60) lay)
+        (pushnew (nth (+ i 60) lay)
                  shifted-list
                  :test 'equal))
       (setq i (+ i 1)))
@@ -871,9 +872,8 @@ and `ergoemacs-pretty-key' descriptions.
         (while (< i len)
           (unless (or (string= "" (nth i base))
                       (string= "" (nth i lay)))
-            (ergoemacs-pushnew `(,(nth i base) . ,(nth i lay))
-                    ergoemacs-translation-assoc
-                    :test 'equal))
+            (add-to-list 'ergoemacs-translation-assoc
+                         `(,(nth i base) . ,(nth i lay))))
           (setq i (+ i 1)))
         (setq ergoemacs-translation-regexp
               (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"

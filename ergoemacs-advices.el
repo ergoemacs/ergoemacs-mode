@@ -98,7 +98,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
                   (and (not (vectorp key))
                        (string= "ESC" kd)))
         ;; Let `ergoemacs-mode' know these keys have changed.
-        (ergoemacs-pushnew kd ergoemacs-global-changed-cache :test 'equal)
+        (pushnew kd ergoemacs-global-changed-cache :test 'equal)
         (setq ergoemacs-global-not-changed-cache (delete kd ergoemacs-global-not-changed-cache))
         ;; Remove the key from `ergoemacs-mode' bindings
         (ergoemacs-theme-component--ignore-globally-defined-key key t)))))

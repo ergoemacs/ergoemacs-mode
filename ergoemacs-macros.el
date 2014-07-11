@@ -389,17 +389,6 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
       (t 'object-set-name-string)) ,obj ,name))
 
 ;;;###autoload
-(defmacro ergoemacs-pushnew (x place &rest plist)
-  "Fix byte-compile errors for emacs versions less than 24.3.
-It says that `adjoin' from `cl' may be called at runtime, so use
-`add-to-list' instead of `pushnew'"
-  (cond
-   ((and (<= 24 emacs-major-version)
-         (<= 3 emacs-minor-version))
-    `(pushnew ,x ,place ,@plist))
-   (t `(add-to-list ',place ,x ,(plist-get plist ':test)))))
-
-;;;###autoload
 (defmacro ergoemacs-save-buffer-state (&rest body)
   "Eval BODY,
 then restore the buffer state under the assumption that no significant
