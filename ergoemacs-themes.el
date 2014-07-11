@@ -797,7 +797,6 @@
 (ergoemacs-theme-component quit ()
   "Escape exits"
   (global-set-key (kbd "<escape>") 'keyboard-quit)
-  (define-key browse-kill-ring-mode-map (kbd "<escape>") 'browse-kill-ring-quit)
   (when isearch-mode-hook
     :modify-map t
     :full-shortcut-keymap t
