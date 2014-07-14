@@ -1,4 +1,4 @@
-;; ergoemacs-theme-engine.el --- Engine for ergoemacs-themes
+;; ergoemacs-theme-engine.el --- Engine for ergoemacs-themes -*- lexical-binding: t -*-
 
 ;; Copyright © 2014  Free Software Foundation, Inc.
 
@@ -604,6 +604,9 @@ DEF is anything that can be a key's definition:
 (defvar ergoemacs-force-just-first nil)
 (defvar ergoemacs-force-variable nil)
 (defvar ergoemacs-force-fixed nil)
+(defvar ergoemacs-needs-translation)
+(defvar ergoemacs-translation-to)
+(defvar ergoemacs-translation-from)
 (defmethod ergoemacs-define-map--cmd-list ((obj ergoemacs-variable-map) key-desc def no-unbind &optional desc)
   "Add KEY-DESC for DEF to OBJ cmd-list slot.
 Optionally use DESC when another description isn't found in `ergoemacs-function-short-names'."
@@ -654,8 +657,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
       (oset obj cmd-list cmd-list))))
 
 (defmethod ergoemacs-define-map ((obj ergoemacs-variable-map) key def &optional no-unbind)
-  (let* ((key-desc (key-description key))
-         (key-vect (read-kbd-macro key-desc t)))
+  (let* ((key-desc (key-description key)))
     (ergoemacs-define-map--cmd-list obj key-desc def no-unbind)
     ;; Defining key resets the fixed-maps...
     (oset obj keymap-hash (make-hash-table))))
@@ -669,6 +671,8 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
     (oset obj cmd-list (ergoemacs-copy-list cmd-list))))
 
 (defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-translation-assoc)
+(defvar ergoemacs-translation-regexp)
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-variable-map) &optional layout)
   (with-slots (keymap-list
                cmd-list
@@ -769,8 +773,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
   (with-slots (fixed
                variable
                variable-reg) obj
-    (let* ((key-desc (key-description key))
-           (key-vect (read-kbd-macro key-desc t)))
+    (let* ((key-desc (key-description key)))
       (if (and (not ergoemacs-force-fixed)
                (or ergoemacs-force-variable
                    (and (not (string= variable-reg ""))
@@ -826,7 +829,7 @@ Assumes maps are orthogonal."
            read
            (ilay (intern lay))
            (ret (gethash ilay keymap-hash))
-           (fix fixed) map1 map2 var)
+           (fix fixed) var)
       (unless ret ;; Calculate
         (setq var (ergoemacs-get-fixed-map variable lay))
         (setq read (copy-keymap (oref fix read-map)))
@@ -1016,7 +1019,7 @@ Assumes maps are orthogonal."
            (append-ret (gethash (list match ret) hooks)))
       (unless append-ret
         (maphash
-         (lambda (ignore-key map-obj)
+         (lambda (_ignore-key map-obj)
            (when (and (slot-boundp map-obj 'hook)
                       (string-match-p match (symbol-name (oref map-obj hook))))
              (if keymaps
@@ -1078,7 +1081,7 @@ Assumes maps are orthogonal."
 (defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-map-list) &optional match keymaps)
   (with-slots (map-list hooks) obj
     (let* ((final (gethash (list match keymaps) hooks))
-           ret test)
+           ret)
       (unless final
         (dolist (map map-list)
           (when (ergoemacs-theme-component-maps-p map)
@@ -1098,7 +1101,7 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
   (ergoemacs-get-hooks obj (concat "\\`" (regexp-quote (symbol-name hook)) "\\'") t))
 
 (defmethod ergoemacs-get-inits ((obj ergoemacs-theme-component-map-list))
-  (let (ret '())
+  (let ((ret '()))
     (with-slots (map-list) obj
       (dolist (map map-list)
         (setq ret (append ret (oref map init)))))
@@ -1298,8 +1301,8 @@ FULL-SHORTCUT-MAP-P "
                   (cond
                    ((ignore-errors
                       (and (eq (nth 0 (nth 1 n-map)) 'keymap)
-                               (not (keymap-parent n-map))))
-                    (pop n-map)
+                           (not (keymap-parent n-map))
+                           (pop n-map)))
                     ;; (push (make-sparse-keymap "ergoemacs-modified") n-map)
                     )
                    (t
@@ -1368,9 +1371,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
         ;; playing with pointers in C.
         ;;(setq final-map (ergoemacs-get-fixed-map--combine-maps menu-keymap final-map))
         ;; Use a combined keymap instead
-        (if (not (ignore-errors (nth 0 (nth 1 final-map))))
-            (setq final-map (list final-map))
-          (pop final-map))
+        (if (not (and (ignore-errors (nth 0 (nth 1 final-map))) (pop final-map)))
+            (setq final-map (list final-map)))
         (push menu-keymap final-map)
         (setq final-map (make-composed-keymap final-map))
         ;; Rebuild Shortcut hash
@@ -1769,7 +1771,7 @@ COMPONENT can be defined as component::version"
                           component))
            (version (or (and (symbolp version) (symbol-name version))
                         version ""))
-           comp ver-list ver)
+           comp ver-list)
       (save-match-data
         (when (string-match "::\\([0-9.]+\\)$" comp-name)
           (setq version (match-string 1 comp-name)
@@ -1828,7 +1830,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
   (setq ergoemacs-theme--object (ergoemacs-theme-get-obj (or theme ergoemacs-theme "standard") (or version (ergoemacs-theme-get-version))))
   (ergoemacs-theme-obj-install ergoemacs-theme--object))
 
-(defun ergoemacs-apply-inits (&rest ignore)
+(defun ergoemacs-apply-inits (&rest _ignore)
   "Applies any deferred initializations."
   (when ergoemacs-theme--object
     (ergoemacs-apply-inits-obj ergoemacs-theme--object)))
@@ -1848,6 +1850,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 
 (declare-function ergoemacs-global-changed-p "ergoemacs-unbind.el")
 (declare-function ergoemacs-shuffle-keys "ergoemacs-mode.el")
+(defvar ergoemacs-ignore-advice)
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key &optional reset)
   "Adds KEY to `ergoemacs-global-override-rm-keys' and `ergoemacs-global-override-map' if globally redefined."
   (let ((ergoemacs-ignore-advice t)
@@ -1874,7 +1877,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
             ;; Reset `ergoemacs-shortcut-prefix-keys'
             (setq ergoemacs-shortcut-prefix-keys '())
             (maphash
-             (lambda(key ignore)
+             (lambda(key _ignore)
                (when (< 1 (length key))
                  (pushnew (substring key 0 -1)
                           ergoemacs-shortcut-prefix-keys
@@ -2065,12 +2068,10 @@ If OFF is non-nil, turn off the options instead."
       (dolist (elt (reverse menu-list))
         (let ((menu-name (nth 0 elt))
               (menu-items (nth 1 elt))
-              desc plist2
+              desc
               (ret '()))
           (dolist (option (reverse menu-items))
             (when (memq option (append options-on options-off))
-              ;; (setq plist2 (gethash (concat (symbol-name option) ":plist") ergoemacs-theme-component-hash))
-              ;; (setq desc (plist-get plist2 ':description))
               (setq desc (ergoemacs-theme-get-component-description (symbol-name option)))
               (push option menu-options)
               (push
@@ -2276,7 +2277,7 @@ Returns new keymap."
       (if (listp key)
           (dolist (rm-key key)
             (ergoemacs-rm-key keymap rm-key))
-        (let ((new-keymap (copy-keymap keymap)))
+        (let ((new-keymap (copy-keymap keymap)) _ignore)
           (cond
            ((keymapp (nth 1 new-keymap))
             (pop new-keymap)
@@ -2365,9 +2366,9 @@ When SILENT is true, also include silent themes"
     (symbol :tag "Other")))
 
 ;;;###autoload
-(defun ergoemacs-key (key function &optional desc only-first fixed-key)
+(defun ergoemacs-key (key function &optional _desc only-first _fixed-key)
   "Defines KEY in ergoemacs keyboard based on QWERTY and binds to FUNCTION.
-DESC is ignored, as is FIXED-KEY."
+_DESC is ignored, as is _FIXED-KEY."
   (if (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component)
       (let* ((key (or
                    (and (vectorp key) key)
@@ -2378,9 +2379,9 @@ DESC is ignored, as is FIXED-KEY."
     (warn "ergoemacs-key is depreciated, use global-set-key instead.")
     (global-set-key (ergoemacs-kbd key nil only-first) function)))
 
-(defun ergoemacs-fixed-key (key function &optional desc)
+(defun ergoemacs-fixed-key (key function &optional _desc)
   "Defines fixed KEY in ergoemacs and binds to FUNCTION.
-Ignores DESC."
+Ignores _DESC."
   (if (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component)
       (let* ((key (or
                    (and (vectorp key) key)
