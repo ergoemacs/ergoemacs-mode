@@ -38,6 +38,7 @@
   "http://ergoemacs.github.io/")
 
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
+(defvar ergoemacs-use-unicode-char)
 (defun ergoemacs-kbd-to-key (key)
   "Convert key Emacs key code to ergoemacs-key-code."
   (let ((ergoemacs-use-unicode-char nil))
@@ -89,6 +90,9 @@
       (ergoemacs-preprocess-menu-keybindings (car (cdr (cdr (cdr x))))))))
 
 (defvar ergoemacs-handle-ctl-c-or-ctl-x)
+(defvar ergoemacs-no-shortcut-keys)
+(defvar ergoemacs-shortcut-keys)
+(defvar ergoemacs-read-input-keys)
 (defun ergoemacs-shortcut-for-command (cmd)
   "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
   (cond
