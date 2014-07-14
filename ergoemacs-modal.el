@@ -1,4 +1,4 @@
-;;; ergoemacs-modal.el --- Modal Editing commands
+;;; ergoemacs-modal.el --- Modal Editing commands -*- lexical-binding: t -*-
 
 ;; Copyright © 2013-2014  Free Software Foundation, Inc.
 
@@ -263,14 +263,13 @@ If so return the hash of translation values."
 (declare-function ergoemacs-read-key "ergoemacs-shortcuts.el")
 (declare-function ergoemacs-mode-line "ergoemacs-mode.el")
 
-(defun ergoemacs-modal--internal (&optional arg)
+(defun ergoemacs-modal--internal ()
   "The default command for `ergoemacs-mode' modal.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 the translation type defined by `ergoemacs-modal-list' as long as it should."
   (let* ((type (nth 0 ergoemacs-modal-list))
          (hash (gethash type ergoemacs-translations))
-         tmp
-         (always (plist-get hash ':modal-always)))
+         tmp)
     (when (not (ergoemacs-modal-p))
       (setq type nil))
     ;; Actual call
@@ -298,28 +297,28 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
             (set-cursor-color ergoemacs-default-cursor))
           (ergoemacs-mode-line)))))))
 
-(defun ergoemacs-modal-default (&optional arg)
+(defun ergoemacs-modal-default ()
   "The default command for `ergoemacs-mode' modal.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 the translation type defined by `ergoemacs-modal-list' as long as it should."
-  (interactive "P")
-  (ergoemacs-modal--internal arg))
+  (interactive)
+  (ergoemacs-modal--internal))
 
-(defun ergoemacs-modal-movement (&optional arg)
+(defun ergoemacs-modal-movement ()
   "The default command for `ergoemacs-mode' modal.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 the translation type defined by `ergoemacs-modal-list' as long as it should."
-  (interactive "^P")
-  (ergoemacs-modal--internal arg))
+  (interactive "^")
+  (ergoemacs-modal--internal))
 (put 'ergoemacs-modal-movement 'CUA 'move) ;; Fake movement command
 
 
-(defun ergoemacs-modal-movement-no-shift-select (&optional arg)
+(defun ergoemacs-modal-movement-no-shift-select ()
   "The default command for `ergoemacs-mode' modal.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 the translation type defined by `ergoemacs-modal-list' as long as it should."
-  (interactive "P")
-  (ergoemacs-modal--internal arg))
+  (interactive)
+  (ergoemacs-modal--internal))
 
 (defvar ergoemacs-modal-save nil)
 (defvar ergoemacs-modal nil
@@ -378,10 +377,10 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
     (ergoemacs-modal-base-keymap map)))
 
 (defvar ergoemacs-modal-emulation-mode-map-alist)
+(defvar ergoemacs-ignore-advice)
 (defun ergoemacs-modal-toggle (type)
   "Toggle ergoemacs command modes."
   (let* ((help-list (gethash type ergoemacs-translation-text))
-         keymap
          (type type)
          tmp
          (ergoemacs-ignore-advice t))
