@@ -1,4 +1,4 @@
-;;; ergoemacs-themes.el --- ErgoEmacs keybindings and themes
+;;; ergoemacs-themes.el --- ErgoEmacs keybindings and themes -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
