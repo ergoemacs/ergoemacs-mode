@@ -1,4 +1,4 @@
-;;; ergoemacs-translate.el --- Keyboard translation functions
+;;; ergoemacs-translate.el --- Keyboard translation functions -*- lexical-binding: t -*-
 
 ;; Copyright © 2013-2014  Free Software Foundation, Inc.
 
