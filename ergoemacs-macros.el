@@ -1,4 +1,4 @@
-;;; ergoemacs-macros.el --- Macros for ergoemacs-mode
+;;; ergoemacs-macros.el --- Macros for ergoemacs-mode -*- lexical-binding: t -*-
 
 ;; Copyright © 2013, 2014  Free Software Foundation, Inc.
 
@@ -273,7 +273,6 @@ This has been stolen directly from ert by Christian Ohler <ohler@gnu.org>
 Afterward it was modified for use with `ergoemacs-mode' to use
 additional parsing routines defined by PARSE-FUNCTION."
           (let ((extracted-key-accu '())
-                last-was-version
                 plist
                 (remaining keys-and-body))
             ;; Allow
@@ -282,12 +281,14 @@ additional parsing routines defined by PARSE-FUNCTION."
               (if (condition-case nil
                       (stringp (first remaining))
                     (error nil))
-                  (push `(:name . ,(pop remaining)) extracted-key-accu)
-                (push `(:name . ,(symbol-name (pop remaining))) extracted-key-accu))
-              (when (memq (type-of (first remaining)) '(symbol cons))
-                (pop remaining))
-              (when (stringp (first remaining))
-                (push `(:description . ,(pop remaining)) extracted-key-accu)))
+                  (push (cons ':name (pop remaining)) extracted-key-accu)
+                (push (cons ':name  (symbol-name (pop remaining))) extracted-key-accu))
+              ;; Useless logical construct to ignore byte-compile
+              ;; warning of (pop remaining).
+              (when (or (and (memq (type-of (first remaining)) '(symbol cons)) (pop remaining)) t)
+                (when (stringp (first remaining))
+                  (push (cons ':description (pop remaining)) extracted-key-accu))
+                ))
             (while (and (consp remaining) (keywordp (first remaining)))
               (let ((keyword (pop remaining)))
                 (unless (consp remaining)
@@ -343,11 +344,11 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
          ,@(nth 1 kb)))))
 
 ;;;###autoload
-(defmacro ergoemacs-deftheme (name desc based-on &rest differences)
+(defmacro ergoemacs-deftheme (name _desc based-on &rest differences)
   "Creates a theme layout for Ergoemacs keybindings -- Compatability layer.
 
 NAME is the theme name.
-DESC is the theme description
+_DESC is the theme description and is currently ignored.
 BASED-ON is the base name theme that the new theme is based on.
 
 DIFFERENCES are the differences from the layout based on the functions.  These are based on the following functions:
