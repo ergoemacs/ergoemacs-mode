@@ -997,9 +997,9 @@ Based on `ergoemacs-with-ergoemacs'"
       ergoemacs-command-shortcuts-hash)
      (if (not use-apps)
          (while (and ret (eq (elt (nth 0 ret) 0) 'apps))
-           (pop ret))
+           (setq ret (cdr ret)))
        (while (and ret (not (eq (elt (nth 0 ret) 0) 'apps)))
-         (pop ret)))
+         (setq ret (cdr ret))))
      (setq ret (nth 0 ret))
      ret)))
 

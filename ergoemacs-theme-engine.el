@@ -815,8 +815,8 @@ Assumes maps are orthogonal."
      (parent
       (make-composed-keymap (list map1 map2)))
      (t
-      (pop map1)
-      (pop map2)
+      (setq map1 (cdr map1))
+      (setq map2 (cdr map2))
       (setq map1 (append map1 map2))
       (push 'keymap map1)
       (copy-keymap map1)))))
@@ -1301,8 +1301,8 @@ FULL-SHORTCUT-MAP-P "
                   (cond
                    ((ignore-errors
                       (and (eq (nth 0 (nth 1 n-map)) 'keymap)
-                           (not (keymap-parent n-map))
-                           (pop n-map)))
+                           (not (keymap-parent n-map))))
+                    (setq n-map (cdr n-map))
                     ;; (push (make-sparse-keymap "ergoemacs-modified") n-map)
                     )
                    (t
@@ -1371,8 +1371,9 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
         ;; playing with pointers in C.
         ;;(setq final-map (ergoemacs-get-fixed-map--combine-maps menu-keymap final-map))
         ;; Use a combined keymap instead
-        (if (not (and (ignore-errors (nth 0 (nth 1 final-map))) (pop final-map)))
-            (setq final-map (list final-map)))
+        (if (ignore-errors (nth 0 (nth 1 final-map)))
+            (setq final-map (cdr final-map))
+          (setq final-map (list final-map)))
         (push menu-keymap final-map)
         (setq final-map (make-composed-keymap final-map))
         ;; Rebuild Shortcut hash
@@ -2280,7 +2281,7 @@ Returns new keymap."
         (let ((new-keymap (copy-keymap keymap)) _ignore)
           (cond
            ((keymapp (nth 1 new-keymap))
-            (pop new-keymap)
+            (setq new-keymap (cdr new-keymap))
             (setq new-keymap
                   (mapcar
                    (lambda(map)

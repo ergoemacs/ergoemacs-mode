@@ -283,12 +283,10 @@ additional parsing routines defined by PARSE-FUNCTION."
                     (error nil))
                   (push (cons ':name (pop remaining)) extracted-key-accu)
                 (push (cons ':name  (symbol-name (pop remaining))) extracted-key-accu))
-              ;; Useless logical construct to ignore byte-compile
-              ;; warning of (pop remaining).
-              (when (or (and (memq (type-of (first remaining)) '(symbol cons)) (pop remaining)) t)
-                (when (stringp (first remaining))
-                  (push (cons ':description (pop remaining)) extracted-key-accu))
-                ))
+              (when (memq (type-of (first remaining)) '(symbol cons))
+                (setq remaining (cdr remaining)))
+              (when (stringp (first remaining))
+                (push (cons ':description (pop remaining)) extracted-key-accu)))
             (while (and (consp remaining) (keywordp (first remaining)))
               (let ((keyword (pop remaining)))
                 (unless (consp remaining)
