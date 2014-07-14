@@ -1,4 +1,4 @@
-;;; ergoemacs-advices.el --- advices for ErgoEmacs
+;;; ergoemacs-advices.el --- advices for ErgoEmacs -*- lexical-binding: t -*-
 
 ;; Copyright © 2013, 2014  Free Software Foundation, Inc.
 
@@ -315,13 +315,18 @@ Uses `ergoemacs-real-key-description'."
 (defvar ergoemacs-original-keys-to-shortcut-keys-regexp)
 (defvar ergoemacs-original-keys-to-shortcut-keys)
 (defvar ergoemacs-unbind-keys)
+(defvar ergoemacs-read-input-keys)
+(defvar ergoemacs-repeat-keys)
+(defvar ergoemacs-shortcut-keys)
+(defvar ergoemacs-modal)
+(defvar ergoemacs-no-shortcut-keys)
+(defvar ergoemacs-use-unicode-brackets)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
 (defun ergoemacs-substitute-command (string &optional map)
   "Substitutes command STRING within MAP or currently bound keys."
   (save-match-data
-    (let* (ret
-           (test (ergoemacs-with-global
+    (let* ((test (ergoemacs-with-global
                   (ergoemacs-real-substitute-command-keys
                    (or (and map (concat map string)) string))))
            (test-vect (read-kbd-macro test t))
@@ -444,7 +449,7 @@ Return the original STRING if no substitutions are made.
 Otherwise, return a new string, without any text properties."
   (save-match-data
     (if (not string) nil
-      (let (ret str mapvar (pt 0) tmp)
+      (let (ret mapvar (pt 0) tmp)
         (if (not ergoemacs-mode)
             (setq ret (ergoemacs-real-substitute-command-keys string))
           (while (string-match "\\(\\(?:\\\\=\\)?\\)\\\\\\(\\[\\|<\\|{\\)\\(.*?\\)\\(\\]\\|>\\|}\\)" string pt)

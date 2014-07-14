@@ -110,7 +110,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
 "
   `(let ((overriding-terminal-local-map overriding-terminal-local-map)
          (overriding-local-map overriding-local-map)
-         lookup tmp-overlay override-text-map)
+         tmp-overlay)
      ;; Remove most of ergoemacs-mode's key bindings
      (ergoemacs-emulations 'remove)
      (unwind-protect
