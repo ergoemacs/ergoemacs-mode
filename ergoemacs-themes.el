@@ -35,6 +35,7 @@
 (autoload 'wdired-change-to-wdired-mode "wdired" "ergoemacs-autoload." t)
 (autoload 'wdired-exit "wdired" "ergoemacs-autoload." t)
 
+
 (require 'advice)
 
 (defvar ergoemacs-theme-comp-hash)
@@ -175,7 +176,7 @@
           :help "Customize recently opened files menu and options"
           :active t]
          ))
-  (recentf-mode 1)
+  (ergoemacs-recentf-mode 1)
   ;; (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
   ;; (setq cua--rectangle-keymap (make-sparse-keymap))
   ;; (setq cua--rectangle-initialized nil)

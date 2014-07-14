@@ -40,6 +40,22 @@
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defun ergoemacs-recentf-mode (&optional arg)
+  "Toggle \"Open Recent\" menu (Recentf mode).
+With a prefix argument ARG, enable Recentf mode if ARG is
+positive, and disable it otherwise.  If called from Lisp, enable
+Recentf mode if ARG is omitted or nil.
+
+When Recentf mode is enabled, a \"Open Recent\" submenu is
+displayed in the \"File\" menu, containing a list of files that
+were operated on recently.
+
+This wrapper only calls `recentf-mode' when `ergoemacs-mode' is
+running interactively.
+"
+  (unless noninteractive
+    (recentf-mode arg)))
+
 
 (defvar ergoemacs-delete-functions
   '(delete-backward-char delete-char kill-word backward-kill-word)
