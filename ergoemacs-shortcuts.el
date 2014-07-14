@@ -529,10 +529,11 @@ It will replace anything defined by `ergoemacs-translation'"
            (boundp 'cua-mode) cua-mode
            (fboundp 'cua-clear-rectangle-mark))
       (cua-clear-rectangle-mark))
-     ((or (progn
-            (setq tmp (key-binding "q"))
-            (and (not (symbolp tmp)) (commandp tmp t)))
-          (not (string-match "self-insert" (symbol-name tmp))))
+     ((and (not (region-active-p))
+           (or (progn
+                 (setq tmp (key-binding "q"))
+                 (and (not (symbolp tmp)) (commandp tmp t)))
+               (not (string-match "self-insert" (symbol-name tmp)))))
       (call-interactively (key-binding "q")))
      (t
       (let (defined-fn
