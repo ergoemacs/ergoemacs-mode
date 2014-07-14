@@ -1,4 +1,4 @@
-;;; ergoemacs-functions.el --- miscellaneous functions for ErgoEmacs
+;;; ergoemacs-functions.el --- miscellaneous functions for ErgoEmacs -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
@@ -130,7 +130,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
 (declare-function ergoemacs-read-key "ergoemacs-shortcuts.el")
 (defun ergoemacs-ctl-c-or-ctl-x (key &optional arg)
   "Ergoemacs C-c or C-x defined by KEY."
-  (let (fn-cp fn-cx fn-both)
+  (let (fn-cp)
     ;; Create the needed functions
     (if (string= "C-c" key)
         (progn
@@ -188,12 +188,13 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
                                                    "*ergoemacs-clean*"
                                                    (format "%s -L %s -Q --batch -f batch-byte-compile *.el" emacs-exe default-directory))))
         (set-process-sentinel process 'ergoemacs-run-clean))
-    (ergoemacs-run-clean)))
+    (ergoemacs-run-clean nil nil)))
 
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme)
-(defun ergoemacs-run-clean (&rest ignore)
+(defun ergoemacs-run-clean (process change)
   "Run the clean environment"
+  (message "Run ergoemacs-clean (%s;%s)" process change)
   (let ((emacs-exe (ergoemacs-emacs-exe))
         cmd process rm-batch)
     (when ergoemacs-keyboard-layout
@@ -230,7 +231,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
                      (file-name-nondirectory ergoemacs-batch-file)))
       (set-process-sentinel process 'ergoemacs-run-clean-rm-batch))))
 
-(defun ergoemacs-run-clean-rm-batch (&rest ignore)
+(defun ergoemacs-run-clean-rm-batch ()
   "Remove temporary batch file."
   (when ergoemacs-batch-file
     (delete-file ergoemacs-batch-file)))
@@ -276,6 +277,8 @@ If `pr-interface' is available, use that function instead."
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
 (declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
+
+(defvar ergoemacs-unbind-keys)
 (defun ergoemacs-call-keyword-completion ()
   "Call the command that has keyboard shortcut M-TAB."
   (interactive)
@@ -509,10 +512,10 @@ other window.
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defun ergoemacs-beginning-or-end-of-buffer (&optional arg)
+(defun ergoemacs-beginning-or-end-of-buffer ()
   "Goto end or beginning of buffer. See `ergoemacs-end-or-beginning-of-buffer'.
 This behavior can be turned off with `ergoemacs-repeatable-beginning-or-end-of-buffer'."
-  (interactive "p")
+  (interactive)
   (let ((ma (region-active-p)))
     (if current-prefix-arg
         (progn
@@ -525,7 +528,7 @@ This behavior can be turned off with `ergoemacs-repeatable-beginning-or-end-of-b
     (when (and (not ma) (region-active-p))
       (deactivate-mark))))
 
-(defun ergoemacs-end-or-beginning-of-buffer (&optional arg)
+(defun ergoemacs-end-or-beginning-of-buffer ()
   "Go to beginning or end of buffer.
 
 This calls `end-of-buffer', unless there is no prefix and the
@@ -537,7 +540,7 @@ behavior can be turned off
 with`ergoemacs-repeatable-beginning-or-end-of-buffer'
 
 This will not honor `shift-select-mode'."
-  (interactive "p")
+  (interactive)
   (let ((ma (region-active-p)))
     (if current-prefix-arg
         (progn
@@ -836,16 +839,13 @@ the prefix arguments of `end-of-buffer',
 (defun ergoemacs-select-current-block ()
   "Select the current block of next between empty lines."
   (interactive)
-  (let (p1 p2)
-    (progn
-      (if (re-search-backward "\n[ \t]*\n" nil "move")
-          (progn (re-search-forward "\n[ \t]*\n")
-                 (setq p1 (point)))
-        (setq p1 (point)))
-      (if (re-search-forward "\n[ \t]*\n" nil "move")
-          (progn (re-search-backward "\n[ \t]*\n")
-                 (setq p2 (point)))
-        (setq p2 (point))))
+  (let (p1)
+    (if (re-search-backward "\n[ \t]*\n" nil "move")
+        (progn (re-search-forward "\n[ \t]*\n")
+               (setq p1 (point)))
+      (setq p1 (point)))
+    (if (re-search-forward "\n[ \t]*\n" nil "move")
+        (re-search-backward "\n[ \t]*\n"))
     (set-mark p1)))
 
 (defun ergoemacs-select-text-in-quote ()
@@ -906,10 +906,10 @@ Use `ergoemacs-shortcut-remap' in case kill line was remapped."
     (setq current-prefix-arg (- 1 number))
     (ergoemacs-shortcut-remap 'kill-line)))
 
-(defun ergoemacs-move-cursor-next-pane (&optional number)
+(defun ergoemacs-move-cursor-next-pane ()
   "Move cursor to the next pane.
 Use `ergoemacs-shortcut-remap' for maximum mode compatibility."
-  (interactive "p") ;; Other window is bound to C-x o
+  (interactive)
   (ergoemacs-shortcut-remap 'other-window))
 
 (defun ergoemacs-move-cursor-previous-pane (&optional number)
@@ -973,7 +973,6 @@ Calling this command 3 times will always result in no whitespaces around cursor.
   (let (cursor-point
         line-has-meat-p  ; current line contains non-white space chars
         space-tab-neighbor-p
-        whitespace-begin whitespace-end
         space-or-tab-begin space-or-tab-end
         line-begin-pos line-end-pos)
     (save-excursion
@@ -992,13 +991,12 @@ Calling this command 3 times will always result in no whitespaces around cursor.
       (setq space-or-tab-begin (point))
       
       (skip-chars-backward "\t \n")
-      (setq whitespace-begin (point))
       
       (goto-char cursor-point)
       (skip-chars-forward "\t ")
       (setq space-or-tab-end (point))
       (skip-chars-forward "\t \n")
-      (setq whitespace-end (point)))
+      )
     
     (if line-has-meat-p
         (let (deleted-text)
@@ -1011,8 +1009,6 @@ Calling this command 3 times will always result in no whitespaces around cursor.
                 (insert " "))))
       
       (progn
-        ;; (delete-region whitespace-begin whitespace-end)
-        ;; (insert "\n")
         (delete-blank-lines))
       ;; todo: possibly code my own delete-blank-lines here for better efficiency, because delete-blank-lines seems complex.
       )))
@@ -1355,10 +1351,10 @@ by `ergoemacs-maximum-number-of-files-to-open'.
       (setq ergoemacs-recently-closed-buffers (butlast ergoemacs-recently-closed-buffers 1)))))
 
 (declare-function undo-tree-mode "undo-tree.el")
-(defun ergoemacs-redo (&optional arg)
+(defun ergoemacs-redo ()
   "Redo using either `redo' or `undo-tree-redo'.
 Installs `undo-tree' if not present."
-  (interactive "*P")
+  (interactive "*")
   (require 'undo-tree nil t)
   (cond
    ((fboundp 'redo)
@@ -1691,8 +1687,8 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
           (const :tag "Repeated paste, pastes same thing multiple times."))
   :group 'ergoemacs-mode)
 
-
-(defun ergoemacs-paste-cycle (&optional arg)
+;;;###autoload
+(defun ergoemacs-paste-cycle ()
   "Run `yank-pop' or`yank'.
 This is `yank-pop' if `ergoemacs-smart-paste' is nil.
 This is `yank' if `ergoemacs-smart-paste' is t.
@@ -1702,7 +1698,7 @@ paste, this will start `browse-kill-ring'.
 
 When in `browse-kill-ring-mode', cycle backward through the key ring.
 "
-  (interactive "P")
+  (interactive)
   (if (eq major-mode 'browse-kill-ring-mode)
       (if (save-excursion (re-search-backward "^----" nil t))
           (call-interactively 'browse-kill-ring-previous)
@@ -1716,7 +1712,8 @@ When in `browse-kill-ring-mode', cycle backward through the key ring.
         (ergoemacs-shortcut-remap 'yank-pop)))))
 
 (put 'ergoemacs-paste 'delete-selection 'yank)
-(defun ergoemacs-paste (&optional arg)
+;;;###autoload
+(defun ergoemacs-paste ()
   "Run `yank' or `yank-pop' if this command is repeated.
 This is `yank' if `ergoemacs-smart-paste' is nil.
 This is `yank-pop' if `ergoemacs-smart-paste' is t and last command is a yank.
@@ -1724,7 +1721,7 @@ This is `browse-kill-ring' if `ergoemacs-smart-paste' equals 'browse-kill-ring a
 
 When in `browse-kill-ring-mode', cycle forward through the key ring.
 "
-  (interactive "P")
+  (interactive)
   (cond
    ((and (eq major-mode 'browse-kill-ring-mode) (save-excursion (re-search-forward "^----" nil t)))
     (call-interactively 'browse-kill-ring-forward))
@@ -1748,18 +1745,17 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
 (declare-function org-yank "org.el")
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
-  (let ((regtxt (and cua--register (get-register cua--register))))
-    (cond
-     ((and mark-active (boundp 'cua--rectangle) cua--rectangle)
-      ;; call cua-paste
-      (cua-paste arg))
-     ((and cua--last-killed-rectangle
-           (eq (and kill-ring (car kill-ring)) (car cua--last-killed-rectangle)))
-      ;; Call cua-paste
-      (cua-paste arg))
-     (t
-      ;; Call org-yank.
-      (org-yank arg)))))
+  (cond
+   ((and mark-active (boundp 'cua--rectangle) cua--rectangle)
+    ;; call cua-paste
+    (cua-paste arg))
+   ((and cua--last-killed-rectangle
+         (eq (and kill-ring (car kill-ring)) (car cua--last-killed-rectangle)))
+    ;; Call cua-paste
+    (cua-paste arg))
+   (t
+    ;; Call org-yank.
+    (org-yank arg))))
 
 (defvar ergoemacs-keymap)
 (defun ergoemacs-lookup-key-and-run (key)
@@ -1781,11 +1777,11 @@ DISABLE defines if the option should be disabled by default."
        ,(format "Use ergoemacs-mode defined <M-%s>." direction)
        :type 'boolean
        :group 'ergoemacs-mode)
-     (defun ,(intern (format "ergoemacs-org-meta%s" direction))  (&optional arg)
+     (defun ,(intern (format "ergoemacs-org-meta%s" direction))  ()
        ,(format "Run `org-meta%s' in the proper context.
 When `ergoemacs-use-ergoemacs-meta%s' is non-nil use what ergoemacs-mode defines for <M-%s>.
 ARG is the prefix argument for either command." direction direction direction)
-       (interactive "P")
+       (interactive)
        (cond
         ((or
           (not ,(intern (format "ergoemacs-use-ergoemacs-meta%s" direction)))
@@ -1996,33 +1992,21 @@ If arg is a negative prefix, copy file path only"
 (declare-function ergoemacs-gen-svg "ergoemacs-extras.el")
 (declare-function ergoemacs-theme-component-map-list-md5 "ergoemacs-theme-engine.el")
 (defvar ergoemacs-theme-options)
-(defun ergoemacs-display-current-svg (&optional arg)
+(defun ergoemacs-display-current-svg ()
   "Generates the current ergoemacs layout, unless it already exists and opens it in a browser.
 With a prefix, force regeneration. "
-  (interactive "p")
-  (let ((var (or ergoemacs-theme "standard"))
-        (layout ergoemacs-keyboard-layout)
-        (extra "ergo-layouts")
-        (dir "")
-        (png "")
-        (png-tmp)
-        (png-prefix "")
-        (file-prefix "")
-        (md5 (if ergoemacs-theme--object
-                 (concat
-                  "-" (ergoemacs-theme-component-map-list-md5 ergoemacs-theme--object))
-               ""))
-        (file ""))
-    (when var
-      (setq extra (concat var "/ergo-layouts")))
-    (setq dir (expand-file-name extra
+  (interactive)
+  (let* ((var (or ergoemacs-theme "standard"))
+         (layout ergoemacs-keyboard-layout)
+         (extra (concat var "/ergo-layouts"))
+         (md5 (if ergoemacs-theme--object
+                  (concat
+                   "-" (ergoemacs-theme-component-map-list-md5 ergoemacs-theme--object))
+                ""))
+         (dir (expand-file-name extra
                                 (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-    (setq file (expand-file-name (concat "ergoemacs-layout-" layout md5 ".svg") dir))
-    (setq file-prefix (expand-file-name (concat "ergoemacs-layout-" layout md5 "-prefix.svg") dir))
-    
-    (setq png (expand-file-name (concat "ergoemacs-layout-" layout md5 ".png") dir))
-    (setq png-tmp (expand-file-name (concat "ergoemacs-layout-" layout md5 "-tmp.png") dir))
-    (setq png-prefix (expand-file-name (concat "ergoemacs-layout-" layout md5 "-prefix.png") dir))
+         (png (expand-file-name (concat "ergoemacs-layout-" layout md5 ".png") dir))
+         (file (expand-file-name (concat "ergoemacs-layout-" layout md5 ".svg") dir)))
     
     (unless (and (not current-prefix-arg) (file-exists-p file))
       (if (called-interactively-p 'any)
@@ -2056,6 +2040,7 @@ With a prefix, force regeneration. "
         (condition-case err
             (browse-url-of-file file)
           (error
+           (message "Error opening with browser (%s), try opening in an external app." err)
            (ergoemacs-open-in-external-app file)))))
     file))
 
@@ -2247,6 +2232,7 @@ See also `ergoemacs-lookup-word-on-internet'."
   (dolist (dict-url ergoemacs-all-dictionaries)
     (ergoemacs-lookup-word-on-internet input-word dict-url)))
 
+(defvar apropos-do-all)
 (defun ergoemacs-apropos-user-options (regexp)
   "Show user variables that match REGEXP."
   (interactive (list (read-string "Apropos user options (regexp): ")))
@@ -2301,11 +2287,11 @@ See also `ergoemacs-lookup-word-on-internet'."
 (defvar ergoemacs-shortcut-keys)
 (defvar ergoemacs-no-shortcut-keys)
 (defvar ergoemacs-read-input-keys)
-(defvar ergoemacs-unbind-keys)
 (defvar ergoemacs-read-emulation-mode-map-alist)
 (defvar ergoemacs-modal-emulation-mode-map-alist)
 (defvar ergoemacs-repeat-emulation-mode-map-alist)
 (defvar ergoemacs-emulation-mode-map-alist)
+(defvar ergoemacs-debug-keymap--temp-map)
 (defun ergoemacs-state ()
   "Debugging the state of `ergoemacs-mode'"
   (interactive)
@@ -2343,10 +2329,10 @@ See also `ergoemacs-lookup-word-on-internet'."
                     minor-mode-map-alist)))
   (insert "** Maps\n")
   (dolist (x ergoemacs-emulation-mode-map-alist)
-    (let ((tmp (cdr x)))
-      (insert (format "*** %s: %s\n%s\n"
-                      (nth 0 x) (symbol-value (nth 0 x))
-                      (substitute-command-keys "\\{tmp}"))))))
+    (setq ergoemacs-debug-keymap--temp-map (cdr x))
+    (insert (format "*** %s: %s\n%s\n"
+                    (nth 0 x) (symbol-value (nth 0 x))
+                    (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")))))
 
 
 ;; Ergoemacs Test suite
