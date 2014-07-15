@@ -64,8 +64,29 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
 
 (defadvice describe-buffer-bindings (around ergoemacs-describe-buffer-bindings activate)
   "Describes buffer bindings without `ergoemacs-read-input-keys' enabled"
-  (let (ergoemacs-read-input-keys)
+  (let (ergoemacs-read-input-keys
+        ergoemacs-read-shortcut-keys
+        ergoemacs-read-no-shortcut-keys)
     ad-do-it))
+
+(defvar ergoemacs-read-key-last nil)
+(defadvice popwin:popup-buffer (around ergoemacs-popwin:close-popup-window-if-necessary activate)
+  "Saves `ergoemacs-read-key' before popping up a window."
+  (when (and ergoemacs-mode ergoemacs-read-key)
+    (setq ergoemacs-read-key-last ergoemacs-read-key))
+  ad-do-it)
+
+(defadvice popwin:close-popup-window-if-necessary (around ergoemacs-popwin:close-popup-window-if-necessary activate)
+  "Allows popup-window to be active while reading an `ergoemacs-mode' key via `ergoemacs-read-key'"
+  (cond
+   ((and ergoemacs-mode ergoemacs-read-key ergoemacs-read-key-last
+         (equal ergoemacs-read-key-last ergoemacs-read-key))
+    nil)
+   ((and ergoemacs-mode ergoemacs-read-key ergoemacs-read-key-last
+         (not (equal ergoemacs-read-key-last ergoemacs-read-key)))
+    (setq ergoemacs-read-key-last nil)
+    (popwin:close-popup-window))
+   (t ad-do-it)))
 
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.
@@ -516,6 +537,8 @@ The real command is always `ergoemacs-real-completing-read'.
 Uses `ergoemacs-real-key-binding' to get the key-binding."
   (ergoemacs-with-global
    (ergoemacs-real-key-binding key accept-default no-remap position)))
+
+
 
 (defun ergoemacs-enable-c-advices (&optional disable)
   "Enabling advices for C code and complex changes to functions.

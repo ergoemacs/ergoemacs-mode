@@ -421,9 +421,9 @@
 
 (defvar ergoemacs-dir)
 ;;;###autoload
-(defun ergoemacs-ghpages (&optional arg)
+(defun ergoemacs-ghpages ()
   "Generate github pages with o-blog."
-  (interactive "P")
+  (interactive)
   (let ((o-blog (expand-file-name (file-name-directory (locate-library "o-blog"))))
         (htmlize (expand-file-name (file-name-directory (locate-library "htmlize"))))
         (emacs-exe (invocation-name))
