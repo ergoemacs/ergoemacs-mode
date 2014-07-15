@@ -495,7 +495,11 @@ It will replace anything defined by `ergoemacs-translation'"
       (ergoemacs-read-key-install-next-key next-key key pretty kbd))))
 
 (defvar guide-key-mode)
+(defvar guide-key/guide-key-sequence)
 (declare-function guide-key/popup-function "guide-key.el")
+(declare-function guide-key/close-guide-buffer "guide-key.el")
+(declare-function guide-key/popup-guide-buffer-p "guide-key.el")
+(defvar ergoemacs-read-key-last-help nil)
 (defvar ergoemacs-read-key nil
   "Current key for `ergoemacs-read-key'")
 (defun ergoemacs-read-key-help ()
@@ -505,7 +509,16 @@ It will replace anything defined by `ergoemacs-translation'"
   (if (not ergoemacs-read-key) nil
     (if guide-key-mode
         (let ((key ergoemacs-read-key))
-          (guide-key/popup-function key)
+          (if (equal ergoemacs-read-key-last-help ergoemacs-read-key)
+              (progn
+                (setq ergoemacs-read-key-last-help nil)
+                (setq guide-key/guide-key-sequence (delete (key-description ergoemacs-read-key) guide-key/guide-key-sequence))
+                (guide-key/close-guide-buffer))
+            ;; Not using pushnew because the test is equal and
+            ;; guide-key/guide-key-sequence is a global variable.
+            (add-to-list 'guide-key/guide-key-sequence (key-description ergoemacs-read-key))
+            (setq ergoemacs-read-key-last-help ergoemacs-read-key)
+            (guide-key/popup-function key))
           t)
       (let ((cb (current-buffer))
             (key ergoemacs-read-key))
@@ -593,7 +606,6 @@ It will replace anything defined by `ergoemacs-translation'"
 (defvar keyfreq-mode)
 (defvar ergoemacs-this-command)
 (defvar keyfreq-table)
-(defvar ergoemacs-read-key-last)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-smart-function-p "ergoemacs-model.el")
 (defvar ergoemacs-test-fn nil
@@ -622,7 +634,9 @@ In addition, when the function is called:
 
 "
   (setq ergoemacs-deactivate-mark nil)
-  (setq ergoemacs-read-key-last [ergoemacs-read-key-call])
+  (when (and ergoemacs-read-key-last-help guide-key-mode)
+    (setq ergoemacs-read-key-last-help nil)
+    (guide-key/close-guide-buffer))
   (cond
    (ergoemacs-test-fn
     (setq ergoemacs-test-fn function))
@@ -1011,6 +1025,8 @@ argument prompt.
 "
   (setq ergoemacs-deactivate-mark nil)
   (let ((continue-read t)
+        (guide-key/guide-key-sequence '())
+        (guide-key/recursive-key-sequence-flag t)
         (real-type (or type 'normal))
         (first-type (or type 'normal))
         deactivate-mark
@@ -1041,6 +1057,11 @@ argument prompt.
         (setq type real-type)
         (setq curr-universal first-universal)
         (setq real-type nil))
+      (when (and ergoemacs-read-key guide-key-mode
+                 (not (equal ergoemacs-read-key-last-help ergoemacs-read-key))
+                 (guide-key/popup-guide-buffer-p ergoemacs-read-key))
+        (setq ergoemacs-read-key-last-help ergoemacs-read-key)
+        (guide-key/popup-function ergoemacs-read-key))
       (setq real-read (not ergoemacs--input))
       (setq base (concat ":" (symbol-name type))
             next-key (vector
@@ -1057,9 +1078,11 @@ argument prompt.
           (cond
            ((and (not ergoemacs-read-key))
             (ergoemacs-keyboard-quit))
-           (ergoemacs-read-key-last
-            (setq ergoemacs-read-key-last [exit-by-escape]
-                  continue-read t))
+           ((and ergoemacs-read-key-last-help guide-key-mode)
+            (setq ergoemacs-read-key-last-help nil
+                  guide-key/guide-key-sequence (delete (key-description ergoemacs-read-key) guide-key/guide-key-sequence)
+                  continue-read t)
+            (guide-key/close-guide-buffer))
            (t (unless (minibufferp)
                 (let (message-log-max)
                   (setq tmp (gethash type ergoemacs-translation-text))
@@ -1335,13 +1358,12 @@ argument prompt.
                   (beep)
                   (unless (minibufferp)
                     (let (message-log-max)
-                      (message "%s is undefined!" pretty-key-undefined)))))))))
-      (when (fboundp 'popwin:close-popup-window-if-necessary)
-        (popwin:close-popup-window-if-necessary))))
+                      (message "%s is undefined!" pretty-key-undefined)))))))))))
   (when ergoemacs-deactivate-mark
     (setq deactivate-mark ergoemacs-deactivate-mark
           ergoemacs-mark-active nil))
-  (setq ergoemacs-describe-key nil))
+  (setq ergoemacs-describe-key nil
+        ergoemacs-read-key-last-help nil))
 
 (defun ergoemacs-read-key-default (&optional arg)
   "The default command for `ergoemacs-mode' read-key.
