@@ -1973,17 +1973,6 @@ If arg is a negative prefix, copy file path only"
                      "unix")) current-coding)))
     (set-buffer-file-coding-system new-coding t)))
 
-;;; ergoemacs help functions.
-(declare-function ergoemacs-pretty-key-rep "ergoemacs-translate.el")
-(defun ergoemacs-translate-keybindings ()
-  "Fix keybindings"
-  (let ((help (get-buffer "*Help*")))
-    (when help
-      (with-current-buffer help
-        (let ((inhibit-read-only t))
-          (ergoemacs-pretty-key-rep))))))
-
-
 (defun ergoemacs-describe-major-mode ()
   "Show inline doc for current major-mode."
   ;; code by Kevin Rodgers. 2009-02-25.

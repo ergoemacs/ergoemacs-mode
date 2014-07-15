@@ -495,6 +495,7 @@ It will replace anything defined by `ergoemacs-translation'"
       (ergoemacs-read-key-install-next-key next-key key pretty kbd))))
 
 (defvar guide-key-mode)
+(declare-function guide-key/popup-function "guide-key.el")
 (defvar ergoemacs-read-key nil
   "Current key for `ergoemacs-read-key'")
 (defun ergoemacs-read-key-help ()
@@ -592,6 +593,7 @@ It will replace anything defined by `ergoemacs-translation'"
 (defvar keyfreq-mode)
 (defvar ergoemacs-this-command)
 (defvar keyfreq-table)
+(defvar ergoemacs-read-key-last)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-smart-function-p "ergoemacs-model.el")
 (defvar ergoemacs-test-fn nil

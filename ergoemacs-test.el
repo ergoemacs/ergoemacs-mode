@@ -326,16 +326,11 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
    (ergoemacs-test-global-key-set-before
     'after "C-e" 'ergoemacs-key)))
 
-(declare-function ergoemacs-pretty-key-rep "ergoemacs-tranlate.el")
+(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (ert-deftest ergoemacs-test-ctl-c-ctl-c ()
   "Issue #64.  Should translate C-c C-c correctly."
   (let (ergoemacs-use-unicode-char)
-    (should (string= (ergoemacs-pretty-key-rep "C-c C-c") "[Ctl+C] [Ctl+C]"))))
-
-(ert-deftest ergoemacs-test-helm-M-x ()
-  "Issue #65.  helm-M-x should not be helm-[Alt+X]."
-  (let (ergoemacs-use-unicode-char)
-    (should (string= (ergoemacs-pretty-key-rep "helm-M-x test") "helm-M-x test"))))
+    (should (string= (ergoemacs-pretty-key "C-c C-c") "[Ctrl+C][Ctrl+C]"))))
 
 (declare-function ergoemacs-cut-line-or-region "ergoemacs-functions.el")
 (ert-deftest ergoemacs-test-cut-line-or-region ()
@@ -354,18 +349,12 @@ not using cua or cutting line. I think kill-region is what is meant."
       (cua-mode 1))
     (should ret)))
 
-(ert-deftest ergoemacs-test-next-and-prior-translation ()
-  "Issue #70.
-Test next and prior translation."
-  (should (string= (ergoemacs-pretty-key-rep "Test next and prior translation")
-                   "Test next and prior translation")))
-
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (ert-deftest ergoemacs-test-issue-77 ()
   "Issue #77.
-Test \"C-x \" translating to \"[Ctl+X][]\", should be \"[Ctl+X]\""
+Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
   (let ((ergoemacs-use-unicode-char nil))
-    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctl+X]"))))
+    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]"))))
 
 (ert-deftest ergoemacs-test-issue-86 ()
   "Test Issue #86.
@@ -933,6 +922,10 @@ Selected mark would not be cleared after paste."
 (ert-deftest ergoemacs-test-global-key-set-apps-220-before ()
   "Test global C-c b"
   (should (equal (ergoemacs-test-global-key-set-before nil "C-c b") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-M-t-after ()
+  "Test global M-t"
+  (should (equal (ergoemacs-test-global-key-set-before nil "M-t") t)))
 
 (ert-deftest ergoemacs-test-issue-243 ()
   "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
