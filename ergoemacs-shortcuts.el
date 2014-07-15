@@ -507,7 +507,7 @@ It will replace anything defined by `ergoemacs-translation'"
   (interactive)
   ;; Eventually...
   (if (not ergoemacs-read-key) nil
-    (if guide-key-mode
+    (if (and (boundp 'guide-key-mode) guide-key-mode)
         (let ((key ergoemacs-read-key))
           (if (equal ergoemacs-read-key-last-help ergoemacs-read-key)
               (progn
@@ -634,7 +634,7 @@ In addition, when the function is called:
 
 "
   (setq ergoemacs-deactivate-mark nil)
-  (when (and ergoemacs-read-key-last-help guide-key-mode)
+  (when (and ergoemacs-read-key-last-help (boundp 'guide-key-mode) guide-key-mode)
     (setq ergoemacs-read-key-last-help nil)
     (guide-key/close-guide-buffer))
   (cond
@@ -1057,7 +1057,7 @@ argument prompt.
         (setq type real-type)
         (setq curr-universal first-universal)
         (setq real-type nil))
-      (when (and ergoemacs-read-key guide-key-mode
+      (when (and ergoemacs-read-key (boundp 'guide-key-mode) guide-key-mode
                  (not (equal ergoemacs-read-key-last-help ergoemacs-read-key))
                  (guide-key/popup-guide-buffer-p ergoemacs-read-key))
         (setq ergoemacs-read-key-last-help ergoemacs-read-key)
@@ -1078,7 +1078,7 @@ argument prompt.
           (cond
            ((and (not ergoemacs-read-key))
             (ergoemacs-keyboard-quit))
-           ((and ergoemacs-read-key-last-help guide-key-mode)
+           ((and ergoemacs-read-key-last-help (boundp 'guide-key-mode) guide-key-mode)
             (setq ergoemacs-read-key-last-help nil
                   guide-key/guide-key-sequence (delete (key-description ergoemacs-read-key) guide-key/guide-key-sequence)
                   continue-read t)
