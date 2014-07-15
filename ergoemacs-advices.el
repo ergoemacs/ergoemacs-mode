@@ -62,6 +62,11 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
    (t
     ad-do-it)))
 
+(defadvice describe-buffer-bindings (around ergoemacs-describe-buffer-bindings activate)
+  "Describes buffer bindings without `ergoemacs-read-input-keys' enabled"
+  (let (ergoemacs-read-input-keys)
+    ad-do-it))
+
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
