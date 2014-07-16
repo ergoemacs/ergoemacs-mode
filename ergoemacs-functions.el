@@ -2128,7 +2128,7 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
 
 ;; Shell handling
 
-
+(declare-function w32-long-file-name "w32proc.c")
 (defun ergoemacs-shell-here-directory-change-hook ()
   "Renames buffer to reflect directory name."
   (rename-buffer
