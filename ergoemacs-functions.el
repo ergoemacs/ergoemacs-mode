@@ -2160,9 +2160,8 @@ Sends shell prompt string to process, then turns on
         (set (make-local-variable 'dirtrack-list) (list "^PS \\([a-zA-Z]:.*\\)>" 1))
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))
-       (t ;; Assume PS1 compliant shell
-        (setenv "PS1" "\\u@\\h:\\w\\$ ")
-        (set (make-local-variable 'dirtrack-list) (list "^.*?@.*?:\\(.*\\)$" 1))
+       (t ;; Assume basic abc@host:dir structure
+        (set (make-local-variable 'dirtrack-list) (list "^\\(?:.*?@\\)?\\(?:.*?:\\)? +\\(.*\\) +\\([$#]\\|\\]\\)" 1))
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))))))
 
