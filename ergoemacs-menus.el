@@ -263,6 +263,7 @@ All other modes are assumed to be minor modes or unimportant.
                                            (t "In File Manager"))
                               ergoemacs-open-in-desktop)
                              (sep1 menu-item "--")
+                             (open-eshell-here menu-item "In Emacs Shell" ergoemacs-eshell-here)
                              (open-shell-here menu-item ,(if (eq system-type 'windows-nt) "In Command Prompt" "In Shell") ergoemacs-shell-here)
                              ,(if (eq system-type 'windows-nt) '(powershell-here menu-item "In PowerShell" ergoemacs-powershell-here :enable (fboundp 'powershell)))
                              ))

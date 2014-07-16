@@ -2168,7 +2168,7 @@ Sends shell prompt string to process, then turns on
 (add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
 
 (defun ergoemacs-shell-here (&optional shell-program buffer-prefix)
-  "Runs a shell process in the current directory, or switches to a shell in the current directory."
+  "Runs/switches to a shell process in the current directory."
   (interactive)
   (let* ((shell (or shell-program 'shell))
          (buf-prefix (or buffer-prefix (symbol-name shell)))
@@ -2177,6 +2177,21 @@ Sends shell prompt string to process, then turns on
                                             (abbreviate-file-name default-directory)) "*")))
     (set-buffer (get-buffer-create name))
     (funcall shell name)))
+
+(add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
+
+(defvar eshell-buffer-name)
+(defun ergoemacs-eshell-here ()
+  "Run/switch to an `eshell' process in the current directory"
+  (interactive)
+  (let* ((eshell-buffer-name
+          (concat "*eshell@" (if (eq system-type 'windows-nt)
+                                 (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
+                               (abbreviate-file-name default-directory)) "*"))
+         (eshell-exists-p (get-buffer eshell-buffer-name)))
+    (call-interactively 'eshell)
+    (unless eshell-exists-p
+      (ergoemacs-shell-here-directory-change-hook))))
 
 (defun ergoemacs-powershell-here ()
   "Runs PowerShell Here"

@@ -864,6 +864,7 @@
   (global-set-key (kbd "<apps> n c") 'calc)
   (global-set-key (kbd "<apps> n d") 'dired-jump)
   (global-set-key (kbd "<apps> n e") 'eshell)
+  (global-set-key (kbd "<apps> n p") 'powershell)
   (global-set-key (kbd "<apps> n f") 'ergoemacs-open-in-desktop)
   (global-set-key (kbd "<apps> n g") 'grep)
   (global-set-key (kbd "<apps> n m") 'magit-status)
@@ -1028,6 +1029,8 @@
   (when undo-tree-mode
     (global-set-key [remap ergoemacs-redo] 'undo-tree-redo))
   (when ergoemacs-mode
+    (global-set-key [remap eshell] 'ergoemacs-eshell-here)
+    (global-set-key [remap powershell] 'ergoemacs-powershell-here)
     (global-set-key [remap shell] 'ergoemacs-shell-here)
     (global-set-key [remap universal-argument]
                     'ergoemacs-universal-argument)
