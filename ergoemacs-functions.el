@@ -2157,6 +2157,11 @@ Sends shell prompt string to process, then turns on
        ((string-match "powershell.exe" shell)
         (set (make-local-variable 'dirtrack-list) (list "^PS \\([a-zA-Z]:.*\\)>" 1))
         (shell-dirtrack-mode -1)
+        (dirtrack-mode 1))
+       (t ;; Assume PS1 compliant shell
+        (setenv "PS1" "\\u@\\h:\\w\\$ ")
+        (set (make-local-variable 'dirtrack-list) (list "^.*?@.*?:\\(.*\\)$" 1))
+        (shell-dirtrack-mode -1)
         (dirtrack-mode 1))))))
 
 (add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
