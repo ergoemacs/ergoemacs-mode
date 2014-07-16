@@ -510,6 +510,12 @@ Otherwise, return a new string, without any text properties."
 	    (setq pt (match-beginning 0))
 	    (when (string=  "\\=" (substring ret pt (min (+ pt 2) (length ret))))
 	      (setq pt (+ pt 2))))
+          (setq pt 0)
+          (while (string-match "\\<C-u\\>" ret pt)
+            (setq string
+                  (ergoemacs-substitute-command "\\[universal-argument]" "\\<global-map>"))
+            (setq ret (replace-match string t t ret))
+            (setq pt (+ (length string) (match-beginning 0))))
 	  (when (not ergoemacs-use-M-x-p)
 	    (setq ret (replace-regexp-in-string "\\(\\<M-x\\|<execute>\\) " (ergoemacs-substitute-command "\\[execute-extended-command] " "\\<global-map>")
 						ret t t))))
