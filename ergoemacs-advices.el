@@ -72,8 +72,9 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
-  (let ((is-global-p (equal keymap (current-global-map))))
-    (if (and ergoemacs-run-mode-hooks
+  (let ((is-global-p (equal keymap (current-global-map)))
+        (is-local-p (equal keymap (current-local-map))))
+    (if (and (or is-local-p ergoemacs-run-mode-hooks)
              (not (equal keymap (current-global-map)))
              (not (equal keymap ergoemacs-keymap)))
         (let ((ergoemacs-run-mode-hooks nil)
