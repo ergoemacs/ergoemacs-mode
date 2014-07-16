@@ -1,4 +1,4 @@
-;;; ergoemacs-unbind.el --- unbind keys
+;;; ergoemacs-unbind.el --- unbind keys -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
