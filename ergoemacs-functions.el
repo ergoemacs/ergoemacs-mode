@@ -2161,7 +2161,7 @@ Sends shell prompt string to process, then turns on
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))
        (t ;; Assume basic abc@host:dir structure
-        (set (make-local-variable 'dirtrack-list) (list "^\\(?:.*?@\\)?\\(?:.*?:\\)? *\\(.*\\) *\\([$#]\\|\\]\\)" 1))
+        (set (make-local-variable 'dirtrack-list) (list "^\\(?:.*?@\\)?\\(?:.*?:\\)?\\(?:[^ ]* \\)? *\\(.*\\) *\\([$#]\\|\\]\\)" 1))
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))))))
 
