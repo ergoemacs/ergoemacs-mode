@@ -2135,8 +2135,8 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
    (generate-new-buffer-name
     (concat (replace-regexp-in-string "\\`\\([*].*[@]\\).*\\'" "\\1" (buffer-name) t)
             (if (eq system-type 'windows-nt)
-                (w32-long-file-name default-directory) ;; Fix case issues
-              default-directory) "*"))))
+                (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
+              (abbreviate-file-name default-directory)) "*"))))
 
 (add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
 
@@ -2172,7 +2172,9 @@ Sends shell prompt string to process, then turns on
   (interactive)
   (let* ((shell (or shell-program 'shell))
          (buf-prefix (or buffer-prefix (symbol-name shell)))
-         (name (concat "*" buf-prefix "@" default-directory "*")))
+         (name (concat "*" buf-prefix "@" (if (eq system-type 'windows-nt)
+                                              (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
+                                            (abbreviate-file-name default-directory)) "*")))
     (set-buffer (get-buffer-create name))
     (funcall shell name)))
 
