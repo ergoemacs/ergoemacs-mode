@@ -67,6 +67,7 @@
 ;;(require 'cl)
 (require 'easymenu)
 (require 'undo-tree nil t)
+(provide 'ergoemacs-mode)
 
 (defvar ergoemacs-debug ""
   "Debugging for `ergoemacs-mode'.")
