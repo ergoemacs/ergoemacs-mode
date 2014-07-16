@@ -261,7 +261,11 @@ All other modes are assumed to be minor modes or unimportant.
                                            ((eq system-type 'windows-nt) "In Explorer")
                                            ((eq system-type 'darwin) "In Finder")
                                            (t "In File Manager"))
-                              ergoemacs-open-in-desktop)))
+                              ergoemacs-open-in-desktop)
+                             (sep1 menu-item "--")
+                             (open-shell-here menu-item ,(if (eq system-type 'windows-nt) "In Command Prompt" "In Shell") ergoemacs-shell-here)
+                             ,(if (eq system-type 'windows-nt) '(powershell-here menu-item "In PowerShell" ergoemacs-powershell-here :enable (fboundp 'powershell)))
+                             ))
             ;; FIXME -- Somehow put open last closed in recentf menu; It
             ;; seems to fit there the best
             ;; (open-last-closed menu-item "Open last closed" ergoemacs-open-last-closed)

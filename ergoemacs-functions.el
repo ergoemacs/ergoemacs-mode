@@ -2126,6 +2126,57 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
       (insert (cdr sans-accent))
       (backward-char))))
 
+;; Shell handling
+
+
+(defun ergoemacs-shell-here-directory-change-hook ()
+  "Renames buffer to reflect directory name."
+  (rename-buffer
+   (generate-new-buffer-name
+    (concat (replace-regexp-in-string "\\`\\([*].*[@]\\).*\\'" "\\1" (buffer-name) t)
+            (if (eq system-type 'windows-nt)
+                (w32-long-file-name default-directory) ;; Fix case issues
+              default-directory) "*"))))
+
+(add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
+
+(defun ergoemacs-shell-here-hook ()
+  "Hook for `ergoemacs-shell-here'.
+Sends shell prompt string to process, then turns on
+`dirtrack-mode' as well as add rename buffer filter when the directory has been changed."
+  (when (string-match "\\`[*].*[@].*[*]" (buffer-name))
+    (let ((shell (or (and (boundp 'explicit-shell-file-name) explicit-shell-file-name)
+                     (getenv "ESHELL") shell-file-name))
+          (proc (get-buffer-process (current-buffer))))
+      (require 'dirtrack)
+      (cond
+       ((string-match "cmd\\(proxy\\)?.exe" shell)
+        (set (make-local-variable 'dirtrack-list) (list "^\\([a-zA-Z]:.*\\)>" 1))
+        (shell-dirtrack-mode -1)
+        (dirtrack-mode 1))
+       ((string-match "powershell.exe" shell)
+        (set (make-local-variable 'dirtrack-list) (list "^PS \\([a-zA-Z]:.*\\)>" 1))
+        (shell-dirtrack-mode -1)
+        (dirtrack-mode 1))))))
+
+(add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
+
+(defun ergoemacs-shell-here (&optional shell-program buffer-prefix)
+  "Runs a shell process in the current directory, or switches to a shell in the current directory."
+  (interactive)
+  (let* ((shell (or shell-program 'shell))
+         (buf-prefix (or buffer-prefix (symbol-name shell)))
+         (name (concat "*" buf-prefix "@" default-directory "*")))
+    (set-buffer (get-buffer-create name))
+    (funcall shell name)))
+
+(defun ergoemacs-powershell-here ()
+  "Runs PowerShell Here"
+  (interactive)
+  (if (not (fboundp 'powershell))
+      (error "Requires powershell package to run PowerShell.")
+    (ergoemacs-shell-here 'powershell "PowerShell")))
+
 
 ;;; Ergoemacs lookup words. from lookup-word-on-internet.el
 

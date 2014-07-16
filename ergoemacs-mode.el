@@ -539,7 +539,6 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
   (ergoemacs-reset-global-where-is))
 
 
-
 ;;; Frequently used commands as aliases
 
 (defcustom ergoemacs-use-aliases t
