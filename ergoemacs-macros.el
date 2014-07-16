@@ -219,7 +219,9 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
   (let ((kb (make-symbol "body-and-plist")))
     (setq kb (ergoemacs-theme-component--parse body-and-plist))
     `(progn
-       (require 'ergoemacs-mode) ;; This should be loaded
+       (unless (boundp 'ergoemacs-theme-comp-hash)
+         (defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
+           "Hash of ergoemacs theme components"))
        (puthash ,(plist-get (nth 0 kb) ':name)
                 (lambda() ,(plist-get (nth 0 kb) ':description)
                   (ergoemacs-theme-component--create-component

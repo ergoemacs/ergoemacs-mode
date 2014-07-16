@@ -2140,14 +2140,16 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
 
 (add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
 
+(defvar dirtrack-list)
+(declare-function shell-dirtrack-mode "shell.el")
+(declare-function dirtrack-mode "dirtrack.el")
 (defun ergoemacs-shell-here-hook ()
   "Hook for `ergoemacs-shell-here'.
 Sends shell prompt string to process, then turns on
 `dirtrack-mode' as well as add rename buffer filter when the directory has been changed."
   (when (string-match "\\`[*].*[@].*[*]" (buffer-name))
     (let ((shell (or (and (boundp 'explicit-shell-file-name) explicit-shell-file-name)
-                     (getenv "ESHELL") shell-file-name))
-          (proc (get-buffer-process (current-buffer))))
+                     (getenv "ESHELL") shell-file-name)))
       (require 'dirtrack)
       (cond
        ((string-match "cmd\\(proxy\\)?.exe" shell)
