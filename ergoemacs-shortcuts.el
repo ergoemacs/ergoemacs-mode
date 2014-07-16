@@ -1,4 +1,4 @@
-;;; ergoemacs-shortcuts.el --- Ergoemacs shortcuts interface
+;;; ergoemacs-shortcuts.el --- Ergoemacs shortcuts interface -*- lexical-binding: t -*-
 
 ;; Copyright © 2013-2014  Free Software Foundation, Inc.
 
@@ -233,7 +233,7 @@ universal argument can be entered.
          (type (or type 'normal))
          (local-keymap (ergoemacs-local-map type))
          (key-tag (intern (concat ":" (symbol-name type) "-key")))
-         ret (blink-on nil) tmp
+         ret (blink-on nil)
          (help-list (gethash type ergoemacs-translation-text))
          help-text)
     (when help-list
@@ -422,7 +422,7 @@ This is actually a dummy function.  The actual work is done in `ergoemacs-read-k
 It will replace anything defined by `ergoemacs-translation'"
   (let ((next-key next-key))
     (maphash 
-     (lambda(yyy var-plist)
+     (lambda(_ignore var-plist)
        (let* ((variant (concat ":" (symbol-name (plist-get var-plist ':name))))
               (var-kbd (intern variant))
               (var-key (intern (concat variant "-key")))
@@ -533,6 +533,12 @@ It will replace anything defined by `ergoemacs-translation'"
 (declare-function ergoemacs-key-fn-lookup "ergoemacs-translate.el")
 (declare-function ergoemacs-modal-toggle "ergoemacs-modal.el")
 (declare-function cua-clear-rectangle-mark "cua-rect.el")
+(defvar ergoemacs-mode)
+(defvar ergoemacs-no-shortcut-keys)
+(defvar ergoemacs-shortcut-keys)
+(defvar ergoemacs-no-shorcut-keys)
+(defvar ergoemacs-unbind-keys)
+(defvar ergoemacs-repeat-keys)
 (defun ergoemacs-keyboard-quit ()
   "Replacement for `keyboard-quit' and `minibuffer-keyboard-quit'.
 
@@ -565,10 +571,7 @@ It will replace anything defined by `ergoemacs-translation'"
              ergoemacs-read-input-keys
              ergoemacs-mode)
         (setq defined-fn (ergoemacs-key-fn-lookup 'keyboard-quit))
-        (setq defined-fn
-              (condition-case err
-                  (ergoemacs-real-key-binding defined-fn)
-                (error nil)))
+        (setq defined-fn (ignore-errors (ergoemacs-real-key-binding defined-fn)))
         (cond
          (defined-fn
            (ergoemacs-read-key-call defined-fn))
@@ -679,9 +682,7 @@ In addition, when the function is called:
                 (insert (mapconcat (lambda(x) x) keys ", "))
                 (insert ".\n\n"))))
         (setq ergoemacs-describe-key nil))))
-   ((condition-case err
-        (string-match "self-insert" (symbol-name function))
-      (error nil))
+   ((ignore-errors (string-match "self-insert" (symbol-name function)))
     (setq ergoemacs-single-command-keys keys)
     (setq last-input-event keys)
     (setq prefix-arg current-prefix-arg)
@@ -750,7 +751,7 @@ If FN is a member of `ergoemacs-universal-fns', return 'universal
 If universal is returned, and type first-type is bound, set these
 to the appropriate values for `ergoemacs-read-key'.
 "
-  (let (ret tmp)
+  (let (ret)
     (when (ignore-errors (keymapp fn))
       ;; If keymap, continue.
       (setq ret 'keymap))
@@ -778,10 +779,8 @@ to the appropriate values for `ergoemacs-read-key'.
 
 (defun ergoemacs-read-key--send-unread (unread-vector
                                         lookup
-                                        use-overrride
-                                        pretty-key
                                         use-override
-                                        tmp-overlay)
+                                        pretty-key)
   "Send `unread-command-events' inside `ergoemacs-read-key-lookup'"
   (setq ergoemacs-mark-active
         (or (and mark-active transient-mark-mode) mark-active))
@@ -806,15 +805,10 @@ to the appropriate values for `ergoemacs-read-key'.
 (defvar pretty-key-undefined)
 (defvar ergoemacs-modal-save)
 (defvar ergoemacs-shortcut-prefix-keys)
-(defun ergoemacs-read-key-lookup (prior-key prior-pretty-key key pretty-key force-key)
+(defun ergoemacs-read-key-lookup (key pretty-key)
   "Lookup KEY and run if necessary.
 
-PRETTY-KEY is the ergoemacs-mode pretty representation of the key
-
-PRIOR-KEY is the prior key press recorded.  For example, for the
-key sequence, <apps> k the PRIOR-KEY is 'apps
-
-FORCE-KEY forces keys like <escape> to work properly.
+PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
 "
   (prog1
       (let* (ergoemacs-read-input-keys
@@ -878,7 +872,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                 ;; Shortcut character.
                 (ergoemacs-read-key--send-unread
                  (read-kbd-macro (nth 0 (nth 0 hash)) t) lookup use-override
-                 pretty-key use-override tmp-overlay)
+                 pretty-key)
                 (setq ret 'unread))
                ((and hash (stringp (nth 0 (nth 0 hash))))
                 ;; Shorcut to another key combination/translation
@@ -918,8 +912,7 @@ FORCE-KEY forces keys like <escape> to work properly.
                   (setq ergoemacs-single-command-keys nil)
                   (setq ret 'translate-fn))
                  ((vectorp tmp)
-                  (ergoemacs-read-key--send-unread tmp lookup use-override
-                                                   pretty-key use-override tmp-overlay)
+                  (ergoemacs-read-key--send-unread tmp lookup use-override pretty-key)
                   (setq ret 'translate))))
                ;; Is there an local override function?
                ((progn
@@ -1009,7 +1002,7 @@ Otherwise add new translation to key-plist and return it."
     key-plist))
 
 (defvar ergoemacs-command-shortcuts-hash)
-
+(defvar guide-key/recursive-key-sequence-flag)
 (defun ergoemacs-read-key (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -1036,12 +1029,10 @@ argument prompt.
         (ergoemacs-read-key key)
         key-trial
         pretty-key-trial
-        orig-pretty-key
         (type (or initial-key-type 'normal))
         base
         local-keymap
         local-fn
-        force-key
         key-trials
         real-read
         (first-universal universal)
@@ -1051,8 +1042,7 @@ argument prompt.
     (setq ergoemacs--input (ergoemacs-to-sequence ergoemacs-read-key)
           ergoemacs-read-key nil)
     (while continue-read
-      (setq continue-read nil
-            force-key nil)
+      (setq continue-read nil)
       (when (and (not ergoemacs--input) real-type)
         (setq type real-type)
         (setq curr-universal first-universal)
@@ -1131,9 +1121,7 @@ argument prompt.
             (setq curr-universal nil)
             (when (or
                    (not
-                    (condition-case err
-                        (interactive-form local-fn)
-                      (error nil)))
+                    (ignore-errors (interactive-form local-fn)))
                    (eq local-fn 'ergoemacs-read-key-swap))
               ;; Either the `ergoemacs-read-key-swap' is not applicable,
               ;; or not specified correctly.  Therefore set local-fn to
@@ -1145,7 +1133,6 @@ argument prompt.
                                    ergoemacs-read-key-next-key-is-alt-ctl
                                    ergoemacs-read-key-next-key-is-quoted))
               (setq next-key (funcall local-fn type pretty-key))
-              (setq force-key t)
               (setq local-fn nil))
             (if (eq local-fn 'ergoemacs-read-key-help)
                 (setq continue-read (ergoemacs-read-key-help))
@@ -1167,10 +1154,7 @@ argument prompt.
                   (setq tmp (gethash (plist-get next-key
                                                 (intern (concat base "-key")))
                                      ergoemacs-command-shortcuts-hash))
-                  (when (and tmp
-                             (condition-case err
-                                 (interactive-form (nth 0 tmp))
-                               (error nil)))
+                  (when (and tmp (commandp (nth 0 tmp) t))
                     (dolist (ergoemacs-read-key (ergoemacs-shortcut-function-binding (nth 0 tmp)))
                       (let ((key-base (concat ":" (md5 (format "%s" ergoemacs-read-key))))
                             (ergoemacs-use-ergoemacs-key-descriptions t))
@@ -1231,9 +1215,7 @@ argument prompt.
                         (setq local-fn
                               (if key-trial
                                   (ergoemacs-read-key-lookup
-                                   ergoemacs-read-key pretty-key
-                                   key-trial pretty-key-trial
-                                   force-key) nil))
+                                   key-trial pretty-key-trial) nil))
                         (setq ergoemacs-deactivate-mark deactivate-mark)
                         (cond
                          ((eq local-fn 'keymap)
@@ -1365,11 +1347,11 @@ argument prompt.
   (setq ergoemacs-describe-key nil
         ergoemacs-read-key-last-help nil))
 
-(defun ergoemacs-read-key-default (&optional arg)
+(defun ergoemacs-read-key-default ()
   "The default command for `ergoemacs-mode' read-key.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 no translation listed."
-  (interactive "^P")
+  (interactive "^")
   (ergoemacs-read-key
    (or ergoemacs-single-command-keys (this-single-command-keys))))
 
@@ -1407,16 +1389,12 @@ defined in the major/minor modes (by
 `ergoemacs-with-major-and-minor-modes'). "
   (let ((override (ergoemacs-real-key-binding (read-kbd-macro (format "<ergoemacs-user> %s" (key-description keys)))))
         cmd1 cmd2)
-    (unless (condition-case err
-                (interactive-form override)
-              (error nil))
+    (unless (commandp override)
       (setq override nil))
     (unless override
       (setq cmd1 (ergoemacs-with-overrides
                   (ergoemacs-real-key-binding keys)))
-      (when (condition-case err
-                (interactive-form cmd1)
-              (error nil))
+      (when (commandp cmd1 t)
         (setq cmd2 (ergoemacs-with-major-and-minor-modes
                     (ergoemacs-real-key-binding keys)))
         (unless (eq cmd1 cmd2)
@@ -1430,12 +1408,10 @@ This is used for the following functions: `ergoemacs-shortcut-movement'
 
 Basically, this gets the keys called and passes the arguments to`ergoemacs-read-key'."
   (let* ((keys (or ergoemacs-single-command-keys (this-single-command-keys)))
-         (args (gethash keys ergoemacs-command-shortcuts-hash))
-         (one (nth 0 args)) tmp override)
+         (args (gethash keys ergoemacs-command-shortcuts-hash)))
     (unless args
       (setq keys (read-kbd-macro (key-description keys) t))
-      (setq args (gethash keys ergoemacs-command-shortcuts-hash))
-      (setq one (nth 0 args)))
+      (setq args (gethash keys ergoemacs-command-shortcuts-hash)))
     (ergoemacs-read-key keys)
     (setq ergoemacs-single-command-keys nil)))
 
@@ -1476,7 +1452,7 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
               `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
     keymap))
 
-(defun ergoemacs-shortcut-movement (&optional opt-args)
+(defun ergoemacs-shortcut-movement ()
   "Shortcut for other key/function for movement keys.
 
 This function is `cua-mode' aware for movement and supports
@@ -1485,19 +1461,19 @@ This function is `cua-mode' aware for movement and supports
 Calls the function shortcut key defined in
 `ergoemacs-command-shortcuts-hash' for
 `ergoemacs-single-command-keys' or `this-single-command-keys'."
-  (interactive "^P")
-  (ergoemacs-shortcut-movement-no-shift-select opt-args))
+  (interactive "^")
+  (ergoemacs-shortcut-movement-no-shift-select))
 (put 'ergoemacs-shortcut-movement 'CUA 'move)
 
 
-(defun ergoemacs-shortcut-movement-no-shift-select (&optional opt-args)
+(defun ergoemacs-shortcut-movement-no-shift-select ()
   "Shortcut for other key/function in movement keys without shift-selection support.
 
 Calls the function shortcut key defined in
 `ergoemacs-command-shortcuts-hash' for
 `ergoemacs-single-command-keys' or `this-single-command-keys'.
 "
-  (interactive "P")
+  (interactive)
   (let ((ck (this-single-command-keys)))
     (ergoemacs-shortcut---internal)
     ;; Now optionally install the repeatable movements.
@@ -1513,11 +1489,11 @@ Calls the function shortcut key defined in
        (ergoemacs-repeat-movement-full-keymap)
        (format " %sFull" (ergoemacs-unicode-char "↔" "<->")))))))
 
-(defun ergoemacs-shortcut (&optional opt-args)
+(defun ergoemacs-shortcut ()
   "Shortcut for other key/function for non-movement keys.
 Calls the function shortcut key defined in
 `ergoemacs-command-shortcuts-hash' for `ergoemacs-single-command-keys' or `this-single-command-keys'."
-  (interactive "P")
+  (interactive)
   (ergoemacs-shortcut---internal))
 
 (defvar ergoemacs-shortcut-send-key nil)
@@ -1629,9 +1605,7 @@ user-defined keys.
                     (setq fn (lookup-key keymap key t))
                     (if (eq fn (lookup-key keymap user-key))
                         (setq fn nil)
-                      (unless (condition-case err
-                                  (interactive-form fn)
-                                (error nil))
+                      (unless (commandp fn t)
                         (setq fn nil))))
                    (t
                     (ergoemacs-with-global
@@ -1651,19 +1625,17 @@ user-defined keys.
                         (setq fn nil))))
                     (when fn
                       (unless dont-swap-for-ergoemacs-functions
-                        (setq fn2 (condition-case err
-                                      (intern-soft (concat "ergoemacs-" (symbol-name fn)))
-                                    (error nil)))
+                        (setq fn2 (ignore-errors (intern-soft (concat "ergoemacs-" (symbol-name fn)))))
                         (when (and fn2 (not (interactive-form fn2)))
                           (setq fn2 nil)))
                       (when (memq fn (append
                                       `(,function ,(if keymap nil ergoemacs-this-command))
-                                      ergoemacs-shortcut-ignored-functions))
+                                      (if dont-ignore-commands '() ergoemacs-shortcut-ignored-functions)))
                         (setq fn nil))
                       (when (and fn2
                                  (memq fn2 (append
                                             `(,function ,(if keymap nil ergoemacs-this-command))
-                                            ergoemacs-shortcut-ignored-functions)))
+                                            (if dont-ignore-commands '() ergoemacs-shortcut-ignored-functions))))
                         (setq fn2 nil))
                       (cond
                        (fn2
@@ -1674,17 +1646,15 @@ user-defined keys.
         (setq ret (append ret2 ret)))
       ret)))
 
-(defun ergoemacs-shortcut-remap (function &optional keys)
+(defun ergoemacs-shortcut-remap (function)
   "Runs the FUNCTION or whatever `ergoemacs-shortcut-remap-list' returns.
 Will use KEYS or `this-single-command-keys', if cannot find the
 original key binding.
 "
-  (let ((send-keys (or keys (key-description (this-single-command-keys))))
-        (fn-lst (ergoemacs-shortcut-remap-list function))
+  (let ((fn-lst (ergoemacs-shortcut-remap-list function))
         (fn function)
         send-fn)
     (when fn-lst
-      (setq send-keys (nth 2 (nth 0 fn-lst)))
       (setq fn (nth 0 (nth 0 fn-lst))))
     (setq send-fn (or (command-remapping fn (point)) fn))
     (unless (commandp send-fn t)
@@ -1702,8 +1672,7 @@ If MAP is nil, base this on a sparse keymap."
         (ergoemacs-orig-keymap
          (if map
              (copy-keymap map) nil))
-        shortcut-list
-        fn-lst)
+        shortcut-list)
     (maphash
      (lambda (key item)
        (push (list key item) shortcut-list))
@@ -1732,7 +1701,7 @@ Setup C-c and C-x keys to be described properly.")
   "Removes ergoemacs shortcuts from keymaps."
   (let ((inhibit-read-only t)
         deactivate-mark
-        hashkey lookup override-text-map override orig-map
+        hashkey lookup override-text-map
         tmp-overlay)
     (cond
      ((and overriding-terminal-local-map nil) ;; Don't do this for now...
@@ -1888,8 +1857,7 @@ The keymaps are:
 - text property with :keymap property."
   (let ((inhibit-read-only t)
         deactivate-mark
-        hashkey hashkey-read lookup override-text-map override-read-map
-        override orig-map)
+        override-text-map)
     (cond
      ((and overriding-terminal-local-map nil) ;; Don't do this for now
       (when (not
