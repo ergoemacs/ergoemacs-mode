@@ -1,4 +1,4 @@
-;;; ergoemacs-track.el --- minor mode to track layout-based distances typed
+;;; ergoemacs-track.el --- minor mode to track layout-based typed -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
@@ -115,7 +115,7 @@
               (last 0)
               curr)
           (mapcar
-           (lambda(x)
+           (lambda(_x)
              (setq i (+ i 1))
              (setq curr (+ last (/ ergoemacs-tab-key-width 2)))
              (cond
@@ -135,7 +135,7 @@
               (last 0)
               curr)
           (mapcar
-           (lambda(x)
+           (lambda(_x)
              (setq i (+ i 1))
              (setq curr (+ last (/ ergoemacs-tab-key-width 2)))
              (cond
@@ -249,7 +249,7 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
                 (kp2 (gethash (cons layout key2) ergoemacs-key-hash))
                 kpl kpl1
                 (kp12 (gethash (cons layout (cons key1 key2)) ergoemacs-key-hash))
-                dx dy d dh)
+                dx dy)
             
             (when (and (not kp12) kp1 kp2
                        (eq (plist-get kp1 :finger-n) (plist-get kp2 :finger-n)))
@@ -429,17 +429,17 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
 
 (defvar ergoemacs-last-key-press nil)
 
-(defun ergoemacs-track-post-command-hook ()
-  "Tracks the key presses."
-  (let ((keys (key-description (this-command-keys)))
-        dist-p)
-    ;; Note that sending something like QWERTY <apps> j
-    ;; Adds a key binding of C-c or C-c * key binding.
-    (when ergoemacs-last-key-press
-      (setq dist-p (ergoemacs-key-distance ergoemacs-last-key-press keys)))
-    (setq ergoemacs-last-key-press keys)))
+;; (defun ergoemacs-track-post-command-hook ()
+;;   "Tracks the key presses."
+;;   (let ((keys (key-description (this-command-keys)))
+;;         dist-p)
+;;     ;; Note that sending something like QWERTY <apps> j
+;;     ;; Adds a key binding of C-c or C-c * key binding.
+;;     (when ergoemacs-last-key-press
+;;       (setq dist-p (ergoemacs-key-distance ergoemacs-last-key-press keys)))
+;;     (setq ergoemacs-last-key-press keys)))
 
-(add-hook 'post-command-hook 'ergoemacs-track-post-command-hook)
+;; (add-hook 'post-command-hook 'ergoemacs-track-post-command-hook)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-track.el ends here
