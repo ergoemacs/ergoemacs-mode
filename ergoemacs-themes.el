@@ -1028,6 +1028,7 @@
   (when undo-tree-mode
     (global-set-key [remap ergoemacs-redo] 'undo-tree-redo))
   (when ergoemacs-mode
+    (global-set-key [remap shell] 'ergoemacs-shell-here)
     (global-set-key [remap universal-argument]
                     'ergoemacs-universal-argument)
     (global-set-key [remap describe-key]
