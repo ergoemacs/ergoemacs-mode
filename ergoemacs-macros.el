@@ -218,11 +218,13 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
            (indent 2))
   (let ((kb (make-symbol "body-and-plist")))
     (setq kb (ergoemacs-theme-component--parse body-and-plist))
-    `(puthash ,(plist-get (nth 0 kb) ':name)
-              (lambda() ,(plist-get (nth 0 kb) ':description)
-                (ergoemacs-theme-component--create-component
-                 ',(nth 0 kb)
-                 '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash)))
+    `(progn
+       (require 'ergoemacs-mode) ;; This should be loaded
+       (puthash ,(plist-get (nth 0 kb) ':name)
+                (lambda() ,(plist-get (nth 0 kb) ':description)
+                  (ergoemacs-theme-component--create-component
+                   ',(nth 0 kb)
+                   '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash))))
 
 (declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-theme-set-version "ergoemacs-theme-engine.el")
