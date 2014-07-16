@@ -483,23 +483,23 @@ Otherwise, return a new string, without any text properties."
             (setq ret (ergoemacs-real-substitute-command-keys string))
           (while (string-match "\\(\\(?:\\\\=\\)?\\)\\\\\\(\\[\\|<\\|{\\)\\(.*?\\)\\(\\]\\|>\\|}\\)" string pt)
             (cond
-             ((string-match-p "\\\\=" (match-string 1 string))
+             ((string-match-p "\\\\=" (match-string 1 string)) ; Quoted
               (setq pt (+ (length (match-string 2 string))
                           (length (match-string 3 string))
                           (length (match-string 4 string))
                           (match-beginning 0)))
               (setq string (replace-match "\\\\\\2\\3\\4" t nil string)))
-             ((and (string-match-p "<" (match-string 2 string))
+             ((and (string-match-p "<" (match-string 2 string)) ; Choose Map \<>
                    (string-match-p ">" (match-string 4 string)))
               (setq mapvar (concat "\\<" (match-string 3 string) ">"))
               (setq string (replace-match "" nil nil string))
               (setq pt (match-beginning 0)))
-             ((and (string-match-p "{" (match-string 2 string))
+             ((and (string-match-p "{" (match-string 2 string)) ; Entire map
                    (string-match-p "}" (match-string 4 string)))
               (setq tmp (ergoemacs-substitute-map (match-string 0 string)))
               (setq string (replace-match tmp t t string))
               (setq pt (+ (length tmp) (match-beginning 0))))
-             ((and (string-match-p "\\[" (match-string 2 string))
+             ((and (string-match-p "\\[" (match-string 2 string)) ; command
                    (string-match-p "\\]" (match-string 4 string)))
               (setq tmp (ergoemacs-substitute-command (match-string 0 string) mapvar))
               (setq string (replace-match tmp t t string))
