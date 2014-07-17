@@ -682,10 +682,16 @@ This is done by checking if this is a command that supports shift selection or c
 (defvar ergoemacs-repeat-keymap)
 (defvar ergoemacs-read-key-overriding-overlay-save)
 (defvar ergoemacs-read-key-overriding-terminal-local-save)
+(defvar ergoemacs-first-keymaps)
 (declare-function ergoemacs-restore-post-command-hook "ergoemacs-shortcuts.el")
 (declare-function ergoemacs-install-shortcuts-up "ergoemacs-shortcuts.el")
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
+  (dolist (item ergoemacs-first-keymaps)
+    (let ((hook (car item)))
+      (dolist (fn (cdr item))
+        (remove-hook hook fn)
+        (add-hook hook fn))))
   (when (and ergoemacs-mark-active
              (not ergoemacs-read-input-keys)
              (not mark-active))

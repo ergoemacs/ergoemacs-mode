@@ -1017,7 +1017,6 @@ Selected mark would not be cleared after paste."
   :expected-result :failed ;; Not sure why... But for now ignore the error
   (ergoemacs-test-layout ;; Us/standard
    (ergoemacs-shortcut-for-command 'goto-line) ;;
-   (should (string= (ergoemacs-shortcut-for-command 'goto-line) (ergoemacs-kbd-to-key "C-l")))
    (should (string= (ergoemacs-shortcut-for-command 'ergoemacs-new-empty-buffer) (ergoemacs-kbd-to-key "C-n")))
    (should (string= (ergoemacs-shortcut-for-command 'make-frame-command) (ergoemacs-kbd-to-key "C-N")))
    (should (string= (ergoemacs-shortcut-for-command 'find-file) (ergoemacs-kbd-to-key "C-o")))
@@ -1030,7 +1029,8 @@ Selected mark would not be cleared after paste."
    (should (string= (ergoemacs-shortcut-for-command 'split-window-below) (ergoemacs-kbd-to-key "M-4")))
    (should (string= (ergoemacs-shortcut-for-command 'split-window-right) (ergoemacs-kbd-to-key "M-$")))
    (should (string= (ergoemacs-shortcut-for-command 'delete-other-windows) (ergoemacs-kbd-to-key "M-3")))
-   (should (string= (ergoemacs-shortcut-for-command 'execute-extended-command) (ergoemacs-kbd-to-key "M-a")))))
+   (should (string= (ergoemacs-shortcut-for-command 'execute-extended-command) (ergoemacs-kbd-to-key "M-a")))
+   (should (string= (ergoemacs-shortcut-for-command 'goto-line) (ergoemacs-kbd-to-key "C-l")))))
 
 ;; (ert-deftest ergoemacs-test-5.3.7 ()
 ;;   "Test Ergoemacs 5.3.7 keys"

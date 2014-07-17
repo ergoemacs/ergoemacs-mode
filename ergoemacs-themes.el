@@ -451,12 +451,14 @@
   (define-key eshell-mode-map (kbd "<M-f12>") 'eshell-next-matching-input-from-input)
   
   (when minibuffer-setup-hook
+    :first t
     (define-key minibuffer-local-map (kbd "<f11>") 'previous-history-element)
     (define-key minibuffer-local-map (kbd "<f12>") 'next-history-element)
     (define-key minibuffer-local-map (kbd "<M-f11>") 'previous-matching-history-element)
     (define-key minibuffer-local-map (kbd "S-<f11>") 'previous-matching-history-element)
     (define-key minibuffer-local-map (kbd "<M-f12>") 'next-matching-history-element)
     (define-key minibuffer-local-map (kbd "S-<f12>") 'next-matching-history-element))
+  
   (when isearch-mode-hook
     :modify-map t
     :full-shortcut-map t
@@ -812,6 +814,7 @@
     :modify-map t
     (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
   (when minibuffer-setup-hook
+    :first t
     (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
   :version 5.3.7
   (global-set-key (kbd "M-n") 'keyboard-quit))
