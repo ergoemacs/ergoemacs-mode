@@ -2138,7 +2138,7 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
                 (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
               (abbreviate-file-name default-directory)) "*"))))
 
-(add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
+;; (add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
 
 (defvar dirtrack-list)
 (declare-function shell-dirtrack-mode "shell.el")
@@ -2165,7 +2165,7 @@ Sends shell prompt string to process, then turns on
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))))))
 
-(add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
+;; (add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
 
 (defun ergoemacs-shell-here (&optional shell-program buffer-prefix)
   "Runs/switches to a shell process in the current directory."
@@ -2178,7 +2178,7 @@ Sends shell prompt string to process, then turns on
     (set-buffer (get-buffer-create name))
     (funcall shell name)))
 
-(add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
+;; (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
 
 (defvar eshell-buffer-name)
 (defun ergoemacs-eshell-here ()

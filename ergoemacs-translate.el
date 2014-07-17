@@ -66,6 +66,7 @@
 (defvar ergoemacs-emulation-mode-map-alist)
 (defvar ergoemacs-mode)
 (defvar ergoemacs-ignore-advice)
+(defvar ergoemacs-read-local-emulation-mode-map-alist)
 
 (defvar ergoemacs-display-char-list nil
   "List of characters and fonts and if they display or not.")

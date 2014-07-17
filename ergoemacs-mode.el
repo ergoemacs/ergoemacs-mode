@@ -364,6 +364,12 @@ Valid values are:
 (defvar ergoemacs-read-emulation-mode-map-alist nil
   "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
 
+(defvar ergoemacs-read-local-emulation-mode-map-alist nil
+  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+
+(defvar ergoemacs-local-emulation-mode-map-alist nil
+  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+
 (defvar ergoemacs-emulation-mode-map-alist nil
   "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
 
@@ -378,6 +384,8 @@ Valid values are:
 When REMOVE is true, remove the emulations."
   (dolist (hook (reverse '(ergoemacs-modal-emulation-mode-map-alist
                            ergoemacs-read-emulation-mode-map-alist
+                           ergoemacs-read-local-emulation-mode-map-alist
+                           ergoemacs-local-emulation-mode-map-alist
                            ergoemacs-repeat-emulation-mode-map-alist
                            ergoemacs-emulation-mode-map-alist
                            ergoemacs-shortcut-emulation-mode-map-alist

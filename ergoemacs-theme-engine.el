@@ -1407,6 +1407,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             ergoemacs-unbind-keys (not remove-p)
             ergoemacs-read-input-keymap final-read-map
             ergoemacs-read-emulation-mode-map-alist `((ergoemacs-read-input-keys ,@final-read-map))
+            ergoemacs-read-emulation-mode-map-alist nil
             ergoemacs-shortcut-keymap final-shortcut-map
             ergoemacs-no-shortcut-keymap final-no-shortcut-map
             ergoemacs-unbind-keymap final-unbind-map

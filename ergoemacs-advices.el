@@ -61,7 +61,6 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
     (remove-hook 'ergoemacs-pre-command-hook function local))
    (t
     ad-do-it)))
-
 (defadvice describe-buffer-bindings (around ergoemacs-describe-buffer-bindings activate)
   "Describes buffer bindings without `ergoemacs-read-input-keys' enabled"
   (let (ergoemacs-read-input-keys
@@ -73,8 +72,19 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (let ((is-global-p (equal keymap (current-global-map)))
-        (is-local-p (equal keymap (current-local-map))))
-    (if (and (or is-local-p ergoemacs-run-mode-hooks)
+        (is-local-p (equal keymap (current-local-map)))
+        ergoemacs-local-map)
+    (when (and is-local-p (not ergoemacs-local-emulation-mode-map-alist))
+      (set (make-local-variable 'ergoemacs-local-emulation-mode-map-alist) '()))
+    ;; (when is-local-p
+    ;;   (setq ergoemacs-local-map
+    ;;         (cdr (car ergoemacs-local-emulation-mode-map-alist)))
+    ;;   (unless (ignore-errors (keymapp ergoemacs-local-map))
+    ;;     (setq ergoemacs-local-map (make-sparse-keymap)))
+    ;;   (define-key ergoemacs-local-map key def)
+    ;;   (setq ergoemacs-local-emulation-mode-map-alist
+    ;;         (list (cons 'ergoemacs-mode (make-sparse-keymap)))))
+    (if (and ergoemacs-run-mode-hooks
              (not (equal keymap (current-global-map)))
              (not (equal keymap ergoemacs-keymap)))
         (let ((ergoemacs-run-mode-hooks nil)
