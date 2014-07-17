@@ -63,6 +63,7 @@
     nil))
 
 (defun ergoemacs-preprocess-menu-keybindings (menu)
+  "Put `ergoemacs-mode' key bindings on menus."
   (if (not (ignore-errors (keymapp menu)))
       (progn
         (message "Invalid menu in ergoemacs-preprocess-menu-keybindings %s" menu)
