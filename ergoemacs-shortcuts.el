@@ -547,6 +547,8 @@ It will replace anything defined by `ergoemacs-translation'"
 - `cua-mode' rectangle is active, clear the selected rectangle.
 - If the 【q】 key is bound to a non self-insert function, exit
   by this function. (By convention, the 【q】 key is often quit)
+- If the 【Ctrl+G】 key is bound to something other than
+  `keyboard-quit' use that. 
 - If `ergoemacs-mode' knows of the quit function, use that
 - If an `ergoemacs-mode' modal translation is active, deactivate it.
 - Otherwise issue `keyboard-quit'
@@ -564,7 +566,13 @@ It will replace anything defined by `ergoemacs-translation'"
                  (setq tmp (key-binding "q"))
                  (and (not (symbolp tmp)) (commandp tmp t)))
                (not (string-match "self-insert" (symbol-name tmp)))))
-      (call-interactively (key-binding "q")))
+      (call-interactively tmp))
+     ((and (not (region-active-p))
+           (or (progn
+                 (setq tmp (key-binding "C-g"))
+                 (and (not (symbolp tmp)) (commandp tmp t)))
+               (not (eq 'keyboard-quit tmp))))
+      (call-interactively tmp))
      (t
       (let (defined-fn
              ergoemacs-shortcut-keys
