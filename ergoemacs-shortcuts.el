@@ -562,16 +562,16 @@ It will replace anything defined by `ergoemacs-translation'"
            (fboundp 'cua-clear-rectangle-mark))
       (cua-clear-rectangle-mark))
      ((and (not (region-active-p))
-           (or (progn
-                 (setq tmp (key-binding "q"))
-                 (and (not (symbolp tmp)) (commandp tmp t)))
+           (and (progn
+                  (setq tmp (key-binding "q"))
+                  (commandp tmp t))
                (not (string-match "self-insert" (symbol-name tmp)))))
       (call-interactively tmp))
      ((and (not (region-active-p))
-           (or (progn
-                 (setq tmp (key-binding "C-g"))
-                 (and (not (symbolp tmp)) (commandp tmp t)))
-               (not (eq 'keyboard-quit tmp))))
+           (and (progn
+                  (setq tmp (key-binding "C-g"))
+                  (commandp tmp t))
+                (not (eq 'keyboard-quit tmp))))
       (call-interactively tmp))
      (t
       (let (defined-fn
