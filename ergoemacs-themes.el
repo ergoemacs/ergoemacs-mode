@@ -373,7 +373,7 @@
   "Fixed keys for bold and italic"
   (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
   ;; C-i is TAB... This seems to cause issues?
-  (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
+  ;; (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
   (define-key org-mode-map (kbd "<tab>") 'org-cycle)
   (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle)
   )
@@ -465,7 +465,8 @@
     (define-key isearch-mode-map (kbd "<f12>") 'isearch-ring-advance)
     (define-key isearch-mode-map (kbd "S-<f11>") 'isearch-ring-advance)
     (define-key isearch-mode-map (kbd "S-<f12>") 'isearch-ring-retreat))
-  (when iswitchb-minibuffer-setup-hook
+  
+  (when iswitchb-define-mode-map-hook
     :always t
     :modify-map t
     (define-key iswitchb-mode-map (kbd "<f11>") 'iswitchb-prev-match)
@@ -574,7 +575,7 @@
   (define-key browse-kill-ring-mode-map (kbd "M-k") 'browse-kill-ring-forward)
   (define-key browse-kill-ring-mode-map (kbd "M-f") 'browse-kill-ring-delete)
   
-  (when iswitchb-minibuffer-setup-hook
+  (when iswitchb-define-mode-map-hook 
     :always t
     :modify-keymap t
     (define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
@@ -785,7 +786,7 @@
     :full-shortcut-keymap t
     (define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
     (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold))
-  (when iswitchb-minibuffer-setup-hook
+  (when iswitchb-define-mode-map-hook
     :modify-map t
     :always t
     (define-key iswitchb-mode-map (kbd "M-?") 'iswitchb-toggle-case)
