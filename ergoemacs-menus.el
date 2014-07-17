@@ -63,31 +63,30 @@
     nil))
 
 (defun ergoemacs-preprocess-menu-keybindings (menu)
-  (unless (keymapp menu)
-    (error "Invalid menu in ergoemacs-preprocess-menu-keybindings %s" menu))
-
-  (when (symbolp menu)
-    (setq menu (symbol-value menu)))
-
-  ;; For each element in the menu
-  (setcdr menu
-          (mapcar (lambda (item)
-                    (let ((key (ergoemacs-shortcut-for-menu-item item)))
-                      (if key
-                          (append item (cons :keys (cons key nil)))
-                        item)))
-                  (cdr menu)))
-
-  ;; Recurse sub menu items
-  (dolist (x (cdr menu))
-    (when (and (consp x)
-               (consp (cdr x))
-               (consp (cdr (cdr x)))
-               (consp (cdr (cdr (cdr x))))
-               (eq (car (cdr x)) 'menu-item)
-               (keymapp (car (cdr (cdr (cdr x))))))
+  (if (not (ignore-errors (keymapp menu)))
+      (progn
+        (message "Invalid menu in ergoemacs-preprocess-menu-keybindings %s" menu)
+        menu)
+    (when (symbolp menu)
+      (setq menu (symbol-value menu)))
+    ;; For each element in the menu
+    (setcdr menu
+            (mapcar (lambda (item)
+                      (let ((key (ergoemacs-shortcut-for-menu-item item)))
+                        (if key
+                            (append item (cons :keys (cons key nil)))
+                          item)))
+                    (cdr menu)))
+    ;; Recurse sub menu items
+    (dolist (x (cdr menu))
+      (when (and (consp x)
+                 (consp (cdr x))
+                 (consp (cdr (cdr x)))
+                 (consp (cdr (cdr (cdr x))))
+                 (eq (car (cdr x)) 'menu-item)
+                 (keymapp (car (cdr (cdr (cdr x))))))
                                         ;(message "Submenu: %s" (car (cdr (cdr x))))
-      (ergoemacs-preprocess-menu-keybindings (car (cdr (cdr (cdr x))))))))
+        (ergoemacs-preprocess-menu-keybindings (car (cdr (cdr (cdr x)))))))))
 
 (defvar ergoemacs-handle-ctl-c-or-ctl-x)
 (defvar ergoemacs-no-shortcut-keys)
