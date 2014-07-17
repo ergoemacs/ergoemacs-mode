@@ -207,6 +207,8 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                  `(ergoemacs-theme-component--with-hook
                    ',(nth 1 elt) ',(nth 0 tmp)
                    '(lambda () ,@(nth 1 tmp)))))
+              ((ignore-errors (memq (nth 0 elt) '(mapcar mapc dolist when if)))
+               (macroexpand-all (ergoemacs-theme-component--parse-remaining elt)))
               (t elt)))
            remaining)))
     remaining))
