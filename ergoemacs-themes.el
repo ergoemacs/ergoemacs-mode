@@ -415,9 +415,9 @@
   (global-set-key (kbd "<f12>") 'next-line)
   (global-set-key (kbd "<f3>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "<f6>") 'ergoemacs-unchorded-alt-modal)
+  (global-set-key (kbd "<f8>") 'search-map)
   (global-set-key (kbd "<f8> <f8>") 'highlight-symbol-at-point)
   (global-set-key (kbd "<f8> <f9>") 'highlight-symbol-query-replace)
-  (global-set-key (kbd "<f8>") 'search-map)
   (global-set-key (kbd "<f2>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "<f4>") 'ergoemacs-paste)
   ;; Mode Specific Changes
