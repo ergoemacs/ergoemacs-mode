@@ -1216,6 +1216,32 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
 
+(defun ergoemacs-flatten-composed-keymap--define-key (keymap parent &optional pre-vector)
+  "Define keys in KEYMAP in PARENT keymap recursively.
+PRE-VECTOR is to help define the full key-vector sequence."
+  (dolist (item keymap)
+    (let ((key (ignore-errors (or (and pre-vector (vconcat pre-vector (vector (car item)))) (vector (car item))))))
+      (cond
+       ((eq item 'keymap))
+       ((and key (ignore-errors (commandp (cdr item) t)))
+        (define-key parent key (cdr item)))
+       ((and key (ignore-errors (eq 'keymap (nth 1 item))))
+        (ergoemacs-flatten-composed-keymap--define-key (cdr item) parent key))))))
+
+(defun ergoemacs-flatten-composed-keymap (keymap)
+  "Flattens a composed KEYMAP.
+If it is not a composed KEYMAP, return the keymap as is."
+  (if (not (ignore-errors (and (keymapp keymap) (eq (nth 0 (nth 1 keymap)) 'keymap)))) keymap
+    (let* ((parent (keymap-parent keymap))
+           (new-keymap (or (and parent (copy-keymap parent)) (make-sparse-keymap)))
+           (remaining (cdr (copy-keymap keymap)))
+           (keymap-list '()))
+      (while (keymapp (car remaining))
+        (push (pop remaining) keymap-list)) ;; Should be reversed
+      (dolist (sub-keymap keymap-list)
+        (ergoemacs-flatten-composed-keymap--define-key sub-keymap new-keymap))
+      new-keymap)))
+
 (defvar ergoemacs-get-variable-layout  nil)
 (defvar ergoemacs-get-fixed-layout nil)
 (defvar ergoemacs-global-override-rm-keys)
@@ -1264,20 +1290,29 @@ FULL-SHORTCUT-MAP-P "
                          modify-map
                          full-map
                          always
+                         cmd-list
                          deferred-keys) (ergoemacs-get-fixed-map obj map-name)
               (cond
                ((and modify-map always)
                 ;; Maps that are always modified.
                 (let ((fn-name (intern (concat (symbol-name emulation-var) "-and-" (symbol-name map-name)))))
                   (fset fn-name
-                        `(lambda() ,(format "Turn on `ergoemacs-mode' for `%s' during the hook `%s'."
+                        `(lambda() ,(format "Turn on `ergoemacs-mode' for `%s' during the hook `%s'.\n Map is stored in `'"
                                        (symbol-name map-name) (symbol-name hook))
                            (let ((new-map ',map))
                              (ergoemacs-theme--install-shortcuts-list 
                               ',(reverse shortcut-list) new-map ,map-name ,full-map)
+                             (dolist (item ',deferred-keys) ; Install deferred keys now.
+                               (catch 'found-bound-command
+                                 (dolist (fn (nth 1 item))
+                                   (when (commandp fn t)
+                                     (define-key new-map (nth 0 item) fn)
+                                     (throw 'found-bound-command t)))))
                              (set ',map-name
-                                  (copy-keymap
-                                   (make-composed-keymap new-map ,map-name))))))
+                                  (ergoemacs-flatten-composed-keymap (make-composed-keymap new-map ,map-name)))
+                             ,(when (eq map-name 'iswitchb-mode-map)
+                                `(message "Final Map:\n%s" (substitute-command-keys ,(format "\\{%s}" (symbol-name map-name)))))
+                             )))
                   (funcall (if remove-p #'remove-hook #'add-hook) hook
                            fn-name)))
                ((and modify-map (not (boundp map-name)))
