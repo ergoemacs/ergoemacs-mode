@@ -606,7 +606,7 @@
   (global-set-key (kbd "M-H") 'ergoemacs-end-of-line-or-what)
   ;; Mode specific movement
   (define-key eshell-mode-map (kbd "M-h") 'eshell-bol)
-  (define-key comint-mode-map (kbd "M-H") 'comint-bol))
+  (define-key comint-mode-map (kbd "M-h") 'comint-bol))
 
 (ergoemacs-theme-component move-and-transpose-lines ()
   "Move Current line/selection down or up with Alt+up or Alt+down"
