@@ -378,6 +378,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
 
 (defvar ergoemacs-modal-emulation-mode-map-alist)
 (defvar ergoemacs-ignore-advice)
+(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
 (defun ergoemacs-modal-toggle (type)
   "Toggle ergoemacs command modes."
   (let* ((help-list (gethash type ergoemacs-translation-text))
@@ -423,9 +424,10 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
           (progn ;; Turn off current modal, turn on last modal.
             (setq help-list (gethash type ergoemacs-translation-text))
             (setq ergoemacs-modal-keymap
-                  (make-composed-keymap
-                   (list (ergoemacs-local-map type t)
-                         (ergoemacs-modal-base-keymap))))
+                  (ergoemacs-flatten-composed-keymap
+                   (make-composed-keymap
+                    (list (ergoemacs-local-map type t)
+                          (ergoemacs-modal-base-keymap)))))
             (setq ergoemacs-modal-emulation-mode-map-alist
                   `((ergoemacs-modal ,@ergoemacs-modal-keymap)))
             (set-default 'ergoemacs-modal type)
