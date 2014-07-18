@@ -471,11 +471,8 @@
   (when iswitchb-define-mode-map-hook
     :always t
     :modify-map t
-    :run-hook minibuffer-setup-hook
-    (define-key iswitchb-mode-map (kbd "<f11>") 'iswitchb-prev-match)
-    (define-key iswitchb-mode-map (kbd "<f12>") 'iswitchb-next-match)
-    (define-key iswitchb-mode-map (kbd "S-<f11>") 'iswitchb-prev-match)
-    (define-key iswitchb-mode-map (kbd "S-<f12>") 'iswitchb-next-match)))
+    (define-key iswitchb-mode-map [remap previous-history-element] 'iswitchb-prev-match)
+    (define-key iswitchb-mode-map [remap next-history-element] 'iswitchb-next-match)))
 
 (ergoemacs-theme-component f2-edit ()
   "Have <f2> edit"
@@ -581,9 +578,8 @@
   (when iswitchb-define-mode-map-hook 
     :always t
     :modify-keymap t
-    :run-hook minibuffer-setup-hook
-    (define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
-    (define-key iswitchb-mode-map (kbd "M-l") 'iswitchb-next-match)))
+    (define-key iswitchb-mode-map [remap backward-char] 'iswitchb-prev-match)
+    (define-key iswitchb-mode-map [remap forward-char] 'iswitchb-next-match)))
 
 (ergoemacs-theme-component move-word ()
   "Moving around and deleting words"
@@ -790,12 +786,12 @@
     :full-shortcut-keymap t
     (define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
     (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold))
+  
   (when iswitchb-define-mode-map-hook
     :modify-map t
     :always t
-    :run-hook minibuffer-setup-hook
-    (define-key iswitchb-mode-map (kbd "M-?") 'iswitchb-toggle-case)
-    (define-key iswitchb-mode-map (kbd "M-/") 'iswitchb-toggle-regexp)))
+    (define-key iswitchb-mode-map [remap ergoemacs-toggle-camel-case] 'iswitchb-toggle-case)
+    (define-key iswitchb-mode-map [remap ergoemacs-toggle-letter-case] 'iswitchb-toggle-regexp)))
 
 (ergoemacs-theme-component select-items ()
   "Select Items"
