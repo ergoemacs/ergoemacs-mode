@@ -34,6 +34,9 @@
 (autoload 'dired-jump "dired-x" "ergoemacs-autoload." t)
 (autoload 'wdired-change-to-wdired-mode "wdired" "ergoemacs-autoload." t)
 (autoload 'wdired-exit "wdired" "ergoemacs-autoload." t)
+(autoload 'isearch-ring-advance "isearch" nil t)
+(autoload 'isearch-ring-retreat "isearch" nil t)
+(autoload 'isearch-ring-toggle-regexp "isearch" nil t)
 
 
 (require 'advice)

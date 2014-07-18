@@ -1563,12 +1563,11 @@ If it is not a composed KEYMAP, return the keymap as is."
                     ;; (push (make-sparse-keymap "ergoemacs-modified") n-map)
                     )
                    (t
+                    (setq n-map (list n-map))
                     ;; (setq n-map (list (make-sparse-keymap "ergoemacs-modified") n-map))
                     ))
-                  (setq n-map (copy-keymap
-                               (make-composed-keymap
-                                n-map
-                                o-map)))
+                  (push map n-map)
+                  (setq n-map (copy-keymap (make-composed-keymap n-map o-map)))
                   (define-key n-map [ergoemacs] 'ignore)
                   (set map-name n-map)))
                (t ;; Maps that are not modified.
