@@ -281,7 +281,7 @@ Valid values are:
   (load "ergoemacs-shortcuts"))
 
 (defvar ergoemacs-theme)
-(defcustom ergoemacs-mode-line 'always
+(defcustom ergoemacs-mode-line t
   "Ergoemacs-keybindings minor mode version number used."
   :type '(choice
 	  (const :tag "Always Show Mode Line" t)
