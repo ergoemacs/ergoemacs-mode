@@ -775,6 +775,8 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                                       :first (oref obj first))))
       (when (slot-boundp obj 'hook)
         (oset fixed hook (oref obj hook)))
+      (when (slot-boundp obj 'run-hook)
+        (oset fixed run-hook (oref obj run-hook)))
       (oset obj fixed fixed)))
   (unless (slot-boundp obj 'variable)
     (let ((var (ergoemacs-variable-map
@@ -788,6 +790,8 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                 :first (oref obj first))))
       (when (slot-boundp obj 'hook)
         (oset var hook (oref obj hook)))
+      (when (slot-boundp obj 'run-hook)
+        (oset var run-hook (oref obj run-hook)))
       (oset obj variable var))))
 
 (defmethod ergoemacs-define-map ((obj ergoemacs-composite-map) key def &optional no-unbind)
@@ -883,6 +887,8 @@ Assumes maps are orthogonal."
                    :deferred-keys (append (oref var deferred-keys) (oref fix deferred-keys))))
         (when (slot-boundp obj 'hook)
           (oset ret hook (oref obj hook)))
+        (when (slot-boundp obj 'run-hook)
+          (oset ret run-hook (oref obj run-hook)))
         (puthash ilay ret keymap-hash)
         (oset obj keymap-hash keymap-hash))
       (setq ret (clone ret (ergoemacs-object-name-string obj))) ;; Reset name
@@ -1059,6 +1065,27 @@ Assumes maps are orthogonal."
          maps))
       ret)))
 
+(defmethod ergoemacs-run-hook-fn ((obj ergoemacs-theme-component-maps)
+                                  hook map-name)
+  "Get the hook that should be run before the HOOK and MAP-NAME combination."
+  (ergoemacs-theme-component-maps--ini obj)
+  (let (ret)
+    (with-slots (maps) obj
+      (catch 'found-hook
+        (maphash
+         (lambda (map-n map-obj)
+           (setq ret
+                 (or ret
+                     (and (eq map-name map-n)
+                          (slot-boundp map-obj 'hook)
+                          (eq (oref map-obj hook) hook)
+                          (slot-boundp map-obj 'run-hook)
+                          (oref map-obj run-hook))))
+           (when  ret
+             (throw 'found-hook t)))
+         maps))
+      ret)))
+
 (defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-maps) &optional match ret keymaps)
   (ergoemacs-theme-component-maps--ini obj)
   (with-slots (maps hooks) obj
@@ -1139,6 +1166,21 @@ Assumes maps are orthogonal."
               (when final
                 (throw 'is-first-p t)))))
         (puthash (list hook map-name 'first-p) final hooks))
+      final)))
+
+(defmethod ergoemacs-run-hook-fn ((obj ergoemacs-theme-component-map-list)
+                                  hook map-name)
+  "See if the HOOK and MAP-NAME combination should be the first run."
+  (with-slots (map-list hooks) obj
+    (let* ((final (gethash (list hook map-name 'run-hook-fn) hooks)))
+      (unless final
+        (catch 'run-hook-p
+          (dolist (map map-list)
+            (when (ergoemacs-theme-component-maps-p map)
+              (setq final (ergoemacs-run-hook-fn map hook map-name))
+              (when final
+                (throw 'run-hook-p t)))))
+        (puthash (list hook map-name 'run-hook-fn) final hooks))
       final)))
 
 (defmethod ergoemacs-get-hooks ((obj ergoemacs-theme-component-map-list) &optional match keymaps)
@@ -1386,27 +1428,29 @@ If it is not a composed KEYMAP, return the keymap as is."
                                (dolist (fn (cdr map))
                                  (unless (eq fn ',fn-name)
                                    (funcall fn)))))
+                           ,(when (ergoemacs-run-hook-fn obj hook map-name)
+                              `(run-hooks ',(ergoemacs-run-hook-fn obj hook map-name)))
                            (message ,(format "Run %s" (symbol-name fn-name)))
-                           (unless (and ,(and first (ergoemacs-is-first-p obj hook map-name))
-                                        (eq (lookup-key ,map-name [,map-name]) 'ignore))  
-                             (let ((new-map ',map))
-                               (ergoemacs-theme--install-shortcuts-list 
-                                ',(reverse shortcut-list) new-map ,map-name ,full-map)
-                               (dolist (item ',deferred-keys) ; Install deferred keys now.
-                                 (catch 'found-bound-command
-                                   (dolist (fn (nth 1 item))
-                                     (when (commandp fn t)
-                                       (define-key new-map (nth 0 item) fn)
-                                       (throw 'found-bound-command t)))))
-                               (setq new-map (ergoemacs-flatten-composed-keymap (make-composed-keymap new-map ,map-name)))
-                               ;; Try to modify in place, without any
-                               ;; copying of keymaps.
-                               (ergoemacs-flatten-composed-keymap--define-key new-map ,map-name)
-                               ,(when (and first (ergoemacs-is-first-p obj hook map-name))
-                                  `(define-key ,map-name [,map-name] 'ignore))
-                               ;; ,(when (eq hook 'iswitchb-minibuffer-setup-hook)
-                               ;;    `(message "%s" (substitute-command-keys "\\{minibuffer-local-map}")))
-                               ))))
+                           (let ((new-map ',map))
+                             (ergoemacs-theme--install-shortcuts-list 
+                              ',(reverse shortcut-list) new-map ,map-name ,full-map)
+                             (dolist (item ',deferred-keys) ; Install deferred keys now.
+                               (catch 'found-bound-command
+                                 (dolist (fn (nth 1 item))
+                                   (when (commandp fn t)
+                                     (define-key new-map (nth 0 item) fn)
+                                     (throw 'found-bound-command t)))))
+                             (setq new-map (ergoemacs-flatten-composed-keymap (make-composed-keymap new-map ,map-name)))
+                             ;; Try to modify in place, without any
+                             ;; copying of keymaps.
+                             (ergoemacs-flatten-composed-keymap--define-key new-map ,map-name)
+                             ,(when (and first (ergoemacs-is-first-p obj hook map-name))
+                                `(progn
+                                   (define-key ,map-name [,map-name] 'ignore)
+                                   (remove-hook ',hook ',fn-name)))
+                             ;; ,(when (eq hook 'iswitchb-minibuffer-setup-hook)
+                             ;;    `(message "%s" (substitute-command-keys "\\{minibuffer-local-map}")))
+                             )))
                   (funcall (if remove-p #'remove-hook #'add-hook) hook
                            fn-name)
                   (when (and first (not remove-p)
@@ -1675,6 +1719,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
               new-cmd-list
               new-modify-map
               new-hook
+              new-run-hook
               new-full-map
               new-always
               new-first
@@ -1711,6 +1756,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                   (push unbind-map new-unbind-map))
                 (when (slot-boundp map-obj 'hook)
                   (setq new-hook (oref map-obj hook)))
+                (when (slot-boundp map-obj 'run-hook)
+                  (setq new-run-hook (oref map-obj run-hook)))
                 (if curr-first
                     (setq new-shortcut-list shortcut-list
                           new-shortcut-movement shortcut-movement
@@ -1760,6 +1807,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                  :deferred-keys new-deferred-keys))
           (when new-hook
             (oset ret hook new-hook))
+          (when new-run-hook
+            (oset ret run-hook new-run-hook))
           (puthash key ret ergoemacs-theme-component-map-list-fixed-hash)))
       ret)))
 
