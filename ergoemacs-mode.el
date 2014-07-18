@@ -69,6 +69,37 @@
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
 
+(defun ergoemacs-flatten-composed-keymap--define-key (keymap parent &optional pre-vector)
+  "Define keys in KEYMAP in PARENT keymap recursively.
+PRE-VECTOR is to help define the full key-vector sequence."
+  (dolist (item keymap)
+    (let ((key (ignore-errors (or (and pre-vector (vconcat pre-vector (vector (car item)))) (vector (car item)))))
+          i)
+      (cond
+       ((eq item 'keymap))
+       ((and key (ignore-errors (commandp (cdr item) t)))
+        (setq i (lookup-key parent key))
+        (when (integerp i)
+          (define-key parent (substring key 0 i) nil))
+        (define-key parent key (cdr item)))
+       ((and key (ignore-errors (eq 'keymap (nth 1 item))))
+        (ergoemacs-flatten-composed-keymap--define-key (cdr item) parent key))))))
+
+(defun ergoemacs-flatten-composed-keymap (keymap)
+  "Flattens a composed KEYMAP.
+If it is not a composed KEYMAP, return the keymap as is."
+  (if (not (ignore-errors (and (keymapp keymap) (eq (nth 0 (nth 1 keymap)) 'keymap)))) keymap
+    (let* ((parent (keymap-parent keymap))
+           (new-keymap (or (and parent (copy-keymap parent)) (make-sparse-keymap)))
+           (remaining (cdr (copy-keymap keymap)))
+           (keymap-list '()))
+      (while (keymapp (car remaining))
+        (push (pop remaining) keymap-list)) ;; Should be reversed
+      (dolist (sub-keymap keymap-list)
+        (ergoemacs-flatten-composed-keymap--define-key sub-keymap new-keymap))
+      new-keymap)))
+
+
 (defvar ergoemacs-debug ""
   "Debugging for `ergoemacs-mode'.")
 

@@ -7,7 +7,7 @@
 ;; Author: Matthew L. Fidler
 ;; Maintainer: 
 ;; Created: Thu Mar 20 10:41:30 2014 (-0500)
-;; Version: 
+;; Version:
 ;; Package-Requires: ()
 ;; Last-Updated: 
 ;;           By: 
@@ -1388,32 +1388,6 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
 
-(defun ergoemacs-flatten-composed-keymap--define-key (keymap parent &optional pre-vector)
-  "Define keys in KEYMAP in PARENT keymap recursively.
-PRE-VECTOR is to help define the full key-vector sequence."
-  (dolist (item keymap)
-    (let ((key (ignore-errors (or (and pre-vector (vconcat pre-vector (vector (car item)))) (vector (car item))))))
-      (cond
-       ((eq item 'keymap))
-       ((and key (ignore-errors (commandp (cdr item) t)))
-        (define-key parent key (cdr item)))
-       ((and key (ignore-errors (eq 'keymap (nth 1 item))))
-        (ergoemacs-flatten-composed-keymap--define-key (cdr item) parent key))))))
-
-(defun ergoemacs-flatten-composed-keymap (keymap)
-  "Flattens a composed KEYMAP.
-If it is not a composed KEYMAP, return the keymap as is."
-  (if (not (ignore-errors (and (keymapp keymap) (eq (nth 0 (nth 1 keymap)) 'keymap)))) keymap
-    (let* ((parent (keymap-parent keymap))
-           (new-keymap (or (and parent (copy-keymap parent)) (make-sparse-keymap)))
-           (remaining (cdr (copy-keymap keymap)))
-           (keymap-list '()))
-      (while (keymapp (car remaining))
-        (push (pop remaining) keymap-list)) ;; Should be reversed
-      (dolist (sub-keymap keymap-list)
-        (ergoemacs-flatten-composed-keymap--define-key sub-keymap new-keymap))
-      new-keymap)))
-
 (defvar ergoemacs-get-variable-layout  nil)
 (defvar ergoemacs-get-fixed-layout nil)
 (defvar ergoemacs-global-override-rm-keys)
@@ -1434,6 +1408,7 @@ If it is not a composed KEYMAP, return the keymap as is."
 (defvar ergoemacs-no-shortcut-emulation-mode-map-alist)
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme--hook-running nil)
+(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   (with-slots (read-map
                map
@@ -1567,8 +1542,7 @@ If it is not a composed KEYMAP, return the keymap as is."
                     ;; (setq n-map (list (make-sparse-keymap "ergoemacs-modified") n-map))
                     ))
                   (push map n-map)
-                  (setq n-map (copy-keymap (make-composed-keymap n-map o-map)))
-                  (define-key n-map [ergoemacs] 'ignore)
+                  (setq n-map (copy-keymap (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map))))
                   (set map-name n-map)))
                (t ;; Maps that are not modified.
                 (unless remove-p
@@ -1600,7 +1574,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             (unless (eq defer '())
               (push (cons i defer) ergoemacs-deferred-keys))
             (setq i (+ i 1))
-            (push (cons emulation-var (ergoemacs-get-fixed-map--composite tmp))
+            (push (cons emulation-var (ergoemacs-flatten-composed-keymap (ergoemacs-get-fixed-map--composite tmp)))
                   hook-map-list))))
       
       ;; Reset shortcut hash
@@ -1644,7 +1618,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             (setq final-map (cdr final-map))
           (setq final-map (list final-map)))
         (push menu-keymap final-map)
-        (setq final-map (make-composed-keymap final-map))
+        (setq final-map (ergoemacs-flatten-composed-keymap (make-composed-keymap final-map)))
         ;; Rebuild Shortcut hash
         (let (tmp)
           (dolist (c (reverse shortcut-list))
@@ -1674,12 +1648,12 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             ergoemacs-no-shortcut-keys nil
             ergoemacs-read-input-keys (not remove-p)
             ergoemacs-unbind-keys (not remove-p)
-            ergoemacs-read-input-keymap final-read-map
+            ergoemacs-read-input-keymap (ergoemacs-flatten-composed-keymap final-read-map)
             ergoemacs-read-emulation-mode-map-alist `((ergoemacs-read-input-keys ,@final-read-map))
             ergoemacs-read-emulation-mode-map-alist nil
-            ergoemacs-shortcut-keymap final-shortcut-map
-            ergoemacs-no-shortcut-keymap final-no-shortcut-map
-            ergoemacs-unbind-keymap final-unbind-map
+            ergoemacs-shortcut-keymap (ergoemacs-flatten-composed-keymap final-shortcut-map)
+            ergoemacs-no-shortcut-keymap (ergoemacs-flatten-composed-keymap final-no-shortcut-map)
+            ergoemacs-unbind-keymap (ergoemacs-flatten-composed-keymap final-unbind-map)
             ergoemacs-emulation-mode-map-alist
             (reverse
              (append
@@ -1691,7 +1665,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                    (when deferred-keys
                      (push (cons i (cons remap deferred-keys)) ergoemacs-deferred-keys))
                    (setq i (+ i 1))
-                   (cons remap map)))
+                   (cons remap (ergoemacs-flatten-composed-keymap map))))
                (ergoemacs-get-hooks obj "-mode\\'"))))
             ergoemacs-shortcut-emulation-mode-map-alist
             `((ergoemacs-shortcut-keys ,@final-shortcut-map))
@@ -2571,7 +2545,7 @@ Returns new keymap."
       (if (listp key)
           (dolist (rm-key key)
             (ergoemacs-rm-key keymap rm-key))
-        (let ((new-keymap (copy-keymap keymap)) _ignore)
+        (let ((new-keymap (copy-keymap keymap)))
           (cond
            ((keymapp (nth 1 new-keymap))
             (setq new-keymap (cdr new-keymap))
@@ -2593,7 +2567,15 @@ Returns new keymap."
             (push 'keymap new-keymap)
             new-keymap)
            (t
-            (define-key new-keymap key nil)
+            (let ((lk (lookup-key new-keymap key)) lk2 lk3)
+              (cond
+               ((integerp lk)
+                (setq lk2 (lookup-key (current-global-map) key))
+                (setq lk3 (lookup-key new-keymap (substring key 0 lk)))
+                (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
+                  (define-key new-keymap key lk2)))
+               (lk
+                (define-key new-keymap key nil))))
             new-keymap))))))
 
 (defvar ergoemacs-M-x "M-x ")
