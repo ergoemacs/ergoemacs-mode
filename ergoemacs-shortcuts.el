@@ -1788,6 +1788,7 @@ Setup C-c and C-x keys to be described properly.")
     tmp-overlay))
 
 (defvar ergoemacs-read-input-keymap)
+(defvar ergoemacs-modal-keymap)
 (defun ergoemacs-install-shortcut-up--internal (text keymap &optional dont-complete)
   (let* ((keymap keymap)
          read-map
