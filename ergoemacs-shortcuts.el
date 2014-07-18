@@ -1788,7 +1788,6 @@ Setup C-c and C-x keys to be described properly.")
     tmp-overlay))
 
 (defvar ergoemacs-read-input-keymap)
-(declare-function ergoemacs-modal-keymap "ergoemacs-modal.el")
 (defun ergoemacs-install-shortcut-up--internal (text keymap &optional dont-complete)
   (let* ((keymap keymap)
          read-map
@@ -1808,7 +1807,7 @@ Setup C-c and C-x keys to be described properly.")
       (if ergoemacs-modal
           (setq keymap
                 (let ((map (make-sparse-keymap)))
-                  (setq map (ergoemacs-modal-keymap map))
+                  (setq map ergoemacs-modal-keymap)
                   (setq map
                         (make-composed-keymap
                          (list
