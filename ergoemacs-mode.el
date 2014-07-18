@@ -282,7 +282,7 @@ Valid values are:
 
 (defvar ergoemacs-theme)
 (defcustom ergoemacs-mode-line t
-  "Ergoemacs-keybindings minor mode version number used."
+  "Determines when the ergoemacs-mode modeline indicator is shown."
   :type '(choice
 	  (const :tag "Always Show Mode Line" t)
 	  (const :tag "Do not show layout" no-layout)
