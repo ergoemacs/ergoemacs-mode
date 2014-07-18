@@ -471,6 +471,7 @@
   (when iswitchb-define-mode-map-hook
     :always t
     :modify-map t
+    :run-hook minibuffer-setup-hook
     (define-key iswitchb-mode-map (kbd "<f11>") 'iswitchb-prev-match)
     (define-key iswitchb-mode-map (kbd "<f12>") 'iswitchb-next-match)
     (define-key iswitchb-mode-map (kbd "S-<f11>") 'iswitchb-prev-match)
@@ -580,6 +581,7 @@
   (when iswitchb-define-mode-map-hook 
     :always t
     :modify-keymap t
+    :run-hook minibuffer-setup-hook
     (define-key iswitchb-mode-map (kbd "M-j") 'iswitchb-prev-match)
     (define-key iswitchb-mode-map (kbd "M-l") 'iswitchb-next-match)))
 
@@ -791,6 +793,7 @@
   (when iswitchb-define-mode-map-hook
     :modify-map t
     :always t
+    :run-hook minibuffer-setup-hook
     (define-key iswitchb-mode-map (kbd "M-?") 'iswitchb-toggle-case)
     (define-key iswitchb-mode-map (kbd "M-/") 'iswitchb-toggle-regexp)))
 

@@ -696,11 +696,6 @@ This is done by checking if this is a command that supports shift selection or c
 (declare-function ergoemacs-install-shortcuts-up "ergoemacs-shortcuts.el")
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
-  (dolist (item ergoemacs-first-keymaps)
-    (let ((hook (car item)))
-      (dolist (fn (cdr item))
-        (remove-hook hook fn)
-        (add-hook hook fn))))
   (when (and ergoemacs-mark-active
              (not ergoemacs-read-input-keys)
              (not mark-active))
@@ -767,6 +762,12 @@ This is done by checking if this is a command that supports shift selection or c
     (condition-case err
         (progn
           (when ergoemacs-mode
+            (dolist (item ergoemacs-first-keymaps)
+              (let ((hook (car item)))
+                (unless (ignore-errors (keymapp (symbol-value hook)))
+                  (dolist (fn (cdr item))
+                    (remove-hook hook fn)
+                    (add-hook hook fn)))))
             (setq ergoemacs-shortcut-keys t)
             (setq ergoemacs-no-shortcut-keys nil)
             (ergoemacs-shuffle-keys)

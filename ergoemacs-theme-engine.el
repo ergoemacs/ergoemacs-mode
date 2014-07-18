@@ -1359,7 +1359,6 @@ If it is not a composed KEYMAP, return the keymap as is."
                          full-map
                          always
                          first
-                         cmd-list
                          deferred-keys) (ergoemacs-get-fixed-map obj map-name)
               (cond
                ((and modify-map always)
@@ -1372,19 +1371,32 @@ If it is not a composed KEYMAP, return the keymap as is."
                   (fset fn-name
                         `(lambda() ,(format "Turn on `ergoemacs-mode' for `%s' during the hook `%s'."
                                        (symbol-name map-name) (symbol-name hook))
-                           (let ((new-map ',map))
-                             (ergoemacs-theme--install-shortcuts-list 
-                              ',(reverse shortcut-list) new-map ,map-name ,full-map)
-                             (dolist (item ',deferred-keys) ; Install deferred keys now.
-                               (catch 'found-bound-command
-                                 (dolist (fn (nth 1 item))
-                                   (when (commandp fn t)
-                                     (define-key new-map (nth 0 item) fn)
-                                     (throw 'found-bound-command t)))))
-                             (setq new-map (ergoemacs-flatten-composed-keymap (make-composed-keymap new-map ,map-name)))
-                             ;; Try to modify in place, without any
-                             ;; copying of keymaps.
-                             (ergoemacs-flatten-composed-keymap--define-key new-map ,map-name))))
+                           (dolist (map ergoemacs-first-keymaps)
+                             (when (eq (car map) ',map-name)
+                               (dolist (fn (cdr map))
+                                 (unless (eq fn ',fn-name)
+                                   (funcall fn)))))
+                           (message ,(format "Run %s" (symbol-name fn-name)))
+                           (unless (and ,(and first (ergoemacs-is-first-p obj hook map-name))
+                                        (eq (lookup-key ,map-name [,map-name]) 'ignore))  
+                             (let ((new-map ',map))
+                               (ergoemacs-theme--install-shortcuts-list 
+                                ',(reverse shortcut-list) new-map ,map-name ,full-map)
+                               (dolist (item ',deferred-keys) ; Install deferred keys now.
+                                 (catch 'found-bound-command
+                                   (dolist (fn (nth 1 item))
+                                     (when (commandp fn t)
+                                       (define-key new-map (nth 0 item) fn)
+                                       (throw 'found-bound-command t)))))
+                               (setq new-map (ergoemacs-flatten-composed-keymap (make-composed-keymap new-map ,map-name)))
+                               ;; Try to modify in place, without any
+                               ;; copying of keymaps.
+                               (ergoemacs-flatten-composed-keymap--define-key new-map ,map-name)
+                               ,(when (and first (ergoemacs-is-first-p obj hook map-name))
+                                  `(define-key ,map-name [,map-name] 'ignore))
+                               ;; ,(when (eq hook 'iswitchb-minibuffer-setup-hook)
+                               ;;    `(message "%s" (substitute-command-keys "\\{minibuffer-local-map}")))
+                               ))))
                   (funcall (if remove-p #'remove-hook #'add-hook) hook
                            fn-name)
                   (when (and first (not remove-p)
@@ -1398,7 +1410,17 @@ If it is not a composed KEYMAP, return the keymap as is."
                                  (append (list hook fn-name) (cdr x))))
                              ergoemacs-first-keymaps))
                       (unless found
-                        (push (list hook fn-name) ergoemacs-first-keymaps))))))
+                        (push (list hook fn-name) ergoemacs-first-keymaps))
+                      (setq found nil)
+                      (setq ergoemacs-first-keymaps
+                            (mapcar
+                             (lambda(x)
+                               (if (not (eq (car x) map-name)) x
+                                 (setq found t)
+                                 (append (list map-name fn-name) (cdr x))))
+                             ergoemacs-first-keymaps))
+                      (unless found
+                        (push (list map-name fn-name) ergoemacs-first-keymaps))))))
                ((and modify-map (not (boundp map-name)))
                 (pushnew (list map-name full-map map deferred-keys) ergoemacs-deferred-maps))
                ((and modify-map (boundp map-name))
@@ -1457,7 +1479,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                            ergoemacs-first-keymaps))
                     (unless found
                       (push (list hook emulation-var)
-                            ergoemacs-first-keymaps))))))))
+                            ergoemacs-first-keymaps))
+                    (setq found nil)))))))
           (unless (equal tmp '())
             (unless (eq defer '())
               (push (cons i defer) ergoemacs-deferred-keys))
