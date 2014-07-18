@@ -250,6 +250,8 @@
    (first :initarg :first
           :initform nil
           :type boolean)
+   (run-hook :initarg :run-hook
+             :type symbol)
    (deferred-keys :initarg :deferred-keys
      :initform '()
      :type list))
@@ -316,6 +318,7 @@ The elements of LIST are not copied, just the list structure itself."
                  unbind-map
                  always
                  first
+                 run-hook
                  modify-map
                  deferred-keys
                  full-map) obj
@@ -597,6 +600,8 @@ DEF is anything that can be a key's definition:
    (first :initarg :first
            :initform nil
            :type boolean)
+   (run-hook :initarg :run-hook
+             :type symbol)
    (always :initarg :always
            :initform nil
            :type boolean))
@@ -741,6 +746,8 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
    (first :initarg :first
            :initform nil
            :type boolean)
+   (run-hook :initarg :run-hook
+             :type symbol)
    (fixed :initarg :fixed
           :type ergoemacs-fixed-map)
    (keymap-hash :initarg :keymap-hash
@@ -964,6 +971,7 @@ Assumes maps are orthogonal."
 
 (defvar ergoemacs-theme-component-maps--always nil)
 (defvar ergoemacs-theme-component-maps--first nil)
+(defvar ergoemacs-theme-component-maps--run-hook nil)
 (defvar ergoemacs-theme-component-maps--full-map nil)
 (defvar ergoemacs-theme-component-maps--modify-map nil)
 (defvar ergoemacs-theme-component-maps--global-map nil)
@@ -989,6 +997,8 @@ Assumes maps are orthogonal."
                  :first ergoemacs-theme-component-maps--first
                  :full-map ergoemacs-theme-component-maps--full-map
                  :modify-map ergoemacs-theme-component-maps--modify-map))
+          (when ergoemacs-theme-component-maps--run-hook
+            (oset ret run-hook ergoemacs-theme-component-maps--run-hook))
           (if ergoemacs-theme-component-maps--hook
               (oset ret hook ergoemacs-theme-component-maps--hook)
             (oset ret hook (intern (save-match-data (replace-regexp-in-string "-map.*\\'" "-hook" (symbol-name keymap))))))
@@ -1825,7 +1835,9 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
         (ergoemacs-theme-component-maps--always
          (plist-get plist ':always))
         (ergoemacs-theme-component-maps--first
-         (plist-get plist ':first)))
+         (plist-get plist ':first))
+        (ergoemacs-theme-component-maps--run-hook
+         (plist-get plist ':run-hook)))
     (funcall body)))
 
 ;;;###autoload
@@ -1834,6 +1846,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
   (let* ((ergoemacs-theme-component-maps--versions '())
          (ergoemacs-theme-component-maps--always nil)
          (ergoemacs-theme-component-maps--first nil)
+         (ergoemacs-theme-component-maps--run-hook nil)
          (ergoemacs-theme-component-maps--full-map nil)
          (ergoemacs-theme-component-maps--modify-map nil)
          (ergoemacs-theme-component-maps--global-map nil)
