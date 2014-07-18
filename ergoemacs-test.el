@@ -1008,7 +1008,8 @@ Selected mark would not be cleared after paste."
 (declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
 (ert-deftest ergoemacs-test-unbind-commands-active ()
   "Make sure the unbound keys work"
-  (should (eq 'ergoemacs-undefined (ergoemacs-real-key-binding (read-kbd-macro "C-x C-s")))))
+  (let (ergoemacs-shortcut-keys ergoemacs-mode ergoemacs-read-input-keys)
+    (should (eq 'ergoemacs-undefined (ergoemacs-real-key-binding (read-kbd-macro "C-x C-s"))))))
 
 (declare-function ergoemacs-shortcut-for-command "ergoemacs-menus.el")
 (declare-function ergoemacs-kbd-to-key "ergoemacs-menus.el")
