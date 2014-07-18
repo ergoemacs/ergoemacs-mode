@@ -1485,9 +1485,7 @@ FULL-SHORTCUT-MAP-P "
                                ,(when (and first (ergoemacs-is-first-p obj hook map-name))
                                   `(progn
                                      (define-key ,map-name [,map-name] 'ignore)
-                                     (remove-hook ',hook ',fn-name)))
-                               ,(when (eq hook 'iswitchb-define-mode-map-hook)
-                                  `(message "%s" (substitute-command-keys "\\{iswitchb-mode-map}")))))))
+                                     (remove-hook ',hook ',fn-name)))))))
                   (funcall (if remove-p #'remove-hook #'add-hook) hook
                            fn-name)
                   (when (and first (not remove-p)
