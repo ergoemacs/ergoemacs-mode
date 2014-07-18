@@ -281,28 +281,37 @@ Valid values are:
   (load "ergoemacs-shortcuts"))
 
 (defvar ergoemacs-theme)
+(defcustom ergoemacs-mode-line 'always
+  "Ergoemacs-keybindings minor mode version number used."
+  :type '(choice
+	  (const :tag "Always Show Mode Line" t)
+	  (const :tag "Do not show layout" no-layout)
+	  (const :tag "Never Show Mode Line" nil))
+  :group 'ergoemacs-mode)
 (defun ergoemacs-mode-line (&optional text)
   "Set ergoemacs-mode-line"
   ;; (ergoemacs-debug-heading "Set Mode Line to %s" (or text "Default"))
-  (if text
+  (let ((new-text (and text (or (and (not ergoemacs-mode-line) "") text))))
+    (if new-text
+        (setq minor-mode-alist
+              (mapcar (lambda(x)
+                        (if (not (eq 'ergoemacs-mode (nth 0 x)))
+                            x
+                          `(ergoemacs-mode ,new-text)))
+                      minor-mode-alist))
       (setq minor-mode-alist
             (mapcar (lambda(x)
                       (if (not (eq 'ergoemacs-mode (nth 0 x)))
                           x
-                        `(ergoemacs-mode ,text)))
-                    minor-mode-alist))
-    (setq minor-mode-alist
-          (mapcar (lambda(x)
-                    (if (not (eq 'ergoemacs-mode (nth 0 x)))
-                        x
-                      `(ergoemacs-mode ,(concat
-                                         (if (string= "standard" (or ergoemacs-theme "standard"))
-                                             " ErgoEmacs"
-                                           (concat " Ergo"
-                                                   (upcase (substring ergoemacs-theme 0 1))
-                                                   (substring ergoemacs-theme 1)))
-                                         "[" ergoemacs-keyboard-layout "]"))))
-                  minor-mode-alist)))
+                        `(ergoemacs-mode ,(if (or (not ergoemacs-mode-line) (eq ergoemacs-mode-line 'no-layout)) ""
+                                            (concat
+                                             (if (string= "standard" (or ergoemacs-theme "standard"))
+                                                 " ErgoEmacs"
+                                               (concat " Ergo"
+                                                       (upcase (substring ergoemacs-theme 0 1))
+                                                       (substring ergoemacs-theme 1)))
+                                             "[" ergoemacs-keyboard-layout "]")))))
+                    minor-mode-alist))))
   (ergoemacs-debug-flush))
 
 (require 'lookup-word-on-internet nil "NOERROR")
