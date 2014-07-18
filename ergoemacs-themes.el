@@ -610,8 +610,8 @@
   (global-set-key (kbd "M-h") 'ergoemacs-beginning-of-line-or-what)
   (global-set-key (kbd "M-H") 'ergoemacs-end-of-line-or-what)
   ;; Mode specific movement
-  (define-key eshell-mode-map (kbd "M-h") 'eshell-bol)
-  (define-key comint-mode-map (kbd "M-h") 'comint-bol))
+  (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol)
+  (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol))
 
 (ergoemacs-theme-component move-and-transpose-lines ()
   "Move Current line/selection down or up with Alt+up or Alt+down"
@@ -688,9 +688,9 @@
     :full-shortcut-keymap t
     (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
     (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill))
-  (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-yank)
-  (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-yank)
-  (define-key browse-kill-ring-mode-map (kbd "M-z") 'browse-kill-ring-undo-other-window))
+  (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
+  (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
+  (define-key browse-kill-ring-mode-map [remap undo] 'browse-kill-ring-undo-other-window))
 
 (ergoemacs-theme-component search ()
   "Search and Replace"
@@ -707,8 +707,8 @@
   (global-set-key (kbd "M-%") '(vr/query-replace query-replace-regexp))
 
   ;; Mode specific changes
-  (define-key browse-kill-ring-mode-map (kbd "M-y") 'browse-kill-ring-search-forward)
-  (define-key browse-kill-ring-mode-map (kbd "M-Y") 'browse-kill-ring-search-backward)
+  (define-key browse-kill-ring-mode-map [remap isearch-forward] 'browse-kill-ring-search-forward)
+  (define-key browse-kill-ring-mode-map [remap isearch-backward] 'browse-kill-ring-search-backward)
   :version 5.7.5
   (global-set-key (kbd "M-;") 'isearch-forward)
   (global-set-key (kbd "M-:") 'isearch-backward))
