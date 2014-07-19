@@ -865,6 +865,18 @@
   (global-set-key (kbd "<apps> z") 'undo)
   (global-set-key (kbd "<apps> r") goto-map))
 
+(ergoemacs-theme-component apps-toggle ()
+  "Toggle States and applications"
+  :first-is-variable-reg "<\\(apps\\|menu\\)> i"
+  (global-set-key [apps i c] 'column-number-mode)
+  (global-set-key [apps i d] 'toggle-debug-on-error)
+  (global-set-key [apps i e] 'toggle-debug-on-error)
+  (global-set-key [apps i f] 'auto-fill-mode)
+  (global-set-key [apps i l] 'toggle-truncate-lines)
+  (global-set-key [apps i q] 'toggle-debug-on-quit)
+  (global-set-key [apps i r] 'read-only-mode)
+  (global-set-key [apps i t] 'endless/toggle-theme))
+
 (ergoemacs-theme-component apps-apps ()
   "Applications"
   :first-is-variable-reg "<\\(apps\\|menu\\)> n"
@@ -1137,6 +1149,7 @@
                 standard-vars)
   :optional-on '(apps-punctuation
                  apps-apps
+                 apps-toggle
                  apps
                  backspace-del-seq
                  backspace-is-back
@@ -1152,7 +1165,7 @@
                  save-options-on-exit)
   :optional-off '(guru no-backspace search-reg
                        ergoemacs-banish-shift)
-  :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
+  :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
@@ -1182,6 +1195,7 @@
                 ergoemacs-remaps
                 standard-vars)
   :optional-on '(apps-punctuation
+                 apps-toggle
                  apps-apps
                  apps
                  backspace-del-seq
@@ -1198,7 +1212,7 @@
                  save-options-on-exit)
   :optional-off '(guru no-backspace search-reg
                        ergoemacs-banish-shift move-and-transpose-lines)
-  :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation))
+  :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
