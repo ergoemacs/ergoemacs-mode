@@ -661,10 +661,12 @@ All other modes are assumed to be minor modes or unimportant.
 (defvar tabbar-mode)
 (declare-function tabbar-install-faces "tabbar-ruler.el")
 (declare-function tabbar-mode "tabbar-mode.el")
+(declare-function package-refresh-contents "package.el")
+(declare-function package-initialize "package.el")
 (defun ergoemacs-menu-tabbar-toggle ()
   "Enables/Disables (and installs if not present) a tab-bar for emacs."
   (interactive)
-  (require 'package)
+  (require 'package nil t)
   (if (not (fboundp 'tabbar-mode))
       (let ((package-archives '(("melpa" . "http://melpa.milkbox.net/packages/"))))
         (require 'tabbar-ruler nil t)
