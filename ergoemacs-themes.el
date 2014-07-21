@@ -874,8 +874,7 @@
   (global-set-key [apps i f] 'auto-fill-mode)
   (global-set-key [apps i l] 'toggle-truncate-lines)
   (global-set-key [apps i q] 'toggle-debug-on-quit)
-  (global-set-key [apps i r] 'read-only-mode)
-  (global-set-key [apps i t] 'endless/toggle-theme))
+  (global-set-key [apps i r] 'read-only-mode))
 
 (ergoemacs-theme-component apps-apps ()
   "Applications"
