@@ -116,10 +116,44 @@ running interactively.
                           nil)))
       t)))
 
+(defvar ergoemacs-mode)
+(defvar ergoemacs-smart-paste)
+(defvar ergoemacs-use-menus)
+(defvar ergoemacs-theme)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-theme-options)
+(defun ergoemacs-save-options-to-customized (&optional no-save)
+  (let (ergoemacs-mode)
+    (customize-save-variable 'ergoemacs-smart-paste ergoemacs-smart-paste)
+    (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
+    (customize-save-variable 'ergoemacs-theme (or ergoemacs-theme "standard"))
+    (customize-save-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+    (customize-save-variable 'ergoemacs-ctl-c-or-ctl-x-delay ergoemacs-ctl-c-or-ctl-x-delay)
+    (customize-save-variable 'ergoemacs-handle-ctl-c-or-ctl-x ergoemacs-handle-ctl-c-or-ctl-x)
+    (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
+    (customize-save-variable 'ergoemacs-theme-options ergoemacs-theme-options)
+    (unless no-save
+      (customize-save-customized))))
+
+(declare-function ergoemacs-mode "ergoemacs-mode.el")
+(declare-function ergoemacs-ini-mode "ergoemacs-mode.el")
 (defun ergoemacs-exit-customize-save-customized ()
   "Call `customize-save-customized' on exit emacs.
 
+Also:
+
+- Deactivates `ergoemacs-mode'
+- Activates `ergoemacs-ini-mode', to try to run `ergoemacs-mode'
+  when called for or at the last second.
+- Saves `ergoemacs-mode' options by calling
+  `ergoemacs-save-options-to-customized'
+
 If an error occurs, display the error, and sit for 2 seconds before exiting"
+  (ergoemacs-mode -1)
+  (ergoemacs-ini-mode 1)
+  (customize-save-variable 'ergoemacs-mode nil)
+  (customize-save-variable 'ergoemacs-ini-mode t)
+  (ergoemacs-save-options-to-customized 'no-save)
   (cond
    (noninteractive)
    ((not (or custom-file user-init-file))
@@ -342,7 +376,6 @@ If `narrow-to-region' is in effect, then cut that region only."
        (point))
      (save-excursion
        (ergoemacs-shortcut-remap 'move-end-of-line)
-       (call-interactively 'move-end-of-line)
        (re-search-forward "\\=\n" nil t) ;; Include newline
        (point)))))
   (deactivate-mark))
@@ -697,7 +730,7 @@ the prefix arguments of `beginning-of-buffer',
           ;; (setq prefix-arg nil)
           (setq current-prefix-arg nil)
           (ergoemacs-shortcut-remap 'move-beginning-of-line)
-          (setq this-command 'move-beginning-of-line)
+          ;; (setq this-command 'move-beginning-of-line)
           (push (point) pts))
         (when ergoemacs-back-to-indentation
           (save-excursion
@@ -716,7 +749,7 @@ the prefix arguments of `beginning-of-buffer',
                   (push (point) pts))))))
         (cond
          ((not pts)
-          (call-interactively 'move-beginning-of-line))
+          (ergoemacs-shortcut-remap 'move-beginning-of-line))
          (t
           (setq pts (sort pts '<))
           (dolist (x pts)
@@ -819,8 +852,7 @@ the prefix arguments of `end-of-buffer',
       (let (pts tmp)
         (setq current-prefix-arg nil)
         (save-excursion
-          (call-interactively 'move-end-of-line)
-          (setq this-command 'move-end-of-line)
+          (ergoemacs-shortcut-remap 'move-end-of-line)
           (push (point) pts))
         (when ergoemacs-end-of-comment-line
           (save-excursion
@@ -838,7 +870,7 @@ the prefix arguments of `end-of-buffer',
           (setq pts (reverse tmp)))
         (cond
          ((not pts)
-          (call-interactively 'move-end-of-line)
+          (ergoemacs-shortcut-remap 'move-end-of-line)
           (setq this-command 'move-end-of-line))
          (t
           (goto-char (nth 0 pts)))))))
@@ -1168,7 +1200,7 @@ the last misspelled word with
         (setq p1 (car bds) p2 (cdr bds)))))
     (if (not (and p1 p2))
         (when ergoemacs-toggle-letter-case-and-spell
-          (call-interactively 'flyspell-auto-correct-previous-word))
+          (ergoemacs-shortcut-remap 'flyspell-auto-correct-previous-word))
       (when (not (eq last-command this-command))
         (save-excursion
           (goto-char p1)
@@ -1288,7 +1320,7 @@ Emacs buffers are those whose name starts with *."
 (defun ergoemacs-delete-frame ()
   "Deletes frame or closes emacs (with prompt)."
   (interactive)
-  (unless (ignore-errors (call-interactively 'delete-frame))
+  (unless (ignore-errors (ergoemacs-shortcut-remap 'delete-frame))
     (when (yes-or-no-p "Do you wish to Close Emacs? ")
       ;; Bound to C-x C-c
       (save-buffers-kill-terminal))))
