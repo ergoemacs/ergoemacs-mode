@@ -730,8 +730,11 @@ the prefix arguments of `beginning-of-buffer',
           ;; (setq prefix-arg nil)
           (setq current-prefix-arg nil)
           (ergoemacs-shortcut-remap 'move-beginning-of-line)
-          ;; (setq this-command 'move-beginning-of-line)
-          (push (point) pts))
+          (push (point) pts)
+          (when (and (not (bolp)) (not (bobp)))
+            (backward-char 1)
+            (ergoemacs-shortcut-remap 'move-beginning-of-line)
+            (push (point) pts)))
         (when ergoemacs-back-to-indentation
           (save-excursion
             (back-to-indentation)
@@ -853,7 +856,13 @@ the prefix arguments of `end-of-buffer',
         (setq current-prefix-arg nil)
         (save-excursion
           (ergoemacs-shortcut-remap 'move-end-of-line)
-          (push (point) pts))
+          (push (point) pts)
+          ;; Support visual lines mode and allow going to the next
+          ;; end of the visual line...
+          (when (and (not (eolp)) (not (eobp)))
+            (forward-char 1)
+            (ergoemacs-shortcut-remap 'move-end-of-line)
+            (push (point) pts)))
         (when ergoemacs-end-of-comment-line
           (save-excursion
             ;; See http://www.emacswiki.org/emacs/EndOfLineNoComments
