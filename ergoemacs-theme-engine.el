@@ -1651,6 +1651,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             ergoemacs-unbind-keys (not remove-p)
             ergoemacs-read-input-keymap (ergoemacs-flatten-composed-keymap  final-read-map)
             ergoemacs-read-emulation-mode-map-alist `((ergoemacs-read-input-keys ,@final-read-map))
+            ergoemacs-read-local-emulation-mode-map-alist nil
             ergoemacs-shortcut-keymap (ergoemacs-flatten-composed-keymap final-shortcut-map)
             ergoemacs-no-shortcut-keymap (ergoemacs-flatten-composed-keymap final-no-shortcut-map)
             ergoemacs-unbind-keymap (ergoemacs-flatten-composed-keymap final-unbind-map)
