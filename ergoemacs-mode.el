@@ -82,19 +82,26 @@ PRE-VECTOR is to help define the full key-vector sequence."
         (when (integerp i)
           (define-key parent (substring key 0 i) nil))
         (define-key parent key (cdr item)))
+       ((and key (equal key [menu-bar]))
+        (define-key parent key nil)
+        (define-key parent key (cdr item)))
        ((and key (ignore-errors (eq 'keymap (nth 1 item))))
-        (ergoemacs-flatten-composed-keymap--define-key (cdr item) parent key))))))
+        (ergoemacs-flatten-composed-keymap--define-key (cdr item) parent key))
+       (t )))))
 
 (defun ergoemacs-flatten-composed-keymap (keymap)
   "Flattens a composed KEYMAP.
 If it is not a composed KEYMAP, return the keymap as is."
   (if (not (ignore-errors (and (keymapp keymap) (eq (nth 0 (nth 1 keymap)) 'keymap)))) keymap
-    (let* ((parent (keymap-parent keymap))
-           (new-keymap (or (and parent (copy-keymap parent)) (make-sparse-keymap)))
-           (remaining (cdr (copy-keymap keymap)))
+    (let* (new-keymap
+           (remaining (cdr keymap))
            (keymap-list '()))
       (while (keymapp (car remaining))
         (push (pop remaining) keymap-list)) ;; Should be reversed
+      ;; Parent keymap
+      (if (keymapp remaining)
+          (setq new-keymap (copy-keymap remaining))
+        (setq new-keymap (make-sparse-keymap)))
       (dolist (sub-keymap keymap-list)
         (ergoemacs-flatten-composed-keymap--define-key sub-keymap new-keymap))
       new-keymap)))
