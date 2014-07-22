@@ -718,8 +718,9 @@
 
 (ergoemacs-theme-component search-reg ()
   "Regular Expression Search/Replace"
-  (global-set-key [remap isearch-forward] 'isearch-forward-regexp)
-  (global-set-key [remap isearch-backward] 'isearch-backward-regexp)
+  (when ergoemacs-mode ;; FIXME should work without when statement
+    (global-set-key [remap isearch-forward] 'isearch-forward-regexp)
+    (global-set-key [remap isearch-backward] 'isearch-backward-regexp))
 
   (global-set-key (kbd "M-%") nil)
   (global-set-key (kbd "M-5") '(vr/query-replace query-replace-regexp))
