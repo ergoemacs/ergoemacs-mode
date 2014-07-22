@@ -87,7 +87,10 @@ PRE-VECTOR is to help define the full key-vector sequence."
         (define-key parent key (cdr item)))
        ((and key (ignore-errors (eq 'keymap (nth 1 item))))
         (ergoemacs-flatten-composed-keymap--define-key (cdr item) parent key))
-       (t )))))
+       ((and key (equal key [keymap]) (keymapp item))
+        (ergoemacs-flatten-composed-keymap--define-key item parent pre-vector))
+       (t
+        (message "This: %s %s %s" pre-vector key item))))))
 
 (defun ergoemacs-flatten-composed-keymap (keymap)
   "Flattens a composed KEYMAP.
