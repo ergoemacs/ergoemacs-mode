@@ -12,7 +12,7 @@
 ;; Last-Updated: 
 ;;           By: 
 ;;     Update #: 0
-;; URL: 
+;; URL:
 ;; Doc URL: 
 ;; Keywords:
 ;; Compatibility: 
@@ -2506,15 +2506,7 @@ If OFF is non-nil, turn off the options instead."
      menu-item "Save Settings for Future Sessions"
      (lambda ()
        (interactive)
-       (customize-save-variable 'ergoemacs-smart-paste ergoemacs-smart-paste)
-       (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
-       (customize-save-variable 'ergoemacs-theme (or ergoemacs-theme "standard"))
-       (customize-save-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-       (customize-save-variable 'ergoemacs-ctl-c-or-ctl-x-delay ergoemacs-ctl-c-or-ctl-x-delay)
-       (customize-save-variable 'ergoemacs-handle-ctl-c-or-ctl-x ergoemacs-handle-ctl-c-or-ctl-x)
-       (customize-save-variable 'ergoemacs-use-menus ergoemacs-use-menus)
-       (customize-save-variable 'ergoemacs-theme-options ergoemacs-theme-options)
-       (customize-save-customized)))
+       (ergoemacs-save-options-to-customized)))
     (ergoemacs-customize
      menu-item "Customize ErgoEmacs"
      (lambda ()

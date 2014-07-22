@@ -548,6 +548,8 @@ bindings the keymap is:
           ergoemacs-modal-save             nil)
     (set-default 'ergoemacs-modal nil)
     (ergoemacs-theme-remove)
+    ;; (customize-save-variable 'ergoemacs-mode nil)
+    ;; (customize-save-variable 'ergoemacs-ini-mode nil)
     (when (featurep 'ergoemacs-menus)
       (ergoemacs-menus-off))
     (when (and ergoemacs-use-mac-command-as-meta (eq system-type 'darwin))
@@ -585,6 +587,27 @@ bindings the keymap is:
                     (lambda(x) (nth 0 x))
                     minor-mode-map-alist))
   (ergoemacs-debug-flush))
+
+;;;###autoload
+(defun ergoemacs-mode-start ()
+  "Start `ergoemacs-mode' if not already started."
+  (ignore-errors ;; In case it didn't work correctly.
+    (unless ergoemacs-mode
+      (ergoemacs-mode 1))))
+
+(define-minor-mode ergoemacs-ini-mode
+  "Dummy mode to call `ergoemacs-mode' at the very last second if not already loaded."
+  nil
+  :global t
+  :group 'ergoemacs-mode
+  (cond
+   (ergoemacs-mode)
+   (ergoemacs-ini-mode
+    (add-hook 'emacs-startup-hook 'ergoemacs-mode-start))
+   ((not ergoemacs-ini-mode)
+    (remove-hook 'emacs-startup-hook 'ergoemacs-mode-start))))
+
+
 
 
 
