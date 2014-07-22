@@ -1344,6 +1344,7 @@ FULL-SHORTCUT-MAP-P "
        full-shortcut-map-p))))
 
 (declare-function ergoemacs-shortcut-remap-list "ergoemacs-shortcuts.el")
+(defvar ergoemacs-read-local-emulation-mode-map-alist)
 (defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
                                                    full-shortcut-map-p)
   (let (fn-lst)
