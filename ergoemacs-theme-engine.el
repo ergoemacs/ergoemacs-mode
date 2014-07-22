@@ -1540,8 +1540,8 @@ FULL-SHORTCUT-MAP-P "
                     ;; (setq n-map (list (make-sparse-keymap "ergoemacs-modified") n-map))
                     ))
                   (push map n-map)
-                  (setq n-map (copy-keymap (make-composed-keymap n-map o-map) ;; (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map))
-                                           ))
+                  (setq n-map (copy-keymap ;; (make-composed-keymap n-map o-map)
+                                           (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map))))
                   (set map-name n-map)))
                (t ;; Maps that are not modified.
                 (unless remove-p
@@ -1573,8 +1573,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             (unless (eq defer '())
               (push (cons i defer) ergoemacs-deferred-keys))
             (setq i (+ i 1))
-            (push (cons emulation-var (ergoemacs-get-fixed-map--composite tmp);; (ergoemacs-flatten-composed-keymap (ergoemacs-get-fixed-map--composite tmp))
-                        )
+            (push (cons emulation-var ;; (ergoemacs-get-fixed-map--composite tmp)
+                        (ergoemacs-flatten-composed-keymap (ergoemacs-get-fixed-map--composite tmp)))
                   hook-map-list))))
       
       ;; Reset shortcut hash
@@ -1619,8 +1619,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
           (setq final-map (list final-map)))
         (push menu-keymap final-map)
         (setq final-map (make-composed-keymap final-map))
-        ;; Currently broken takes out menu :( at the very least
-        ;;(setq final-map (ergoemacs-flatten-composed-keymap  final-map))
+        (setq final-map (ergoemacs-flatten-composed-keymap final-map))
         ;; Rebuild Shortcut hash
         (let (tmp)
           (dolist (c (reverse shortcut-list))
@@ -1650,12 +1649,12 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             ergoemacs-no-shortcut-keys nil
             ergoemacs-read-input-keys (not remove-p)
             ergoemacs-unbind-keys (not remove-p)
-            ergoemacs-read-input-keymap final-read-map ;;(ergoemacs-flatten-composed-keymap  final-read-map)
+            ergoemacs-read-input-keymap (ergoemacs-flatten-composed-keymap  final-read-map)
             ergoemacs-read-emulation-mode-map-alist `((ergoemacs-read-input-keys ,@final-read-map))
             ergoemacs-read-emulation-mode-map-alist nil
-            ergoemacs-shortcut-keymap final-shortcut-map ;;(ergoemacs-flatten-composed-keymap final-shortcut-map)
-            ergoemacs-no-shortcut-keymap final-no-shortcut-map ;; (ergoemacs-flatten-composed-keymap final-no-shortcut-map)
-            ergoemacs-unbind-keymap final-unbind-map ;; (ergoemacs-flatten-composed-keymap final-unbind-map)
+            ergoemacs-shortcut-keymap (ergoemacs-flatten-composed-keymap final-shortcut-map)
+            ergoemacs-no-shortcut-keymap (ergoemacs-flatten-composed-keymap final-no-shortcut-map)
+            ergoemacs-unbind-keymap (ergoemacs-flatten-composed-keymap final-unbind-map)
             ergoemacs-emulation-mode-map-alist
             (reverse
              (append
@@ -1667,8 +1666,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                    (when deferred-keys
                      (push (cons i (cons remap deferred-keys)) ergoemacs-deferred-keys))
                    (setq i (+ i 1))
-                   (cons remap map ;; (ergoemacs-flatten-composed-keymap map)
-                         )))
+                   (cons remap (ergoemacs-flatten-composed-keymap map))))
                (ergoemacs-get-hooks obj "-mode\\'"))))
             ergoemacs-shortcut-emulation-mode-map-alist
             `((ergoemacs-shortcut-keys ,@final-shortcut-map))
