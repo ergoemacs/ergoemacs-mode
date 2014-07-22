@@ -868,13 +868,14 @@
 (ergoemacs-theme-component apps-toggle ()
   "Toggle States and applications"
   :first-is-variable-reg "<\\(apps\\|menu\\)> i"
-  (global-set-key [apps i c] 'column-number-mode)
-  (global-set-key [apps i d] 'toggle-debug-on-error)
-  (global-set-key [apps i e] 'toggle-debug-on-error)
-  (global-set-key [apps i f] 'auto-fill-mode)
-  (global-set-key [apps i l] 'toggle-truncate-lines)
-  (global-set-key [apps i q] 'toggle-debug-on-quit)
-  (global-set-key [apps i r] 'read-only-mode))
+  (global-set-key (kbd "<apps> i c") 'column-number-mode)
+  (global-set-key (kbd "<apps> i d") 'toggle-debug-on-error)
+  (global-set-key (kbd "<apps> i e") 'toggle-debug-on-error)
+  (global-set-key (kbd "<apps> i f") 'auto-fill-mode)
+  (global-set-key (kbd "<apps> i l") 'toggle-truncate-lines)
+  (global-set-key (kbd "<apps> i q") 'toggle-debug-on-quit)
+  (global-set-key (kbd "<apps> i r") 'read-only-mode)
+  (global-set-key (kbd "<apps> i C-r") 'revert-buffer))
 
 (ergoemacs-theme-component apps-apps ()
   "Applications"
