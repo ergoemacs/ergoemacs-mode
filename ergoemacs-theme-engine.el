@@ -2213,7 +2213,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
                 (when (commandp lk t)
                   (set map (ergoemacs-rm-key (symbol-value map) test-key)))))
             ;; Remove from shortcuts, if present
-            (remhash key ergoemacs-command-shortcuts-hash)
+            ;; (remhash key ergoemacs-command-shortcuts-hash)
             ;; Reset `ergoemacs-shortcut-prefix-keys'
             (setq ergoemacs-shortcut-prefix-keys '())
             (maphash
