@@ -31,9 +31,9 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
-(autoload 'dired-jump "dired-x" "ergoemacs-autoload." t)
-(autoload 'wdired-change-to-wdired-mode "wdired" "ergoemacs-autoload." t)
-(autoload 'wdired-exit "wdired" "ergoemacs-autoload." t)
+;; FIXME: Don't require, change maps on load...
+(require 'dired)
+(require 'wdired)
 (autoload 'isearch-ring-advance "isearch" nil t)
 (autoload 'isearch-ring-retreat "isearch" nil t)
 (autoload 'isearch-ring-toggle-regexp "isearch" nil t)
@@ -710,6 +710,11 @@
   (global-set-key (kbd "M-%") '(vr/query-replace query-replace-regexp))
 
   ;; Mode specific changes
+  (when dired-mode-hook 
+    :modify-map t
+    (define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
+    (define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp))
+
   (define-key browse-kill-ring-mode-map [remap isearch-forward] 'browse-kill-ring-search-forward)
   (define-key browse-kill-ring-mode-map [remap isearch-backward] 'browse-kill-ring-search-backward)
   :version 5.7.5
