@@ -370,19 +370,25 @@ The elements of LIST are not copied, just the list structure itself."
       (oset obj shortcut-list shortcut-list))))
 
 (defmethod ergoemacs-define-map--deferred-list ((obj ergoemacs-fixed-map) key deferred-list)
-  "Add/Replace DEFERRED-LIST for KEY in OBJ."
+  "Add/Replace/Remove DEFERRED-LIST for KEY in OBJ.
+Add if not present
+Replace if present
+Delete if DEFERRED-LIST is nil
+"
   (with-slots (deferred-keys) obj
-    (let ((deferred-list deferred-list))
+    (let ((new-deferred-list deferred-list))
       (setq deferred-keys
             (mapcar
              (lambda(x)
                (if (equal (nth 0 x) key)
-                   (prog1 (list key deferred-list)
-                     (setq deferred-list nil))
+                   (prog1 (list key new-deferred-list)
+                     (setq new-deferred-list nil))
                  x))
              deferred-keys))
-      (when deferred-list
-        (push (list key (reverse deferred-list)) deferred-keys))
+      (when (and new-deferred-list deferred-list)
+        (push (list key (reverse new-deferred-list)) deferred-keys))
+      (unless deferred-list
+        (setq deferred-keys (delete (list key nil) deferred-keys)))
       (oset obj deferred-keys deferred-keys))))
 
 (defmethod ergoemacs-define-map--cmd-list ((obj ergoemacs-fixed-map) key-desc def &optional desc)
@@ -467,6 +473,8 @@ DEF is anything that can be a key's definition:
     (DEFN should be a valid definition in its own right),
  or a cons (MAP . CHAR), meaning use definition of CHAR in keymap MAP,
  or an extended menu item definition.
+
+This will return if the map object was modified.
 ")
 
 (defmethod ergoemacs-define-map ((obj ergoemacs-fixed-map) key def &optional
@@ -506,11 +514,13 @@ DEF is anything that can be a key's definition:
        ((and global-map-p (eq def nil) (not no-unbind))
         ;; Unbound keymap
         (define-key unbind-map key-vect 'ergoemacs-undefined)
-        (oset obj unbind-map unbind-map))
+        (oset obj unbind-map unbind-map)
+        t)
        ((and global-map-p (eq def nil) no-unbind)
         ;; Remove from all keymaps
         (push key-vect rm-keys)
-        (oset obj rm-keys rm-keys))
+        (oset obj rm-keys rm-keys)
+        t)
        ((and global-map-p (commandp def t)
              (not (string-match "\\(mouse\\|wheel\\|remap\\)" key-desc))
              (ergoemacs-shortcut-function-binding def))
@@ -530,7 +540,8 @@ DEF is anything that can be a key's definition:
         (oset obj no-shortcut-map no-shortcut-map)
         (ergoemacs-define-map--cmd-list obj key-desc def)
         (define-key no-shortcut-map key def)
-        (oset obj shortcut-map shortcut-map))
+        (oset obj shortcut-map shortcut-map)
+        t)
        ((or (commandp def t) (keymapp def) (stringp def))
         ;; Normal command
         (if (memq def '(ergoemacs-ctl-c ergoemacs-ctl-x))
@@ -541,33 +552,46 @@ DEF is anything that can be a key's definition:
               (oset obj read-list read-list))
           (define-key map key-vect def)
           (oset obj map map))
-        (ergoemacs-define-map--cmd-list obj key-desc def))
+        (ergoemacs-define-map--cmd-list obj key-desc def)
+        t)
        ((ignore-errors (keymapp (symbol-value def)))
         ;; Keymap variable.
         (ergoemacs-define-map--cmd-list obj key-desc def)
         (define-key map key-vect (symbol-value def))
-        (oset obj map map))
+        (oset obj map map)
+        t)
        ((and (listp def) (or (stringp (nth 0 def))))
         ;; `ergoemacs-read-key' shortcut
         (ergoemacs-define-map--shortcut-list obj key-vect def)
         (ergoemacs-define-map--cmd-list obj key-desc def (nth 0 def))
         (define-key shortcut-map key 'ergoemacs-shortcut)
-        (oset obj shortcut-map shortcut-map))
+        (oset obj shortcut-map shortcut-map)
+        t)
        ((listp def)
-        (catch 'found-command
-          (dolist (command def)
-            (if (not (commandp command t))
-                (push command tmp)
-              (define-key map key-vect command)
-              (ergoemacs-define-map--cmd-list obj key-desc def)
-              (oset obj map map)
-              (throw 'found-command t))))
-        (when tmp
-          ;; Add to deferred key list
-          (ergoemacs-define-map--deferred-list obj key-vect tmp)))
+        (let ((ret (catch 'found-command
+                     (dolist (command def)
+                       (if (not (commandp command t))
+                           (push command tmp)
+                         (define-key map key-vect command)
+                         (ergoemacs-define-map--cmd-list obj key-desc def)
+                         (oset obj map map)
+                         (throw 'found-command t)))
+                     nil)))
+          (ergoemacs-define-map--deferred-list obj key-vect tmp)
+          ret))
        ((symbolp def)
         ;; Unbound symbol, add to deferred key list
-        (ergoemacs-define-map--deferred-list obj key-vect (list def)))))))
+        (ergoemacs-define-map--deferred-list obj key-vect (list def))
+        nil)))))
+
+(defmethod ergoemacs-apply-deferred ((obj ergoemacs-fixed-map))
+  "Apply deferred keys.
+Return if the map object has been modified."
+  (let (ret)
+    (with-slots (deferred-keys) obj
+      (dolist (key-list deferred-keys)
+        (setq ret (or (ergoemacs-define-map obj (nth 0 key-list) (nth 1 key-list)) ret))))
+    ret))
 
 
 (defclass ergoemacs-variable-map (eieio-named)
@@ -724,6 +748,15 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
         (oset obj keymap-hash keymap-hash))
       ret)))
 
+(defmethod ergoemacs-apply-deferred ((obj ergoemacs-variable-map))
+  (let (ret)
+    (with-slots (keymap-hash) obj
+      (maphash
+       (lambda(_key fixed-obj)
+         (setq ret (or (ergoemacs-apply-deferred fixed-obj) ret)))
+       keymap-hash))
+    ret))
+
 (defclass ergoemacs-composite-map (eieio-named)
   ((global-map-p :initarg :global-map-p
                  :initform nil
@@ -818,6 +851,13 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
           (ergoemacs-define-map variable key def no-unbind)
         (ergoemacs-define-map fixed key def no-unbind))))
   (oset obj keymap-hash (make-hash-table)))
+
+(defmethod ergoemacs-apply-deferred ((obj ergoemacs-composite-map))
+  (ergoemacs-composite-map--ini obj)
+  (with-slots (fixed variable) obj
+    (let ((fixed-changed (ergoemacs-apply-deferred fixed))
+          (var-changed (ergoemacs-apply-deferred variable)))
+      (or fixed-changed var-changed))))
 
 (defmethod ergoemacs-copy-obj ((obj ergoemacs-composite-map))
   (with-slots (fixed variable keymap-hash) obj
@@ -941,6 +981,18 @@ Assumes maps are orthogonal."
              :initform ()
              :type list))
   "`ergoemacs-mode' theme-component maps")
+
+(defmethod ergoemacs-apply-deferred ((obj ergoemacs-theme-component-maps))
+  (let (ret)
+    (with-slots (global maps) obj
+      (setq ret (ergoemacs-apply-deferred global))
+      (maphash
+       (lambda(_key composite-map)
+         (setq ret (or (ergoemacs-apply-deferred composite-map) ret)))
+       maps)
+      (when ret ;; Reset fixed-maps hash
+        (oset obj fixed-maps (make-hash-table)))
+      ret)))
 
 (defmethod ergoemacs-variable-layout-list ((obj ergoemacs-theme-component-maps))
   (with-slots (global) obj
@@ -1157,6 +1209,13 @@ Assumes maps are orthogonal."
           :initform (make-hash-table :test 'equal)
           :type hash-table))
   "`ergoemacs-mode' theme-component maps")
+
+(defmethod ergoemacs-apply-deferred ((obj ergoemacs-theme-component-map-list))
+  (let (ret)
+    (with-slots (map-list) obj
+      (dolist (map map-list)
+        (setq ret (or (ergoemacs-apply-deferred map) ret))))
+    ret))
 
 (defmethod ergoemacs-theme-component-map-list-md5 ((obj ergoemacs-theme-component-map-list))
   (with-slots (map-list) obj
@@ -1424,15 +1483,15 @@ FULL-SHORTCUT-MAP-P "
           (menu-keymap (make-sparse-keymap))
           final-map final-shortcut-map final-no-shortcut-map
           final-read-map final-unbind-map
-          (rm-list (append rm-keys ergoemacs-global-override-rm-keys)) 
+          (rm-list (append rm-keys ergoemacs-global-override-rm-keys))
+          (defer '())
           (i 0))
       ;; Get all the major-mode hooks that will be called or modified
       (setq ergoemacs-deferred-maps '()
             ergoemacs-deferred-keys '())
       (dolist (hook (ergoemacs-get-hooks obj))
         (let ((emulation-var (intern (concat "ergoemacs--for-" (symbol-name hook))))
-              (tmp '()) o-map n-map
-              (defer '()))
+              (tmp '()) o-map n-map)
           (dolist (map-name (ergoemacs-get-keymaps-for-hook obj hook))
             (with-slots (map
                          modify-map
@@ -1511,11 +1570,13 @@ FULL-SHORTCUT-MAP-P "
                       (unless found
                         (push (list map-name fn-name) ergoemacs-first-keymaps))))))
                ((and modify-map (not (boundp map-name)))
-                (pushnew (list map-name full-map map deferred-keys) ergoemacs-deferred-maps))
+                (pushnew map-name ergoemacs-deferred-maps))
                ((and modify-map (boundp map-name))
                 ;; Maps that are modified once (modify NOW if bound);
                 ;; no need for hooks?
-                (setq defer (append defer (cons map-name deferred-keys)))
+                (dolist (d deferred-keys)
+                  (dolist (f (nth 1 d))
+                    (pushnew f defer)))
                 (setq o-map (gethash map-name ergoemacs-original-map-hash))
                 (if remove-p
                     (when o-map
@@ -1570,8 +1631,6 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                             ergoemacs-first-keymaps))
                     (setq found nil)))))))
           (unless (equal tmp '())
-            (unless (eq defer '())
-              (push (cons i defer) ergoemacs-deferred-keys))
             (setq i (+ i 1))
             (push (cons emulation-var ;; (ergoemacs-get-fixed-map--composite tmp)
                         (ergoemacs-flatten-composed-keymap (ergoemacs-get-fixed-map--composite tmp)))
@@ -1663,7 +1722,9 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                  (with-slots (map
                               deferred-keys) (ergoemacs-get-fixed-map obj remap)
                    (when deferred-keys
-                     (push (cons i (cons remap deferred-keys)) ergoemacs-deferred-keys))
+                     (dolist (k deferred-keys)
+                       (dolist (f (nth 1 k))
+                         (pushnew f defer))))
                    (setq i (+ i 1))
                    (cons remap (ergoemacs-flatten-composed-keymap map))))
                (ergoemacs-get-hooks obj "-mode\\'"))))
@@ -1671,7 +1732,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             `((ergoemacs-shortcut-keys ,@final-shortcut-map))
             ergoemacs-no-shortcut-emulation-mode-map-alist
             `((ergoemacs-no-shortcut-keys ,@final-no-shortcut-map))
-            )
+            ergoemacs-deferred-keys defer)
+      ;;ergoemacs-deferred-keys
       ;; Apply variables and mode changes.
       (if remove-p
           (progn
@@ -2101,7 +2163,17 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 (defun ergoemacs-apply-inits (&rest _ignore)
   "Applies any deferred initializations."
   (when ergoemacs-theme--object
-    (ergoemacs-apply-inits-obj ergoemacs-theme--object)))
+    (ergoemacs-apply-inits-obj ergoemacs-theme--object)
+    (when (catch 'found-keymap-changes
+            (dolist (map-name ergoemacs-deferred-maps)
+              (when (and (boundp map-name) (ergoemacs-apply-deferred ergoemacs-theme--object))
+                (throw 'found-keymap-changes t)))
+            (dolist (fn ergoemacs-deferred-keys)
+              (when (and (commandp fn t) (ergoemacs-apply-deferred ergoemacs-theme--object))
+                (throw 'found-keymap-changes t))))
+      ;; Reset ergoemacs-mode
+      (ergoemacs-theme-remove)
+      (ergoemacs-theme-install))))
 
 (defun ergoemacs-theme-debug ()
   "Prints debugging information about the currently installed theme object."
