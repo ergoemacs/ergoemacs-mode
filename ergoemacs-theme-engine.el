@@ -512,7 +512,7 @@ DEF is anything that can be a key's definition:
         (push key-vect rm-keys)
         (oset obj rm-keys rm-keys))
        ((and global-map-p (commandp def t)
-             (not (string-match "\\(mouse\\|wheel\\)" (key-description key)))
+             (not (string-match "\\(mouse\\|wheel\\|remap\\)" key-desc))
              (ergoemacs-shortcut-function-binding def))
         ;; This key could have some smart interpretations.
         (ergoemacs-define-map--shortcut-list obj key-vect def)
