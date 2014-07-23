@@ -30,6 +30,10 @@
 (eval-when-compile 
   (require 'cl)
   (require 'ergoemacs-macros))
+
+(autoload 'dired-jump "dired-x" nil t)
+
+
 (require 'advice)
 
 (defvar ergoemacs-theme-comp-hash)
