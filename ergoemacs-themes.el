@@ -30,15 +30,6 @@
 (eval-when-compile 
   (require 'cl)
   (require 'ergoemacs-macros))
-
-;; FIXME: Don't require, change maps on load...
-(require 'dired)
-(require 'wdired)
-(autoload 'isearch-ring-advance "isearch" nil t)
-(autoload 'isearch-ring-retreat "isearch" nil t)
-(autoload 'isearch-ring-toggle-regexp "isearch" nil t)
-
-
 (require 'advice)
 
 (defvar ergoemacs-theme-comp-hash)
