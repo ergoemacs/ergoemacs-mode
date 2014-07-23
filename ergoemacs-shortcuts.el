@@ -534,6 +534,10 @@ It will replace anything defined by `ergoemacs-translation'"
 (declare-function ergoemacs-key-fn-lookup "ergoemacs-translate.el")
 (declare-function ergoemacs-modal-toggle "ergoemacs-modal.el")
 (declare-function cua-clear-rectangle-mark "cua-rect.el")
+
+(defvar ergoemacs-keyboard-quit-modes
+  '((wdired-mode wdired-exit))
+  "Escape key for various modes.")
 (defvar ergoemacs-mode)
 (defvar ergoemacs-no-shortcut-keys)
 (defvar ergoemacs-shortcut-keys)
@@ -548,7 +552,9 @@ It will replace anything defined by `ergoemacs-translation'"
 - If the 【q】 key is bound to a non self-insert function, exit
   by this function. (By convention, the 【q】 key is often quit)
 - If the 【Ctrl+G】 key is bound to something other than
-  `keyboard-quit' use that. 
+  `keyboard-quit' use that.
+- If the major mode has a function defined in
+  `ergoemacs-keyboard-quit', use that.
 - If `ergoemacs-mode' knows of the quit function, use that
 - If an `ergoemacs-mode' modal translation is active, deactivate it.
 - Otherwise issue `keyboard-quit'
@@ -572,6 +578,13 @@ It will replace anything defined by `ergoemacs-translation'"
                   (setq tmp (key-binding "C-g"))
                   (commandp tmp t))
                 (not (eq 'keyboard-quit tmp))))
+      (call-interactively tmp))
+     ((and (not (region-active-p))
+           (and (progn
+                  (setq tmp (assoc major-mode ergoemacs-keyboard-quit-modes))
+                  (if (not tmp) nil
+                    (setq tmp (car (cdr tmp)))
+                    (commandp tmp t)))))
       (call-interactively tmp))
      (t
       (let (defined-fn

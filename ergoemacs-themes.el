@@ -986,9 +986,6 @@
 
 (ergoemacs-theme-component dired-to-wdired ()
   "C-c C-c enters wdired, <escape> exits."
-  (when wdired-mode-hook
-    :modify-map t
-    (define-key wdired-mode-map (kbd "<escape>") 'wdired-exit))
   (when dired-mode-hook
     :modify-map t
     (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode)))
