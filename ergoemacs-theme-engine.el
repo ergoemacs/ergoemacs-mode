@@ -593,7 +593,7 @@ Return if the map object has been modified."
         (setq ret (or (ergoemacs-define-map obj (nth 0 key-list) (nth 1 key-list)) ret))))
     ret))
 
-
+(defvar ergoemacs-translation-assoc)
 (defclass ergoemacs-variable-map (eieio-named)
   ((global-map-p :initarg :global-map-p
                  :initform nil
@@ -713,7 +713,6 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
     (oset obj cmd-list (ergoemacs-copy-list cmd-list))))
 
 (defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-translation-assoc)
 (defvar ergoemacs-translation-regexp)
 (defmethod ergoemacs-get-fixed-map ((obj ergoemacs-variable-map) &optional layout)
   (with-slots (keymap-list
