@@ -1950,7 +1950,9 @@ Ignores command sequences starting with `ergoemacs-ignored-prefixes'."
         (unless (or (string-match-p "\\(--\\|key\\)" (match-string 1 string))
                     (member (match-string 1 string) ergoemacs-ignored-prefixes)
                     (member (match-string 1 string) ret))
-          (push (match-string 1 string) ret))
+          (when (string-match-p (format "%s [A-Za-z]" (regexp-quote (match-string 1 string)))
+                                (match-string 0 string))
+            (push (match-string 1 string) ret)))
         (setq pt (match-end 0)))
       ret)))
 
