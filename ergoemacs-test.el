@@ -925,7 +925,16 @@ Selected mark would not be cleared after paste."
 
 (ert-deftest ergoemacs-test-global-key-set-M-t-after ()
   "Test global M-t"
-  (should (equal (ergoemacs-test-global-key-set-before nil "M-t") t)))
+  (should (equal (ergoemacs-test-global-key-set-before 'after "M-t") t)))
+
+
+(ert-deftest ergoemacs-test-global-key-set-C-d-after ()
+  "Test global C-d"
+  (should (equal (ergoemacs-test-global-key-set-before 'after "C-d") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-C-d-before ()
+  "Test global C-d"
+  (should (equal (ergoemacs-test-global-key-set-before nil "C-d") t)))
 
 (ert-deftest ergoemacs-test-issue-243 ()
   "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
