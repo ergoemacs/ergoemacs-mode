@@ -326,6 +326,7 @@ This assumes any key defined while running a hook is a user-defined hook."
   "Makes sure that the keys are correct in the menu."
   (let ((ret (ignore-errors ad-do-it)))
     (when ergoemacs-mode
+      (require 'ergoemacs-menus)
       (ergoemacs-preprocess-menu-keybindings ret))
     ret))
 
