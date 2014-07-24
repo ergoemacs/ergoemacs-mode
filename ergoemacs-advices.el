@@ -67,7 +67,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
         ergoemacs-read-shortcut-keys
         ergoemacs-read-no-shortcut-keys)
     ad-do-it))
-
+(defvar ergoemacs-global-map)
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
@@ -85,7 +85,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ;;   (setq ergoemacs-local-emulation-mode-map-alist
     ;;         (list (cons 'ergoemacs-mode (make-sparse-keymap)))))
     (if (and ergoemacs-run-mode-hooks
-             (not (equal keymap (current-global-map)))
+             (not (equal keymap ergoemacs-global-map))
              (not (equal keymap ergoemacs-keymap)))
         (let ((ergoemacs-run-mode-hooks nil)
               (new-key (read-kbd-macro
