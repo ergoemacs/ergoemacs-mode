@@ -318,7 +318,6 @@
   (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (global-set-key (kbd "C-o") 'find-file)
   (global-set-key (kbd "C-p") 'ergoemacs-print-buffer-confirm)
-  (global-set-key (kbd "C-s") 'save-buffer)
   
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
   (global-set-key (kbd "C-x <timeout>") 'ergoemacs-cut-line-or-region)
@@ -340,6 +339,8 @@
 
   (define-key browse-kill-ring-mode-map (kbd "C-f") 'browse-kill-ring-search-forward)
   (define-key browse-kill-ring-mode-map (kbd "<deletechar>") 'browse-kill-ring-delete)
+
+  (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done)
 
   (define-key eshell-mode-map (kbd "<home>") 'eshell-bol)
   (define-key comint-mode-map (kbd "<home>") 'comint-bol)
