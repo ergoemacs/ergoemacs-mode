@@ -2235,10 +2235,11 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
           (when (and (or (commandp lk t)
                          (keymapp lk))
                      (not (member key '([remap] ))))
+            (when (not (member key ergoemacs-global-override-rm-keys))
+              (message "Removing %s because of globally bound %s"
+                       (ergoemacs-pretty-key (key-description key)) lk))
             (pushnew key ergoemacs-global-override-rm-keys
                      :test 'equal)
-            (message "Removing %s because of globally bound %s"
-                     (ergoemacs-pretty-key (key-description key)) lk)
             (throw 'found-global-command t)))
         (setq key (substring key 0 (- (length key) 1)))))))
 
