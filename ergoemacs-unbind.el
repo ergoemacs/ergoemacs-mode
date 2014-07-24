@@ -631,6 +631,7 @@
     ("M-|" (shell-command-on-region))
     ("M-}" (forward-paragraph))
     ("M-~" (not-modified))
+    ("DEL" (delete-backward-char))
     ("RET" (newline)))
   "Default Emacs Key Bindings.")
 
