@@ -1609,6 +1609,9 @@ FULL-SHORTCUT-MAP-P "
                   (set map-name n-map)))
                (t ;; Maps that are not modified.
                 (unless remove-p
+                  (dolist (d deferred-keys)
+                    (dolist (f (nth 1 d))
+                      (pushnew f defer)))
                   ;; (message "Setup %s"  hook)
                   (fset emulation-var
                         `(lambda() ,(format "Turn on `ergoemacs-mode' keymaps for `%s'.
