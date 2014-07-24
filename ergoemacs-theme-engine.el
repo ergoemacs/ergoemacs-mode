@@ -1366,7 +1366,9 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
       ;; (Nth 0 Init)iable state change
       (push (list (nth 0 init) (symbol-value (nth 0 init)))
             ergoemacs-applied-inits)
-      (set (nth 0 init) (funcall (nth 1 init)))))))
+      (if (custom-variable-p (nth 0 init))
+          (customize-set-variable (nth 0 init) (funcall (nth 1 init)))
+        (set (nth 0 init) (funcall (nth 1 init))))))))
 
 (defun ergoemacs-remove-inits ()
   "Remove the applied initilizations of modes and variables.
@@ -1386,6 +1388,8 @@ This assumes the variables are stored in `ergoemacs-applied-inits'"
        ((and (string-match-p "-mode$" (symbol-name var))
              (ignore-errors (commandp var t)))
         (funcall var val))
+       ((custom-variable-p var)
+        (customize-set-variable var val))
        (t
         (set var val)))))
   (setq ergoemacs-applied-inits '()))
@@ -2240,8 +2244,11 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
                          (keymapp lk))
                      (not (member key '([remap] ))))
             (when (not (member key ergoemacs-global-override-rm-keys))
-              (message "Removing %s because of globally bound %s"
-                       (ergoemacs-pretty-key (key-description key)) lk))
+              (message "Removing %s (%s; %s) because of globally bound %s"
+                       (ergoemacs-pretty-key (key-description key))
+                       (key-description key)
+                       key
+                       lk))
             (pushnew key ergoemacs-global-override-rm-keys
                      :test 'equal)
             (throw 'found-global-command t)))
