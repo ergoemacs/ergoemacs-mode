@@ -1702,6 +1702,10 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
       (set-default 'ergoemacs-no-shortcut-keys nil)
       (set-default 'ergoemacs-read-input-keys (not remove-p))
       (set-default 'ergoemacs-unbind-keys (not remove-p))
+      ;; Add M-O M-[ to read-keys for terminal compatibility
+      (when (ignore-errors (keymapp final-read-map))
+	(define-key final-read-map (read-kbd-macro "M-O" t) 'ergoemacs-read-key-default)
+	(define-key final-read-map (read-kbd-macro "M-[" t) 'ergoemacs-read-key-default))
       (setq ergoemacs-mode (not remove-p)
             ergoemacs-keymap final-map
             ergoemacs-shortcut-keys (not remove-p)
@@ -2190,6 +2194,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 
 (declare-function ergoemacs-global-changed-p "ergoemacs-unbind.el")
 (declare-function ergoemacs-shuffle-keys "ergoemacs-mode.el")
+(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (defvar ergoemacs-ignore-advice)
 (defun ergoemacs-theme-component--ignore-globally-defined-key (key &optional reset)
   "Adds KEY to `ergoemacs-global-override-rm-keys' and `ergoemacs-global-override-map' if globally redefined."
