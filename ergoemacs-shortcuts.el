@@ -663,6 +663,8 @@ In addition, when the function is called:
     (setq ergoemacs-read-key-last-help nil)
     (guide-key/close-guide-buffer))
   (cond
+   ((ergoemacs-smart-function-p function)
+    (error "Ergoemacs-mode is confused, and exiting out of an infinite loop (refused to call %s)" function))
    (ergoemacs-test-fn
     (setq ergoemacs-test-fn function))
    (ergoemacs-describe-key
@@ -924,6 +926,8 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
                          (setq fn (ergoemacs-real-key-binding tmp))
                          (when (and (symbolp fn) (string-match "self-insert" (symbol-name fn)))
                            (setq fn nil))
+                         (when (ergoemacs-smart-function-p fn)
+                           (setq fn nil))
                          (commandp fn t)))
                   (setq fn (or (command-remapping fn (point)) fn))
                   (setq ergoemacs-single-command-keys key)
@@ -940,6 +944,8 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
                ((progn
                   (setq fn (ergoemacs-get-override-function key))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
+                  (when (ergoemacs-smart-function-p fn)
+                    (setq fn nil))
                   (or ret (commandp fn t)))
                 (unless ret
                   (ergoemacs-read-key-call fn nil key)
@@ -948,6 +954,8 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
                ((progn
                   (setq fn (ergoemacs-real-key-binding key))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
+                  (when (ergoemacs-smart-function-p fn)
+                    (setq fn nil))
                   (or ret (commandp fn t)))
                 (unless ret
                   (setq fn (or (command-remapping fn (point)) fn))
@@ -974,6 +982,8 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
                                     (setq ret 'keymap)
                                   (ergoemacs-with-global
                                    (ergoemacs-real-key-binding key)))))))
+                  (when (ergoemacs-smart-function-p fn)
+                    (setq fn nil))
                   (setq ret (ergoemacs-read-key-lookup-get-ret fn))
                   (or ret (commandp fn t)))
                 (unless ret
@@ -1419,7 +1429,8 @@ defined in the major/minor modes (by
       (when (commandp cmd1 t)
         (setq cmd2 (ergoemacs-with-major-and-minor-modes
                     (ergoemacs-real-key-binding keys)))
-        (unless (eq cmd1 cmd2)
+        (unless (or (eq cmd1 cmd2)
+                    (ergoemacs-smart-function-p cmd1))
           (setq override cmd1))))
     override))
 
@@ -1636,6 +1647,8 @@ user-defined keys.
                          (setq fn nil)
                        (if (keymapp fn)
                            (setq fn nil))))))
+                  (when (ergoemacs-smart-function-p fn)
+                    (setq fn nil))
                   (when fn
                     (cond
                      ((eq ignore-desc t))
