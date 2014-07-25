@@ -227,7 +227,7 @@
   
   ;; (global-set-key (kbd "C-u") 'ergoemacs-universal-argument)
   (global-set-key (kbd "<M-backspace>") '(undo-tree-undo undo))
-  (global-set-key (kbd "C-z") 'undo)
+  (global-set-key (kbd "C-z") '(undo-tree-undo undo))
 
   ;; Take out undo-tree's redo bindings
   (when ergoemacs-theme-hook
@@ -670,14 +670,14 @@
   (global-set-key (kbd "C-_") nil)
   (global-set-key (kbd "C-/") nil)
   (global-set-key (kbd "C-x u") nil)
-  (global-set-key (kbd "M-z") 'undo)
+  (global-set-key (kbd "M-z") '(undo-tree-undo undo))
   
   ;; Fixed Component; Note that <timeout> is the actual function.
   (global-set-key (kbd "C-c <timeout>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-c") 'ergoemacs-ctl-c)
   (global-set-key (kbd "C-x <timeout>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-x") 'ergoemacs-ctl-x)
-  (global-set-key (kbd "C-z") 'undo)
+  (global-set-key (kbd "C-z") '(undo-tree-undo undo))
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "C-y") '(redo undo-tree-redo ergoemacs-redo))
 
@@ -689,7 +689,8 @@
     (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill))
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
-  (define-key browse-kill-ring-mode-map [remap undo] 'browse-kill-ring-undo-other-window))
+  (define-key browse-kill-ring-mode-map [remap undo] 'browse-kill-ring-undo-other-window)
+  (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window))
 
 (ergoemacs-theme-component search ()
   "Search and Replace"
@@ -863,7 +864,7 @@
   (global-set-key (kbd "<apps> v") 'ergoemacs-paste)
   (global-set-key (kbd "<apps> b") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<apps> t") 'switch-to-buffer)
-  (global-set-key (kbd "<apps> z") 'undo)
+  (global-set-key (kbd "<apps> z") '(undo-tree-undo undo))
   (global-set-key (kbd "<apps> r") goto-map))
 
 (ergoemacs-theme-component apps-toggle ()
