@@ -632,7 +632,8 @@
     ("M-}" (forward-paragraph))
     ("M-~" (not-modified))
     ("DEL" (delete-backward-char))
-    ("RET" (newline)))
+    ("RET" (newline))
+    ("TAB" (indent-for-tab-command)))
   "Default Emacs Key Bindings.")
 
 (defvar ergoemacs-single-command-keys)
