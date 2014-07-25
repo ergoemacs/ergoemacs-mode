@@ -62,11 +62,13 @@
         (ergoemacs-shortcut-for-command (cadddr item)))
     nil))
 
+;;;###autoload
 (defun ergoemacs-preprocess-menu-keybindings (menu)
   "Put `ergoemacs-mode' key bindings on menus."
   (if (not (ignore-errors (keymapp menu)))
       (progn
-        (message "Invalid menu in ergoemacs-preprocess-menu-keybindings %s" menu)
+        (when menu
+          (message "Invalid menu in ergoemacs-preprocess-menu-keybindings %s" menu))
         menu)
     (when (symbolp menu)
       (setq menu (symbol-value menu)))
