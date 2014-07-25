@@ -572,8 +572,8 @@ This will return if the map object was modified.
                      (dolist (command def)
                        (if (not (commandp command t))
                            (push command tmp)
-                         (when ergoemacs-define-map--deferred
-                           (message "Found deferred %s, applying to ergoemacs-mode" command))
+                         ;; (when ergoemacs-define-map--deferred
+                         ;;   (message "Found deferred %s, applying to ergoemacs-mode" command))
                          (define-key map key-vect command)
                          (ergoemacs-define-map--cmd-list obj key-desc def)
                          (oset obj map map)
@@ -754,11 +754,15 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
   (let (ret)
     (with-slots (keymap-hash) obj
       (maphash
-       (lambda(_key fixed-obj)
-         (setq ret (or (ergoemacs-apply-deferred fixed-obj) ret)))
+       (lambda(key fixed-obj)
+         (if (not fixed-obj)
+	     (remhash key keymap-hash)
+	   (let ((fix (ergoemacs-apply-deferred fixed-obj)))
+	     (when fix
+               (puthash key fixed-obj keymap-hash))
+	     (setq ret (or fix ret)))))
        keymap-hash)
-      (when ret
-        (oset obj keymap-hash (make-hash-table))))
+      (oset obj keymap-hash keymap-hash))
     ret))
 
 (defclass ergoemacs-composite-map (eieio-named)
@@ -859,10 +863,15 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
 (defmethod ergoemacs-apply-deferred ((obj ergoemacs-composite-map))
   (ergoemacs-composite-map--ini obj)
   (when (with-slots (fixed variable) obj
-          (let ((fixed-changed (ergoemacs-apply-deferred fixed))
-                (var-changed (ergoemacs-apply-deferred variable)))
+          (let ((fixed-changed (and fixed (ergoemacs-apply-deferred fixed)))
+                (var-changed (and variable (ergoemacs-apply-deferred variable))))
             (or fixed-changed var-changed)))
     (oset obj keymap-hash (make-hash-table))
+    ;; (with-slots (map object-name deferred-keys) (ergoemacs-get-fixed-map obj)
+    ;;   (setq ergoemacs-debug-keymap--temp-map map)
+    ;;   (message "Composite Map: %s\n%s\nDeferred: %s"
+    ;;            object-name (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")
+    ;;            deferred-keys))
     t))
 
 (defmethod ergoemacs-copy-obj ((obj ergoemacs-composite-map))
@@ -991,14 +1000,31 @@ Assumes maps are orthogonal."
 (defmethod ergoemacs-apply-deferred ((obj ergoemacs-theme-component-maps))
   (let (ret)
     (with-slots (global maps) obj
-      (setq ret (ergoemacs-apply-deferred global))
+      (setq ret (and global (ergoemacs-apply-deferred global)))
+      ;; (when ret
+      ;;   (with-slots (map object-name deferred-keys) (ergoemacs-get-fixed-map global)
+      ;;     (setq ergoemacs-debug-keymap--temp-map map)
+      ;;     (message "Global Map: %s\n%s\nDeferred: %s"
+      ;;              object-name (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")
+      ;;              deferred-keys)))
       (maphash
-       (lambda(_key composite-map)
-         (setq ret (or (ergoemacs-apply-deferred composite-map) ret)))
+       (lambda(key composite-map)
+         (let ((changed (and composite-map (ergoemacs-apply-deferred composite-map))))
+           (when changed
+             (puthash key composite-map maps)
+             ;; (with-slots (map object-name deferred-keys) (ergoemacs-get-fixed-map composite-map)
+             ;;   (setq ergoemacs-debug-keymap--temp-map map)
+             ;;   (message "Local : %s\n%s\nDeferred: %s"
+             ;;            object-name (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")
+             ;;            deferred-keys))
+             )
+           (setq ret (or changed ret))))
        maps)
       (when ret ;; Reset fixed-maps hash
-        (oset obj hooks (make-hash-table))
-        (oset obj fixed-maps (make-hash-table))
+        (oset obj global global)
+        (oset obj maps maps)
+        ;; (oset obj hooks (make-hash-table))
+        (oset obj fixed-maps (make-hash-table)) ;; Reset cache
         (ergoemacs-theme-component-maps--save-hash obj))
       ret)))
 
@@ -1221,10 +1247,27 @@ Assumes maps are orthogonal."
 (defmethod ergoemacs-apply-deferred ((obj ergoemacs-theme-component-map-list))
   (let (ret)
     (with-slots (map-list) obj
-      (dolist (map map-list)
-        (setq ret (or (ergoemacs-apply-deferred map) ret)))
+      (setq map-list
+            (mapcar
+             (lambda(new-map)
+               (let ((changed (and new-map (ergoemacs-apply-deferred new-map))))
+                 ;; (when changed
+                 ;;     (with-slots (map object-name deferred-keys) (ergoemacs-get-fixed-map new-map 'log-edit-mode-map)
+                 ;;       (setq ergoemacs-debug-keymap--temp-map map)
+                 ;;       (message "Composite Map: %s\n%s\nDeferred: %s"
+                 ;;                object-name (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")
+                 ;;                deferred-keys)))
+                 (setq ret (or changed ret))
+                 new-map))
+             map-list))
       (when ret
-        (oset obj hooks (make-hash-table :test 'equal))))
+        (oset obj map-list map-list)
+        (oset obj hooks (make-hash-table :test 'equal))
+        (setq ergoemacs-theme-component-map-list-fixed-hash (make-hash-table :test 'equal))
+        ;; (with-slots (map) (ergoemacs-get-fixed-map obj 'log-edit-mode-map)
+        ;;   (setq ergoemacs-debug-keymap--temp-map map)
+        ;;   (message "%s" (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")))
+        ))
     ret))
 
 (defmethod ergoemacs-theme-component-map-list-md5 ((obj ergoemacs-theme-component-map-list))
