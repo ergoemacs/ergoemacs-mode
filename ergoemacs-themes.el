@@ -1049,6 +1049,8 @@
   "Remaps for ergoemacs-mode"
   (when undo-tree-mode
     (global-set-key [remap ergoemacs-redo] 'undo-tree-redo))
+  (when mark-active
+    (global-set-key (kbd "TAB") 'indent-region))
   (when ergoemacs-mode
     (global-set-key [remap eshell] 'ergoemacs-eshell-here)
     (global-set-key [remap powershell] 'ergoemacs-powershell-here)
