@@ -1390,7 +1390,7 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
     ret))
 
 (defvar ergoemacs-applied-inits '())
-
+(defvar ergoemacs-custom-applied-variables '())
 (defmethod ergoemacs-apply-inits-obj ((obj ergoemacs-theme-component-map-list))
   (dolist (init (ergoemacs-get-inits obj))
     (cond
@@ -1415,13 +1415,17 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
       (push (list (nth 0 init) (if (symbol-value (nth 0 init)) 1 -1))
             ergoemacs-applied-inits)
       ;; Minor mode toggle... (minor-mode deferred-arg)
-      (funcall (nth 0 init) (funcall (nth 1 init))))
+      (if (custom-variable-p (nth 0 init))
+          (custom-set-minor-mode (nth 0 init) (funcall (nth 1 init)))
+        (funcall (nth 0 init) (funcall (nth 1 init)))))
      (t
       ;; (Nth 0 Init)iable state change
       (push (list (nth 0 init) (symbol-value (nth 0 init)))
             ergoemacs-applied-inits)
       (if (custom-variable-p (nth 0 init))
-          (customize-set-variable (nth 0 init) (funcall (nth 1 init)))
+          (progn
+            (pushnew (nth 0 init) ergoemacs-custom-applied-variables)
+            (customize-set-variable (nth 0 init) (funcall (nth 1 init))))
         (set (nth 0 init) (funcall (nth 1 init))))))))
 
 (defun ergoemacs-remove-inits ()
@@ -1441,7 +1445,9 @@ This assumes the variables are stored in `ergoemacs-applied-inits'"
             (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))))
        ((and (string-match-p "-mode$" (symbol-name var))
              (ignore-errors (commandp var t)))
-        (funcall var val))
+        (if (custom-variable-p var)
+            (custom-set-minor-mode var val)
+          (funcall var val)))
        ((custom-variable-p var)
         (customize-set-variable var val))
        (t
@@ -2368,10 +2374,10 @@ This respects `ergoemacs-theme-options'."
     components))
 
 ;;;###autoload
-(defun ergoemacs-theme-option-off (option)
+(defun ergoemacs-theme-option-off (option &optional no-custom)
   "Turns OPTION off.
 Uses `ergoemacs-theme-option-on'."
-  (ergoemacs-theme-option-on option 'off))
+  (ergoemacs-theme-option-on option no-custom 'off))
 
 (defun ergoemacs-require (option &optional theme type)
   "Requires an OPTION on ergoemacs themes.
@@ -2419,32 +2425,35 @@ theme, but assumed to be disabled by default.
           (setq theme-plist (plist-put theme-plist ':optional-off off))
           (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
                    ergoemacs-theme-hash)))))
-  (ergoemacs-theme-option-on option))
+  (ergoemacs-theme-option-on option t))
 
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
 ;;;###autoload
-(defun ergoemacs-theme-option-on (option &optional off)
+(defun ergoemacs-theme-option-on (option &optional no-custom off)
   "Turns OPTION on.
 When OPTION is a list turn on all the options in the list
 If OFF is non-nil, turn off the options instead."
   (if (eq (type-of option) 'cons)
       (dolist (new-option option)
         (let (ergoemacs-mode)
-          (ergoemacs-theme-option-on new-option off)))
-    (let (found)
-      (setq ergoemacs-theme-options
-            (mapcar
-             (lambda(elt)
-               (if (not (eq (nth 0 elt) option))
-                   elt
-                 (setq found t)
-                 (if off
-                     (list option 'off)
-                   (list option 'on))))
-             ergoemacs-theme-options))
+          (ergoemacs-theme-option-on new-option no-custom off)))
+    (let* (found
+          (tmp (mapcar
+                (lambda(elt)
+                  (if (not (eq (nth 0 elt) option))
+                      elt
+                    (setq found t)
+                    (if off
+                        (list option 'off)
+                      (list option 'on))))
+                ergoemacs-theme-options)))
       (unless found
         (push (if off (list option 'off) (list option 'on))
-              ergoemacs-theme-options))))
+              tmp))
+      (if no-custom
+          (setq ergoemacs-theme-options tmp)
+        (customize-mark-as-set 'ergoemacs-theme-options)
+        (customize-set-variable 'ergoemacs-theme-options tmp))))
   (when ergoemacs-mode
     (ergoemacs-mode -1)
     (ergoemacs-mode 1)))
@@ -2567,7 +2576,8 @@ If OFF is non-nil, turn off the options instead."
          (lambda(theme)
            `(,(intern theme) menu-item ,(concat theme " - " (plist-get (gethash theme ergoemacs-theme-hash) ':description))
              (lambda() (interactive)
-               (ergoemacs-set-default 'ergoemacs-theme ,theme))
+               (customize-set-variable 'ergoemacs-theme ,theme)
+               (customize-mark-as-set 'ergoemacs-theme))
              :button (:radio . (string= (or ergoemacs-theme "standard") ,theme))))
          (sort (ergoemacs-get-themes) 'string<))))
     ,(ergoemacs-keymap-menu-theme-options theme)
@@ -2580,24 +2590,28 @@ If OFF is non-nil, turn off the options instead."
        menu-item "Ctrl+C and Ctrl+X are for Emacs Commands"
        (lambda()
          (interactive)
-         (set-default 'ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
+         (customize-set-variable 'ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
+         (customize-mark-as-set 'ergoemacs-handle-ctl-c-or-ctl-x))
        :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)))
       (c-c-c-x-cua
        menu-item "Ctrl+C and Ctrl+X are only Copy/Cut"
        (lambda()
          (interactive)
-         (set-default 'ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut))
+         (customize-set-variable 'ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+         (customize-mark-as-set 'ergoemacs-handle-ctl-c-or-ctl-x))
        :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)))
       (c-c-c-x-both
        menu-item "Ctrl+C and Ctrl+X are both Emacs Commands & Copy/Cut"
        (lambda()
          (interactive)
-         (set-default 'ergoemacs-handle-ctl-c-or-ctl-x 'both))
+         (customize-set-variable 'ergoemacs-handle-ctl-c-or-ctl-x 'both)
+         (customize-mark-as-set 'ergoemacs-handle-ctl-c-or-ctl-x))
        :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
       (c-c-c-x-timeout
        menu-item "Customize Ctrl+C and Ctrl+X Cut/Copy Timeout"
        (lambda() (interactive)
-         (customize-variable 'ergoemacs-ctl-c-or-ctl-x-delay)))))
+         (customize-variable 'ergoemacs-ctl-c-or-ctl-x-delay)
+         (customize-mark-as-set 'ergoemacs-handle-ctl-c-or-ctl-x)))))
     (c-v
      menu-item "Paste behavior"
      (keymap
@@ -2605,19 +2619,22 @@ If OFF is non-nil, turn off the options instead."
        menu-item "Repeating Paste pastes multiple times"
        (lambda()
          (interactive)
-         (set-default 'ergoemacs-smart-paste nil))
+         (customize-set-variable 'ergoemacs-smart-paste nil)
+         (customize-mark-as-set 'ergoemacs-smart-paste))
        :button (:radio . (eq ergoemacs-smart-paste 'nil)))
       (c-v-cycle
        menu-item "Repeating Paste cycles through previous pastes"
        (lambda()
          (interactive)
-         (set-default 'ergoemacs-smart-paste t))
+         (customize-set-variable 'ergoemacs-smart-paste t)
+         (customize-mark-as-set 'ergoemacs-smart-paste))
        :button (:radio . (eq ergoemacs-smart-paste 't)))
       (c-v-kill-ring
        menu-item "Repeating Paste starts browse-kill-ring"
        (lambda()
          (interactive)
-         (set-default 'ergoemacs-smart-paste 'browse-kill-ring))
+         (customize-set-variable 'ergoemacs-smart-paste 'browse-kill-ring)
+         (customize-mark-as-set 'ergoemacs-smart-paste))
        :enable (condition-case err (interactive-form 'browse-kill-ring)
                  (error nil))
        :button (:radio . (eq ergoemacs-smart-paste 'browse-kill-ring)))))
@@ -2639,7 +2656,8 @@ If OFF is non-nil, turn off the options instead."
     (ergoemacs-menus
      menu-item "Use Menus"
      (lambda() (interactive)
-       (setq ergoemacs-use-menus (not ergoemacs-use-menus))
+       (customize-set-variable 'ergoemacs-use-menus (not ergoemacs-use-menus))
+       (customize-mark-as-set 'ergoemacs-use-menus)
        (if ergoemacs-use-menus
            (progn
              (require 'ergoemacs-menus)

@@ -98,6 +98,7 @@
 (defun ergoemacs-shortcut-for-command (cmd)
   "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
   (cond
+   ((not cmd))
    ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
          (eq cmd 'ergoemacs-cut-line-or-region)) (ergoemacs-kbd-to-key "C-x") )
    ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))

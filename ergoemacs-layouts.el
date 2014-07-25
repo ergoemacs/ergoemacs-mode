@@ -329,7 +329,8 @@
 (declare-function ergoemacs-set-default "ergoemacs-mode.el")
 (defun ergoemacs-set-layout (layout)
   "Set the ergoemacs layout to LAYOUT."
-  (ergoemacs-set-default 'ergoemacs-keyboard-layout layout))
+  (customize-set-variable 'ergoemacs-keyboard-layout layout)
+  (customize-mark-as-set 'ergoemacs-keyboard-layout))
 
 (defun ergoemacs-get-layouts-menu ()
   "Gets the keymap entry for ergoemacs-layouts."

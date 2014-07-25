@@ -122,23 +122,31 @@ running interactively.
 (defvar ergoemacs-theme)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme-options)
+(defvar ergoemacs-custom-applied-variables)
 (defun ergoemacs-save-options-to-customized (&optional no-save)
   (unless noninteractive
-    (let (ergoemacs-mode)
-      (customize-set-variable 'ergoemacs-smart-paste ergoemacs-smart-paste)
-      (customize-set-variable 'ergoemacs-use-menus ergoemacs-use-menus)
-      (customize-set-variable 'ergoemacs-theme (or ergoemacs-theme "standard"))
-      (customize-set-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-      (customize-set-variable 'ergoemacs-ctl-c-or-ctl-x-delay ergoemacs-ctl-c-or-ctl-x-delay)
-      (customize-set-variable 'ergoemacs-handle-ctl-c-or-ctl-x ergoemacs-handle-ctl-c-or-ctl-x)
-      (customize-set-variable 'ergoemacs-use-menus ergoemacs-use-menus)
-      (customize-set-variable 'ergoemacs-theme-options ergoemacs-theme-options)
-      (unless no-save
-        (customize-save-customized)))))
+    (let (ergoemacs-mode found)
+      (unless no-save ;; Now check to see if it needs to be saved.
+        (catch 'found-unsaved
+          (mapatoms (lambda (symbol)
+                      (and (or (get symbol 'customized-face)
+                               (get symbol 'customized-face-comment))
+                           (custom-facep symbol)
+                           (not (memq symbol ergoemacs-custom-applied-variables))
+                           (setq found t)
+                           (throw 'found-unsaved t))
+                      (and (or (get symbol 'customized-value)
+                               (get symbol 'customized-variable-comment))
+                           (boundp symbol)
+                           (not (memq symbol ergoemacs-custom-applied-variables))
+                           (setq found t)
+                           (throw 'found-unsaved t)))))
+        (when found
+          (customize-save-customized))))))
 
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
 (declare-function ergoemacs-ini-mode "ergoemacs-mode.el")
-(defun ergoemacs-exit-customize-save-customized ()
+(defun ergoemacs-exit-customize-save-customized (&optional reinit)
   "Call `customize-save-customized' on exit emacs.
 
 Also:
@@ -152,19 +160,10 @@ Also:
 If an error occurs, display the error, and sit for 2 seconds before exiting"
   (ergoemacs-mode -1)
   (ergoemacs-ini-mode 1)
-  (customize-save-variable 'ergoemacs-mode nil)
-  (customize-save-variable 'ergoemacs-ini-mode t)
-  (ergoemacs-save-options-to-customized 'no-save)
-  (cond
-   (noninteractive)
-   ((not (or custom-file user-init-file))
-    (message "Not saving; \"emacs -q\" would overwrite customizations")
-    (sit-for 1))
-   ((and (null custom-file) init-file-had-error)
-    (message "Cannot save customizations; init file was not fully loaded")
-    (sit-for 1))
-   (t
-    (ignore-errors (customize-save-customized)))))
+  (ignore-errors (ergoemacs-save-options-to-customized))
+  (when reinit
+    (ergoemacs-ini-mode -1)
+    (ergoemacs-mode 1)))
 
 (defun ergoemacs-ctl-c (&optional arg)
   "Ergoemacs C-c key."
