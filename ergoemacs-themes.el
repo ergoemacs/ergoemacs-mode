@@ -366,7 +366,8 @@
     (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
     (define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
     (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
-    (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)))
+    (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill))
+  )
 
 (ergoemacs-theme-component fixed-bold-italic ()
   "Fixed keys for bold and italic"
@@ -992,6 +993,12 @@
     :modify-map t
     (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode)))
 
+(ergoemacs-theme-component dired-tab ()
+  "TAB expands a directory."
+  (when dired-mode-hook
+    :modify-map t
+    (define-key dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir)))
+
 (ergoemacs-theme-component guru ()
   "Unbind some commonly used keys such as <left> and <right> to get in the habit of using ergoemacs keybindings."
   (global-unset-key (kbd "<left>"))
@@ -1044,6 +1051,8 @@
   (when ido-mode
     (global-set-key [remap execute-extended-command] 'smex))
   (setq smex-prompt-string (substitute-command-keys "\\[execute-extended-command] ")))
+
+
 
 (ergoemacs-theme-component ergoemacs-remaps ()
   "Remaps for ergoemacs-mode"
@@ -1129,6 +1138,7 @@
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
   :components '(copy
+                dired-tab
                 dired-to-wdired
                 execute
                 fixed-newline
@@ -1176,6 +1186,7 @@
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
   :components '(copy
+                dired-tab
                 dired-to-wdired
                 execute
                 fixed-newline
