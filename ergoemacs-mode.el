@@ -479,6 +479,7 @@ When REMOVE is true, remove the emulations."
 (declare-function ergoemacs-theme-remove "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-enable-c-advices "ergoemacs-advices.el")
 (declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
+
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
