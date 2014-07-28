@@ -40,22 +40,6 @@
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defun ergoemacs-recentf-mode (&optional arg)
-  "Toggle \"Open Recent\" menu (Recentf mode).
-With a prefix argument ARG, enable Recentf mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-Recentf mode if ARG is omitted or nil.
-
-When Recentf mode is enabled, a \"Open Recent\" submenu is
-displayed in the \"File\" menu, containing a list of files that
-were operated on recently.
-
-This wrapper only calls `recentf-mode' when `ergoemacs-mode' is
-running interactively.
-"
-  (unless noninteractive
-    (recentf-mode arg)))
-
 
 (defvar ergoemacs-delete-functions
   '(delete-backward-char delete-char kill-word backward-kill-word)
@@ -122,27 +106,6 @@ running interactively.
 (defvar ergoemacs-theme)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme-options)
-(defvar ergoemacs-custom-applied-variables)
-(defun ergoemacs-save-options-to-customized (&optional no-save)
-  (unless noninteractive
-    (let (ergoemacs-mode found)
-      (unless no-save ;; Now check to see if it needs to be saved.
-        (catch 'found-unsaved
-          (mapatoms (lambda (symbol)
-                      (and (or (get symbol 'customized-face)
-                               (get symbol 'customized-face-comment))
-                           (custom-facep symbol)
-                           (not (memq symbol ergoemacs-custom-applied-variables))
-                           (setq found t)
-                           (throw 'found-unsaved t))
-                      (and (or (get symbol 'customized-value)
-                               (get symbol 'customized-variable-comment))
-                           (boundp symbol)
-                           (not (memq symbol ergoemacs-custom-applied-variables))
-                           (setq found t)
-                           (throw 'found-unsaved t)))))
-        (when found
-          (customize-save-customized))))))
 
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
 (declare-function ergoemacs-ini-mode "ergoemacs-mode.el")
@@ -155,12 +118,12 @@ Also:
 - Activates `ergoemacs-ini-mode', to try to run `ergoemacs-mode'
   when called for or at the last second.
 - Saves `ergoemacs-mode' options by calling
-  `ergoemacs-save-options-to-customized'
+  `customize-save-customized'
 
 If an error occurs, display the error, and sit for 2 seconds before exiting"
   (ergoemacs-mode -1)
   (ergoemacs-ini-mode 1)
-  (ignore-errors (ergoemacs-save-options-to-customized))
+  (ignore-errors (unless noninteractive (customize-save-customized)))
   (when reinit
     (ergoemacs-ini-mode -1)
     (ergoemacs-mode 1)))

@@ -177,7 +177,7 @@
           (customize-group "recentf")
           :help "Customize recently opened files menu and options"
           :active t]))
-  (ergoemacs-recentf-mode 1)
+  (recentf-mode (if noninteractive -1 1))
   ;; (setq cua--rectangle-modifier-key ergoemacs-cua-rect-modifier)
   ;; (setq cua--rectangle-keymap (make-sparse-keymap))
   ;; (setq cua--rectangle-initialized nil)

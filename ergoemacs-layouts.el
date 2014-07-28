@@ -326,11 +326,10 @@
                 `(const :tag ,elt :value ,elt))
               (sort (ergoemacs-get-layouts t) 'string<))))
 
-(declare-function ergoemacs-set-default "ergoemacs-mode.el")
+(declare-function ergoemacs-save "ergoemacs-theme-engine.el")
 (defun ergoemacs-set-layout (layout)
   "Set the ergoemacs layout to LAYOUT."
-  (customize-set-variable 'ergoemacs-keyboard-layout layout)
-  (customize-mark-as-set 'ergoemacs-keyboard-layout))
+  (ergoemacs-save 'ergoemacs-keyboard-layout layout))
 
 (defun ergoemacs-get-layouts-menu ()
   "Gets the keymap entry for ergoemacs-layouts."

@@ -1,4 +1,4 @@
-;; ergoemacs-theme-engine.el --- Engine for ergoemacs-themes -*- lexical-binding: t -*- 
+;; ergoemacs-theme-engine.el --- Engine for ergoemacs-themes -*- lexical-binding: t -*-
 
 ;; Copyright © 2014  Free Software Foundation, Inc.
 
@@ -1389,8 +1389,91 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
         (setq ret (append ret (oref map init)))))
     ret))
 
+(defun ergoemacs-reset (variable)
+  "Sets VARIABLE to VALUE without disturbing customize or setq.
+If FORCE is true, set it even if it changed.
+"
+  (let* ((minor-mode-p (and (string= "mode" (substring (symbol-name variable) -4))
+                            (commandp variable t)))
+         (value (get variable 'ergoemacs-save-value))
+         (new-value (or (and (not minor-mode-p) value)
+                        (and (integerp value) (< 0 value) value)
+                        (and (not (integerp value)) value)
+                        ;; Otherwise negative integers are the same as nil
+                        )))
+    (put variable 'ergoemacs-save-value nil)
+    (if (and minor-mode-p (not (boundp variable)))
+        (funcall variable new-value)
+      (if (custom-variable-p variable)
+          (progn
+            (customize-set-variable variable new-value)
+            (customize-mark-to-save variable)
+            (when (and minor-mode-p (not new-value))
+              (funcall variable -1)))
+        (set variable new-value)
+        (set-default variable new-value)
+        (when minor-mode-p ;; Change minor mode
+          (if new-value
+              (funcall variable new-value)
+            (funcall variable -1)))))))
+
+;;;###autoload
+(defun ergoemacs-set (variable value &optional force)
+  "Sets VARIABLE to VALUE without disturbing customize or setq.
+If FORCE is true, set it even if it changed.
+"
+  (let* ((minor-mode-p (and (string= "mode" (substring (symbol-name variable) -4))
+                            (commandp variable t)))
+         (new-value (or (and (not minor-mode-p) value)
+                        (and (integerp value) (< 0 value) value)
+                        (and (not (integerp value)) value))) ; Otherwise negative integers are the same as nil
+         (last-value (ignore-errors (symbol-value variable))))
+    (when (and minor-mode-p (not last-value))
+      (setq last-value -1))
+    (cond
+     ((and minor-mode-p (not (boundp variable)))
+      (message "Malformed Minor Mode: %s" variable)
+      (unless (get variable 'ergoemacs-save-value)
+        (put variable 'ergoemacs-save-value (if new-value nil 1)))
+      (funcall variable new-value))
+     ((not (equal last-value value))
+      (cond
+       ((and (custom-variable-p variable) (or force (not (get variable 'save-value))))
+        ;; (message "Changed customizable %s" variable)
+        (unless (get variable 'ergoemacs-save-value)
+          (put variable 'ergoemacs-save-value (symbol-value variable)))
+        (customize-set-variable variable new-value)
+        (customize-mark-to-save variable)
+        (when (and minor-mode-p (not new-value))
+          (funcall variable -1)))
+       ((or force (equal (symbol-value variable) (default-value variable)))
+        (unless (get variable 'ergoemacs-save-value)
+          (put variable 'ergoemacs-save-value (symbol-value variable)))
+        ;; (message "Changed variable %s" variable)
+        (set variable new-value)
+        (set-default variable new-value)
+        (unless (get variable 'ergoemacs-save-value)
+          (put variable 'ergoemacs-save-value (symbol-value variable)))
+        (when minor-mode-p
+          (if new-value
+              (funcall variable new-value)
+            (funcall variable -1))))
+       (t
+        ;; (message "%s changed outside ergoemacs-mode, respecting." variable)
+        )))
+     (t
+      ;; (message "%s not changed" variable)
+      ))))
+
+;;;###autoload
+(defun ergoemacs-save (variable value)
+  "Set VARIABLE to VALUE and tell customize it needs to be saved."
+  (if (not (custom-variable-p variable))
+      (set variable value)
+    (customize-set-variable variable value)
+    (customize-mark-as-set variable)))
+
 (defvar ergoemacs-applied-inits '())
-(defvar ergoemacs-custom-applied-variables '())
 (defmethod ergoemacs-apply-inits-obj ((obj ergoemacs-theme-component-map-list))
   (dolist (init (ergoemacs-get-inits obj))
     (cond
@@ -1410,30 +1493,18 @@ ergoemacs-get-keymaps-for-hook OBJ HOOK")
         (push (list (nth 0 init) (nth 1 init)
                     (list (not add-hook-p) append-p local-p))
               ergoemacs-applied-inits)))
-     ((and (string-match-p "-mode$" (symbol-name (nth 0 init)))
-           (ignore-errors (commandp (nth 0 init) t)))
-      (push (list (nth 0 init) (if (symbol-value (nth 0 init)) 1 -1))
-            ergoemacs-applied-inits)
-      ;; Minor mode toggle... (minor-mode deferred-arg)
-      (if (custom-variable-p (nth 0 init))
-          (custom-set-minor-mode (nth 0 init) (funcall (nth 1 init)))
-        (funcall (nth 0 init) (funcall (nth 1 init)))))
      (t
       ;; (Nth 0 Init)iable state change
       (push (list (nth 0 init) (symbol-value (nth 0 init)))
             ergoemacs-applied-inits)
-      (if (custom-variable-p (nth 0 init))
-          (progn
-            (pushnew (nth 0 init) ergoemacs-custom-applied-variables)
-            (customize-set-variable (nth 0 init) (funcall (nth 1 init))))
-        (set (nth 0 init) (funcall (nth 1 init))))))))
+      (ergoemacs-set (nth 0 init) (funcall (nth 1 init)))))))
 
 (defun ergoemacs-remove-inits ()
   "Remove the applied initilizations of modes and variables.
 This assumes the variables are stored in `ergoemacs-applied-inits'"
   (dolist (init ergoemacs-applied-inits)
     (let ((var (nth 0 init))
-          (val (nth 1 init))
+          ;; (val (nth 1 init))
           (hook (nth 2 init)))
       (cond
        (hook
@@ -1443,15 +1514,8 @@ This assumes the variables are stored in `ergoemacs-applied-inits'"
           (if add-hook-p
               (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
             (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))))
-       ((and (string-match-p "-mode$" (symbol-name var))
-             (ignore-errors (commandp var t)))
-        (if (custom-variable-p var)
-            (custom-set-minor-mode var val)
-          (funcall var val)))
-       ((custom-variable-p var)
-        (customize-set-variable var val))
        (t
-        (set var val)))))
+        (ergoemacs-reset var)))))
   (setq ergoemacs-applied-inits '()))
 
 (defun ergoemacs-theme--install-shortcuts-list (shortcut-list keymap lookup-keymap full-shortcut-map-p)
@@ -2011,10 +2075,10 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
        ergoemacs-theme-component-maps--curr-component
        map key def))))
 
-(defun ergoemacs-set (symbol newval &optional hook)
+(defun ergoemacs-theme--set (symbol newval &optional hook)
   (if (not (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component))
-      (warn "`ergoemacs-set' is meant to be called in a theme definition.")
-    ;; ergoemacs-set definition.
+      (warn "`ergoemacs-theme--set' is meant to be called in a theme definition.")
+    ;; ergoemacs-theme--set definition.
     (with-slots (init) ergoemacs-theme-component-maps--curr-component
       (push (list symbol newval hook) init)
       (oset ergoemacs-theme-component-maps--curr-component
@@ -2024,7 +2088,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
   "Changes the theme component version to VERSION."
   (if (not (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component))
       (warn "`ergoemacs-theme-component--version' is meant to be called in a theme definition.")
-    ;; ergoemacs-set definition.
+    ;; ergoemacs-theme--set definition.
     (push ergoemacs-theme-component-maps--curr-component
           ergoemacs-theme-component-maps--versions)
     (setq ergoemacs-theme-component-maps--curr-component
@@ -2452,8 +2516,7 @@ If OFF is non-nil, turn off the options instead."
               tmp))
       (if no-custom
           (setq ergoemacs-theme-options tmp)
-        (customize-mark-as-set 'ergoemacs-theme-options)
-        (customize-set-variable 'ergoemacs-theme-options tmp))))
+        (ergoemacs-save 'ergoemacs-theme-options tmp))))
   (when ergoemacs-mode
     (ergoemacs-mode -1)
     (ergoemacs-mode 1)))
@@ -2576,8 +2639,7 @@ If OFF is non-nil, turn off the options instead."
          (lambda(theme)
            `(,(intern theme) menu-item ,(concat theme " - " (plist-get (gethash theme ergoemacs-theme-hash) ':description))
              (lambda() (interactive)
-               (customize-set-variable 'ergoemacs-theme ,theme)
-               (customize-mark-as-set 'ergoemacs-theme))
+               (ergoemacs-save 'ergoemacs-theme ,theme))
              :button (:radio . (string= (or ergoemacs-theme "standard") ,theme))))
          (sort (ergoemacs-get-themes) 'string<))))
     ,(ergoemacs-keymap-menu-theme-options theme)
@@ -2590,28 +2652,24 @@ If OFF is non-nil, turn off the options instead."
        menu-item "Ctrl+C and Ctrl+X are for Emacs Commands"
        (lambda()
          (interactive)
-         (customize-set-variable 'ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
-         (customize-mark-as-set 'ergoemacs-handle-ctl-c-or-ctl-x))
+         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
        :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)))
       (c-c-c-x-cua
        menu-item "Ctrl+C and Ctrl+X are only Copy/Cut"
        (lambda()
          (interactive)
-         (customize-set-variable 'ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-         (customize-mark-as-set 'ergoemacs-handle-ctl-c-or-ctl-x))
+         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut))
        :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)))
       (c-c-c-x-both
        menu-item "Ctrl+C and Ctrl+X are both Emacs Commands & Copy/Cut"
        (lambda()
          (interactive)
-         (customize-set-variable 'ergoemacs-handle-ctl-c-or-ctl-x 'both)
-         (customize-mark-as-set 'ergoemacs-handle-ctl-c-or-ctl-x))
+         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'both))
        :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
       (c-c-c-x-timeout
        menu-item "Customize Ctrl+C and Ctrl+X Cut/Copy Timeout"
        (lambda() (interactive)
-         (customize-variable 'ergoemacs-ctl-c-or-ctl-x-delay)
-         (customize-mark-as-set 'ergoemacs-handle-ctl-c-or-ctl-x)))))
+         (ergoemacs-save 'ergoemacs-ctl-c-or-ctl-x-delay)))))
     (c-v
      menu-item "Paste behavior"
      (keymap
@@ -2619,22 +2677,19 @@ If OFF is non-nil, turn off the options instead."
        menu-item "Repeating Paste pastes multiple times"
        (lambda()
          (interactive)
-         (customize-set-variable 'ergoemacs-smart-paste nil)
-         (customize-mark-as-set 'ergoemacs-smart-paste))
+         (ergoemacs-save 'ergoemacs-smart-paste nil))
        :button (:radio . (eq ergoemacs-smart-paste 'nil)))
       (c-v-cycle
        menu-item "Repeating Paste cycles through previous pastes"
        (lambda()
          (interactive)
-         (customize-set-variable 'ergoemacs-smart-paste t)
-         (customize-mark-as-set 'ergoemacs-smart-paste))
+         (ergoemacs-save 'ergoemacs-smart-paste t))
        :button (:radio . (eq ergoemacs-smart-paste 't)))
       (c-v-kill-ring
        menu-item "Repeating Paste starts browse-kill-ring"
        (lambda()
          (interactive)
-         (customize-set-variable 'ergoemacs-smart-paste 'browse-kill-ring)
-         (customize-mark-as-set 'ergoemacs-smart-paste))
+         (ergoemacs-save 'ergoemacs-smart-paste 'browse-kill-ring))
        :enable (condition-case err (interactive-form 'browse-kill-ring)
                  (error nil))
        :button (:radio . (eq ergoemacs-smart-paste 'browse-kill-ring)))))
@@ -2656,8 +2711,7 @@ If OFF is non-nil, turn off the options instead."
     (ergoemacs-menus
      menu-item "Use Menus"
      (lambda() (interactive)
-       (customize-set-variable 'ergoemacs-use-menus (not ergoemacs-use-menus))
-       (customize-mark-as-set 'ergoemacs-use-menus)
+       (ergoemacs-save 'ergoemacs-use-menus (not ergoemacs-use-menus))
        (if ergoemacs-use-menus
            (progn
              (require 'ergoemacs-menus)
@@ -2669,7 +2723,7 @@ If OFF is non-nil, turn off the options instead."
      menu-item "Save Settings for Future Sessions"
      (lambda ()
        (interactive)
-       (ergoemacs-save-options-to-customized)))
+       (ergoemacs-exit-customize-save-customized)))
     (ergoemacs-customize
      menu-item "Customize ErgoEmacs"
      (lambda ()
