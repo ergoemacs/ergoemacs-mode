@@ -775,9 +775,7 @@ This is done by checking if this is a command that supports shift selection or c
 
 (defun ergoemacs-smart-function-p (var)
   "Is VAR an `ergoemacs-mode' smart function?"
-  (or (not (symbolp var))
-      (and (boundp var)
-           (memq (symbol-value var) ergoemacs-smart-functions))))
+  (and (symbolp var) (fboundp var) (memq var ergoemacs-smart-functions)))
 
 (defvar ergoemacs-last-command nil)
 (defvar ergoemacs-mark-active)

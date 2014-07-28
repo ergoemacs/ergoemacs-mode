@@ -716,8 +716,7 @@ In addition, when the function is called:
    (t
     (dolist (var ergoemacs-this-command-fake)
       ;; should include `this-command' and `this-original-command'
-      (when (ergoemacs-smart-function-p var)
-        (set var function)))
+      (set var function))
     (let ((this-command-keys-shift-translated
            (or this-command-keys-shift-translated
                (if ergoemacs-shift-translated t nil))))
@@ -824,7 +823,6 @@ to the appropriate values for `ergoemacs-read-key'.
 
 (defvar ergoemacs-command-shortcuts-hash)
 (defvar ergoemacs-extract-map-hash)
-(defvar refix-keys)
 (defvar ergoemacs-unbind-keymap)
 (defvar pretty-key-undefined)
 (defvar ergoemacs-modal-save)
@@ -973,7 +971,7 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
                ((progn
                   (setq fn (or
                             ;; Call major/minor mode key?
-                            (ergoemacs-with-major-and-minor-modes 
+                            (ergoemacs-with-major-and-minor-modes
                              (ergoemacs-real-key-binding key))
                             ;; Call unbound or global key?
                             (if (eq (lookup-key ergoemacs-unbind-keymap key) 'ergoemacs-undefined) 'ergoemacs-undefined
@@ -1002,7 +1000,7 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
                   (ergoemacs-read-key-call fn nil key)
                   (setq ergoemacs-single-command-keys nil)
                   (setq ret 'function-global-or-override)))))
-          ;; Fix tempoary overlay
+          ;; Fix temporary overlay 
           (when (and tmp-overlay (not ergoemacs-read-key-overriding-overlay-save))
             (delete-overlay tmp-overlay)))
         ret)
