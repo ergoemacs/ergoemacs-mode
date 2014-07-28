@@ -571,7 +571,7 @@ It will replace anything defined by `ergoemacs-translation'"
            (and (progn
                   (setq tmp (key-binding "q"))
                   (commandp tmp t))
-               (not (string-match "self-insert" (symbol-name tmp)))))
+               (not (ignore-errors (string-match "self-insert" (symbol-name tmp))))))
       (call-interactively tmp))
      ((and (not (region-active-p))
            (and (progn
