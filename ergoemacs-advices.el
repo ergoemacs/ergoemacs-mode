@@ -61,12 +61,52 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
     (remove-hook 'ergoemacs-pre-command-hook function local))
    (t
     ad-do-it)))
-(defadvice describe-buffer-bindings (around ergoemacs-describe-buffer-bindings activate)
+
+(defadvice describe-buffer-bindings (around ergoemacs-describe-buffer-bindings (buffer &optional prefix menus) activate)
   "Describes buffer bindings without `ergoemacs-read-input-keys' enabled"
   (let (ergoemacs-read-input-keys
         ergoemacs-read-shortcut-keys
         ergoemacs-read-no-shortcut-keys)
-    ad-do-it))
+    ad-do-it
+    ;; Replace ergoemacs-shortcuts
+    (let (tmp)
+      (save-match-data
+        (save-excursion
+          (goto-char (point-min))
+          (while (re-search-forward "^\\(.*?\\)\\([ \t]*\\)ergoemacs-shortcut.*$" nil t)
+            (cond
+             ((string-match-p " [.][.] " (match-string 1))
+              ;; Expand these
+              (let* ((space (match-string 2))
+                     (dots (match-string 1))
+                     (pt (point))
+                     (begin (save-match-data
+                              (and (string-match "^\\(.*\\) [.][.]" dots)
+                                   (read-kbd-macro (match-string 1 dots) t))))
+                     (begin-i (elt (substring begin -1) 0))
+                     (end (save-match-data
+                            (and (string-match "[.][.] \\(.*\\)$" dots)
+                                 (elt (substring (read-kbd-macro (match-string 1 dots) t) -1) 0))))
+                     tmp tmp2)
+                (setq begin (substring begin 0 -1))
+                (replace-match "")
+                (while (<= begin-i end)
+                  (setq tmp (vconcat begin (vector begin-i))
+                        tmp2 (ergoemacs-shortcut-remap tmp t))
+                  (unless tmp2
+                    (setq tmp2 (gethash tmp ergoemacs-command-shortcuts-hash))
+                    (when tmp2
+                      (setq tmp2 (format "Shortcut to %s %s" (ergoemacs-pretty-key (car (car tmp2)))
+                                         (if (car (cdr (car tmp2)))
+                                             (nth 5 (gethash (car (cdr (car tmp2))) ergoemacs-translation-text))
+                                           "")))))
+                  (insert (format "%s%s%s\n" (key-description tmp) space tmp2))
+                  (setq begin-i (+ 1 begin-i)))))
+             ((progn
+                (setq tmp (ergoemacs-shortcut-remap (save-match-data  (read-kbd-macro (match-string 1) t)) t))
+                tmp)
+              (replace-match (format "\\1\\2%s" tmp))))))))))
+
 (defvar ergoemacs-global-map)
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.

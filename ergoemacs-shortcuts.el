@@ -1679,20 +1679,25 @@ user-defined keys.
         (setq ret (append ret2 ret)))
       ret)))
 
-(defun ergoemacs-shortcut-remap (function)
+(defun ergoemacs-shortcut-remap (function &optional dont-call)
   "Runs the FUNCTION or whatever `ergoemacs-shortcut-remap-list' returns.
-Will use KEYS or `this-single-command-keys', if cannot find the
-original key binding.
+When DONT-CALL is non nil, dont actually call the function, return it instead.
 "
-  (let ((fn-lst (ergoemacs-shortcut-remap-list function))
-        (fn function)
-        send-fn)
-    (when fn-lst
-      (setq fn (nth 0 (nth 0 fn-lst))))
-    (setq send-fn (or (command-remapping fn (point)) fn))
-    (unless (commandp send-fn t)
-      (setq send-fn fn))
-    (ergoemacs-read-key-call send-fn)))
+  (save-match-data
+    (if (commandp function t)
+        (let ((fn-lst (ergoemacs-shortcut-remap-list function))
+              (fn function)
+              send-fn)
+          (when fn-lst
+            (setq fn (nth 0 (nth 0 fn-lst))))
+          (setq send-fn (or (command-remapping fn (point)) fn))
+          (unless (commandp send-fn t)
+            (setq send-fn fn))
+          (if dont-call send-fn
+            (ergoemacs-read-key-call send-fn)))
+      (let ((hash (gethash function ergoemacs-command-shortcuts-hash)))
+        (when (and hash (eq 'global (car (cdr hash))) (commandp (car hash)))
+          (ergoemacs-shortcut-remap (car hash) dont-call))))))
 
 (declare-function ergoemacs-theme--install-shortcuts-list "ergoemacs-theme-engine.el")
 (defun ergoemacs-install-shortcuts-map (&optional map dont-complete)
