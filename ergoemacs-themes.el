@@ -449,15 +449,6 @@
   (define-key eshell-mode-map (kbd "S-<f12>") 'eshell-next-matching-input-from-input)
   (define-key eshell-mode-map (kbd "<M-f12>") 'eshell-next-matching-input-from-input)
   
-  (when minibuffer-setup-hook
-    :first t
-    (define-key minibuffer-local-map (kbd "<f11>") 'previous-history-element)
-    (define-key minibuffer-local-map (kbd "<f12>") 'next-history-element)
-    (define-key minibuffer-local-map (kbd "<M-f11>") 'previous-matching-history-element)
-    (define-key minibuffer-local-map (kbd "S-<f11>") 'previous-matching-history-element)
-    (define-key minibuffer-local-map (kbd "<M-f12>") 'next-matching-history-element)
-    (define-key minibuffer-local-map (kbd "S-<f12>") 'next-matching-history-element))
-  
   (when isearch-mode-hook
     :modify-map t
     :full-shortcut-map t
@@ -466,10 +457,16 @@
     (define-key isearch-mode-map (kbd "<f12>") 'isearch-ring-advance)
     (define-key isearch-mode-map (kbd "S-<f11>") 'isearch-ring-advance)
     (define-key isearch-mode-map (kbd "S-<f12>") 'isearch-ring-retreat))
+
+  (when icicle-minibuffer-setup-hook
+    (define-key minibuffer-local-map (kbd "<f11>") 'previous-history-element)
+    (define-key minibuffer-local-map (kbd "<f12>") 'next-history-element)
+    (define-key minibuffer-local-map (kbd "S-<f11>") 'next-history-element)
+    (define-key minibuffer-local-map (kbd "S-<f12>") 'previous-history-element))
   
   (when iswitchb-define-mode-map-hook
-    :always t
     :modify-map t
+    :always t
     (define-key iswitchb-mode-map [remap previous-history-element] 'iswitchb-prev-match)
     (define-key iswitchb-mode-map [remap next-history-element] 'iswitchb-next-match)))
 
@@ -575,8 +572,6 @@
   (define-key browse-kill-ring-mode-map (kbd "M-f") 'browse-kill-ring-delete)
   
   (when iswitchb-define-mode-map-hook 
-    :always t
-    :modify-keymap t
     (define-key iswitchb-mode-map [remap backward-char] 'iswitchb-prev-match)
     (define-key iswitchb-mode-map [remap forward-char] 'iswitchb-next-match)))
 
@@ -793,8 +788,6 @@
     (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold))
   
   (when iswitchb-define-mode-map-hook
-    :modify-map t
-    :always t
     (define-key iswitchb-mode-map [remap ergoemacs-toggle-camel-case] 'iswitchb-toggle-case)
     (define-key iswitchb-mode-map [remap ergoemacs-toggle-letter-case] 'iswitchb-toggle-regexp)))
 
@@ -814,11 +807,6 @@
     :full-shortcut-keymap t
     (define-key isearch-mode-map (kbd "<escape>") 'isearch-abort))
   (when org-read-date-minibuffer-setup-hook
-    :always t
-    :modify-map t
-    (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
-  (when minibuffer-setup-hook
-    :first t
     (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
   :version 5.3.7
   (global-set-key (kbd "M-n") 'keyboard-quit))
