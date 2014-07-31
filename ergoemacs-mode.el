@@ -94,11 +94,31 @@ PRE-VECTOR is to help define the full key-vector sequence."
         ;; (message "This: %s %s %s" pre-vector key item)
         )))))
 
-(defun ergoemacs-flatten-composed-keymap (keymap)
+(defvar ergoemacs-movement-functions
+  '(scroll-down
+    move-beginning-of-line move-end-of-line scroll-up
+    scroll-down forward-block backward-block
+    forward-word backward-word next-line previous-line
+    forward-char backward-char ergoemacs-backward-block
+    ergoemacs-forward-block ergoemacs-backward-open-bracket
+    ergoemacs-forward-close-bracket move-end-of-line
+    move-beginning-of-line backward-word forward-word
+    subword-backward subword-forward
+    beginning-of-buffer end-of-buffer)
+  "Movement functions.")
+
+(declare-function ergoemacs-translate "ergoemacs-translate.el")
+(defun ergoemacs-flatten-composed-keymap (keymap &optional force-shifted)
   "Flattens a composed KEYMAP.
-If it is not a composed KEYMAP, return the keymap as is."
+If it is not a composed KEYMAP, return the keymap as is.
+
+This will also install
+`ergoemacs-shortcut-movement-force-shift-select' when
+FORCE-SHIFTED is non-nil.
+"
   (if (not (ignore-errors (and (keymapp keymap) (eq (nth 0 (nth 1 keymap)) 'keymap)))) keymap
     (let* (new-keymap
+           trans
            (remaining (cdr keymap))
            (keymap-list '()))
       (while (keymapp (car remaining))
@@ -109,13 +129,20 @@ If it is not a composed KEYMAP, return the keymap as is."
         (setq new-keymap (make-sparse-keymap)))
       (dolist (sub-keymap keymap-list)
         (ergoemacs-flatten-composed-keymap--define-key sub-keymap new-keymap))
+      (when force-shifted
+        (dolist (move-fn (append ergoemacs-movement-functions
+                                  '(ergoemacs-shortcut-movement)))
+          (dolist (move-key (where-is-internal move-fn new-keymap))
+            (setq trans (plist-get (ergoemacs-translate move-key) ':caps-translated-key))
+            (when (and trans (not (lookup-key new-keymap trans)))
+              (define-key new-keymap trans 'ergoemacs-shortcut-movement-force-shift-select)))))
       new-keymap)))
 
 (when (not (fboundp 'make-composed-keymap))
   (defun make-composed-keymap (maps &optional parent)
     "Construct a new keymap composed of MAPS and inheriting from PARENT.
 
-This dose not work in emacs 23 or below, but ergoemacs-mode uses
+This does not work in emacs 23 or below, but ergoemacs-mode uses
 it to create the same structure and flatten them later.
 
 In emacs 24, this is how the function behaves:
@@ -229,19 +256,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   "Ergoemacs-keybindings minor mode version number used."
   :type 'string
   :group 'ergoemacs-mode)
-
-(defvar ergoemacs-movement-functions
-  '(scroll-down
-    move-beginning-of-line move-end-of-line scroll-up
-    scroll-down forward-block backward-block
-    forward-word backward-word next-line previous-line
-    forward-char backward-char ergoemacs-backward-block
-    ergoemacs-forward-block ergoemacs-backward-open-bracket
-    ergoemacs-forward-close-bracket move-end-of-line
-    move-beginning-of-line backward-word forward-word
-    subword-backward subword-forward
-    beginning-of-buffer end-of-buffer)
-  "Movement functions.")
 
 (defvar ergoemacs-deletion-functions
   '(delete-backward-char
@@ -764,6 +778,7 @@ This is done by checking if this is a command that supports shift selection or c
 (defvar ergoemacs-smart-functions
   '(ergoemacs-shortcut
     ergoemacs-shortcut-movement-no-shift-select
+    ergoemacs-shortcut-movement-force-shift-select
     ergoemacs-shortcut-movement
     ergoemacs-read-key
     ergoemacs-modal-default
@@ -785,8 +800,10 @@ This is done by checking if this is a command that supports shift selection or c
 (defvar ergoemacs-first-keymaps)
 (declare-function ergoemacs-restore-post-command-hook "ergoemacs-shortcuts.el")
 (declare-function ergoemacs-install-shortcuts-up "ergoemacs-shortcuts.el")
+(defvar ergoemacs-force-shift-select-mark-active nil)
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
+  (setq ergoemacs-force-shift-select-mark-active mark-active)
   (when (and ergoemacs-mark-active
              (not ergoemacs-read-input-keys)
              (not mark-active))

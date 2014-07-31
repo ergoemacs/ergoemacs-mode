@@ -477,6 +477,7 @@ DEF is anything that can be a key's definition:
 This will return if the map object was modified.
 ")
 
+(defvar ergoemacs-movement-functions)
 (defmethod ergoemacs-define-map ((obj ergoemacs-fixed-map) key def &optional
                                  no-unbind)
   (with-slots (shortcut-map
@@ -489,6 +490,8 @@ This will return if the map object was modified.
                shortcut-shifted-movement
                read-list
                read-map) obj
+    (when (ergoemacs-is-movement-command-p def) ;; Add to known movement keys
+      (pushnew def ergoemacs-movement-functions))
     (let* ((key-desc (key-description key))
            (key-vect (read-kbd-macro key-desc t))
            swapped
@@ -1813,7 +1816,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
           (setq final-map (list final-map)))
         (push menu-keymap final-map)
         (setq final-map (make-composed-keymap final-map))
-        (setq final-map (ergoemacs-flatten-composed-keymap final-map))
+        (setq final-map (ergoemacs-flatten-composed-keymap final-map t))
         ;; Rebuild Shortcut hash
         (let (tmp)
           (dolist (c (reverse shortcut-list))
@@ -1849,8 +1852,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             ergoemacs-unbind-keys (not remove-p)
             ergoemacs-read-input-keymap (ergoemacs-flatten-composed-keymap  final-read-map)
             ergoemacs-read-emulation-mode-map-alist `((ergoemacs-read-input-keys ,@final-read-map))
-            ergoemacs-shortcut-keymap (ergoemacs-flatten-composed-keymap final-shortcut-map)
-            ergoemacs-no-shortcut-keymap (ergoemacs-flatten-composed-keymap final-no-shortcut-map)
+            ergoemacs-shortcut-keymap (ergoemacs-flatten-composed-keymap final-shortcut-map t)
+            ergoemacs-no-shortcut-keymap (ergoemacs-flatten-composed-keymap final-no-shortcut-map t)
             ergoemacs-unbind-keymap (ergoemacs-flatten-composed-keymap final-unbind-map)
             ergoemacs-emulation-mode-map-alist
             (reverse

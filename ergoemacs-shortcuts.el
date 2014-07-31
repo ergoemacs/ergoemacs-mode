@@ -1496,6 +1496,41 @@ Calls the function shortcut key defined in
   (ergoemacs-shortcut-movement-no-shift-select))
 (put 'ergoemacs-shortcut-movement 'CUA 'move)
 
+(defvar ergoemacs-force-shift-select-mark-active)
+(defun ergoemacs-shortcut-movement-force-shift-select ()
+  "Shortcut for supporting shift selection in non A-Z characters.
+
+Calls the function bound to the down-shifted, layout-based
+equivalent of the character pressed.  For example on QWERTY the
+\">\" character would shift-translate to \".\"
+
+This uses `erogemacs-translate' to change
+`ergoemacs-single-command-keys' to the shift translated key.
+
+`ergoemacs-read-key-call' is called for the function bound to the
+shift-translated key.
+
+"
+  (interactive "^")
+  (setq this-command-keys-shift-translated t)
+  (cond
+   ((and shift-select-mode ergoemacs-force-shift-select-mark-active
+         (not mark-active))
+    ;; Mark was active, then it was deactivated, now activate again.
+    (unless (and mark-active
+                 (eq (car-safe transient-mark-mode) 'only))
+      (setq transient-mark-mode
+            (cons 'only
+                  (unless (eq transient-mark-mode 'lambda)
+                    transient-mark-mode))
+            mark-active t)))
+   (t ;; Mark was not active, activate mark.
+    (handle-shift-selection)))
+  (setq ergoemacs-single-command-keys
+        (plist-get (ergoemacs-translate (this-single-command-keys))
+                   ':shift-translated-key))
+  (ergoemacs-read-key-call (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding ergoemacs-single-command-keys))))
+
 
 (defun ergoemacs-shortcut-movement-no-shift-select ()
   "Shortcut for other key/function in movement keys without shift-selection support.
@@ -1505,7 +1540,7 @@ Calls the function shortcut key defined in
 `ergoemacs-single-command-keys' or `this-single-command-keys'.
 "
   (interactive)
-  (let ((ck (this-single-command-keys)))
+  (let ((ck (or ergoemacs-single-command-keys (this-single-command-keys))))
     (ergoemacs-shortcut---internal)
     ;; Now optionally install the repeatable movements.
     (cond
