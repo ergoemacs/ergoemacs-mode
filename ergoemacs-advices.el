@@ -121,6 +121,19 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
                 (replace-match (format "\\1\\2%s" tmp2)))))))))))
 
 (defvar ergoemacs-global-map)
+(defvar ergoemacs-global-changes-are-ignored-p nil
+  "Defines if global-changes are ignored.")
+(defun ergoemacs-global-changes-are-ignored-in-runtime ()
+  (setq ergoemacs-global-changes-are-ignored-p t))
+(add-hook 'emacs-startup-hook 'ergoemacs-global-changes-are-ignored-in-runtime)
+(defadvice eval-buffer (around ergoemacs-eval-buffer-advice activate)
+  "When called interactively, make sure `ergoemacs-global-changes-are-ignored-p' is true"
+  (when (called-interactively-p 'any)
+    (setq ergoemacs-global-changes-are-ignored-p nil))
+  ad-do-it
+  (when (called-interactively-p 'any)
+    (setq ergoemacs-global-changes-are-ignored-p t)))
+
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
@@ -146,7 +159,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
                                 (key-description key)))))
           (define-key keymap new-key def)))
     ad-do-it
-    (when is-global-p
+    (when (and is-global-p (not ergoemacs-global-changes-are-ignored-p))
       (let ((vk key))
         (ergoemacs-global-set-key-after key)
         (unless (vectorp vk) ;; Do vector def too.
@@ -166,6 +179,8 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     (let ((kd (key-description key)))
       (unless (or (and (vectorp key)
                        (memq (elt key 0) '(menu-bar 27 remap)))
+                  ;; FIXME: don't unbind for packages that use
+                  ;; global-set-key.  Like undo-tree
                   (and (not (vectorp key))
                        (string= "ESC" kd)))
         ;; Let `ergoemacs-mode' know these keys have changed.
