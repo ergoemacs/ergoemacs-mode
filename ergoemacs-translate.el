@@ -651,6 +651,11 @@ properties are also added:
     C-S-a  -> C-a
     Anything without shift is nil.
 
+This also works with characters that are not A-Z.  In the case of
+non letter characters, :caps-translated is also defined, that
+defines the \"capitalized\" version of the key.  For example /
+would capitalize to ? for QWERTY keyboards.
+
 All other translations are defined in `ergoemacs-translations'.
 
 There are also :XXX-key and :XXX-pretty for actual key-strokes
@@ -664,7 +669,7 @@ and `ergoemacs-pretty-key' descriptions.
          shift-translated
          (ergoemacs-use-ergoemacs-key-descriptions t)
          shifted-key
-         unshifted-key)
+         unshifted-key tmp)
     (if ret ret
       (unless (stringp key)
         (setq key (key-description key)
@@ -700,9 +705,37 @@ and `ergoemacs-pretty-key' descriptions.
             (setq ret (plist-put ret ':shift-translated (ergoemacs-translate-shifted shift-translated)))
             (setq ret (plist-put ret ':shift-translated-key (read-kbd-macro (ergoemacs-translate-shifted shift-translated) t)))
             (setq ret (plist-put ret ':shift-translated-pretty (ergoemacs-pretty-key shift-translated))))
-        (setq ret (plist-put ret ':shift-translated nil))
-        (setq ret (plist-put ret ':shift-translated-key nil))
-        (setq ret (plist-put ret ':shift-translated-pretty nil)))
+        (if (and shifted-key (not (string= shifted-key only-key)))
+            (if (string-match (format "^%s$" ergoemacs-shifted-regexp) only-key)
+                (setq shift-translated (replace-regexp-in-string
+                                        (format"%s$" (regexp-quote only-key))
+                                        shifted-key key)
+                      ret (plist-put ret ':shift-translated (ergoemacs-translate-shifted shift-translated))
+                      ret (plist-put ret ':shift-translated-key (read-kbd-macro (ergoemacs-translate-shifted shift-translated) t))
+                      ret (plist-put ret ':shift-translated-pretty (ergoemacs-pretty-key  shift-translated))
+                      ret (plist-put ret ':caps-translated nil)
+                      ret (plist-put ret ':caps-translated-key nil)
+                      ret (plist-put ret ':caps-translated-pretty nil))
+              (if (and (string= (upcase only-key) (downcase only-key))
+                       (string-match (format "^%s$" ergoemacs-unshifted-regexp) only-key))
+                  (setq tmp (replace-regexp-in-string
+                             (format"%s$" (regexp-quote only-key))
+                             shifted-key key)
+                        ret (plist-put ret ':caps-translated (ergoemacs-translate-shifted tmp))
+                        ret (plist-put ret ':caps-translated-key (read-kbd-macro (ergoemacs-translate-shifted tmp) t))
+                        ret (plist-put ret ':caps-translated-pretty (ergoemacs-pretty-key tmp)))
+                (setq ret (plist-put ret ':shift-translated nil)
+                      ret (plist-put ret ':shift-translated-key nil)
+                      ret (plist-put ret ':shift-translated-pretty nil)
+                      ret (plist-put ret ':caps-translated nil)
+                      ret (plist-put ret ':caps-translated-key nil)
+                      ret (plist-put ret ':caps-translated-pretty nil))))
+          (setq ret (plist-put ret ':shift-translated nil)
+                ret (plist-put ret ':shift-translated-key nil)
+                ret (plist-put ret ':shift-translated-pretty nil)
+                ret (plist-put ret ':caps-translated nil)
+                ret (plist-put ret ':caps-translated-key nil)
+                ret (plist-put ret ':caps-translated-pretty nil))))
       
       (when shifted-key
         (setq ret (plist-put ret ':shifted (ergoemacs-translate-shifted shifted-key)))
