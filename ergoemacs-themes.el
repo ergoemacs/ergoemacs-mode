@@ -365,8 +365,7 @@
     (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
     (define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
     (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
-    (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill))
-  )
+    (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)))
 
 (ergoemacs-theme-component fixed-bold-italic ()
   "Fixed keys for bold and italic"
@@ -387,6 +386,7 @@
   (global-set-key (kbd "M-RET") 'newline-and-indent)
   (when helm-before-initialize-hook
     :modify-map t
+    :always t
     :full-shortcut-keymap t
     (define-key helm-map (kbd "M-RET") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
@@ -395,7 +395,14 @@
     (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
     (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
     (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)))
+    (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
+
+    (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+    (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
+    
+    ))
 
 (ergoemacs-theme-component fn-keys ()
   "Function Keys"
@@ -1027,6 +1034,11 @@
     (global-set-key [remap info] 'helm-info)
     (global-set-key [remap ac-isearch] 'ac-complete-with-helm)))
 
+(ergoemacs-theme-component icy-reclaim ()
+  "Reclaim some icicle keybindings."
+  (when icicle-minibuffer-setup-hook
+    (define-key minibuffer-local-map (kbd "M-*") 'icicle-narrow-candidates)))
+
 (ergoemacs-theme-component multiple-cursors-remaps ()
   "Multiple Cursors phi-search remaps"
   (when multiple-cursors-mode
@@ -1146,6 +1158,7 @@
                 ergoemacs-remaps
                 standard-vars)
   :optional-on '(apps-punctuation
+                 icy-reclaim
                  apps-apps
                  apps-toggle
                  apps
@@ -1165,7 +1178,7 @@
                        ergoemacs-banish-shift)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
-                  ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))
+                  ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps icy-reclaim))
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))))
@@ -1193,7 +1206,7 @@
                 text-transform
                 ergoemacs-remaps
                 standard-vars)
-  :optional-on '(apps-punctuation
+  :optional-on '(apps-punctuation icy-reclaim
                  apps-toggle
                  apps-apps
                  apps
@@ -1213,7 +1226,7 @@
                        ergoemacs-banish-shift move-and-transpose-lines)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
-                  ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps))
+                  ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps icy-reclaim))
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq)))
