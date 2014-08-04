@@ -467,8 +467,10 @@
 
   (when icicle-minibuffer-setup-hook
     (define-key minibuffer-local-map (kbd "<f11>") 'previous-history-element)
+    (define-key minibuffer-local-map (kbd "M-<f11>") 'icicle-insert-history-element)
     (define-key minibuffer-local-map (kbd "<f12>") 'next-history-element)
     (define-key minibuffer-local-map (kbd "S-<f11>") 'next-history-element)
+    (define-key minibuffer-local-map (kbd "M-<f12>") 'icicle-insert-history-element)
     (define-key minibuffer-local-map (kbd "S-<f12>") 'previous-history-element))
   
   (when iswitchb-define-mode-map-hook
