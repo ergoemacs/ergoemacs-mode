@@ -1534,32 +1534,35 @@ FULL-SHORTCUT-MAP-P "
 
 (declare-function ergoemacs-shortcut-remap-list "ergoemacs-shortcuts.el")
 (defvar ergoemacs-theme--install-shortcut-item--global nil)
+(defvar ergoemacs-ignore-advice)
 (defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
                                                    full-shortcut-map-p)
-  (let (fn-lst)
+  (let (fn-lst
+        (ergoemacs-ignore-advice t))
     (cond
      ((commandp (nth 0 args))
       (setq fn-lst (ergoemacs-shortcut-remap-list (nth 0 args) lookup-keymap))
       (if fn-lst
-          (ignore-errors
-            (when ergoemacs-theme--install-shortcut-item--global
-              (ergoemacs-theme-component--ignore-globally-defined-key key))
+          (progn
+            (ignore-errors
+              (when ergoemacs-theme--install-shortcut-item--global
+                (ergoemacs-theme-component--ignore-globally-defined-key key))) 
             (define-key keymap key (nth 0 (nth 0 fn-lst))))
         (when full-shortcut-map-p
           (ignore-errors
             (when ergoemacs-theme--install-shortcut-item--global
-              (ergoemacs-theme-component--ignore-globally-defined-key key))
+              (ergoemacs-theme-component--ignore-globally-defined-key key)))
             (when (or (commandp (nth 0 args) t)
                       (keymapp (nth 0 args)))
-              (define-key keymap key (nth 0 args)))))))
+              (define-key keymap key (nth 0 args))))))
      (full-shortcut-map-p
       (ignore-errors
         (when ergoemacs-theme--install-shortcut-item--global
-          (ergoemacs-theme-component--ignore-globally-defined-key key))
+          (ergoemacs-theme-component--ignore-globally-defined-key key)))
         (define-key keymap key
           `(lambda(&optional arg)
              (interactive "P")
-             (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args)))))))))
+             (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args))))))))
 
 (defvar ergoemacs-original-map-hash (make-hash-table)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
@@ -1602,6 +1605,26 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme--hook-running nil)
 (declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
+(defun ergoemacs-get-child-maps (keymap &optional ob)
+  "Get the child maps for KEYMAP"
+  (let (ret)
+    (mapatoms
+     (lambda(map)
+       (when (and (ignore-errors (keymapp (symbol-value map)))
+                  (equal (keymap-parent (symbol-value map)) keymap))
+         (push map ret)))
+     ob)
+    ret))
+
+(defun ergoemacs-set-keymap-and-children (keymap-name new-keymap)
+  "Sets NEW-KEYMAP to the symbol KEYMAP-NAME.
+This makes sure any children are updated with the new map."
+  (let ((childern (ergoemacs-get-child-maps (symbol-value keymap-name))))
+    (set keymap-name new-keymap)
+    ;; Update children
+    (dolist (map childern)
+      (set-keymap-parent (symbol-value map) (symbol-value keymap-name)))))
+
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   (with-slots (read-map
                map
@@ -1620,6 +1643,7 @@ FULL-SHORTCUT-MAP-P "
           final-read-map final-unbind-map
           (rm-list (append rm-keys ergoemacs-global-override-rm-keys))
           (defer '())
+          child-maps
           (i 0))
       ;; Get all the major-mode hooks that will be called or modified
       (setq ergoemacs-deferred-maps '()
@@ -1736,9 +1760,10 @@ FULL-SHORTCUT-MAP-P "
                     ;; (setq n-map (list (make-sparse-keymap "ergoemacs-modified") n-map))
                     ))
                   (push map n-map)
-                  (setq n-map (copy-keymap ;; (make-composed-keymap n-map o-map)
-                                           (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map))))
-                  (set map-name n-map)))
+                  (ergoemacs-set-keymap-and-children
+                   map-name
+                   (copy-keymap
+                    (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map))))))
                (t ;; Maps that are not modified.
                 (unless remove-p
                   (dolist (d deferred-keys)

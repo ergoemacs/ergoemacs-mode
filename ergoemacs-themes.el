@@ -386,7 +386,6 @@
   (global-set-key (kbd "M-RET") 'newline-and-indent)
   (when helm-before-initialize-hook
     :modify-map t
-    :always t
     :full-shortcut-keymap t
     (define-key helm-map (kbd "M-RET") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
