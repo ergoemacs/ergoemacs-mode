@@ -1037,7 +1037,8 @@
 (ergoemacs-theme-component icy-reclaim ()
   "Reclaim some icicle keybindings."
   (when icicle-minibuffer-setup-hook
-    (define-key minibuffer-local-map (kbd "M-*") 'icicle-narrow-candidates)))
+    (define-key minibuffer-local-map (kbd "M-*") 'icicle-narrow-candidates)
+    (define-key minibuffer-local-map (kbd "M-?") 'icicle-minibuffer-help)))
 
 (ergoemacs-theme-component multiple-cursors-remaps ()
   "Multiple Cursors phi-search remaps"
