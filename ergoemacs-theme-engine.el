@@ -1740,7 +1740,8 @@ This makes sure any children are updated with the new map."
                 (if remove-p
                     (when o-map
                       ;; (message "Restore %s"  map-name)
-                      (set map-name (copy-keymap o-map)))
+                      (ergoemacs-set-keymap-and-children
+                       map-name (copy-keymap o-map)))
                   ;; (message "Modify %s"  map-name)
                   (unless o-map
                     (setq o-map (copy-keymap (symbol-value map-name)))
