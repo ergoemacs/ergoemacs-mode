@@ -1643,7 +1643,6 @@ This makes sure any children are updated with the new map."
           final-read-map final-unbind-map
           (rm-list (append rm-keys ergoemacs-global-override-rm-keys))
           (defer '())
-          child-maps
           (i 0))
       ;; Get all the major-mode hooks that will be called or modified
       (setq ergoemacs-deferred-maps '()
