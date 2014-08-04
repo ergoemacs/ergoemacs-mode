@@ -1038,7 +1038,19 @@
   "Reclaim some icicle keybindings."
   (when icicle-minibuffer-setup-hook
     (define-key minibuffer-local-map (kbd "M-*") 'icicle-narrow-candidates)
-    (define-key minibuffer-local-map (kbd "M-?") 'icicle-minibuffer-help)))
+    (define-key minibuffer-local-map (kbd "M-?") 'icicle-minibuffer-help)
+    (define-key minibuffer-local-map (kbd "C-M-RET") 'icicle-help-on-candidate)
+    (define-key minibuffer-local-map (kbd "<C-prior>") 'icicle-previous-apropos-candidate-action)
+    (define-key minibuffer-local-map (kbd "<C-next>") 'icicle-next-apropos-candidate-action)
+    (define-key minibuffer-local-map (kbd "<C-M-prior>") 'icicle-help-on-previous-apropos-candidate)
+    (define-key minibuffer-local-map (kbd "<C-M-next>") 'icicle-help-on-next-apropos-candidate)
+    (define-key minibuffer-local-map (kbd "<C-home>") 'icicle-previous-prefix-candidate-action)
+    (define-key minibuffer-local-map (kbd "<C-end>") 'icicle-next-prefix-candidate-action)
+    (define-key minibuffer-local-map (kbd "<C-M-home>") 'icicle-help-on-previous-prefix-candidate)
+    (define-key minibuffer-local-map (kbd "<C-M-end>") 'icicle-help-on-next-prefix-candidate)
+    (define-key minibuffer-local-map (kbd "<C-M-up>") 'icicle-previous-candidate-per-mode-help)
+    (define-key minibuffer-local-map (kbd "<C-M-down>") 'icicle-next-candidate-per-mode-help)
+    (define-key minibuffer-local-map (kbd "<delete>") 'icicle-remove-candidate)))
 
 (ergoemacs-theme-component multiple-cursors-remaps ()
   "Multiple Cursors phi-search remaps"
