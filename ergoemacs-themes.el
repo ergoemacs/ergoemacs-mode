@@ -367,6 +367,11 @@
     (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
     (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)))
 
+(ergoemacs-theme-component tab-indents-region ()
+  "Tab indents selected region"
+  (when mark-active
+    (global-set-key (kbd "TAB") 'indent-region)))
+
 (ergoemacs-theme-component fixed-bold-italic ()
   "Fixed keys for bold and italic"
   (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
@@ -1171,7 +1176,7 @@
                 text-transform
                 ergoemacs-remaps
                 standard-vars)
-  :optional-on '(apps-punctuation
+  :optional-on '(apps-punctuation tab-indents-region
                  icy-reclaim
                  apps-apps
                  apps-toggle
@@ -1220,7 +1225,7 @@
                 text-transform
                 ergoemacs-remaps
                 standard-vars)
-  :optional-on '(apps-punctuation icy-reclaim
+  :optional-on '(apps-punctuation icy-reclaim tab-indents-region
                  apps-toggle
                  apps-apps
                  apps

@@ -202,7 +202,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                    `(ergoemacs-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)))))
               ((or (ignore-errors (eq (nth 0 elt) 'with-hook))
                    (and (ignore-errors (eq (nth 0 elt) 'when))
-                        (ignore-errors (string-match "-\\(hook\\|mode\\)$" (symbol-name (nth 1 elt))))))
+                        (ignore-errors (string-match "\\(-hook\\|-mode\\|^mark-active\\)$" (symbol-name (nth 1 elt))))))
                (let ((tmp (ergoemacs-theme-component--parse (cdr (cdr elt)) t)))
                  `(ergoemacs-theme-component--with-hook
                    ',(nth 1 elt) ',(nth 0 tmp)

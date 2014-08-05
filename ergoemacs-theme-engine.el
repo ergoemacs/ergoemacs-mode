@@ -1894,7 +1894,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                          (pushnew f defer))))
                    (setq i (+ i 1))
                    (cons remap (ergoemacs-flatten-composed-keymap map))))
-               (ergoemacs-get-hooks obj "-mode\\'"))))
+               (ergoemacs-get-hooks obj "\\(-mode\\'\\|\\`mark-active\\'\\)"))))
             ergoemacs-shortcut-emulation-mode-map-alist
             `((ergoemacs-shortcut-keys ,@final-shortcut-map))
             ergoemacs-no-shortcut-emulation-mode-map-alist
@@ -1943,7 +1943,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             (ergoemacs-debug-obj (ergoemacs-get-fixed-map obj map)
                                  "*****"))))
       (ergoemacs-debug "*** Emulations" )
-      (dolist (mode (ergoemacs-get-hooks obj "-mode\\'"))
+      (dolist (mode (ergoemacs-get-hooks obj "\\(-mode\\'\\|\\`mark-active\\'\\)" ))
         (ergoemacs-debug-obj (ergoemacs-get-fixed-map obj mode) "****"))
       (ergoemacs-debug "** Components")
       (dolist (map-obj map-list)
@@ -2097,7 +2097,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
            (map (or (and (memq keymap '(global-map ergoemacs-keymap))
                          (or ergoemacs-theme-component-maps--global-map
                              (and ergoemacs-theme-component-maps--hook
-                                  (string-match "-mode\\'" (symbol-name ergoemacs-theme-component-maps--hook))
+                                  (string-match "\\(-mode\\'\\|\\`mark-active\\'\\)" (symbol-name ergoemacs-theme-component-maps--hook))
                                   ergoemacs-theme-component-maps--hook))) keymap)))
       (ergoemacs-define-map
        ergoemacs-theme-component-maps--curr-component
@@ -2128,7 +2128,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
 (defun ergoemacs-theme-component--with-hook (hook plist body)
   ;; Adapted from Stefan Monnier
   (let ((ergoemacs-theme-component-maps--hook
-         (or (and (string-match-p "-\\(hook\\|mode\\)\\'" (symbol-name hook)) hook)
+         (or (and (string-match-p "\\(-hook\\|-mode\\|\\`mark-active\\)\\'" (symbol-name hook)) hook)
              (and (string-match-p "mode-.*" (symbol-name hook))
                   (save-match-data
                     (intern-soft
