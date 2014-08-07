@@ -396,7 +396,10 @@
     (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "M-S-RET") "C-u M-RET")
     (define-key helm-map (kbd "<M-S-return>") "C-u M-RET")
-    
+
+
+    (define-key helm-read-file-map [remap eshell] 'helm-ff-run-switch-to-eshell)
+    (define-key helm-read-file-map [remap ergoemacs-eshell-here] 'helm-ff-run-switch-to-eshell)
     (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
     (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
     (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
@@ -405,7 +408,11 @@
     (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
     (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
     (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
-    
+    (define-key helm-read-file-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
+
+    (define-key helm-find-files-map [remap eshell] 'helm-ff-run-switch-to-eshell)
+    (define-key helm-find-files-map [remap ergoemacs-eshell-here] 'helm-ff-run-switch-to-eshell)
+    (define-key helm-find-files-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
     (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
     (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
     (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
