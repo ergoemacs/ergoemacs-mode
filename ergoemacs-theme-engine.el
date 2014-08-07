@@ -1605,8 +1605,10 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme--hook-running nil)
 (declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
+
 (defun ergoemacs-get-child-maps (keymap &optional ob)
   "Get the child maps for KEYMAP"
+  ;; Not sure this is useful any longer
   (let (ret)
     (mapatoms
      (lambda(map)
@@ -1615,15 +1617,6 @@ FULL-SHORTCUT-MAP-P "
          (push map ret)))
      ob)
     ret))
-
-(defun ergoemacs-set-keymap-and-children (keymap-name new-keymap)
-  "Sets NEW-KEYMAP to the symbol KEYMAP-NAME.
-This makes sure any children are updated with the new map."
-  (let ((childern (ergoemacs-get-child-maps (symbol-value keymap-name))))
-    (set keymap-name new-keymap)
-    ;; Update children
-    (dolist (map childern)
-      (set-keymap-parent (symbol-value map) (symbol-value keymap-name)))))
 
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   (with-slots (read-map
@@ -1739,8 +1732,8 @@ This makes sure any children are updated with the new map."
                 (if remove-p
                     (when o-map
                       ;; (message "Restore %s"  map-name)
-                      (ergoemacs-set-keymap-and-children
-                       map-name (copy-keymap o-map)))
+                      ;; Update map in place
+                      (setcdr (symbol-value map-name) (cdr (copy-keymap o-map))))
                   ;; (message "Modify %s"  map-name)
                   (unless o-map
                     (setq o-map (copy-keymap (symbol-value map-name)))
@@ -1760,10 +1753,10 @@ This makes sure any children are updated with the new map."
                     ;; (setq n-map (list (make-sparse-keymap "ergoemacs-modified") n-map))
                     ))
                   (push map n-map)
-                  (ergoemacs-set-keymap-and-children
-                   map-name
-                   (copy-keymap
-                    (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map))))))
+                  ;; Update map in place
+                  (setcdr (symbol-value map-name)
+                          (cdr (copy-keymap
+                                (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map)))))))
                (t ;; Maps that are not modified.
                 (unless remove-p
                   (dolist (d deferred-keys)
