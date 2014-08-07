@@ -1482,6 +1482,37 @@ Else it is a user buffer."
 
 ;;; helm-mode functions
 
+;;; This comes from https://github.com/emacs-helm/helm/pull/327, but
+;;; was reverted so it is added back here.
+(defcustom ergoemacs-helm-ff-ido-style-backspace t
+  "Use backspace to navigate with `helm-find-files'.
+You will have to restart Emacs or reeval `helm-find-files-map'
+and `helm-read-file-map' for this to take effect."
+  :group 'ergoemacs-mode
+  :type '(choice
+          (const :tag "Do not use ido-style backspace")
+          (const :tag "Use ido-style backspace" t)))
+
+(defun ergoemacs-helm-ff-backspace (&rest args)
+  "Call backsapce or `helm-find-files-down-one-level'.
+If sitting at the end of a file directory, backspace goes up one
+level, like in `ido-find-file'. "
+  (interactive "P")
+  (let (backspace)
+    (looking-back "^.*")
+    (cond
+     ((and ergoemacs-helm-ff-ido-style-backspace
+           (looking-back "[/\\]"))
+      (call-interactively
+       (let (ergoemacs-read-key)
+         (ergoemacs-real-key-binding (kbd "<left>")))))
+     (t
+      (setq backspace (lookup-key
+                       (current-global-map)
+                       (read-kbd-macro "DEL")))
+      (call-interactively backspace)))))
+
+
 ;;; This comes from https://github.com/emacs-helm/helm/issues/340
 (defcustom ergoemacs-helm-ido-style-return t
   "Allows ido-style return in `helm-mode'"
