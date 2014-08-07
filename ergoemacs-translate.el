@@ -163,7 +163,8 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
             (while (string-match "<\\(\\(?:C-\\|S-\\|M-\\)?[A-Za-z0-9]+\\)>" ret pt)
               (setq pt (- (match-end 0) 2)
                     ret (replace-match (match-string 1 ret) t t ret)))
-            (dolist (args `(("\\<M-" ,(if (eq system-type 'darwin)
+            (dolist (args `(("\\_<backtab\\_>" "S-TAB")
+                            ("\\<M-" ,(if (eq system-type 'darwin)
                                           (cond
                                            ((or (and (boundp 'mac-command-modifier)
                                                      (eq mac-command-modifier 'meta))
