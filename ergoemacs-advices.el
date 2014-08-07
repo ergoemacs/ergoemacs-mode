@@ -134,6 +134,15 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
   (when (called-interactively-p 'any)
     (setq ergoemacs-global-changes-are-ignored-p t)))
 
+;;; Advices enabled or disabled with ergoemacs-mode
+(defvar ergoemacs-ignore-advice nil)
+(defadvice current-active-maps (around ergoemacs-current-active-maps-advice activate)
+  "Ignores keys that start `ergoemacs-read-input-keys'"
+  (let ((ergoemacs-read-input-keys
+         (if ergoemacs-ignore-advice ergoemacs-read-input-keys
+           nil)))
+    ad-do-it))
+
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
@@ -167,8 +176,6 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
           (ergoemacs-global-set-key-after vk))))))
 
 (defvar ergoemacs-global-override-rm-keys '())
-;;; Advices enabled or disabled with ergoemacs-mode
-(defvar ergoemacs-ignore-advice nil)
 
 (declare-function ergoemacs-theme-component--ignore-globally-defined-key
                   "ergoemacs-theme-engine.el")
@@ -627,13 +634,89 @@ Uses `ergoemacs-real-key-binding' to get the key-binding."
   (ergoemacs-with-global
    (ergoemacs-real-key-binding key accept-default no-remap position)))
 
+(declare-function ergoemacs-real-this-command-keys
+                  "ergoemacs-advices.el" () t)
+(fset 'ergoemacs-real-this-command-keys
+      (symbol-function 'this-command-keys))
+
+(declare-function ergoemacs-real-this-command-keys-vector
+                  "ergoemacs-advices.el" () t)
+(fset 'ergoemacs-real-this-command-keys-vector
+      (symbol-function 'this-command-keys-vector))
+
+(declare-function ergoemacs-real-this-single-command-keys
+                  "ergoemacs-advices.el" () t)
+(fset 'ergoemacs-real-this-single-command-keys
+      (symbol-function 'this-single-command-keys))
+
+
+(defvar ergoemacs-single-command-keys)
+(defun ergoemacs-this-command-keys-vector ()
+  "Return the key sequence that invoked this command, as a vector.
+However, if the command has called `read-key-sequence', it returns
+the last key sequence that has been read.
+
+See also `this-command-keys'.
+
+When `ergoemacs-mode' is enabled and
+`ergoemacs-single-command-keys' is non-nil, return the prefix
+keys concatenated with `ergoemacs-single-command-keys'."
+  (or
+   (and ergoemacs-mode ergoemacs-single-command-keys
+        (let ((total-keys (ergoemacs-real-this-command-keys-vector))
+              (single-keys (ergoemacs-real-this-single-command-keys)))
+          (if (= (length total-keys) (length single-keys))
+              ergoemacs-single-command-keys
+            (vconcat (substring total-keys 0 (- (length total-keys) (length single-keys))) ergoemacs-single-command-keys))))
+   (ergoemacs-real-this-command-keys-vector)))
+
+(defun ergoemacs-this-command-keys ()
+  "Return the key sequence that invoked this command, as a vector or string.
+However, if the command has called `read-key-sequence', it returns
+the last key sequence that has been read.
+
+See also `this-command-keys-vector'.
+
+When `ergoemacs-mode' is enabled and
+`ergoemacs-single-command-keys' is non-nil, return the prefix
+keys concatenated with `ergoemacs-single-command-keys'.
+
+When `ergoemacs-mode' is active, this is always a vector.
+"
+  (or
+   (and ergoemacs-mode ergoemacs-single-command-keys
+        (let ((total-keys (ergoemacs-real-this-command-keys-vector))
+              (single-keys (ergoemacs-real-this-single-command-keys)))
+          (if (= (length total-keys) (length single-keys))
+              ergoemacs-single-command-keys
+            (vconcat (substring total-keys 0 (- (length total-keys) (length single-keys))) ergoemacs-single-command-keys))))
+   (ergoemacs-real-this-command-keys)))
+
+(declare-function ergoemacs-real-this-single-command-keys
+                  "ergoemacs-advices.el" () t)
+(fset 'ergoemacs-real-this-single-command-keys
+      (symbol-function 'this-single-command-keys))
+
+(defun ergoemacs-this-single-command-keys ()
+  "Return the key sequence that invoked this command.
+More generally, it returns the last key sequence read, either by
+the command loop or by `read-key-sequence'.
+Unlike `this-command-keys', this function's value
+does not include prefix arguments.
+The value is always a vector.
+
+When `ergoemacs-mode' is enabled and
+`ergoemacs-single-command-keys' is non-nil, return this value."
+  (or (and ergoemacs-mode ergoemacs-single-command-keys)
+      (ergoemacs-real-this-single-command-keys)))
+
 
 
 (defun ergoemacs-enable-c-advices (&optional disable)
   "Enabling advices for C code and complex changes to functions.
 DISABLE when non-nil.
 Assumes ergoemacs-real-FUNCTION and ergoemacs-FUNCTION as the two functions to toggle"
-  (dolist (ad '(completing-read substitute-command-keys key-binding key-description))
+  (dolist (ad '(completing-read substitute-command-keys key-binding key-description this-single-command-keys this-command-keys this-command-keys-vector))
     (cond
      (disable
       (fset ad (symbol-function (intern (concat "ergoemacs-real-" (symbol-name ad))))))

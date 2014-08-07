@@ -648,7 +648,7 @@
 (defun ergoemacs-undefined ()
   "Ergoemacs Undefined key, echo new key for old action."
   (interactive)
-  (let* ((key-kbd (or ergoemacs-single-command-keys (this-single-command-keys)))
+  (let* ((key-kbd (this-single-command-keys))
          tmp
          (local-fn nil))
     ;; Lookup local key, if present and then issue that

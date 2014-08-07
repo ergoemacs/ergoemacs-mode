@@ -80,15 +80,19 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perfomr `ou
 
 (defvar ergoemacs-first-variant nil
   "First variant of `ergoemacs-read' key.")
+
+(defvar ergoemacs-single-command-keys nil
+  "Override command keys for `this-command-keys'
+`this-single-command-keys' `this-command-keys-vector'")
+
 (defvar ergoemacs-describe-key nil)
 (defun ergoemacs-describe-key ()
   "Ergoemacs replacement for `describe-key'
 Uses `ergoemacs-read-key'"
   (interactive)
-  (setq ergoemacs-describe-key t)
+  (setq ergoemacs-describe-key t
+        ergoemacs-single-command-keys nil)
   (ergoemacs-read-key nil 'normal))
-
-(defvar ergoemacs-single-command-keys nil)
 (defvar ergoemacs-mark-active nil)
 
 (defun ergoemacs-to-sequence (key)
@@ -508,7 +512,12 @@ It will replace anything defined by `ergoemacs-translation'"
   (interactive)
   ;; Eventually...
   (if (not ergoemacs-read-key) nil
-    (if (and (boundp 'guide-key-mode) guide-key-mode)
+    (cond
+     ((and (boundp 'icicle-mode) icicle-mode)
+      (let ((key (vconcat ergoemacs-read-key [ergoemacs-ignore])))
+        (ergoemacs-read-key-call 'icicle-complete-keys nil key)
+        nil))
+     ((and (boundp 'guide-key-mode) guide-key-mode)
         (let ((key ergoemacs-read-key))
           (if (equal ergoemacs-read-key-last-help ergoemacs-read-key)
               (progn
@@ -520,14 +529,14 @@ It will replace anything defined by `ergoemacs-translation'"
             (add-to-list 'guide-key/guide-key-sequence (key-description ergoemacs-read-key))
             (setq ergoemacs-read-key-last-help ergoemacs-read-key)
             (guide-key/popup-function key))
-          t)
-      (let ((cb (current-buffer))
-            (key ergoemacs-read-key))
-        (save-excursion
-          (with-help-window (help-buffer)
-            (set-buffer (help-buffer))
-            (describe-buffer-bindings cb key)))
-        nil))))
+          t))
+     (t (let ((cb (current-buffer))
+              (key ergoemacs-read-key))
+          (save-excursion
+            (with-help-window (help-buffer)
+              (set-buffer (help-buffer))
+              (describe-buffer-bindings cb key)))
+          nil)))))
 
 (defvar ergoemacs-modal-list)
 (declare-function minibuffer-keyboard-quit "delsel.el")
@@ -735,7 +744,8 @@ In addition, when the function is called:
             (setq count (gethash (cons major-mode function) keyfreq-table))
             (puthash (cons major-mode function) (if count (+ count 1) 1)
                      keyfreq-table))))
-      (let (deactivate-mark)
+      (let (deactivate-mark
+            (ergoemacs-single-command-keys keys))
 	(remove-hook 'ergoemacs-pre-command-hook 'ergoemacs-pre-command-hook)
 	(remove-hook 'ergoemacs-pre-command-hook 'ergoemacs-pre-command-hook t)
         (run-hooks 'ergoemacs-pre-command-hook)
@@ -1382,8 +1392,7 @@ argument prompt.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 no translation listed."
   (interactive "^")
-  (ergoemacs-read-key
-   (or ergoemacs-single-command-keys (this-single-command-keys))))
+  (ergoemacs-read-key (this-single-command-keys)))
 
 
 
@@ -1438,7 +1447,7 @@ This is used for the following functions: `ergoemacs-shortcut-movement'
 `ergoemacs-shortcut-movement-no-shift-select' and `ergoemacs-shortcut'.
 
 Basically, this gets the keys called and passes the arguments to`ergoemacs-read-key'."
-  (let* ((keys (or ergoemacs-single-command-keys (this-single-command-keys)))
+  (let* ((keys (this-single-command-keys))
          (args (gethash keys ergoemacs-command-shortcuts-hash)))
     (unless args
       (setq keys (read-kbd-macro (key-description keys) t))
@@ -1491,7 +1500,7 @@ This function is `cua-mode' aware for movement and supports
 
 Calls the function shortcut key defined in
 `ergoemacs-command-shortcuts-hash' for
-`ergoemacs-single-command-keys' or `this-single-command-keys'."
+`this-single-command-keys'."
   (interactive "^")
   (ergoemacs-shortcut-movement-no-shift-select))
 (put 'ergoemacs-shortcut-movement 'CUA 'move)
@@ -1529,7 +1538,7 @@ shift-translated key.
   (setq ergoemacs-single-command-keys
         (plist-get (ergoemacs-translate (this-single-command-keys))
                    ':shift-translated-key))
-  (ergoemacs-read-key-call (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding ergoemacs-single-command-keys))))
+  (ergoemacs-read-key-call (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (this-single-command-keys)))))
 
 
 (defun ergoemacs-shortcut-movement-no-shift-select ()
@@ -1537,10 +1546,10 @@ shift-translated key.
 
 Calls the function shortcut key defined in
 `ergoemacs-command-shortcuts-hash' for
-`ergoemacs-single-command-keys' or `this-single-command-keys'.
+`this-single-command-keys'.
 "
   (interactive)
-  (let ((ck (or ergoemacs-single-command-keys (this-single-command-keys))))
+  (let ((ck (this-single-command-keys)))
     (ergoemacs-shortcut---internal)
     ;; Now optionally install the repeatable movements.
     (cond
@@ -1558,7 +1567,7 @@ Calls the function shortcut key defined in
 (defun ergoemacs-shortcut ()
   "Shortcut for other key/function for non-movement keys.
 Calls the function shortcut key defined in
-`ergoemacs-command-shortcuts-hash' for `ergoemacs-single-command-keys' or `this-single-command-keys'."
+`ergoemacs-command-shortcuts-hash' for `this-single-command-keys'."
   (interactive)
   (ergoemacs-shortcut---internal))
 

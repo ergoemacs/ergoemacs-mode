@@ -1409,7 +1409,7 @@ Similar to (kill-buffer (current-buffer)) with the following addition:
 A emacs buffer is one who's name starts with *.
 Else it is a user buffer."
   (interactive)
-  (let ((override-fn (ergoemacs-get-override-function (or ergoemacs-single-command-keys (this-single-command-keys))))
+  (let ((override-fn (ergoemacs-get-override-function (this-single-command-keys)))
         emacs-buff-p
         is-emacs-buffer-after-p
         (org-p (string-match "^[*]Org Src" (buffer-name)))

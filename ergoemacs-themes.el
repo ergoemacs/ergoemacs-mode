@@ -396,17 +396,24 @@
     (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "M-S-RET") "C-u M-RET")
     (define-key helm-map (kbd "<M-S-return>") "C-u M-RET")
-    (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
-
-    (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
     
-    ))
+    (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+    (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
+    (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+    (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
+    
+    (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+    (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
+    (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
+    (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+    (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)))
 
 (ergoemacs-theme-component fn-keys ()
   "Function Keys"
@@ -1041,7 +1048,9 @@
     (global-set-key [remap ac-isearch] 'ac-complete-with-helm)))
 
 (ergoemacs-theme-component icy-reclaim ()
-  "Reclaim some icicle keybindings."
+  "Reclaim some icicle key bindings."
+  (setq icicle-key-complete-keys-for-minibuffer
+        (list (ergoemacs-kbd "M-T")))
   (when icicle-minibuffer-setup-hook
     (define-key minibuffer-local-map (kbd "M-*") 'icicle-narrow-candidates)
     (define-key minibuffer-local-map (kbd "M-?") 'icicle-minibuffer-help)

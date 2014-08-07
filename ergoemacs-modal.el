@@ -273,8 +273,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
     (when (not (ergoemacs-modal-p))
       (setq type nil))
     ;; Actual call
-    (ergoemacs-read-key
-     (or ergoemacs-single-command-keys (this-single-command-keys))
+    (ergoemacs-read-key (this-single-command-keys)
      type
      type)
     ;; Fix cursor color and mode-line
