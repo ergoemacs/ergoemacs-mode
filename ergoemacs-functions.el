@@ -794,7 +794,9 @@ the prefix arguments of `end-of-buffer',
              (or (not ergoemacs-use-beginning-or-end-of-line-only)
                  (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                       (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
-             (or (eolp)
+             (or (= (point) (save-excursion
+                              (call-interactively 'move-end-of-line)
+                              (point)))
                  (and
                   (or
                    (memq last-command '(ergoemacs-forward-block scroll-up-command)))
@@ -817,6 +819,9 @@ the prefix arguments of `end-of-buffer',
           (forward-line (- N 1))))
       (let (pts tmp)
         (setq current-prefix-arg nil)
+        (save-excursion
+          (call-interactively 'move-end-of-line)
+          (push (point) pts))
         (save-excursion
           (ergoemacs-shortcut-remap 'move-end-of-line)
           (push (point) pts)
