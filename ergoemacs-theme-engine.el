@@ -2904,6 +2904,13 @@ Ignores _DESC."
     (global-set-key (if (vectorp key) key
                       (read-kbd-macro key)) function)))
 
+(defconst ergoemacs-font-lock-keywords
+  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\)?\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
+     (1 font-lock-keyword-face)
+     (2 font-lock-constant-face nil t))))
+
+(font-lock-add-keywords 'emacs-lisp-mode ergoemacs-font-lock-keywords)
+
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-theme-engine.el ends here
