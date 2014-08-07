@@ -407,6 +407,34 @@ This assumes any key defined while running a hook is a user-defined hook."
     ret))
 
 
+(defadvice read-event (around ergoemacs-read-event activate)
+  "Ignore `ergoemacs-single-command-keys'"
+  (let (ergoemacs-single-command-keys)
+    ad-do-it))
+
+(defadvice read-key-sequence (around ergoemacs-read-key-sequence activate)
+  "Ignore `ergoemacs-single-command-keys'"
+  (let (ergoemacs-single-command-keys)
+    ad-do-it))
+
+(defadvice read-key-sequence-vector (around ergoemacs-read-key-sequence-vector activate)
+  "Ignore `ergoemacs-single-command-keys'"
+  (let (ergoemacs-single-command-keys)
+    ad-do-it))
+
+(defadvice read-char-exclusive (around ergoemacs-read-char-exclusive activate)
+  "Ignore `ergoemacs-single-command-keys'"
+  (let (ergoemacs-single-command-keys)
+    ad-do-it))
+
+(defadvice read-char (around ergoemacs-read-char activate)
+  "Ignore `ergoemacs-single-command-keys'"
+  (let (ergoemacs-single-command-keys)
+    ad-do-it))
+
+
+
+
 ;;; Unfortunately, the advice route doesn't seem to work for these
 ;;; functions :(
 
