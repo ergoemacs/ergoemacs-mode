@@ -323,26 +323,56 @@ additional parsing routines defined by PARSE-FUNCTION."
 :options-menu -- Menu options list
 :silent -- If this theme is \"silent\", i.e. doesn't show up in the Themes menu.
 
+:based-on
+
 The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
 "
   (declare (doc-string 2)
            (indent 2))
   (let ((kb (make-symbol "body-and-plist"))
-        (tmp (make-symbol "tmp")))
+        (tmp (make-symbol "tmp"))
+        (based-on (make-symbol "based-on")))
     (setq kb (ergoemacs-theme-component--parse-keys-and-body body-and-plist))
     (setq tmp (eval (plist-get (nth 0 kb) ':components)))
     (push (intern (concat (plist-get (nth 0 kb) ':name) "-theme")) tmp)
     (setq tmp (plist-put (nth 0 kb) ':components tmp))
+    (setq based-on (plist-get (nth 0 kb) ':based-on))
+    ;; (message "First Based-On: %s" based-on)
+    (setq based-on (or (and (stringp based-on) based-on)
+                       (and (symbolp based-on) (symbol-name based-on))
+                       (and (eq (car based-on) 'quote) (symbol-name (car (cdr based-on))))
+                       nil))
+    ;; (message "Last Based-On: %s" based-on)
     (dolist (comp '(:optional-on :optional-off :options-menu))
       (setq tmp (plist-put (nth 0 kb) comp
                            (eval (plist-get (nth 0 kb) comp)))))
     
-    `(let (themes silent)
-       (setq themes (gethash "defined-themes" ergoemacs-theme-hash)
-             silent (gethash "silent-themes" ergoemacs-theme-hash))
+    `(let* ((based-on (gethash ,based-on ergoemacs-theme-hash))
+            (curr-plist ',tmp)
+            (opt-on (plist-get curr-plist ':optional-on))
+            (opt-off (plist-get curr-plist ':optional-off))
+            (comp (plist-get curr-plist ':components))
+            (themes (gethash "defined-themes" ergoemacs-theme-hash))
+            (silent (gethash "silent-themes" ergoemacs-theme-hash))
+            (included (append opt-on opt-off comp)))
        (push ,(plist-get (nth 0 kb) ':name) themes)
        (push ,(plist-get (nth 0 kb) ':name) silent)
-       (puthash ,(plist-get (nth 0 kb) ':name) ',tmp ergoemacs-theme-hash)
+       (if (not based-on)
+           (puthash ,(plist-get (nth 0 kb) ':name) curr-plist ergoemacs-theme-hash)
+         (dolist (type '(:optional-on :optional-off :components))
+           (dolist (comp (plist-get based-on type))
+             (unless (memq comp included)
+               (setq curr-plist
+                     (plist-put curr-plist type
+                                (append (plist-get curr-plist type)
+                                        (list comp)))))))
+         (when (and (not (plist-get curr-plist ':options-menu))
+                    (plist-get based-on ':options-menu))
+           (setq curr-plist
+                 (plist-put curr-plist ':options-menu
+                            (plist-get based-on ':options-menu))))
+         (puthash ,(plist-get (nth 0 kb) ':name) curr-plist
+                  ergoemacs-theme-hash))
        (if ,(plist-get (nth 0 kb) ':silent)
            (puthash "silent-themes" silent ergoemacs-theme-hash)
          (puthash "defined-themes" themes ergoemacs-theme-hash))
