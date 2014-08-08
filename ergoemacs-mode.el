@@ -136,7 +136,8 @@ FORCE-SHIFTED is non-nil.
             (setq trans (plist-get (ergoemacs-translate move-key) ':caps-translated-key))
             (when (and trans (not (lookup-key new-keymap trans)))
               (define-key new-keymap trans 'ergoemacs-shortcut-movement-force-shift-select)))))
-      new-keymap)))
+      (setcdr keymap (cdr new-keymap))
+      keymap)))
 
 (when (not (fboundp 'make-composed-keymap))
   (defun make-composed-keymap (maps &optional parent)
