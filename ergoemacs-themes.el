@@ -1162,6 +1162,16 @@
   (global-set-key (kbd "<menu> SPC y") (kbd "Y"))
   (global-set-key (kbd "<menu> SPC z") (kbd "Z")))
 
+(ergoemacs-theme lvl0 ()
+  "CUA-mode style"
+  (global-set-key (kbd "C-c <timeout>") 'ergoemacs-copy-line-or-region)
+  (global-set-key (kbd "C-c") 'ergoemacs-ctl-c)
+  (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
+  (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
+  
+  (global-set-key (kbd "<S-insert>") 'ergoemacs-paste)
+  (global-set-key (kbd "C-v") 'ergoemacs-paste))
+
 (ergoemacs-theme lvl1 ()
   "Arrow Key Movements Only"
   :components '(move-char))
