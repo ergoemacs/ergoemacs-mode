@@ -1861,7 +1861,10 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
       ;; Add M-O M-[ to read-keys for terminal compatibility
       (when (ignore-errors (keymapp final-read-map))
 	(define-key final-read-map (read-kbd-macro "M-O" t) 'ergoemacs-read-key-default)
-	(define-key final-read-map (read-kbd-macro "M-[" t) 'ergoemacs-read-key-default))
+	(define-key final-read-map (read-kbd-macro "M-[" t) 'ergoemacs-read-key-default)
+        (dolist (prefix (ergoemacs-extract-prefixes (current-global-map)))
+          (define-key final-read-map (read-kbd-macro prefix t)
+            'ergoemacs-read-key-default)))
       (setq ergoemacs-mode (not remove-p)
             ergoemacs-keymap final-map
             ergoemacs-shortcut-keys (not remove-p)
