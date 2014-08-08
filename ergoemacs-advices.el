@@ -235,6 +235,19 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
     (customize-mark-as-set 'cua-enable-cua-keys)))
 
+(defadvice icicle-keys+cmds-w-prefix (around ergoemacs-icicle-keys+cmds-w-prefix-advice activate)
+  "Make the current active maps go into `overriding-local-map'.
+
+The active maps from `current-active-maps' are composed through
+`make-composed-keymap', then flattened by
+`ergoemacs-flatten-composed-keymap' and assigned to `overriding-local-map'."
+  (let ((old-overriding-local-map overriding-local-map))
+    (when ergoemacs-mode
+      (setq overriding-local-map (ergoemacs-flatten-composed-keymap (make-composed-keymap (current-active-maps t)))))
+    ad-do-it
+    (when ergoemacs-mode
+      (setq overriding-local-map old-overriding-local-map))))
+
 (defadvice icicle-mode (around ergoemacs-icicle-play (arg) activate)
   "Allow `ergoemacs-mode' to play nicely with `icicle-mode'."
   (let ((oee ergoemacs-mode))
