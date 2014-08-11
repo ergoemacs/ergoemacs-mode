@@ -1618,6 +1618,8 @@ FULL-SHORTCUT-MAP-P "
      ob)
     ret))
 
+
+(declare-function ergoemacs-extract-prefixes "ergoemacs-shortcuts.el")
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   (with-slots (read-map
                map
