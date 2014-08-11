@@ -749,7 +749,7 @@
   (global-set-key (kbd "M-5") '(vr/query-replace query-replace-regexp))
   
   (global-set-key (kbd "C-M-%") nil)
-  (global-set-key (kbd "M-%") 'query-replace))
+  (global-set-key (kbd "M-%") '(vr/query-replace query-replace-regexp)))
 
 (ergoemacs-component switch ()
   "Window/Frame/Tab Switching"
