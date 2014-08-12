@@ -235,7 +235,26 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                 (lambda() ,(plist-get (nth 0 kb) ':description)
                   (ergoemacs-theme-component--create-component
                    ',(nth 0 kb)
-                   '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash))))
+                   '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash)
+       ,(when (plist-get (nth 0 kb) ':require)
+          `(ergoemacs-require ',(intern (plist-get (nth 0 kb) ':name)))))))
+
+(defmacro ergoemacs-package (name _junk doc-string &rest body-and-plist)
+  "Defines a required package named NAME"
+  (declare (doc-string 2)
+           (indent 2))
+  (let ((kb (make-symbol "body-and-plist"))
+        (plist (make-symbol "plist"))
+        (body (make-symbol "body")))
+    (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
+          plist (nth 0 kb)
+          body (nth 1 kb))
+    (unless (plist-get plist ':required) ;; Its a required theme component.
+      (setq plist (plist-put plist ':required t)))
+    (macroexpand-all
+     `(ergoemacs-theme-component ,name ()
+        ,doc-string
+        ,@plist ,@body))))
 
 (declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-theme-set-version "ergoemacs-theme-engine.el")
