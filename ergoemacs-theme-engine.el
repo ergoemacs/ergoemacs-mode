@@ -1756,9 +1756,13 @@ FULL-SHORTCUT-MAP-P "
                     ))
                   (push map n-map)
                   ;; Update map in place
-                  (setcdr (symbol-value map-name)
-                          (cdr (copy-keymap
-                                (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map)))))))
+                  (puthash (intern (concat (symbol-name map-name) "-n-map")) n-map ergoemacs-original-map-hash)
+                  (setq n-map (cdr (copy-keymap
+                                    (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map)))))
+                  ;; (keymap "ergoemacs-modfied" (map-name) ...)
+                  (push (list map-name) n-map)
+                  (push "ergoemacs-modified" n-map)
+                  (setcdr (symbol-value map-name) n-map)))
                (t ;; Maps that are not modified.
                 (unless remove-p
                   (dolist (d deferred-keys)
