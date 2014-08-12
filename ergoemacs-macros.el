@@ -214,7 +214,11 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
     remaining))
 
 ;;;###autoload
-(defalias 'ergoemacs-component 'ergoemacs-theme-component)
+(defmacro ergoemacs-component (&rest body-and-plist)
+  "A component of an ergoemacs-theme."
+  (declare (doc-string 2)
+           (indent 2))
+  (macroexpand-all `(ergoemacs-theme-component ,@body-and-plist)))
 
 ;;;###autoload
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
