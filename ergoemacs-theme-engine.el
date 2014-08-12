@@ -1756,7 +1756,9 @@ FULL-SHORTCUT-MAP-P "
                     ))
                   (push map n-map)
                   ;; Update map in place
-                  (puthash (intern (concat (symbol-name map-name) "-n-map")) n-map ergoemacs-original-map-hash)
+                  (puthash (intern (concat (symbol-name map-name) "-e-map")) map ergoemacs-original-map-hash)
+                  (puthash (intern (concat (symbol-name map-name) "-full-map")) full-map ergoemacs-original-map-hash)
+                  (puthash (intern (concat (symbol-name map-name) "-deferred")) deferred-keys ergoemacs-original-map-hash)
                   (setq n-map (cdr (copy-keymap
                                     (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map o-map)))))
                   ;; (keymap "ergoemacs-modfied" (map-name) ...)

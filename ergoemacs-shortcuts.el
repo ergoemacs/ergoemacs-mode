@@ -1747,7 +1747,10 @@ When DONT-CALL is non nil, dont actually call the function, return it instead.
 (defun ergoemacs-install-shortcuts-map (&optional map dont-complete)
   "Returns a keymap with shortcuts installed.
 If MAP is defined, use a copy of that keymap as a basis for the shortcuts.
-If MAP is nil, base this on a sparse keymap."
+If MAP is nil, base this on a sparse keymap.
+
+The shortcuts are also installed into the map directly.
+"
   (let ((ergoemacs-shortcut-override-keymap
          (or map
              (make-sparse-keymap)))
@@ -1762,6 +1765,8 @@ If MAP is nil, base this on a sparse keymap."
     (ergoemacs-theme--install-shortcuts-list
      shortcut-list ergoemacs-shortcut-override-keymap 
      ergoemacs-orig-keymap (not dont-complete))
+    ;; Install in place.
+    (setcdr map (cdr ergoemacs-shortcut-override-keymap)) 
     ergoemacs-shortcut-override-keymap))
 
 (defvar ergoemacs-describe-keybindings-functions
@@ -2035,6 +2040,16 @@ Do not do anything if you are:
             (define-key read-map key-vector 'ergoemacs-read-key-default)))
         (set (make-local-variable 'ergoemacs-read-local-emulation-mode-map-alist)
              (list (cons 'ergoemacs-read-input-keys read-map)))))))
+
+(defvar ergoemacs-smart-functions)
+(defun ergoemacs-active-map ()
+  "Return a keymap representing the current active keymaps."
+  (let* (ergoemacs-shortcut-keys
+         (current-maps
+          (ergoemacs-flatten-composed-keymap
+           (make-composed-keymap (current-active-maps t)))))
+    (ergoemacs-install-shortcuts-map current-maps)
+    current-maps))
 
 (provide 'ergoemacs-shortcuts)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

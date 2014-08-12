@@ -148,7 +148,13 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (let ((is-global-p (equal keymap (current-global-map)))
         (is-local-p (equal keymap (current-local-map)))
+        (is-ergoemacs-modified-p (and ergoemacs-mode
+                                      (ignore-errors (and (string= "ergoemacs-modified" (nth 1 keymap))
+                                                          (car (nth 2 keymap))))))
         ergoemacs-local-map)
+    (when is-ergoemacs-modified-p
+      ;; Restore original map to make changes.
+      (setcdr keymap (cdr (gethash is-ergoemacs-modified-p ergoemacs-original-map-hash))))
     (when (and is-local-p (not ergoemacs-local-emulation-mode-map-alist))
       (set (make-local-variable 'ergoemacs-local-emulation-mode-map-alist) '()))
     ;; (when is-local-p
@@ -168,6 +174,32 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
                                 (key-description key)))))
           (define-key keymap new-key def)))
     ad-do-it
+    (when is-ergoemacs-modified-p
+      ;; Restore ergoemacs-mode changes
+      (let ((map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-e-map")) ergoemacs-original-map-hash))
+            (n-map (copy-keymap keymap))
+            (full-map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-full-map")) ergoemacs-original-map-hash)))
+        ;; Save original map again.
+        (puthash is-ergoemacs-modified-p (copy-keymap keymap) ergoemacs-original-map-hash)
+        (setq n-map (ergoemacs-install-shortcuts-map n-map (not full-map)))
+        (cond
+         ((ignore-errors
+            (and (eq (nth 0 (nth 1 n-map)) 'keymap)
+                 (not (keymap-parent n-map))))
+          (setq n-map (cdr n-map))
+          ;; (push (make-sparse-keymap "ergoemacs-modified") n-map)
+          )
+         (t
+          (setq n-map (list n-map))
+          ;; (setq n-map (list (make-sparse-keymap "ergoemacs-modified") n-map))
+          ))
+        (push map n-map)
+        (setq n-map (cdr (copy-keymap
+                          (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map keymap)))))
+        ;; (keymap "ergoemacs-modfied" (is-ergoemacs-modified-p) ...)
+        (push (list is-ergoemacs-modified-p) n-map)
+        (push "ergoemacs-modified" n-map)
+        (setcdr keymap n-map)))
     (when (and is-global-p (not ergoemacs-global-changes-are-ignored-p))
       (let ((vk key))
         (ergoemacs-global-set-key-after key)
@@ -235,27 +267,17 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (when (and (boundp 'ergoemacs-mode) ergoemacs-mode)
     (customize-mark-as-set 'cua-enable-cua-keys)))
 
+(declare-function ergoemacs-active-map "ergoemacs-shortcuts.el")
 (defadvice icicle-keys+cmds-w-prefix (around ergoemacs-icicle-keys+cmds-w-prefix-advice activate)
   "Make the current active maps go into `overriding-local-map'.
 
-The active maps from `current-active-maps' are composed through
-`make-composed-keymap', then flattened by
-`ergoemacs-flatten-composed-keymap' and assigned to `overriding-local-map'."
-  (let ((old-overriding-local-map overriding-local-map))
+The active map from `ergoemacs-active-keymap' is installed temporarily to `overriding-local-map'."
+  (let (shortcut-map (old-overriding-local-map overriding-local-map))
     (when ergoemacs-mode
-      (setq overriding-local-map (ergoemacs-flatten-composed-keymap (make-composed-keymap (current-active-maps t)))))
+      (setq overriding-local-map (ergoemacs-active-map)))
     ad-do-it
     (when ergoemacs-mode
       (setq overriding-local-map old-overriding-local-map))))
-
-(defadvice icicle-mode (around ergoemacs-icicle-play (arg) activate)
-  "Allow `ergoemacs-mode' to play nicely with `icicle-mode'."
-  (let ((oee ergoemacs-mode))
-    (when oee ;; Remove key bindings
-      (ergoemacs-mode -1))
-    ad-do-it
-    (when oee ;; Add them back.  Now icy-mode should play nice.
-      (ergoemacs-mode 1))))
 
 (defadvice guide-key/close-guide-buffer (around ergoemacs-guide-key/close-guide-buffer activate)
   "Don't close guide buffer when reading ergoemacs-mode keys."
@@ -751,18 +773,41 @@ When `ergoemacs-mode' is enabled and
   (or (and ergoemacs-mode ergoemacs-single-command-keys)
       (ergoemacs-real-this-single-command-keys)))
 
+(defcustom ergoemacs-functions-to-redefine
+  `(completing-read substitute-command-keys key-binding key-description this-single-command-keys this-command-keys this-command-keys-vector)
+  "List of symbols representing functions to be redefined in ergoemacs-mode."
+  :type '(repeat (restricted-sexp :tag "Command"
+                                  ;; Use `symbolp' instead of `functionp' or `fboundp', in case the library
+                                  ;; defining the function is not loaded.
+                                  :match-alternatives (symbolp) :value ignore))
+  :group 'ergoemacs-mode)
 
+(defun ergoemacs-enable-c-advice (ad &optional disable)
+  "Enable ergoemacs-c advice AD (or optionally DISABLE)"
+  (cond
+   (disable
+    (when (fboundp (intern (concat "ergoemacs-real-" (symbol-name ad))))
+      (fset ad (symbol-function (intern (concat "ergoemacs-real-" (symbol-name ad)))))))
+   (t
+    (when (fboundp (intern (concat "ergoemacs-" (symbol-name ad))))
+      (fset ad (intern (concat "ergoemacs-" (symbol-name ad))))))))
 
 (defun ergoemacs-enable-c-advices (&optional disable)
   "Enabling advices for C code and complex changes to functions.
 DISABLE when non-nil.
 Assumes ergoemacs-real-FUNCTION and ergoemacs-FUNCTION as the two functions to toggle"
-  (dolist (ad '(completing-read substitute-command-keys key-binding key-description this-single-command-keys this-command-keys this-command-keys-vector))
-    (cond
-     (disable
-      (fset ad (symbol-function (intern (concat "ergoemacs-real-" (symbol-name ad))))))
-     (t
-      (fset ad (symbol-function (intern (concat "ergoemacs-" (symbol-name ad)))))))))
+  (dolist (ad ergoemacs-functions-to-redefine)
+    (ergoemacs-enable-c-advice ad)))
+
+
+(defadvice icicle-mode (around ergoemacs-icicle-play (arg) activate)
+  "Allow `ergoemacs-mode' to play nicely with `icicle-mode'."
+  (ergoemacs-enable-c-advice 'completing-read t)
+  ad-do-it
+  (when (and ergoemacs-mode (not icicle-mode))
+    (ergoemacs-enable-c-advice 'completing-read)))
+
+
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advices.el ends here
