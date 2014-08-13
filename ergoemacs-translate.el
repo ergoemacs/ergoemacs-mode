@@ -519,18 +519,39 @@ Translates C-A into C-S-a."
           case-fold-search)
       (unless (string-match "\\(^<.+>$\\|\\<SPC\\>\\|\\<DEL\\>\\|\\<ESC\\>\\|\\<RET\\>\\|\\<TAB\\>\\)" ret)
         (if (string-match "C-" ret)
-            (when (and (string-match "\\(.\\)$" ret)
-                       (string= (upcase (match-string 1 ret))
-                                (match-string 1 ret))
-                       (not (string= (downcase (match-string 1 ret))
-                                     (match-string 1 ret))))
-              (setq ret
-                    (replace-match
-                     (concat "S-" (downcase (match-string 1 ret))) t t ret)))
+            (progn
+              (when (and (string-match "\\(.\\)$" ret)
+                         (string= (upcase (match-string 1 ret))
+                                  (match-string 1 ret))
+                         (not (string= (downcase (match-string 1 ret))
+                                       (match-string 1 ret))))
+                (setq ret
+                      (replace-match
+                       (concat "S-" (downcase (match-string 1 ret))) t t ret)))
+              (when (and
+                     (string-match-p "\\<S-" ret)
+                     (string-match "\\(.\\)$" ret)
+                     (string= (downcase (match-string 1 ret)) (upcase (match-string 1 ret)))
+                     (or (not (string= (match-string 1 ret) ">"))
+                         (not (string-match-p "<.+?>" ret)))
+                     (assoc (match-string 1 ret) ergoemacs-shifted-assoc))
+                (setq ret (replace-match
+                           (cdr (assoc (match-string 1 ret) ergoemacs-shifted-assoc)) t t ret))
+                (when (string-match "\\<S-" ret)
+                  (setq ret (replace-match "" nil nil ret)))))
           (when (string-match "^\\(.*\\)S-\\(.*\\)\\(.\\)$" ret)
-            (setq ret (concat (match-string 1 ret)
-                              (match-string 2 ret)
-                              (upcase (match-string 3 ret)))))))
+            (cond
+             ((and (or (not (string= (match-string 3 ret) ">"))
+                       (not (string-match-p "<.+?>" ret)))
+                   (assoc (match-string 3 ret) ergoemacs-shifted-assoc)
+                   (string= (upcase (match-string 3 ret)) (downcase (match-string 3 ret))))
+              (setq ret (concat (match-string 1 ret)
+                                (match-string 2 ret)
+                                (cdr (assoc (match-string 3 ret) ergoemacs-shifted-assoc)))))
+             (t
+              (setq ret (concat (match-string 1 ret)
+                                (match-string 2 ret)
+                                (upcase (match-string 3 ret)))))))))
       ret)))
 
 (defun ergoemacs-shift-translate-install (trans-plist ret-plist)
@@ -554,7 +575,6 @@ Translates C-A into C-S-a."
                      (downcase (match-string 1 key))) t t key)))
      ((string-match (format "\\(-\\|^\\)\\(%s\\)$" ergoemacs-shifted-regexp) key)
       (setq shift-translated (replace-match (format "\\1%s" (cdr (assoc (match-string 2 key) ergoemacs-shifted-assoc))) t nil key))))
-    ;;; (message "%s" (plist-get (ergoemacs-translate (read-kbd-macro ">" t)) :unchorded-alt))
     (unless (string= shift-translated key)
       (setq ret (plist-put ret name shift-translated))
       (setq ret (plist-put ret k (read-kbd-macro shift-translated t)))
