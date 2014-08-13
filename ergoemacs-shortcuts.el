@@ -729,6 +729,22 @@ In addition, when the function is called:
     (let ((this-command-keys-shift-translated
            (or this-command-keys-shift-translated
                (if ergoemacs-shift-translated t nil))))
+      ;; Try to maintain shift-selection.
+      (when (and ergoemacs-shift-translated
+                 (ergoemacs-is-movement-command-p function))
+        (cond
+         ((and shift-select-mode ergoemacs-force-shift-select-mark-active
+               (not mark-active))
+          ;; Mark was active, then it was deactivated, now activate again.
+          (unless (and mark-active
+                       (eq (car-safe transient-mark-mode) 'only))
+            (setq transient-mark-mode
+                  (cons 'only
+                        (unless (eq transient-mark-mode 'lambda)
+                          transient-mark-mode))
+                  mark-active t)))
+         (t ;; Mark was not active, activate mark.
+          (handle-shift-selection))))
       (when (featurep 'keyfreq)
         (when keyfreq-mode
           (let ((command ergoemacs-this-command) count)
