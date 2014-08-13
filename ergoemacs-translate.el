@@ -551,7 +551,10 @@ Translates C-A into C-S-a."
       (setq shift-translated
             (replace-match
              (concat "-"
-                     (downcase (match-string 1 key))) t t key))))
+                     (downcase (match-string 1 key))) t t key)))
+     ((string-match (format "\\(-\\|^\\)\\(%s\\)$" ergoemacs-shifted-regexp) key)
+      (setq shift-translated (replace-match (format "\\1%s" (cdr (assoc (match-string 2 key) ergoemacs-shifted-assoc))) t nil key))))
+    ;;; (message "%s" (plist-get (ergoemacs-translate (read-kbd-macro ">" t)) :unchorded-alt))
     (unless (string= shift-translated key)
       (setq ret (plist-put ret name shift-translated))
       (setq ret (plist-put ret k (read-kbd-macro shift-translated t)))
