@@ -1762,6 +1762,23 @@ When DONT-CALL is non nil, dont actually call the function, return it instead.
           (ergoemacs-shortcut-remap (car hash) dont-call))))))
 
 (declare-function ergoemacs-theme--install-shortcuts-list "ergoemacs-theme-engine.el")
+
+(defun ergoemacs-install-shortcuts-map-name (keymap &optional full ob)
+  "Gets the first symbol pointing to this KEYMAP."
+  (let (ret)
+    (unless (or (equal keymap (make-sparse-keymap))
+                (equal keymap (make-keymap)))
+      (mapatoms
+       (lambda(map)
+         (when (and (ignore-errors (keymapp (symbol-value map)))
+                    (equal (symbol-value map) keymap))
+           (push map ret)))
+       ob))
+    (if ret
+        (when (not full)
+          (setq ret (car ret)))
+      (setq ret (intern (concat "ergoemacs-unbound-" (format-time-string "%s")))))
+    ret))
 (defun ergoemacs-install-shortcuts-map (&optional map dont-complete)
   "Returns a keymap with shortcuts installed.
 If MAP is defined, use a copy of that keymap as a basis for the shortcuts.
@@ -1774,13 +1791,15 @@ The shortcuts are also installed into the map directly.
         (message "Ignoring already changed map `%s'"
                  (symbol-name (car (nth 2 map))))
         map)
-    (let ((ergoemacs-shortcut-override-keymap
+    (let ((map-name (ergoemacs-install-shortcuts-map-name map))
+          (ergoemacs-shortcut-override-keymap
            (or map
                (make-sparse-keymap)))
           (ergoemacs-orig-keymap
            (if map
                (copy-keymap map) nil))
           shortcut-list)
+      (puthash map-name ergoemacs-orig-keymap ergoemacs-original-map-hash)
       (maphash
        (lambda (key item)
          (push (list key item) shortcut-list))
@@ -1789,6 +1808,10 @@ The shortcuts are also installed into the map directly.
        shortcut-list ergoemacs-shortcut-override-keymap 
        ergoemacs-orig-keymap (not dont-complete))
       ;; Install in place.
+      (setq ergoemacs-shortcut-override-keymap (cdr ergoemacs-shortcut-override-keymap))
+      (push (list map-name) ergoemacs-shortcut-override-keymap)
+      (push "ergoemacs-modified" ergoemacs-shortcut-override-keymap)
+      (push 'keymap ergoemacs-shortcut-override-keymap)
       (setcdr map (cdr ergoemacs-shortcut-override-keymap)) 
       ergoemacs-shortcut-override-keymap)))
 
