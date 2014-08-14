@@ -332,6 +332,8 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
 (declare-function ergoemacs-translate-shifted "ergoemacs-translate.el")
 (declare-function ergoemacs-get-layouts "ergoemacs-layouts.el")
 (declare-function ergoemacs-local-map "ergoemacs-translate.el")
+(unless (fboundp 'make-composed-keymap)
+  (declare-function make-composed-keymap "ergoemacs-mode.el"))
 (defun ergoemacs-modal-base-keymap  (&optional map)
   "Returns the ergoemacs-modal keymap"
   (if ergoemacs-modal-base-keymap

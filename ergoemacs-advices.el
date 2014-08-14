@@ -242,6 +242,9 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
          (if ergoemacs-ignore-advice ergoemacs-read-input-keys
            nil)))
     ad-do-it))
+Command
+"c:/Users/fidlema3/AppData/Local/Temp/ep/emacs-24.3/bin/emacs-24.3-EmacsMate" --debug-init -Q -L "e:/EmacsPortable.App/Data/src/ergoemacs-mode/" --load="ergoemacs-mode" --load="ergoemacs-test"  --eval "(progn (setq debug-on-error t) (ergoemacs-mode 1))"
+
 
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.

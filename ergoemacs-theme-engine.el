@@ -889,6 +889,8 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
     (oset obj variable variable)
     (oset obj keymap-hash keymap-hash)))
 
+(unless (fboundp 'make-composed-keymap)
+  (declare-function make-composed-keymap "ergoemacs-mode.el"))
 (defun ergoemacs-get-fixed-map--combine-maps (keymap1 keymap2 &optional parent)
   "Combines KEYMAP1 and KEYMAP2.
 When parent is a keymap, make a composed keymap of KEYMAP1 and KEYMAP2 with PARENT keymap
