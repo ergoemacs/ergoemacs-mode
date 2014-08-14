@@ -35,11 +35,12 @@
 (defvar ergoemacs-advices '()
   "List of advices to enable and disable when ergoemacs is running.")
 
-(defvar ergoemacs-run-mode-hooks nil)
+(defvar ergoemacs-run-mode-hooks t)
 (defmacro ergoemacs-define-overrides (&rest body)
   "Force the define-keys to work"
   `(let ((ergoemacs-run-mode-hooks t))
      ,@body))
+
 (defvar ergoemacs-mode)
 (defvar ergoemacs-hook-functions)
 (defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local) activate)
@@ -123,16 +124,75 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
 (defvar ergoemacs-global-map)
 (defvar ergoemacs-global-changes-are-ignored-p nil
   "Defines if global-changes are ignored.")
-(defun ergoemacs-global-changes-are-ignored-in-runtime ()
-  (setq ergoemacs-global-changes-are-ignored-p t))
-(add-hook 'emacs-startup-hook 'ergoemacs-global-changes-are-ignored-in-runtime)
+
+(defvar ergoemacs-is-not-user-defined-dir
+  (concat (regexp-opt '("/src" "/vendor" "/prelude" "/bundles")) "\\(/\\|\\'\\)"))
+(defvar ergoemacs-is-user-defined-dir
+  (concat (regexp-opt '("/personal")) "\\(/\\|\\'\\)"))
+
+(defvar ergoemacs-is-user-defined-map-change-p nil)
+(defvar ergoemacs-is-user-defined-hash (make-hash-table :test 'equal))
+(defvar ergoemacs-dir)
+(defvar ergoemacs-is-user-defined-emacs-lisp-dirs
+  (append (list (file-name-directory (locate-library "subr"))
+                ergoemacs-dir)
+          (and (boundp 'package-directory-list)
+               (boundp 'package-user-dir)
+               (append package-directory-list
+                       (list package-user-dir)))))
+
+(defun ergoemacs-is-user-defined-map-change-p ()
+  "Tries to determine if the map change is a user-defined map change."
+  (or ergoemacs-is-user-defined-map-change-p
+      (let* ((file (or
+                    load-file-name
+                    (buffer-file-name)))
+	     (ret (gethash file ergoemacs-is-user-defined-hash))
+             dir)
+        (if (eq ret 'no)
+            (setq ret nil)
+          (unless ret
+            (setq dir (expand-file-name
+                       (file-name-directory file)))
+            (setq ret (gethash dir ergoemacs-is-user-defined-hash))
+            (if (eq ret 'no)
+                (setq ret nil)
+              (unless ret
+                (setq ret
+                      (catch 'found-dir
+                        (dolist (cur-dir ergoemacs-is-user-defined-emacs-lisp-dirs)
+                          (when (string-match (concat "\\`" (regexp-quote (expand-file-name cur-dir)))
+                                              dir)
+                            (throw 'found-dir nil)))
+                        t))
+                (when (and ret (string-match-p ergoemacs-is-not-user-defined-dir dir))
+                  (setq ret nil))
+                (when (and (not ret) (string-match-p ergoemacs-is-user-defined-dir dir))
+                  (setq ret t))
+                (if ret
+                    (progn
+                      (puthash dir t ergoemacs-is-user-defined-hash)
+                      (puthash file t ergoemacs-is-user-defined-hash))
+                  (puthash dir 'no ergoemacs-is-user-defined-hash)
+                  (puthash file 'no ergoemacs-is-user-defined-hash))))))
+        ret)))
+
+(defun ergoemacs-changes-are-ignored-in-runtime ()
+  "Ignore changes to keymaps after loading ergoemacs-mode."
+  (setq ergoemacs-run-mode-hooks nil
+        ergoemacs-global-changes-are-ignored-p t))
+(add-hook 'after-init-hook 'ergoemacs-changes-are-ignored-in-runtime)
 (defadvice eval-buffer (around ergoemacs-eval-buffer-advice activate)
   "When called interactively, make sure `ergoemacs-global-changes-are-ignored-p' is true"
   (when (called-interactively-p 'any)
-    (setq ergoemacs-global-changes-are-ignored-p nil))
-  ad-do-it
-  (when (called-interactively-p 'any)
-    (setq ergoemacs-global-changes-are-ignored-p t)))
+    (setq ergoemacs-global-changes-are-ignored-p nil)
+    (setq ergoemacs-is-user-defined-map-change-p t))
+  (unwind-protect
+      (progn
+        ad-do-it)
+    (when (called-interactively-p 'any)
+      (setq ergoemacs-global-changes-are-ignored-p t)
+      (setq ergoemacs-is-user-defined-map-change-p nil))))
 
 ;;; Advices enabled or disabled with ergoemacs-mode
 (defvar ergoemacs-ignore-advice nil)
@@ -165,14 +225,16 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ;;   (define-key ergoemacs-local-map key def)
     ;;   (setq ergoemacs-local-emulation-mode-map-alist
     ;;         (list (cons 'ergoemacs-mode (make-sparse-keymap)))))
-    (if (and ergoemacs-run-mode-hooks
-             (not (equal keymap ergoemacs-global-map))
-             (not (equal keymap ergoemacs-keymap)))
-        (let ((ergoemacs-run-mode-hooks nil)
-              (new-key (read-kbd-macro
-                        (format "<ergoemacs-user> %s"
-                                (key-description key)))))
-          (define-key keymap new-key def)))
+    (ignore-errors
+      (if (and ergoemacs-run-mode-hooks
+               (ergoemacs-is-user-defined-map-change-p)
+               (not (equal keymap ergoemacs-global-map))
+               (not (equal keymap ergoemacs-keymap)))
+          (let ((ergoemacs-run-mode-hooks nil)
+                (new-key (read-kbd-macro
+                          (format "<ergoemacs-user> %s"
+                                  (key-description key)))))
+            (define-key keymap new-key def))))
     ad-do-it
     (when is-ergoemacs-modified-p
       ;; Restore ergoemacs-mode changes
@@ -186,13 +248,9 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
          ((ignore-errors
             (and (eq (nth 0 (nth 1 n-map)) 'keymap)
                  (not (keymap-parent n-map))))
-          (setq n-map (cdr n-map))
-          ;; (push (make-sparse-keymap "ergoemacs-modified") n-map)
-          )
+          (setq n-map (cdr n-map)))
          (t
-          (setq n-map (list n-map))
-          ;; (setq n-map (list (make-sparse-keymap "ergoemacs-modified") n-map))
-          ))
+          (setq n-map (list n-map))))
         (push map n-map)
         (setq n-map (cdr (copy-keymap
                           (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map keymap)))))
@@ -341,7 +399,8 @@ This require `ergoemacs-mode' to be enabled as well as
 (defadvice run-mode-hooks (around ergoemacs-run-hooks activate)
   "`ergoemacs-mode' run-hooks advice helps user define keys properly.
 This assumes any key defined while running a hook is a user-defined hook."
-  (let ((ergoemacs-run-mode-hooks t))
+  (let ((ergoemacs-run-mode-hooks t)
+        (ergoemacs-is-user-defined-map-change-p t))
     ad-do-it))
 
 (defadvice fancy-startup-tail (around ergoemacs-fancy-startup-tail activate)
@@ -773,8 +832,52 @@ When `ergoemacs-mode' is enabled and
   (or (and ergoemacs-mode ergoemacs-single-command-keys)
       (ergoemacs-real-this-single-command-keys)))
 
+;; When
+(declare-function ergoemacs-real-eval-after-load 
+                  "ergoemacs-advices.el" (file form) t)
+(fset 'ergoemacs-real-eval-after-load
+      (symbol-function 'eval-after-load))
+
+(defun ergoemacs-eval-after-load (file form)
+  "Arrange that if FILE is loaded, FORM will be run immediately afterwards.
+If FILE is already loaded, evaluate FORM right now.
+
+If a matching file is loaded again, FORM will be evaluated again.
+
+If FILE is a string, it may be either an absolute or a relative file
+name, and may have an extension (e.g. \".el\") or may lack one, and
+additionally may or may not have an extension denoting a compressed
+format (e.g. \".gz\").
+
+When FILE is absolute, this first converts it to a true name by chasing
+symbolic links.  Only a file of this name (see next paragraph regarding
+extensions) will trigger the evaluation of FORM.  When FILE is relative,
+a file whose absolute true name ends in FILE will trigger evaluation.
+
+When FILE lacks an extension, a file name with any extension will trigger
+evaluation.  Otherwise, its extension must match FILE's.  A further
+extension for a compressed format (e.g. \".gz\") on FILE will not affect
+this name matching.
+
+Alternatively, FILE can be a feature (i.e. a symbol), in which case FORM
+is evaluated at the end of any file that `provide's this feature.
+If the feature is provided when evaluating code not associated with a
+file, FORM is evaluated immediately after the provide statement.
+
+Usually FILE is just a library name like \"font-lock\" or a feature name
+like 'font-lock.
+
+This function makes or adds to an entry on `after-load-alist'.
+
+`ergoemacs-mode' will respect user keys defined in the user 
+initialization after ergoemacs-mode loaded itself.  has `eval-after-load'
+"
+  (ergoemacs-real-eval-after-load file (or (and ergoemacs-run-mode-hooks `(let ((ergoemacs-run-mode-hooks t)) ,form)) form)))
+
+
+
 (defcustom ergoemacs-functions-to-redefine
-  `(completing-read substitute-command-keys key-binding key-description this-single-command-keys this-command-keys this-command-keys-vector)
+  `(completing-read substitute-command-keys key-binding key-description this-single-command-keys this-command-keys this-command-keys-vector eval-after-load)
   "List of symbols representing functions to be redefined in ergoemacs-mode."
   :type '(repeat (restricted-sexp :tag "Command"
                                   ;; Use `symbolp' instead of `functionp' or `fboundp', in case the library
