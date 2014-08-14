@@ -872,7 +872,12 @@ This function makes or adds to an entry on `after-load-alist'.
 `ergoemacs-mode' will respect user keys defined in the user 
 initialization after ergoemacs-mode loaded itself.  has `eval-after-load'
 "
-  (ergoemacs-real-eval-after-load file (or (and ergoemacs-run-mode-hooks `(let ((ergoemacs-run-mode-hooks t)) ,form)) form)))
+  (ergoemacs-real-eval-after-load
+   file (or (and ergoemacs-run-mode-hooks
+                 (ergoemacs-is-user-defined-map-change-p) `
+                 `(let ((ergoemacs-run-mode-hooks t)
+                        (ergoemacs-is-user-defined-map-change-p t))
+                    ,form)) form)))
 
 
 
@@ -910,6 +915,7 @@ Assumes ergoemacs-real-FUNCTION and ergoemacs-FUNCTION as the two functions to t
   (when (and ergoemacs-mode (not icicle-mode))
     (ergoemacs-enable-c-advice 'completing-read)))
 
+(ergoemacs-enable-c-advice 'eval-after-load)
 
 (provide 'ergoemacs-advices)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
