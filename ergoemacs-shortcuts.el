@@ -1769,23 +1769,28 @@ If MAP is nil, base this on a sparse keymap.
 
 The shortcuts are also installed into the map directly.
 "
-  (let ((ergoemacs-shortcut-override-keymap
-         (or map
-             (make-sparse-keymap)))
-        (ergoemacs-orig-keymap
-         (if map
-             (copy-keymap map) nil))
-        shortcut-list)
-    (maphash
-     (lambda (key item)
-       (push (list key item) shortcut-list))
-     ergoemacs-command-shortcuts-hash)
-    (ergoemacs-theme--install-shortcuts-list
-     shortcut-list ergoemacs-shortcut-override-keymap 
-     ergoemacs-orig-keymap (not dont-complete))
-    ;; Install in place.
-    (setcdr map (cdr ergoemacs-shortcut-override-keymap)) 
-    ergoemacs-shortcut-override-keymap))
+  (if (ignore-errors (string= "ergoemacs-modified" (nth 1 map)))
+      (progn
+        (message "Ignoring already changed map `%s'"
+                 (symbol-name (car (nth 2 map))))
+        map)
+    (let ((ergoemacs-shortcut-override-keymap
+           (or map
+               (make-sparse-keymap)))
+          (ergoemacs-orig-keymap
+           (if map
+               (copy-keymap map) nil))
+          shortcut-list)
+      (maphash
+       (lambda (key item)
+         (push (list key item) shortcut-list))
+       ergoemacs-command-shortcuts-hash)
+      (ergoemacs-theme--install-shortcuts-list
+       shortcut-list ergoemacs-shortcut-override-keymap 
+       ergoemacs-orig-keymap (not dont-complete))
+      ;; Install in place.
+      (setcdr map (cdr ergoemacs-shortcut-override-keymap)) 
+      ergoemacs-shortcut-override-keymap)))
 
 (defvar ergoemacs-describe-keybindings-functions
   '(describe-package
