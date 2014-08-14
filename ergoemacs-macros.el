@@ -239,21 +239,26 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
        ,(when (plist-get (nth 0 kb) ':require)
           `(ergoemacs-require ',(intern (plist-get (nth 0 kb) ':name)))))))
 
-(defmacro ergoemacs-package (name _junk doc-string &rest body-and-plist)
-  "Defines a required package named NAME"
+(defmacro ergoemacs-package (name &rest keys-and-body)
+  "Defines a required package named NAME.
+Maybe be similar to use-package"
   (declare (doc-string 2)
            (indent 2))
   (let ((kb (make-symbol "body-and-plist"))
         (plist (make-symbol "plist"))
-        (body (make-symbol "body")))
+        (body (make-symbol "body"))
+        (doc (make-symbol "doc")))
     (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
           plist (nth 0 kb)
           body (nth 1 kb))
-    (unless (plist-get plist ':required) ;; Its a required theme component.
-      (setq plist (plist-put plist ':required t)))
+    (when (equal (car body) '())
+      (setq body (cdr body)))
+    (setq doc (if (stringp (car body)) (pop body) (symbol-name name)))
+    (unless (plist-get plist ':require) ;; Its a required theme component.
+      (setq plist (plist-put plist ':require name)))
     (macroexpand-all
      `(ergoemacs-theme-component ,name ()
-        ,doc-string
+        ,doc
         ,@plist ,@body))))
 
 (declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
