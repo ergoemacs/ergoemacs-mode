@@ -419,6 +419,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
 
 (defvar ergoemacs-ignored-prefixes)
 (declare-function ergoemacs-read-key-default "ergoemacs-shortcuts.el")
+(defvar ergoemacs-ignore-advice)
 (defmethod ergoemacs-define-map--read-map ((obj ergoemacs-fixed-map) key)
   "Defines KEY in the OBJ read-key slot if it is a vector over 2.
 Key sequences starting with `ergoemacs-ignored-prefixes' are not added."
@@ -426,6 +427,7 @@ Key sequences starting with `ergoemacs-ignored-prefixes' are not added."
                read-list) obj
     (when (< 1 (length key))
       (let* ((new-key (substring key 0 1))
+             (ergoemacs-ignore-advice t)
              (kd (key-description new-key)))
         (unless (member kd ergoemacs-ignored-prefixes)
           (push new-key read-list)
@@ -493,6 +495,7 @@ This will return if the map object was modified.
     (when (ergoemacs-is-movement-command-p def) ;; Add to known movement keys
       (pushnew def ergoemacs-movement-functions))
     (let* ((key-desc (key-description key))
+           (ergoemacs-ignore-advice t)
            (key-vect (read-kbd-macro key-desc t))
            swapped
            (shift-list shortcut-shifted-movement)
@@ -889,8 +892,6 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
     (oset obj variable variable)
     (oset obj keymap-hash keymap-hash)))
 
-(unless (fboundp 'make-composed-keymap)
-  (declare-function make-composed-keymap "ergoemacs-mode.el"))
 (defun ergoemacs-get-fixed-map--combine-maps (keymap1 keymap2 &optional parent)
   "Combines KEYMAP1 and KEYMAP2.
 When parent is a keymap, make a composed keymap of KEYMAP1 and KEYMAP2 with PARENT keymap
@@ -924,6 +925,7 @@ Assumes maps are orthogonal."
                         global-map-p keymap-hash) obj
     (let* ((lay (or layout ergoemacs-keyboard-layout))
            read
+           (ergoemacs-ignore-advice t)
            (ilay (intern lay))
            (ret (gethash ilay keymap-hash))
            (fix fixed) var)
@@ -1536,7 +1538,6 @@ FULL-SHORTCUT-MAP-P "
 
 (declare-function ergoemacs-shortcut-remap-list "ergoemacs-shortcuts.el")
 (defvar ergoemacs-theme--install-shortcut-item--global nil)
-(defvar ergoemacs-ignore-advice)
 (defun ergoemacs-theme--install-shortcut-item (key args keymap lookup-keymap
                                                    full-shortcut-map-p)
   (let (fn-lst
@@ -2793,7 +2794,8 @@ Returns new keymap."
       (if (listp key)
           (dolist (rm-key key)
             (ergoemacs-rm-key keymap rm-key))
-        (let ((new-keymap (copy-keymap keymap)))
+        (let ((new-keymap (copy-keymap keymap))
+              (ergoemacs-ignore-advice t))
           (cond
            ((keymapp (nth 1 new-keymap))
             (setq new-keymap (cdr new-keymap))
