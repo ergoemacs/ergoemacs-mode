@@ -643,11 +643,12 @@ Addresses Issue #145."
 \\{ergoemacs-test-major-mode-map}"
   (define-key ergoemacs-test-major-mode-map (read-kbd-macro "C-s") 'save-buffer))
 
-(add-hook 'ergoemacs-test-major-mode-hook
-          '(lambda()
-             (interactive)
-             (define-key ergoemacs-test-major-mode-map
-               (read-kbd-macro "C-w") 'ergoemacs-close-current-buffer)))
+(let ((ergoemacs-is-user-defined-map-change-p t))
+  (add-hook 'ergoemacs-test-major-mode-hook
+            '(lambda()
+               (interactive)
+               (define-key ergoemacs-test-major-mode-map
+                 (read-kbd-macro "C-w") 'ergoemacs-close-current-buffer))))
 
 (ert-deftest ergoemacs-test-ignore-ctl-w ()
   "Ignore user-defined C-w in major-mode `ergoemacs-test-major-mode'.

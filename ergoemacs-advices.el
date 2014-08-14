@@ -43,16 +43,6 @@
 
 (defvar ergoemacs-mode)
 (defvar ergoemacs-hook-functions)
-(defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local) activate)
-  "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
-If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
-  (cond
-   ((and ergoemacs-mode (eq hook 'pre-command-hook)
-         (memq hook ergoemacs-hook-functions))
-    (add-hook 'ergoemacs-pre-command-hook function append local))
-   (t
-    ad-do-it)))
-
 (defadvice remove-hook (around ergoemacs-remove-hook-advice (hook function &optional local) activate)
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'.
 If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre-command-hook' instead."
@@ -143,41 +133,89 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
 
 (defun ergoemacs-is-user-defined-map-change-p (&optional function)
   "Tries to determine if the map change is a user-defined map change."
-  (or ergoemacs-is-user-defined-map-change-p
+  (or ergoemacs-is-user-defined-map-change-p      
       (let* ((file (if (functionp function)
-                       (find-lisp-object-file-name function (symbol-function function))
+                       (or (gethash function ergoemacs-is-user-defined-hash)
+                           (find-lisp-object-file-name function (symbol-function function)))
                      (or
                       load-file-name
                       (buffer-file-name))))
-	     (ret (gethash file ergoemacs-is-user-defined-hash))
-             dir)
-        (if (eq ret 'no)
-            (setq ret nil)
-          (unless ret
+             ret dir)
+        (cond
+         ;; File is not there, its not a user defined change
+         ((not file) nil)
+         ;; Cached change based on function
+         ((eq file t) t)
+         ((eq file 'no) nil)
+         ;; Cached change based on file
+         ((progn
+            (setq ret (gethash file ergoemacs-is-user-defined-hash))
+            (eq ret 'no)) nil)
+         (ret t)
+         ;; Cached change based on directory
+         ((progn
             (setq dir (expand-file-name
                        (file-name-directory file)))
             (setq ret (gethash dir ergoemacs-is-user-defined-hash))
-            (if (eq ret 'no)
-                (setq ret nil)
-              (unless ret
-                (setq ret
-                      (catch 'found-dir
-                        (dolist (cur-dir ergoemacs-is-user-defined-emacs-lisp-dirs)
-                          (when (string-match (concat "\\`" (regexp-quote (expand-file-name cur-dir)))
-                                              dir)
-                            (throw 'found-dir nil)))
-                        t))
-                (when (and ret (string-match-p ergoemacs-is-not-user-defined-dir dir))
-                  (setq ret nil))
-                (when (and (not ret) (string-match-p ergoemacs-is-user-defined-dir dir))
-                  (setq ret t))
-                (if ret
-                    (progn
-                      (puthash dir t ergoemacs-is-user-defined-hash)
-                      (puthash file t ergoemacs-is-user-defined-hash))
-                  (puthash dir 'no ergoemacs-is-user-defined-hash)
-                  (puthash file 'no ergoemacs-is-user-defined-hash))))))
-        ret)))
+            (eq ret 'no)) nil)
+         (ret t)
+         (t
+          (setq ret
+                (catch 'found-dir
+                  (dolist (cur-dir ergoemacs-is-user-defined-emacs-lisp-dirs)
+                    (when (string-match (concat "\\`" (regexp-quote (expand-file-name cur-dir)))
+                                        dir)
+                      (throw 'found-dir nil)))
+                  t))
+          (when (and ret (string-match-p ergoemacs-is-not-user-defined-dir dir))
+            (setq ret nil))
+          (when (and (not ret) (string-match-p ergoemacs-is-user-defined-dir dir))
+            (setq ret t))
+          (if ret
+              (progn
+                (puthash dir t ergoemacs-is-user-defined-hash)
+                (puthash file t ergoemacs-is-user-defined-hash)
+                (when function
+                  (puthash function t ergoemacs-is-user-defined-hash)))
+            (puthash dir 'no ergoemacs-is-user-defined-hash)
+            (puthash file 'no ergoemacs-is-user-defined-hash)
+            (when function
+              (puthash function 'no ergoemacs-is-user-defined-hash)))
+          ret)))))
+
+(defvar ergoemacs-add-hook-hash (make-hash-table))
+(defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local) activate)
+  "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
+If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
+  (cond
+   ((and ergoemacs-mode (eq hook 'pre-command-hook)
+         (memq hook ergoemacs-hook-functions))
+    (add-hook 'ergoemacs-pre-command-hook function append local))
+   ((and (ignore-errors (symbolp function))
+         (ignore-errors (gethash function ergoemacs-add-hook-hash)))
+    (add-hook hook (gethash function ergoemacs-add-hook-hash) append local))
+   ((and (ignore-errors (symbolp function))
+         (not (ignore-errors
+                (string= "ergoemacs-" (substring (symbol-name function) 0 10))))
+         (ergoemacs-is-user-defined-map-change-p function))
+    (fset (intern (concat "ergoemacs--user-" (symbol-name function)))
+          `(lambda(&rest args)
+             ,(format "Run `%s' respecting user keys in `ergoemacs-mode'."
+                      (symbol-name function))
+             (let ((ergoemacs-is-user-defined-map-change-p t)
+                   (ergoemacs-run-mode-hooks t))
+               (apply ,function args))))
+    (puthash function (intern (concat "ergoemacs--user-" (symbol-name function))) ergoemacs-add-hook-hash)
+    (add-hook hook function append local))
+   ((and (ignore-errors (not (symbolp function))) 
+         (ergoemacs-is-user-defined-map-change-p)
+         (not (ignore-errors (string= "ergoemacs-" (substring (documentation function) 0 10)))))
+    (add-hook hook `(lambda(&rest args) "ergoemacs--user-hook"
+                      (let ((ergoemacs-is-user-defined-map-change-p t)
+                            (ergoemacs-run-mode-hooks t))
+                        (apply ,function args))) append local))
+   (t
+    ad-do-it)))
 
 (defun ergoemacs-changes-are-ignored-in-runtime ()
   "Ignore changes to keymaps after loading ergoemacs-mode."
@@ -398,12 +436,12 @@ This require `ergoemacs-mode' to be enabled as well as
         ad-do-it)))))
 
 
-(defadvice run-mode-hooks (around ergoemacs-run-hooks activate)
-  "`ergoemacs-mode' run-hooks advice helps user define keys properly.
-This assumes any key defined while running a hook is a user-defined hook."
-  (let ((ergoemacs-run-mode-hooks t)
-        (ergoemacs-is-user-defined-map-change-p t))
-    ad-do-it))
+;; (defadvice run-mode-hooks (around ergoemacs-run-hooks activate)
+;;   "`ergoemacs-mode' run-hooks advice helps user define keys properly.
+;; This assumes any key defined while running a hook is a user-defined hook."
+;;   (let ((ergoemacs-run-mode-hooks t)
+;;         (ergoemacs-is-user-defined-map-change-p t))
+;;     ad-do-it))
 
 (defadvice fancy-startup-tail (around ergoemacs-fancy-startup-tail activate)
   "Modify fancy startup to use ergoemacs-mode keys"
