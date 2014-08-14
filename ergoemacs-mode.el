@@ -330,7 +330,6 @@ Valid values are:
           (expand-file-name "ergoemacs-theme-engine.el" ergoemacs-dir)))
     (load "ergoemacs-theme-engine"))
    (t
-    (message "Whoa")
     (byte-compile-file (expand-file-name "ergoemacs-theme-engine.el" ergoemacs-dir) t))))
 
 (defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
