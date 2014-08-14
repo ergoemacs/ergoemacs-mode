@@ -141,12 +141,14 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
                (append package-directory-list
                        (list package-user-dir)))))
 
-(defun ergoemacs-is-user-defined-map-change-p ()
+(defun ergoemacs-is-user-defined-map-change-p (&optional function)
   "Tries to determine if the map change is a user-defined map change."
   (or ergoemacs-is-user-defined-map-change-p
-      (let* ((file (or
-                    load-file-name
-                    (buffer-file-name)))
+      (let* ((file (if (functionp function)
+                       (find-lisp-object-file-name function (symbol-function function))
+                     (or
+                      load-file-name
+                      (buffer-file-name))))
 	     (ret (gethash file ergoemacs-is-user-defined-hash))
              dir)
         (if (eq ret 'no)
