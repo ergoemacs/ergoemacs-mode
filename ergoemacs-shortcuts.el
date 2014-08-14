@@ -641,10 +641,12 @@ It will replace anything defined by `ergoemacs-translation'"
 (defvar ergoemacs-this-command)
 (defvar keyfreq-table)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
-(declare-function ergoemacs-smart-function-p "ergoemacs-model.el")
+(declare-function ergoemacs-smart-function-p "ergoemacs-mode.el")
 (defvar ergoemacs-test-fn nil
   "Flag to have `ergoemacs-read-key-call' assign the function to
   this variable.")
+(defvar ergoemacs-force-shift-select-mark-active)
+(declare-function ergoemacs-is-movement-command-p "ergoemacs-mode.el")
 (defun ergoemacs-read-key-call (function &optional record-flag keys)
   "`ergoemacs-mode' replacement for `call-interactively'.
 

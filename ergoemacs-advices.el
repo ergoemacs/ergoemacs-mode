@@ -905,7 +905,7 @@ initialization after ergoemacs-mode loaded itself.  has `eval-after-load'
 DISABLE when non-nil.
 Assumes ergoemacs-real-FUNCTION and ergoemacs-FUNCTION as the two functions to toggle"
   (dolist (ad ergoemacs-functions-to-redefine)
-    (ergoemacs-enable-c-advice ad)))
+    (ergoemacs-enable-c-advice ad disable)))
 
 
 (defadvice icicle-mode (around ergoemacs-icicle-play (arg) activate)
