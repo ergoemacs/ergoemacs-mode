@@ -234,7 +234,9 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
       (setq cmd (format "%s -e %s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\" --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\""
                         (executable-find "xterm") emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))))
-    (insert "Command\n" cmd "\n\n")
+    (with-current-buffer (get-buffer-create "*ergoemacs-clean*")
+      (goto-char (point-max))
+      (insert "Command\n" cmd "\n\n"))
     (if (not rm-batch)
         (setq process (start-process-shell-command "ergoemacs-run-clean"
                                                    "*ergoemacs-clean*"
