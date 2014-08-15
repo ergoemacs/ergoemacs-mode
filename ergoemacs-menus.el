@@ -113,7 +113,7 @@
                   (dolist (item (where-is-internal cmd nil nil nil t))
                     (cond
                      ((and (< (length item) min-len) item
-                           (not (memq (elt item 0) '(menu-bar remap again redo cut copy paste help))))
+                           (not (memq (elt item 0) '(ergoemacs-user menu-bar remap again redo cut copy paste help))))
                       (setq ret item)
                       (setq min-len (length item)))
                      ((and item (= (length item) min-len)
