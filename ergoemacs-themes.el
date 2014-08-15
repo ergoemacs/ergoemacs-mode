@@ -347,6 +347,7 @@
   (when helm-before-initialize-hook
     :modify-map t
     :full-shortcut-keymap t
+    (define-key helm-map [remap mark-whole-buffer] 'helm-mark-all)
     (define-key helm-map (kbd "C-w") 'helm-keyboard-quit)
     (define-key helm-map (kbd "C-z") nil))
 
