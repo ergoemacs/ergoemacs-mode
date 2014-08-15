@@ -77,6 +77,7 @@
     ("<end>" (end-of-buffer move-end-of-line))
     ("<execute>" (execute-extended-command))
     ("<f10>" (menu-bar-open))
+    ("<f11>" (toggle-frame-fullscreen))
     ("<f1> ." (display-local-help))
     ("<f1> 4 i" (info-other-window))
     ("<f1> 4" (prefix))
