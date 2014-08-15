@@ -270,15 +270,16 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ;;   (setq ergoemacs-local-emulation-mode-map-alist
     ;;         (list (cons 'ergoemacs-mode (make-sparse-keymap)))))
     (ignore-errors
-      (if (and ergoemacs-run-mode-hooks
-               (ergoemacs-is-user-defined-map-change-p)
-               (not (equal keymap ergoemacs-global-map))
-               (not (equal keymap ergoemacs-keymap)))
-          (let ((ergoemacs-run-mode-hooks nil)
-                (new-key (read-kbd-macro
-                          (format "<ergoemacs-user> %s"
-                                  (key-description key)))))
-            (define-key keymap new-key def))))
+      (when (and ergoemacs-run-mode-hooks
+                 (not (string-match-p "<menu-item>" (key-description key)))
+                 (ergoemacs-is-user-defined-map-change-p)
+                 (not (equal keymap ergoemacs-global-map))
+                 (not (equal keymap ergoemacs-keymap)))
+        (let ((ergoemacs-run-mode-hooks nil)
+              (new-key (read-kbd-macro
+                        (format "<ergoemacs-user> %s"
+                                (key-description key)))))
+          (define-key keymap new-key def))))
     ad-do-it
     (when is-ergoemacs-modified-p
       ;; Restore ergoemacs-mode changes
