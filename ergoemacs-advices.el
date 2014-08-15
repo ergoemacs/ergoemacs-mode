@@ -287,7 +287,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
             (full-map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-full-map")) ergoemacs-original-map-hash)))
         ;; Save original map again.
         (puthash is-ergoemacs-modified-p (copy-keymap keymap) ergoemacs-original-map-hash)
-        (setq n-map (ergoemacs-install-shortcuts-map n-map (not full-map)))
+        (setq n-map (ergoemacs-install-shortcuts-map n-map (not full-map) nil 'no-brand))
         (cond
          ((ignore-errors
             (and (eq (nth 0 (nth 1 n-map)) 'keymap)
