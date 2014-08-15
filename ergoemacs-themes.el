@@ -1052,7 +1052,7 @@
     (global-set-key [remap find-file] 'helm-find-files)
     (global-set-key [remap eshell-pcomplete] 'helm-esh-pcomplete)
     (global-set-key [remap occur] 'helm-occur)
-    (global-set-key [remap info] 'helm-info)
+    (global-set-key [remap info] 'helm-info-at-point)
     (global-set-key [remap ac-isearch] 'ac-complete-with-helm)))
 
 (ergoemacs-component icy-reclaim ()
