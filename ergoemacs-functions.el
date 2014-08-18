@@ -33,6 +33,8 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
+(declare-function ergoemacs-without-emulation--internal "ergoemacs-shortcuts.el")
+
 (require 'redo "redo.elc" t) ; for redo shortcut
 
 (defcustom ergoemacs-isearch-backward-char-to-edit nil

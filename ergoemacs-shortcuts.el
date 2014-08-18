@@ -95,6 +95,88 @@ Uses `ergoemacs-read-key'"
   (ergoemacs-read-key nil 'normal))
 (defvar ergoemacs-mark-active nil)
 
+(defvar ergoemacs-original-map-hash)
+(defvar ergoemacs-mode)
+(declare-function ergoemacs-emulations "ergoemacs-mode.el")
+(defun ergoemacs-without-emulation--internal (function)
+  "Without keys defined at `emulation-mode-map-alists' for FUNCTION.
+
+Also temporarily remove any changes ergoemacs-mode made to:
+- `overriding-terminal-local-map'
+- `overriding-local-map'
+
+Will override any ergoemacs changes to the text properties by temporarily
+installing the original keymap above the ergoemacs-mode installed keymap.
+"
+  (let ((overriding-terminal-local-map overriding-terminal-local-map)
+        (overriding-local-map overriding-local-map)
+        (hash (make-hash-table))
+        tmp-map tmp)
+    ;; Remove most of ergoemacs-mode's key bindings
+    (ergoemacs-emulations 'remove)
+    (dolist (map (current-active-maps t))
+      (when (and (ignore-errors
+                   (string= "ergoemacs-user" (nth 1 map)))
+                 (setq tmp (gethash (car (nth 2 map))
+                                    ergoemacs-original-map-hash)))
+        ;; (message "Found %s" (car (nth 2 map)))
+        (setq tmp (cdr tmp))
+        (push (nth 2 map) tmp)
+        (puthash (car (nth 2 map)) map hash)
+        (push "ergoemacs-unmodified" tmp)
+        (setcdr map tmp))
+      (when (and (setq tmp-map (keymap-parent map))
+                 (ignore-errors
+                   (string= "ergoemacs-user" (nth 1 tmp-map)))
+                 (setq tmp (gethash (car (nth 2 tmp-map))
+                                    ergoemacs-original-map-hash)))
+        ;; (message "Found Parent %s" (car (nth 2 map)))
+        (setq tmp (cdr tmp))
+        (push (nth 2 tmp-map) tmp)
+        (puthash (car (nth 2 tmp-map)) tmp hash)
+        (push "ergoemacs-unmodified" tmp)
+        (setcdr tmp-map tmp))
+      ;; composed map
+      (when (or (ignore-errors (eq 'keymap (nth 0 (nth 1 map))))
+                (ignore-errors (eq 'keymap (nth 0 (nth 2 map)))))
+        (dolist (sub-map map)
+          (when (and (ignore-errors (keymapp sub-map))
+                     (ignore-errors
+                       (string= "ergoemacs-user" (nth 1 sub-map)))
+                     (setq tmp (gethash (car (nth 2 sub-map))
+                                        ergoemacs-original-map-hash)))
+            ;; (message "Found Composed %s" (car (nth 2 map)))
+            (setq tmp (cdr tmp))
+            (push (nth 2 tmp-map) tmp)
+            (puthash (car (nth 2 tmp-map)) tmp hash)
+            (push "ergoemacs-unmodified" tmp)
+            (setcdr sub-map tmp)))))
+    (unwind-protect
+        ;; Install override-text-map changes above anything already
+        ;; installed.
+        (funcall function)
+      (when ergoemacs-mode
+        (dolist (map (current-active-maps t))
+          (when (and (ignore-errors
+                       (string= "ergoemacs-unmodified" (nth 1 map)))
+                     (setq tmp (gethash (car (nth 2 map)) hash)))
+            (setcdr map (cdr tmp)))
+          (when (and (setq tmp-map (keymap-parent map))
+                     (ignore-errors
+                       (string= "ergoemacs-unmodified" (nth 1 tmp-map)))
+                     (setq tmp (gethash (car (nth 2 tmp-map)) hash)))
+            (setcdr tmp-map (cdr tmp)))
+          ;; composed map
+          (when (or (ignore-errors (eq 'keymap (nth 0 (nth 1 map))))
+                    (ignore-errors (eq 'keymap (nth 0 (nth 2 map)))))
+            (dolist (sub-map map)
+              (when (and (ignore-errors (keymapp sub-map))
+                         (ignore-errors
+                           (string= "ergoemacs-unmodified" (nth 1 sub-map)))
+                         (setq tmp (gethash (car (nth 2 sub-map)) hash)))
+                (setcdr sub-map (cdr tmp))))))
+        (ergoemacs-emulations)))))
+
 (defun ergoemacs-to-sequence (key)
   "Returns a key sequence from KEY.
 This sequence is compatible with `listify-key-sequence'."
@@ -1636,7 +1718,8 @@ save-buffer (C-x C-s) `org-save-all-org-buffers'"
 (defun ergoemacs-shortcut-remap-list
   (function
    &optional keymap
-   ignore-desc dont-swap-for-ergoemacs-functions dont-ignore-commands)
+   ignore-desc dont-swap-for-ergoemacs-functions dont-ignore-commands
+   filter-p)
   "Determine the possible current remapping of FUNCTION.
 
 It based on the key bindings bound to the default emacs keys
@@ -1678,7 +1761,7 @@ This command also ignores anything that remaps to FUNCTION,
 by setting changed by setting DONT-IGNORE-COMMANDS to t.
 
 When KEYMAP is defined, `ergoemacs-this-command' is not included
-in the ignored commands.i
+in the ignored commands.
 
 Also this ignores anything that is changed in the global keymap.
 
@@ -1687,6 +1770,9 @@ If <ergoemacs-user> key is defined, ignore this functional remap.
 <ergoemacs-user> key is defined with the `define-key' advice when
 running `run-mode-hooks'.  It is a work-around to try to respect
 user-defined keys.
+
+When FILTER-P is a function, only include functions
+where (FILTER-P function) is non-nil
 "
   (if (not ergoemacs-use-function-remapping) nil
     (let ((key-bindings-lst (ergoemacs-shortcut-function-binding function))
@@ -1720,6 +1806,9 @@ user-defined keys.
                        (if (keymapp fn)
                            (setq fn nil))))))
                   (when (ergoemacs-smart-function-p fn)
+                    (setq fn nil))
+                  (when (ignore-errors (and (functionp filter-p)
+                                            (not (funcall filter-p fn))))
                     (setq fn nil))
                   (when fn
                     (cond
@@ -1756,10 +1845,15 @@ user-defined keys.
 (defun ergoemacs-shortcut-remap (function &optional dont-call)
   "Runs the FUNCTION or whatever `ergoemacs-shortcut-remap-list' returns.
 When DONT-CALL is non nil, dont actually call the function, return it instead.
+
+When DONT-CALL is a function, and (DONT-CALL FUNCTION) is
+non-nil, call either the remapped function or FUNCTION
 "
   (save-match-data
     (if (commandp function t)
-        (let ((fn-lst (ergoemacs-shortcut-remap-list function))
+        (let ((fn-lst (ergoemacs-shortcut-remap-list
+                       function nil nil nil nil dont-call))
+              (dont-call (if (functionp dont-call) nil dont-call))
               (fn function)
               send-fn)
           (when fn-lst
@@ -1767,7 +1861,9 @@ When DONT-CALL is non nil, dont actually call the function, return it instead.
           (setq send-fn (or (command-remapping fn (point)) fn))
           (unless (commandp send-fn t)
             (setq send-fn fn))
-          (if dont-call send-fn
+          (if (and dont-call
+                   (not (ignore-errors (funcall dont-call send-fn))))
+              send-fn
             (ergoemacs-read-key-call send-fn)))
       (let ((hash (gethash function ergoemacs-command-shortcuts-hash)))
         (when (and hash (eq 'global (car (cdr hash))) (commandp (car hash)))

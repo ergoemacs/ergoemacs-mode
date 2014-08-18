@@ -108,21 +108,7 @@ Also temporarily remove any changes ergoemacs-mode made to:
 Will override any ergoemacs changes to the text properties by temporarily
 installing the original keymap above the ergoemacs-mode installed keymap.
 "
-  `(let ((overriding-terminal-local-map overriding-terminal-local-map)
-         (overriding-local-map overriding-local-map)
-         tmp-overlay)
-     ;; Remove most of ergoemacs-mode's key bindings
-     (ergoemacs-emulations 'remove)
-     (unwind-protect
-         (progn
-           ;; Install override-text-map changes above anything already
-           ;; installed.
-           (setq tmp-overlay (ergoemacs-remove-shortcuts t))
-           ,@body)
-       (when tmp-overlay
-         (delete-overlay tmp-overlay))
-       (when ergoemacs-mode
-         (ergoemacs-emulations)))))
+  `(ergoemacs-without-emulation--internal (lambda() ,@body)))
 
 ;; This shouldn't be called at run-time; This fixes the byte-compile warning.
 (fset 'ergoemacs-theme-component--parse

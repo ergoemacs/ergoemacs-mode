@@ -31,6 +31,7 @@
 (eval-when-compile 
   (require 'cl)
   (require 'ergoemacs-macros))
+(declare-function ergoemacs-without-emulation--internal "ergoemacs-shortcuts.el")
 
 (defvar ergoemacs-advices '()
   "List of advices to enable and disable when ergoemacs is running.")
