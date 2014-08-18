@@ -919,7 +919,7 @@ initialization after ergoemacs-mode loaded itself.  has `eval-after-load'
 "
   (ergoemacs-real-eval-after-load
    file (or (and ergoemacs-run-mode-hooks
-                 (ergoemacs-is-user-defined-map-change-p) `
+                 (ergoemacs-is-user-defined-map-change-p) 
                  `(let ((ergoemacs-run-mode-hooks t)
                         (ergoemacs-is-user-defined-map-change-p t))
                     ,form)) form)))
