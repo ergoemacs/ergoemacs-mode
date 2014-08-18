@@ -603,6 +603,11 @@ Return if the map object has been modified."
     ret))
 
 (defvar ergoemacs-translation-assoc)
+(defvar ergoemacs-translation-from)
+(defvar ergoemacs-translation-to)
+(defvar ergoemacs-needs-translation)
+(defvar ergoemacs-translation-regexp)
+(defvar ergoemacs-translation-assoc)
 (defclass ergoemacs-variable-map (eieio-named)
   ((global-map-p :initarg :global-map-p
                  :initform nil
@@ -672,21 +677,33 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                              (ignore-errors (string-match-p just-first key-desc)))))
            (us-key
             (or (and (string= layout "us") key-desc) 
-                (let ((ergoemacs-translation-from layout)
-                      (ergoemacs-translation-to "us")
-                      (ergoemacs-needs-translation t)
-                      (ergoemacs-translation-regexp translation-regexp)
-                      (ergoemacs-translation-assoc translation-assoc))
-                  (when (string= "" translation-regexp)
-                    (setq ergoemacs-translation-from nil
-                          ergoemacs-translation-to nil
-                          ergoemacs-translation-regexp nil
-                          ergoemacs-translation-assoc nil)
-                    (ergoemacs-setup-translation "us" layout)
-                    (unless ergoemacs-translation-regexp
-                      (oset obj translation-regexp ergoemacs-translation-regexp)
-                      (oset obj translation-assoc ergoemacs-translation-assoc))
-                    (ergoemacs-kbd key-desc t only-first))))))
+                (let ((translation-from ergoemacs-translation-from)
+                      (translation-to ergoemacs-translation-to)
+                      (needs-translation ergoemacs-needs-translation)
+                      (old-translation-regexp ergoemacs-translation-regexp )
+                      (old-translation-assoc ergoemacs-translation-assoc))
+                  (unwind-protect
+                      (progn
+                        (setq ergoemacs-translation-from layout
+                              ergoemacs-translation-to "us"
+                              ergoemacs-needs-translation t
+                              ergoemacs-translation-regexp translation-regexp
+                              ergoemacs-translation-assoc translation-assoc)
+                        (when (string= "" translation-regexp)
+                          (setq ergoemacs-translation-from nil
+                                ergoemacs-translation-to nil
+                                ergoemacs-translation-regexp nil
+                                ergoemacs-translation-assoc nil)
+                          (ergoemacs-setup-translation "us" layout)
+                          (unless ergoemacs-translation-regexp
+                            (oset obj translation-regexp ergoemacs-translation-regexp)
+                            (oset obj translation-assoc ergoemacs-translation-assoc)))
+                        (ergoemacs-kbd key-desc t only-first))
+                    (setq ergoemacs-translation-from translation-from
+                          ergoemacs-translation-to translation-to
+                          ergoemacs-needs-translation needs-translation
+                          ergoemacs-translation-regexp old-translation-regexp
+                          ergoemacs-translation-assoc old-translation-assoc))))))
       (if final-desc
           (setq final-desc (nth 1 final-desc))
         (cond
@@ -738,25 +755,31 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
     (let* ((lay (or layout ergoemacs-keyboard-layout))
            (ilay (intern lay))
            (ret (gethash ilay keymap-hash))
-           ergoemacs-translation-from
-           ergoemacs-translation-to
-           ergoemacs-needs-translation
-           ergoemacs-translation-regexp
-           ergoemacs-translation-assoc)
-      (unless ret
-        (setq ret (ergoemacs-fixed-map
-                   lay
-                   :global-map-p global-map-p
-                   :modify-map modify-map
-                   :full-map full-map
-                   :always always
-                   :first first))
-        (ergoemacs-setup-translation lay "us")
-        (dolist (cmd (reverse cmd-list))
-          (ergoemacs-define-map ret (ergoemacs-kbd (nth 0 cmd) nil (nth 3 cmd))
-                                (nth 1 cmd) (nth 4 cmd)))
-        (puthash ilay ret keymap-hash)
-        (oset obj keymap-hash keymap-hash))
+           (translation-from ergoemacs-translation-from)
+           (translation-to ergoemacs-translation-to)
+           (needs-translation ergoemacs-needs-translation)
+           (old-translation-regexp ergoemacs-translation-regexp)
+           (old-translation-assoc ergoemacs-translation-assoc))
+      (unwind-protect
+          (unless ret
+            (setq ret (ergoemacs-fixed-map
+                       lay
+                       :global-map-p global-map-p
+                       :modify-map modify-map
+                       :full-map full-map
+                       :always always
+                       :first first))
+            (ergoemacs-setup-translation lay "us")
+            (dolist (cmd (reverse cmd-list))
+              (ergoemacs-define-map ret (ergoemacs-kbd (nth 0 cmd) nil (nth 3 cmd))
+                                    (nth 1 cmd) (nth 4 cmd)))
+            (puthash ilay ret keymap-hash)
+            (oset obj keymap-hash keymap-hash))
+        (setq ergoemacs-translation-from translation-from
+              ergoemacs-translation-to translation-to
+              ergoemacs-needs-translation needs-translation
+              ergoemacs-translation-regexp old-translation-regexp
+              ergoemacs-translation-assoc old-translation-assoc))
       ret)))
 
 (defmethod ergoemacs-apply-deferred ((obj ergoemacs-variable-map))
