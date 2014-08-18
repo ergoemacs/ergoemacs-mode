@@ -5,7 +5,7 @@
 ;; Filename: ergoemacs-theme-engine.el
 ;; Description: 
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer:
 ;; Created: Thu Mar 20 10:41:30 2014 (-0500)
 ;; Version:
 ;; Package-Requires: ()
@@ -2925,7 +2925,7 @@ Ignores _DESC."
                       (read-kbd-macro key)) function)))
 
 (defconst ergoemacs-font-lock-keywords
-  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component-\\|-require\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
+  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
      (1 font-lock-keyword-face)
      (2 font-lock-constant-face nil t))))
 
