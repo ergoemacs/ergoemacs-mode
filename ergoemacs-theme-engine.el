@@ -1608,7 +1608,7 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme--hook-running nil)
 (declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
-
+(defvar ergoemacs-is-user-defined-map-change-p)
 (defun ergoemacs-get-child-maps (keymap &optional ob)
   "Get the child maps for KEYMAP"
   ;; Not sure this is useful any longer
@@ -1632,6 +1632,7 @@ FULL-SHORTCUT-MAP-P "
                shortcut-list
                rm-keys) (ergoemacs-get-fixed-map obj)
     (let ((hook-map-list '())
+          (ergoemacs-is-user-defined-map-change-p 'no)
           (ergoemacs-theme--install-shortcut-item--global t)
           ;; (read-map (or read-map (make-spase-keymap)))
           ;; (shortcut-map (or shortcut-map (make-sparse-keymap)))
@@ -1658,7 +1659,8 @@ FULL-SHORTCUT-MAP-P "
               (cond
                ((and modify-map always)
                 ;; Maps that are always modified.
-                (let ((fn-name
+                (let ((ergoemacs-is-user-defined-map-change-p nil)
+                      (fn-name
                        (intern
                         (concat
                          (symbol-name emulation-var) "-and-"
