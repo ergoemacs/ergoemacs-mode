@@ -179,12 +179,16 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
         (setq ret t))
       (if ret
           (progn
-            (puthash dir t ergoemacs-is-user-defined-hash)
-            (puthash file t ergoemacs-is-user-defined-hash)
+            (when dir
+              (puthash dir t ergoemacs-is-user-defined-hash))
+            (when file
+              (puthash file t ergoemacs-is-user-defined-hash))
             (when function
               (puthash function t ergoemacs-is-user-defined-hash)))
-        (puthash dir 'no ergoemacs-is-user-defined-hash)
-        (puthash file 'no ergoemacs-is-user-defined-hash)
+        (when dir
+          (puthash dir 'no ergoemacs-is-user-defined-hash))
+        (when file
+          (puthash file 'no ergoemacs-is-user-defined-hash))
         (when function
           (puthash function 'no ergoemacs-is-user-defined-hash)))
       ret))))
@@ -193,37 +197,42 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
 (defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local) activate)
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
 If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
-  (cond
-   ((and ergoemacs-mode (eq hook 'pre-command-hook)
-         (memq hook ergoemacs-hook-functions))
-    (add-hook 'ergoemacs-pre-command-hook function append local))
-   ((and (ignore-errors (symbolp function))
-         (ignore-errors (gethash function ergoemacs-add-hook-hash)))
-    (add-hook hook (gethash function ergoemacs-add-hook-hash) append local))
-   ((and (ignore-errors (symbolp function))
-         (not (ignore-errors
-                (string= "ergoemacs-" (substring (symbol-name function) 0 10))))
-         (and (not ergoemacs-global-changes-are-ignored-p)
-              (let (ergoemacs-is-user-defined-map-change-p)
-           (ergoemacs-is-user-defined-map-change-p function))))
-    (fset (intern (concat "ergoemacs--user-" (symbol-name function)))
-          `(lambda(&rest args)
-             ,(format "Run `%s' respecting user keys in `ergoemacs-mode'."
-                      (symbol-name function))
-             (let ((ergoemacs-is-user-defined-map-change-p t)
-                   (ergoemacs-run-mode-hooks t))
-               (apply ',(intern (symbol-name function)) args))))
-    (puthash function (intern (concat "ergoemacs--user-" (symbol-name function))) ergoemacs-add-hook-hash)
-    (add-hook hook function append local))
-   ((and (ignore-errors (not (symbolp function))) 
-         (ergoemacs-is-user-defined-map-change-p)
-         (not (ignore-errors (string= "ergoemacs-" (substring (documentation function) 0 10)))))
-    (add-hook hook `(lambda(&rest args) "ergoemacs--user-hook"
-                      (let ((ergoemacs-is-user-defined-map-change-p t)
-                            (ergoemacs-run-mode-hooks t))
-                        (apply ,function args))) append local))
-   (t
-    ad-do-it)))
+  (let ((ignored-hooks
+         '(pre-command-hook post-command-hook before-change-functions change-major-mode-hook post-self-insert-hook ergoemacs-pre-command-hook)))
+    (cond
+     ((and ergoemacs-mode (eq hook 'pre-command-hook)
+           (memq hook ergoemacs-hook-functions))
+      (add-hook 'ergoemacs-pre-command-hook function append local))
+     ((and (ignore-errors (symbolp function))
+           (ignore-errors (gethash function ergoemacs-add-hook-hash)))
+      (add-hook hook (gethash function ergoemacs-add-hook-hash) append local))
+     ((and (ignore-errors (symbolp function))
+           (not (memq hook ignored-hooks))
+           (not (memq function '(global-font-lock-mode-check-buffers)))
+           (not (ignore-errors
+                  (string= "ergoemacs-" (substring (symbol-name function) 0 10))))
+           (ergoemacs-is-user-defined-map-change-p function))
+      (fset (intern (concat "ergoemacs--user-" (symbol-name function)))
+            `(lambda(&rest args)
+               ,(format "Run `%s' respecting user keys in `ergoemacs-mode'."
+                        (symbol-name function))
+               (let ((ergoemacs-is-user-defined-map-change-p t)
+                     (ergoemacs-run-mode-hooks t))
+                 (apply ',(intern (symbol-name function)) args))))
+      (puthash function (intern (concat "ergoemacs--user-" (symbol-name function))) ergoemacs-add-hook-hash)
+      (message "Add ergoemacs--user-%s instead of %s to hook %s (to preserve keys)" function function hook)
+      (add-hook hook function append local))
+     ((and (ignore-errors (not (symbolp function)))
+           (not (memq hook ignored-hooks))
+           (ergoemacs-is-user-defined-map-change-p)
+           (not (ignore-errors (string= "ergoemacs-" (substring (documentation function) 0 10)))))
+      (message "Add Ergoemacs user hook to %s (to preserve keys)" hook)
+      (add-hook hook `(lambda(&rest args) "ergoemacs--user-hook"
+                        (let ((ergoemacs-is-user-defined-map-change-p t)
+                              (ergoemacs-run-mode-hooks t))
+                          (apply ,function args))) append local))
+     (t
+      ad-do-it))))
 
 (defun ergoemacs-changes-are-ignored-in-runtime ()
   "Ignore changes to keymaps after loading ergoemacs-mode."
