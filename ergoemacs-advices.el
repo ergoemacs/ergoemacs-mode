@@ -203,9 +203,9 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
    ((and (ignore-errors (symbolp function))
          (not (ignore-errors
                 (string= "ergoemacs-" (substring (symbol-name function) 0 10))))
-         (and (not ergoemacs-changes-are-ignored-in-runtime)
+         (and (not ergoemacs-global-changes-are-ignored-p)
               (let (ergoemacs-is-user-defined-map-change-p)
-                (ergoemacs-is-user-defined-map-change-p function))))
+           (ergoemacs-is-user-defined-map-change-p function))))
     (fset (intern (concat "ergoemacs--user-" (symbol-name function)))
           `(lambda(&rest args)
              ,(format "Run `%s' respecting user keys in `ergoemacs-mode'."
