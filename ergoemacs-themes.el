@@ -1223,8 +1223,11 @@
                  quit
                  apps-swap
                  save-options-on-exit)
-  :optional-off '(guru no-backspace search-reg
-                       ergoemacs-banish-shift)
+  :optional-off '(guru
+                  search-reg
+                  no-backspace
+                  ergoemacs-banish-shift
+                  move-and-transpose-lines)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps icy-reclaim))
