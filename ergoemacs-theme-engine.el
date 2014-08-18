@@ -683,9 +683,10 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                           ergoemacs-translation-regexp nil
                           ergoemacs-translation-assoc nil)
                     (ergoemacs-setup-translation "us" layout)
-                    (oset obj translation-regexp ergoemacs-translation-regexp)
-                    (oset obj translation-assoc ergoemacs-translation-assoc))
-                  (ergoemacs-kbd key-desc t only-first)))))
+                    (unless ergoemacs-translation-regexp
+                      (oset obj translation-regexp ergoemacs-translation-regexp)
+                      (oset obj translation-assoc ergoemacs-translation-assoc))
+                    (ergoemacs-kbd key-desc t only-first)))))
       (if final-desc
           (setq final-desc (nth 1 final-desc))
         (cond
