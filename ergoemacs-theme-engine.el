@@ -686,7 +686,7 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                     (unless ergoemacs-translation-regexp
                       (oset obj translation-regexp ergoemacs-translation-regexp)
                       (oset obj translation-assoc ergoemacs-translation-assoc))
-                    (ergoemacs-kbd key-desc t only-first)))))
+                    (ergoemacs-kbd key-desc t only-first))))))
       (if final-desc
           (setq final-desc (nth 1 final-desc))
         (cond
@@ -707,6 +707,8 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
       (when final-desc
         (push final-desc cmd-list))
       (oset obj cmd-list cmd-list))))
+
+
 
 (defmethod ergoemacs-define-map ((obj ergoemacs-variable-map) key def &optional no-unbind)
   (let* ((key-desc (key-description key)))
