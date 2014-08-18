@@ -143,7 +143,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
      (ergoemacs-is-user-defined-map-change-p t)
      ;; File is not there, its not a user defined change
      ((progn
-        (setq file (if (functionp function)
+        (setq file (if (ignore-errors (functionp function))
                        (or (gethash function ergoemacs-is-user-defined-hash)
                            (find-lisp-object-file-name function (symbol-function function)))
                      (or
