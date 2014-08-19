@@ -283,7 +283,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ;;         (list (cons 'ergoemacs-mode (make-sparse-keymap)))))
     (ignore-errors
       (when (and ergoemacs-run-mode-hooks
-                 (not (string-match-p "<menu-bar>" (key-description key)))
+                 (not (string-match-p "\\(<menu-bar>\\|<remap>\\)" (key-description key)))
                  (ergoemacs-is-user-defined-map-change-p)
                  (not (equal keymap ergoemacs-global-map))
                  (not (equal keymap ergoemacs-keymap)))
