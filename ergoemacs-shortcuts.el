@@ -1512,7 +1512,8 @@ argument prompt.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 no translation listed."
   (interactive "^")
-  (ergoemacs-read-key (this-single-command-keys)))
+  (let ((tmp (this-single-command-keys)))
+    (ergoemacs-read-key (or (and (equal tmp [27 27]) "M-ESC") tmp))))
 
 
 
