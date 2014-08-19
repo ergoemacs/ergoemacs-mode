@@ -1832,7 +1832,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                   hook-map-list))))
       
       ;; Reset shortcut hash
-      (setq ;;ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
+      (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
             ergoemacs-shortcut-prefix-keys '()
             ergoemacs-original-keys-to-shortcut-keys-regexp ""
             ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal))
