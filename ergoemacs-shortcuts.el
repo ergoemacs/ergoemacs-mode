@@ -534,52 +534,65 @@ It will replace anything defined by `ergoemacs-translation'"
 
 (defvar ergoemacs-alt-ctl-text "M-C-")
 
-(defun ergoemacs-read-key-next-key-is-alt (&optional type pretty-key)
+(defalias 'ergoemacs-read-key-force-next-key-is-alt 'ergoemacs-read-key-next-key-is-alt)
+(defun ergoemacs-read-key-next-key-is-alt (&optional type pretty-key
+                                                     next-key-vector)
   "The next key read is an Alt+ key. (or M- )"
   (interactive)
   (when (and type pretty-key)
     (let* ((next-key (ergoemacs-translate
-                      (vector
-                       (ergoemacs-read-event nil pretty-key ergoemacs-alt-text))))
+                      (or next-key-vector
+                          (vector
+                           (ergoemacs-read-event nil pretty-key ergoemacs-alt-text)))))
            (key (plist-get next-key ':alt-key))
            (pretty (plist-get next-key ':alt-pretty))
            (kbd (plist-get next-key ':alt)))
       (ergoemacs-read-key-install-next-key next-key key pretty kbd))))
 
-(defun ergoemacs-read-key-next-key-is-ctl (&optional type pretty-key)
+(defalias 'ergoemacs-read-key-force-next-key-is-ctl 'ergoemacs-read-key-next-key-is-ctl)
+(defun ergoemacs-read-key-next-key-is-ctl (&optional type pretty-key
+                                                     next-key-vector)
   "The next key read is an Ctrl+ key. (or C- )"
   (interactive)
   (when (and type pretty-key)
     (let* ((next-key (ergoemacs-translate
-                      (vector
-                       (ergoemacs-read-event nil pretty-key ergoemacs-ctl-text))))
+                      (or next-key-vector
+                          (vector
+                           (ergoemacs-read-event nil pretty-key ergoemacs-ctl-text)))))
            (key (plist-get next-key ':ctl-key))
            (pretty (plist-get next-key ':ctl-pretty))
            (kbd (plist-get next-key ':ctl)))    
       (ergoemacs-read-key-install-next-key next-key key pretty kbd))))
 
-(defun ergoemacs-read-key-next-key-is-alt-ctl (&optional type pretty-key)
+
+(defalias 'ergoemacs-read-key-force-next-key-is-alt-ctl 'ergoemacs-read-key-next-key-is-alt-ctl)
+(defun ergoemacs-read-key-next-key-is-alt-ctl (&optional type pretty-key
+                                                         next-key-vector)
   "The next key read is an Alt+Ctrl+ key. (or C-M- )"
   (interactive)
   (if (or type pretty-key)
       (when (and type pretty-key)
         (let* ((next-key (ergoemacs-translate
-                          (vector
-                           (ergoemacs-read-event nil pretty-key ergoemacs-alt-ctl-text))))
+                          (or next-key-vector
+                              (vector
+                               (ergoemacs-read-event nil pretty-key ergoemacs-alt-ctl-text)))))
                (key (plist-get next-key ':alt-ctl-key))
                (pretty (plist-get next-key ':alt-ctl-pretty))
                (kbd (plist-get next-key ':alt-ctl)))
           (ergoemacs-read-key-install-next-key next-key key pretty kbd)))
     (warn "This should be called from ergoemacs read key sequence only.")))
 
-(defun ergoemacs-read-key-next-key-is-quoted (&optional type pretty-key)
+(defalias 'ergoemacs-read-key-force-next-key-is-quoted 'ergoemacs-read-key-next-key-is-quoted)
+(defun ergoemacs-read-key-next-key-is-quoted (&optional type pretty-key
+                                                        next-key-vector)
   "The next key read is quoted."
   (interactive)
   (when (and type pretty-key)
-    (let* ((next-key (ergoemacs-translate (vector (ergoemacs-read-event nil pretty-key ""))))
-          (key (plist-get next-key ':normal-key))
-          (pretty (plist-get next-key ':normal-pretty))
-          (kbd (plist-get next-key ':normal)))
+    (let* ((next-key (ergoemacs-translate (or next-key-vector
+                                              (vector (ergoemacs-read-event nil pretty-key "")))))
+           (key (plist-get next-key ':normal-key))
+           (pretty (plist-get next-key ':normal-pretty))
+           (kbd (plist-get next-key ':normal)))
       (ergoemacs-read-key-install-next-key next-key key pretty kbd))))
 
 (defvar guide-key-mode)
@@ -930,10 +943,10 @@ to the appropriate values for `ergoemacs-read-key'.
     (define-key lookup [ergoemacs-single-command-keys] 'ignore)
     (if (and (not use-override) overriding-terminal-local-map)
         (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-      (if overriding-terminal-local-map
+      (if (and use-override overriding-terminal-local-map)
           (setcdr overriding-terminal-local-map (cdr use-override))))
-    (if use-override overriding-local-map 
-      (setcdr overriding-local-map (cdr use-override)))))
+    (if (and use-override overriding-local-map)
+        (setcdr overriding-local-map (cdr use-override)))))
 
 (defvar ergoemacs-command-shortcuts-hash)
 (defvar ergoemacs-extract-map-hash)
@@ -1187,6 +1200,7 @@ argument prompt.
         (type (or initial-key-type 'normal))
         base
         local-keymap
+        last-local-fn
         local-fn
         key-trials
         real-read
@@ -1251,8 +1265,32 @@ argument prompt.
                  local-keymap)
             (setq local-fn (lookup-key local-keymap tmp))
           (setq local-fn nil))
-        (when (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (vconcat ergoemacs-read-key (plist-get next-key ':normal-key))))
-          (setq local-fn nil))
+        ;; Was the last key a translation key and isn't on the current
+        ;; bindings?
+        (when (and (memq last-local-fn '(ergoemacs-read-key-next-key-is-alt
+                                         ergoemacs-read-key-next-key-is-ctl
+                                         ergoemacs-read-key-next-key-is-alt-ctl
+                                         ergoemacs-read-key-next-key-is-quoted))
+                   (not (let (ergoemacs-read-input-keys)
+                          (ergoemacs-real-key-binding (vconcat ergoemacs-read-key (plist-get next-key ':normal-key))))))
+          ;; Replace with translated bindings
+          (setq ergoemacs-read-key (substring ergoemacs-read-key 0 -1)
+                pretty-key (ergoemacs-pretty-key (ergoemacs-real-key-description ergoemacs-read-key))
+                next-key (funcall last-local-fn type pretty-key
+                                  (plist-get next-key ':normal-key))
+                local-fn nil))
+        (setq last-local-fn nil)
+        (when (and (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (vconcat ergoemacs-read-key (plist-get next-key ':normal-key))))
+                   (not (memq local-fn '(ergoemacs-read-key-force-next-key-is-alt
+                                         ergoemacs-read-key-force-next-key-is-ctl
+                                         ergoemacs-read-key-force-next-key-is-alt-ctl
+                                         ergoemacs-read-key-force-next-key-is-quoted))))
+          (setq last-local-fn local-fn
+                local-fn nil))
+        (when current-key-is-escape-p ;; emacs ESC translation
+          (if (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (vconcat ergoemacs-read-key (plist-get next-key ':normal-key))))
+              (setq last-local-fn 'ergoemacs-read-key-next-key-is-alt)
+            (setq local-fn 'ergoemacs-read-key-next-key-is-alt)))
         (if (eq local-fn 'ergoemacs-read-key-undo-last)
             (if (= 0 (length history))
                 (setq continue-read nil) ;; Exit read-key
@@ -1268,9 +1306,6 @@ argument prompt.
                     key-trials nil
                     pretty-key-trial nil
                     pretty-key nil))
-          (when current-key-is-escape-p ;; emacs ESC translation
-            (unless (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (vconcat ergoemacs-read-key (plist-get next-key ':normal-key))))
-              (setq local-fn 'ergoemacs-read-key-next-key-is-alt)))
           (if (and (eq local-fn 'ergoemacs-read-key-swap)
                    (or (not curr-universal) ergoemacs-read-key))
               (progn
@@ -1294,7 +1329,11 @@ argument prompt.
             (when (memq local-fn '(ergoemacs-read-key-next-key-is-alt
                                    ergoemacs-read-key-next-key-is-ctl
                                    ergoemacs-read-key-next-key-is-alt-ctl
-                                   ergoemacs-read-key-next-key-is-quoted))
+                                   ergoemacs-read-key-next-key-is-quoted
+                                   ergoemacs-read-key-force-next-key-is-alt
+                                   ergoemacs-read-key-force-next-key-is-ctl
+                                   ergoemacs-read-key-force-next-key-is-alt-ctl
+                                   ergoemacs-read-key-force-next-key-is-quoted))
               (setq next-key (funcall local-fn type pretty-key))
               (setq local-fn nil))
             (if (eq local-fn 'ergoemacs-read-key-help)

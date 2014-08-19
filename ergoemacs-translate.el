@@ -423,7 +423,11 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
       (dolist (x '((ergoemacs-read-key-next-key-is-alt "M-")
                    (ergoemacs-read-key-next-key-is-ctl "C-")
                    (ergoemacs-read-key-next-key-is-alt-ctl "C-M-")
-                   (ergoemacs-read-key-next-key-is-quoted "")))
+                   (ergoemacs-read-key-next-key-is-quoted "")
+                   (ergoemacs-read-key-force-next-key-is-alt "M-")
+                   (ergoemacs-read-key-force-next-key-is-ctl "C-")
+                   (ergoemacs-read-key-force-next-key-is-alt-ctl "C-M-")
+                   (ergoemacs-read-key-force-next-key-is-quoted "")))
         (let ((key (where-is-internal (nth 0 x) keymap t))
               (trans (nth 1 x)))
           (when key
