@@ -1251,6 +1251,8 @@ argument prompt.
                  local-keymap)
             (setq local-fn (lookup-key local-keymap tmp))
           (setq local-fn nil))
+        (when (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (vconcat ergoemacs-read-key (plist-get next-key ':normal-key))))
+          (setq local-fn nil))
         (if (eq local-fn 'ergoemacs-read-key-undo-last)
             (if (= 0 (length history))
                 (setq continue-read nil) ;; Exit read-key
@@ -1267,7 +1269,8 @@ argument prompt.
                     pretty-key-trial nil
                     pretty-key nil))
           (when current-key-is-escape-p ;; emacs ESC translation
-            (setq local-fn 'ergoemacs-read-key-next-key-is-alt))
+            (unless (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (vconcat ergoemacs-read-key (plist-get next-key ':normal-key))))
+              (setq local-fn 'ergoemacs-read-key-next-key-is-alt)))
           (if (and (eq local-fn 'ergoemacs-read-key-swap)
                    (or (not curr-universal) ergoemacs-read-key))
               (progn
