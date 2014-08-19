@@ -119,7 +119,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
                    (string= "ergoemacs-user" (nth 1 map)))
                  (setq tmp (gethash (car (nth 2 map))
                                     ergoemacs-original-map-hash)))
-        ;; (message "Found %s" (car (nth 2 map)))
+        (message "Found %s" (car (nth 2 map)))
         (setq tmp (cdr tmp))
         (push (nth 2 map) tmp)
         (puthash (car (nth 2 map)) map hash)
@@ -130,7 +130,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
                    (string= "ergoemacs-user" (nth 1 tmp-map)))
                  (setq tmp (gethash (car (nth 2 tmp-map))
                                     ergoemacs-original-map-hash)))
-        ;; (message "Found Parent %s" (car (nth 2 map)))
+        (message "Found Parent %s" (car (nth 2 map)))
         (setq tmp (cdr tmp))
         (push (nth 2 tmp-map) tmp)
         (puthash (car (nth 2 tmp-map)) tmp hash)
@@ -145,7 +145,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
                        (string= "ergoemacs-user" (nth 1 sub-map)))
                      (setq tmp (gethash (car (nth 2 sub-map))
                                         ergoemacs-original-map-hash)))
-            ;; (message "Found Composed %s" (car (nth 2 map)))
+            (message "Found Composed %s" (car (nth 2 map)))
             (setq tmp (cdr tmp))
             (push (nth 2 tmp-map) tmp)
             (puthash (car (nth 2 tmp-map)) tmp hash)
@@ -930,8 +930,9 @@ to the appropriate values for `ergoemacs-read-key'.
     (define-key lookup [ergoemacs-single-command-keys] 'ignore)
     (if (and (not use-override) overriding-terminal-local-map)
         (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
-      (setcdr overriding-terminal-local-map (cdr use-override)))
-    (if (and use-override overriding-local-map)
+      (if overriding-terminal-local-map
+          (setcdr overriding-terminal-local-map (cdr use-override))))
+    (if use-override overriding-local-map 
       (setcdr overriding-local-map (cdr use-override)))))
 
 (defvar ergoemacs-command-shortcuts-hash)
