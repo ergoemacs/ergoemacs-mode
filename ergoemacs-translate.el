@@ -1000,7 +1000,7 @@ Based on `ergoemacs-with-ergoemacs'"
      (maphash
       (lambda (key val)
         (let ((fn (nth 0 val)))
-          (when (eq fn function)
+          (when (and (eq fn function) (eq (ergoemacs-real-key-binding key) function))
             (push key ret))))
       ergoemacs-command-shortcuts-hash)
      (if (not use-apps)
