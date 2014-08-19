@@ -1193,11 +1193,13 @@ argument prompt.
         (first-universal universal)
         (curr-universal nil)
         ergoemacs--input tmp
-        history)
+        history
+        current-key-is-escape-p)
     (setq ergoemacs--input (ergoemacs-to-sequence ergoemacs-read-key)
           ergoemacs-read-key nil)
     (while continue-read
-      (setq continue-read nil)
+      (setq continue-read nil
+            current-key-is-escape-p nil)
       (when (and (not ergoemacs--input) real-type)
         (setq type real-type)
         (setq curr-universal first-universal)
@@ -1215,7 +1217,8 @@ argument prompt.
       (setq tmp (plist-get next-key ':normal))
       (cond
        ((string= tmp "ESC")
-        (setq tmp "<escape>"))
+        (setq tmp "<escape>"
+              current-key-is-escape-p t))
        ((string= tmp "RET")
         (setq tmp "<return>")))
       (if (string= tmp (key-description
@@ -1263,6 +1266,8 @@ argument prompt.
                     key-trials nil
                     pretty-key-trial nil
                     pretty-key nil))
+          (when current-key-is-escape-p ;; emacs ESC translation
+            (setq local-fn 'ergoemacs-read-key-next-key-is-alt))
           (if (and (eq local-fn 'ergoemacs-read-key-swap)
                    (or (not curr-universal) ergoemacs-read-key))
               (progn
