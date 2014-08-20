@@ -193,15 +193,13 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
         (when function
           (puthash function 'no ergoemacs-is-user-defined-hash)))
       ret))))
-
-(defmacro ergoemacs-advise-function-for-user-bindings (function)
-  "Advise FUNCTION to allow user bindings"
+(defmacro ergoemacs-advise-hook (function)
+  "Advise FUNCTION"
   `(defadvice ,function (around ,(intern (concat "ergoemacs-" (symbol-name function) "-advice")) activate)
-     "Keys defined in this block will be respected by `ergoemacs-mode'"
-     (let ((ergoemacs-is-user-defined-map-change-p t)
-           (ergoemacs-run-mode-hooks t))
-       ad-do-it)))
-
+  "Keys defined in this function will be respected by `ergoemacs-mode'"
+  (let ((ergoemacs-is-user-defined-map-change-p t)
+        (ergoemacs-run-mode-hooks t))
+    ad-do-it)))
 (defadvice add-hook (around ergoemacs-add-hook-advice (hook function &optional append  local) activate)
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
 If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
@@ -213,18 +211,20 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
       (add-hook 'ergoemacs-pre-command-hook function append local))
      ((and (ignore-errors (not (symbolp function)))
            (not (memq hook ignored-hooks))
-           (ergoemacs-is-user-defined-map-change-p)
-           (not (ignore-errors (string= "ergoemacs-" (substring (documentation function) 0 10)))))
-      (let ((fn (intern (concat "ergoemacs-user-hook--" (md5 (format "%s" function))))))
+           (ergoemacs-is-user-defined-map-change-p))
+      (let ((fn (intern (concat "ergoemacs-user--" (md5 (format "%s" function))))))
         (fset fn function)
         (add-hook hook fn append local)))
      (t
       (when (and (ignore-errors (symbolp function))
                  (not (memq hook ignored-hooks))
                  (not (memq function '(global-font-lock-mode-check-buffers)))
+                 (let ((fun-str (symbol-name function)))
+                   (or (string= "ergoemacs-user--" (substring fun-str 0 (min 16 (length fun-str))))
+                       (not (string= "ergoemacs-" (substring fun-str 0 (min 10 (length fun-str)))))))
                  (ergoemacs-is-user-defined-map-change-p function))
         (message "Apply user keybindings in %s" function)
-        (ergoemacs-advise-function-for-user-bindings function))
+        (eval `(ergoemacs-advise-hook ,function)))
       ad-do-it))))
 
 (defun ergoemacs-changes-are-ignored-in-runtime ()
