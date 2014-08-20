@@ -1171,6 +1171,7 @@ Otherwise add new translation to key-plist and return it."
 
 (defvar ergoemacs-command-shortcuts-hash)
 (defvar guide-key/recursive-key-sequence-flag)
+(declare-function ergoemacs-real-key-description "ergoemacs-advices.el")
 (defun ergoemacs-read-key (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
