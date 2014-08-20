@@ -194,7 +194,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
           (puthash function 'no ergoemacs-is-user-defined-hash)))
       ret))))
 (defmacro ergoemacs-advise-hook (function)
-  "Advise FUNCTION"
+  "Advise FUNCTION for running in a hook to respect keybindings."
   `(defadvice ,function (around ,(intern (concat "ergoemacs-" (symbol-name function) "-advice")) activate)
   "Keys defined in this function will be respected by `ergoemacs-mode'"
   (let ((ergoemacs-is-user-defined-map-change-p t)
