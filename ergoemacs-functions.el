@@ -208,10 +208,14 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
 
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme)
+(defvar ergoemacs-run-clean nil
+  "Library to load and run instead of `ergoemacs-mode'")
 (defun ergoemacs-run-clean (process change)
   "Run the clean environment"
   (message "Run ergoemacs-clean (%s;%s)" process change)
   (let ((emacs-exe (ergoemacs-emacs-exe))
+        (ergoemacs-load (or ergoemacs-run-clean
+                            " --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\""))
         cmd process rm-batch)
     (when ergoemacs-keyboard-layout
       (setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout))
@@ -220,22 +224,25 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
     (cond
      ((with-current-buffer (get-buffer-create "*ergoemacs-clean*")
         (not ergoemacs-terminal))
-      (setq cmd (format "%s --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\"" emacs-exe
-                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))))
+      (setq cmd (format "%s --debug-init -Q -L \"%s\" %s" emacs-exe
+                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
+                        ergoemacs-load)))
      ((and (eq system-type 'windows-nt) (executable-find "cmd"))
                                         ; Needs some work....
-      (setq cmd (format "%s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\" --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\""
+      (setq cmd (format "%s -nw --debug-init -Q -L \"%s\" %s"
                         emacs-exe
-                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))
+                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
+                        ergoemacs-load))
       (set (make-local-variable 'ergoemacs-batch-file)
            (make-temp-file "ergoemacs-clean" nil ".bat"))
       (with-temp-file ergoemacs-batch-file
         (insert cmd))
       (setq default-directory (file-name-directory ergoemacs-batch-file)))
      ((executable-find "xterm")
-      (setq cmd (format "%s -e %s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\" --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\""
+      (setq cmd (format "%s -e %s -nw --debug-init -Q -L \"%s\" %s"
                         (executable-find "xterm") emacs-exe
-                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))))
+                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
+                        ergoemacs-load))))
     (with-current-buffer (get-buffer-create "*ergoemacs-clean*")
       (goto-char (point-max))
       (insert "Command\n" cmd "\n\n"))
@@ -253,6 +260,19 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
   "Remove temporary batch file."
   (when ergoemacs-batch-file
     (delete-file ergoemacs-batch-file)))
+
+(defun ergoemacs-clean-library (library &optional terminal)
+  "Runs a clean LIBRARY with an `ergoemacs-mode' autoload.
+If TERMINAL is non-nil, run the terminal version"
+  (interactive "aLibrary: \n")
+  (let* ((lib-file (expand-file-name (find-lisp-object-file-name library (symbol-function library))))
+         (lib-dir (file-name-directory lib-file))
+         (req-file (file-name-sans-extension
+                    (file-name-nondirectory lib-file)))
+         (ergoemacs-run-clean (format " -L \"%s\" --load \"%s\" --eval \"(progn (setq debug-on-error t) (%s) (autoload 'ergoemacs-mode (symbol-name 'ergoemacs-mode) nil t))\"" lib-dir req-file library)))
+    (if terminal
+        (ergoemacs-clean-nw)
+      (ergoemacs-clean))))
 
 (defun ergoemacs-clean ()
   "Run ergoemacs in a bootstrap environment.
