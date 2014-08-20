@@ -572,7 +572,8 @@ bindings the keymap is:
         (ergoemacs-debug-heading "Ergoemacs Menus have loaded.")
         (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
         (ergoemacs-populate-pre-command-hook)
-        (ergoemacs-debug-heading "Ergoemacs-mode turned ON."))
+        (ergoemacs-debug-heading "Ergoemacs-mode turned ON.")
+        (message "Ergoemacs-mode turned ON."))
     ;; turn off ergoemacs-mode
     (ergoemacs-debug-heading "Ergoemacs-mode is turning OFF.")
     (setq ergoemacs-modal                  nil
@@ -597,7 +598,8 @@ bindings the keymap is:
     (ergoemacs-populate-pre-command-hook t)
     ;; Revert `substitute-command-keys' and `completing-read'
     (ergoemacs-enable-c-advices 'disable)
-    (ergoemacs-debug-heading "Ergoemacs-mode turned OFF."))
+    (ergoemacs-debug-heading "Ergoemacs-mode turned OFF.")
+    (message "Ergoemacs-mode turned OFF."))
   ;; Always have `ergoemacs-post-command-hook' on so that it will
   ;; uninstall ergoemacs keymaps that were installed to overlays and
   ;; text-properties and anything above `emulation-mode-map-alists'.
@@ -623,9 +625,8 @@ bindings the keymap is:
 ;;;###autoload
 (defun ergoemacs-mode-start ()
   "Start `ergoemacs-mode' if not already started."
-  (ignore-errors ;; In case it didn't work correctly.
-    (unless ergoemacs-mode
-      (ergoemacs-mode 1))))
+  (unless ergoemacs-mode
+    (ergoemacs-mode 1)))
 
 (define-minor-mode ergoemacs-ini-mode
   "Dummy mode to call `ergoemacs-mode' at the very last second if not already loaded."
