@@ -257,6 +257,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (let ((is-global-p (equal keymap (current-global-map)))
         (is-local-p (equal keymap (current-local-map)))
         (is-ergoemacs-modified-p (and ergoemacs-mode
+                                      (not ergoemacs-ignore-advice)
                                       (ignore-errors (and (string= "ergoemacs-modified" (nth 1 keymap))
                                                           (car (nth 2 keymap))))))
         ergoemacs-local-map)
