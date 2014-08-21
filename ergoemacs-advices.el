@@ -204,7 +204,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
   "Advice to allow `this-command' to be set correctly before running `pre-command-hook'
 If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-pre-command-hook' instead."
   (let ((ignored-hooks
-         '(pre-command-hook post-command-hook before-change-functions change-major-mode-hook post-self-insert-hook ergoemacs-pre-command-hook)))
+         '(pre-command-hook post-command-hook before-change-functions change-major-mode-hook post-self-insert-hook ergoemacs-pre-command-hook emulation-mode-map-alists)))
     (cond
      ((and ergoemacs-mode (eq hook 'pre-command-hook)
            (memq hook ergoemacs-hook-functions))
