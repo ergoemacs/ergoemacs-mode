@@ -146,7 +146,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
      ((progn
         (setq file (if (ignore-errors (functionp function))
                        (or (gethash function ergoemacs-is-user-defined-hash)
-                           (find-lisp-object-file-name function (symbol-function function)))
+                           (ignore-errors (find-lisp-object-file-name function (symbol-function function))))
                      (or
                       load-file-name
                       (buffer-file-name))))
@@ -225,7 +225,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
                        (not (string= "ergoemacs-" (substring fun-str 0 (min 10 (length fun-str)))))))
                  (ergoemacs-is-user-defined-map-change-p function))
         (message "Apply user keybindings in %s" function)
-        (eval `(ergoemacs-advise-hook ,function)))
+        (ignore-errors (eval `(ergoemacs-advise-hook ,function))))
       ad-do-it))))
 
 (defun ergoemacs-changes-are-ignored-in-runtime ()
