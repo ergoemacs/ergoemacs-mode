@@ -1647,7 +1647,7 @@ FULL-SHORTCUT-MAP-P "
      ob)
     ret))
 
-
+(defvar ergoemacs-modified-map-hash)
 (declare-function ergoemacs-extract-prefixes "ergoemacs-shortcuts.el")
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   (with-slots (read-map
@@ -1833,6 +1833,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
       
       ;; Reset shortcut hash
       (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
+            ergoemacs-modified-map-hash (make-hash-table :test 'equal)
             ergoemacs-shortcut-prefix-keys '()
             ergoemacs-original-keys-to-shortcut-keys-regexp ""
             ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal))
