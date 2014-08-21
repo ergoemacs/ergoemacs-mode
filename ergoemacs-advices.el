@@ -216,7 +216,8 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
         (fset fn function)
         (add-hook hook fn append local)))
      (t
-      (when (and (ignore-errors (symbolp function))
+      (when (and (not ergoemacs-global-changes-are-ignored-p)
+                 (ignore-errors (symbolp function))
                  (not (memq hook ignored-hooks))
                  (not (memq function '(global-font-lock-mode-check-buffers)))
                  (let ((fun-str (symbol-name function)))
