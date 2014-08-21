@@ -1576,22 +1576,25 @@ FULL-SHORTCUT-MAP-P "
             (ignore-errors
               (when ergoemacs-theme--install-shortcut-item--global
                 (ergoemacs-theme-component--ignore-globally-defined-key key))) 
-            (define-key keymap key (nth 0 (nth 0 fn-lst))))
+            (ignore-errors
+              (define-key keymap key (nth 0 (nth 0 fn-lst)))))
         (when full-shortcut-map-p
           (ignore-errors
             (when ergoemacs-theme--install-shortcut-item--global
               (ergoemacs-theme-component--ignore-globally-defined-key key)))
             (when (or (commandp (nth 0 args) t)
                       (keymapp (nth 0 args)))
-              (define-key keymap key (nth 0 args))))))
+              (ignore-errors
+                (define-key keymap key (nth 0 args)))))))
      (full-shortcut-map-p
       (ignore-errors
         (when ergoemacs-theme--install-shortcut-item--global
           (ergoemacs-theme-component--ignore-globally-defined-key key)))
+      (ignore-errors 
         (define-key keymap key
           `(lambda(&optional arg)
              (interactive "P")
-             (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args))))))))
+             (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args)))))))))
 
 (defvar ergoemacs-original-map-hash (make-hash-table)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
