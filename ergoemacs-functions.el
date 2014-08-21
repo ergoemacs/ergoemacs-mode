@@ -372,6 +372,7 @@ If `narrow-to-region' is in effect, then cut that region only."
        (point)))))
   (deactivate-mark))
 
+(declare-function cua-cut-rectangle-as-text "cur-rect.el")
 (declare-function cua-cut-region "cua-base.el")
 (defun ergoemacs-cut-line-or-region (&optional arg)
   "Cut the current line, or current text selection.
@@ -391,7 +392,9 @@ Note that `ergoemacs-shortcut-remap' will remap mode-specific
 changes to `kill-line' to allow it to work as expected in
 major-modes like `org-mode'. "
   (interactive "P")
-  (cond   
+  (cond
+   ((and (boundp 'cua--rectangle) cua--rectangle)
+    (cua-cut-rectangle-as-text arg))
    ((and (region-active-p) (boundp 'cua-mode) cua-mode)
     (cua-cut-region arg)
     (deactivate-mark))
