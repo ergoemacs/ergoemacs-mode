@@ -150,9 +150,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
                      (or
                       load-file-name
                       (buffer-file-name))))
-        (when (not (stringp file))
-          (setq file nil))
-        (not file)) nil)
+        (or (and file (not (stringp file))) (not file))) nil)
      ;; Cached change based on function
      ((eq file t) t)
      ((eq file 'no) nil)
@@ -163,17 +161,19 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
      (ret t)
      ;; Cached change based on directory
      ((progn
-        (setq dir (expand-file-name
-                   (file-name-directory file)))
+        (setq dir (and file
+                       (expand-file-name
+                        (file-name-directory file))))
         (setq ret (gethash dir ergoemacs-is-user-defined-hash))
-        (eq ret 'no)) nil)
+        (or (not dir) (eq ret 'no))) nil)
      (ret t)
      (t
       (setq ret
             (catch 'found-dir
               (dolist (cur-dir ergoemacs-is-user-defined-emacs-lisp-dirs)
-                (when (string-match (concat "\\`" (regexp-quote (expand-file-name cur-dir)))
-                                    dir)
+                (when (and cur-dir dir
+                           (string-match (concat "\\`" (regexp-quote (expand-file-name cur-dir)))
+                                         dir))
                   (throw 'found-dir nil)))
               t))
       (when (and ret (string-match-p ergoemacs-is-not-user-defined-dir dir))
