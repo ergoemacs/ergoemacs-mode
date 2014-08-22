@@ -146,10 +146,12 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
      ((progn
         (setq file (if (ignore-errors (functionp function))
                        (or (gethash function ergoemacs-is-user-defined-hash)
-                           (ignore-errors (find-lisp-object-file-name function (symbol-function function))))
+                           (find-lisp-object-file-name function (symbol-function function)))
                      (or
                       load-file-name
                       (buffer-file-name))))
+        (when (not (stringp file))
+          (setq file nil))
         (not file)) nil)
      ;; Cached change based on function
      ((eq file t) t)
