@@ -2414,14 +2414,14 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
               ;; Reset keymaps.
               (dolist (map '(ergoemacs-no-shortcut-keymap ergoemacs-shortcut-keymap ergoemacs-read-input-keymap ergoemacs-keymap ergoemacs-unbind-keymap))
                 (when (symbol-value map)
-                  (set map (ergoemacs-rm-key (symbol-value map) key))
+                  (ergoemacs-setcdr map (cdr (ergoemacs-rm-key (symbol-value map) key)))
                   (setq lk (lookup-key (symbol-value map) key))
                   (if (not (integerp lk))
                       (setq test-key key)
                     (setq test-key (substring key 0 lk))
                     (setq lk (lookup-key (symbol-value map) test-key)))
-                  (when (commandp lk t)
-                    (set map (ergoemacs-rm-key (symbol-value map) test-key)))))
+                  (when (or (not lk) (commandp lk t))
+                    (ergoemacs-setcdr map (cdr (ergoemacs-rm-key (symbol-value map) test-key))))))
               ;; Remove from shortcuts, if present
               ;; (remhash key ergoemacs-command-shortcuts-hash)
               ;; Reset `ergoemacs-shortcut-prefix-keys'
@@ -2442,17 +2442,23 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
                     (list (cons 'ergoemacs-no-shortcut-keys ergoemacs-no-shortcut-keymap)))
               ;;Put maps in `minor-mode-map-alist'
               (ergoemacs-shuffle-keys t))
+            ;;(message "%s->%s" (key-description key) lk)
             (when (and (or (commandp lk t)
-                           (keymapp lk))
+                           (keymapp lk)
+                           (not lk))
                        (not (member key '([remap] ))))
               (when (not (member key ergoemacs-global-override-rm-keys))
-                (message "Removing %s (%s; %s) because of globally bound %s"
-                         (ergoemacs-pretty-key (key-description key))
-                         (key-description key)
-                         key
-                         lk))
-              (pushnew key ergoemacs-global-override-rm-keys
-                       :test 'equal)
+                (if lk
+                    (message "Removing %s (%s; %s) because of globally bound %s"
+                             (ergoemacs-pretty-key (key-description key))
+                             (key-description key)
+                             key
+                             lk)
+                  (message "Respecting Key %s (%s; %s)"
+                           (ergoemacs-pretty-key (key-description key))
+                           (key-description key)
+                           key))
+                (push key ergoemacs-global-override-rm-keys))
               (throw 'found-global-command t)))
           (setq key (substring key 0 (- (length key) 1))))))))
 
