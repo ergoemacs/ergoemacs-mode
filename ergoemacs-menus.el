@@ -62,6 +62,7 @@
         (ergoemacs-shortcut-for-command (cadddr item)))
     nil))
 
+(declare-function ergoemacs-setcdr "ergoemacs-mode.el")
 ;;;###autoload
 (defun ergoemacs-preprocess-menu-keybindings (menu)
   "Put `ergoemacs-mode' key bindings on menus."
@@ -73,7 +74,7 @@
     (when (symbolp menu)
       (setq menu (symbol-value menu)))
     ;; For each element in the menu
-    (setcdr menu
+    (ergoemacs-setcdr menu
             (mapcar (lambda (item)
                       (let ((key (ergoemacs-shortcut-for-menu-item item)))
                         (if key

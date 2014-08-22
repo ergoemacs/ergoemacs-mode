@@ -270,7 +270,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
         ergoemacs-local-map)
     (when is-ergoemacs-modified-p
       ;; Restore original map to make changes.
-      (setcdr keymap (cdr (gethash is-ergoemacs-modified-p ergoemacs-original-map-hash))))
+      (ergoemacs-setcdr keymap (cdr (gethash is-ergoemacs-modified-p ergoemacs-original-map-hash))))
     (when (and is-local-p (not ergoemacs-local-emulation-mode-map-alist))
       (set (make-local-variable 'ergoemacs-local-emulation-mode-map-alist) '()))
     ;; (when is-local-p
@@ -314,7 +314,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
         ;; (keymap "ergoemacs-modfied" (is-ergoemacs-modified-p) ...)
         (push (list is-ergoemacs-modified-p) n-map)
         (push "ergoemacs-modified" n-map)
-        (setcdr keymap n-map)))
+        (ergoemacs-setcdr keymap n-map)))
     (when (and is-global-p (not ergoemacs-global-changes-are-ignored-p))
       (let ((vk key))
         (ergoemacs-global-set-key-after key)

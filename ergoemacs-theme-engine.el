@@ -1638,6 +1638,7 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-theme--hook-running nil)
 (declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
 (defvar ergoemacs-is-user-defined-map-change-p)
+(declare-function ergoemacs-setcdr "ergoemacs-mode.el")
 (defun ergoemacs-get-child-maps (keymap &optional ob)
   "Get the child maps for KEYMAP"
   ;; Not sure this is useful any longer
@@ -1769,7 +1770,7 @@ FULL-SHORTCUT-MAP-P "
                     (when o-map
                       ;; (message "Restore %s"  map-name)
                       ;; Update map in place
-                      (setcdr (symbol-value map-name) (cdr (copy-keymap o-map))))
+                      (ergoemacs-setcdr map-name (cdr (copy-keymap o-map))))
                   ;; (message "Modify %s"  map-name)
                   (unless o-map
                     (setq o-map (copy-keymap (symbol-value map-name)))
@@ -1798,7 +1799,7 @@ FULL-SHORTCUT-MAP-P "
                   ;; (keymap "ergoemacs-modfied" (map-name) ...)
                   (push (list map-name) n-map)
                   (push "ergoemacs-modified" n-map)
-                  (setcdr (symbol-value map-name) n-map)))
+                  (ergoemacs-setcdr map-name n-map)))
                (t ;; Maps that are not modified.
                 (unless remove-p
                   (dolist (d deferred-keys)

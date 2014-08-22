@@ -107,37 +107,46 @@ PRE-VECTOR is to help define the full key-vector sequence."
     beginning-of-buffer end-of-buffer)
   "Movement functions.")
 
+(defun ergoemacs-setcdr (var val)
+  "Use `setcdr' on VAL to VAL.
+If VAL is a symbol, use the `symbol-value', "
+  (if (symbolp var)
+      (setcdr (symbol-value var) val)
+    (setcdr var val)))
+
 (defvar ergoemacs-original-map-hash)
 (defun ergoemacs-original-keymap (keymap &optional replace)
   "Return a copy of original keymap, or the current keymap."
   (if (not keymap) nil
-    (let (ret)
-      (setq ret
-            (copy-keymap
-             (if (ignore-errors
-                   (and (string= "ergoemacs-modified" (nth 1 keymap))
-                        (setq ret (gethash (car (nth 2 keymap)) ergoemacs-original-map-hash))))
-                 (progn
-                   (setq ret (cdr ret))
-                   (push (nth 2 keymap) ret)
-                   (push "ergoemacs-unmodified" ret)
-                   (push 'keymap ret)
-                   ret)
-               (copy-keymap keymap))))
-      ;; Deal with composed keymaps
-      (setq ret
-            (mapcar
-             (lambda(map)
-               (if (ignore-errors (keymapp map))
-                   (ergoemacs-original-keymap map)
-                 map))
-             ret))
-      ;; Substitute parent maps too.
-      (when (keymap-parent ret)
-        (set-keymap-parent ret (ergoemacs-original-keymap (keymap-parent ret))))
-      (when replace
-        (setcdr keymap (cdr ret)))
-      ret)))
+    (if (symbolp keymap)
+        (ergoemacs-original-keymap (symbol-value keymap) replace)    
+      (let (ret)
+        (setq ret
+              (copy-keymap
+               (if (ignore-errors
+                     (and (string= "ergoemacs-modified" (nth 1 keymap))
+                          (setq ret (gethash (car (nth 2 keymap)) ergoemacs-original-map-hash))))
+                   (progn
+                     (setq ret (cdr ret))
+                     (push (nth 2 keymap) ret)
+                     (push "ergoemacs-unmodified" ret)
+                     (push 'keymap ret)
+                     ret)
+                 (copy-keymap keymap))))
+        ;; Deal with composed keymaps
+        (setq ret
+              (mapcar
+               (lambda(map)
+                 (if (ignore-errors (keymapp map))
+                     (ergoemacs-original-keymap map)
+                   map))
+               ret))
+        ;; Substitute parent maps too.
+        (when (keymap-parent ret)
+          (set-keymap-parent ret (ergoemacs-original-keymap (keymap-parent ret))))
+        (when replace
+          (ergoemacs-setcdr keymap (cdr ret)))
+        ret))))
 
 (declare-function ergoemacs-translate "ergoemacs-translate.el")
 (defun ergoemacs-flatten-composed-keymap (keymap &optional force-shifted)
@@ -167,7 +176,7 @@ FORCE-SHIFTED is non-nil."
             (setq trans (plist-get (ergoemacs-translate move-key) ':caps-translated-key))
             (when (and trans (not (lookup-key new-keymap trans)))
               (define-key new-keymap trans 'ergoemacs-shortcut-movement-force-shift-select)))))
-      (setcdr keymap (cdr new-keymap))
+      (ergoemacs-setcdr keymap (cdr new-keymap))
       keymap)))
 
 (when (not (fboundp 'make-composed-keymap))

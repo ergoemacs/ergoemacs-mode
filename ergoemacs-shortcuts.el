@@ -100,6 +100,7 @@ Uses `ergoemacs-read-key'"
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-copy-list "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-original-keymap "ergoemacs-mode.el")
+(declare-function ergoemacs-setcdr "ergoemacs-mode.el")
 (defun ergoemacs-without-emulation--internal (function)
   "Without keys defined at `emulation-mode-map-alists' for FUNCTION.
 
@@ -151,18 +152,18 @@ installing the original keymap above the ergoemacs-mode installed keymap.
       (cond
        ((listp var)
         (push (cons i (cdr var)) temp-maps)
-        (setcdr var (ergoemacs-original-keymap (cdr var))))
+        (ergoemacs-setcdr var (ergoemacs-original-keymap (cdr var))))
        ((ignore-errors (listp (symbol-value var)))
         (push (cons var (ergoemacs-copy-list (symbol-value var)))
               emulation-maps)
         (dolist (map-key (symbol-value var))
-          (setcdr map-key (ergoemacs-original-keymap (cdr map-key))))))
+          (ergoemacs-setcdr map-key (ergoemacs-original-keymap (cdr map-key))))))
       (setq i (+ i 1)))
     ;; Restore `minor-mode-overriding-map-alist'
     (dolist (var minor-mode-overriding-map-alist)
-      (setcdr var (ergoemacs-original-keymap (cdr var))))
+      (ergoemacs-setcdr var (ergoemacs-original-keymap (cdr var))))
     (dolist (var minor-mode-map-alist)
-      (setcdr var (ergoemacs-original-keymap (cdr var))))
+      (ergoemacs-setcdr var (ergoemacs-original-keymap (cdr var))))
     ;; Restore local maps
     (when old-local
       (use-local-map (ergoemacs-original-keymap old-local)))
@@ -172,10 +173,10 @@ installing the original keymap above the ergoemacs-mode installed keymap.
         (funcall function)
       ;; Restore text-properties maps
       (when old-pt-map
-        (setcdr (get-char-property (point) 'keymap)
+        (ergoemacs-setcdr (get-char-property (point) 'keymap)
                 (cdr old-pt-map)))
       (when old-local-map
-        (setcdr (get-char-property (point) 'local-map)
+        (ergoemacs-setcdr (get-char-property (point) 'local-map)
                 (cdr old-local-map)))
       
       ;; Restore variables in `emulation-mode-map-alists'.
@@ -183,7 +184,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
         (set (car var) (cdr var)))
       ;; Restore temporary maps
       (dolist (var temp-maps)
-        (setcdr (nth (car var) emulation-mode-map-alists)
+        (ergoemacs-setcdr (nth (car var) emulation-mode-map-alists)
                 (cdr var)))
       (when old-local
         (use-local-map old-local))
@@ -957,9 +958,9 @@ to the appropriate values for `ergoemacs-read-key'.
     (if (and (not use-override) overriding-terminal-local-map)
         (setq ergoemacs-read-key-overriding-terminal-local-save overriding-terminal-local-map)
       (if (and use-override overriding-terminal-local-map)
-          (setcdr overriding-terminal-local-map (cdr use-override))))
+          (ergoemacs-setcdr overriding-terminal-local-map (cdr use-override))))
     (if (and use-override overriding-local-map)
-        (setcdr overriding-local-map (cdr use-override)))))
+        (ergoemacs-setcdr overriding-local-map (cdr use-override)))))
 
 (defvar ergoemacs-command-shortcuts-hash)
 (defvar ergoemacs-extract-map-hash)
@@ -1967,61 +1968,66 @@ If MAP is nil, base this on a sparse keymap.
 
 The shortcuts are also installed into the map directly.
 "
-  (if (ignore-errors (string= "ergoemacs-modified" (nth 1 map)))
-      (progn
-        ;; (message "Ignoring already changed map `%s'"
-        ;;          (symbol-name (car (nth 2 map))))
-        map)
-    
-    (let* ((maps (ergoemacs-install-shortcuts-map-name map))
-           (ergoemacs-shortcut-override-keymap
-            (gethash maps ergoemacs-modified-map-hash))
-           shortcut-list
-           ergoemacs-orig-keymap
-           changed-map)
-      (unless ergoemacs-shortcut-override-keymap
-        (setq ergoemacs-shortcut-override-keymap
-              (or map
-                  (make-sparse-keymap))
-              ergoemacs-orig-keymap
-              (if map
-                  (copy-keymap map) nil))
-        (unless no-brand
-          (dolist (map-name maps)
-            (unless (gethash map-name ergoemacs-original-map-hash)
-              (puthash map-name ergoemacs-orig-keymap ergoemacs-original-map-hash))))
-        (maphash
-         (lambda (key item)
-           (push (list key item) shortcut-list))
-         ergoemacs-command-shortcuts-hash)
-        (ergoemacs-theme--install-shortcuts-list
-         shortcut-list ergoemacs-shortcut-override-keymap 
-         ergoemacs-orig-keymap (not dont-complete))
-        (puthash maps ergoemacs-shortcut-override-keymap
-                 ergoemacs-modified-map-hash))
-      (setq ergoemacs-shortcut-override-keymap (cdr ergoemacs-shortcut-override-keymap))
-      ;; Install in place.
-      (when install-read
-        (dolist (key (ergoemacs-extract-prefixes
-                      ergoemacs-shortcut-override-keymap))
-          (push (cons (elt (read-kbd-macro key t) 0)
-                      'ergoemacs-read-key-default)
-                ergoemacs-shortcut-override-keymap)))
-      ;; Modify ALL maps that are the same...
-      (dolist (map-name maps)
-        (let ((new-map (ergoemacs-copy-list
-                        ergoemacs-shortcut-override-keymap)))
-          
+  (if (symbolp map)
+      (ergoemacs-install-shortcuts-map
+       (symbol-value map)
+       dont-complete
+       install-read no-brand)
+    (if (ignore-errors (string= "ergoemacs-modified" (nth 1 map)))
+        (progn
+          ;; (message "Ignoring already changed map `%s'"
+          ;;          (symbol-name (car (nth 2 map))))
+          map)
+      
+      (let* ((maps (ergoemacs-install-shortcuts-map-name map))
+             (ergoemacs-shortcut-override-keymap
+              (gethash maps ergoemacs-modified-map-hash))
+             shortcut-list
+             ergoemacs-orig-keymap
+             changed-map)
+        (unless ergoemacs-shortcut-override-keymap
+          (setq ergoemacs-shortcut-override-keymap
+                (or map
+                    (make-sparse-keymap))
+                ergoemacs-orig-keymap
+                (if map
+                    (copy-keymap map) nil))
           (unless no-brand
-            (when (ignore-errors (string= "ergoemacs-unmodified" (nth 0 new-map)))
-              (setq new-map (cdr (cdr new-map))))
-            (push (list map-name) new-map)
-            (push "ergoemacs-modified" new-map))
-          (when (ignore-errors (keymapp (symbol-value new-map)))
-            (setcdr (symbol-value new-map) new-map))
-          (unless changed-map
-            (setcdr map new-map))))
-      map)))
+            (dolist (map-name maps)
+              (unless (gethash map-name ergoemacs-original-map-hash)
+                (puthash map-name ergoemacs-orig-keymap ergoemacs-original-map-hash))))
+          (maphash
+           (lambda (key item)
+             (push (list key item) shortcut-list))
+           ergoemacs-command-shortcuts-hash)
+          (ergoemacs-theme--install-shortcuts-list
+           shortcut-list ergoemacs-shortcut-override-keymap 
+           ergoemacs-orig-keymap (not dont-complete))
+          (puthash maps ergoemacs-shortcut-override-keymap
+                   ergoemacs-modified-map-hash))
+        (setq ergoemacs-shortcut-override-keymap (cdr ergoemacs-shortcut-override-keymap))
+        ;; Install in place.
+        (when install-read
+          (dolist (key (ergoemacs-extract-prefixes
+                        ergoemacs-shortcut-override-keymap))
+            (push (cons (elt (read-kbd-macro key t) 0)
+                        'ergoemacs-read-key-default)
+                  ergoemacs-shortcut-override-keymap)))
+        ;; Modify ALL maps that are the same...
+        (dolist (map-name maps)
+          (let ((new-map (ergoemacs-copy-list
+                          ergoemacs-shortcut-override-keymap)))
+            
+            (unless no-brand
+              (when (ignore-errors (string= "ergoemacs-unmodified" (nth 0 new-map)))
+                (setq new-map (cdr (cdr new-map))))
+              (push (list map-name) new-map)
+              (push "ergoemacs-modified" new-map))
+            (when (ignore-errors (keymapp (symbol-value new-map)))
+              (ergoemacs-setcdr (symbol-value new-map) new-map))
+            (unless changed-map
+              (ergoemacs-setcdr map new-map))))
+        map))))
 
 (defvar ergoemacs-describe-keybindings-functions
   '(describe-package
@@ -2051,7 +2057,7 @@ Setup C-c and C-x keys to be described properly.")
                                      (gethash (car (nth 2 overriding-local-map))
                                               ergoemacs-original-map-hash))
                                hashkey)))
-      (setcdr overriding-local-map (cdr hashkey)))
+      (ergoemacs-setcdr overriding-local-map (cdr hashkey)))
      ((progn
         (setq override-text-map (get-char-property (point) 'keymap))
        (and (ignore-errors (string= "ergoemacs-modified" (nth 1 override-text-map)))
@@ -2060,7 +2066,7 @@ Setup C-c and C-x keys to be described properly.")
                                           ergoemacs-original-map-hash))
                            hashkey)))
       (if (not create-overlay)
-          (setcdr override-text-map (cdr hashkey))
+          (ergoemacs-setcdr override-text-map (cdr hashkey))
         (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
                                         (min (+ (point) 1) (point-max))))
         (overlay-put tmp-overlay 'keymap hashkey)
@@ -2100,12 +2106,12 @@ The keymaps are:
                  (and (listp var)
                       (not (string= "ergoemacs-modified" (nth 1 (cdr var))))
                       (cdr var)))
-               (setcdr var (ergoemacs-install-shortcuts-map (cdr var) t)))
+               (ergoemacs-setcdr var (ergoemacs-install-shortcuts-map (cdr var) t)))
               ;; Not needed; add/remove promotes ergoemacs-mode above these.
               ;; ((ignore-errors (listp (symbol-value var)))
               ;;  (dolist (map-key (symbol-value var))
               ;;    (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
-              ;;      (setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))
+              ;;      (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))
               ))
          (ergoemacs-emulations))))))
 
