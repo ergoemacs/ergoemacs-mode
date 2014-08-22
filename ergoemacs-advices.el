@@ -251,6 +251,18 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
       (setq ergoemacs-global-changes-are-ignored-p t)
       (setq ergoemacs-is-user-defined-map-change-p nil))))
 
+(defadvice eval-region (around ergoemacs-eval-buffer-advice activate)
+  "When called interactively, make sure `ergoemacs-global-changes-are-ignored-p' is true"
+  (when (called-interactively-p 'any)
+    (setq ergoemacs-global-changes-are-ignored-p nil)
+    (setq ergoemacs-is-user-defined-map-change-p t))
+  (unwind-protect
+      (progn
+        ad-do-it)
+    (when (called-interactively-p 'any)
+      (setq ergoemacs-global-changes-are-ignored-p t)
+      (setq ergoemacs-is-user-defined-map-change-p nil))))
+
 (defadvice current-active-maps (around ergoemacs-current-active-maps-advice activate)
   "Ignores keys that start `ergoemacs-read-input-keys'"
   (let ((ergoemacs-read-input-keys
