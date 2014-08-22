@@ -161,10 +161,9 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
      (ret t)
      ;; Cached change based on directory
      ((progn
-        (setq dir (and file
-                       (expand-file-name
-                        (file-name-directory file))))
-        (setq ret (gethash dir ergoemacs-is-user-defined-hash))
+        (setq dir (file-name-directory file))
+        (when dir
+          (setq ret (gethash (expand-file-name dir) ergoemacs-is-user-defined-hash)))
         (or (not dir) (eq ret 'no))) nil)
      (ret t)
      (t
