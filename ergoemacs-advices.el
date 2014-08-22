@@ -217,7 +217,8 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
            (not (memq hook ignored-hooks))
            (ergoemacs-is-user-defined-map-change-p))
       (let ((fn (intern (concat "ergoemacs-user--" (md5 (format "%s" function))))))
-        (fset fn function)
+        (unless (memq fn ergoemacs-advise-hooks)
+          (fset fn function))
         (add-hook hook fn append local)))
      (t
       (when (and (not ergoemacs-global-changes-are-ignored-p)
