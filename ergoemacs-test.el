@@ -1043,6 +1043,30 @@ Selected mark would not be cleared after paste."
    (should (string= (ergoemacs-shortcut-for-command 'execute-extended-command) (ergoemacs-kbd-to-key "M-a")))
    (should (string= (ergoemacs-shortcut-for-command 'goto-line) (ergoemacs-kbd-to-key "C-l")))))
 
+(ert-deftest ergoemacs-test-issue-293 ()
+  "Test Issue #293.
+Unable to use M-ijkl in a grep buffer."
+  (ergoemacs-test-layout
+   :layout "colemak"
+   :macro "M-e M-e M-e M-e M-i"
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (insert "-*- mode: grep; default-directory: \"~src/ergoemacs-mode/\" -*-
+Grep started at Fri Aug 22 08:30:37
+
+grep -nH -e ergoemacs-mode ergoemacs-mode.el
+ergoemacs-mode.el:1:;;; ergoemacs-mode.el --- Emacs mode based on common modern interface and ergonomics. -*- lexical-binding: t -*-
+ergoemacs-mode.el:949:;;; ergoemacs-mode.el ends here
+
+Grep finished (matches found) at Fri Aug 22 08:30:37
+")
+     (grep-mode)
+     (goto-char (point-min))
+     (execute-kbd-macro macro)
+     (should (looking-at "rgoemacs-mode.el"))
+     (kill-buffer (current-buffer)))))
+
 ;; (ert-deftest ergoemacs-test-5.3.7 ()
 ;;   "Test Ergoemacs 5.3.7 keys"
 ;;   (let ((ergoemacs-test-fn t))
