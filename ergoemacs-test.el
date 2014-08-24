@@ -1073,7 +1073,26 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
 ;;     (ergoemacs-test-layout
 ;;      :version "5.3.7"
 ;;      (with-timeout (0.2 nil) (ergoemacs-read-key "M-n"))
-;;      (should (eq ergoemacs-test-fn (or (command-remapping 'keyboard-quit (point)) 'keyboard-quit))))))
+;;      (should (eq ergoemacs-test-fn (or (command-remapping
+;;   'keyboard-quit (point)) 'keyboard-quit))))))
+
+(ert-deftest ergoemacs-test-297 ()
+  "Backspace doesn't work in `isearch-mode'."
+  (let ((ret t))
+    (ergoemacs-test-layout
+     :layout "colemak"
+     :macro "C-f ars C-f <backspace> M-n"
+     (save-excursion
+       (define-key isearch-mode-map (kbd "C-w") 'ignore)
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (insert "aars1\nars2\nars3\nars4")
+       (goto-char (point-min))
+       (execute-kbd-macro macro)
+       (when (looking-at ".*")
+         (unless (string= "s1" (match-string 0))
+           (setq ret nil)))
+       (kill-buffer (current-buffer))))
+    (should (equal ret t))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
