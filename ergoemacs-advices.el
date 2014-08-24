@@ -307,12 +307,21 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ad-do-it
     (when is-ergoemacs-modified-p
       ;; Restore ergoemacs-mode changes
-      (let ((map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-e-map")) ergoemacs-original-map-hash))
-            (n-map (copy-keymap keymap))
-            (full-map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-full-map")) ergoemacs-original-map-hash)))
+      (let* ((map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-e-map")) ergoemacs-original-map-hash))
+             (n-map (copy-keymap map))
+            (full-map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-full-map")) ergoemacs-original-map-hash))
+            shortcut-list)
+        (remhash is-ergoemacs-modified-p ergoemacs-modified-map-hash)
         ;; Save original map again.
-        (puthash is-ergoemacs-modified-p (copy-keymap keymap) ergoemacs-original-map-hash)
-        (setq n-map (ergoemacs-install-shortcuts-map n-map (not full-map) nil 'no-brand))
+        (puthash is-ergoemacs-modified-p (copy-keymap keymap)
+                 ergoemacs-original-map-hash)
+        (maphash
+         (lambda (key item)
+           (push (list key item) shortcut-list))
+         ergoemacs-command-shortcuts-hash)
+        (ergoemacs-theme--install-shortcuts-list
+         shortcut-list n-map 
+         keymap full-map)
         (cond
          ((ignore-errors
             (and (eq (nth 0 (nth 1 n-map)) 'keymap)
