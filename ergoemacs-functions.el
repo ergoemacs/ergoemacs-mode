@@ -2535,7 +2535,7 @@ In other functions run `org-babel-detangle'"
   (let ((org-p (string-match "^[*]Org Src" (buffer-name))))
     (cond
      ((eq major-mode 'org-mode)
-      (condition-case err
+      (condition-case _err
           (call-interactively 'org-edit-special)
         (error (call-interactively 'org-babel-tangle))))
      (org-p
