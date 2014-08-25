@@ -2525,14 +2525,19 @@ See also `ergoemacs-lookup-word-on-internet'."
 
 (defun ergoemacs-org-edit-src ()
   "Deal with org source blocks.
-In `org-mode' run `org-edit-special'
+
+In `org-mode' run `org-edit-special'. If `user-error' is raised
+run `org-babel-tangle'.
+
 In org source buffers run `org-edit-src-exit'
 In other functions run `org-babel-detangle'"
   (interactive)
   (let ((org-p (string-match "^[*]Org Src" (buffer-name))))
     (cond
      ((eq major-mode 'org-mode)
-      (call-interactively 'org-edit-special))
+      (condition-case err
+          (call-interactively 'org-edit-special)
+        (error (call-interactively 'org-babel-tangle))))
      (org-p
       (call-interactively 'org-edit-src-exit))
      (t
