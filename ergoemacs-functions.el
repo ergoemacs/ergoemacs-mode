@@ -776,7 +776,7 @@ the prefix arguments of `beginning-of-buffer',
               (ergoemacs-shortcut-remap
                'move-beginning-of-line)
               (when (= pt (point))
-                (call-interactivetly 'move-beginning-of-line)))
+                (call-interactively 'move-beginning-of-line)))
             (push (point) pts)))
         (when ergoemacs-back-to-indentation
           (save-excursion
@@ -798,7 +798,8 @@ the prefix arguments of `beginning-of-buffer',
           (let ((pt (point)))
             (ergoemacs-shortcut-remap
              'move-beginning-of-line)
-            (call-interactively 'move-beginning-of-line)))
+            (when (= pt (point))
+              (call-interactively 'move-beginning-of-line))))
          (t
           (setq pts (sort pts '<))
           (dolist (x pts)
@@ -884,7 +885,7 @@ the prefix arguments of `end-of-buffer',
                   (or
                    (memq last-command '(ergoemacs-forward-block scroll-up-command)))
                   (bolp))))
-        (progn 
+        (progn
           (cond
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
             (let ((pt (point)))
@@ -2525,14 +2526,15 @@ See also `ergoemacs-lookup-word-on-internet'."
 (defun ergoemacs-org-edit-src ()
   "Deal with org source blocks.
 In `org-mode' run `org-edit-special'
-In org source buffers run `org-edit-src-save'
+In org source buffers run `org-edit-src-exit'
 In other functions run `org-babel-detangle'"
+  (interactive)
   (let ((org-p (string-match "^[*]Org Src" (buffer-name))))
     (cond
      ((eq major-mode 'org-mode)
       (call-interactively 'org-edit-special))
      (org-p
-      (call-interactively 'org-edit-src-save))
+      (call-interactively 'org-edit-src-exit))
      (t
       (call-interactively 'org-babel-detangle)))))
 
