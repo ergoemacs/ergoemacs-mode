@@ -2522,6 +2522,20 @@ See also `ergoemacs-lookup-word-on-internet'."
   (interactive "*p")
   (ergoemacs-move-text-internal arg))
 
+(defun ergoemacs-org-edit-src ()
+  "Deal with org source blocks.
+In `org-mode' run `org-edit-special'
+In org source buffers run `org-edit-src-save'
+In other functions run `org-babel-detangle'"
+  (let ((org-p (string-match "^[*]Org Src" (buffer-name))))
+    (cond
+     ((eq major-mode 'org-mode)
+      (call-interactively 'org-edit-special))
+     (org-p
+      (call-interactively 'org-edit-src-save))
+     (t
+      (call-interactively 'org-babel-detangle)))))
+
 
 (defvar ergoemacs-shortcut-keys)
 (defvar ergoemacs-no-shortcut-keys)

@@ -843,6 +843,7 @@
 (ergoemacs-component apps ()
   "General Apps Key Sequence"
   :first-is-variable-reg "<\\(apps\\|menu\\)> h"
+  (global-set-key (kbd "<apps> '") 'ergoemacs-org-edit-src)
   (global-set-key (kbd "<apps> 2") 'delete-window)
   (global-set-key (kbd "<apps> 3") 'delete-other-windows)
   (global-set-key (kbd "<apps> 4") 'split-window-vertically)
