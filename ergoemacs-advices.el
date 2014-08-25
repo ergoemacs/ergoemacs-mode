@@ -308,7 +308,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     (when is-ergoemacs-modified-p
       ;; Restore ergoemacs-mode changes
       (let* ((map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-e-map")) ergoemacs-original-map-hash))
-             (n-map (copy-keymap map))
+             (n-map (or (and map (copy-keymap map)) (make-sparse-keymap)))
             (full-map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-full-map")) ergoemacs-original-map-hash))
             shortcut-list)
         (remhash is-ergoemacs-modified-p ergoemacs-modified-map-hash)
