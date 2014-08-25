@@ -1094,6 +1094,22 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
        (kill-buffer (current-buffer))))
     (should (equal ret t))))
 
+(ert-deftest ergoemacs-test-org-c-a ()
+  "Test beginning of line in standard ergoemacs-mode/org-mode."
+  (ergoemacs-test-layout
+   :layout "colemak"
+   :macro "M-m"
+   (let ((ret ))(save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (insert "abc\n* TODO Fix org C-a issue")
+     (org-mode)
+     (goto-char (point-max))
+     (execute-kbd-macro macro)
+     (ignore-errors
+       (should (string= (buffer-substring (point) (point-at-eol))
+                        "Fix org C-a issue")))
+     (kill-buffer (current-buffer))))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
