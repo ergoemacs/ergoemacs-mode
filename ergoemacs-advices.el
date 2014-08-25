@@ -146,7 +146,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
      ((progn
         (setq file (if (ignore-errors (functionp function))
                        (or (gethash function ergoemacs-is-user-defined-hash)
-                           (find-lisp-object-file-name function (symbol-function function)))
+                           (ignore-errors (find-lisp-object-file-name function (symbol-function function))))
                      (or
                       load-file-name
                       (buffer-file-name))))
@@ -279,6 +279,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
                                       (not ergoemacs-ignore-advice)
                                       (ignore-errors (and (string= "ergoemacs-modified" (nth 1 keymap))
                                                           (car (nth 2 keymap))))))
+        (original-keymap (copy-keymap keymap))
         ergoemacs-local-map)
     (when is-ergoemacs-modified-p
       ;; Restore original map to make changes.
@@ -330,12 +331,21 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
          (t
           (setq n-map (list n-map))))
         (push map n-map)
-        (setq n-map (cdr (copy-keymap
+        (setq n-map
+              (cdr (copy-keymap
                           (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map keymap)))))
         ;; (keymap "ergoemacs-modfied" (is-ergoemacs-modified-p) ...)
         (push (list is-ergoemacs-modified-p) n-map)
         (push "ergoemacs-modified" n-map)
         (ergoemacs-setcdr keymap n-map)))
+    ;; Update `minor-mode-map-alist'. Should address Issue #298
+    (setq minor-mode-map-alist
+          (mapcar
+           (lambda(elt)
+             (if (equal (cdr elt) original-keymap)
+                 (cons (car elt) keymap)
+               elt))
+           minor-mode-map-alist))
     (when (and is-global-p (not ergoemacs-global-changes-are-ignored-p))
       (let ((vk key))
         (ergoemacs-global-set-key-after key)
