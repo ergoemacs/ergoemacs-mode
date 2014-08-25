@@ -342,8 +342,11 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     (setq minor-mode-map-alist
           (mapcar
            (lambda(elt)
-             (if (equal (cdr elt) original-keymap)
-                 (cons (car elt) keymap)
+             (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
+                      (not (equal original-keymap '(keymap)))
+                      (equal (cdr elt) original-keymap))
+                 (progn
+		   (cons (car elt) keymap))
                elt))
            minor-mode-map-alist))
     (when (and is-global-p (not ergoemacs-global-changes-are-ignored-p))
