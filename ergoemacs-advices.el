@@ -224,7 +224,6 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
                  (not (memq function ergoemacs-advise-hooks))
                  (string-match-p "-mode-hook\\'" (symbol-name hook))
                  (ignore-errors (symbolp function))
-                 (ignore-errors (string-match "mode-hook" (symbol-name function)))
                  (not (memq hook ignored-hooks))
                  (not (memq function '(global-font-lock-mode-check-buffers)))
                  (let ((fun-str (symbol-name function)))
