@@ -349,7 +349,12 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ;; never be done in a sparse, unidenifying keymap, otherwise the
     ;; keymaps will be cross-linked causing random an unpredictable
     ;; behavior.
-    (when (not (equal original-keymap '(keymap)))
+
+    ;; To keep from inifinite loops, don't do this when defining
+    ;; `ergoemacs-mode' style keys
+    
+    (when (and (not ergoemacs-ignore-advice)
+               (not (equal original-keymap '(keymap))))
       ;; Update `minor-mode-map-alist'. Should address Issue #298
       (dolist (elt minor-mode-map-alist)
         (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
