@@ -2530,10 +2530,17 @@ In `org-mode' run `org-edit-special'. If `user-error' is raised
 run `org-babel-tangle'.
 
 In org source buffers run `org-edit-src-exit'
-In other functions run `org-babel-detangle'"
+In other functions run `org-babel-detangle'.
+
+With a prefix argument like \\[universial-argument] in an
+`org-mode' buffer, run `org-babel-tangle'."
   (interactive)
   (let ((org-p (string-match "^[*]Org Src" (buffer-name))))
     (cond
+     ((and (eq major-mode 'org-mode)
+           current-prefix-arg)
+      (setq current-prefix-arg nil)
+      (call-interactively 'org-babel-tangle))
      ((eq major-mode 'org-mode)
       (condition-case _err
           (call-interactively 'org-edit-special)
