@@ -1506,6 +1506,7 @@ If FORCE is true, set it even if it changed.
     (customize-set-variable variable value)
     (customize-mark-as-set variable)))
 
+(defvar ergoemacs-theme-refresh nil)
 (defvar ergoemacs-applied-inits '())
 (defmethod ergoemacs-apply-inits-obj ((obj ergoemacs-theme-component-map-list))
   (dolist (init (ergoemacs-get-inits obj))
@@ -1514,6 +1515,10 @@ If FORCE is true, set it even if it changed.
       )
      ((assq (nth 0 init) ergoemacs-applied-inits)
       ;; Already applied, Do nothing for now.
+      (when ergoemacs-theme-refresh ;; When refreshing don't reset.
+        (let ((x (assq (nth 0 init) ergoemacs-theme-refresh)))
+          (when x
+            (setq ergoemacs-theme-refresh (delq x ergoemacs-theme-refresh)))))
       )
      ((nth 2 init)
       ;; Hook
@@ -1530,25 +1535,35 @@ If FORCE is true, set it even if it changed.
       ;; (Nth 0 Init)iable state change
       (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
             ergoemacs-applied-inits)
-      (ergoemacs-set (nth 0 init) (funcall (nth 1 init)))))))
+      (ergoemacs-set (nth 0 init) (funcall (nth 1 init))))))
+  ;; Now remove things that were not set
+  (when ergoemacs-theme-refresh
+    (let ((tmp ergoemacs-applied-inits))
+      (setq ergoemacs-theme-refresh nil)
+      (setq ergoemacs-applied-inits ergoemacs-theme-refresh)
+      (unwind-protect
+          (ergoemacs-remove-inits)
+        (setq ergoemacs-applied-inits tmp)))))
 
 (defun ergoemacs-remove-inits ()
-  "Remove the applied initilizations of modes and variables.
+  "Remove the applied initializations of modes and variables.
 This assumes the variables are stored in `ergoemacs-applied-inits'"
-  (dolist (init ergoemacs-applied-inits)
-    (let ((var (nth 0 init))
-          ;; (val (nth 1 init))
-          (hook (nth 2 init)))
-      (cond
-       (hook
-        (let ((add-hook-p (nth 0 hook))
-              (append-p (nth 1 hook))
-              (local-p (nth 2 hook)))
-          (if add-hook-p
-              (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
-            (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))))
-       (t
-        (ergoemacs-reset var)))))
+  (if ergoemacs-theme-refresh
+      (setq ergoemacs-theme-refresh ergoemacs-applied-inits)
+    (dolist (init ergoemacs-applied-inits)
+      (let ((var (nth 0 init))
+            ;; (val (nth 1 init))
+            (hook (nth 2 init)))
+        (cond
+         (hook
+          (let ((add-hook-p (nth 0 hook))
+                (append-p (nth 1 hook))
+                (local-p (nth 2 hook)))
+            (if add-hook-p
+                (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
+              (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))))
+         (t
+          (ergoemacs-reset var))))))
   (setq ergoemacs-applied-inits '()))
 
 (defun ergoemacs-theme--install-shortcuts-list (shortcut-list keymap lookup-keymap full-shortcut-map-p)
@@ -2362,13 +2377,21 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 
 (defvar ergoemacs-theme--object nil
   "Current `ergoemacs-mode' theme object")
-(defun ergoemacs-theme-reset ()
-  "Resets the `ergoemacs-mode' theme.")
+(defun ergoemacs-theme-reset (&optional theme  version)
+  "Resets the `ergoemacs-mode' theme."
+  (setq ergoemacs-theme-refresh t)
+  (when ergoemacs-theme--object
+    (ergoemacs-theme-obj-install ergoemacs-theme--object 'remove)
+    (setq ergoemacs-theme--object nil))
+  (setq ergoemacs-theme--object (ergoemacs-theme-get-obj (or theme ergoemacs-theme "standard") (or version (ergoemacs-theme-get-version))))
+  (ergoemacs-theme-obj-install ergoemacs-theme--object))
 
 (defun ergoemacs-theme-install (&optional theme  version)
   "Gets the keymaps for THEME for VERSION."
   (setq ergoemacs-theme--object (ergoemacs-theme-get-obj (or theme ergoemacs-theme "standard") (or version (ergoemacs-theme-get-version))))
   (ergoemacs-theme-obj-install ergoemacs-theme--object))
+
+
 
 (defun ergoemacs-apply-inits (&rest _ignore)
   "Applies any deferred initializations."
@@ -2382,8 +2405,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
               (when (and (commandp fn t) (ergoemacs-apply-deferred ergoemacs-theme--object))
                 (throw 'found-keymap-changes t))))
       ;; Reset ergoemacs-mode
-      (ergoemacs-theme-remove)
-      (ergoemacs-theme-install))))
+      (ergoemacs-theme-reset))))
 
 (defun ergoemacs-theme-debug ()
   "Prints debugging information about the currently installed theme object."
@@ -2597,8 +2619,7 @@ If OFF is non-nil, turn off the options instead."
           (setq ergoemacs-theme-options tmp)
         (ergoemacs-save 'ergoemacs-theme-options tmp))))
   (when ergoemacs-mode
-    (ergoemacs-mode -1)
-    (ergoemacs-mode 1)))
+    (ergoemacs-theme-reset)))
 
 (defun ergoemacs-theme-toggle-option (option)
   "Toggles theme OPTION."
@@ -2648,8 +2669,7 @@ If OFF is non-nil, turn off the options instead."
                    (interactive)
                    (ergoemacs-theme-toggle-option ',option)
                    (customize-mark-as-set 'ergoemacs-theme-options)
-                   (ergoemacs-mode -1)
-                   (ergoemacs-mode 1))
+                   (ergoemacs-theme-reset))
                  :button (:toggle . (ergoemacs-theme-option-enabled-p ',option)))
                ret)))
           (unless (eq ret '())
@@ -2677,8 +2697,7 @@ If OFF is non-nil, turn off the options instead."
                     (interactive)
                     (ergoemacs-theme-toggle-option ',option)
                     (customize-mark-as-set 'ergoemacs-theme-options)
-                    (ergoemacs-mode -1)
-                    (ergoemacs-mode 1))
+                    (ergoemacs-theme-reset))
                   :button (:toggle . (ergoemacs-theme-option-enabled-p ',option)))))
             (sort options-list 'string<)))))))
 
@@ -2695,8 +2714,7 @@ If OFF is non-nil, turn off the options instead."
             (interactive)
             (ergoemacs-theme-set-version nil)
             (customize-mark-as-set 'ergoemacs-theme-version)
-            (ergoemacs-mode -1)
-            (ergoemacs-mode 1))
+            (ergoemacs-theme-reset))
           :button (:radio . (equal (ergoemacs-theme-get-version) nil)))
          ,@(mapcar
             (lambda(version)
@@ -2704,8 +2722,7 @@ If OFF is non-nil, turn off the options instead."
                 (lambda() (interactive)
                   (ergoemacs-theme-set-version ,version)
                   (customize-mark-as-set 'ergoemacs-theme-version)
-                  (ergoemacs-mode -1)
-                  (ergoemacs-mode 1))
+                  (ergoemacs-theme-reset))
                 :button (:radio . (equal (ergoemacs-theme-get-version) ,version))))
             theme-versions))))))
 

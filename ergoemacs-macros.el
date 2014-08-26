@@ -269,21 +269,19 @@ Maybe be similar to use-package"
             ,(if (plist-get plist ':macro)
                  `(edmacro-parse-keys ,(plist-get plist ':macro) t)))
            (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout))
-       (ergoemacs-mode -1)
        (setq ergoemacs-theme ,(plist-get plist ':theme))
        (setq ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us"))
        (ergoemacs-theme-set-version ,(or (plist-get plist ':version) nil))
-       (ergoemacs-mode 1)
+       (ergoemacs-theme-reset)
        ,(if (plist-get plist :cua)
             `(cua-mode 1))
        (unwind-protect
            (progn
              ,@body)
-         (ergoemacs-mode -1)
          (setq ergoemacs-theme old-ergoemacs-theme)
          (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
          (ergoemacs-theme-set-version old-version)
-         (ergoemacs-mode 1)))))
+         (ergoemacs-theme-reset)))))
 
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
