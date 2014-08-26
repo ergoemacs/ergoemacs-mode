@@ -231,10 +231,9 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
                    (or (string= "ergoemacs-user--" (substring fun-str 0 (min 16 (length fun-str))))
                        (not (string= "ergoemacs-" (substring fun-str 0 (min 10 (length fun-str)))))))
                  (ergoemacs-is-user-defined-map-change-p function))
-        (unless
-          (push function ergoemacs-advise-hooks)
-          (message "Apply user keybindings in %s" function)
-          (ignore-errors (eval `(ergoemacs-advise-hook ,function)))))
+        (push function ergoemacs-advise-hooks)
+        (message "Apply user keybindings in %s" function)
+        (ignore-errors (eval `(ergoemacs-advise-hook ,function))))
       ad-do-it))))
 
 (defun ergoemacs-changes-are-ignored-in-runtime ()
