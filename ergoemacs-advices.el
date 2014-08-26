@@ -338,17 +338,43 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
         (push (list is-ergoemacs-modified-p) n-map)
         (push "ergoemacs-modified" n-map)
         (ergoemacs-setcdr keymap n-map)))
-    ;; Update `minor-mode-map-alist'. Should address Issue #298
-    (setq minor-mode-map-alist
-          (mapcar
-           (lambda(elt)
-             (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
-                      (not (equal original-keymap '(keymap)))
-                      (equal (cdr elt) original-keymap))
-                 (progn
-		   (cons (car elt) keymap))
-               elt))
-           minor-mode-map-alist))
+    ;; Not sure why, but somehow `ergoemacs-mode' is unlinking the
+    ;; maps from any of the alists of interest, like:
+    ;;
+    ;; - `minor-mode-map-alist'
+    ;; - `minor-mode-overriding-map-alist'
+    ;; - `emulation-mode-map-alists'
+    ;;
+    ;; This updates these variables if the map is updated. This should
+    ;; never be done in a sparse, unidenifying keymap, otherwise the
+    ;; keymaps will be cross-linked causing random an unpredictable
+    ;; behavior.
+    (when (not (equal original-keymap '(keymap)))
+      ;; Update `minor-mode-map-alist'. Should address Issue #298
+      (dolist (elt minor-mode-map-alist)
+        (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
+                 (equal (cdr elt) original-keymap))
+            (ergoemacs-setcdr elt keymap)))
+      ;; Update `minor-mode-overriding-map-alist'. 
+      (dolist (elt minor-mode-overriding-map-alist)
+        (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
+                 (equal (cdr elt) original-keymap))
+            (ergoemacs-setcdr elt keymap)))
+      ;; Now fix any emulation maps... (sigh).
+      (ergoemacs-emulations 'remove)
+      (unwind-protect
+          (dolist (var emulation-mode-map-alists)
+            (cond
+             ((ignore-errors
+                (and (listp var)
+                     (equal (cdr var) original-keymap)))
+              (ergoemacs-setcdr var keymap))
+             ((ignore-errors (listp (ergoemacs-sv var)))
+              (dolist (map-key (ergoemacs-sv var))
+                (when (equal (cdr map-key) original-keymap)
+                  (ergoemacs-setcdr map-key keymap))))))
+        (ergoemacs-emulations)))
+    
     (when (and is-global-p (not ergoemacs-global-changes-are-ignored-p))
       (let ((vk key))
         (ergoemacs-global-set-key-after key)
