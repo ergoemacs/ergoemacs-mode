@@ -879,10 +879,10 @@ This should only be run when no global keys have been set.
   (dolist (x ergoemacs-emacs-default-bindings)
     (ergoemacs-global-changed-p (nth 0 x) nil t fix))
   (message "Ergoemacs Keys warnings for this layout:")
-  (dolist (x (symbol-value (ergoemacs-get-fixed-layout)))
+  (dolist (x (ergoemacs-sv (ergoemacs-get-fixed-layout)))
     (and (eq 'string (type-of (nth 0 x)))
          (ergoemacs-global-changed-p (nth 0 x) nil t fix)))
-  (dolist (x (symbol-value (ergoemacs-get-variable-layout)))
+  (dolist (x (ergoemacs-sv (ergoemacs-get-variable-layout)))
     (and (eq 'string (type-of (nth 0 x)))
          (ergoemacs-global-changed-p (nth 0 x) t t fix))))
 

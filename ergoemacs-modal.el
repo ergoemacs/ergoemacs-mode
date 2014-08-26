@@ -340,7 +340,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
         ergoemacs-modal-base-keymap)
     (let ((ret (make-sparse-keymap)))
       (dolist (lay (ergoemacs-get-layouts))
-        (dolist (char (symbol-value (intern (concat "ergoemacs-layout-" lay))))
+        (dolist (char (ergoemacs-sv (intern (concat "ergoemacs-layout-" lay))))
           (unless (string= char "")
             (dolist (mod '("" "C-" "M-" "C-M-"))
               (let ((key (read-kbd-macro

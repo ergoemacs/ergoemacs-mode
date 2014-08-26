@@ -72,7 +72,7 @@
           (message "Invalid menu in ergoemacs-preprocess-menu-keybindings %s" menu))
         menu)
     (when (symbolp menu)
-      (setq menu (symbol-value menu)))
+      (setq menu (ergoemacs-sv menu)))
     ;; For each element in the menu
     (ergoemacs-setcdr menu
             (mapcar (lambda (item)

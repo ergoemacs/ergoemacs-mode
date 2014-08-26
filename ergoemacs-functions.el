@@ -2591,7 +2591,7 @@ In other functions run `org-babel-detangle'"
   (dolist (x ergoemacs-emulation-mode-map-alist)
     (setq ergoemacs-debug-keymap--temp-map (cdr x))
     (insert (format "*** %s: %s\n%s\n"
-                    (nth 0 x) (symbol-value (nth 0 x))
+                    (nth 0 x) (ergoemacs-sv (nth 0 x))
                     (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")))))
 
 

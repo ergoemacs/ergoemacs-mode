@@ -153,10 +153,10 @@ installing the original keymap above the ergoemacs-mode installed keymap.
        ((listp var)
         (push (cons i (cdr var)) temp-maps)
         (ergoemacs-setcdr var (ergoemacs-original-keymap (cdr var))))
-       ((ignore-errors (listp (symbol-value var)))
-        (push (cons var (ergoemacs-copy-list (symbol-value var)))
+       ((ignore-errors (listp (ergoemacs-sv var)))
+        (push (cons var (ergoemacs-copy-list (ergoemacs-sv var)))
               emulation-maps)
-        (dolist (map-key (symbol-value var))
+        (dolist (map-key (ergoemacs-sv var))
           (ergoemacs-setcdr map-key (ergoemacs-original-keymap (cdr map-key))))))
       (setq i (+ i 1)))
     ;; Restore `minor-mode-overriding-map-alist'
@@ -1948,8 +1948,8 @@ non-nil, call either the remapped function or FUNCTION
                   (equal keymap (make-keymap)))
         (mapatoms
          (lambda(map)
-           (when (and (ignore-errors (keymapp (symbol-value map)))
-                      (equal (symbol-value map) keymap))
+           (when (and (ignore-errors (keymapp (ergoemacs-sv map)))
+                      (equal (ergoemacs-sv map) keymap))
              (push map ret)))
          ob)))
     (unless ret
@@ -1970,7 +1970,7 @@ The shortcuts are also installed into the map directly.
 "
   (if (symbolp map)
       (ergoemacs-install-shortcuts-map
-       (symbol-value map)
+       (ergoemacs-sv map)
        dont-complete
        install-read no-brand)
     (if (ignore-errors (string= "ergoemacs-modified" (nth 1 map)))
@@ -2023,8 +2023,8 @@ The shortcuts are also installed into the map directly.
                 (setq new-map (cdr (cdr new-map))))
               (push (list map-name) new-map)
               (push "ergoemacs-modified" new-map))
-            (when (ignore-errors (keymapp (symbol-value new-map)))
-              (ergoemacs-setcdr (symbol-value new-map) new-map))
+            (when (ignore-errors (keymapp (ergoemacs-sv new-map)))
+              (ergoemacs-setcdr (ergoemacs-sv new-map) new-map))
             (unless changed-map
               (ergoemacs-setcdr map new-map))))
         map))))
@@ -2108,8 +2108,8 @@ The keymaps are:
                       (cdr var)))
                (ergoemacs-setcdr var (ergoemacs-install-shortcuts-map (cdr var) t)))
               ;; Not needed; add/remove promotes ergoemacs-mode above these.
-              ;; ((ignore-errors (listp (symbol-value var)))
-              ;;  (dolist (map-key (symbol-value var))
+              ;; ((ignore-errors (listp (ergoemacs-sv var)))
+              ;;  (dolist (map-key (ergoemacs-sv var))
               ;;    (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
               ;;      (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))
               ))

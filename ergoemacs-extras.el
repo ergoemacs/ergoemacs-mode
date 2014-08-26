@@ -142,11 +142,11 @@
         (standard-shortcuts-regexp
          (regexp-opt (mapcar
                       (lambda(x) (nth 0 x))
-                      (symbol-value (ergoemacs-get-fixed-layout))) 'paren))
+                      (ergoemacs-sv (ergoemacs-get-fixed-layout))) 'paren))
         (ergo-shortcuts-regexp
          (regexp-opt (mapcar
                       (lambda(x) (nth 0 x))
-                      (symbol-value (ergoemacs-get-variable-layout))) 'paren)))
+                      (ergoemacs-sv (ergoemacs-get-variable-layout))) 'paren)))
     (with-temp-buffer
       (describe-buffer-bindings (current-buffer))
       (goto-char (point-min))
@@ -259,8 +259,8 @@
               (progn
                 (setq shortcut-type "Unclassified")
                 (setq short-desc "")
-                (dolist (x `(,@(symbol-value (ergoemacs-get-variable-layout))
-                             ,@(symbol-value (ergoemacs-get-fixed-layout))))
+                (dolist (x `(,@(ergoemacs-sv (ergoemacs-get-variable-layout))
+                             ,@(ergoemacs-sv (ergoemacs-get-fixed-layout))))
                   ;; (message "%s" (nth 1 x))
                   ;; (message "%s" (nth 1 (nth 0 x)))
                   (when (string= (format "%s" (nth 1 x))
@@ -629,7 +629,7 @@ Currently only supports two modifier plus key."
         (goto-char (point-min))
         (when (re-search-forward "QWERTY")
           (replace-match layout))
-        (dolist (x (symbol-value (ergoemacs-get-variable-layout)))
+        (dolist (x (ergoemacs-sv (ergoemacs-get-variable-layout)))
           (let ((from (nth 0 x))
                 from-reg
                 (to nil))
@@ -721,7 +721,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
         (goto-char (point-min))
         (when (re-search-forward "QWERTY")
           (replace-match layout))
-        (dolist (x (symbol-value (ergoemacs-get-variable-layout)))
+        (dolist (x (ergoemacs-sv (ergoemacs-get-variable-layout)))
           (let ((from (nth 0 x))
                 from-reg
                 (to nil))
@@ -795,7 +795,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
           (insert "\n")
           (setq i 1)
           (setq lay-ini (format "%s\n[%s]" lay-ini lay))
-          (dolist (x (symbol-value variable))
+          (dolist (x (ergoemacs-sv variable))
             (unless (string-match "\\(<apps>\\|<menu>\\)" x) ;; Currently take out
               ;; <apps> mapping.  Needs some work.
               (let ((key (format "%s" (string-to-char x))))
@@ -836,7 +836,7 @@ EXTRA is the extra directory used to gerenate the bash ~/.inputrc
             (ergoemacs-setup-keys-for-layout x)
             (insert (concat "[" x "-" z "]\n"))
             (message "Generating AHK ini for %s %s" x z)
-            (dolist (y (symbol-value (ergoemacs-get-variable-layout)))
+            (dolist (y (ergoemacs-sv (ergoemacs-get-variable-layout)))
               (when (string-match re (format "%s" (nth 1 y)))
                 (let ((trans (ergoemacs-trans-ahk (ergoemacs-kbd (nth 0 y) t (nth 3 y)) t)))
                   (when (string-match "^[0-9]+$" trans)
@@ -1133,7 +1133,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
     ;;             (setq num (+ num (cdr a)))
     ;;             (push (car a) cmds))))
     ;;       (nth 1 minor-list))))
-    ;;  (symbol-value (ergoemacs-get-minor-mode-layout)))
+    ;;  (ergoemacs-sv (ergoemacs-get-minor-mode-layout)))
     (list (if var-layout
               (ergoemacs-kbd (nth 0 x) t (nth 3 x))
             (nth 0 x)) (nth 2 x)  num cmds
@@ -1166,7 +1166,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                                         ergoemacs-keyboard-layout))
                    'ergoemacs-layout-us))
           var-layout)
-      (setq lay (symbol-value lay))
+      (setq lay (ergoemacs-sv lay))
       ;; Merge with the values in .emacs.keyfreq file
       (keyfreq-table-load table)
       (setq list (keyfreq-list (keyfreq-groups-major-modes table) 'no-sort))
@@ -1181,7 +1181,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
              (lambda(x)
                (ergoemacs-keyfreq-calc-ergo x list var-layout cmd-n total-n))
              (append
-              (symbol-value (ergoemacs-get-fixed-layout)))))
+              (ergoemacs-sv (ergoemacs-get-fixed-layout)))))
       
       (setq cmd-freq-ergo
             (append cmd-freq-ergo
@@ -1189,7 +1189,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
                      (lambda(x)
                        (ergoemacs-keyfreq-calc-ergo x list var-layout cmd-n total-n))
                      (append
-                      (symbol-value (ergoemacs-get-variable-layout))))))
+                      (ergoemacs-sv (ergoemacs-get-variable-layout))))))
       
       (setq cmd-freq-ergo (sort cmd-freq-ergo #'(lambda(x y) (< (nth 2 x) (nth 2 y)))))
 
@@ -1326,7 +1326,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                          (error nil))
                        (replace-match (format "-%s" (upcase (match-string 1 (nth 0 x)))) t t (nth 0 x))
                      (nth 0 x))  ,(nth 1 x) ,(nth 2 x)))
-              `(,@(symbol-value (ergoemacs-get-fixed-layout))
+              `(,@(ergoemacs-sv (ergoemacs-get-fixed-layout))
                 ,@(if cua-mode
                       `(("C-c" nil "Copy")
                         ("C-v" nil "Paste")
@@ -1342,7 +1342,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
       (setq extra-dir (expand-file-name xtra extra-dir))
       (if (not (file-exists-p extra-dir))
           (make-directory extra-dir t))
-      (setq lay (symbol-value lay))
+      (setq lay (ergoemacs-sv lay))
       (setq file (expand-file-name
                   (concat "ergoemacs-layout-" layout
                           (if is-prefix "-prefix" "")
@@ -1400,15 +1400,15 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                   (var-is-fixed-p (nth 5 x))
                   curr-var)
               ;; Variable Layout
-              (setq curr-var (nth i (symbol-value (intern (concat "ergoemacs-layout-" ergoemacs-translation-from)))))
+              (setq curr-var (nth i (ergoemacs-sv (intern (concat "ergoemacs-layout-" ergoemacs-translation-from)))))
               
               (if var-is-fixed-p
                   (setq curr-var (nth i lay))
-                (setq curr-var (nth i (symbol-value (intern (concat "ergoemacs-layout-" ergoemacs-translation-from))))))
+                (setq curr-var (nth i (ergoemacs-sv (intern (concat "ergoemacs-layout-" ergoemacs-translation-from))))))
               
               (unless (string= curr-var "")
                 (setq txt (assoc (format "%s%s" key-pre curr-var)
-                                 (symbol-value (ergoemacs-get-variable-layout))))
+                                 (ergoemacs-sv (ergoemacs-get-variable-layout))))
                 
                 (if (not txt)
                     (setq txt "")
@@ -1417,10 +1417,10 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                     (setq txt "")))
                 (when (string= "" txt)
                   (setq txt (all-completions (format "%s%s " key-pre curr-var)
-                                             (symbol-value (ergoemacs-get-variable-layout))))
+                                             (ergoemacs-sv (ergoemacs-get-variable-layout))))
                   (if (= 0 (length txt))
                       (setq txt "")
-                    (setq prefix-fixed (nth 3 (assoc (nth 0 txt) (symbol-value (ergoemacs-get-variable-layout)))))
+                    (setq prefix-fixed (nth 3 (assoc (nth 0 txt) (ergoemacs-sv (ergoemacs-get-variable-layout)))))
                     (setq txt "⌨")
                     ;; Add to prefix list
                     (setq prefix-lst
@@ -1457,7 +1457,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                   (replace-match  (format ">%s<" txt) t t)))
               ;; Space and other symbols
               (dolist (sym '("SPC"))
-                (setq txt (assoc (format "%s%s" sym-pre sym) (symbol-value (ergoemacs-get-variable-layout))))
+                (setq txt (assoc (format "%s%s" sym-pre sym) (ergoemacs-sv (ergoemacs-get-variable-layout))))
                 (if (not txt)
                     (setq txt "")
                   (if (>= (length txt) 3)
@@ -1468,7 +1468,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                   (setq txt
                         (all-completions
                          (format "%s%s " sym-pre sym)
-                         (symbol-value (ergoemacs-get-variable-layout))))
+                         (ergoemacs-sv (ergoemacs-get-variable-layout))))
                   (if (= 0 (length txt))
                       (setq txt "")
                     (setq txt "⌨")))
@@ -1478,10 +1478,10 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                     (replace-match  (format ">%s<" (ergoemacs-gen-svg-quote txt)) t t))))
 
               (dolist (sym '("F1" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9" "F10" "F11" "F12"))
-                (setq txt (assoc (format "<%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
+                (setq txt (assoc (format "<%s>" (downcase sym)) (ergoemacs-sv (ergoemacs-get-variable-layout))))
                 (if (not txt)
                     (progn
-                      (setq txt (assoc (format "<%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
+                      (setq txt (assoc (format "<%s>" (downcase sym)) (ergoemacs-sv (ergoemacs-get-fixed-layout))))
                       (if (not txt)
                           (setq txt "")
                         (if (>= (length txt) 3)
@@ -1494,13 +1494,13 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                   (setq txt
                         (all-completions
                          (format "<%s> " (downcase sym))
-                         (symbol-value (ergoemacs-get-variable-layout))))
+                         (ergoemacs-sv (ergoemacs-get-variable-layout))))
                   (if (= 0 (length txt))
                       (progn
                         (setq txt
                               (all-completions
                                (format "<%s> " (downcase sym))
-                               (symbol-value (ergoemacs-get-fixed-layout))))
+                               (ergoemacs-sv (ergoemacs-get-fixed-layout))))
                         (if (= 0 (length txt))
                             (setq txt "")
                           (setq txt "⌨")))
@@ -1509,10 +1509,10 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                 (when (search-forward (format ">N%s<" (upcase sym)) nil t)
                   (replace-match  (format ">%s<" txt) t t))
 
-                (setq txt (assoc (format "<C-%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
+                (setq txt (assoc (format "<C-%s>" (downcase sym)) (ergoemacs-sv (ergoemacs-get-variable-layout))))
                 (if (not txt)
                     (progn
-                      (setq txt (assoc (format "<C-%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
+                      (setq txt (assoc (format "<C-%s>" (downcase sym)) (ergoemacs-sv (ergoemacs-get-fixed-layout))))
                       (if (not txt)
                           (setq txt "")
                         (if (>= (length txt) 3)
@@ -1525,13 +1525,13 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                   (setq txt
                         (all-completions
                          (format "<C-%s> " (downcase sym))
-                         (symbol-value (ergoemacs-get-variable-layout))))
+                         (ergoemacs-sv (ergoemacs-get-variable-layout))))
                   (if (= 0 (length txt))
                       (progn
                         (setq txt
                               (all-completions
                                (format "<C-%s> " (downcase sym))
-                               (symbol-value (ergoemacs-get-fixed-layout))))
+                               (ergoemacs-sv (ergoemacs-get-fixed-layout))))
                         (if (= 0 (length txt))
                             (setq txt "")
                           (setq txt "⌨")))
@@ -1540,10 +1540,10 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                 (when (search-forward (format ">CC%s<" (upcase sym)) nil t)
                   (replace-match  (format ">%s<" txt) t t))
                 
-                (setq txt (assoc (format "<M-%s>" (downcase sym)) (symbol-value (ergoemacs-get-variable-layout))))
+                (setq txt (assoc (format "<M-%s>" (downcase sym)) (ergoemacs-sv (ergoemacs-get-variable-layout))))
                 (if (not txt)
                     (progn
-                      (setq txt (assoc (format "<M-%s>" (downcase sym)) (symbol-value (ergoemacs-get-fixed-layout))))
+                      (setq txt (assoc (format "<M-%s>" (downcase sym)) (ergoemacs-sv (ergoemacs-get-fixed-layout))))
                       (if (not txt)
                           (setq txt "")
                         (if (>= (length txt) 3)
@@ -1556,13 +1556,13 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
                   (setq txt
                         (all-completions
                          (format "<M-%s> " (downcase sym))
-                         (symbol-value (ergoemacs-get-variable-layout))))
+                         (ergoemacs-sv (ergoemacs-get-variable-layout))))
                   (if (= 0 (length txt))
                       (progn
                         (setq txt
                               (all-completions
                                (format "<M-%s> " (downcase sym))
-                               (symbol-value (ergoemacs-get-fixed-layout))))
+                               (ergoemacs-sv (ergoemacs-get-fixed-layout))))
                         (if (= 0 (length txt))
                             (setq txt "")
                           (setq txt "⌨")))
@@ -1666,7 +1666,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
 ;;           (json-encode
 ;;            (mapcar
 ;;             (lambda(layout)
-;;               `(,layout ,@(symbol-value (intern (concat "ergoemacs-layout-" layout)))))
+;;               `(,layout ,@(ergoemacs-sv (intern (concat "ergoemacs-layout-" layout)))))
 ;;             (ergoemacs-get-layouts))) ";"))
 
 ;; (defun ergoemacs-fixed-themes-json ()
@@ -1686,7 +1686,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
 ;;                                   (replace-match (upcase (match-string 1))))
 ;;                                 (buffer-string))  . ,(nth 2 x)))
 ;;                          (remove-if (lambda(x) (not (nth 2 x)))
-;;                                     (symbol-value
+;;                                     (ergoemacs-sv
 ;;                                      (if (string= "" theme)
 ;;                                          (intern "ergoemacs-fixed-layout")
 ;;                                        (intern (concat "ergoemacs-fixed-layout-" theme))))))))
@@ -1710,7 +1710,7 @@ IS-PREFIX tell ergoemacs if this is a prefix diagram."
 ;;                                   (replace-match (upcase (match-string 1))))
 ;;                                 (buffer-string))  . ,(nth 2 x)))
 ;;                          (remove-if (lambda(x) (not (nth 2 x)))
-;;                                     (symbol-value
+;;                                     (ergoemacs-sv
 ;;                                      (if (string= "" theme)
 ;;                                          (intern "ergoemacs-variable-layout")
 ;;                                        (intern (concat "ergoemacs-variable-layout-" theme))))))))

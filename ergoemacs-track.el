@@ -158,7 +158,7 @@
     (when lay
       (if curr-i
           (setq wi curr-i)
-        (dolist (x (symbol-value lay))
+        (dolist (x (ergoemacs-sv lay))
           (when (string= key x)
             (setq wi i))
           (setq i (+ i 1))))
@@ -229,7 +229,7 @@
 (dolist (layout (ergoemacs-get-layouts t))
   (let ((lay (intern-soft (format "ergoemacs-layout-%s" layout))))
     (when lay
-      (dolist (key (symbol-value lay))
+      (dolist (key (ergoemacs-sv lay))
         (unless (string= key "")
           (puthash (cons layout key)
                    (ergoemacs-key-properties key layout)

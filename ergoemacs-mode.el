@@ -109,17 +109,20 @@ PRE-VECTOR is to help define the full key-vector sequence."
 
 (defun ergoemacs-setcdr (var val)
   "Use `setcdr' on VAL to VAL.
-If VAL is a symbol, use the `symbol-value', "
+If VAL is a symbol, use `ergoemacs-sv' to determine the value.
+If VAR is nil, return nil and do nothing. "
   (if (symbolp var)
-      (setcdr (symbol-value var) val)
-    (setcdr var val)))
+      (setcdr (ergoemacs-sv var) val)
+    (if var
+        (setcdr var val)
+      nil)))
 
 (defvar ergoemacs-original-map-hash)
 (defun ergoemacs-original-keymap (keymap &optional replace)
   "Return a copy of original keymap, or the current keymap."
   (if (not keymap) nil
     (if (symbolp keymap)
-        (ergoemacs-original-keymap (symbol-value keymap) replace)    
+        (ergoemacs-original-keymap (ergoemacs-sv keymap) replace)    
       (let (ret)
         (setq ret
               (copy-keymap
@@ -589,10 +592,10 @@ bindings the keymap is:
                 (am (or (and (boundp 'ns-alternate-modifier) 'ns-alternate-modifier)
                         (and (boundp 'mac-alternate-modifier) 'mac-alternate-modifier))))
             (when cm
-              (setq ergoemacs-old-ns-command-modifier (symbol-value cm))
+              (setq ergoemacs-old-ns-command-modifier (ergoemacs-sv cm))
               (set cm 'meta))
             (when am
-              (setq ergoemacs-old-ns-alternate-modifier (symbol-value am))
+              (setq ergoemacs-old-ns-alternate-modifier (ergoemacs-sv am))
               (set am nil))))
         ;; (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
         ;;   (if (not ergoemacs-read-key-overriding-overlay-save)
@@ -806,9 +809,9 @@ This is done by checking if this is a command that supports shift selection or c
       (dolist (buf (buffer-list))
         (with-current-buffer buf
           (unless (equal (default-value from-hook)
-                         (symbol-value from-hook))
+                         (ergoemacs-sv from-hook))
             (setq do-append nil)
-            (dolist (item (symbol-value from-hook))
+            (dolist (item (ergoemacs-sv from-hook))
               (if (eq item t)
                   (setq do-append t)
                 (unless (or depopulate (not (memq item ergoemacs-hook-functions)))
@@ -915,7 +918,7 @@ This is done by checking if this is a command that supports shift selection or c
           (when ergoemacs-mode
             (dolist (item ergoemacs-first-keymaps)
               (let ((hook (car item)))
-                (unless (ignore-errors (keymapp (symbol-value hook)))
+                (unless (ignore-errors (keymapp (ergoemacs-sv hook)))
                   (dolist (fn (cdr item))
                     (remove-hook hook fn)
                     (add-hook hook fn)))))

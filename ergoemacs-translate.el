@@ -288,7 +288,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
 If MODAL is true, get the modal override map."
   (let ((map (intern-soft (concat "ergoemacs-" (symbol-name type) (if modal "-modal-map" "-translation-local-map")))))
     (if (not map) nil
-      (symbol-value map))))
+      (ergoemacs-sv map))))
 
 (defun ergoemacs-translation (&rest arg-plist)
   "Add or modifies an ergoemacs-translation.
@@ -838,8 +838,8 @@ and `ergoemacs-pretty-key' descriptions.
   (let ((orig-base (or base-layout "us"))
         lay shifted-list unshifted-list base
         len i)
-    (setq lay (symbol-value (intern (concat "ergoemacs-layout-" layout))))
-    (setq base (symbol-value (intern (concat "ergoemacs-layout-" orig-base))))
+    (setq lay (ergoemacs-sv (intern (concat "ergoemacs-layout-" layout))))
+    (setq base (ergoemacs-sv (intern (concat "ergoemacs-layout-" orig-base))))
     
     (setq len (length base))
     (setq i 0)
