@@ -221,14 +221,17 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
         (add-hook hook fn append local)))
      (t
       (when (and (not ergoemacs-global-changes-are-ignored-p)
+                 (not (memq function ergoemacs-advise-hooks))
+                 (string-match-p "-mode-hook\\'" (symbol-name hook))
                  (ignore-errors (symbolp function))
+                 (ignore-errors (string-match "mode-hook" (symbol-name function)))
                  (not (memq hook ignored-hooks))
                  (not (memq function '(global-font-lock-mode-check-buffers)))
                  (let ((fun-str (symbol-name function)))
                    (or (string= "ergoemacs-user--" (substring fun-str 0 (min 16 (length fun-str))))
                        (not (string= "ergoemacs-" (substring fun-str 0 (min 10 (length fun-str)))))))
                  (ergoemacs-is-user-defined-map-change-p function))
-        (unless (memq function ergoemacs-advise-hooks)
+        (unless
           (push function ergoemacs-advise-hooks)
           (message "Apply user keybindings in %s" function)
           (ignore-errors (eval `(ergoemacs-advise-hook ,function)))))
