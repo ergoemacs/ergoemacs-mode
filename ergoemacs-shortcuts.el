@@ -2107,10 +2107,11 @@ The keymaps are:
                       (not (string= "ergoemacs-modified" (nth 1 (cdr var))))
                       (cdr var)))
                (ergoemacs-setcdr var (ergoemacs-install-shortcuts-map (cdr var) t)))
-              ((ignore-errors (listp (ergoemacs-sv var)))
-               (dolist (map-key (ergoemacs-sv var))
-                 (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
-                   (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))
+              ;; This should be unnecessary.  
+              ;; ((ignore-errors (listp (ergoemacs-sv var)))
+              ;;  (dolist (map-key (ergoemacs-sv var))
+              ;;    (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
+              ;;      (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))
               ))
          (ergoemacs-emulations))))))
 
