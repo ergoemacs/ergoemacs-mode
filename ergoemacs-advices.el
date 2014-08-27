@@ -32,6 +32,7 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 (declare-function ergoemacs-without-emulation--internal "ergoemacs-shortcuts.el")
+(declare-function ergoemacs-theme-reset "ergoemacs-theme-engine.el")
 
 (defvar ergoemacs-advices '()
   "List of advices to enable and disable when ergoemacs is running.")
