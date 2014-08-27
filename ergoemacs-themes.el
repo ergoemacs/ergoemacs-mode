@@ -1213,7 +1213,6 @@
                 ergoemacs-remaps
                 standard-vars)
   :optional-on '(apps-punctuation
-                 alt-backspace-is-undo
                  tab-indents-region
                  icy-reclaim
                  apps-apps
@@ -1232,6 +1231,7 @@
                  apps-swap
                  save-options-on-exit)
   :optional-off '(guru
+                  alt-backspace-is-undo
                   search-reg
                   no-backspace
                   ergoemacs-banish-shift
