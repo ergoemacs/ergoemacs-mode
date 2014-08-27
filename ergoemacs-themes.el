@@ -1240,7 +1240,7 @@
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps icy-reclaim))
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
-                  ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines))
+                  ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))))
 
 (ergoemacs-theme reduction ()
