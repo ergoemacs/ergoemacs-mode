@@ -274,6 +274,7 @@
 (declare-function ergoemacs-is-movement-command-p "ergoemacs-mode.el")
 (declare-function ergoemacs-setup-translation "ergoemacs-translate.el")
 (declare-function ergoemacs-kbd "ergoemacs-translate.el")
+
 (defun ergoemacs-copy-list (list)
   "Return a copy of LIST, which may be a dotted list.
 The elements of LIST are not copied, just the list structure itself."
@@ -2377,14 +2378,13 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 
 (defvar ergoemacs-theme--object nil
   "Current `ergoemacs-mode' theme object")
-(defun ergoemacs-theme-reset (&optional theme  version)
+
+(declare-function ergoemacs-mode "ergoemacs-mode.el")
+(defun ergoemacs-theme-reset ()
   "Resets the `ergoemacs-mode' theme."
   (setq ergoemacs-theme-refresh t)
-  (when ergoemacs-theme--object
-    (ergoemacs-theme-obj-install ergoemacs-theme--object 'remove)
-    (setq ergoemacs-theme--object nil))
-  (setq ergoemacs-theme--object (ergoemacs-theme-get-obj (or theme ergoemacs-theme "standard") (or version (ergoemacs-theme-get-version))))
-  (ergoemacs-theme-obj-install ergoemacs-theme--object))
+  (ergoemacs-mode -1)
+  (ergoemacs-mode 1))
 
 (defun ergoemacs-theme-install (&optional theme  version)
   "Gets the keymaps for THEME for VERSION."
@@ -2544,7 +2544,17 @@ This respects `ergoemacs-theme-options'."
 Uses `ergoemacs-theme-option-on'."
   (ergoemacs-theme-option-on option no-custom 'off))
 
-(defun ergoemacs-require (option &optional theme type)
+(defun ergoemacs-remove (option &optional theme type keep)
+  "Removes an OPTION on ergoemacs themes.
+
+Calls `ergoemacs-require' with TYPE defaulting to 'off and
+remove defaulting to t.
+
+KEEP can change remove to nil.
+"
+  (ergoemacs-require option theme (or type 'off) (if keep nil t)))
+
+(defun ergoemacs-require (option &optional theme type remove)
   "Requires an OPTION on ergoemacs themes.
 
 THEME can be a single theme or list of themes to apply the option
@@ -2559,6 +2569,9 @@ and it dosen't show up on the ergoemacs-mode menu.
 
 TYPE can also be 'off, where the option will be included in the
 theme, but assumed to be disabled by default.
+
+REMOVE represents when you would remove the OPTION from the
+ergoemacs THEME.
 "
   (if (eq (type-of option) 'cons)
       (dolist (new-option option)
@@ -2579,6 +2592,7 @@ theme, but assumed to be disabled by default.
                 on (delq option-sym on)
                 off (delq option-sym off))
           (cond
+           (remove) ;; Don't do anything.
            ((eq type 'required-hidden)
             (push option-sym comp))
            ((eq type 'off)
@@ -2983,7 +2997,7 @@ Ignores _DESC."
                       (read-kbd-macro key)) function)))
 
 (defconst ergoemacs-font-lock-keywords
-  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
+  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
      (1 font-lock-keyword-face)
      (2 font-lock-constant-face nil t))))
 
