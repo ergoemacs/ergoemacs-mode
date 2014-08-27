@@ -36,6 +36,7 @@
 (declare-function ergoemacs-define-key "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-theme-set-version "ergoemacs-theme-engine.el")
+(declare-function ergoemacs-theme-reset "ergoemacs-theme-engine.el")
 
 (require 'ert)
 (require 'elp)

@@ -321,8 +321,7 @@ Will reload `ergoemacs-mode' after setting the values."
   (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
                  (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
              (boundp 'ergoemacs-mode) ergoemacs-mode)
-    (ergoemacs-mode -1)
-    (ergoemacs-mode 1)))
+    (ergoemacs-theme-reset)))
 
 (declare-function ergoemacs-get-layouts-doc "ergoemacs-layouts.el")
 (declare-function ergoemacs-get-layouts-type "ergoemacs-layouts.el")

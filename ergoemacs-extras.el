@@ -109,8 +109,7 @@
 (declare-function ergoemacs-get-variable-layout "ergoemacs-theme-engine.el")
 (defun ergoemacs-get-html-key-table ()
   "Gets the key table for the current layout."
-  (ergoemacs-mode -1)
-  (ergoemacs-mode 1)
+  (ergoemacs-theme-reset)
   (let ((case-fold-search nil)
         (shortcut-type "")
         (short-desc "")
