@@ -225,7 +225,6 @@
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   
   ;; (global-set-key (kbd "C-u") 'ergoemacs-universal-argument)
-  (global-set-key (kbd "<M-backspace>") '(undo-tree-undo undo))
   (global-set-key (kbd "C-z") '(undo-tree-undo undo))
 
   ;; Take out undo-tree's redo bindings
@@ -640,6 +639,10 @@
   "Move Current line/selection down or up with Alt+up or Alt+down"
   (global-set-key [\M-up] 'ergoemacs-move-text-up)
   (global-set-key [\M-down] 'ergoemacs-move-text-down))
+
+(ergoemacs-component alt-backspace-is-undo ()
+  "Alt+Backspace is Undo"
+  (global-set-key (kbd "<M-backspace>") '(undo-tree-undo undo)))
 
 (ergoemacs-component move-page ()
   "Move by Page"
@@ -1209,7 +1212,9 @@
                 text-transform
                 ergoemacs-remaps
                 standard-vars)
-  :optional-on '(apps-punctuation tab-indents-region
+  :optional-on '(apps-punctuation
+                 alt-backspace-is-undo
+                 tab-indents-region
                  icy-reclaim
                  apps-apps
                  apps-toggle
