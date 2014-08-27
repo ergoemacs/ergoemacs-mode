@@ -215,6 +215,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
       (add-hook 'ergoemacs-pre-command-hook function append local))
      ((and (ignore-errors (not (symbolp function)))
            (not (memq hook ignored-hooks))
+           (string-match-p "-mode-hook\\'" (symbol-name hook))
            (ergoemacs-is-user-defined-map-change-p)
            (and (string-match-p "(define-key\\_>" (format "%s" function))
                 (not (string-match-p "\\_<setup-hook\\_>" (format "%s" function)))))
