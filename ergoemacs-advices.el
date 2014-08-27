@@ -473,9 +473,12 @@ The active map from `ergoemacs-active-keymap' is installed temporarily to `overr
   (when ergoemacs-mode
     (goto-char (point-min))
     (while (re-search-forward (format"^%s \\([^ \t]+\\)" (regexp-quote (key-description key-seq))) nil t)
-      (replace-match (concat (key-description key-seq) " " (substring (ergoemacs-pretty-key (match-string 1)) 1 -1)) t t)))
+      (replace-match (concat (key-description key-seq) " "
+                             (cond
+                              (ergoemacs-pretty-key-use-face (ergoemacs-pretty-key (match-string 1)))
+                              (t (substring (ergoemacs-pretty-key (match-string 1)) 1 -1)))) t t)))
   ad-do-it
-  (when (and ergoemacs-mode ergoemacs-use-unicode-brackets)
+  (when (and ergoemacs-mode ergoemacs-use-unicode-brackets (not ergoemacs-pretty-key-use-face))
     (goto-char (point-min))
     (while (re-search-forward "\\(^\\|  \\)\\[" nil t)
       (replace-match (format "\\1%s" (ergoemacs-unicode-char "【" "[")))

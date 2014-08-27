@@ -246,11 +246,13 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
                         ret (replace-match (nth 1 args) t t ret)))))))
           (setq ret (replace-regexp-in-string "<\\(.*\\)>" "\\1" ret))
           (when ergoemacs-pretty-key-use-face
-            (setq ret (concat (replace-regexp-in-string (regexp-opt (list ob cb)) "" ret) " "))
+            (setq ret (replace-regexp-in-string (regexp-quote (concat cb ob)) " " ret))
+            (setq ret (replace-regexp-in-string (regexp-opt (list ob cb)) "" ret))
             (setq pt 0)
-            (while (string-match "[+]" ret pt)
+            (while (string-match "[+ ]" ret pt)
               (add-text-properties pt (match-beginning 0) '(face ergoemacs-pretty-key) ret)
               (setq pt (match-end 0)))
+            (setq ret (concat ret " "))
             (add-text-properties pt (- (length ret) 1) '(face ergoemacs-pretty-key) ret))
           ret)))))
 
