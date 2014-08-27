@@ -129,6 +129,16 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
 (defvar ergoemacs-use-M-x-p nil)
 
 (defvar ergoemacs-M-x)
+
+(defface ergoemacs-pretty-key
+  '((t :inverse-video t :box (:line-width 1 :style released-button) :weight bold))
+  "Button Face for a `ergoemacs-mode' pretty key."
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-pretty-key-use-face t
+  "Use a button face for keys."
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
   (if (not code) ""
@@ -234,6 +244,14 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
                 (while (string-match (nth 0 args) ret pt)
                   (setq pt (+ (length (nth 1 args)) (match-beginning 0))
                         ret (replace-match (nth 1 args) t t ret)))))))
+          (setq ret (replace-regexp-in-string "<\\(.*\\)>" "\\1" ret))
+          (when ergoemacs-pretty-key-use-face
+            (setq ret (concat (replace-regexp-in-string (regexp-opt (list ob cb)) "" ret) " "))
+            (setq pt 0)
+            (while (string-match "[+]" ret pt)
+              (add-text-properties pt (match-beginning 0) '(face ergoemacs-pretty-key) ret)
+              (setq pt (match-end 0)))
+            (add-text-properties pt (- (length ret) 1) '(face ergoemacs-pretty-key) ret))
           ret)))))
 
 
