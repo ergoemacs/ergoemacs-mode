@@ -313,7 +313,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
     undo-tree-undo
     undo-tree-redo)
   "Undo and redo functions that ErgoEmacs is aware of...")
-
+(declare-function ergoemacs-theme-reset "ergoemacs-theme-engine.el")
 (defun ergoemacs-set-default (symbol new-value)
   "Ergoemacs equivalent to set-default.
 Will reload `ergoemacs-mode' after setting the values."
