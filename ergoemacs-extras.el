@@ -107,6 +107,7 @@
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
 (declare-function ergoemacs-get-fixed-layout "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-get-variable-layout "ergoemacs-theme-engine.el")
+(declare-function ergoemacs-theme-reset "ergoemacs-theme-engine.el")
 (defun ergoemacs-get-html-key-table ()
   "Gets the key table for the current layout."
   (ergoemacs-theme-reset)
