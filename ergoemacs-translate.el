@@ -120,10 +120,11 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   :type 'boolean
   :group 'ergoemacs-mode)
 
-;; FIXME: invalidate/fix cache when changing.
 (defcustom ergoemacs-use-small-symbols nil
   "Use small symbols to represent alt+ ctl+ etc. on windows/linux."
   :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
 (defvar ergoemacs-use-M-x-p nil)
@@ -226,10 +227,10 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
                    (string= "⇧" (ergoemacs-unicode-char "⇧" ""))
                    (string= "⌘" (ergoemacs-unicode-char "⌘" ""))
                    (string= "⌥" (ergoemacs-unicode-char "⌥" "")))
-              (dolist (args `((".Opt[+]"  "⌥")
-                              (".Cmd[+]" "⌘")
-                              (".Shift[+]" "⇧")
-                              (".Ctr?l[+]" "^")))
+              (dolist (args `(("Opt[+]"  "⌥")
+                              ("Cmd[+]" "⌘")
+                              ("Shift[+]" "⇧")
+                              ("Ctr?l[+]" "^")))
                 (setq pt 0)
                 (while (string-match (nth 0 args) ret pt)
                   (setq pt (+ (length (nth 1 args)) (match-beginning 0))
@@ -237,9 +238,9 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
              ((and ergoemacs-use-small-symbols
                    (string= "⇧" (ergoemacs-unicode-char "⇧" ""))
                    (string= "♦" (ergoemacs-unicode-char "♦" "")))
-              (dolist (args `((".Alt[+]"  "♦")
-                              (".Shift[+]" "⇧")
-                              (".Ctr?l[+]" "^")))
+              (dolist (args `(("Alt[+]"  "♦")
+                              ("Shift[+]" "⇧")
+                              ("Ctr?l[+]" "^")))
                 (setq pt 0)
                 (while (string-match (nth 0 args) ret pt)
                   (setq pt (+ (length (nth 1 args)) (match-beginning 0))
@@ -250,10 +251,13 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
             (setq ret (replace-regexp-in-string (regexp-opt (list ob cb)) "" ret))
             (setq pt 0)
             (while (string-match "[+ ]" ret pt)
-              (add-text-properties pt (match-beginning 0) '(face ergoemacs-pretty-key) ret)
+              (add-text-properties
+               pt (match-beginning 0)
+               '(face ergoemacs-pretty-key) ret)
               (setq pt (match-end 0)))
-            (setq ret (concat ret " "))
-            (add-text-properties pt (- (length ret) 1) '(face ergoemacs-pretty-key) ret))
+            (add-text-properties
+             pt (length ret)
+             '(face ergoemacs-pretty-key) ret))
           ret)))))
 
 
@@ -476,6 +480,62 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
     (puthash (plist-get arg-plist ':name) ret-plist
              ergoemacs-translations)))
 
+(defun ergoemacs-update-translation-text ()
+  "Updates the translation text help variable."
+  (maphash
+   (lambda(key val)
+     (let ((keys0 (nth 0 val))
+           (new-pretty1 '()) ; 1
+           (keys2 (nth 2 val)) ;2
+           (new-pretty3 '()) ;3
+           (elt4 (nth 4 val))
+           tmp1 tmp2 tmp3)
+       (dolist (cur-key (reverse keys0))
+         (if (not (string-match "\\`\\(.*\\)\\(→\\|->\\)\\(.*\\)\\'" cur-key))
+             (push cur-key new-pretty1)
+           (setq tmp1 (match-string 1 cur-key)
+                 tmp2 (match-string 2 cur-key)
+                 tmp3 (match-string 3 cur-key))
+           (setq tmp1 (substring
+                       (ergoemacs-pretty-key
+                        (concat
+                         (replace-regexp-in-string
+                          "\\` +\\(.*?\\) +\\'" "\\1" tmp1) "q"))
+                       0 -1)
+                 tmp3 (substring
+                       (ergoemacs-pretty-key
+                        (concat
+                         (replace-regexp-in-string
+                          "\\` +\\(.*?\\) +\\'" "\\1" tmp3) "q"))
+                       0 -1))
+           (push (concat tmp1 tmp2 tmp3) new-pretty1)))
+       (dolist (cur-key (reverse keys2))
+         (if (not (string-match "\\`\\(.*\\)\\(→\\|->\\)\\(.*\\)\\'" cur-key))
+             (push cur-key new-pretty3)
+           (setq tmp1 (match-string 1 cur-key)
+                 tmp2 (match-string 2 cur-key)
+                 tmp3 (match-string 3 cur-key))
+           (setq tmp1 (ergoemacs-pretty-key
+                       (replace-regexp-in-string
+                        "\\` +\\(.*?\\) +\\'" "\\1" tmp1))
+                 tmp3 (substring
+                       (ergoemacs-pretty-key
+                        (concat
+                         (replace-regexp-in-string
+                          "\\` +\\(.*?\\) +\\'" "\\1" tmp3) "q"))
+                       0 -1))
+           (push (concat tmp1 tmp2 tmp3) new-pretty3)))
+       (unless (string= "" (nth 0 elt4))
+         (setq elt4
+               (list (nth 0 elt4)
+                     (substring
+                      (ergoemacs-pretty-key (concat (nth 0 elt4) "q"))
+                      0 -1))))
+       (puthash
+        key (list keys0 new-pretty1 keys2 new-pretty3 elt4 (nth 5 val))
+        ergoemacs-translation-text)))
+   ergoemacs-translation-text))
+
 ;; Reset translations in case this is re-sourced
 (ergoemacs-reset-translations)
 
@@ -518,8 +578,8 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
            (define-key map [f1] 'ergoemacs-read-key-help)
            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-force-next-key-is-quoted)
            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-force-next-key-is-alt-ctl)
-           (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
-           (define-key map "G" 'ergoemacs-read-key-next-key-is-alt-ctl)
+           (define-key map "g" 'ergoemacs-read-key-force-next-key-is-alt)
+           (define-key map "G" 'ergoemacs-read-key-force-next-key-is-alt-ctl)
            map))
 
 (ergoemacs-translation

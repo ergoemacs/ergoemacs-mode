@@ -1669,6 +1669,13 @@ FULL-SHORTCUT-MAP-P "
 
 (defvar ergoemacs-modified-map-hash)
 (declare-function ergoemacs-extract-prefixes "ergoemacs-shortcuts.el")
+(defvar ergoemacs-alt-text)
+(defvar ergoemacs-ctl-text)
+(defvar ergoemacs-alt-ctl-text)
+(declare-function ergoemacs-pretty-key
+                  "ergoemacs-translate.el")
+(declare-function ergoemacs-update-translation-text
+                  "ergoemacs-translate.el")
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   (with-slots (read-map
                map
@@ -1853,10 +1860,14 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
       
       ;; Reset shortcut hash
       (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
+            ergoemacs-alt-text (replace-regexp-in-string "[Qq]" "" (ergoemacs-pretty-key "M-q"))
+            ergoemacs-ctl-text (replace-regexp-in-string "[Qq]" "" (ergoemacs-pretty-key "C-q"))
+            ergoemacs-alt-ctl-text (replace-regexp-in-string "[Qq]" "" (ergoemacs-pretty-key "M-C-q"))
             ergoemacs-modified-map-hash (make-hash-table :test 'equal)
             ergoemacs-shortcut-prefix-keys '()
             ergoemacs-original-keys-to-shortcut-keys-regexp ""
             ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal))
+      (ergoemacs-update-translation-text)
       (unless remove-p
         ;; Remove keys that should not be in the keymap.
         ;; This includes globally set keys that `ergoemacs-mode' will
