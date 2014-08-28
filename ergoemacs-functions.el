@@ -2516,12 +2516,18 @@ See also `ergoemacs-lookup-word-on-internet'."
 (defun ergoemacs-move-text-up (arg)
   "Move region (transient-mark-mode active) or current line ARG lines up."
   (interactive "*p")
-  (ergoemacs-move-text-internal (- arg)))
+  (cond
+   ((eq major-mode 'org-mode)
+    (call-interactively 'org-metaup))
+   (t (ergoemacs-move-text-internal (- arg)))))
 
 (defun ergoemacs-move-text-down (arg)
   "Move region (transient-mar-mode active) or current line (ARG lines) down."
   (interactive "*p")
-  (ergoemacs-move-text-internal arg))
+  (cond
+   ((eq major-mode 'org-mode)
+    (call-interactively 'org-metadown))
+   (t (ergoemacs-move-text-internal arg))))
 
 (defun ergoemacs-org-edit-src ()
   "Deal with org source blocks.
