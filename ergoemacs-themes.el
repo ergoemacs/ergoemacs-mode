@@ -381,7 +381,10 @@
 (ergoemacs-component backspace-is-back ()
   "Backspace is back, as in browsers..."
   (define-key Info-mode-map (kbd "<backspace>") 'Info-history-back)
-  (define-key Info-mode-map (kbd "<S-backspace>") 'Info-history-forward))
+  (define-key Info-mode-map (kbd "<S-backspace>") 'Info-history-forward)
+  (define-key Info-mode-map (kbd "<M-backspace>") 'Info-history-forward)
+  (define-key help-mode-map (kbd "<backspace>") 'help-go-back)
+  (define-key help-mode-map (kbd "<S-backspace>") 'help-go-forward))
 
 (ergoemacs-component fixed-newline ()
   "Newline and indent"
