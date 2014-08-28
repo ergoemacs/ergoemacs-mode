@@ -1540,8 +1540,8 @@ If FORCE is true, set it even if it changed.
   ;; Now remove things that were not set
   (when ergoemacs-theme-refresh
     (let ((tmp ergoemacs-applied-inits))
-      (setq ergoemacs-theme-refresh nil)
       (setq ergoemacs-applied-inits ergoemacs-theme-refresh)
+      (setq ergoemacs-theme-refresh nil)
       (unwind-protect
           (ergoemacs-remove-inits)
         (setq ergoemacs-applied-inits tmp)))))
