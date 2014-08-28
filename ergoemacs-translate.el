@@ -140,7 +140,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   "Use a button face for keys."
   :group 'ergoemacs-mode)
 
-(defvar ergoemacs-pretty-key nil)
+
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
   (if (not code) ""
