@@ -140,6 +140,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   "Use a button face for keys."
   :group 'ergoemacs-mode)
 
+(defvar ergoemacs-pretty-key nil)
 (defun ergoemacs-pretty-key (code)
   "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
   (if (not code) ""
@@ -221,6 +222,13 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
             (while (string-match "[+]\\([[:lower:]]\\)\\(】\\|\\]\\)" ret pt)
               (setq ret (replace-match (upcase (match-string 0 ret)) t t ret)
                     pt (match-end 0)))
+            (when ergoemacs-pretty-key-use-face
+              (setq pt 0)
+              (while (string-match "[+]\\([+]\\)" ret pt)
+                (add-text-properties
+                 (match-beginning 1) (match-end 1)
+                 '(face ergoemacs-pretty-key) ret)
+                (setq pt (match-end 0))))
             (setq pt 0)
             (cond
              ((and (eq system-type 'darwin)
@@ -229,7 +237,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
                    (string= "⌥" (ergoemacs-unicode-char "⌥" "")))
               (dolist (args `(("Opt[+]"  "⌥")
                               ("Cmd[+]" "⌘")
-                              ("Shift[+]" "⇧")
+                              ("⇧?Shift[+]" "⇧")
                               ("Ctr?l[+]" "^")))
                 (setq pt 0)
                 (while (string-match (nth 0 args) ret pt)
@@ -239,7 +247,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
                    (string= "⇧" (ergoemacs-unicode-char "⇧" ""))
                    (string= "♦" (ergoemacs-unicode-char "♦" "")))
               (dolist (args `(("Alt[+]"  "♦")
-                              ("Shift[+]" "⇧")
+                              ("⇧?Shift[+]" "⇧")
                               ("Ctr?l[+]" "^")))
                 (setq pt 0)
                 (while (string-match (nth 0 args) ret pt)
@@ -257,7 +265,9 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
               (setq pt (match-end 0)))
             (add-text-properties
              pt (length ret)
-             '(face ergoemacs-pretty-key) ret))
+             '(face ergoemacs-pretty-key) ret)
+            (when (string= "+" ret)
+              (add-text-properties 0 1 '(face ergoemacs-pretty-key) ret)))
           ret)))))
 
 
