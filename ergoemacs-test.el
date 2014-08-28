@@ -1100,16 +1100,17 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
   (ergoemacs-test-layout
    :layout "colemak"
    :macro "M-m"
-   (let ((ret ))(save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (insert "abc\n* TODO Fix org C-a issue")
-     (org-mode)
-     (goto-char (point-max))
-     (execute-kbd-macro macro)
-     (ignore-errors
-       (should (string= (buffer-substring (point) (point-at-eol))
-                        "Fix org C-a issue")))
-     (kill-buffer (current-buffer))))))
+   (let (ret)
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (insert "abc\n* TODO Fix org C-a issue")
+       (org-mode)
+       (goto-char (point-max))
+       (execute-kbd-macro macro)
+       (ignore-errors
+         (should (string= (buffer-substring (point) (point-at-eol))
+                          "Fix org C-a issue")))
+       (kill-buffer (current-buffer))))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
