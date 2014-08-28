@@ -1123,6 +1123,35 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
      (call-interactively 'calc-quit)
      (should (eq ergoemacs-test-fn (or (command-remapping 'calc-undo (point)) 'calc-undo))))))
 
+(ert-deftest ergoemacs-test-org-respect-keys-issue-304 ()
+  "Tests Issue #304.
+`org-mode' should respect the keys used."
+  (let ((ergoemacs-test-fn t))
+    (ergoemacs-test-layout
+     :layout "us"
+     :theme "standard"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (org-mode)
+       (with-timeout (0.2 nil) (ergoemacs-read-key "<M-right>"))
+       (should (eq ergoemacs-test-fn 'ergoemacs-org-metaright))
+       (should (eq (ergoemacs-real-key-binding (kbd "<M-right>"))
+                   'ergoemacs-org-metaright))
+       (with-timeout (0.2 nil) (ergoemacs-read-key "<M-left>"))
+       (should (eq ergoemacs-test-fn 'ergoemacs-org-metaleft))
+       (should (eq (ergoemacs-real-key-binding (kbd "<M-left>"))
+                   'ergoemacs-org-metaleft))
+       (with-timeout (0.2 nil) (ergoemacs-read-key "<M-up>"))
+       (should (eq ergoemacs-test-fn 'ergoemacs-org-metaup))
+       (should (eq (ergoemacs-real-key-binding (kbd "<M-up>"))
+                   'ergoemacs-org-metaup))
+       (with-timeout (0.2 nil) (ergoemacs-read-key "<M-down>"))
+       (should (eq ergoemacs-test-fn 'ergoemacs-org-metadown))
+       (should (eq (ergoemacs-real-key-binding (kbd "<M-down>"))
+                   'ergoemacs-org-metadown))))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
