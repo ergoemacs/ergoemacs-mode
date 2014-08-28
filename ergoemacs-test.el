@@ -1112,6 +1112,17 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
                           "Fix org C-a issue")))
        (kill-buffer (current-buffer))))))
 
+(ert-deftest ergoemacs-test-calc-300 ()
+  "Test Calc undo"
+  (let ((ergoemacs-test-fn t))
+    (ergoemacs-test-layout
+     :theme "reduction"
+     :layout "colemak"
+     (call-interactively 'calc)
+     (with-timeout (0.2 nil) (ergoemacs-read-key "C-z"))
+     (call-interactively 'calc-quit)
+     (should (eq ergoemacs-test-fn (or (command-remapping 'calc-undo (point)) 'calc-undo))))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
