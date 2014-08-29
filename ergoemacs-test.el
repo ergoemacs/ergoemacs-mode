@@ -1152,6 +1152,34 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
        (should (eq (ergoemacs-real-key-binding (kbd "<M-down>"))
                    'ergoemacs-org-metadown))))))
 
+(ert-deftest ergoemacs-test-M-e-only-one-char-issue-306 ()
+  "Tests Issue #306.
+`org-mode' should respect the keys used."
+  (let ((ergoemacs-test-fn t)
+        (ergoemacs-read-input-keys nil))
+    (ergoemacs-test-layout
+     :layout "us"
+     :theme "lvl2"
+     :macro "M-e"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (fundamental-mode)
+       (with-timeout (0.2 nil) (ergoemacs-read-key "M-e"))
+       (should (or (eq ergoemacs-test-fn 'backward-kill-word)
+                   (eq ergoemacs-test-fn (command-remapping 'backward-kill-word (point)))))
+       (setq ergoemacs-test-fn nil)
+       (goto-char (point-max))
+       (execute-kbd-macro macro)
+       (should (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
+do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+enim ad minim veniam, quis nostrud exercitation ullamco laboris
+nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+reprehenderit in voluptate velit esse cillum dolore eu fugiat
+nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+sunt in culpa qui officia deserunt mollit anim id est " (buffer-string)))))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
