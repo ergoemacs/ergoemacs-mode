@@ -519,7 +519,17 @@ translation."
 (defun ergoemacs-read-key-undo-last ()
   "Function to undo the last key-press.
 This is actually a dummy function.  The actual work is done in `ergoemacs-read-key'"
-  (interactive))
+  (interactive)
+  (warn "This is a dummy function called by `ergoemacs-read-key'"))
+
+(defun ergoemacs-read-key-force-undo-last ()
+  "Function to undo the last key-press.
+
+Unlike `ergoemacs-read-key-undo-last', this ignores any bindings like \\[backward-kill-sentence]
+
+This is actually a dummy function.  The actual work is done in `ergoemacs-read-key'"
+  (interactive)
+  (warn "This is a dummy function called by `ergoemacs-read-key'"))
 
 (defvar ergoemacs-translations)
 (defun ergoemacs-read-key-install-next-key (next-key key pretty kbd)

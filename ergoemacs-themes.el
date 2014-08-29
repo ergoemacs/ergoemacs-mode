@@ -519,13 +519,13 @@
   (when ergoemacs-theme-hook
     :modify-map t
     (define-key ergoemacs-ctl-to-alt-translation-local-map (read-kbd-macro "DEL")
-      'ergoemacs-read-key-undo-last)
+      'ergoemacs-read-key-force-undo-last)
     (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
-      'ergoemacs-read-key-undo-last)
+      'ergoemacs-read-key-force-undo-last)
     (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
-      'ergoemacs-read-key-undo-last)
+      'ergoemacs-read-key-force-undo-last)
     (define-key ergoemacs-normal-translation-local-map (read-kbd-macro "DEL")
-      'ergoemacs-read-key-undo-last)))
+      'ergoemacs-read-key-force-undo-last)))
 
 (ergoemacs-component help ()
   "Help changes for ergoemacs-mode"
