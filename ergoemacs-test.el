@@ -1150,7 +1150,8 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
        (with-timeout (0.2 nil) (ergoemacs-read-key "<M-down>"))
        (should (eq ergoemacs-test-fn 'ergoemacs-org-metadown))
        (should (eq (ergoemacs-real-key-binding (kbd "<M-down>"))
-                   'ergoemacs-org-metadown))))))
+                   'ergoemacs-org-metadown))
+       (kill-buffer (current-buffer))))))
 
 (ert-deftest ergoemacs-test-M-e-only-one-char-issue-306 ()
   "Tests Issue #306.
@@ -1178,7 +1179,8 @@ enim ad minim veniam, quis nostrud exercitation ullamco laboris
 nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
 reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-sunt in culpa qui officia deserunt mollit anim id est " (buffer-string)))))))
+sunt in culpa qui officia deserunt mollit anim id est " (buffer-string)))
+       (kill-buffer (current-buffer))))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
