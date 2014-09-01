@@ -2393,7 +2393,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
 (defun ergoemacs-theme-reset ()
   "Resets the `ergoemacs-mode' theme."
-  (setq ergoemacs-theme-refresh t)
+  ;; (setq ergoemacs-theme-refresh t)
   (ergoemacs-mode -1)
   (ergoemacs-mode 1))
 
