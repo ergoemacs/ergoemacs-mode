@@ -1325,14 +1325,15 @@ argument prompt.
                    (not (memq local-fn '(ergoemacs-read-key-force-next-key-is-alt
                                          ergoemacs-read-key-force-next-key-is-ctl
                                          ergoemacs-read-key-force-next-key-is-alt-ctl
-                                         ergoemacs-read-key-force-next-key-is-quoted))))
+                                         ergoemacs-read-key-force-next-key-is-quoted
+                                         ergoemacs-read-key-force-undo-last))))
           (setq last-local-fn local-fn
                 local-fn nil))
         (when current-key-is-escape-p ;; emacs ESC translation
           (if (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (vconcat ergoemacs-read-key (plist-get next-key ':normal-key))))
               (setq last-local-fn 'ergoemacs-read-key-next-key-is-alt)
             (setq local-fn 'ergoemacs-read-key-next-key-is-alt)))
-        (if (eq local-fn 'ergoemacs-read-key-undo-last)
+        (if (memq local-fn '(ergoemacs-read-key-force-undo-last ergoemacs-read-key-undo-last))
             (if (= 0 (length history))
                 (setq continue-read nil) ;; Exit read-key
               (setq tmp (pop history))
