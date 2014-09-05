@@ -691,27 +691,34 @@ Uses `ergoemacs-real-key-description'."
 (defvar ergoemacs-use-unicode-brackets)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
+(defvar ergoemacs-substitute-command-hash (make-hash-table :test 'equal))
 (defun ergoemacs-substitute-command (string &optional map)
   "Substitutes command STRING within MAP or currently bound keys."
-  (save-match-data
-    (let* ((test (ergoemacs-with-global
-                  (ergoemacs-real-substitute-command-keys
-                   (or (and map (concat map string)) string))))
-           (test-vect (read-kbd-macro test t))
-           (test-hash (gethash test-vect ergoemacs-original-keys-to-shortcut-keys)))
-      (if test-hash
-          (progn
-            (setq test (ergoemacs-real-key-description (nth 0 test-hash)))
-            (ergoemacs-pretty-key test))
-        (let (ergoemacs-modal
-              ;; (ergoemacs-shortcut-keys (not map))
-              ergoemacs-shortcut-keys
-              (ergoemacs-no-shortcut-keys (not map))
-              ergoemacs-repeat-keys
-              ergoemacs-read-input-keys)
-          (ergoemacs-pretty-key
-           (ergoemacs-real-substitute-command-keys
-            (or (and map (concat map string)) string))))))))
+  (or (gethash (list string map) ergoemacs-substitute-command-hash)
+      (save-match-data
+        (let* ((test (ergoemacs-with-global
+                      (ergoemacs-real-substitute-command-keys
+                       (or (and map (concat map string)) string))))
+               (test-vect (read-kbd-macro test t))
+               (test-hash (gethash test-vect ergoemacs-original-keys-to-shortcut-keys))
+               ret)
+          (if test-hash
+              (progn
+                (setq test (ergoemacs-real-key-description (nth 0 test-hash))
+                      ret (ergoemacs-pretty-key test))
+                (puthash (list string map) ret ergoemacs-substitute-command-hash)
+                ret)
+            (let (ergoemacs-modal
+                  ;; (ergoemacs-shortcut-keys (not map))
+                  ergoemacs-shortcut-keys
+                  (ergoemacs-no-shortcut-keys (not map))
+                  ergoemacs-repeat-keys
+                  ergoemacs-read-input-keys)
+              (setq ret (ergoemacs-pretty-key
+                         (ergoemacs-real-substitute-command-keys
+                          (or (and map (concat map string)) string))))
+              (puthash (list string map) ret ergoemacs-substitute-command-hash)
+              ret))))))
 
 (defun ergoemacs-substitute-map--1 (string)
   (substring

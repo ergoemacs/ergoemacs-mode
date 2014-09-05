@@ -1860,13 +1860,14 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
       
       ;; Reset shortcut hash
       (setq ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
+            ergoemacs-substitute-command-hash (make-hash-table :test 'equal)
+            ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal)
+            ergoemacs-modified-map-hash (make-hash-table :test 'equal)
             ergoemacs-alt-text (replace-regexp-in-string "[Qq]" "" (ergoemacs-pretty-key "M-q"))
             ergoemacs-ctl-text (replace-regexp-in-string "[Qq]" "" (ergoemacs-pretty-key "C-q"))
             ergoemacs-alt-ctl-text (replace-regexp-in-string "[Qq]" "" (ergoemacs-pretty-key "M-C-q"))
-            ergoemacs-modified-map-hash (make-hash-table :test 'equal)
             ergoemacs-shortcut-prefix-keys '()
-            ergoemacs-original-keys-to-shortcut-keys-regexp ""
-            ergoemacs-original-keys-to-shortcut-keys (make-hash-table :test 'equal))
+            ergoemacs-original-keys-to-shortcut-keys-regexp "")
       (ergoemacs-update-translation-text)
       (unless remove-p
         ;; Remove keys that should not be in the keymap.
