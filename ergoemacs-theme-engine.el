@@ -1676,6 +1676,7 @@ FULL-SHORTCUT-MAP-P "
                   "ergoemacs-translate.el")
 (declare-function ergoemacs-update-translation-text
                   "ergoemacs-translate.el")
+(defvar ergoemacs-substitute-command-hash)
 (defmethod ergoemacs-theme-obj-install ((obj ergoemacs-theme-component-map-list) &optional remove-p)
   (with-slots (read-map
                map
