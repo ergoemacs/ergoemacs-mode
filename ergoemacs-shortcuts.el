@@ -1590,6 +1590,16 @@ argument prompt.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 no translation listed."
   (interactive "^")
+  (when (and shift-select-mode ergoemacs-force-shift-select-mark-active
+             (not mark-active))
+    ;; Mark was active, then it was deactivated, now activate again.
+    (unless (and mark-active
+                 (eq (car-safe transient-mark-mode) 'only))
+      (setq transient-mark-mode
+            (cons 'only
+                  (unless (eq transient-mark-mode 'lambda)
+                    transient-mark-mode))
+            mark-active t)))
   (let ((tmp (this-single-command-keys)))
     (ergoemacs-read-key (or (and (equal tmp [27 27]) "M-ESC") tmp))))
 
