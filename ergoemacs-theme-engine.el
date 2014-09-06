@@ -1510,16 +1510,20 @@ If FORCE is true, set it even if it changed.
 (defvar ergoemacs-theme-refresh nil)
 (defvar ergoemacs-applied-inits '())
 (defmethod ergoemacs-apply-inits-obj ((obj ergoemacs-theme-component-map-list))
+  ;; (message "Apply Inits %s" ergoemacs-theme-refresh)
+  (when (eq ergoemacs-theme-refresh t)
+    (setq ergoemacs-theme-refresh ergoemacs-applied-inits))
   (dolist (init (ergoemacs-get-inits obj))
     (cond
+     ((and ergoemacs-theme-refresh (boundp (nth 0 init)))
+      ;; FIXME: Change when the theme changed the value...
+      (let ((x (assq (nth 0 init) ergoemacs-theme-refresh)))
+        (when x
+          (setq ergoemacs-theme-refresh (delq x ergoemacs-theme-refresh)))))
      ((not (boundp (nth 0 init))) ;; Do nothing, not bound yet.
       )
      ((assq (nth 0 init) ergoemacs-applied-inits)
       ;; Already applied, Do nothing for now.
-      (when ergoemacs-theme-refresh ;; When refreshing don't reset.
-        (let ((x (assq (nth 0 init) ergoemacs-theme-refresh)))
-          (when x
-            (setq ergoemacs-theme-refresh (delq x ergoemacs-theme-refresh)))))
       )
      ((nth 2 init)
       ;; Hook
@@ -1549,6 +1553,7 @@ If FORCE is true, set it even if it changed.
 (defun ergoemacs-remove-inits ()
   "Remove the applied initializations of modes and variables.
 This assumes the variables are stored in `ergoemacs-applied-inits'"
+  (message "Remove Inits %s" ergoemacs-theme-refresh)
   (if ergoemacs-theme-refresh
       (setq ergoemacs-theme-refresh ergoemacs-applied-inits)
     (dolist (init ergoemacs-applied-inits)
@@ -2395,7 +2400,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
 (defun ergoemacs-theme-reset ()
   "Resets the `ergoemacs-mode' theme."
-  ;; (setq ergoemacs-theme-refresh t)
+  (setq ergoemacs-theme-refresh t)
   (ergoemacs-mode -1)
   (ergoemacs-mode 1))
 
