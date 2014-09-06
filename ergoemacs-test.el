@@ -1186,6 +1186,13 @@ nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est " (buffer-string)))
        (kill-buffer (current-buffer))))))
 
+
+(ert-deftest ergoemacs-test-issue-305-variables-set-to-nil ()
+  "Test Issue #305.
+When calling `ergoemacs-refresh' variable values should be preserved."
+  (ergoemacs-theme-reset)
+  (should (eq t shift-select-mode)))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
