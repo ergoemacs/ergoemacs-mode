@@ -356,7 +356,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 (ert-deftest ergoemacs-test-issue-77 ()
   "Issue #77.
 Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
-  (let ((ergoemacs-use-unicode-char nil)
+  (let (ergoemacs-use-unicode-char
         ergoemacs-pretty-key-use-face
         ergoemacs-use-small-symbols)
     (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]"))))
