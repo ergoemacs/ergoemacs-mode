@@ -1862,17 +1862,24 @@ paste, this will start `browse-kill-ring'.
 When in `browse-kill-ring-mode', cycle backward through the key ring.
 "
   (interactive)
-  (if (eq major-mode 'browse-kill-ring-mode)
-      (if (save-excursion (re-search-backward "^----" nil t))
-          (call-interactively 'browse-kill-ring-previous)
-        (goto-char (point-max))
-        (call-interactively 'browse-kill-ring-previous))
-    (if (and (fboundp 'browse-kill-ring)
-             (not (eq last-command 'yank)))
-        (browse-kill-ring)
-      (if ergoemacs-smart-paste
-          (ergoemacs-shortcut-remap 'yank)
-        (ergoemacs-shortcut-remap 'yank-pop)))))
+  (cond
+   ((and isearch-mode ergoemacs-smart-paste)
+    (isearch-yank-kill)
+    (setq this-command 'isearch-yank-kill))
+   (isearch-mode
+    (isearch-yank-pop)
+    (setq this-command 'isearch-yank-pop))
+   ((eq major-mode 'browse-kill-ring-mode)
+    (if (save-excursion (re-search-backward "^----" nil t))
+        (call-interactively 'browse-kill-ring-previous)
+      (goto-char (point-max))
+      (call-interactively 'browse-kill-ring-previous)))
+   ((and (fboundp 'browse-kill-ring)
+         (not (eq last-command 'yank)))
+    (browse-kill-ring))
+   (ergoemacs-smart-paste
+    (ergoemacs-shortcut-remap 'yank))
+   (t (ergoemacs-shortcut-remap 'yank-pop))))
 
 (put 'ergoemacs-paste 'delete-selection 'yank)
 ;;;###autoload
@@ -1883,9 +1890,17 @@ This is `yank-pop' if `ergoemacs-smart-paste' is t and last command is a yank.
 This is `browse-kill-ring' if `ergoemacs-smart-paste' equals 'browse-kill-ring and last command is a yank.
 
 When in `browse-kill-ring-mode', cycle forward through the key ring.
+
+This does the same thing in `iseach-mode' using `isearch-yank-pop' and  `isearch-yank-kill'
 "
   (interactive)
   (cond
+   ((and isearch-mode ergoemacs-smart-paste (eq last-command 'isearch-yank-kill))
+    (isearch-yank-pop)
+    (setq this-command 'isearch-yank-pop))
+   (isearch-mode
+    (isearch-yank-kill)
+    (setq this-command 'isearch-yank-kill))
    ((and (eq major-mode 'browse-kill-ring-mode) (save-excursion (re-search-forward "^----" nil t)))
     (call-interactively 'browse-kill-ring-forward))
    ((eq major-mode 'browse-kill-ring-mode)

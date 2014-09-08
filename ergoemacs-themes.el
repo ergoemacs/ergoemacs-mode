@@ -360,9 +360,12 @@
     :full-shortcut-map t
     (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
     (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
-    (define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
-    (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
-    (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)))
+    (define-key isearch-mode-map (kbd "<S-insert>") 'ergoemacs-paste)
+    (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
+    (define-key isearch-mode-map (kbd "C-c") 'isearch-yank-word-or-char)
+    (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
+    (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
+    (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)))
 
 (ergoemacs-component tab-indents-region ()
   "Tab indents selected region"
@@ -712,8 +715,12 @@
   (when isearch-mode-hook
     :modify-keymap t
     :full-shortcut-keymap t
-    (define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
-    (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill))
+    (define-key isearch-mode-map (kbd "C-c") 'isearch-yank-word-or-char)
+    (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
+    (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
+    (define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
+    (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
+    (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle))
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   (define-key browse-kill-ring-mode-map [remap undo] 'browse-kill-ring-undo-other-window)
