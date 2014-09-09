@@ -1514,33 +1514,45 @@ If FORCE is true, set it even if it changed.
   (when (eq ergoemacs-theme-refresh t)
     (setq ergoemacs-theme-refresh ergoemacs-applied-inits))
   (dolist (init (ergoemacs-get-inits obj))
-    (cond
-     ((and ergoemacs-theme-refresh (boundp (nth 0 init)))
-      ;; FIXME: Change when the theme changed the value...
-      (let ((x (assq (nth 0 init) ergoemacs-theme-refresh)))
-        (when x
-          (setq ergoemacs-theme-refresh (delq x ergoemacs-theme-refresh)))))
-     ((not (boundp (nth 0 init))) ;; Do nothing, not bound yet.
-      )
-     ((assq (nth 0 init) ergoemacs-applied-inits)
-      ;; Already applied, Do nothing for now.
-      )
-     ((nth 2 init)
-      ;; Hook
-      (let ((add-hook-p (nth 0 (nth 2 init)))
-            (append-p (nth 1 (nth 2 init)))
-            (local-p (nth 2 (nth 2 init))))
-        (if add-hook-p
-            (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
-          (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))
-        (push (list (nth 0 init) (nth 1 init)
-                    (list (not add-hook-p) append-p local-p))
-              ergoemacs-applied-inits)))
-     (t
-      ;; (Nth 0 Init)iable state change
-      (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
-            ergoemacs-applied-inits)
-      (ergoemacs-set (nth 0 init) (funcall (nth 1 init))))))
+    (let ((x (and ergoemacs-theme-refresh (boundp (nth 0 init))
+                  (assq (nth 0 init) ergoemacs-theme-refresh))))
+      (cond
+       ((and x
+              (not (nth 2 init))
+              (not
+               (equal (ergoemacs-sv (nth 0 init))
+                      (funcall (nth 1 init)))))
+         ;; Values have changed, so reapply.
+         (setq ergoemacs-theme-refresh (delq x ergoemacs-theme-refresh)
+               x nil))
+       ((and x (nth 2 init))
+        ;; Reapply hooks
+        (setq ergoemacs-theme-refresh (delq x ergoemacs-theme-refresh)
+              x nil)))
+      (cond
+       (x ;; Values have not changed
+        (setq ergoemacs-theme-refresh (delq x ergoemacs-theme-refresh)))
+       ((not (boundp (nth 0 init))) ;; Do nothing, not bound yet.
+        )
+       ((assq (nth 0 init) ergoemacs-applied-inits)
+        ;; Already applied, Do nothing for now.
+        )
+       ((nth 2 init)
+        ;; Hook
+        (let ((add-hook-p (nth 0 (nth 2 init)))
+              (append-p (nth 1 (nth 2 init)))
+              (local-p (nth 2 (nth 2 init))))
+          (if add-hook-p
+              (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
+            (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))
+          (push (list (nth 0 init) (nth 1 init)
+                      (list (not add-hook-p) append-p local-p))
+                ergoemacs-applied-inits)))
+       (t
+        ;; (Nth 0 Init)iable state change
+        (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
+              ergoemacs-applied-inits)
+        (ergoemacs-set (nth 0 init) (funcall (nth 1 init)))))))
   ;; Now remove things that were not set
   (when ergoemacs-theme-refresh
     (let ((tmp ergoemacs-applied-inits))
