@@ -763,13 +763,17 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   "Shuffle ergoemacs keymaps in `minor-mode-map-alist'."
   (when (or force-update (not (eq (car (nth 0 minor-mode-map-alist)) 'ergoemacs-mode)))
     (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
-      (when x
-        (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+      (while x
+        (setq minor-mode-map-alist (delq x minor-mode-map-alist))
+        ;; Multiple menus sometimes happen because of multiple 
+        ;; ergoemacs-mode variables in minor-mode-map-alist
+        (setq x (assq 'ergoemacs-mode minor-mode-map-alist)))
       (push (cons 'ergoemacs-mode ergoemacs-keymap) minor-mode-map-alist)))
   (when (or force-update (not (eq (car (nth (- 1 (length minor-mode-map-alist)) minor-mode-map-alist)) 'ergoemacs-unbind-keys)))
     (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
-      (when x
-        (setq minor-mode-map-alist (delq x minor-mode-map-alist)))
+      (while x
+        (setq minor-mode-map-alist (delq x minor-mode-map-alist))
+        (setq x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
       (setq minor-mode-map-alist (append minor-mode-map-alist
                                          (list (cons 'ergoemacs-unbind-keys ergoemacs-unbind-keymap)))))))
 

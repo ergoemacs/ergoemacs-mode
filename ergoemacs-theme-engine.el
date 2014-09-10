@@ -1988,12 +1988,15 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             ergoemacs-deferred-keys defer)
       ;;ergoemacs-deferred-keys
       ;; Apply variables and mode changes.
+
+      ;; Remove prior ergoemacs-mode keymaps
+      (dolist (item '(ergoemacs-mode ergoemacs-unbind-keys))
+        (let ((x (assq item minor-mode-map-alist)))
+          (while x
+            (setq minor-mode-map-alist (delq x minor-mode-map-alist))
+            (setq x (assq item minor-mode-map-alist)))))
       (if remove-p
           (progn
-            (dolist (item '(ergoemacs-mode ergoemacs-unbind-keys))
-              (let ((x (assq item minor-mode-map-alist)))
-                (when x
-                  (setq minor-mode-map-alist (delq x minor-mode-map-alist)))))
             (ergoemacs-remove-inits)
             (remove-hook 'after-load-functions 'ergoemacs-apply-inits))
         ;; Setup `ergoemacs-mode' and `ergoemacs-unbind-keys'
