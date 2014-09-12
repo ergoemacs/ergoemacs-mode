@@ -1677,12 +1677,15 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
     (ergoemacs-mode-line mode-line)))
 
 (defvar ergoemacs-repeat-movement-commands)
-(defun ergoemacs-repeat-movement-full-keymap (&optional cmds)
-  "Allow movement commands to be repeated without pressing the ALT key"
+(defun ergoemacs-repeat-movement-full-keymap (&optional cmds add-this-command)
+  "Allow movement commands to be repeated without pressing the ALT key.
+CMDS represents the commands to lookup and add to the repeatable keymap.
+ADD-THIS-COMMAND will add the current movement to the keymap to cache the movement."
   (let (ergoemacs-modal
         ergoemacs-repeat-keys
         ergoemacs-read-input-keys
-        (keymap (make-sparse-keymap)))
+        (keymap (make-sparse-keymap))
+        (ergoemacs-ignore-advice t))
     (dolist (key (apply 'append
                         (mapcar
                          (lambda (cmd)
@@ -1697,6 +1700,11 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
                 (append (delete 'meta mods)
                         (list (event-basic-type (elt key 0))))))
               `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
+    (when add-this-command
+      (let ((ck (this-single-command-keys))
+            (ergoemacs-ignore-advice t)
+            (map (make-sparse-keymap)))
+        (define-key keymap ck this-command)))
     keymap))
 
 (defun ergoemacs-shortcut-movement ()
@@ -1747,6 +1755,12 @@ shift-translated key.
                    ':shift-translated-key))
   (ergoemacs-read-key-call (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (this-single-command-keys)))))
 
+(defcustom ergoemacs-cache-movement-commands t
+  "Cache movement command lookups on the repeatable keymap."
+  :group 'ergoemacs-mode
+  :type 'boolean)
+
+(defcustom ergoemacs-cache-movement-commands-command-keys nil)
 
 (defun ergoemacs-shortcut-movement-no-shift-select ()
   "Shortcut for other key/function in movement keys without shift-selection support.
@@ -1760,16 +1774,26 @@ Calls the function shortcut key defined in
     (ergoemacs-shortcut---internal)
     ;; Now optionally install the repeatable movements.
     (cond
-     ((and (eq ergoemacs-repeat-movement-commands 'single) (= (length ck) 1))
+     ((and (eq ergoemacs-repeat-movement-commands 'single)
+           (= (length ck) 1))
       (ergoemacs-install-repeat-keymap
-       (let ((map (make-sparse-keymap)))
+       (let ((map (make-sparse-keymap))
+             (ergoemacs-ignore-advice t))
          (define-key map (vector (event-basic-type (elt ck 0))) this-command)
+         (when ergoemacs-cache-movement-commands
+           (define-key map ck this-command))
          map)
        (format " %sSingle" (ergoemacs-unicode-char "↔" "<->"))))
      ((eq ergoemacs-repeat-movement-commands 'all)
       (ergoemacs-install-repeat-keymap
-       (ergoemacs-repeat-movement-full-keymap)
-       (format " %sFull" (ergoemacs-unicode-char "↔" "<->")))))))
+       (ergoemacs-repeat-movement-full-keymap nil ergoemacs-cache-movement-commands)
+       (format " %sFull" (ergoemacs-unicode-char "↔" "<->"))))
+     (ergoemacs-cache-movement-commands
+      (ergoemacs-install-repeat-keymap
+       (let ((map (make-sparse-keymap)))
+         (setq ergoemacs-cache-movement-commands-command-keys ck)
+         (define-key map ck this-command)
+         map))))))
 
 (defun ergoemacs-shortcut ()
   "Shortcut for other key/function for non-movement keys.

@@ -865,8 +865,16 @@ This is done by checking if this is a command that supports shift selection or c
         (ergoemacs-restore-post-command-hook)
         (when (and ergoemacs-repeat-keys
                    (keymapp ergoemacs-repeat-keymap)
-                   (not (lookup-key ergoemacs-repeat-keymap (this-single-command-keys))))
-          (setq ergoemacs-repeat-keys nil)
+                   (or
+                    (and ergoemacs-cache-movement-commands-command-keys
+                         (not ergoemacs-repeat-movement-commands)
+                         (equal ergoemacs-repeat-movement-commands
+                                (this-single-command-keys)))
+                    (and ergoemacs-cache-movement-commands-command-keys
+                         ergoemacs-repeat-movement-commands
+                         (not (lookup-key ergoemacs-repeat-keymap (this-single-command-keys))))))
+          (setq ergoemacs-repeat-keys nil
+                ergoemacs-repeat-movement-commands nil)
           (ergoemacs-mode-line))
         (when (and (not ergoemacs-read-input-keys)
                    (not unread-command-events))
