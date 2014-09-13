@@ -1675,7 +1675,7 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
   (setq ergoemacs-repeat-keys t)
   (when mode-line
     (ergoemacs-mode-line mode-line)))
-
+(defvar ergoemacs-ignore-advice)
 (defvar ergoemacs-repeat-movement-commands)
 (defun ergoemacs-repeat-movement-full-keymap (&optional cmds add-this-command)
   "Allow movement commands to be repeated without pressing the ALT key.
@@ -1702,8 +1702,7 @@ ADD-THIS-COMMAND will add the current movement to the keymap to cache the moveme
               `(lambda() (interactive) (ergoemacs-read-key ,(key-description key))))))))
     (when add-this-command
       (let ((ck (this-single-command-keys))
-            (ergoemacs-ignore-advice t)
-            (map (make-sparse-keymap)))
+            (ergoemacs-ignore-advice t))
         (define-key keymap ck this-command)))
     keymap))
 
@@ -1760,7 +1759,7 @@ shift-translated key.
   :group 'ergoemacs-mode
   :type 'boolean)
 
-(defcustom ergoemacs-cache-movement-commands-command-keys nil)
+(defvar ergoemacs-cache-movement-commands-command-keys nil)
 
 (defun ergoemacs-shortcut-movement-no-shift-select ()
   "Shortcut for other key/function in movement keys without shift-selection support.

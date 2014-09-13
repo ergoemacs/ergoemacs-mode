@@ -850,6 +850,7 @@ This is done by checking if this is a command that supports shift selection or c
 (declare-function ergoemacs-restore-post-command-hook "ergoemacs-shortcuts.el")
 (declare-function ergoemacs-install-shortcuts-up "ergoemacs-shortcuts.el")
 (defvar ergoemacs-force-shift-select-mark-active nil)
+(defvar ergoemacs-cache-movement-commands-command-keys)
 (defun ergoemacs-pre-command-hook ()
   "Ergoemacs pre-command-hook."
   (setq ergoemacs-force-shift-select-mark-active mark-active)
@@ -870,7 +871,7 @@ This is done by checking if this is a command that supports shift selection or c
                          (not ergoemacs-repeat-movement-commands)
                          (equal ergoemacs-repeat-movement-commands
                                 (this-single-command-keys)))
-                    (and ergoemacs-cache-movement-commands-command-keys
+                    (and (not ergoemacs-cache-movement-commands-command-keys)
                          ergoemacs-repeat-movement-commands
                          (not (lookup-key ergoemacs-repeat-keymap (this-single-command-keys))))))
           (setq ergoemacs-repeat-keys nil
