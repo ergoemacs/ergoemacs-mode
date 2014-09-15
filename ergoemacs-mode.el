@@ -864,6 +864,8 @@ This is done by checking if this is a command that supports shift selection or c
     (ignore-errors
       (progn
         (ergoemacs-restore-post-command-hook)
+        (when (and (not ergoemacs-repeat-keys) ergoemacs-repeat-keymap)
+          (setq ergoemacs-repeat-keymap t))
         (when (and ergoemacs-repeat-keys
                    (keymapp ergoemacs-repeat-keymap)
                    (or
