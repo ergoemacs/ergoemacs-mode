@@ -1669,8 +1669,8 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
 (declare-function ergoemacs-mode-line "ergoemacs-mode.el")
 (defun ergoemacs-install-repeat-keymap (keymap &optional mode-line)
   "Installs repeat KEYMAP."
-  (setq ergoemacs-repeat-keymap keymap)
-  (setq ergoemacs-repeat-emulation-mode-map-alist
+  (set (make-local-variable 'ergoemacs-repeat-keymap) keymap)
+  (set (make-local-variable 'ergoemacs-repeat-emulation-mode-map-alist)
         (list (cons 'ergoemacs-repeat-keys ergoemacs-repeat-keymap)))
   (set (make-local-variable 'ergoemacs-repeat-keys) t)
   (when mode-line
