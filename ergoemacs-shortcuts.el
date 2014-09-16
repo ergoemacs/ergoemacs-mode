@@ -1672,7 +1672,7 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
   (set (make-local-variable 'ergoemacs-repeat-keymap) keymap)
   (set (make-local-variable 'ergoemacs-repeat-emulation-mode-map-alist)
         (list (cons 'ergoemacs-repeat-keys ergoemacs-repeat-keymap)))
-  (set (make-local-variable 'ergoemacs-repeat-keys))
+  (set (make-local-variable 'ergoemacs-repeat-keys) t)
   (when mode-line
     (ergoemacs-mode-line mode-line)))
 (defvar ergoemacs-ignore-advice)
