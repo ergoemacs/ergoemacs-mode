@@ -1672,7 +1672,7 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
   (set (make-local-variable 'ergoemacs-repeat-keymap) keymap)
   (set (make-local-variable 'ergoemacs-repeat-emulation-mode-map-alist)
         (list (cons 'ergoemacs-repeat-keys ergoemacs-repeat-keymap)))
-  (set (make-local-variable 'ergoemacs-repeat-keys) t)
+  (set (make-local-variable 'ergoemacs-repeat-keys))
   (when mode-line
     (ergoemacs-mode-line mode-line)))
 (defvar ergoemacs-ignore-advice)
@@ -1760,6 +1760,34 @@ shift-translated key.
   :type 'boolean)
 
 (defvar ergoemacs-cache-movement-commands-command-keys nil)
+
+(defun ergoemacs-delete-repeat-cache (&rest _ignore)
+  "Removes repeatable keys and cached movement keys"
+  (setq ergoemacs-repeat-keys nil
+        ergoemacs-repeat-movement-commands nil)
+  (ergoemacs-mode-line))
+
+(defun ergoemacs-delete-cached-movement (&rest _ignore)
+  "Deletes cached movement commands."
+  (when ergoemacs-cache-movement-commands-command-keys
+    (setq ergoemacs-cache-movement-commands-command-keys nil)
+    (ergoemacs-delete-repeat-cache)))
+
+(dolist (hook '(after-change-major-mode-hook
+                after-change-functions
+                after-insert-file-functions
+                after-make-frame-functions
+                after-save-hook
+                buffer-list-update-hook
+                delete-frame-functions
+                find-file-hook
+                kill-buffer-hook
+                post-self-insert-hook
+                suspend-hook
+                window-setup-hook))
+  (add-hook hook 'ergoemacs-delete-cached-movement))
+
+
 
 (defun ergoemacs-shortcut-movement-no-shift-select ()
   "Shortcut for other key/function in movement keys without shift-selection support.
