@@ -320,6 +320,10 @@ Used to help with translation keymaps like `input-decode-map'"
 (declare-function ergoemacs-translate "ergoemacs-translate.el")
 (declare-function ergoemacs-local-map "ergoemacs-translate.el")
 (declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
+
+(defvar ergoemacs-read-key nil
+  "Current key for `ergoemacs-read-key'")
+
 (defun ergoemacs-read-event (type &optional pretty-key extra-txt universal)
   "Reads a single event of TYPE.
 
@@ -417,6 +421,9 @@ universal argument can be entered.
           (setq ret (ergoemacs-read-event-change ret key-translation-map))))
       (cond
        ((and ret (not universal)
+             (not (ergoemacs-real-key-binding
+                   (or (and ergoemacs-read-key (vconcat ergoemacs-read-key (vector ret)))
+                       (vector ret))))
              (and local-keymap
                   (memq (lookup-key local-keymap (vector ret))
                         ergoemacs-universal-fns)))
@@ -457,6 +464,9 @@ universal argument can be entered.
                         (ergoemacs-translate (vector ret))
                         key-tag))
                       ergoemacs-universal-fns)
+                (not (ergoemacs-real-key-binding
+                      (or (and ergoemacs-read-key (vconcat ergoemacs-read-key (vector ret)))
+                          (vector ret))))
                 (and local-keymap
                      (memq (lookup-key local-keymap (vector ret))
                            ergoemacs-universal-fns))))
@@ -628,8 +638,6 @@ It will replace anything defined by `ergoemacs-translation'"
 (declare-function guide-key/close-guide-buffer "guide-key.el")
 (declare-function guide-key/popup-guide-buffer-p "guide-key.el")
 (defvar ergoemacs-read-key-last-help nil)
-(defvar ergoemacs-read-key nil
-  "Current key for `ergoemacs-read-key'")
 (defun ergoemacs-read-key-help ()
   "Show help for the current sequence KEY."
   (interactive)
