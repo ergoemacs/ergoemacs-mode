@@ -1787,6 +1787,9 @@ shift-translated key.
                 after-make-frame-functions
                 after-save-hook
                 buffer-list-update-hook
+                buffer-quit-hook
+                minibuffer-exit-hook
+                minibuffer-setup-hook
                 delete-frame-functions
                 find-file-hook
                 kill-buffer-hook
