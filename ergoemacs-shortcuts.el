@@ -1790,15 +1790,15 @@ shift-translated key.
                 buffer-quit-hook
                 minibuffer-exit-hook
                 minibuffer-setup-hook
+                mouse-leave-buffer-hook
                 delete-frame-functions
                 find-file-hook
                 kill-buffer-hook
                 post-self-insert-hook
                 suspend-hook
                 window-setup-hook))
-  (add-hook hook 'ergoemacs-delete-cached-movement))
-
-
+  (when (boundp hook)
+    (add-hook hook 'ergoemacs-delete-cached-movement)))
 
 (defun ergoemacs-shortcut-movement-no-shift-select ()
   "Shortcut for other key/function in movement keys without shift-selection support.
