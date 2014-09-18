@@ -1103,6 +1103,12 @@
     (global-set-key [remap execute-extended-command] 'smex))
   (setq smex-prompt-string (substitute-command-keys "\\[execute-extended-command] ")))
 
+(ergoemacs-component ido-prev-next-instead-of-left-right ()
+  "In Ido use, Ergoemacs left and right for previous/next match."
+  (when ido-mode
+    (global-set-key [remap ido-magic-forward-char] 'ido-next-match)
+    (global-set-key [remap ido-magic-backward-char] 'ido-prev-match)))
+
 
 
 (ergoemacs-component ergoemacs-remaps ()
@@ -1243,13 +1249,15 @@
                   search-reg
                   no-backspace
                   ergoemacs-banish-shift
-                  move-and-transpose-lines)
+                  move-and-transpose-lines
+                  ido-prev-next-instead-of-left-right)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps icy-reclaim))
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
-                  ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))))
+                  ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
+                  ("Disputed Keys" (ido-prev-next-instead-of-left-right))))
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
