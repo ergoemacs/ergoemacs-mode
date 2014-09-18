@@ -1762,8 +1762,9 @@ shift-translated key.
                    ':shift-translated-key))
   (ergoemacs-read-key-call (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (this-single-command-keys)))))
 
-(defcustom ergoemacs-cache-movement-commands t
-  "Cache movement command lookups on the repeatable keymap."
+(defcustom ergoemacs-cache-movement-commands nil
+  "Cache movement command lookups on the repeatable keymap.
+This is currently unstable."
   :group 'ergoemacs-mode
   :type 'boolean)
 
