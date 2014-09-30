@@ -1677,10 +1677,10 @@ Basically, this gets the keys called and passes the arguments to`ergoemacs-read-
 (declare-function ergoemacs-mode-line "ergoemacs-mode.el")
 (defun ergoemacs-install-repeat-keymap (keymap &optional mode-line)
   "Installs repeat KEYMAP."
-  (set (make-local-variable 'ergoemacs-repeat-keymap) keymap)
-  (set (make-local-variable 'ergoemacs-repeat-emulation-mode-map-alist)
+  (setq ergoemacs-repeat-keymap keymap)
+  (setq ergoemacs-repeat-emulation-mode-map-alist
         (list (cons 'ergoemacs-repeat-keys ergoemacs-repeat-keymap)))
-  (set (make-local-variable 'ergoemacs-repeat-keys) t)
+  (setq ergoemacs-repeat-keys t)
   (when mode-line
     (ergoemacs-mode-line mode-line)))
 (defvar ergoemacs-ignore-advice)
@@ -1762,7 +1762,7 @@ shift-translated key.
                    ':shift-translated-key))
   (ergoemacs-read-key-call (let (ergoemacs-read-input-keys) (ergoemacs-real-key-binding (this-single-command-keys)))))
 
-(defcustom ergoemacs-cache-movement-commands nil
+(defcustom ergoemacs-cache-movement-commands t
   "Cache movement command lookups on the repeatable keymap.
 This is currently unstable."
   :group 'ergoemacs-mode
