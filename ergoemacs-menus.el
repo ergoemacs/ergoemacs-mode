@@ -277,7 +277,7 @@ All other modes are assumed to be minor modes or unimportant.
             (kill-buffer menu-item "Close" ergoemacs-close-current-buffer)
             (separator1 menu-item "--")
             (save-buffer menu-item "Save" save-buffer)
-            (write-file menu-item "Save As..." write-nfile)
+            (write-file menu-item "Save As..." write-file)
             (revert-buffer menu-item "Revert to Saved" revert-buffer)
             (print-buffer menu-item "Print" ergoemacs-print-buffer-confirm)
             ;; (ps-print-buffer-faces menu-item "Print (font+color)" ps-print-buffer-faces)
