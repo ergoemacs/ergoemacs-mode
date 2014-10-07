@@ -61,6 +61,27 @@
           (const :tag "C-c/C-x copy/paste when region active, Emacs C-c/C-x otherwise." both))
   :group 'ergoemacs-mode)
 
+(defun ergoemacs-revert-buffer ()
+  "Calls `revert-buffer' or reverts to backup.
+The backup is determined by `find-backup-file-name'"
+  (interactive)
+  (let ((backup-buffer nil;; (and (buffer-file-name) (find-backup-file-name (buffer-file-name)))
+                       )
+        (opt (point)))
+    (cond
+     ((buffer-modified-p (current-buffer))
+      (call-interactively 'revert-buffer))
+     ;; FIXME -- not working for some reason.
+     ((and backup-buffer (file-readable-p (car backup-buffer))
+           (yes-or-no-p (format "Revert buffer to backup saved on disk (%s)?" (car backup-buffer))))
+      (delete-region (point-min) (point-max))
+      ;; FIXME -- Allow cycling through past backups with repeated command.
+      (insert-file-contents (car backup-buffer))
+      (goto-char opt))
+     (t
+      (user-error "Did not revert buffer.")))
+    ))
+
 (defun ergoemacs-major-mode-p (value)
   "Return t if VALUE is a major mode function."
   ;; Taken from http://bazaar.launchpad.net/~nxhtml/nxhtml/main/view/head:/util/ourcomments-util.el
@@ -108,9 +129,13 @@
 (defvar ergoemacs-theme)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme-options)
-
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
 (declare-function ergoemacs-ini-mode "ergoemacs-mode.el")
+(declare-function ergoemacs-save-cache "ergoemacs-theme-engine.el")
+(defvar ergoemacs-theme-component-map-list-fixed-hash-cache)
+(defvar ergoemacs-theme-component-map-list-fixed-hash-file)
+(defvar ergoemacs-theme-component-map-list-fixed-hash)
+
 (defun ergoemacs-exit-customize-save-customized (&optional reinit)
   "Call `customize-save-customized' on exit emacs.
 
@@ -121,10 +146,14 @@ Also:
   when called for or at the last second.
 - Saves `ergoemacs-mode' options by calling
   `customize-save-customized'
+- Saves `ergoemacs-theme-component-map-list-fixed-hash' to
+ `ergoemacs-theme-component-map-list-fixed-hash-file'
 
 If an error occurs, display the error, and sit for 2 seconds before exiting"
   (ergoemacs-mode -1)
   (ergoemacs-ini-mode 1)
+  (when ergoemacs-theme-component-map-list-fixed-hash-cache
+    (ergoemacs-save-cache))
   (ignore-errors (unless noninteractive (customize-save-customized)))
   (when reinit
     (ergoemacs-ini-mode -1)
