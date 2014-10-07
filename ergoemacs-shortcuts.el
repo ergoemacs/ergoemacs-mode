@@ -2171,6 +2171,7 @@ Setup C-c and C-x keys to be described properly.")
 (defvar ergoemacs-modal-keymap)
 (declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
 
+(defvar ergoemacs-no-shortcut-keys) 
 (defun ergoemacs-install-shortcuts-up ()
   "Installs ergoemacs shortcuts into overriding keymaps.
 The keymaps are:
@@ -2181,7 +2182,7 @@ The keymaps are:
 - text property with :keymap property.
 
 Also will install into other keymaps when
-`ergoemacs-no-shortcuts-keys' is non-nil.
+`ergoemacs-no-shortcut-keys' is non-nil.
 "
    (let ((inhibit-read-only t)
 	 deactivate-mark
@@ -2204,7 +2205,7 @@ Also will install into other keymaps when
                       (not (string= "ergoemacs-modified" (nth 1 (cdr var))))
                       (cdr var)))
                (ergoemacs-setcdr var (ergoemacs-install-shortcuts-map (cdr var) t)))
-              ((and ergoemacs-no-shortcuts-keys (ignore-errors (listp (ergoemacs-sv var))))
+              ((and ergoemacs-no-shortcut-keys (ignore-errors (listp (ergoemacs-sv var))))
                ;; Modify any maps that have not been modified when
                ;; `ergoemacs-no-shortcut-keys' is non-nil
                (dolist (map-key (ergoemacs-sv var))
@@ -2212,11 +2213,12 @@ Also will install into other keymaps when
                    (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))))
          (ergoemacs-emulations))
        ;; Now install in other maps.
-       (when ergoemacs-no-shortcuts-keys
+       (when ergoemacs-no-shortcut-keys
          (dolist (var '(minor-mode-overriding-map-alist minor-mode-map-alist))
            (dolist (map-key (ergoemacs-sv var))
-             (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
-               (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t))))))))))
+             (unless (memq (car map-key) '(ergoemacs-mode ergoemacs-unbind-keys ergoemacs-no-shortcut-keys))
+               (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
+                 (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))))))))
 
 (defvar ergoemacs-debug-keymap--temp-map)
 (declare-function ergoemacs-real-substitute-command-keys "ergoemacs-advice.el")
