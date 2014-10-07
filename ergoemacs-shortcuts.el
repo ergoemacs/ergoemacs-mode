@@ -2178,7 +2178,11 @@ The keymaps are:
 - `overriding-local-map'
 - temporary overlay maps
 - Overlays with :keymap property
-- text property with :keymap property."
+- text property with :keymap property.
+
+Also will install into other keymaps when
+`ergoemacs-no-shortcuts-keys' is non-nil.
+"
    (let ((inhibit-read-only t)
 	 deactivate-mark
 	 override-text-map)
@@ -2191,7 +2195,6 @@ The keymaps are:
                (setq override-text-map (get-char-property (point) 'keymap))
                (and (ignore-errors (keymapp override-text-map)) (not (ignore-errors (string= "ergoemacs-modified" (nth 1 override-text-map))))))
          (ergoemacs-install-shortcuts-map override-text-map t t))
-       ;; This is too slow.
        (ergoemacs-emulations 'remove)
        (unwind-protect
            (dolist (var emulation-mode-map-alists)
@@ -2201,13 +2204,19 @@ The keymaps are:
                       (not (string= "ergoemacs-modified" (nth 1 (cdr var))))
                       (cdr var)))
                (ergoemacs-setcdr var (ergoemacs-install-shortcuts-map (cdr var) t)))
-              ;; This should be unnecessary.  
-              ;; ((ignore-errors (listp (ergoemacs-sv var)))
-              ;;  (dolist (map-key (ergoemacs-sv var))
-              ;;    (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
-              ;;      (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))
-              ))
-         (ergoemacs-emulations))))))
+              ((and ergoemacs-no-shortcuts-keys (ignore-errors (listp (ergoemacs-sv var))))
+               ;; Modify any maps that have not been modified when
+               ;; `ergoemacs-no-shortcut-keys' is non-nil
+               (dolist (map-key (ergoemacs-sv var))
+                 (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
+                   (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))))
+         (ergoemacs-emulations))
+       ;; Now install in other maps.
+       (when ergoemacs-no-shortcuts-keys
+         (dolist (var '(minor-mode-overriding-map-alist minor-mode-map-alist))
+           (dolist (map-key (ergoemacs-sv var))
+             (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
+               (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t))))))))))
 
 (defvar ergoemacs-debug-keymap--temp-map)
 (declare-function ergoemacs-real-substitute-command-keys "ergoemacs-advice.el")
