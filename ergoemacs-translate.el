@@ -57,7 +57,6 @@
 
 ;;; ergoemacs pretty keys
 (defvar ergoemacs-shortcut-emulation-mode-map-alist)
-(defvar ergoemacs-no-shortcut-emulation-mode-map-alist)
 (defvar ergoemacs-read-input-keys)
 (defvar ergoemacs-shortcut-keys)
 (defvar ergoemacs-no-shortcut-keys)

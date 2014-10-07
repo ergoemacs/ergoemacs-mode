@@ -2221,7 +2221,7 @@ Also will install into other keymaps when
                 (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t))))))
         (when (get-text-property (point) 'local-map)
           (ergoemacs-install-shortcuts-map (get-char-property (point) 'local-map)))
-        (ergoemacs-install-shortcuts-map (current-local-map)))))))
+        (ergoemacs-install-shortcuts-map (current-local-map) t))))))
 
 (defvar ergoemacs-debug-keymap--temp-map)
 (declare-function ergoemacs-real-substitute-command-keys "ergoemacs-advice.el")

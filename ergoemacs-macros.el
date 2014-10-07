@@ -52,8 +52,6 @@ major-mode, minor-mode, and global keys are ignored."
          (ergoemacs-emulation-mode-map-alist '())
          (ergoemacs-shortcut-emulation-mode-map-alist
           `())
-         (ergoemacs-no-shortcut-emulation-mode-map-alist
-          `((ergoemacs-no-shortcut-keys ,@ergoemacs-no-shortcut-keymap)))
          (old-global-map (current-global-map))
          (old-local-map (current-local-map))
          (new-local-map (make-sparse-keymap))

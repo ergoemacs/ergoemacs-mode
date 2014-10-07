@@ -513,9 +513,6 @@ Valid values are:
 (defvar ergoemacs-shortcut-emulation-mode-map-alist nil
   "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
 
-(defvar ergoemacs-no-shortcut-emulation-mode-map-alist nil
-  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
-
 (defun ergoemacs-emulations (&optional remove)
   "Add ergoemacs emulations to `emulation-mode-map-alist'.
 When REMOVE is true, remove the emulations."
@@ -946,8 +943,8 @@ This is done by checking if this is a command that supports shift selection or c
                   (dolist (fn (cdr item))
                     (remove-hook hook fn)
                     (add-hook hook fn)))))
-            (setq ergoemacs-shortcut-keys t)
-            (setq ergoemacs-no-shortcut-keys nil)
+            (setq ergoemacs-shortcut-keys nil)
+            (setq ergoemacs-no-shortcut-keys t)
             (ergoemacs-shuffle-keys)
             (when (not unread-command-events)
               (ergoemacs-install-shortcuts-up)))

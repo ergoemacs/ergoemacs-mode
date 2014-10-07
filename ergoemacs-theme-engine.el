@@ -1666,12 +1666,12 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-no-shortcut-keymap)
 (defvar ergoemacs-emulation-mode-map-alist)
 (defvar ergoemacs-shortcut-emulation-mode-map-alist)
-(defvar ergoemacs-no-shortcut-emulation-mode-map-alist)
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme--hook-running nil)
 (declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
 (defvar ergoemacs-is-user-defined-map-change-p)
 (declare-function ergoemacs-setcdr "ergoemacs-mode.el")
+(declare-function ergoemacs-shuffle-keys "ergoemacs-mode.el")
 (defun ergoemacs-get-child-maps (keymap &optional ob)
   "Get the child maps for KEYMAP"
   ;; Not sure this is useful any longer
@@ -1944,8 +1944,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                 (regexp-opt tmp t))))
       ;; Turn on/off ergoemacs-mode
       (set-default 'ergoemacs-mode (not remove-p))
-      (set-default 'ergoemacs-shortcut-keys (not remove-p))
-      (set-default 'ergoemacs-no-shortcut-keys nil)
+      (set-default 'ergoemacs-shortcut-keys nil)
+      (set-default 'ergoemacs-no-shortcut-keys (not remove-p))
       (set-default 'ergoemacs-read-input-keys (not remove-p))
       (set-default 'ergoemacs-unbind-keys (not remove-p))
       ;; Add M-O M-[ to read-keys for terminal compatibility
@@ -1957,8 +1957,8 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             'ergoemacs-read-key-default)))
       (setq ergoemacs-mode (not remove-p)
             ergoemacs-keymap final-map
-            ergoemacs-shortcut-keys (not remove-p)
-            ergoemacs-no-shortcut-keys nil
+            ergoemacs-shortcut-keys nil
+            ergoemacs-no-shortcut-keys (not remove-p)
             ergoemacs-read-input-keys (not remove-p)
             ergoemacs-unbind-keys (not remove-p)
             ergoemacs-read-input-keymap (ergoemacs-flatten-composed-keymap  final-read-map)
@@ -1983,14 +1983,12 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                (ergoemacs-get-hooks obj "\\(-mode\\'\\|\\`mark-active\\'\\)"))))
             ergoemacs-shortcut-emulation-mode-map-alist
             `((ergoemacs-shortcut-keys ,@final-shortcut-map))
-            ergoemacs-no-shortcut-emulation-mode-map-alist
-            `((ergoemacs-no-shortcut-keys ,@final-no-shortcut-map))
             ergoemacs-deferred-keys defer)
       ;;ergoemacs-deferred-keys
       ;; Apply variables and mode changes.
 
       ;; Remove prior ergoemacs-mode keymaps
-      (dolist (item '(ergoemacs-mode ergoemacs-unbind-keys))
+      (dolist (item '(ergoemacs-mode ergoemacs-unbind-keys ergoemacs-no-shortcut-keys))
         (let ((x (assq item minor-mode-map-alist)))
           (while x
             (setq minor-mode-map-alist (delq x minor-mode-map-alist))
@@ -2000,10 +1998,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             (ergoemacs-remove-inits)
             (remove-hook 'after-load-functions 'ergoemacs-apply-inits))
         ;; Setup `ergoemacs-mode' and `ergoemacs-unbind-keys'
-        (setq minor-mode-map-alist
-              `((ergoemacs-mode ,@final-map)
-                ,@minor-mode-map-alist
-                (ergoemacs-unbind-keys ,@final-unbind-map)))
+        (ergoemacs-shuffle-keys t)
         (ergoemacs-apply-inits-obj obj)
         (add-hook 'after-load-functions 'ergoemacs-apply-inits)
         (unwind-protect
@@ -2454,7 +2449,6 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
     (setq ergoemacs-theme--object nil)))
 
 (declare-function ergoemacs-global-changed-p "ergoemacs-unbind.el")
-(declare-function ergoemacs-shuffle-keys "ergoemacs-mode.el")
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (defvar ergoemacs-ignore-advice)
 (defvar ergoemacs-global-changes-are-ignored-p)
@@ -2495,9 +2489,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
               (setq ergoemacs-read-emulation-mode-map-alist
                     (list (cons 'ergoemacs-read-input-keys ergoemacs-read-input-keymap))
                     ergoemacs-shortcut-emulation-mode-map-alist
-                    (list (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap))
-                    ergoemacs-no-shortcut-emulation-mode-map-alist
-                    (list (cons 'ergoemacs-no-shortcut-keys ergoemacs-no-shortcut-keymap)))
+                    (list (cons 'ergoemacs-shortcut-keys ergoemacs-shortcut-keymap)))
               ;;Put maps in `minor-mode-map-alist'
               (ergoemacs-shuffle-keys t))
             ;;(message "%s->%s" (key-description key) lk)
