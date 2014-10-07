@@ -435,6 +435,7 @@ Key sequences starting with `ergoemacs-ignored-prefixes' are not added."
           (oset obj read-list read-list)
           (define-key read-map new-key #'ergoemacs-read-key-default)
           (oset obj read-map read-map))))))
+(defvar ergoemacs-define-map-debug nil)
 (defvar ergoemacs-define-map--deferred nil)
 (defgeneric ergoemacs-define-map (obj key def &optional no-unbind)
   "Method to define a key in an `ergoemacs-mode' key class.
@@ -493,6 +494,8 @@ This will return if the map object was modified.
                shortcut-shifted-movement
                read-list
                read-map) obj
+    (when ergoemacs-define-map-debug
+      (message "key: %s def: %s no-unbind: %s" key def no-unbind))
     (when (ergoemacs-is-movement-command-p def) ;; Add to known movement keys
       (pushnew def ergoemacs-movement-functions))
     (let* ((key-desc (key-description key))
@@ -2269,7 +2272,11 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                            (plist-get plist ':first-is-variable-reg)
                            "")))
          ver-list tmp)
+    ;; (message "Creating ergoemacs-mode component %s" (plist-get plist ':name))
+    (when (equal (plist-get plist ':name) "reduction-theme")
+      (setq ergoemacs-define-map-debug t))
     (funcall body)
+    (setq ergoemacs-define-map-debug nil)
     (if (equal ergoemacs-theme-component-maps--versions '())
         (ergoemacs-theme-component-maps--save-hash ergoemacs-theme-component-maps--curr-component)
       (push ergoemacs-theme-component-maps--curr-component
