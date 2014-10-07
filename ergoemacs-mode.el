@@ -769,7 +769,15 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
         ;; ergoemacs-mode variables in minor-mode-map-alist
         (setq x (assq 'ergoemacs-mode minor-mode-map-alist)))
       (push (cons 'ergoemacs-mode ergoemacs-keymap) minor-mode-map-alist)))
-  (when (or force-update (not (eq (car (nth (- 1 (length minor-mode-map-alist)) minor-mode-map-alist)) 'ergoemacs-unbind-keys)))
+  (when (or force-update
+            (not (eq (car (nth (- (length minor-mode-map-alist) 2))) 'ergoemacs-no-shortcut-keys)))
+    (let ((x (assq 'ergoemacs-no-shortcut-keys minor-mode-map-alist)))
+      (while x
+        (setq minor-mode-map-alist (delq x minor-mode-map-alist))
+        (setq x (assq 'ergoemacs-no-shortcut-keys minor-mode-map-alist)))
+      (setq minor-mode-map-alist (append minor-mode-map-alist
+                                         (list (cons 'ergoemacs-no-shortcut-keys ergoemacs-no-shortcut-keymap))))))
+  (when (or force-update (not (eq (car (nth (- (length minor-mode-map-alist) 1) minor-mode-map-alist)) 'ergoemacs-unbind-keys)))
     (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
       (while x
         (setq minor-mode-map-alist (delq x minor-mode-map-alist))
