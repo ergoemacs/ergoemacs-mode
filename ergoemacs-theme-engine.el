@@ -518,6 +518,8 @@ This will return if the map object was modified.
           (aset key-vect number 'menu))))
       (when swapped
         (setq key-desc (key-description key-vect)))
+      (when ergoemacs-define-map-debug
+        (message "key-vect: %s key-desc: %s " key-vect key-desc))
       (ergoemacs-theme-component--ignore-globally-defined-key key-vect)
       (ergoemacs-define-map--read-map obj key-vect)
       (cond
@@ -547,10 +549,10 @@ This will return if the map object was modified.
               (oset obj shortcut-movement move-list)
               (define-key shortcut-map key 'ergoemacs-shortcut-movement))
           (define-key shortcut-map key 'ergoemacs-shortcut))
-        (oset obj no-shortcut-map no-shortcut-map)
+        (oset obj shortcut-map shortcut-map)
         (ergoemacs-define-map--cmd-list obj key-desc def)
         (define-key no-shortcut-map key def)
-        (oset obj shortcut-map shortcut-map)
+        (oset obj no-shortcut-map no-shortcut-map)
         t)
        ((or (commandp def t) (keymapp def) (stringp def))
         ;; Normal command
@@ -729,10 +731,10 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
         (push final-desc cmd-list))
       (oset obj cmd-list cmd-list))))
 
-
-
 (defmethod ergoemacs-define-map ((obj ergoemacs-variable-map) key def &optional no-unbind)
   (let* ((key-desc (key-description key)))
+    (when ergoemacs-define-map-debug
+      (message "variable,: %s %s" key def))
     (ergoemacs-define-map--cmd-list obj key-desc def no-unbind)
     ;; Defining key resets the fixed-maps...
     (oset obj keymap-hash (make-hash-table))))
@@ -892,7 +894,12 @@ Optionally use DESC when another description isn't found in `ergoemacs-function-
                (or ergoemacs-force-variable
                    (and (not (string= variable-reg ""))
                         (ignore-errors (string-match-p variable-reg key-desc)))))
-          (ergoemacs-define-map variable key def no-unbind)
+          (progn
+            (when ergoemacs-define-map-debug
+              (message "define-map (variable): %s %s" key def))
+            (ergoemacs-define-map variable key def no-unbind))
+        (when ergoemacs-define-map-debug
+          (message "define-map (fixed): %s %s" key def))
         (ergoemacs-define-map fixed key def no-unbind))))
   (oset obj keymap-hash (make-hash-table)))
 
@@ -1157,13 +1164,19 @@ Assumes maps are orthogonal."
   (with-slots (global maps) obj
     (cond
      ((eq keymap 'global-map)
+      (when ergoemacs-define-map-debug
+        (message "\nglobal-define-key (global-map): %s %s" key def))
       (ergoemacs-define-map global key def))
      ((eq keymap 'ergoemacs-keymap)
+      (when ergoemacs-define-map-debug
+        (message "\nglobal-define-key (ergoemacs-keymap): %s %s" key def))
       (ergoemacs-define-map global key def t))
      (t
       (let ((composite-map (ergoemacs-theme-component-maps--keymap obj keymap)))
         (if (not (ergoemacs-composite-map-p composite-map))
             (warn "`ergoemacs-define-map' cannot find map for %s" keymap)
+          (when ergoemacs-define-map-debug
+            (message "\ndefine-key (composite-map): %s %s" key def))
           (ergoemacs-define-map composite-map key def)
           (puthash keymap composite-map maps)
           (oset obj maps maps)))))
@@ -2273,10 +2286,11 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                            "")))
          ver-list tmp)
     ;; (message "Creating ergoemacs-mode component %s" (plist-get plist ':name))
-    (when (equal (plist-get plist ':name) "reduction-theme")
-      (setq ergoemacs-define-map-debug t))
+    ;; (when (string= (format "%s" (plist-get plist ':name)) "reduction-theme")
+    ;;   (message "Fun: %s" body)
+    ;;   (setq ergoemacs-define-map-debug t))
     (funcall body)
-    (setq ergoemacs-define-map-debug nil)
+    ;; (setq ergoemacs-define-map-debug nil)
     (if (equal ergoemacs-theme-component-maps--versions '())
         (ergoemacs-theme-component-maps--save-hash ergoemacs-theme-component-maps--curr-component)
       (push ergoemacs-theme-component-maps--curr-component
