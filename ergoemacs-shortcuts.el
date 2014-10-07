@@ -174,10 +174,10 @@ installing the original keymap above the ergoemacs-mode installed keymap.
       ;; Restore text-properties maps
       (when old-pt-map
         (ergoemacs-setcdr (get-char-property (point) 'keymap)
-                (cdr old-pt-map)))
+                          (cdr old-pt-map)))
       (when old-local-map
         (ergoemacs-setcdr (get-char-property (point) 'local-map)
-                (cdr old-local-map)))
+                          (cdr old-local-map)))
       
       ;; Restore variables in `emulation-mode-map-alists'.
       (dolist (var emulation-maps)
@@ -185,7 +185,7 @@ installing the original keymap above the ergoemacs-mode installed keymap.
       ;; Restore temporary maps
       (dolist (var temp-maps)
         (ergoemacs-setcdr (nth (car var) emulation-mode-map-alists)
-                (cdr var)))
+                          (cdr var)))
       (when old-local
         (use-local-map old-local))
       (when ergoemacs-mode
@@ -261,7 +261,7 @@ Used to help with translation keymaps like `input-decode-map'"
         (when old-ergoemacs-input
           (setq ergoemacs--input old-ergoemacs-input))
       (if (and (vectorp test-ret)
-                 (= 1 (length test-ret)))
+               (= 1 (length test-ret)))
           (progn
             (setq ret (elt test-ret 0)))
         (when old-ergoemacs-input
@@ -344,17 +344,17 @@ universal argument can be entered.
          help-text)
     (when help-list
       (let ((off (if ergoemacs-use-ergoemacs-key-descriptions 1 0)))
-          (setq help-text
-                (concat (if (nth off help-list)
-                            (concat "\nTranslations:"
-                                    (mapconcat
-                                     (lambda (x) x)
-                                     (nth off help-list) ", ")) "")
-                        (if (nth (+ 2 off) help-list)
-                            (concat "\nKeys:"
-                                    (mapconcat
-                                     (lambda (x) x)
-                                     (nth (+ 2 off) help-list) ", ")) "")))))
+        (setq help-text
+              (concat (if (nth off help-list)
+                          (concat "\nTranslations:"
+                                  (mapconcat
+                                   (lambda (x) x)
+                                   (nth off help-list) ", ")) "")
+                      (if (nth (+ 2 off) help-list)
+                          (concat "\nKeys:"
+                                  (mapconcat
+                                   (lambda (x) x)
+                                   (nth (+ 2 off) help-list) ", ")) "")))))
     (while (not ret)
       (unless (or (minibufferp) (and ergoemacs-modal (not pretty-key)))
         (let (message-log-max)
@@ -520,7 +520,7 @@ This function looks up the FIRST-TYPE and CURRENT-TYPE in
 
 If the next translation is not found, default to the normal
 translation."
-(interactive)
+  (interactive)
   (let ((next-swap (assoc (list first-type current-type) ergoemacs-read-swaps)))
     (if next-swap
         (nth 1 next-swap)
@@ -649,18 +649,18 @@ It will replace anything defined by `ergoemacs-translation'"
         (ergoemacs-read-key-call 'icicle-complete-keys nil key)
         nil))
      ((and (boundp 'guide-key-mode) guide-key-mode)
-        (let ((key ergoemacs-read-key))
-          (if (equal ergoemacs-read-key-last-help ergoemacs-read-key)
-              (progn
-                (setq ergoemacs-read-key-last-help nil)
-                (setq guide-key/guide-key-sequence (delete (key-description ergoemacs-read-key) guide-key/guide-key-sequence))
-                (guide-key/close-guide-buffer))
-            ;; Not using pushnew because the test is equal and
-            ;; guide-key/guide-key-sequence is a global variable.
-            (add-to-list 'guide-key/guide-key-sequence (key-description ergoemacs-read-key))
-            (setq ergoemacs-read-key-last-help ergoemacs-read-key)
-            (guide-key/popup-function key))
-          t))
+      (let ((key ergoemacs-read-key))
+        (if (equal ergoemacs-read-key-last-help ergoemacs-read-key)
+            (progn
+              (setq ergoemacs-read-key-last-help nil)
+              (setq guide-key/guide-key-sequence (delete (key-description ergoemacs-read-key) guide-key/guide-key-sequence))
+              (guide-key/close-guide-buffer))
+          ;; Not using pushnew because the test is equal and
+          ;; guide-key/guide-key-sequence is a global variable.
+          (add-to-list 'guide-key/guide-key-sequence (key-description ergoemacs-read-key))
+          (setq ergoemacs-read-key-last-help ergoemacs-read-key)
+          (guide-key/popup-function key))
+        t))
      (t (let ((cb (current-buffer))
               (key ergoemacs-read-key))
           (save-excursion
@@ -711,7 +711,7 @@ It will replace anything defined by `ergoemacs-translation'"
            (and (progn
                   (setq tmp (key-binding "q"))
                   (commandp tmp t))
-               (not (ignore-errors (string-match "self-insert" (symbol-name tmp))))))
+                (not (ignore-errors (string-match "self-insert" (symbol-name tmp))))))
       (call-interactively tmp))
      ((and (not (region-active-p))
            (and (progn
@@ -844,7 +844,7 @@ In addition, when the function is called:
                     (dolist (global-key (where-is-internal function))
                       (unless (eq (elt global-key 0) 'menu-bar)
                         (push (ergoemacs-pretty-key (key-description global-key))
-                            keys)))))
+                              keys)))))
                 (insert (mapconcat (lambda(x) x) keys ", "))
                 (insert ".\n\n"))))
         (setq ergoemacs-describe-key nil))))
@@ -1305,7 +1305,7 @@ argument prompt.
                            (if ergoemacs-use-ergoemacs-key-descriptions
                                (plist-get next-key ':normal-pretty)
                              (plist-get next-key ':normal))))))
-            (setq ergoemacs-describe-key nil))
+           (setq ergoemacs-describe-key nil))
         (setq tmp (plist-get next-key ':normal-key))
         ;; See if there is a local equivalent of this...
         (setq local-keymap (ergoemacs-local-map type))
@@ -2154,11 +2154,11 @@ Setup C-c and C-x keys to be described properly.")
       (ergoemacs-setcdr overriding-local-map (cdr hashkey)))
      ((progn
         (setq override-text-map (get-char-property (point) 'keymap))
-       (and (ignore-errors (string= "ergoemacs-modified" (nth 1 override-text-map)))
-            (ignore-errors (setq hashkey
-                                 (gethash (car (nth 2 override-text-map))
-                                          ergoemacs-original-map-hash))
-                           hashkey)))
+        (and (ignore-errors (string= "ergoemacs-modified" (nth 1 override-text-map)))
+             (ignore-errors (setq hashkey
+                                  (gethash (car (nth 2 override-text-map))
+                                           ergoemacs-original-map-hash))
+                            hashkey)))
       (if (not create-overlay)
           (ergoemacs-setcdr override-text-map (cdr hashkey))
         (setq tmp-overlay (make-overlay (max (- (point) 1) (point-min))
@@ -2184,41 +2184,44 @@ The keymaps are:
 Also will install into other keymaps when
 `ergoemacs-no-shortcut-keys' is non-nil.
 "
-   (let ((inhibit-read-only t)
-	 deactivate-mark
-	 override-text-map)
-     (cond
-      ((and overriding-local-map
-            (not (ignore-errors (string= "ergoemacs-modified" (nth 1 overriding-local-map)))))
-       (ergoemacs-install-shortcuts-map overriding-local-map nil t))
-      (t
-       (when (progn
-               (setq override-text-map (get-char-property (point) 'keymap))
-               (and (ignore-errors (keymapp override-text-map)) (not (ignore-errors (string= "ergoemacs-modified" (nth 1 override-text-map))))))
-         (ergoemacs-install-shortcuts-map override-text-map t t))
-       (ergoemacs-emulations 'remove)
-       (unwind-protect
-           (dolist (var emulation-mode-map-alists)
-             (cond
-              ((ignore-errors
-                 (and (listp var)
-                      (not (string= "ergoemacs-modified" (nth 1 (cdr var))))
-                      (cdr var)))
-               (ergoemacs-setcdr var (ergoemacs-install-shortcuts-map (cdr var) t)))
-              ((and ergoemacs-no-shortcut-keys (ignore-errors (listp (ergoemacs-sv var))))
-               ;; Modify any maps that have not been modified when
-               ;; `ergoemacs-no-shortcut-keys' is non-nil
-               (dolist (map-key (ergoemacs-sv var))
-                 (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
-                   (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))))
-         (ergoemacs-emulations))
-       ;; Now install in other maps.
-       (when ergoemacs-no-shortcut-keys
-         (dolist (var '(minor-mode-overriding-map-alist minor-mode-map-alist))
-           (dolist (map-key (ergoemacs-sv var))
-             (unless (memq (car map-key) '(ergoemacs-mode ergoemacs-unbind-keys ergoemacs-no-shortcut-keys))
-               (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
-                 (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))))))))
+  (let ((inhibit-read-only t)
+        deactivate-mark
+        override-text-map)
+    (cond
+     ((and overriding-local-map
+           (not (ignore-errors (string= "ergoemacs-modified" (nth 1 overriding-local-map)))))
+      (ergoemacs-install-shortcuts-map overriding-local-map nil t))
+     (t
+      (when (progn
+              (setq override-text-map (get-char-property (point) 'keymap))
+              (and (ignore-errors (keymapp override-text-map)) (not (ignore-errors (string= "ergoemacs-modified" (nth 1 override-text-map))))))
+        (ergoemacs-install-shortcuts-map override-text-map t t))
+      (ergoemacs-emulations 'remove)
+      (unwind-protect
+          (dolist (var emulation-mode-map-alists)
+            (cond
+             ((ignore-errors
+                (and (listp var)
+                     (not (string= "ergoemacs-modified" (nth 1 (cdr var))))
+                     (cdr var)))
+              (ergoemacs-setcdr var (ergoemacs-install-shortcuts-map (cdr var) t)))
+             ((and ergoemacs-no-shortcut-keys (ignore-errors (listp (ergoemacs-sv var))))
+              ;; Modify any maps that have not been modified when
+              ;; `ergoemacs-no-shortcut-keys' is non-nil
+              (dolist (map-key (ergoemacs-sv var))
+                (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
+                  (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t)))))))
+        (ergoemacs-emulations))
+      ;; Now install in other maps.
+      (when ergoemacs-no-shortcut-keys
+        (dolist (var '(minor-mode-overriding-map-alist minor-mode-map-alist))
+          (dolist (map-key (ergoemacs-sv var))
+            (unless (memq (car map-key) '(ergoemacs-mode ergoemacs-unbind-keys ergoemacs-no-shortcut-keys))
+              (when (not (ignore-errors (string= "ergoemacs-modified" (nth 1 (cdr map-key)))))
+                (ergoemacs-setcdr map-key (ergoemacs-install-shortcuts-map (cdr map-key) t))))))
+        (when (get-text-property (point) 'local-map)
+          (ergoemacs-install-shortcuts-map (get-char-property (point) 'local-map)))
+        (ergoemacs-install-shortcuts-map (current-local-map)))))))
 
 (defvar ergoemacs-debug-keymap--temp-map)
 (declare-function ergoemacs-real-substitute-command-keys "ergoemacs-advice.el")
