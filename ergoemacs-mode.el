@@ -771,6 +771,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
       (push (cons 'ergoemacs-mode ergoemacs-keymap) minor-mode-map-alist)))
   (when (or force-update
             (not (eq (car (nth (- (length minor-mode-map-alist) 2))) 'ergoemacs-no-shortcut-keys)))
+    ;; FIXME: does not respect local keys
     (let ((x (assq 'ergoemacs-no-shortcut-keys minor-mode-map-alist)))
       (while x
         (setq minor-mode-map-alist (delq x minor-mode-map-alist))
