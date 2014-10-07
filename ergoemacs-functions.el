@@ -131,10 +131,6 @@ The backup is determined by `find-backup-file-name'"
 (defvar ergoemacs-theme-options)
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
 (declare-function ergoemacs-ini-mode "ergoemacs-mode.el")
-(declare-function ergoemacs-save-cache "ergoemacs-theme-engine.el")
-(defvar ergoemacs-theme-component-map-list-fixed-hash-cache)
-(defvar ergoemacs-theme-component-map-list-fixed-hash-file)
-(defvar ergoemacs-theme-component-map-list-fixed-hash)
 
 (defun ergoemacs-exit-customize-save-customized (&optional reinit)
   "Call `customize-save-customized' on exit emacs.
@@ -146,14 +142,10 @@ Also:
   when called for or at the last second.
 - Saves `ergoemacs-mode' options by calling
   `customize-save-customized'
-- Saves `ergoemacs-theme-component-map-list-fixed-hash' to
- `ergoemacs-theme-component-map-list-fixed-hash-file'
-
 If an error occurs, display the error, and sit for 2 seconds before exiting"
   (ergoemacs-mode -1)
   (ergoemacs-ini-mode 1)
-  (when ergoemacs-theme-component-map-list-fixed-hash-cache
-    (ergoemacs-save-cache))
+  
   (ignore-errors (unless noninteractive (customize-save-customized)))
   (when reinit
     (ergoemacs-ini-mode -1)
