@@ -402,7 +402,7 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
   (if ergoemacs-ignore-advice nil
     (let ((kd (key-description key)))
       (unless (or (and (vectorp key)
-                       (memq (elt key 0) '(menu-bar 27 remap)))
+                       (ignore-errors (memq (elt key 0) '(menu-bar 27 remap))))
                   ;; FIXME: don't unbind for packages that use
                   ;; global-set-key.  Like undo-tree
                   (and (not (vectorp key))
