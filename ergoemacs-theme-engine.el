@@ -212,9 +212,6 @@
    (shortcut-map :initarg :shortcut-map
                  :initform (make-sparse-keymap)
                  :type keymap)
-   (no-shortcut-map :initarg :no-shortcut-map
-                    :initform (make-sparse-keymap)
-                    :type keymap)
    (map :initarg :map
         :initform (make-sparse-keymap)
         :type keymap)
@@ -288,7 +285,6 @@ The elements of LIST are not copied, just the list structure itself."
 (defmethod ergoemacs-copy-obj ((obj ergoemacs-fixed-map))
   (with-slots (read-map
                shortcut-map
-               no-shortcut-map
                map
                unbind-map
                deferred-keys
@@ -299,7 +295,6 @@ The elements of LIST are not copied, just the list structure itself."
                shortcut-list) obj
     (oset obj read-map (copy-keymap read-map))
     (oset obj shortcut-map (copy-keymap shortcut-map))
-    (oset obj no-shortcut-map (copy-keymap no-shortcut-map))
     (oset obj map (copy-keymap map))
     (oset obj unbind-map (copy-keymap unbind-map))
     (oset obj deferred-keys (ergoemacs-copy-list deferred-keys))
@@ -316,7 +311,6 @@ The elements of LIST are not copied, just the list structure itself."
     (with-slots (object-name
                  map
                  shortcut-map
-                 no-shortcut-map
                  read-map
                  unbind-map
                  always
@@ -347,9 +341,6 @@ The elements of LIST are not copied, just the list structure itself."
         (ergoemacs-debug "%s* Shortcut\n" stars)
         (ergoemacs-debug "%s\n" shortcut-map)
         (ergoemacs-debug-keymap shortcut-map)
-        (ergoemacs-debug "%s* Shortcut Free\n" stars)
-        (ergoemacs-debug "%s\n" no-shortcut-map)
-        (ergoemacs-debug-keymap no-shortcut-map)
         (ergoemacs-debug "%s* Unbind\n" stars)
         (ergoemacs-debug "%s\n" unbind-map)
         (ergoemacs-debug-keymap unbind-map))))))
@@ -485,7 +476,6 @@ This will return if the map object was modified.
 (defmethod ergoemacs-define-map ((obj ergoemacs-fixed-map) key def &optional
                                  no-unbind)
   (with-slots (shortcut-map
-               no-shortcut-map
                map
                unbind-map
                rm-keys
@@ -551,8 +541,6 @@ This will return if the map object was modified.
           (define-key shortcut-map key 'ergoemacs-shortcut))
         (oset obj shortcut-map shortcut-map)
         (ergoemacs-define-map--cmd-list obj key-desc def)
-        (define-key no-shortcut-map key def)
-        (oset obj no-shortcut-map no-shortcut-map)
         t)
        ((or (commandp def t) (keymapp def) (stringp def))
         ;; Normal command
@@ -986,7 +974,6 @@ Assumes maps are orthogonal."
                    :read-map read
                    :read-list (append (oref var read-list) (oref fix read-list))
                    :shortcut-map (ergoemacs-get-fixed-map--combine-maps (oref var shortcut-map) (oref fix shortcut-map))
-                   :no-shortcut-map (ergoemacs-get-fixed-map--combine-maps (oref var no-shortcut-map) (oref fix no-shortcut-map))
                    :map (ergoemacs-get-fixed-map--combine-maps (oref var map) (oref fix map))
                    :unbind-map (ergoemacs-get-fixed-map--combine-maps (oref var unbind-map) (oref fix unbind-map))
                    :shortcut-list (append (oref var shortcut-list) (oref fix shortcut-list))
@@ -1714,7 +1701,6 @@ FULL-SHORTCUT-MAP-P "
   (with-slots (read-map
                map
                shortcut-map
-               no-shortcut-map
                unbind-map
                shortcut-list
                rm-keys) (ergoemacs-get-fixed-map obj)
@@ -1725,7 +1711,8 @@ FULL-SHORTCUT-MAP-P "
           ;; (shortcut-map (or shortcut-map (make-sparse-keymap)))
           ;; (map (or map (make-sparse-keymap)))
           (menu-keymap (make-sparse-keymap))
-          final-map final-shortcut-map final-no-shortcut-map
+          final-map final-shortcut-map
+          (final-no-shortcut-map (make-sparse-keymap))
           final-read-map final-unbind-map
           (rm-list (append rm-keys ergoemacs-global-override-rm-keys))
           (defer '())
@@ -1909,7 +1896,6 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
         ;; respect.
         ;; The removing of keys doesn't really work right now.
         (setq final-shortcut-map (copy-keymap shortcut-map)
-              final-no-shortcut-map (copy-keymap no-shortcut-map)
               final-unbind-map (copy-keymap unbind-map)
               final-read-map (copy-keymap read-map)
               final-map (copy-keymap map)
@@ -1951,6 +1937,11 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                          ergoemacs-shortcut-prefix-keys
                          :test 'equal))
               (when (eq (nth 1 (nth 1 c)) 'global)
+                (cond
+                 ((ignore-errors (commandp (nth 0 (nth 1 c)) t))
+                  (define-key final-no-shortcut-map (nth 0 c) (nth 0 (nth 1 c))))
+                 (t
+                  (define-key final-no-shortcut-map (nth 0 c) 'ergoemacs-shortcut)))
                 (dolist (global-key (ergoemacs-shortcut-function-binding (nth 0 (nth 1 c))))
                   (if (not (gethash global-key ergoemacs-original-keys-to-shortcut-keys))
                       (puthash global-key (append (gethash global-key ergoemacs-original-keys-to-shortcut-keys) (list (nth 0 c))) ergoemacs-original-keys-to-shortcut-keys)
@@ -2073,7 +2064,6 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
               new-read-map
               new-read-list
               new-shortcut-map
-              new-no-shortcut-map
               new-map
               new-unbind-map
               new-shortcut-list
@@ -2096,7 +2086,6 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                            read-map
                            read-list
                            shortcut-map
-                           no-shortcut-map
                            map
                            unbind-map
                            shortcut-list
@@ -2113,8 +2102,6 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                   (push read-map new-read-map))
                 (unless (equal shortcut-map '(keymap))
                   (push shortcut-map new-shortcut-map))
-                (unless (equal no-shortcut-map '(keymap))
-                  (push no-shortcut-map new-no-shortcut-map))
                 (unless (equal map '(keymap))
                   (push map new-map))
                 (unless (equal unbind-map '(keymap))
@@ -2159,7 +2146,6 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                  :read-list new-read-list
                  :read-map (ergoemacs-get-fixed-map--composite new-read-map)
                  :shortcut-map  (ergoemacs-get-fixed-map--composite new-shortcut-map) 
-                 :no-shortcut-map (ergoemacs-get-fixed-map--composite new-no-shortcut-map)
                  :map (ergoemacs-get-fixed-map--composite new-map)
                  :unbind-map (ergoemacs-get-fixed-map--composite new-unbind-map)
                  :shortcut-list new-shortcut-list
