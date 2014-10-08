@@ -42,12 +42,13 @@ If SYMBOL is void, return nil"
 major-mode, minor-mode, and global keys are ignored."
   `(let ((ergoemacs-mode t)
          (ergoemacs-unbind-keys t)
-         (ergoemacs-shortcut-keys t)
-         (ergoemacs-no-shortcut-keys nil)
+         (ergoemacs-shortcut-keys nil)
+         (ergoemacs-no-shortcut-keys t)
          ergoemacs-modal
          ergoemacs-read-input-keys
          (minor-mode-map-alist
           `((ergoemacs-mode ,@ergoemacs-keymap)
+            (ergoemacs-no-shortcut-keys ,@ergoemacs-no-shortcut-keymap)
             (ergoemacs-unbind-keys ,@ergoemacs-unbind-keymap)))
          (ergoemacs-emulation-mode-map-alist '())
          (ergoemacs-shortcut-emulation-mode-map-alist
@@ -86,7 +87,7 @@ The global map is ignored, but major/minor modes keymaps are included."
 (defmacro ergoemacs-with-global (&rest body)
   "With global keymap, not ergoemacs keymaps."
   `(ergoemacs-without-emulation
-    (let (ergoemacs-mode ergoemacs-unbind-keys)
+    (let (ergoemacs-mode ergoemacs-unbind-keys ergoemacs-no-shortcut-keys)
       ,@body)))
 
 ;;;###autoload
