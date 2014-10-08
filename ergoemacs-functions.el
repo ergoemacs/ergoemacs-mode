@@ -333,6 +333,7 @@ If `pr-interface' is available, use that function instead."
       (print-buffer))))
 
 (defvar ergoemacs-mode)
+(defvar ergoemacs-no-shortcut-keys)
 (declare-function ergoemacs-emulations "ergoemacs-mode.el")
 (declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
 (declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)

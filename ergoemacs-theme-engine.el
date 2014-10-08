@@ -1901,6 +1901,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
               final-map (copy-keymap map)
               ergoemacs-get-fixed-layout nil
               ergoemacs-get-variable-layout nil)
+        
         (dolist (key rm-list)
           (let ((vector-key (or (and (vectorp key) key)
                                 (read-kbd-macro (key-description key) t))))
@@ -1910,7 +1911,6 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
                                           final-read-map)
                                      (ergoemacs-rm-key final-read-map key))
                   final-shortcut-map (ergoemacs-rm-key final-shortcut-map key)
-                  final-no-shortcut-map (ergoemacs-rm-key final-no-shortcut-map key)
                   final-map (ergoemacs-rm-key final-map key)
                   final-unbind-map (ergoemacs-rm-key final-unbind-map key))))
         ;; Add `ergoemacs-mode' menu.
