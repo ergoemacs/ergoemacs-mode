@@ -86,6 +86,23 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perfomr `ou
 `this-single-command-keys' `this-command-keys-vector'")
 
 (defvar ergoemacs-describe-key nil)
+
+(defun ergoemacs-run-unbound (item)
+  "Runs the unbound command ITEM."
+  (cond
+   ((listp item)
+    (unless (catch 'found-command
+              (dolist (i item)
+                (when (commandp i t)
+                  (ergoemacs-read-key-call i)
+                  (throw 'found-command t)))
+              nil)
+      (message "Could not find any of the commands: %s" item)))
+   ((commandp item t)
+    (ergoemacs-read-key-call item))
+   (t
+    (user-error "Could not find the command %s" item))))
+
 (defun ergoemacs-describe-key ()
   "Ergoemacs replacement for `describe-key'
 Uses `ergoemacs-read-key'"
