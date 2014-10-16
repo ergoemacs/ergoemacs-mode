@@ -430,8 +430,9 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
   "Compatability fixes for `object-name-string' or `eieio-object-name-string'.
 "
   `(,(cond
-      ((and (<= 24 emacs-major-version)
-            (<= 4 emacs-minor-version))
+      ((or (<= 23 emacs-major-version)
+           (and (<= 24 emacs-major-version)
+                (<= 4 emacs-minor-version)))
        'eieio-object-name-string)
       (t 'object-name-string)) ,obj))
 
@@ -439,8 +440,9 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
   "Compatability fixes for `object-set-name-string' or `eieio-object-set-name-string'.
 "
   `(,(cond
-      ((and (<= 24 emacs-major-version)
-            (<= 4 emacs-minor-version))
+      ((or (<= 23 emacs-major-version)
+           (and (<= 24 emacs-major-version)
+                (<= 4 emacs-minor-version)))
        'eieio-object-set-name-string)
       (t 'object-set-name-string)) ,obj ,name))
 
