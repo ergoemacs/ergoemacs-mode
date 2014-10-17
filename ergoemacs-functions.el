@@ -1944,6 +1944,7 @@ This does the same thing in `iseach-mode' using `isearch-yank-pop' and  `isearch
 (declare-function org-yank "org.el")
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
+  (interactive)
   (cond
    ((and mark-active (boundp 'cua--rectangle) cua--rectangle)
     ;; call cua-paste
