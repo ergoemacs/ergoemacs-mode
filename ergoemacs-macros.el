@@ -426,24 +426,22 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
        ,(format "Generated theme component for %s theme" (symbol-name name))
        ,@differences)))
 
+(require 'eieio)
+
 (defmacro ergoemacs-object-name-string (obj)
   "Compatability fixes for `object-name-string' or `eieio-object-name-string'.
 "
   `(,(cond
-      ((or (<= 23 emacs-major-version)
-           (and (<= 24 emacs-major-version)
-                (<= 4 emacs-minor-version)))
-       'eieio-object-name-string)
+      ((fboundp 'object-name-string) 'object-name-string)
+      ((fboundp 'eieio-object-name-string) 'eieio-object-name-string)
       (t 'object-name-string)) ,obj))
 
 (defmacro ergoemacs-object-set-name-string (obj name)
   "Compatability fixes for `object-set-name-string' or `eieio-object-set-name-string'.
 "
   `(,(cond
-      ((or (<= 23 emacs-major-version)
-           (and (<= 24 emacs-major-version)
-                (<= 4 emacs-minor-version)))
-       'eieio-object-set-name-string)
+      ((fboundp 'object-set-name-string) 'object-set-name-string)
+      ((fboundp 'eieio-object-set-name-string) 'eieio-object-set-name-string)
       (t 'object-set-name-string)) ,obj ,name))
 
 ;;;###autoload
