@@ -2187,7 +2187,7 @@ Setup C-c and C-x keys to be described properly.")
 
 (defvar ergoemacs-read-input-keymap)
 (defvar ergoemacs-modal-keymap)
-(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
+(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-map.el")
 
 (defun ergoemacs-install-shortcuts-up ()
   "Installs ergoemacs shortcuts into overriding keymaps.

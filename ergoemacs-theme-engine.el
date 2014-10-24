@@ -1554,7 +1554,7 @@ FULL-SHORTCUT-MAP-P "
 (defvar ergoemacs-no-shortcut-emulation-mode-map-alist)
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme--hook-running nil)
-(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
+(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-map.el")
 (defvar ergoemacs-is-user-defined-map-change-p)
 (declare-function ergoemacs-setcdr "ergoemacs-mode.el")
 (defun ergoemacs-get-child-maps (keymap &optional ob)

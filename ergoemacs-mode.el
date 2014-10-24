@@ -69,31 +69,6 @@
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
 
-(defun ergoemacs-flatten-composed-keymap--define-key (keymap parent &optional pre-vector)
-  "Define keys in KEYMAP in PARENT keymap recursively.
-PRE-VECTOR is to help define the full key-vector sequence."
-  (dolist (item keymap)
-    (let ((key (ignore-errors (or (and pre-vector (vconcat pre-vector (vector (car item)))) (vector (car item)))))
-          i)
-      (cond
-       ((eq item 'keymap))
-       ((and key (cdr item)
-             (ignore-errors (or (symbolp (cdr item)) (commandp (cdr item) t))))
-        (setq i (lookup-key parent key))
-        (when (integerp i)
-          (define-key parent (substring key 0 i) nil))
-        (define-key parent key (cdr item)))
-       ((and key (equal key [menu-bar]))
-        (define-key parent key nil)
-        (define-key parent key (cdr item)))
-       ((and key (ignore-errors (eq 'keymap (nth 1 item))))
-        (ergoemacs-flatten-composed-keymap--define-key (cdr item) parent key))
-       ((and key (equal key [keymap]) (keymapp item))
-        (ergoemacs-flatten-composed-keymap--define-key item parent pre-vector))
-       (t
-        ;; (message "This: %s %s %s" pre-vector key item)
-        )))))
-
 (defvar ergoemacs-movement-functions
   '(scroll-down
     move-beginning-of-line move-end-of-line scroll-up
@@ -152,56 +127,7 @@ If VAR is nil, return nil and do nothing. "
         ret))))
 
 (declare-function ergoemacs-translate "ergoemacs-translate.el")
-(defun ergoemacs-flatten-composed-keymap (keymap &optional force-shifted)
-  "Flattens a composed KEYMAP.
-If it is not a composed KEYMAP, return the keymap as is.
-
-This will also install
-`ergoemacs-shortcut-movement-force-shift-select' when
-FORCE-SHIFTED is non-nil."
-  (if (not (ignore-errors (and (keymapp keymap) (eq (nth 0 (nth 1 keymap)) 'keymap)))) keymap
-    (let* (new-keymap
-           trans
-           (remaining (cdr keymap))
-           (keymap-list '()))
-      (while (keymapp (car remaining))
-        (push (pop remaining) keymap-list)) ;; Should be reversed
-      ;; Parent keymap
-      (if (keymapp remaining)
-          (setq new-keymap (copy-keymap remaining))
-        (setq new-keymap (make-sparse-keymap)))
-      (dolist (sub-keymap keymap-list)
-        (ergoemacs-flatten-composed-keymap--define-key sub-keymap new-keymap))
-      (when force-shifted
-        (dolist (move-fn (append ergoemacs-movement-functions
-                                  '(ergoemacs-shortcut-movement)))
-          (dolist (move-key (where-is-internal move-fn new-keymap))
-            (setq trans (plist-get (ergoemacs-translate move-key) ':caps-translated-key))
-            (when (and trans (not (lookup-key new-keymap trans)))
-              (define-key new-keymap trans 'ergoemacs-shortcut-movement-force-shift-select)))))
-      (ergoemacs-setcdr keymap (cdr new-keymap))
-      keymap)))
-
-(when (not (fboundp 'make-composed-keymap))
-  (defun make-composed-keymap (maps &optional parent)
-    "Construct a new keymap composed of MAPS and inheriting from PARENT.
-
-This does not work in emacs 23 or below, but ergoemacs-mode uses
-it to create the same structure and flatten them later.
-
-In emacs 24, this is how the function behaves:
-
-When looking up a key in the returned map, the key is looked in each
-keymap of MAPS in turn until a binding is found.
-If no binding is found in MAPS, the lookup continues in PARENT, if non-nil.
-As always with keymap inheritance, a nil binding in MAPS overrides
-any corresponding binding in PARENT, but it does not override corresponding
-bindings in other keymaps of MAPS.
-MAPS can be a list of keymaps or a single keymap.
-PARENT if non-nil should be a keymap."
-    `(keymap
-      ,@(if (keymapp maps) (list maps) maps)
-      ,@parent)))
+(require 'ergoemacs-map)
 
 
 (defvar ergoemacs-debug ""

@@ -377,7 +377,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
 
 (defvar ergoemacs-modal-emulation-mode-map-alist)
 (defvar ergoemacs-ignore-advice)
-(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
+(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-map.el")
 (defun ergoemacs-modal-toggle (type)
   "Toggle ergoemacs command modes."
   (let* ((help-list (gethash type ergoemacs-translation-text))
