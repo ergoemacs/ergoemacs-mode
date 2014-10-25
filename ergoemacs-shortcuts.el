@@ -2229,32 +2229,6 @@ The keymaps are:
 
 (defvar ergoemacs-debug-keymap--temp-map)
 (declare-function ergoemacs-real-substitute-command-keys "ergoemacs-advice.el")
-(defun ergoemacs-extract-prefixes (keymap)
-  "Extract prefix commands for KEYMAP.
-Ignores command sequences starting with `ergoemacs-ignored-prefixes'."
-  (save-match-data
-    (let ((string (or (ignore-errors
-                        (ergoemacs-real-substitute-command-keys (format "\\{%s}" (symbol-name keymap))))
-                      (progn
-                        (setq ergoemacs-debug-keymap--temp-map keymap)
-                        (ergoemacs-real-substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}"))))
-          (pt 0)
-          (ret '()))
-      (while (string-match "^\\([^ \n][^ \n\t]*?\\) [^.].+*" string pt)
-        (unless (or (string-match-p "\\(--\\|key\\)" (match-string 1 string))
-                    (member (match-string 1 string) ergoemacs-ignored-prefixes)
-                    (member (match-string 1 string) ret))
-          (when (string-match-p (format "%s [A-Za-z]" (regexp-quote (match-string 1 string)))
-                                (match-string 0 string))
-            (when (save-match-data
-                    (ignore-errors
-                      (keymapp
-                       (lookup-key
-                        keymap
-                        (read-kbd-macro (match-string 1 string) t)))))
-              (push (match-string 1 string) ret))))
-        (setq pt (match-end 0)))
-      ret)))
 
 (defvar ergoemacs-ignore-advice)
 (defun ergoemacs-setup-local-prefixes ()

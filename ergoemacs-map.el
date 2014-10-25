@@ -55,6 +55,34 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
+(defun ergoemacs-extract-prefixes (keymap &optional dont-ignore return-vector)
+  "Extract prefix commands for KEYMAP.
+Ignores command sequences starting with `ergoemacs-ignored-prefixes'.
+
+When DONT-IGNORE is non-nil, don't ignore sequences starting with `ergoemacs-ignored-prefixes'.
+When RETURN-VECTOR is non-nil, return list of the keys in a vector form.
+"
+  (if (not (keymapp keymap)) nil
+    (let (ret ret2)
+      (dolist (key keymap)
+        (cond
+         ((ignore-errors (keymapp (cdr key)))
+          (push (vector (car key)) ret))
+         ((ignore-errors (char-table-p key))
+          (map-char-table
+           #'(lambda(key-2 value)
+               (when (keymapp value)
+                 (push (vector key-2) ret)))
+           key))))
+      (if (and dont-ignore return-vector) ret
+        (dolist (a ret)
+          (let ((tmp (key-description a)))
+            (when (or dont-ignore (not (member tmp ergoemacs-ignored-prefixes)))
+              (if return-vector
+                  (push a ret2)
+                (push tmp ret2)))))
+        ret2))))
+
 (when (not (fboundp 'make-composed-keymap))
   (defun make-composed-keymap (maps &optional parent)
     "Construct a new keymap composed of MAPS and inheriting from PARENT.
@@ -102,7 +130,7 @@ PRE-VECTOR is to help define the full key-vector sequence."
         ;; (message "This: %s %s %s" pre-vector key item)
         )))))
 
-
+(defvar ergoemacs-movement-functions)
 (defun ergoemacs-flatten-composed-keymap (keymap &optional force-shifted)
   "Flattens a composed KEYMAP.
 If it is not a composed KEYMAP, return the keymap as is.
@@ -198,10 +226,11 @@ The KEYMAP will have the structure
     (ergoemacs-setcdr keymap (cdr map))
     map))
 
+(defvar ergoemacs-original-map-hash)
+(defvar ergoemacs-command-shortcuts-hash)
 (defun ergoemacs-map--original (keymap)
   "Gets the original KEYMAP with `ergoemacs-mode' identifiers installed."
-  (let ((map-name (ergoemacs-map-p keymap))
-        map)
+  (let ((map-name (ergoemacs-map-p keymap)))
     (if (not map-name)
         (let ((maps (ergoemacs-map--name keymap)))
           (ergoemacs-map--label keymap maps t)
