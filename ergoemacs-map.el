@@ -55,18 +55,29 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
-(defun ergoemacs-extract-prefixes (keymap &optional dont-ignore return-vector)
+(defun ergoemacs-extract-prefixes (keymap &optional dont-ignore return-vector defined)
   "Extract prefix commands for KEYMAP.
 Ignores command sequences starting with `ergoemacs-ignored-prefixes'.
 
 When DONT-IGNORE is non-nil, don't ignore sequences starting with `ergoemacs-ignored-prefixes'.
+
 When RETURN-VECTOR is non-nil, return list of the keys in a vector form.
+
+When DEFINED is non-nil, use the list to know previously defined keys.  Also will return a list (prefix-list defined-list)
 "
   (if (not (keymapp keymap)) nil
-    (let (ret (ret2 '()) defined)
+    (let (ret (ret2 '()) (cur-defined (if (eq defined t) nil defined)) tmp)
       (dolist (key keymap)
         (cond
-         ((ignore-errors (member (vector (car key)) defined))) ;; Ignore already defined keys.
+         ((ignore-errors (keymapp key))
+          (setq tmp (ergoemacs-extract-prefixes key dont-ignore return-vector (if cur-defined cur-defined t)))
+          (dolist (item (reverse (nth 0 tmp)))
+            (unless (member item ret)
+              (push item ret)))
+          (dolist (item (reverse (nth 1 tmp)))
+            (unless (member item cur-defined)
+              (push item cur-defined))))
+         ((ignore-errors (member (vector (car key)) cur-defined))) ;; Ignore already defined keys.
          ((ignore-errors (keymapp (cdr key)))
           (push (vector (car key)) ret))
          ((ignore-errors (char-table-p key))
@@ -74,17 +85,19 @@ When RETURN-VECTOR is non-nil, return list of the keys in a vector form.
            #'(lambda(key-2 value)
                (if (keymapp value)
                    (push (vector key-2) ret)
-                 (push (vector key-2) defined)))
+                 (push (vector key-2) cur-defined)))
            key))
-         ((ignore-errors (car key)) (push (vector (car key)) defined))))
-      (if (and dont-ignore return-vector) ret
-        (dolist (a ret)
-          (let ((tmp (key-description a)))
-            (when (or dont-ignore (not (member tmp ergoemacs-ignored-prefixes)))
-              (if return-vector
-                  (push a ret2)
-                (push tmp ret2)))))
-        ret2))))
+         ((ignore-errors (car key)) (push (vector (car key)) cur-defined))))
+      (if defined
+          (list ret cur-defined)
+        (if (and dont-ignore return-vector) ret
+          (dolist (a ret)
+            (let ((tmp (key-description a)))
+              (when (or dont-ignore (not (member tmp ergoemacs-ignored-prefixes)))
+                (if return-vector
+                    (push a ret2)
+                  (push tmp ret2)))))
+          ret2)))))
 
 (when (not (fboundp 'make-composed-keymap))
   (defun make-composed-keymap (maps &optional parent)
