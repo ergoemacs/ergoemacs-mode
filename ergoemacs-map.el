@@ -63,17 +63,20 @@ When DONT-IGNORE is non-nil, don't ignore sequences starting with `ergoemacs-ign
 When RETURN-VECTOR is non-nil, return list of the keys in a vector form.
 "
   (if (not (keymapp keymap)) nil
-    (let (ret ret2)
+    (let (ret (ret2 '()) defined)
       (dolist (key keymap)
         (cond
+         ((ignore-errors (member (vector (car key)) defined))) ;; Ignore already defined keys.
          ((ignore-errors (keymapp (cdr key)))
           (push (vector (car key)) ret))
          ((ignore-errors (char-table-p key))
           (map-char-table
            #'(lambda(key-2 value)
-               (when (keymapp value)
-                 (push (vector key-2) ret)))
-           key))))
+               (if (keymapp value)
+                   (push (vector key-2) ret)
+                 (push (vector key-2) defined)))
+           key))
+         ((ignore-errors (car key)) (push (vector (car key)) defined))))
       (if (and dont-ignore return-vector) ret
         (dolist (a ret)
           (let ((tmp (key-description a)))
