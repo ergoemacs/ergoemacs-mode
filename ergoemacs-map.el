@@ -202,7 +202,6 @@ Returns the keymap name if it is a modified map."
                 (or (and unmodified '(ergoemacs-modified ergoemacs-unmodified)) '(ergoemacs-modified)))
           (car (cdr (cdr keymap)))))))
 
-(defvar ergoemacs-map--last-unbound nil)
 (defun ergoemacs-map--name (keymap)
   "Gets the first symbol pointing to this KEYMAP (if any)"
   (or
@@ -219,8 +218,7 @@ Returns the keymap name if it is a modified map."
                          (equal (ergoemacs-sv map) keymap)))
             (push map ret)))))
      (unless ret
-       (setq ergoemacs-map--last-unbound (list (intern (concat "ergoemacs-unbound-" (format-time-string "%s")))))
-       (setq ret ergoemacs-map--last-unbound))
+       (setq ret (list (intern (concat "ergoemacs-unbound-" (format-time-string "%s"))))))
      ret)))
 
 (defun ergoemacs-map--label (keymap &optional map-name unmodified)
