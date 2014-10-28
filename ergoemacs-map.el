@@ -181,12 +181,23 @@ FORCE-SHIFTED is non-nil."
   "Determines if this is an `ergoemacs-mode' KEYMAP.
 Returns the keymap name if it is a modified map."
   (or
-   (ignore-errors
+   (ignore-errors ;; (keymap #char-table "Label" (ergoemacs-map-marker) (ergoemacs-map-list))
+     (and (char-table-p (car (cdr keymap)))
+          (stringp (car (cdr (cdr keymap))))
+          (memq (car (car (cdr (cdr (cdr keymap))))) 
+                (or (and unmodified '(ergoemacs-modified ergoemacs-unmodified)) '(ergoemacs-modified)))
+          (car (cdr (cdr (cdr (cdr keymap)))))))
+   (ignore-errors ;; (keymap #char-table (ergoemacs-map-marker) (ergoemacs-map-list))
+     (and (char-table-p (car (cdr keymap))) 
+          (memq (car (car (cdr (cdr keymap)))) 
+                (or (and unmodified '(ergoemacs-modified ergoemacs-unmodified)) '(ergoemacs-modified)))
+          (car (cdr (cdr (cdr keymap))))))
+   (ignore-errors ;; (keymap "label" (ergoemacs-map-marker) (ergoemacs-map-list))
      (and (stringp (car (cdr keymap))) 
           (memq (car (car (cdr (cdr keymap)))) 
                 (or (and unmodified '(ergoemacs-modified ergoemacs-unmodified)) '(ergoemacs-modified)))
           (car (cdr (cdr (cdr keymap))))))
-   (ignore-errors
+   (ignore-errors ;;(keymap  (ergoemacs-map-marker) (ergoemacs-map-list))
      (and (memq (car (car (cdr keymap)))
                 (or (and unmodified '(ergoemacs-modified ergoemacs-unmodified)) '(ergoemacs-modified)))
           (car (cdr (cdr keymap)))))))
@@ -219,15 +230,18 @@ MAP-NAME is the identifier of the map name.
 
 The KEYMAP will have the structure
 
-  (keymap \"Optional Label\" (ergoemacs-(un)modified) (bound-map-list) (read-keys) true-map)
+  (keymap optional-char-table \"Optional Label\" (ergoemacs-(un)modified) (bound-map-list) true-map)
 
 "
   (let ((map keymap)
         (maps (or map-name (ergoemacs-map--name keymap)))
+        char-table
         label)
     (if (eq (car map) 'keymap)
         (setq map (cdr map))
       (setq map (list map)))
+    (when (char-table-p (car map))
+      (setq char-table (pop map)))
     (when (stringp (car map))
       (setq label (pop map)))
     ;; Drop prior `ergoemacs-mode' labels
@@ -238,6 +252,8 @@ The KEYMAP will have the structure
               '(ergoemacs-modified)) map)
     (when label
       (push label map))
+    (when char-table
+      (push char-table map))
     (push 'keymap map)
     (ergoemacs-setcdr keymap (cdr map))
     map))
