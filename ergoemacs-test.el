@@ -1200,25 +1200,36 @@ When calling `ergoemacs-refresh' variable values should be preserved."
   "Test Labeling function"
   (let ((keymap1 '(keymap "keymap1" (127 . backward-delete-char-untabify)))
         (keymap2 '(keymap (127 . backward-delete-char-untabify)))
+        (full (let ((map (make-keymap "labeled")))
+                (define-key map [127] 'backward-delete-char-untabify)
+                map))
+        (full-u (let ((map (make-keymap)))
+                  (define-key map [127] 'backward-delete-char-untabify)
+                  map))
+        char-map
         last)
     (setq ergoemacs-test-keymap-label-1 nil
-          ergoemacs-test-keymap-label-2 nil)
+          ergoemacs-test-keymap-label-2 nil
+          char-map (nth 1 full))
 
+    (should (equal (ergoemacs-map--label full) `(keymap ,char-map "labeled" (ergoemacs-modified) ,(ergoemacs-map-p full))))
+    (should (equal (ergoemacs-map--label full-u) `(keymap ,char-map (ergoemacs-modified) ,(ergoemacs-map-p full-u))))
+    
     ;; Unbound keymap1
-    (should (equal (ergoemacs-map--label keymap1) `(keymap "keymap1" (ergoemacs-modified) ,ergoemacs-map--last-unbound (127 . backward-delete-char-untabify))))
-    (should (equal keymap1 `(keymap "keymap1" (ergoemacs-modified) ,ergoemacs-map--last-unbound (127 . backward-delete-char-untabify))))
-    (setq last ergoemacs-map--last-unbound)
-    (should (equal (ergoemacs-map--label keymap1) `(keymap "keymap1" (ergoemacs-modified) ,ergoemacs-map--last-unbound (127 . backward-delete-char-untabify))))
-    (should (equal last ergoemacs-map--last-unbound))
-    (should (equal keymap1 `(keymap "keymap1" (ergoemacs-modified) ,ergoemacs-map--last-unbound (127 . backward-delete-char-untabify))))
+    (should (equal (ergoemacs-map--label keymap1) `(keymap "keymap1" (ergoemacs-modified) ,(ergoemacs-map-p keymap1) (127 . backward-delete-char-untabify))))
+    (should (equal keymap1 `(keymap "keymap1" (ergoemacs-modified) ,(ergoemacs-map-p keymap1) (127 . backward-delete-char-untabify))))
+    (setq last (ergoemacs-map-p keymap1))
+    (should (equal (ergoemacs-map--label keymap1) `(keymap "keymap1" (ergoemacs-modified) ,(ergoemacs-map-p keymap1) (127 . backward-delete-char-untabify))))
+    (should (equal last (ergoemacs-map-p keymap1)))
+    (should (equal keymap1 `(keymap "keymap1" (ergoemacs-modified) ,(ergoemacs-map-p keymap1) (127 . backward-delete-char-untabify))))
 
     ;; Unbound keymap2
-    (should (equal (ergoemacs-map--label keymap2) `(keymap (ergoemacs-modified) ,ergoemacs-map--last-unbound (127 . backward-delete-char-untabify))))
-    (should (equal keymap2 `(keymap (ergoemacs-modified) ,ergoemacs-map--last-unbound (127 . backward-delete-char-untabify))))
-    (setq last ergoemacs-map--last-unbound)
-    (should (equal (ergoemacs-map--label keymap2) `(keymap (ergoemacs-modified) ,ergoemacs-map--last-unbound (127 . backward-delete-char-untabify))))
-    (should (equal last ergoemacs-map--last-unbound))
-    (should (equal keymap2 `(keymap (ergoemacs-modified) ,ergoemacs-map--last-unbound (127 . backward-delete-char-untabify))))
+    (should (equal (ergoemacs-map--label keymap2) `(keymap (ergoemacs-modified) ,(ergoemacs-map-p keymap2) (127 . backward-delete-char-untabify))))
+    (should (equal keymap2 `(keymap (ergoemacs-modified) ,(ergoemacs-map-p keymap2) (127 . backward-delete-char-untabify))))
+    (setq last (ergoemacs-map-p keymap2))
+    (should (equal (ergoemacs-map--label keymap2) `(keymap (ergoemacs-modified) ,(ergoemacs-map-p keymap2) (127 . backward-delete-char-untabify))))
+    (should (equal last (ergoemacs-map-p keymap2)))
+    (should (equal keymap2 `(keymap (ergoemacs-modified) ,(ergoemacs-map-p keymap2) (127 . backward-delete-char-untabify))))
 
     (setq ergoemacs-test-keymap-label-1 '(keymap "keymap1" (127 . backward-delete-char-untabify))
           ergoemacs-test-keymap-label-2 '(keymap (127 . backward-delete-char-untabify)))
