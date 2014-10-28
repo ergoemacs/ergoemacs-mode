@@ -132,10 +132,10 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
   "In parsing, this function converts
-- `define-key' is converted to `ergoemacs-define-key' and keymaps are quoted
-- `global-set-key' is converted to `ergoemacs-define-key' with keymap equal to `global-map'
-- `global-unset-key' is converted to `ergoemacs-define-key' with keymap equal to `global-map' and function definition is `nil'
-- `global-reset-key' is converted `ergoemacs-define-key'
+- `define-key' is converted to `ergoemacs-theme-define-key' and keymaps are quoted
+- `global-set-key' is converted to `ergoemacs-theme-define-key' with keymap equal to `global-map'
+- `global-unset-key' is converted to `ergoemacs-theme-define-key' with keymap equal to `global-map' and function definition is `nil'
+- `global-reset-key' is converted `ergoemacs-theme-define-key'
 - `setq' and `set' is converted to `ergoemacs-theme--set'
 - `add-hook' and `remove-hook' is converted to `ergoemacs-theme--set'
 - Mode initialization like (delete-selection-mode 1)
@@ -158,9 +158,9 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                (setq last-was-version t)
                nil)
               ((ignore-errors (eq (nth 0 elt) 'global-reset-key))
-               `(ergoemacs-define-key 'global-map ,(nth 1 elt) nil))
+               `(ergoemacs-theme-define-key 'global-map ,(nth 1 elt) nil))
               ((ignore-errors (eq (nth 0 elt) 'global-unset-key))
-               `(ergoemacs-define-key 'global-map ,(nth 1 elt) nil))
+               `(ergoemacs-theme-define-key 'global-map ,(nth 1 elt) nil))
               ((ignore-errors (eq (nth 0 elt) 'set))
                ;; Currently doesn't support (setq a b c d ), but it should.
                `(ergoemacs-theme--set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
@@ -182,16 +182,16 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                `(ergoemacs-theme--set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
                (if (ignore-errors (keymapp (ergoemacs-sv (nth 2 elt))))
-                   `(ergoemacs-define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
-                 `(ergoemacs-define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
+                   `(ergoemacs-theme-define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
+                 `(ergoemacs-theme-define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
               ((ignore-errors (eq (nth 0 elt) 'define-key))
                (if (equal (nth 1 elt) '(current-global-map))
                    (if (ignore-errors (keymapp (ergoemacs-sv (nth 3 elt))))
-                       `(ergoemacs-define-key 'global-map ,(nth 2 elt) (quote ,(nth 3 elt)))
-                     `(ergoemacs-define-key 'global-map ,(nth 2 elt) ,(nth 3 elt)))
+                       `(ergoemacs-theme-define-key 'global-map ,(nth 2 elt) (quote ,(nth 3 elt)))
+                     `(ergoemacs-theme-define-key 'global-map ,(nth 2 elt) ,(nth 3 elt)))
                  (if (ignore-errors (keymapp (ergoemacs-sv (nth 3 elt))))
-                     `(ergoemacs-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
-                   `(ergoemacs-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)))))
+                     `(ergoemacs-theme-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
+                   `(ergoemacs-theme-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)))))
               ((or (ignore-errors (eq (nth 0 elt) 'with-hook))
                    (and (ignore-errors (eq (nth 0 elt) 'when))
                         (ignore-errors (string-match "\\(-hook\\|-mode\\|^mark-active\\)$" (symbol-name (nth 1 elt))))))

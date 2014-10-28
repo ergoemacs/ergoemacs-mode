@@ -2029,10 +2029,10 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
       ret)))
 
 
-(defun ergoemacs-define-key (keymap key def)
+(defun ergoemacs-theme-define-key (keymap key def)
   "Defines KEY to be DEF in KEYMAP for object `ergoemacs-theme-component-maps--curr-component'."
   (if (not (ergoemacs-theme-component-maps-p ergoemacs-theme-component-maps--curr-component))
-      (warn "`ergoemacs-define-key' is meant to be called in a theme definition.")
+      (warn "`ergoemacs-theme-define-key' is meant to be called in a theme definition.")
     (let* ((ergoemacs-theme-component-maps--hook
             (or
              ergoemacs-theme-component-maps--hook
@@ -2860,7 +2860,7 @@ _DESC is ignored, as is _FIXED-KEY."
                    (read-kbd-macro key t)))
              (ergoemacs-force-just-first only-first)
              (ergoemacs-force-variable t))
-        (ergoemacs-define-key 'global-map key function))
+        (ergoemacs-theme-define-key 'global-map key function))
     (warn "ergoemacs-key is depreciated, use global-set-key instead.")
     (global-set-key (ergoemacs-kbd key nil only-first) function)))
 
@@ -2873,7 +2873,7 @@ Ignores _DESC."
                    (read-kbd-macro key t)))
              (ergoemacs-force-just-first nil)
              (ergoemacs-force-fixed t))
-        (ergoemacs-define-key 'global-map key function))
+        (ergoemacs-theme-define-key 'global-map key function))
     (warn "ergoemacs-fixed-key is depreciated, use global-set-key instead.")
     (global-set-key (if (vectorp key) key
                       (read-kbd-macro key)) function)))

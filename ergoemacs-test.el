@@ -33,7 +33,7 @@
   (require 'ergoemacs-macros))
 
 (declare-function ergoemacs-theme--set "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-define-key "ergoemacs-theme-engine.el")
+(declare-function ergoemacs-theme-define-key "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-theme-set-version "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-theme-reset "ergoemacs-theme-engine.el")
