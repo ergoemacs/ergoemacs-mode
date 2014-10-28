@@ -221,10 +221,11 @@ Returns the keymap name if it is a modified map."
        (setq ret (list (intern (concat "ergoemacs-unbound-" (format-time-string "%s"))))))
      ret)))
 
-(defun ergoemacs-map--label (keymap &optional map-name unmodified)
+(defun ergoemacs-map--label (keymap &optional map-name unmodified strip)
   "Label an `ergoemacs-mode' touched keymap.
 UNMODIFIED, labels the keymap as practically untouched.
 MAP-NAME is the identifier of the map name.
+When STRIP is true, remove all `ergoemacs-mode' labels
 
 The KEYMAP will have the structure
 
@@ -245,9 +246,10 @@ The KEYMAP will have the structure
     ;; Drop prior `ergoemacs-mode' labels
     (when (ignore-errors (memq (car (car map)) '(ergoemacs-unmodified ergoemacs-modified)))
       (setq map (cdr (cdr map))))
-    (push maps map)
-    (push (or (and unmodified '(ergoemacs-unmodified))
-              '(ergoemacs-modified)) map)
+    (unless strip
+      (push maps map)
+      (push (or (and unmodified '(ergoemacs-unmodified))
+                '(ergoemacs-modified)) map))
     (when label
       (push label map))
     (when char-table
