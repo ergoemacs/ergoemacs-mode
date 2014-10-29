@@ -1628,12 +1628,6 @@ no translation listed."
   (let ((tmp (this-single-command-keys)))
     (ergoemacs-read-key (or (and (equal tmp [27 27]) "M-ESC") tmp))))
 
-
-
-(defvar ergoemacs-ignored-prefixes '(;; "C-h" "<f1>"
-                                     "C-x" "C-c" "ESC" "<escape>"
-                                     "<remap>"))
-
 (defvar ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
   "List of command shortcuts.")
 
