@@ -82,12 +82,13 @@
     beginning-of-buffer end-of-buffer)
   "Movement functions.")
 
-(defun ergoemacs-setcdr (var val)
+(defun ergoemacs-setcdr (var val &optional default)
   "Use `setcdr' on VAL to VAL.
 If VAL is a symbol, use `ergoemacs-sv' to determine the value.
-If VAR is nil, return nil and do nothing. "
+If VAR is nil, return nil and do nothing.
+If DEFAULT is non-nil set the default value, instead of the symbol value."
   (if (symbolp var)
-      (setcdr (ergoemacs-sv var) val)
+      (setcdr (ergoemacs-sv var default) val)
     (if var
         (setcdr var val)
       nil)))
