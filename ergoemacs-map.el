@@ -56,14 +56,14 @@
   (require 'ergoemacs-macros))
 
 (defvar ergoemacs-ignored-prefixes '(;; "C-h" "<f1>"
-                                     "C-x" "C-c" "ESC" "<escape>"
-                                     "<remap>"
-                                     "<left-fringe>"
-                                     "<vertical-line>"
-                                     "<vertical-scroll-bar>"
-                                     "<header-line>"
-                                     "<mode-line>"
-                                     "<menu-bar>"))
+                                     [27]  [escape]
+                                     [remap]
+                                     [left-fringe]
+                                     [vertical-line]
+                                     [vertical-scroll-bar]
+                                     [header-line]
+                                     [mode-line]
+                                     [menu-bar]))
 (defun ergoemacs-extract-prefixes (keymap &optional dont-ignore return-vector defined)
   "Extract prefix commands for KEYMAP.
 Ignores command sequences starting with `ergoemacs-ignored-prefixes'.

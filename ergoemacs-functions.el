@@ -151,53 +151,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
     (ergoemacs-ini-mode -1)
     (ergoemacs-mode 1)))
 
-(defun ergoemacs-ctl-c (&optional arg)
-  "Ergoemacs C-c key."
-  (interactive "P")
-  (ergoemacs-ctl-c-or-ctl-x "C-c" arg))
-
-(defun ergoemacs-ctl-x (&optional arg)
-  "Ergoemacs C-x key."
-  (interactive "P")
-  (ergoemacs-ctl-c-or-ctl-x "C-x" arg))
-
 (defvar cua--rectangle)
-
-(declare-function ergoemacs-read-key "ergoemacs-shortcuts.el")
-(defvar ergoemacs-read-key)
-(defun ergoemacs-ctl-c-or-ctl-x (key &optional arg)
-  "Ergoemacs C-c or C-x defined by KEY."
-  (let (fn-cp)
-    ;; Create the needed functions
-    (if (string= "C-c" key)
-        (progn
-          (setq fn-cp 'ergoemacs-copy-line-or-region))
-      (progn
-        (setq fn-cp 'ergoemacs-cut-line-or-region)))
-    (cond
-     ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-      (funcall fn-cp arg))
-     ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
-      (ergoemacs-read-key key 'normal))
-     (this-command-keys-shift-translated
-      ;; Shift translated keys are C-c and C-x only.
-      (ergoemacs-read-key key 'normal))
-     ((and ergoemacs-ctl-c-or-ctl-x-delay
-           (or (region-active-p)
-               (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode)))
-      ;; Wait for next key...
-      (let ((next-key
-             (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
-               (eval (macroexpand `(key-description [,(read-key)]))))))
-        (if next-key
-            (progn
-              (ergoemacs-read-key (concat key " " next-key) 'normal))
-          (funcall fn-cp arg))))
-     ((or (region-active-p)
-          (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode))
-      (funcall fn-cp arg))
-     (t
-      (ergoemacs-read-key key 'normal)))))
 
 (defvar ergoemacs-terminal
   "Local variable to determine if `ergoemacs-clean' is running a terminal `ergoemacs-mode'")

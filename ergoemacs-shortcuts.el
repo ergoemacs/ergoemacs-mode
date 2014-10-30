@@ -1613,7 +1613,15 @@ argument prompt.
 (defun ergoemacs-read-key-default ()
   "The default command for `ergoemacs-mode' read-key.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
-no translation listed."
+no translation listed.
+
+It also handles the Ctrl+c and Ctrl+x by the option set in
+`ergoemacs-handle-ctl-c-or-ctl-x'.
+
+When Ctrl+c copies, this function runs `ergoemacs-copy-line-or-region'.
+
+When Ctrl+x cuts, this function runs `ergoemacs-cut-line-or-region'.
+"
   (interactive "^")
   (when (and shift-select-mode ergoemacs-force-shift-select-mark-active
              (not mark-active))
@@ -1625,8 +1633,37 @@ no translation listed."
                   (unless (eq transient-mark-mode 'lambda)
                     transient-mark-mode))
             mark-active t)))
-  (let ((tmp (this-single-command-keys)))
-    (ergoemacs-read-key (or (and (equal tmp [27 27]) "M-ESC") tmp))))
+  (let ((key (this-single-command-keys)))
+    (cond
+     ((member key '([3] [24]))
+      (let ((fn-cp (or (and (equal [3] key) 'ergoemacs-copy-line-or-region)
+                       'ergoemacs-cut-line-or-region)))
+        
+        (cond
+         ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+          (ergoemacs-read-key-call fn-cp))
+         ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
+          (ergoemacs-read-key key 'normal))
+         (this-command-keys-shift-translated
+          ;; Shift translated keys are C-c and C-x only.
+          (ergoemacs-read-key key 'normal))
+         ((and ergoemacs-ctl-c-or-ctl-x-delay
+               (or (region-active-p)
+                   (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode)))
+          ;; Wait for next key...
+          (let ((next-key
+                 (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
+                   (vector (read-key)))))
+            (if next-key
+                (progn
+                  (ergoemacs-read-key (vconcat key next-key) 'normal))
+              (ergoemacs-read-key-call fn-cp))))
+         ((or (region-active-p)
+              (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode))
+          (ergoemacs-read-key-call fn-cp))
+         (t
+          (ergoemacs-read-key key 'normal)))))
+     (t (ergoemacs-read-key (or (and (equal key [27 27]) "M-ESC") key))))))
 
 (defvar ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)
   "List of command shortcuts.")

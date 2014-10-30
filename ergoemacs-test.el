@@ -440,6 +440,8 @@ Test next and prior translation."
     (should ret)))
 
 (defvar ergoemacs-ctl-c-or-ctl-x-delay)
+(defvar ergoemacs-single-command-keys)
+(declare-function ergoemacs-paste "ergoemacs-functions.el")
 (ert-deftest ergoemacs-test-issue-130-cut ()
   "Attempts to test Issue #130 -- Cut"
   :expected-result (if noninteractive :failed :passed)
@@ -447,17 +449,19 @@ Test next and prior translation."
     (let ((ret t)
           (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
           (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-      (with-temp-buffer
-        (insert ergoemacs-test-lorem-ipsum)
-        (push-mark (point))
-        (push-mark (point-max) nil t)
-        (goto-char (point-min))
-        (with-timeout (0.15 nil)
-          (call-interactively 'ergoemacs-ctl-x))
-        (setq ret (string= "" (buffer-string))))
+      (unwind-protect
+          (with-temp-buffer
+            (setq ergoemacs-single-command-keys [24])
+            (insert ergoemacs-test-lorem-ipsum)
+            (push-mark (point))
+            (push-mark (point-max) nil t)
+            (goto-char (point-min))
+            (with-timeout (0.15 nil)
+              (call-interactively 'ergoemacs-read-key-default))
+            (setq ret (string= "" (buffer-string))))
+        (setq ergoemacs-single-command-keys nil))
       (should ret))))
 
-(declare-function ergoemacs-paste "ergoemacs-functions.el")
 (ert-deftest ergoemacs-test-issue-130-copy ()
   "Attempts to test Issue #130 -- Copy"
   :expected-result (if noninteractive :failed :passed)
@@ -465,18 +469,21 @@ Test next and prior translation."
       (let ((ret t)
             (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
             (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-        (with-temp-buffer
-          (insert ergoemacs-test-lorem-ipsum)
-          (push-mark (point))
-          (push-mark (point-max) nil t)
-          (goto-char (point-min))
-          (with-timeout (0.15 nil)
-            (call-interactively 'ergoemacs-ctl-c))
-          (goto-char (point-max))
-          (ergoemacs-paste)
-          (setq ret (string= (concat ergoemacs-test-lorem-ipsum
-                                     ergoemacs-test-lorem-ipsum)
-                             (buffer-string))))
+        (unwind-protect
+            (with-temp-buffer
+              (setq ergoemacs-single-command-keys [3])
+              (insert ergoemacs-test-lorem-ipsum)
+              (push-mark (point))
+              (push-mark (point-max) nil t)
+              (goto-char (point-min))
+              (with-timeout (0.15 nil)
+                (call-interactively 'ergoemacs-read-key-default))
+              (goto-char (point-max))
+              (ergoemacs-paste)
+              (setq ret (string= (concat ergoemacs-test-lorem-ipsum
+                                         ergoemacs-test-lorem-ipsum)
+                                 (buffer-string))))
+          (setq ergoemacs-single-command-keys nil))
         (should ret))))
 
 (ert-deftest ergoemacs-test-apps-cut ()

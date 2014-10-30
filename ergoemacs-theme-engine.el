@@ -399,9 +399,8 @@ Key sequences starting with `ergoemacs-ignored-prefixes' are not added."
                read-list) obj
     (when (< 1 (length key))
       (let* ((new-key (substring key 0 1))
-             (ergoemacs-ignore-advice t)
-             (kd (key-description new-key)))
-        (unless (member kd ergoemacs-ignored-prefixes)
+             (ergoemacs-ignore-advice t))
+        (unless (member new-key ergoemacs-ignored-prefixes)
           (push new-key read-list)
           (oset obj read-list read-list)
           (define-key read-map new-key #'ergoemacs-read-key-default)
