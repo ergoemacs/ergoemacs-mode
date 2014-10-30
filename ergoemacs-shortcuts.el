@@ -1633,36 +1633,35 @@ When Ctrl+x cuts, this function runs `ergoemacs-cut-line-or-region'.
                   (unless (eq transient-mark-mode 'lambda)
                     transient-mark-mode))
             mark-active t)))
-  (let ((key (this-single-command-keys)))
+  (let ((key (this-single-command-keys))
+        fn-cp)
     (cond
-     ((member key '([3] [24]))
-      (let ((fn-cp (or (and (equal [3] key) 'ergoemacs-copy-line-or-region)
-                       'ergoemacs-cut-line-or-region)))
-        
-        (cond
-         ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-          (ergoemacs-read-key-call fn-cp))
-         ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
-          (ergoemacs-read-key key 'normal))
-         (this-command-keys-shift-translated
-          ;; Shift translated keys are C-c and C-x only.
-          (ergoemacs-read-key key 'normal))
-         ((and ergoemacs-ctl-c-or-ctl-x-delay
-               (or (region-active-p)
-                   (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode)))
-          ;; Wait for next key...
-          (let ((next-key
-                 (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
-                   (vector (read-key)))))
-            (if next-key
-                (progn
-                  (ergoemacs-read-key (vconcat key next-key) 'normal))
-              (ergoemacs-read-key-call fn-cp))))
-         ((or (region-active-p)
-              (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode))
-          (ergoemacs-read-key-call fn-cp))
-         (t
-          (ergoemacs-read-key key 'normal)))))
+     ((let (ergoemacs-read-input-keys)
+        (setq fn-cp (ergoemacs-real-key-binding (vconcat key [ergoemacs-timeout]))))
+      (cond
+       ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+        (ergoemacs-read-key-call fn-cp))
+       ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
+        (ergoemacs-read-key key 'normal))
+       (this-command-keys-shift-translated
+        ;; Shift translated keys are C-c and C-x only.
+        (ergoemacs-read-key key 'normal))
+       ((and ergoemacs-ctl-c-or-ctl-x-delay
+             (or (region-active-p)
+                 (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode)))
+        ;; Wait for next key...
+        (let ((next-key
+               (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
+                 (vector (read-key)))))
+          (if next-key
+              (progn
+                (ergoemacs-read-key (vconcat key next-key) 'normal))
+            (ergoemacs-read-key-call fn-cp))))
+       ((or (region-active-p)
+            (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode))
+        (ergoemacs-read-key-call fn-cp))
+       (t
+        (ergoemacs-read-key key 'normal))))
      (t (ergoemacs-read-key (or (and (equal key [27 27]) "M-ESC") key))))))
 
 (defvar ergoemacs-command-shortcuts-hash (make-hash-table :test 'equal)

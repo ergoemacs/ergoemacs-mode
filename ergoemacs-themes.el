@@ -232,8 +232,7 @@
   
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
-  (global-set-key (kbd "C-c <timeout>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "C-c") 'ergoemacs-ctl-c)
+  (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
   
@@ -315,9 +314,8 @@
   (global-set-key (kbd "C-p") 'ergoemacs-print-buffer-confirm)
   
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
-  (global-set-key (kbd "C-x <timeout>") 'ergoemacs-cut-line-or-region)
+  (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-x C-b") 'ibuffer)
-  (global-set-key (kbd "C-x") 'ergoemacs-ctl-x "Cut")
   (global-set-key (kbd "C-y") '(redo undo-tree-redo ergoemacs-redo) "↷ redo")
   
   (global-set-key (kbd "M-S-<next>") 'forward-page)
@@ -703,10 +701,8 @@
   (global-set-key (kbd "M-z") 'undo)
   
   ;; Fixed Component; Note that <timeout> is the actual function.
-  (global-set-key (kbd "C-c <timeout>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "C-c") 'ergoemacs-ctl-c)
-  (global-set-key (kbd "C-x <timeout>") 'ergoemacs-cut-line-or-region)
-  (global-set-key (kbd "C-x") 'ergoemacs-ctl-x)
+  (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
+  (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-z") 'undo)
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "C-y") '(redo undo-tree-redo ergoemacs-redo))
@@ -1186,8 +1182,7 @@
 
 (ergoemacs-theme lvl0 ()
   "CUA-mode style"
-  (global-set-key (kbd "C-c <timeout>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "C-c") 'ergoemacs-ctl-c)
+  (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
   
