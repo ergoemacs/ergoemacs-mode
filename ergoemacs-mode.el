@@ -503,7 +503,7 @@ bindings the keymap is:
       (progn
         (setq ergoemacs-debug-heading-start-time (float-time)
               ergoemacs-debug-heading-last-time (float-time)
-              ergoemacs-global-map (current-global-map))
+              ergoemacs-global-map (copy-keymap (current-global-map)))
         (ergoemacs-debug "* Ergoemacs-mode is turning ON.")
         (when cua-mode
           (cua-mode -1)
