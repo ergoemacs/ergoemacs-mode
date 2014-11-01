@@ -672,7 +672,7 @@ All other modes are assumed to be minor modes or unimportant.
   (interactive)
   (require 'package nil t)
   (if (not (fboundp 'tabbar-mode))
-      (let ((package-archives '(("melpa" . "http://melpa.milkbox.net/packages/"))))
+      (let ((package-archives '(("melpa" . "http://melpa.org/packages/"))))
         (require 'tabbar-ruler nil t)
         (if (fboundp 'tabbar-install-faces)
             (tabbar-install-faces)
