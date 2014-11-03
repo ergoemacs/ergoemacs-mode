@@ -68,10 +68,19 @@
 
 (defvar ergoemacs-submaps--key nil)
 (defvar ergoemacs-submaps--list nil)
+(defvar ergoemacs-submaps-- nil)
 (defvar ergoemacs-extract-keys-hash (make-hash-table :test 'equal))
 (defvar ergoemacs-extract-keys--hash-1 nil)
 (defvar ergoemacs-extract-keys--hash-2 nil)
 (defvar ergoemacs-extract-keys--full-map nil)
+
+(defun ergoemacs-extract-keys--handle-keymap (keymap cur-key)
+  (ergoemacs-map--label keymap nil t nil cur-key)
+  (if (ergoemacs-map-p keymap)
+      ;; Bound submap, traverse submap later
+      (push (ergoemacs-map-p keymap) ergoemacs-submaps--)
+    (ergoemacs-extract-keys keymap nil (or cur-key t))))
+
 (defun ergoemacs-extract-keys--puthash (cur-key value)
   (let (tmp)
     (cond
@@ -79,12 +88,10 @@
      ;; Keymaps
      ;; Indirect maps
      ((ignore-errors (keymapp (symbol-function value)))
-      (ergoemacs-map--label (symbol-function value) nil t nil cur-key)
-      (ergoemacs-extract-keys (symbol-function value) nil (or cur-key t)))
+      (ergoemacs-extract-keys--handle-keymap (symbol-function value) cur-key))
      ;; Prefix keys
      ((ignore-errors (and (keymapp value) (listp value)))
-      (ergoemacs-map--label value nil t nil cur-key)
-      (ergoemacs-extract-keys value nil (or cur-key t)))
+      (ergoemacs-extract-keys--handle-keymap value cur-key))
      ;; Ignore defined keys
      ;; ((gethash cur-key ergoemacs-extract-keys--hash-2))
      
@@ -125,33 +132,52 @@
       (warn "Ignorning %s->%s" (or (ignore-errors (key-description cur-key)) (format "err-%s" cur-key)) value))
      )))
 
-(defun ergoemacs-extract-keys--flatten (item)
+(defun ergoemacs-extract-keys--flatten (item submaps &optional keymap prefix)
   "Internal function to create keymap for ITEM."
-  (let ((ret (if ergoemacs-extract-keys--full-map
-                 (make-keymap)
-               (make-sparse-keymap))))
+  (let ((ret (or keymap
+                 (if ergoemacs-extract-keys--full-map
+                     (make-keymap)
+                   (make-sparse-keymap))))
+        tmp tmp2)
     (maphash
      (lambda(key def)
        (condition-case err
            (if (and (consp key) ergoemacs-extract-keys--full-map)
-               (set-char-table-range (nth 1 ret) key def)
-             (define-key ret key def))
+               (if (not prefix) (set-char-table-range (nth 1 ret) key def)
+                 (message "Keys from %s to %s" (vconcat prefix (vector (car char))) (vconcat prefix (vector (cdr char))))
+                 (loop for char from (car key) to (cdr key)
+                       do (define-key ret (vconcat prefix (vector char)) def)))
+             (define-key ret (or (and prefix (vconcat prefix key)) key) def))
          (error
           (warn "Error defining %s->%s (%s)" (if (eq key t) "Default" (key-description key)) def err))))
      (nth 1 item))
+    (dolist (key submaps)
+      (setq tmp (symbol-value (nth 1 key))
+            tmp2 ergoemacs-extract-keys--full-map)
+      (setq ergoemacs-extract-keys--full-map (ergoemacs-map-get tmp :full))
+      (ergoemacs-extract-keys)
+      ;; (if (not flatten) ret
+      ;;   (setq ergoemacs-extract-keys--full-map (ergoemacs-map-get keymap :full))
+      ;;   (prog1
+      ;;       (ergoemacs-extract-keys--flatten ret (ergoemacs-submaps keymap))
+      ;;     (setq ergoemacs-extract-keys--full-map nil)))
+      (ergoemacs-extract-keys--flatten
+       (ergoemacs-extract-keys tmp) (ergoemacs-submaps keymap)
+       tmp (or (and prefix (vconcat prefix (nth 0 key)))
+               (nth 0 key)))
+      (setq ergoemacs-extract-keys--full-map nil))
     ret))
 
 (defun ergoemacs-extract-keys (keymap &optional flatten pre)
   "Create a hash table of functions and their keys from a keymap."
-  (let (tmp
-        ret)
+  (let (tmp ret tmp2)
     (if (and (not ergoemacs-submaps--key)
              (setq tmp (ergoemacs-map-p keymap))
              (setq ret (gethash tmp ergoemacs-extract-keys-hash)))
         (if (not flatten) ret
           (setq ergoemacs-extract-keys--full-map (ergoemacs-map-get keymap :full))
           (prog1
-              (ergoemacs-extract-keys--flatten ret)
+              (ergoemacs-extract-keys--flatten ret (ergoemacs-submaps keymap))
             (setq ergoemacs-extract-keys--full-map nil)))
       (unless pre
         (ergoemacs-map--label keymap nil t)
@@ -187,15 +213,20 @@
                  (vector (car key))) (cdr key)))))
         (unless pre
           (setq ret (list ergoemacs-extract-keys--hash-1 ergoemacs-extract-keys--hash-2))
+          (ergoemacs-map-put keymap :submaps ergoemacs-submaps--list)
           (if flatten
-              (setq ret (ergoemacs-extract-keys--flatten ret) ret)
-            (ergoemacs-map-put keymap :submaps ergoemacs-submaps--list)
+              (setq ret (ergoemacs-extract-keys--flatten ret (ergoemacs-submaps keymap)))
             (puthash (ergoemacs-map-p keymap) ret ergoemacs-extract-keys-hash))
           (setq ergoemacs-extract-keys--hash-1 nil
                 ergoemacs-extract-keys--hash-2 nil
                 ergoemacs-extract-keys--full-map nil
                 ergoemacs-submaps--key nil
-                ergoemacs-submaps--list nil))
+                ergoemacs-submaps--list nil)
+          (while ergoemacs-submaps--
+            (setq tmp ergoemacs-submaps--)
+            (setq ergoemacs-submaps-- nil)
+            (dolist (key tmp)
+              (ergoemacs-extract-keys (symbol-value (nth 0 key))))))
         ret))))
 
 (defun ergoemacs-submap-p (keymap)
@@ -372,7 +403,15 @@ Returns a plist of keymap properties"
   "Returns the maps linked to the current map, if it is an `ergoemacs-mode' map"
   (ergoemacs-map-get keymap :map-list))
 
-
+(defun ergoemacs-map-boundp (keymap &optional force)
+  "Returns if the maps linked to the current map are unbound, if it is an `ergoemacs-mode' map.
+When FORCE is on, figure out if it is bound."
+  (let ((ret (symbol-name (car (ergoemacs-map-get keymap :map-list)))))
+    (if (not (string= ret "nil"))
+        (string-match-p "^ergoemacs-unbound-" ret)
+      (if (not force) nil
+        (ergoemacs-map--label keymap nil t) ;; Assume map is unmodified.
+        (ergoemacs-map-boundp keymap)))))
 
 (defun ergoemacs-map--name (keymap)
   "Gets the first symbol pointing to this KEYMAP (if any)"
