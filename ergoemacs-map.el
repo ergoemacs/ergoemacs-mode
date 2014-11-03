@@ -91,7 +91,22 @@
      ;; Command
      ;; ((ignore-errors (and (vectorp cur-key) (not value)))
      ;;  (puthash cur-key 'undefined ergoemacs-extract-keys--hash-2))
-     
+
+     ;; Menu item [tool-bar]
+     ((ignore-errors
+        (and (vectorp cur-key)
+             (eq 'menu-item (cdar value))))
+      (puthash (vconcat cur-key (vector (car value))) (cdr value)
+               ergoemacs-extract-keys--hash-2))
+     ;; Menu ("String" keymap), like ("File" keymap ...)
+     ((ignore-errors
+        (and (stringp (nth 0 value))
+             (eq (nth 1 value) 'keymap)))
+      (puthash cur-key (list (nth 0 value) 'keymap)
+               ergoemacs-extract-keys--hash-2)
+      (setq tmp value)
+      (pop tmp)
+      (ergoemacs-extract-keys tmp nil (or cur-key t)))
      ;; Command
      ((and (vectorp cur-key)
            (or (commandp value t) ;; Command
@@ -99,7 +114,7 @@
                (symbolp value) ;; Symbol
                (and (consp value) (eq (car value) 'menu-item))
                (and (consp value) (stringp (car value))
-                    (commandp (cdr value) t))))
+                    (symbolp (cdr value)))))
       (puthash cur-key value ergoemacs-extract-keys--hash-2)
       (unless (stringp value)
         (setq tmp (gethash value ergoemacs-extract-keys--hash-1))
@@ -148,7 +163,7 @@
               ergoemacs-extract-keys--hash-2
               (make-hash-table :test 'equal)))
       (if (not (keymapp keymap)) ergoemacs-extract-keys--hash-1
-        (dolist (key keymap)
+        (dolist (key (reverse keymap))
           (cond
            ((ignore-errors (char-table-p key))
             (setq ergoemacs-extract-keys--full-map t)
@@ -193,6 +208,10 @@ If not a submap, return nil
   (let* ((ret (ergoemacs-map-plist keymap)))
     (or (and (not ret) 'unknown)
         (plist-get ret :submap-p))))
+
+(defun ergoemacs-submaps (keymap)
+  "Returns the known submaps of this keymap."
+  (ergoemacs-map-get keymap :submaps))
 
 (defun ergoemacs-extract-prefixes (keymap &optional dont-ignore return-vector defined)
   "Extract prefix commands for KEYMAP.
