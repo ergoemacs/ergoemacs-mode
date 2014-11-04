@@ -128,8 +128,6 @@ If DEFAULT is non-nil set the default value, instead of the symbol value."
         ret))))
 
 (declare-function ergoemacs-translate "ergoemacs-translate.el")
-(require 'ergoemacs-map)
-
 
 (defvar ergoemacs-debug ""
   "Debugging for `ergoemacs-mode'.")
@@ -205,6 +203,10 @@ If DEFAULT is non-nil set the default value, instead of the symbol value."
     (buffer-file-name)))
   "Ergoemacs directory.")
 (add-to-list 'load-path ergoemacs-dir)
+
+
+(unless (featurep 'ergoemacs-map)
+  (load "ergoemacs-map"))
 
 
 (unless (featurep 'ergoemacs-layouts)
