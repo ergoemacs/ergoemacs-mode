@@ -142,12 +142,17 @@
     (maphash
      (lambda(key def)
        (condition-case err
-           (if (and (consp key) ergoemacs-extract-keys--full-map)
-               (if (not prefix) (set-char-table-range (nth 1 ret) key def)
-                 (message "Keys from %s to %s" (vconcat prefix (vector (car char))) (vconcat prefix (vector (cdr char))))
-                 (loop for char from (car key) to (cdr key)
-                       do (define-key ret (vconcat prefix (vector char)) def)))
-             (define-key ret (or (and prefix (vconcat prefix key)) key) def))
+           (if (and (consp key) ergoemacs-extract-keys--full-map (not prefix))
+               (set-char-table-range (nth 1 ret) key def)
+             (if (consp key)
+                 (progn
+                   (message "Ignoring %s from %s to %s" def
+                            (car key) (cdr key))
+                   ;; (loop for char from (car key) to (cdr key)
+                   ;;     do (define-key ret (or (and prefix (vconcat prefix (vector char)))
+                   ;;                            (vector char)) def))
+                   )
+               (define-key ret (or (and prefix (vconcat prefix key)) key) def)))
          (error
           (warn "Error defining %s->%s (%s)" (if (eq key t) "Default" (key-description key)) def err))))
      (nth 1 item))
@@ -155,22 +160,16 @@
       (setq tmp (symbol-value (nth 1 key))
             tmp2 ergoemacs-extract-keys--full-map)
       (setq ergoemacs-extract-keys--full-map (ergoemacs-map-get tmp :full))
-      (ergoemacs-extract-keys)
-      ;; (if (not flatten) ret
-      ;;   (setq ergoemacs-extract-keys--full-map (ergoemacs-map-get keymap :full))
-      ;;   (prog1
-      ;;       (ergoemacs-extract-keys--flatten ret (ergoemacs-submaps keymap))
-      ;;     (setq ergoemacs-extract-keys--full-map nil)))
       (ergoemacs-extract-keys--flatten
        (ergoemacs-extract-keys tmp) (ergoemacs-submaps keymap)
-       tmp (or (and prefix (vconcat prefix (nth 0 key)))
+       ret (or (and prefix (vconcat prefix (nth 0 key)))
                (nth 0 key)))
-      (setq ergoemacs-extract-keys--full-map nil))
+      (setq ergoemacs-extract-keys--full-map tmp2))
     ret))
 
 (defun ergoemacs-extract-keys (keymap &optional flatten pre)
   "Create a hash table of functions and their keys from a keymap."
-  (let (tmp ret tmp2)
+  (let (tmp ret)
     (if (and (not ergoemacs-submaps--key)
              (setq tmp (ergoemacs-map-p keymap))
              (setq ret (gethash tmp ergoemacs-extract-keys-hash)))
@@ -243,6 +242,54 @@ If not a submap, return nil
 (defun ergoemacs-submaps (keymap)
   "Returns the known submaps of this keymap."
   (ergoemacs-map-get keymap :submaps))
+
+(defun ergoemacs-default-global--file ()
+  "What is the global key hash file."
+  (let* ((file (expand-file-name (format "ergoemacs-global-%s.el" emacs-version)
+                                 ergoemacs-dir))
+         (extras (expand-file-name "ergoemacs-extras" user-emacs-directory))
+         (file2 (expand-file-name (format "ergoemacs-global-%s.el" emacs-version)
+                                  extras)))
+    (or
+     (and (file-readable-p file2) file2)
+     (and (file-readable-p file) file)
+     (and (file-writable-p file) file)
+     file2)))
+
+(defun ergoemacs-default-global--gen ()
+  "Generates hash for default emacs maps."
+  (let ((extract-hash))
+    (ergoemacs-extract-keys global-map)
+    (ergoemacs-extract-keys minibuffer-local-map)
+    (ergoemacs-extract-keys minibuffer-local-ns-map)
+    (ergoemacs-extract-keys minibuffer-local-completion-map)
+    (ergoemacs-extract-keys minibuffer-local-must-match-map)
+    (ergoemacs-extract-keys minibuffer-local-filename-completion-map)
+    (with-temp-file (ergoemacs-default-global--file) 
+      (let ((print-level nil)
+            (print-length nil))
+        (prin1 ergoemacs-extract-keys-hash (current-buffer))
+        (goto-char (point-min))
+        (insert "(setq ergoemacs-extract-keys-hash ")
+        (goto-char (point-max))
+        (insert ")")))))
+
+(defun ergoemacs-map-default-global ()
+  "Loads/Creates the default global map information."
+  (if (file-readable-p (ergoemacs-default-global--file))
+      (load (ergoemacs-default-global--file))
+    (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-get-default-keys*"))
+    (let* ((emacs-exe (ergoemacs-emacs-exe))
+           (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
+           (cmd (format "%s -L %s --load \"ergoemacs-mode\" -Q --batch --eval \"(ergoemacs-default-global--gen)\"" emacs-exe default-directory))
+           (process (start-process-shell-command "ergoemacs-global" "*ergoemacs-get-default-keys*" cmd)))
+      (set-process-sentinel process 'ergoemacs-map-defualt-global--finish))))
+
+(defun ergoemacs-map-defualt-global--finish (process change)
+  "Run the clean environment"
+  (when (string-match "finished" change)
+    (kill-buffer (get-buffer-create "*ergoemacs-get-default-keys*"))
+    (ergoemacs-map-default-global)))
 
 (defun ergoemacs-extract-prefixes (keymap &optional dont-ignore return-vector defined)
   "Extract prefix commands for KEYMAP.
@@ -450,7 +497,7 @@ The KEYMAP will have the structure
            (unmodified unmodified)
            char-table
            (old-plist '())
-           label tmp1 tmp2)
+           label tmp1)
       (if (eq (car map) 'keymap)
           (setq map (cdr map))
         (setq map (list map)))
