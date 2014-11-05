@@ -137,10 +137,11 @@
                     (symbolp (cdr value)))))
       (if compare
           (progn
-            (setq tmp (gethash cur-key (nth 1 (gethash ergoemacs-submaps--key ergoemacs-extract-keys-hash))))
-            (message "%s;%s;%s; %s" cur-key ergoemacs-submaps--key tmp value)
-            (unless (and tmp (eq tmp value))
-              (define-key ergoemacs-extract-keys--keymap cur-key value)))
+            (setq tmp (gethash ergoemacs-submaps--key ergoemacs-extract-keys-hash))
+            (when (hash-table-p (nth 1 tmp))
+              (setq tmp (gethash cur-key (nth 1 tmp)))
+              (unless (and tmp (eq tmp value))
+                (define-key ergoemacs-extract-keys--keymap cur-key value))))
         (puthash cur-key value ergoemacs-extract-keys--hash-2)
         (unless (stringp value)
           (setq tmp (gethash value ergoemacs-extract-keys--hash-1))
@@ -246,7 +247,7 @@ COMPARE will compare differences to the current hash.
           (setq ret (list ergoemacs-extract-keys--hash-1 ergoemacs-extract-keys--hash-2))
           (ergoemacs-map-put keymap :submaps ergoemacs-submaps--list)
           (when compare
-            (ergoemacs-map-put keymap :user-changes ergoemacs-extract-keys--keymap))
+            (ergoemacs-map-put keymap :changes-before-map ergoemacs-extract-keys--keymap))
           (when ergoemacs-extract-keys--prefixes
             (ergoemacs-map-put keymap :prefixes ergoemacs-extract-keys--prefixes))
           (if flatten
@@ -330,7 +331,9 @@ If not a submap, return nil
            (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
            (cmd (format "%s -L %s --load \"ergoemacs-mode\" -Q --batch --eval \"(ergoemacs-default-global--gen)\"" emacs-exe default-directory))
            (process (start-process-shell-command "ergoemacs-global" "*ergoemacs-get-default-keys*" cmd)))
-      (set-process-sentinel process 'ergoemacs-map-defualt-global--finish))))
+      (set-process-sentinel process 'ergoemacs-map-defualt-global--finish)))
+  ;; Figure differences from default global map
+  (ergoemacs-extract-keys global-map nil nil t))
 
 (defun ergoemacs-map-defualt-global--finish (process change)
   "Run the clean environment"
