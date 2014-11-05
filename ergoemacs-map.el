@@ -73,25 +73,33 @@
 (defvar ergoemacs-extract-keys--hash-1 nil)
 (defvar ergoemacs-extract-keys--hash-2 nil)
 (defvar ergoemacs-extract-keys--full-map nil)
+(defvar ergoemacs-extract-keys--keymap nil)
+(defvar ergoemacs-extract-keys--prefixes nil)
+(defvar ergoemacs-extract-keys--base-map nil)
 
-(defun ergoemacs-extract-keys--handle-keymap (keymap cur-key)
+(defun ergoemacs-extract-keys--handle-keymap (keymap cur-key compare)
   (ergoemacs-map--label keymap nil t nil cur-key)
+  (when ergoemacs-extract-keys--base-map
+    (push cur-key ergoemacs-extract-keys--prefixes))
   (if (ergoemacs-map-p keymap)
       ;; Bound submap, traverse submap later
       (push (ergoemacs-map-p keymap) ergoemacs-submaps--)
-    (ergoemacs-extract-keys keymap nil (or cur-key t))))
+    (let ((tmp ergoemacs-extract-keys--base-map))
+      (setq ergoemacs-extract-keys--base-map nil)
+      (ergoemacs-extract-keys keymap nil (or cur-key t) compare)
+      (setq ergoemacs-extract-keys--base-map tmp))))
 
-(defun ergoemacs-extract-keys--puthash (cur-key value)
+(defun ergoemacs-extract-keys--puthash (cur-key value compare)
   (let (tmp)
     (cond
      ((eq (aref cur-key 0) 'ergoemacs-labeled)) ;; Ignore label
      ;; Keymaps
      ;; Indirect maps
      ((ignore-errors (keymapp (symbol-function value)))
-      (ergoemacs-extract-keys--handle-keymap (symbol-function value) cur-key))
+      (ergoemacs-extract-keys--handle-keymap (symbol-function value) cur-key compare))
      ;; Prefix keys
      ((ignore-errors (and (keymapp value) (listp value)))
-      (ergoemacs-extract-keys--handle-keymap value cur-key))
+      (ergoemacs-extract-keys--handle-keymap value cur-key compare))
      ;; Ignore defined keys
      ;; ((gethash cur-key ergoemacs-extract-keys--hash-2))
      
@@ -103,17 +111,22 @@
      ((ignore-errors
         (and (vectorp cur-key)
              (eq 'menu-item (cdar value))))
-      (puthash (vconcat cur-key (vector (car value))) (cdr value)
-               ergoemacs-extract-keys--hash-2))
+      (unless compare
+        (puthash (vconcat cur-key (vector (car value))) (cdr value)
+                 ergoemacs-extract-keys--hash-2)))
      ;; Menu ("String" keymap), like ("File" keymap ...)
      ((ignore-errors
         (and (stringp (nth 0 value))
              (eq (nth 1 value) 'keymap)))
-      (puthash cur-key (list (nth 0 value) 'keymap)
-               ergoemacs-extract-keys--hash-2)
-      (setq tmp value)
-      (pop tmp)
-      (ergoemacs-extract-keys tmp nil (or cur-key t)))
+      (unless compare
+        (puthash cur-key (list (nth 0 value) 'keymap)
+                 ergoemacs-extract-keys--hash-2)
+        (setq tmp value)
+        (pop tmp)
+        (let ((tmp2 ergoemacs-extract-keys--base-map))
+          (setq ergoemacs-extract-keys--base-map nil)
+          (ergoemacs-extract-keys tmp nil (or cur-key t))
+          (setq ergoemacs-extract-keys--base-map tmp2))))
      ;; Command
      ((and (vectorp cur-key)
            (or (commandp value t) ;; Command
@@ -122,15 +135,19 @@
                (and (consp value) (eq (car value) 'menu-item))
                (and (consp value) (stringp (car value))
                     (symbolp (cdr value)))))
-      (puthash cur-key value ergoemacs-extract-keys--hash-2)
-      (unless (stringp value)
-        (setq tmp (gethash value ergoemacs-extract-keys--hash-1))
-        (push cur-key tmp)
-        (puthash value tmp ergoemacs-extract-keys--hash-1)))
-     ;; Only use interactive commands.
+      (if compare
+          (progn
+            (setq tmp (gethash cur-key (nth 1 (gethash ergoemacs-submaps--key ergoemacs-extract-keys-hash))))
+            (message "%s;%s;%s; %s" cur-key ergoemacs-submaps--key tmp value)
+            (unless (and tmp (eq tmp value))
+              (define-key ergoemacs-extract-keys--keymap cur-key value)))
+        (puthash cur-key value ergoemacs-extract-keys--hash-2)
+        (unless (stringp value)
+          (setq tmp (gethash value ergoemacs-extract-keys--hash-1))
+          (push cur-key tmp)
+          (puthash value tmp ergoemacs-extract-keys--hash-1))))
      (t
-      (warn "Ignorning %s->%s" (or (ignore-errors (key-description cur-key)) (format "err-%s" cur-key)) value))
-     )))
+      (warn "Ignorning %s->%s" (or (ignore-errors (key-description cur-key)) (format "err-%s" cur-key)) value)))))
 
 (defun ergoemacs-extract-keys--flatten (item submaps &optional keymap prefix)
   "Internal function to create keymap for ITEM."
@@ -167,10 +184,19 @@
       (setq ergoemacs-extract-keys--full-map tmp2))
     ret))
 
-(defun ergoemacs-extract-keys (keymap &optional flatten pre)
-  "Create a hash table of functions and their keys from a keymap."
+(defun ergoemacs-extract-keys (keymap &optional flatten pre compare)
+  "Create a hash table of functions and their keys from a keymap.
+
+FLATTEN will create a single keymap without submaps, parent maps,
+or composed maps.
+
+PRE represents the current prefix (for recursive calls).
+
+COMPARE will compare differences to the current hash.
+"
   (let (tmp ret)
     (if (and (not ergoemacs-submaps--key)
+             (not compare)
              (setq tmp (ergoemacs-map-p keymap))
              (setq ret (gethash tmp ergoemacs-extract-keys-hash)))
         (if (not flatten) ret
@@ -186,7 +212,10 @@
               ergoemacs-extract-keys--hash-1
               (make-hash-table)
               ergoemacs-extract-keys--hash-2
-              (make-hash-table :test 'equal)))
+              (make-hash-table :test 'equal)
+              ergoemacs-extract-keys--prefixes nil
+              ergoemacs-extract-keys--base-map t
+              ergoemacs-extract-keys--keymap (make-sparse-keymap)))
       (if (not (keymapp keymap)) ergoemacs-extract-keys--hash-1
         (dolist (key (reverse keymap))
           (cond
@@ -197,9 +226,12 @@
                #'(lambda(key-2 value)
                    ;; Can be a list (from . to)
                    (if (consp key-2)
-                       (puthash key-2 value ergoemacs-extract-keys--hash-2)
+                       (if (not compare)
+                           (puthash key-2 value ergoemacs-extract-keys--hash-2)
+                         ;; FIXME -- See if anything changed here...
+                         )
                      (ergoemacs-extract-keys--puthash (or (and (vectorp pre) (vconcat pre (vector key-2)))
-                                                          (vector key-2)) value)))
+                                                          (vector key-2)) value compare)))
                key)
               (setq key (char-table-parent key))))
            ((ignore-errors (car key))
@@ -209,23 +241,32 @@
                  (and (vectorp pre) (vconcat pre (vector (car key))))
                  (and (integerp (car key)) (vector (car key)))
                  (and (stringp (car key)) (=  1 (length (car key))) (vector (get-byte 0 (car key))))
-                 (vector (car key))) (cdr key)))))
+                 (vector (car key))) (cdr key) compare))))
         (unless pre
           (setq ret (list ergoemacs-extract-keys--hash-1 ergoemacs-extract-keys--hash-2))
           (ergoemacs-map-put keymap :submaps ergoemacs-submaps--list)
+          (when compare
+            (ergoemacs-map-put keymap :user-changes ergoemacs-extract-keys--keymap))
+          (when ergoemacs-extract-keys--prefixes
+            (ergoemacs-map-put keymap :prefixes ergoemacs-extract-keys--prefixes))
           (if flatten
               (setq ret (ergoemacs-extract-keys--flatten ret (ergoemacs-submaps keymap)))
-            (puthash (ergoemacs-map-p keymap) ret ergoemacs-extract-keys-hash))
+            (unless compare
+              (puthash (ergoemacs-map-p keymap) ret ergoemacs-extract-keys-hash)))
           (setq ergoemacs-extract-keys--hash-1 nil
                 ergoemacs-extract-keys--hash-2 nil
                 ergoemacs-extract-keys--full-map nil
                 ergoemacs-submaps--key nil
-                ergoemacs-submaps--list nil)
+                ergoemacs-submaps--list nil
+                ergoemacs-extract-keys--base-map nil
+                ergoemacs-extract-keys--prefixes nil
+                ergoemacs-extract-keys--keymap nil)
           (while ergoemacs-submaps--
             (setq tmp ergoemacs-submaps--)
             (setq ergoemacs-submaps-- nil)
             (dolist (key tmp)
-              (ergoemacs-extract-keys (symbol-value (nth 0 key))))))
+              (ergoemacs-extract-keys (symbol-value (nth 0 key))
+                                      nil nil compare))))
         ret))))
 
 (defun ergoemacs-submap-p (keymap)
@@ -258,21 +299,27 @@ If not a submap, return nil
 
 (defun ergoemacs-default-global--gen ()
   "Generates hash for default emacs maps."
-  (let ((extract-hash))
-    (ergoemacs-extract-keys global-map)
-    (ergoemacs-extract-keys minibuffer-local-map)
-    (ergoemacs-extract-keys minibuffer-local-ns-map)
-    (ergoemacs-extract-keys minibuffer-local-completion-map)
-    (ergoemacs-extract-keys minibuffer-local-must-match-map)
-    (ergoemacs-extract-keys minibuffer-local-filename-completion-map)
-    (with-temp-file (ergoemacs-default-global--file) 
-      (let ((print-level nil)
-            (print-length nil))
-        (prin1 ergoemacs-extract-keys-hash (current-buffer))
-        (goto-char (point-min))
-        (insert "(setq ergoemacs-extract-keys-hash ")
-        (goto-char (point-max))
-        (insert ")")))))
+  (ergoemacs-extract-keys global-map)
+  (ergoemacs-extract-keys minibuffer-local-map)
+  (ergoemacs-extract-keys minibuffer-local-ns-map)
+  (ergoemacs-extract-keys minibuffer-local-completion-map)
+  (ergoemacs-extract-keys minibuffer-local-must-match-map)
+  (ergoemacs-extract-keys minibuffer-local-filename-completion-map)
+  (with-temp-file (ergoemacs-default-global--file) 
+    (let ((print-level nil)
+          (print-length nil))
+      (goto-char (point-min))
+      (maphash
+       (lambda(key _item)
+         (insert (format "(ergoemacs-map--label %s '%s nil nil nil '"
+                         (nth 0 key) key))
+         (prin1 (ergoemacs-map-plist (symbol-value (nth 0 key))) (current-buffer))
+         (insert ")"))
+       ergoemacs-extract-keys-hash)
+      (insert "(setq ergoemacs-extract-keys-hash ")
+      (prin1 ergoemacs-extract-keys-hash (current-buffer))
+      (goto-char (point-max))
+      (insert ")"))))
 
 (defun ergoemacs-map-default-global ()
   "Loads/Creates the default global map information."
