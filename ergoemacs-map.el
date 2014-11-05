@@ -312,10 +312,10 @@ If not a submap, return nil
       (goto-char (point-min))
       (maphash
        (lambda(key _item)
-         (insert (format "(ergoemacs-map--label %s '%s nil nil nil '"
-                         (nth 0 key) key))
+         (insert (format "(when (boundp '%s) (ergoemacs-map--label %s '%s nil nil nil '"
+                         (nth 0 key) (nth 0 key) key))
          (prin1 (ergoemacs-map-plist (symbol-value (nth 0 key))) (current-buffer))
-         (insert ")"))
+         (insert "))"))
        ergoemacs-extract-keys-hash)
       (insert "(setq ergoemacs-extract-keys-hash ")
       (prin1 ergoemacs-extract-keys-hash (current-buffer))
