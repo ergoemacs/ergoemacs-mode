@@ -890,6 +890,7 @@ This is done by checking if this is a command that supports shift selection or c
 (autoload 'ergoemacs-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme "ergoemacs-macros")
+(ergoemacs-map-default-global)
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-mode.el ends here
