@@ -81,6 +81,8 @@
   (ergoemacs-map--label keymap nil t nil cur-key)
   (when ergoemacs-extract-keys--base-map
     (push cur-key ergoemacs-extract-keys--prefixes))
+  (unless compare ;; Indicate this is a prefix key
+    (puthash cur-key 'ergoemacs-prefix ergoemacs-extract-keys--hash-2))
   (if (ergoemacs-map-p keymap)
       ;; Bound submap, traverse submap later
       (push (ergoemacs-map-p keymap) ergoemacs-submaps--)
@@ -285,6 +287,43 @@ If not a submap, return nil
   "Returns the known submaps of this keymap."
   (ergoemacs-map-get keymap :submaps))
 
+(defun ergoemacs-prior-function (key &optional where-is before-ergoemacs keymap)
+  "Looks up the original binding of KEY.
+
+If KEYMAP is nil, assumes the keymap is `global-map'.
+
+If BEFORE-ERGOEMACS is non-nil, assume bindings applied before
+`ergoemacs-mode' loaded are the original binding.
+
+If WHERE-IS is non-nil, return a list of the keys (in vector format) where this is bound.
+"
+  (let* ((map (or keymap global-map))
+         (hash-lst (ergoemacs-extract-keys map))
+         (hash-1 (nth 0 hash-lst))
+         (hash-2 (nth 1 hash-lst))
+         (new-key (or (and (vectorp key) key)
+                      (read-kbd-macro (key-description key) t)))
+         (before-ergoemacs-map (and before-ergoemacs (ergoemacs-map-get map :changes-before-map)))
+         (prior (or (and (keymapp before-ergoemacs-map) (lookup-key before-ergoemacs-map key))
+                    (gethash new-key hash-2))) prefix)
+    (when (integerp prior)
+      (setq prior nil))
+    (if (and prior where-is)
+        (setq prior (gethash prior hash-1)))
+    (unless prior
+      (when (catch 'found-submap
+              (dolist (submap (ergoemacs-submaps map))
+                (when (boundp (cadr submap))
+                  (setq prefix (substring new-key 0 (length (car submap))))
+                  (when (equal prefix  (car submap))
+                    (setq map (symbol-value (cadr submap)))
+                    (setq new-key (substring new-key (length (car submap))))
+                    (throw 'found-submap t)))) nil)
+        (setq prior (ergoemacs-prior-function new-key where-is after-ergoemacs map))
+        (when where-is
+          (setq prior (mapcar (lambda(x) (vconcat prefix x)) prior)))))
+    prior))
+
 (defun ergoemacs-default-global--file ()
   "What is the global key hash file."
   (let* ((file (expand-file-name (format "ergoemacs-global-%s.el" emacs-version)
@@ -331,11 +370,11 @@ If not a submap, return nil
            (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
            (cmd (format "%s -L %s --load \"ergoemacs-mode\" -Q --batch --eval \"(ergoemacs-default-global--gen)\"" emacs-exe default-directory))
            (process (start-process-shell-command "ergoemacs-global" "*ergoemacs-get-default-keys*" cmd)))
-      (set-process-sentinel process 'ergoemacs-map-defualt-global--finish)))
+      (set-process-sentinel process 'ergoemacs-map-default-global--finish)))
   ;; Figure differences from default global map
   (ergoemacs-extract-keys global-map nil nil t))
 
-(defun ergoemacs-map-defualt-global--finish (process change)
+(defun ergoemacs-map-default-global--finish (process change)
   "Run the clean environment"
   (when (string-match "finished" change)
     (kill-buffer (get-buffer-create "*ergoemacs-get-default-keys*"))
