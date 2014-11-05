@@ -871,23 +871,6 @@ This should only be run when no global keys have been set.
               (pushnew key-kbd ergoemacs-global-not-changed-cache :test 'equal))
             has-changed))))))
 
-(declare-function ergoemacs-get-fixed-layout "ergoemacs-translate.el")
-(declare-function ergoemacs-get-variable-layout "ergoemacs-translate.el")
-(defun ergoemacs-warn-globally-changed-keys (&optional fix)
-  "Warns about globally changed keys. If FIX is true, fix the ergoemacs-unbind file."
-  (interactive)
-  (dolist (x ergoemacs-emacs-default-bindings)
-    (ergoemacs-global-changed-p (nth 0 x) nil t fix))
-  (message "Ergoemacs Keys warnings for this layout:")
-  (dolist (x (ergoemacs-sv (ergoemacs-get-fixed-layout)))
-    (and (eq 'string (type-of (nth 0 x)))
-         (ergoemacs-global-changed-p (nth 0 x) nil t fix)))
-  (dolist (x (ergoemacs-sv (ergoemacs-get-variable-layout)))
-    (and (eq 'string (type-of (nth 0 x)))
-         (ergoemacs-global-changed-p (nth 0 x) t t fix))))
-
-
-
 ;; Based on describe-key-briefly
 (declare-function ergoemacs-key-fn-lookup "ergoemacs-translate.el")
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
