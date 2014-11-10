@@ -78,7 +78,7 @@
 (defvar ergoemacs-extract-keys--base-map nil)
 
 (defun ergoemacs-extract-keys--handle-keymap (keymap cur-key compare)
-  (ergoemacs-map--label keymap nil t nil cur-key)
+  (ergoemacs-map--label keymap nil nil cur-key)
   (when ergoemacs-extract-keys--base-map
     (push cur-key ergoemacs-extract-keys--prefixes))
   (unless compare ;; Indicate this is a prefix key
@@ -269,7 +269,7 @@ COMPARE will compare differences to the current hash.
               (when tmp
                 (dolist (map tmp)
                   (ergoemacs-extract-keys map)))))
-          (ergoemacs-map--label keymap nil t)
+          (ergoemacs-map--label keymap)
           (setq ergoemacs-submaps--key (ergoemacs-map-p keymap)
                 ergoemacs-submaps--list '()
                 ergoemacs-extract-keys--full-map nil
@@ -390,7 +390,7 @@ If WHERE-IS is non-nil, return a list of the keys (in vector format) where this 
       (maphash
        (lambda(key _item)
          (setq tmp (plist-get key :map-list))
-         (insert (format "(when (boundp '%s) (ergoemacs-map--label %s '%s nil nil nil '"
+         (insert (format "(when (boundp '%s) (ergoemacs-map--label %s '%s nil nil '"
                          (nth 0 tmp) (nth 0 tmp) tmp))
          (prin1 (ergoemacs-map-plist (symbol-value (nth 0 tmp))) (current-buffer))
          (insert "))"))
@@ -569,10 +569,10 @@ composing or parent/child relationships)"
    ((eq property :full)
     (warn "Cannot set the keymap property :full"))
    (t (let ((ret (ergoemacs-map-plist keymap)) tmp)
-        (if (and ret (member property '(:submap-p :map-list :unmodified)))
+        (if (and ret (member property '(:submap-p :map-list)))
             (progn
               (setq ret (plist-put ret property value))
-              (ergoemacs-map--label keymap nil 'keep nil nil ret))
+              (ergoemacs-map--label keymap nil nil nil ret))
           (puthash property value (nth 1 (ergoemacs-extract-keys keymap))))))))
 
 (defun ergoemacs-map-composed-p (keymap)
@@ -647,7 +647,7 @@ When FORCE is on, figure out if it is bound."
     (if (not (string= ret "nil"))
         (string-match-p "^ergoemacs-unbound-" ret)
       (if (not force) nil
-        (ergoemacs-map--label keymap nil t) ;; Assume map is unmodified.
+        (ergoemacs-map--label keymap)
         (ergoemacs-map-boundp keymap)))))
 
 (defvar ergoemacs-map--const-keymaps nil
@@ -675,9 +675,8 @@ When FORCE is on, figure out if it is bound."
        (setq ret (list (intern (concat "ergoemacs-unbound-" (format-time-string "%s-%N"))))))
      ret)))
 
-(defun ergoemacs-map--label (keymap &optional map-name unmodified strip submap-vector replace-plist)
+(defun ergoemacs-map--label (keymap &optional map-name strip submap-vector replace-plist)
   "Label an `ergoemacs-mode' touched keymap.
-UNMODIFIED, labels the keymap as practically untouched.
 MAP-NAME is the identifier of the map name.
 When STRIP is true, remove all `ergoemacs-mode' labels
 The KEYMAP will have the structure
@@ -692,11 +691,10 @@ The KEYMAP will have the structure
           (warn "Will not update a plist for composed maps' members."))
          (t
           (dolist (map (ergoemacs-map-composed-list keymap))
-            (ergoemacs-map--label map nil unmodified strip submap-vector nil))))
+            (ergoemacs-map--label map nil strip submap-vector nil))))
       (let* ((map keymap)
              (maps (or map-name (ergoemacs-map--name keymap)))
              (unbound-p (string-match-p  "^ergoemacs-unbound-" (symbol-name (nth 0 maps))))
-             (unmodified unmodified)
              char-table
              (old-plist '())
              label tmp1 tmp2)
@@ -710,9 +708,6 @@ The KEYMAP will have the structure
         ;; Drop prior `ergoemacs-mode' labels
         (when (ignore-errors (eq (car (car map)) 'ergoemacs-labeled))
           (setq old-plist (funcall (cdr (car map))))
-          (setq unmodified (if (eq unmodified 'keep)
-                               (plist-get old-plist :unmodified)
-                             unmodified))
           (setq map (cdr map)))
         (when replace-plist
           (setq old-plist replace-plist))
@@ -725,7 +720,6 @@ The KEYMAP will have the structure
         (unless (or strip
                     (and submap-vector unbound-p))
           (setq old-plist (plist-put old-plist ':map-list maps))
-          (setq old-plist (plist-put old-plist ':unmodified unmodified))
           (push (cons 'ergoemacs-labeled
                       `(lambda() (interactive) ',old-plist)) map))
         
@@ -746,7 +740,7 @@ The KEYMAP will have the structure
   (let ((map-name (ergoemacs-map-p keymap)))
     (if (not map-name)
         (let ((maps (ergoemacs-map--name keymap)))
-          (ergoemacs-map--label keymap maps t)
+          (ergoemacs-map--label keymap maps)
           (dolist (map-name maps) ;; Save to original map hash
             (unless (gethash map-name ergoemacs-original-map-hash)
               (puthash map-name (copy-keymap keymap) ergoemacs-original-map-hash)))
