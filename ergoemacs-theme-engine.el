@@ -1518,8 +1518,7 @@ FULL-SHORTCUT-MAP-P "
              (interactive "P")
              (ergoemacs-read-key ,(nth 0 args) ',(nth 1 args)))))))))
 
-(defvar ergoemacs-original-map-hash (make-hash-table)
-  "Hash table of the original maps that `ergoemacs-mode' saves.")
+(defvar ergoemacs-original-map-hash)
 
 (defvar ergoemacs-first-keymaps '()
   "list of hooks that should be first.")

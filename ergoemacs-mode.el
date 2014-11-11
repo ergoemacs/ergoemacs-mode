@@ -93,40 +93,6 @@ If DEFAULT is non-nil set the default value, instead of the symbol value."
         (setcdr var val)
       nil)))
 
-(defvar ergoemacs-original-map-hash)
-(defun ergoemacs-original-keymap (keymap &optional replace)
-  "Return a copy of original keymap, or the current keymap."
-  (if (not keymap) nil
-    (if (symbolp keymap)
-        (ergoemacs-original-keymap (ergoemacs-sv keymap) replace)    
-      (let (ret)
-        (setq ret
-              (copy-keymap
-               (if (ignore-errors
-                     (and (string= "ergoemacs-modified" (nth 1 keymap))
-                          (setq ret (gethash (car (nth 2 keymap)) ergoemacs-original-map-hash))))
-                   (progn
-                     (setq ret (cdr ret))
-                     (push (nth 2 keymap) ret)
-                     (push "ergoemacs-unmodified" ret)
-                     (push 'keymap ret)
-                     ret)
-                 (copy-keymap keymap))))
-        ;; Deal with composed keymaps
-        (setq ret
-              (mapcar
-               (lambda(map)
-                 (if (ignore-errors (keymapp map))
-                     (ergoemacs-original-keymap map)
-                   map))
-               ret))
-        ;; Substitute parent maps too.
-        (when (keymap-parent ret)
-          (set-keymap-parent ret (ergoemacs-original-keymap (keymap-parent ret))))
-        (when replace
-          (ergoemacs-setcdr keymap (cdr ret)))
-        ret))))
-
 (declare-function ergoemacs-translate "ergoemacs-translate.el")
 
 (defvar ergoemacs-debug ""

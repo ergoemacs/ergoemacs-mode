@@ -793,83 +793,83 @@
     (write-file (expand-file-name "ergoemacs-unbind.el" ergoemacs-dir))))
 
 (declare-function ergoemacs-kbd "ergoemacs-translate.el")
-(defun ergoemacs-global-changed-p (key &optional is-variable complain fix)
-  "Returns if a global key has been changed.  If IS-VARIABLE is
-true and KEY is a string, then lookup the keyboard equivalent
-based on current layout.
+;; (defun ergoemacs-global-changed-p (key &optional is-variable complain fix)
+;;   "Returns if a global key has been changed.  If IS-VARIABLE is
+;; true and KEY is a string, then lookup the keyboard equivalent
+;; based on current layout.
 
-If COMPLAIN is true, complain about keys that have changed.
+;; If COMPLAIN is true, complain about keys that have changed.
 
-If FIX is true, open ergoemacs-unbind and fix the variables.
-This should only be run when no global keys have been set.
-"
-  (let* ((key-code
-          (cond
-           ((eq (type-of key) 'string)
-            (if is-variable
-                (ergoemacs-kbd key)
-              (or (ignore-errors (read-kbd-macro key))
-                  (read-kbd-macro
-                   (encode-coding-string
-                    key locale-coding-system)))))
-           (t key)))
-         (key-kbd (key-description key-code)))
-    (if (string-match "\\(mouse\\|wheel\\)" key-kbd)
-        nil
-      (if (member key-kbd ergoemacs-global-changed-cache)
-          (progn
-            (when (or fix complain)
-              (let* ((key-function (lookup-key (current-global-map) key-code t))
-                     (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
-                     (trans-function (if (ignore-errors (keymapp key-function))
-                                         'prefix
-                                       key-function)))
-                (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
-                         trans-function old-bindings)))
-            t)
-        (if (member key-kbd ergoemacs-global-not-changed-cache)
-            nil
-          (let* ((key-function (lookup-key (current-global-map) key-code t))
-                 (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
-                 (trans-function (if (ignore-errors (keymapp key-function))
-                                     'prefix
-                                   key-function))
-                 (has-changed nil))
-            (cond
-             ((not trans-function)) ; trans-function is undefined.
-                                        ; Assume not globally changed.
-             ((integerp trans-function) ; Over defined. See if previous key is globally-changed.
-              (let ((key-as-vector (read-kbd-macro (key-description key-code) t))
-                    (prefix-vector (make-vector trans-function nil))
-                    (i 0))
-                (while (< i trans-function)
-                  (aset prefix-vector i (elt key-as-vector i))
-                  (setq i (+ 1 i)))
-                ;; If it is a prefix vector, assume not globally
-                ;; changed
-                (unless (ignore-errors (keymapp (lookup-key (current-global-map) prefix-vector)))
-                  ;; Not a prefix, see if the key had actually changed
-                  ;; by recursively calling `ergoemacs-global-changed-p'
-                  (setq has-changed
-                        (ergoemacs-global-changed-p
-                         prefix-vector is-variable complain fix)))))
-             (old-bindings ; Trans function is defined, not an integer
-              (unless (member trans-function (nth 1 old-bindings))
-                (setq has-changed t)))
-             (t
-              (setq has-changed t)) ; Not found in old bindings, but bound globally
-             )
-            (if has-changed
-                (progn
-                  (when (or fix complain)
-                    (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
-                             trans-function old-bindings)
-                    (when fix
-                      (unless (integerp trans-function)
-                        (ergoemacs-global-fix-defualt-bindings key-kbd trans-function))))
-                  (pushnew key-kbd ergoemacs-global-changed-cache :test 'equal))
-              (pushnew key-kbd ergoemacs-global-not-changed-cache :test 'equal))
-            has-changed))))))
+;; If FIX is true, open ergoemacs-unbind and fix the variables.
+;; This should only be run when no global keys have been set.
+;; "
+;;   (let* ((key-code
+;;           (cond
+;;            ((eq (type-of key) 'string)
+;;             (if is-variable
+;;                 (ergoemacs-kbd key)
+;;               (or (ignore-errors (read-kbd-macro key))
+;;                   (read-kbd-macro
+;;                    (encode-coding-string
+;;                     key locale-coding-system)))))
+;;            (t key)))
+;;          (key-kbd (key-description key-code)))
+;;     (if (string-match "\\(mouse\\|wheel\\)" key-kbd)
+;;         nil
+;;       (if (member key-kbd ergoemacs-global-changed-cache)
+;;           (progn
+;;             (when (or fix complain)
+;;               (let* ((key-function (lookup-key (current-global-map) key-code t))
+;;                      (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
+;;                      (trans-function (if (ignore-errors (keymapp key-function))
+;;                                          'prefix
+;;                                        key-function)))
+;;                 (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
+;;                          trans-function old-bindings)))
+;;             t)
+;;         (if (member key-kbd ergoemacs-global-not-changed-cache)
+;;             nil
+;;           (let* ((key-function (lookup-key (current-global-map) key-code t))
+;;                  (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
+;;                  (trans-function (if (ignore-errors (keymapp key-function))
+;;                                      'prefix
+;;                                    key-function))
+;;                  (has-changed nil))
+;;             (cond
+;;              ((not trans-function)) ; trans-function is undefined.
+;;                                         ; Assume not globally changed.
+;;              ((integerp trans-function) ; Over defined. See if previous key is globally-changed.
+;;               (let ((key-as-vector (read-kbd-macro (key-description key-code) t))
+;;                     (prefix-vector (make-vector trans-function nil))
+;;                     (i 0))
+;;                 (while (< i trans-function)
+;;                   (aset prefix-vector i (elt key-as-vector i))
+;;                   (setq i (+ 1 i)))
+;;                 ;; If it is a prefix vector, assume not globally
+;;                 ;; changed
+;;                 (unless (ignore-errors (keymapp (lookup-key (current-global-map) prefix-vector)))
+;;                   ;; Not a prefix, see if the key had actually changed
+;;                   ;; by recursively calling `ergoemacs-global-changed-p'
+;;                   (setq has-changed
+;;                         (ergoemacs-global-changed-p
+;;                          prefix-vector is-variable complain fix)))))
+;;              (old-bindings ; Trans function is defined, not an integer
+;;               (unless (member trans-function (nth 1 old-bindings))
+;;                 (setq has-changed t)))
+;;              (t
+;;               (setq has-changed t)) ; Not found in old bindings, but bound globally
+;;              )
+;;             (if has-changed
+;;                 (progn
+;;                   (when (or fix complain)
+;;                     (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
+;;                              trans-function old-bindings)
+;;                     (when fix
+;;                       (unless (integerp trans-function)
+;;                         (ergoemacs-global-fix-defualt-bindings key-kbd trans-function))))
+;;                   (pushnew key-kbd ergoemacs-global-changed-cache :test 'equal))
+;;               (pushnew key-kbd ergoemacs-global-not-changed-cache :test 'equal))
+;;             has-changed))))))
 
 ;; Based on describe-key-briefly
 (declare-function ergoemacs-key-fn-lookup "ergoemacs-translate.el")
