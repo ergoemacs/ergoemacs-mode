@@ -590,18 +590,6 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
 (unless (featurep 'ergoemacs-advices)
   (load "ergoemacs-advices"))
 
-(defcustom ergoemacs-ignore-prev-global t
-  "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."
-  :type 'boolean
-  :group 'ergoemacs-mode)
-
-(declare-function ergoemacs-ignore-prev-global "ergoemacs-unbind.el")
-(declare-function ergoemacs-reset-global-where-is "ergoemacs-unbind.el")
-(if ergoemacs-ignore-prev-global
-    (ergoemacs-ignore-prev-global)
-  (ergoemacs-reset-global-where-is))
-
-
 ;;; Frequently used commands as aliases
 
 (defcustom ergoemacs-use-aliases t

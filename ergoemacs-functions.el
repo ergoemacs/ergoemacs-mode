@@ -167,7 +167,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
   (when (or (equal current-prefix-arg '(4))
             (equal current-prefix-arg '(16)))
     (insert "Delete Byte Compiled Files:\n")
-    (dolist (file (directory-files (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) t "[.]elc$"))
+    (dolist (file (directory-files (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) t "\\(ergoemacs-global-.*elc?$\\|[.]elc$\\\)"))
       (insert "\tDelete " file)
       (delete-file file)
       (insert "\n"))

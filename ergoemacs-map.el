@@ -87,7 +87,7 @@
     (puthash cur-key 'ergoemacs-prefix ergoemacs-extract-keys--hash-2))
   (if (ergoemacs-map-p keymap)
       ;; Bound submap, traverse submap later
-      (push (ergoemacs-map-p keymap) ergoemacs-submaps--)
+      (push (plist-get (ergoemacs-map-p keymap) :map-list) ergoemacs-submaps--)
     (let ((tmp ergoemacs-extract-keys--base-map))
       (setq ergoemacs-extract-keys--base-map nil)
       (ergoemacs-extract-keys keymap nil (or cur-key t) compare)
@@ -226,12 +226,10 @@
                    (if (consp key-2)
                        (if (not compare)
                            (progn
-                             (puthash key-2 value ergoemacs-extract-keys--hash-2)
-                             (setq tmp (gethash 'ranges ergoemacs-extract-keys--hash-2))
-                             (pushnew key-2 tmp :test 'equal)
-                             (message "Put: %s value: %s (%s) %s" key-2 value ergoemacs-submaps--key tmp)
-                             (puthash 'ranges tmp ergoemacs-extract-keys--hash-2)
-                             (message "Get: %s" (gethash 'ranges ergoemacs-extract-keys--hash-2)))
+                             (puthash (ergoemacs-copy-list key-2) value ergoemacs-extract-keys--hash-2)
+                             (setq tmp (gethash 'ranges ergoemacs-extract-keys--hash-2) )
+                             (push (ergoemacs-copy-list key-2) tmp)
+                             (puthash 'ranges tmp ergoemacs-extract-keys--hash-2))
                          ;; FIXME -- See if anything changed here...
                          )
                      (ergoemacs-extract-keys--puthash (or (and (vectorp pre) (vconcat pre (vector key-2)))
@@ -404,33 +402,47 @@ If WHERE-IS is non-nil, return a list of the keys (in vector format) where this 
                   (setq prefix (substring new-key 0 (length (car submap))))
                   (when (equal prefix  (car submap))
                     (setq map (symbol-value (cadr submap)))
-                    (setq new-key (substring new-key (length (car submap))))
+                    (setq tmp (substring new-key (length (car submap))))
                     (throw 'found-submap t)))) nil)
-        (setq prior (ergoemacs-prior-function new-key where-is before-ergoemacs map))
+        (setq prior (ergoemacs-prior-function tmp where-is before-ergoemacs map))
         (when where-is
           (setq prior (mapcar (lambda(x) (vconcat prefix x)) prior)))))
     
     (when (and (not prior) (= 1 (length new-key))
                (setq range (gethash 'ranges hash-2)))
       ;; Possibly a range?
-      (dolist (r range)
-        (when (and (integerp (aref new-key 0))
-                   (> (aref new-key 0) (car r))
-                   (< (aref new-key 0) (cdr r)))
-          (message "%s; %s" (aref new-key 0) r)
-          )))
+      (catch 'found-range
+        (dolist (r range)
+          (when (and (integerp (aref new-key 0))
+                     (>= (aref new-key 0) (car r))
+                     (<= (aref new-key 0) (cdr r)))
+            (setq prior (gethash r hash-2))
+            (throw 'found-range t))) t))
     (unless prior
       ;; Instead of sequences like M-q, try ESC q
       (setq tmp (ergoemacs-meta-to-escape new-key))
       (when tmp
-        (setq prior (ergoemacs-prior-function tmp where-is before-ergoemacs keymap))))
+        (setq prior (ergoemacs-prior-function tmp where-is before-ergoemacs keymap))
+        (when (eq prior 'self-insert-command)
+          (setq prior nil))))
     prior))
 
-(defun ergoemacs-global-changed-p (key &optional before-ergoemacs)
+(defcustom ergoemacs-ignore-prev-global t
+  "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+;; for compatability 
+;;;###autoload
+(defun ergoemacs-ignore-prev-global ()
+  "Ignore previously defined global keys."
+  (setq ergoemacs-ignore-prev-global t))
+
+(defun ergoemacs-global-changed-p (key)
   "Determines if the global KEY has changed"
   (let* ((key (read-kbd-macro (key-description key) t))
         (current (lookup-key global-map key))
-        (prior (ergoemacs-prior-function key nil before-ergoemacs)))
+        (prior (ergoemacs-prior-function key nil ergoemacs-ignore-prev-global)))
     (when (keymapp current)
       (setq current 'ergoemacs-prefix))
     (not (eq current prior))))
@@ -481,20 +493,24 @@ If WHERE-IS is non-nil, return a list of the keys (in vector format) where this 
     (ergoemacs-map--label-atoms)
     (if (file-readable-p (ergoemacs-default-global--file))
         (load (ergoemacs-default-global--file))
-      (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-get-default-keys*"))
+      ;; (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-get-default-keys*"))
       (let* ((emacs-exe (ergoemacs-emacs-exe))
              (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
              (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(ergoemacs-default-global--gen) (kill-emacs)\"" emacs-exe default-directory))
-             (process (start-process-shell-command "ergoemacs-global" "*ergoemacs-get-default-keys*" cmd)))
-        (set-process-sentinel process 'ergoemacs-map-default-global--finish)))
+             ;; (process (start-process-shell-command "ergoemacs-global" "*ergoemacs-get-default-keys*" cmd))
+             )
+        (message "%s" (shell-command-to-string cmd))
+        (ergoemacs-map-default-global)
+        ;; (set-process-sentinel process 'ergoemacs-map-default-global--finish)
+        ))
     ;; Figure differences from default global map
     (ergoemacs-extract-keys global-map nil nil t)))
 
-(defun ergoemacs-map-default-global--finish (process change)
-  "Run the clean environment"
-  (when (string-match "finished" change)
-    (kill-buffer (get-buffer-create "*ergoemacs-get-default-keys*"))
-    (ergoemacs-map-default-global)))
+;; (defun ergoemacs-map-default-global--finish (process change)
+;;   "Run the clean environment"
+;;   (when (string-match "finished" change)
+;;     (kill-buffer (get-buffer-create "*ergoemacs-get-default-keys*"))
+;;     (ergoemacs-map-default-global)))
 
 
 (defun ergoemacs-extract-prefixes (keymap &optional dont-ignore return-vector)
