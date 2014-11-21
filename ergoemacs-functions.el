@@ -190,7 +190,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
   (message "Run ergoemacs-clean (%s;%s)" process change)
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (ergoemacs-load (or ergoemacs-run-clean
-                            " --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\""))
+                            " --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (require 'elp) (setq debug-on-error t) (elp-instrument-package (symbol-name 'ergoemacs-)) (ergoemacs-mode 1) (elp-results))\""))
         cmd process rm-batch)
     (when ergoemacs-keyboard-layout
       (setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout))

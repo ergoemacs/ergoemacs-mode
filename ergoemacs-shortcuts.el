@@ -1069,7 +1069,7 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
               ;;     (overlay-put tmp-overlay 'priority 536870910)))
               (cond
                ;; Apply shortcuts (even though masked).
-               ((and key (member key ergoemacs-shortcut-prefix-keys))
+               ((and key (not (ergoemacs-global-changed-p key)) (member key ergoemacs-shortcut-prefix-keys))
                 ;; Shortcut prefix key, wait for more.
                 (setq ret 'keymap))
                ((and hash (commandp (nth 0 hash) t))

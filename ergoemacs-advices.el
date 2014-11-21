@@ -275,144 +275,8 @@ If `pre-command-hook' is used and `ergoemacs-mode' is enabled add to `ergoemacs-
            nil)))
     ad-do-it))
 
-(defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
-  "This does the right thing when modifying `ergoemacs-keymap'.
-Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
-  (let ((is-global-p (equal keymap (current-global-map)))
-        (is-local-p (equal keymap (current-local-map)))
-        (is-ergoemacs-modified-p (and ergoemacs-mode
-                                      (not ergoemacs-ignore-advice)
-                                      (ignore-errors (and (string= "ergoemacs-modified" (nth 1 keymap))
-                                                          (car (nth 2 keymap))))))
-        (original-keymap (copy-keymap keymap))
-        ergoemacs-local-map)
-    (when is-ergoemacs-modified-p
-      ;; Restore original map to make changes.
-      (ergoemacs-setcdr keymap (cdr (gethash is-ergoemacs-modified-p ergoemacs-original-map-hash))))
-    (when (and is-local-p (not ergoemacs-local-emulation-mode-map-alist))
-      (set (make-local-variable 'ergoemacs-local-emulation-mode-map-alist) '()))
-    ;; (when is-local-p
-    ;;   (setq ergoemacs-local-map
-    ;;         (cdr (car ergoemacs-local-emulation-mode-map-alist)))
-    ;;   (unless (ignore-errors (keymapp ergoemacs-local-map))
-    ;;     (setq ergoemacs-local-map (make-sparse-keymap)))
-    ;;   (define-key ergoemacs-local-map key def)
-    ;;   (setq ergoemacs-local-emulation-mode-map-alist
-    ;;         (list (cons 'ergoemacs-mode (make-sparse-keymap)))))
-    (ignore-errors
-      (when (and ergoemacs-run-mode-hooks
-                 (not (string-match-p "\\(<menu-bar>\\|<remap>\\)" (key-description key)))
-                 (ergoemacs-is-user-defined-map-change-p)
-                 (not (equal keymap ergoemacs-global-map))
-                 (not (equal keymap ergoemacs-keymap)))
-        (let ((ergoemacs-run-mode-hooks nil)
-              (new-key (read-kbd-macro
-                        (format "<ergoemacs-user> %s"
-                                (key-description key)))))
-          (define-key keymap new-key def))))
-    ad-do-it
-    (when is-ergoemacs-modified-p
-      ;; Restore ergoemacs-mode changes
-      (let* ((map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-e-map")) ergoemacs-original-map-hash))
-             (n-map (or (and map (copy-keymap map)) (make-sparse-keymap)))
-            (full-map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-full-map")) ergoemacs-original-map-hash))
-            shortcut-list)
-        (remhash is-ergoemacs-modified-p ergoemacs-modified-map-hash)
-        ;; Save original map again.
-        (puthash is-ergoemacs-modified-p (copy-keymap keymap)
-                 ergoemacs-original-map-hash)
-        (maphash
-         (lambda (key item)
-           (push (list key item) shortcut-list))
-         ergoemacs-command-shortcuts-hash)
-        (ergoemacs-theme--install-shortcuts-list
-         shortcut-list n-map 
-         keymap full-map)
-        (cond
-         ((ignore-errors
-            (and (eq (nth 0 (nth 1 n-map)) 'keymap)
-                 (not (keymap-parent n-map))))
-          (setq n-map (cdr n-map)))
-         (t
-          (setq n-map (list n-map))))
-        (push map n-map)
-        (setq n-map
-              (cdr (copy-keymap
-                          (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map keymap)))))
-        ;; (keymap "ergoemacs-modfied" (is-ergoemacs-modified-p) ...)
-        (push (list is-ergoemacs-modified-p) n-map)
-        (push "ergoemacs-modified" n-map)
-        (ergoemacs-setcdr keymap n-map)))
-    ;; Not sure why, but somehow `ergoemacs-mode' is unlinking the
-    ;; maps from any of the alists of interest, like:
-    ;;
-    ;; - `minor-mode-map-alist'
-    ;; - `minor-mode-overriding-map-alist'
-    ;; - `emulation-mode-map-alists'
-    ;;
-    ;; This updates these variables if the map is updated. This should
-    ;; never be done in a sparse, unidenifying keymap, otherwise the
-    ;; keymaps will be cross-linked causing random an unpredictable
-    ;; behavior.
-
-    ;; To keep from inifinite loops, don't do this when defining
-    ;; `ergoemacs-mode' style keys
-    
-    (when (and (not ergoemacs-ignore-advice)
-               (not (equal original-keymap '(keymap))))
-      ;; Update `minor-mode-map-alist'. Should address Issue #298
-      (dolist (elt minor-mode-map-alist)
-        (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
-                 (equal (cdr elt) original-keymap))
-            (ergoemacs-setcdr elt keymap)))
-      ;; Update `minor-mode-overriding-map-alist'. 
-      (dolist (elt minor-mode-overriding-map-alist)
-        (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
-                 (equal (cdr elt) original-keymap))
-            (ergoemacs-setcdr elt keymap)))
-      ;; Now fix any emulation maps... (sigh).
-      (ergoemacs-emulations 'remove)
-      (unwind-protect
-          (dolist (var emulation-mode-map-alists)
-            (cond
-             ((ignore-errors
-                (and (listp var)
-                     (equal (cdr var) original-keymap)))
-              (ergoemacs-setcdr var keymap))
-             ((ignore-errors (listp (ergoemacs-sv var)))
-              (dolist (map-key (ergoemacs-sv var))
-                (when (equal (cdr map-key) original-keymap)
-                  (ergoemacs-setcdr map-key keymap))))))
-        (ergoemacs-emulations)))
-    
-    ;; (when (and is-global-p (not ergoemacs-global-changes-are-ignored-p))
-    ;;   (let ((vk key))
-    ;;     (ergoemacs-global-set-key-after key)
-    ;;     (unless (vectorp vk) ;; Do vector def too.
-    ;;       (setq vk (read-kbd-macro (key-description key) t))
-    ;;       (ergoemacs-global-set-key-after vk))))
-    ))
 
 (defvar ergoemacs-global-override-rm-keys '())
-
-(declare-function ergoemacs-theme-component--ignore-globally-defined-key
-                  "ergoemacs-theme-engine.el")
-(defvar ergoemacs-global-changed-cache)
-(defvar ergoemacs-global-not-changed-cache)
-(defun ergoemacs-global-set-key-after (key)
-  (if ergoemacs-ignore-advice nil
-    (let ((kd (key-description key)))
-      (unless (or (and (vectorp key)
-                       (ignore-errors (memq (elt key 0) '(menu-bar 27 remap))))
-                  ;; FIXME: don't unbind for packages that use
-                  ;; global-set-key.  Like undo-tree
-                  (and (not (vectorp key))
-                       (string= "ESC" kd)))
-        ;; Let `ergoemacs-mode' know these keys have changed.
-        (pushnew kd ergoemacs-global-changed-cache :test 'equal)
-        (setq ergoemacs-global-not-changed-cache (delete kd ergoemacs-global-not-changed-cache))
-        ;; Remove the key from `ergoemacs-mode' bindings
-        (ergoemacs-theme-component--ignore-globally-defined-key key t)))))
 
 (defvar ergoemacs-use-M-x-p)
 (eval-after-load "helm"
@@ -1020,7 +884,7 @@ initialization after ergoemacs-mode loaded itself.  has `eval-after-load'
 
 
 (defcustom ergoemacs-functions-to-redefine
-  `(completing-read substitute-command-keys key-binding key-description this-single-command-keys this-command-keys this-command-keys-vector eval-after-load)
+  `(completing-read substitute-command-keys key-binding key-description this-single-command-keys this-command-keys this-command-keys-vector eval-after-load define-key)
   "List of symbols representing functions to be redefined in ergoemacs-mode."
   :type '(repeat (restricted-sexp :tag "Command"
                                   ;; Use `symbolp' instead of `functionp' or `fboundp', in case the library

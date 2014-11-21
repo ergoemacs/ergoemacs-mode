@@ -76,6 +76,7 @@
 (defvar ergoemacs-extract-keys--hash-2 nil)
 (defvar ergoemacs-extract-keys--full-map nil)
 (defvar ergoemacs-extract-keys--keymap nil)
+(defvar ergoemacs-extract-keys--before-keys nil)
 (defvar ergoemacs-extract-keys--prefixes nil)
 (defvar ergoemacs-extract-keys--base-map nil)
 
@@ -368,6 +369,36 @@ modifier occurred, such as in `ergoemacs-meta-to-escape'.
 KEY-SEQ must be a vector.  If there is no need to escape the key sequence return nil."
   (ergoemacs-emacs-shift-translate key-seq 'meta 27))
 
+(defun ergoemacs-key-submap (key map &optional not-recursive)
+  "If KEY defines a key on a submap MAP, return the submap map name and key on it."
+  (let (new-key
+        prefix
+        map-name
+        (new-key (or (and (vectorp key) key)
+                     (read-kbd-macro (key-description key) t)))
+        ret)
+    (when (catch 'found-submap
+            (dolist (submap (ergoemacs-submaps map))
+              (when (boundp (cadr submap))
+                (when (equal new-key (car submap))
+                  (setq prefix new-key)
+                  (setq map (cadr submap))
+                  (setq new-key nil)
+                  (throw 'found-submap t))
+                (when (> (length new-key) (length (car submap)))
+                  (setq prefix (substring new-key 0 (length (car submap))))
+                  (when (equal prefix  (car submap))
+                    (setq map (cadr submap))
+                    (setq new-key (substring new-key (length (car submap))))
+                    (throw 'found-submap t))))) nil)
+      (when (and new-key (not not-recursive))
+        (setq ret (ergoemacs-key-submap new-key (symbol-value map))))
+      (if ret
+          (setq ret (list (vconcat prefix (nth 0 ret)) (or (nth 1 ret)
+                                                           (list prefix new-key map)) (nth 2 ret)))
+        (setq ret (list prefix new-key map))))
+    ret))
+
 ;;; FIXME: Write tests for this function
 (defun ergoemacs-prior-function (key &optional where-is before-ergoemacs keymap)
   "Looks up the original binding of KEY.
@@ -440,12 +471,17 @@ If WHERE-IS is non-nil, return a list of the keys (in vector format) where this 
 
 (defun ergoemacs-global-changed-p (key)
   "Determines if the global KEY has changed"
-  (let* ((key (read-kbd-macro (key-description key) t))
-        (current (lookup-key global-map key))
-        (prior (ergoemacs-prior-function key nil ergoemacs-ignore-prev-global)))
-    (when (keymapp current)
-      (setq current 'ergoemacs-prefix))
-    (not (eq current prior))))
+  (let* ((key (or (and (vectorp key) key)
+                  (read-kbd-macro (key-description key) t)))
+         (after-changed (ergoemacs-map-get global-map :keys-after-changed))
+         current prior)
+    (if (member key after-changed) t
+      (setq current (lookup-key global-map key)
+            prior (ergoemacs-prior-function key nil (not ergoemacs-ignore-prev-global)))
+      (unless (eq current prior)
+        (when (keymapp current)
+          (setq current 'ergoemacs-prefix)))
+      (not (eq current prior)))))
 
 (defun ergoemacs-default-global--file ()
   "What is the global key hash file."
@@ -487,31 +523,26 @@ If WHERE-IS is non-nil, return a list of the keys (in vector format) where this 
       (goto-char (point-max))
       (insert ")"))))
 
+(defun ergoemacs-map--label-after-startup ()
+  "Labels all maps after startup. Also label maps after everything has loaded."
+  (ergoemacs-map--label-atoms)
+  (add-hook 'after-load-functions 'ergoemacs-map--label-atoms))
+
+(add-hook 'after-init-hook 'ergoemacs-map--label-after-startup)
+
 (defun ergoemacs-map-default-global ()
   "Loads/Creates the default global map information."
-  (unless noninteractive
-    (ergoemacs-map--label-atoms)
-    (if (file-readable-p (ergoemacs-default-global--file))
-        (load (ergoemacs-default-global--file))
-      ;; (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-get-default-keys*"))
+  (ergoemacs-map--label-atoms)
+  (if (file-readable-p (ergoemacs-default-global--file))
+      (load (ergoemacs-default-global--file))
+    (if noninteractive
+        (warn "Could not find global map information")
       (let* ((emacs-exe (ergoemacs-emacs-exe))
              (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
-             (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(ergoemacs-default-global--gen) (kill-emacs)\"" emacs-exe default-directory))
-             ;; (process (start-process-shell-command "ergoemacs-global" "*ergoemacs-get-default-keys*" cmd))
-             )
+             (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(ergoemacs-default-global--gen) (kill-emacs)\"" emacs-exe default-directory)))
         (message "%s" (shell-command-to-string cmd))
         (ergoemacs-map-default-global)
-        ;; (set-process-sentinel process 'ergoemacs-map-default-global--finish)
-        ))
-    ;; Figure differences from default global map
-    (ergoemacs-extract-keys global-map nil nil t)))
-
-;; (defun ergoemacs-map-default-global--finish (process change)
-;;   "Run the clean environment"
-;;   (when (string-match "finished" change)
-;;     (kill-buffer (get-buffer-create "*ergoemacs-get-default-keys*"))
-;;     (ergoemacs-map-default-global)))
-
+        (ergoemacs-extract-keys global-map nil nil t)))))
 
 (defun ergoemacs-extract-prefixes (keymap &optional dont-ignore return-vector)
   "Extract prefix commands for KEYMAP.
@@ -941,6 +972,204 @@ The KEYMAP will have the structure
         (ergoemacs-setcdr (ergoemacs-sv map-name) (cdr new-map)))
       ;; Return new map
       new-map))))
+
+(defun ergoemacs-define-key--is-global-map (map key)
+  "Determines if defining KEY the MAP will change the global-map.
+This checks if the map is a submap of the global map.  If so, it
+returns a list of keys affected.   Otherwise, it returns nil"
+  (let ((submap-p (ergoemacs-submap-p map)) tmp (ret '()))
+    (cond
+     ((and submap-p (not (eq submap-p 'unknown)))
+      (dolist (submap submap-p)
+        (setq tmp
+              (ergoemacs-define-key--is-global-map
+               (symbol-value (nth 0 (plist-get (cdr submap) :map-list)))
+               (or (and (vectorp key) (vconcat (car submap) key))
+                   (car submap))))
+        (when tmp
+          (setq ret (append ret tmp)))))
+     ((memq 'global-map (plist-get (ergoemacs-map-p map) :map-list))
+      (setq ret (or (and key (list key)) t))))
+    ret))
+
+
+(declare-function ergoemacs-real-define-key "ergoemacs-map.el" (file form) t)
+(fset 'ergoemacs-real-define-key (symbol-function 'define-key))
+
+(defun ergoemacs-define-key (keymap key def)
+  "In KEYMAP, define key sequence KEY as DEF.
+KEYMAP is a keymap.
+
+KEY is a string or a vector of symbols and characters, representing a
+sequence of keystrokes and events.  Non-ASCII characters with codes
+above 127 (such as ISO Latin-1) can be represented by vectors.
+Two types of vector have special meanings:
+ [remap COMMAND] remaps any key binding for COMMAND.
+ [t] creates a default definition, which applies to any event with no
+    other definition in KEYMAP.
+
+DEF is anything that can be a key's definition:
+ nil (means key is undefined in this keymap),
+ a command (a Lisp function suitable for interactive calling),
+ a string (treated as a keyboard macro),
+ a keymap (to define a prefix key),
+ a symbol (when the key is looked up, the symbol will stand for its
+    function definition, which should at that time be one of the above,
+    or another symbol whose function definition is used, etc.),
+ a cons (STRING . DEFN), meaning that DEFN is the definition
+    (DEFN should be a valid definition in its own right),
+ or a cons (MAP . CHAR), meaning use definition of CHAR in keymap MAP,
+ or an extended menu item definition.
+ (See info node `(elisp)Extended Menu Items'.)
+
+If KEYMAP is a sparse keymap with a binding for KEY, the existing
+binding is altered.  If there is no binding for KEY, the new pair
+binding KEY to DEF is added at the front of KEYMAP.
+
+When `ergoemacs-mode' has labeled the keymap, then define the key
+in the original keymap, and in the override keymap.
+
+"
+  ;; (let ((map-plist (ergoemacs-map-p keymap))
+  ;;       changes-after-map)
+  ;;   (unless map-plist
+  ;;     ;; ergoemacs-mode aware keymap.
+  ;;     ;; First save changes as changes made after `ergoemacs-mode'
+  ;;     (setq changes-after-map (or (ergoemacs-map-get keymap :changes-after-map) (make-sparse-keymap)))
+  ;;     (ergoemacs-real-define-key changes-after-map key def)
+  ;;     (ergoemacs-map-put keymap :changes-after-map changes-after-map)
+  ;;     ;; (ergoemacs-real-define-key keymap key def)
+  ;;     )
+  ;;   (ergoemacs-real-define-key keymap key def))
+  (let ((is-local-p (equal keymap (current-local-map)))
+        (is-ergoemacs-modified-p (and ergoemacs-mode
+                                      (not ergoemacs-ignore-advice)
+                                      (ignore-errors (and (string= "ergoemacs-modified" (nth 1 keymap))
+                                                          (car (nth 2 keymap))))))
+        (original-keymap (copy-keymap keymap))
+        (key-vect (or (and (vectorp key) key)
+                      (read-kbd-macro (key-description key) t)))
+        ergoemacs-local-map)
+    (when is-ergoemacs-modified-p
+      ;; Restore original map to make changes.
+      (ergoemacs-setcdr keymap (cdr (gethash is-ergoemacs-modified-p ergoemacs-original-map-hash))))
+    (when (and is-local-p (not ergoemacs-local-emulation-mode-map-alist))
+      (set (make-local-variable 'ergoemacs-local-emulation-mode-map-alist) '()))
+    (when is-local-p
+      (setq ergoemacs-local-map
+            (cdr (car ergoemacs-local-emulation-mode-map-alist)))
+      (unless (ignore-errors (keymapp ergoemacs-local-map))
+        (setq ergoemacs-local-map (make-sparse-keymap)))
+      (define-key ergoemacs-local-map key def)
+      (setq ergoemacs-local-emulation-mode-map-alist
+            (list (cons 'ergoemacs-mode (make-sparse-keymap)))))
+    (ignore-errors
+      (when (and ergoemacs-run-mode-hooks
+                 (not (string-match-p "\\(<menu-bar>\\|<remap>\\)" (key-description key)))
+                 (ergoemacs-is-user-defined-map-change-p)
+                 (not (equal keymap ergoemacs-global-map))
+                 (not (equal keymap ergoemacs-keymap)))
+        (let ((ergoemacs-run-mode-hooks nil)
+              (new-key (read-kbd-macro
+                        (format "<ergoemacs-user> %s"
+                                (key-description key)))))
+          (ergoemacs-real-define-key keymap new-key def))))
+    (ergoemacs-real-define-key keymap key def)
+    (when is-ergoemacs-modified-p
+      ;; Restore ergoemacs-mode changes
+      (let* ((map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-e-map")) ergoemacs-original-map-hash))
+             (n-map (or (and map (copy-keymap map)) (make-sparse-keymap)))
+             (full-map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-full-map")) ergoemacs-original-map-hash))
+             shortcut-list)
+        (remhash is-ergoemacs-modified-p ergoemacs-modified-map-hash)
+        ;; Save original map again.
+        (puthash is-ergoemacs-modified-p (copy-keymap keymap)
+                 ergoemacs-original-map-hash)
+        (maphash
+         (lambda (key item)
+           (push (list key item) shortcut-list))
+         ergoemacs-command-shortcuts-hash)
+        (ergoemacs-theme--install-shortcuts-list
+         shortcut-list n-map 
+         keymap full-map)
+        (cond
+         ((ignore-errors
+            (and (eq (nth 0 (nth 1 n-map)) 'keymap)
+                 (not (keymap-parent n-map))))
+          (setq n-map (cdr n-map)))
+         (t
+          (setq n-map (list n-map))))
+        (push map n-map)
+        (setq n-map
+              (cdr (copy-keymap
+                    (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map keymap)))))
+        ;; (keymap "ergoemacs-modfied" (is-ergoemacs-modified-p) ...)
+        (push (list is-ergoemacs-modified-p) n-map)
+        (push "ergoemacs-modified" n-map)
+        (ergoemacs-setcdr keymap n-map)))
+    ;; Not sure why, but somehow `ergoemacs-mode' is unlinking the
+    ;; maps from any of the alists of interest, like:
+    ;;
+    ;; - `minor-mode-map-alist'
+    ;; - `minor-mode-overriding-map-alist'
+    ;; - `emulation-mode-map-alists'
+    ;;
+    ;; This updates these variables if the map is updated. This should
+    ;; never be done in a sparse, unidenifying keymap, otherwise the
+    ;; keymaps will be cross-linked causing random an unpredictable
+    ;; behavior.
+
+    ;; To keep from inifinite loops, don't do this when defining
+    ;; `ergoemacs-mode' style keys
+    
+    (when (and (not ergoemacs-ignore-advice)
+               (not (equal original-keymap '(keymap))))
+      ;; Update `minor-mode-map-alist'. Should address Issue #298
+      (dolist (elt minor-mode-map-alist)
+        (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
+                 (equal (cdr elt) original-keymap))
+            (ergoemacs-setcdr elt keymap)))
+      ;; Update `minor-mode-overriding-map-alist'. 
+      (dolist (elt minor-mode-overriding-map-alist)
+        (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
+                 (equal (cdr elt) original-keymap))
+            (ergoemacs-setcdr elt keymap)))
+      ;; Now fix any emulation maps... (sigh).
+      (ergoemacs-emulations 'remove)
+      (unwind-protect
+          (dolist (var emulation-mode-map-alists)
+            (cond
+             ((ignore-errors
+                (and (listp var)
+                     (equal (cdr var) original-keymap)))
+              (ergoemacs-setcdr var keymap))
+             ((ignore-errors (listp (ergoemacs-sv var)))
+              (dolist (map-key (ergoemacs-sv var))
+                (when (equal (cdr map-key) original-keymap)
+                  (ergoemacs-setcdr map-key keymap))))))
+        (ergoemacs-emulations)))
+    
+    ;; Update global changes
+    (dolist (global-key (ergoemacs-define-key--is-global-map keymap key-vect))
+      (ergoemacs-global-set-key-after global-key))))
+
+(defun ergoemacs-global-set-key-after (key)
+  (if ergoemacs-ignore-advice nil
+    (let ((kd (key-description key)) tmp)
+      (unless (or (and (vectorp key)
+                       (ignore-errors (memq (elt key 0) '(menu-bar 27 remap))))
+                  ;; FIXME: don't unbind for packages that use
+                  ;; global-set-key.  Like undo-tree
+                  (and (not (vectorp key))
+                       (string= "ESC" kd)))
+        ;; Let `ergoemacs-mode' know these keys have changed.
+        (setq tmp (ergoemacs-map-get global-map :keys-changed-after))
+        (pushnew (read-kbd-macro kd t) tmp :test 'equal)
+        (ergoemacs-map-put global-map :keys-after-changed tmp)
+        ;; (pushnew kd ergoemacs-global-changed-cache :test 'equal)
+        ;; (setq ergoemacs-global-not-changed-cache (delete kd ergoemacs-global-not-changed-cache))
+        ;; Remove the key from `ergoemacs-mode' bindings
+        (ergoemacs-theme-component--ignore-globally-defined-key key t)))))
 
 (provide 'ergoemacs-map)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -257,6 +257,17 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
          "<apps>"
        "<menu>") 'define-key) t)))
 
+
+(ert-deftest ergoemacs-test-global-key-set-apps-after ()
+  "Test setting <apps> after loading."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps>"
+       "<menu>")) t)))
+
 (ert-deftest ergoemacs-test-global-key-set-apps-m-before ()
   "Test setting <apps> m before loading."
   (should
