@@ -797,8 +797,8 @@ Also make a hash table of all original maps (linked based on :map-list)"
        (when (keymapp sv)
          (setq ret (ergoemacs-map-get sv :map-list)
                omap (gethash ret ergoemacs-original-map-hash))
-         (when
-           (remhash ret ergoemacs-original-map-hash))
+         ;; (when
+         ;;   (remhash ret ergoemacs-original-map-hash))
          (if (and ret (string-match-p "^ergoemacs-unbound-" (symbol-name (nth 0 ret))))
              (setq ret '()))
          (pushnew map ret)
@@ -1041,115 +1041,15 @@ in the original keymap, and in the override keymap.
   ;;     ;; (ergoemacs-real-define-key keymap key def)
   ;;     )
   ;;   (ergoemacs-real-define-key keymap key def))
-  (let ((is-local-p (equal keymap (current-local-map)))
-        (is-ergoemacs-modified-p (and ergoemacs-mode
-                                      (not ergoemacs-ignore-advice)
-                                      (ignore-errors (and (string= "ergoemacs-modified" (nth 1 keymap))
-                                                          (car (nth 2 keymap))))))
-        (original-keymap (copy-keymap keymap))
-        (key-vect (or (and (vectorp key) key)
+  (let ((key-vect (or (and (vectorp key) key)
                       (read-kbd-macro (key-description key) t)))
-        ergoemacs-local-map)
-    (when is-ergoemacs-modified-p
-      ;; Restore original map to make changes.
-      (ergoemacs-setcdr keymap (cdr (gethash is-ergoemacs-modified-p ergoemacs-original-map-hash))))
-    (when (and is-local-p (not ergoemacs-local-emulation-mode-map-alist))
-      (set (make-local-variable 'ergoemacs-local-emulation-mode-map-alist) '()))
-    (when is-local-p
-      (setq ergoemacs-local-map
-            (cdr (car ergoemacs-local-emulation-mode-map-alist)))
-      (unless (ignore-errors (keymapp ergoemacs-local-map))
-        (setq ergoemacs-local-map (make-sparse-keymap)))
-      (define-key ergoemacs-local-map key def)
-      (setq ergoemacs-local-emulation-mode-map-alist
-            (list (cons 'ergoemacs-mode (make-sparse-keymap)))))
-    (ignore-errors
-      (when (and ergoemacs-run-mode-hooks
-                 (not (string-match-p "\\(<menu-bar>\\|<remap>\\)" (key-description key)))
-                 (ergoemacs-is-user-defined-map-change-p)
-                 (not (equal keymap ergoemacs-global-map))
-                 (not (equal keymap ergoemacs-keymap)))
-        (let ((ergoemacs-run-mode-hooks nil)
-              (new-key (read-kbd-macro
-                        (format "<ergoemacs-user> %s"
-                                (key-description key)))))
-          (ergoemacs-real-define-key keymap new-key def))))
-    (ergoemacs-real-define-key keymap key def)
-    (when is-ergoemacs-modified-p
-      ;; Restore ergoemacs-mode changes
-      (let* ((map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-e-map")) ergoemacs-original-map-hash))
-             (n-map (or (and map (copy-keymap map)) (make-sparse-keymap)))
-             (full-map (gethash (intern (concat (symbol-name is-ergoemacs-modified-p) "-full-map")) ergoemacs-original-map-hash))
-             shortcut-list)
-        (remhash is-ergoemacs-modified-p ergoemacs-modified-map-hash)
-        ;; Save original map again.
-        (puthash is-ergoemacs-modified-p (copy-keymap keymap)
-                 ergoemacs-original-map-hash)
-        (maphash
-         (lambda (key item)
-           (push (list key item) shortcut-list))
-         ergoemacs-command-shortcuts-hash)
-        (ergoemacs-theme--install-shortcuts-list
-         shortcut-list n-map 
-         keymap full-map)
-        (cond
-         ((ignore-errors
-            (and (eq (nth 0 (nth 1 n-map)) 'keymap)
-                 (not (keymap-parent n-map))))
-          (setq n-map (cdr n-map)))
-         (t
-          (setq n-map (list n-map))))
-        (push map n-map)
-        (setq n-map
-              (cdr (copy-keymap
-                    (ergoemacs-flatten-composed-keymap (make-composed-keymap n-map keymap)))))
-        ;; (keymap "ergoemacs-modfied" (is-ergoemacs-modified-p) ...)
-        (push (list is-ergoemacs-modified-p) n-map)
-        (push "ergoemacs-modified" n-map)
-        (ergoemacs-setcdr keymap n-map)))
-    ;; Not sure why, but somehow `ergoemacs-mode' is unlinking the
-    ;; maps from any of the alists of interest, like:
-    ;;
-    ;; - `minor-mode-map-alist'
-    ;; - `minor-mode-overriding-map-alist'
-    ;; - `emulation-mode-map-alists'
-    ;;
-    ;; This updates these variables if the map is updated. This should
-    ;; never be done in a sparse, unidenifying keymap, otherwise the
-    ;; keymaps will be cross-linked causing random an unpredictable
-    ;; behavior.
-
-    ;; To keep from inifinite loops, don't do this when defining
-    ;; `ergoemacs-mode' style keys
-    
-    (when (and (not ergoemacs-ignore-advice)
-               (not (equal original-keymap '(keymap))))
-      ;; Update `minor-mode-map-alist'. Should address Issue #298
-      (dolist (elt minor-mode-map-alist)
-        (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
-                 (equal (cdr elt) original-keymap))
-            (ergoemacs-setcdr elt keymap)))
-      ;; Update `minor-mode-overriding-map-alist'. 
-      (dolist (elt minor-mode-overriding-map-alist)
-        (if (and (not (ignore-errors (string-match "^ergoemacs" (symbol-name (car elt)))))
-                 (equal (cdr elt) original-keymap))
-            (ergoemacs-setcdr elt keymap)))
-      ;; Now fix any emulation maps... (sigh).
-      (ergoemacs-emulations 'remove)
-      (unwind-protect
-          (dolist (var emulation-mode-map-alists)
-            (cond
-             ((ignore-errors
-                (and (listp var)
-                     (equal (cdr var) original-keymap)))
-              (ergoemacs-setcdr var keymap))
-             ((ignore-errors (listp (ergoemacs-sv var)))
-              (dolist (map-key (ergoemacs-sv var))
-                (when (equal (cdr map-key) original-keymap)
-                  (ergoemacs-setcdr map-key keymap))))))
-        (ergoemacs-emulations)))
-    
-    ;; Update global changes
+        (labeled-map-p (ergoemacs-map-p keymap)))
+    (cond
+     (labeled-map-p
+      (ergoemacs-real-define-key (ergoemacs-original-keymap keymap) key def) ;; Should done in place..?
+      (ergoemacs-real-define-key keymap key def))
+     (t
+      (ergoemacs-real-define-key keymap key def)))
     (dolist (global-key (ergoemacs-define-key--is-global-map keymap key-vect))
       (ergoemacs-global-set-key-after global-key))))
 
@@ -1163,13 +1063,97 @@ in the original keymap, and in the override keymap.
                   (and (not (vectorp key))
                        (string= "ESC" kd)))
         ;; Let `ergoemacs-mode' know these keys have changed.
-        (setq tmp (ergoemacs-map-get global-map :keys-changed-after))
+        (setq tmp (ergoemacs-map-get global-map :keys-after-changed))
         (pushnew (read-kbd-macro kd t) tmp :test 'equal)
         (ergoemacs-map-put global-map :keys-after-changed tmp)
         ;; (pushnew kd ergoemacs-global-changed-cache :test 'equal)
         ;; (setq ergoemacs-global-not-changed-cache (delete kd ergoemacs-global-not-changed-cache))
         ;; Remove the key from `ergoemacs-mode' bindings
         (ergoemacs-theme-component--ignore-globally-defined-key key t)))))
+
+
+;;; ergoemacs-events
+
+
+(defvar ergoemacs-event-hash (make-hash-table)
+  "Event modifiers not covered by standard emacs")
+
+(defun ergoemacs-curr-layout-symbol (&optional layout)
+  "Gets the LAYOUT symbol.
+If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
+  (intern (format "ergoemacs-layout-%s" (or layout ergoemacs-keyboard-layout))))
+
+(defun ergoemacs-event-modifier-hash (&optional layout)
+  "Gets the event modifier hash for LAYOUT."
+  (let* ((layout-symbol (ergoemacs-curr-layout-symbol layout))
+         (hash (gethash layout-symbol ergoemacs-event-hash)))
+    (if hash hash
+      ;; Not present setup modifier hash
+      (setq hash (make-hash-table))
+      (let ((lay (symbol-value layout-symbol))
+            (i 0)
+            r1 r2)
+        (while (< i 60)
+          (unless (or (string= "" (nth i lay))
+                      (string= "" (nth (+ i 60) lay)))
+            (setq r1 (aref (read-kbd-macro (nth i lay) t) 0)
+                  r2 (aref (read-kbd-macro (nth (+ i 60) lay) t) 0))
+            (unless (eq (event-basic-type r1) (event-basic-type r2))
+              ;; This shifted expression isn't covered by basic emacs.
+              (puthash r2 r1 hash)
+              (puthash (intern (format "s%s" r1)) r2 hash)))
+          (setq i (+ i 1)))
+        (puthash layout-symbol hash ergoemacs-event-hash))
+      hash)))
+
+(defun ergoemacs-event-modifiers (event &optional layout)
+  "Return a list of symbols representing the modifier keys in event EVENT.
+This is different than `event-modifiers', since keys like # will
+return ergoemacs-shift for a QWERTY keyboard."
+  (let ((modifiers (event-modifiers event)))
+    (if (memq 'shift modifiers) modifiers
+      ;; Add 'shift for # type events.
+      (when (gethash (event-basic-type event) (ergoemacs-event-modifier-hash layout))
+        (push 'ergoemacs-shift modifiers)))
+    modifiers))
+
+(defun ergoemacs-event-basic-type  (event &optional layout)
+  "Return the basic type of the given event (all modifiers removed).
+This is different than `event-basic-type' because ?# would return
+?3 on a QWERTY LAYOUT."
+  (let* ((basic (event-basic-type event))
+         (new-basic (gethash basic (ergoemacs-event-modifier-hash layout))))
+    (or new-basic basic)))
+
+(defun ergoemacs-event-convert-list (list &optional layout)
+  "Convert the event description list EVENT-DESC to an event type.
+
+This is different than `event-convert-list' because '(shift ?3)
+or '(ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT."
+  (let ((cur-list list)
+        elt
+        tmp
+        new-list)
+    (if (not (or (memq 'shift list) (memq 'ergoemacs-shift list)))
+        (setq new-list list)
+      (while (> (length cur-list) 0)
+        (setq elt (pop cur-list))
+        (cond
+         ((and cur-list (memq elt '(shift ergoemacs-shift))))
+         ((and (not cur-list)
+               (setq tmp (gethash (intern (format "s%s" elt))
+                                  (ergoemacs-event-modifier-hash layout))))
+          ;; Special case.
+          (setq new-list (append new-list (list tmp))))
+         ((not cur-list)
+          (push 'shift new-list)
+          (setq new-list (append new-list (list elt))))
+         (t
+          (push elt new-list)))))
+    (event-convert-list new-list)))
+
+
+
 
 (provide 'ergoemacs-map)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
