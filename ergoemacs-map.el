@@ -1413,7 +1413,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
         (push m tmp))))
     tmp))
 
-(defun ergoemacs-pretty-key-description (kbd)
+(defun ergoemacs-pretty-key-description (kbd &optional layout)
   "Creates Pretty keyboard binding from kbd from M- to Alt+"
   (let ((ret "")
         tmp
@@ -1423,14 +1423,22 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
             ev (ergoemacs-event-basic-type key))
       (cond
        ((and (memq 'control mod) (eq ev ?\[))
-        (setq mod (ergoemacs-pretty-key-description--ctl mod))
-        (setq ev 'escape))
+        (setq mod (ergoemacs-pretty-key-description--ctl mod)
+              ev 'escape))
        ((and (memq 'control mod) (eq ev ?m))
-        (setq mod (ergoemacs-pretty-key-description--ctl mod))
-        (setq ev 'return))
+        (setq mod (ergoemacs-pretty-key-description--ctl mod)
+              ev 'return))
        ((and (memq 'control mod) (eq ev ?i))
-        (setq mod (ergoemacs-pretty-key-description--ctl mod))
-        (setq ev 'tab)))
+        (setq mod (ergoemacs-pretty-key-description--ctl mod)
+              ev 'tab))
+       ((memq 'ergoemacs-shift mod)
+        (setq tmp '())
+        (dolist (m mod)
+          (unless (eq m 'ergoemacs-shift)
+            (push m tmp)))
+        (setq mod tmp
+              ev (gethash (intern (format "s%s" ev))
+                          (ergoemacs-event-modifier-hash layout)))))
       (setq tmp (format "%s%s%s%s"
                         (or (and ergoemacs-pretty-key-use-face "")
                             (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "【" "["))
