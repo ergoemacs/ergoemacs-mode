@@ -1253,80 +1253,36 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   (let ((ret ""))
     (cond
      ((eq key 'escape)
-      (setq ret "Esc")
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret "Esc"))
      ((eq key 'tab)
       (setq ret (format "%sTab"
-                        (ergoemacs-unicode-char "↹" "")))
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+                        (ergoemacs-unicode-char "↹" ""))))
      ((eq key 'return)
       (setq ret (format "Enter%s"
-                        (ergoemacs-unicode-char "⏎" "")))
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+                        (ergoemacs-unicode-char "⏎" ""))))
      ((memq key '(apps menu))
-      (setq ret (ergoemacs-unicode-char "▤" "Menu"))
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret (ergoemacs-unicode-char "▤" "Menu")))
      ((eq key 'left)
-      (setq ret (ergoemacs-unicode-char "←" "left"))
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret (ergoemacs-unicode-char "←" "left")))
      ((eq key 'right)
-      (setq ret (ergoemacs-unicode-char "→" "right"))
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret (ergoemacs-unicode-char "→" "right")))
      ((eq key 'up)
-      (setq ret (ergoemacs-unicode-char "↑" "up"))
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret (ergoemacs-unicode-char "↑" "up")))
 
      ((eq key 'down)
-      (setq ret (ergoemacs-unicode-char "↓" "down"))
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret (ergoemacs-unicode-char "↓" "down")))
      ((eq key 'prior)
-      (setq ret "PgUp")
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret "PgUp"))
      ((eq key 'next)
-      (setq ret "PgDn")
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret "PgDn"))
      ((integerp key)
-      (setq ret (make-string 1 key))
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret (make-string 1 key)))
      (t
-      (setq ret (format "%s" key))
-      (when (and ergoemacs-pretty-key-use-face
-                 (not ergoemacs-use-small-symbols))
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret))))
+      (setq ret (format "%s" key))))
+    (when (and ergoemacs-pretty-key-use-face
+               (not ergoemacs-use-small-symbols))
+      (add-text-properties 0 (length ret)
+                           '(face ergoemacs-pretty-key) ret))
     ret))
 
 (defun ergoemacs-pretty-key-description--modifier (mod)
@@ -1415,45 +1371,46 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
 
 (defun ergoemacs-pretty-key-description (kbd &optional layout)
   "Creates Pretty keyboard binding from kbd from M- to Alt+"
-  (let ((ret "")
-        tmp
-        mod ev)
-    (dolist (key (listify-key-sequence kbd))
-      (setq mod (ergoemacs-event-modifiers key)
-            ev (ergoemacs-event-basic-type key))
-      (cond
-       ((and (memq 'control mod) (eq ev ?\[))
-        (setq mod (ergoemacs-pretty-key-description--ctl mod)
-              ev 'escape))
-       ((and (memq 'control mod) (eq ev ?m))
-        (setq mod (ergoemacs-pretty-key-description--ctl mod)
-              ev 'return))
-       ((and (memq 'control mod) (eq ev ?i))
-        (setq mod (ergoemacs-pretty-key-description--ctl mod)
-              ev 'tab))
-       ((memq 'ergoemacs-shift mod)
-        (setq tmp '())
-        (dolist (m mod)
-          (unless (eq m 'ergoemacs-shift)
-            (push m tmp)))
-        (setq mod tmp
-              ev (gethash (intern (format "s%s" ev))
-                          (ergoemacs-event-modifier-hash layout)))))
-      (setq tmp (format "%s%s%s%s"
-                        (or (and ergoemacs-pretty-key-use-face "")
-                            (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "【" "["))
-                            "[")
-                        (mapconcat #'ergoemacs-pretty-key-description--modifier
-                                   mod "")
-                        (ergoemacs-pretty-key-description--key ev)
-                        (or (and ergoemacs-pretty-key-use-face "")
-                            (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "】" "]"))
-                            "]")))
-      (when (and ergoemacs-use-small-symbols ergoemacs-pretty-key-use-face)
-        (add-text-properties 0 (length tmp)
-                             '(face ergoemacs-pretty-key) tmp))
-      (setq ret (format "%s %s" ret tmp)))
-    (substring ret 1)))
+  (if (eq kbd (vector)) ""
+    (let ((ret "")
+          tmp
+          mod ev)
+      (dolist (key (listify-key-sequence kbd))
+        (setq mod (ergoemacs-event-modifiers key)
+              ev (ergoemacs-event-basic-type key))
+        (cond
+         ((and (memq 'control mod) (eq ev ?\[))
+          (setq mod (ergoemacs-pretty-key-description--ctl mod)
+                ev 'escape))
+         ((and (memq 'control mod) (eq ev ?m))
+          (setq mod (ergoemacs-pretty-key-description--ctl mod)
+                ev 'return))
+         ((and (memq 'control mod) (eq ev ?i))
+          (setq mod (ergoemacs-pretty-key-description--ctl mod)
+                ev 'tab))
+         ((memq 'ergoemacs-shift mod)
+          (setq tmp '())
+          (dolist (m mod)
+            (unless (eq m 'ergoemacs-shift)
+              (push m tmp)))
+          (setq mod tmp
+                ev (gethash (intern (format "s%s" ev))
+                            (ergoemacs-event-modifier-hash layout)))))
+        (setq tmp (format "%s%s%s%s"
+                          (or (and ergoemacs-pretty-key-use-face "")
+                              (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "【" "["))
+                              "[")
+                          (mapconcat #'ergoemacs-pretty-key-description--modifier
+                                     mod "")
+                          (ergoemacs-pretty-key-description--key ev)
+                          (or (and ergoemacs-pretty-key-use-face "")
+                              (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "】" "]"))
+                              "]")))
+        (when (and ergoemacs-use-small-symbols ergoemacs-pretty-key-use-face)
+          (add-text-properties 0 (length tmp)
+                               '(face ergoemacs-pretty-key) tmp))
+        (setq ret (format "%s %s" ret tmp)))
+      (substring ret 1))))
 
 
 (defun ergoemacs-pretty-key (code)
