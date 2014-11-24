@@ -1073,8 +1073,6 @@ in the original keymap, and in the override keymap.
 
 
 ;;; ergoemacs-events
-
-
 (defvar ergoemacs-event-hash (make-hash-table)
   "Event modifiers not covered by standard emacs")
 
@@ -1108,13 +1106,25 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
 
 (defun ergoemacs-event-modifiers (event &optional layout)
   "Return a list of symbols representing the modifier keys in event EVENT.
-This is different than `event-modifiers', since keys like # will
-return ergoemacs-shift for a QWERTY keyboard."
-  (let ((modifiers (event-modifiers event)))
-    (if (memq 'shift modifiers) modifiers
+This is different than `event-modifiers' in two ways:
+- Symbol keys like # will return 'ergoemacs-shift for a QWERTY keyboard.
+- Special keys like C-RET will return 'ergoemacs-control
+"
+  (let ((modifiers (event-modifiers event))
+        basic)
+    (unless (memq 'shift modifiers)
       ;; Add 'shift for # type events.
-      (when (gethash (event-basic-type event) (ergoemacs-event-modifier-hash layout))
+      (setq basic (event-basic-type event))
+      (when (gethash basic (ergoemacs-event-modifier-hash layout))
         (push 'ergoemacs-shift modifiers)))
+    ;; Also add 'ergoemacs-control to C-RET which translates to C-m
+    (unless (and (integerp event)
+                 (< event 1000)
+                 (memq 'control modifiers))
+      (unless basic
+        (setq basic (event-basic-type event)))
+      (when (memq basic '(?m ?i ?\[))
+        (push 'ergoemacs-control modifiers)))
     modifiers))
 
 (defun ergoemacs-event-basic-type  (event &optional layout)
@@ -1128,18 +1138,29 @@ This is different than `event-basic-type' because ?# would return
 (defun ergoemacs-event-convert-list (list &optional layout)
   "Convert the event description list EVENT-DESC to an event type.
 
-This is different than `event-convert-list' because '(shift ?3)
-or '(ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT."
+This is different than `event-convert-list' because:
+ -  '(shift ?3) or '(ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT.
+ -  '(ergoemacs-control control ?m) produces C-RET"
   (let ((cur-list list)
         elt
         tmp
+        control-p
         new-list)
+    (when (memq 'ergoemacs-control cur-list)
+      (setq control-p t)
+      (dolist (elt (reverse cur-list))
+        (unless (equal elt 'ergoemacs-control)
+          (push elt new-list)))
+      (setq cur-list new-list)
+      (setq new-list nil))
+    
     (if (not (or (memq 'shift list) (memq 'ergoemacs-shift list)))
-        (setq new-list list)
+        (setq new-list cur-list)
       (while (> (length cur-list) 0)
         (setq elt (pop cur-list))
         (cond
          ((and cur-list (memq elt '(shift ergoemacs-shift))))
+         
          ((and (not cur-list)
                (setq tmp (gethash (intern (format "s%s" elt))
                                   (ergoemacs-event-modifier-hash layout))))
@@ -1150,8 +1171,292 @@ or '(ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT."
           (setq new-list (append new-list (list elt))))
          (t
           (push elt new-list)))))
-    (event-convert-list new-list)))
+    (if control-p
+        (aref (read-kbd-macro (concat "C-" (key-description (vector (event-convert-list new-list)))) t) 0)
+      (event-convert-list new-list))))
 
+;;; Pretty key
+
+(defvar ergoemacs-display-char-list nil
+  "List of characters and fonts and if they display or not.")
+
+(require 'descr-text)
+(require 'faces)
+
+(defvar ergoemacs-use-unicode-char t
+  "Use unicode characters when available.")
+
+(defun ergoemacs-display-char-p (char)
+  "Determines if CHAR can be displayed."
+  (ignore-errors
+    (let* (ret
+           (buf (current-buffer))
+           (face (font-xlfd-name (face-attribute 'default :font)))
+           (found (assoc (list face char window-system) ergoemacs-display-char-list)))
+      (if found
+          (nth 0 (cdr found))
+        (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
+        (delete-region (point-min) (point-max))
+        (insert char)
+        (let ((display (describe-char-display (point-min) (char-after (point-min)))))
+          (if (display-graphic-p (selected-frame))
+              (if display
+                  (setq ret t))
+            (if display
+                (setq ret t))))
+        (switch-to-buffer buf)
+        ;; Save it so the user doesn't see the buffer popup very much
+        ;; (if at all).
+        (push (list (list face char window-system) ret) ergoemacs-display-char-list)
+        ret))))
+
+(defun ergoemacs-unicode-char (char alt-char)
+  "Uses CHAR if it can be displayed, otherwise use ALT-CHAR.
+This assumes `ergoemacs-use-unicode-char' is non-nil.  When
+`ergoemacs-use-unicode-char' is nil display ALT-CHAR"
+  (if (and ergoemacs-use-unicode-char (ergoemacs-display-char-p char))
+      char
+    alt-char))
+
+(defcustom ergoemacs-use-ergoemacs-key-descriptions t
+  "Use ergoemacs key descriptions (Alt+) instead of emacs key descriptors (M-)"
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-use-unicode-brackets t
+  "Use unicode brackets."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-use-small-symbols nil
+  "Use small symbols to represent alt+ ctl+ etc. on windows/linux."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
+
+(defvar ergoemacs-use-M-x-p nil)
+
+(defvar ergoemacs-M-x)
+
+(defface ergoemacs-pretty-key
+  '((t :inverse-video t :box (:line-width 1 :style released-button) :weight bold))
+  "Button Face for a `ergoemacs-mode' pretty key."
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-pretty-key-use-face t
+  "Use a button face for keys."
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-pretty-key-description--key (key)
+  "Key description"
+  (let ((ret ""))
+    (cond
+     ((eq key 'escape)
+      (setq ret "Esc")
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((eq key 'tab)
+      (setq ret (format "%sTab"
+                        (ergoemacs-unicode-char "↹" "")))
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((eq key 'return)
+      (setq ret (format "Enter%s"
+                        (ergoemacs-unicode-char "⏎" "")))
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((memq key '(apps menu))
+      (setq ret (ergoemacs-unicode-char "▤" "Menu"))
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((eq key 'left)
+      (setq ret (ergoemacs-unicode-char "←" "left"))
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((eq key 'right)
+      (setq ret (ergoemacs-unicode-char "→" "right"))
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((eq key 'up)
+      (setq ret (ergoemacs-unicode-char "↑" "up"))
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+
+     ((eq key 'down)
+      (setq ret (ergoemacs-unicode-char "↓" "down"))
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((eq key 'prior)
+      (setq ret "PgUp")
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((eq key 'next)
+      (setq ret "PgDn")
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((integerp key)
+      (setq ret (make-string 1 key))
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     (t
+      (setq ret (format "%s" key))
+      (when (and ergoemacs-pretty-key-use-face
+                 (not ergoemacs-use-small-symbols))
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret))))
+    ret))
+
+(defun ergoemacs-pretty-key-description--modifier (mod)
+  "Modifier description"
+  (let (ret)
+    (cond
+     ;; OSX specific key descriptions
+     ((and (eq mod 'meta) ergoemacs-use-small-symbols
+           (eq system-type 'darwin)
+           (or (and (boundp 'mac-command-modifier)
+                    (eq mac-command-modifier 'meta))
+               (and (boundp 'ns-command-modifier)
+                    (eq ns-command-modifier 'meta))))
+      (setq ret (format "%s"
+                        (ergoemacs-unicode-char "⌘" "+"))))
+     ((and (eq mod 'meta)
+           (eq system-type 'darwin)
+           (or (and (boundp 'mac-command-modifier)
+                    (eq mac-command-modifier 'meta))
+               (and (boundp 'ns-command-modifier)
+                    (eq ns-command-modifier 'meta))))
+      (setq ret (format "%sCmd+"
+                        (ergoemacs-unicode-char "⌘" "")))
+      (when ergoemacs-pretty-key-use-face
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((and (eq mod 'meta) ergoemacs-use-small-symbols
+           (eq system-type 'darwin)
+           (or (and (boundp 'mac-alternate-modifier)
+                    (eq mac-alternate-modifier 'meta))
+               (and (boundp 'ns-alternate-modifier)
+                    (eq ns-alternate-modifier 'meta))))
+      (setq ret (format "%s"
+                        (ergoemacs-unicode-char "⌥" "+"))))
+     ((and (eq mod 'meta)
+           (eq system-type 'darwin)
+           (or (and (boundp 'mac-alternate-modifier)
+                    (eq mac-alternate-modifier 'meta))
+               (and (boundp 'ns-alternate-modifier)
+                    (eq ns-alternate-modifier 'meta))))
+      (setq ret (format "%sOpt+"
+                        (ergoemacs-unicode-char "⌥" "")))
+      (when ergoemacs-pretty-key-use-face
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((and ergoemacs-use-small-symbols (eq mod 'shift))
+      (setq ret (ergoemacs-unicode-char "⇧" "+")))
+     ((and ergoemacs-use-small-symbols (eq mod 'meta))
+      (setq ret (ergoemacs-unicode-char "♦" "!")))
+     ((and ergoemacs-use-small-symbols (eq mod 'control))
+      (setq ret "^"))
+     ((eq mod 'shift)
+      (setq ret (format "%sShift+"
+                        (ergoemacs-unicode-char "⇧" "")))
+      (when ergoemacs-pretty-key-use-face
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((eq mod 'control)
+      (setq ret "Ctrl+")
+      (when ergoemacs-pretty-key-use-face
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     ((eq mod 'meta)
+      (setq ret "Alt+")
+      (when ergoemacs-pretty-key-use-face
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret)))
+     (t
+      (setq ret (format "%s+" mod))
+      (when ergoemacs-pretty-key-use-face
+        (add-text-properties 0 (- (length ret) 1)
+                             '(face ergoemacs-pretty-key) ret))))
+    ret))
+
+(defun ergoemacs-pretty-key-description--ctl (mod)
+  "Put in the correct modifiers for special keys"
+  (let ((tmp '()))
+    (dolist (m mod)
+      (cond
+       ((eq m 'ergoemacs-control)
+        (push 'control tmp))
+       ((eq m 'control))
+       (t
+        (push m tmp))))
+    tmp))
+
+(defun ergoemacs-pretty-key-description (kbd)
+  "Creates Pretty keyboard binding from kbd from M- to Alt+"
+  (let ((ret "")
+        tmp
+        mod ev)
+    (dolist (key (listify-key-sequence kbd))
+      (setq mod (ergoemacs-event-modifiers key)
+            ev (ergoemacs-event-basic-type key))
+      (cond
+       ((and (memq 'control mod) (eq ev ?\[))
+        (setq mod (ergoemacs-pretty-key-description--ctl mod))
+        (setq ev 'escape))
+       ((and (memq 'control mod) (eq ev ?m))
+        (setq mod (ergoemacs-pretty-key-description--ctl mod))
+        (setq ev 'return))
+       ((and (memq 'control mod) (eq ev ?i))
+        (setq mod (ergoemacs-pretty-key-description--ctl mod))
+        (setq ev 'tab)))
+      (setq tmp (format "%s%s%s%s"
+                        (or (and ergoemacs-pretty-key-use-face "")
+                            (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "【" "["))
+                            "[")
+                        (mapconcat #'ergoemacs-pretty-key-description--modifier
+                                   mod "")
+                        (ergoemacs-pretty-key-description--key ev)
+                        (or (and ergoemacs-pretty-key-use-face "")
+                            (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "】" "]"))
+                            "]")))
+      (when (and ergoemacs-use-small-symbols ergoemacs-pretty-key-use-face)
+        (add-text-properties 0 (length tmp)
+                             '(face ergoemacs-pretty-key) tmp))
+      (setq ret (format "%s %s" ret tmp)))
+    (substring ret 1)))
+
+
+(defun ergoemacs-pretty-key (code)
+  "Creates Pretty keyboard binding from kbd CODE from M- to Alt+"
+  (if (not code) ""
+    (save-match-data
+      (if (string-match "^\\(M-x\\|<execute>\\) " code)
+          (if ergoemacs-use-M-x-p
+              code
+            (replace-match ergoemacs-M-x t t code))
+        (ergoemacs-pretty-key-description (read-kbd-macro code t))))))
 
 
 
