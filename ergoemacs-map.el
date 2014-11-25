@@ -1272,6 +1272,14 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   "Key description"
   (let ((ret ""))
     (cond
+     ((eq key 'deletechar)
+      (setq ret "Del"))
+     ((memq key '(insert insertchar))
+      (setq ret "Ins"))
+     ((eq key 'home)
+      (setq ret "Home"))
+     ((eq key 127)
+      (setq ret "Backspace"))
      ((eq key 'escape)
       (setq ret "Esc"))
      ((eq key 'tab)
@@ -1352,7 +1360,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
       (setq ret (ergoemacs-unicode-char "⇧" "+")))
      ((and ergoemacs-use-small-symbols (eq mod 'meta))
       (setq ret (ergoemacs-unicode-char "♦" "!")))
-     ((and ergoemacs-use-small-symbols (eq mod 'control))
+     ((and ergoemacs-use-small-symbols (memq mod '(control ergoemacs-control)))
       (setq ret "^"))
      ((eq mod 'shift)
       (setq ret (format "%sShift+"
@@ -1360,7 +1368,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
       (when ergoemacs-pretty-key-use-face
         (add-text-properties 0 (- (length ret) 1)
                              '(face ergoemacs-pretty-key) ret)))
-     ((eq mod 'control)
+     ((memq mod '(control ergoemacs-control))
       (setq ret "Ctrl+")
       (when ergoemacs-pretty-key-use-face
         (add-text-properties 0 (- (length ret) 1)
@@ -1442,8 +1450,6 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
               code
             (replace-match ergoemacs-M-x t t code))
         (ergoemacs-pretty-key-description (read-kbd-macro code t))))))
-
-
 
 (provide 'ergoemacs-map)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
