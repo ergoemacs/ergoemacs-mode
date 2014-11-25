@@ -341,7 +341,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (let (ergoemacs-use-unicode-char
         ergoemacs-pretty-key-use-face
         ergoemacs-use-small-symbols)
-    (should (string= (ergoemacs-pretty-key "C-c C-c") "[Ctrl+C][Ctrl+C]"))))
+    (should (string= (ergoemacs-pretty-key "C-c C-c") "[Ctrl+c][Ctrl+c]"))))
 
 (declare-function ergoemacs-cut-line-or-region "ergoemacs-functions.el")
 (ert-deftest ergoemacs-test-cut-line-or-region ()
@@ -363,11 +363,11 @@ not using cua or cutting line. I think kill-region is what is meant."
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (ert-deftest ergoemacs-test-issue-77 ()
   "Issue #77.
-Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
+Test \"C-x \" translating to \"[Ctrl+x][]\", should be \"[Ctrl+x]\""
   (let (ergoemacs-use-unicode-char
         ergoemacs-pretty-key-use-face
         ergoemacs-use-small-symbols)
-    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]"))))
+    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+x]"))))
 
 (ert-deftest ergoemacs-test-issue-86 ()
   "Test Issue #86.
@@ -959,7 +959,7 @@ Selected mark would not be cleared after paste."
 
 (ert-deftest ergoemacs-test-issue-243 ()
   "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
-  :expected-result :failed
+  ;; :expected-result :failed
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (w-file (expand-file-name "global-test" ergoemacs-dir))
         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
