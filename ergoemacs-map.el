@@ -1278,6 +1278,8 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
       (setq ret "Ins"))
      ((eq key 'home)
       (setq ret "Home"))
+     ((eq key 'end)
+      (setq ret "End"))
      ((eq key 127)
       (setq ret "Backspace"))
      ((eq key 'escape)
