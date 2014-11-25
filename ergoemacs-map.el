@@ -1138,9 +1138,9 @@ This is different than `event-modifiers' in two ways:
       (when (gethash basic (ergoemacs-event-modifier-hash layout))
         (push 'ergoemacs-shift modifiers)))
     ;; Also add 'ergoemacs-control to C-RET which translates to C-m
-    (unless (and (integerp event)
-                 (< event 1000)
-                 (memq 'control modifiers))
+    (when (and (integerp event)
+               (> event 1000)
+               (memq 'control modifiers))
       (unless basic
         (setq basic (event-basic-type event)))
       (when (memq basic '(?m ?i ?\[))
@@ -1452,6 +1452,148 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
               code
             (replace-match ergoemacs-M-x t t code))
         (ergoemacs-pretty-key-description (read-kbd-macro code t))))))
+
+;;; Translation between layouts
+(defvar ergoemacs-translation-hash (make-hash-table))
+
+(defun ergoemacs-get-translation-hash (&optional layout-to layout-from)
+  "Gets the translation hash."
+  (let* ((to (ergoemacs-curr-layout-symbol (or layout-from ergoemacs-keyboard-layout)))
+         (from (ergoemacs-curr-layout-symbol (or layout-from "us")))
+         (hash-f (gethash from ergoemacs-translation-hash (make-hash-table)))
+         (hash-f-t (gethash to hash-f))
+         (i 0)
+         hash-t hash-t-f lay-t lay-f r-t r-f)
+    (if hash-f-t hash-f-t
+      (setq hash-f-t (make-hash-table)
+            hash-t (gethash to ergoemacs-translation-hash (make-hash-table))
+            hash-t-f (make-hash-table)
+            lay-t (symbol-value to)
+            lay-f (symbol-value from))
+      (while (< i 120)
+        (unless (or (string= "" (nth i lay-t))
+                    (string= "" (nth i lay-f)))
+          (setq r-t (aref (read-kbd-macro (nth i lay-t) t) 0)
+                r-f (aref (read-kbd-macro (nth i lay-f) t) 0))
+          (puthash r-t r-f hash-t-f)
+          (puthash r-f r-t hash-f-t))
+        (setq i (+ i 1)))
+      (puthash from hash-t-f hash-t)
+      (puthash to hash-f-t hash-f)
+      (puthash to hash-t ergoemacs-translation-hash)
+      (puthash from hash-f ergoemacs-translation-hash)
+      hash-f-t)))
+
+(defun ergoemacs-event-translate (event &optional layout-to layout-from basic modifiers)
+  "Translate EVENT to the appropriate keyboard layout.
+BASIC is the precalculated basic event from `ergoemacs-event-basic-type'
+MODIFIERS is the precalculated modifiers from `ergoemacs-event-modifiers'
+LAYOUT-TO is the layout to translate to, (default `ergoemacs-keyboard-layout')
+LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
+  (let* ((basic (or basic (ergoemacs-event-basic-type event layout-from)))
+         (modifiers (or modifiers (ergoemacs-event-modifiers event layout-from)))
+         new-modifiers
+         new-event
+         (translation-hash (ergoemacs-get-translation-hash layout-to layout-from)))
+    (cond
+     ((and (eq system-type 'windows-nt) (eq basic 'menu))
+      (setq basic 'apps))
+     ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
+      (setq basic 'menu)))
+    (if (memq 'ergoemacs-control modifiers)
+        (setq new-event basic
+              new-modifiers modifiers)
+      (if (or (memq 'shift modifiers)
+              (memq 'ergoemacs-shift modifiers))
+          (dolist (m modifiers)
+            (if (not (memq m '(shift ergoemacs-shift)))
+                (push m new-modifiers)
+              (setq new-event (ergoemacs-event-convert-list (list m basic) layout-from))
+              (setq new-event (or (gethash new-event translation-hash) new-event))))
+        (setq new-event (or (gethash basic translation-hash) basic)
+              new-modifiers modifiers)))
+    (ergoemacs-event-convert-list (append new-modifiers (list new-event)) layout-to)))
+
+(defun ergoemacs-kbd-translate (kbd &optional just-first-keys variable-modifiers variable-prefixes layout-to layout-from)
+  "Translates between ergoemacs-mode keyboard layouts.
+KBD is the key.
+
+VARIABLE-MODIFIERS are the modifiers that cause translation
+between keyboards to occur.
+
+VARIABLE-PREFIXES are the list of prefix keys that are variable.
+
+JUST-FIRST-KEYS is a list of keys where the keyboard translation
+stops.  For example when JUST-FIRST-KEYS is [apps ?n] would
+translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
+ [apps ?k ?k]
+"
+  (let ((var-mod variable-modifiers)
+        (var-pre variable-prefixes)
+        (ret [])
+        (untranslated [])
+        (just-first-keys (or (and (vectorp just-first-keys) (list just-first-keys))
+                             just-first-keys))
+        translated-event
+        just-first-p
+        translate-prefix-p
+        basic modifiers)
+    (dolist (event (listify-key-sequence kbd))
+      (setq basic (ergoemacs-event-basic-type event layout-from)
+            modifiers (ergoemacs-event-modifiers event layout-from))
+      (unless translate-prefix-p
+        (setq translate-prefix-p (member untranslated var-pre)))
+      (when (and just-first-keys (not just-first-p))
+        (setq just-first-p (member untranslated just-first-keys)))
+      (cond
+       ((and (or (catch 'found-modifiers
+                   (dolist (m modifiers)
+                     (when (memq m var-mod)
+                       (throw 'found-modifiers t)))
+                   nil)
+                 translate-prefix-p)
+             (not just-first-p))
+        (setq translated-event
+              (ergoemacs-event-translate event layout-to layout-from basic modifiers)))
+       ((and (eq system-type 'windows-nt) (eq basic 'menu))
+        (setq translated-event (ergoemacs-event-convert-list (append modifiers '(apps)))))
+       ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
+        (setq translated-event (ergoemacs-event-convert-list (append modifiers '(menu)))))
+       (t (setq translated-event event)))
+      (setq untranslated (vconcat untranslated (list event))
+            ret (vconcat ret (list translated-event))))
+    ret))
+
+
+
+;; (defstruct ergoemacs-map
+;;   (map (make-sparse-keymap))
+;;   (just-first-keys nil :read-only t)
+;;   (variable-modifiers '(meta) :read-only t)
+;;   (variable-prefixes '([apps] [menu]) :read-only)
+;;   (layout-from "us" :read-only t)
+;;   (relative-to 'global-map))
+
+;; (defun ergoemacs-kbd (key &optional just-translate only-first)
+;;   "Translates kbd code KEY for layout `ergoemacs-translation-from' to kbd code for `ergoemacs-translation-to'.
+;; If JUST-TRANSLATE is non-nil, just return the KBD code, not the actual emacs key sequence."
+;;   (let ((kbd (or (and (vectorp key) key)
+;;                  (and (stringp key) (read-kbd-macro key t))))
+;;         just-first-keys)
+;;     (if (not kbd) nil
+;;       (cond
+;;        ((and only-first
+;;              (> (length kbd) 2)
+;;              (memq (aref kbd 0) '(menu apps)))
+;;         (setq just-first-keys (substring kbd 0 2)))
+;;        ((and only-first
+;;              (> (length kbd) 1))
+;;         (setq just-first-keys (substring kbd 0 1))))
+;;       (setq kbd (ergoemacs-kbd-translate kbd just-first-keys t t ergoemacs-translation-to ergoemacs-translation-from))
+;;       (when just-translate
+;;         (setq kbd (key-description kbd))))
+;;     kbd
+;;     ))
 
 (provide 'ergoemacs-map)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
