@@ -341,7 +341,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (let (ergoemacs-use-unicode-char
         ergoemacs-pretty-key-use-face
         ergoemacs-use-small-symbols)
-    (should (string= (ergoemacs-pretty-key "C-c C-c") "[Ctrl+c][Ctrl+c]"))))
+    (should (string= (ergoemacs-pretty-key "C-c C-c") "[Ctrl+C][Ctrl+C]"))))
 
 (declare-function ergoemacs-cut-line-or-region "ergoemacs-functions.el")
 (ert-deftest ergoemacs-test-cut-line-or-region ()
@@ -363,11 +363,11 @@ not using cua or cutting line. I think kill-region is what is meant."
 (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
 (ert-deftest ergoemacs-test-issue-77 ()
   "Issue #77.
-Test \"C-x \" translating to \"[Ctrl+x][]\", should be \"[Ctrl+x]\""
+Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
   (let (ergoemacs-use-unicode-char
         ergoemacs-pretty-key-use-face
         ergoemacs-use-small-symbols)
-    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+x]"))))
+    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]"))))
 
 (ert-deftest ergoemacs-test-issue-86 ()
   "Test Issue #86.
