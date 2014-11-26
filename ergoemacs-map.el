@@ -255,7 +255,7 @@ PRE represents the current prefix (for recursive calls).
 
 COMPARE will compare differences to the current hash.
 "
-  (if (not (keymapp keymap)) nil
+  (if (not (ignore-errors (keymapp keymap))) nil
     (let (tmp ret)
       (if (and (not ergoemacs-submaps--key)
                (not compare)
@@ -478,7 +478,7 @@ If WHERE-IS is non-nil, return a list of the keys (in vector format) where this 
       (setq current (lookup-key global-map key)
             prior (ergoemacs-prior-function key nil (not ergoemacs-ignore-prev-global)))
       (unless (eq current prior)
-        (when (keymapp current)
+        (when (ignore-errors (keymapp current))
           (setq current 'ergoemacs-prefix)))
       (not (eq current prior)))))
 
@@ -801,7 +801,7 @@ Also make a hash table of all original maps (linked based on :map-list)"
        (let ((sv (ergoemacs-sv map t))
              omap
              ret)
-         (when (keymapp sv)
+         (when (ignore-errors (keymapp sv))
            (setq ret (ergoemacs-map-get sv :map-list)
                  omap (gethash ret ergoemacs-original-map-hash))
            ;; (when
@@ -824,16 +824,16 @@ Also make a hash table of all original maps (linked based on :map-list)"
      (composed
       (dolist (map-label composed)
         (setq tmp (ergoemacs-original-keymap--intern map-label))
-        (when (keymapp tmp)
+        (when (ignore-errors (keymapp tmp))
           (push tmp ret)))
       (setq tmp (and parent (ergoemacs-original-keymap--intern parent)))
-      (setq ret (make-composed-keymap tmp (and (keymapp tmp) tmp))))
+      (setq ret (make-composed-keymap tmp (and (ignore-errors (keymapp tmp)) tmp))))
      ((and (setq map-list (gethash map-list ergoemacs-original-map-hash))
-           (keymapp map-list))
+           (ignore-errors (keymapp map-list)))
       (setq ret (copy-keymap map-list))
       (when parent
         (setq parent (ergoemacs-original-keymap--intern parent))
-        (when (keymapp parent)
+        (when (ignore-errors (keymapp parent))
           (set-keymap-parent ret parent)))))
     ret))
 
@@ -865,7 +865,7 @@ When STRIP is true, remove all `ergoemacs-mode' labels
 The KEYMAP will have the structure
   (keymap optional-char-table \"Optional Label\" (ergoemacs-labeled (lambda nil (plist-of-properties))) true-map)
 "
-  (if (not (keymapp keymap)) nil
+  (if (not (ignore-errors (keymapp keymap))) nil
     (if (ergoemacs-map-composed-p keymap)
         (cond
          (map-name
