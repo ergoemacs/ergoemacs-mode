@@ -1059,19 +1059,11 @@ in the original keymap, and in the override keymap.
   ;;     ;; (ergoemacs-real-define-key keymap key def)
   ;;     )
   ;;   (ergoemacs-real-define-key keymap key def))
-  (if (ignore-errors (keymapp (symbol-function keymap)))
-      (ergoemacs-real-define-key keymap key def)
-    (let ((key-vect (or (and (vectorp key) key)
-                        (read-kbd-macro (key-description key) t)))
-          (labeled-map-p (ergoemacs-map-p keymap)))
-      (cond
-       (labeled-map-p
-        (ergoemacs-real-define-key (ergoemacs-original-keymap keymap) key def) ;; Should done in place..?
-        (ergoemacs-real-define-key keymap key def))
-       (t
-        (ergoemacs-real-define-key keymap key def)))
-      (dolist (global-key (ergoemacs-define-key--is-global-map keymap key-vect))
-        (ergoemacs-global-set-key-after global-key)))))
+  (ergoemacs-real-define-key keymap key def)
+  (let ((key-vect (or (and (vectorp key) key)
+                      (read-kbd-macro (key-description key) t))))
+    (dolist (global-key (ergoemacs-define-key--is-global-map keymap key-vect))
+      (ergoemacs-global-set-key-after global-key))))
 
 (defun ergoemacs-global-set-key-after (key)
   (if ergoemacs-ignore-advice nil
