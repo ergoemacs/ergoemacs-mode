@@ -1255,6 +1255,17 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-capitalize-keys 'with-modifiers
+  "Capitalize keys like Ctrl+C.
+`ergoemacs-mode' should show Ctrl+Shift+C if you are pressing these keys."
+  :type '(choice
+          (const :tag "Don't Capitalize Keys" nil)
+          (const :tag "Capitalize Keys with modifiers" with-modifiers)
+          (const :tag "Capitalize Keys" t))
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
+
 (defvar ergoemacs-use-M-x-p nil)
 
 (defvar ergoemacs-M-x)
@@ -1268,7 +1279,7 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
   "Use a button face for keys."
   :group 'ergoemacs-mode)
 
-(defun ergoemacs-pretty-key-description--key (key)
+(defun ergoemacs-pretty-key-description--key (key mod)
   "Key description"
   (let ((ret ""))
     (cond
@@ -1280,16 +1291,18 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
       (setq ret "Home"))
      ((eq key 'end)
       (setq ret "End"))
+     ((eq key 32)
+      (setq ret "Space"))
      ((eq key 127)
-      (setq ret "Backspace"))
+      (setq ret (format "%sBackspace" (ergoemacs-unicode-char "←" "left"))))
      ((eq key 'escape)
       (setq ret "Esc"))
      ((eq key 'tab)
-      (setq ret (format "%sTab"
+      (setq ret (format "Tab%s"
                         (ergoemacs-unicode-char "↹" ""))))
      ((eq key 'return)
       (setq ret (format "Enter%s"
-                        (ergoemacs-unicode-char "⏎" ""))))
+                        (ergoemacs-unicode-char "↵" ""))))
      ((memq key '(apps menu))
       (setq ret (ergoemacs-unicode-char "▤" "Menu")))
      ((eq key 'left)
@@ -1298,7 +1311,6 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
       (setq ret (ergoemacs-unicode-char "→" "right")))
      ((eq key 'up)
       (setq ret (ergoemacs-unicode-char "↑" "up")))
-
      ((eq key 'down)
       (setq ret (ergoemacs-unicode-char "↓" "down")))
      ((eq key 'prior)
@@ -1306,7 +1318,13 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
      ((eq key 'next)
       (setq ret "PgDn"))
      ((integerp key)
-      (setq ret (make-string 1 key)))
+      (setq ret (or (and (or (and (eq ergoemacs-capitalize-keys 'with-modifiers)
+                                  mod)
+                             (eq ergoemacs-capitalize-keys t))
+                         (upcase (make-string 1 key)))
+                    (make-string 1 key))))
+     ((and (symbolp key) (string-match "^f[0-9]+$" (symbol-name key)))
+      (setq ret (upcase (symbol-name key))))
      (t
       (setq ret (format "%s" key))))
     (when (and ergoemacs-pretty-key-use-face
@@ -1328,63 +1346,57 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
                     (eq ns-command-modifier 'meta))))
       (setq ret (format "%s"
                         (ergoemacs-unicode-char "⌘" "+"))))
-     ((and (eq mod 'meta)
+     ((and (eq mod 'meta) 
            (eq system-type 'darwin)
            (or (and (boundp 'mac-command-modifier)
                     (eq mac-command-modifier 'meta))
                (and (boundp 'ns-command-modifier)
                     (eq ns-command-modifier 'meta))))
       (setq ret (format "%sCmd+"
-                        (ergoemacs-unicode-char "⌘" "")))
-      (when ergoemacs-pretty-key-use-face
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+                        (ergoemacs-unicode-char "⌘" "+"))))
+     ((and (eq mod 'meta) 
+           (eq system-type 'darwin)
+           (or (and (boundp 'mac-alternate-modifier)
+                    (eq mac-alternate-modifier 'meta))
+               (and (boundp 'ns-alternate-modifier)
+                    (eq ns-alternate-modifier 'meta))))
+      (setq ret (format "%sOpt+" (ergoemacs-unicode-char "⌥" "+"))))
      ((and (eq mod 'meta) ergoemacs-use-small-symbols
            (eq system-type 'darwin)
            (or (and (boundp 'mac-alternate-modifier)
                     (eq mac-alternate-modifier 'meta))
                (and (boundp 'ns-alternate-modifier)
                     (eq ns-alternate-modifier 'meta))))
-      (setq ret (format "%s"
-                        (ergoemacs-unicode-char "⌥" "+"))))
-     ((and (eq mod 'meta)
-           (eq system-type 'darwin)
-           (or (and (boundp 'mac-alternate-modifier)
-                    (eq mac-alternate-modifier 'meta))
-               (and (boundp 'ns-alternate-modifier)
-                    (eq ns-alternate-modifier 'meta))))
-      (setq ret (format "%sOpt+"
-                        (ergoemacs-unicode-char "⌥" "")))
-      (when ergoemacs-pretty-key-use-face
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret (format "%s" (ergoemacs-unicode-char "⌥" "+"))))
      ((and ergoemacs-use-small-symbols (eq mod 'shift))
       (setq ret (ergoemacs-unicode-char "⇧" "+")))
      ((and ergoemacs-use-small-symbols (eq mod 'meta))
       (setq ret (ergoemacs-unicode-char "♦" "!")))
-     ((and ergoemacs-use-small-symbols (memq mod '(control ergoemacs-control)))
+     ((and (or (eq system-type 'darwin) ergoemacs-use-small-symbols)
+	   (memq mod '(control ergoemacs-control)))
       (setq ret "^"))
      ((eq mod 'shift)
       (setq ret (format "%sShift+"
-                        (ergoemacs-unicode-char "⇧" "")))
-      (when ergoemacs-pretty-key-use-face
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+                        (ergoemacs-unicode-char "⇧" ""))))
      ((memq mod '(control ergoemacs-control))
-      (setq ret "Ctrl+")
-      (when ergoemacs-pretty-key-use-face
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret "Ctrl+"))
      ((eq mod 'meta)
-      (setq ret "Alt+")
-      (when ergoemacs-pretty-key-use-face
-        (add-text-properties 0 (- (length ret) 1)
-                             '(face ergoemacs-pretty-key) ret)))
+      (setq ret "Alt+"))
+     ((and (eq mod 'super) ergoemacs-use-small-symbols
+           (eq system-type 'windows-nt))
+      (setq ret (ergoemacs-unicode-char "⊞" "#")))
+     ((and (eq mod 'super)
+           (eq system-type 'windows-nt))
+      (setq ret (format "%sWin+" (ergoemacs-unicode-char "⊞" "#"))))
      (t
       (setq ret (format "%s+" mod))
       (when ergoemacs-pretty-key-use-face
         (add-text-properties 0 (- (length ret) 1)
                              '(face ergoemacs-pretty-key) ret))))
+    (when (and ergoemacs-pretty-key-use-face
+               (not ergoemacs-use-small-symbols))
+      (add-text-properties 0 (- (length ret) 1)
+                           '(face ergoemacs-pretty-key) ret))
     ret))
 
 (defun ergoemacs-pretty-key-description--ctl (mod)
@@ -1432,15 +1444,18 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
                               "[")
                           (mapconcat #'ergoemacs-pretty-key-description--modifier
                                      mod "")
-                          (ergoemacs-pretty-key-description--key ev)
+                          (ergoemacs-pretty-key-description--key ev mod)
                           (or (and ergoemacs-pretty-key-use-face "")
                               (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "】" "]"))
                               "]")))
         (when (and ergoemacs-use-small-symbols ergoemacs-pretty-key-use-face)
           (add-text-properties 0 (length tmp)
                                '(face ergoemacs-pretty-key) tmp))
-        (setq ret (format "%s %s" ret tmp)))
-      (substring ret 1))))
+        (setq ret (format "%s%s%s" ret
+                          (or (and ergoemacs-pretty-key-use-face " ")
+                              (and ergoemacs-use-unicode-brackets "")) tmp)))
+      (substring ret (or (and ergoemacs-pretty-key-use-face 1)
+                         (and ergoemacs-use-unicode-brackets 0))))))
 
 
 (defun ergoemacs-pretty-key (code)
