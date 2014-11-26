@@ -802,7 +802,6 @@ Also make a hash table of all original maps (linked based on :map-list)"
              omap
              ret)
          (when (keymapp sv)
-           (message "Label: %s" map)
            (setq ret (ergoemacs-map-get sv :map-list)
                  omap (gethash ret ergoemacs-original-map-hash))
            ;; (when
