@@ -151,13 +151,13 @@ installing the original keymap above the ergoemacs-mode installed keymap.
           overriding-local-map (ergoemacs-original-keymap overriding-local-map))
     (when old-pt-map
       (cond
-       ((ignore-errors (keymapp old-pt-map))
+       ((ergoemacs-keymapp old-pt-map)
         (setq old-pt-map (copy-keymap old-pt-map))
         (ergoemacs-original-keymap (get-char-property (point) 'keymap) t))
        (t (setq old-pt-map nil))))
     (when old-local-map
       (cond
-       ((ignore-errors (keymapp old-local-map))
+       ((ergoemacs-keymapp old-local-map)
         (setq old-local-map (copy-keymap old-local-map))
         (ergoemacs-original-keymap (get-char-property (point) 'local-map) t))
        (t (setq old-local-map nil))))
@@ -265,7 +265,7 @@ Used to help with translation keymaps like `input-decode-map'"
     (setq current-key (vector ret))
     (setq test-ret (lookup-key keymap current-key))
     (while (and current-key
-                (keymapp test-ret))
+                (ergoemacs-keymapp test-ret))
       (setq next-key
             (with-timeout (ergoemacs-read-key-delay nil)
               (or (pop ergoemacs--input)
@@ -951,7 +951,7 @@ If universal is returned, and type first-type is bound, set these
 to the appropriate values for `ergoemacs-read-key'.
 "
   (let (ret)
-    (when (ignore-errors (keymapp fn))
+    (when (ergoemacs-keymapp fn) 
       ;; If keymap, continue.
       (setq ret 'keymap))
     (when (memq fn ergoemacs-universal-fns)
@@ -1103,7 +1103,7 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
                   tmp)
                 ;; Should use emacs key translation.
                 (cond
-                 ((or (keymapp tmp))
+                 ((or (ergoemacs-keymapp tmp) )
                   (setq ret 'keymap))
                  ((and ergoemacs-describe-key (vectorp tmp))
                   (setq ergoemacs-single-command-keys nil)
@@ -1170,7 +1170,7 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
                             ;; Call unbound or global key?
                             (if (eq (lookup-key ergoemacs-unbind-keymap key) 'ergoemacs-undefined) 'ergoemacs-undefined
                               (let (ergoemacs-read-input-keys)
-                                (if (keymapp (ergoemacs-real-key-binding key))
+                                (if (ergoemacs-keymapp (ergoemacs-real-key-binding key)) 
                                     (setq ret 'keymap)
                                   (ergoemacs-with-global
                                    (ergoemacs-real-key-binding key)))))))
@@ -2008,7 +2008,7 @@ where (FILTER-P function) is non-nil
                      (setq fn (ergoemacs-real-key-binding key t nil (point)))
                      (if (eq fn (ergoemacs-real-key-binding user-key t nil (point)))
                          (setq fn nil)
-                       (if (keymapp fn)
+                       (if (ergoemacs-keymapp fn) 
                            (setq fn nil))))))
                   (when (ergoemacs-smart-function-p fn)
                     (setq fn nil))
@@ -2089,7 +2089,7 @@ non-nil, call either the remapped function or FUNCTION
                   (equal keymap (make-keymap)))
         (mapatoms
          (lambda(map)
-           (when (and (ignore-errors (keymapp (ergoemacs-sv map)))
+           (when (and (ergoemacs-keymapp (ergoemacs-sv map)) 
                       (equal (ergoemacs-sv map) keymap))
              (push map ret)))
          ob)))
@@ -2164,7 +2164,7 @@ The shortcuts are also installed into the map directly.
                 (setq new-map (cdr (cdr new-map))))
               (push (list map-name) new-map)
               (push "ergoemacs-modified" new-map))
-            (when (ignore-errors (keymapp (ergoemacs-sv new-map)))
+            (when (ergoemacs-keymapp (ergoemacs-sv new-map)) 
               (ergoemacs-setcdr (ergoemacs-sv new-map) new-map))
             (unless changed-map
               (ergoemacs-setcdr map new-map))))

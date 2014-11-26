@@ -102,7 +102,7 @@
      ((gethash cur-key ergoemacs-extract-keys--hash-2))
      ;; Keymaps
      ;; Indirect maps
-     ((ignore-errors (keymapp (symbol-function value)))
+     ((ergoemacs-keymapp (symbol-function value))
       (ergoemacs-extract-keys--handle-keymap (symbol-function value) cur-key compare))
      ;; Prefix keys
      ((ignore-errors (and (keymapp value) (listp value)))
@@ -255,7 +255,7 @@ PRE represents the current prefix (for recursive calls).
 
 COMPARE will compare differences to the current hash.
 "
-  (if (not (ignore-errors (keymapp keymap))) nil
+  (if (not (ergoemacs-keymapp keymap)) nil
     (let (tmp ret)
       (if (and (not ergoemacs-submaps--key)
                (not compare)
@@ -269,7 +269,7 @@ COMPARE will compare differences to the current hash.
         (unless pre
           (unless compare
             ;; Label any parent maps or composed maps.
-            (when (ignore-errors (keymapp keymap))
+            (when (ergoemacs-keymapp keymap) 
               (setq tmp (keymap-parent keymap))
               (when tmp (ergoemacs-extract-keys tmp))
               (setq tmp (ergoemacs-map-composed-list keymap))
@@ -287,7 +287,7 @@ COMPARE will compare differences to the current hash.
                 ergoemacs-extract-keys--prefixes nil
                 ergoemacs-extract-keys--base-map t
                 ergoemacs-extract-keys--keymap (make-sparse-keymap)))
-        (if (not (ignore-errors (keymapp keymap))) ergoemacs-extract-keys--hash-1
+        (if (not (ergoemacs-keymapp keymap) ) ergoemacs-extract-keys--hash-1
           (ergoemacs-extract-keys--loop keymap flatten pre compare)
           (unless pre
             (puthash :submaps ergoemacs-submaps--list ergoemacs-extract-keys--hash-2)
@@ -416,7 +416,7 @@ If WHERE-IS is non-nil, return a list of the keys (in vector format) where this 
          (new-key (or (and (vectorp key) key)
                       (read-kbd-macro (key-description key) t)))
          (before-ergoemacs-map (and before-ergoemacs (ergoemacs-map-get map :changes-before-map)))
-         (prior (or (and (ignore-errors (keymapp before-ergoemacs-map)) (lookup-key before-ergoemacs-map key))
+         (prior (or (and (ergoemacs-keymapp before-ergoemacs-map) (lookup-key before-ergoemacs-map key))
                     (gethash new-key hash-2)))
          tmp
          range 
@@ -478,7 +478,7 @@ If WHERE-IS is non-nil, return a list of the keys (in vector format) where this 
       (setq current (lookup-key global-map key)
             prior (ergoemacs-prior-function key nil (not ergoemacs-ignore-prev-global)))
       (unless (eq current prior)
-        (when (ignore-errors (keymapp current))
+        (when (ergoemacs-keymapp current) 
           (setq current 'ergoemacs-prefix)))
       (not (eq current prior)))))
 
@@ -551,7 +551,7 @@ When DONT-IGNORE is non-nil, don't ignore sequences starting with `ergoemacs-ign
 
 When RETURN-VECTOR is non-nil, return list of the keys in a vector form.
 "
-  (if (not (ignore-errors (keymapp keymap))) nil
+  (if (not (ergoemacs-keymapp keymap) ) nil
     (ergoemacs-extract-keys keymap)
     (if (not (ergoemacs-map-p keymap))
         (warn "Can't identify keymap's prefixes")
@@ -647,7 +647,7 @@ FORCE-SHIFTED is non-nil."
   "Determines if this is an `ergoemacs-mode' KEYMAP.
 Returns a plist of fixed keymap properties (not changed by
 composing or parent/child relationships)"
-  (if (not (keymapp keymap)) nil
+  (if (not (ergoemacs-keymapp keymap) ) nil
     (if (ignore-errors (symbol-function keymap))
         (progn (gethash keymap ergoemacs-map--indirect-keymaps))
       (let ((ret (or
@@ -692,7 +692,7 @@ composing or parent/child relationships)"
    ((eq property :full)
     (ignore-errors (char-table-p (nth 1 keymap))))
    ((eq property :indirect)
-    (ignore-errors (keymapp (symbol-function keymap))))
+    (ergoemacs-keymapp (symbol-function keymap)))
    (t (let ((ret (ergoemacs-map-plist keymap)))
         (or (and ret (or (plist-get ret property)
                          (gethash property (nth 1 (ergoemacs-extract-keys keymap)))))
@@ -801,7 +801,7 @@ Also make a hash table of all original maps (linked based on :map-list)"
        (let ((sv (ergoemacs-sv map t))
              omap
              ret)
-         (when (ignore-errors (keymapp sv))
+         (when (ergoemacs-keymapp sv)
            (setq ret (ergoemacs-map-get sv :map-list)
                  omap (gethash ret ergoemacs-original-map-hash))
            ;; (when
@@ -824,16 +824,16 @@ Also make a hash table of all original maps (linked based on :map-list)"
      (composed
       (dolist (map-label composed)
         (setq tmp (ergoemacs-original-keymap--intern map-label))
-        (when (ignore-errors (keymapp tmp))
+        (when (ergoemacs-keymapp tmp) 
           (push tmp ret)))
       (setq tmp (and parent (ergoemacs-original-keymap--intern parent)))
-      (setq ret (make-composed-keymap tmp (and (ignore-errors (keymapp tmp)) tmp))))
+      (setq ret (make-composed-keymap tmp (and (ergoemacs-keymapp tmp) tmp))))
      ((and (setq map-list (gethash map-list ergoemacs-original-map-hash))
-           (ignore-errors (keymapp map-list)))
+           (ergoemacs-keymapp map-list))
       (setq ret (copy-keymap map-list))
       (when parent
         (setq parent (ergoemacs-original-keymap--intern parent))
-        (when (ignore-errors (keymapp parent))
+        (when (ergoemacs-keymapp parent) 
           (set-keymap-parent ret parent)))))
     ret))
 
@@ -865,7 +865,7 @@ When STRIP is true, remove all `ergoemacs-mode' labels
 The KEYMAP will have the structure
   (keymap optional-char-table \"Optional Label\" (ergoemacs-labeled (lambda nil (plist-of-properties))) true-map)
 "
-  (if (not (ignore-errors (keymapp keymap))) nil
+  (if (not (ergoemacs-keymapp keymap) ) nil
     (if (ergoemacs-map-composed-p keymap)
         (cond
          (map-name
@@ -886,7 +886,7 @@ The KEYMAP will have the structure
         (unwind-protect
             (progn
               (ignore-errors (set-keymap-parent map nil))
-              (if (ignore-errors (keymapp (symbol-function keymap)))
+              (if (ergoemacs-keymapp (symbol-function keymap))
                   (setq indirect-p t ; Indirect keymap
                         old-plist (gethash keymap ergoemacs-map--indirect-keymaps))
                 (setq old-plist (lookup-key map [ergoemacs-labeled]))

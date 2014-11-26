@@ -519,7 +519,7 @@ This will return if the map object was modified.
         (define-key no-shortcut-map key def)
         (oset obj shortcut-map shortcut-map)
         t)
-       ((or (commandp def t) (keymapp def) (stringp def))
+       ((or (commandp def t) (ergoemacs-keymapp def) (stringp def))
         ;; Normal command
         (when (equal (substring key-vect -1) [ergoemacs-timeout])
           (push (list (substring key-vect -1) 'ergoemacs-read-key-default)
@@ -531,7 +531,7 @@ This will return if the map object was modified.
         (oset obj map map)
         (ergoemacs-define-map--cmd-list obj key-desc def)
         t)
-       ((ignore-errors (keymapp (ergoemacs-sv def)))
+       ((ergoemacs-keymapp (ergoemacs-sv def)) 
         ;; Keymap variable.
         (ergoemacs-define-map--cmd-list obj key-desc def)
         (define-key map key-vect (ergoemacs-sv def))
@@ -874,14 +874,14 @@ Assumes maps are orthogonal."
   (let ((map1 keymap1) (map2 keymap2))
     (cond
      ((equal map1 '(keymap))
-      (if (keymapp parent)
+      (if (ergoemacs-keymapp parent)
           (make-composed-keymap map2 parent)
         map2))
      ((equal map2 '(keymap))
-      (if (keymapp parent)
+      (if (ergoemacs-keymapp parent)
           (make-composed-keymap map1 parent)
         map1))
-     ((keymapp parent)
+     ((ergoemacs-keymapp parent)
       (make-composed-keymap (list map1 map2) parent))
      (parent
       (make-composed-keymap (list map1 map2)))
@@ -1505,7 +1505,7 @@ FULL-SHORTCUT-MAP-P "
             (when ergoemacs-theme--install-shortcut-item--global
               (ergoemacs-theme-component--ignore-globally-defined-key key)))
             (when (or (commandp (nth 0 args) t)
-                      (keymapp (nth 0 args)))
+                      (ergoemacs-keymapp (nth 0 args)))
               (ignore-errors
                 (define-key keymap key (nth 0 args)))))))
      (full-shortcut-map-p
@@ -1561,7 +1561,7 @@ FULL-SHORTCUT-MAP-P "
   (let (ret)
     (mapatoms
      (lambda(map)
-       (when (and (ignore-errors (keymapp (ergoemacs-sv map)))
+       (when (and (ergoemacs-keymapp (ergoemacs-sv map)) 
                   (equal (keymap-parent (ergoemacs-sv map)) keymap))
          (push map ret)))
      ob)
@@ -1817,7 +1817,7 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
       (set-default 'ergoemacs-read-input-keys (not remove-p))
       (set-default 'ergoemacs-unbind-keys (not remove-p))
       ;; Add M-O M-[ to read-keys for terminal compatibility
-      (when (ignore-errors (keymapp final-read-map))
+      (when (ergoemacs-keymapp final-read-map) 
 	(define-key final-read-map (read-kbd-macro "M-O" t) 'ergoemacs-read-key-default)
 	(define-key final-read-map (read-kbd-macro "M-[" t) 'ergoemacs-read-key-default)
         (dolist (prefix (ergoemacs-extract-prefixes (current-global-map)))
@@ -2246,7 +2246,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
                     (ergoemacs-keymap-collapse keymap))))
     (or (equal keymap nil)
         (equal keymap '(keymap))
-        (and (keymapp keymap) (stringp (nth 1 keymap)) (= 2 (length keymap))))))
+        (and (ergoemacs-keymapp keymap) (stringp (nth 1 keymap)) (= 2 (length keymap))))))
 
 (defun ergoemacs-keymap-collapse (keymap)
   "Takes out all empty keymaps from a composed keymap"
@@ -2254,7 +2254,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
     (dolist (item keymap)
       (cond
        ((eq item 'keymap) (push item ret))
-       ((ignore-errors (keymapp item))
+       ((ergoemacs-keymapp item) 
         (unless (ergoemacs-keymap-empty-p item t)
           (setq tmp (ergoemacs-keymap-collapse item))
           (when tmp
@@ -2349,7 +2349,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
               (ergoemacs-shuffle-keys t))
             ;;(message "%s->%s" (key-description key) lk)
             (when (and (or (commandp lk t)
-                           (keymapp lk)
+                           (ergoemacs-keymapp lk)
                            (not lk))
                        (not (member key '([remap] ))))
               (when (not (member key ergoemacs-global-override-rm-keys))
@@ -2754,18 +2754,18 @@ Returns new keymap."
         (let ((new-keymap (copy-keymap keymap))
               (ergoemacs-ignore-advice t))
           (cond
-           ((keymapp (nth 1 new-keymap))
+           ((ergoemacs-keymapp (nth 1 new-keymap))
             (setq new-keymap (cdr new-keymap))
             (setq new-keymap
                   (mapcar
                    (lambda(map)
-                     (if (not (ignore-errors (keymapp map))) map
+                     (if (not (ergoemacs-keymapp map)) map
                        (let ((lk (lookup-key map key)) lk2 lk3)
                          (cond
                           ((integerp lk)
                            (setq lk2 (lookup-key (current-global-map) key))
                            (setq lk3 (lookup-key map (substring key 0 lk)))
-                           (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
+                           (when (and (or (commandp lk2) (ergoemacs-keymapp lk2)) (not lk3))
                              (define-key map key lk2)))
                           (lk
                            (define-key map key nil)))))
@@ -2779,7 +2779,7 @@ Returns new keymap."
                ((integerp lk)
                 (setq lk2 (lookup-key (current-global-map) key))
                 (setq lk3 (lookup-key new-keymap (substring key 0 lk)))
-                (when (and (or (commandp lk2) (keymapp lk2)) (not lk3))
+                (when (and (or (commandp lk2) (ergoemacs-keymapp lk2)) (not lk3))
                   (define-key new-keymap key lk2)))
                (lk
                 (define-key new-keymap key nil))))
