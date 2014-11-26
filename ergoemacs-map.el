@@ -171,12 +171,11 @@
              (unless (eq key 'ranges)
                (if (consp key)
                    (progn
-                     (message "Ignoring %s from %s to %s" def
-                              (car key) (cdr key))
-                     ;; (loop for char from (car key) to (cdr key)
-                     ;;     do (define-key ret (or (and prefix (vconcat prefix (vector char)))
-                     ;;                            (vector char)) def))
-                     )
+                     ;; (message "Ignoring %s from %s to %s" def
+                     ;;          (car key) (cdr key))
+                     (loop for char from (car key) to (cdr key)
+                         do (define-key ret (or (and prefix (vconcat prefix (vector char)))
+                                                (vector char)) def)))
                  (when (vectorp key)
                    (cond
                     ((eq def 'ergoemacs-nil)
@@ -648,43 +647,44 @@ FORCE-SHIFTED is non-nil."
   "Determines if this is an `ergoemacs-mode' KEYMAP.
 Returns a plist of fixed keymap properties (not changed by
 composing or parent/child relationships)"
-  (if (ignore-errors (symbol-function keymap))
-      (progn (gethash keymap ergoemacs-map--indirect-keymaps))
-    (let ((ret (or
-                (ignore-errors ;; (keymap #char-table "Label" (ergoemacs-map-marker) (ergoemacs-map-list))
-                  (and (char-table-p (car (cdr keymap)))
-                       (stringp (car (cdr (cdr keymap))))
-                       (eq (car (car (cdr (cdr (cdr keymap))))) 'ergoemacs-labeled)
-                       (funcall (cdr (car (cdr (cdr (cdr keymap))))))))
-                (ignore-errors ;; (keymap #char-table (ergoemacs-map-marker) (ergoemacs-map-list))
-                  (and (char-table-p (car (cdr keymap))) 
-                       (eq (car (car (cdr (cdr keymap)))) 'ergoemacs-labeled)
-                       (funcall (cdr (car (cdr (cdr keymap)))))))
-                (ignore-errors ;; (keymap "label" (ergoemacs-map-marker) (ergoemacs-map-list))
-                  (and (stringp (car (cdr keymap))) 
-                       (eq (car (car (cdr (cdr keymap)))) 'ergoemacs-labeled)
-                       (funcall (cdr (car (cdr (cdr keymap)))))))
-                (ignore-errors ;;(keymap  (ergoemacs-map-marker) (ergoemacs-map-list))
-                  (and (eq (car (car (cdr keymap))) 'ergoemacs-labeled)
-                       (funcall (cdr (car (cdr keymap))))))))
-          (map keymap) parent)
-      (unless ret
-        (unwind-protect
-            (progn
-              (setq parent (keymap-parent map))
-              (ignore-errors (set-keymap-parent map nil))
-              (setq ret (lookup-key map [ergoemacs-labeled]))
-              (when ret
-                (setq ret (ignore-errors (funcall ret)))))
-          (ignore-errors (set-keymap-parent map parent))))
-      (if ret ret
-        ;; Now get properties for constant/indirect keymaps
-        (catch 'found-map
-          (dolist (map ergoemacs-map--const-keymaps)
-            (when (eq (cdr map) (cdr keymap))
-              (setq ret (car map))
-              (throw 'found-map t))))
-        ret))))
+  (if (not (keymapp keymap)) nil
+    (if (ignore-errors (symbol-function keymap))
+        (progn (gethash keymap ergoemacs-map--indirect-keymaps))
+      (let ((ret (or
+                  (ignore-errors ;; (keymap #char-table "Label" (ergoemacs-map-marker) (ergoemacs-map-list))
+                    (and (char-table-p (car (cdr keymap)))
+                         (stringp (car (cdr (cdr keymap))))
+                         (eq (car (car (cdr (cdr (cdr keymap))))) 'ergoemacs-labeled)
+                         (funcall (cdr (car (cdr (cdr (cdr keymap))))))))
+                  (ignore-errors ;; (keymap #char-table (ergoemacs-map-marker) (ergoemacs-map-list))
+                    (and (char-table-p (car (cdr keymap))) 
+                         (eq (car (car (cdr (cdr keymap)))) 'ergoemacs-labeled)
+                         (funcall (cdr (car (cdr (cdr keymap)))))))
+                  (ignore-errors ;; (keymap "label" (ergoemacs-map-marker) (ergoemacs-map-list))
+                    (and (stringp (car (cdr keymap))) 
+                         (eq (car (car (cdr (cdr keymap)))) 'ergoemacs-labeled)
+                         (funcall (cdr (car (cdr (cdr keymap)))))))
+                  (ignore-errors ;;(keymap  (ergoemacs-map-marker) (ergoemacs-map-list))
+                    (and (eq (car (car (cdr keymap))) 'ergoemacs-labeled)
+                         (funcall (cdr (car (cdr keymap))))))))
+            (map keymap) parent)
+        (unless ret
+          (unwind-protect
+              (progn
+                (setq parent (keymap-parent map))
+                (ignore-errors (set-keymap-parent map nil))
+                (setq ret (lookup-key map [ergoemacs-labeled]))
+                (when ret
+                  (setq ret (ignore-errors (funcall ret)))))
+            (ignore-errors (set-keymap-parent map parent))))
+        (if ret ret
+          ;; Now get properties for constant/indirect keymaps
+          (catch 'found-map
+            (dolist (map ergoemacs-map--const-keymaps)
+              (when (eq (cdr map) (cdr keymap))
+                (setq ret (car map))
+                (throw 'found-map t))))
+          ret)))))
 
 (defun ergoemacs-map-get (keymap property)
   "Gets ergoemacs-mode KEYMAP PROPERTY."
