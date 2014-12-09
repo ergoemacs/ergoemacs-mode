@@ -248,12 +248,13 @@ When DONT-IGNORE is non-nil, don't ignore sequences starting with `ergoemacs-ign
 
 When RETURN-VECTOR is non-nil, return list of the keys in a vector form.
 "
-  (if (not (ergoemacs-keymapp keymap) ) nil
+  (if (not (ergoemacs-keymapp keymap)) nil
     ;; (ergoemacs-extract-keys keymap)
     (when (not (ergoemacs-map-p keymap))
       (ergoemacs-map--label keymap))
     (let ((ret (ergoemacs-map-get keymap :prefixes)) ret2)
       (unless ret
+        (ergoemacs-mapkeymap nil keymap 'prefix)
         (setq ret (ergoemacs-map-get keymap :prefixes)))
       (if (and dont-ignore return-vector) ret
         (dolist (a ret)
@@ -325,11 +326,12 @@ This does not include submaps, which may also be a full keymap."
     (funcall function key 'ergoemacs-prefix (or prefix t)))
   (when (and ergoemacs-mapkeymap--key (not prefix))
       (pushnew key ergoemacs-mapkeymap--prefixes :test 'equal))
-  (if (and submaps (ergoemacs-map-p keymap))
+  (if (and submaps (not (eq submaps 'prefix)) (ergoemacs-map-p keymap))
       (progn
         (pushnew (cons key (ergoemacs-map-p keymap)) ergoemacs-mapkeymap--submaps :test 'equal))
-    (ergoemacs-mapkeymap--loop
-     function (ergoemacs-map-keymap-value keymap) submaps key)))
+    (when (or (not submaps) (not (eq submaps 'prefix)))
+      (ergoemacs-mapkeymap--loop
+       function (ergoemacs-map-keymap-value keymap) submaps key))))
 
 (defun ergoemacs-mapkeymap--key-item (key item function submaps &optional prefix)
   "Process an ITEM for KEY and possibly call FUNCTION, or defer keymap evaluation when SUBMAPS is true.
@@ -477,6 +479,14 @@ PREFIX is the prefix key where the map is being examined."
 (defun ergoemacs-mapkeymap (function keymap &optional submaps)
   "Call FUNCTION for all keys in hash table KEYMAP.
 FUNCTION is called with three arguments KEY, VALUE and PREFIX.
+
+When SUBMAPS is non-nil, will map over the whole keymap with the
+exception of the submaps.  Once finished mapping over the main
+map, map over each submap.  It will also assign properties to the
+maps.
+
+When SUBMAPS is 'prefix, only extract prefixes of the keymap,
+don't recurse to prefix keys
 
 Will return a collapsed keymap without parent"
   (let (ret sub tmp1 tmp2)
