@@ -424,8 +424,7 @@ When REMOVE is true, remove the emulations."
                            ergoemacs-no-shortcut-emulation-mode-map-alist)))
     (funcall (if remove #'remove-hook #'add-hook) 'emulation-mode-map-alists hook)))
 
-(defvar ergoemacs-global-map nil
-  "Saves the current global map to make sure the global changes are true.")
+
 (defvar ns-alternate-modifier)
 (defvar mac-alternate-modifier)
 (defvar ergoemacs-read-key-overriding-overlay-save)
@@ -470,8 +469,7 @@ bindings the keymap is:
   (if ergoemacs-mode
       (progn
         (setq ergoemacs-debug-heading-start-time (float-time)
-              ergoemacs-debug-heading-last-time (float-time)
-              ergoemacs-global-map (copy-keymap (current-global-map)))
+              ergoemacs-debug-heading-last-time (float-time))
         (ergoemacs-debug "* Ergoemacs-mode is turning ON.")
         (when cua-mode
           (cua-mode -1)
