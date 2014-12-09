@@ -329,9 +329,8 @@ This does not include submaps, which may also be a full keymap."
   (if (and submaps (not (eq submaps 'prefix)) (ergoemacs-map-p keymap))
       (progn
         (pushnew (cons key (ergoemacs-map-p keymap)) ergoemacs-mapkeymap--submaps :test 'equal))
-    (when (or (not submaps) (not (eq submaps 'prefix)))
-      (ergoemacs-mapkeymap--loop
-       function (ergoemacs-map-keymap-value keymap) submaps key))))
+    (ergoemacs-mapkeymap--loop
+     function (ergoemacs-map-keymap-value keymap) submaps key)))
 
 (defun ergoemacs-mapkeymap--key-item (key item function submaps &optional prefix)
   "Process an ITEM for KEY and possibly call FUNCTION, or defer keymap evaluation when SUBMAPS is true.
@@ -506,7 +505,7 @@ Will return a collapsed keymap without parent"
              function (ergoemacs-map-keymap-value keymap) submaps)
             (when (and ergoemacs-mapkeymap--prefixes submaps)
               (ergoemacs-map-put keymap :prefixes ergoemacs-mapkeymap--prefixes))
-            (setq sub ergoemacs-mapkeymap--submaps )
+            (setq sub ergoemacs-mapkeymap--submaps)
             (setq ret ergoemacs-mapkeymap--current)
             (setq ergoemacs-mapkeymap--current nil
                   ergoemacs-mapkeymap--nil nil
