@@ -220,13 +220,6 @@ KEY-SEQ must be a vector.  If there is no need to escape the key sequence return
          (insert "))"))
        ergoemacs-map-plist-hash))))
 
-(defun ergoemacs-map--label-after-startup ()
-  "Labels all maps after startup. Also label maps after everything has loaded."
-  (ergoemacs-map--label-atoms)
-  (add-hook 'after-load-functions 'ergoemacs-map--label-atoms))
-
-(add-hook 'after-init-hook 'ergoemacs-map--label-after-startup)
-
 (defun ergoemacs-map-default-global ()
   "Loads/Creates the default global map information."
   (ergoemacs-map--label-atoms)
@@ -801,6 +794,7 @@ Also make a hash table of all original maps (linked based on :map-list)"
            (puthash ret (or omap (copy-keymap sv)) ergoemacs-original-map-hash)
            (ergoemacs-map--label sv ret)))
        (put map :ergoemacs-labeled t)))))
+
 
 (defun ergoemacs-original-keymap--intern (keymap-label)
   (let ((map-list (plist-get keymap-label :map-list))
@@ -1592,6 +1586,16 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
 
 (defvar ergoemacs-global-before-ergoemacs (ergoemacs-mapkeymap nil global-map)
   "A single keymap for the keys before `ergoemacs-mode' loads.")
+
+
+(defun ergoemacs-map--label-after-startup ()
+  "Labels all maps after startup. Also label maps after everything has loaded."
+  (ergoemacs-map--label-atoms)
+  (add-hook 'after-load-functions 'ergoemacs-map--label-atoms))
+(add-hook 'after-init-hook 'ergoemacs-map--label-after-startup)
+
+(unless init-file-user
+  (ergoemacs-map--label-after-startup))
 
 (provide 'ergoemacs-map)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
