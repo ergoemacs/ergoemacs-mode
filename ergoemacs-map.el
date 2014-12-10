@@ -140,13 +140,17 @@ KEY-SEQ must be a vector.  If there is no need to escape the key sequence return
   (let* ((key (or (and (vectorp key) key)
                   (read-kbd-macro (key-description key) t)))
          (after-changed (ergoemacs-map-get global-map :keys-after-changed))
-         keymap k1 k2)
+         keymap k1 k2 ret)
     (if (member key after-changed) t
       (setq keymap (or (and ergoemacs-ignore-prev-global ergoemacs-global-before-ergoemacs)
                        ergoemacs-global-map)
             k1 (lookup-key keymap key t)
             k2 (lookup-key global-map key t))
-      (not (or (eq k1 k2) (and (keymapp k1) (keymapp k2)))))))
+      (setq ret (not (or (eq k1 k2) (and (keymapp k1) (keymapp k2)))))
+      (when ret ;; Cache result
+        (push key after-changed)
+        (ergoemacs-map-put global-map :keys-after-changed after-changed))
+      ret)))
 
 (defun ergoemacs-default-global--file ()
   "What is the global key hash file."
