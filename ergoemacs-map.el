@@ -161,7 +161,7 @@ KEY-SEQ must be a vector.  If there is no need to escape the key sequence return
 
 (defun ergoemacs-default-global--gen ()
   "Generates hash for default emacs maps."
-  (setq ergoemacs-map-plist-hash (make-hash-table :test 'equal))
+  ;; (setq ergoemacs-map-plist-hash (make-hash-table :test 'equal))
   (ergoemacs-map--label-atoms)
   (with-temp-file (ergoemacs-default-global--file) 
     (let ((print-level nil)
@@ -176,10 +176,10 @@ KEY-SEQ must be a vector.  If there is no need to escape the key sequence return
            (push key keys))))
        global-map t)
       (setq ergoemacs-global-map (copy-keymap (ergoemacs-mapkeymap nil global-map)))
-      (ergoemacs-map--label ergoemacs-global-map '(ergoemacs-global-map))
+      (ergoemacs-map--label ergoemacs-global-map)
       (ergoemacs-map-put ergoemacs-global-map :keys keys)
-      (message "Keys: %s\nKey::%s" keys
-               (ergoemacs-map-get ergoemacs-global-map :keys))
+      ;; (message "Keys: %s\nKey::%s" keys
+      ;;          (ergoemacs-map-get ergoemacs-global-map :keys))
 
       (insert "(setq ergoemacs-map-plist-hash '")
       (prin1 ergoemacs-map-plist-hash (current-buffer))
@@ -209,13 +209,15 @@ KEY-SEQ must be a vector.  If there is no need to escape the key sequence return
       ;; (prin1 (ergoemacs-mapkeymap nil minibuffer-local-filename-completion-map t) (current-buffer))
 
       (insert ")")
+
+      (message "global-map-list %s" (ergoemacs-map-get global-map :map-list))
       (maphash
-       (lambda(key _item)
-         (setq tmp (plist-get key :map-list))
-         (insert (format "(when (boundp '%s) (ergoemacs-map--label %s '%s nil nil '"
-                         (nth 0 tmp) (nth 0 tmp) tmp))
-         (prin1 (ergoemacs-map-plist (symbol-value (nth 0 tmp))) (current-buffer))
-         (insert "))"))
+       (lambda(key item)
+         (message "%s->%s" key (gethash ':map-list item))
+         (when (and (hash-table-p item)
+                    (setq tmp (gethash :map-list item)))
+           (insert (format "(when (boundp '%s) (ergoemacs-map--label %s %s))"
+                           (car tmp) (car tmp) (plist-get key :map-key)))))
        ergoemacs-map-plist-hash))))
 
 (defun ergoemacs-map-default-global ()
@@ -284,7 +286,11 @@ KEYMAP can be a symbol, keymap or ergoemacs-mode keymap"
     (or (and (listp keymap) (ergoemacs-keymapp keymap) keymap)
         (and (symbolp keymap) (ergoemacs-keymapp (setq tmp (symbol-value keymap))) tmp)
         (and (symbolp keymap) (ergoemacs-keymapp (setq tmp (symbol-function keymap))) tmp)
-        (ignore-errors (and (setq tmp (plist-get keymap :map-list)) (symbol-value (nth 0 tmp)))))))
+        (ignore-errors (and (setq tmp (gethash keymap ergoemacs-map-plist-hash))
+                            (setq tmp (gethash :map-list tmp))
+                            (symbol-value (car tmp))))
+        ;; (ignore-errors (and (setq tmp (plist-get keymap :map-list)) (symbol-value (nth 0 tmp))))
+        )))
 
 ;; FIXME: Write test or function
 (defun ergoemacs-map-all-sparse-p (keymap)
@@ -511,8 +517,8 @@ Will return a collapsed keymap without parent"
                   ;; Now map keymap
                   (ergoemacs-mapkeymap function (ergoemacs-map-keymap-value (cdr item)) t)
                   ;; Make sure submap is assigned
-                  (setq tmp2 (ergoemacs-map-get (ergoemacs-map-keymap-value (cdr item)) :submap-p))
-                  (pushnew (cons (car item) (ergoemacs-map-get keymap :map-list)) tmp2 :test 'equal)
+                  (setq tmp2 (ergoemacs-map-get (cdr item) :submap-p))
+                  (pushnew (cons (car item) (ergoemacs-map--key keymap)) tmp2 :test 'equal)
                   (ergoemacs-map-put (ergoemacs-map-keymap-value (cdr item)) :submap-p tmp2)
                   (push (cdr item) tmp1)))))))
     ret))
@@ -657,7 +663,7 @@ composing or parent/child relationships)"
                 (throw 'found-map t))))
           ret)))))
 
-(defvar ergoemacs-map-plist-hash nil)
+(defvar ergoemacs-map-plist-hash (make-hash-table :test 'equal))
 
 (defun ergoemacs-map-get (keymap property)
   "Gets ergoemacs-mode KEYMAP PROPERTY."
@@ -668,29 +674,36 @@ composing or parent/child relationships)"
     (ergoemacs-keymapp (symbol-function keymap)))
    (t (let ((ret (ergoemacs-map-plist keymap)) tmp)
         (or (and ret (or (plist-get ret property)
-                         (and (setq tmp (gethash (ergoemacs-map-p keymap) ergoemacs-map-plist-hash))
+                         (and (hash-table-p ergoemacs-map-plist-hash)
+                              (setq tmp (gethash (ergoemacs-map-p keymap) ergoemacs-map-plist-hash))
+                              (hash-table-p tmp)
                               (gethash property tmp))))
-            (and (not (eq property :map-list))
-                 (setq tmp (gethash (ergoemacs-map-p keymap) ergoemacs-map-plist-hash))
+            (and (not (eq property :map-key))
+                 (hash-table-p ergoemacs-map-plist-hash)
+                 (setq tmp (gethash (ergoemacs-map-p (ergoemacs-map-keymap-value keymap)) ergoemacs-map-plist-hash))
+                 (hash-table-p tmp)
                  (gethash property tmp)))))))
 
 (defun ergoemacs-map-put (keymap property value)
   "Set ergoemacs-mode KEYMAP PROPERTY to VALUE."
-  (cond
-   ((not (ergoemacs-keymapp keymap))
-    (warn "Trying to put keymap property on non-keymap %s." keymap))
-   ((eq property :full)
-    (warn "Cannot set the keymap property :full"))
-   (t (let ((ret (ergoemacs-map-plist keymap)) tmp)
-        (if (and ret (member property '(:map-list)))
-            (progn
-              (setq ret (plist-put ret property value))
-              (ergoemacs-map--label keymap nil nil nil ret))
-          (setq tmp (gethash (ergoemacs-map-p keymap) ergoemacs-map-plist-hash))
-          (unless tmp
-            (setq tmp (make-hash-table)))
-          (puthash property value tmp)
-          (puthash (ergoemacs-map-p keymap) tmp ergoemacs-map-plist-hash))))))
+  (let ((keymap (ergoemacs-map-keymap-value keymap)))
+    (cond
+     ((not (ergoemacs-keymapp keymap))
+      (warn "Trying to put keymap property on non-keymap %s." keymap))
+     ((eq property :full)
+      (warn "Cannot set the keymap property :full"))
+     (t (let ((ret (ergoemacs-map-plist keymap)) tmp)
+          (if (and ret (eq property ':map-key))
+              (progn
+                (setq ret (plist-put ret property value))
+                (ergoemacs-map--label keymap value))
+            (unless (hash-table-p ergoemacs-map-plist-hash)
+              (setq ergoemacs-map-plist-hash (make-hash-table :test 'equal)))
+            (setq tmp (gethash (ergoemacs-map-p keymap) ergoemacs-map-plist-hash))
+            (unless (hash-table-p tmp)
+              (setq tmp (make-hash-table)))
+            (puthash property value tmp)
+            (puthash (ergoemacs-map-p keymap) tmp ergoemacs-map-plist-hash)))))))
 
 (defun ergoemacs-map-composed-p (keymap)
   "Determine if the KEYMAP is a composed keymap."
@@ -721,12 +734,12 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
       ret)))
 
 (defun ergoemacs-map-parent (keymap &optional force)
-  "Returns a `ergoemacs-mode' map-list for the parent of KEYMAP."
+  "Returns a `ergoemacs-mode' map-key for the parent of KEYMAP."
   (let ((parent (keymap-parent keymap)))
     (and parent (ergoemacs-map-p parent force))))
 
 (defun ergoemacs-map-composed (keymap &optional force)
-  "Returns a list of `ergoemacs-mode' map-list for the composed keymap list"
+  "Returns a list of `ergoemacs-mode' map-key for the composed keymap list"
   (let ((composed-list (ergoemacs-map-composed-list keymap nil force)))
     (and composed-list
          (catch 'not-bound
@@ -740,33 +753,33 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
 (defun ergoemacs-map-p (keymap &optional force)
   "Returns the maps linked to the current map, if it is an `ergoemacs-mode' map."
   (let* ((keymap (ergoemacs-map-keymap-value keymap))
-         (map-list (ergoemacs-map-get keymap :map-list))
+         (map-key (ergoemacs-map-get keymap :map-key))
          (composed (ergoemacs-map-composed keymap force))
          parent ret)
-    (when (and force (not (or map-list composed)))
+    (when (and force (not (or map-key composed)))
       (ergoemacs-map--label keymap)
-      (setq map-list (ergoemacs-map-get keymap :map-list)
+      (setq map-key (ergoemacs-map-get keymap :map-key)
             composed (ergoemacs-map-composed keymap)
             parent (ergoemacs-map-parent keymap)))
-    (when map-list
-      (setq ret (plist-put ret :map-list map-list)))
+    (when map-key
+      (setq ret (plist-put ret :map-key map-key)))
     (when composed
       (setq ret (plist-put ret :composed composed)))
-    (when (or map-list composed)
+    (when (or map-key composed)
       (setq parent (ergoemacs-map-parent keymap t))
       (when parent
         (setq ret (plist-put ret :parent parent))))
     ret))
 
-(defun ergoemacs-map-boundp (keymap &optional force)
-  "Returns if the maps linked to the current map are unbound, if it is an `ergoemacs-mode' map.
-When FORCE is on, figure out if it is bound."
-  (let ((ret (symbol-name (car (ergoemacs-map-get keymap :map-list)))))
-    (if (not (string= ret "nil"))
-        (string-match-p "^ergoemacs-unbound-" ret)
-      (if (not force) nil
-        (ergoemacs-map--label keymap)
-        (ergoemacs-map-boundp keymap)))))
+;; (defun ergoemacs-map-boundp (keymap &optional force)
+;;   "Returns if the maps linked to the current map are unbound, if it is an `ergoemacs-mode' map.
+;; When FORCE is on, figure out if it is bound."
+;;   (let ((ret ()(symbol-name (car (ergoemacs-map-get keymap :map-list)))))
+;;     (if (not (string= ret "nil"))
+;;         (string-match-p "^ergoemacs-unbound-" ret)
+;;       (if (not force) nil
+;;         (ergoemacs-map--label keymap)
+;;         (ergoemacs-map-boundp keymap)))))
 
 (defvar ergoemacs-map--const-keymaps nil
   "Variable listing constant keymaps.")
@@ -774,30 +787,30 @@ When FORCE is on, figure out if it is bound."
   "Variable listing indirect keymaps.")
 
 (defun ergoemacs-map--label-atoms (&rest _ignore)
-  "Label all the bound keymaps.
-Also make a hash table of all original maps (linked based on :map-list)"
+  "Label all the bound keymaps."
   (mapatoms
    (lambda(map)
      (unless (get map :ergoemacs-labeled)
-       (let ((sv (ergoemacs-sv map t))
-             omap
-             ret)
+       (let* ((sv (ergoemacs-sv map t))
+              omap
+              (key (ergoemacs-map--key sv))
+              ret)
          (when (ergoemacs-keymapp sv)
+           (ergoemacs-map--label sv key)
            (setq ret (ergoemacs-map-get sv :map-list)
-                 omap (gethash ret ergoemacs-original-map-hash))
-           ;; (when
-           ;;   (remhash ret ergoemacs-original-map-hash))
-           (if (and ret (string-match-p "^ergoemacs-unbound-" (symbol-name (nth 0 ret))))
-               (setq ret '()))
+                 omap (gethash key ergoemacs-original-map-hash))
            (pushnew map ret)
            ;; Hash should be a copy pointers of the original maps.
-           (puthash ret (or omap (copy-keymap sv)) ergoemacs-original-map-hash)
-           (ergoemacs-map--label sv ret)))
-       (put map :ergoemacs-labeled t)))))
+           (puthash key (or omap (copy-keymap sv)) ergoemacs-original-map-hash)
+           (ergoemacs-map-put sv :map-list ret)
+           ;; (message "%s->%s;%s" key ret (ergoemacs-map-get sv :map-list))
+           ))
+       (unless noninteractive
+        (put map :ergoemacs-labeled t))))))
 
 
 (defun ergoemacs-original-keymap--intern (keymap-label)
-  (let ((map-list (plist-get keymap-label :map-list))
+  (let ((map-key (plist-get keymap-label :map-key))
         (composed (plist-get keymap-label :composed))
         (parent (plist-get keymap-label :parent))
         tmp
@@ -810,9 +823,9 @@ Also make a hash table of all original maps (linked based on :map-list)"
           (push tmp ret)))
       (setq tmp (and parent (ergoemacs-original-keymap--intern parent)))
       (setq ret (make-composed-keymap tmp (and (ergoemacs-keymapp tmp) tmp))))
-     ((and (setq map-list (gethash map-list ergoemacs-original-map-hash))
-           (ergoemacs-keymapp map-list))
-      (setq ret (copy-keymap map-list))
+     ((and (setq map-key (gethash map-key ergoemacs-original-map-hash))
+           (ergoemacs-keymapp map-key))
+      (setq ret (copy-keymap map-key))
       (when parent
         (setq parent (ergoemacs-original-keymap--intern parent))
         (when (ergoemacs-keymapp parent) 
@@ -831,38 +844,34 @@ Also make a hash table of all original maps (linked based on :map-list)"
             (ergoemacs-setcdr keymap (cdr ret))))
         (or ret keymap)))))
 
+(defun ergoemacs-map--key (keymap &optional key)
+  "Gets the key for the KEYMAP."
+  (let ((ret (ergoemacs-map-plist (ergoemacs-map-keymap-value keymap))))
+    (or (and ret (plist-get ret :map-key)) (random))))
+
 (defun ergoemacs-map--name (keymap)
   "Gets the first symbol pointing to this KEYMAP (if any)"
-  (or
-   (let ((ret (ergoemacs-map-p keymap))) (and ret (plist-get ret :map-list)))
-   (let (ret)
-     (unless ret
-       (setq ret (list (intern (concat "ergoemacs-unbound-" (format-time-string "%s-%N"))))))
-     ret)))
+  (or (ergoemacs-map-get keymap :map-list)))
 
-(defun ergoemacs-map--label (keymap &optional map-name strip submap-vector replace-plist)
+(defun ergoemacs-map--label (keymap &optional map-key)
   "Label an `ergoemacs-mode' touched keymap.
 MAP-NAME is the identifier of the map name.
-When STRIP is true, remove all `ergoemacs-mode' labels
 The KEYMAP will have the structure
   (keymap optional-char-table \"Optional Label\" (ergoemacs-labeled (lambda nil (plist-of-properties))) true-map)
 "
   (if (not (ergoemacs-keymapp keymap) ) nil
     (if (ergoemacs-map-composed-p keymap)
         (cond
-         (map-name
-          (warn "Will not label a composed map's members to %s" map-name))
-         (replace-plist
-          (warn "Will not update a plist for composed maps' members."))
+         (map-key
+          (warn "Will not label a composed map's members to %s" map-key))
          (t
           (dolist (map (ergoemacs-map-composed-list keymap))
-            (ergoemacs-map--label map nil strip submap-vector nil))))
+            (ergoemacs-map--label map map-key))))
       (let* ((map keymap)
-             (maps (or map-name (ergoemacs-map--name keymap)))
-             (unbound-p (string-match-p  "^ergoemacs-unbound-" (symbol-name (nth 0 maps))))
+             (map-key (or map-key (ergoemacs-map--key map)))
              char-table
-             old-plist
              indirect-p
+             old-plist
              (parent (keymap-parent map))
              label tmp1 tmp2)
         (unwind-protect
@@ -891,14 +900,10 @@ The KEYMAP will have the structure
                       (push tmp2 tmp1)))
                   (while tmp1
                     (push (pop tmp1) map))))
-              (when replace-plist
-                (setq old-plist replace-plist))
-              (unless (or strip
-                          (and submap-vector unbound-p))
-                (setq old-plist (plist-put old-plist ':map-list maps))
-                (unless indirect-p
-                  (push (cons 'ergoemacs-labeled
-                              `(lambda() (interactive) ',old-plist)) map)))
+              (setq old-plist (list :map-key map-key))
+              (unless indirect-p
+                (push (cons 'ergoemacs-labeled
+                            `(lambda() (interactive) ',old-plist)) map))
               (unless indirect-p
                 (when label
                   (push label map))
@@ -916,15 +921,13 @@ The KEYMAP will have the structure
 (defvar ergoemacs-command-shortcuts-hash)
 (defun ergoemacs-map--original (keymap)
   "Gets the original KEYMAP with `ergoemacs-mode' identifiers installed."
-  (let ((map-name (ergoemacs-map-p keymap)))
-    (if (not map-name)
-        (let ((maps (ergoemacs-map--name keymap)))
-          (ergoemacs-map--label keymap maps)
-          (dolist (map-name maps) ;; Save to original map hash
-            (unless (gethash map-name ergoemacs-original-map-hash)
-              (puthash map-name (copy-keymap keymap) ergoemacs-original-map-hash)))
-          keymap)
-      (gethash (car map-name) ergoemacs-original-map-hash))))
+  (let* ((map-key (ergoemacs-map--key keymap))
+         (ret (gethash map-key ergoemacs-original-map-hash)))
+    (unless ret
+      (ergoemacs-map--label keymap map-key)
+      (puthash map-key (copy-keymap (ergoemacs-map-keymap-value keymap)) ergoemacs-original-map-hash)
+      (setq ret (gethash map-key ergoemacs-original-map-hash)))
+    ret))
 
 (defun ergoemacs-map--install-ergoemacs (map &optional complete)
   "Returns a keymap with `ergoemacs-mode' modifications."
@@ -954,7 +957,6 @@ The KEYMAP will have the structure
         (push (cons (elt (read-kbd-macro key t) 0)
                     'ergoemacs-read-key-default)
               new-map))
-      (ergoemacs-map--label new-map maps)
       ;; Install parent map
       (when parent
         (set-keymap-parent new-map parent))
@@ -981,7 +983,7 @@ returns a list of keys affected.   Otherwise, it returns nil"
                    (car submap))))
         (when tmp
           (setq ret (append ret tmp)))))
-     ((memq 'global-map (plist-get (ergoemacs-map-p map) :map-list))
+     ((memq 'global-map (ergoemacs-map-get map :map-list))
       (setq ret (or (and key (list key)) t))))
     ret))
 
