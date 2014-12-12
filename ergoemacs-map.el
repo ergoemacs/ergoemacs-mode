@@ -672,17 +672,11 @@ composing or parent/child relationships)"
     (ignore-errors (char-table-p (nth 1 (ergoemacs-map-keymap-value keymap)))))
    ((eq property :indirect)
     (ergoemacs-keymapp (symbol-function keymap)))
-   (t (let ((ret (ergoemacs-map-plist keymap)) tmp)
-        (or (and ret (or (plist-get ret property)
-                         (and (hash-table-p ergoemacs-map-plist-hash)
-                              (setq tmp (gethash (ergoemacs-map-p keymap) ergoemacs-map-plist-hash))
-                              (hash-table-p tmp)
-                              (gethash property tmp))))
-            (and (not (eq property :map-key))
-                 (hash-table-p ergoemacs-map-plist-hash)
-                 (setq tmp (gethash (ergoemacs-map-p (ergoemacs-map-keymap-value keymap)) ergoemacs-map-plist-hash))
-                 (hash-table-p tmp)
-                 (gethash property tmp)))))))
+   ((eq property :map-key)
+    (ignore-errors (plist-get (ergoemacs-map-plist keymap) :map-key)))
+   (t
+    (ignore-errors
+      (gethash (gethash property (ergoemacs-map-p (ergoemacs-map-keymap-value keymap)) ergoemacs-map-plist-hash))))))
 
 (defun ergoemacs-map-put (keymap property value)
   "Set ergoemacs-mode KEYMAP PROPERTY to VALUE."
