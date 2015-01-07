@@ -1575,6 +1575,7 @@ and `helm-read-file-map' for this to take effect."
           (const :tag "Do not use ido-style backspace")
           (const :tag "Use ido-style backspace" t)))
 
+(defvar ergoemacs-read-key)
 (defun ergoemacs-helm-ff-backspace ()
   "Call backsapce or `helm-find-files-down-one-level'.
 If sitting at the end of a file directory, backspace goes up one
