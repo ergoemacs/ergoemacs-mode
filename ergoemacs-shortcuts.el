@@ -1006,6 +1006,9 @@ to the appropriate values for `ergoemacs-read-key'.
 (defvar pretty-key-undefined)
 (defvar ergoemacs-modal-save)
 (defvar ergoemacs-shortcut-prefix-keys)
+
+(declare-function ergoemacs-global-changed-p "ergoemacs-map.el")
+
 (defun ergoemacs-read-key-lookup (key pretty-key)
   "Lookup KEY and run if necessary.
 
@@ -1610,6 +1613,8 @@ argument prompt.
   (setq ergoemacs-describe-key nil
         ergoemacs-read-key-last-help nil))
 
+(defvar ergoemacs-handle-ctl-c-or-ctl-x)
+(defvar ergoemacs-ctl-c-or-ctl-x-delay)
 (defun ergoemacs-read-key-default ()
   "The default command for `ergoemacs-mode' read-key.
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
@@ -2098,7 +2103,10 @@ non-nil, call either the remapped function or FUNCTION
     ret))
 
 (defvar ergoemacs-original-map-hash)
-(declare-function ergoemacs-copy-list "ergoemacs-theme-engine.el")
+
+(declare-function ergoemacs-copy-list "ergoemacs-theme-engine")
+(declare-function ergoemacs-extract-prefixes "ergoemacs-map")
+
 (defvar ergoemacs-modified-map-hash (make-hash-table :test 'equal)
   "Hash of modified maps")
 (defun ergoemacs-install-shortcuts-map (&optional map dont-complete
@@ -2185,12 +2193,11 @@ Setup C-c and C-x keys to be described properly.")
 (defvar ergoemacs-show-true-bindings nil
   "Show the true bindings.  Otherwise, show what the bindings translate to...")
 
-(defun ergoemacs-remove-shortcuts (&optional create-overlay)
+(defun ergoemacs-remove-shortcuts (&rest _ignore)
   "Removes ergoemacs shortcuts from keymaps."
   (let ((inhibit-read-only t)
         deactivate-mark
-        hashkey override-text-map
-        tmp-overlay)
+        hashkey)
     (cond
      ((and overriding-local-map
            (and (ignore-errors (string= "ergoemacs-modified" (nth 1 overriding-local-map)))
@@ -2228,8 +2235,7 @@ The keymaps are:
 - Overlays with :keymap property
 - text property with :keymap property."
    (let ((inhibit-read-only t)
-	 deactivate-mark
-	 override-text-map)
+	 deactivate-mark)
      (cond
       ((and overriding-local-map
             (not (ignore-errors (string= "ergoemacs-modified" (nth 1 overriding-local-map)))))
