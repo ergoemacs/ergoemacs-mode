@@ -39,9 +39,9 @@
 (defmacro ergoemacs-sv (symbol &optional default)
   "Error free `symbol-value'.
 If SYMBOL is void, return nil"
-  (if default
-      `(ignore-errors (default-value ,symbol))
-    `(ignore-errors (symbol-value ,symbol))))
+  `(if ,default
+       (ignore-errors (default-value ,symbol))
+     (ignore-errors (symbol-value ,symbol))))
 
 ;;;###autoload
 (defmacro ergoemacs-with-ergoemacs (&rest body)

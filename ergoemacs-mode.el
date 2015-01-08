@@ -842,6 +842,8 @@ This is done by checking if this is a command that supports shift selection or c
 (autoload 'ergoemacs-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme "ergoemacs-macros")
+
+(declare-function ergoemacs-map-default-global "ergoemacs-map")
 (ergoemacs-map-default-global)
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
