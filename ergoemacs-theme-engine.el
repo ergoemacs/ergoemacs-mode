@@ -193,6 +193,18 @@
   :type '(repeat :tag "Command abbreviation"
                  (list (sexp :tag "Command")
                        (string :tag "Short Name"))))
+
+(declare-function eieio-defclass "eieio")
+(declare-function eieio--defalias "eieio")
+(declare-function eieio--defgeneric-init-form "eieio")
+(declare-function eieio--defmethod "eieio")
+(declare-function slot-value "eieio")
+(declare-function eieio-oset "eieio")
+(declare-function slot-boundp "eieio")
+(declare-function object-name-string "eieio")
+(declare-function eieio-oref "eieio")
+(declare-function clone "eieio")
+
 (require 'eieio)
 (require 'eieio-base)
 
@@ -1768,17 +1780,15 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
               ergoemacs-get-fixed-layout nil
               ergoemacs-get-variable-layout nil)
         (dolist (key rm-list)
-          (let ((vector-key (or (and (vectorp key) key)
-                                (read-kbd-macro (key-description key) t))))
-            (setq ;; final-read-map (or (and (memq (elt vector-key 0) '(3 24)) ;; Keep `C-c' and `C-x'.
-                  ;;                         (eq (lookup-key final-read-map (vector (elt vector-key 0)))
-                  ;;                             '(ergoemacs-read-key-default))
-                  ;;                         final-read-map)
-                  ;;                    (ergoemacs-rm-key final-read-map key))
-                  final-shortcut-map (ergoemacs-rm-key final-shortcut-map key)
-                  final-no-shortcut-map (ergoemacs-rm-key final-no-shortcut-map key)
-                  final-map (ergoemacs-rm-key final-map key)
-                  final-unbind-map (ergoemacs-rm-key final-unbind-map key))))
+          (setq ;; final-read-map (or (and (memq (elt vector-key 0) '(3 24)) ;; Keep `C-c' and `C-x'.
+           ;;                         (eq (lookup-key final-read-map (vector (elt vector-key 0)))
+           ;;                             '(ergoemacs-read-key-default))
+           ;;                         final-read-map)
+           ;;                    (ergoemacs-rm-key final-read-map key))
+           final-shortcut-map (ergoemacs-rm-key final-shortcut-map key)
+           final-no-shortcut-map (ergoemacs-rm-key final-no-shortcut-map key)
+           final-map (ergoemacs-rm-key final-map key)
+           final-unbind-map (ergoemacs-rm-key final-unbind-map key)))
         ;; Add `ergoemacs-mode' menu.
         (define-key menu-keymap [menu-bar ergoemacs-mode]
           `("ErgoEmacs" . ,(ergoemacs-keymap-menu (or ergoemacs-theme "standard"))))
