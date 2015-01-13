@@ -1535,6 +1535,8 @@ Installs `undo-tree' if not present."
   "Turns on `ergoemacs-started-emacsclient' for use with `ergoemacs-close-current-buffer'"
   (set (make-local-variable 'ergoemacs-started-emacsclient) t))
 
+(add-hook 'server-switch-hook 'ergoemacs-server-switch-hook)
+
 (defun ergoemacs-close-current-buffer ()
   "Close the current buffer.
 
