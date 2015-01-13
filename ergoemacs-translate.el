@@ -123,6 +123,8 @@ If MODAL is true, get the modal override map."
     (if (not map) nil
       (ergoemacs-sv map))))
 
+(declare-function ergoemacs-unicode-char "ergoemacs-map")
+(declare-function ergoemacs-pretty-key "ergoemacs-map")
 (defun ergoemacs-translation (&rest arg-plist)
   "Add or modifies an ergoemacs-translation.
 
@@ -560,6 +562,7 @@ properties are also added:
     (setq ret (ergoemacs-shift-translate-install trans-plist ret))
     ret))
 
+(defvar ergoemacs-use-ergoemacs-key-descriptions)
 (defun ergoemacs-translate (key)
   "Translates KEY and returns a plist of the translations.
 

@@ -1213,6 +1213,11 @@ When calling `ergoemacs-refresh' variable values should be preserved."
 
 (defvar ergoemacs-test-keymap-label-3 nil)
 
+(declare-function ergoemacs-map--label "ergoemacs-map")
+(declare-function ergoemacs-map-p "ergoemacs-map")
+(declare-function ergoemacs-map-get "ergoemacs-map")
+(declare-function ergoemacs-map--label-atoms "ergoemacs-map")
+
 (ert-deftest ergoemacs-test-keymap-label ()
   "Test Labeling function"
   (let ((keymap1 '(keymap "keymap1" (127 . backward-delete-char-untabify)))
@@ -1265,6 +1270,8 @@ When calling `ergoemacs-refresh' variable values should be preserved."
                         (throw 'mismatch nil)))
                     t)))
       ret)))
+
+(declare-function ergoemacs-extract-prefixes "ergoemacs-map")
 
 (ert-deftest ergoemacs-test-extract-prefixes ()
   "Tests the `ergoemacs-extract-prefixes' function."
