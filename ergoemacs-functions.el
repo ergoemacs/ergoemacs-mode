@@ -1528,14 +1528,12 @@ Installs `undo-tree' if not present."
 (declare-function minibuffer-keyboard-quit "delsel.el")
 (declare-function org-edit-src-save "org-src.el")
 
-(defvar ergoemacs-close-current-buffer-setup-server-edit-list nil
-  "List of buffers being edited by the server.")
+(defvar ergoemacs-started-emacsclient nil
+  "Tells if the emacsclient was called.")
 
-(defun ergoemacs-close-current-buffer-setup-server-edit ()
-  "Setup `server-edit' to be the close for buffers that are being edited."
-  (push (current buffer) ergoemacs-close-current-buffer-setup-server-edit-list))
-
-(add-hook 'server-switch-hook 'ergoemacs-close-current-buffer-setup-server-edit)
+(defun ergoemacs-server-switch-hook ()
+  "Turns on `ergoemacs-started-emacsclient' for use with `ergoemacs-close-current-buffer'"
+  (set (make-local-variable 'ergoemacs-started-emacsclient) t))
 
 (defun ergoemacs-close-current-buffer ()
   "Close the current buffer.
@@ -1562,6 +1560,15 @@ Else it is a user buffer."
         (git-commit-p (eq major-mode 'git-commit-mode)))
     (setq emacs-buff-p (if (string-match "^*" (buffer-name)) t nil))
     (cond
+     (ergoemacs-started-emacsclient
+      (when (and (buffer-modified-p)
+                 (if (equal (buffer-file-name) nil)
+                     (if (string-equal "" (save-restriction (widen) (buffer-string))) nil t)
+                   t))
+        (if (y-or-n-p (format "Buffer %s modified; Do you want to save? " (buffer-name)))
+            (save-buffer)
+          (set-buffer-modified-p nil)))
+      (server-edit))
      ((string= major-mode "minibuffer-inactive-mode")
       (if override-fn
           (progn
@@ -1595,14 +1602,6 @@ Else it is a user buffer."
         (if (y-or-n-p (format "Buffer %s modified; Do you want to save? " (buffer-name)))
             (org-edit-src-save)
           (set-buffer-modified-p nil)))
-      ;; save to a list of closed buffer
-      (if (not (member (current-buffer) ergoemacs-close-current-buffer-setup-server-edit-list))
-          (kill-buffer (current-buffer))
-        (dolist (buf ergoemacs-close-current-buffer-setup-server-edit-list)
-          (unless (equal buf (current-buffer))
-            (push buf tmp)))
-        (setq ergoemacs-close-current-buffer-setup-server-edit-list tmp)
-        (call-interactively 'server-edit))
       ;; if emacs buffer, switch to a user buffer
       (if (string-match "^*" (buffer-name))
           (setq is-emacs-buffer-after-p t)
