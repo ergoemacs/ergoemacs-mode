@@ -245,7 +245,7 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
       ;; (pushnew (cons key (ergoemacs-map-p keymap)) ergoemacs-mapkeymap--submaps :test 'equal)
       (add-to-list 'ergoemacs-mapkeymap--submaps (cons key (ergoemacs-map-p keymap)))
       (ergoemacs-mapkeymap--loop
-     function (ergoemacs-map-keymap-value keymap) submaps key)))
+       function (ergoemacs-map-keymap-value keymap) submaps key)))
 
 (defun ergoemacs-mapkeymap--key-item (key item function submaps &optional prefix)
   "Process an ITEM for KEY and possibly call FUNCTION, or defer keymap evaluation when SUBMAPS is true.
@@ -253,7 +253,7 @@ PREFIX is the current PREFIX for the key code. "
   (cond
    ;; Already ignored keys
    ((member key ergoemacs-mapkeymap--nil))
-
+   
    ;; Ignore already defined keys
    ((and (vectorp key) (lookup-key ergoemacs-mapkeymap--current key)))
 
@@ -325,8 +325,9 @@ PREFIX is the current PREFIX for the key code. "
     (ergoemacs-mapkeymap--define-key key item prefix)
     (when function
       (funcall function key item (or prefix t))))
+   
    (t
-    (warn "Could not extract %s %s" key item))))
+    (warn "Could not extract\n\tkey:\"%s\" \n\tItem: \"%s\"" key item))))
 
 (declare-function ergoemacs-real-define-key "ergoemacs-map.el" (keymap key def) t)
 (fset 'ergoemacs-real-define-key (symbol-function 'define-key))
@@ -389,8 +390,11 @@ PREFIX is the prefix key where the map is being examined."
           (unless (eq (car item) 'ergoemacs-labeled) ;; ignore labels
             (ergoemacs-mapkeymap--key-item
              key (cdr item) function submaps prefix))))
+       ;; Ignore [()] keys like:
+       ;;(keymap "Select Buffer" [("*scratch*" (nil)...) ...])
+       ((vectorp item))
        (t
-        (warn "Could not extract %s" item))))))
+        (warn "Could not extract Item: \"%s\"" item))))))
 
 (defun ergoemacs-map-get (keymap property)
   "Gets ergoemacs-mode KEYMAP PROPERTY."
