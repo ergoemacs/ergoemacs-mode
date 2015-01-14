@@ -1535,6 +1535,11 @@ Installs `undo-tree' if not present."
   "Turns on `ergoemacs-started-emacsclient' for use with `ergoemacs-close-current-buffer'"
   (set (make-local-variable 'ergoemacs-started-emacsclient) t))
 
+(defun ergoemacs-server-visit-hook ()
+  "Turns on `ergoemacs-started-emacsclient' for use with `ergoemacs-close-current-buffer'"
+  (unless ergoemacs-started-emacsclient
+    (set (make-local-variable 'ergoemacs-started-emacsclient) t)))
+
 (add-hook 'server-switch-hook 'ergoemacs-server-switch-hook)
 
 (defun ergoemacs-close-current-buffer ()
@@ -1597,7 +1602,7 @@ Else it is a user buffer."
       ;; offer to save buffers that are non-empty and modified, even
       ;; for non-file visiting buffer. (because kill-buffer does not
       ;; offer to save buffers that are not associated with files)
-      
+      (kill-buffer (current-buffer))
       ;; 
       (when (and (buffer-modified-p)
                  org-p)
