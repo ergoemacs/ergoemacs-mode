@@ -167,7 +167,7 @@ This does not include submaps, which may also be a full keymap."
                   (unless (ergoemacs-map-all-sparse-p map)
                     (throw 'found-full nil))) t)))
        (t
-        (setq ret (not (char-table-p (nth 1 kv))))))
+        (setq ret (not (ignore-errors (char-table-p (nth 1 kv)))))))
       (when ret
         (setq ret (ergoemacs-map-all-sparse-p (keymap-parent keymap))))
       ret)))
@@ -907,7 +907,7 @@ The KEYMAP will have the structure
                 (if (eq (car map) 'keymap)
                     (setq map (cdr map))
                   (setq map (list map)))
-                (when (char-table-p (car map))
+                (when (ignore-errors (char-table-p (car map)))
                   (setq char-table (pop map)))
                 (when (stringp (car map))
                   (setq label (pop map)))
