@@ -1496,6 +1496,7 @@ Installs `undo-tree' if not present."
 
 (add-hook 'server-switch-hook 'ergoemacs-server-switch-hook)
 
+(declare-function server-edit "server.el")
 (defun ergoemacs-close-current-buffer ()
   "Close the current buffer.
 
@@ -1513,7 +1514,6 @@ A emacs buffer is one who's name starts with *.
 Else it is a user buffer."
   (interactive)
   (let ((override-fn (ergoemacs-get-override-function (this-single-command-keys)))
-        tmp
         emacs-buff-p
         is-emacs-buffer-after-p
         (org-p (string-match "^[*]Org Src" (buffer-name)))
