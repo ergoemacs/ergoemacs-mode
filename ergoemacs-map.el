@@ -332,11 +332,19 @@ PREFIX is the current PREFIX for the key code. "
 (declare-function ergoemacs-real-define-key "ergoemacs-map.el" (keymap key def) t)
 (fset 'ergoemacs-real-define-key (symbol-function 'define-key))
 
+(declare-function ergoemacs-setcdr "ergoemacs-mode.el")
+
 (defun ergoemacs-map-force-full-keymap (keymap)
   "Forces KEYMAP to be a full keymap."
   (if (ignore-errors (char-table-p (nth 1 keymap))) keymap
     (ergoemacs-setcdr keymap (cons (nth 1 (make-keymap)) (cdr keymap)))
     keymap))
+
+(defun ergoemacs-map-set-char-table-range (keymap range value)
+  "Sets the KEYMAP's char-table RANGE to VALUE.
+If KEYMAP is not a full keymap, make it a full keymap."
+  (set-char-table-range
+   (nth 1 (ergoemacs-map-force-full-keymap keymap)) range value))
 
 (defun ergoemacs-mapkeymap--define-key (key item &optional prefix)
   "Defines KEY to be ITEM for ergoemacs-mapkeymap--current.
@@ -346,10 +354,9 @@ KEY could be a cons for a range if the keymap is a full keymap, otherwise KEY is
     (ergoemacs-real-define-key
      ergoemacs-mapkeymap--current key item))
    ((consp key) ;; Char table range.
-    (set-char-table-range
-     (nth 1 (ergoemacs-map-force-full-keymap
-             (if prefix (lookup-key ergoemacs-mapkeymap--current prefix)
-               ergoemacs-mapkeymap--current))) key item))))
+    (ergoemacs-map-set-char-table-range
+     (if prefix (lookup-key ergoemacs-mapkeymap--current prefix)
+       ergoemacs-mapkeymap--current) key item))))
 
 (defun ergoemacs-mapkeymap--loop (function keymap submaps &optional prefix)
   "Loops over keys in KEYMAP.
