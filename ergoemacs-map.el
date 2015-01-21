@@ -424,7 +424,7 @@ don't recurse to prefix keys
 Will return a collapsed keymap without parent"
   (let (ret sub tmp1 tmp2 tmp3)
     (if ergoemacs-mapkeymap--current
-        (error "Cannot call `ergoemacs-mapkeymap' while another `ergoemacs-mapkeymap' is being called.")
+        (error "Cannot call `ergoemacs-mapkeymap' while another `ergoemacs-mapkeymap' is being called.\n%s" ergoemacs-mapkeymap--current)
       (unwind-protect
           (progn
             (setq ergoemacs-mapkeymap--current
@@ -458,7 +458,12 @@ Will return a collapsed keymap without parent"
                   (unless (member tmp3 tmp2)
                     (push tmp3 tmp2))
                   (ergoemacs-map-put (ergoemacs-map-keymap-value (cdr item)) :submap-p tmp2)
-                  (push (cdr item) tmp1)))))))
+                  (push (cdr item) tmp1)))))
+        (setq ergoemacs-mapkeymap--current nil
+              ergoemacs-mapkeymap--nil nil
+              ergoemacs-mapkeymap--prefixes nil
+              ergoemacs-mapkeymap--submaps nil
+              ergoemacs-mapkeymap--key nil)))
     ret))
 
 (defvar ergoemacs-global-before-ergoemacs (ergoemacs-mapkeymap nil global-map)
