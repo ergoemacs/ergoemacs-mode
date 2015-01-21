@@ -335,7 +335,7 @@ PREFIX is the current PREFIX for the key code. "
 (defun ergoemacs-map-force-full-keymap (keymap)
   "Forces KEYMAP to be a full keymap."
   (if (ignore-errors (char-table-p (nth 1 keymap))) keymap
-    (setcdr keymap (cons (nth 1 (make-keymap)) (cdr keymap)))
+    (ergoemacs-setcdr keymap (cons (nth 1 (make-keymap)) (cdr keymap)))
     keymap))
 
 (defun ergoemacs-mapkeymap--define-key (key item &optional prefix)
