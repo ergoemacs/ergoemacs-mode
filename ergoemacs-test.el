@@ -63,6 +63,8 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (ert "^ergoemacs-test-")
     (call-interactively 'elp-results)))
 
+
+
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme)
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
@@ -1464,9 +1466,40 @@ When calling `ergoemacs-refresh' variable values should be preserved."
                                          (ergoemacs-extract-prefixes composed-no-parent-2 nil t)))))
 
 
+;; Flatten test
+;; keymap
+
+(defvar ergoemacs-mapkeymap--debug)
+(ert-deftest ergoemacs-test-flatten ()
+  "Tests the flatten capability of `ergoemacs-mode'"
+  (let ((ergoemacs-mapkeymap--debug t)
+        (map '(keymap (keymap (1 . ergoemacs-1))
+                      (keymap (2 . ergoemacs-2))
+                      (keymap (2 . ergoemacs-2a))
+                      (keymap (3 . ergoemacs-3))
+                      keymap (3 . ergoemacs-3a) (4 . ergoemacs-4)))
+        (map-1 '(keymap
+                 (keymap (27 keymap
+                             (39 . ergoemacs-shortcut)))
+                 (keymap
+                  (27 keymap
+                      (50 . ergoemacs-shortcut)
+                      (51 . ergoemacs-shortcut)))
+                 (keymap
+                  (27 keymap
+                      (33554464 . ergoemacs-shortcut))))))
+    (should (ergoemacs-test-same-members (ergoemacs-mapkeymap nil map) '(keymap (4 . ergoemacs-4) (3 . ergoemacs-3) (2 . ergoemacs-2) (1 . ergoemacs-1))))
+    (should (ergoemacs-test-same-members
+             (ergoemacs-mapkeymap nil map-1)
+             '(keymap (27 keymap
+                          (33554464 . ergoemacs-shortcut)
+                          (51 . ergoemacs-shortcut)
+                          (50 . ergoemacs-shortcut)
+                          (39 . ergoemacs-shortcut)))))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
 ;; Local Variables:
-;; coding: utf-8-emacs
+;;i coding: utf-8-emacs
 ;; End:
