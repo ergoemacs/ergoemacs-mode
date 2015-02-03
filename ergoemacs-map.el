@@ -300,8 +300,8 @@ PREFIX is the current PREFIX for the key code. "
           (ergoemacs-debug "Setup prefix %s to be a full keymap"
                            (key-description key)))
         (ergoemacs-mapkeymap--define-key key
-                                         `(,(nth 0 item) ,(nth 1 item) ,@(make-keymap)) prefix)))
-    (ergoemacs-mapkeymap--key-keymap key (nthcdr 2 item) function submaps prefix))
+                                         `(,(nth 0 item) ,(nth 1 item) ,@(make-keymap)) prefix))
+      (ergoemacs-mapkeymap--key-keymap key (nthcdr 2 item) function submaps prefix)))
    
    ;; (key "String" keymap)
    ((ignore-errors
@@ -320,8 +320,8 @@ PREFIX is the current PREFIX for the key code. "
                                          `(,(nth 0 item) ,@(make-keymap)) prefix)
         (when ergoemacs-mapkeymap--debug
           (ergoemacs-debug "Setup prefix %s to be a full keymap"
-                           (key-description key)))))
-    (ergoemacs-mapkeymap--key-keymap key (nthcdr 1 item) function submaps prefix))
+                           (key-description key))))
+      (ergoemacs-mapkeymap--key-keymap key (nthcdr 1 item) function submaps prefix)))
    
    ;; (key keymap)
    ((ergoemacs-keymapp item)
@@ -338,8 +338,8 @@ PREFIX is the current PREFIX for the key code. "
          key (make-keymap) prefix)
         (when ergoemacs-mapkeymap--debug
           (ergoemacs-debug "Setup prefix %s to be a full keymap"
-                           (key-description key)))))
-    (ergoemacs-mapkeymap--key-keymap key item function submaps prefix))
+                           (key-description key))))
+      (ergoemacs-mapkeymap--key-keymap key item function submaps prefix)))
 
    ;; Ignore already defined keys
    ((and (vectorp key) (lookup-key ergoemacs-mapkeymap--current key))
