@@ -236,6 +236,8 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
 (defvar ergoemacs-mapkeymap--debug nil)
 (defvar ergoemacs-mapkeymap--maps nil)
 
+(declare-function ergoemacs-debug "ergoemacs-mode")
+(declare-function ergoemacs-debug-heading "ergoemacs-mode")
 (defun ergoemacs-mapkeymap--key-keymap (key keymap function submaps &optional prefix)
   "Handle KEYMAPs"
   (when function

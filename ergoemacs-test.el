@@ -1470,6 +1470,7 @@ When calling `ergoemacs-refresh' variable values should be preserved."
 ;; keymap
 
 (defvar ergoemacs-mapkeymap--debug)
+(declare-function ergoemacs-mapkeymap "ergoemacs-map")
 (ert-deftest ergoemacs-test-flatten ()
   "Tests the flatten capability of `ergoemacs-mode'"
   (let ((ergoemacs-mapkeymap--debug t)
@@ -1501,5 +1502,5 @@ When calling `ergoemacs-refresh' variable values should be preserved."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
 ;; Local Variables:
-;;i coding: utf-8-emacs
+;; coding: utf-8-emacs
 ;; End:
