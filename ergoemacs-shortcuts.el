@@ -915,7 +915,7 @@ In addition, when the function is called:
 	(remove-hook 'ergoemacs-pre-command-hook 'ergoemacs-pre-command-hook)
 	(remove-hook 'ergoemacs-pre-command-hook 'ergoemacs-pre-command-hook t)
         (run-hooks 'ergoemacs-pre-command-hook)
-        (call-interactively function record-flag keys)
+        (call-interactively this-command record-flag keys)
         (setq ergoemacs-deactivate-mark deactivate-mark)
         (when deactivate-mark
           (setq ergoemacs-mark-active nil))))))
