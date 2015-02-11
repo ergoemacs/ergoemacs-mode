@@ -894,8 +894,7 @@ In addition, when the function is called:
             (puthash (cons major-mode function) (if count (+ count 1) 1)
                      keyfreq-table))))
       (let (deactivate-mark
-            (ergoemacs-single-command-keys keys)
-            (this-command function))
+            (ergoemacs-single-command-keys keys))
 	(remove-hook 'ergoemacs-pre-command-hook 'ergoemacs-pre-command-hook)
 	(remove-hook 'ergoemacs-pre-command-hook 'ergoemacs-pre-command-hook t)
         (run-hooks 'ergoemacs-pre-command-hook)
