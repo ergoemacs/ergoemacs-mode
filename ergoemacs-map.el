@@ -246,14 +246,15 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
     (funcall function key 'ergoemacs-prefix (or prefix t)))
   (when (and ergoemacs-mapkeymap--key (not prefix))
     ;; (pushnew key ergoemacs-mapkeymap--prefixes :test 'equal)
-    (unless (member key ergoemacs-mapkeymap--prefixes)
+    (unless (or (member key (append ergoemacs-mapkeymap--prefixes ergoemacs-mapkeymap--nil))
+                (not (ergoemacs-keymapp (lookup-key ergoemacs-mapkeymap--current key))))
       (when ergoemacs-mapkeymap--debug
         (ergoemacs-debug "Add prefix %s" key))
       (push key ergoemacs-mapkeymap--prefixes)))
   (if (and submaps (not (eq submaps 'prefix)) (ergoemacs-map-p keymap))
       ;; (pushnew (cons key (ergoemacs-map-p keymap))
       ;; ergoemacs-mapkeymap--submaps :test 'equal)
-      (unless (member (cons key (ergoemacs-map-p keymap)) ergoemacs-mapkeymap--submaps)
+      (unless (member (cons key (ergoemacs-map-p keymap)) (append ergoemacs-mapkeymap--submaps ergoemacs-mapkeymap--nil))
         (when ergoemacs-mapkeymap--debug
           (ergoemacs-debug "Add submap %s" (cons key (ergoemacs-map-p keymap)) ))
         (push (cons key (ergoemacs-map-p keymap)) ergoemacs-mapkeymap--submaps))
