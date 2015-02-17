@@ -593,6 +593,7 @@ Will return a collapsed keymap without parent"
           keys
           tmp)
       (goto-char (point-min))
+      (insert "(defvar ergoemacs-map-plist-hash)(defvar ergoemacs-global-map)(declare-function ergoemacs-map--label \"ergoemacs-map\")")
       (ergoemacs-mapkeymap
        (lambda (key _item _prefix)
          (cond
