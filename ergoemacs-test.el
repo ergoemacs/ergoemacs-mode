@@ -53,6 +53,16 @@ reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
+(defvar ergoemacs-test-fast nil)
+(defun ergoemacs-test-fast ()
+  "Fast test of ergoemacs-mode (doesn't include keyboard startup issues)."
+  (interactive)
+  (unwind-protect
+      (progn
+        (setq ergoemacs-test-fast t)
+        (call-interactively 'ergoemacs-test))
+    (setq ergoemacs-test-fast nil)))
+
 ;;;###autoload
 (defun ergoemacs-test ()
   "Test ergoemacs issues."
@@ -141,7 +151,8 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (declare-function ergoemacs-shortcut-remap-list "ergoemacs-shortcuts.el")
 (defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global delete-def)
   "Test the global key set before ergoemacs-mode is loaded."
-  (let* ((emacs-exe (ergoemacs-emacs-exe))
+  (if ergoemacs-test-fast t
+    (let* ((emacs-exe (ergoemacs-emacs-exe))
          (ret nil)
          (sk nil)
          (test-key (or key "M-k"))
@@ -192,7 +203,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
     (when (file-exists-p w-file)
       (setq ret 't)
       (delete-file w-file))
-    ret))
+    ret)))
 
 (ert-deftest ergoemacs-test-global-key-set-before-1 ()
   "Test global set key before ergoemacs-mode loads."
