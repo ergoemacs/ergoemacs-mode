@@ -1226,48 +1226,6 @@ When calling `ergoemacs-refresh' variable values should be preserved."
 
 (defvar ergoemacs-test-keymap-label-3 nil)
 
-(declare-function ergoemacs-map--label "ergoemacs-map")
-(declare-function ergoemacs-map-p "ergoemacs-map")
-(declare-function ergoemacs-map-get "ergoemacs-map")
-(declare-function ergoemacs-map--label-atoms "ergoemacs-map")
-
-(ert-deftest ergoemacs-test-keymap-label ()
-  "Test Labeling function"
-  (let ((keymap1 '(keymap "keymap1" (127 . backward-delete-char-untabify)))
-        (keymap2 '(keymap (127 . backward-delete-char-untabify)))
-        (full (let ((map (make-keymap "labeled")))
-                (define-key map [127] 'backward-delete-char-untabify)
-                map))
-        (full-u (let ((map (make-keymap)))
-                  (define-key map [127] 'backward-delete-char-untabify)
-                  map))
-        last)
-    (ergoemacs-map--label full)
-    (ergoemacs-map--label full-u)
-    (should (not (equal (ergoemacs-map-p full) '(:map-list (full)))))
-    (should (not (equal (ergoemacs-map-p full-u) '(:map-list (full-u)))))
-    (should (not (equal (ergoemacs-map-p keymap1) '(:map-list (keymap1)))))
-    (should (not (equal (ergoemacs-map-p keymap2) '(:map-list (keymap2)))))
-    (ergoemacs-map--label keymap1)
-    (setq last (ergoemacs-map-p keymap1))
-    (should (equal last (ergoemacs-map-p keymap1)))
-    (ergoemacs-map--label keymap2)
-    (setq last (ergoemacs-map-p keymap2))
-    (should (equal last (ergoemacs-map-p keymap2)))
-
-    (should (equal (ergoemacs-map-p ergoemacs-test-keymap-label-1) '(:map-list (ergoemacs-test-keymap-label-1))))
-    (should (equal (ergoemacs-map-p ergoemacs-test-keymap-label-2) '(:map-list (ergoemacs-test-keymap-label-2))))
-
-    (setq last (ergoemacs-map-get global-map :submaps))
-    (message "Last: %s" last)
-    (setq ergoemacs-test-keymap-label-3 global-map)
-    (put 'ergoemacs-test-keymap-label-3 :ergoemacs-labeled nil) ;; Simulate that the keymap was defined, but not loaded
-    (ergoemacs-map--label-atoms)
-    (should (equal (ergoemacs-map-get ergoemacs-test-keymap-label-3 :map-list) '(ergoemacs-test-keymap-label-3 widget-global-map global-map)))
-    (message "Now: %s" (ergoemacs-map-get global-map :submaps))
-    (should (equal last (ergoemacs-map-get global-map :submaps)))
-    ))
-
 (defun ergoemacs-test-same-members (list1 list2)
   "Tests to see if each list has the same items in it."
   (if (not (= (length list1) (length list2))) nil
