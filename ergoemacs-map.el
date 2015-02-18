@@ -470,9 +470,12 @@ PREFIX is the prefix key where the map is being examined."
   "Only return items in the KEYMAP-LIST that are the same as KEYMAP."
   (let (ret)
     (dolist (map keymap-list)
-      (when (eq (ergoemacs-map-keymap-value map) keymap)
-        (push map ret)))
-    ret)))
+      (if (and (eq (ergoemacs-map-keymap-value map) keymap)
+               (eq (default-value map) keymap))
+          (push map ret)
+        ;; Remove :map-key and replace with new key.
+        (ergoemacs-map--label (ergoemacs-map-keymap-value map) (random))))
+    ret))
 
 (defun ergoemacs-map-get (keymap property)
   "Gets ergoemacs-mode KEYMAP PROPERTY."
@@ -482,12 +485,13 @@ PREFIX is the prefix key where the map is being examined."
    ((eq property :indirect)
     (ergoemacs-keymapp (symbol-function keymap)))
    ((eq property :map-key)
+    ;; Expire any ids that are no longer linked
     (ignore-errors (plist-get (ergoemacs-map-plist keymap) :map-key)))
+   ((eq property :local-map-list)
+    (ergoemacs-map-get--keymap-list (ergoemacs-map-get keymap :map-list) keymap))
    (t
-    (let ((ret (ignore-errors
-                 (gethash property (gethash (ergoemacs-map-p (ergoemacs-map-keymap-value keymap)) ergoemacs-map-plist-hash)))))
-      (when (eq property :map-list)
-        (setq ret (ergoemacs-map-get--keymap-list ret keymap)))))))
+    (ignore-errors
+      (gethash property (gethash (ergoemacs-map-p (ergoemacs-map-keymap-value keymap)) ergoemacs-map-plist-hash))))))
 
 (defun ergoemacs-mapkeymap (function keymap &optional submaps)
   "Call FUNCTION for all keys in hash table KEYMAP.
@@ -858,9 +862,7 @@ composing or parent/child relationships)"
            (pushnew map ret)
            ;; Hash should be a copy pointers of the original maps.
            (puthash key (or omap (copy-keymap sv)) ergoemacs-original-map-hash)
-           (ergoemacs-map-put sv :map-list ret)
-           ;; (message "%s->%s;%s" key ret (ergoemacs-map-get sv :map-list))
-           ))
+           (ergoemacs-map-put sv :map-list ret)))
        (unless noninteractive
         (put map :ergoemacs-labeled t))))))
 
