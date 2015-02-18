@@ -466,6 +466,14 @@ PREFIX is the prefix key where the map is being examined."
        (t
         (warn "Could not extract Item: \"%s\"" item))))))
 
+(defun ergoemacs-map-get--keymap-list (keymap-list keymap)
+  "Only return items in the KEYMAP-LIST that are the same as KEYMAP."
+  (let (ret)
+    (dolist (map keymap-list)
+      (when (eq (ergoemacs-map-keymap-value map) keymap)
+        (push map ret)))
+    ret)))
+
 (defun ergoemacs-map-get (keymap property)
   "Gets ergoemacs-mode KEYMAP PROPERTY."
   (cond
@@ -476,8 +484,10 @@ PREFIX is the prefix key where the map is being examined."
    ((eq property :map-key)
     (ignore-errors (plist-get (ergoemacs-map-plist keymap) :map-key)))
    (t
-    (ignore-errors
-      (gethash property (gethash (ergoemacs-map-p (ergoemacs-map-keymap-value keymap)) ergoemacs-map-plist-hash))))))
+    (let ((ret (ignore-errors
+                 (gethash property (gethash (ergoemacs-map-p (ergoemacs-map-keymap-value keymap)) ergoemacs-map-plist-hash)))))
+      (when (eq property :map-list)
+        (setq ret (ergoemacs-map-get--keymap-list ret keymap)))))))
 
 (defun ergoemacs-mapkeymap (function keymap &optional submaps)
   "Call FUNCTION for all keys in hash table KEYMAP.
@@ -639,7 +649,7 @@ Will return a collapsed keymap without parent"
       (message "global-map-list %s" (ergoemacs-map-get global-map :map-list))
       (maphash
        (lambda(key item)
-         (message "%s->%s" key (gethash ':map-list item))
+         (message "%s->%s" key (gethash :map-list item))
          (when (and (hash-table-p item)
                     (setq tmp (gethash :map-list item)))
            (insert (format "(when (boundp '%s) (ergoemacs-map--label %s %s))"
