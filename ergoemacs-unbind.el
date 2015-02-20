@@ -28,10 +28,9 @@
 ;; 
 
 ;;; Code:
-(eval-when-compile 
+(eval-when-compile
   (require 'cl)
   (require 'ergoemacs-macros))
-
 (require 'edmacro)
 
 (defvar ergoemacs-emacs-default-bindings
@@ -647,7 +646,8 @@
 (defun ergoemacs-undefined ()
   "Ergoemacs Undefined key, echo new key for old action."
   (interactive)
-  (let* ((key-kbd (or ergoemacs-single-command-keys (this-single-command-keys)))
+  (let* ((key-kbd (or ergoemacs-single-command-keys
+                      (this-single-command-keys)))
          tmp
          (local-fn nil))
     ;; Lookup local key, if present and then issue that
@@ -667,22 +667,21 @@
       (setq tmp (ergoemacs-real-key-binding key-kbd))
       (when (and tmp (not (equal tmp 'ergoemacs-undefined)))
         (setq local-fn tmp))
-      (when (featurep 'keyfreq)
-        (when keyfreq-mode
-          (let ((command 'ergoemacs-undefined) count)
-            (setq count (gethash (cons major-mode command) keyfreq-table))
-            (cond
-             ((not count))
-             ((= count 1)
-              (remhash (cons major-mode command) keyfreq-table))
-             (count
-              (puthash (cons major-mode command) (- count 1)
-                       keyfreq-table)))
-            ;; Add local-fn to counter.
-            (setq command local-fn)
-            (setq count (gethash (cons major-mode command) keyfreq-table))
-            (puthash (cons major-mode command) (if count (+ count 1) 1)
-                     keyfreq-table))))
+      (when (and (boundp 'keyfreq-mode) keyfreq-mode (boundp 'keyfreq-table))
+        (let* ((command 'ergoemacs-undefined)
+               (count (gethash (cons major-mode command) keyfreq-table)))
+          (cond
+           ((not count))
+           ((= count 1)
+            (remhash (cons major-mode command) keyfreq-table))
+           (count
+            (puthash (cons major-mode command) (- count 1)
+                     keyfreq-table)))
+          ;; Add local-fn to counter.
+          (setq command local-fn)
+          (setq count (gethash (cons major-mode command) keyfreq-table))
+          (puthash (cons major-mode command) (if count (+ count 1) 1)
+                   keyfreq-table)))
       (setq this-command local-fn)
       (condition-case err
           (call-interactively local-fn)
@@ -691,30 +690,28 @@
         ;; Local map present.  Use it, if there is a key
         ;; defined there.
         (setq local-fn (get-char-property (point) 'local-map))
-        (if (and local-fn
-                 (ignore-errors (keymapp local-fn)))
+        (if (and local-fn (keymapp local-fn))
             (setq local-fn (lookup-key local-fn key-kbd))
           (if (current-local-map)
               (setq local-fn (lookup-key (current-local-map) key-kbd))
             (setq local-fn nil)))
         (functionp local-fn))
       (setq this-command local-fn) ; Don't record this command.
-      (when (featurep 'keyfreq)
-        (when keyfreq-mode
-          (let ((command 'ergoemacs-undefined) count)
-            (setq count (gethash (cons major-mode command) keyfreq-table))
-            (cond
-             ((not count))
-             ((= count 1)
-              (remhash (cons major-mode command) keyfreq-table))
-             (count
-              (puthash (cons major-mode command) (- count 1)
-                       keyfreq-table)))
-            ;; Add local-fn to counter.
-            (setq command local-fn)
-            (setq count (gethash (cons major-mode command) keyfreq-table))
-            (puthash (cons major-mode command) (if count (+ count 1) 1)
-                     keyfreq-table))))
+      (when (and (boundp 'keyfreq-mode) keyfreq-mode (boundp 'keyfreq-table))
+        (let ((command 'ergoemacs-undefined) count)
+          (setq count (gethash (cons major-mode command) keyfreq-table))
+          (cond
+           ((not count))
+           ((= count 1)
+            (remhash (cons major-mode command) keyfreq-table))
+           (count
+            (puthash (cons major-mode command) (- count 1)
+                     keyfreq-table)))
+          ;; Add local-fn to counter.
+          (setq command local-fn)
+          (setq count (gethash (cons major-mode command) keyfreq-table))
+          (puthash (cons major-mode command) (if count (+ count 1) 1)
+                   keyfreq-table)))
       (condition-case err
           (call-interactively local-fn)
         (error (beep) (message "%s" err))))
@@ -745,10 +742,9 @@
   (setq ergoemacs-emacs-default-bindings
         (mapcar
          (lambda(elt)
-           (let ((first (nth 0  elt))
-                 (last (nth 1 elt))
-                 fn)
-             (setq fn (lookup-key global-map (read-kbd-macro first)))
+           (let* ((first (nth 0  elt))
+                  (last (nth 1 elt))
+                  (fn (lookup-key global-map (read-kbd-macro first))))
              (if (not (functionp fn))
                  elt
                (pushnew fn last :test 'equal)
@@ -779,7 +775,7 @@
   "Cache of global variables that have changed.")
 
 (defvar ergoemacs-dir)
-(defun ergoemacs-global-fix-defualt-bindings (kbd-code function)
+(defun ergoemacs-global-fix-default-bindings (kbd-code function)
   "Helper function to fix `ergoemacs-emacs-default-bindings' based on currently running emacs."
   (interactive)
   (with-temp-buffer
@@ -803,13 +799,14 @@ This should only be run when no global keys have been set.
 "
   (let* ((key-code
           (cond
-           ((eq (type-of key) 'string)
+           ((stringp key)
             (if is-variable
                 (ergoemacs-kbd key)
-              (or (ignore-errors (read-kbd-macro key))
-                  (read-kbd-macro
-                   (encode-coding-string
-                    key locale-coding-system)))))
+              (condition-case nil
+                  (read-kbd-macro key)
+                (error (read-kbd-macro
+                        (encode-coding-string
+                         key locale-coding-system))))))
            (t key)))
          (key-kbd (key-description key-code)))
     (if (string-match "\\(mouse\\|wheel\\)" key-kbd)
@@ -819,7 +816,7 @@ This should only be run when no global keys have been set.
             (when (or fix complain)
               (let* ((key-function (lookup-key (current-global-map) key-code t))
                      (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
-                     (trans-function (if (ignore-errors (keymapp key-function))
+                     (trans-function (if (keymapp key-function)
                                          'prefix
                                        key-function)))
                 (message "Warning %s has been set globally. It is bound to %s not in %s." key-kbd
@@ -829,7 +826,7 @@ This should only be run when no global keys have been set.
             nil
           (let* ((key-function (lookup-key (current-global-map) key-code t))
                  (old-bindings (assoc key-kbd ergoemacs-emacs-default-bindings))
-                 (trans-function (if (ignore-errors (keymapp key-function))
+                 (trans-function (if (keymapp key-function)
                                      'prefix
                                    key-function))
                  (has-changed nil))
@@ -845,17 +842,17 @@ This should only be run when no global keys have been set.
                   (setq i (+ 1 i)))
                 ;; If it is a prefix vector, assume not globally
                 ;; changed
-                (unless (ignore-errors (keymapp (lookup-key (current-global-map) prefix-vector)))
+                (unless (keymapp (lookup-key (current-global-map) prefix-vector))
                   ;; Not a prefix, see if the key had actually changed
                   ;; by recursively calling `ergoemacs-global-changed-p'
                   (setq has-changed
                         (ergoemacs-global-changed-p
                          prefix-vector is-variable complain fix)))))
-             (old-bindings ; Trans function is defined, not an integer
+             (old-bindings ; Trans function is defined, not an integer.
               (unless (member trans-function (nth 1 old-bindings))
                 (setq has-changed t)))
              (t
-              (setq has-changed t)) ; Not found in old bindings, but bound globally
+              (setq has-changed t)) ; Not found in old bindings, but bound globally.
              )
             (if has-changed
                 (progn
@@ -864,24 +861,27 @@ This should only be run when no global keys have been set.
                              trans-function old-bindings)
                     (when fix
                       (unless (integerp trans-function)
-                        (ergoemacs-global-fix-defualt-bindings key-kbd trans-function))))
-                  (pushnew key-kbd ergoemacs-global-changed-cache :test 'equal))
-              (pushnew key-kbd ergoemacs-global-not-changed-cache :test 'equal))
+                        (ergoemacs-global-fix-default-bindings
+                         key-kbd trans-function))))
+                  (pushnew key-kbd ergoemacs-global-changed-cache
+                           :test 'equal))
+              (pushnew key-kbd ergoemacs-global-not-changed-cache
+                       :test 'equal))
             has-changed))))))
 
 (declare-function ergoemacs-get-fixed-layout "ergoemacs-translate.el")
 (declare-function ergoemacs-get-variable-layout "ergoemacs-translate.el")
 (defun ergoemacs-warn-globally-changed-keys (&optional fix)
-  "Warns about globally changed keys. If FIX is true, fix the ergoemacs-unbind file."
+  "Warn about globally changed keys. If FIX is true, fix the ergoemacs-unbind file."
   (interactive)
   (dolist (x ergoemacs-emacs-default-bindings)
     (ergoemacs-global-changed-p (nth 0 x) nil t fix))
   (message "Ergoemacs Keys warnings for this layout:")
   (dolist (x (symbol-value (ergoemacs-get-fixed-layout)))
-    (and (eq 'string (type-of (nth 0 x)))
+    (and (stringp (nth 0 x))
          (ergoemacs-global-changed-p (nth 0 x) nil t fix)))
   (dolist (x (symbol-value (ergoemacs-get-variable-layout)))
-    (and (eq 'string (type-of (nth 0 x)))
+    (and (stringp (nth 0 x))
          (ergoemacs-global-changed-p (nth 0 x) t t fix))))
 
 

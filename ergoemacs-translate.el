@@ -1,6 +1,6 @@
 ;;; ergoemacs-translate.el --- Keyboard translation functions -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2014  Free Software Foundation, Inc.
+;; Copyright © 2013-2015  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-translate.el
 ;; Description: 
@@ -139,7 +139,9 @@ This assumes `ergoemacs-use-unicode-char' is non-nil.  When
         (let* ((ob (or (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "【" "[")) "["))
                (cb (or (and ergoemacs-use-unicode-brackets (ergoemacs-unicode-char "】" "]")) "]"))
                (ret (concat ob (replace-regexp-in-string
-                                " +$" "" (replace-regexp-in-string "^ +" "" code)) cb))
+                                " +\\'" ""
+                                (replace-regexp-in-string "\\` +" "" code))
+                            cb))
                (case-fold-search nil)
                (pt 0))
           (when ergoemacs-use-ergoemacs-key-descriptions
@@ -351,46 +353,45 @@ This keymap is made in `ergoemacs-translation'"))))
 This keymap is made in `ergoemacs-translation'"))))
     
     ;; Create the universal argument functions.
-    (eval (macroexpand
-           `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")) ()
-              ,(concat "Ergoemacs universal argument, with "
-                       (symbol-name (plist-get arg-plist ':name))
-                       " translation setup.
+    ;; FIXME: Since Emacs-25 we could use a closure with a computed docstring,
+    ;; using (:documentation <exp>).
+    (eval `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")) ()
+             ,(concat "Ergoemacs universal argument, with "
+                      (symbol-name (plist-get arg-plist ':name))
+                      " translation setup.
 This is called through `ergoemacs-universal-argument'.
 This function is made in `ergoemacs-translation'")
-              (interactive)
-              (ergoemacs-universal-argument ',(plist-get arg-plist ':name)))))
-    (add-to-list 'ergoemacs-universal-fns
-                 (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")))
+             (interactive)
+             (ergoemacs-universal-argument ',(plist-get arg-plist ':name))))
+    (pushnew (intern (format "ergoemacs-%s-universal-argument"
+                             (plist-get arg-plist ':name)))
+             ergoemacs-universal-fns)
 
-    (eval (macroexpand
-           `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-digit-argument")) ()
-              ,(concat "Ergoemacs digit argument, with "
-                       (symbol-name (plist-get arg-plist ':name))
-                       " translation setup.
+    (eval `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-digit-argument")) ()
+             ,(concat "Ergoemacs digit argument, with "
+                      (symbol-name (plist-get arg-plist ':name))
+                      " translation setup.
 This is called through `ergoemacs-digit-argument'.
 This function is made in `ergoemacs-translation'")
-              (interactive)
-              (ergoemacs-digit-argument ',(plist-get arg-plist ':name)))))
+             (interactive)
+             (ergoemacs-digit-argument ',(plist-get arg-plist ':name))))
 
-    (eval (macroexpand
-           `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-negative-argument")) ()
+    (eval `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-negative-argument")) ()
               ,(concat "Ergoemacs digit argument, with "
                        (symbol-name (plist-get arg-plist ':name))
                        " translation setup.
 This is called through `ergoemacs-negative-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
-              (ergoemacs-negative-argument ',(plist-get arg-plist ':name)))))
+              (ergoemacs-negative-argument ',(plist-get arg-plist ':name))))
 
-    (eval (macroexpand
-           `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-modal")) ()
-              ,(concat "Toggle modal "
-                       (symbol-name (plist-get arg-plist ':name))
-                       " translation.
+    (eval `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-modal")) ()
+             ,(concat "Toggle modal "
+                      (symbol-name (plist-get arg-plist ':name))
+                      " translation.
 This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-toggle'.")
-              (interactive)
-              (ergoemacs-modal-toggle ',(plist-get arg-plist ':name)))))
+             (interactive)
+             (ergoemacs-modal-toggle ',(plist-get arg-plist ':name))))
     
     
     ;; Now put the translation text together as a list.
@@ -784,19 +785,16 @@ and `ergoemacs-pretty-key' descriptions.
     (while (< i 60)
       (unless (or (string= "" (nth i lay))
                   (string= "" (nth (+ i 60) lay)))
-        ;; Add to list is incompatible with lexical scoping.  However
-        ;; this use is OK since `ergoemacs-shifted-assoc' is defined
-        ;; in a defvar statement.
-        (add-to-list 'ergoemacs-shifted-assoc
-                     `(,(nth i lay) . ,(nth (+ i 60) lay)))
-        (add-to-list 'ergoemacs-shifted-assoc
-                     `(,(nth (+ i 60) lay) . ,(nth i lay)))
-        (pushnew (nth i lay)
-                 unshifted-list
-                 :test 'equal)
-        (pushnew (nth (+ i 60) lay)
-                 shifted-list
-                 :test 'equal))
+        (let* ((u (nth i lay))
+               (s (nth (+ i 60) lay))
+               (sa1 `(,u . ,s))
+               (sa2 `(,s . ,u)))
+          ;; Warning: We use local vars here to avoid optimization bug in
+          ;; pushnew in Emacs≤24.3 which would make it use `adjoin'.
+          (pushnew sa1 ergoemacs-shifted-assoc :test 'equal)
+          (pushnew sa2 ergoemacs-shifted-assoc :test 'equal)
+          (pushnew u unshifted-list :test 'equal)
+          (pushnew s shifted-list :test 'equal)))
       (setq i (+ i 1)))
     (setq ergoemacs-shifted-regexp 
           (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
@@ -822,13 +820,14 @@ and `ergoemacs-pretty-key' descriptions.
         (while (< i len)
           (unless (or (string= "" (nth i base))
                       (string= "" (nth i lay)))
-            (add-to-list 'ergoemacs-translation-assoc
-                         `(,(nth i base) . ,(nth i lay))))
+            (let ((ta `(,(nth i base) . ,(nth i lay))))
+              ;; Warning: `ta' here avoids need for `adjoin' in Emacs≤24.3.
+              (pushnew ta ergoemacs-translation-assoc :test 'equal)))
           (setq i (+ i 1)))
         (setq ergoemacs-translation-regexp
               (format "\\(-\\| \\|^\\)\\(%s\\)\\($\\| \\)"
                       (regexp-opt (mapcar (lambda(x) (nth 0 x))
-                                          ergoemacs-translation-assoc) nil)))))
+                                          ergoemacs-translation-assoc))))))
     ;; Pre-cache the translations...?  Takes too long to load :(
     (when nil
       (dolist (char (append lay '("<f1>"  "<S-f1>"

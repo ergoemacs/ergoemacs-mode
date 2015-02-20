@@ -1124,7 +1124,7 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
     ;; made by ergoemacs.
     ;; (mapc
     ;;  (lambda(minor-list)
-    ;;    (when (eq (type-of (nth 1 minor-list)) 'cons)
+    ;;    (when (consp (nth 1 minor-list))
     ;;      (mapc
     ;;       (lambda(translation-list)
     ;;         (when (eq (nth 1 x) (nth 1 translation-list))
@@ -1136,9 +1136,10 @@ Files are generated in the dir 〔ergoemacs-extras〕 at `user-emacs-directory'.
     ;;  (symbol-value (ergoemacs-get-minor-mode-layout)))
     (list (if var-layout
               (ergoemacs-kbd (nth 0 x) t (nth 3 x))
-            (nth 0 x)) (nth 2 x)  num cmds
-            (format "%6.2f%%" (/ (* 1e2 num) cmd-n))
-            (format "%6.2f%%" (/ (* 1e2 num) total-n)))))
+            (nth 0 x))
+          (nth 2 x)  num cmds
+          (format "%6.2f%%" (/ (* 1e2 num) cmd-n))
+          (format "%6.2f%%" (/ (* 1e2 num) total-n)))))
 
 (defvar keyfreq-table)
 (declare-function keyfreq-table-load "keyfreq.el")

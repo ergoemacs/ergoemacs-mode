@@ -1,6 +1,6 @@
 ;;; ergoemacs-macros.el --- Macros for ergoemacs-mode -*- lexical-binding: t -*-
 
-;; Copyright © 2013, 2014  Free Software Foundation, Inc.
+;; Copyright © 2013, 2014, 2015  Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -29,6 +29,7 @@
 ;;; Code:
 
 ;; These should only be called when byte compiled
+(eval-when-compile (require 'cl))       ;FIXME: Use cl-lib instead!
 
 ;;;###autoload
 (defmacro ergoemacs-with-ergoemacs (&rest body)
@@ -228,7 +229,9 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                 (lambda() ,(plist-get (nth 0 kb) ':description)
                   (ergoemacs-theme-component--create-component
                    ',(nth 0 kb)
-                   '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash))))
+                   ;; FIXME: This lambda probably shouldn't be quoted.
+                   '(lambda () ,@(nth 1 kb))))
+                ergoemacs-theme-comp-hash))))
 
 (declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
 (declare-function ergoemacs-theme-set-version "ergoemacs-theme-engine.el")
@@ -262,9 +265,9 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
          (ergoemacs-theme-set-version old-version)
          (ergoemacs-mode 1)))))
 
-(fset 'ergoemacs-theme-component--parse-keys-and-body
-      #'(lambda (keys-and-body &optional parse-function  skip-first)
-          "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
+(defun ergoemacs-theme-component--parse-keys-and-body
+    (keys-and-body &optional parse-function  skip-first)
+  "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
 
 KEYS-AND-BODY should have the form of a property list, with the
 exception that only keywords are permitted as keys and that the
@@ -278,38 +281,38 @@ This has been stolen directly from ert by Christian Ohler <ohler@gnu.org>
 
 Afterward it was modified for use with `ergoemacs-mode' to use
 additional parsing routines defined by PARSE-FUNCTION."
-          (let ((extracted-key-accu '())
-                plist
-                (remaining keys-and-body))
-            ;; Allow
-            ;; (component name)
-            (unless (or (keywordp (first remaining)) skip-first)
-              (if (condition-case nil
-                      (stringp (first remaining))
-                    (error nil))
-                  (push (cons ':name (pop remaining)) extracted-key-accu)
-                (push (cons ':name  (symbol-name (pop remaining))) extracted-key-accu))
-              (when (memq (type-of (first remaining)) '(symbol cons))
-                (setq remaining (cdr remaining)))
-              (when (stringp (first remaining))
-                (push (cons ':description (pop remaining)) extracted-key-accu)))
-            (while (and (consp remaining) (keywordp (first remaining)))
-              (let ((keyword (pop remaining)))
-                (unless (consp remaining)
-                  (error "Value expected after keyword %S in %S"
-                         keyword keys-and-body))
-                (when (assoc keyword extracted-key-accu)
-                  (warn "Keyword %S appears more than once in %S" keyword
-                        keys-and-body))
-                (push (cons keyword (pop remaining)) extracted-key-accu)))
-            (setq extracted-key-accu (nreverse extracted-key-accu))
-            (when parse-function
-              (setq remaining
-                    (funcall parse-function remaining)))
-            (setq plist (loop for (key . value) in extracted-key-accu
-                              collect key
-                              collect value))
-            (list plist remaining))))
+  (let ((extracted-key-accu '())
+        plist
+        (remaining keys-and-body))
+    ;; Allow
+    ;; (component name)
+    (unless (or (keywordp (first remaining)) skip-first)
+      (push (cons ':name (if (stringp (first remaining))
+                             (pop remaining)
+                           (symbol-name (pop remaining))))
+            extracted-key-accu)
+      (when (memq (type-of (first remaining)) '(symbol cons))
+        (setq remaining (cdr remaining)))
+      (when (stringp (first remaining))
+        (push (cons ':description (pop remaining))
+              extracted-key-accu)))
+    (while (and (consp remaining) (keywordp (first remaining)))
+      (let ((keyword (pop remaining)))
+        (unless (consp remaining)
+          (error "Value expected after keyword %S in %S"
+                 keyword keys-and-body))
+        (when (assoc keyword extracted-key-accu)
+          (warn "Keyword %S appears more than once in %S" keyword
+                keys-and-body))
+        (push (cons keyword (pop remaining)) extracted-key-accu)))
+    (setq extracted-key-accu (nreverse extracted-key-accu))
+    (when parse-function
+      (setq remaining
+            (funcall parse-function remaining)))
+    (setq plist (loop for (key . value) in extracted-key-accu
+                      collect key
+                      collect value))
+    (list plist remaining)))
 
 ;;;###autoload
 (defmacro ergoemacs-theme (&rest body-and-plist)
@@ -382,16 +385,17 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
       ((and (<= 24 emacs-major-version)
             (<= 4 emacs-minor-version))
        'eieio-object-name-string)
-      (t 'object-name-string)) ,obj))
+      (t 'object-name-string))
+    ,obj))
 
 (defmacro ergoemacs-object-set-name-string (obj name)
-  "Compatability fixes for `object-set-name-string' or `eieio-object-set-name-string'.
-"
+  "Compatability fixes for `object-set-name-string' or `eieio-object-set-name-string'."
   `(,(cond
       ((and (<= 24 emacs-major-version)
             (<= 4 emacs-minor-version))
        'eieio-object-set-name-string)
-      (t 'object-set-name-string)) ,obj ,name))
+      (t 'object-set-name-string))
+    ,obj ,name))
 
 ;;;###autoload
 (defmacro ergoemacs-save-buffer-state (&rest body)

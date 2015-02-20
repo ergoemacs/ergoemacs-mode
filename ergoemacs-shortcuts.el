@@ -979,6 +979,7 @@ PRETTY-KEY is the ergoemacs-mode pretty representation of the key.
                 (unless ret
                   (setq fn (or (command-remapping fn (point)) fn))
                   (setq ergoemacs-single-command-keys key)
+                  ;; FIXME: Redundancy with ergoemacs-read-key--echo-command!
                   (let (message-log-max)
                     (if (string= pretty-key-undefined pretty-key)
                         (message "%s%s%s" pretty-key
@@ -1257,7 +1258,7 @@ argument prompt.
                                     pretty-key pretty-key-trial)))
                           ;; Found, exit
                           (throw 'ergoemacs-key-trials t))
-                         ((eq (type-of local-fn) 'cons)
+                         ((consp local-fn)
                           (when real-read
                             (push (list type
                                         (listify-key-sequence ergoemacs-read-key))
@@ -1311,7 +1312,7 @@ argument prompt.
                                 pretty-key pretty-key-trial)
                           ;; Found, exit
                           (throw 'ergoemacs-key-trials t))
-                         ((eq (type-of local-fn) 'cons)
+                         ((consp local-fn)
                           (when real-read
                             (push (list type
                                         (listify-key-sequence ergoemacs-read-key))
@@ -1531,17 +1532,19 @@ Calls the function shortcut key defined in
 This also considers archaic emacs bindings by looking at
 `ergoemacs-where-is-global-hash' (ie bindings that are no longer
 in effect)."
-  (let ((ret (gethash (list function dont-ignore-menu) ergoemacs-shortcut-function-binding-hash)))
-    (if ret
-        ret
-      (if dont-ignore-menu
-          (where-is-internal function (current-global-map))
-        (dolist (x (where-is-internal function (current-global-map)))
-          (unless (or (eq 'menu-bar (elt x 0)))
-            (push x ret)))
-        (setq ret (reverse ret)))
-      (puthash (list function dont-ignore-menu) ret ergoemacs-shortcut-function-binding-hash)
-      ret)))
+  (let ((ret (gethash (list function dont-ignore-menu)
+                      ergoemacs-shortcut-function-binding-hash)))
+    (or ret
+        (progn
+          (if dont-ignore-menu
+              (where-is-internal function (current-global-map))
+            (dolist (x (where-is-internal function (current-global-map)))
+              (unless (or (eq 'menu-bar (elt x 0)))
+                (push x ret)))
+            (setq ret (nreverse ret)))
+          (puthash (list function dont-ignore-menu) ret
+                   ergoemacs-shortcut-function-binding-hash)
+          ret))))
 
 (defcustom ergoemacs-use-function-remapping t
   "Uses function remapping.
@@ -1639,7 +1642,7 @@ user-defined keys.
                   (when fn
                     (cond
                      ((eq ignore-desc t))
-                     ((eq (type-of ignore-desc) 'string)
+                     ((stringp ignore-desc)
                       (when (string-match ignore-desc key-desc)
                         (setq fn nil)))
                      (t

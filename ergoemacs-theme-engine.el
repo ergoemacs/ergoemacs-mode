@@ -51,12 +51,10 @@
 ;; 
 ;;; Code:
 
-(eval-when-compile 
+(eval-when-compile
   (require 'cl)
   (require 'ergoemacs-macros))
 
-;;; Not sure why `adjoin' may be called at run-time; sigh.
-(autoload 'adjoin "cl.el")
 
 (defgroup ergoemacs-themes nil
   "Default Ergoemacs Layout"
@@ -325,8 +323,8 @@ The elements of LIST are not copied, just the list structure itself."
                  modify-map
                  deferred-keys
                  full-map) obj
-      (ergoemacs-debug "%s %s" (or (and (string= stars "") "Keymap:")
-                                   stars) object-name)
+      (ergoemacs-debug "%s %s" (or (and (string= stars "") "Keymap:") stars)
+                       object-name)
       (ergoemacs-debug "Deferred Keys: %s" deferred-keys)
       (cond
        ((ergoemacs-keymap-empty-p read-map)
@@ -1750,9 +1748,9 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
             (unless (member (nth 0 c) rm-list)
               (puthash (nth 0 c) (nth 1 c) ergoemacs-command-shortcuts-hash)
               (when (< 1 (length (nth 0 c)))
-                (pushnew (substring (nth 0 c) 0 -1)
-                         ergoemacs-shortcut-prefix-keys
-                         :test 'equal))
+                (let ((k (substring (nth 0 c) 0 -1)))
+                  ;; Warning: `k' here avoids need for `adjoin' in Emacs≤24.3.
+                  (pushnew k ergoemacs-shortcut-prefix-keys :test 'equal)))
               (when (eq (nth 1 (nth 1 c)) 'global)
                 (dolist (global-key (ergoemacs-shortcut-function-binding (nth 0 (nth 1 c))))
                   (if (not (gethash global-key ergoemacs-original-keys-to-shortcut-keys))
@@ -2289,9 +2287,9 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
             (maphash
              (lambda(key _ignore)
                (when (< 1 (length key))
-                 (pushnew (substring key 0 -1)
-                          ergoemacs-shortcut-prefix-keys
-                          :test 'equal)))
+                 (let ((k (substring key 0 -1)))
+                   ;; Warning: `k' here avoids need for `adjoin' in Emacs≤24.3.
+                   (pushnew k ergoemacs-shortcut-prefix-keys :test 'equal))))
              ergoemacs-command-shortcuts-hash)
             ;; Setup emulation maps.
             (setq ergoemacs-read-emulation-mode-map-alist
@@ -2322,7 +2320,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
   (ergoemacs-get-versions (ergoemacs-theme-get-obj theme version)))
 
 (defun ergoemacs-theme-set-version (version)
-  "Sets the current themes default VERSION"
+  "Set the current themes default VERSION."
   (let (found)
     (setq ergoemacs-theme-version
           (mapcar
@@ -2336,7 +2334,7 @@ DONT-COLLAPSE doesn't collapse empty keymaps"
       (push (list (or ergoemacs-theme "standard") version) ergoemacs-theme-version))))
 
 (defun ergoemacs-theme-get-version ()
-  "Gets the current version for the current theme"
+  "Get the current version for the current theme."
   (let ((theme-ver (assoc (or ergoemacs-theme "standard") ergoemacs-theme-version)))
     (if (not theme-ver) nil
       (car (cdr theme-ver)))))
@@ -2389,13 +2387,14 @@ and it dosen't show up on the ergoemacs-mode menu.
 TYPE can also be 'off, where the option will be included in the
 theme, but assumed to be disabled by default.
 "
-  (if (eq (type-of option) 'cons)
+  (if (consp option)
       (dolist (new-option option)
         (let (ergoemacs-mode)
           (ergoemacs-require new-option theme type)))
     (let ((option-sym
            (or (and (stringp option) (intern option)) option)))
-      (dolist (theme (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
+      (dolist (theme (or (and theme (if (consp theme) theme
+                                      (list theme)))
                          (ergoemacs-get-themes)))
         (let ((theme-plist (gethash (if (stringp theme) theme
                                       (symbol-name theme))
@@ -2427,7 +2426,7 @@ theme, but assumed to be disabled by default.
   "Turns OPTION on.
 When OPTION is a list turn on all the options in the list
 If OFF is non-nil, turn off the options instead."
-  (if (eq (type-of option) 'cons)
+  (if (consp option)
       (dolist (new-option option)
         (let (ergoemacs-mode)
           (ergoemacs-theme-option-on new-option off)))
@@ -2618,8 +2617,7 @@ If OFF is non-nil, turn off the options instead."
        (lambda()
          (interactive)
          (set-default 'ergoemacs-smart-paste 'browse-kill-ring))
-       :enable (condition-case err (interactive-form 'browse-kill-ring)
-                 (error nil))
+       :enable (commandp 'browse-kill-ring)
        :button (:radio . (eq ergoemacs-smart-paste 'browse-kill-ring)))))
     (ergoemacs-sep-bash "--")
     (ergoemacs-bash
@@ -2807,7 +2805,8 @@ Ignores _DESC."
         (ergoemacs-define-key 'global-map key function))
     (warn "ergoemacs-fixed-key is depreciated, use global-set-key instead.")
     (global-set-key (if (vectorp key) key
-                      (read-kbd-macro key)) function)))
+                      (read-kbd-macro key))
+                    function)))
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

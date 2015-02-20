@@ -27,7 +27,7 @@
 ;; 
 
 ;;; Code:
-(eval-when-compile 
+(eval-when-compile
   (require 'cl)
   (require 'ergoemacs-macros))
 

@@ -28,7 +28,7 @@
 
 ;;; Code:
 
-(eval-when-compile 
+(eval-when-compile
   (require 'cl)
   (require 'ergoemacs-macros))
 
@@ -71,7 +71,7 @@ If `pre-command-hook' is used and `ergoemacs-mode' is remove from `ergoemacs-pre
 (defadvice define-key (around ergoemacs-define-key-advice (keymap key def) activate)
   "This does the right thing when modifying `ergoemacs-keymap'.
 Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
-  (let ((is-global-p (equal keymap (current-global-map)))
+  (let ((is-global-p (eq keymap (current-global-map)))
         (is-local-p (equal keymap (current-local-map)))
         ergoemacs-local-map)
     (when (and is-local-p (not ergoemacs-local-emulation-mode-map-alist))
@@ -85,8 +85,9 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
     ;;   (setq ergoemacs-local-emulation-mode-map-alist
     ;;         (list (cons 'ergoemacs-mode (make-sparse-keymap)))))
     (if (and ergoemacs-run-mode-hooks
-             (not (equal keymap ergoemacs-global-map))
-             (not (equal keymap ergoemacs-keymap)))
+             (not is-global-p)
+             (not (and (boundp 'ergoemacs-keymap)
+                       (eq keymap ergoemacs-keymap))))
         (let ((ergoemacs-run-mode-hooks nil)
               (new-key (read-kbd-macro
                         (format "<ergoemacs-user> %s"
@@ -117,7 +118,8 @@ Also adds keymap-flag for user-defined keys run with `run-mode-hooks'."
                        (string= "ESC" kd)))
         ;; Let `ergoemacs-mode' know these keys have changed.
         (pushnew kd ergoemacs-global-changed-cache :test 'equal)
-        (setq ergoemacs-global-not-changed-cache (delete kd ergoemacs-global-not-changed-cache))
+        (setq ergoemacs-global-not-changed-cache
+              (delete kd ergoemacs-global-not-changed-cache))
         ;; Remove the key from `ergoemacs-mode' bindings
         (ergoemacs-theme-component--ignore-globally-defined-key key t)))))
 
