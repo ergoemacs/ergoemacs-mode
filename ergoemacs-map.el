@@ -1610,6 +1610,37 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
             ret (vconcat ret (list translated-event))))
     ret))
 
+(defstruct ergoemacs-struct-component-map
+  "A basic ergoemacs component map structure."
+  (name "default-name")
+  (map (make-sparse-keymap))
+  (variables nil)
+  (just-first-keys nil :read-only t)
+  (variable-modifiers '(meta) :read-only t)
+  (variable-prefixes '([apps] [menu]) :read-only t)
+  (layout "us" :read-only t)
+  (calculated-layouts nil)
+  (relative-to 'global-map))
+
+(defun ergoemacs-get-map (component-map &optional lookup-keymap layout)
+  "Get COMPONENT-MAP looking up changed keys in LOOKUP-MAP based on LAYOUT."
+  (let ((cur-layout (or layout ergoemacs-keyboard-layout))
+        ret)
+    (cond
+     ((ergoemacs-struct-component-map-p component-map)
+      (cond
+       ((and (not lookup-keymap)
+             (string= cur-layout (ergoemacs-struct-component-map-layout component-map)))
+        (ergoemacs-struct-component-map-map component-map))
+       ((and (not lookup-keymap)
+             (setq ret (gethash (list nil cur-layout) (ergoemacs-struct-component-map-calculated-layouts component-map))))
+        ret)
+       ((setq ret (gethash (list (ergoemacs-map-p lookup-keymap) cur-layout) (ergoemacs-struct-component-map-calculated-layouts component-map)))
+        ret)
+       (t ;; layout hasn't been calculated.
+        )))
+     (t
+      (error "Component map isn't a proper argument")))))
 
 
 ;; (defstruct ergoemacs-map
