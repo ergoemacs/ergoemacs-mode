@@ -1448,11 +1448,12 @@ by `ergoemacs-maximum-number-of-files-to-open'.
   (interactive)
   (let* ((my-file-list
           (cond
-           ((listp file) file)
+           ((consp file) file)
            (file (list file))
            ((eq major-mode 'dired-mode) (dired-get-marked-files))
            ((eq major-mode 'locate-mode) (dired-get-marked-files))
-           ((not file) (list (buffer-file-name)))))
+           ((not file) (list (or (buffer-file-name)
+                                 (error "This buffer is not visiting a file"))))))
          (do-it (or (<= (length my-file-list) ergoemacs-maximum-number-of-file-to-open)
                     (>= 0 ergoemacs-maximum-number-of-file-to-open)
                     (y-or-n-p (format "Open more than %s files? " ergoemacs-maximum-number-of-file-to-open)))))
