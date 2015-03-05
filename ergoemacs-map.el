@@ -374,7 +374,16 @@ PREFIX is the current PREFIX for the key code. "
         (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
                          (key-description key)))
       (funcall function key item (or prefix t))))
-   
+   ((string-match-p "^-+$" (format (car item)))
+    ;; Separators...
+    (ergoemacs-mapkeymap--define-key key item prefix)
+    (when function
+      (when ergoemacs-mapkeymap--debug
+        (ergoemacs-debug "Call (%s %s %s %s)" function key item (or prefix t))
+        (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
+                         (key-description key)))
+      (funcall function key item (or prefix t)))
+    )
    (t
     (warn "Could not extract\n\tkey:\"%s\" \n\tItem: \"%s\"" key item))))
 
