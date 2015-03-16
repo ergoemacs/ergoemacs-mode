@@ -621,6 +621,11 @@
   (global-set-key (kbd "M-d") nil)
   (global-set-key (kbd "M-r") 'kill-word))
 
+(ergoemacs-component move-sexp ()
+  "Instead of moving around by words, use sexps."
+  (global-set-key [remap forward-word] 'forward-sexp)
+  (global-set-key [remap backward-word] 'backward-sexp))
+
 (ergoemacs-component move-paragraph ()
   "Move by Paragraph"
   (global-unset-key (kbd "M-{"))
@@ -1250,6 +1255,7 @@
                   no-backspace
                   ergoemacs-banish-shift
                   move-and-transpose-lines
+                  move-sexp
                   ido-prev-next-instead-of-left-right)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
@@ -1257,7 +1263,7 @@
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
-                  ("Disputed Keys" (ido-prev-next-instead-of-left-right))))
+                  ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))))
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
