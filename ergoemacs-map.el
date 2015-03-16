@@ -1628,7 +1628,7 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
   (variable-modifiers '(meta) :read-only t)
   (variable-prefixes '([apps] [menu]) :read-only t)
   (layout "us" :read-only t)
-  (calculated-layouts nil)
+  (calculated-layouts (make-hash-table :test 'equal))
   (relative-to 'global-map))
 
 (defun ergoemacs-get-map (component-map &optional lookup-keymap layout)
@@ -1644,9 +1644,22 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
        ((and (not lookup-keymap)
              (setq ret (gethash (list nil cur-layout) (ergoemacs-struct-component-map-calculated-layouts component-map))))
         ret)
-       ((setq ret (gethash (list (ergoemacs-map-p lookup-keymap) cur-layout) (ergoemacs-struct-component-map-calculated-layouts component-map)))
+       ((setq ret (gethash
+                   (list (and lookup-keymap
+                              (ergoemacs-map-p lookup-keymap)) cur-layout)
+                   (ergoemacs-struct-component-map-calculated-layouts component-map)))
         ret)
        (t ;; layout hasn't been calculated.
+        (setq ret (make-sparse-keymap))
+        (let ((map (ergoemacs-struct-component-map-map component-map))
+              (just-first-keys (ergoemacs-struct-component-map-just-first-keys component-map))
+              (variable-modifiers (ergoemacs-struct-component-map-variable-modifiers component-map))
+              (variable-prefixes (ergoemacs-struct-component-map-variable-modifiers component-map))
+              (layout-from (ergoemacs-struct-component-map-layout component-map)))
+          ;; (ergoemacs-kbd-translate kbd just-first-keys variable-modifiers variable-prefixes cur-layout layout-from)
+          (ergoemacs-mapkeymap nil
+           map)
+          )
         )))
      (t
       (error "Component map isn't a proper argument")))))
