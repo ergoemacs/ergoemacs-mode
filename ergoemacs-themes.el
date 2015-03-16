@@ -619,6 +619,11 @@
   (global-set-key (kbd "M-d") nil)
   (global-set-key (kbd "M-r") 'kill-word))
 
+(ergoemacs-component move-sexp ()
+  "Instead of moving around by words, use sexps."
+  (global-set-key [remap forward-word] 'forward-sexp)
+  (global-set-key [remap backward-word] 'backward-sexp))
+
 (ergoemacs-component move-paragraph ()
   "Move by Paragraph"
   (global-unset-key (kbd "M-{"))
@@ -1065,6 +1070,15 @@
     (global-set-key [remap info] 'helm-info-at-point)
     (global-set-key [remap ac-isearch] 'ac-complete-with-helm)))
 
+(ergoemacs-component helm-switch-sources ()
+  "Ctrl+o switches multiple sources."
+  (define-key helm-map (kbd "C-o") 'helm-next-source))
+
+(ergoemacs-component helm-files-up ()
+  "Use Ctrl+L to go up one level in helm."
+  (define-key helm-find-files-map (kbd "C-l") 'helm-find-files-up-one-level))
+
+
 (ergoemacs-component icy-reclaim ()
   "Reclaim some icicle key bindings."
   (setq icicle-key-complete-keys-for-minibuffer
@@ -1245,14 +1259,18 @@
                   no-backspace
                   ergoemacs-banish-shift
                   move-and-transpose-lines
+                  move-sexp
+                  helm-switch-sources
+                  helm-files-up
                   ido-prev-next-instead-of-left-right)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
+                  ("Helm Options" (helm-switch-sources helm-files-up))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps icy-reclaim))
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
-                  ("Disputed Keys" (ido-prev-next-instead-of-left-right))))
+                  ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))))
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
