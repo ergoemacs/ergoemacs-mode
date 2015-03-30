@@ -868,12 +868,13 @@ composing or parent/child relationships)"
            (ergoemacs-map--label sv key)
            (setq ret (ergoemacs-map-get sv :map-list)
                  omap (gethash key ergoemacs-original-map-hash))
-           (pushnew map ret)
-           ;; Hash should be a copy pointers of the original maps.
-           (puthash key (or omap (copy-keymap sv)) ergoemacs-original-map-hash)
-           (ergoemacs-map-put sv :map-list ret)))
-       (unless noninteractive
-        (put map :ergoemacs-labeled t))))))
+           (if (memql map ret)
+               (unless noninteractive
+                 (put map :ergoemacs-labeled t))
+             (pushnew map ret)
+             ;; Hash should be a copy pointers of the original maps.
+             (puthash key (or omap (copy-keymap sv)) ergoemacs-original-map-hash)
+             (ergoemacs-map-put sv :map-list ret))))))))
 
 
 (defun ergoemacs-original-keymap--intern (keymap-label)
@@ -1623,44 +1624,144 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
   "A basic ergoemacs component map structure."
   (name "default-name")
   (map (make-sparse-keymap))
+  (maps (make-hash-table))
+  (undefined '())
   (variables nil)
   (just-first-keys nil :read-only t)
   (variable-modifiers '(meta) :read-only t)
-  (variable-prefixes '([apps] [menu]) :read-only t)
+  (variable-prefixes '([apps] [menu] [27]) :read-only t)
   (layout "us" :read-only t)
   (calculated-layouts (make-hash-table :test 'equal))
   (relative-to 'global-map))
 
-(defun ergoemacs-get-map (component-map &optional lookup-keymap layout)
-  "Get COMPONENT-MAP looking up changed keys in LOOKUP-MAP based on LAYOUT."
+(setq ergoemacs-struct-movement
+  (make-ergoemacs-struct-component-map
+   :name "movement"
+   :undefined (list
+               (kbd "C-b")
+               (kbd "C-f")
+               (kbd "C-p")
+               (kbd "C-n")
+               (kbd "C-SPC")
+               (kbd "C-d"))
+   :maps (let ((map (make-sparse-keymap))
+               (hash (make-hash-table)))
+           ;; ;; Mode specific changes
+           (define-key map (kbd "M-i") 'browse-kill-ring-previous)
+           (define-key map (kbd "M-k") 'browse-kill-ring-forward)
+           (define-key map (kbd "M-i") 'browse-kill-ring-backward)
+           (define-key map (kbd "M-k") 'browse-kill-ring-forward)
+           (define-key map (kbd "M-f") 'browse-kill-ring-delete)
+           (puthash 'browse-kill-ring-mode-map map hash)
+           (setq map (make-sparse-keymap))
+           hash)
+   :map (let ((map (make-sparse-keymap)))
+          (define-key map (kbd "M-j") 'backward-char)
+          (define-key map (kbd "M-l") 'forward-char)
+          (define-key map (kbd "M-i") 'previous-line)
+          (define-key map (kbd "M-k") 'next-line)
+
+          ;; ;; These are here so that C-M-i will translate to C-<up> for modes
+          ;; ;; like inferior R mode.  That allows the command to be the last
+          ;; ;; command.
+          ;; ;; Not sure it belongs here or not...
+          (define-key map (kbd "C-M-j") 'left-word)
+          (define-key map (kbd "C-M-l") 'right-word)
+          (define-key map (kbd "C-M-i") 'backward-paragraph)
+          (define-key map (kbd "C-M-k") 'forward-paragraph)
+          (define-key map (kbd "M-SPC") 'set-mark-command)
+          ;; ;; Delete previous/next char.
+          (define-key map (kbd "M-d") 'delete-backward-char)
+
+          (define-key map (kbd "M-f") 'delete-char)
+          map)))
+
+(defvar ergoemacs-get-map--keymap nil)
+
+(defun ergoemacs-get-map-- (map layout cur-layout &optional lookup-keymap lookup-key)
+  "Get component MAP and return KEYMAP updating MAP cache.
+Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY. "
+  (let* (ret
+         (map-list (and lookup-keymap (ergoemacs-map-get lookup-keymap :map-list)))
+         (relative-map-name (and lookup-keymap (ergoemacs-struct-component-map-relative-to map)))
+         (relative-map-p (and lookup-keymap (not (member relative-map-name map-list))))
+         (relative-map (and lookup-keymap
+                            (if (eq relative-map-name 'global-map)
+                                ergoemacs-global-map
+                              (symbol-value relative-map-name))))
+         (cmap (ergoemacs-struct-component-map-map map))
+         (just-first-keys (ergoemacs-struct-component-map-just-first-keys map))
+         (variable-modifiers (ergoemacs-struct-component-map-variable-modifiers map))
+         (variable-prefixes (ergoemacs-struct-component-map-variable-prefixes map))
+         (layout-from (ergoemacs-struct-component-map-layout map))
+         (hash (ergoemacs-struct-component-map-calculated-layouts map))
+         (extra-hash (ergoemacs-struct-component-map-maps map))
+         extra-map)
+    (setq ergoemacs-get-map--keymap (make-sparse-keymap))
+    (ergoemacs-mapkeymap
+     (lambda (key item prefix)
+       (unless (eq prefix t)
+         (let ((new-key
+                (ergoemacs-kbd-translate
+                 key just-first-keys variable-modifiers variable-prefixes cur-layout layout-from))
+               (other-command-keys (and relative-map (where-is-internal item relative-map)))
+               new-command)
+           (define-key ergoemacs-get-map--keymap new-key
+             (or (and relative-map
+                      (catch 'found-new ;; Define lookup-key's
+                        ;; equivalent key
+                        (dolist (other-key other-command-keys)
+                          (setq new-command (lookup-key lookup-keymap other-key))
+                          (when new-command
+                            (throw 'found-new t))) nil) new-command)
+                 ;; If not found, revert to prior defined key.
+                 item)))))
+     cmap)
+    (if (and lookup-keymap
+             (catch 'found-extra
+               ;; If there are exceptions, install them before any lookups.
+               (dolist (map-name (ergoemacs-map-get lookup-keymap :map-list))
+                 (setq extra-map (gethash map-name extra-hash))
+                 (when extra-map
+                   (throw 'found-extra t))) nil))
+        (setq ret (ergoemacs-mapkeymap nil (make-composed-keymap (list extra-map ergoemacs-get-map--keymap))))
+      (setq ret (copy-keymap ergoemacs-get-map--keymap)))
+    (puthash (list lookup-key cur-layout) ret hash)
+    (setf (ergoemacs-struct-component-map-calculated-layouts map) hash)
+    (setq ergoemacs-get-map--keymap nil)
+    ret))
+
+(defun ergoemacs-get-map (map &optional lookup-keymap layout)
+  "Get MAP looking up changed keys in LOOKUP-MAP based on LAYOUT.
+
+Map can be a `ergoemacs-struct-component-map'"
   (let ((cur-layout (or layout ergoemacs-keyboard-layout))
+        lookup-key
         ret)
     (cond
-     ((ergoemacs-struct-component-map-p component-map)
+     ((ergoemacs-struct-component-map-p map)
       (cond
        ((and (not lookup-keymap)
-             (string= cur-layout (ergoemacs-struct-component-map-layout component-map)))
-        (ergoemacs-struct-component-map-map component-map))
+             (string= cur-layout (ergoemacs-struct-component-map-layout map)))
+        (ergoemacs-struct-component-map-map map))
        ((and (not lookup-keymap)
-             (setq ret (gethash (list nil cur-layout) (ergoemacs-struct-component-map-calculated-layouts component-map))))
+             (setq ret (gethash
+                        (list nil cur-layout)
+                        (ergoemacs-struct-component-map-calculated-layouts map))))
         ret)
        ((setq ret (gethash
                    (list (and lookup-keymap
-                              (ergoemacs-map-p lookup-keymap)) cur-layout)
-                   (ergoemacs-struct-component-map-calculated-layouts component-map)))
+                              (setq lookup-key (ergoemacs-map-p lookup-keymap))) cur-layout)
+                   (ergoemacs-struct-component-map-calculated-layouts map)))
         ret)
-       (t ;; layout hasn't been calculated.
-        (setq ret (make-sparse-keymap))
-        (let ((map (ergoemacs-struct-component-map-map component-map))
-              (just-first-keys (ergoemacs-struct-component-map-just-first-keys component-map))
-              (variable-modifiers (ergoemacs-struct-component-map-variable-modifiers component-map))
-              (variable-prefixes (ergoemacs-struct-component-map-variable-modifiers component-map))
-              (layout-from (ergoemacs-struct-component-map-layout component-map)))
-          ;; (ergoemacs-kbd-translate kbd just-first-keys variable-modifiers variable-prefixes cur-layout layout-from)
-          (ergoemacs-mapkeymap nil
-           map)
-          )
-        )))
+       ((not lookup-keymap)
+        ;; Overall layout hasn't been calculated.
+        (ergoemacs-get-map-- map layout cur-layout))
+       ((ergoemacs-keymapp lookup-keymap)
+        ;; Layout for lookup keymap hasn't been calculated
+        (ergoemacs-get-map-- map layout cur-layout lookup-keymap lookup-key))
+       (t
+        (error "Cant calculate/lookup keymap."))))
      (t
       (error "Component map isn't a proper argument")))))
 
