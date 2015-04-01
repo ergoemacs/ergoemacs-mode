@@ -1787,6 +1787,7 @@ Map can also be a list of `ergoemacs-struct-component-map' values.
 "
   (let ((cur-layout (or layout ergoemacs-keyboard-layout))
         lookup-key
+        (lookup-keymap (and lookup-keymap (ergoemacs-map--original lookup-keymap)))
         ret)
     (cond
      ((ergoemacs-struct-component-map-p map)
@@ -1827,9 +1828,15 @@ Map can also be a list of `ergoemacs-struct-component-map' values.
                      undefined-map)))
                  (or (and lookup-keymap (ergoemacs-map--original lookup-keymap))
                      (ergoemacs-map--original global-map))))
-      ;; Rot the keymap if necessary
-      (unless ergoemacs-make-composed-keymap-p
-        (setq ret (ergoemacs-mapkeymap nil ret)))
+      ;; Decompose (rot) the keymap (so you can label the map)
+      (setq ret (ergoemacs-mapkeymap nil ret))
+      (ergoemacs-map--label
+       ret
+       (append (list (list (ergoemacs-map-p lookup-keymap) cur-layout))
+               (mapcar
+                (lambda(cur-map)
+                  (intern (ergoemacs-struct-component-map-name cur-map)))
+                map)))
       ret)
      (t
       (error "Component map isn't a proper argument")))))
