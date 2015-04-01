@@ -208,7 +208,12 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
                 ret)) composed-list)))))
 
 (defun ergoemacs-map-p (keymap &optional force)
-  "Returns the maps linked to the current map, if it is an `ergoemacs-mode' map."
+  "Returns the maps linked to the current map, if it is an `ergoemacs-mode' map.
+
+:map-key is the key of the current map.
+:composed is a list of the `ergoemacs-map-p' of each of the composed maps.
+:parent is the `ergoemacs-map-p' of the current map
+"
   (let* ((keymap (ergoemacs-map-keymap-value keymap))
          (map-key (ergoemacs-map-get keymap :map-key))
          (composed (ergoemacs-map-composed keymap force))
@@ -849,7 +854,8 @@ composing or parent/child relationships)"
   "Get the list of maps bound to KEYMAP.
 KEYMAP can be a keymap or keymap integer key."
   (let (ret
-        (map-p (ergoemacs-map-p keymap)))
+        (map-p (ergoemacs-map-p keymap))
+        map-key)
     (cond
      ((and map-p (setq ret (ergoemacs-map-get keymap :map-list-hash)))
       (setq map-p ret)
@@ -858,7 +864,7 @@ KEYMAP can be a keymap or keymap integer key."
         (when (eq keymap (ergoemacs-sv map))
           (push map ret)))
       ret)
-     (map-p
+     ((and map-p (setq map-key (ergoemacs-map--key keymap)) (integerp map-key))
       (dolist (map ergoemacs-map--label-atoms-maps)
         (when (eq keymap (ergoemacs-sv map))
           (push map ret)))
@@ -872,9 +878,12 @@ KEYMAP can be a keymap or keymap integer key."
           (push map ret)))
       (ergoemacs-map-put map-p :map-list-hash ret)
       ret)
-     ((and (consp keymap)
-           (plist-get keymap :map-key))
-      (ergoemacs-map--map-list (plist-get keymap :map-key))))))
+     ((and (or map-key (consp keymap))
+           (setq ret (or map-key (plist-get keymap :map-key)))
+           (integerp ret))
+      (ergoemacs-map--map-list ret))
+     ((and ret (consp ret) (ignore-errors (setq ret (car (car ret)))))
+      (ergoemacs-map--map-list ret)))))
 
 (defun ergoemacs-map--label-atoms-- (map sv)
   (when sv
@@ -1016,14 +1025,40 @@ The KEYMAP will have the structure
 
 (defvar ergoemacs-command-shortcuts-hash)
 (defun ergoemacs-map--original (keymap)
-  "Gets the original KEYMAP with `ergoemacs-mode' identifiers installed."
-  (let* ((map-key (ergoemacs-map--key keymap))
-         (ret (gethash map-key ergoemacs-original-map-hash)))
-    (unless ret
-      (ergoemacs-map--label keymap map-key)
-      (puthash map-key (copy-keymap (ergoemacs-map-keymap-value keymap)) ergoemacs-original-map-hash)
-      (setq ret (gethash map-key ergoemacs-original-map-hash)))
-    ret))
+  "Gets the original KEYMAP with `ergoemacs-mode' identifiers installed.
+KEYMAP can be an `ergoemacs-map-p' of the keymap as well."
+  (let (map-key ret)
+    (cond
+     ((and (ergoemacs-keymapp keymap) (setq map-key (ergoemacs-map--key keymap))
+           (integerp map-key))
+      (setq ret (gethash map-key ergoemacs-original-map-hash))
+      (if (and (not ret) ;; Don't save empty keymaps as original keymaps...
+               (or (equal keymap (make-sparse-keymap))
+                   (equal keymap (make-keymap)))) keymap
+        (unless ret
+          (ergoemacs-map--label keymap map-key)
+          (puthash map-key (copy-keymap (ergoemacs-map-keymap-value keymap)) ergoemacs-original-map-hash)
+          (setq ret (gethash map-key ergoemacs-original-map-hash)))
+        ret))
+     ((and map-key (ignore-errors (setq map-key (car (car map-key)))))
+      (ergoemacs-map--original map-key))
+     ((and (consp keymap) (ignore-errors (setq map-key (plist-get keymap :map-key))) (integerp map-key))
+      (setq ret (gethash map-key ergoemacs-original-map-hash))
+      (setq map-key (plist-get keymap :parent))
+      (when map-key
+        (set-keymap-parent ret (ergoemacs-map--original map-key)))
+      ret)
+     ((and map-key (consp map-key) (ignore-errors (setq map-key (car (car map-key)))))
+      (ergoemacs-map--original map-key))
+     ((and (consp keymap) (ignore-errors (setq map-key (plist-get keymap :composed))))
+      (setq ret (plist-get keymap :parent))
+      (setq ret (make-composed-keymap
+                 (mapcar
+                  (lambda(map)
+                    (ergoemacs-map--original map))
+                  map-key)
+                 (and ret (ergoemacs-map--original ret))))
+      ret))))
 
 (declare-function ergoemacs-theme--install-shortcut-item "ergoemacs-theme-engine")
 (defun ergoemacs-map--install-ergoemacs (map &optional complete)
@@ -1813,21 +1848,25 @@ Map can also be a list of `ergoemacs-struct-component-map' values.
         (ergoemacs-get-map-- map layout cur-layout lookup-keymap lookup-key))
        (t
         (error "Cant calculate/lookup keymap."))))
-     ((consp map)
-      (setq ret (make-composed-keymap
-                 (append
-                  (mapcar
-                   (lambda(cur-map)
-                     (ergoemacs-get-map cur-map lookup-keymap layout))
-                   map)
-                  (list
-                   (let ((undefined-map (make-sparse-keymap)))
-                     (dolist (cur-map map)
-                       (dolist (undefined-key (ergoemacs-struct-component-map-undefined cur-map))
-                         (define-key undefined-map undefined-key 'ergoemacs-undefined)))
-                     undefined-map)))
-                 (or (and lookup-keymap (ergoemacs-map--original lookup-keymap))
-                     (ergoemacs-map--original global-map))))
+     ((and (consp map)
+           (catch 'all-struct
+             (setq ret (make-composed-keymap
+                        (append
+                         (mapcar
+                          (lambda(cur-map)
+                            (if (ergoemacs-struct-component-map-p cur-map)
+                                (ergoemacs-get-map cur-map lookup-keymap layout)
+                              (throw 'all-struct nil)))
+                          map)
+                         (list
+                          (let ((undefined-map (make-sparse-keymap)))
+                            (dolist (cur-map map)
+                              (dolist (undefined-key (ergoemacs-struct-component-map-undefined cur-map))
+                                (define-key undefined-map undefined-key 'ergoemacs-undefined)))
+                            undefined-map)))
+                        (or (and lookup-keymap (ergoemacs-map--original lookup-keymap))
+                            (ergoemacs-map--original global-map))))
+             t))
       ;; Decompose (rot) the keymap (so you can label the map)
       (setq ret (ergoemacs-mapkeymap nil ret))
       (ergoemacs-map--label
