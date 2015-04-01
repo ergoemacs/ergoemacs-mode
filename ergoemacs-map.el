@@ -601,6 +601,9 @@ Will return a collapsed keymap without parent"
      (and (file-writable-p file) file)
      file2)))
 
+(defvar ergoemacs-map--label-atoms-maps nil
+  "Known bound keymaps")
+
 (defun ergoemacs-default-global--gen ()
   "Generates hash for default emacs maps."
   ;; (setq ergoemacs-map-plist-hash (make-hash-table :test 'equal))
@@ -608,8 +611,7 @@ Will return a collapsed keymap without parent"
   (with-temp-file (ergoemacs-default-global--file) 
     (let ((print-level nil)
           (print-length nil)
-          keys
-          tmp)
+          keys)
       (goto-char (point-min))
       (insert "(defvar ergoemacs-map-plist-hash)(defvar ergoemacs-global-map)(declare-function ergoemacs-map--label \"ergoemacs-map\")")
       (ergoemacs-mapkeymap
@@ -845,11 +847,6 @@ composing or parent/child relationships)"
 ;;         (ergoemacs-map--label keymap)
 ;;         (ergoemacs-map-boundp keymap)))))
 
-
-
-(defvar ergoemacs-map--label-atoms-maps nil
-  "Known bound keymaps")
-
 (defun ergoemacs-map--map-list (keymap)
   "Get the list of maps bound to KEYMAP.
 KEYMAP can be a keymap or keymap integer key."
@@ -885,16 +882,6 @@ KEYMAP can be a keymap or keymap integer key."
      ((and ret (consp ret) (ignore-errors (setq ret (car (car ret)))))
       (ergoemacs-map--map-list ret)))))
 
-(defun ergoemacs-map--label-atoms-- (map sv)
-  (when sv
-    (let (omap key ret)
-      (setq key (ergoemacs-map--key sv))
-      (ergoemacs-map--label sv key)
-      (setq omap (gethash key ergoemacs-original-map-hash))
-      ;; Hash should be a copy pointers of the original maps.
-      (unless omap
-        (puthash key (copy-keymap sv) ergoemacs-original-map-hash)))))
-
 (defun ergoemacs-map--label-atoms (&rest _ignore)
   "Label all the bound keymaps."
   (mapatoms
@@ -910,7 +897,14 @@ KEYMAP can be a keymap or keymap integer key."
          (unless (ignore-errors (string-match-p "-\\(key\\)?map$" (symbol-name map)))
            (put map :ergoemacs-labeled t)))
         (t ;;Label
-         (ergoemacs-map--label-atoms-- map sv)
+         (when sv
+           (let (omap key)
+             (setq key (ergoemacs-map--key sv))
+             (ergoemacs-map--label sv key)
+             (setq omap (gethash key ergoemacs-original-map-hash))
+             ;; Hash should be a copy pointers of the original maps.
+             (unless omap
+               (puthash key (copy-keymap sv) ergoemacs-original-map-hash))))
          (pushnew map ergoemacs-map--label-atoms-maps)
          (put map :ergoemacs-labeled t)))))))
 
@@ -1722,6 +1716,7 @@ If not specified, OBJECT is `ergoemacs-struct-define-key--current'."
           (define-key cur-map key def))))))
 
 
+(defvar ergoemacs-struct-movement nil)
 (setq ergoemacs-struct-movement
   (make-ergoemacs-struct-component-map
    :name "movement"))
@@ -1761,13 +1756,13 @@ If not specified, OBJECT is `ergoemacs-struct-define-key--current'."
 
 (defvar ergoemacs-get-map--keymap nil)
 
-(defun ergoemacs-get-map-- (map layout cur-layout &optional lookup-keymap lookup-key)
+(defun ergoemacs-get-map-- (map cur-layout &optional lookup-keymap lookup-key)
   "Get component MAP and return KEYMAP updating MAP cache.
 Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY. "
   (let* (ret
-         (map-list (and lookup-keymap (ergoemacs-map-get lookup-keymap :map-list)))
+         ;; (map-list (and lookup-keymap (ergoemacs-map-get lookup-keymap :map-list)))
          (relative-map-name (and lookup-keymap (ergoemacs-struct-component-map-relative-to map)))
-         (relative-map-p (and lookup-keymap (not (member relative-map-name map-list))))
+         ;; (relative-map-p (and lookup-keymap (not (member relative-map-name map-list))))
          (relative-map (and lookup-keymap
                             (if (eq relative-map-name 'global-map)
                                 ergoemacs-global-map
@@ -1842,10 +1837,10 @@ Map can also be a list of `ergoemacs-struct-component-map' values.
         ret)
        ((not lookup-keymap)
         ;; Overall layout hasn't been calculated.
-        (ergoemacs-get-map-- map layout cur-layout))
+        (ergoemacs-get-map-- map cur-layout))
        ((ergoemacs-keymapp lookup-keymap)
         ;; Layout for lookup keymap hasn't been calculated
-        (ergoemacs-get-map-- map layout cur-layout lookup-keymap lookup-key))
+        (ergoemacs-get-map-- map cur-layout lookup-keymap lookup-key))
        (t
         (error "Cant calculate/lookup keymap."))))
      ((and (consp map)
