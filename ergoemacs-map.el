@@ -652,12 +652,7 @@ Will return a collapsed keymap without parent"
       (dolist (map ergoemacs-map--label-atoms-maps)
         (when (ergoemacs-map-p map)
           (insert (format "(when (boundp '%s) (ergoemacs-map--label %s %s))"
-                          map map (ergoemacs-map-get (ergoemacs-sv map) :map-key)))))
-      (mapatoms
-       (lambda(map)
-         (when (get map :ergoemacs-labeled)
-           (insert (format "(when (boundp '%s) (put '%s :ergoemacs-labeled t))"
-                           map map))))))))
+                          map map (ergoemacs-map-get (ergoemacs-sv map) :map-key))))))))
 
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
 
@@ -850,22 +845,33 @@ composing or parent/child relationships)"
 (defun ergoemacs-map--map-list (keymap)
   "Get the list of maps bound to KEYMAP.
 KEYMAP can be a keymap or keymap integer key."
-  (cond
-   ((ergoemacs-keymapp keymap)
-    (let (ret)
+  (let (ret
+        (map-p (ergoemacs-map-p keymap)))
+    (cond
+     ((and map-p (setq ret (ergoemacs-map-get keymap :map-list-hash)))
+      (setq map-p ret)
+      (setq ret nil)
+      (dolist (map map-p)
+        (when (eq keymap (ergoemacs-sv map))
+          (push map ret)))
+      ret)
+     (map-p
       (dolist (map ergoemacs-map--label-atoms-maps)
         (when (eq keymap (ergoemacs-sv map))
           (push map ret)))
-      ret))
-   ((integerp keymap)
-    (let (ret)
+      (ergoemacs-map-put keymap :map-list-hash ret)
+      ret)
+     ((integerp keymap)
       (dolist (map ergoemacs-map--label-atoms-maps)
         (when (equal keymap (ergoemacs-map--key map))
+          (unless map-p
+            (setq map-p map))
           (push map ret)))
-      ret))
-   ((and (consp keymap)
-         (plist-get keymap :map-key))
-    (ergoemacs-map--map-list (plist-get keymap :map-key)))))
+      (ergoemacs-map-put map-p :map-list-hash ret)
+      ret)
+     ((and (consp keymap)
+           (plist-get keymap :map-key))
+      (ergoemacs-map--map-list (plist-get keymap :map-key))))))
 
 (defun ergoemacs-map--label-atoms-- (map sv)
   (when sv
