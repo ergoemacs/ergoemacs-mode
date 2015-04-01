@@ -1,6 +1,6 @@
 ;;; ergoemacs-map.el --- Ergoemacs map interface -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2014  Free Software Foundation, Inc.
+;; Copyright © 2013-2015  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-map.el
 ;; Description:
@@ -694,7 +694,10 @@ When RETURN-VECTOR is non-nil, return list of the keys in a vector form.
                 (push tmp ret2)))))
         ret2))))
 
+(defvar ergoemacs-make-composed-keymap-p t)
+
 (when (not (fboundp 'make-composed-keymap))
+  (setq ergoemacs-make-composed-keymap-p nil)
   (defun make-composed-keymap (maps &optional parent)
     "Construct a new keymap composed of MAPS and inheriting from PARENT.
 
@@ -1809,6 +1812,25 @@ Map can also be a list of `ergoemacs-struct-component-map' values.
         (ergoemacs-get-map-- map layout cur-layout lookup-keymap lookup-key))
        (t
         (error "Cant calculate/lookup keymap."))))
+     ((consp map)
+      (setq ret (make-composed-keymap
+                 (append
+                  (mapcar
+                   (lambda(cur-map)
+                     (ergoemacs-get-map cur-map lookup-keymap layout))
+                   map)
+                  (list
+                   (let ((undefined-map (make-sparse-keymap)))
+                     (dolist (cur-map map)
+                       (dolist (undefined-key (ergoemacs-struct-component-map-undefined cur-map))
+                         (define-key undefined-map undefined-key 'ergoemacs-undefined)))
+                     undefined-map)))
+                 (or (and lookup-keymap (ergoemacs-map--original lookup-keymap))
+                     (ergoemacs-map--original global-map))))
+      ;; Rot the keymap if necessary
+      (unless ergoemacs-make-composed-keymap-p
+        (setq ret (ergoemacs-mapkeymap nil ret)))
+      ret)
      (t
       (error "Component map isn't a proper argument")))))
 
