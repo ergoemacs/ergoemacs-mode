@@ -1,4 +1,4 @@
-;;; ergoemacs-map.el --- Ergoemacs map interface -*- lexical-binding: t -*-
+ ;;; ergoemacs-map.el --- Ergoemacs map interface -*- lexical-binding: t -*-
 
 ;; Copyright © 2013-2015  Free Software Foundation, Inc.
 
@@ -89,7 +89,10 @@ the key sequence return nil.
 
 Optionally you can change how this function behaves.
 
-The MODIFIER to something like 'meta tells which modifier to remove.
+Instead of translating the shifted key to the unshifted key, you
+can remove another modifier.  For example if you wanted to
+convert C-M-a to C-a, you could use 'meta as the MODIFIER
+argument to remove the M- modifier.
 
 The PREFIX argument can add a key before the key where the
 modifier occurred, such as in `ergoemacs-meta-to-escape'.
@@ -891,31 +894,49 @@ KEYMAP can be a keymap or keymap integer key."
      ((and ret (consp ret) (ignore-errors (setq ret (car (car ret)))))
       (ergoemacs-map--map-list ret)))))
 
+(defun ergoemacs-map--label-map (map)
+  "Label MAP"
+  (let* (sv)
+    (cond 
+     ((get map :ergoemacs-labeled)
+      t) ;; Already labeled
+     ((not (setq sv (ergoemacs-sv map t)))
+      nil) ;; Nil
+     ((not (ergoemacs-keymapp sv)) ;; Not a keymap
+      (put map :ergoemacs-labeled t)
+      t)
+     ((or (equal sv (make-sparse-keymap)) ;; Empty
+          (equal sv (make-keymap)))
+      nil)
+     (t ;;Label
+      (when sv
+        (let (omap key)
+          (setq key (ergoemacs-map--key sv))
+          (ergoemacs-map--label sv key)
+          (setq omap (gethash key ergoemacs-original-map-hash))
+          ;; Hash should be a copy pointers of the original maps.
+          (unless omap
+            (puthash key (copy-keymap sv) ergoemacs-original-map-hash))))
+      (pushnew map ergoemacs-map--label-atoms-maps)
+      (put map :ergoemacs-labeled t)
+      t))))
+
 (defun ergoemacs-map--label-atoms (&rest _ignore)
   "Label all the bound keymaps."
-  (mapatoms
-   (lambda(map)
-     (let* (sv)
-       (cond 
-        ((get map :ergoemacs-labeled)) ;; Already labeled
-        ((not (setq sv (ergoemacs-sv map t)))) ;; Nil
-        ((not (ergoemacs-keymapp sv)) ;; Not a keymap
-         (put map :ergoemacs-labeled t))
-        ((or (equal sv (make-sparse-keymap)) ;; Empty
-             (equal sv (make-keymap)))
-         (unless (ignore-errors (string-match-p "-\\(key\\)?map$" (symbol-name map)))
-           (put map :ergoemacs-labeled t)))
-        (t ;;Label
-         (when sv
-           (let (omap key)
-             (setq key (ergoemacs-map--key sv))
-             (ergoemacs-map--label sv key)
-             (setq omap (gethash key ergoemacs-original-map-hash))
-             ;; Hash should be a copy pointers of the original maps.
-             (unless omap
-               (puthash key (copy-keymap sv) ergoemacs-original-map-hash))))
-         (pushnew map ergoemacs-map--label-atoms-maps)
-         (put map :ergoemacs-labeled t)))))))
+  (mapatoms #'ergoemacs-map--label-map))
+
+(defvar ergoemacs-map--unlabeled nil
+  "A list of unlabeled keymaps.")
+
+(defun ergoemacs-map--label-unlabeled (&rest _ignore)
+  "Label known but unlabeled keymaps."
+  (let (new)
+    (dolist (map ergoemacs-map--unlabeled)
+      (unless (ergoemacs-map--label-map map)
+        (push map new)))
+    (setq ergoemacs-map--unlabeled new)))
+
+
 
 (defun ergoemacs-original-keymap--intern (keymap-label)
   (let ((map-key (plist-get keymap-label :map-key))
@@ -1719,6 +1740,7 @@ If not specified, OBJECT is `ergoemacs-struct-define-key--current'."
              (key (or (and (vectorp key) key)
                       (and (stringp key) (vconcat key)))))
         (when new-map-p
+          (pushnew keymap ergoemacs-map--unlabeled)
           (setq cur-map (make-sparse-keymap))
           (puthash keymap cur-map (ergoemacs-struct-component-map-maps obj)))
         (if (and global-map-p (not def))
@@ -1825,7 +1847,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
            (unless (eq prefix t)
              (when (or (not unbind-keys) ;; Don't add key that is a
                        ;; member of unbind-keys
-                       (not (member new-key unbind-keys)))
+                       (not (member key unbind-keys)))
                (define-key ergoemacs-get-map--keymap-extra key item))))
          extra-map)
         (setq extra-map ergoemacs-get-map--keymap-extra))
@@ -1982,9 +2004,9 @@ loops do not occur.
 
 
 (defun ergoemacs-map--label-after-startup ()
-  "Labels all maps after startup. Also label maps after everything has loaded."
-  (ergoemacs-map--label-atoms)
-  (add-hook 'after-load-functions 'ergoemacs-map--label-atoms))
+  "Labels known unlabeled maps after startup. Also label maps after everything has loaded."
+  (ergoemacs-map--label-unlabeled)
+  (add-hook 'after-load-functions 'ergoemacs-map--label-unlabeled))
 (add-hook 'after-init-hook 'ergoemacs-map--label-after-startup)
 
 
