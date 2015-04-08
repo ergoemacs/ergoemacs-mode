@@ -854,6 +854,7 @@
 (ergoemacs-component apps ()
   "General Apps Key Sequence"
   :first-is-variable-reg "<\\(apps\\|menu\\)> h"
+  :just-first-keys (list [apps ?h] [menu ?h])
   (global-set-key (kbd "<apps> '") 'ergoemacs-org-edit-src)
   (global-set-key (kbd "<apps> 2") 'delete-window)
   (global-set-key (kbd "<apps> 3") 'delete-other-windows)
@@ -899,6 +900,7 @@
 
 (ergoemacs-component apps-toggle ()
   "Toggle States and applications"
+  :just-first-keys (list [apps ?i] [menu ?i])
   :first-is-variable-reg "<\\(apps\\|menu\\)> i"
   (global-set-key (kbd "<apps> i c") 'column-number-mode)
   (global-set-key (kbd "<apps> i d") 'toggle-debug-on-error)
@@ -911,6 +913,7 @@
 
 (ergoemacs-component apps-apps ()
   "Applications"
+  :just-first-keys (list [apps ?n] [menu ?n])
   :first-is-variable-reg "<\\(apps\\|menu\\)> n"
   (global-set-key (kbd "<apps> n a") 'org-agenda)
   (global-set-key (kbd "<apps> n A") 'org-capture)

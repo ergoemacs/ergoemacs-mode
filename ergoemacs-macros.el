@@ -139,16 +139,16 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
   "In parsing, this function converts
-- `define-key' is converted to `ergoemacs-theme-define-key' and keymaps are quoted
-- `global-set-key' is converted to `ergoemacs-theme-define-key' with keymap equal to `global-map'
-- `global-unset-key' is converted to `ergoemacs-theme-define-key' with keymap equal to `global-map' and function definition is `nil'
-- `global-reset-key' is converted `ergoemacs-theme-define-key'
+- `define-key' is converted to `ergoemacs-struct-define-key' and keymaps are quoted
+- `global-set-key' is converted to `ergoemacs-struct-define-key' with keymap equal to `global-map'
+- `global-unset-key' is converted to `ergoemacs-struct-define-key' with keymap equal to `global-map' and function definition is `nil'
+- `global-reset-key' is converted `ergoemacs-struct-define-key'
 - `setq' and `set' is converted to `ergoemacs-theme--set'
 - `add-hook' and `remove-hook' is converted to `ergoemacs-theme--set'
 - Mode initialization like (delete-selection-mode 1)
   or (delete-selection) is converted to
   `ergoemacs-theme--set'
-- Allows :version statement expansion
+- Allows :version statement expansion to `ergoemacs-struct-new-version'
 - Adds with-hook syntax or (when -hook) or (when -mode)
 "
   (let* ((last-was-version nil)
@@ -159,15 +159,15 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
               (last-was-version
                (setq last-was-version nil)
                (if (stringp elt)
-                   `(ergoemacs-theme-component--version ,elt)
-                 `(ergoemacs-theme-component--version ,(symbol-name elt))))
+                   `(ergoemacs-struct-new-version ,elt)
+                 `(ergoemacs-struct-new-version ,(symbol-name elt))))
               ((ignore-errors (eq elt ':version))
                (setq last-was-version t)
                nil)
               ((ignore-errors (eq (nth 0 elt) 'global-reset-key))
-               `(ergoemacs-theme-define-key 'global-map ,(nth 1 elt) nil))
+               `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) nil))
               ((ignore-errors (eq (nth 0 elt) 'global-unset-key))
-               `(ergoemacs-theme-define-key 'global-map ,(nth 1 elt) nil))
+               `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) nil))
               ((ignore-errors (eq (nth 0 elt) 'set))
                ;; Currently doesn't support (setq a b c d ), but it should.
                `(ergoemacs-theme--set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
@@ -189,18 +189,16 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                `(ergoemacs-theme--set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
                (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
-                   `(ergoemacs-theme-define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
-                 `(ergoemacs-theme-define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
+                   `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
+                 `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
               ((ignore-errors (eq (nth 0 elt) 'define-key))
                (if (equal (nth 1 elt) '(current-global-map))
                    (if (ergoemacs-keymapp (ergoemacs-sv (nth 3 elt))) 
-                       `(ergoemacs-theme-define-key 'global-map ,(nth 2 elt) (quote ,(nth 3 elt)))
-                     `(ergoemacs-theme-define-key 'global-map ,(nth 2 elt) ,(nth 3 elt)))
+                       `(ergoemacs-struct-define-key 'global-map ,(nth 2 elt) (quote ,(nth 3 elt)))
+                     `(ergoemacs-struct-define-key 'global-map ,(nth 2 elt) ,(nth 3 elt)))
                  (if (ergoemacs-keymapp (ergoemacs-sv (nth 3 elt))) 
-                     (macroexpand-all `(progn (ergoemacs-theme-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
-                                              (pusnew (quote ,(nth 1 elt)) ergoemacs-map--unlabeled)))
-                   (macroexpand-all `(progn (ergoemacs-theme-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt))
-                           (pushnew (quote ,(nth 1 elt)) ergoemacs-map--unlabeled))))))
+                     `(ergoemacs-struct-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
+                   `(ergoemacs-struct-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)) )))
               ((or (ignore-errors (eq (nth 0 elt) 'with-hook))
                    (and (ignore-errors (eq (nth 0 elt) 'when))
                         (ignore-errors (string-match "\\(-hook\\|-mode\\|^mark-active\\)$" (symbol-name (nth 1 elt))))))
@@ -232,11 +230,19 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
        (unless (boundp 'ergoemacs-theme-comp-hash)
          (defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
            "Hash of ergoemacs theme components"))
+       (unless (boundp 'ergoemacs-component-hash)
+         (defvar ergoemacs-component-hash (make-hash-table :test 'equal)
+           "Hash of ergoemacs theme components"))
        (puthash ,(plist-get (nth 0 kb) ':name)
                 (lambda() ,(plist-get (nth 0 kb) ':description)
                   (ergoemacs-theme-component--create-component
                    ',(nth 0 kb)
                    '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash)
+       (puthash ,(plist-get (nth 0 kb) ':name)
+                (lambda() ,(plist-get (nth 0 kb) ':description)
+                  (ergoemacs-struct--create-component
+                   ',(nth 0 kb)
+                   '(lambda () ,@(nth 1 kb)))) ergoemacs-component-hash)
        ,(when (plist-get (nth 0 kb) ':require)
           `(ergoemacs-require ',(intern (plist-get (nth 0 kb) ':name)))))))
 

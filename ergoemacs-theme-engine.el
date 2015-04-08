@@ -2181,51 +2181,6 @@ The actual keymap changes are included in `ergoemacs-emulation-mode-map-alist'."
           (oset comp versions ver-list)
           (ergoemacs-theme-component-maps--save-hash comp))))))
 
-(defun ergoemacs-theme-component-get-closest-version (version version-list)
-  "Return the closest version to VERSION in VERSION-LIST.
-Formatted for use with `ergoemacs-theme-component-hash' it will return ::version or an empty string"
-  (if (or (not version) (string= "nil" version)) ""
-    (if version-list
-        (let ((use-version (version-to-list version))
-              biggest-version
-              biggest-version-list
-              smallest-version
-              smallest-version-list
-              best-version
-              best-version-list
-              test-version-list
-              ret)
-          (dolist (v version-list)
-            (setq test-version-list (version-to-list v))
-            (if (not biggest-version)
-                (setq biggest-version v
-                      biggest-version-list test-version-list)
-              (when (version-list-< biggest-version-list test-version-list)
-                (setq biggest-version v
-                      biggest-version-list test-version-list)))
-            (if (not smallest-version)
-                (setq smallest-version v
-                      smallest-version-list test-version-list)
-              (when (version-list-< test-version-list smallest-version-list)
-                (setq smallest-version v
-                      smallest-version-list test-version-list)))
-            (cond
-             ((and (not best-version)
-                   (version-list-<= test-version-list use-version))
-              (setq best-version v
-                    best-version-list test-version-list))
-             ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
-                   (version-list-<= test-version-list use-version))
-              (setq best-version v
-                    best-version-list test-version-list))))
-          (if (version-list-< biggest-version-list use-version)
-              (setq ret "")
-            (if best-version
-                (setq ret (concat "::" best-version))
-              (setq ret (concat "::" smallest-version))))
-          ret)
-      "")))
-
 (defun ergoemacs-theme-get-component-description (component)
   "Gets the description of a COMPONENT.
 Allows the component not to be calculated."
@@ -2234,7 +2189,7 @@ Allows the component not to be calculated."
          (comp (gethash comp-name ergoemacs-theme-comp-hash)))
     (cond
      ((functionp comp)
-      (documentation comp))
+      (documentation comp t))
      ((ergoemacs-theme-component-maps-p comp)
       (oref comp description))
      (t ""))))
@@ -2266,7 +2221,7 @@ COMPONENT can be defined as component::version"
         (when (not (string= "" version))
           (setq ver-list (oref comp versions))
           (setq version
-                (ergoemacs-theme-component-get-closest-version
+                (ergoemacs-closest-version
                  version ver-list))
           (setq comp (gethash (concat comp-name version)
                               ergoemacs-theme-comp-hash))))

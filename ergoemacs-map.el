@@ -1,4 +1,4 @@
- ;;; ergoemacs-map.el --- Ergoemacs map interface -*- lexical-binding: t -*-
+;;; ergoemacs-map.el --- Ergoemacs map interface -*- lexical-binding: t -*-
 
 ;; Copyright © 2013-2015  Free Software Foundation, Inc.
 
@@ -538,9 +538,9 @@ Will return a collapsed keymap without parent"
            function (ergoemacs-map-keymap-value keymap) submaps)
           (when (and ergoemacs-mapkeymap--prefixes submaps)
             (ergoemacs-map-put keymap :prefixes ergoemacs-mapkeymap--prefixes))
-          (setq sub ergoemacs-mapkeymap--submaps)
-          (setq ret ergoemacs-mapkeymap--current)
-          (setq ergoemacs-mapkeymap--current nil
+          (setq sub ergoemacs-mapkeymap--submaps
+                ret ergoemacs-mapkeymap--current
+                ergoemacs-mapkeymap--current nil
                 ergoemacs-mapkeymap--nil nil
                 ergoemacs-mapkeymap--prefixes nil
                 ergoemacs-mapkeymap--submaps nil
@@ -552,8 +552,8 @@ Will return a collapsed keymap without parent"
                 ;; Now map keymap
                 (ergoemacs-mapkeymap function (ergoemacs-map-keymap-value (cdr item)) t)
                 ;; Make sure submap is assigned
-                (setq tmp2 (ergoemacs-map-get (cdr item) :submap-p))
-                (setq tmp3 (cons (car item) (ergoemacs-map--key keymap)))
+                (setq tmp2 (ergoemacs-map-get (cdr item) :submap-p)
+                      tmp3 (cons (car item) (ergoemacs-map--key keymap)))
                 (unless (member tmp3 tmp2)
                   (push tmp3 tmp2))
                 (ergoemacs-map-put (ergoemacs-map-keymap-value (cdr item)) :submap-p tmp2)
@@ -564,8 +564,8 @@ Will return a collapsed keymap without parent"
                 ergoemacs-mapkeymap--prefixes nil
                 ergoemacs-mapkeymap--submaps nil
                 ergoemacs-mapkeymap--key nil)
-        (setq tmp1 (pop ergoemacs-mapkeymap--maps))
-        (setq ergoemacs-mapkeymap--current (plist-get tmp1 :current)
+        (setq tmp1 (pop ergoemacs-mapkeymap--maps)
+              ergoemacs-mapkeymap--current (plist-get tmp1 :current)
               ergoemacs-mapkeymap--nil (plist-get tmp1 :nil)
               ergoemacs-mapkeymap--prefixes (plist-get tmp1 :prefixes)
               ergoemacs-mapkeymap--submaps (plist-get tmp1 :submaps)
@@ -585,8 +585,8 @@ Will return a collapsed keymap without parent"
       (setq keymap (or (and ergoemacs-ignore-prev-global ergoemacs-global-before-ergoemacs)
                        ergoemacs-global-map)
             k1 (lookup-key keymap key t)
-            k2 (lookup-key global-map key t))
-      (setq ret (not (or (eq k1 k2) (and (keymapp k1) (keymapp k2)))))
+            k2 (lookup-key global-map key t)
+            ret (not (or (eq k1 k2) (and (keymapp k1) (keymapp k2)))))
       (when ret ;; Cache result
         (push key after-changed)
         (ergoemacs-map-put global-map :keys-after-changed after-changed))
@@ -613,6 +613,9 @@ Will return a collapsed keymap without parent"
   "Generates hash for default emacs maps."
   ;; (setq ergoemacs-map-plist-hash (make-hash-table :test 'equal))
   (ergoemacs-map--label-atoms)
+  ;; Pre-calculate map-lists 
+  (dolist (map ergoemacs-map--label-atoms-maps)
+    (ergoemacs-map-get (ergoemacs-sv map) :map-list))
   (with-temp-file (ergoemacs-default-global--file) 
     (let ((print-level nil)
           (print-length nil)
@@ -1711,8 +1714,12 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
 (defstruct ergoemacs-struct-component-map
   "A basic ergoemacs component map structure."
   (name "default-name")
+  (plist '())
   (map (make-sparse-keymap))
   (maps (make-hash-table))
+  (dynamic-keys '())
+  (version nil)
+  (versions '())
   (undefined '())
   (unbind '())
   (variables nil)
@@ -1725,71 +1732,156 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
 
 (defvar ergoemacs-component-hash (make-hash-table :test 'equal)
   "Hash of ergoemacs-components")
-
 (defvar ergoemacs-struct-define-key--current nil)
+
+(defun ergoemacs-struct--create-component (plist body)
+  "PLIST is the component properties
+BODY is the body of function."
+  (unwind-protect
+      (progn
+        (setq ergoemacs-struct-define-key--current
+              (make-ergoemacs-struct-component-map
+               :name (plist-get plist :name)
+               :plist plist
+               :just-first-keys (or (plist-get plist :just-first-keys) nil)
+               :variable-modifiers (or (plist-get plist :variable-modifiers) '(meta))
+               :variable-prefixes (or (plist-get plist :variable-prefixes) '([apps] [menu] [27]))
+               :layout (or (plist-get plist :layout) "us")))
+        (funcall body))
+    (puthash (concat (ergoemacs-struct-component-map-name ergoemacs-struct-define-key--current)
+                     (and (ergoemacs-struct-component-map-version ergoemacs-struct-define-key--current)
+                          (concat "::" (ergoemacs-struct-component-map-version ergoemacs-struct-define-key--current))))
+             ergoemacs-struct-define-key--current ergoemacs-component-hash)
+    (setq ergoemacs-struct-define-key--current nil)))
+
+(defun ergoemacs-struct-get-component-description (component)
+  "Gets the description of a COMPONENT.
+Allows the component not to be calculated."
+  (let* ((comp-name (or (and (symbolp component) (symbol-name component))
+                        component))
+         (comp (gethash comp-name ergoemacs-component-hash)))
+    (cond
+     ((functionp comp)
+      (replace-regexp-in-string "[\n ]*(fn)[ \n]*\\'" "" (documentation comp t)))
+     ((ergoemacs-struct-component-map-p comp)
+      (plist-get (ergoemacs-struct-component-map-plist comp) :description))
+     (t ""))))
+
+(defun ergoemacs-struct-new-version (version &optional object)
+  "Add VERSION to component OBJECT."
+  (cond
+   ((and (not ergoemacs-struct-define-key--current) (not object)) ;; Old
+    (ergoemacs-theme-component--version version))
+   (t
+    (let ((obj (or object ergoemacs-struct-define-key--current))
+          new-obj tmp)
+      (if (not (ergoemacs-struct-component-map-p obj))
+          (error "OBJECT is not an ergoemacs-structure.")
+        (puthash (concat (ergoemacs-struct-component-map-name obj)
+                         (and (ergoemacs-struct-component-map-version obj)
+                              (concat "::" (ergoemacs-struct-component-map-version obj))))
+                 ergoemacs-struct-define-key--current ergoemacs-component-hash)
+        ;; Get the base object without version changes
+        (setq new-obj (gethash (ergoemacs-struct-component-map-name obj) ergoemacs-component-hash))
+        ;; Update all versions to include the new version information.
+        (dolist (old-version (ergoemacs-struct-component-map-versions new-obj))
+          (setq tmp (gethash (concat (ergoemacs-struct-component-map-name new-obj) "::" old-version) ergoemacs-component-hash))
+          (when (ergoemacs-struct-component-map-p tmp)
+            (push version (ergoemacs-struct-component-map-versions tmp))))
+        (push version (ergoemacs-struct-component-map-versions new-obj))
+        ;; Use the last object as the base of the new object
+        (setq ergoemacs-struct-define-key--current (copy-ergoemacs-struct-component-map obj))
+        (fset (ergoemacs-struct-component-map-version ergoemacs-struct-define-key--current) version))))))
+
+(declare-function 'ergoemacs-theme-define-key "ergoemacs-theme-engine")
+(defvar ergoemacs-translations)
+(defvar ergoemacs-struct-define-key-- nil)
+(defun ergoemacs-struct-define-key--get-def (def)
+  "Gets the `ergoemacs-mode' function definition for DEF."
+  (cond
+   ((and (consp def)
+         (= 2 (length def))
+         (stringp (nth 0 def))
+         (or (not (nth 1 def))
+             (gethash (nth 1 def) ergoemacs-translations)))
+    `(lambda(&optional arg)
+      (interactive "P")
+      (ergoemacs-read-key ,(nth 0 def) ',(nth 1 def))))
+   (t def)))
+
 (defun ergoemacs-struct-define-key (keymap key def &optional object)
   "Defines KEY to be DEF in KEYMAP for OBJECT.
 If not specified, OBJECT is `ergoemacs-struct-define-key--current'."
-  (let ((obj (or object ergoemacs-struct-define-key--current)))
-    (if (not (ergoemacs-struct-component-map-p obj))
-        (error "OBJECT not a ergoemacs-structure.")
-      (let* ((global-map-p (eq keymap 'global-map))
-             (cur-map (or (and global-map-p (ergoemacs-struct-component-map-map obj))
-                          (gethash keymap (ergoemacs-struct-component-map-maps obj))))
-             (new-map-p (not cur-map))
-             (key (or (and (vectorp key) key)
-                      (and (stringp key) (vconcat key)))))
-        (when new-map-p
-          (pushnew keymap ergoemacs-map--unlabeled)
-          (setq cur-map (make-sparse-keymap))
-          (puthash keymap cur-map (ergoemacs-struct-component-map-maps obj)))
-        (if (and global-map-p (not def))
+  (cond
+   ((and (not ergoemacs-struct-define-key--current) (not object)) ;; Old
+    (ergoemacs-theme-define-key keymap key def))
+   (t
+    (let ((obj (or object ergoemacs-struct-define-key--current))
+          (def (ergoemacs-struct-define-key--get-def def)))
+      (if (not (ergoemacs-struct-component-map-p obj))
+          (error "OBJECT not a ergoemacs-structure.")
+        (let* ((global-map-p (eq keymap 'global-map))
+               (cur-map (or (and global-map-p (ergoemacs-struct-component-map-map obj))
+                            (gethash keymap (ergoemacs-struct-component-map-maps obj))))
+               (new-map-p (not cur-map))
+               fn-lst
+               (key (or (and (vectorp key) key)
+                        (and (stringp key) (vconcat key)))))
+          (when new-map-p
+            (pushnew keymap ergoemacs-map--unlabeled)
+            (setq cur-map (make-sparse-keymap))
+            (puthash keymap cur-map (ergoemacs-struct-component-map-maps obj)))
+          (cond
+           ((and global-map-p (not def) (lookup-key (ergoemacs-struct-component-map-map obj) key))
+            ;; Remove the key from the keymap, do not set it to
+            ;; nil; Its as if it was never defined
+            (setq ergoemacs-struct-define-key-- (make-sparse-keymap))
+            (ergoemacs-mapkeymap
+             (lambda (cur-key item prefix)
+               (unless (or (eq prefix t) (eq item 'ergoemacs-prefix))
+                 (unless (equal key cur-key)
+                   (define-key ergoemacs-struct-define-key-- cur-key item))))
+             cur-map)
+            (setf (ergoemacs-struct-component-map-map obj)
+                  (copy-keymap ergoemacs-struct-define-key--))
+            (setq ergoemacs-struct-define-key-- nil))
+           ((and global-map-p (not def)) ;; Add to undefined keys
             (unless (member key (ergoemacs-struct-component-map-undefined obj))
-              (push key (ergoemacs-struct-component-map-undefined obj)))
-          (define-key cur-map key def))))))
+              (push key (ergoemacs-struct-component-map-undefined obj))))
+           ((and (lookup-key cur-map key) (not def))
+            ;; Remove the key from the keymap.  Do not set it to nil.
+            ;; Its as if it was never defined.
+            (setq ergoemacs-struct-define-key-- (make-sparse-keymap))
+            (ergoemacs-mapkeymap
+             (lambda (cur-key item prefix)
+               (unless (or (eq prefix t) (eq item 'ergoemacs-prefix))
+                 (unless (equal key cur-key)
+                   (define-key ergoemacs-struct-define-key-- cur-key item))))
+             cur-map)
+            ;; Puthash is in place...?
+            (puthash keymap (copy-keymap cur-map) (ergoemacs-struct-component-map-maps obj))
+            (setq ergoemacs-struct-define-key-- nil))
+           ((and (consp def) (symbolp (nth 1 def))) ;; (fn1 fn2 fn3 fn4)
+            (unless (catch 'found-fn
+                      (dolist (cur-def def)
+                        (if (not (commandp cur-def t))
+                            (push cur-def fn-lst)
+                          (define-key cur-map key cur-def)
+                          (throw 'found-fn t)))
+                      nil)
+              ;; Not found
+              (define-key cur-map key `(lambda() (interactive) (error ,(format "This key is undefined without one of the following functions: %s") fn-lst))))
+            (when fn-lst ;; Test for later
+              (push (list keymap key fn-lst)
+                    (ergoemacs-struct-component-map-dynamic-keys obj))))
+           (t
+            (define-key cur-map key def)))))))))
 
-
-(defvar ergoemacs-struct-movement nil)
-(setq ergoemacs-struct-movement
-  (make-ergoemacs-struct-component-map
-   :name "movement"))
-
-(ergoemacs-struct-define-key 'global-map (kbd "C-b") nil ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "C-f") nil ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "C-p") nil ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "C-n") nil ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "C-SPC") nil ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "C-d") nil ergoemacs-struct-movement)
-
-(ergoemacs-struct-define-key 'browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-previous ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'browse-kill-ring-mode-map (kbd "M-k") 'browse-kill-ring-forward ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-backward ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'browse-kill-ring-mode-map (kbd "M-k") 'browse-kill-ring-forward ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'browse-kill-ring-mode-map (kbd "M-f") 'browse-kill-ring-delete ergoemacs-struct-movement)
-
-(ergoemacs-struct-define-key 'global-map (kbd "M-j") 'backward-char ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "M-l") 'forward-char ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "M-i") 'previous-line ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "M-k") 'next-line ergoemacs-struct-movement)
-
-;; ;; These are here so that C-M-i will translate to C-<up> for modes
-;; ;; like inferior R mode.  That allows the command to be the last
-;; ;; command.
-;; ;; Not sure it belongs here or not...
-(ergoemacs-struct-define-key 'global-map (kbd "C-M-j") 'left-word ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "C-M-l") 'right-word ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "C-M-i") 'backward-paragraph ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "C-M-k") 'forward-paragraph ergoemacs-struct-movement)
-(ergoemacs-struct-define-key 'global-map (kbd "M-SPC") 'set-mark-command ergoemacs-struct-movement)
-;; ;; Delete previous/next char.
-(ergoemacs-struct-define-key 'global-map (kbd "M-d") 'delete-backward-char ergoemacs-struct-movement)
-
-(ergoemacs-struct-define-key 'global-map (kbd "M-f") 'delete-char ergoemacs-struct-movement) 
-
+(defvar ergoemacs-struct-hash (make-hash-table)
+  "Hash table of `ergoemacs-mode' component structures.")
 
 (defvar ergoemacs-get-map--keymap nil)
 (defvar ergoemacs-get-map--keymap-extra nil)
-
 (defun ergoemacs-get-map-- (map cur-layout &optional lookup-keymap lookup-key unbind-keys)
   "Get component MAP and return KEYMAP updating MAP cache.
 Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY. "
@@ -1812,7 +1904,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
     (setq ergoemacs-get-map--keymap (make-sparse-keymap))
     (ergoemacs-mapkeymap
      (lambda (key item prefix)
-       (unless (eq prefix t)
+       (unless (or (eq prefix t) (eq item 'ergoemacs-prefix))
          (let ((new-key (ergoemacs-kbd-translate
                  key just-first-keys variable-modifiers variable-prefixes cur-layout layout-from))
                (other-command-keys (and relative-map (where-is-internal item relative-map)))
@@ -1844,7 +1936,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
         (setq ergoemacs-get-map--keymap-extra (make-sparse-keymap))
         (ergoemacs-mapkeymap
          (lambda (key item prefix)
-           (unless (eq prefix t)
+           (unless (or (eq prefix t) (eq item 'ergoemacs-prefix))
              (when (or (not unbind-keys) ;; Don't add key that is a
                        ;; member of unbind-keys
                        (not (member key unbind-keys)))
@@ -1853,7 +1945,6 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
         (setq extra-map ergoemacs-get-map--keymap-extra))
       (setq ret (ergoemacs-mapkeymap nil (make-composed-keymap (list extra-map ergoemacs-get-map--keymap)))))
     (puthash (list lookup-key cur-layout) ret hash)
-    (setf (ergoemacs-struct-component-map-calculated-layouts map) hash)
     (setq ergoemacs-get-map--keymap nil)
     ret))
 
@@ -1868,18 +1959,101 @@ STRUCT-MAP can be a list of `ergoemacs-struct-component-map' structures as well.
     (dolist (cur-map struct-map)
       (ergoemacs-struct-component-map-clear-cache cur-map)))))
 
+(defun ergoemacs-closest-version (version version-list)
+  "Return the closest version to VERSION in VERSION-LIST.
+Formatted for use with `ergoemacs-theme-component-hash' it will return ::version or an empty string"
+  (if (or (not version) (string= "nil" version)) ""
+    (if version-list
+        (let ((use-version (version-to-list version))
+              biggest-version
+              biggest-version-list
+              smallest-version
+              smallest-version-list
+              best-version
+              best-version-list
+              test-version-list
+              ret)
+          (dolist (v version-list)
+            (setq test-version-list (version-to-list v))
+            (if (not biggest-version)
+                (setq biggest-version v
+                      biggest-version-list test-version-list)
+              (when (version-list-< biggest-version-list test-version-list)
+                (setq biggest-version v
+                      biggest-version-list test-version-list)))
+            (if (not smallest-version)
+                (setq smallest-version v
+                      smallest-version-list test-version-list)
+              (when (version-list-< test-version-list smallest-version-list)
+                (setq smallest-version v
+                      smallest-version-list test-version-list)))
+            (cond
+             ((and (not best-version)
+                   (version-list-<= test-version-list use-version))
+              (setq best-version v
+                    best-version-list test-version-list))
+             ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
+                   (version-list-<= test-version-list use-version))
+              (setq best-version v
+                    best-version-list test-version-list))))
+          (if (version-list-< biggest-version-list use-version)
+              (setq ret "")
+            (if best-version
+                (setq ret (concat "::" best-version))
+              (setq ret (concat "::" smallest-version))))
+          ret)
+      "")))
+
+(defvar ergoemacs-theme-version)
+(defun ergoemacs-get-map--lookup-closest (comp)
+  "Looks up closest component version from `ergoemacs-component-hash'"
+  (if (not (ergoemacs-struct-component-map-p comp)) nil
+    (let (versions)
+      (cond
+       ((not (setq versions (ergoemacs-struct-component-map-versions comp)))
+        comp)
+       ((string= "" (setq versions (ergoemacs-closest-version ergoemacs-theme-version versions)))
+        comp)
+       (t
+        (ergoemacs-get-map--lookup-hash (concat (ergoemacs-struct-component-map-name comp) versions)))))))
+
+(defun ergoemacs-get-map--lookup-hash (map-or-map-list)
+  "Lookup `ergoemacs-component-hash' from MAP-OR-MAP-LIST if necessary.
+
+This takes into consideration any versions defined, and the
+closest `ergoemacs-theme-version' calculated from
+`ergoemacs-closest-version' by using `ergoemacs-get-map--lookup-closest'"
+  (if (consp map-or-map-list)
+      (mapcar #'ergoemacs-get-map--lookup-hash map-or-map-list)
+    (if (ergoemacs-struct-component-map-p map-or-map-list)
+        (ergoemacs-get-map--lookup-closest map-or-map-list)
+      (let ((map map-or-map-list)
+            ret)
+        (when (symbolp map) ;; If map is a symbol, change to string.
+          (setq map (symbol-name map)))
+        (when (stringp map) ;; If map is a string, get the component from `ergoemacs-component-hash'
+          (setq ret (gethash map ergoemacs-component-hash))
+          (when (and ret (functionp ret))
+            (funcall ret)
+            (setq ret (gethash map ergoemacs-component-hash))))
+        (ergoemacs-get-map--lookup-closest ret)))))
+
 (defun ergoemacs-get-map (map &optional lookup-keymap unbind-keys layout
                               recursive)
   "Get MAP looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
-Map can be a `ergoemacs-struct-component-map'
+Map can be a `ergoemacs-struct-component-map', or a string/symbol
+of a calculated or uncalcuated component in
+`ergoemacs-component-hash'
 
-Map can also be a list of `ergoemacs-struct-component-map' values.
+Map can also be a list of `ergoemacs-struct-component-map' values
+or string/symbols that are in `ergoemacs-component-hash'
 
 RECURSIVE is an internal argument to make sure that infinite
 loops do not occur.
 "
   (let ((cur-layout (or layout ergoemacs-keyboard-layout))
+        (map (ergoemacs-get-map--lookup-hash map))
         lookup-key
         (lookup-keymap (or (and lookup-keymap (not recursive) (ergoemacs-map--original lookup-keymap)) lookup-keymap))
         unbind-list
