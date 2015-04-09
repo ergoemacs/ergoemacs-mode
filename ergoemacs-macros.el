@@ -149,7 +149,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
   or (delete-selection) is converted to
   `ergoemacs-struct-set'
 - Allows :version statement expansion to `ergoemacs-struct-new-version'
-- Adds with-hook syntax or (when -hook) or (when -mode)
+- Adds with-hook syntax or (when -hook) or (when -mode) using `ergoemacs-struct-with-hook'
 "
   (let* ((last-was-version nil)
          (remaining
@@ -203,7 +203,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                    (and (ignore-errors (eq (nth 0 elt) 'when))
                         (ignore-errors (string-match "\\(-hook\\|-mode\\|^mark-active\\)$" (symbol-name (nth 1 elt))))))
                (let ((tmp (ergoemacs-theme-component--parse (cdr (cdr elt)) t)))
-                 `(ergoemacs-theme-component--with-hook
+                 `(ergoemacs-struct-with-hook
                    ',(nth 1 elt) ',(nth 0 tmp)
                    '(lambda () ,@(nth 1 tmp)))))
               ((ignore-errors (memq (nth 0 elt) '(mapcar mapc dolist when if)))

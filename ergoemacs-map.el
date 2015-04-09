@@ -1717,6 +1717,10 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
   (plist '())
   (map (make-sparse-keymap))
   (maps (make-hash-table))
+  (cond-maps (make-hash-table))
+  (hook-maps (make-hash-table))
+  (when-condition nil)
+  (hook nil)
   (dynamic-keys '())
   (version nil)
   (versions '())
@@ -1737,7 +1741,7 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
 (defun ergoemacs-struct--create-component (plist body)
    "PLIST is the component properties
 BODY is the body of function."
-  (unwind-protect
+   (unwind-protect
       (progn
         (setq ergoemacs-struct-define-key--current
               (make-ergoemacs-struct-component-map
@@ -1754,6 +1758,36 @@ BODY is the body of function."
              ergoemacs-struct-define-key--current ergoemacs-component-hash)
     (setq ergoemacs-struct-define-key--current nil)))
 
+(defun ergoemacs-struct-with-hook (when-condition plist body &optional object)
+  "How the (when...) conditions in an ergoemacs-mode theme are handled."
+  (cond
+   ((and (not ergoemacs-struct-define-key--current) (not object)) ;; Old
+    (ergoemacs-theme-component--with-hook when-condition plist body))
+   (t
+    (let ((obj (or object ergoemacs-struct-define-key--current))
+          (hook
+           (or (and (string-match-p "\\(-hook\\|-mode\\|\\`mark-active\\)\\'" (symbol-name when-condition)) when-condition)
+               (and (string-match-p "mode-.*" (symbol-name when-condition))
+                    (save-match-data
+                      (intern-soft
+                       (replace-regexp-in-string
+                        "-mode-.*" "mode-hook"
+                        (symbol-name when-condition)))))
+               (and (string-match-p "(key)?map" (symbol-name when-condition))
+                    (save-match-data
+                      (intern-soft
+                       (replace-regexp-in-string
+                        "(key)?map.*" "hook"
+                        (symbol-name when-condition)))))))
+          new-obj tmp)
+      (if (not (ergoemacs-struct-component-map-p obj))
+          (error "OBJECT is not an ergoemacs-structure.")
+        (setf (ergoemacs-struct-component-map-when-condition obj) when-condition)
+        (setf (ergoemacs-struct-component-map-hook obj) hook)
+        (funcall body)
+        (setf (ergoemacs-struct-component-map-when-condition obj) nil)
+        (setf (ergoemacs-struct-component-map-hook obj) nil))))))
+   
 (defun ergoemacs-struct-get-component-description (component)
   "Gets the description of a COMPONENT.
 Allows the component not to be calculated."
@@ -1868,19 +1902,32 @@ If not specified, OBJECT is `ergoemacs-struct-define-key--current'."
           (def (ergoemacs-struct-define-key--get-def def)))
       (if (not (ergoemacs-struct-component-map-p obj))
           (error "OBJECT not a ergoemacs-structure.")
-        (let* ((global-map-p (eq keymap 'global-map))
-               (cur-map (or (and global-map-p (ergoemacs-struct-component-map-map obj))
-                            (gethash keymap (ergoemacs-struct-component-map-maps obj))))
-               (new-map-p (not cur-map))
+        (let* ((global-map-p (or (eq keymap 'global-map) (eq keymap 'ergoemacs-mode-map)))
+               (when-condition (ergoemacs-struct-component-map-when-condition obj))
+               (hook (ergoemacs-struct-component-map-hook obj))
+               (cur-map (or (and global-map-p (not when-condition) (ergoemacs-struct-component-map-map obj))
+                            (and (not when-condition) (gethash keymap (ergoemacs-struct-component-map-maps obj)))
+                            (and global-map-p when-condition (gethash when-condition (ergoemacs-struct-component-map-cond-maps obj)))
+                            (and when-condition hook (ignore-errors (gethash keymap (gethash hook (ergoemacs-struct-component-map-hook-maps obj)))))))
                fn-lst
                (key (or (and (vectorp key) key)
                         (and (stringp key) (vconcat key)))))
-          (when new-map-p
+          (cond
+           ((and (not cur-map) (not when-condition))
             (pushnew keymap ergoemacs-map--unlabeled)
             (setq cur-map (make-sparse-keymap))
             (puthash keymap cur-map (ergoemacs-struct-component-map-maps obj)))
+           ((and (not cur-map) when-condition global-map-p)
+            (setq cur-map (make-sparse-keymap))
+            (puthash when-condition cur-map (ergoemacs-struct-component-map-cond-maps obj)))
+           ((and (not cur-map) when-condition hook)
+            (unless (gethash hook (ergoemacs-struct-component-map-hook-maps obj))
+              (puthash hook (make-hash-table) (ergoemacs-struct-component-map-hook-maps obj)))
+            (pushnew keymap ergoemacs-map--unlabeled)
+            (setq cur-map (make-sparse-keymap))
+            (puthash keymap cur-map (gethash hook (ergoemacs-struct-component-map-hook-maps obj)))))
           (cond
-           ((and global-map-p (not def) (lookup-key (ergoemacs-struct-component-map-map obj) key))
+           ((and global-map-p (not when-condition) (not def) (lookup-key (ergoemacs-struct-component-map-map obj) key))
             ;; Remove the key from the keymap, do not set it to
             ;; nil; Its as if it was never defined
             (setq ergoemacs-struct-define-key-- (make-sparse-keymap))
@@ -1893,10 +1940,10 @@ If not specified, OBJECT is `ergoemacs-struct-define-key--current'."
             (setf (ergoemacs-struct-component-map-map obj)
                   (copy-keymap ergoemacs-struct-define-key--))
             (setq ergoemacs-struct-define-key-- nil))
-           ((and global-map-p (not def)) ;; Add to undefined keys
+           ((and global-map-p (not when-condition) (not def)) ;; Add to undefined keys
             (unless (member key (ergoemacs-struct-component-map-undefined obj))
               (push key (ergoemacs-struct-component-map-undefined obj))))
-           ((and (lookup-key cur-map key) (not def))
+           ((and (not when-condition) (lookup-key cur-map key) (not def))
             ;; Remove the key from the keymap.  Do not set it to nil.
             ;; Its as if it was never defined.
             (setq ergoemacs-struct-define-key-- (make-sparse-keymap))
@@ -1907,7 +1954,7 @@ If not specified, OBJECT is `ergoemacs-struct-define-key--current'."
                    (define-key ergoemacs-struct-define-key-- cur-key item))))
              cur-map)
             ;; Puthash is in place...?
-            (puthash keymap (copy-keymap cur-map) (ergoemacs-struct-component-map-maps obj))
+            (puthash keymap (copy-keymap ergoemacs-struct-define-key--) (ergoemacs-struct-component-map-maps obj))
             (setq ergoemacs-struct-define-key-- nil))
            ((and (consp def) (symbolp (nth 1 def))) ;; (fn1 fn2 fn3 fn4)
             (unless (catch 'found-fn
@@ -1930,7 +1977,7 @@ If not specified, OBJECT is `ergoemacs-struct-define-key--current'."
 
 (defvar ergoemacs-get-map--keymap nil)
 (defvar ergoemacs-get-map--keymap-extra nil)
-(defun ergoemacs-get-map-- (map cur-layout &optional lookup-keymap lookup-key unbind-keys)
+(defun ergoemacs-get-map-- (map cur-layout &optional lookup-keymap lookup-key unbind-keys translate-map)
   "Get component MAP and return KEYMAP updating MAP cache.
 Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY. "
   (let* (ret
@@ -1941,7 +1988,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
                             (if (eq relative-map-name 'global-map)
                                 ergoemacs-global-map
                               (ergoemacs-map--original (symbol-value relative-map-name)))))
-         (cmap (ergoemacs-struct-component-map-map map))
+         (cmap (or translate-map (ergoemacs-struct-component-map-map map)))
          (just-first-keys (ergoemacs-struct-component-map-just-first-keys map))
          (variable-modifiers (ergoemacs-struct-component-map-variable-modifiers map))
          (variable-prefixes (ergoemacs-struct-component-map-variable-prefixes map))
@@ -2098,18 +2145,53 @@ closest `ergoemacs-theme-version' calculated from
     map)
    (t map)))
 
+(defun ergoemacs-get-map--minor-mode-map-alist-hash (&optional obj layout)
+  "Get `minor-mode-map-alist' additions in hash-table form."
+  (let ((obj (ergoemacs-get-map--lookup-hash (or obj (ergoemacs-theme-components))))
+        (cur-layout (or layout ergoemacs-keyboard-layout))
+        (hash (make-hash-table)))
+    (cond
+     ((consp obj)
+      (dolist (cur-obj obj)
+        (maphash
+         (lambda(key value)
+           (puthash key (append (gethash key hash) value) hash))
+         (ergoemacs-get-map--minor-mode-map-alist-hash cur-obj)))
+      hash)
+     (t
+      (maphash
+       (lambda(key value)
+         ;; Put the translated keymap in a list in the hash.
+         (puthash key (list (ergoemacs-get-map-- obj cur-layout nil (list 'cond-map key) nil value)) hash))
+       (ergoemacs-struct-component-map-cond-maps obj))
+      hash))))
+
+(defun ergoemacs-get-map--minor-mode-map-alist (&optional obj)
+  (let (ret map)
+    (maphash
+     (lambda(key value)
+       (setq map (ergoemacs-mapkeymap nil (make-composed-keymap value)))
+       (ergoemacs-map--label map (list 'cond-map key ergoemacs-keyboard-layout))
+       (push (cons key map) ret))
+     (ergoemacs-get-map--minor-mode-map-alist-hash))
+    ret))
+
 (defvar ergoemacs-get-map-hash (make-hash-table :test 'equal))
 (defun ergoemacs-get-map (&optional lookup-keymap setcdr-p unbind-keys layout map recursive)
-  "Get MAP looking up changed keys in LOOKUP-MAP based on LAYOUT.
+  "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
-Map can be a `ergoemacs-struct-component-map', or a string/symbol
+MAP can be a `ergoemacs-struct-component-map', or a string/symbol
 of a calculated or uncalcuated component in
 `ergoemacs-component-hash'
 
-Map can also be a list of `ergoemacs-struct-component-map' values
+MAP can also be a list of `ergoemacs-struct-component-map' values
 or string/symbols that are in `ergoemacs-component-hash'
 
+If missing, MAP represents the current theme compenents, from `ergoemacs-theme-components'
+
 SETCDR-P tells ergoemacs-mode to swap out the keymaps.
+
+LAYOUT represents the layout that is used.
 
 RECURSIVE is an internal argument to make sure that infinite
 loops do not occur.
@@ -2117,13 +2199,38 @@ loops do not occur.
   (let ((cur-layout (or layout ergoemacs-keyboard-layout))
         (map (ergoemacs-get-map--lookup-hash (or map (ergoemacs-theme-components))))
         lookup-key
-        (lookup-keymap (or (and lookup-keymap (not recursive) (ergoemacs-map--original lookup-keymap)) lookup-keymap))
+        (lookup-keymap (or (and lookup-keymap (not recursive) (ergoemacs-keymapp lookup-keymap)
+                                (ergoemacs-map--original lookup-keymap)) lookup-keymap))
         unbind-list
         parent
         composed-list
         ret)
     (ergoemacs-get-map--setcdr
      (cond
+      ((and overriding-terminal-local-map
+            (eq overriding-terminal-local-map lookup-keymap))
+       ;;
+       )
+      ((and overriding-local-map
+            (eq overriding-local-map lookup-keymap))
+       ;;
+       )
+      ((eq emulation-mode-map-alists lookup-keymap)
+       ;; Modify the emulation-mode-map-alists.
+       )
+      ((eq minor-mode-overriding-map-alist lookup-keymap)
+       ;; Modify the `minor-mode-overriding-map-alist'
+       )
+      ((eq minor-mode-map-alist lookup-keymap)
+       ;; Modify the `minor-mode-map-alist' and append conditional
+       ;; maps.
+       )
+      ((eq (current-local-map) lookup-keymap)
+       ;; Modify local map.
+       )
+      ((eq (current-global-map) lookup-keymap)
+       ;; Modify global map
+       )
       ((ergoemacs-struct-component-map-p map)
        (cond
         ((and (not lookup-keymap)
