@@ -260,14 +260,7 @@ Valid values are:
 (defvar ergoemacs-read-input-keys nil)
 
 (unless (featurep 'ergoemacs-theme-engine)
-  (cond
-   ((and (file-exists-p (expand-file-name "ergoemacs-theme-engine.elc" ergoemacs-dir))
-         (file-newer-than-file-p
-          (expand-file-name "ergoemacs-theme-engine.elc" ergoemacs-dir)
-          (expand-file-name "ergoemacs-theme-engine.el" ergoemacs-dir)))
-    (load "ergoemacs-theme-engine"))
-   (t
-    (byte-compile-file (expand-file-name "ergoemacs-theme-engine.el" ergoemacs-dir) t))))
+  (load "ergoemacs-theme-engine"))
 
 (defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
   "Hash of ergoemacs theme components")

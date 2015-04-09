@@ -143,11 +143,11 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 - `global-set-key' is converted to `ergoemacs-struct-define-key' with keymap equal to `global-map'
 - `global-unset-key' is converted to `ergoemacs-struct-define-key' with keymap equal to `global-map' and function definition is `nil'
 - `global-reset-key' is converted `ergoemacs-struct-define-key'
-- `setq' and `set' is converted to `ergoemacs-theme--set'
-- `add-hook' and `remove-hook' is converted to `ergoemacs-theme--set'
+- `setq' and `set' is converted to `ergoemacs-struct-set'
+- `add-hook' and `remove-hook' is converted to `ergoemacs-struct-set'
 - Mode initialization like (delete-selection-mode 1)
   or (delete-selection) is converted to
-  `ergoemacs-theme--set'
+  `ergoemacs-struct-set'
 - Allows :version statement expansion to `ergoemacs-struct-new-version'
 - Adds with-hook syntax or (when -hook) or (when -mode)
 "
@@ -170,23 +170,23 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) nil))
               ((ignore-errors (eq (nth 0 elt) 'set))
                ;; Currently doesn't support (setq a b c d ), but it should.
-               `(ergoemacs-theme--set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
+               `(ergoemacs-struct-set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
               ((ignore-errors (eq (nth 0 elt) 'add-hook))
-               `(ergoemacs-theme--set ,(nth 1 elt) ,(nth 2 elt)
+               `(ergoemacs-struct-set ,(nth 1 elt) ,(nth 2 elt)
                                (list t ,(nth 3 elt) ,(nth 4 elt))))
               ((ignore-errors (eq (nth 0 elt) 'remove-hook))
-               `(ergoemacs-theme--set ,(nth 1 elt) ,(nth 2 elt)
+               `(ergoemacs-struct-set ,(nth 1 elt) ,(nth 2 elt)
                                (list nil nil ,(nth 3 elt))))
               ((ignore-errors (eq (nth 0 elt) 'setq))
                (let ((tmp-elt elt)
                      (ret '()))
                  (pop tmp-elt)
                  (while (and (= 0 (mod (length tmp-elt) 2)) (< 0 (length tmp-elt)))
-                   (push `(ergoemacs-theme--set (quote ,(pop tmp-elt)) '(lambda() ,(pop tmp-elt))) ret))
+                   (push `(ergoemacs-struct-set (quote ,(pop tmp-elt)) '(lambda() ,(pop tmp-elt))) ret))
                  (push 'progn ret)
                  ret))
               ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
-               `(ergoemacs-theme--set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
+               `(ergoemacs-struct-set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
                (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
                    `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
