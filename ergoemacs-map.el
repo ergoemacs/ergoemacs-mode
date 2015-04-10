@@ -493,7 +493,7 @@ PREFIX is the prefix key where the map is being examined."
    ((eq property :indirect)
     (ergoemacs-keymapp (symbol-function keymap)))
    ((eq property :map-key)
-    ;; Expire any ids that are no longer linked
+    ;; FIXME Expire any ids that are no longer linked
     (ignore-errors (plist-get (ergoemacs-map-plist keymap) :map-key)))
    ((eq property :map-list)
     (ergoemacs-map--map-list keymap))
@@ -1778,8 +1778,7 @@ BODY is the body of function."
                       (intern-soft
                        (replace-regexp-in-string
                         "(key)?map.*" "hook"
-                        (symbol-name when-condition)))))))
-          new-obj tmp)
+                        (symbol-name when-condition))))))))
       (if (not (ergoemacs-struct-component-map-p obj))
           (error "OBJECT is not an ergoemacs-structure.")
         (setf (ergoemacs-struct-component-map-when-condition obj) when-condition)
@@ -1850,11 +1849,11 @@ Allows the component not to be calculated."
   (let ((obj (or obj (ergoemacs-theme-components))))
     (if (consp obj)
         (dolist (cur-obj (ergoemacs-get-map--lookup-hash obj))
-          (ergoemacs-struct-refresh-keys obj))
+          (ergoemacs-struct-refresh-keys cur-obj))
       (let* ((obj (ergoemacs-get-map--lookup-hash obj))
              (cur-dynamic (ergoemacs-struct-component-map-dynamic-keys obj))
              new-dynamic keymap key global-map-p cur-map
-             fn-lst new-fn-lst new-fn lookup-key cur-layout)
+             fn-lst new-fn-lst new-fn cur-layout)
         (dolist (cur-lst cur-dynamic)
           (setq keymap (nth 0 cur-lst)
                 key (nth 1 cur-lst)
@@ -1876,10 +1875,9 @@ Allows the component not to be calculated."
             ;; Now fix cached layouts
             (maphash
              (lambda(key value)
-               (setq lookup-key (nth 0 key)
-                     cur-layout (nth 1 key))
-               (when (or (global-map-p (not lookup-key))
-                         (eq looup-key keymap))
+               (setq cur-layout (nth 1 key))
+               (when (or (global-map-p (not (nth 0 key)))
+                         (eq (nth 0 key) keymap))
                  ;; Update keymap (in place).
                  (define-key value
                    (ergoemacs-kbd-translate
@@ -1965,7 +1963,7 @@ If not specified, OBJECT is `ergoemacs-struct-define-key--current'."
                           (throw 'found-fn t)))
                       nil)
               ;; Not found
-              (define-key cur-map key `(lambda() (interactive) (error ,(format "This key is undefined without one of the following functions: %s") fn-lst))))
+              (define-key cur-map key `(lambda() (interactive) (error ,(format "This key is undefined without one of the following functions: %s" fn-lst)))))
             (when fn-lst ;; Test for later
               (push (list keymap key fn-lst)
                     (ergoemacs-struct-component-map-dynamic-keys obj))))
@@ -2174,7 +2172,7 @@ closest `ergoemacs-theme-version' calculated from
        (setq map (ergoemacs-mapkeymap nil (make-composed-keymap value)))
        (ergoemacs-map--label map (list 'cond-map key ergoemacs-keyboard-layout))
        (push (cons key map) ret))
-     (ergoemacs-get-map--minor-mode-map-alist-hash))
+     (ergoemacs-get-map--minor-mode-map-alist-hash obj))
     ret))
 
 (defun ergoemacs-get-map--hook-hash (hook &optional layout obj)
@@ -2202,10 +2200,15 @@ closest `ergoemacs-theme-version' calculated from
 
 (defun ergoemacs-get-map--hook (hook &optional layout obj)
   "Get hook hash"
-  (let* (ret)
+  (let* (ret tmp label)
     (maphash
      (lambda(key value)
-       (push (cons key (ergoemacs-mapkeymap nil (make-composed-keymap value))) ret))
+       (setq tmp (when (ergoemacs-keymapp (ergoemacs-sv key))
+                   (ergoemacs-sv key))
+             label (list 'hook-maps key (or layout ergoemacs-keyboard-layout) (if tmp t nil))
+             tmp (ergoemacs-mapkeymap nil (make-composed-keymap value tmp)))
+       (ergoemacs-map--label tmp label)
+       (push (cons key tmp) ret))
      (ergoemacs-get-map--hook-hash hook layout obj))
     ret))
 
@@ -2363,8 +2366,7 @@ loops do not occur.
    ((and (not ergoemacs-struct-define-key--current) (not object)) ;; Old
     (ergoemacs-theme--set symbol newval hook))
    (t
-    (let ((obj (or object ergoemacs-struct-define-key--current))
-          new-obj tmp)
+    (let ((obj (or object ergoemacs-struct-define-key--current)))
       (if (not (ergoemacs-struct-component-map-p obj))
           (error "OBJECT is not an ergoemacs-structure.")
         (push (list symbol newval hook) (ergoemacs-struct-component-map-variables obj)))))))
@@ -2586,6 +2588,7 @@ If Object isn't specified assume it is for the current ergoemacs theme."
            (t (ergoemacs-struct-component-map-versions (ergoemacs-get-map--lookup-hash obj))))
           'string<)))
 
+(defvar ergoemacs-theme)
 (defun ergoemacs-theme-set-version (version)
   "Sets the current themes default VERSION"
   (let (found)
@@ -2643,6 +2646,7 @@ KEEP can change remove to nil.
 "
   (ergoemacs-require option theme (or type 'off) (if keep nil t)))
 
+(defvar ergoemacs-mode)
 (defun ergoemacs-require (option &optional theme type remove)
   "Requires an OPTION on ergoemacs themes.
 
