@@ -162,24 +162,28 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
   "Recompile `ergoemacs-mode' for a bootstrap environment."
   (interactive)
   (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-clean*"))
-  (set (make-local-variable 'ergoemacs-terminal) terminal)
-  (delete-region (point-min) (point-max))
-  (when (or (equal current-prefix-arg '(4))
-            (equal current-prefix-arg '(16)))
-    (insert "Delete Byte Compiled Files:\n")
-    (dolist (file (directory-files (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) t "\\(ergoemacs-global-.*elc?$\\|[.]elc$\\\)"))
-      (insert "\tDelete " file)
-      (delete-file file)
+  (unless (eq major-mode 'compilation-mode)
+    (compilation-mode))
+  (let ((inhibit-read-only t))
+    (set (make-local-variable 'ergoemacs-terminal) terminal)
+    (setq default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
+    (delete-region (point-min) (point-max))
+    (when (or (equal current-prefix-arg '(4))
+              (equal current-prefix-arg '(16)))
+      (insert "Delete Byte Compiled Files:\n")
+      (dolist (file (directory-files default-directory t "\\(ergoemacs-global-.*elc?$\\|[.]elc$\\\)"))
+        (insert "\tDelete " file)
+        (delete-file file)
+        (insert "\n"))
       (insert "\n"))
-    (insert "\n"))
-  (if (equal  current-prefix-arg '(16))
-      (let* ((emacs-exe (ergoemacs-emacs-exe))
-             (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
-             (process (start-process-shell-command "ergoemacs-byte-compile"
-                                                   "*ergoemacs-clean*"
-                                                   (format "%s -L %s -Q --batch -f batch-byte-compile *.el" emacs-exe default-directory))))
-        (set-process-sentinel process 'ergoemacs-run-clean))
-    (ergoemacs-run-clean nil nil)))
+    (if (equal  current-prefix-arg '(16))
+        (let* ((emacs-exe (ergoemacs-emacs-exe))
+               (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
+               (process (start-process-shell-command "ergoemacs-byte-compile"
+                                                     "*ergoemacs-clean*"
+                                                     (format "%s -L %s -Q --batch -f batch-byte-compile *.el" emacs-exe default-directory))))
+          (set-process-sentinel process 'ergoemacs-run-clean))
+      (ergoemacs-run-clean nil nil))))
 
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme)
@@ -188,7 +192,9 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
 (defun ergoemacs-run-clean (process change)
   "Run the clean environment"
   (message "Run ergoemacs-clean (%s;%s)" process change)
+  (compilation-mode)
   (let ((emacs-exe (ergoemacs-emacs-exe))
+        (inhibit-read-only t)
         (ergoemacs-load (or ergoemacs-run-clean
                             " --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (require 'elp) (setq debug-on-error t) (elp-instrument-package (symbol-name 'ergoemacs-)) (ergoemacs-mode 1) (run-with-idle-timer 0.1 nil 'elp-results))\""))
         cmd process rm-batch)
@@ -199,6 +205,8 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
     (cond
      ((with-current-buffer (get-buffer-create "*ergoemacs-clean*")
         (not ergoemacs-terminal))
+      (unless (eq major-mode 'compilation-mode)
+        (compilation-mode))
       (setq cmd (format "%s --debug-init -Q -L \"%s\" %s" emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
                         ergoemacs-load)))
@@ -214,6 +222,8 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
         (insert cmd))
       (setq default-directory (file-name-directory ergoemacs-batch-file)))
      ((executable-find "xterm")
+      (unless (eq major-mode 'compilation-mode)
+        (compilation-mode)) 
       (setq cmd (format "%s -e %s -nw --debug-init -Q -L \"%s\" %s"
                         (executable-find "xterm") emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
