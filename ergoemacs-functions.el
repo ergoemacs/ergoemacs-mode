@@ -161,9 +161,10 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
 (defun ergoemacs-clean-recompile-then-run (&optional terminal)
   "Recompile `ergoemacs-mode' for a bootstrap environment."
   (interactive)
+  (let ((buf (get-buffer "*ergoemacs-clean*")))
+    (when buf
+      (kill-buffer buf)))
   (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-clean*"))
-  (unless (eq major-mode 'compilation-mode)
-    (compilation-mode))
   (let ((inhibit-read-only t))
     (set (make-local-variable 'ergoemacs-terminal) terminal)
     (setq default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
@@ -192,7 +193,6 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
 (defun ergoemacs-run-clean (process change)
   "Run the clean environment"
   (message "Run ergoemacs-clean (%s;%s)" process change)
-  (compilation-mode)
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (inhibit-read-only t)
         (ergoemacs-load (or ergoemacs-run-clean
@@ -230,7 +230,8 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
                         ergoemacs-load))))
     (with-current-buffer (get-buffer-create "*ergoemacs-clean*")
       (goto-char (point-max))
-      (insert "Command\n" cmd "\n\n"))
+      (insert "Command\n" cmd "\n\n")
+      (compilation-mode))
     (if (not rm-batch)
         (setq process (start-process-shell-command "ergoemacs-run-clean"
                                                    "*ergoemacs-clean*"
