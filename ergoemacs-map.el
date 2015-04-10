@@ -2167,6 +2167,7 @@ closest `ergoemacs-theme-version' calculated from
       hash))))
 
 (defun ergoemacs-get-map--minor-mode-map-alist (&optional obj)
+  "Get the ending maps for `minor-mode-map-alist' using the ergoemacs structures."
   (let (ret map)
     (maphash
      (lambda(key value)
@@ -2174,6 +2175,38 @@ closest `ergoemacs-theme-version' calculated from
        (ergoemacs-map--label map (list 'cond-map key ergoemacs-keyboard-layout))
        (push (cons key map) ret))
      (ergoemacs-get-map--minor-mode-map-alist-hash))
+    ret))
+
+(defun ergoemacs-get-map--hook-hash (hook &optional layout obj)
+  "Get hook hash"
+  (let ((obj (ergoemacs-get-map--lookup-hash (or obj (ergoemacs-theme-components))))
+        (cur-layout (or layout ergoemacs-keyboard-layout))
+        tmp
+        (hash (make-hash-table)))
+    (cond
+     ((consp obj)
+      (dolist (cur-obj obj)
+        (maphash
+         (lambda(key value)
+           (puthash key (append (gethash key hash) value) hash))
+         (ergoemacs-get-map--hook-hash hook layout cur-obj)))
+      hash)
+     (t
+      (when (hash-table-p (setq tmp (gethash hook (ergoemacs-struct-component-map-hook-maps obj))))
+        (maphash
+         (lambda(key value)
+           ;; Put the translated keymap in a list in the hash.
+           (puthash key (list (ergoemacs-get-map-- obj cur-layout nil (list 'hook-maps hook key) nil value)) hash))
+         tmp))
+      hash))))
+
+(defun ergoemacs-get-map--hook (hook &optional layout obj)
+  "Get hook hash"
+  (let* (ret)
+    (maphash
+     (lambda(key value)
+       (push (cons key (ergoemacs-mapkeymap nil (make-composed-keymap value))) ret))
+     (ergoemacs-get-map--hook-hash hook layout obj))
     ret))
 
 (defvar ergoemacs-get-map-hash (make-hash-table :test 'equal))
