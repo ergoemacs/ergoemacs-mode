@@ -205,8 +205,6 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
     (cond
      ((with-current-buffer (get-buffer-create "*ergoemacs-clean*")
         (not ergoemacs-terminal))
-      (unless (eq major-mode 'compilation-mode)
-        (compilation-mode))
       (setq cmd (format "%s --debug-init -Q -L \"%s\" %s" emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
                         ergoemacs-load)))
@@ -221,17 +219,17 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
       (with-temp-file ergoemacs-batch-file
         (insert cmd))
       (setq default-directory (file-name-directory ergoemacs-batch-file)))
-     ((executable-find "xterm")
-      (unless (eq major-mode 'compilation-mode)
-        (compilation-mode)) 
+     ((executable-find "xterm") 
       (setq cmd (format "%s -e %s -nw --debug-init -Q -L \"%s\" %s"
                         (executable-find "xterm") emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
                         ergoemacs-load))))
     (with-current-buffer (get-buffer-create "*ergoemacs-clean*")
       (goto-char (point-max))
-      (insert "Command\n" cmd "\n\n")
-      (compilation-mode))
+      (insert "Command\n" cmd "\n\n"))
+    (with-current-buffer (get-buffer-create "*ergoemacs-clean*")
+      (unless (eq major-mode 'compilation-mode)
+        (compilation-mode)))
     (if (not rm-batch)
         (setq process (start-process-shell-command "ergoemacs-run-clean"
                                                    "*ergoemacs-clean*"
