@@ -54,22 +54,161 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
+(defun ergoemacs-curr-layout-symbol (&optional layout)
+  "Gets the LAYOUT symbol.
+If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
+  (intern (format "ergoemacs-layout-%s" (or layout ergoemacs-keyboard-layout))))
 
 ;;; ergoemacs pretty keys
-(defvar ergoemacs-shortcut-emulation-mode-map-alist)
-(defvar ergoemacs-no-shortcut-emulation-mode-map-alist)
-(defvar ergoemacs-read-input-keys)
-(defvar ergoemacs-shortcut-keys)
-(defvar ergoemacs-no-shortcut-keys)
-(defvar ergoemacs-modal)
-(defvar ergoemacs-unbind-keys)
-(defvar ergoemacs-emulation-mode-map-alist)
-(defvar ergoemacs-mode)
-(defvar ergoemacs-ignore-advice)
-(defvar ergoemacs-read-local-emulation-mode-map-alist)
-(defvar ergoemacs-single-command-keys)
+(defvar ergoemacs-translation-hash (make-hash-table)
+  "")
 
+(defun ergoemacs-get-translation-hash (&optional layout-to layout-from)
+  "Gets the translation hash."
+  (let* ((to (ergoemacs-curr-layout-symbol (or layout-to ergoemacs-keyboard-layout)))
+         (from (ergoemacs-curr-layout-symbol (or layout-from "us")))
+         (hash-f (gethash from ergoemacs-translation-hash (make-hash-table)))
+         (hash-f-t (gethash to hash-f))
+         (i 0)
+         hash-t hash-t-f lay-t lay-f r-t r-f)
+    (if hash-f-t hash-f-t
+      (setq hash-f-t (make-hash-table)
+            hash-t (gethash to ergoemacs-translation-hash (make-hash-table))
+            hash-t-f (make-hash-table)
+            lay-t (symbol-value to)
+            lay-f (symbol-value from))
+      (while (< i 120)
+        (unless (or (string= "" (nth i lay-t))
+                    (string= "" (nth i lay-f)))
+          (setq r-t (aref (read-kbd-macro (nth i lay-t) t) 0)
+                r-f (aref (read-kbd-macro (nth i lay-f) t) 0))
+          (puthash r-t r-f hash-t-f)
+          (puthash r-f r-t hash-f-t))
+        (setq i (+ i 1)))
+      (puthash from hash-t-f hash-t)
+      (puthash to hash-f-t hash-f)
+      (puthash to hash-t ergoemacs-translation-hash)
+      (puthash from hash-f ergoemacs-translation-hash)
+      hash-f-t)))
 
+(defun ergoemacs-emacs-shift-translate (key-seq &optional modifier prefix)
+  "Uses emacs style shift-translation: M-Q becomes M-q.
+
+KEY-SEQ must be a vector.  If there is no need to shift-translate
+the key sequence return nil.
+
+Optionally you can change how this function behaves.
+
+Instead of translating the shifted key to the unshifted key, you
+can remove another modifier.  For example if you wanted to
+convert C-M-a to C-a, you could use 'meta as the MODIFIER
+argument to remove the M- modifier.
+
+The PREFIX argument can add a key before the key where the
+modifier occurred, such as in `ergoemacs-meta-to-escape'.
+"
+  (if (not (vectorp key-seq)) nil
+    (let ((rev-seq (reverse (append key-seq ())))
+          (which-mod (or modifier 'shift))
+          modifiers new-mod
+          found 
+          (seq '()))
+      (dolist (event rev-seq)
+        (setq modifiers (event-modifiers event))
+        (if (not (memq which-mod modifiers)) (push event seq)
+          (setq new-mod (list (event-basic-type event)))
+          (dolist (mod modifiers)
+            (unless (eq which-mod mod)
+              (push mod new-mod)))
+          (push (event-convert-list new-mod) seq)
+          (when prefix
+            (push prefix seq))
+          (setq found t)))
+      (if found (vconcat seq) nil))))
+
+(defun ergoemacs-meta-to-escape (key-seq)
+  "Escapes a KEY-SEQ M-q becomes ESC q.
+KEY-SEQ must be a vector.  If there is no need to escape the key sequence return nil."
+  (ergoemacs-emacs-shift-translate key-seq 'meta 27))
+
+(defvar ergoemacs-event-hash (make-hash-table)
+  "Event modifiers not covered by standard emacs")
+
+(defun ergoemacs-event-modifier-hash (&optional layout)
+  "Gets the event modifier hash for LAYOUT."
+  (let* ((layout-symbol (ergoemacs-curr-layout-symbol layout))
+         (hash (gethash layout-symbol ergoemacs-event-hash)))
+    (if hash hash
+      ;; Not present setup modifier hash
+      (setq hash (make-hash-table))
+      (let ((lay (symbol-value layout-symbol))
+            (i 0)
+            r1 r2)
+        (while (< i 60)
+          (unless (or (string= "" (nth i lay))
+                      (string= "" (nth (+ i 60) lay)))
+            (setq r1 (aref (read-kbd-macro (nth i lay) t) 0)
+                  r2 (aref (read-kbd-macro (nth (+ i 60) lay) t) 0))
+            (unless (eq (event-basic-type r1) (event-basic-type r2))
+              ;; This shifted expression isn't covered by basic emacs.
+              (puthash r2 r1 hash)
+              (puthash (intern (format "s%s" r1)) r2 hash)))
+          (setq i (+ i 1)))
+        (puthash layout-symbol hash ergoemacs-event-hash))
+      hash)))
+
+(defun ergoemacs-event-modifiers (event &optional layout)
+  "Return a list of symbols representing the modifier keys in event EVENT.
+This is different than `event-modifiers' in two ways:
+- Symbol keys like # will return 'ergoemacs-shift for a QWERTY keyboard.
+- Special keys like C-RET will return 'ergoemacs-control
+"
+  (let ((modifiers (event-modifiers event))
+        basic)
+    (unless (memq 'shift modifiers)
+      ;; Add 'shift for # type events.
+      (setq basic (event-basic-type event))
+      (when (gethash basic (ergoemacs-event-modifier-hash layout))
+        (push 'ergoemacs-shift modifiers)))
+    ;; Also add 'ergoemacs-control to C-RET which translates to C-m
+    (when (and (integerp event)
+               (> event 1000)
+               (memq 'control modifiers))
+      (unless basic
+        (setq basic (event-basic-type event)))
+      (when (memq basic '(?m ?i ?\[))
+        (push 'ergoemacs-control modifiers)))
+    modifiers))
+
+(defun ergoemacs-event-translate (event &optional layout-to layout-from basic modifiers)
+  "Translate EVENT to the appropriate keyboard layout.
+BASIC is the precalculated basic event from `ergoemacs-event-basic-type'
+MODIFIERS is the precalculated modifiers from `ergoemacs-event-modifiers'
+LAYOUT-TO is the layout to translate to, (default `ergoemacs-keyboard-layout')
+LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
+  (let* ((basic (or basic (ergoemacs-event-basic-type event layout-from)))
+         (modifiers (or modifiers (ergoemacs-event-modifiers event layout-from)))
+         new-modifiers
+         new-event
+         (translation-hash (ergoemacs-get-translation-hash layout-to layout-from)))
+    (cond
+     ((and (eq system-type 'windows-nt) (eq basic 'menu))
+      (setq basic 'apps))
+     ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
+      (setq basic 'menu)))
+    (if (memq 'ergoemacs-control modifiers)
+        (setq new-event basic
+              new-modifiers modifiers)
+      (if (or (memq 'shift modifiers)
+              (memq 'ergoemacs-shift modifiers))
+          (dolist (m modifiers)
+            (if (not (memq m '(shift ergoemacs-shift)))
+                (push m new-modifiers)
+              (setq new-event (ergoemacs-event-convert-list (list m basic) layout-from))
+              (setq new-event (or (gethash new-event translation-hash) new-event))))
+        (setq new-event (or (gethash basic translation-hash) basic)
+              new-modifiers modifiers)))
+    (ergoemacs-event-convert-list (append new-modifiers (list new-event)) layout-to)))
 
 ;;; Actual Translations
 (defvar ergoemacs-translation-keymap
@@ -123,8 +262,93 @@ If MODAL is true, get the modal override map."
     (if (not map) nil
       (ergoemacs-sv map))))
 
-(declare-function ergoemacs-unicode-char "ergoemacs-map")
-(declare-function ergoemacs-pretty-key "ergoemacs-map")
+(defun ergoemacs-translation-get (&optional type key)
+  "Get precalculated translation, or calculate and get translation for TYPE.
+If TYPE is not specified, assume it is the normal translation."
+  (let* ((type (or type 'normal))
+         (ret (gethash type ergoemacs-translations)))
+    (when (and (consp ret) (eq (car ret) 'lambda))
+      (setq ret (funcall ret)))
+    (if key
+        (plist-get ret key)
+      ret)))
+
+(defun ergoemacs-translation--defered (arg-plist)
+  "Deferred calculation of an `ergoemacs-translation'."
+  (let ((ret-plist arg-plist)
+        (keymap (plist-get arg-plist ':keymap))
+        (keymap-modal (plist-get arg-plist ':keymap-modal))
+        tmp
+        (trans-text '())
+        (pretty-trans '())
+        (key-text '())
+        (key-pretty '()))
+    (setq ret-plist (plist-put ret-plist ':keymap-modal nil))
+    (setq ret-plist (plist-put ret-plist ':keymap nil))
+    ;; Now put the translation text together as a list.
+    (dolist (x '((:alt "M-")
+                 (:ctl "C-")
+                 (:shift "S-")
+                 (:alt-ctl "M-C-")
+                 (:alt-shift "M-S-")
+                 (:ctl-shift "C-S-")
+                 (:alt-ctl-shift "C-M-S-")))
+      (let ((trans (plist-get arg-plist (nth 0 x)))
+            (orig (nth 1 x))
+            case-fold-search)
+        (when trans
+          (push (concat orig (ergoemacs-unicode-char "→" "->") trans)
+                trans-text)
+          (push (concat
+                 (replace-regexp-in-string
+                  "[Qq]" ""
+                  (ergoemacs-pretty-key (concat orig "q")))
+                 (ergoemacs-unicode-char "→" "->")
+                 (replace-regexp-in-string
+                  "[Qq]" ""
+                  (ergoemacs-pretty-key (concat trans "q"))))
+                pretty-trans))))
+    (when keymap
+      (dolist (x '((ergoemacs-read-key-next-key-is-alt "M-")
+                   (ergoemacs-read-key-next-key-is-ctl "C-")
+                   (ergoemacs-read-key-next-key-is-alt-ctl "C-M-")
+                   (ergoemacs-read-key-next-key-is-quoted "")
+                   (ergoemacs-read-key-force-next-key-is-alt "M-")
+                   (ergoemacs-read-key-force-next-key-is-ctl "C-")
+                   (ergoemacs-read-key-force-next-key-is-alt-ctl "C-M-")
+                   (ergoemacs-read-key-force-next-key-is-quoted "")))
+        (let ((key (where-is-internal (nth 0 x) keymap t))
+              (trans (nth 1 x)))
+          (when key
+            (setq key (key-description key))
+            (push (concat key (ergoemacs-unicode-char "→" "->") trans)
+                  key-text)
+            (push (concat
+                   (ergoemacs-pretty-key key)
+                   (ergoemacs-unicode-char "→" "->")
+                   (replace-regexp-in-string
+                    "[Qq]" ""
+                    (ergoemacs-pretty-key (concat trans "q"))))
+                  key-pretty)))))
+
+    (setq tmp '("" ""))
+    (when (plist-get arg-plist ':unchorded)
+      (setq tmp (list (plist-get arg-plist ':unchorded)
+                      (replace-regexp-in-string
+                       "[Qq]" ""
+                       (ergoemacs-pretty-key
+                        (concat (plist-get arg-plist ':unchorded) "q"))))))
+    (puthash (plist-get arg-plist ':name)
+             (list :trans-text trans-text
+                   :pretty-trans pretty-trans
+                   :key-text key-text
+                   :key-pretty key-pretty
+                   :lst tmp
+                   :text (or (plist-get arg-plist ':text) ""))
+             ergoemacs-translation-text)
+    (puthash (plist-get arg-plist ':name) ret-plist
+             ergoemacs-translations)))
+
 (defun ergoemacs-translation (&rest arg-plist)
   "Add or modifies an ergoemacs-translation.
 
@@ -168,8 +392,6 @@ This also creates functions:
         (pretty-trans '())
         (key-text '())
         (key-pretty '()))
-    (setq ret-plist (plist-put ret-plist ':keymap-modal nil))
-    (setq ret-plist (plist-put ret-plist ':keymap nil))
 
     (eval (macroexpand
            `(defvar ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-modal-map"))
@@ -197,8 +419,7 @@ This is called through `ergoemacs-universal-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
               (ergoemacs-universal-argument ',(plist-get arg-plist ':name)))))
-    (add-to-list 'ergoemacs-universal-fns
-                 (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")))
+    (push (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")) ergoemacs-universal-fns)
 
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-digit-argument")) ()
@@ -229,66 +450,8 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
               (interactive)
               (ergoemacs-modal-toggle ',(plist-get arg-plist ':name)))))
     
-    
-    ;; Now put the translation text together as a list.
-    (dolist (x '((:alt "M-")
-                 (:ctl "C-")
-                 (:shift "S-")
-                 (:alt-ctl "M-C-")
-                 (:alt-shift "M-S-")
-                 (:ctl-shift "C-S-")
-                 (:alt-ctl-shift "C-M-S-")))
-      (let ((trans (plist-get arg-plist (nth 0 x)))
-            (orig (nth 1 x))
-            case-fold-search)
-        (when trans
-          (push (concat orig (ergoemacs-unicode-char "→" "->") trans)
-                trans-text)
-          (push (concat
-                 (replace-regexp-in-string
-                  "[Qq]" ""
-                  (ergoemacs-pretty-key (concat orig "q")))
-                 (ergoemacs-unicode-char "→" "->")
-                 (replace-regexp-in-string
-                  "[Qq]" ""
-                  (ergoemacs-pretty-key (concat trans "q"))))
-                pretty-trans))))
     ;; Now get keys that change the next key's behavior
-    (when keymap
-      (dolist (x '((ergoemacs-read-key-next-key-is-alt "M-")
-                   (ergoemacs-read-key-next-key-is-ctl "C-")
-                   (ergoemacs-read-key-next-key-is-alt-ctl "C-M-")
-                   (ergoemacs-read-key-next-key-is-quoted "")
-                   (ergoemacs-read-key-force-next-key-is-alt "M-")
-                   (ergoemacs-read-key-force-next-key-is-ctl "C-")
-                   (ergoemacs-read-key-force-next-key-is-alt-ctl "C-M-")
-                   (ergoemacs-read-key-force-next-key-is-quoted "")))
-        (let ((key (where-is-internal (nth 0 x) keymap t))
-              (trans (nth 1 x)))
-          (when key
-            (setq key (key-description key))
-            (push (concat key (ergoemacs-unicode-char "→" "->") trans)
-                  key-text)
-            (push (concat
-                   (ergoemacs-pretty-key key)
-                   (ergoemacs-unicode-char "→" "->")
-                   (replace-regexp-in-string
-                    "[Qq]" ""
-                    (ergoemacs-pretty-key (concat trans "q"))))
-                  key-pretty)))))
-    (setq tmp '("" ""))
-    (when (plist-get arg-plist ':unchorded)
-      (setq tmp (list (plist-get arg-plist ':unchorded)
-                      (replace-regexp-in-string
-                       "[Qq]" ""
-                       (ergoemacs-pretty-key
-                        (concat (plist-get arg-plist ':unchorded) "q"))))))
-    (puthash (plist-get arg-plist ':name)
-             (list trans-text pretty-trans
-                   key-text key-pretty tmp (or (plist-get arg-plist ':text) ""))
-             ergoemacs-translation-text)
-    ;; Replace/Add translation
-    (puthash (plist-get arg-plist ':name) ret-plist
+    (puthash (plist-get arg-plist ':name) `(lambda() (ergoemacs-translation--defered ',arg-plist))
              ergoemacs-translations)))
 
 (defun ergoemacs-update-translation-text ()
@@ -361,7 +524,7 @@ This function is made in `ergoemacs-translation' and calls `ergoemacs-modal-togg
 
 (ergoemacs-translation
  :name 'ctl-to-alt
- :text (format "<Ctl%sAlt> " (ergoemacs-unicode-char "↔" " to "))
+ :text (lambda() (format "<Ctl%sAlt> " (ergoemacs-unicode-char "↔" " to ")))
  :alt "C-"
  :ctl "M-"
  :modal-color "blue"
@@ -883,11 +1046,6 @@ For example, on dvorak, change C-j to C-c (copy/command)."
                "[Aa]lt[+-]" "M-" pre-kbd-code))))
     ret))
 
-(defvar ergoemacs-keymap)
-(defvar ergoemacs-unbind-keymap)
-(defvar ergoemacs-shortcut-keymap)
-(defvar ergoemacs-no-shortcut-keymap)
-(defvar ergoemacs-command-shortcuts-hash)
 (defun ergoemacs-key-fn-lookup (function &optional use-apps)
   "Looks up the key binding for FUNCTION based on.
 Based on `ergoemacs-with-ergoemacs'"
@@ -906,6 +1064,54 @@ Based on `ergoemacs-with-ergoemacs'"
          (setq ret (cdr ret))))
      (setq ret (nth 0 ret))
      ret)))
+
+(defun ergoemacs-event-basic-type  (event &optional layout)
+  "Return the basic type of the given event (all modifiers removed).
+This is different than `event-basic-type' because ?# would return
+?3 on a QWERTY LAYOUT."
+  (let* ((basic (event-basic-type event))
+         (new-basic (gethash basic (ergoemacs-event-modifier-hash layout))))
+    (or new-basic basic)))
+
+(defun ergoemacs-event-convert-list (list &optional layout)
+  "Convert the event description list EVENT-DESC to an event type.
+
+This is different than `event-convert-list' because:
+ -  '(shift ?3) or '(ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT.
+ -  '(ergoemacs-control control ?m) produces C-RET"
+  (let ((cur-list list)
+        elt
+        tmp
+        control-p
+        new-list)
+    (when (memq 'ergoemacs-control cur-list)
+      (setq control-p t)
+      (dolist (elt (reverse cur-list))
+        (unless (equal elt 'ergoemacs-control)
+          (push elt new-list)))
+      (setq cur-list new-list)
+      (setq new-list nil))
+    
+    (if (not (or (memq 'shift list) (memq 'ergoemacs-shift list)))
+        (setq new-list cur-list)
+      (while (> (length cur-list) 0)
+        (setq elt (pop cur-list))
+        (cond
+         ((and cur-list (memq elt '(shift ergoemacs-shift))))
+         
+         ((and (not cur-list)
+               (setq tmp (gethash (intern (format "s%s" elt))
+                                  (ergoemacs-event-modifier-hash layout))))
+          ;; Special case.
+          (setq new-list (append new-list (list tmp))))
+         ((not cur-list)
+          (push 'shift new-list)
+          (setq new-list (append new-list (list elt))))
+         (t
+          (push elt new-list)))))
+    (if control-p
+        (aref (read-kbd-macro (concat "C-" (key-description (vector (event-convert-list new-list)))) t) 0)
+      (event-convert-list new-list))))
 
 (provide 'ergoemacs-translate)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

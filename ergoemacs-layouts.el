@@ -326,7 +326,6 @@
                 `(const :tag ,elt :value ,elt))
               (sort (ergoemacs-get-layouts t) 'string<))))
 
-(declare-function ergoemacs-save "ergoemacs-theme-engine.el")
 (defun ergoemacs-set-layout (layout)
   "Set the ergoemacs layout to LAYOUT."
   (ergoemacs-save 'ergoemacs-keyboard-layout layout))

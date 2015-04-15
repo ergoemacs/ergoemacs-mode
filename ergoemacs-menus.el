@@ -95,7 +95,7 @@
 (defvar ergoemacs-handle-ctl-c-or-ctl-x)
 (defvar ergoemacs-no-shortcut-keys)
 (defvar ergoemacs-shortcut-keys)
-(defvar ergoemacs-read-input-keys)
+
 (defun ergoemacs-shortcut-for-command (cmd)
   "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
   (cond
@@ -106,8 +106,7 @@
          (eq cmd 'ergoemacs-copy-line-or-region)) (ergoemacs-kbd-to-key "C-c"))
    (t
     (let ((key (key-description
-                (let (ergoemacs-read-input-keys
-                      ergoemacs-shortcut-keys
+                (let (ergoemacs-shortcut-keys
                       (ergoemacs-no-shortcut-keys t)
                       (min-len 1000)
                       (ret ""))

@@ -43,86 +43,6 @@ If SYMBOL is void, return nil"
        (ignore-errors (default-value ,symbol))
      (ignore-errors (symbol-value ,symbol))))
 
-;;;###autoload
-(defmacro ergoemacs-with-ergoemacs (&rest body)
-  "With basic `ergoemacs-mode' mode keys.
-major-mode, minor-mode, and global keys are ignored."
-  `(let ((ergoemacs-mode t)
-         (ergoemacs-unbind-keys t)
-         (ergoemacs-shortcut-keys t)
-         (ergoemacs-no-shortcut-keys nil)
-         ergoemacs-modal
-         ergoemacs-read-input-keys
-         (minor-mode-map-alist
-          `((ergoemacs-mode ,@ergoemacs-keymap)
-            (ergoemacs-unbind-keys ,@ergoemacs-unbind-keymap)))
-         (ergoemacs-emulation-mode-map-alist '())
-         (ergoemacs-shortcut-emulation-mode-map-alist
-          `())
-         (ergoemacs-no-shortcut-emulation-mode-map-alist
-          `((ergoemacs-no-shortcut-keys ,@ergoemacs-no-shortcut-keymap)))
-         (old-global-map (current-global-map))
-         (old-local-map (current-local-map))
-         (new-local-map (make-sparse-keymap))
-         (new-global-map (make-sparse-keymap)))
-     (unwind-protect
-         (progn
-           (use-global-map new-global-map)
-           (use-local-map new-local-map)
-           ,@body)
-       (use-global-map old-global-map)
-       (use-local-map old-local-map))))t
-
-;;;###autoload
-(defmacro ergoemacs-with-overrides (&rest body)
-  "With the `ergoemacs-mode' mode overrides.
-The global map is ignored, but major/minor modes keymaps are included."
-  `(let (ergoemacs-mode
-         ergoemacs-unbind-keys
-         ergoemacs-shortcut-keys
-         ergoemacs-no-shortcut-keys
-         ergoemacs-modal
-         ergoemacs-read-input-keys
-         (old-global-map (current-global-map))
-         (new-global-map (make-sparse-keymap)))
-     (unwind-protect
-         (progn
-           (use-global-map new-global-map)
-           ,@body)
-       (use-global-map old-global-map))))
-
-;;;###autoload
-(defmacro ergoemacs-with-global (&rest body)
-  "With global keymap, not ergoemacs keymaps."
-  `(ergoemacs-without-emulation
-    (let (ergoemacs-mode ergoemacs-unbind-keys)
-      ,@body)))
-
-;;;###autoload
-(defmacro ergoemacs-with-major-and-minor-modes (&rest body)
-  "Without global keymaps and ergoemacs keymaps."
-  `(let ((old-global-map (current-global-map))
-         (new-global-map (make-sparse-keymap)))
-     (unwind-protect
-         (progn
-           (use-global-map new-global-map)
-           (ergoemacs-with-global
-            ,@body))
-       (use-global-map old-global-map))))
-
-;;;###autoload
-(defmacro ergoemacs-without-emulation (&rest body)
-  "Without keys defined at `emulation-mode-map-alists'.
-
-Also temporarily remove any changes ergoemacs-mode made to:
-- `overriding-terminal-local-map'
-- `overriding-local-map'
-
-Will override any ergoemacs changes to the text properties by temporarily
-installing the original keymap above the ergoemacs-mode installed keymap.
-"
-  `(ergoemacs-without-emulation--internal (lambda() ,@body)))
-
 ;; This shouldn't be called at run-time; This fixes the byte-compile warning.
 (fset 'ergoemacs-theme-component--parse
       #'(lambda(keys-and-body &optional skip-first)
@@ -139,17 +59,17 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
   "In parsing, this function converts
-- `define-key' is converted to `ergoemacs-struct-define-key' and keymaps are quoted
-- `global-set-key' is converted to `ergoemacs-struct-define-key' with keymap equal to `global-map'
-- `global-unset-key' is converted to `ergoemacs-struct-define-key' with keymap equal to `global-map' and function definition is `nil'
-- `global-reset-key' is converted `ergoemacs-struct-define-key'
-- `setq' and `set' is converted to `ergoemacs-struct-set'
-- `add-hook' and `remove-hook' is converted to `ergoemacs-struct-set'
+- `define-key' is converted to `ergoemacs-component-struct--define-key' and keymaps are quoted
+- `global-set-key' is converted to `ergoemacs-component-struct--define-key' with keymap equal to `global-map'
+- `global-unset-key' is converted to `ergoemacs-component-struct--define-key' with keymap equal to `global-map' and function definition is `nil'
+- `global-reset-key' is converted `ergoemacs-component-struct--define-key'
+- `setq' and `set' is converted to `ergoemacs-component-struct--set'
+- `add-hook' and `remove-hook' is converted to `ergoemacs-component-struct--set'
 - Mode initialization like (delete-selection-mode 1)
   or (delete-selection) is converted to
-  `ergoemacs-struct-set'
-- Allows :version statement expansion to `ergoemacs-struct-new-version'
-- Adds with-hook syntax or (when -hook) or (when -mode) using `ergoemacs-struct-with-hook'
+  `ergoemacs-component-struct--set'
+- Allows :version statement expansion to `ergoemacs-component-struct--new-version'
+- Adds with-hook syntax or (when -hook) or (when -mode) using `ergoemacs-component-struct--with-hook'
 "
   (let* ((last-was-version nil)
          (remaining
@@ -159,51 +79,51 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
               (last-was-version
                (setq last-was-version nil)
                (if (stringp elt)
-                   `(ergoemacs-struct-new-version ,elt)
-                 `(ergoemacs-struct-new-version ,(symbol-name elt))))
+                   `(ergoemacs-component-struct--new-version ,elt)
+                 `(ergoemacs-component-struct--new-version ,(symbol-name elt))))
               ((ignore-errors (eq elt ':version))
                (setq last-was-version t)
                nil)
               ((ignore-errors (eq (nth 0 elt) 'global-reset-key))
-               `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) nil))
+               `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) nil))
               ((ignore-errors (eq (nth 0 elt) 'global-unset-key))
-               `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) nil))
+               `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) nil))
               ((ignore-errors (eq (nth 0 elt) 'set))
                ;; Currently doesn't support (setq a b c d ), but it should.
-               `(ergoemacs-struct-set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
+               `(ergoemacs-component-struct--set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
               ((ignore-errors (eq (nth 0 elt) 'add-hook))
-               `(ergoemacs-struct-set ,(nth 1 elt) ,(nth 2 elt)
+               `(ergoemacs-component-struct--set ,(nth 1 elt) ,(nth 2 elt)
                                (list t ,(nth 3 elt) ,(nth 4 elt))))
               ((ignore-errors (eq (nth 0 elt) 'remove-hook))
-               `(ergoemacs-struct-set ,(nth 1 elt) ,(nth 2 elt)
+               `(ergoemacs-component-struct--set ,(nth 1 elt) ,(nth 2 elt)
                                (list nil nil ,(nth 3 elt))))
               ((ignore-errors (eq (nth 0 elt) 'setq))
                (let ((tmp-elt elt)
                      (ret '()))
                  (pop tmp-elt)
                  (while (and (= 0 (mod (length tmp-elt) 2)) (< 0 (length tmp-elt)))
-                   (push `(ergoemacs-struct-set (quote ,(pop tmp-elt)) '(lambda() ,(pop tmp-elt))) ret))
+                   (push `(ergoemacs-component-struct--set (quote ,(pop tmp-elt)) '(lambda() ,(pop tmp-elt))) ret))
                  (push 'progn ret)
                  ret))
               ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
-               `(ergoemacs-struct-set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
+               `(ergoemacs-component-struct--set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
                (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
-                   `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
-                 `(ergoemacs-struct-define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
+                   `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
+                 `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
               ((ignore-errors (eq (nth 0 elt) 'define-key))
                (if (equal (nth 1 elt) '(current-global-map))
                    (if (ergoemacs-keymapp (ergoemacs-sv (nth 3 elt))) 
-                       `(ergoemacs-struct-define-key 'global-map ,(nth 2 elt) (quote ,(nth 3 elt)))
-                     `(ergoemacs-struct-define-key 'global-map ,(nth 2 elt) ,(nth 3 elt)))
+                       `(ergoemacs-component-struct--define-key 'global-map ,(nth 2 elt) (quote ,(nth 3 elt)))
+                     `(ergoemacs-component-struct--define-key 'global-map ,(nth 2 elt) ,(nth 3 elt)))
                  (if (ergoemacs-keymapp (ergoemacs-sv (nth 3 elt))) 
-                     `(ergoemacs-struct-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
-                   `(ergoemacs-struct-define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)) )))
+                     `(ergoemacs-component-struct--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
+                   `(ergoemacs-component-struct--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)) )))
               ((or (ignore-errors (eq (nth 0 elt) 'with-hook))
                    (and (ignore-errors (eq (nth 0 elt) 'when))
                         (ignore-errors (string-match "\\(-hook\\|-mode\\|^mark-active\\)$" (symbol-name (nth 1 elt))))))
                (let ((tmp (ergoemacs-theme-component--parse (cdr (cdr elt)) t)))
-                 `(ergoemacs-struct-with-hook
+                 `(ergoemacs-component-struct--with-hook
                    ',(nth 1 elt) ',(nth 0 tmp)
                    '(lambda () ,@(nth 1 tmp)))))
               ((ignore-errors (memq (nth 0 elt) '(mapcar mapc dolist when if)))
@@ -227,9 +147,6 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
   (let ((kb (make-symbol "body-and-plist")))
     (setq kb (ergoemacs-theme-component--parse body-and-plist))
     `(progn
-       (unless (boundp 'ergoemacs-theme-comp-hash)
-         (defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
-           "Hash of ergoemacs theme components"))
        (unless (boundp 'ergoemacs-component-hash)
          (defvar ergoemacs-component-hash (make-hash-table :test 'equal)
            "Hash of ergoemacs theme components"))
@@ -240,7 +157,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                    '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash)
        (puthash ,(plist-get (nth 0 kb) ':name)
                 (lambda() ,(plist-get (nth 0 kb) ':description)
-                  (ergoemacs-struct--create-component
+                  (ergoemacs-component-struct--create-component
                    ',(nth 0 kb)
                    '(lambda () ,@(nth 1 kb)))) ergoemacs-component-hash)
        ,(when (plist-get (nth 0 kb) ':require)
@@ -268,8 +185,6 @@ Maybe be similar to use-package"
         ,doc
         ,@plist ,@body))))
 
-(declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-theme-set-version "ergoemacs-theme-engine.el")
 ;;;###autoload
 (defmacro ergoemacs-test-layout (&rest keys-and-body)
   (let ((kb (make-symbol "body-and-plist"))
@@ -440,24 +355,6 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
      (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
        ,(format "Generated theme component for %s theme" (symbol-name name))
        ,@differences)))
-
-(require 'eieio)
-
-(defmacro ergoemacs-object-name-string (obj)
-  "Compatability fixes for `object-name-string' or `eieio-object-name-string'.
-"
-  `(,(cond
-      ((fboundp 'object-name-string) 'object-name-string)
-      ((fboundp 'eieio-object-name-string) 'eieio-object-name-string)
-      (t 'object-name-string)) ,obj))
-
-(defmacro ergoemacs-object-set-name-string (obj name)
-  "Compatability fixes for `object-set-name-string' or `eieio-object-set-name-string'.
-"
-  `(,(cond
-      ((fboundp 'object-set-name-string) 'object-set-name-string)
-      ((fboundp 'eieio-object-set-name-string) 'eieio-object-set-name-string)
-      (t 'object-set-name-string)) ,obj ,name))
 
 ;;;###autoload
 (defmacro ergoemacs-save-buffer-state (&rest body)

@@ -36,10 +36,6 @@
 
 (require 'advice)
 
-(defvar ergoemacs-theme-comp-hash)
-(defvar ergoemacs-theme-hash)
-(declare-function ergoemacs-struct--create-component "ergoemacs-map.el")
-
 (ergoemacs-component standard-vars ()
   "Enabled/changed variables/modes"
   (setq org-CUA-compatible t
