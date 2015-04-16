@@ -50,6 +50,32 @@
 ;; 
 ;;; Code:
 
+(defvar ergoemacs-keyboard-layout)
+(defvar cl-struct-ergoemacs-component-struct-tags)
+(defvar ergoemacs-keymap)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-menu-keymap)
+(defvar ergoemacs-theme)
+
+(declare-function ergoemacs-setcdr "ergoemacs-lib")
+
+(declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-component")
+(declare-function ergoemacs-component-struct--minor-mode-map-alist "ergoemacs-component")
+(declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
+(declare-function ergoemacs-component-struct--get "ergoemacs-component")
+
+(declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
+(declare-function ergoemacs-theme--menu "ergoemacs-theme-engine")
+
+(declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
+
+(declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--get "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--get-or-generate-map-key "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
+
+
 (defvar ergoemacs-map--hash (make-hash-table :test 'equal)
   "Hash of calculated maps")
 
@@ -158,7 +184,7 @@ If LOOKUP-KEYMAP
          (let (new-lst)
            (dolist (elt minor-mode-map-alist)
              (unless (or (eq (car elt) 'ergoemacs-mode)
-                         (ignore-errors (eq 'cond-map (car (ergoemacs-map-properties--key (cdr elt))))))
+                         (ignore-errors (eq 'cond-map (car (ergoemacs-map-properties--get-or-generate-map-key (cdr elt))))))
                (push elt new-lst)))
            (setq minor-mode-map-alist (reverse new-lst))))
        ;; Modify the `minor-mode-overriding-map-alist'
@@ -190,7 +216,7 @@ If LOOKUP-KEYMAP
          ret)
         ((setq ret (gethash
                     (list (and lookup-keymap
-                               (setq lookup-key (ergoemacs-map-properties--key-struct lookup-keymap))) cur-layout unbind-keys)
+                               (setq lookup-key (ergoemacs-map-properties--get lookup-keymap :key-struct))) cur-layout unbind-keys)
                     (ergoemacs-component-struct-calculated-layouts map)))
          ret)
         ((not lookup-keymap)
@@ -223,11 +249,11 @@ If LOOKUP-KEYMAP
                     lookup-key)
               t)
             (not lookup-keymap)
-            (setq lookup-key (append (list (ergoemacs-map-properties--key-struct (ergoemacs-map-properties--original global-map))) lookup-key))
+            (setq lookup-key (append (list (ergoemacs-map-properties--get (ergoemacs-map-properties--original global-map) :key-struct)) lookup-key))
             (setq ret (gethash lookup-key ergoemacs-map--hash)))
        ret)
       ((and (consp map) lookup-key lookup-keymap
-            (setq lookup-key (append (list (ergoemacs-map-properties--key-struct lookup-keymap)) lookup-key))
+            (setq lookup-key (append (list (ergoemacs-map-properties--get lookup-keymap :key-struct)) lookup-key))
             
             (setq ret (gethash lookup-key ergoemacs-map--hash)))
        ret)
@@ -241,8 +267,8 @@ If LOOKUP-KEYMAP
             (progn ;; Check for composed keymaps or keymap parents
               (if (not lookup-keymap) t
                 (setq parent (keymap-parent lookup-keymap))
-                (setq composed-list (and (ergoemacs-map-properties--composed-p lookup-keymap)
-                                         (ergoemacs-map-properties--composed-list lookup-keymap)))
+                (setq composed-list (and (ergoemacs-map-properties--get lookup-keymap :composed-p)
+                                         (ergoemacs-map-properties--get lookup-keymap :composed-list)))
                 (and (not parent) (not composed-list))))
             (setq ret (make-composed-keymap
                        (append
@@ -297,7 +323,7 @@ If LOOKUP-KEYMAP
 
 (defun ergoemacs-map--install ()
   (interactive)
-  (when (not (consp (ergoemacs-map-properties--key (current-global-map))))
+  (when (not (consp (ergoemacs-map-properties--get-or-generate-map-key (current-global-map))))
     (message "Global")
     (setq ergoemacs-keymap (ergoemacs-map))
     (use-global-map ergoemacs-keymap)

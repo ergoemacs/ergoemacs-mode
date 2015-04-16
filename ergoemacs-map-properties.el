@@ -55,6 +55,16 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
+(defvar ergoemacs-dir)
+(defvar ergoemacs-map-properties--original-global-map)
+(defvar ergoemacs-map-properties--global-map-before-ergoemacs)
+(defvar ergoemacs-ignore-prev-global)
+
+(declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
+(declare-function ergoemacs-emacs-exe "ergoemacs-functions")
+(declare-function ergoemacs-setcdr "ergoemacs-lib")
+(declare-function ergoemacs-map--setcdr "ergoemacs-map")
+
 (defvar ergoemacs-map-properties--ignored-prefixes '(;; "C-h" "<f1>"
                                      [27]  [escape]
                                      [remap]
@@ -172,25 +182,29 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
 
 (defun ergoemacs-map-properties--get (keymap &optional property)
   "Gets ergoemacs-mode KEYMAP PROPERTY."
-  (let (tmp)
-    (cond
-     ((eq property :full)
-      (ignore-errors (char-table-p (nth 1 (ergoemacs-map-properties--keymap-value keymap)))))
-     ((eq property :indirect)
-      (ergoemacs-keymapp (symbol-function keymap)))
-     ((or (eq property :map-key) (eq property :key))
-      ;; FIXME Expire any ids that are no longer linked
-      (ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist keymap) :map-key)))
-     ((eq property :map-list)
-      (ergoemacs-map-properties--map-list keymap))
-     ;; ((and (setq tmp (intern (concat "ergoemacs-map-properties--"(substring (symbol-name :map-list) 1))))
-     ;;       (fboundp tmp))
-     ;;  (ignore-errors (funcall tmp keymap)))
-     ((eq property :prefixes)
-      (ergoemacs-map-properties--extract-prefixes keymap))
-     (t
-      (ignore-errors
-        (gethash property (gethash (ergoemacs-map-properties--key-struct (ergoemacs-map-properties--keymap-value keymap)) ergoemacs-map-properties--plist-hash)))))))
+  (cond
+   ((eq property :full)
+    (ignore-errors (char-table-p (nth 1 (ergoemacs-map-properties--keymap-value keymap)))))
+   ((eq property :indirect)
+    (ergoemacs-keymapp (symbol-function keymap)))
+   ((or (eq property :map-key) (eq property :key))
+    ;; FIXME Expire any ids that are no longer linked
+    (ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist keymap) :map-key)))
+   ((eq property :map-list)
+    (ergoemacs-map-properties--map-list keymap))
+   ((eq property :prefixes)
+    (ergoemacs-map-properties--extract-prefixes keymap))
+   ((eq property :original)
+    (ergoemacs-map-properties--original keymap))
+   ((eq property :composed-p)
+    (ergoemacs-map-properties--composed-p keymap))
+   ((eq property :composed-list)
+    (ergoemacs-map-properties--composed-list keymap))
+   ((eq property :key-struct)
+    (ergoemacs-map-properties--key-struct keymap))
+   (t
+    (ignore-errors
+      (gethash property (gethash (ergoemacs-map-properties--key-struct (ergoemacs-map-properties--keymap-value keymap)) ergoemacs-map-properties--plist-hash))))))
 
 (defun ergoemacs-map-properties--default-global-file ()
   "What is the global key hash file."
@@ -391,27 +405,27 @@ KEYMAP can be a keymap or keymap integer key."
         map-key)
     (cond
      ((and map-p (not no-hash) (setq ret (ergoemacs-map-properties--get keymap :map-list-hash)))
-      (setq map-key (ergoemacs-map-properties--key keymap))
+      (setq map-key (ergoemacs-map-properties--get-or-generate-map-key keymap))
       (setq map-p ret)
       (setq ret nil)
       (dolist (map map-p)
         (when (or (eq keymap (ergoemacs-sv map))
-                  (= map-key (ergoemacs-map-properties--key (ergoemacs-sv map))))
+                  (= map-key (ergoemacs-map-properties--get-or-generate-map-key (ergoemacs-sv map))))
           (push map ret)))
       (when (not ret);; Check again...
         (setq ret (ergoemacs-map-properties--map-list keymap t)))
       ret)
-     ((and map-p (setq map-key (ergoemacs-map-properties--key keymap)) (integerp map-key))
-      (setq map-p (ergoemacs-map-properties--key keymap))
+     ((and map-p (setq map-key (ergoemacs-map-properties--get-or-generate-map-key keymap)) (integerp map-key))
+      (setq map-p (ergoemacs-map-properties--get-or-generate-map-key keymap))
       (dolist (map ergoemacs-map-properties--label-atoms-maps)
         (when (or (eq keymap (ergoemacs-sv map))
-                  (equal map-p (ergoemacs-map-properties--key map)))
+                  (equal map-p (ergoemacs-map-properties--get-or-generate-map-key map)))
           (push map ret)))
       (ergoemacs-map-properties--put keymap :map-list-hash ret)
       ret)
      ((integerp keymap)
       (dolist (map ergoemacs-map-properties--label-atoms-maps)
-        (when (equal keymap (ergoemacs-map-properties--key map))
+        (when (equal keymap (ergoemacs-map-properties--get-or-generate-map-key map))
           (unless map-p
             (setq map-p map))
           (push map ret)))
@@ -441,7 +455,7 @@ KEYMAP can be a keymap or keymap integer key."
      (t ;;Label
       (when sv
         (let (omap key)
-          (setq key (ergoemacs-map-properties--key sv))
+          (setq key (ergoemacs-map-properties--get-or-generate-map-key sv))
           (ergoemacs-map-properties--label sv key)
           (setq omap (gethash key ergoemacs-map-properties--original-map-hash))
           ;; Hash should be a copy pointers of the original maps.
@@ -466,7 +480,7 @@ KEYMAP can be a keymap or keymap integer key."
         (push map new)))
     (setq ergoemacs-map-properties--unlabeled new)))
 
-(defun ergoemacs-map-properties--key (keymap)
+(defun ergoemacs-map-properties--get-or-generate-map-key (keymap)
   "Gets the key for the KEYMAP."
   (let ((ret (ergoemacs-map-properties--map-fixed-plist (ergoemacs-map-properties--keymap-value keymap))))
     (or (and ret (plist-get ret :map-key)) (random))))
@@ -486,7 +500,7 @@ The KEYMAP will have the structure
           (dolist (map (ergoemacs-map-properties--composed-list keymap))
             (ergoemacs-map-properties--label map map-key))))
       (let* ((map keymap)
-             (map-key (or map-key (ergoemacs-map-properties--key map)))
+             (map-key (or map-key (ergoemacs-map-properties--get-or-generate-map-key map)))
              char-table
              indirect-p
              old-plist
@@ -542,7 +556,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let (map-key ret)
     (ergoemacs-map--setcdr
      (cond
-      ((and (ergoemacs-keymapp keymap) (setq map-key (ergoemacs-map-properties--key keymap))
+      ((and (ergoemacs-keymapp keymap) (setq map-key (ergoemacs-map-properties--get-or-generate-map-key keymap))
             (integerp map-key))
        (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash))
        (if (and (not ret) ;; Don't save empty keymaps as original keymaps...
@@ -602,7 +616,6 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
         (push key after-changed)
         (ergoemacs-map-properties--put global-map :keys-after-changed after-changed))
       ret)))
-
 
 (provide 'ergoemacs-map-properties)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

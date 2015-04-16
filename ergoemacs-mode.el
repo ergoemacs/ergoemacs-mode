@@ -317,7 +317,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   " (ergoemacs-get-layouts-doc)
   )
   :type (ergoemacs-get-layouts-type)
-  :set 'ergoemacs-set-default
+  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
@@ -327,6 +327,12 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 (defvar ergoemacs-map-properties--global-map-before-ergoemacs (ergoemacs-mapkeymap nil global-map)
   "A single keymap for the keys before `ergoemacs-mode' loads.")
 
+(defcustom ergoemacs-ignore-prev-global t
+  "Ignore global keys that were changed before `ergoemacs-mode' was loaded."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
 
 (ergoemacs-map-properties--get-original-global-map)
 (provide 'ergoemacs-mode)

@@ -343,7 +343,7 @@ Will return a collapsed keymap without parent"
                 (ergoemacs-mapkeymap function (ergoemacs-map-properties--keymap-value (cdr item)) t)
                 ;; Make sure submap is assigned
                 (setq tmp2 (ergoemacs-map-properties--get (cdr item) :submap-p)
-                      tmp3 (cons (car item) (ergoemacs-map-properties--key keymap)))
+                      tmp3 (cons (car item) (ergoemacs-map-properties--get-or-generate-map-key keymap)))
                 (unless (member tmp3 tmp2)
                   (push tmp3 tmp2))
                 (ergoemacs-map-properties--put (ergoemacs-map-properties--keymap-value (cdr item)) :submap-p tmp2)
