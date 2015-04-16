@@ -321,7 +321,14 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
-(ergoemacs-map-default-global)
+(defvar ergoemacs-map-properties--original-global-map nil
+  "Original emacs global map before any customizations are made.")
+
+(defvar ergoemacs-map-properties--global-map-before-ergoemacs (ergoemacs-mapkeymap nil global-map)
+  "A single keymap for the keys before `ergoemacs-mode' loads.")
+
+
+(ergoemacs-map-properties--get-original-global-map)
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-mode.el ends here

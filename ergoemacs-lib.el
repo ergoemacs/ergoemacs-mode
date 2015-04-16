@@ -51,6 +51,28 @@
 ;;; Code:
 ;; (require 'guide-key nil t)
 
+(when (not (fboundp 'make-composed-keymap))
+  (setq ergoemacs-make-composed-keymap-p nil)
+  (defun make-composed-keymap (maps &optional parent)
+    "Construct a new keymap composed of MAPS and inheriting from PARENT.
+
+This does not work in emacs 23 or below, but ergoemacs-mode uses
+it to create the same structure and flatten them later.
+
+In emacs 24, this is how the function behaves:
+
+When looking up a key in the returned map, the key is looked in each
+keymap of MAPS in turn until a binding is found.
+If no binding is found in MAPS, the lookup continues in PARENT, if non-nil.
+As always with keymap inheritance, a nil binding in MAPS overrides
+any corresponding binding in PARENT, but it does not override corresponding
+bindings in other keymaps of MAPS.
+MAPS can be a list of keymaps or a single keymap.
+PARENT if non-nil should be a keymap."
+    `(keymap
+      ,@(if (keymapp maps) (list maps) maps)
+      ,@parent)))
+
 ;;;###autoload
 (defun ergoemacs-set (variable value &optional force)
   "Sets VARIABLE to VALUE without disturbing customize or setq.

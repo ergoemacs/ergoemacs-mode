@@ -53,7 +53,7 @@
 (defvar ergoemacs-map--hash (make-hash-table :test 'equal)
   "Hash of calculated maps")
 
-(defun ergoemacs-get-map--setcdr (map lookup-keymap setcdr-p)
+(defun ergoemacs-map--setcdr (map lookup-keymap setcdr-p)
   "Sets the keymap MAP in place when SETCDR-P is non-nil..."
   (cond
    ((not setcdr-p)
@@ -65,26 +65,26 @@
     map)
    (t map)))
 
-(defun ergoemacs-get-map--alist (alist &optional setcdr-p)
+(defun ergoemacs-map--alist (alist &optional setcdr-p)
   "Apply maps for ALIST."
   (mapcar
    (lambda(elt)
      
      (let ((map (if (eq setcdr-p 'remove)
-                    (ergoemacs-map--original (cdr elt) setcdr-p)
+                    (ergoemacs-map-properties--original (cdr elt) setcdr-p)
                   (ergoemacs-map (cdr elt) setcdr-p))))
        (cons (car elt) map)))
    alist))
 
-(defun ergoemacs-get-map--alists (alists &optional setcdr-p)
+(defun ergoemacs-map--alists (alists &optional setcdr-p)
   "Apply maps for ALISTS"
   (mapcar
    (lambda(elt)
      (cond
       ((consp elt)
-       (ergoemacs-get-map--alist elt setcdr-p))
+       (ergoemacs-map--alist elt setcdr-p))
       (setcdr-p
-       (set elt (ergoemacs-get-map--alist (symbol-value elt) setcdr-p))
+       (set elt (ergoemacs-map--alist (symbol-value elt) setcdr-p))
        elt)
       (t elt)))
    alists))
@@ -118,14 +118,22 @@ If LOOKUP-KEYMAP
          lookup-key
          (map (ergoemacs-component-struct--lookup-hash (or map (ergoemacs-theme-components))))
          (lookup-keymap (or (and lookup-keymap (not recursive) (ergoemacs-keymapp lookup-keymap)
-                                 (ergoemacs-map--original lookup-keymap)) lookup-keymap))
+                                 (ergoemacs-map-properties--original lookup-keymap)) lookup-keymap))
          unbind-list
          parent
          composed-list
          (read-map (make-sparse-keymap))
+         property-p
          ret)
-    (ergoemacs-get-map--setcdr
+    (ergoemacs-map--setcdr
      (cond
+      ((and (ergoemacs-keymapp lookup-keymap)
+            (symbolp setcdr-p)
+            (setq property-p (string= ":" (substring (symbol-name setcdr-p) 0 1)))
+            (not unbind-keys))
+       (ergoemacs-map-properties--get lookup-keymap setcdr-p))
+      ((and property-p unbind-keys)
+       (ergoemacs-map-properties--put lookup-keymap setcdr-p unbind-keys))
       ((and (ergoemacs-keymapp lookup-keymap)
             (or (and overriding-terminal-local-map
                      (eq overriding-terminal-local-map lookup-keymap))
@@ -137,7 +145,7 @@ If LOOKUP-KEYMAP
        )
       ((and lookup-keymap (eq emulation-mode-map-alists lookup-keymap))
        ;; Modify the emulation-mode-map-alists.
-       (setq ret (ergoemacs-get-map--alists emulation-mode-map-alists setcdr-p))
+       (setq ret (ergoemacs-map--alists emulation-mode-map-alists setcdr-p))
        ;; Make sure that `ergoemacs-mode' read key and modal
        ;; translations are at the top.
        (when setcdr-p
@@ -150,15 +158,15 @@ If LOOKUP-KEYMAP
          (let (new-lst)
            (dolist (elt minor-mode-map-alist)
              (unless (or (eq (car elt) 'ergoemacs-mode)
-                         (ignore-errors (eq 'cond-map (car (ergoemacs-map--key (cdr elt))))))
+                         (ignore-errors (eq 'cond-map (car (ergoemacs-map-properties--key (cdr elt))))))
                (push elt new-lst)))
            (setq minor-mode-map-alist (reverse new-lst))))
        ;; Modify the `minor-mode-overriding-map-alist'
-       (setq ret (ergoemacs-get-map--alist lookup-keymap setcdr-p))
+       (setq ret (ergoemacs-map--alist lookup-keymap setcdr-p))
        ;; Add maps in `ergoemacs-component-struct--minor-mode-map-alist' if
        ;; needed.
        (when (and ret (eq minor-mode-map-alist lookup-keymap)
-                  (not (ignore-errors (eq 'cond-map (car (ergoemacs-map-get (cdr (last ret)) :map-key))))))
+                  (not (ignore-errors (eq 'cond-map (car (ergoemacs-map-properties--get (cdr (last ret)) :map-key))))))
          (setq ret (append ret (ergoemacs-component-struct--minor-mode-map-alist))))
        (when setcdr-p
          (cond
@@ -182,7 +190,7 @@ If LOOKUP-KEYMAP
          ret)
         ((setq ret (gethash
                     (list (and lookup-keymap
-                               (setq lookup-key (ergoemacs-map-p lookup-keymap))) cur-layout unbind-keys)
+                               (setq lookup-key (ergoemacs-map-properties--key-struct lookup-keymap))) cur-layout unbind-keys)
                     (ergoemacs-component-struct-calculated-layouts map)))
          ret)
         ((not lookup-keymap)
@@ -215,11 +223,11 @@ If LOOKUP-KEYMAP
                     lookup-key)
               t)
             (not lookup-keymap)
-            (setq lookup-key (append (list (ergoemacs-map-p (ergoemacs-map--original global-map))) lookup-key))
+            (setq lookup-key (append (list (ergoemacs-map-properties--key-struct (ergoemacs-map-properties--original global-map))) lookup-key))
             (setq ret (gethash lookup-key ergoemacs-map--hash)))
        ret)
       ((and (consp map) lookup-key lookup-keymap
-            (setq lookup-key (append (list (ergoemacs-map-p lookup-keymap)) lookup-key))
+            (setq lookup-key (append (list (ergoemacs-map-properties--key-struct lookup-keymap)) lookup-key))
             
             (setq ret (gethash lookup-key ergoemacs-map--hash)))
        ret)
@@ -233,8 +241,8 @@ If LOOKUP-KEYMAP
             (progn ;; Check for composed keymaps or keymap parents
               (if (not lookup-keymap) t
                 (setq parent (keymap-parent lookup-keymap))
-                (setq composed-list (and (ergoemacs-map-composed-p lookup-keymap)
-                                         (ergoemacs-map-composed-list lookup-keymap)))
+                (setq composed-list (and (ergoemacs-map-properties--composed-p lookup-keymap)
+                                         (ergoemacs-map-properties--composed-list lookup-keymap)))
                 (and (not parent) (not composed-list))))
             (setq ret (make-composed-keymap
                        (append
@@ -252,11 +260,11 @@ If LOOKUP-KEYMAP
                                     (unless (member undefined-key ret)
                                       (define-key undefined-map undefined-key 'ergoemacs-undefined))))
                                 undefined-map))))
-                       (or (and lookup-keymap (not recursive) (ergoemacs-map--original lookup-keymap))
-                           (and (not lookup-keymap) (ergoemacs-map--original global-map))))))
+                       (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
+                           (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))))
        ;; Decompose (rot) the keymap (so you can label the map)
        (setq ret (ergoemacs-mapkeymap nil ret))
-       (ergoemacs-map--label
+       (ergoemacs-map-properties--label
         ret
         lookup-key)
        (dolist (cur-map map)
@@ -289,7 +297,7 @@ If LOOKUP-KEYMAP
 
 (defun ergoemacs-map--install ()
   (interactive)
-  (when (not (consp (ergoemacs-map--key (current-global-map))))
+  (when (not (consp (ergoemacs-map-properties--key (current-global-map))))
     (message "Global")
     (setq ergoemacs-keymap (ergoemacs-map))
     (use-global-map ergoemacs-keymap)
@@ -326,7 +334,7 @@ If LOOKUP-KEYMAP
 
 (defun ergoemacs-map--remove ()
   (interactive)
-  (use-global-map (ergoemacs-map--original global-map t))
+  (use-global-map (ergoemacs-map-properties--original global-map t))
   (when emulation-mode-map-alists
     (ergoemacs-map emulation-mode-map-alists 'remove))
   (when minor-mode-overriding-map-alist
