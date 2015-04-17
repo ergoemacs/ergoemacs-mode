@@ -1801,7 +1801,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
   :type 'boolean
   :group 'ergoemacs-mode)
 
-;; (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
+;; (declare-function ergoemacs-describe-key-kbd "ergoemacs-translate.el")
 ;; (defun ergoemacs-smart-punctuation ()
 ;;   "Smart Punctuation Function for `ergoemacs-mode'."
 ;;   (interactive) 
@@ -1835,7 +1835,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
 ;;         (define-key temp-map (read-kbd-macro repeat-key) this-command)
 ;;         (set-temporary-overlay-map temp-map)
 ;;         (when (eq (ergoemacs-real-key-binding (read-kbd-macro repeat-key) t) this-command)
-;;           (message "Cycle with %s" (ergoemacs-pretty-key repeat-key)))))))
+;;           (message "Cycle with %s" (ergoemacs-describe-key-kbd repeat-key)))))))
 
 (defvar org-table-any-line-regexp)
 (declare-function cua-set-rectangle-mark "cua-rect.el")

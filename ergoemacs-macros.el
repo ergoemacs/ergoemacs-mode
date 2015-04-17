@@ -396,6 +396,48 @@ This was stole/modified from `c-save-buffer-state'"
             (buffer-modified-p)
             (set-buffer-modified-p nil)))))
 
+;;;###autoload
+(defmacro ergoemacs-map (&optional keymap property set-value)
+  ""
+  (cond
+   ((and keymap property (not set-value)
+         (symbolp property)
+         (string= ":" (substring (symbol-name property) 0 1)))
+    ;; Get a property
+    (cond
+     ((eq property :full)
+      `(ignore-errors (char-table-p (nth 1 (ergoemacs-map-properties--keymap-value ,keymap)))))
+     ((eq property :indirect)
+      (macroexpand-all `(ergoemacs-keymapp (symbol-function ,keymap))))
+     ((eq property '(:map-key :key))
+      ;; FIXME Expire any ids that are no longer linked??
+      `(ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist ,keymap) :map-key)))
+     ((eq property :prefixes)
+      (ergoemacs-map-properties--extract-prefixes keymap))
+     ((memq property '(:map-list :original :composed-p :composed-list :key-struct))
+      `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name property) 1))) ,keymap))
+     (t
+      `(ignore-errors (gethash ,property (gethash (ergoemacs-map-properties--key-struct (ergoemacs-map-properties--keymap-value ,keymap)) ergoemacs-map-properties--plist-hash))))))
+
+   ((and keymap property set-value
+         (symbolp property)
+         (string= ":" (substring (symbol-name property) 0 1)))
+    ;; Assign a property.
+    `(ergoemacs-map-properties--put ,keymap ,property ,set-value))
+   
+   ((and (not set-value) (eq keymap 'emulation-mode-map-alists))
+    `(ergoemacs-map--emulation-mode-map-alists ,property))
+   
+   ((and (not set-value) (eq keymap 'minor-mode-overriding-map-alist))
+    `(ergoemacs-map--minor-mode-overriding-map-alist ,property))
+
+   ((and (not set-value) (eq keymap 'minor-mode-map-alist))
+    `(ergoemacs-map--minor-mode-map-alist ,property))
+
+   (t
+    `(ergoemacs-map-- ,keymap ,property))
+   ))
+
 
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

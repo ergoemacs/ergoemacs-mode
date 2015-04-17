@@ -51,6 +51,11 @@
 ;;; Code:
 ;; (require 'guide-key nil t)
 
+(defun ergoemacs-curr-layout-symbol (&optional layout)
+  "Gets the LAYOUT symbol.
+If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
+  (intern (format "ergoemacs-layout-%s" (or layout ergoemacs-keyboard-layout))))
+
 (when (not (fboundp 'make-composed-keymap))
   (setq ergoemacs-make-composed-keymap-p nil)
   (defun make-composed-keymap (maps &optional parent)

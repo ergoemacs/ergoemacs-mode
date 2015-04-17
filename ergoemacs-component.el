@@ -57,7 +57,7 @@
 
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
-(defvar ergoemacs-translations)
+(defvar ergoemacs-translate--translation-hash)
 (defvar ergoemacs-map-properties--ignored-prefixes)
 (defvar ergoemacs-map-properties--unlabeled)
 (defvar ergoemacs-theme-version)
@@ -68,8 +68,9 @@
 (declare-function ergoemacs-reset "ergoemacs-lib")
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 (declare-function ergoemacs-map "ergoemacs-map")
+(declare-function ergoemacs-translate "ergoemacs-translate")
 
-;; ergoemacs-kbd-translate
+;; ergoemacs-translate
 
 (defun ergoemacs-curr-layout-symbol (&optional layout)
   "Gets the LAYOUT symbol.
@@ -221,7 +222,7 @@ Allows the component not to be calculated."
          (= 2 (length def))
          (stringp (nth 0 def))
          (or (not (nth 1 def))
-             (gethash (nth 1 def) ergoemacs-translations)))
+             (gethash (nth 1 def) ergoemacs-translate--translation-hash)))
     `(lambda(&optional arg)
        (interactive "P")
        (ergoemacs-read-key ,(nth 0 def) ',(nth 1 def))))
@@ -265,7 +266,7 @@ Allows the component not to be calculated."
                          (eq (nth 0 key) keymap))
                  ;; Update keymap (in place).
                  (define-key value
-                   (ergoemacs-kbd-translate
+                   (ergoemacs-translate
                     key (ergoemacs-component-struct-just-first-keys obj)
                     (ergoemacs-component-struct-variable-modifiers obj)
                     (ergoemacs-component-struct-variable-prefixes obj) cur-layout
@@ -476,7 +477,7 @@ closest `ergoemacs-theme-version' calculated from
   "Get component MAP and return KEYMAP updating MAP cache.
 Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY. "
   (let* (ret
-         ;; (map-list (and lookup-keymap (ergoemacs-map-properties--get lookup-keymap :map-list)))
+         ;; (map-list (and lookup-keymap (ergoemacs-map lookup-keymap :map-list)))
          (relative-map-name (and lookup-keymap (ergoemacs-component-struct-relative-to map)))
          ;; (relative-map-p (and lookup-keymap (not (member relative-map-name map-list))))
          (relative-map (and lookup-keymap
@@ -495,7 +496,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
     (ergoemacs-mapkeymap
      (lambda (key item prefix)
        (unless (or (eq prefix t) (eq item 'ergoemacs-prefix))
-         (let ((new-key (ergoemacs-kbd-translate
+         (let ((new-key (ergoemacs-translate
                          key just-first-keys variable-modifiers variable-prefixes cur-layout layout-from))
                (other-command-keys (and relative-map (where-is-internal item relative-map)))
                new-command)
@@ -614,7 +615,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
   (let ((cur-layout (or layout ergoemacs-keyboard-layout))
         new-list)
     (dolist (key list)
-      (push (ergoemacs-kbd-translate
+      (push (ergoemacs-translate
              key (ergoemacs-component-struct-just-first-keys obj)
              (ergoemacs-component-struct-variable-modifiers obj)
              (ergoemacs-component-struct-variable-prefixes obj) cur-layout

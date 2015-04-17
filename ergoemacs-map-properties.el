@@ -196,12 +196,6 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
     (ergoemacs-map-properties--extract-prefixes keymap))
    ((eq property :original)
     (ergoemacs-map-properties--original keymap))
-   ((eq property :composed-p)
-    (ergoemacs-map-properties--composed-p keymap))
-   ((eq property :composed-list)
-    (ergoemacs-map-properties--composed-list keymap))
-   ((eq property :key-struct)
-    (ergoemacs-map-properties--key-struct keymap))
    (t
     (ignore-errors
       (gethash property (gethash (ergoemacs-map-properties--key-struct (ergoemacs-map-properties--keymap-value keymap)) ergoemacs-map-properties--plist-hash))))))

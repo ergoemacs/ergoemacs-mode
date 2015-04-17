@@ -334,6 +334,90 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
+(defgroup ergoemacs-dispaly nil
+  "Display Options for `ergoemacs-mode'."
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-display-unicode-characters t
+  "Use unicode characters when available."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters)
+
+(defcustom ergoemacs-display-ergoemacs-key-descriptions t
+  "Use ergoemacs key descriptions (Alt+) instead of emacs key descriptors (M-)"
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-use-ergoemacs-key-descriptions 'ergoemacs-display-ergoemacs-key-descriptions)
+
+
+(defcustom ergoemacs-display-use-unicode-brackets-around-keys t
+  "Use unicode brackets."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys) 
+
+
+(defcustom ergoemacs-display-small-symbols-for-key-modifiers nil
+  "Use small symbols to represent alt+ ctl+ etc. on windows/linux."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-use-small-symbols 'ergoemacs-display-small-symbols-for-key-modifiers)
+
+(defcustom ergoemacs-display-capitalize-keys 'with-modifiers
+  "Capitalize keys like Ctrl+C.
+`ergoemacs-mode' should show Ctrl+Shift+C if you are pressing these keys."
+  :type '(choice
+          (const :tag "Don't Capitalize Keys" nil)
+          (const :tag "Capitalize Keys with modifiers" with-modifiers)
+          (const :tag "Capitalize Keys" t))
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-capitalize-keys 'ergoemacs-display-capitalize-keys)
+
+(defcustom ergoemacs-display-key-use-face-p t
+  "Use a button face for keys."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p)
+
+
+(defface ergoemacs-display-key-face
+  '((t :inverse-video t :box (:line-width 1 :style released-button) :weight bold))
+  "Button Face for a `ergoemacs-mode' pretty key."
+  ;; :set #'ergoemacs-set-default
+  ;; :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+;; (define-obsolete-face-alias 'ergoemacs-describe-key-kbd 'ergoemacs-display-key-face "")
+
+;;; Options not supported now
+
+;; (defcustom ergoemacs-change-fixed-layout-to-variable-layout nil
+;;   "Change the fixed layout to variable layout keys.
+;; For example, on dvorak, change C-j to C-c (copy/command)."
+;;   :type 'boolean
+;;   :set 'ergoemacs-set-default
+;;   :initialize #'custom-initialize-default
+;;   :group 'ergoemacs-mode)
+
 (ergoemacs-map-properties--get-original-global-map)
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -142,7 +142,7 @@
 
 ;; Based on describe-key-briefly
 (declare-function ergoemacs-key-fn-lookup "ergoemacs-translate.el")
-(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
+(declare-function ergoemacs-describe-key-kbd "ergoemacs-translate.el")
 (defvar yank-menu)
 (defun ergoemacs-where-is-old-binding (&optional key only-new-key)
   "Print the name of the function KEY invoked before to start ErgoEmacs minor mode."
@@ -189,19 +189,19 @@
       nil)
      ((and old-cmd new-key)
       (message "%s keybinding%s%s (%s)"
-               (ergoemacs-pretty-key key-desc)
+               (ergoemacs-describe-key-kbd key-desc)
                (if (called-interactively-p  'any)
                    " is changed to "
                  " is disabled! Use ")
-               (ergoemacs-pretty-key new-key)
+               (ergoemacs-describe-key-kbd new-key)
                old-cmd))
      (old-cmd
       (message "Key %s was bound to `%s' which is not bound any longer"
-               (ergoemacs-pretty-key key-desc)
+               (ergoemacs-describe-key-kbd key-desc)
                old-cmd))
      (t
       (message "Key %s was not bound to any command (%s)"
-               (ergoemacs-pretty-key key-desc)
+               (ergoemacs-describe-key-kbd key-desc)
                old-cmd)))))
 
 (provide 'ergoemacs-unbind)
