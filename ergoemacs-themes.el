@@ -31,6 +31,11 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
+(declare-function ergoemacs-theme-component--create-component "ergoemacs-theme")
+(declare-function ergoemacs-component-struct--create-component "ergoemacs-component")
+(defvar ergoemacs-theme-hash)
+(defvar ergoemacs-theme-comp-hash)
+
 (autoload 'dired-jump "dired-x" nil t)
 
 

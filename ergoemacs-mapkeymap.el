@@ -50,6 +50,19 @@
 ;; 
 ;;; Code:
 
+(defvar ergoemacs-map-properties--plist-hash)
+
+(declare-function ergoemacs-map-properties--key-struct "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--keymap-value "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--all-sparse-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--get-or-generate-map-key "ergoemacs-map-properties")
+
+(declare-function ergoemacs-debug "ergoemacs-debug")
+(declare-function ergoemacs-debug-heading "ergoemacs-debug")
+
+(declare-function ergoemacs-setcdr "ergoemacs-lib")
+
 (defvar ergoemacs-mapkeymap--current nil)
 (defvar ergoemacs-mapkeymap--submaps nil)
 (defvar ergoemacs-mapkeymap--prefixes nil)

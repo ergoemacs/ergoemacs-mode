@@ -61,6 +61,8 @@
 (defvar ergoemacs-menu-keymap)
 (defvar ergoemacs-theme)
 (defvar ergoemacs-map-properties--plist-hash)
+(defvar ergoemacs-dir)
+
 
 
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
@@ -76,12 +78,15 @@
 (declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
 
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--get "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--get-or-generate-map-key "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--key-struct "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keymap-value "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--composed-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--composed-list "ergoemacs-map-properties")
+
 
 (declare-function ergoemacs-translate-setup "ergoemacs-translate")
 
@@ -161,6 +166,31 @@
       (setq minor-mode-map-alist ret))
     ret))
 
+(defun ergoemacs-map--base-lookup-key (map-list)
+  "Lookup Base key for MAP-LIST"
+  (let ((map map-list)
+        lookup-key)
+    (catch 'all-struct
+      (dolist (cur-map map)
+        (if (ergoemacs-component-struct-p cur-map)
+            (push (intern (format "%s%s"
+                                  (ergoemacs-component-struct-name cur-map)
+                                  (or (and (ergoemacs-component-struct-version cur-map)
+                                           (concat "::" (ergoemacs-component-struct-version cur-map)))
+                                      ""))) lookup-key)
+          (throw 'all-struct
+                 (setq lookup-key nil))))
+      (setq lookup-key (reverse lookup-key))
+      (push (or (and (stringp ergoemacs-keyboard-layout) (intern ergoemacs-keyboard-layout)) ergoemacs-keyboard-layout)
+            lookup-key)
+      t)
+    lookup-key))
+
+(defun ergoemacs-map--md5 (&optional map-list)
+  "Get the MD5 for MAP-LIST.
+MAP-LIST is the list of theme components if not pre-specified."
+  (md5 (format "%s" (ergoemacs-map--base-lookup-key (ergoemacs-component-struct--lookup-hash (or map-list (ergoemacs-theme-components)))))))
+
 (defun ergoemacs-map-- (&optional lookup-keymap setcdr-p unbind-keys layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
@@ -239,21 +269,7 @@ If LOOKUP-KEYMAP
                 (equal lookup-keymap (make-keymap))))
        lookup-keymap)
       ((and (consp map)
-            (catch 'all-struct
-              (setq lookup-key nil)
-              (dolist (cur-map map)
-                (if (ergoemacs-component-struct-p cur-map)
-                    (push (intern (format "%s%s"
-                                          (ergoemacs-component-struct-name cur-map)
-                                          (or (and (ergoemacs-component-struct-version cur-map)
-                                                   (concat "::" (ergoemacs-component-struct-version cur-map)))
-                                              ""))) lookup-key)
-                  (throw 'all-struct
-                         (setq lookup-key nil))))
-              (setq lookup-key (reverse lookup-key))
-              (push (or (and (stringp ergoemacs-keyboard-layout) (intern ergoemacs-keyboard-layout)) ergoemacs-keyboard-layout)
-                    lookup-key)
-              t)
+            (setq lookup-key (ergoemacs-map--base-lookup-key map))
             (not lookup-keymap)
             (setq lookup-key (append (list (ergoemacs-map (ergoemacs-map-properties--original global-map) :key-struct)) lookup-key))
             (setq ret (gethash lookup-key ergoemacs-map--hash)))
@@ -273,8 +289,8 @@ If LOOKUP-KEYMAP
             (progn ;; Check for composed keymaps or keymap parents
               (if (not lookup-keymap) t
                 (setq parent (keymap-parent lookup-keymap))
-                (setq composed-list (and (ergoemacs-map-properties--get lookup-keymap :composed-p)
-                                         (ergoemacs-map-properties--get lookup-keymap :composed-list)))
+                (setq composed-list (and (ergoemacs-map lookup-keymap :composed-p)
+                                         (ergoemacs-map lookup-keymap :composed-list)))
                 (and (not parent) (not composed-list))))
             (setq ret (make-composed-keymap
                        (append
@@ -376,6 +392,7 @@ If LOOKUP-KEYMAP
 
 (add-hook 'ergoemacs-mode-shutdown-hook 'ergoemacs-map--remove)
 
+(autoload 'ergoemacs-map (expand-file-name "ergoemacs-macros.el" ergoemacs-dir) nil t)
 (provide 'ergoemacs-map)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-map.el ends here

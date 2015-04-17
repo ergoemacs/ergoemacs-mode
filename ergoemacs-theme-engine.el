@@ -50,31 +50,16 @@
 ;; 
 ;;; Code:
 
-(defgroup ergoemacs-themes nil
-  "Default Ergoemacs Layout"
-  :group 'ergoemacs-mode)
+(defvar ergoemacs-theme)
+(defvar ergoemacs-mode)
+(defvar ergoemacs-theme-version)
+(defvar ergoemacs-theme-options)
 
-(defcustom ergoemacs-theme-options
-  '()
-  "List of theme options"
-  :type '(repeat
-          (list
-           (sexp :tag "Theme Component")
-           (choice
-            (const :tag "Force Off" off)
-            (const :tag "Force On" on)
-            (const :tag "Let theme decide" nil))))
-  :group 'ergoemacs-themes)
-
-(defcustom ergoemacs-theme-version
-  '()
-  "Each themes set version"
-  :type '(repeat
-          (string :tag "Theme Component")
-          (choice
-           (const :tag "Latest Version" nil)
-           (string :tag "Version")))
-  :group 'ergoemacs-theme)
+(declare-function ergoemacs-save "ergoemacs-lib")
+(declare-function ergoemacs-mode-reset "ergoemacs-lib")
+(declare-function ergoemacs-component-struct--component-description "ergoemacs-component")
+(declare-function ergoemacs-component-struct--versions "ergoemacs-component")
+(declare-function ergoemacs-layouts--menu "ergoemacs-layouts")
 
 (defvar ergoemacs-theme-hash (make-hash-table :test 'equal)
   "Hash of `ergoemacs-mode' themes")
@@ -288,7 +273,7 @@ When SILENT is true, also include silent themes"
 (defun ergoemacs-theme--menu (theme)
   "Defines menus for current THEME."
   `(keymap
-    ,(ergoemacs-get-layouts-menu)
+    ,(ergoemacs-layouts--menu)
     (ergoemacs-theme-sep "--")
     (ergoemacs-themes
      menu-item "Themes"

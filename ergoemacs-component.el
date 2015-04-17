@@ -64,18 +64,19 @@
 (defvar ergoemacs-map-properties--original-global-map)
 
 (declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
+
 (declare-function ergoemacs-set "ergoemacs-lib")
 (declare-function ergoemacs-reset "ergoemacs-lib")
+
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
-(declare-function ergoemacs-map "ergoemacs-map")
+
 (declare-function ergoemacs-translate "ergoemacs-translate")
 
-;; ergoemacs-translate
+(declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
-(defun ergoemacs-curr-layout-symbol (&optional layout)
-  "Gets the LAYOUT symbol.
-If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
-  (intern (format "ergoemacs-layout-%s" (or layout ergoemacs-keyboard-layout))))
+;; ergoemacs-translate
 
 (defcustom ergoemacs-ignore-prev-global t
   "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."

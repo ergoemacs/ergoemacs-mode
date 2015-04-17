@@ -330,7 +330,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
   "`ergoemacs-mode' modal keymap.  Attempts to capture ALL keystrokes.")
 
 (declare-function ergoemacs-translate--shifted "ergoemacs-translate.el")
-(declare-function ergoemacs-get-layouts "ergoemacs-layouts.el")
+(declare-function ergoemacs-layouts--list "ergoemacs-layouts.el")
 (declare-function ergoemacs-translate--local-map "ergoemacs-translate.el")
 (defun ergoemacs-modal-base-keymap  (&optional map)
   "Returns the ergoemacs-modal keymap"
@@ -339,7 +339,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
           (make-composed-keymap (list map ergoemacs-modal-base-keymap))
         ergoemacs-modal-base-keymap)
     (let ((ret (make-sparse-keymap)))
-      (dolist (lay (ergoemacs-get-layouts))
+      (dolist (lay (ergoemacs-layouts--list))
         (dolist (char (ergoemacs-sv (intern (concat "ergoemacs-layout-" lay))))
           (unless (string= char "")
             (dolist (mod '("" "C-" "M-" "C-M-"))

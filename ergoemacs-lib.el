@@ -51,11 +51,13 @@
 ;;; Code:
 ;; (require 'guide-key nil t)
 
-(defun ergoemacs-curr-layout-symbol (&optional layout)
-  "Gets the LAYOUT symbol.
-If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
-  (intern (format "ergoemacs-layout-%s" (or layout ergoemacs-keyboard-layout))))
+(defvar ergoemacs-mode)
+(defvar ergoemacs-theme-hash)
 
+(declare-function ergoemacs-theme--list "ergoemacs-theme-engine")
+(declare-function ergoemacs-theme-option-on "ergoemacs-theme-engine")
+
+(defvar ergoemacs-make-composed-keymap-p t)
 (when (not (fboundp 'make-composed-keymap))
   (setq ergoemacs-make-composed-keymap-p nil)
   (defun make-composed-keymap (maps &optional parent)
@@ -77,6 +79,18 @@ PARENT if non-nil should be a keymap."
     `(keymap
       ,@(if (keymapp maps) (list maps) maps)
       ,@parent)))
+
+
+(defun ergoemacs-setcdr (var val &optional default)
+  "Use `setcdr' on VAL to VAL.
+If VAL is a symbol, use `ergoemacs-sv' to determine the value.
+If VAR is nil, return nil and do nothing.
+If DEFAULT is non-nil set the default value, instead of the symbol value."
+  (if (symbolp var)
+      (setcdr (ergoemacs-sv var default) val)
+    (if var
+        (setcdr var val)
+      nil)))
 
 ;;;###autoload
 (defun ergoemacs-set (variable value &optional force)

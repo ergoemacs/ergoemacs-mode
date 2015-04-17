@@ -71,18 +71,14 @@
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
 
+(defvar ergoemacs-component-struct--refresh-variables)
+(defvar ergoemacs-keyboard-layout)
+(declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
+(declare-function ergoemacs-layouts--customization-type "ergoemacs-layouts")
+(declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
+
 
 ;; Fundamental ergoemacs functions
-(defun ergoemacs-setcdr (var val &optional default)
-  "Use `setcdr' on VAL to VAL.
-If VAL is a symbol, use `ergoemacs-sv' to determine the value.
-If VAR is nil, return nil and do nothing.
-If DEFAULT is non-nil set the default value, instead of the symbol value."
-  (if (symbolp var)
-      (setcdr (ergoemacs-sv var default) val)
-    (if var
-        (setcdr var val)
-      nil)))
 
 ;; Include extra files
 (defvar ergoemacs-dir
@@ -112,30 +108,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :group 'convenience
   :group 'emulations)
 
-
-(defun ergoemacs-set-default (symbol new-value)
-  "Ergoemacs equivalent to set-default.
-Will reload `ergoemacs-mode' after setting the values."
-  (set-default symbol new-value)
-  (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
-                 (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
-             (boundp 'ergoemacs-mode) ergoemacs-mode)
-    (ergoemacs-theme-reset)))
-
-
-(defcustom ergoemacs-keyboard-layout (or (getenv "ERGOEMACS_KEYBOARD_LAYOUT") "us")
-  "Specifies which keyboard-layout to use."
-  ;; (concat "Specifies which keyboard layout to use.
-;; This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.
-
-;; Valid values are:
-
-;; " ;; (ergoemacs-get-layouts-doc)
-;; )
-  :type 'sexp
-  :set 'ergoemacs-set-default
-  :initialize #'custom-initialize-default
-  :group 'ergoemacs-mode)
 
 (defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
   "Hash of ergoemacs theme components")
@@ -208,6 +180,9 @@ Will reload `ergoemacs-mode' after setting the values."
 
 (defvar ergoemacs-mode-shutdown-hook nil
   "Hook for shutting down `ergoemacs-mode'")
+
+(defvar ergoemacs-mode-intialize-hook nil
+  "Hook for initializing `ergoemacs-mode'")
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -249,6 +224,16 @@ bindings the keymap is:
   (setq ergoemacs-component-struct--refresh-variables t)
   (ergoemacs-mode -1)
   (ergoemacs-mode 1))
+
+;;;###autoload
+(defun ergoemacs-set-default (symbol new-value)
+  "Ergoemacs equivalent to set-default.
+Will reload `ergoemacs-mode' after setting the values."
+  (set-default symbol new-value)
+  (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
+                 (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
+             (boundp 'ergoemacs-mode) ergoemacs-mode)
+    (ergoemacs-mode-reset)))
 
 
 
@@ -314,9 +299,9 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
   Valid values are:
 
-  " (ergoemacs-get-layouts-doc)
+  " (ergoemacs-layouts--custom-documentation)
   )
-  :type (ergoemacs-get-layouts-type)
+  :type (ergoemacs-layouts--customization-type)
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
@@ -401,10 +386,36 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (defface ergoemacs-display-key-face
   '((t :inverse-video t :box (:line-width 1 :style released-button) :weight bold))
-  "Button Face for a `ergoemacs-mode' pretty key."
+  "Button Face for an `ergoemacs-mode' pretty key."
   ;; :set #'ergoemacs-set-default
   ;; :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
+
+(defgroup ergoemacs-themes nil
+  "Default Ergoemacs Layout"
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-theme-options
+  '()
+  "List of theme options"
+  :type '(repeat
+          (list
+           (sexp :tag "Theme Component")
+           (choice
+            (const :tag "Force Off" off)
+            (const :tag "Force On" on)
+            (const :tag "Let theme decide" nil))))
+  :group 'ergoemacs-themes)
+
+(defcustom ergoemacs-theme-version
+  '()
+  "Each themes set version"
+  :type '(repeat
+          (string :tag "Theme Component")
+          (choice
+           (const :tag "Latest Version" nil)
+           (string :tag "Version")))
+  :group 'ergoemacs-theme)
 
 ;; (define-obsolete-face-alias 'ergoemacs-describe-key-kbd 'ergoemacs-display-key-face "")
 
@@ -418,7 +429,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 ;;   :initialize #'custom-initialize-default
 ;;   :group 'ergoemacs-mode)
 
-(ergoemacs-map-properties--get-original-global-map)
+(run-hooks 'ergoemacs-mode-intialize-hook)
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-mode.el ends here

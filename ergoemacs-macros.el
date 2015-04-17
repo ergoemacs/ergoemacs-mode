@@ -398,22 +398,43 @@ This was stole/modified from `c-save-buffer-state'"
 
 ;;;###autoload
 (defmacro ergoemacs-map (&optional keymap property set-value)
-  ""
+  "Get/Set keymaps and `ergoemacs-mode' properties
+
+When KEYMAP can be a property.  The following properties are supported:
+- :layout - returns the current (or specified by PROPERTY) keyboard layout.
+- :remap - Use `ergoemacs-mode' to remap to an appropriate function.
+- :md5 -- returns an md5 of the currently enabled `ergoemacs-mode' options.
+
+"
   (cond
+   ;; FIXME
+   ((and keymap (symbolp keymap)
+         (eq keymap :remap) property)
+    `(call-interactively ,property))
+
+   ((and keymap (symbolp keymap)
+         (eq keymap :md5))
+    `(ergoemacs-map--md5 ,property))
+   
+   ((and keymap (symbolp keymap)
+         (eq keymap :layout))
+    `(ergoemacs-layouts--current ,property))
+   
    ((and keymap property (not set-value)
          (symbolp property)
          (string= ":" (substring (symbol-name property) 0 1)))
+    
     ;; Get a property
     (cond
      ((eq property :full)
       `(ignore-errors (char-table-p (nth 1 (ergoemacs-map-properties--keymap-value ,keymap)))))
      ((eq property :indirect)
       (macroexpand-all `(ergoemacs-keymapp (symbol-function ,keymap))))
-     ((eq property '(:map-key :key))
+     ((memq property '(:map-key :key))
       ;; FIXME Expire any ids that are no longer linked??
       `(ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist ,keymap) :map-key)))
      ((eq property :prefixes)
-      (ergoemacs-map-properties--extract-prefixes keymap))
+      `(ergoemacs-map-properties--extract-prefixes ,keymap))
      ((memq property '(:map-list :original :composed-p :composed-list :key-struct))
       `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name property) 1))) ,keymap))
      (t
