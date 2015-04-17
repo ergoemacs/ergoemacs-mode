@@ -312,7 +312,7 @@ If LOOKUP-KEYMAP
                            (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))))
        ;; Decompose (rot) the keymap (so you can label the map)
        (setq ret (ergoemacs-mapkeymap nil ret))
-       (ergoemacs-map-properties--label
+       (ergoemacs-map :label
         ret
         lookup-key)
        (dolist (cur-map map)
