@@ -113,7 +113,7 @@
      
      (let ((map (if (eq setcdr-p 'remove)
                     (ergoemacs-map-properties--original (cdr elt) setcdr-p)
-                  (ergoemacs-map (cdr elt) setcdr-p))))
+                  (ergoemacs (cdr elt) setcdr-p))))
        (cons (car elt) map)))
    alist))
 
@@ -159,7 +159,7 @@
     
     (setq ret (ergoemacs-map--alist minor-mode-map-alist setcdr-p))
 
-    (when (and ret (not (ignore-errors (eq 'cond-map (car (ergoemacs-map (cdr (last ret)) :map-key))))))
+    (when (and ret (not (ignore-errors (eq 'cond-map (car (ergoemacs (cdr (last ret)) :map-key))))))
       (setq ret (append ret (ergoemacs-component-struct--minor-mode-map-alist))))
 
     (when setcdr-p
@@ -252,7 +252,7 @@ If LOOKUP-KEYMAP
          ret)
         ((setq ret (gethash
                     (list (and lookup-keymap
-                               (setq lookup-key (ergoemacs-map lookup-keymap :key-struct))) cur-layout unbind-keys)
+                               (setq lookup-key (ergoemacs lookup-keymap :key-struct))) cur-layout unbind-keys)
                     (ergoemacs-component-struct-calculated-layouts map)))
          ret)
         ((not lookup-keymap)
@@ -271,11 +271,11 @@ If LOOKUP-KEYMAP
       ((and (consp map)
             (setq lookup-key (ergoemacs-map--base-lookup-key map))
             (not lookup-keymap)
-            (setq lookup-key (append (list (ergoemacs-map (ergoemacs-map-properties--original global-map) :key-struct)) lookup-key))
+            (setq lookup-key (append (list (ergoemacs (ergoemacs-map-properties--original global-map) :key-struct)) lookup-key))
             (setq ret (gethash lookup-key ergoemacs-map--hash)))
        ret)
       ((and (consp map) lookup-key lookup-keymap
-            (setq lookup-key (append (list (ergoemacs-map lookup-keymap :key-struct)) lookup-key))
+            (setq lookup-key (append (list (ergoemacs lookup-keymap :key-struct)) lookup-key))
             
             (setq ret (gethash lookup-key ergoemacs-map--hash)))
        ret)
@@ -289,8 +289,8 @@ If LOOKUP-KEYMAP
             (progn ;; Check for composed keymaps or keymap parents
               (if (not lookup-keymap) t
                 (setq parent (keymap-parent lookup-keymap))
-                (setq composed-list (and (ergoemacs-map lookup-keymap :composed-p)
-                                         (ergoemacs-map lookup-keymap :composed-list)))
+                (setq composed-list (and (ergoemacs lookup-keymap :composed-p)
+                                         (ergoemacs lookup-keymap :composed-list)))
                 (and (not parent) (not composed-list))))
             (setq ret (make-composed-keymap
                        (append
@@ -312,7 +312,7 @@ If LOOKUP-KEYMAP
                            (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))))
        ;; Decompose (rot) the keymap (so you can label the map)
        (setq ret (ergoemacs-mapkeymap nil ret))
-       (ergoemacs-map :label
+       (ergoemacs :label
         ret
         lookup-key)
        (dolist (cur-map map)
@@ -347,17 +347,17 @@ If LOOKUP-KEYMAP
   (interactive)
   (when (not (consp (ergoemacs-map-properties--get-or-generate-map-key (current-global-map))))
     (message "Global")
-    (setq ergoemacs-keymap (ergoemacs-map))
+    (setq ergoemacs-keymap (ergoemacs))
     (use-global-map ergoemacs-keymap)
     (message "Emulation")
     (when emulation-mode-map-alists
-      (ergoemacs-map emulation-mode-map-alists t))
+      (ergoemacs emulation-mode-map-alists t))
     (message "Minor overriding")
     (when minor-mode-overriding-map-alist
-      (ergoemacs-map minor-mode-overriding-map-alist t))
+      (ergoemacs minor-mode-overriding-map-alist t))
     (message "Minor")
     (when minor-mode-map-alist
-      (ergoemacs-map minor-mode-map-alist t))
+      (ergoemacs minor-mode-map-alist t))
     (let ((layout
            (intern-soft
             (concat "ergoemacs-layout-" ergoemacs-keyboard-layout))))
@@ -384,16 +384,16 @@ If LOOKUP-KEYMAP
   (interactive)
   (use-global-map (ergoemacs-map-properties--original global-map t))
   (when emulation-mode-map-alists
-    (ergoemacs-map emulation-mode-map-alists 'remove))
+    (ergoemacs emulation-mode-map-alists 'remove))
   (when minor-mode-overriding-map-alist
-    (ergoemacs-map minor-mode-overriding-map-alist 'remove))
+    (ergoemacs minor-mode-overriding-map-alist 'remove))
   (when minor-mode-map-alist
-    (ergoemacs-map minor-mode-map-alist 'remove)))
+    (ergoemacs minor-mode-map-alist 'remove)))
 
 (add-hook 'ergoemacs-mode-shutdown-hook 'ergoemacs-map--remove)
 
-(autoload 'ergoemacs-map (expand-file-name "ergoemacs-macros.el" ergoemacs-dir) nil t)
-(provide 'ergoemacs-map)
+(autoload 'ergoemacs (expand-file-name "ergoemacs-macros.el" ergoemacs-dir) nil t)
+(provide 'ergoemacs)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-map.el ends here
 ;; Local Variables:

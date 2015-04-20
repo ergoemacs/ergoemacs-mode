@@ -397,7 +397,7 @@ This was stole/modified from `c-save-buffer-state'"
             (set-buffer-modified-p nil)))))
 
 ;;;###autoload
-(defmacro ergoemacs-map (&optional keymap property set-value)
+(defmacro ergoemacs (&optional keymap property set-value)
   "Get/Set keymaps and `ergoemacs-mode' properties
 
 When KEYMAP can be a property.  The following properties are supported:

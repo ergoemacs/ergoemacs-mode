@@ -67,8 +67,8 @@
 
 (defun ergoemacs-translate--get-hash (&optional layout-to layout-from)
   "Gets the translation hash."
-  (let* ((to (ergoemacs-map :layout  (or layout-to ergoemacs-keyboard-layout)))
-         (from (ergoemacs-map :layout  (or layout-from "us")))
+  (let* ((to (ergoemacs :layout  (or layout-to ergoemacs-keyboard-layout)))
+         (from (ergoemacs :layout  (or layout-from "us")))
          (hash-f (gethash from ergoemacs-translate--hash (make-hash-table)))
          (hash-f-t (gethash to hash-f))
          (i 0)
@@ -138,7 +138,7 @@ KEY-SEQ must be a vector.  If there is no need to escape the key sequence return
 
 (defun ergoemacs-translate--event-modifier-hash (&optional layout)
   "Gets the event modifier hash for LAYOUT."
-  (let* ((layout-symbol (ergoemacs-map :layout  layout))
+  (let* ((layout-symbol (ergoemacs :layout  layout))
          (hash (gethash layout-symbol ergoemacs-translate--event-hash)))
     (if hash hash
       ;; Not present setup modifier hash

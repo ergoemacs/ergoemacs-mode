@@ -80,6 +80,7 @@
 
 ;; Fundamental ergoemacs functions
 
+
 ;; Include extra files
 (defvar ergoemacs-dir
   (file-name-directory

@@ -478,13 +478,13 @@ closest `ergoemacs-theme-version' calculated from
   "Get component MAP and return KEYMAP updating MAP cache.
 Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY. "
   (let* (ret
-         ;; (map-list (and lookup-keymap (ergoemacs-map lookup-keymap :map-list)))
+         ;; (map-list (and lookup-keymap (ergoemacs lookup-keymap :map-list)))
          (relative-map-name (and lookup-keymap (ergoemacs-component-struct-relative-to map)))
          ;; (relative-map-p (and lookup-keymap (not (member relative-map-name map-list))))
          (relative-map (and lookup-keymap
                             (if (eq relative-map-name 'global-map)
                                 ergoemacs-map-properties--original-global-map
-                              (ergoemacs-map (symbol-value relative-map-name) :original))))
+                              (ergoemacs (symbol-value relative-map-name) :original))))
          (cmap (or translate-map (ergoemacs-component-struct-map map)))
          (just-first-keys (ergoemacs-component-struct-just-first-keys map))
          (variable-modifiers (ergoemacs-component-struct-variable-modifiers map))
@@ -521,7 +521,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
                   (catch 'found-extra
                     ;; If there are exceptions, install them before
                     ;; any lookups.
-                    (dolist (map-name (ergoemacs-map lookup-keymap :map-list))
+                    (dolist (map-name (ergoemacs lookup-keymap :map-list))
                       (setq extra-map (gethash map-name extra-hash))
                       (when extra-map
                         (throw 'found-extra t))) nil)))
@@ -569,7 +569,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
     (maphash
      (lambda(key value)
        (setq map (ergoemacs-mapkeymap nil (make-composed-keymap value)))
-       (ergoemacs-map map :label (list 'cond-map key ergoemacs-keyboard-layout))
+       (ergoemacs map :label (list 'cond-map key ergoemacs-keyboard-layout))
        (push (cons key map) ret))
      (ergoemacs-component-struct--minor-mode-map-alist-hash obj))
     ret))
@@ -606,7 +606,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
                    (ergoemacs-sv key))
              label (list 'hook-maps key (or layout ergoemacs-keyboard-layout) (if tmp t nil))
              tmp (ergoemacs-mapkeymap nil (make-composed-keymap value tmp)))
-       (ergoemacs-map tmp :label label)
+       (ergoemacs tmp :label label)
        (push (cons key tmp) ret))
      (ergoemacs-component-struct--hook-hash hook layout obj))
     ret))
