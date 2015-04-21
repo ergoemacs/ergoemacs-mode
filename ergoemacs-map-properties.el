@@ -63,7 +63,6 @@
 (declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
-(declare-function ergoemacs-map--setcdr "ergoemacs-map")
 
 (defvar ergoemacs-map-properties--ignored-prefixes '(;; "C-h" "<f1>"
                                      [27]  [escape]
@@ -141,6 +140,21 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
         (when melt
           (setq ret (append '(keymap) ret))))
       ret)))
+
+(defun ergoemacs-map-properties--current-local-map-p (keymap &rest _ignore)
+  "Determines if the KEYMAP is installed in `current-local-map'."
+  ;; Make sure they both have labels
+  (if (or (not (current-local-map))
+          (not (ergoemacs-keymapp keymap))) nil
+    (ergoemacs keymap :label)
+    (ergoemacs (current-local-map) :label)
+    (let ((local-map-key (ergoemacs (current-local-map) :map-key))
+          (map-key (ergoemacs keymap :map-key)))
+      (when (consp local-map-key)
+        (setq local-map-key (plist-get (car local-map-key) :map-key)))
+      (when (consp map-key)
+        (setq map-key (plist-get (car map-key) :map-key)))
+      (= map-key local-map-key))))
 
 (defun ergoemacs-map-properties--composed (keymap &optional force)
   "Returns a list of `ergoemacs-mode' map-key for the composed keymap list"
@@ -528,7 +542,7 @@ The KEYMAP will have the structure
   "Determines if a KEYMAP is empty."
   (catch 'found-key
     (ergoemacs-mapkeymap
-     (lambda (cur-key item prefix)
+     (lambda (cur-key item _prefix)
        (if (consp cur-key)
            (throw 'found-key nil)
          (unless (eq item 'ergoemacs-prefix) 
@@ -537,72 +551,46 @@ The KEYMAP will have the structure
      keymap) t))
 
 ;;ergoemacs-map-properties--label
-(defun ergoemacs-map-properties--original (keymap &optional setcdr-p)
+(defun ergoemacs-map-properties--original (keymap)
   "Gets the original KEYMAP with `ergoemacs-mode' identifiers installed.
 KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let (map-key ret)
-    (ergoemacs-map--setcdr
-     (cond
-      ((and (ergoemacs-keymapp keymap) (setq map-key (ergoemacs-map-properties--get-or-generate-map-key keymap))
-            (integerp map-key))
-       (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash))
-       (if (and (not ret) ;; Don't save empty keymaps as original keymaps...
-                (or (equal keymap (make-sparse-keymap))
-                    (equal keymap (make-keymap)))) keymap
-         (unless ret
-           (ergoemacs :label keymap map-key)
-           (puthash map-key (copy-keymap (ergoemacs-map-properties--keymap-value keymap)) ergoemacs-map-properties--original-map-hash)
-           (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash)))
-         ret))
-      ((and map-key (ignore-errors (setq map-key (car (car map-key)))))
-       (ergoemacs-map-properties--original map-key))
-      ((and (consp keymap) (ignore-errors (setq map-key (plist-get keymap :map-key))) (integerp map-key))
-       (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash))
-       (setq map-key (plist-get keymap :parent))
-       (when map-key
-         (set-keymap-parent ret (ergoemacs-map-properties--original map-key)))
-       ret)
-      ((and map-key (consp map-key) (ignore-errors (setq map-key (car (car map-key)))))
-       (ergoemacs-map-properties--original map-key))
-      ((and (consp keymap) (ignore-errors (setq map-key (plist-get keymap :composed))))
-       (setq ret (plist-get keymap :parent))
-       (setq ret (make-composed-keymap
-                  (mapcar
-                   (lambda(map)
-                     (ergoemacs-map-properties--original map))
-                   map-key)
-                  (and ret (ergoemacs-map-properties--original ret))))
-       ret)) keymap setcdr-p)))
+    (cond
+     ((and (ergoemacs-keymapp keymap) (setq map-key (ergoemacs-map-properties--get-or-generate-map-key keymap))
+           (integerp map-key))
+      (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash))
+      (if (and (not ret) ;; Don't save empty keymaps as original keymaps...
+               (or (equal keymap (make-sparse-keymap))
+                   (equal keymap (make-keymap)))) keymap
+        (unless ret
+          (ergoemacs :label keymap map-key)
+          (puthash map-key (copy-keymap (ergoemacs-map-properties--keymap-value keymap)) ergoemacs-map-properties--original-map-hash)
+          (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash)))
+        ret))
+     ((and map-key (ignore-errors (setq map-key (car (car map-key)))))
+      (ergoemacs-map-properties--original map-key))
+     ((and (consp keymap) (ignore-errors (setq map-key (plist-get keymap :map-key))) (integerp map-key))
+      (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash))
+      (setq map-key (plist-get keymap :parent))
+      (when map-key
+        (set-keymap-parent ret (ergoemacs-map-properties--original map-key)))
+      ret)
+     ((and map-key (consp map-key) (ignore-errors (setq map-key (car (car map-key)))))
+      (ergoemacs-map-properties--original map-key))
+     ((and (consp keymap) (ignore-errors (setq map-key (plist-get keymap :composed))))
+      (setq ret (plist-get keymap :parent))
+      (setq ret (make-composed-keymap
+                 (mapcar
+                  (lambda(map)
+                    (ergoemacs-map-properties--original map))
+                  map-key)
+                 (and ret (ergoemacs-map-properties--original ret))))
+      ret))))
 
 ;; Startup and load functions
 
-(defun ergoemacs-map-properties--label-after-startup ()
-  "Labels known unlabeled maps after startup. Also label maps after everything has loaded."
-  (ergoemacs-map-properties--label-unlabeled)
-  (add-hook 'after-load-functions 'ergoemacs-map-properties--label-unlabeled))
-(add-hook 'after-init-hook 'ergoemacs-map-properties--label-after-startup)
-
-
-(unless init-file-user
-  (run-with-idle-timer 0.05 nil 'ergoemacs-map-properties--label-after-startup))
-
-;;; Uncharacterized
-(defun ergoemacs-global-changed-p (key)
-  "Determines if the global KEY has changed"
-  (let* ((key (or (and (vectorp key) key)
-                  (read-kbd-macro (key-description key) t)))
-         (after-changed (ergoemacs global-map :keys-after-changed))
-         keymap k1 k2 ret)
-    (if (member key after-changed) t
-      (setq keymap (or (and ergoemacs-ignore-prev-global ergoemacs-map-properties--global-map-before-ergoemacs)
-                       ergoemacs-map-properties--original-global-map)
-            k1 (lookup-key keymap key t)
-            k2 (lookup-key global-map key t)
-            ret (not (or (eq k1 k2) (and (keymapp k1) (keymapp k2)))))
-      (when ret ;; Cache result
-        (push key after-changed)
-        (ergoemacs-map-properties--put global-map :keys-after-changed after-changed))
-      ret)))
+(add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
+(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
 
 (provide 'ergoemacs-map-properties)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

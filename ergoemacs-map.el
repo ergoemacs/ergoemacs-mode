@@ -94,19 +94,6 @@
 (defvar ergoemacs-map--hash (make-hash-table :test 'equal)
   "Hash of calculated maps")
 
-(defun ergoemacs-map--setcdr (map lookup-keymap setcdr-p)
-  "Sets the keymap MAP in place when SETCDR-P is non-nil..."
-  (let (tmp)
-    (cond
-     ((not setcdr-p)
-      map)
-     ((not (ergoemacs-keymapp map))
-      map)
-     ((ergoemacs-keymapp lookup-keymap)
-      ;;
-      map)
-     (t map))))
-
 (defun ergoemacs-map--alist (alist &optional setcdr-p)
   "Apply maps for ALIST."
   (mapcar
@@ -191,7 +178,7 @@
 MAP-LIST is the list of theme components if not pre-specified."
   (md5 (format "%s" (ergoemacs-map--base-lookup-key (ergoemacs-component-struct--lookup-hash (or map-list (ergoemacs-theme-components)))))))
 
-(defun ergoemacs-map-- (&optional lookup-keymap setcdr-p unbind-keys layout map recursive)
+(defun ergoemacs-map-- (&optional lookup-keymap unbind-keys layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
 MAP can be a `ergoemacs-component-struct', or a string/symbol
@@ -202,8 +189,6 @@ MAP can also be a list of `ergoemacs-component-struct' values
 or string/symbols that are in `ergoemacs-component-hash'
 
 If missing, MAP represents the current theme compenents, from `ergoemacs-theme-components'
-
-SETCDR-P tells ergoemacs-mode to swap out the keymaps.
 
 LAYOUT represents the layout that is used.
 
@@ -226,133 +211,131 @@ If LOOKUP-KEYMAP
          composed-list
          (read-map (make-sparse-keymap))
          ret)
-    (ergoemacs-map--setcdr
-     (cond
-      ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
-       lookup-keymap)
-      ((and (ergoemacs-keymapp lookup-keymap)
-            (or (and overriding-terminal-local-map
-                     (eq overriding-terminal-local-map lookup-keymap))
-                (and overriding-local-map
-                     (eq overriding-local-map lookup-keymap))
-                (eq (get-char-property (point) 'keymap) lookup-keymap)))
-       ;; Need to install modal and read-key maps into these
-       ;; keymaps...
-       )
-      ;; ((eq (current-local-map) lookup-keymap)
-      ;;  ;; Modify local map.
-      ;;  )
-      ((ergoemacs-component-struct-p map)
-       (cond
-        ((and (not lookup-keymap)
-              (string= cur-layout (ergoemacs-component-struct-layout map)))
-         (ergoemacs-component-struct-map map))
-        ((and (not lookup-keymap)
-              (setq ret (gethash
-                         (list nil cur-layout unbind-keys)
-                         (ergoemacs-component-struct-calculated-layouts map))))
-         ret)
-        ((setq ret (gethash
-                    (list (and lookup-keymap
-                               (setq lookup-key (ergoemacs lookup-keymap :key-struct))) cur-layout unbind-keys)
-                    (ergoemacs-component-struct-calculated-layouts map)))
-         ret)
-        ((not lookup-keymap)
-         ;; Overall layout hasn't been calculated.
-         (ergoemacs-component-struct--get map cur-layout nil nil unbind-keys))
-        ((ergoemacs-keymapp lookup-keymap)
-         ;; Layout for lookup keymap hasn't been calculated
-         (ergoemacs-component-struct--get map cur-layout lookup-keymap lookup-key unbind-keys))
-        (t
-         (error "Cant calculate/lookup keymap."))))
-      ((and (consp map) ;; Don't do anything with blank keymaps.
-            lookup-keymap
-            (or (equal lookup-keymap (make-sparse-keymap))
-                (equal lookup-keymap (make-keymap))))
-       lookup-keymap)
-      ((and (consp map)
-            (setq lookup-key (ergoemacs-map--base-lookup-key map))
-            (not lookup-keymap)
-            (setq lookup-key (append (list (ergoemacs (ergoemacs-map-properties--original global-map) :key-struct)) lookup-key))
-            (setq ret (gethash lookup-key ergoemacs-map--hash)))
-       ret)
-      ((and (consp map) lookup-key lookup-keymap
-            (setq lookup-key (append (list (ergoemacs lookup-keymap :key-struct)) lookup-key))
-            (setq ret (gethash lookup-key ergoemacs-map--hash)))
-       ret)
-      ((and (consp map) lookup-key
-            (progn
-              (dolist (cur-map map)
-                (setq unbind-list (append unbind-list
-                                          (ergoemacs-component-struct--translated-list
-                                           cur-map (ergoemacs-component-struct-unbind cur-map)))))
-              t)
-            (progn ;; Check for composed keymaps or keymap parents
-              (if (not lookup-keymap) t
-                (setq parent (keymap-parent lookup-keymap))
-                (setq composed-list (and (ergoemacs lookup-keymap :composed-p)
-                                         (ergoemacs lookup-keymap :composed-list)))
-                (and (not parent) (not composed-list))))
-            (setq ret (make-composed-keymap
-                       (append
-                        (mapcar
-                         (lambda(cur-map)
-                           (let ((ret (ergoemacs-map-- lookup-keymap setcdr-p unbind-list layout cur-map t)))
-                             ;; (when (not lookup-keymap)
-                             ;;   (ergoemacs-debug-heading "%s" (ergoemacs-component-struct-name cur-map))
-                             ;;   (ergoemacs-debug-keymap ret))
-                             ret))
-                           map)
-                        (and (not lookup-keymap)
-                             (list
-                              (let ((undefined-map (make-sparse-keymap)))
-                                (dolist (cur-map map)
-                                  (dolist (undefined-key
-                                           (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-undefined cur-map)))
-                                    (unless (member undefined-key ret)
-                                      (define-key undefined-map undefined-key 'ergoemacs-map-undefined))))
-                                undefined-map))))
-                       ;; (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
-                       ;;     (and (not lookup-keymap) (ergoemacs-map-properties--original global-map)))
-                       )))
-       ;; Decompose (rot) the keymap (so you can label the map)
-       (setq ret (ergoemacs-mapkeymap nil ret))
-       (ergoemacs :label ret lookup-key)
-       ;; Set the parent map as the original map.
-       (set-keymap-parent ret (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
-                                  (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))
-       ;; Ensure the unbound keys are truly undefined.
-       (dolist (key unbind-list)
-         (when (let ((tmp (lookup-key ret key)))
-                 (and tmp (not (integerp tmp))))
-           (define-key ret key nil)))
-       (dolist (cur-map map)
-         (dolist (read-key
-                  (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-read-list cur-map)))
-           (define-key read-map read-key 'ergoemacs-read-key-default)))
-       (when lookup-key
-         (puthash lookup-key ret ergoemacs-map--hash)
-         (puthash (cons 'read-map lookup-key) read-map ergoemacs-map--hash))
-       ret)
-      ((and (not composed-list) parent)
-       (unwind-protect
+    (cond
+     ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
+      lookup-keymap)
+     ((and (ergoemacs-keymapp lookup-keymap)
+           (or (and overriding-terminal-local-map
+                    (eq overriding-terminal-local-map lookup-keymap))
+               (and overriding-local-map
+                    (eq overriding-local-map lookup-keymap))
+               (eq (get-char-property (point) 'keymap) lookup-keymap)))
+      ;; Need to install modal and read-key maps into these
+      ;; keymaps...
+      )
+     ;; ((eq (current-local-map) lookup-keymap)
+     ;;  ;; Modify local map.
+     ;;  )
+     ((ergoemacs-component-struct-p map)
+      (cond
+       ((and (not lookup-keymap)
+             (string= cur-layout (ergoemacs-component-struct-layout map)))
+        (ergoemacs-component-struct-map map))
+       ((and (not lookup-keymap)
+             (setq ret (gethash
+                        (list nil cur-layout unbind-keys)
+                        (ergoemacs-component-struct-calculated-layouts map))))
+        ret)
+       ((setq ret (gethash
+                   (list (and lookup-keymap
+                              (setq lookup-key (ergoemacs lookup-keymap :key-struct))) cur-layout unbind-keys)
+                   (ergoemacs-component-struct-calculated-layouts map)))
+        ret)
+       ((not lookup-keymap)
+        ;; Overall layout hasn't been calculated.
+        (ergoemacs-component-struct--get map cur-layout nil nil unbind-keys))
+       ((ergoemacs-keymapp lookup-keymap)
+        ;; Layout for lookup keymap hasn't been calculated
+        (ergoemacs-component-struct--get map cur-layout lookup-keymap lookup-key unbind-keys))
+       (t
+        (error "Cant calculate/lookup keymap."))))
+     ((and (consp map) ;; Don't do anything with blank keymaps.
+           lookup-keymap
+           (or (equal lookup-keymap (make-sparse-keymap))
+               (equal lookup-keymap (make-keymap))))
+      lookup-keymap)
+     ((and (consp map)
+           (setq lookup-key (ergoemacs-map--base-lookup-key map))
+           (not lookup-keymap)
+           (setq lookup-key (append (list (ergoemacs (ergoemacs-map-properties--original global-map) :key-struct)) lookup-key))
+           (setq ret (gethash lookup-key ergoemacs-map--hash)))
+      ret)
+     ((and (consp map) lookup-key lookup-keymap
+           (setq lookup-key (append (list (ergoemacs lookup-keymap :key-struct)) lookup-key))
+           (setq ret (gethash lookup-key ergoemacs-map--hash)))
+      ret)
+     ((and (consp map) lookup-key
            (progn
-             (set-keymap-parent lookup-keymap nil)
-             (setq ret (ergoemacs-map-- lookup-keymap setcdr-p unbind-keys layout map t)))
-         (set-keymap-parent lookup-keymap parent))
-       (setq parent (ergoemacs-map-- parent setcdr-p unbind-keys layout map t))
-       (set-keymap-parent ret parent)
-       ret)
-      (composed-list
-       (make-composed-keymap
-        (mapcar
-         (lambda(x)
-           (ergoemacs-map-- x setcdr-p unbind-keys layout map t))
-         composed-list)
-        (ergoemacs-map-- parent setcdr-p unbind-keys layout map t)))
-      (t
-       (error "Component map isn't a proper argument")))
-     lookup-keymap setcdr-p)))
+             (dolist (cur-map map)
+               (setq unbind-list (append unbind-list
+                                         (ergoemacs-component-struct--translated-list
+                                          cur-map (ergoemacs-component-struct-unbind cur-map)))))
+             t)
+           (progn ;; Check for composed keymaps or keymap parents
+             (if (not lookup-keymap) t
+               (setq parent (keymap-parent lookup-keymap))
+               (setq composed-list (and (ergoemacs lookup-keymap :composed-p)
+                                        (ergoemacs lookup-keymap :composed-list)))
+               (and (not parent) (not composed-list))))
+           (setq ret (make-composed-keymap
+                      (append
+                       (mapcar
+                        (lambda(cur-map)
+                          (let ((ret (ergoemacs-map-- lookup-keymap unbind-list layout cur-map t)))
+                            ;; (when (not lookup-keymap)
+                            ;;   (ergoemacs-debug-heading "%s" (ergoemacs-component-struct-name cur-map))
+                            ;;   (ergoemacs-debug-keymap ret))
+                            ret))
+                        map)
+                       (and (not lookup-keymap)
+                            (list
+                             (let ((undefined-map (make-sparse-keymap)))
+                               (dolist (cur-map map)
+                                 (dolist (undefined-key
+                                          (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-undefined cur-map)))
+                                   (unless (member undefined-key ret)
+                                     (define-key undefined-map undefined-key 'ergoemacs-map-undefined))))
+                               undefined-map))))
+                      ;; (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
+                      ;;     (and (not lookup-keymap) (ergoemacs-map-properties--original global-map)))
+                      )))
+      ;; Decompose (rot) the keymap (so you can label the map)
+      (setq ret (ergoemacs-mapkeymap nil ret))
+      (ergoemacs :label ret lookup-key)
+      ;; Set the parent map as the original map.
+      (set-keymap-parent ret (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
+                                 (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))
+      ;; Ensure the unbound keys are truly undefined.
+      (dolist (key unbind-list)
+        (when (let ((tmp (lookup-key ret key)))
+                (and tmp (not (integerp tmp))))
+          (define-key ret key nil)))
+      (dolist (cur-map map)
+        (dolist (read-key
+                 (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-read-list cur-map)))
+          (define-key read-map read-key 'ergoemacs-read-key-default)))
+      (when lookup-key
+        (puthash lookup-key ret ergoemacs-map--hash)
+        (puthash (cons 'read-map lookup-key) read-map ergoemacs-map--hash))
+      ret)
+     ((and (not composed-list) parent)
+      (unwind-protect
+          (progn
+            (set-keymap-parent lookup-keymap nil)
+            (setq ret (ergoemacs-map-- lookup-keymap unbind-keys layout map t)))
+        (set-keymap-parent lookup-keymap parent))
+      (setq parent (ergoemacs-map-- parent unbind-keys layout map t))
+      (set-keymap-parent ret parent)
+      ret)
+     (composed-list
+      (make-composed-keymap
+       (mapcar
+        (lambda(x)
+          (ergoemacs-map-- x unbind-keys layout map t))
+        composed-list)
+       (ergoemacs-map-- parent unbind-keys layout map t)))
+     (t
+      (error "Component map isn't a proper argument")))))
 
 (defun ergoemacs-map--install ()
   (interactive)
@@ -362,13 +345,13 @@ If LOOKUP-KEYMAP
     (use-global-map ergoemacs-keymap)
     (message "Emulation")
     (when emulation-mode-map-alists
-      (ergoemacs emulation-mode-map-alists t))
+      (ergoemacs emulation-mode-map-alists))
     (message "Minor overriding")
     (when minor-mode-overriding-map-alist
-      (ergoemacs minor-mode-overriding-map-alist t))
+      (ergoemacs minor-mode-overriding-map-alist))
     (message "Minor")
     (when minor-mode-map-alist
-      (ergoemacs minor-mode-map-alist t))
+      (ergoemacs minor-mode-map-alist))
     (let ((layout
            (intern-soft
             (concat "ergoemacs-layout-" ergoemacs-keyboard-layout))))
@@ -378,7 +361,7 @@ If LOOKUP-KEYMAP
        (t ; US qwerty by default
         (ergoemacs-translate-setup "us"))))
     ;; Add menu
-    (message "menu")
+    ;;; (message "menu")
     (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
       `("ErgoEmacs" . ,(ergoemacs-theme--menu (or ergoemacs-theme "standard"))))
     (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
@@ -392,6 +375,7 @@ If LOOKUP-KEYMAP
 (add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-map--install)
 
 (defun ergoemacs-map--remove ()
+  "Remove `ergoemacs-mode'"
   (interactive)
   (use-global-map (ergoemacs-map-properties--original global-map t))
   (when emulation-mode-map-alists

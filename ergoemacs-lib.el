@@ -88,9 +88,8 @@ If VAR is nil, return nil and do nothing.
 If DEFAULT is non-nil set the default value, instead of the symbol value."
   (if (symbolp var)
       (setcdr (ergoemacs-sv var default) val)
-    (if var
-        (setcdr var val)
-      nil)))
+    (if (not var) nil
+      (setcdr var val))))
 
 ;;;###autoload
 (defun ergoemacs-set (variable value &optional force)

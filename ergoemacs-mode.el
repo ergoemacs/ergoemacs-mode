@@ -156,7 +156,15 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 
 (require 'lookup-word-on-internet nil "NOERROR")
 
-(dolist (pkg '(ergoemacs-lib
+(defconst ergoemacs-font-lock-keywords
+  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice[*]\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
+     (1 font-lock-keyword-face)
+     (2 font-lock-constant-face nil t))))
+
+(font-lock-add-keywords 'emacs-lisp-mode ergoemacs-font-lock-keywords)
+
+(dolist (pkg '(ergoemacs-advice
+               ergoemacs-lib
                ergoemacs-mapkeymap
                ergoemacs-map-properties
                ergoemacs-layouts
@@ -186,13 +194,12 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defvar ergoemacs-mode-intialize-hook nil
   "Hook for initializing `ergoemacs-mode'")
 
-(defvar ergoemacs-mode-temporary-replacement-functions nil
-  "List of `ergoemacs-mode' replacement functions that are turned
-on when `ergoemacs-mode' is turned on.")
+(defvar ergoemacs-mode-init-hook nil
+  "Hook for running after emacs loads")
 
-(defvar ergoemacs-mode-permanent-replacement-functions nil
-  "List of `ergoemacs-mode' replacement functions that are turned 
-on after `ergoemacs-mode' is loaded, and not turned off.")
+(defvar ergoemacs-mode-after-load-hook nil
+  "Hook for running after a library loads")
+
 
 ;; ErgoEmacs minor mode
 ;;;###autoload
@@ -440,7 +447,28 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 ;;   :initialize #'custom-initialize-default
 ;;   :group 'ergoemacs-mode)
 
+
+(defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
+  "Run functions for anything that is loaded after emacs starts up."
+  (run-hooks 'ergoemacs-mode-after-load-hook))
+
+(defun ergoemacs-mode-after-init-emacs ()
+  "Run functions after emacs loads."
+  (run-hooks 'ergoemacs-mode-init-hook)
+  (add-hook 'after-load-functions 'ergoemacs-mode-after-startup-run-load-hooks))
+
+(add-hook 'after-init-hook 'ergoemacs-map-properties--label-after-startup)
+
+(unless init-file-user
+  (run-with-idle-timer 0.05 nil 'ergoemacs-mode-after-init-emacs))
+
 (run-hooks 'ergoemacs-mode-intialize-hook)
+
+(defun ergoemacs-map-properties--label-after-startup ()
+  "Labels known unlabeled maps after startup. Also label maps after everything has loaded."
+  (ergoemacs-map-properties--label-unlabeled)
+  (add-hook 'after-load-functions 'ergoemacs-map-properties--label-unlabeled))
+
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-mode.el ends here

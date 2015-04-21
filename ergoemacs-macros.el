@@ -404,13 +404,19 @@ When KEYMAP can be a property.  The following properties are supported:
 - :layout - returns the current (or specified by PROPERTY) keyboard layout.
 - :remap - Use `ergoemacs-mode' to remap to an appropriate function.
 - :md5 -- returns an md5 of the currently enabled `ergoemacs-mode' options.
-- :label -- Labels the keymap PROPERTY to SET-VALUE using `ergoemacs-map-properties--label'.
 - :theme-debug -- Debugs the theme by calling `ergoemacs-component--checkout'
 - :original -- Returns the original keymap
 - :map-list, :original,  :composed-p, :composed-list, :key-struct :empty-p calls ergoemacs-mat-properties-- equivalent functions.
 
 "
-  (let ((map-properties-list '(:map-list :original :composed-p :composed-list :key-struct :empty-p)))
+  (let ((map-properties-list '(:map-list
+                               :original
+                               :composed-p
+                               :composed-list
+                               :key-struct
+                               :empty-p
+                               :label
+                               :current-local-map-p)))
     (cond
      ((and keymap (symbolp keymap)
            (memq keymap map-properties-list))
@@ -427,10 +433,6 @@ When KEYMAP can be a property.  The following properties are supported:
      ((and keymap (symbolp keymap)
            (eq keymap :md5))
       `(ergoemacs-map--md5 ,property))
-
-     ((and keymap (symbolp keymap)
-           (eq keymap :label) property)
-      `(ergoemacs-map-properties--label ,property ,set-value))
      
      ((and keymap (symbolp keymap)
            (eq keymap :layout))
@@ -472,25 +474,32 @@ When KEYMAP can be a property.  The following properties are supported:
       `(ergoemacs-map--minor-mode-map-alist ,property))
 
      (t
-      `(ergoemacs-map-- ,keymap ,property))
+      `(ergoemacs-map-- ,keymap))
      )))
 
+;;;###autoload
 (defmacro ergoemacs-advice* (function args &rest body-and-plist)
-  "C style advice."
+  "Defines an `ergoemacs-mode' advice that replaces a function (like `define-key')"
+  (declare (doc-string 2)
+           (indent 2))
   (let ((kb (make-symbol "kb")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body `(,function () ,@body-and-plist)))
+    (setq kb (ergoemacs-theme-component--parse-keys-and-body `(nil nil ,@body-and-plist)))
     `(progn
-       (fset ',(intern (concat "ergoemacs-real-" (symbol-name function)))
-             (symbol-function ',function))
-       ,(when (plist-get (nth 0 kb) :file)
-          `(declare-function ,(intern (concat "ergoemacs-real-" (symbol-name function)))
-                             ,(plist-get (nth 0 kb) :file) ,args t))
-       (defun ,(intern (concat "ergoemacs-" (symbol-name function))) ,args
+       (defalias ',(intern (format "ergoemacs-advice--real-%s" (symbol-name function)))
+         (symbol-function ',function) (concat ,(format "ARGS=%s\n\n" args) (documentation ',function)
+                                              ,(format "\n\n`ergoemacs-mode' preserved the real `%s' in this function."
+                                                       (symbol-name function))))
+       (defun ,(intern (format "ergoemacs-advice--%s--" function)) ,args
+         ,(format "%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
+                  (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function))
          ,@(nth 1 kb))
+       ;; Hack to make sure the documentation is in the function...
+       (defalias ',(intern (format "ergoemacs-advice--%s" function)) ',(intern (format "ergoemacs-advice--%s--" function))
+         ,(format "ARGS=%s\n\n%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
+                  args (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function)))
        ,(if (plist-get (nth 0 kb) :always)
-            `(push ',function ergoemacs-mode-permanent-replacement-functions)
-          `(push ',function ergoemacs-mode-temporary-replacement-functions)))))
-
+            `(push ',function ergoemacs-advice--permanent-replace-functions)
+          `(push ',function ergoemacs-advice--temp-replace-functions)))))
 
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
