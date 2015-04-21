@@ -78,6 +78,9 @@
 (defvar ergoemacs-map-properties--original-map-hash (make-hash-table)
   "Hash table of the original maps that `ergoemacs-mode' saves.")
 
+(defvar ergoemacs-map-properties--user-map-hash (make-hash-table)
+  "Hash table of the user maps that `ergoemacs-mode' saves.")
+
 (defvar ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal))
 
 (defun ergoemacs-map-properties--keymap-value (keymap)
@@ -586,6 +589,20 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
                   map-key)
                  (and ret (ergoemacs-map-properties--original ret))))
       ret))))
+
+
+(defun ergoemacs-map-properties--user (keymap)
+  "Gets the user KEYMAP with `ergoemacs-mode' identifiers installed.
+KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
+  (let ((key (ergoemacs keymap :map-key))
+        map)
+    (when (integerp key)
+      (setq map (gethash key ergoemacs-map-properties--user-map-hash))
+      (unless map
+        (puthash key (make-sparse-keymap) ergoemacs-map-properties--user-map-hash)
+        (setq map (gethash key ergoemacs-map-properties--user-map-hash))
+        (ergoemacs map :label (list (ergoemacs keymap :key-struct) 'user))))
+    map))
 
 ;; Startup and load functions
 

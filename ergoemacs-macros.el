@@ -411,6 +411,7 @@ When KEYMAP can be a property.  The following properties are supported:
 "
   (let ((map-properties-list '(:map-list
                                :original
+                               :user
                                :composed-p
                                :composed-list
                                :key-struct
