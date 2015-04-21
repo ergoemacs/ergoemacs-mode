@@ -281,10 +281,10 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
         (tmp (make-symbol "tmp"))
         (based-on (make-symbol "based-on")))
     (setq kb (ergoemacs-theme-component--parse-keys-and-body body-and-plist))
-    (setq tmp (eval (plist-get (nth 0 kb) ':components)))
-    (push (intern (concat (plist-get (nth 0 kb) ':name) "-theme")) tmp)
-    (setq tmp (plist-put (nth 0 kb) ':components tmp))
-    (setq based-on (plist-get (nth 0 kb) ':based-on))
+    (setq tmp (eval (plist-get (nth 0 kb) :components)))
+    (push (intern (concat (plist-get (nth 0 kb) :name) "-theme")) tmp)
+    (setq tmp (plist-put (nth 0 kb) :components tmp))
+    (setq based-on (plist-get (nth 0 kb) :based-on))
     ;; (message "First Based-On: %s" based-on)
     (setq based-on (or (and (stringp based-on) based-on)
                        (and (symbolp based-on) (symbol-name based-on))
@@ -405,65 +405,91 @@ When KEYMAP can be a property.  The following properties are supported:
 - :remap - Use `ergoemacs-mode' to remap to an appropriate function.
 - :md5 -- returns an md5 of the currently enabled `ergoemacs-mode' options.
 - :label -- Labels the keymap PROPERTY to SET-VALUE using `ergoemacs-map-properties--label'.
-
+- :theme-debug -- Debugs the theme by calling `ergoemacs-component--checkout'
+- :original -- Returns the original keymap
+- :map-list, :original,  :composed-p, :composed-list, :key-struct :empty-p calls ergoemacs-mat-properties-- equivalent functions.
 
 "
-  (cond
-   ;; FIXME
-   ((and keymap (symbolp keymap)
-         (eq keymap :remap) property)
-    `(call-interactively ,property))
-
-   ((and keymap (symbolp keymap)
-         (eq keymap :md5))
-    `(ergoemacs-map--md5 ,property))
-
-   ((and keymap (symbolp keymap)
-         (eq keymap :label) property)
-    `(ergoemacs-map-properties--label ,property ,set-value))
-   
-   ((and keymap (symbolp keymap)
-         (eq keymap :layout))
-    `(ergoemacs-layouts--current ,property))
-   
-   ((and keymap property (not set-value)
-         (symbolp property)
-         (string= ":" (substring (symbol-name property) 0 1)))
-    
-    ;; Get a property
+  (let ((map-properties-list '(:map-list :original :composed-p :composed-list :key-struct :empty-p)))
     (cond
-     ((eq property :full)
-      `(ignore-errors (char-table-p (nth 1 (ergoemacs-map-properties--keymap-value ,keymap)))))
-     ((eq property :indirect)
-      (macroexpand-all `(ergoemacs-keymapp (symbol-function ,keymap))))
-     ((memq property '(:map-key :key))
-      ;; FIXME Expire any ids that are no longer linked??
-      `(ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist ,keymap) :map-key)))
-     ((eq property :prefixes)
-      `(ergoemacs-map-properties--extract-prefixes ,keymap))
-     ((memq property '(:map-list :original :composed-p :composed-list :key-struct :empty-p))
-      `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name property) 1))) ,keymap))
+     ((and keymap (symbolp keymap)
+           (memq keymap map-properties-list))
+      `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name keymap) 1))) ,property ,set-value))
+     
+     ((and keymap (symbolp keymap)
+           (memq keymap '(:debug-theme :theme-debug :debug)))
+      `(ergoemacs-component--checkout ,property ,set-value))
+     
+     ((and keymap (symbolp keymap)
+           (eq keymap :remap) property)
+      `(call-interactively ,property))
+
+     ((and keymap (symbolp keymap)
+           (eq keymap :md5))
+      `(ergoemacs-map--md5 ,property))
+
+     ((and keymap (symbolp keymap)
+           (eq keymap :label) property)
+      `(ergoemacs-map-properties--label ,property ,set-value))
+     
+     ((and keymap (symbolp keymap)
+           (eq keymap :layout))
+      `(ergoemacs-layouts--current ,property))
+     
+     ((and keymap property (not set-value)
+           (symbolp property)
+           (string= ":" (substring (symbol-name property) 0 1)))
+      
+      ;; Get a property
+      (cond
+       ((eq property :full)
+        `(ignore-errors (char-table-p (nth 1 (ergoemacs-map-properties--keymap-value ,keymap)))))
+       ((eq property :indirect)
+        (macroexpand-all `(ergoemacs-keymapp (symbol-function ,keymap))))
+       ((memq property '(:map-key :key))
+        ;; FIXME Expire any ids that are no longer linked??
+        `(ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist ,keymap) :map-key)))
+       ((eq property :prefixes)
+        `(ergoemacs-map-properties--extract-prefixes ,keymap))
+       ((memq property map-properties-list)
+        `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name property) 1))) ,keymap))
+       (t
+        `(ignore-errors (gethash ,property (gethash (ergoemacs-map-properties--key-struct (ergoemacs-map-properties--keymap-value ,keymap)) ergoemacs-map-properties--plist-hash))))))
+
+     ((and keymap property set-value
+           (symbolp property)
+           (string= ":" (substring (symbol-name property) 0 1)))
+      ;; Assign a property.
+      `(ergoemacs-map-properties--put ,keymap ,property ,set-value))
+     
+     ((and (not set-value) (eq keymap 'emulation-mode-map-alists))
+      `(ergoemacs-map--emulation-mode-map-alists ,property))
+     
+     ((and (not set-value) (eq keymap 'minor-mode-overriding-map-alist))
+      `(ergoemacs-map--minor-mode-overriding-map-alist ,property))
+
+     ((and (not set-value) (eq keymap 'minor-mode-map-alist))
+      `(ergoemacs-map--minor-mode-map-alist ,property))
+
      (t
-      `(ignore-errors (gethash ,property (gethash (ergoemacs-map-properties--key-struct (ergoemacs-map-properties--keymap-value ,keymap)) ergoemacs-map-properties--plist-hash))))))
+      `(ergoemacs-map-- ,keymap ,property))
+     )))
 
-   ((and keymap property set-value
-         (symbolp property)
-         (string= ":" (substring (symbol-name property) 0 1)))
-    ;; Assign a property.
-    `(ergoemacs-map-properties--put ,keymap ,property ,set-value))
-   
-   ((and (not set-value) (eq keymap 'emulation-mode-map-alists))
-    `(ergoemacs-map--emulation-mode-map-alists ,property))
-   
-   ((and (not set-value) (eq keymap 'minor-mode-overriding-map-alist))
-    `(ergoemacs-map--minor-mode-overriding-map-alist ,property))
-
-   ((and (not set-value) (eq keymap 'minor-mode-map-alist))
-    `(ergoemacs-map--minor-mode-map-alist ,property))
-
-   (t
-    `(ergoemacs-map-- ,keymap ,property))
-   ))
+(defmacro ergoemacs-advice* (function args &rest body-and-plist)
+  "C style advice."
+  (let ((kb (make-symbol "kb")))
+    (setq kb (ergoemacs-theme-component--parse-keys-and-body `(,function () ,@body-and-plist)))
+    `(progn
+       (fset ',(intern (concat "ergoemacs-real-" (symbol-name function)))
+             (symbol-function ',function))
+       ,(when (plist-get (nth 0 kb) :file)
+          `(declare-function ,(intern (concat "ergoemacs-real-" (symbol-name function)))
+                             ,(plist-get (nth 0 kb) :file) ,args t))
+       (defun ,(intern (concat "ergoemacs-" (symbol-name function))) ,args
+         ,@(nth 1 kb))
+       ,(if (plist-get (nth 0 kb) :always)
+            `(push ',function ergoemacs-mode-permanent-replacement-functions)
+          `(push ',function ergoemacs-mode-temporary-replacement-functions)))))
 
 
 (provide 'ergoemacs-macros)

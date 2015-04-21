@@ -466,7 +466,7 @@ MAP-NAME is the identifier of the map name.
 The KEYMAP will have the structure
   (keymap optional-char-table \"Optional Label\" (ergoemacs-labeled (lambda nil (plist-of-properties))) true-map)
 "
-  (if (not (ergoemacs-keymapp keymap) ) nil
+  (if (not (ergoemacs-keymapp keymap)) nil
     (if (ergoemacs-map-properties--composed-p keymap)
         (cond
          (map-key
@@ -529,9 +529,11 @@ The KEYMAP will have the structure
   (catch 'found-key
     (ergoemacs-mapkeymap
      (lambda (cur-key item prefix)
-       (unless (or (eq prefix t) (eq item 'ergoemacs-prefix)) 
-         (when item
-           (throw 'found-key nil))))
+       (if (consp cur-key)
+           (throw 'found-key nil)
+         (unless (eq item 'ergoemacs-prefix) 
+           (when item
+             (throw 'found-key nil)))))
      keymap) t))
 
 ;;ergoemacs-map-properties--label

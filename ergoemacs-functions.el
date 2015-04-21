@@ -1474,8 +1474,7 @@ Similar to (kill-buffer (current-buffer)) with the following addition:
 A emacs buffer is one who's name starts with *.
 Else it is a user buffer."
   (interactive)
-  (let ((override-fn (ergoemacs-get-override-function (this-single-command-keys)))
-        emacs-buff-p
+  (let (emacs-buff-p
         is-emacs-buffer-after-p
         (org-p (string-match "^[*]Org Src" (buffer-name)))
         (org-capture-p (string-match "CAPTURE-.*\\.org" (buffer-name)))
@@ -1492,10 +1491,7 @@ Else it is a user buffer."
           (set-buffer-modified-p nil)))
       (server-edit))
      ((string= major-mode "minibuffer-inactive-mode")
-      (if override-fn
-          (progn
-            (call-interactively override-fn))
-        (minibuffer-keyboard-quit)))
+      (minibuffer-keyboard-quit))
      (org-capture-p
       (if (y-or-n-p "Capture not saved, do you want to save?")
           (call-interactively 'org-capture-finalize)
@@ -1742,7 +1738,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
   :type 'boolean
   :group 'ergoemacs-mode)
 
-;; (declare-function ergoemacs-describe-key-kbd "ergoemacs-translate.el")
+;; (declare-function ergoemacs-key-description-kbd "ergoemacs-translate.el")
 ;; (defun ergoemacs-smart-punctuation ()
 ;;   "Smart Punctuation Function for `ergoemacs-mode'."
 ;;   (interactive) 
@@ -1776,7 +1772,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
 ;;         (define-key temp-map (read-kbd-macro repeat-key) this-command)
 ;;         (set-temporary-overlay-map temp-map)
 ;;         (when (eq (ergoemacs-real-key-binding (read-kbd-macro repeat-key) t) this-command)
-;;           (message "Cycle with %s" (ergoemacs-describe-key-kbd repeat-key)))))))
+;;           (message "Cycle with %s" (ergoemacs-key-description-kbd repeat-key)))))))
 
 
 (defun ergoemacs-org-insert-heading-respect-content (&optional reopen-or-invisible-ok)

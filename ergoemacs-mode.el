@@ -161,7 +161,8 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
                ergoemacs-map-properties
                ergoemacs-layouts
                ergoemacs-translate
-               ergoemacs-describe-key
+               ergoemacs-key-description
+               ergoemacs-debug
                ergoemacs-component
                ergoemacs-read-key
                ergoemacs-map
@@ -184,6 +185,15 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 
 (defvar ergoemacs-mode-intialize-hook nil
   "Hook for initializing `ergoemacs-mode'")
+
+(defvar ergoemacs-mode-temporary-replacement-functions nil
+  "List of `ergoemacs-mode' replacement functions that are turned
+on when `ergoemacs-mode' is turned on.")
+
+(defvar ergoemacs-mode-permanent-replacement-functions nil
+  "List of `ergoemacs-mode' replacement functions that are turned 
+on after `ergoemacs-mode' is loaded, and not turned off.")
+
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -418,7 +428,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
            (string :tag "Version")))
   :group 'ergoemacs-theme)
 
-;; (define-obsolete-face-alias 'ergoemacs-describe-key-kbd 'ergoemacs-display-key-face "")
+;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "")
 
 ;;; Options not supported now
 

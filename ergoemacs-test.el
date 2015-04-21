@@ -348,13 +348,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
    (ergoemacs-test-global-key-set-before
     'after "C-e" 'ergoemacs-key)))
 
-(declare-function ergoemacs-describe-key-kbd "ergoemacs-translate.el")
+(declare-function ergoemacs-key-description-kbd "ergoemacs-translate.el")
 (ert-deftest ergoemacs-test-ctl-c-ctl-c ()
   "Issue #64.  Should translate C-c C-c correctly."
   (let (ergoemacs-display-unicode-characters
         ergoemacs-display-key-use-face-p
         ergoemacs-display-small-symbols-for-key-modifiers)
-    (should (string= (ergoemacs-describe-key-kbd "C-c C-c") "[Ctrl+C][Ctrl+C]"))))
+    (should (string= (ergoemacs-key-description-kbd "C-c C-c") "[Ctrl+C][Ctrl+C]"))))
 
 (declare-function ergoemacs-cut-line-or-region "ergoemacs-functions.el")
 (ert-deftest ergoemacs-test-cut-line-or-region ()
@@ -373,14 +373,14 @@ not using cua or cutting line. I think kill-region is what is meant."
       (cua-mode 1))
     (should ret)))
 
-(declare-function ergoemacs-describe-key-kbd "ergoemacs-translate.el")
+(declare-function ergoemacs-key-description-kbd "ergoemacs-translate.el")
 (ert-deftest ergoemacs-test-issue-77 ()
   "Issue #77.
 Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
   (let (ergoemacs-display-unicode-characters
         ergoemacs-display-key-use-face-p
         ergoemacs-display-small-symbols-for-key-modifiers)
-    (should (string= (ergoemacs-describe-key-kbd "C-x ") "[Ctrl+X]"))))
+    (should (string= (ergoemacs-key-description-kbd "C-x ") "[Ctrl+X]"))))
 
 (ert-deftest ergoemacs-test-issue-86 ()
   "Test Issue #86.
@@ -824,7 +824,7 @@ Selected mark would not be cleared after paste."
 
 (ert-deftest ergoemacs-test-command-remapping ()
   "Test to make sure remapping for `ergoemacs-commands' are applied."
-  (should (eq 'ergoemacs-describe-key (command-remapping 'describe-key))))
+  (should (eq 'ergoemacs-key-description (command-remapping 'describe-key))))
 
 ;; Fixed, but tests dont work.  Not sure why ergoemacs-test-fn goes to nil
 
@@ -1043,7 +1043,7 @@ Selected mark would not be cleared after paste."
   "Test `package-list-packages' `substitute-command-keys'"
   (require 'package)
   (package-list-packages-no-fetch)
-  (should (string= (ergoemacs-describe-key-kbd "U")
+  (should (string= (ergoemacs-key-description-kbd "U")
                    (substitute-command-keys
                     "\\[package-menu-mark-upgrades]")))
   (kill-buffer (current-buffer)))

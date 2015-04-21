@@ -1139,7 +1139,7 @@
     (global-set-key [remap universal-argument]
                     'ergoemacs-universal-argument)
     (global-set-key [remap describe-key]
-                    'ergoemacs-describe-key)
+                    'ergoemacs-key-description)
     (global-set-key [remap describe-mode]
                     'ergoemacs-describe-major-mode)
     (global-set-key [remap ergoemacs-print-buffer-confirm]

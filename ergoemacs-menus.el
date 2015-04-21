@@ -37,14 +37,14 @@
 (defvar ergoemacs-mode-web-page-url
   "http://ergoemacs.github.io/")
 
-(declare-function ergoemacs-describe-key-kbd "ergoemacs-translate.el")
+(declare-function ergoemacs-key-description-kbd "ergoemacs-translate.el")
 (defvar ergoemacs-display-unicode-characters)
 (defun ergoemacs-kbd-to-key (key)
   "Convert key Emacs key code to ergoemacs-key-code."
   (let ((ergoemacs-display-unicode-characters nil))
     (replace-regexp-in-string
      "\\(\\[\\|\\]\\)" ""
-     (replace-regexp-in-string "\\]\\[" " "(ergoemacs-describe-key-kbd key)))))
+     (replace-regexp-in-string "\\]\\[" " "(ergoemacs-key-description-kbd key)))))
 
 (defun ergoemacs-shortcut-for-menu-item (item)
   (if (and (>= (safe-length item) 4)
