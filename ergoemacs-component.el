@@ -488,81 +488,67 @@ closest `ergoemacs-theme-version' calculated from
 
 (defvar ergoemacs-component-struct--get-keymap nil)
 (defvar ergoemacs-component-struct--get-keymap-extra nil)
+(defun ergoemacs-component-struct--lookup-list (lookup-keymap &optional layout obj)
+  ""
+  (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
+        (cur-layout (or layout ergoemacs-keyboard-layout))
+        ;; (ergoemacs-component-struct--lookup-list org-mode-map)
+        extra-hash
+        tmp ret extra-map final-map)
+    (if (consp obj)
+        (dolist (cobj (reverse obj))
+          (when (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap layout cobj))
+            (push tmp ret)))
+      (setq extra-hash (ergoemacs-component-struct-maps obj))
+      (when (catch 'found-extra
+              ;; If there are exceptions, install them before
+              ;; any lookups.
+              (dolist (map-name (ergoemacs lookup-keymap :map-list))
+                (setq extra-map (gethash map-name extra-hash))
+                (when extra-map
+                  (setq final-map map-name)
+                  (throw 'found-extra t))) nil)
+        (setq ret (ergoemacs-component-struct--get obj cur-layout final-map nil extra-map))))
+    ret))
 
-(defun ergoemacs-component-struct--get (map cur-layout &optional lookup-keymap lookup-key unbind-keys translate-map)
+(defun ergoemacs-component-struct--get (map cur-layout &optional lookup-key unbind-keys translate-map)
   "Get component MAP and return KEYMAP updating MAP cache.
-Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY. "
+Cache using LOOKUP-KEY. "
   (let* (ret
-         ;; (map-list (and lookup-keymap (ergoemacs lookup-keymap :map-list)))
-         (relative-map-name (and lookup-keymap (ergoemacs-component-struct-relative-to map)))
-         ;; (relative-map-p (and lookup-keymap (not (member relative-map-name map-list))))
-         (relative-map (and lookup-keymap
-                            (if (eq relative-map-name 'global-map)
-                                ergoemacs-map-properties--original-global-map
-                              (ergoemacs (symbol-value relative-map-name) :original))))
          (cmap (or translate-map (ergoemacs-component-struct-map map)))
          (just-first-keys (ergoemacs-component-struct-just-first-keys map))
          (variable-modifiers (ergoemacs-component-struct-variable-modifiers map))
          (variable-prefixes (ergoemacs-component-struct-variable-prefixes map))
          (layout-from (ergoemacs-component-struct-layout map))
          (hash (ergoemacs-component-struct-calculated-layouts map))
-         (extra-hash (ergoemacs-component-struct-maps map))
+         (hashkey)
          tmp
          extra-map)
-    (setq ergoemacs-component-struct--get-keymap (make-sparse-keymap))
-    (ergoemacs-mapkeymap
-     (lambda (key item prefix)
-       (if (consp key)
-           (warn "Keymap range currently not supported %s,%s %s" key item prefix)
-         (unless (eq item 'ergoemacs-prefix)
-           (let ((new-key (ergoemacs-translate
-                           key just-first-keys variable-modifiers variable-prefixes cur-layout layout-from))
-                 ;; (where-is-internal item relative-map)
-                 ;; (other-command-keys
-                 ;;  (and relative-map ;; (setq tmp (ergoemacs relative-map :where-is))
-                 ;;       ;; (gethash item tmp)
-                 ;;       (where-is-internal item relative-map)
-                 ;;       ))
-                 ;; new-command
-                 )
-             ;; Don't add key that is a member of unbind-keys
-             (when (or (not unbind-keys) 
-                       (not (member new-key unbind-keys)))
-               (cond
-                ((not relative-map)
-                 (ergoemacs-advice--real-define-key ergoemacs-component-struct--get-keymap new-key item))
-                ((and relative-map lookup-keymap (setq tmp (ergoemacs lookup-keymap :new-command item)))
-                 (ergoemacs-advice--real-define-key ergoemacs-component-struct--get-keymap new-key tmp))
-                ((and relative-map (member new-key (ergoemacs relative-map :keys)))
-                 (ergoemacs-advice--real-define-key ergoemacs-component-struct--get-keymap new-key item))))))))
-     cmap)
-    (if (not (and lookup-keymap
-                  (catch 'found-extra
-                    ;; If there are exceptions, install them before
-                    ;; any lookups.
-                    (dolist (map-name (ergoemacs lookup-keymap :map-list))
-                      (setq extra-map (gethash map-name extra-hash))
-                      (when extra-map
-                        (throw 'found-extra t))) nil)))
-        (setq ret (copy-keymap ergoemacs-component-struct--get-keymap))
-      (when unbind-keys
-        (setq ergoemacs-component-struct--get-keymap-extra (make-sparse-keymap))
-        (ergoemacs-mapkeymap
-         (lambda (key item prefix)
-           (if (consp key)
-               (message "Keymap range not supported %s,%s,%s" key item prefix)
-             (unless (eq item 'ergoemacs-prefix)
-               (when (or (not unbind-keys) ;; Don't add key that is a
-                         ;; member of unbind-keys
-                         (not (member key unbind-keys)))
-                 (ergoemacs-advice--real-define-key ergoemacs-component-struct--get-keymap-extra key item)))))
-         extra-map)
-        (setq extra-map ergoemacs-component-struct--get-keymap-extra))
-      (setq ret (ergoemacs-mapkeymap nil (make-composed-keymap (list extra-map ergoemacs-component-struct--get-keymap)))))
-    (ergoemacs ret :label (list lookup-key (intern (format "%s%s" (ergoemacs-component-struct-name map) (or (ergoemacs-component-struct-version map) ""))) (intern cur-layout)))
-    (puthash (list lookup-key (intern cur-layout)) ret hash)
-    (setq ergoemacs-component-struct--get-keymap nil)
-    ret))
+    (cond
+     ((string= layout-from cur-layout)
+      (setq ret (copy-keymap cmap))
+      ret)
+     ((setq ret (gethash (list lookup-key (intern cur-layout)) hash))
+      ret)
+     (t
+      (setq ergoemacs-component-struct--get-keymap (make-sparse-keymap))
+      (ergoemacs-mapkeymap
+       (lambda (key item prefix)
+         (if (consp key)
+             (warn "Keymap range currently not supported %s,%s %s" key item prefix)
+           (unless (eq item 'ergoemacs-prefix)
+             (let ((new-key (ergoemacs-translate
+                             key just-first-keys variable-modifiers variable-prefixes cur-layout layout-from)))
+               ;; Don't add key that is a member of unbind-keys
+               (when (or (not unbind-keys) 
+                         (not (member new-key unbind-keys)))
+                 (ergoemacs-advice--real-define-key ergoemacs-component-struct--get-keymap new-key item))))))
+       cmap)
+      (setq ret (copy-keymap ergoemacs-component-struct--get-keymap))
+      (ergoemacs ret :label (list lookup-key (intern (format "%s%s" (ergoemacs-component-struct-name map) (or (ergoemacs-component-struct-version map) ""))) (intern cur-layout)))
+      (puthash (list lookup-key (intern cur-layout)) ret hash)
+      (setq ergoemacs-component-struct--get-keymap nil)
+      ret))))
 
 (defun ergoemacs-component-struct--minor-mode-map-alist-hash (&optional obj layout)
   "Get `minor-mode-map-alist' additions in hash-table form."
@@ -581,7 +567,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
       (maphash
        (lambda(key value)
          ;; Put the translated keymap in a list in the hash.
-         (puthash key (list (ergoemacs-component-struct--get obj cur-layout nil (list 'cond-map key) nil value)) hash))
+         (puthash key (list (ergoemacs-component-struct--get obj cur-layout (list 'cond-map key) nil value)) hash))
        (ergoemacs-component-struct-cond-maps obj))
       hash))))
 
@@ -615,7 +601,7 @@ Optionally, lookup any translations in LOOKUP-KEYMAP, and cache using LOOKUP-KEY
         (maphash
          (lambda(key value)
            ;; Put the translated keymap in a list in the hash.
-           (puthash key (list (ergoemacs-component-struct--get obj cur-layout nil (list 'hook-maps hook key) nil value)) hash))
+           (puthash key (list (ergoemacs-component-struct--get obj cur-layout (list 'hook-maps hook key) nil value)) hash))
          tmp))
       hash))))
 

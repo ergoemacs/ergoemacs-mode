@@ -237,17 +237,9 @@ If LOOKUP-KEYMAP
                         (list nil cur-layout unbind-keys)
                         (ergoemacs-component-struct-calculated-layouts map))))
         ret)
-       ((setq ret (gethash
-                   (list (and lookup-keymap
-                              (setq lookup-key (ergoemacs lookup-keymap :key-struct))) cur-layout unbind-keys)
-                   (ergoemacs-component-struct-calculated-layouts map)))
-        ret)
        ((not lookup-keymap)
         ;; Overall layout hasn't been calculated.
-        (ergoemacs-component-struct--get map cur-layout nil nil unbind-keys))
-       ((ergoemacs-keymapp lookup-keymap)
-        ;; Layout for lookup keymap hasn't been calculated
-        (ergoemacs-component-struct--get map cur-layout lookup-keymap lookup-key unbind-keys))
+        (ergoemacs-component-struct--get map cur-layout nil unbind-keys))
        (t
         (error "Cant calculate/lookup keymap."))))
      ((and (consp map) ;; Don't do anything with blank keymaps.
@@ -285,11 +277,30 @@ If LOOKUP-KEYMAP
                    (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-undefined cur-map)))
             (unless (member undefined-key ret)
               (define-key tmp undefined-key 'ergoemacs-map-undefined))))
-        (push tmp composed-list))
-      (dolist (cur-map (reverse map))
-        (setq tmp (ergoemacs-map-- lookup-keymap unbind-list layout cur-map t))
-        (unless (ergoemacs tmp :empty-p)
-          (push tmp composed-list)))
+        (push tmp composed-list)
+        (dolist (cur-map (reverse map))
+          (setq tmp (ergoemacs-map-- lookup-keymap unbind-list layout cur-map t))
+          (unless (ergoemacs tmp :empty-p)
+            (push tmp composed-list))))
+      (when lookup-keymap
+        (setq composed-list (cdr (ergoemacs ergoemacs-keymap :composed-list))) ;; pop off user keys
+        (push 'keymap composed-list) ;; Make into keymap
+        ;; Look through `ergoemacs-mode' keys
+        (setq ret (make-sparse-keymap))
+        (setq parent (ergoemacs lookup-keymap :keys))
+        (ergoemacs-mapkeymap
+         (lambda(key item prefix)
+           (unless (eq item 'ergoemacs-prefix)
+             
+             (if (setq tmp (ergoemacs lookup-keymap :new-command item))
+                 (ergoemacs-advice--real-define-key ret key tmp)
+               (when (member key parent)
+                 (ergoemacs-advice--real-define-key ret key item)))))
+         composed-list)
+        (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
+        (setq composed-list (or (and tmp (append tmp (list tmp))) (list ret))
+              ret nil
+              parent nil))
       ;; Parent keymap
       (setq parent (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
                        (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))
@@ -390,14 +401,6 @@ If LOOKUP-KEYMAP
       (error "%s is disabled! Use %s for %s instead." key (ergoemacs-key-description (where-is-internal old-key ergoemacs-keymap t)) old-key))
      (t
       (error "%s is disabled!" key)))))
-
-;; (defun ergoemacs-map--modify-minibuffer-local-map ()
-;;   "Modify and use the minibuffer local map."
-;;   (ergoemacs-advice--use-local-map (current-local-map))
-;;   (message "Current Local Map: %s" (current-local-map))
-;;   (message "Global Map: %s" (keymap-parent (current-local-map))))
-
-;; (add-hook 'minibuffer-setup-hook 'ergoemacs-map--modify-minibuffer-local-map)
 
 (add-hook 'ergoemacs-mode-shutdown-hook 'ergoemacs-map--remove)
 
