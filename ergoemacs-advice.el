@@ -169,13 +169,14 @@ binding KEY to DEF is added at the front of KEYMAP.
 
 `ergoemacs-mode' modifies `define-key' in the following ways:
 "
-  (cond
-   ((and ergoemacs-mode (ergoemacs keymap :key) (ergoemacs :current-local-map-p keymap))
-    ;; Make changes in the local buffer as well as the keymap.
-    (ergoemacs-advice--real-define-key (current-local-map) key def)
-    (ergoemacs-advice--real-define-key keymap key def))
-   (t
-    (ergoemacs-advice--real-define-key keymap key def))))
+  (let (tmp)
+    (cond
+     ((and (consp (setq tmp (ergoemacs keymap :map-key)))
+           (ignore-errors (eq (nth 1 tmp) 'user)))
+      (ergoemacs-advice--real-define-key keymap key def)
+      (ergoemacs-advice--real-define-key (keymap-parent keymap) key def))
+     (t
+      (ergoemacs-advice--real-define-key keymap key def)))))
 
 
 

@@ -417,11 +417,18 @@ When KEYMAP can be a property.  The following properties are supported:
                                :key-struct
                                :empty-p
                                :label
-                               :current-local-map-p)))
+                               :current-local-map-p
+                               :keys
+                               :where-is
+                               :lookup)))
     (cond
      ((and keymap (symbolp keymap)
            (memq keymap map-properties-list))
       `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name keymap) 1))) ,property ,set-value))
+
+     ((and keymap property (eq property :new-command) set-value)
+      ;; (ergoemacs keymap :new-command 'next-line)
+      `(ergoemacs-map-properties--new-command ,keymap ,set-value))
      
      ((and keymap (symbolp keymap)
            (memq keymap '(:debug-theme :theme-debug :debug)))

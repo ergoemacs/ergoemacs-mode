@@ -85,7 +85,7 @@
       (when ergoemacs-mapkeymap--debug
         (ergoemacs-debug "Add prefix %s" key))
       (push key ergoemacs-mapkeymap--prefixes)))
-  (if (and submaps (not (eq submaps 'prefix)) (ergoemacs-map-properties--key-struct keymap))
+  (if (and submaps (not (eq submaps :prefix)) (ergoemacs-map-properties--key-struct keymap))
       ;; (pushnew (cons key (ergoemacs-map-properties--key-struct keymap))
       ;; ergoemacs-mapkeymap--submaps :test 'equal)
       (unless (member (cons key (ergoemacs-map-properties--key-struct keymap)) (append ergoemacs-mapkeymap--submaps ergoemacs-mapkeymap--nil))
@@ -115,65 +115,6 @@ PREFIX is the current PREFIX for the key code. "
     (push key ergoemacs-mapkeymap--nil)
     (when function
       (funcall function key nil (or prefix t))))
-   
-   ;; (key "String" "Help-String" keymap)
-   ((ignore-errors
-      (and (consp item) (stringp (nth 0 item))
-           (stringp (nth 1 item))
-           (ergoemacs-keymapp (nthcdr 2 item))))
-    ;; Install prefix as sparse/full keymap
-    (unless (lookup-key ergoemacs-mapkeymap--current key)
-      (if (ergoemacs-map-properties--all-sparse-p (nthcdr 2 item))
-          (progn
-            (when ergoemacs-mapkeymap--debug
-              (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
-                               (key-description key)))
-            (ergoemacs-mapkeymap--define-key key
-                                             `(,(nth 0 item) ,(nth 1 item)
-                                               ,@(make-sparse-keymap)) prefix))
-        (when ergoemacs-mapkeymap--debug
-          (ergoemacs-debug "Setup prefix %s to be a full keymap"
-                           (key-description key)))
-        (ergoemacs-mapkeymap--define-key key
-                                         `(,(nth 0 item) ,(nth 1 item) ,@(make-keymap)) prefix)))
-    (ergoemacs-mapkeymap--key-keymap key (nthcdr 2 item) function submaps prefix))
-   
-   ;; (key "String" keymap)
-   ((ignore-errors
-      (and (consp item) (stringp (nth 0 item))
-           (ergoemacs-keymapp (nthcdr 1 item))))
-    ;; Install prefix as sparse/full keymap
-    (unless (lookup-key ergoemacs-mapkeymap--current key)
-      (if (ergoemacs-map-properties--all-sparse-p (nthcdr 1 item))
-          (progn
-            (when ergoemacs-mapkeymap--debug
-              (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
-                               (key-description key)))
-            (ergoemacs-mapkeymap--define-key key
-                                             `(,(nth 0 item) ,@(make-sparse-keymap)) prefix))
-        (ergoemacs-mapkeymap--define-key key
-                                         `(,(nth 0 item) ,@(make-keymap)) prefix)
-        (when ergoemacs-mapkeymap--debug
-          (ergoemacs-debug "Setup prefix %s to be a full keymap"
-                           (key-description key)))))
-    (ergoemacs-mapkeymap--key-keymap key (nthcdr 1 item) function submaps prefix))
-   
-   ;; (key keymap)
-   ((ergoemacs-keymapp item)
-    ;; Prefix Key
-    (unless (lookup-key ergoemacs-mapkeymap--current key)
-      (if (ergoemacs-map-properties--all-sparse-p item)
-          (progn
-            (when ergoemacs-mapkeymap--debug
-              (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
-                               (key-description key)))
-            (ergoemacs-mapkeymap--define-key
-             key (make-sparse-keymap) prefix))
-        (ergoemacs-mapkeymap--define-key key (make-keymap) prefix)
-        (when ergoemacs-mapkeymap--debug
-          (ergoemacs-debug "Setup prefix %s to be a full keymap"
-                           (key-description key)))))
-    (ergoemacs-mapkeymap--key-keymap key item function submaps prefix))
 
    ;; Ignore already defined keys
    ((and (vectorp key) (lookup-key ergoemacs-mapkeymap--current key))
@@ -181,7 +122,6 @@ PREFIX is the current PREFIX for the key code. "
       (ergoemacs-debug "Ignore %s=%s " (key-description key)
                        (lookup-key ergoemacs-mapkeymap--current key))))
 
-   
    (;; (key . symbol)
     (or (symbolp item)
         ;; lambda items
@@ -207,6 +147,66 @@ PREFIX is the current PREFIX for the key code. "
         (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
                          (key-description key)))
       (funcall function key item (or prefix t))))
+
+   ;; (key keymap)
+   ((ergoemacs-keymapp item)
+    ;; Prefix Key
+    (unless (lookup-key ergoemacs-mapkeymap--current key)
+      (if (ergoemacs-map-properties--all-sparse-p item)
+          (progn
+            (when ergoemacs-mapkeymap--debug
+              (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
+                               (key-description key)))
+            (ergoemacs-mapkeymap--define-key
+             key (make-sparse-keymap) prefix))
+        (ergoemacs-mapkeymap--define-key key (make-keymap) prefix)
+        (when ergoemacs-mapkeymap--debug
+          (ergoemacs-debug "Setup prefix %s to be a full keymap"
+                           (key-description key)))))
+    (ergoemacs-mapkeymap--key-keymap key item function submaps prefix))
+
+   ;; (key "String" keymap)
+   ((ignore-errors
+      (and (consp item) (stringp (nth 0 item))
+           (ergoemacs-keymapp (nthcdr 1 item))))
+    ;; Install prefix as sparse/full keymap
+    (unless (lookup-key ergoemacs-mapkeymap--current key)
+      (if (ergoemacs-map-properties--all-sparse-p (nthcdr 1 item))
+          (progn
+            (when ergoemacs-mapkeymap--debug
+              (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
+                               (key-description key)))
+            (ergoemacs-mapkeymap--define-key key
+                                             `(,(nth 0 item) ,@(make-sparse-keymap)) prefix))
+        (ergoemacs-mapkeymap--define-key key
+                                         `(,(nth 0 item) ,@(make-keymap)) prefix)
+        (when ergoemacs-mapkeymap--debug
+          (ergoemacs-debug "Setup prefix %s to be a full keymap"
+                           (key-description key)))))
+    (ergoemacs-mapkeymap--key-keymap key (nthcdr 1 item) function submaps prefix))
+   
+   ;; (key "String" "Help-String" keymap)
+   ((ignore-errors
+      (and (consp item) (stringp (nth 0 item))
+           (stringp (nth 1 item))
+           (ergoemacs-keymapp (nthcdr 2 item))))
+    ;; Install prefix as sparse/full keymap
+    (unless (lookup-key ergoemacs-mapkeymap--current key)
+      (if (ergoemacs-map-properties--all-sparse-p (nthcdr 2 item))
+          (progn
+            (when ergoemacs-mapkeymap--debug
+              (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
+                               (key-description key)))
+            (ergoemacs-mapkeymap--define-key key
+                                             `(,(nth 0 item) ,(nth 1 item)
+                                               ,@(make-sparse-keymap)) prefix))
+        (when ergoemacs-mapkeymap--debug
+          (ergoemacs-debug "Setup prefix %s to be a full keymap"
+                           (key-description key)))
+        (ergoemacs-mapkeymap--define-key key
+                                         `(,(nth 0 item) ,(nth 1 item) ,@(make-keymap)) prefix)))
+    (ergoemacs-mapkeymap--key-keymap key (nthcdr 2 item) function submaps prefix))
+   
    ((ignore-errors (string-match-p "^-+$" (format (car item))))
     ;; Separators...
     (ergoemacs-mapkeymap--define-key key item prefix)
@@ -216,8 +216,6 @@ PREFIX is the current PREFIX for the key code. "
         (ergoemacs-debug "Setup prefix %s to be a sparse keymap"
                          (key-description key)))
       (funcall function key item (or prefix t))))
-   ((integerp item) ;; Not sure what this is supposed to accomplish.
-    )
    (t
     (warn "Could not extract\n\tkey:\"%s\" (%s) \n\tItem: \"%s\"" key (key-description key) item))))
 
@@ -243,7 +241,7 @@ KEY could be a cons for a range if the keymap is a full keymap, otherwise KEY is
    ((vectorp key)
     (when ergoemacs-mapkeymap--debug
       (ergoemacs-debug "Define %s %s" (key-description key) item))
-    (define-key
+    (ergoemacs-advice--real-define-key
      ergoemacs-mapkeymap--current key item))
    ((consp key) ;; Char table range.
     (when ergoemacs-mapkeymap--debug
@@ -313,7 +311,7 @@ exception of the submaps.  Once finished mapping over the main
 map, map over each submap.  It will also assign properties to the
 maps.
 
-When SUBMAPS is 'prefix, only extract prefixes of the keymap,
+When SUBMAPS is :prefix, only extract prefixes of the keymap,
 don't recurse to prefix keys
 
 Will return a collapsed keymap without parent"
@@ -355,7 +353,7 @@ Will return a collapsed keymap without parent"
                 ;; Now map keymap
                 (ergoemacs-mapkeymap function (ergoemacs-map-properties--keymap-value (cdr item)) t)
                 ;; Make sure submap is assigned
-                (setq tmp2 (ergoemacs (cdr item) :submap-p)
+                (setq tmp2 (ergoemacs-map-properties--put (cdr item) :submap-p)
                       tmp3 (cons (car item) (ergoemacs-map-properties--get-or-generate-map-key keymap)))
                 (unless (member tmp3 tmp2)
                   (push tmp3 tmp2))

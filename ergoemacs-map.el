@@ -210,6 +210,7 @@ If LOOKUP-KEYMAP
          parent
          composed-list
          (read-map (make-sparse-keymap))
+         tmp
          ret)
     (cond
      ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
@@ -276,35 +277,29 @@ If LOOKUP-KEYMAP
                (setq parent (keymap-parent lookup-keymap))
                (setq composed-list (and (ergoemacs lookup-keymap :composed-p)
                                         (ergoemacs lookup-keymap :composed-list)))
-               (and (not parent) (not composed-list))))
-           (setq ret (make-composed-keymap
-                      (append
-                       (mapcar
-                        (lambda(cur-map)
-                          (let ((ret (ergoemacs-map-- lookup-keymap unbind-list layout cur-map t)))
-                            ;; (when (not lookup-keymap)
-                            ;;   (ergoemacs-debug-heading "%s" (ergoemacs-component-struct-name cur-map))
-                            ;;   (ergoemacs-debug-keymap ret))
-                            ret))
-                        map)
-                       (and (not lookup-keymap)
-                            (list
-                             (let ((undefined-map (make-sparse-keymap)))
-                               (dolist (cur-map map)
-                                 (dolist (undefined-key
-                                          (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-undefined cur-map)))
-                                   (unless (member undefined-key ret)
-                                     (define-key undefined-map undefined-key 'ergoemacs-map-undefined))))
-                               undefined-map))))
-                      ;; (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
-                      ;;     (and (not lookup-keymap) (ergoemacs-map-properties--original global-map)))
-                      )))
-      ;; Decompose (rot) the keymap (so you can label the map)
-      (setq ret (ergoemacs-mapkeymap nil ret))
-      (ergoemacs :label ret lookup-key)
+               (and (not parent) (not composed-list)))))
+      (when (not lookup-keymap)
+        (setq tmp (make-sparse-keymap))
+        (dolist (cur-map map)
+          (dolist (undefined-key
+                   (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-undefined cur-map)))
+            (unless (member undefined-key ret)
+              (define-key tmp undefined-key 'ergoemacs-map-undefined))))
+        (push tmp composed-list))
+      (dolist (cur-map (reverse map))
+        (setq tmp (ergoemacs-map-- lookup-keymap unbind-list layout cur-map t))
+        (unless (ergoemacs tmp :empty-p)
+          (push tmp composed-list)))
+      ;; Parent keymap
+      (setq parent (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
+                       (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))
+      (setq tmp (ergoemacs parent :user))
+      (when tmp
+        (push tmp composed-list))
+      (setq ret (make-composed-keymap composed-list parent))
       ;; Set the parent map as the original map.
-      (set-keymap-parent ret (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
-                                 (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))
+      ;; (set-keymap-parent ret (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
+      ;;                            (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))
       ;; Ensure the unbound keys are truly undefined.
       (dolist (key unbind-list)
         (when (let ((tmp (lookup-key ret key)))
@@ -395,6 +390,14 @@ If LOOKUP-KEYMAP
       (error "%s is disabled! Use %s for %s instead." key (ergoemacs-key-description (where-is-internal old-key ergoemacs-keymap t)) old-key))
      (t
       (error "%s is disabled!" key)))))
+
+;; (defun ergoemacs-map--modify-minibuffer-local-map ()
+;;   "Modify and use the minibuffer local map."
+;;   (ergoemacs-advice--use-local-map (current-local-map))
+;;   (message "Current Local Map: %s" (current-local-map))
+;;   (message "Global Map: %s" (keymap-parent (current-local-map))))
+
+;; (add-hook 'minibuffer-setup-hook 'ergoemacs-map--modify-minibuffer-local-map)
 
 (add-hook 'ergoemacs-mode-shutdown-hook 'ergoemacs-map--remove)
 

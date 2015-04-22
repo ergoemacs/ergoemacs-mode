@@ -226,18 +226,23 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
   (with-temp-file (ergoemacs-map-properties--default-global-file) 
     (let ((print-level nil)
           (print-length nil)
+          (where-is-hash (make-hash-table))
+          tmp
           keys)
       (goto-char (point-min))
       (insert "(defvar ergoemacs-map-properties--plist-hash)(defvar ergoemacs-map-properties--original-global-map)(declare-function ergoemacs-map-properties--label \"ergoemacs-map-properties\")")
       (ergoemacs-mapkeymap
-       (lambda (key _item _prefix)
+       (lambda (key item _prefix)
          (cond
           ((vectorp key)
-           (push key keys))))
-       global-map t)
+           (push key keys)
+           (if (setq tmp (gethash item where-is-hash))
+               (push key tmp)
+             (puthash item (list key) where-is-hash)))))
+       global-map)
       (setq ergoemacs-map-properties--original-global-map (copy-keymap (ergoemacs-mapkeymap nil global-map)))
       (ergoemacs :label ergoemacs-map-properties--original-global-map)
-      (ergoemacs-map-properties--put ergoemacs-map-properties--original-global-map :keys keys)
+      (ergoemacs :keys ergoemacs-map-properties--original-global-map) ;; Should calculate :where-is and :lookup
       ;; (message "Keys: %s\nKey::%s" keys
       ;;          (ergoemacs ergoemacs-map-properties--original-global-map :keys))
 
@@ -302,10 +307,10 @@ When RETURN-VECTOR is non-nil, return list of the keys in a vector form.
     ;; (ergoemacs-extract-keys keymap)
     (when (not (ergoemacs-map-properties--key-struct keymap))
       (ergoemacs :label keymap))
-    (let ((ret (ergoemacs keymap :prefixes)) ret2)
+    (let ((ret (ergoemacs keymap :extract-prefixes)) ret2)
       (unless ret
         (ergoemacs-mapkeymap nil keymap 'prefix)
-        (setq ret (ergoemacs keymap :prefixes)))
+        (setq ret (ergoemacs keymap :extract-prefixes)))
       (if (and dont-ignore (not return-kbd)) ret
         (dolist (a ret)
           (let ((tmp (key-description a)))
@@ -546,11 +551,12 @@ The KEYMAP will have the structure
   (catch 'found-key
     (ergoemacs-mapkeymap
      (lambda (cur-key item _prefix)
-       (if (consp cur-key)
-           (throw 'found-key nil)
-         (unless (eq item 'ergoemacs-prefix) 
-           (when item
-             (throw 'found-key nil)))))
+       (unless (equal cur-key [ergoemacs-labeled])
+         (if (consp cur-key)
+             (throw 'found-key nil)
+           (unless (eq item 'ergoemacs-prefix) 
+             (when item
+               (throw 'found-key nil))))))
      keymap) t))
 
 ;;ergoemacs-map-properties--label
@@ -603,6 +609,64 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
         (setq map (gethash key ergoemacs-map-properties--user-map-hash))
         (ergoemacs map :label (list (ergoemacs keymap :key-struct) 'user))))
     map))
+
+(defun ergoemacs-map-properties--calculate-keys-and-where-is-hash (keymap)
+  "Calculates :where-is and :keys properties for KEYMAP."
+  (let ((where-is-hash (make-hash-table))
+        (lookup-hash (make-hash-table :test 'equal))
+        keys)
+    (ergoemacs-mapkeymap
+     (lambda (key item _prefix)
+       (cond
+        ((and (vectorp key)
+              (commandp item t))
+         (push key keys)
+         (if (setq tmp (gethash item where-is-hash))
+             (push key tmp)
+           (puthash item (list key) where-is-hash))
+         (puthash key item lookup-hash))))
+     keymap)
+    (ergoemacs keymap :extract-keys keys)
+    (ergoemacs keymap :extract-where-is where-is-hash)
+    (ergoemacs keymap :extract-lookup lookup-hash)))
+
+(defun ergoemacs-map-properties--keys (keymap &rest _ignore)
+  "Extract :keys property for KEYMAP."
+  (let ((ret (ergoemacs keymap :extract-keys)))
+    (unless ret
+      (ergoemacs-map-properties--calculate-keys-and-where-is-hash keymap)
+      (setq ret (ergoemacs keymap :extract-keys)))
+    ret))
+
+(defun ergoemacs-map-properties--where-is (keymap &rest _ignore)
+  "Extract :where-is property for KEYMAP."
+  (let ((ret (ergoemacs keymap :extract-where-is)))
+    (unless ret
+      (ergoemacs-map-properties--calculate-keys-and-where-is-hash keymap)
+      (setq ret (ergoemacs keymap :extract-where-is)))
+    ret))
+
+(defun ergoemacs-map-properties--lookup (keymap &rest _ignore)
+  "Extract :lookup property for KEYMAP."
+  (let ((ret (ergoemacs keymap :extract-lookup)))
+    (unless ret
+      (ergoemacs-map-properties--calculate-keys-and-where-is-hash keymap)
+      (setq ret (ergoemacs keymap :extract-lookup)))
+    ret))
+
+(defun ergoemacs-map-properties--new-command (keymap command &optional relative-map)
+  "Get the COMMAND equivalent binding in KEYMAP based on RELATIVE-MAP."
+  (and command keymap
+       (let (ret
+             (cmd-list (gethash command (ergoemacs (or relative-map ergoemacs-map-properties--original-global-map) :where-is)))
+             (lookup (ergoemacs keymap :lookup)))
+         (if (not cmd-list) nil
+           (catch 'found-new
+             (dolist (key cmd-list)
+               (when (setq ret (gethash key lookup))
+                 (throw 'found-new t)))
+             t)
+           ret))))
 
 ;; Startup and load functions
 

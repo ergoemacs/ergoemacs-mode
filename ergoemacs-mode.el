@@ -464,10 +464,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (run-hooks 'ergoemacs-mode-intialize-hook)
 
-(defun ergoemacs-map-properties--label-after-startup ()
-  "Labels known unlabeled maps after startup. Also label maps after everything has loaded."
-  (ergoemacs-map-properties--label-unlabeled)
-  (add-hook 'after-load-functions 'ergoemacs-map-properties--label-unlabeled))
 
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
