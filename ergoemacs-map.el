@@ -71,6 +71,7 @@
 (declare-function ergoemacs-component-struct--minor-mode-map-alist "ergoemacs-component")
 (declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
 (declare-function ergoemacs-component-struct--get "ergoemacs-component")
+(declare-function ergoemacs-component-struct--lookup-list "ergoemacs-component")
 
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme--menu "ergoemacs-theme-engine")
@@ -86,9 +87,16 @@
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--composed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--composed-list "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--keys "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--new-command "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--user "ergoemacs-map-properties")
 
+(declare-function ergoemacs-advice--real-define-key "ergoemacs-advice")
 
 (declare-function ergoemacs-translate-setup "ergoemacs-translate")
+
+(declare-function ergoemacs-key-description "ergoemacs-key-description")
 
 
 (defvar ergoemacs-map--hash (make-hash-table :test 'equal)
@@ -289,7 +297,7 @@ If LOOKUP-KEYMAP
         (setq ret (make-sparse-keymap))
         (setq parent (ergoemacs lookup-keymap :keys))
         (ergoemacs-mapkeymap
-         (lambda(key item prefix)
+         (lambda(key item _prefix)
            (unless (eq item 'ergoemacs-prefix)
              
              (if (setq tmp (ergoemacs lookup-keymap :new-command item))

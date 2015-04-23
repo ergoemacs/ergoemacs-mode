@@ -614,7 +614,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   "Calculates :where-is and :keys properties for KEYMAP."
   (let ((where-is-hash (make-hash-table))
         (lookup-hash (make-hash-table :test 'equal))
-        keys)
+        keys tmp)
     (ergoemacs-mapkeymap
      (lambda (key item _prefix)
        (cond

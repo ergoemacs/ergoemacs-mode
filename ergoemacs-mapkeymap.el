@@ -61,6 +61,8 @@
 (declare-function ergoemacs-debug "ergoemacs-debug")
 (declare-function ergoemacs-debug-heading "ergoemacs-debug")
 
+(declare-function ergoemacs-advice--real-define-key "ergoemacs-advice")
+
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
 (defvar ergoemacs-mapkeymap--current nil)

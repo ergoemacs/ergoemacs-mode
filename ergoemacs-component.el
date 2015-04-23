@@ -76,6 +76,15 @@
 (declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
+
+(declare-function ergoemacs-advice--real-define-key "ergoemacs-advice")
+
+(declare-function ergoemacs-debug "ergoemacs-debug")
+(declare-function ergoemacs-debug-heading "ergoemacs-debug")
+(declare-function ergoemacs-debug-keymap "ergoemacs-debug")
+
+(declare-function ergoemacs-map-- "ergoemacs-map")
+
 ;; ergoemacs-translate
 
 (defcustom ergoemacs-ignore-prev-global t
@@ -520,10 +529,7 @@ Cache using LOOKUP-KEY. "
          (variable-modifiers (ergoemacs-component-struct-variable-modifiers map))
          (variable-prefixes (ergoemacs-component-struct-variable-prefixes map))
          (layout-from (ergoemacs-component-struct-layout map))
-         (hash (ergoemacs-component-struct-calculated-layouts map))
-         (hashkey)
-         tmp
-         extra-map)
+         (hash (ergoemacs-component-struct-calculated-layouts map)))
     (cond
      ((string= layout-from cur-layout)
       (setq ret (copy-keymap cmap))
