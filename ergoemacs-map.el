@@ -186,7 +186,7 @@
 MAP-LIST is the list of theme components if not pre-specified."
   (md5 (format "%s" (ergoemacs-map--base-lookup-key (ergoemacs-component-struct--lookup-hash (or map-list (ergoemacs-theme-components)))))))
 
-(defun ergoemacs-map-- (&optional lookup-keymap unbind-keys layout map recursive)
+(defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
 MAP can be a `ergoemacs-component-struct', or a string/symbol
@@ -242,12 +242,12 @@ If LOOKUP-KEYMAP
         (ergoemacs-component-struct-map map))
        ((and (not lookup-keymap)
              (setq ret (gethash
-                        (list nil cur-layout unbind-keys)
+                        (list nil (intern cur-layout))
                         (ergoemacs-component-struct-calculated-layouts map))))
         ret)
        ((not lookup-keymap)
         ;; Overall layout hasn't been calculated.
-        (ergoemacs-component-struct--get map cur-layout nil unbind-keys))
+        (ergoemacs-component-struct--get map cur-layout nil))
        (t
         (error "Cant calculate/lookup keymap."))))
      ((and (consp map) ;; Don't do anything with blank keymaps.
@@ -287,7 +287,7 @@ If LOOKUP-KEYMAP
               (define-key tmp undefined-key 'ergoemacs-map-undefined))))
         (push tmp composed-list)
         (dolist (cur-map (reverse map))
-          (setq tmp (ergoemacs-map-- lookup-keymap unbind-list layout cur-map t))
+          (setq tmp (ergoemacs-map-- lookup-keymap layout cur-map t))
           (unless (ergoemacs tmp :empty-p)
             (push tmp composed-list))))
       (when lookup-keymap
@@ -336,18 +336,18 @@ If LOOKUP-KEYMAP
       (unwind-protect
           (progn
             (set-keymap-parent lookup-keymap nil)
-            (setq ret (ergoemacs-map-- lookup-keymap unbind-keys layout map t)))
+            (setq ret (ergoemacs-map-- lookup-keymap layout map t)))
         (set-keymap-parent lookup-keymap parent))
-      (setq parent (ergoemacs-map-- parent unbind-keys layout map t))
+      (setq parent (ergoemacs-map-- parent layout map t))
       (set-keymap-parent ret parent)
       ret)
      (composed-list
       (make-composed-keymap
        (mapcar
         (lambda(x)
-          (ergoemacs-map-- x unbind-keys layout map t))
+          (ergoemacs-map-- x layout map t))
         composed-list)
-       (ergoemacs-map-- parent unbind-keys layout map t)))
+       (ergoemacs-map-- parent layout map t)))
      (t
       (error "Component map isn't a proper argument")))))
 
