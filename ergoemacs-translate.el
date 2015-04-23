@@ -133,6 +133,35 @@ modifier occurred, such as in `ergoemacs-translate--meta-to-escape'.
 KEY-SEQ must be a vector.  If there is no need to escape the key sequence return nil."
   (ergoemacs-translate--emacs-shift key-seq 'meta 27))
 
+(defun ergoemacs-translate--escape-to-meta (key-seq)
+  "Changes key sequences ESC q to M-q.
+KEY-SEQ must be a vector or string.  If there is no need to change the sequence, return nil."
+  (let ((key-seq (or (and (vectorp key-seq) key-seq)
+                     (vconcat key-seq))))
+    (let ((rev-seq (reverse (append key-seq ())))
+          old-event
+          modifiers
+          found
+          seq)
+      (dolist (event rev-seq)
+        ;; [27 134217736] -> nil
+        ;; [27 8] -> [134217832]
+        ;; [27 8 27] -> [134217832 27]
+        ;; [27 27 8 27] -> [27 134217832 27]
+        (cond
+         ((and (eq 27 event) seq)
+          (setq old-event (pop seq)
+                modifiers (event-modifiers old-event))
+          (if (memq 'meta modifiers)
+              (progn
+                (push old-event seq)
+                (push event seq))
+            (setq found t)
+            (push (event-convert-list (append '(meta)  (list (event-basic-type old-event)))) seq)))
+         (t
+          (push event seq))))
+      (and found (vconcat seq)))))
+
 (defvar ergoemacs-translate--event-hash (make-hash-table)
   "Event modifiers not covered by standard emacs")
 

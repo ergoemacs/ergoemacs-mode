@@ -659,11 +659,13 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (and command keymap
        (let (ret
              (cmd-list (gethash command (ergoemacs (or relative-map ergoemacs-map-properties--original-global-map) :where-is)))
-             (lookup (ergoemacs keymap :lookup)))
+             ;; (lookup (ergoemacs keymap :lookup))
+             )
          (if (not cmd-list) nil
            (catch 'found-new
              (dolist (key cmd-list)
-               (when (setq ret (gethash key lookup))
+               (when (and (setq ret (lookup-key keymap key))
+                          (and (integerp ret) (setq ret nil)))
                  (throw 'found-new t)))
              t)
            ret))))

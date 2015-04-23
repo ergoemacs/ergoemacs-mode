@@ -233,49 +233,50 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
 
 (defun ergoemacs-key-description (kbd &optional layout)
   "Creates Pretty keyboard binding from kbd from M- to Alt+"
-  (if (eq kbd (vector)) ""
-    (let ((ret "")
-          tmp
-          mod ev)
-      (dolist (key (listify-key-sequence kbd))
-        (setq mod (ergoemacs-translate--event-modifiers key)
-              ev (ergoemacs-translate--event-basic-type key))
-        (cond
-         ((and (memq 'control mod) (eq ev ?\[))
-          (setq mod (ergoemacs-key-description--add-emacs-modifiers-for-ergoemacs-modifiers mod)
-                ev 'escape))
-         ((and (memq 'control mod) (eq ev ?m))
-          (setq mod (ergoemacs-key-description--add-emacs-modifiers-for-ergoemacs-modifiers mod)
-                ev 'return))
-         ((and (memq 'control mod) (eq ev ?i))
-          (setq mod (ergoemacs-key-description--add-emacs-modifiers-for-ergoemacs-modifiers mod)
-                ev 'tab))
-         ((memq 'ergoemacs-shift mod)
-          (setq tmp '())
-          (dolist (m mod)
-            (unless (eq m 'ergoemacs-shift)
-              (push m tmp)))
-          (setq mod tmp
-                ev (gethash (intern (format "s%s" ev))
-                            (ergoemacs-translate--event-modifier-hash layout)))))
-        (setq tmp (format "%s%s%s%s"
-                          (or (and ergoemacs-display-key-use-face-p "")
-                              (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs-key-description--unicode-char "【" "["))
-                              "[")
-                          (mapconcat #'ergoemacs-key-description--modifier
-                                     mod "")
-                          (ergoemacs-key-description--key ev mod)
-                          (or (and ergoemacs-display-key-use-face-p "")
-                              (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs-key-description--unicode-char "】" "]"))
-                              "]")))
-        (when (and ergoemacs-display-small-symbols-for-key-modifiers ergoemacs-display-key-use-face-p)
-          (add-text-properties 0 (length tmp)
-                               '(face ergoemacs-display-key-face) tmp))
-        (setq ret (format "%s%s%s" ret
-                          (or (and ergoemacs-display-key-use-face-p " ")
-                              (and ergoemacs-display-use-unicode-brackets-around-keys "")) tmp)))
-      (substring ret (or (and ergoemacs-display-key-use-face-p 1)
-                         (and ergoemacs-display-use-unicode-brackets-around-keys 0))))))
+  (let ((kbd (or (ergoemacs-translate--escape-to-meta kbd) kbd)))
+    (if (eq kbd (vector)) ""
+      (let ((ret "")
+            tmp
+            mod ev)
+        (dolist (key (listify-key-sequence kbd))
+          (setq mod (ergoemacs-translate--event-modifiers key)
+                ev (ergoemacs-translate--event-basic-type key))
+          (cond
+           ((and (memq 'control mod) (eq ev ?\[))
+            (setq mod (ergoemacs-key-description--add-emacs-modifiers-for-ergoemacs-modifiers mod)
+                  ev 'escape))
+           ((and (memq 'control mod) (eq ev ?m))
+            (setq mod (ergoemacs-key-description--add-emacs-modifiers-for-ergoemacs-modifiers mod)
+                  ev 'return))
+           ((and (memq 'control mod) (eq ev ?i))
+            (setq mod (ergoemacs-key-description--add-emacs-modifiers-for-ergoemacs-modifiers mod)
+                  ev 'tab))
+           ((memq 'ergoemacs-shift mod)
+            (setq tmp '())
+            (dolist (m mod)
+              (unless (eq m 'ergoemacs-shift)
+                (push m tmp)))
+            (setq mod tmp
+                  ev (gethash (intern (format "s%s" ev))
+                              (ergoemacs-translate--event-modifier-hash layout)))))
+          (setq tmp (format "%s%s%s%s"
+                            (or (and ergoemacs-display-key-use-face-p "")
+                                (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs-key-description--unicode-char "【" "["))
+                                "[")
+                            (mapconcat #'ergoemacs-key-description--modifier
+                                       mod "")
+                            (ergoemacs-key-description--key ev mod)
+                            (or (and ergoemacs-display-key-use-face-p "")
+                                (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs-key-description--unicode-char "】" "]"))
+                                "]")))
+          (when (and ergoemacs-display-small-symbols-for-key-modifiers ergoemacs-display-key-use-face-p)
+            (add-text-properties 0 (length tmp)
+                                 '(face ergoemacs-display-key-face) tmp))
+          (setq ret (format "%s%s%s" ret
+                            (or (and ergoemacs-display-key-use-face-p " ")
+                                (and ergoemacs-display-use-unicode-brackets-around-keys "")) tmp)))
+        (substring ret (or (and ergoemacs-display-key-use-face-p 1)
+                           (and ergoemacs-display-use-unicode-brackets-around-keys 0)))))))
 
 (defun ergoemacs-key-description-kbd (code)
   "Creates `ergoemacs-mode' style description of kbd macro CODE"

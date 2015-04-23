@@ -77,7 +77,6 @@
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
 
-(declare-function ergoemacs-advice--real-define-key "ergoemacs-advice")
 
 (declare-function ergoemacs-debug "ergoemacs-debug")
 (declare-function ergoemacs-debug-heading "ergoemacs-debug")
@@ -267,7 +266,7 @@ Allows the component not to be calculated."
                 t) (push cur-lst new-dynamic)
             (when new-fn-lst ;; For later checks
               (push (list keymap key (reverse new-fn-lst)) new-dynamic))
-            (ergoemacs-advice--real-define-key cur-map key new-fn)
+            (define-key cur-map key new-fn)
             ;; Now fix cached layouts
             (maphash
              (lambda(key value)
@@ -275,7 +274,7 @@ Allows the component not to be calculated."
                (when (or (and global-map-p (not (nth 0 key)))
                          (eq (nth 0 key) keymap))
                  ;; Update keymap (in place).
-                 (ergoemacs-advice--real-define-key value
+                 (define-key value
                    (ergoemacs-translate
                     key (ergoemacs-component-struct-just-first-keys obj)
                     (ergoemacs-component-struct-variable-modifiers obj)
@@ -360,7 +359,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                    (warn "Keymap range currently not supported %s %s %s" cur-key item prefix)
                  (unless (eq item 'ergoemacs-prefix)
                    (unless (equal key cur-key)
-                     (ergoemacs-advice--real-define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
+                     (define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
              cur-map)
             (setf (ergoemacs-component-struct-map obj)
                   (copy-keymap ergoemacs-component-struct--define-key-temp-map))
@@ -381,7 +380,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                    (message "Key range not supported %s, %s, %s" cur-key item prefix)
                  (unless (eq item 'ergoemacs-prefix)
                    (unless (equal key cur-key)
-                     (ergoemacs-advice--real-define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
+                     (define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
              cur-map)
             (puthash keymap (copy-keymap ergoemacs-component-struct--define-key-temp-map) (ergoemacs-component-struct-maps obj))
             (setq ergoemacs-component-struct--define-key-temp-map nil))
@@ -390,17 +389,17 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                       (dolist (cur-def def)
                         (if (not (commandp cur-def t))
                             (push cur-def fn-lst)
-                          (ergoemacs-advice--real-define-key cur-map key cur-def)
+                          (define-key cur-map key cur-def)
                           (throw 'found-fn t)))
                       nil)
               ;; Not found
-              (ergoemacs-advice--real-define-key cur-map key `(lambda() (interactive) (error ,(format "This key is undefined without one of the following functions: %s" fn-lst))))
+              (define-key cur-map key `(lambda() (interactive) (error ,(format "This key is undefined without one of the following functions: %s" fn-lst))))
               (ergoemacs-component-struct--define-key-add-prefix key obj))
             (when fn-lst ;; Test for later
               (push (list keymap key fn-lst)
                     (ergoemacs-component-struct-dynamic-keys obj))))
            (t
-            (ergoemacs-advice--real-define-key cur-map key def)
+            (define-key cur-map key def)
             (ergoemacs-component-struct--define-key-add-prefix key obj)))))))))
 
 (defvar ergoemacs-component-struct--hash (make-hash-table)
@@ -543,7 +542,7 @@ Cache using LOOKUP-KEY. "
          (if (consp key)
              (warn "Keymap range currently not supported %s,%s %s" key item prefix)
            (unless (eq item 'ergoemacs-prefix)
-             (ergoemacs-advice--real-define-key
+             (define-key
               ergoemacs-component-struct--get-keymap
               (ergoemacs-translate
                key just-first-keys variable-modifiers

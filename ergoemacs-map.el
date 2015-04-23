@@ -92,8 +92,6 @@
 (declare-function ergoemacs-map-properties--new-command "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user "ergoemacs-map-properties")
 
-(declare-function ergoemacs-advice--real-define-key "ergoemacs-advice")
-
 (declare-function ergoemacs-translate-setup "ergoemacs-translate")
 
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
@@ -186,6 +184,7 @@
 MAP-LIST is the list of theme components if not pre-specified."
   (md5 (format "%s" (ergoemacs-map--base-lookup-key (ergoemacs-component-struct--lookup-hash (or map-list (ergoemacs-theme-components)))))))
 
+(defvar ergoemacs-map-- (make-hash-table :test 'equal))
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
@@ -218,6 +217,7 @@ If LOOKUP-KEYMAP
          parent
          composed-list
          (read-map (make-sparse-keymap))
+         tmp-key
          tmp
          ret)
     (cond
@@ -236,20 +236,26 @@ If LOOKUP-KEYMAP
      ;;  ;; Modify local map.
      ;;  )
      ((ergoemacs-component-struct-p map)
-      (cond
-       ((and (not lookup-keymap)
-             (string= cur-layout (ergoemacs-component-struct-layout map)))
-        (ergoemacs-component-struct-map map))
-       ((and (not lookup-keymap)
-             (setq ret (gethash
-                        (list nil (intern cur-layout))
-                        (ergoemacs-component-struct-calculated-layouts map))))
-        ret)
-       ((not lookup-keymap)
-        ;; Overall layout hasn't been calculated.
-        (ergoemacs-component-struct--get map cur-layout nil))
-       (t
-        (error "Cant calculate/lookup keymap."))))
+      (let ((ret (cond
+                  ((and (not lookup-keymap)
+                        (string= cur-layout (ergoemacs-component-struct-layout map)))
+                   (ergoemacs-component-struct-map map))
+                  ((and (not lookup-keymap)
+                        (setq ret (gethash
+                                   (list nil (intern cur-layout))
+                                   (ergoemacs-component-struct-calculated-layouts map))))
+                   ret)
+                  ((not lookup-keymap)
+                   ;; Overall layout hasn't been calculated.
+                   (ergoemacs-component-struct--get map cur-layout nil))
+                  (t
+                   (error "Cant calculate/lookup keymap.")))))
+        (ergoemacs-mapkeymap
+         (lambda(key item prefix)
+           (unless (eq item 'ergoemacs-prefix)
+             (puthash key item ergoemacs-map--)))
+         ret)
+        ret))
      ((and (consp map) ;; Don't do anything with blank keymaps.
            lookup-keymap
            (or (equal lookup-keymap (make-sparse-keymap))
@@ -289,41 +295,58 @@ If LOOKUP-KEYMAP
         (dolist (cur-map (reverse map))
           (setq tmp (ergoemacs-map-- lookup-keymap layout cur-map t))
           (unless (ergoemacs tmp :empty-p)
-            (push tmp composed-list))))
+            (push tmp composed-list)))
+        (setq parent (ergoemacs-map-properties--original global-map)))
       (when lookup-keymap
-        (setq composed-list (cdr (ergoemacs ergoemacs-keymap :composed-list))) ;; pop off user keys
-        (push 'keymap composed-list) ;; Make into keymap
-        ;; Look through `ergoemacs-mode' keys
+        ;; The list of  `ergoemacs-mode' keymaps without the unbind
+        ;; keys and user modifications to the global map.
         (setq ret (make-sparse-keymap))
-        (setq parent (ergoemacs lookup-keymap :keys))
-        (ergoemacs-mapkeymap
-         (lambda(key item _prefix)
-           (unless (eq item 'ergoemacs-prefix)
-             
-             (if (setq tmp (ergoemacs lookup-keymap :new-command item))
-                 (ergoemacs-advice--real-define-key ret key tmp)
-               (when (member key parent)
-                 (ergoemacs-advice--real-define-key ret key item)))))
-         composed-list)
+        (maphash
+         (lambda(key item)
+           (cond
+            ;; Keys where `ergoemacs-mode' dominates...
+            ((and (setq tmp (lookup-key lookup-keymap key))
+                  (not (integerp tmp)))
+             (define-key ret key item)
+             (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+               ;; Define the higher character meta as well...
+               (define-key ret tmp-key item)))
+            ((and (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+                  (setq tmp (lookup-key lookup-keymap tmp-key))
+                  (not (integerp tmp)))
+             ;; Define both
+             (define-key ret tmp-key item)
+             (define-key ret key item))
+            ;; Mode specific keys are translated to `ergoemacs-mode'
+            ;; equivalent.
+            ((setq tmp (ergoemacs lookup-keymap :new-command item))
+             (define-key ret key tmp)
+             (when tmp-key
+               ;; Define the higher character as well.
+               (define-key ret tmp-key tmp)))))
+         ergoemacs-map--)
+        
         (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
-        (setq composed-list (or (and tmp (append tmp (list tmp))) (list ret))
+        
+        (setq composed-list (or (and tmp (append tmp (list ret))) (list ret))
               ret nil
-              parent nil))
-      ;; Parent keymap
-      (setq parent (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
-                       (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))
+              parent (and (not recursive) (ergoemacs-map-properties--original lookup-keymap))))
+      
+      (setq ret (make-sparse-keymap))
+      (dolist (key unbind-list)
+        (when (not lookup-keymap)
+          (remhash key ergoemacs-map--))
+        (define-key ret key nil))
+      (set-keymap-parent ret (make-composed-keymap composed-list parent))
+      (when lookup-key
+        (ergoemacs ret :label lookup-key))
+      ;; Ensure the unbound keys are truly undefined.
       (setq tmp (ergoemacs parent :user))
       (when tmp
         (push tmp composed-list))
-      (setq ret (make-composed-keymap composed-list parent))
-      ;; Set the parent map as the original map.
-      ;; (set-keymap-parent ret (or (and lookup-keymap (not recursive) (ergoemacs-map-properties--original lookup-keymap))
-      ;;                            (and (not lookup-keymap) (ergoemacs-map-properties--original global-map))))
-      ;; Ensure the unbound keys are truly undefined.
-      (dolist (key unbind-list)
-        (when (let ((tmp (lookup-key ret key)))
-                (and tmp (not (integerp tmp))))
-          (define-key ret key nil)))
+      
+      (setq ret (make-composed-keymap tmp ret))
+      
       (dolist (cur-map map)
         (dolist (read-key
                  (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-read-list cur-map)))
@@ -355,7 +378,8 @@ If LOOKUP-KEYMAP
   (interactive)
   (when (not (consp (ergoemacs-map-properties--get-or-generate-map-key (current-global-map))))
     (message "Global")
-    (setq ergoemacs-keymap (ergoemacs))
+    (setq ergoemacs-map-- (make-hash-table :test 'equal)
+          ergoemacs-keymap (ergoemacs))
     (use-global-map ergoemacs-keymap)
     (message "Emulation")
     (when emulation-mode-map-alists

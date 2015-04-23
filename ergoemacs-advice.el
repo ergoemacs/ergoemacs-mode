@@ -137,47 +137,6 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
     (ergoemacs :label keymap)
     (ergoemacs-advice--real-use-global-map keymap))))
 
-(ergoemacs-advice* define-key (keymap key def)
-  "In KEYMAP, define key sequence KEY as DEF.
-KEYMAP is a keymap.
-
-KEY is a string or a vector of symbols and characters, representing a
-sequence of keystrokes and events.  Non-ASCII characters with codes
-above 127 (such as ISO Latin-1) can be represented by vectors.
-Two types of vector have special meanings:
- [remap COMMAND] remaps any key binding for COMMAND.
- [t] creates a default definition, which applies to any event with no
-    other definition in KEYMAP.
-
-DEF is anything that can be a key's definition:
- nil (means key is undefined in this keymap),
- a command (a Lisp function suitable for interactive calling),
- a string (treated as a keyboard macro),
- a keymap (to define a prefix key),
- a symbol (when the key is looked up, the symbol will stand for its
-    function definition, which should at that time be one of the above,
-    or another symbol whose function definition is used, etc.),
- a cons (STRING . DEFN), meaning that DEFN is the definition
-    (DEFN should be a valid definition in its own right),
- or a cons (MAP . CHAR), meaning use definition of CHAR in keymap MAP,
- or an extended menu item definition.
- (See info node `(elisp)Extended Menu Items'.)
-
-If KEYMAP is a sparse keymap with a binding for KEY, the existing
-binding is altered.  If there is no binding for KEY, the new pair
-binding KEY to DEF is added at the front of KEYMAP.
-
-`ergoemacs-mode' modifies `define-key' in the following ways:
-"
-  (let (tmp)
-    (cond
-     ((and (consp (setq tmp (ergoemacs keymap :map-key)))
-           (ignore-errors (eq (nth 1 tmp) 'user)))
-      (ergoemacs-advice--real-define-key keymap key def)
-      (ergoemacs-advice--real-define-key (keymap-parent keymap) key def))
-     (t
-      (ergoemacs-advice--real-define-key keymap key def)))))
-
 
 
 (provide 'ergoemacs-advice)
