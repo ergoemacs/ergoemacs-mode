@@ -60,6 +60,7 @@
 (defvar ergoemacs-display-small-symbols-for-key-modifiers)
 (defvar ergoemacs-display-use-unicode-brackets-around-keys)
 
+(declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-basic-type "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-modifier-hash "ergoemacs-translate")

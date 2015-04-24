@@ -93,6 +93,7 @@
 (declare-function ergoemacs-map-properties--user "ergoemacs-map-properties")
 
 (declare-function ergoemacs-translate-setup "ergoemacs-translate")
+(declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 
@@ -251,7 +252,7 @@ If LOOKUP-KEYMAP
                   (t
                    (error "Cant calculate/lookup keymap.")))))
         (ergoemacs-mapkeymap
-         (lambda(key item prefix)
+         (lambda(key item _prefix)
            (unless (eq item 'ergoemacs-prefix)
              (puthash key item ergoemacs-map--)))
          ret)
@@ -264,7 +265,7 @@ If LOOKUP-KEYMAP
      ((and (consp map)
            (setq lookup-key (ergoemacs-map--base-lookup-key map))
            (not lookup-keymap)
-           (setq lookup-key (append (list (ergoemacs (ergoemacs-map-properties--original global-map) :key-struct)) lookup-key))
+           (setq lookup-key (append (list (ergoemacs (ergoemacs global-map :original) :key-struct)) lookup-key))
            (setq ret (gethash lookup-key ergoemacs-map--hash)))
       ret)
      ((and (consp map) lookup-key lookup-keymap
@@ -296,7 +297,7 @@ If LOOKUP-KEYMAP
           (setq tmp (ergoemacs-map-- lookup-keymap layout cur-map t))
           (unless (ergoemacs tmp :empty-p)
             (push tmp composed-list)))
-        (setq parent (ergoemacs-map-properties--original global-map)))
+        (setq parent (ergoemacs global-map :original)))
       (when lookup-keymap
         ;; The list of  `ergoemacs-mode' keymaps without the unbind
         ;; keys and user modifications to the global map.
@@ -343,10 +344,7 @@ If LOOKUP-KEYMAP
       ;; Ensure the unbound keys are truly undefined.
       (setq tmp (ergoemacs parent :user))
       (when tmp
-        (push tmp composed-list))
-      
-      (setq ret (make-composed-keymap tmp ret))
-      
+        (setq ret (make-composed-keymap tmp ret)))
       (dolist (cur-map map)
         (dolist (read-key
                  (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-read-list cur-map)))
