@@ -121,6 +121,9 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defvar ergoemacs-menu-keymap (make-sparse-keymap)
   "ErgoEmacs minor-mode menu keymap.")
 
+(defvar ergoemacs-global-changed-keymap (make-sparse-keymap)
+  "This keymap shows the global keys that were changed before `ergoemacs-mode' loaded.")
+
 (defvar ergoemacs-theme)
 (defcustom ergoemacs-mode-line t
   "Determines when the ergoemacs-mode modeline indicator is shown."

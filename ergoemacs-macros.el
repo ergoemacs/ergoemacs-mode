@@ -405,12 +405,10 @@ When KEYMAP can be a property.  The following properties are supported:
 - :remap - Use `ergoemacs-mode' to remap to an appropriate function.
 - :md5 -- returns an md5 of the currently enabled `ergoemacs-mode' options.
 - :theme-debug -- Debugs the theme by calling `ergoemacs-component--checkout'
-- :original -- Returns the original keymap
-- :map-list, :original,  :composed-p, :composed-list, :key-struct :empty-p calls ergoemacs-mat-properties-- equivalent functions.
+- :map-list,  :composed-p, :composed-list, :key-struct :empty-p calls ergoemacs-mat-properties-- equivalent functions.
 
 "
   (let ((map-properties-list '(:map-list
-                               :original
                                :user
                                :composed-p
                                :composed-list
@@ -421,7 +419,8 @@ When KEYMAP can be a property.  The following properties are supported:
                                :keys
                                :where-is
                                :lookup
-                               :user-original)))
+                               :original
+                               :original-user)))
     (cond
      ((and keymap (symbolp keymap)
            (memq keymap map-properties-list))
@@ -434,6 +433,10 @@ When KEYMAP can be a property.  The following properties are supported:
      ((and keymap (symbolp keymap)
            (memq keymap '(:debug-theme :theme-debug :debug)))
       `(ergoemacs-component--checkout ,property ,set-value))
+
+     ((and keymap (symbolp keymap)
+           (eq keymap :global-map))
+      `(ergoemacs-map-properties--original global-map))
      
      ((and keymap (symbolp keymap)
            (eq keymap :remap) property)

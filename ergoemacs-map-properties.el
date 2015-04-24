@@ -75,9 +75,6 @@
                                      [menu-bar]
                                      [C-down-mouse-2]))
 
-(defvar ergoemacs-map-properties--user-map-hash (make-hash-table)
-  "Hash table of the user maps that `ergoemacs-mode' saves.")
-
 (defvar ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal))
 
 (defun ergoemacs-map-properties--keymap-value (keymap &rest _ignore)
@@ -216,6 +213,7 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
 (defun ergoemacs-map-properties--default-global-gen ()
   "Generates hash for default emacs maps."
   ;; (setq ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal))
+  (ergoemacs global-map :label most-negative-fixnum) ;; Should be `most-negative-fixnum'
   (ergoemacs-map-properties--label-atoms)
   ;; Pre-calculate map-lists 
   (dolist (map ergoemacs-map-properties--label-atoms-maps)
@@ -277,11 +275,19 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
           (insert (format "(when (boundp '%s) (ergoemacs-map-properties--label %s %s))"
                           map map (ergoemacs (ergoemacs-sv map) :map-key))))))))
 
+(defun ergoemacs-map-properties--protect-global-map ()
+  "Protects global map by adding a user-key layer to it"
+  (when (and (not noninteractive) (integerp (ergoemacs global-map :map-key)))
+    (let ((map (ergoemacs global-map :user)))
+      (setq global-map (make-composed-keymap map global-map)))))
+
 (defun ergoemacs-map-properties--get-original-global-map ()
   "Loads/Creates the default global map information."
   (ergoemacs-map-properties--label-atoms)
   (if (file-readable-p (ergoemacs-map-properties--default-global-file))
-      (load (ergoemacs-map-properties--default-global-file))
+      (progn
+        (load (ergoemacs-map-properties--default-global-file))
+        (ergoemacs-map-properties--protect-global-map))
     (if noninteractive
         (warn "Could not find global map information")
       (let* ((emacs-exe (ergoemacs-emacs-exe))
@@ -474,11 +480,13 @@ KEYMAP can be a keymap or keymap integer key."
 (add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
 (add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
 
-
+(defvar ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum)
 (defun ergoemacs-map-properties--get-or-generate-map-key (keymap &rest _ignore)
   "Gets the key for the KEYMAP."
   (let ((ret (ergoemacs-map-properties--map-fixed-plist (ergoemacs-map-properties--keymap-value keymap))))
-    (or (and ret (plist-get ret :map-key)) (random))))
+    (or (and ret (plist-get ret :map-key))
+        (setq ergoemacs-map-properties--get-or-generate-map-key
+              (+ 1 ergoemacs-map-properties--get-or-generate-map-key)))))
 
 (defun ergoemacs-map-properties--label (keymap &optional map-key)
   "Label an `ergoemacs-mode' touched keymap.
@@ -560,13 +568,16 @@ The KEYMAP will have the structure
 ;;ergoemacs-map-properties--label
 
 
+(defvar ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
+  "Hash table of the user maps that `ergoemacs-mode' saves.")
+
 (defun ergoemacs-map-properties--user (keymap &rest _ignore)
   "Gets the user KEYMAP with `ergoemacs-mode' identifiers installed.
 KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((key (ergoemacs keymap :map-key))
         map)
     (when (integerp key)
-      (setq map (gethash key ergoemacs-map-properties--user-map-hash))
+      (setq map (gethash (setq key (ergoemacs keymap :key-struct)) ergoemacs-map-properties--user-map-hash))
       (unless map
         (puthash key (make-sparse-keymap) ergoemacs-map-properties--user-map-hash)
         (setq map (gethash key ergoemacs-map-properties--user-map-hash))
@@ -633,30 +644,18 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
              t)
            ret))))
 
-(defun ergoemacs-map-properties--original (keymap &rest _ignore)
-  "Gets the original KEYMAP."
-  (let ((map-key (ergoemacs keymap :map-key)))
-    (cond
-     ((not map-key)
-      (ergoemacs keymap :label)
-      keymap)
-     ((integerp (ergoemacs keymap :map-key))
-      keymap)
-     ((consp map-key)
-      (ergoemacs-map-properties--original (keymap-parent keymap))))))
+(defun ergoemacs-map-properties--original (keymap)
+  "Gets the original keymap."
+  (let ((ret keymap))
+    (while (and (or (and (not (ergoemacs ret :map-key)) (ergoemacs ret :label)) t) ;; Apply label if needed.
+                (not (integerp (ergoemacs ret :map-key)))
+                (setq ret (keymap-parent ret)))
+      t)
+    ret))
 
-(defun ergoemacs-map-properties--protect-global-map ()
-  "Protects global map by adding a user-key layer to it"
-  (when (and (not noninteractive) (integerp (ergoemacs global-map :map-key)))
-    (let ((map (ergoemacs global-map :user)))
-      (setq global-map (make-composed-keymap map global-map)))))
-
-(defun ergoemacs-map-properties--user-original (keymap &rest _ignore)
-  "Get the user defined changes to the original map as a composed keymap"
-  (ergoemacs-setcdr keymap (cdr (make-composed-keymap (ergoemacs keymap :user) (ergoemacs keymap :original))))
-  keymap)
-
-(add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-map-properties--protect-global-map)
+(defun ergoemacs-map-properties--original-user (keymap)
+  "Gets the original keymap with the user protecting layer."
+  (make-composed-keymap (ergoemacs keymap :user) (ergoemacs keymap :original)))
 
 
 (provide 'ergoemacs-map-properties)

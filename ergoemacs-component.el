@@ -75,6 +75,7 @@
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--key-struct "ergoemacs-map-properties")
 
 
 
@@ -306,7 +307,8 @@ Allows the component not to be calculated."
   (or (ergoemacs-component-struct-map obj)
       (let ((map (make-sparse-keymap)))
         (ergoemacs map :label
-                   (list nil (intern (format "%s%s" (ergoemacs-component-struct-name obj) (or (ergoemacs-component-struct-version obj) "")))
+                   (list (ergoemacs (ergoemacs :global-map) :key-struct)
+                         (intern (format "%s%s" (ergoemacs-component-struct-name obj) (or (ergoemacs-component-struct-version obj) "")))
                          (intern (ergoemacs-component-struct-layout obj))))
         (setf (ergoemacs-component-struct-map obj) map)
         map)))
@@ -543,7 +545,7 @@ Cache using LOOKUP-KEY. "
                variable-prefixes cur-layout layout-from) item))))
        cmap)
       (setq ret (copy-keymap ergoemacs-component-struct--get-keymap))
-      (ergoemacs ret :label (list lookup-key (intern (format "%s%s" (ergoemacs-component-struct-name map) (or (ergoemacs-component-struct-version map) ""))) (intern cur-layout)))
+      (ergoemacs ret :label (list (or lookup-key (ergoemacs (ergoemacs :global-map) :key-struct)) (intern (format "%s%s" (ergoemacs-component-struct-name map) (or (ergoemacs-component-struct-version map) ""))) (intern cur-layout)))
       (puthash (list lookup-key (intern cur-layout)) ret hash)
       (setq ergoemacs-component-struct--get-keymap nil)
       ret))))

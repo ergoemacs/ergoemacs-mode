@@ -113,10 +113,9 @@ bindings into this keymap (the original keymap is untouched)
   (ergoemacs :label keymap)
   (cond
    (ergoemacs-mode
-    (ergoemacs-setcdr keymap (cdr (ergoemacs keymap)))
-    (ergoemacs-advice--real-use-local-map keymap))
+    (ergoemacs-advice--real-use-local-map (ergoemacs keymap)))
    (t
-    (ergoemacs-advice--real-use-local-map keymap))))
+    (ergoemacs-advice--real-use-local-map (ergoemacs keymap :original-user)))))
 
 (ergoemacs-advice use-global-map (keymap)
   "Select KEYMAP as the global map.
