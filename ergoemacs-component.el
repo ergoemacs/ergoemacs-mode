@@ -496,27 +496,21 @@ closest `ergoemacs-theme-version' calculated from
 
 (defvar ergoemacs-component-struct--get-keymap nil)
 (defvar ergoemacs-component-struct--get-keymap-extra nil)
-(defun ergoemacs-component-struct--lookup-list (lookup-keymap &optional layout obj)
+(defun ergoemacs-component-struct--lookup-list (lookup-keymap &optional layout obj map-list)
   ""
-  (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
+  (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (reverse (ergoemacs-theme-components)))))
         (cur-layout (or layout ergoemacs-keyboard-layout))
+        (map-list (or map-list (ergoemacs lookup-keymap :map-list)))
         ;; (ergoemacs-component-struct--lookup-list org-mode-map)
         extra-hash
-        tmp ret extra-map final-map)
+        ret extra-map)
     (if (consp obj)
-        (dolist (cobj (reverse obj))
-          (when (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap layout cobj))
-            (push tmp ret)))
-      (setq extra-hash (ergoemacs-component-struct-maps obj))
-      (when (catch 'found-extra
-              ;; If there are exceptions, install them before
-              ;; any lookups.
-              (dolist (map-name (ergoemacs lookup-keymap :map-list))
-                (setq extra-map (gethash map-name extra-hash))
-                (when extra-map
-                  (setq final-map map-name)
-                  (throw 'found-extra t))) nil)
-        (setq ret (ergoemacs-component-struct--get obj cur-layout final-map extra-map))))
+        (dolist (cobj obj)
+          (setq extra-hash (ergoemacs-component-struct-maps cobj))
+          (dolist (map-name map-list)
+            (setq extra-map (gethash map-name extra-hash))
+            (when extra-map
+              (push (ergoemacs-component-struct--get cobj cur-layout map-name extra-map) ret)))))
     ret))
 
 (defun ergoemacs-component-struct--get (map cur-layout &optional lookup-key translate-map)
