@@ -102,22 +102,23 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-advice--enable-permanent-replacements)
 
 
-(ergoemacs-advice* use-local-map (keymap)
+(ergoemacs-advice use-local-map (keymap)
   "Select KEYMAP as the local keymap.
 If KEYMAP is nil, that means no local keymap.
 
 When `ergoemacs-mode' is enabled, install `ergoemacs-mode'
 bindings into this keymap (the original keymap is untouched)
 "
+  :type :replace
+  (ergoemacs :label keymap)
   (cond
    (ergoemacs-mode
-    (ergoemacs :label keymap)
-    (ergoemacs-advice--real-use-local-map (ergoemacs keymap t)))
+    (ergoemacs-setcdr keymap (cdr (ergoemacs keymap)))
+    (ergoemacs-advice--real-use-local-map keymap))
    (t
-    (ergoemacs :label keymap)
     (ergoemacs-advice--real-use-local-map keymap))))
 
-(ergoemacs-advice* use-global-map (keymap)
+(ergoemacs-advice use-global-map (keymap)
   "Select KEYMAP as the global map.
 
 When `ergoemacs-mode' is enabled and KEYMAP is the `global-map', set to `ergoemacs-keymap' instead.
@@ -125,16 +126,16 @@ When `ergoemacs-mode' is enabled and KEYMAP is the `global-map', set to `ergoema
 Also when `ergoemacs-mode' is enabled and KEYMAP is not the
 `global-map', install `ergoemacs-mode' modifications and then set the modified keymap.
 "
+  :type :replace
+  (ergoemacs :label keymap)
   (cond
    ((and ergoemacs-mode (eq keymap global-map))
     (ergoemacs-advice--real-use-global-map ergoemacs-keymap))
    ((and ergoemacs-mode (eq keymap ergoemacs-keymap))
     (ergoemacs-advice--real-use-global-map ergoemacs-keymap))
    (ergoemacs-mode
-    (ergoemacs :label keymap)
     (ergoemacs-advice--real-use-global-map (ergoemacs keymap t)))
    (t
-    (ergoemacs :label keymap)
     (ergoemacs-advice--real-use-global-map keymap))))
 
 

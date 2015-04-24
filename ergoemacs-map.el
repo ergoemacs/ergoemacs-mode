@@ -140,7 +140,7 @@
 
 (defun ergoemacs-map--minor-mode-map-alist (&optional setcdr-p)
   "Modify `minor-mode-map-alist'"
-  (let (ret tmp)
+  (let (ret)
     (when (eq setcdr-p :remove)
       (let (new-lst)
         (dolist (elt minor-mode-map-alist)

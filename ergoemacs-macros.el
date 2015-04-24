@@ -487,28 +487,38 @@ When KEYMAP can be a property.  The following properties are supported:
      )))
 
 ;;;###autoload
-(defmacro ergoemacs-advice* (function args &rest body-and-plist)
-  "Defines an `ergoemacs-mode' advice that replaces a function (like `define-key')"
+(defmacro ergoemacs-advice (function args &rest body-and-plist)
+  "Defines an `ergoemacs-mode' advice.
+
+The structure is (ergoemacs-advice function args tags body-and-plist)
+
+When the tag :type equals :replace, the advice replaces the function.
+
+
+When :type is :replace that replaces a function (like `define-key')"
   (declare (doc-string 2)
            (indent 2))
   (let ((kb (make-symbol "kb")))
     (setq kb (ergoemacs-theme-component--parse-keys-and-body `(nil nil ,@body-and-plist)))
-    `(progn
-       (defalias ',(intern (format "ergoemacs-advice--real-%s" (symbol-name function)))
-         (symbol-function ',function) (concat ,(format "ARGS=%s\n\n" args) (documentation ',function)
-                                              ,(format "\n\n`ergoemacs-mode' preserved the real `%s' in this function."
-                                                       (symbol-name function))))
-       (defun ,(intern (format "ergoemacs-advice--%s--" function)) ,args
-         ,(format "%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
-                  (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function))
-         ,@(nth 1 kb))
-       ;; Hack to make sure the documentation is in the function...
-       (defalias ',(intern (format "ergoemacs-advice--%s" function)) ',(intern (format "ergoemacs-advice--%s--" function))
-         ,(format "ARGS=%s\n\n%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
-                  args (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function)))
-       ,(if (plist-get (nth 0 kb) :always)
-            `(push ',function ergoemacs-advice--permanent-replace-functions)
-          `(push ',function ergoemacs-advice--temp-replace-functions)))))
+    (cond
+     ((eq (plist-get (nth 0 kb) :type) :replace)
+      `(progn
+         (defalias ',(intern (format "ergoemacs-advice--real-%s" (symbol-name function)))
+           (symbol-function ',function) (concat ,(format "ARGS=%s\n\n" args) (documentation ',function)
+                                                ,(format "\n\n`ergoemacs-mode' preserved the real `%s' in this function."
+                                                         (symbol-name function))))
+         (defun ,(intern (format "ergoemacs-advice--%s--" function)) ,args
+           ,(format "%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
+                    (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function))
+           ,@(nth 1 kb))
+         ;; Hack to make sure the documentation is in the function...
+         (defalias ',(intern (format "ergoemacs-advice--%s" function)) ',(intern (format "ergoemacs-advice--%s--" function))
+           ,(format "ARGS=%s\n\n%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
+                    args (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function)))
+         ,(if (plist-get (nth 0 kb) :always)
+              `(push ',function ergoemacs-advice--permanent-replace-functions)
+            `(push ',function ergoemacs-advice--temp-replace-functions)))
+      ))))
 
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
