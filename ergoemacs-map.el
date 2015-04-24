@@ -78,19 +78,20 @@
 
 (declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
 
-(declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--composed-list "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--composed-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--get-or-generate-map-key "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--key-struct "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keymap-value "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--composed-p "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--composed-list "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keys "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--new-command "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--user-original "ergoemacs-map-properties")
 
 (declare-function ergoemacs-translate-setup "ergoemacs-translate")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
@@ -106,8 +107,8 @@
   (mapcar
    (lambda(elt)
      (let ((map (if (eq setcdr-p :remove)
-                    (ergoemacs-map-properties--original (cdr elt) setcdr-p)
-                  (ergoemacs (cdr elt) setcdr-p))))
+                    (ergoemacs (cdr elt) :user-original)
+                  (ergoemacs (cdr elt)))))
        (cons (car elt) map)))
    alist))
 
@@ -118,10 +119,9 @@
      (cond
       ((consp elt)
        (ergoemacs-map--alist elt setcdr-p))
-      (setcdr-p
+      (t
        (set elt (ergoemacs-map--alist (symbol-value elt) setcdr-p))
-       elt)
-      (t elt)))
+       elt)))
    alists))
 
 (defun ergoemacs-map--emulation-mode-map-alists (&optional setcdr-p)
@@ -129,25 +129,23 @@
   ;; Make sure that `ergoemacs-mode' read key and modal
   ;; translations are at the top.
   (let ((ret (ergoemacs-map--alists emulation-mode-map-alists setcdr-p)))
-    (when setcdr-p
-      (setq emulation-mode-map-alists ret))
+    (setq emulation-mode-map-alists ret)
     ret))
 
 (defun ergoemacs-map--minor-mode-overriding-map-alist (&optional setcdr-p)
   "Modify `minor-mode-overriding-map-alist'"
   (let ((ret (ergoemacs-map--alist minor-mode-overriding-map-alist setcdr-p)))
-    (when setcdr-p
-      (setq minor-mode-overriding-map-alist ret))
+    (setq minor-mode-overriding-map-alist ret)
     ret))
 
 (defun ergoemacs-map--minor-mode-map-alist (&optional setcdr-p)
   "Modify `minor-mode-map-alist'"
-  (let (ret)
+  (let (ret tmp)
     (when (eq setcdr-p :remove)
       (let (new-lst)
         (dolist (elt minor-mode-map-alist)
           (unless (or (eq (car elt) 'ergoemacs-mode)
-                      (ignore-errors (eq 'cond-map (car (ergoemacs-map-properties--get-or-generate-map-key (cdr elt))))))
+                      (eq 'cond-map (car (ergoemacs (cdr elt) :map-key))))
             (push elt new-lst)))
         (setq minor-mode-map-alist (reverse new-lst))))
     
@@ -156,8 +154,7 @@
     (when (and ret (not (ignore-errors (eq 'cond-map (car (ergoemacs (cdr (last ret)) :map-key))))))
       (setq ret (append ret (ergoemacs-component-struct--minor-mode-map-alist))))
 
-    (when setcdr-p
-      (setq minor-mode-map-alist ret))
+    (setq minor-mode-map-alist ret)
     ret))
 
 (defun ergoemacs-map--base-lookup-key (map-list)
@@ -213,7 +210,7 @@ If LOOKUP-KEYMAP
          lookup-key
          (map (ergoemacs-component-struct--lookup-hash (or map (ergoemacs-theme-components))))
          (lookup-keymap (or (and lookup-keymap (not recursive) (ergoemacs-keymapp lookup-keymap)
-                                 (ergoemacs-map-properties--original lookup-keymap)) lookup-keymap))
+                                 (ergoemacs lookup-keymap :original)) lookup-keymap))
          unbind-list
          parent
          composed-list
@@ -331,7 +328,7 @@ If LOOKUP-KEYMAP
         
         (setq composed-list (or (and tmp (append tmp (list ret))) (list ret))
               ret nil
-              parent (and (not recursive) (ergoemacs-map-properties--original lookup-keymap))))
+              parent (and (not recursive) (ergoemacs lookup-keymap :original))))
       
       (setq ret (make-sparse-keymap))
       (dolist (key unbind-list)
@@ -374,52 +371,54 @@ If LOOKUP-KEYMAP
 
 (defun ergoemacs-map--install ()
   (interactive)
-  (when (not (consp (ergoemacs-map-properties--get-or-generate-map-key (current-global-map))))
-    (message "Global")
-    (setq ergoemacs-map-- (make-hash-table :test 'equal)
-          ergoemacs-keymap (ergoemacs))
-    (use-global-map ergoemacs-keymap)
-    (message "Emulation")
-    (when emulation-mode-map-alists
-      (ergoemacs emulation-mode-map-alists))
-    (message "Minor overriding")
-    (when minor-mode-overriding-map-alist
-      (ergoemacs minor-mode-overriding-map-alist))
-    (message "Minor")
-    (when minor-mode-map-alist
-      (ergoemacs minor-mode-map-alist))
-    (let ((layout
-           (intern-soft
-            (concat "ergoemacs-layout-" ergoemacs-keyboard-layout))))
-      (cond
-       (layout
-        (ergoemacs-translate-setup ergoemacs-keyboard-layout))
-       (t ; US qwerty by default
-        (ergoemacs-translate-setup "us"))))
-    ;; Add menu
+  (message "Global")
+  (setq ergoemacs-map-- (make-hash-table :test 'equal)
+        ergoemacs-keymap (ergoemacs))
+  (use-global-map ergoemacs-keymap)
+  (message "Emulation")
+  (when emulation-mode-map-alists
+    (ergoemacs-map--emulation-mode-map-alists))
+  (message "Minor overriding")
+  (when minor-mode-overriding-map-alist
+    (ergoemacs-map--minor-mode-overriding-map-alist))
+  (message "Minor")
+  (when minor-mode-map-alist
+    (ergoemacs-map--minor-mode-map-alist))
+  (let ((layout
+         (intern-soft
+          (concat "ergoemacs-layout-" ergoemacs-keyboard-layout))))
+    (cond
+     (layout
+      (ergoemacs-translate-setup ergoemacs-keyboard-layout))
+     (t ; US qwerty by default
+      (ergoemacs-translate-setup "us"))))
+  ;; Add menu
     ;;; (message "menu")
-    (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
-      `("ErgoEmacs" . ,(ergoemacs-theme--menu (or ergoemacs-theme "standard"))))
-    (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
-      (while x
-        (setq minor-mode-map-alist (delq x minor-mode-map-alist))
-        ;; Multiple menus sometimes happen because of multiple 
-        ;; ergoemacs-mode variables in minor-mode-map-alist
-        (setq x (assq 'ergoemacs-mode minor-mode-map-alist)))
-      (push (cons 'ergoemacs-mode ergoemacs-menu-keymap) minor-mode-map-alist))))
+  (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
+    `("ErgoEmacs" . ,(ergoemacs-theme--menu (or ergoemacs-theme "standard"))))
+  (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
+    (while x
+      (setq minor-mode-map-alist (delq x minor-mode-map-alist))
+      ;; Multiple menus sometimes happen because of multiple 
+      ;; ergoemacs-mode variables in minor-mode-map-alist
+      (setq x (assq 'ergoemacs-mode minor-mode-map-alist)))
+    (push (cons 'ergoemacs-mode ergoemacs-menu-keymap) minor-mode-map-alist)))
 
 (add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-map--install)
 
+(defvar ergoemacs-mode)
 (defun ergoemacs-map--remove ()
   "Remove `ergoemacs-mode'"
   (interactive)
-  (use-global-map (ergoemacs-map-properties--original global-map t))
+  ;; Not needed; Global map isn't modified...
+  (let (ergoemacs-mode)
+    (use-global-map global-map))
   (when emulation-mode-map-alists
-    (ergoemacs emulation-mode-map-alists :remove))
+    (ergoemacs-map--emulation-mode-map-alists :remove))
   (when minor-mode-overriding-map-alist
-    (ergoemacs minor-mode-overriding-map-alist :remove))
+    (ergoemacs-map--minor-mode-overriding-map-alist :remove))
   (when minor-mode-map-alist
-    (ergoemacs minor-mode-map-alist :remove)))
+    (ergoemacs-map--minor-mode-map-alist :remove)))
 
 (defun ergoemacs-map-undefined ()
   "Lets the user know that this key is undefined in `ergoemacs-mode'."

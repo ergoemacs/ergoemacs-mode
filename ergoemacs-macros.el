@@ -420,7 +420,8 @@ When KEYMAP can be a property.  The following properties are supported:
                                :current-local-map-p
                                :keys
                                :where-is
-                               :lookup)))
+                               :lookup
+                               :user-original)))
     (cond
      ((and keymap (symbolp keymap)
            (memq keymap map-properties-list))
