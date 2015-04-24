@@ -75,9 +75,6 @@
                                      [menu-bar]
                                      [C-down-mouse-2]))
 
-(defvar ergoemacs-map-properties--original-map-hash (make-hash-table)
-  "Hash table of the original maps that `ergoemacs-mode' saves.")
-
 (defvar ergoemacs-map-properties--user-map-hash (make-hash-table)
   "Hash table of the user maps that `ergoemacs-mode' saves.")
 
@@ -453,11 +450,7 @@ KEYMAP can be a keymap or keymap integer key."
       (when sv
         (let (omap key)
           (setq key (ergoemacs-map-properties--get-or-generate-map-key sv))
-          (ergoemacs :label sv key)
-          (setq omap (gethash key ergoemacs-map-properties--original-map-hash))
-          ;; Hash should be a copy pointers of the original maps.
-          (unless omap
-            (puthash key (copy-keymap sv) ergoemacs-map-properties--original-map-hash))))
+          (ergoemacs :label sv key)))
       (pushnew map ergoemacs-map-properties--label-atoms-maps)
       (put map :ergoemacs-labeled t)
       t))))
@@ -560,41 +553,6 @@ The KEYMAP will have the structure
      keymap) t))
 
 ;;ergoemacs-map-properties--label
-(defun ergoemacs-map-properties--original (keymap)
-  "Gets the original KEYMAP with `ergoemacs-mode' identifiers installed.
-KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
-  (let (map-key ret)
-    (cond
-     ((and (ergoemacs-keymapp keymap) (setq map-key (ergoemacs-map-properties--get-or-generate-map-key keymap))
-           (integerp map-key))
-      (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash))
-      (if (and (not ret) ;; Don't save empty keymaps as original keymaps...
-               (or (equal keymap (make-sparse-keymap))
-                   (equal keymap (make-keymap)))) keymap
-        (unless ret
-          (ergoemacs :label keymap map-key)
-          (puthash map-key (copy-keymap (ergoemacs-map-properties--keymap-value keymap)) ergoemacs-map-properties--original-map-hash)
-          (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash)))
-        ret))
-     ((and map-key (ignore-errors (setq map-key (car (car map-key)))))
-      (ergoemacs-map-properties--original map-key))
-     ((and (consp keymap) (ignore-errors (setq map-key (plist-get keymap :map-key))) (integerp map-key))
-      (setq ret (gethash map-key ergoemacs-map-properties--original-map-hash))
-      (setq map-key (plist-get keymap :parent))
-      (when map-key
-        (set-keymap-parent ret (ergoemacs-map-properties--original map-key)))
-      ret)
-     ((and map-key (consp map-key) (ignore-errors (setq map-key (car (car map-key)))))
-      (ergoemacs-map-properties--original map-key))
-     ((and (consp keymap) (ignore-errors (setq map-key (plist-get keymap :composed))))
-      (setq ret (plist-get keymap :parent))
-      (setq ret (make-composed-keymap
-                 (mapcar
-                  (lambda(map)
-                    (ergoemacs-map-properties--original map))
-                  map-key)
-                 (and ret (ergoemacs-map-properties--original ret))))
-      ret))))
 
 
 (defun ergoemacs-map-properties--user (keymap)
@@ -670,8 +628,25 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
              t)
            ret))))
 
-;; Startup and load functions
+(defun ergoemacs-map-properties--original (keymap)
+  "Gets the original KEYMAP."
+  (let ((map-key (ergoemacs keymap :map-key)))
+    (cond
+     ((not map-key)
+      (ergoemacs keymap :label)
+      keymap)
+     ((integerp (ergoemacs keymap :map-key))
+      keymap)
+     ((consp map-key)
+      (ergoemacs-map-properties--original (keymap-parent keymap))))))
 
+;; (defun ergoemacs-map-properties--protect-global-map ()
+;;   "Protects global map by adding a user-key layer to it"
+;;   (when (and (not noninteractive) (integerp (ergoemacs global-map :map-key)))
+;;     (let ((map (ergoemacs global-map :user)))
+;;       (setq global-map (make-composed-keymap map global-map)))))
+
+;; Startup and load functions
 (add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
 (add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
 
