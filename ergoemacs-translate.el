@@ -148,6 +148,7 @@ KEY-SEQ must be a vector or string.  If there is no need to change the sequence,
         ;; [27 8] -> [134217832]
         ;; [27 8 27] -> [134217832 27]
         ;; [27 27 8 27] -> [27 134217832 27]
+        ;; [27 9] -> [134217737]
         (cond
          ((and (eq 27 event) seq)
           (setq old-event (pop seq)
@@ -157,7 +158,7 @@ KEY-SEQ must be a vector or string.  If there is no need to change the sequence,
                 (push old-event seq)
                 (push event seq))
             (setq found t)
-            (push (event-convert-list (append '(meta)  (list (event-basic-type old-event)))) seq)))
+            (push (event-convert-list (append '(meta) modifiers (list (event-basic-type old-event)))) seq)))
          (t
           (push event seq))))
       (and found (vconcat seq)))))
