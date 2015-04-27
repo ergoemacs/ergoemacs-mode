@@ -227,11 +227,7 @@ bindings the keymap is:
   :lighter " ErgoEmacs"
   :global t
   :group 'ergoemacs-mode
-  :keymap ergoemacs-keymap
-  
-  ;; Try to turn on only rectangle support, global mark mode, and
-  ;; other features of CUA mode.  Let ergoemacs handle C-c and C-v.
-  ;; This will possibly allow swapping of C-c and M-c.
+  :keymap ergoemacs-menu-keymap
   (if ergoemacs-mode
       (progn
         (run-hooks 'ergoemacs-mode-startup-hook)

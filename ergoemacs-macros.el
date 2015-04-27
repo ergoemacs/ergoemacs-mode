@@ -420,7 +420,8 @@ When KEYMAP can be a property.  The following properties are supported:
                                :where-is
                                :lookup
                                :original
-                               :original-user)))
+                               :original-user
+                               :installed-p)))
     (cond
      ((and keymap (symbolp keymap)
            (memq keymap map-properties-list))

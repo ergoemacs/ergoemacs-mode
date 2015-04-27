@@ -400,9 +400,11 @@ composing or parent/child relationships)"
 (defun ergoemacs-map-properties--map-list (keymap &optional no-hash)
   "Get the list of maps bound to KEYMAP.
 KEYMAP can be a keymap or keymap integer key."
-  (let (ret
-        (map-p (ergoemacs-map-properties--key-struct keymap))
-        map-key)
+  (let* (ret
+         (keymap (ergoemacs keymap :original))
+         (map-p (ergoemacs-map-properties--key-struct keymap))
+         map-key
+         tmp)
     (cond
      ((and map-p (not no-hash) (setq ret (ergoemacs keymap :map-list-hash)))
       (setq map-key (ergoemacs-map-properties--get-or-generate-map-key keymap))
@@ -410,7 +412,9 @@ KEYMAP can be a keymap or keymap integer key."
       (setq ret nil)
       (dolist (map map-p)
         (when (or (eq keymap (ergoemacs-sv map))
-                  (= map-key (ergoemacs-map-properties--get-or-generate-map-key (ergoemacs-sv map))))
+                  (setq tmp (ergoemacs-map-properties--get-or-generate-map-key (ergoemacs-sv map)))
+                  (integerp tmp)
+                  (= map-key tmp))
           (push map ret)))
       (when (not ret);; Check again...
         (setq ret (ergoemacs-map-properties--map-list keymap t)))
@@ -419,7 +423,9 @@ KEYMAP can be a keymap or keymap integer key."
       (setq map-p (ergoemacs-map-properties--get-or-generate-map-key keymap))
       (dolist (map ergoemacs-map-properties--label-atoms-maps)
         (when (or (eq keymap (ergoemacs-sv map))
-                  (equal map-p (ergoemacs-map-properties--get-or-generate-map-key map)))
+                  (setq tmp (ergoemacs-map-properties--get-or-generate-map-key map))
+                  (integerp tmp)
+                  (equal map-p tmp))
           (push map ret)))
       (ergoemacs-map-properties--put keymap :map-list-hash ret)
       ret)
@@ -479,6 +485,17 @@ KEYMAP can be a keymap or keymap integer key."
 ;; Startup and load functions
 (add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
 (add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
+
+(defun ergoemacs-map-properties--modify-known ()
+  "Modify known maps."
+  ;; (dolist (map ergoemacs-map-properties--label-atoms-maps)
+  ;;   (unless (= most-negative-fixnum (ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))
+  ;;     ;; (message "Modify: %s" map)
+  ;;     (set-default map (ergoemacs (ergoemacs-sv map)))))
+  )
+
+(add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--modify-known)
+(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--modify-known)
 
 (defvar ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum)
 (defun ergoemacs-map-properties--get-or-generate-map-key (keymap &rest _ignore)
@@ -644,7 +661,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
              t)
            ret))))
 
-(defun ergoemacs-map-properties--original (keymap)
+(defun ergoemacs-map-properties--original (keymap &rest _ignore)
   "Gets the original keymap."
   (let ((ret keymap))
     (while (and (or (and (not (ergoemacs ret :map-key)) (ergoemacs ret :label)) t) ;; Apply label if needed.
@@ -653,10 +670,30 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
       t)
     ret))
 
-(defun ergoemacs-map-properties--original-user (keymap)
+(defun ergoemacs-map-properties--original-user (keymap &rest _ignore)
   "Gets the original keymap with the user protecting layer."
   (make-composed-keymap (ergoemacs keymap :user) (ergoemacs keymap :original)))
 
+(defun ergoemacs-map-properties--installed-p (keymap &optional indicate-protected &rest _ignore)
+  "Is `ergoemacs-mode' installed in KEYMAP?
+Values returned are:
+  :protected-p -- An ergoemacs user keymap is installed on top
+  :cond-p -- This is a conditional map (usually found in `minor-mode-map-alist')
+  t -- `ergoemacs-mode' has been installed
+  nil -- `ergoemacs-mode' has not modified this map.
+"
+  (let* ((parent (keymap-parent keymap))
+         (key (and parent (ergoemacs keymap :map-key)))
+         (ret (and (consp key)
+                   (or (and (eq (nth 1 key) 'user) :protected-p)
+                       (and (eq (nth 1 key) 'cond-map) :cond-p)))))
+    (cond
+     ((eq ret :cond-p) ret)
+     ((not ret) nil)
+     ((and (setq key (ergoemacs parent :map-key)) (not (consp key))) ret)
+     ((eq (nth 1 key) 'ergoemacs-unbound) t)
+     ((and (ergoemacs parent :composed-p) (consp key)) t)
+     (t ret))))
 
 (provide 'ergoemacs-map-properties)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

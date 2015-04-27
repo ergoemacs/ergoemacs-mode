@@ -240,11 +240,10 @@ If KEYMAP is not a full keymap, make it a full keymap."
   "Defines KEY to be ITEM for ergoemacs-mapkeymap--current.
 KEY could be a cons for a range if the keymap is a full keymap, otherwise KEY is a vector."
   (cond
-   ((vectorp key)
+   ((and (vectorp key)
+         (ignore-errors (define-key ergoemacs-mapkeymap--current key item)))
     (when ergoemacs-mapkeymap--debug
-      (ergoemacs-debug "Define %s %s" (key-description key) item))
-    (define-key
-      ergoemacs-mapkeymap--current key item))
+      (ergoemacs-debug "Define %s %s" (key-description key) item)))
    ((consp key) ;; Char table range.
     (when ergoemacs-mapkeymap--debug
       (ergoemacs-debug "Define key range %s to %s" key item))
