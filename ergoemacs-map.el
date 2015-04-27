@@ -86,6 +86,7 @@
 (declare-function ergoemacs-map-properties--keymap-value "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keys "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--lookup "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--new-command "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
@@ -348,9 +349,21 @@ If LOOKUP-KEYMAP
                ;; Define the higher character as well.
                (define-key ret tmp-key tmp)))))
          ergoemacs-map--)
+        
+        (setq tmp (ergoemacs global-map :keys))
+
+        ;; Define ergoemacs-mode remapping lookups.
+        (ergoemacs-mapkeymap
+         (lambda(key item _prefix)
+           (unless (eq item 'ergoemacs-prefix)
+             (when (member key tmp)
+               (define-key ret (vector 'ergoemacs-remap (gethash key (ergoemacs global-map :lookup)))
+                 item))))
+         lookup-keymap)
+        
         (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-struct) 'ergoemacs-mode (intern ergoemacs-keyboard-layout)))
-        (setq tmp ;; (ergoemacs-component-struct--lookup-list lookup-keymap)
-              )
+        
+        (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
         
         (setq composed-list (or (and tmp (append tmp (list ret))) (list ret))
               ret nil

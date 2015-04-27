@@ -62,6 +62,7 @@
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--current-local-map-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 
 (defvar ergoemacs-advice--temp-replace-functions nil
   "List of `ergoemacs-mode' replacement functions that are turned
