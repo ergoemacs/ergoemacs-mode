@@ -103,68 +103,80 @@
 (defvar ergoemacs-map--hash (make-hash-table :test 'equal)
   "Hash of calculated maps")
 
-(defun ergoemacs-map--alist (alist)
+(defvar ergoemacs-map--alist (make-hash-table))
+(defun ergoemacs-map--alist (alist &optional symbol)
   "Apply maps for ALIST."
-  (let (type)
-    (mapcar
-     (lambda(elt)
-       (cond
-        ;; ((not (ergoemacs-sv (car elt)))
-        ;;  ;; not enabled, ignore any changes to this map...?
-        ;;  elt)
-        ((eq (car elt) 'ergoemacs-mode) elt)
-        
-        ((and (not (setq type (ergoemacs (cdr elt) :installed-p))) ergoemacs-mode)
-         ;; Install `ergoemacs-mode' into the keymap
-         (cons (car elt) (ergoemacs (cdr elt))))
-        ((not type)
-         ;; Install `ergoemacs-mode' user protection into the keymap.
-         (cons (car elt) (ergoemacs (cdr elt) :original-user)))
-        ((eq :cond-map type)
-         ;; Don't change conditional maps.  Change in alists...?
-         elt)
-        ((and ergoemacs-mode (eq :protected-p type))
-         ;; Change protection into full ergoemacs-mode installation
-         (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original)))
-         )
-        ((eq :protected-p type)
-         ;; `ergoemacs-mode' already protected this map
-         elt)
-        ((and ergoemacs-mode type)
-         ;; `ergoemacs-mode' already installed
-         elt)
-        ((and (not ergoemacs-mode) type)
-         ;; Change full `ergoemacs-mode' installation to user
-         ;; installation
-         (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original-user))))))
-     alist)))
+  (let (type old-len)
+    (unless (and symbol (setq old-len (gethash symbol ergoemacs-map--alist))
+                 (= (length alist) old-len))
+      (when symbol
+        (puthash symbol (length alist) ergoemacs-map--alist))
+      (mapcar
+       (lambda(elt)
+         (cond
+          ;; ((not (ergoemacs-sv (car elt)))
+          ;;  ;; not enabled, ignore any changes to this map...?
+          ;;  elt)
+          ((eq (car elt) 'ergoemacs-mode) elt)
+          
+          ((and (not (setq type (ergoemacs (cdr elt) :installed-p))) ergoemacs-mode)
+           ;; Install `ergoemacs-mode' into the keymap
+           (cons (car elt) (ergoemacs (cdr elt))))
+          ((not type)
+           ;; Install `ergoemacs-mode' user protection into the keymap.
+           (cons (car elt) (ergoemacs (cdr elt) :original-user)))
+          ((eq :cond-map type)
+           ;; Don't change conditional maps.  Change in alists...?
+           elt)
+          ((and ergoemacs-mode (eq :protected-p type))
+           ;; Change protection into full ergoemacs-mode installation
+           (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original)))
+           )
+          ((eq :protected-p type)
+           ;; `ergoemacs-mode' already protected this map
+           elt)
+          ((and ergoemacs-mode type)
+           ;; `ergoemacs-mode' already installed
+           elt)
+          ((and (not ergoemacs-mode) type)
+           ;; Change full `ergoemacs-mode' installation to user
+           ;; installation
+           (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original-user))))))
+       alist))))
 
-(defun ergoemacs-map--alists (alists)
+(defvar ergoemacs-map--alists (make-hash-table))
+(defun ergoemacs-map--alists (alists &optional symbol)
   "Apply maps for ALISTS"
-  (mapcar
-   (lambda(elt)
-     (cond
-      ((consp elt)
-       (ergoemacs-map--alist (list elt)))
-      (t
-       (set elt (ergoemacs-map--alist (symbol-value elt)))
-       elt)))
-   alists))
+  (let (old-len)
+    ;; Only modify if the list has changed length.
+    (unless (and symbol (setq old-len (gethash symbol ergoemacs-map--alists))
+                 (= (length alists) old-len))
+      (when symbol
+        (puthash symbol (length alists) ergoemacs-map--alists))
+      (mapcar
+       (lambda(elt)
+         (cond
+          ((consp elt)
+           (ergoemacs-map--alist (list elt)))
+          (t
+           (set elt (ergoemacs-map--alist (symbol-value elt) elt))
+           elt)))
+       alists))))
 
 (defun ergoemacs-map--emulation-mode-map-alists ()
   "Modify the `emulation-mode-map-alists'."
-  (setq emulation-mode-map-alists (ergoemacs-map--alists emulation-mode-map-alists))
+  (setq emulation-mode-map-alists (ergoemacs-map--alists emulation-mode-map-alists 'emulation-mode-map-alists))
   ;; FIXME: put translations and read key at the top.
   )
 
 (defun ergoemacs-map--minor-mode-overriding-map-alist ()
   "Modify `minor-mode-overriding-map-alist'"
-  (setq minor-mode-overriding-map-alist (ergoemacs-map--alist minor-mode-overriding-map-alist)))
+  (setq minor-mode-overriding-map-alist (ergoemacs-map--alist minor-mode-overriding-map-alist 'minor-mode-overriding-map-alist)))
 
-(defun ergoemacs-map--minor-mode-map-alist ()
+(defun ergoemacs-map--minor-mode-map-alist (&optional ini)
   "Modify `minor-mode-map-alist'"
   (let (ret)
-    (when (not ergoemacs-mode)
+    (when (and ini (not ergoemacs-mode))
       (let (new-lst)
         (dolist (elt minor-mode-map-alist)
           (unless (or (eq (car elt) 'ergoemacs-mode)
@@ -172,9 +184,9 @@
             (push elt new-lst)))
         (setq minor-mode-map-alist (reverse new-lst))))
     
-    (setq ret (ergoemacs-map--alist minor-mode-map-alist))
+    (setq ret (ergoemacs-map--alist minor-mode-map-alist 'minor-mode-map-alist))
 
-    (when (and ergoemacs-mode ret (not (ignore-errors (eq 'cond-map (car (ergoemacs (cdr (last ret)) :map-key))))))
+    (when (and ini ergoemacs-mode ret (not (ignore-errors (eq 'cond-map (car (ergoemacs (cdr (last ret)) :map-key))))))
       (setq ret (append ret (ergoemacs-component-struct--minor-mode-map-alist))))
     (setq minor-mode-map-alist ret)
     ret))
@@ -241,18 +253,6 @@ If LOOKUP-KEYMAP
     (cond
      ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
       lookup-keymap)
-     ((and (ergoemacs-keymapp lookup-keymap)
-           (or (and overriding-terminal-local-map
-                    (eq overriding-terminal-local-map lookup-keymap))
-               (and overriding-local-map
-                    (eq overriding-local-map lookup-keymap))
-               (eq (get-char-property (point) 'keymap) lookup-keymap)))
-      ;; Need to install modal and read-key maps into these
-      ;; keymaps...
-      )
-     ;; ((eq (current-local-map) lookup-keymap)
-     ;;  ;; Modify local map.
-     ;;  )
      ((ergoemacs-component-struct-p map)
       (let ((ret (cond
                   ((and (not lookup-keymap)
@@ -438,6 +438,47 @@ If LOOKUP-KEYMAP
      (t
       (error "Component map isn't a proper argument")))))
 
+(defvar ergoemacs-map--modify-active-last-overriding-terminal-local-map nil)
+(defvar ergoemacs-map--modify-active-last-overriding-local-map nil)
+(defvar ergoemacs-map--modify-active-last-char-map nil)
+(defvar ergoemacs-map--modify-active-last-local-map nil)
+(defun ergoemacs-map--modify-active (&optional ini)
+  "Modifies Active maps."
+  (let ((char-map (get-char-property (point) 'keymap))
+        (local-map (get-text-property (point) 'local-map)))
+
+  (when (and overriding-terminal-local-map
+             (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
+             (not (ergoemacs overriding-terminal-local-map :installed-p)))
+    (setq overriding-terminal-local-map (ergoemacs overriding-terminal-local-map))
+    (message "%s\n%s\n\n" (ergoemacs overriding-terminal-local-map :map-list) (ergoemacs overriding-terminal-local-map :key-struct))
+    ;; (message "%s" (substitute-command-keys "\\{overriding-terminal-local-map}"))
+    )
+  
+  (when (and overriding-local-map
+             (not (eq overriding-local-map ergoemacs-map--modify-active-last-overriding-local-map))
+             (not (ergoemacs overriding-local-map :installed-p)))
+    (setq overriding-local-map (ergoemacs overriding-local-map)))
+
+  (when (and char-map
+             (not (eq char-map ergoemacs-map--modify-active-last-char-map))
+             (not (ergoemacs char-map :installed-p)))
+    (setf char-map (ergoemacs char-map)))
+
+  (when (and local-map
+             (not (eq local-map ergoemacs-map--modify-active-last-local-map))
+             (not (ergoemacs local-map :installed-p)))
+    (setf local-map (ergoemacs local-map)))
+
+  
+  (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map
+        ergoemacs-map--modify-active-last-overriding-local-map overriding-local-map
+        ergoemacs-map--modify-active-last-char-map char-map
+        ergoemacs-map--modify-active-last-local-map local-map)
+  (ergoemacs-map--emulation-mode-map-alists)
+  (ergoemacs-map--minor-mode-map-alist ini)
+  (ergoemacs-map--minor-mode-overriding-map-alist)))
+
 (defun ergoemacs-map--install ()
   (interactive)
   (let ((layout
@@ -462,15 +503,12 @@ If LOOKUP-KEYMAP
   
   (message "Global")
   (setq ergoemacs-map-- (make-hash-table :test 'equal)
-        ergoemacs-keymap (ergoemacs))
+        ergoemacs-keymap (ergoemacs)
+        ergoemacs-map--alist (make-hash-table)
+        ergoemacs-map--alists (make-hash-table))
   (use-global-map ergoemacs-keymap)
-  
-  (ergoemacs-map--minor-mode-map-alist)
-
-  ;; Buffer-local variables
-  ;; (ergoemacs-map--minor-mode-overriding-map-alist)
-  (ergoemacs-map--emulation-mode-map-alists)
-  )
+  (ergoemacs-map--modify-active t)
+  (add-hook 'post-command-hook 'ergoemacs-map--modify-active))
 
 (add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-map--install)
 
@@ -481,8 +519,9 @@ If LOOKUP-KEYMAP
   ;; Not needed; Global map isn't modified...
   (let (ergoemacs-mode)
     (use-global-map global-map)
-    (ergoemacs-map--minor-mode-map-alist)
-    (ergoemacs-map--emulation-mode-map-alists)))
+    (setq ergoemacs-map--alist (make-hash-table)
+          ergoemacs-map--alists (make-hash-table))
+    (ergoemacs-map--modify-active t)))
 
 (defun ergoemacs-map-undefined ()
   "Lets the user know that this key is undefined in `ergoemacs-mode'."
