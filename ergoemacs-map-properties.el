@@ -66,14 +66,14 @@
 
 (defvar ergoemacs-map-properties--ignored-prefixes '(;; "C-h" "<f1>"
                                                      [27]  [escape]
-                                     [remap]
-                                     [left-fringe]
-                                     [vertical-line]
-                                     [vertical-scroll-bar]
-                                     [header-line]
-                                     [mode-line]
-                                     [menu-bar]
-                                     [C-down-mouse-2]))
+                                                     [remap]
+                                                     [left-fringe]
+                                                     [vertical-line]
+                                                     [vertical-scroll-bar]
+                                                     [header-line]
+                                                     [mode-line]
+                                                     [menu-bar]
+                                                     [C-down-mouse-2]))
 
 (defvar ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal))
 
@@ -456,9 +456,6 @@ KEYMAP can be a keymap or keymap integer key."
 
 (defvar ergoemacs-map-properties--unlabeled nil
   "A list of unlabeled keymaps.")
-
-(defvar ergoemacs-map-properties--map-modify-list nil
-  "A list of maps that `ergoemacs-mode' should modify")
 
 (defun ergoemacs-map-properties--label-unlabeled (&rest _ignore)
   "Label known but unlabeled keymaps."
