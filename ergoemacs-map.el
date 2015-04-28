@@ -450,10 +450,7 @@ If LOOKUP-KEYMAP
   (when (and overriding-terminal-local-map
              (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
              (not (ergoemacs overriding-terminal-local-map :installed-p)))
-    (setq overriding-terminal-local-map (ergoemacs overriding-terminal-local-map))
-    (message "%s\n%s\n\n" (ergoemacs overriding-terminal-local-map :map-list) (ergoemacs overriding-terminal-local-map :key-struct))
-    ;; (message "%s" (substitute-command-keys "\\{overriding-terminal-local-map}"))
-    )
+    (setq overriding-terminal-local-map (ergoemacs overriding-terminal-local-map)))
   
   (when (and overriding-local-map
              (not (eq overriding-local-map ergoemacs-map--modify-active-last-overriding-local-map))
