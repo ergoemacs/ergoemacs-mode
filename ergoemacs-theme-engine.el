@@ -67,7 +67,7 @@
 (defun ergoemacs-theme-components (&optional theme)
   "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."
-  (let* ((theme (or theme (ergoemacs :theme)))
+  (let* ((theme (or theme (ergoemacs :current-theme)))
          (theme-plist (gethash (if (stringp theme) theme
                                  (symbol-name theme))
                                ergoemacs-theme-hash))
@@ -96,13 +96,13 @@ This respects `ergoemacs-theme-options'."
     (setq ergoemacs-theme-version
           (mapcar
            (lambda(elt)
-             (if (not (equal (ergoemacs :theme) (nth 0 elt)))
+             (if (not (equal (ergoemacs :current-theme) (nth 0 elt)))
                  elt
                (setq found t)
-               (list (ergoemacs :theme) version)))
+               (list (ergoemacs :current-theme) version)))
            ergoemacs-theme-version))
     (unless found
-      (push (list (ergoemacs :theme) version) ergoemacs-theme-version))))
+      (push (list (ergoemacs :current-theme) version) ergoemacs-theme-version))))
 
 ;;;###autoload
 (defun ergoemacs-theme-option-off (option &optional no-custom)
@@ -165,7 +165,7 @@ When SILENT is true, also include silent themes"
 
 (defun ergoemacs-theme-option-enabled-p (option)
   "Determines if OPTION is enabled."
-  (let ((plist (gethash (ergoemacs :theme) ergoemacs-theme-hash))
+  (let ((plist (gethash (ergoemacs :current-theme) ergoemacs-theme-hash))
         options-on options-off)
     (setq options-on (plist-get plist ':optional-on)
           options-off (plist-get plist ':optional-off))
@@ -240,7 +240,7 @@ When SILENT is true, also include silent themes"
 
 (defun ergoemacs-theme-get-version ()
   "Gets the current version for the current theme"
-  (let ((theme-ver (assoc (ergoemacs :theme) ergoemacs-theme-version)))
+  (let ((theme-ver (assoc (ergoemacs :current-theme) ergoemacs-theme-version)))
     (if (not theme-ver) nil
       (car (cdr theme-ver)))))
 
@@ -283,7 +283,7 @@ When SILENT is true, also include silent themes"
            `(,(intern theme) menu-item ,(concat theme " - " (plist-get (gethash theme ergoemacs-theme-hash) ':description))
              (lambda() (interactive)
                (ergoemacs-save 'ergoemacs-theme ,theme))
-             :button (:radio . (string= (ergoemacs :theme) ,theme))))
+             :button (:radio . (string= (ergoemacs :current-theme) ,theme))))
          (sort (ergoemacs-theme--list) 'string<))))
     ,(ergoemacs-theme--menu-options theme)
     ,(ergoemacs-theme--version-menu theme)

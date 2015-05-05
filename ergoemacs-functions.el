@@ -2105,7 +2105,7 @@ If arg is a negative prefix, copy file path only"
   "Generates the current ergoemacs layout, unless it already exists and opens it in a browser.
 With a prefix, force regeneration. "
   (interactive)
-  (let* ((var (ergoemacs :theme))
+  (let* ((var (ergoemacs :current-theme))
          (layout ergoemacs-keyboard-layout)
          (extra (concat var "/ergo-layouts"))
          (md5 (ergoemacs :md5))

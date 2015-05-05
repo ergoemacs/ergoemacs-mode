@@ -194,7 +194,7 @@ Maybe be similar to use-package"
           plist (nth 0 kb)
           body (nth 1 kb))
     (macroexpand-all
-     `(let ((old-ergoemacs-theme (ergoemacs :theme))
+     `(let ((old-ergoemacs-theme (ergoemacs :current-theme))
             (old-version (ergoemacs-theme-get-version))
             (macro
              ,(if (plist-get plist :macro)
@@ -424,7 +424,7 @@ When KEYMAP can be a property.  The following properties are supported:
                                :original-user
                                :installed-p)))
     (cond
-     ((and keymap (symbolp keymap) (eq keymap :theme))
+     ((and keymap (symbolp keymap) (eq keymap :current-theme))
       `(or (and (stringp ergoemacs-theme) ergoemacs-theme)
            (and (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme)) "standard"))
      ((and keymap (symbolp keymap)

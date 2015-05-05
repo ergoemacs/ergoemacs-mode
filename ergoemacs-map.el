@@ -489,7 +489,7 @@ If LOOKUP-KEYMAP
       (ergoemacs-translate-setup "us"))))
 
   (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
-    `("ErgoEmacs" . ,(ergoemacs-theme--menu (ergoemacs :theme))))
+    `("ErgoEmacs" . ,(ergoemacs-theme--menu (ergoemacs :current-theme))))
 
   (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
     (while x
