@@ -33,9 +33,20 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
-(declare-function ergoemacs-map--md5 "ergoemacs-map.el")
-
 (require 'redo "redo.elc" t) ; for redo shortcut
+
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-theme)
+(defvar helm-buffer)
+(defvar ergoemacs-mode)
+(defvar helm-ff-default-directory)
+(defvar helm-ff-last-expanded)
+(defvar ergoemacs-single-command-keys)
+(defvar org-table-any-line-regexp)
+(defvar cua--last-killed-rectangle)
+(defvar dirtrack-list)
+(defvar ergoemacs-dir)
+(defvar apropos-do-all)
 
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
   "Backward char will edit isearch."

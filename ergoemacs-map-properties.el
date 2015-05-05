@@ -406,12 +406,10 @@ KEYMAP can be a keymap or keymap integer key."
   (if (ergoemacs-keymapp keymap)
       (let* (ret
              (keymap (ergoemacs keymap :original))
-             (map-p (ergoemacs keymap :key-struct))
-             map-key
-             tmp)
+             (map-p (ergoemacs keymap :key-struct)))
         (cond
          ((and map-p (not no-hash) (setq ret (ergoemacs keymap :map-list-hash)))
-          (setq map-key (ergoemacs-map-properties--get-or-generate-map-key keymap))
+          (ergoemacs-map-properties--get-or-generate-map-key keymap)
           (setq map-p ret)
           (setq ret nil)
           (dolist (map map-p)
@@ -646,7 +644,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   "Gets the original keymap with the user protecting layer."
   (make-composed-keymap (ergoemacs keymap :user) (ergoemacs keymap :original)))
 
-(defun ergoemacs-map-properties--installed-p (keymap &optional indicate-protected &rest _ignore)
+(defun ergoemacs-map-properties--installed-p (keymap &rest _ignore)
   "Is `ergoemacs-mode' installed in KEYMAP?
 Values returned are:
   :protected-p -- An ergoemacs user keymap is installed on top
@@ -656,7 +654,7 @@ Values returned are:
 "
   (let* ((parent (keymap-parent keymap))
          (key (and parent (ergoemacs keymap :map-key)))
-         (ret (and (consp key)
+         (ret (and (consp key) 
                    (or (and (eq (nth 1 key) 'user) :protected-p)
                        (and (eq (nth 1 key) 'cond-map) :cond-p)))))
     (cond

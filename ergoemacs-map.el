@@ -62,8 +62,7 @@
 (defvar ergoemacs-theme)
 (defvar ergoemacs-map-properties--plist-hash)
 (defvar ergoemacs-dir)
-
-
+(defvar ergoemacs-mode)
 
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
@@ -93,6 +92,8 @@
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user-original "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 
 (declare-function ergoemacs-translate-setup "ergoemacs-translate")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
