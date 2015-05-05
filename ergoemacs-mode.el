@@ -149,7 +149,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
                           x
                         `(ergoemacs-mode ,(if (or (not ergoemacs-mode-line) (eq ergoemacs-mode-line 'no-layout)) ""
                                             (concat
-                                             (if (string= "standard" (or ergoemacs-theme "standard"))
+                                             (if (string= "standard" (ergoemacs :theme))
                                                  " ErgoEmacs"
                                                (concat " Ergo"
                                                        (upcase (substring ergoemacs-theme 0 1))

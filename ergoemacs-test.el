@@ -32,11 +32,9 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
-(declare-function ergoemacs-theme--set "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-theme-define-key "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-theme-set-version "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-theme-reset "ergoemacs-theme-engine.el")
+(declare-function ergoemacs-mode-reset "ergoemacs-mode.el")
+
+(defvar ergoemacs-keyboard-layout)
 
 (require 'ert)
 (require 'elp)
@@ -75,7 +73,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 
 
-(defvar ergoemacs-keyboard-layout)
+
 (defvar ergoemacs-theme)
 (declare-function ergoemacs-mode "ergoemacs-mode.el")
 (ert-deftest ergoemacs-test-google-code-145 ()
@@ -1218,7 +1216,7 @@ sunt in culpa qui officia deserunt mollit anim id est " (buffer-string)))
 (ert-deftest ergoemacs-test-issue-305-variables-set-to-nil ()
   "Test Issue #305.
 When calling `ergoemacs-refresh' variable values should be preserved."
-  (ergoemacs-theme-reset)
+  (ergoemacs-mode-reset)
   (should (eq t shift-select-mode)))
 
 (defvar ergoemacs-test-keymap-label-1 '(keymap "keymap1" (127 . backward-delete-char-untabify)))

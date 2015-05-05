@@ -193,25 +193,26 @@ Maybe be similar to use-package"
     (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
           plist (nth 0 kb)
           body (nth 1 kb))
-    `(let ((old-ergoemacs-theme (or ergoemacs-theme "standard"))
-           (old-version (ergoemacs-theme-get-version))
-           (macro
-            ,(if (plist-get plist ':macro)
-                 `(edmacro-parse-keys ,(plist-get plist ':macro) t)))
-           (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout))
-       (setq ergoemacs-theme ,(plist-get plist ':theme))
-       (setq ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us"))
-       (ergoemacs-theme-set-version ,(or (plist-get plist ':version) nil))
-       (ergoemacs-theme-reset)
-       ,(if (plist-get plist :cua)
-            `(cua-mode 1))
-       (unwind-protect
-           (progn
-             ,@body)
-         (setq ergoemacs-theme old-ergoemacs-theme)
-         (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
-         (ergoemacs-theme-set-version old-version)
-         (ergoemacs-theme-reset)))))
+    (macroexpand-all
+     `(let ((old-ergoemacs-theme (ergoemacs :theme))
+            (old-version (ergoemacs-theme-get-version))
+            (macro
+             ,(if (plist-get plist :macro)
+                  `(edmacro-parse-keys ,(plist-get plist :macro) t)))
+            (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout))
+        (setq ergoemacs-theme ,(plist-get plist ':theme))
+        (setq ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us"))
+        (ergoemacs-theme-set-version ,(or (plist-get plist ':version) nil))
+        (ergoemacs-mode-reset)
+        ,(if (plist-get plist :cua)
+             `(cua-mode 1))
+        (unwind-protect
+            (progn
+              ,@body)
+          (setq ergoemacs-theme old-ergoemacs-theme)
+          (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+          (ergoemacs-theme-set-version old-version)
+          (ergoemacs-mode-reset))))))
 
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
@@ -423,6 +424,9 @@ When KEYMAP can be a property.  The following properties are supported:
                                :original-user
                                :installed-p)))
     (cond
+     ((and keymap (symbolp keymap) (eq keymap :theme))
+      `(or (and (stringp ergoemacs-theme) ergoemacs-theme)
+           (and (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme)) "standard"))
      ((and keymap (symbolp keymap)
            (memq keymap map-properties-list))
       `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name keymap) 1))) ,property ,set-value))
