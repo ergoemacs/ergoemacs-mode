@@ -422,7 +422,8 @@ When KEYMAP can be a property.  The following properties are supported:
                                :lookup
                                :original
                                :original-user
-                               :installed-p)))
+                               :installed-p
+                               :sequence)))
     (cond
      ((and keymap (symbolp keymap) (eq keymap :current-version))
       `(ergoemacs-theme-get-version))

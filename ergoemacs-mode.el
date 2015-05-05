@@ -434,6 +434,24 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
            (string :tag "Version")))
   :group 'ergoemacs-theme)
 
+(defgroup ergoemacs-read nil
+  "Options for `ergoemacs-read-key'."
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-translate-keys t
+  "When translation is enabled, when a command is not defined
+look for the command with or without modifiers."
+  :type 'boolean
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-translate-emacs-keys t
+  "When key is undefined, translate to an emacish key.
+For example in `org-mode' C-c C-n performs
+`outline-next-visible-heading'.  A QWERTY `ergoemacs-mode' key
+equivalent is <apps> f M-k.  When enabled, pressing this should also perfomr `outline-next-visible-heading'"
+  :type 'boolean
+  :group 'ergoemacs-read)
+
 ;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "")
 
 ;;; Options not supported now

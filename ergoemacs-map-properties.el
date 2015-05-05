@@ -665,6 +665,21 @@ Values returned are:
      ((and (ergoemacs parent :composed-p) (consp key)) t)
      (t ret))))
 
+
+(defun ergoemacs-map-properties--sequence (key &rest _ignore)
+  "Returns a key sequence from KEY.
+This sequence is compatible with `listify-key-sequence'."
+  (let (input)
+    (cond
+     ((not key)) ;; Not specified.
+     ((vectorp key) ;; Actual key sequence
+      (setq input (listify-key-sequence key)))
+     ((consp key) ;; Listified key sequence
+      (setq input key))
+     ((stringp key) ;; Kbd code
+      (setq input (listify-key-sequence (read-kbd-macro key t)))))
+    input))
+
 (provide 'ergoemacs-map-properties)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-map-properties.el ends here

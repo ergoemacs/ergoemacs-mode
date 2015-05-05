@@ -274,7 +274,7 @@ LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
   "Translation alist.")
 
 (defvar ergoemacs-translate--universal-fns
-  '(universal-argument ergoemacs-universal-argument)
+  '(universal-argument ergoemacs-read-key--universal-argument)
   "Universal argument functions")
 
 (defvar ergoemacs-translate--key-hash (make-hash-table :test 'equal))
@@ -286,7 +286,7 @@ LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
   (setq ergoemacs-translate--key-hash (make-hash-table :test 'equal))
   (setq ergoemacs-translate--translation-hash (make-hash-table :test 'equal))
   (setq ergoemacs-translate--text-hash (make-hash-table :test 'equal))
-  (setq ergoemacs-translate--universal-fns '(universal-argument ergoemacs-universal-argument)))
+  (setq ergoemacs-translate--universal-fns '(universal-argument ergoemacs-read-key--universal-argument)))
 
 (defun ergoemacs-translate--local-map (type &optional modal)
   "Gets local keymap for TYPE, or returns nil.
@@ -441,10 +441,10 @@ This keymap is made in `ergoemacs-translation'"))))
               ,(concat "Ergoemacs universal argument, with "
                        (symbol-name (plist-get arg-plist ':name))
                        " translation setup.
-This is called through `ergoemacs-universal-argument'.
+This is called through `ergoemacs-read-key--universal-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
-              (ergoemacs-universal-argument ',(plist-get arg-plist ':name)))))
+              (ergoemacs-read-key--universal-argument ',(plist-get arg-plist ':name)))))
     (push (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")) ergoemacs-translate--universal-fns)
 
     (eval (macroexpand

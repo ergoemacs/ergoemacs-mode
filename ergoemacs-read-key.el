@@ -49,6 +49,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Code:
+
+(defun ergoemacs-read-key--universal-argument (&optional type)
+  "Ergoemacs universal argument.
+This is called through `ergoemacs-read-key'"
+  (interactive)
+  (setq current-prefix-arg '(4))
+  (ergoemacs-read-key nil type nil t))
+
+
 (provide 'ergoemacs-read-key)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-read-key.el ends here

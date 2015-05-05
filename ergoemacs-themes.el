@@ -222,7 +222,7 @@
   (global-set-key (kbd "C-x h") nil) ;; Mark whole buffer
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   
-  ;; (global-set-key (kbd "C-u") 'ergoemacs-universal-argument)
+  ;; (global-set-key (kbd "C-u") 'ergoemacs-read-key--universal-argument)
   (global-set-key (kbd "C-z") 'undo)
 
   ;; Take out undo-tree's redo bindings
@@ -504,13 +504,13 @@
   (when ergoemacs-theme-hook
     :modify-map t
     (define-key ergoemacs-ctl-to-alt-translation-local-map [f2]
-      'ergoemacs-universal-argument)
+      'ergoemacs-read-key--universal-argument)
     (define-key ergoemacs-unchorded-translation-local-map [f2]
-      'ergoemacs-universal-argument)
+      'ergoemacs-read-key--universal-argument)
     (define-key ergoemacs-unchorded-translation-local-map [f2]
-      'ergoemacs-universal-argument)
+      'ergoemacs-read-key--universal-argument)
     (define-key ergoemacs-normal-translation-local-map [f2]
-      'ergoemacs-universal-argument))
+      'ergoemacs-read-key--universal-argument))
   (when isearch-mode-hook
     :modify-map t
     :full-shortcut-map t
@@ -889,7 +889,7 @@
   (global-set-key (kbd "<apps> s") 'save-buffer)
   (global-set-key (kbd "<apps> C-s") 'write-file)
   (global-set-key (kbd "<apps> o") 'find-file)
-  (global-set-key (kbd "<apps> g") 'ergoemacs-universal-argument)
+  (global-set-key (kbd "<apps> g") 'ergoemacs-read-key--universal-argument)
   (global-set-key (kbd "<apps> w") 'ergoemacs-close-current-buffer)
   (global-set-key (kbd "<apps> x") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "<apps> c") 'ergoemacs-copy-line-or-region)
@@ -1137,7 +1137,7 @@
     (global-set-key [remap powershell] 'ergoemacs-powershell-here)
     (global-set-key [remap shell] 'ergoemacs-shell-here)
     (global-set-key [remap universal-argument]
-                    'ergoemacs-universal-argument)
+                    'ergoemacs-read-key--universal-argument)
     (global-set-key [remap describe-key]
                     'ergoemacs-key-description)
     (global-set-key [remap describe-mode]
