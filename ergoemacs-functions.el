@@ -200,7 +200,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
     (when ergoemacs-keyboard-layout
       (setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout))
     (when ergoemacs-theme
-      (setenv "ERGOEMACS_THEME" ergoemacs-theme))
+      (setenv "ERGOEMACS_THEME" (ergoemacs :current-theme)))
     (cond
      ((with-current-buffer (get-buffer-create "*ergoemacs-clean*")
         (not ergoemacs-terminal))

@@ -470,7 +470,7 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
       (cond
        ((not (setq versions (ergoemacs-component-struct-versions comp)))
         comp)
-       ((string= "" (setq versions (ergoemacs-component-struct--closest-version ergoemacs-theme-version versions)))
+       ((string= "" (setq versions (ergoemacs-component-struct--closest-version (ergoemacs :current-version)  versions)))
         comp)
        (t
         (ergoemacs-component-struct--lookup-hash (concat (ergoemacs-component-struct-name comp) versions)))))))
@@ -741,16 +741,18 @@ This assumes the variables are stored in `ergoemacs-component-struct--applied-in
   "Get Versions available for OBJ.
 If Object isn't specified assume it is for the current ergoemacs theme."
   (let ((obj (or obj (ergoemacs-theme-components obj))))
-    (sort (cond
-           ((consp obj)
-            (let (ret)
-              (dolist (cur-obj (ergoemacs-component-struct--lookup-hash obj))
-                (dolist (ver (ergoemacs-component-struct-versions cur-obj))
-                  (unless (member ver ret)
-                    (push ver ret))))
-              ret))
-           (t (ergoemacs-component-struct--versions (ergoemacs-component-struct--lookup-hash obj))))
-          'string<)))
+    (if (not obj)
+        (error "`ergoemacs-theme-components' could not be detected...")
+      (sort (cond
+             ((consp obj)
+              (let (ret)
+                (dolist (cur-obj (ergoemacs-component-struct--lookup-hash obj))
+                  (dolist (ver (ergoemacs-component-struct-versions cur-obj))
+                    (unless (member ver ret)
+                      (push ver ret))))
+                ret))
+             (t (ergoemacs-component-struct--versions (ergoemacs-component-struct--lookup-hash obj))))
+            'string<))))
 
 (defun ergoemacs-component--checkout (&optional obj dont-show)
   "Checks out ergoemacs-component OBJ"

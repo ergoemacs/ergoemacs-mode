@@ -195,12 +195,12 @@ Maybe be similar to use-package"
           body (nth 1 kb))
     (macroexpand-all
      `(let ((old-ergoemacs-theme (ergoemacs :current-theme))
-            (old-version (ergoemacs-theme-get-version))
+            (old-version (ergoemacs :current-version))
             (macro
              ,(if (plist-get plist :macro)
                   `(edmacro-parse-keys ,(plist-get plist :macro) t)))
             (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout))
-        (setq ergoemacs-theme ,(plist-get plist ':theme))
+        (setq ergoemacs-theme ,(plist-get plist ':currnt-theme))
         (setq ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us"))
         (ergoemacs-theme-set-version ,(or (plist-get plist ':version) nil))
         (ergoemacs-mode-reset)
@@ -424,9 +424,12 @@ When KEYMAP can be a property.  The following properties are supported:
                                :original-user
                                :installed-p)))
     (cond
+     ((and keymap (symbolp keymap) (eq keymap :current-version))
+      `(ergoemacs-theme-get-version))
      ((and keymap (symbolp keymap) (eq keymap :current-theme))
-      `(or (and (stringp ergoemacs-theme) ergoemacs-theme)
-           (and (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme)) "standard"))
+      `(or (and ergoemacs-theme (stringp ergoemacs-theme) ergoemacs-theme)
+           (and ergoemacs-theme (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))
+           "standard"))
      ((and keymap (symbolp keymap)
            (memq keymap map-properties-list))
       `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name keymap) 1))) ,property ,set-value))

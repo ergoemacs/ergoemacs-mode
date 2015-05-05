@@ -68,25 +68,25 @@
   "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."
   (let* ((theme (or theme (ergoemacs :current-theme)))
-         (theme-plist (gethash (if (stringp theme) theme
-                                 (symbol-name theme))
-                               ergoemacs-theme-hash))
+         (theme-plist (gethash theme ergoemacs-theme-hash))
          components)
-    (setq components (reverse (plist-get theme-plist ':components)))
-    (dolist (x (reverse (plist-get theme-plist ':optional-on)))
-      (let ((a (assoc x ergoemacs-theme-options)))
-        (if (not a)
-            (push x components)
-          (setq a (car (cdr a)))
-          (when (or (not a) (eq a 'on))
-            (push x components)))))
-    (dolist (x (reverse (plist-get theme-plist ':optional-off)))
-      (let ((a (assoc x ergoemacs-theme-options)))
-        (when a
-          (setq a (car (cdr a)))
-          (when (eq a 'on)
-            (push x components)))))
-    (setq components (reverse components))
+    (if (not theme)
+        (error "Could not figure out the theme that you are trying to use...")
+      (setq components (reverse (plist-get theme-plist ':components)))
+      (dolist (x (reverse (plist-get theme-plist ':optional-on)))
+        (let ((a (assoc x ergoemacs-theme-options)))
+          (if (not a)
+              (push x components)
+            (setq a (car (cdr a)))
+            (when (or (not a) (eq a 'on))
+              (push x components)))))
+      (dolist (x (reverse (plist-get theme-plist ':optional-off)))
+        (let ((a (assoc x ergoemacs-theme-options)))
+          (when a
+            (setq a (car (cdr a)))
+            (when (eq a 'on)
+              (push x components)))))
+      (setq components (reverse components)))
     components))
 
 ;;;###autoload
@@ -259,7 +259,7 @@ When SILENT is true, also include silent themes"
             (ergoemacs-theme-set-version nil)
             (customize-mark-as-set 'ergoemacs-theme-version)
             (ergoemacs-mode-reset))
-          :button (:radio . (equal (ergoemacs-theme-get-version) nil)))
+          :button (:radio . (equal (ergoemacs :current-version) nil)))
          ,@(mapcar
             (lambda(version)
               `(,(intern version) menu-item ,version
@@ -267,7 +267,7 @@ When SILENT is true, also include silent themes"
                   (ergoemacs-theme-set-version ,version)
                   (customize-mark-as-set 'ergoemacs-theme-version)
                   (ergoemacs-mode-reset))
-                :button (:radio . (equal (ergoemacs-theme-get-version) ,version))))
+                :button (:radio . (equal (ergoemacs :current-version) ,version))))
             theme-versions))))))
 
 (defun ergoemacs-theme--menu (theme)

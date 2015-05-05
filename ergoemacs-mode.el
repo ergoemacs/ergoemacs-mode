@@ -152,8 +152,8 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
                                              (if (string= "standard" (ergoemacs :current-theme))
                                                  " ErgoEmacs"
                                                (concat " Ergo"
-                                                       (upcase (substring ergoemacs-theme 0 1))
-                                                       (substring ergoemacs-theme 1)))
+                                                       (upcase (substring (ergoemacs :current-theme) 0 1))
+                                                       (substring (ergoemacs :current-theme) 1)))
                                              "[" ergoemacs-keyboard-layout "]")))))
                     minor-mode-alist)))))
 
