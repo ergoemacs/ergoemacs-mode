@@ -474,8 +474,6 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perfomr `ou
   (run-hooks 'ergoemacs-mode-init-hook)
   (add-hook 'after-load-functions 'ergoemacs-mode-after-startup-run-load-hooks))
 
-(add-hook 'after-init-hook 'ergoemacs-map-properties--label-after-startup)
-
 (unless init-file-user
   (run-with-idle-timer 0.05 nil 'ergoemacs-mode-after-init-emacs))
 
