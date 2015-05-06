@@ -175,7 +175,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
                ergoemacs-key-description
                ergoemacs-debug
                ergoemacs-component
-               ergoemacs-read-key
+               ergoemacs-command-loop
                ergoemacs-map
                ergoemacs-functions
                ergoemacs-theme-engine
@@ -231,9 +231,23 @@ bindings the keymap is:
   (if ergoemacs-mode
       (progn
         (run-hooks 'ergoemacs-mode-startup-hook)
+        (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+        (add-hook 'post-command-hook 'ergoemacs-post-command-hook)
         (message "Ergoemacs-mode turned ON."))
     (run-hooks 'ergoemacs-mode-shutdown-hook)
+    (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
+    (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
     (message "Ergoemacs-mode turned OFF.")))
+
+(defvar ergoemacs-pre-command-hook nil)
+(defun ergoemacs-pre-command-hook ()
+  "Run `ergoemacs-mode' pre command hooks."
+  (run-hooks 'ergoemacs-pre-command-hook))
+
+(defvar ergoemacs-post-command-hook nil)
+(defun ergoemacs-post-command-hook ()
+  "Run `ergoemacs-mode' post command hooks."
+  (run-hooks 'ergoemacs-post-command-hook))
 
 ;;;###autoload
 (defun ergoemacs-mode-reset ()
@@ -434,6 +448,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
            (string :tag "Version")))
   :group 'ergoemacs-theme)
 
+;;; Command loop options.
 (defgroup ergoemacs-read nil
   "Options for `ergoemacs-read-key'."
   :group 'ergoemacs-mode)

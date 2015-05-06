@@ -274,7 +274,7 @@ LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
   "Translation alist.")
 
 (defvar ergoemacs-translate--universal-fns
-  '(universal-argument ergoemacs-read-key--universal-argument)
+  '(universal-argument ergoemacs-command-loop--universal-argument)
   "Universal argument functions")
 
 (defvar ergoemacs-translate--key-hash (make-hash-table :test 'equal))
@@ -286,7 +286,7 @@ LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
   (setq ergoemacs-translate--key-hash (make-hash-table :test 'equal))
   (setq ergoemacs-translate--translation-hash (make-hash-table :test 'equal))
   (setq ergoemacs-translate--text-hash (make-hash-table :test 'equal))
-  (setq ergoemacs-translate--universal-fns '(universal-argument ergoemacs-read-key--universal-argument)))
+  (setq ergoemacs-translate--universal-fns '(universal-argument ergoemacs-command-loop--universal-argument)))
 
 (defun ergoemacs-translate--local-map (type &optional modal)
   "Gets local keymap for TYPE, or returns nil.
@@ -441,10 +441,10 @@ This keymap is made in `ergoemacs-translation'"))))
               ,(concat "Ergoemacs universal argument, with "
                        (symbol-name (plist-get arg-plist ':name))
                        " translation setup.
-This is called through `ergoemacs-read-key--universal-argument'.
+This is called through `ergoemacs-command-loop--universal-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
-              (ergoemacs-read-key--universal-argument ',(plist-get arg-plist ':name)))))
+              (ergoemacs-command-loop--universal-argument ',(plist-get arg-plist ':name)))))
     (push (intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-universal-argument")) ergoemacs-translate--universal-fns)
 
     (eval (macroexpand
@@ -452,20 +452,20 @@ This function is made in `ergoemacs-translation'")
               ,(concat "Ergoemacs digit argument, with "
                        (symbol-name (plist-get arg-plist ':name))
                        " translation setup.
-This is called through `ergoemacs-read-key--digit-argument'.
+This is called through `ergoemacs-command-loop--digit-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
-              (ergoemacs-read-key--digit-argument ',(plist-get arg-plist ':name)))))
+              (ergoemacs-command-loop--digit-argument ',(plist-get arg-plist ':name)))))
 
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-negative-argument")) ()
               ,(concat "Ergoemacs digit argument, with "
                        (symbol-name (plist-get arg-plist ':name))
                        " translation setup.
-This is called through `ergoemacs-read-key--negative-argument'.
+This is called through `ergoemacs-command-loop--negative-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
-              (ergoemacs-read-key--negative-argument ',(plist-get arg-plist ':name)))))
+              (ergoemacs-command-loop--negative-argument ',(plist-get arg-plist ':name)))))
 
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-modal")) ()

@@ -423,7 +423,9 @@ When KEYMAP can be a property.  The following properties are supported:
                                :original
                                :original-user
                                :installed-p
-                               :sequence)))
+                               :sequence
+                               :movement-p
+                               :command-loop-p)))
     (cond
      ((and keymap (symbolp keymap) (eq keymap :current-version))
       `(ergoemacs-theme-get-version))
@@ -513,6 +515,21 @@ When :type is :replace that replaces a function (like `define-key')"
   (let ((kb (make-symbol "kb")))
     (setq kb (ergoemacs-theme-component--parse-keys-and-body `(nil nil ,@body-and-plist)))
     (cond
+     ((eq (plist-get (nth 0 kb) :type) :around)
+      ;; FIXME: use `nadvice' for emacs 24.4+
+      `(defadvice ,function (around ,(intern (format "ergoemacs-advice--%s" (symbol-name function))) ,args activate)
+         ,(plist-get (nth 0 kb) :description)
+         ,@(nth 1 kb)))
+     ((eq (plist-get (nth 0 kb) :type) :after)
+      ;; FIXME: use `nadvice' for emacs 24.4+
+      `(defadvice ,function (after ,(intern (format "ergoemacs-advice--%s" (symbol-name function))) ,args activate)
+         ,(plist-get (nth 0 kb) :description)
+         ,@(nth 1 kb)))
+     ((eq (plist-get (nth 0 kb) :type) :before)
+      ;; FIXME: use `nadvice' for emacs 24.4+
+      `(defadvice ,function (before ,(intern (format "ergoemacs-advice--%s" (symbol-name function))) ,args activate)
+         ,(plist-get (nth 0 kb) :description)
+         ,@(nth 1 kb)))
      ((eq (plist-get (nth 0 kb) :type) :replace)
       `(progn
          (defalias ',(intern (format "ergoemacs-advice--real-%s" (symbol-name function)))

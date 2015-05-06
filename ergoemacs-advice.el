@@ -103,6 +103,28 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-advice--enable-permanent-replacements)
 
 
+(ergoemacs-advice remove-hook (hook function &optional local)
+  "Advice to allow `this-command' to be set correctly before
+ running `pre-command-hook'."
+  :type :after
+  (when (and (boundp 'ergoemacs-mode) ergoemacs-mode
+             (eq hook 'pre-command-hook)
+             (memq hook ergoemacs-command-loop--deferred-functions))
+    (setq ergoemacs-mode nil)
+    (remove-hook 'ergoemacs-command-loop--pre-command-hook function local)
+    (setq ergoemacs-mode t)))
+
+(ergoemacs-advice add-hook (hook function &optional append local)
+  "Advice to allow `this-command' to be set correctly before
+ running `pre-command-hook'."
+  :type :after
+  (when (and (boundp 'ergoemacs-mode) ergoemacs-mode (eq hook 'pre-command-hook)
+             (memq hook ergoemacs-command-loop--deferred-functions))
+    (setq ergoemacs-mode nil)
+    (remove-hook 'pre-command-hook function local)
+    (add-hook 'ergoemacs-command-loop--pre-command-hook function append local)
+    (setq ergoemacs-mode t)))
+
 (ergoemacs-advice use-local-map (keymap)
   "Select KEYMAP as the local keymap.
 If KEYMAP is nil, that means no local keymap.

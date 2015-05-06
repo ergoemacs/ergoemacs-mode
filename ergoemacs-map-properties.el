@@ -680,6 +680,24 @@ This sequence is compatible with `listify-key-sequence'."
       (setq input (listify-key-sequence (read-kbd-macro key t)))))
     input))
 
+(defun ergoemacs-map-properties--movement-p (command &rest _ignore)
+  "Determines if COMMAND is a movement command.
+This is done by checking if this is a command that supports shift
+selection or cua-mode's movement."
+  (let ((intf (condition-case err
+                  (car (cdr (interactive-form command))))))
+    (and intf (eq (type-of intf) 'string)
+         (or (eq (get command 'CUA) 'move)
+             (string-match "^[@*]*\\^" intf)))))
+
+(defvar ergoemacs-map-properties--command-loop-functions
+  '(ergoemacs-command-loop ergoemacs-read-key)
+  "Determine if the function is a command-loop inducing function.")
+
+(defun ergoemacs-map-properties--command-loop-p (command &rest _ignore)
+  "Determines if COMMAND induces the `ergoemacs-mode' command loop."
+  (memq command ergoemacs-map-properties--command-loop-functions))
+
 (provide 'ergoemacs-map-properties)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-map-properties.el ends here
