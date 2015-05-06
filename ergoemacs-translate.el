@@ -452,20 +452,20 @@ This function is made in `ergoemacs-translation'")
               ,(concat "Ergoemacs digit argument, with "
                        (symbol-name (plist-get arg-plist ':name))
                        " translation setup.
-This is called through `ergoemacs-digit-argument'.
+This is called through `ergoemacs-read-key--digit-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
-              (ergoemacs-digit-argument ',(plist-get arg-plist ':name)))))
+              (ergoemacs-read-key--digit-argument ',(plist-get arg-plist ':name)))))
 
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-negative-argument")) ()
               ,(concat "Ergoemacs digit argument, with "
                        (symbol-name (plist-get arg-plist ':name))
                        " translation setup.
-This is called through `ergoemacs-negative-argument'.
+This is called through `ergoemacs-read-key--negative-argument'.
 This function is made in `ergoemacs-translation'")
               (interactive)
-              (ergoemacs-negative-argument ',(plist-get arg-plist ':name)))))
+              (ergoemacs-read-key--negative-argument ',(plist-get arg-plist ':name)))))
 
     (eval (macroexpand
            `(defun ,(intern (concat "ergoemacs-" (symbol-name (plist-get arg-plist ':name)) "-modal")) ()

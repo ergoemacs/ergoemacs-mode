@@ -452,6 +452,54 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perfomr `ou
   :type 'boolean
   :group 'ergoemacs-read)
 
+(defcustom ergoemacs-read-key-delay 0.01
+  "Timeout for `ergoemacs-read-event'.
+This is to distinguish events in a terminal, like PuTTy."
+  :type 'number
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-read-swaps
+  '(((normal normal) unchorded)
+    ((normal unchorded) ctl-to-alt)
+    ((normal unchorded) normal)
+    ((ctl-to-alt ctl-to-alt) unchorded)
+    ((ctl-to-alt unchorded) ctl-to-alt)
+    ((unchorded unchorded) ctl-to-alt)
+    ((unchorded ctl-to-alt) unchorded))
+  "How the translation will be swapped."
+  :type '(repeat
+          (list
+           (list
+            (sexp :tag "First Type")
+            (sexp :tag "Current Type"))
+           (sexp :tag "Translated Type")))
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-echo-function 'on-translation
+  "Shows the function evaluated with a key."
+  :type '(choice
+          (const :tag "Always echo" t)
+          (const :tag "Echo on translations" on-translation)
+          (const :tag "Don't Echo"))
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-read-blink "•"
+  "Blink character."
+  :type '(choice
+          (string :tag "Cursor")
+          (const :tag "No cursor" nil))
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-read-blink-timeout 0.4
+  "Timeout for `ergoemacs-read' blinking cursor."
+  :type 'number
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-backspace-will-undo-swap-translation t
+  "Backspace will undo a swapped keyboard translation."
+  :type 'boolean
+  :group 'ergoemacs-read)
+
 ;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "")
 
 ;;; Options not supported now
