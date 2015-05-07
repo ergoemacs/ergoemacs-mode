@@ -273,7 +273,7 @@ bindings the keymap is:
 (defvar ergoemacs-after-load-functions nil)
 (defun ergoemacs-after-load-functions (absoulte-file-name)
   "Run `ergoemacs-mode' after load functions."
-  (run-hook-with-args ergoemacs-after-load-functions absoulte-file-name))
+  (run-hook-with-args 'ergoemacs-after-load-functions absoulte-file-name))
 
 ;;;###autoload
 (defun ergoemacs-mode-reset ()

@@ -238,7 +238,7 @@ When SILENT is true, also include silent themes"
                   :button (:toggle . (ergoemacs-theme-option-enabled-p ',option)))))
             (sort options-list 'string<)))))))
 
-(defun ergoemacs-theme-get-version ()
+(defun ergoemacs-theme--get-version ()
   "Gets the current version for the current theme"
   (let ((theme-ver (assoc (ergoemacs :current-theme) ergoemacs-theme-version)))
     (if (not theme-ver) nil

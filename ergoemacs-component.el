@@ -77,11 +77,11 @@
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--key-struct "ergoemacs-map-properties")
 
-
-
 (declare-function ergoemacs-debug "ergoemacs-debug")
 (declare-function ergoemacs-debug-heading "ergoemacs-debug")
 (declare-function ergoemacs-debug-keymap "ergoemacs-debug")
+
+(declare-function ergoemacs-theme--get-version "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
@@ -663,7 +663,7 @@ Cache using LOOKUP-KEY. "
 (defvar ergoemacs-component-struct--refresh-variables nil)
 (defvar ergoemacs-component-struct--applied-inits '())
 
-(defun ergoemacs-component-struct--apply-inits (&optional file obj)
+(defun ergoemacs-component-struct--apply-inits (&optional _file obj)
   "Apply the initializations from the OBJ."
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))

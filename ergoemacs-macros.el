@@ -428,7 +428,7 @@ When KEYMAP can be a property.  The following properties are supported:
                                :command-loop-p)))
     (cond
      ((and keymap (symbolp keymap) (eq keymap :current-version))
-      `(ergoemacs-theme-get-version))
+      `(ergoemacs-theme--get-version))
      ((and keymap (symbolp keymap) (eq keymap :current-theme))
       `(or (and ergoemacs-theme (stringp ergoemacs-theme) ergoemacs-theme)
            (and ergoemacs-theme (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))
@@ -546,8 +546,7 @@ When :type is :replace that replaces a function (like `define-key')"
                     args (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function)))
          ,(if (plist-get (nth 0 kb) :always)
               `(push ',function ergoemacs-advice--permanent-replace-functions)
-            `(push ',function ergoemacs-advice--temp-replace-functions)))
-      ))))
+            `(push ',function ergoemacs-advice--temp-replace-functions)))))))
 
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
