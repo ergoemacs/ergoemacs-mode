@@ -232,11 +232,13 @@ bindings the keymap is:
       (progn
         (run-hooks 'ergoemacs-mode-startup-hook)
         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-        (add-hook 'post-command-hook 'ergoemacs-post-command-hook)
+        (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
+        (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
         (message "Ergoemacs-mode turned ON."))
     (run-hooks 'ergoemacs-mode-shutdown-hook)
     (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+    (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
     (message "Ergoemacs-mode turned OFF.")))
 
 ;;;###autoload
@@ -267,6 +269,11 @@ bindings the keymap is:
 (defun ergoemacs-post-command-hook ()
   "Run `ergoemacs-mode' post command hooks."
   (run-hooks 'ergoemacs-post-command-hook))
+
+(defvar ergoemacs-after-load-functions nil)
+(defun ergoemacs-after-load-functions (absoulte-file-name)
+  "Run `ergoemacs-mode' after load functions."
+  (run-hook-with-args ergoemacs-after-load-functions absoulte-file-name))
 
 ;;;###autoload
 (defun ergoemacs-mode-reset ()

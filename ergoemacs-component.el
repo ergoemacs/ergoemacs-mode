@@ -663,7 +663,7 @@ Cache using LOOKUP-KEY. "
 (defvar ergoemacs-component-struct--refresh-variables nil)
 (defvar ergoemacs-component-struct--applied-inits '())
 
-(defun ergoemacs-component-struct--apply-inits (&optional obj)
+(defun ergoemacs-component-struct--apply-inits (&optional file obj)
   "Apply the initializations from the OBJ."
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
@@ -718,6 +718,7 @@ Cache using LOOKUP-KEY. "
         (setq ergoemacs-component-struct--applied-inits tmp)))))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-component-struct--apply-inits)
+(add-hook 'ergoemacs-after-load-functions #'ergoemacs-component-struct--apply-inits)
 
 (defun ergoemacs-component-struct--remove-inits ()
   "Remove the applied initializations of modes and variables.
