@@ -239,6 +239,25 @@ bindings the keymap is:
     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
     (message "Ergoemacs-mode turned OFF.")))
 
+;;;###autoload
+(defun ergoemacs-mode-start ()
+  "Start `ergoemacs-mode' if not already started."
+  (unless ergoemacs-mode
+    (ergoemacs-mode 1)))
+
+;;;###autoload
+(define-minor-mode ergoemacs-ini-mode
+  "Dummy mode to call `ergoemacs-mode' at the very last second if not already loaded."
+  nil
+  :global t
+  :group 'ergoemacs-mode
+  (cond
+   (ergoemacs-mode)
+   (ergoemacs-ini-mode
+    (add-hook 'emacs-startup-hook 'ergoemacs-mode-start))
+   ((not ergoemacs-ini-mode)
+    (remove-hook 'emacs-startup-hook 'ergoemacs-mode-start))))
+
 (defvar ergoemacs-pre-command-hook nil)
 (defun ergoemacs-pre-command-hook ()
   "Run `ergoemacs-mode' pre command hooks."

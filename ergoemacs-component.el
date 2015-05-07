@@ -656,6 +656,8 @@ Cache using LOOKUP-KEY. "
         (dolist (cur-obj (ergoemacs-component-struct--lookup-hash obj))
           (setq ret (append ret (ergoemacs-component-struct--variables cur-obj))))
         ret))
+     ((ergoemacs-component-struct-p obj)
+      (ergoemacs-component-struct-variables obj))
      (t (ergoemacs-component-struct--variables (ergoemacs-component-struct--lookup-hash obj))))))
 
 (defvar ergoemacs-component-struct--refresh-variables nil)
@@ -715,6 +717,8 @@ Cache using LOOKUP-KEY. "
           (ergoemacs-component-struct--remove-inits)
         (setq ergoemacs-component-struct--applied-inits tmp)))))
 
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-component-struct--apply-inits)
+
 (defun ergoemacs-component-struct--remove-inits ()
   "Remove the applied initializations of modes and variables.
 This assumes the variables are stored in `ergoemacs-component-struct--applied-inits'"
@@ -736,6 +740,8 @@ This assumes the variables are stored in `ergoemacs-component-struct--applied-in
          (t
           (ergoemacs-reset var))))))
   (setq ergoemacs-component-struct--applied-inits '()))
+
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-component-struct--remove-inits)
 
 (defun ergoemacs-component-struct--versions (&optional obj)
   "Get Versions available for OBJ.
