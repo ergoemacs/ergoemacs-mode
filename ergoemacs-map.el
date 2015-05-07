@@ -108,8 +108,8 @@
 (defun ergoemacs-map--alist (alist &optional symbol)
   "Apply maps for ALIST."
   (let (type old-len)
-    (unless (and symbol (setq old-len (gethash symbol ergoemacs-map--alist))
-                 (= (length alist) old-len))
+    (if (and symbol (setq old-len (gethash symbol ergoemacs-map--alist))
+             (= (length alist) old-len)) alist
       (when symbol
         (puthash symbol (length alist) ergoemacs-map--alist))
       (mapcar
