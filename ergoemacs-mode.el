@@ -109,6 +109,21 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :group 'convenience
   :group 'emulations)
 
+(defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
+                               ergoemacs-variant
+                             (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
+                                 ergoemacs-theme
+                               (if (getenv "ERGOEMACS_THEME")
+                                   (getenv "ERGOEMACS_THEME")
+                                 nil)))
+  "Ergoemacs Keyboard Layout Themes"
+  :type '(choice
+          (const :tag "Standard" :value nil)
+          (symbol :tag "Other"))
+  :set 'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
+
 
 (defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
   "Hash of ergoemacs theme components")
@@ -160,11 +175,13 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (require 'lookup-word-on-internet nil "NOERROR")
 
 (defconst ergoemacs-font-lock-keywords
-  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
+  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
      (1 font-lock-keyword-face)
      (2 font-lock-constant-face nil t))))
 
 (font-lock-add-keywords 'emacs-lisp-mode ergoemacs-font-lock-keywords)
+
+(defvar ergoemacs-translation-hash (make-hash-table))
 
 (dolist (pkg '(ergoemacs-advice
                ergoemacs-lib

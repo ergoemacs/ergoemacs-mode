@@ -77,10 +77,12 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
   (cond
    (disable
     (when (fboundp (intern (concat "ergoemacs-advice--real-" (symbol-name ad))))
-      (fset ad (intern (concat "ergoemacs-advice--real-" (symbol-name ad))))))
+      (defalias ad (intern (concat "ergoemacs-advice--real-" (symbol-name ad)))
+        (documentation (intern (concat "ergoemacs-advice--real-" (symbol-name ad)))))))
    (t
     (when (fboundp (intern (concat "ergoemacs-advice--" (symbol-name ad))))
-      (fset ad (intern (concat "ergoemacs-advice--" (symbol-name ad))))))))
+      (defalias ad (intern (concat "ergoemacs-advice--" (symbol-name ad)))
+        (documentation (intern (concat "ergoemacs-advice--" (symbol-name ad)))))))))
 
 (defun ergoemacs-advice--enable-replacements (&optional disable permanent)
   "Enable the function replacements "
@@ -126,12 +128,8 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
     (setq ergoemacs-mode t)))
 
 (ergoemacs-advice use-local-map (keymap)
-  "Select KEYMAP as the local keymap.
-If KEYMAP is nil, that means no local keymap.
-
-When `ergoemacs-mode' is enabled, install `ergoemacs-mode'
-bindings into this keymap (the original keymap is untouched)
-"
+  "When `ergoemacs-mode' is enabled, install `ergoemacs-mode'
+bindings into this keymap (the original keymap is untouched)"
   :type :replace
   (ergoemacs :label keymap)
   (cond
@@ -141,9 +139,7 @@ bindings into this keymap (the original keymap is untouched)
     (ergoemacs-advice--real-use-local-map (ergoemacs keymap :original-user)))))
 
 (ergoemacs-advice use-global-map (keymap)
-  "Select KEYMAP as the global map.
-
-When `ergoemacs-mode' is enabled and KEYMAP is the `global-map', set to `ergoemacs-keymap' instead.
+  "When `ergoemacs-mode' is enabled and KEYMAP is the `global-map', set to `ergoemacs-keymap' instead.
 
 Also when `ergoemacs-mode' is enabled and KEYMAP is not the
 `global-map', install `ergoemacs-mode' modifications and then set the modified keymap.
@@ -159,6 +155,46 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
     (ergoemacs-advice--real-use-global-map (ergoemacs keymap t)))
    (t
     (ergoemacs-advice--real-use-global-map keymap))))
+
+
+(defvar ergoemacs-command-loop--single-command-keys)
+(ergoemacs-advice this-command-keys-vector ()
+  "When `ergoemacs-mode' is enabled and
+`ergoemacs-command-loop--single-command-keys' is non-nil, return the prefix
+keys concatenated with `ergoemacs-command-loop--single-command-keys'."
+  :type :replace
+  (or
+   (and ergoemacs-mode ergoemacs-command-loop--single-command-keys
+        (let ((total-keys (ergoemacs-real-this-command-keys-vector))
+              (single-keys (ergoemacs-real-this-single-command-keys)))
+          (if (= (length total-keys) (length single-keys))
+              ergoemacs-command-loop--single-command-keys
+            (vconcat (substring total-keys 0 (- (length total-keys) (length single-keys)))
+                     ergoemacs-command-loop--single-command-keys))))
+   (ergoemacs-real-this-command-keys-vector)))
+
+(ergoemacs-advice this-command-keys ()
+  "When `ergoemacs-mode' is enabled and
+`ergoemacs-command-loop--single-command-keys' is non-nil, return the prefix
+keys concatenated with `ergoemacs-command-loop--single-command-keys'.
+
+When `ergoemacs-mode' is active this is always a vector."
+  :type :replace
+  (or
+   (and ergoemacs-mode ergoemacs-command-loop--single-command-keys
+        (let ((total-keys (ergoemacs-real-this-command-keys-vector))
+              (single-keys (ergoemacs-real-this-single-command-keys)))
+          (if (= (length total-keys) (length single-keys))
+              ergoemacs-command-loop--single-command-keys
+            (vconcat (substring total-keys 0 (- (length total-keys) (length single-keys))) ergoemacs-command-loop--single-command-keys))))
+   (ergoemacs-real-this-command-keys)))
+
+(ergoemacs-advice this-single-command-keys ()
+  "When `ergoemacs-mode' is enabled and
+`ergoemacs-single-command-keys' is non-nil, return this value."
+  :type :replace
+  (or (and ergoemacs-mode ergoemacs-command-loop--single-command-keys)
+      (ergoemacs-real-this-single-command-keys)))
 
 
 

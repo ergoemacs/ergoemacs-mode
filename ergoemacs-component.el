@@ -232,7 +232,7 @@ Allows the component not to be calculated."
          (= 2 (length def))
          (stringp (nth 0 def))
          (or (not (nth 1 def))
-             (gethash (nth 1 def) ergoemacs-translate--translation-hash)))
+             (gethash (nth 1 def) ergoemacs-translation-hash)))
     `(lambda(&optional arg)
        (interactive "P")
        (ergoemacs-read-key ,(nth 0 def) ',(nth 1 def))))

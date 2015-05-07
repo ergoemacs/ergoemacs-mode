@@ -33,8 +33,10 @@
 
 (declare-function ergoemacs-theme-component--create-component "ergoemacs-theme")
 (declare-function ergoemacs-component-struct--create-component "ergoemacs-component")
+(declare-function ergoemacs-translation--create "ergoemacs-translate")
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-theme-comp-hash)
+(defvar ergoemacs-translation-hash)
 
 (autoload 'dired-jump "dired-x" nil t)
 
@@ -1309,20 +1311,57 @@
   (define-key ergoemacs-keymap (kbd "M-J") nil)
   (define-key ergoemacs-keymap (kbd "M-L") nil))
 
-(defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
-                               ergoemacs-variant
-                             (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
-                                 ergoemacs-theme
-                               (if (getenv "ERGOEMACS_THEME")
-                                   (getenv "ERGOEMACS_THEME")
-                                 nil)))
-  "Ergoemacs Keyboard Layout Themes"
-  :type '(choice
-          (const :tag "Standard" :value nil)
-          (symbol :tag "Other"))
-  :set 'ergoemacs-set-default
-  :initialize #'custom-initialize-default
-  :group 'ergoemacs-mode)
+(ergoemacs-translation normal ()
+  "Identify transformation"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map [f1] 'ergoemacs-read-key-help)
+            (define-key map (read-kbd-macro "C-h") 'ergoemacs-read-key-help)
+            map))
+
+(ergoemacs-translation ctl-to-alt ()
+  "Ctl <-> Alt translation"
+  :text (lambda() (format "<Ctl%sAlt> " (ergoemacs-key-description--unicode-char "↔" " to ")))
+  :meta '(control)
+  :control '(meta)
+  :modal-color "blue"
+  :modal-always t
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map [f1] 'ergoemacs-read-key-help)
+            (define-key map (read-kbd-macro "M-h") 'ergoemacs-read-key-help)
+            (define-key map (if (eq system-type 'windows-nt) [M-apps] [M-menu]) 'ergoemacs-read-key-force-next-key-is-quoted)
+            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-force-next-key-is-ctl)
+            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-force-next-key-is-alt)
+            
+            ;; (define-key map "G" 'ergoemacs-read-key-next-key-is-quoted)
+            ;; (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
+            map))
+
+(ergoemacs-translation unchorded-ctl ()
+  "Make the Ctl key sticky."
+  :text "<Ctl+>"
+  :unchorded '(control) 
+  :meta '()
+  :control '(meta)
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map [f1] 'ergoemacs-read-key-help)
+            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-force-next-key-is-quoted)
+            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-force-next-key-is-alt-ctl)
+            (define-key map "g" 'ergoemacs-read-key-force-next-key-is-alt)
+            (define-key map "G" 'ergoemacs-read-key-force-next-key-is-alt-ctl)
+            map))
+
+(ergoemacs-translation unchorded-alt ()
+  "Make the Alt key sticky."
+  :text "<Alt+>"
+  :unchorded '(meta) 
+  :shift '(meta shift)
+  :meta '(meta shift) 
+  :modal-color "red"
+  :keymap-modal (let ((map (make-sparse-keymap)))
+                  (define-key map (read-kbd-macro "<return>") 'ergoemacs-unchorded-alt-modal)
+                  (define-key map (read-kbd-macro "RET") 'ergoemacs-unchorded-alt-modal)
+                  map))
+
 
 (provide 'ergoemacs-themes)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

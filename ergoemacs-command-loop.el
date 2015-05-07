@@ -96,12 +96,74 @@ This is called through `ergoemacs-command-loop'"
 ;; Command Loop
 
 ;; (1) Read Key sequence
-(defun ergoemacs-command-loop ()
+
+(defun ergoemacs-command-loop--read-event (type &optional universal)
   )
 
-;; (2) Key sequence translated to command
-(defun ergoemacs-command-loop--key-lookup ()
+(defun ergoemacs-command-loop (&optional key type initial-key-type universal)
+  "Read keyboard input and execute command.
+The KEY is the keyboard input where the reading begins.  If nil,
+read the whole keymap.
+
+TYPE is the keyboard translation type, defined by `ergoemacs-translate'
+Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal.
+
+INITIAL-KEY-TYPE represents the translation type for the initial KEY.
+
+UNIVERSAL allows ergoemacs-read-key to start with universal
+argument prompt."
   )
+
+(defun ergoemacs-command-loop--message (&rest args)
+  "Message facility for `ergoemacs-mode' command loop"
+  (cond
+   ;; FIXME, message somewhere when you are in the minibuffer ((minibufferp))
+   (t
+    (let (message-log-max)
+      (apply 'message args)))))
+
+
+;; (2) Key sequence translated to command
+(defun ergoemacs-command-loop--message-binding (key &optional lookup translated-key)
+  "Optionally messages information about the translation.
+KEY is the original key,
+TRANSLATED-KEY is what the assumed key is actually bound.
+LOOKUP is what will be run"
+  (cond
+   ((and lookup (ergoemacs-keymapp lookup)))
+   (lookup
+    (ergoemacs-command-loop--message "%s%s%s%s"
+                                     (ergoemacs-key-description key)
+                                     (ergoemacs-key-description--unicode-char "→" "->")
+                                     lookup
+                                     (or (and translated-key
+                                              (format " (from %s)" (ergoemacs-key-description translated-key)))
+                                         "")))
+   (t
+    (ergoemacs-command-loop--message "%s is undefined!"
+                                     (ergoemacs-key-description key)))))
+
+(defun ergoemacs-command-loop--key-lookup (key)
+  "Find the KEY's function based on current bindings.
+
+If `ergoemacs-mode' has translated this, make emacs think you
+pressed the translated key by changing
+`ergoemacs-command-loop--single-command-keys'."
+  (let ((trials (ergoemacs-translate--trials key))
+        ret)
+    (catch 'found-command
+      (dolist (cur-key trials)
+        (when (and cur-key (setq ret (key-binding key)))
+          (cond
+           ((equal cur-key (nth 0 trials))) ;; Actual key
+           ((equal cur-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
+            (setq ergoemacs-command-loop--shift-translated t
+                  ergoemacs-command-loop--single-command-keys cur-key))
+           (t
+            (ergoemacs-command-loop--message-binding key ret cur-key)
+            (setq ergoemacs-command-loop--single-command-keys cur-key)))
+          (throw 'found-command ret))))
+    ret))
 
 (defvar ergoemacs-command-loop--execute-modify-command-list
   '(last-repeatable-command
@@ -215,70 +277,73 @@ For instance in QWERTY M-> is shift translated to M-."
                  keyfreq-table)))))
 
 ;; (3) execute command
+(defvar ergoemacs-command-loop--single-command-keys nil)
 (defun ergoemacs-command-loop--execute (command &optional keys)
+  "Execute COMMAND pretending that KEYS were pressed."
   ;; The emacs command loop should preserve the undo command by
   ;; running `undo-boundary'.
 
-  (cond
-   ((or (stringp command) (vectorp command))
-    ;; If the command is a keyboard macro (string/vector) then execute
-    ;; it though `execute-kbd-macro'
-    )
-   (t
-    ;; This should be a regular command.
-    
-    ;; Remove counting of `this-command' in `keyfreq-mode'
-    (ergoemacs-command-loop--execute-rm-keyfreq this-command)
-    
-    ;; This command execute should modify the following variables:
-    ;; - `last-repeatable-command'
-    ;; - `this-command'
-    ;; - `this-original-command'
-    
-    ;; In addition, other minor modes may store the command, so these
-    ;; should be modified as well.
-    
-    ;; These are stored in `ergoemacs-command-loop--execute-modify-command-list'
-    
-    (dolist (var ergoemacs-command-loop--execute-modify-command-list)
-      (set var command))
-    
-    ;; Handle Shift Selection
-    (ergoemacs-command-loop--execute-handle-shift-selection)
-    
-    ))
-  
-  
+  (let ((keys (or keys ergoemacs-command-loop--single-command-keys)))
+    (cond
+     ((or (stringp command) (vectorp command))
+      ;; If the command is a keyboard macro (string/vector) then execute
+      ;; it though `execute-kbd-macro'
+      (execute-kbd-macro command))
+     (t
+      ;; This should be a regular command.
+      
+      ;; Remove counting of `this-command' in `keyfreq-mode'
+      (ergoemacs-command-loop--execute-rm-keyfreq this-command)
+      
+      ;; This command execute should modify the following variables:
+      ;; - `last-repeatable-command'
+      ;; - `this-command'
+      ;; - `this-original-command'
+      
+      ;; In addition, other minor modes may store the command, so these
+      ;; should be modified as well.
+      
+      ;; These are stored in `ergoemacs-command-loop--execute-modify-command-list'
+      
+      (dolist (var ergoemacs-command-loop--execute-modify-command-list)
+        (set var command))
+      
+      ;; Handle Shift Selection
+      (ergoemacs-command-loop--execute-handle-shift-selection)
+      (when keys
+        ;; Modify the output for these functions when `keys' is not nil.
+        ;; - `this-command-keys'
+        ;; - `this-command-keys-vector'
+        ;; - `this-single-command-keys'
 
+        ;; Also when `keys' are non-nil, modify `last-command-event' and
+        ;; `last-nonmenu-event'
+        
+        ;; This should allow `self-insert-command' to insert the correct key.
+        (setq ergoemacs-command-loop--single-command-keys keys
+              last-command-event (elt keys (- (length keys) 1))
+              last-nonmenu-event last-command-event))
+      
+
+      (unwind-protect
+          (progn
+            ;; Run deferred pre-command hook.
+            (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook)
+            (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook t)
+            (run-hooks 'ergoemacs-pre-command-hook)
+            
+            (call-interactively this-command t))
+        (setq ergoemacs-command-loop--single-command-keys nil
+              ergoemacs-command-loop--shift-translated nil)))))
   
-  ;; - `last-nonmenu-event' -- does not count events from mouse/menus
-  ;; - `last-command-event' -- Last input event
+  ;; I think these should be correct from the command loop:
   ;; - `last-event-frame' -- (should be correct from emacs command loop)
-
   
-  ;; In addition the following functions should be modified
-  ;; - `this-command-keys'
-  ;; - `this-command-keys-vector'
-  
-  ;; This allow `ergoemacs-mode' to fake the command keys that are
-  ;; being supplied
-  
-
   ;; After executing, the emacs loop should copy `this-command' into
   ;; `last-command'.
   ;; It should also change `last-prefix-arg'
-    )
 
-(defun ergoemacs-command-loop--run-pre-command-hook ()
-  ;; `this-command' contains the command that is about to be run.
-  ;; `last-command' describes the previous command
-  )
-
-(defun ergoemacs-command-loop--run-post-command-hook ()
-  ;; `this-command' contains the command that was just run.
-  ;; `last-command' contains the command before that.
-  ;; Also run when emacs first enters the command loop.
-  ;; `this-command' and `last-command' are both `nil'
+  ;; The `post-command-hook' should be run by emacs
   )
 
 (provide 'ergoemacs-command-loop)

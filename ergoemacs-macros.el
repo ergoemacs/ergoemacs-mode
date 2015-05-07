@@ -501,6 +501,41 @@ When KEYMAP can be a property.  The following properties are supported:
      )))
 
 ;;;###autoload
+(defmacro ergoemacs-translation (&rest body-and-plist)
+  "Defines an `ergoemacs-mode' translation.
+
+:text -- Text to display while completing this translation
+:keymap -- Local Keymap for translation
+:keymap-modal -- Modal keymap for overrides.
+:modal-always -- If the modal state is always on, regardless of
+                 the values of  `ergoemacs-modal-ignored-buffers',
+                `ergoemacs-modal-emacs-state-modes' `minibufferp'
+The following arguments allow the keyboard presses to be translated:
+ - :meta
+ - :control
+ - :shift
+ - :meta-control
+ - :meta-shift
+ - :control-shift
+ - :meta-control-shift
+ - :unchorded (no modifiers)
+
+This also creates functions:
+- ergoemacs-translate--NAME-universal-argument
+- ergoemacs-translate--NAME-digit-argument
+- ergoemacs-translate--NAME-negative-argument
+- ergoemacs-translate--NAME-modal"
+  (declare (doc-string 2)
+           (indent 2))
+  (let ((kb (make-symbol "kb")))
+    (setq kb (ergoemacs-theme-component--parse-keys-and-body body-and-plist))
+    
+    `(puthash ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
+              (lambda() ,(plist-get (nth 0 kb) ':description)
+                (ergoemacs-translate--create :key ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
+                 ,@(nth 0 kb))) ergoemacs-translation-hash)))
+
+;;;###autoload
 (defmacro ergoemacs-advice (function args &rest body-and-plist)
   "Defines an `ergoemacs-mode' advice.
 
@@ -537,13 +572,14 @@ When :type is :replace that replaces a function (like `define-key')"
                                                 ,(format "\n\n`ergoemacs-mode' preserved the real `%s' in this function."
                                                          (symbol-name function))))
          (defun ,(intern (format "ergoemacs-advice--%s--" function)) ,args
-           ,(format "%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
+           ,(format "%s\n\n%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
+                    (documentation function)
                     (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function))
            ,@(nth 1 kb))
          ;; Hack to make sure the documentation is in the function...
          (defalias ',(intern (format "ergoemacs-advice--%s" function)) ',(intern (format "ergoemacs-advice--%s--" function))
-           ,(format "ARGS=%s\n\n%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
-                    args (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function)))
+           ,(format "ARGS=%s\n\n%s\n\n%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
+                    args (documentation function) (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function)))
          ,(if (plist-get (nth 0 kb) :always)
               `(push ',function ergoemacs-advice--permanent-replace-functions)
             `(push ',function ergoemacs-advice--temp-replace-functions)))))))

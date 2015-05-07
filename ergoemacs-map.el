@@ -95,7 +95,6 @@
 (declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 
-(declare-function ergoemacs-translate-setup "ergoemacs-translate")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
@@ -479,15 +478,7 @@ If LOOKUP-KEYMAP
 
 (defun ergoemacs-map--install ()
   (interactive)
-  (let ((layout
-         (intern-soft
-          (concat "ergoemacs-layout-" ergoemacs-keyboard-layout))))
-    (cond
-     (layout
-      (ergoemacs-translate-setup ergoemacs-keyboard-layout))
-     (t ; US qwerty by default
-      (ergoemacs-translate-setup "us"))))
-
+  (ergoemacs-mode-line)
   (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
     `("ErgoEmacs" . ,(ergoemacs-theme--menu (ergoemacs :current-theme))))
 
