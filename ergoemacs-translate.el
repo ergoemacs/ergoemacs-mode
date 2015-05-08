@@ -407,23 +407,84 @@ This list consists of:
     (push key ret)
     ret))
 
-
+(defstruct ergoemacs-translation-struct
+  "A basic ergoemacs translation structure."
+  (name "default-name")
+  (translation '())
+  (universal-argument nil)
+  (negative-argument nil)
+  (digit-argument nil)
+  (modal nil)
+  (text "")
+  (keymap (make-sparse-keymap))
+  (keymap-modal (make-sparse-keymap))
+  (modal-always nil)
+  (key nil))
 
 (defun ergoemacs-translate--create (&rest plist)
   "Create a translation from PLIST and return translation object."
-  ;; Create the functions 
-  (dolist (type '("-universal-argument" "-negative-argument"
-                  "-digit-argument" "-modal"))
-    (eval (macroexpand
-           `(defun ,(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)) ()
-              ,(concat "Ergoemacs digit argument, with :"
-                       (plist-get plist :name)
-                       " translation setup.
+  (let ((plist plist)
+        struct
+        -universal-argument
+        -negative-argument
+        -digit-argument
+        -modal)
+    ;; Create the functions 
+    (dolist (type '("-universal-argument" "-negative-argument"
+                    "-digit-argument" "-modal"))
+      (set (intern type) (intern (concat "ergoemacs-translate--" (plist-get plist :name) type)))
+      (eval (macroexpand
+             `(defun ,(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)) ()
+                ,(concat "Ergoemacs digit argument, with :"
+                         (plist-get plist :name)
+                         " translation setup.
 This is called through `ergoemacs-command-loop--" type "'.
 This function is made in `ergoemacs-translate--create'")
-              (interactive)
-              (,(intern (concat "ergoemacs-command-loop--" type)) ,(plist-get plist ':key))))))
-  )
+                (interactive)
+                (,(intern (concat "ergoemacs-command-loop--" type)) ,(plist-get plist ':key))))))
+    (let (tmp
+          cur-trans
+          ret)
+      (dolist (elt plist)
+        (cond
+         ((and (symbolp elt)
+               (progn
+                 (setq cur-trans nil)
+                 (string-match-p "\\(hyper\\|super\\|shift\\|meta\\|control\\)"
+                                 (setq tmp (symbol-name elt)))))
+          (while (string-match "\\(hyper\\|super\\|shift\\|meta\\|control\\)" tmp)
+            (push (intern (match-string 1 tmp)) cur-trans)
+            (setq tmp (replace-match "" t t tmp))))
+         (cur-trans
+          (push (list cur-trans elt) ret)
+          (setq cur-trans nil))))
+      (setq translation ret))
+    (setq struct
+          (make-ergoemacs-translation-struct
+           :name (plist-get plist :name)
+           :translation translation
+           :universal-argument -universal-argument
+           :negative-argument -negative-argument
+           :digit-argument -digit-argument
+           :modal -modal
+           :text (plist-get plist :text)
+           :keymap (or (plist-get plist :keymap) (make-sparse-keymap))
+           :keymap-modal (or (plist-get plist :keymap-modal) (make-sparse-keymap))
+           :modal-always (plist-get plist :modal-always)
+           :key (plist-get plist :key)))
+    (puthash (plist-get plist :key) struct ergoemacs-translation-hash)
+    struct))
+
+(defun ergoemacs-translate--get (type)
+  "Get translation object TYPE"
+  (let ((ret (gethash type ergoemacs-translation-hash)))
+    (cond
+     ((and ret (ergoemacs-translation-struct-p ret))
+      ret)
+     ((and ret (functionp ret))
+      (setq ret (funcall ret)))
+     (t
+      (error "Somethings wrong; cant get translation %s" type)))))
 
 (provide 'ergoemacs-translate)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
