@@ -97,8 +97,65 @@ This is called through `ergoemacs-command-loop'"
 
 ;; (1) Read Key sequence
 
-(defun ergoemacs-command-loop--read-event (type &optional universal)
-  )
+(defun ergoemacs-command-loop--read-key-help-text-prefix-argument (&optional blink-on universal)
+  "Display prefix argument portion of the `ergoemacs-mode' help text."
+  (or (and (not current-prefix-arg)
+           (concat (or
+                    (and (not universal) "")
+                    (and ergoemacs-command-loop-blink-character
+                         (or (and blink-on (ergoemacs-key-description--unicode-char ergoemacs-read-blink "-"))
+                             " "))
+                    " ")
+                   (or
+                    (and (not universal) "")
+                    (ergoemacs-key-description--unicode-char "▸" ">"))))
+      (format
+       "%s%s%s %s "
+       (cond
+        ((listp current-prefix-arg)
+         (make-string (round (log (nth 0 current-prefix-arg) 4)) ?u))
+        (t current-prefix-arg))
+       (or (and (not universal) "")
+           (and ergoemacs-command-loop-blink-character
+                (or (and blink-on (ergoemacs-key-description--unicode-char ergoemacs-read-blink "-"))
+                    " "))
+           " ")
+       (or (and (listp current-prefix-arg)
+                (format "%s" current-prefix-arg))
+           "")
+       (ergoemacs-key-description--unicode-char "▸" ">"))))
+
+(defun ergoemacs-command-loop--read-key (current-key &optional type universal)
+  (let* ((universal universal)
+         (type (or type :normal))
+         (translation (ergoemacs-translate--get type))
+         (local-keymap (ergoemacs-translation-struct-keymap translation))
+         (text (ergoemacs-translation-struct-text translation))
+         (unchorded (ergoemacs-translation-struct-unchorded translation))
+         (trans (ergoemacs-translation-struct-translation translation))
+         (blink-on nil)
+         msg)
+    ;; (ergoemacs-command-loop--read-key (read-kbd-macro "C-x" t) :unchorded-ctl)
+    (when (functionp text)
+      (setq text (funcall text)))
+    (setq trans (or (and trans (concat "\nTranslations: "
+                                       (mapconcat
+                                        (lambda(elt)
+                                          (format "%s%s%s"
+                                                  (mapconcat #'ergoemacs-key-description--modifier (nth 0 elt) "")
+                                                  (ergoemacs-key-description--unicode-char "→" "->")
+                                                  (mapconcat #'ergoemacs-key-description--modifier (nth 1 elt) "")))
+                                        trans ", "))) ""))
+    (setq unchorded (or (and unchorded (concat " " (mapconcat #'ergoemacs-key-description--modifier unchorded ""))) ""))
+    (ergoemacs-command-loop--message
+     "%s" (concat
+           (ergoemacs-command-loop--read-key-help-text-prefix-argument blink-on universal)
+           text
+           (ergoemacs-key-description current-key)
+           unchorded
+           ;; Cursor
+           trans))
+    ))
 
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
@@ -112,7 +169,9 @@ INITIAL-KEY-TYPE represents the translation type for the initial KEY.
 
 UNIVERSAL allows ergoemacs-read-key to start with universal
 argument prompt."
-  )
+  (let ((type (or type :normal))
+        )
+    ))
 
 (defun ergoemacs-command-loop--message (&rest args)
   "Message facility for `ergoemacs-mode' command loop"

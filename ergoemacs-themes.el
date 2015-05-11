@@ -1321,10 +1321,34 @@
 (ergoemacs-translation ctl-to-alt ()
   "Ctl <-> Alt translation"
   :text (lambda() (format "<Ctl%sAlt> " (ergoemacs-key-description--unicode-char "↔" " to ")))
+  
   :meta '(control)
   :control '(meta)
+  
+  :meta-shift '(control shift)
+  :control-shift '(meta shift)
+  
+  :control-hyper '(meta hyper)
+  :meta-hyper '(control hyper)
+
+  :control-super '(meta super)
+  :meta-super '(control super)
+
+  :meta-shift-hyper '(control shift hyper)
+  :control-shift-hyper '(meta shift hyper)
+
+  :meta-shift-super '(control shift super)
+  :control-shift-super '(meta shift super)
+
+  :meta-super-hyper '(control super hyper)
+  :control-super-hyper '(meta super hyper)
+
+  :meta-super-hyper-shift '(control super hyper shift)
+  :control-super-hyper-shfift '(meta super hyper shift)
+  
   :modal-color "blue"
   :modal-always t
+  
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map [f1] 'ergoemacs-read-key-help)
             (define-key map (read-kbd-macro "M-h") 'ergoemacs-read-key-help)
@@ -1339,7 +1363,8 @@
 (ergoemacs-translation unchorded-ctl ()
   "Make the Ctl key sticky."
   :text "<Ctl+>"
-  :unchorded '(control) 
+  :unchorded '(control)
+  :shift '(control shift)
   :meta '()
   :control '(meta)
   :keymap (let ((map (make-sparse-keymap)))

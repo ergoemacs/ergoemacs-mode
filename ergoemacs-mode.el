@@ -492,9 +492,19 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :group 'ergoemacs-theme)
 
 ;;; Command loop options.
-(defgroup ergoemacs-read nil
-  "Options for `ergoemacs-read-key'."
+(defgroup ergoemacs-command-loop nil
+  "Options for `ergoemacs-command-loop'."
   :group 'ergoemacs-mode)
+
+(define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character)
+
+(defcustom ergoemacs-command-loop-blink-character "•"
+  "Blink character."
+  :type '(choice
+          (string :tag "Cursor")
+          (const :tag "No cursor" nil))
+  :group 'ergoemacs-command-loop)
+
 
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined
@@ -541,12 +551,7 @@ This is to distinguish events in a terminal, like PuTTy."
           (const :tag "Don't Echo"))
   :group 'ergoemacs-read)
 
-(defcustom ergoemacs-read-blink "•"
-  "Blink character."
-  :type '(choice
-          (string :tag "Cursor")
-          (const :tag "No cursor" nil))
-  :group 'ergoemacs-read)
+
 
 (defcustom ergoemacs-read-blink-timeout 0.4
   "Timeout for `ergoemacs-read' blinking cursor."

@@ -419,7 +419,8 @@ This list consists of:
   (keymap (make-sparse-keymap))
   (keymap-modal (make-sparse-keymap))
   (modal-always nil)
-  (key nil))
+  (key nil)
+  (unchorded nil))
 
 (defun ergoemacs-translate--create (&rest plist)
   "Create a translation from PLIST and return translation object."
@@ -428,7 +429,8 @@ This list consists of:
         -universal-argument
         -negative-argument
         -digit-argument
-        -modal)
+        -modal
+        unchorded)
     ;; Create the functions 
     (dolist (type '("-universal-argument" "-negative-argument"
                     "-digit-argument" "-modal"))
@@ -471,7 +473,8 @@ This function is made in `ergoemacs-translate--create'")
            :keymap (or (plist-get plist :keymap) (make-sparse-keymap))
            :keymap-modal (or (plist-get plist :keymap-modal) (make-sparse-keymap))
            :modal-always (plist-get plist :modal-always)
-           :key (plist-get plist :key)))
+           :key (plist-get plist :key)
+           :unchorded (plist-get plist :unchorded)))
     (puthash (plist-get plist :key) struct ergoemacs-translation-hash)
     struct))
 
