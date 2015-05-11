@@ -212,7 +212,7 @@ This is different than `event-modifiers' in two ways:
         (push 'ergoemacs-control modifiers)))
     modifiers))
 
-(defun ergoemacs-translate--event (event &optional layout-to layout-from basic modifiers)
+(defun ergoemacs-translate--event-layout (event &optional layout-to layout-from basic modifiers)
   "Translate EVENT to the appropriate keyboard layout.
 BASIC is the precalculated basic event from `ergoemacs-translate--event-basic-type'
 MODIFIERS is the precalculated modifiers from `ergoemacs-translate--event-modifiers'
@@ -327,7 +327,7 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
                  translate-prefix-p)
              (not just-first-p))
         (setq translated-event
-              (ergoemacs-translate--event event layout-to layout-from basic modifiers)))
+              (ergoemacs-translate--event-layout event layout-to layout-from basic modifiers)))
        ((and (eq system-type 'windows-nt) (eq basic 'menu))
         (setq translated-event (ergoemacs-translate--event-convert-list (append modifiers '(apps)))))
        ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
@@ -456,7 +456,7 @@ This function is made in `ergoemacs-translate--create'")
             (push (intern (match-string 1 tmp)) cur-trans)
             (setq tmp (replace-match "" t t tmp))))
          (cur-trans
-          (push (list cur-trans elt) ret)
+          (push (list (sort cur-trans #'string<) elt) ret)
           (setq cur-trans nil))))
       (setq translation ret))
     (setq struct
@@ -485,6 +485,32 @@ This function is made in `ergoemacs-translate--create'")
       (setq ret (funcall ret)))
      (t
       (error "Somethings wrong; cant get translation %s" type)))))
+
+(defun ergoemacs-translate--event-mods (event &optional type)
+  "Translate EVENT modifiers by the translation TYPE.
+If TYPE is unspecified, assume :normal translation"
+  ;; A:(key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0))))
+  ;; M-A:(key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0) :unchorded-alt)))
+  ;; C-S-A:(key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0) :unchorded-ctl)))
+  ;; M-A: (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-S-A" t) 0) :ctl-to-alt)))
+  (let* ((type (or type :normal))
+         (translation (ergoemacs-translate--get type))
+         (basic (ergoemacs-translate--event-basic-type event))
+         (modifiers (sort (mapcar
+                           (lambda(e)
+                             (cond
+                              ((eq 'ergoemacs-shift e) 'shift)
+                              ((eq 'ergoemacs-control e) 'control)
+                              (t e)))
+                           (ergoemacs-translate--event-modifiers event)) #'string<))
+         (ret event))
+    (when (catch 'found-mod
+            (dolist (mod (ergoemacs-translation-struct-translation translation))
+              (when (equal (nth 0 mod) modifiers)
+                (setq modifiers (nth 1 mod))
+                (throw 'found-mod t))) nil)
+      (setq ret (ergoemacs-translate--event-convert-list `(,@modifiers ,basic))))
+    ret))
 
 (provide 'ergoemacs-translate)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
