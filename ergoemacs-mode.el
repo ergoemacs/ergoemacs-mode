@@ -505,6 +505,13 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
           (const :tag "No cursor" nil))
   :group 'ergoemacs-command-loop)
 
+(defcustom ergoemacs-command-loop-blink-rate 0.4
+  "Rate that the ergoemacs-command loop cursor blinks."
+  :type 'number
+  :group 'ergoemacs-command-loop)
+
+(define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
+
 
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined

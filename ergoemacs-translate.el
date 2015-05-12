@@ -460,6 +460,8 @@ This function is made in `ergoemacs-translate--create'")
          (cur-trans
           (push (list (sort cur-trans #'string<) elt) ret)
           (setq cur-trans nil))))
+      (when (setq tmp (plist-get plist :unchorded))
+        (push (list nil tmp) ret))
       (setq translation ret))
     (setq struct
           (make-ergoemacs-translation-struct
@@ -497,7 +499,7 @@ If TYPE is unspecified, assume :normal translation"
   ;; C-S-A:(key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0) :unchorded-ctl)))
   ;; M-A: (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-S-A" t) 0) :ctl-to-alt)))
   (let* ((type (or type :normal))
-         (translation (ergoemacs-translate--get type))
+         (translation (and (symbolp type) (ergoemacs-translate--get type)))
          (basic (ergoemacs-translate--event-basic-type event))
          (modifiers (sort (mapcar
                            (lambda(e)
@@ -508,7 +510,10 @@ If TYPE is unspecified, assume :normal translation"
                            (ergoemacs-translate--event-modifiers event)) #'string<))
          (ret event))
     (when (catch 'found-mod
-            (dolist (mod (ergoemacs-translation-struct-translation translation))
+            (dolist (mod (or (and (ergoemacs-translation-struct-p translation)
+                                  (ergoemacs-translation-struct-translation translation))
+                             (and (consp type) (consp (nth 0 type)) type)
+                             (and (consp type) (list (list nil type)))))
               (when (equal (nth 0 mod) modifiers)
                 (setq modifiers (nth 1 mod))
                 (throw 'found-mod t))) nil)

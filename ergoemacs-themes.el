@@ -1320,7 +1320,7 @@
 
 (ergoemacs-translation ctl-to-alt ()
   "Ctl <-> Alt translation"
-  :text (lambda() (format "<Ctl%sAlt> " (ergoemacs-key-description--unicode-char "↔" " to ")))
+  :text (lambda() (format "<Ctl%sAlt> " (ergoemacs :unicode-or-alt "↔" " to ")))
   
   :meta '(control)
   :control '(meta)

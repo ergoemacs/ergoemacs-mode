@@ -93,6 +93,35 @@ This is called through `ergoemacs-command-loop'"
 
 (defalias 'ergoemacs-negative-argument 'ergoemacs-command-loop--negative-argument)
 
+(defvar ergoemacs-command-loop--next-key-hash (make-hash-table)
+  "Hash table of how functions force the unchorded next key translation to behave.")
+
+(dolist (arg '((next-key-is-alt (meta))
+               (next-key-is-meta (meta))
+               (next-key-is-ctl (control))
+               (next-key-is-control (control))
+               (next-key-is-alt-ctl (control meta))
+               (next-key-is-ctl-alt (control meta))
+               (next-key-is-control-meta (control meta))
+               (next-key-is-meta-control (control meta))
+               (next-key-is-quoted nil)))
+  (eval (macroexpand
+         `(progn
+            (defun ,(intern (concat "ergoemacs-command-loop--" (symbol-name (nth 0 arg)))) ()
+              ,(format "Ergoemacs function to allow %s to be the emacs modifiers" (nth 1 arg))
+              (interactive)
+              (message "Dummy Function for %s" (ergoemacs :modifier-desc ,(nth 1 arg))))
+            (defalias ',(intern (concat "ergoemacs-read-key-" (symbol-name (nth 0 arg)))) ',(intern (concat "ergoemacs-command-loop--" (symbol-name (nth 0 arg)))))
+            (puthash ',(intern (concat "ergoemacs-command-loop--" (symbol-name (nth 0 arg)))) ',(nth 1 arg) ergoemacs-command-loop--next-key-hash)
+            (puthash ',(intern (concat "ergoemacs-read-key-" (symbol-name (nth 0 arg)))) ',(nth 1 arg) ergoemacs-command-loop--next-key-hash)
+            (defun ,(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))) ()
+              ,(format "Ergoemacs function to allow %s to be the emacs modifiers" (nth 1 arg))
+              (interactive)
+              (message "Dummy Function for %s" (ergoemacs :modifier-desc ,(nth 1 arg))))
+            (defalias ',(intern (concat "ergoemacs-read-key-force-" (symbol-name (nth 0 arg)))) ',(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))))
+            (puthash ',(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))) ',(nth 1 arg) ergoemacs-command-loop--next-key-hash)
+            (puthash ',(intern (concat "ergoemacs-read-key-force-" (symbol-name (nth 0 arg)))) ',(nth 1 arg) ergoemacs-command-loop--next-key-hash)))))
+
 ;; Command Loop
 
 ;; (1) Read Key sequence
@@ -103,12 +132,12 @@ This is called through `ergoemacs-command-loop'"
            (concat (or
                     (and (not universal) "")
                     (and ergoemacs-command-loop-blink-character
-                         (or (and blink-on (ergoemacs-key-description--unicode-char ergoemacs-read-blink "-"))
+                         (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))
                              " "))
                     " ")
                    (or
                     (and (not universal) "")
-                    (ergoemacs-key-description--unicode-char "▸" ">"))))
+                    (ergoemacs :unicode-or-alt "▸" ">"))))
       (format
        "%s%s%s %s "
        (cond
@@ -117,13 +146,84 @@ This is called through `ergoemacs-command-loop'"
         (t current-prefix-arg))
        (or (and (not universal) "")
            (and ergoemacs-command-loop-blink-character
-                (or (and blink-on (ergoemacs-key-description--unicode-char ergoemacs-read-blink "-"))
+                (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))
                     " "))
            " ")
        (or (and (listp current-prefix-arg)
                 (format "%s" current-prefix-arg))
            "")
-       (ergoemacs-key-description--unicode-char "▸" ">"))))
+       (ergoemacs :unicode-or-alt "▸" ">"))))
+
+
+(defun ergoemacs-command-loop--read-key-universal (current-key &optional type)
+  )
+
+(defvar ergoemacs-command-loop--decode-event-delay 0.01
+  "Timeout for `ergoemacs-read-event'.
+This is to distinguish events in a terminal, like xterm.
+
+It needs to be less than `ergoemacs-command-loop-blink-rate'.")
+
+(defun ergoemacs-command-loop--decode-event (event keymap)
+  "Change EVENT based on KEYMAP.
+Used to help with translation keymaps like `input-decode-map'"
+  (let* ((new-event event)
+         (old-ergoemacs-input ergoemacs-command-loop--unread-command-events)
+         new-ergoemacs-input
+         (current-key (vector event))
+         (test-ret (lookup-key keymap current-key))
+         next-key)
+    (while (and current-key
+                (keymapp test-ret))
+      ;; The translation needs more keys...
+      (setq tmp nil
+            next-key (with-timeout (ergoemacs-command-loop--decode-event-delay nil)
+                       (or (pop ergoemacs-command-loop--unread-command-events)
+                           (setq tmp (read-key)))))
+      (when tmp ;; Since a key was read, save it to be read later.
+        (push tmp new-ergoemacs-input))
+      (if next-key
+          (setq current-key (vconcat current-key (vector next-key))
+                test-ret (lookup-key keymap current-key))
+        (setq current-key nil)))
+    (when (stringp test-ret) 
+      (setq test-ret (read-kbd-macro test-ret t)))
+    (if (and (vectorp test-ret)
+             (= (length test-ret)))
+        (setq new-event (elt test-ret 0))
+      ;; Not a new event, restore anything that was popped off the
+      ;; unread command events.
+      (when old-ergoemacs-input
+        (setq ergoemacs-command-loop--unread-command-events old-ergoemacs-input)))
+    ;; Add anything read to the
+    ;; ergoemacs-command-loop--unread-command-events
+    (when new-ergoemacs-input
+      (setq ergoemacs-command-loop--unread-command-events (append new-ergoemacs-input ergoemacs-command-loop--unread-command-events)))
+    new-event))
+
+(defun ergoemacs-command-loop--read-event (&optional current-key)
+  "Reads a single event.
+This respects `input-decode-map', `local-function-key-map' and `key-translation-map'.
+
+It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
+  (let ((input (with-timeout (ergoemacs-command-loop-blink-rate nil)
+                 (or (pop ergoemacs-command-loop--unread-command-events)
+                     (read-key))))
+        last-input
+        binding)
+    ;; Fix issues with `input-decode-map'
+    (when input
+      (setq input (ergoemacs-command-loop--decode-event input input-decode-map)
+            binding (key-binding (vconcat current-key (vector input))))
+      ;; These should only be replaced if they are not bound.
+      (unless binding
+        (setq last-input input
+              input (ergoemacs-command-loop--decode-event input local-function-key-map))
+        (unless (= last-input input)
+          (setq binding (key-binding (vconcat current-key (vector input))))))
+      (unless binding
+        (setq input (ergoemacs-command-loop--decode-event input key-translation-map))))
+    input))
 
 (defun ergoemacs-command-loop--read-key (current-key &optional type universal)
   (let* ((universal universal)
@@ -133,30 +233,86 @@ This is called through `ergoemacs-command-loop'"
          (text (ergoemacs-translation-struct-text translation))
          (unchorded (ergoemacs-translation-struct-unchorded translation))
          (trans (ergoemacs-translation-struct-translation translation))
+         (keys nil)
          (blink-on nil)
-         msg)
+         input
+         mod-keys)
     ;; (ergoemacs-command-loop--read-key (read-kbd-macro "C-x" t) :unchorded-ctl)
     (when (functionp text)
       (setq text (funcall text)))
+    
     (setq trans (or (and trans (concat "\nTranslations: "
                                        (mapconcat
                                         (lambda(elt)
                                           (format "%s%s%s"
-                                                  (mapconcat #'ergoemacs-key-description--modifier (nth 0 elt) "")
-                                                  (ergoemacs-key-description--unicode-char "→" "->")
-                                                  (mapconcat #'ergoemacs-key-description--modifier (nth 1 elt) "")))
+                                                  (ergoemacs :modifier-desc (nth 0 elt))
+                                                  (ergoemacs :unicode-or-alt "→" "->")
+                                                  (ergoemacs :modifier-desc (nth 1 elt))))
                                         trans ", "))) ""))
-    (setq unchorded (or (and unchorded (concat " " (mapconcat #'ergoemacs-key-description--modifier unchorded ""))) ""))
-    (ergoemacs-command-loop--message
-     "%s" (concat
-           (ergoemacs-command-loop--read-key-help-text-prefix-argument blink-on universal)
-           text
-           (ergoemacs-key-description current-key)
-           unchorded
-           ;; Cursor
-           trans))
-    ))
+    (maphash
+     (lambda(key item)
+       (let ((local-key (where-is-internal key local-keymap t))
+             tmp)
+         (when local-key
+           (setq tmp (format "%s%s%s"
+                             (ergoemacs-key-description local-key)
+                             (ergoemacs :unicode-or-alt "→" "->")
+                             (ergoemacs :modifier-desc item)))
+           (push (elt local-key 0) mod-keys)
+           (setq keys (or (and (not keys) tmp)
+                          (and keys (concat keys ", " tmp)))))))
+     ergoemacs-command-loop--next-key-hash)
 
+    (setq keys (or (and keys (concat "\nKeys: " keys)) ""))
+    (setq unchorded (or (and unchorded (concat " " (ergoemacs :modifier-desc unchorded))) ""))
+    (while (not input)
+      (ergoemacs-command-loop--message
+       "%s" (concat
+             (ergoemacs-command-loop--read-key-help-text-prefix-argument blink-on universal)
+             text
+             (ergoemacs-key-description current-key)
+             unchorded
+             ;; Cursor
+             (or (and universal "")
+                 (and ergoemacs-command-loop-blink-character
+                      (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))
+                          " "))
+                 " ")
+             trans
+             keys))
+      (setq blink-on (not blink-on)
+            input (ergoemacs-command-loop--read-event current-key)))
+    (cond
+     ((memq input mod-keys);; Changed behavior.
+      (setq trans (gethash (lookup-key local-keymap (vector input)) ergoemacs-command-loop--next-key-hash)
+            unchorded (concat " " (ergoemacs :modifier-desc trans))
+            input nil)
+      (while (not input)
+        (ergoemacs-command-loop--message
+         "%s" (concat
+               (ergoemacs-command-loop--read-key-help-text-prefix-argument blink-on universal)
+               text
+               (ergoemacs-key-description current-key)
+               unchorded
+               ;; Cursor
+               (or (and universal "")
+                   (and ergoemacs-command-loop-blink-character
+                        (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))
+                            " "))
+                   " ")
+               "\n"
+               "\n"))
+        (setq blink-on (not blink-on)
+              input (ergoemacs-command-loop--read-event current-key)))
+      (setq input (ergoemacs-translate--event-mods input trans)))
+     (t
+      ;; Translate the key appropriately.
+      (setq input (ergoemacs-translate--event-mods input type))))
+    ;; Return new key.
+    (vconcat current-key (vector input))))
+
+(defvar ergoemacs-command-loop--unread-command-events nil
+  "List of evenst that `ergoemacs-command-loop' hasn't read.")
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -185,15 +341,15 @@ argument prompt."
 ;; (2) Key sequence translated to command
 (defun ergoemacs-command-loop--message-binding (key &optional lookup translated-key)
   "Optionally messages information about the translation.
-KEY is the original key,
 TRANSLATED-KEY is what the assumed key is actually bound.
+KEY is the original key,
 LOOKUP is what will be run"
   (cond
    ((and lookup (ergoemacs-keymapp lookup)))
    (lookup
     (ergoemacs-command-loop--message "%s%s%s%s"
                                      (ergoemacs-key-description key)
-                                     (ergoemacs-key-description--unicode-char "→" "->")
+                                     (ergoemacs :unicode-or-alt "→" "->")
                                      lookup
                                      (or (and translated-key
                                               (format " (from %s)" (ergoemacs-key-description translated-key)))
