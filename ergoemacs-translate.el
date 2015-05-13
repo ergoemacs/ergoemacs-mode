@@ -436,14 +436,24 @@ This list consists of:
                     "-digit-argument" "-modal"))
       (set (intern type) (intern (concat "ergoemacs-translate--" (plist-get plist :name) type)))
       (eval (macroexpand
-             `(defun ,(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)) ()
-                ,(concat "Ergoemacs digit argument, with :"
-                         (plist-get plist :name)
-                         " translation setup.
-This is called through `ergoemacs-command-loop--" type "'.
+             `(progn
+                (defun ,(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)) ()
+                  ,(concat "Ergo emacs"
+                           (replace-regexp-in-string "-" " " type)
+                           ", with :"
+                           (plist-get plist :name)
+                           " translation setup.
+This is called through `ergoemacs-command-loop-" type "'.
 This function is made in `ergoemacs-translate--create'")
-                (interactive)
-                (,(intern (concat "ergoemacs-command-loop--" type)) ,(plist-get plist ':key))))))
+                  (interactive)
+                  (,(intern (concat "ergoemacs-command-loop-" type)) ,(plist-get plist ':key)))
+                ;; Backward compatible names.
+                (defalias ',(intern (concat "ergoemacs-" (plist-get plist :name) type))
+                  '(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)))
+                ,(when (eq "-universal-argument" type)
+                   `(progn
+                      (push ',(intern (concat "ergoemacs-" (plist-get plist :name) type)) ergoemacs-command-loop--universal-functions)
+                      (push ',(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)) ergoemacs-command-loop--universal-functions)))))))
     (let (tmp
           cur-trans
           ret)
