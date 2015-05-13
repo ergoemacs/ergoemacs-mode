@@ -62,6 +62,13 @@ with this function."
     (setq cur-input (reverse (append new-key (cdr (reverse cur-input)))))
     (apply 'set-input-mode cur-input)))
 
+(defun ergoemacs-command-loop--setup-quit-key ()
+  "Setup the `ergoemacs-mode' quit key."
+  (ergoemacs-command-loop--redefine-quit-key (nth 0 (where-is-internal 'keyboard-quit))))
+
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--setup-quit-key)
+(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--redefine-quit-key)
+
 (defun ergoemacs-command-loop--universal-argument (&optional type)
   "Ergoemacs universal argument.
 This is called through `ergoemacs-command-loop'"
