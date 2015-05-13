@@ -742,7 +742,7 @@ This assumes the variables are stored in `ergoemacs-component-struct--applied-in
           (ergoemacs-reset var))))))
   (setq ergoemacs-component-struct--applied-inits '()))
 
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-component-struct--remove-inits)
+(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-component-struct--remove-inits)
 
 (defun ergoemacs-component-struct--versions (&optional obj)
   "Get Versions available for OBJ.
