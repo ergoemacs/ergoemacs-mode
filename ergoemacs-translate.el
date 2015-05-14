@@ -438,7 +438,7 @@ This list consists of:
       (eval (macroexpand
              `(progn
                 (defun ,(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)) ()
-                  ,(concat "Ergo emacs"
+                  ,(concat "Ergoemacs"
                            (replace-regexp-in-string "-" " " type)
                            ", with :"
                            (plist-get plist :name)
@@ -462,11 +462,17 @@ This function is made in `ergoemacs-translate--create'")
          ((and (symbolp elt)
                (progn
                  (setq cur-trans nil)
-                 (string-match-p "\\(hyper\\|super\\|shift\\|meta\\|control\\)"
+                 (string-match-p "\\(hyper\\|super\\|shift\\|meta\\|control\\|alt\\|cn?tr?l\\)"
                                  (setq tmp (symbol-name elt)))))
           (while (string-match "\\(hyper\\|super\\|shift\\|meta\\|control\\)" tmp)
-            (push (intern (match-string 1 tmp)) cur-trans)
-            (setq tmp (replace-match "" t t tmp))))
+            (cond
+             ((string-match-p "cn?tr?l" (match-string 1 tmp))
+              (push 'conrtol cur-trans)))
+            ((string= "alt" (match-string 1 tmp))
+             (push 'meta cur-trans))
+            (t
+             (push (intern (match-string 1 tmp)) cur-trans)
+             (setq tmp (replace-match "" t t tmp)))))
          (cur-trans
           (push (list (sort cur-trans #'string<) elt) ret)
           (setq cur-trans nil))))
