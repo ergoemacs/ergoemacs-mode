@@ -474,7 +474,12 @@ This function is made in `ergoemacs-translate--create'")
              (push (intern (match-string 1 tmp)) cur-trans)
              (setq tmp (replace-match "" t t tmp)))))
          (cur-trans
-          (push (list (sort cur-trans #'string<) elt) ret)
+          (cond
+           ((consp elt) ;; Assume list is correct.
+            (push (list (sort cur-trans #'string<) elt) ret))
+           ((stringp elt)
+            ;; Allow "C-M-" syntax (backward compatible)
+            (push (list (sort cur-trans #'string<) (event-modifiers (elt (read-kbd-macro (concat elt "q") t) 0))) ret)))
           (setq cur-trans nil))))
       (when (setq tmp (plist-get plist :unchorded))
         (push (list nil tmp) ret))
