@@ -512,6 +512,24 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
 
+(defcustom ergoemacs-command-loop-swap-translation
+  '(((:normal :normal) :unchorded)
+    ((:normal :unchorded) :ctl-to-alt)
+    ((:normal :unchorded) :normal)
+    ((:ctl-to-alt :ctl-to-alt) :unchorded)
+    ((:ctl-to-alt :unchorded) :ctl-to-alt)
+    ((:unchorded :unchorded) :ctl-to-alt)
+    ((:unchorded :ctl-to-alt) :unchorded))
+  "How the translation will be swapped."
+  :type '(repeat
+          (list
+           (list
+            (sexp :tag "First Type")
+            (sexp :tag "Current Type"))
+           (sexp :tag "Translated Type")))
+  :group 'ergoemacs-command-loop)
+
+(define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation)
 
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined
@@ -531,23 +549,6 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perfomr `ou
   "Timeout for `ergoemacs-read-event'.
 This is to distinguish events in a terminal, like PuTTy."
   :type 'number
-  :group 'ergoemacs-read)
-
-(defcustom ergoemacs-read-swaps
-  '(((normal normal) unchorded)
-    ((normal unchorded) ctl-to-alt)
-    ((normal unchorded) normal)
-    ((ctl-to-alt ctl-to-alt) unchorded)
-    ((ctl-to-alt unchorded) ctl-to-alt)
-    ((unchorded unchorded) ctl-to-alt)
-    ((unchorded ctl-to-alt) unchorded))
-  "How the translation will be swapped."
-  :type '(repeat
-          (list
-           (list
-            (sexp :tag "First Type")
-            (sexp :tag "Current Type"))
-           (sexp :tag "Translated Type")))
   :group 'ergoemacs-read)
 
 (defcustom ergoemacs-echo-function 'on-translation

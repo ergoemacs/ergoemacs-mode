@@ -1139,7 +1139,7 @@
     (global-set-key [remap powershell] 'ergoemacs-powershell-here)
     (global-set-key [remap shell] 'ergoemacs-shell-here)
     (global-set-key [remap universal-argument]
-                    'ergoemacs-read-key--universal-argument)
+                    'ergoemacs-command-loop--universal-argument)
     (global-set-key [remap describe-key]
                     'ergoemacs-key-description)
     (global-set-key [remap describe-mode]
