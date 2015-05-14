@@ -271,7 +271,7 @@ Currently this ensures:
   "History of command loop locations.")
 (defun ergoemacs-command-loop--history ()
   "Read event and add to event history.
-Also add to `last-command-event'."
+Also add to `last-command-event' to allow `self-insert-character' to work appropriately."
   (push (list ergoemacs-command-loop--single-command-keys 
               ergoemacs-command-loop--current-type 
               ergoemacs-command-loop--universal
@@ -322,6 +322,8 @@ Used to help with translation keymaps like `input-decode-map'"
   "Reads a single event.
 This respects `input-decode-map', `local-function-key-map' and `key-translation-map'.
 
+It also inputs real read events into the history with `ergoemacs-command-loop--history'
+
 It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
   (let ((input (with-timeout (ergoemacs-command-loop-blink-rate nil)
                  (or (pop ergoemacs-command-loop--unread-command-events)
@@ -343,6 +345,9 @@ It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
     input))
 
 (defun ergoemacs-command-loop--read-key (&optional current-key type universal)
+  "Read a key for the `ergoemacs-mode' command loop.
+
+This uses `ergoemacs-command-loop--read-event'."
   (let* ((universal universal)
          (type (or type :normal))
          (translation (ergoemacs-translate--get type))
@@ -556,6 +561,7 @@ This sequence is compatible with `listify-key-sequence'."
 (defvar ergoemacs-command-loop--first-type nil)
 (defvar ergoemacs-command-loop--current-type nil)
 (defvar ergoemacs-command-loop--universal nil)
+
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -567,83 +573,126 @@ Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal.
 INITIAL-KEY-TYPE represents the translation type for the initial KEY.
 
 UNIVERSAL allows ergoemacs-read-key to start with universal
-argument prompt."
-  (let* ((type (or type :normal))
-         (continue-read t)
-         (first-type type)
-         raw-key current-key
-         (translation (ergoemacs-translate--get type))
-         (local-keymap (ergoemacs-translation-struct-keymap translation))
-         command)
-    ;; Setup initial unread command events, first type and history
-    (setq ergoemacs-command-loop--unread-command-events (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
-          ergoemacs-command-loop--first-type first-type
-          ergoemacs-command-loop--history nil)
-    (when unread-command-events
-      (setq ergoemacs-command-loop--unread-command-events (append ergoemacs-command-loop--unread-command-events unread-command-events)
-            unread-command-events nil))
-    
-    (while continue-read
-      ;; Read key
-      (setq ergoemacs-command-loop--single-command-keys current-key
-            ergoemacs-command-loop--current-type type
-            ergoemacs-command-loop--universal universal
-            raw-key (ergoemacs-command-loop--read-key
-                     current-key
-                     (or (and ergoemacs-command-loop--unread-command-events :normal) type)
-                     (and (not ergoemacs-command-loop--unread-command-events) universal))
-            ergoemacs-command-loop--single-command-keys nil
-            current-key (nth 1 raw-key)
-            raw-key (nth 0 raw-key)
-            continue-read nil)
-      (cond
-       ;; Handle local commands.
-       ((and (setq command (lookup-key local-keymap raw-key))
-             ;; Already handled by `ergoemacs-command-loop--read-key'
-             (not (gethash command ergoemacs-command-loop--next-key-hash)) 
-             ;; If a command has :ergoemacs-local property of :force, don't
-             ;; worry about looking up a key, just run the function.
-             (or (eq (get command :ergoemacs-local) :force)
-                 (not (key-binding current-key))))
+argument prompt.
 
-        (setq ergoemacs-command-loop--single-command-keys current-key
-              ergoemacs-command-loop--current-type type
-              ergoemacs-command-loop--universal universal
-              ergoemacs-command-loop--exit nil)
+While in the loop, the following functions are modified to
+respect `ergoemacs-command-loop--single-command-keys':
+
+- `this-command-keys-vector'
+- `this-command-keys'
+- `this-single-command-keys'
+"
+  (let ((real-this-command-keys-vector (symbol-function 'this-command-keys-vector))
+        (real-this-command-keys (symbol-function 'this-command-keys))
+        (real-this-single-command-keys (symbol-function 'this-single-command-keys)))
+    (unwind-protect
+      (progn
+        ;; Replace functions temporarily
+        (fset 'this-command-keys-vector
+              (lambda()
+                (or
+                 (and ergoemacs-command-loop--single-command-keys
+                      (let ((total-keys (ergoemacs-real-this-command-keys-vector))
+                            (single-keys (ergoemacs-real-this-single-command-keys)))
+                        (if (= (length total-keys) (length single-keys))
+                            ergoemacs-command-loop--single-command-keys
+                          (vconcat (substring total-keys 0 (- (length total-keys) (length single-keys)))
+                                   ergoemacs-command-loop--single-command-keys))))
+                 (funcall #'real-this-command-keys-vector))))
+        (fset 'this-command-keys
+              (lambda()
+                (or
+                 (and ergoemacs-command-loop--single-command-keys
+                      (let ((total-keys (ergoemacs-real-this-command-keys-vector))
+                            (single-keys (ergoemacs-real-this-single-command-keys)))
+                        (if (= (length total-keys) (length single-keys))
+                            ergoemacs-command-loop--single-command-keys
+                          (vconcat (substring total-keys 0 (- (length total-keys) (length single-keys))) ergoemacs-command-loop--single-command-keys))))
+                 (funcall #'real-this-command-keys))))
+        (fset 'this-single-command-keys
+              (lambda()
+                (or ergoemacs-command-loop--single-command-keys
+                    (real-this-single-command-keys))))
         
-        (call-interactively command)
-        
-        ;; If the command changed anything, fix it here.
-        (when (not (equal type ergoemacs-command-loop--current-type))
-          (setq type ergoemacs-command-loop--current-type
-                translation (ergoemacs-translate--get type)
-                local-keymap (ergoemacs-translation-struct-keymap translation)))
-        (setq current-key ergoemacs-command-loop--single-command-keys 
-              universal ergoemacs-command-loop--universal
-              ergoemacs-command-loop--single-command-keys nil
-              continue-read (not ergoemacs-command-loop--exit)))
-       
-       ;; Handle any keys that are bound in some translatable way.
-       ((setq command (ergoemacs-command-loop--key-lookup current-key))
-        (unless (setq continue-read (ergoemacs-keymapp command))
-          (ergoemacs-command-loop--execute command))
-        (when (and (not continue-read) (setq continue-read ergoemacs-command-loop--unread-command-events))
-          ;; Simulate the end of an emacs command, since we are not
-          ;; exiting the loop.
-          (run-hooks 'post-command-hook)
-          ;; Deactivate mark.
-          (when deactivate-mark
-            (deactivate-mark))
-          ;; After executing, the emacs loop should copy `this-command' into
-          ;; `last-command'.
-          ;; It should also change `last-prefix-arg'
-          (setq last-command this-command
-                last-prefix-arg prefix-arg
-                this-command nil
-                prefix-arg nil
-                deactivate-mark nil)))
-       (t ;; Command not found exit.
-        )))))
+        (let* ((type (or type :normal))
+               (continue-read t)
+               (first-type type)
+               raw-key current-key
+               (translation (ergoemacs-translate--get type))
+               (local-keymap (ergoemacs-translation-struct-keymap translation))
+               command)
+          ;; Setup initial unread command events, first type and history
+          (setq ergoemacs-command-loop--unread-command-events (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
+                ergoemacs-command-loop--first-type first-type
+                ergoemacs-command-loop--history nil)
+          (when unread-command-events
+            (setq ergoemacs-command-loop--unread-command-events (append ergoemacs-command-loop--unread-command-events unread-command-events)
+                  unread-command-events nil))
+          
+          (while continue-read
+            ;; Read key
+            (setq ergoemacs-command-loop--single-command-keys current-key
+                  ergoemacs-command-loop--current-type type
+                  ergoemacs-command-loop--universal universal
+                  raw-key (ergoemacs-command-loop--read-key
+                           current-key
+                           (or (and ergoemacs-command-loop--unread-command-events :normal) type)
+                           (and (not ergoemacs-command-loop--unread-command-events) universal))
+                  ergoemacs-command-loop--single-command-keys nil
+                  current-key (nth 1 raw-key)
+                  raw-key (nth 0 raw-key)
+                  continue-read nil)
+            (cond
+             ;; Handle local commands.
+             ((and (setq command (lookup-key local-keymap raw-key))
+                   ;; Already handled by `ergoemacs-command-loop--read-key'
+                   (not (gethash command ergoemacs-command-loop--next-key-hash)) 
+                   ;; If a command has :ergoemacs-local property of :force, don't
+                   ;; worry about looking up a key, just run the function.
+                   (or (eq (get command :ergoemacs-local) :force)
+                       (not (key-binding current-key))))
+
+              (setq ergoemacs-command-loop--single-command-keys current-key
+                    ergoemacs-command-loop--current-type type
+                    ergoemacs-command-loop--universal universal
+                    ergoemacs-command-loop--exit nil)
+              
+              (call-interactively command)
+              
+              ;; If the command changed anything, fix it here.
+              (when (not (equal type ergoemacs-command-loop--current-type))
+                (setq type ergoemacs-command-loop--current-type
+                      translation (ergoemacs-translate--get type)
+                      local-keymap (ergoemacs-translation-struct-keymap translation)))
+              (setq current-key ergoemacs-command-loop--single-command-keys 
+                    universal ergoemacs-command-loop--universal
+                    ergoemacs-command-loop--single-command-keys nil
+                    continue-read (not ergoemacs-command-loop--exit)))
+             
+             ;; Handle any keys that are bound in some translatable way.
+             ((setq command (ergoemacs-command-loop--key-lookup current-key))
+              (unless (setq continue-read (ergoemacs-keymapp command))
+                (ergoemacs-command-loop--execute command))
+              (when (and (not continue-read) (setq continue-read ergoemacs-command-loop--unread-command-events))
+                ;; Simulate the end of an emacs command, since we are not
+                ;; exiting the loop.
+                (run-hooks 'post-command-hook)
+                ;; Deactivate mark.
+                (when deactivate-mark
+                  (deactivate-mark))
+                ;; After executing, the emacs loop should copy `this-command' into
+                ;; `last-command'.
+                ;; It should also change `last-prefix-arg'
+                (setq last-command this-command
+                      last-prefix-arg prefix-arg
+                      this-command nil
+                      prefix-arg nil
+                      deactivate-mark nil)))
+             (t ;; Command not found exit.
+              )))))
+      (fset 'this-command-keys-vector real-this-command-keys-vector)
+      (fset 'this-command-keys real-this-command-keys)
+      (fset 'this-single-command-keys real-this-single-command-keys))))
 
 (defun ergoemacs-command-loop--message (&rest args)
   "Message facility for `ergoemacs-mode' command loop"
