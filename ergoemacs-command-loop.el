@@ -288,14 +288,16 @@ Currently this ensures:
   "History of command loop locations.")
 (defun ergoemacs-command-loop--history ()
   "Read event and add to event history.
-Also add to `last-command-event' to allow `self-insert-character' to work appropriately."
+Also add to `last-command-event' to allow `self-insert-character' to work appropriately.
+I'm not sure the purpose of `last-event-frame', but this is modified as well"
   (push (list ergoemacs-command-loop--single-command-keys 
               ergoemacs-command-loop--current-type 
               ergoemacs-command-loop--universal
               current-prefix-arg
               last-command-event)
         ergoemacs-command-loop--history)
-  (setq last-command-event (read-event))
+  (setq last-command-event (read-event)
+        last-event-frame (selected-frame))
   last-command-event)
 
 (defun ergoemacs-command-loop--decode-event (event keymap)
@@ -618,21 +620,14 @@ This sequence is compatible with `listify-key-sequence'."
         ergoemacs---this-command-keys nil
         ergoemacs---ergoemacs-command-loop nil))
 
+(add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
+
 (defvar ergoemacs-command-loop--self-insert-command-count 0)
 (defun ergoemacs-command-loop--internal-end-command ()
   "Simulates the end of a command."
   ;; Simulate the end of an emacs command, since we are not
   ;; exiting the loop.
   (run-hooks 'post-command-hook)
-  
-  ;; After executing, the emacs loop should copy `this-command' into
-  ;; `last-command'.
-  ;; It should also change `last-prefix-arg'
-  (setq last-command this-command
-        last-prefix-arg prefix-arg
-        this-command nil
-        prefix-arg nil
-        deactivate-mark nil)
 
   ;; Deactivate mark.
   (when deactivate-mark
@@ -642,16 +637,27 @@ This sequence is compatible with `listify-key-sequence'."
   ;; Create undo-boundary like emacs does.
 
   ;; The undo boundary is created every 20 characters.
-  (if (not (eq last-command 'self-insert-command))
-      (setq ergoemacs-command-loop--self-insert-command-count 1)
-    (if (>= ergoemacs-command-loop--self-insert-command-count 20)
+  (when (eq this-command 'self-insert-command)
+    ;; Adapted from `org-self-insert-command'
+    (if (not (eq last-command 'self-insert-command))
         (setq ergoemacs-command-loop--self-insert-command-count 1)
-      (and (> ergoemacs-command-loop--self-insert-command-count 0)
-           buffer-undo-list (listp buffer-undo-list)
-           (not (cadr buffer-undo-list)) ; remove nil entry
-           (setcdr buffer-undo-list (cddr buffer-undo-list)))
-      (setq ergoemacs-command-loop--self-insert-command-count
-            (1+ ergoemacs-command-loop--self-insert-command-count))))
+      (if (>= ergoemacs-command-loop--self-insert-command-count 20)
+          (setq ergoemacs-command-loop--self-insert-command-count 1)
+        (and (> ergoemacs-command-loop--self-insert-command-count 0)
+             buffer-undo-list (listp buffer-undo-list)
+             (not (cadr buffer-undo-list)) ; remove nil entry
+             (setcdr buffer-undo-list (cddr buffer-undo-list)))
+        (setq ergoemacs-command-loop--self-insert-command-count
+              (1+ ergoemacs-command-loop--self-insert-command-count)))))
+
+  ;; After executing, the emacs loop should copy `this-command' into
+  ;; `last-command'.
+  ;; It should also change `last-prefix-arg'
+  (setq last-command this-command
+        last-prefix-arg prefix-arg
+        this-command nil
+        prefix-arg nil
+        deactivate-mark nil)
   
   ;; See: http://stackoverflow.com/questions/6590889/how-emacs-determines-a-unit-of-work-to-undo
 
@@ -666,6 +672,7 @@ This sequence is compatible with `listify-key-sequence'."
   ;; caused auto-fill-mode to insert indentation.
   
   (undo-boundary))
+
 
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
@@ -730,6 +737,7 @@ respect `ergoemacs-command-loop--single-command-keys':
                raw-key current-key
                (translation (ergoemacs-translate--get type))
                (local-keymap (ergoemacs-translation-struct-keymap translation))
+               (inhibit-quit t)
                command)
           ;; Setup initial unread command events, first type and history
           (setq ergoemacs-command-loop--unread-command-events (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
@@ -1028,14 +1036,18 @@ For instance in QWERTY M-> is shift translated to M-."
       (unwind-protect
           (progn
             ;; Run deferred pre-command hook.
-            (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook)
-            (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook t)
-            (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-            (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook t)
-            (run-hooks 'pre-command-hook)
-            (run-hooks 'ergoemacs-pre-command-hook)
-
-            (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+            (unwind-protect
+                (progn
+                  (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook)
+                  (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook t)
+                  (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+                  (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook t)
+                  (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
+                  (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions t)
+                  (run-hooks 'pre-command-hook)
+                  (run-hooks 'ergoemacs-pre-command-hook))
+              (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+              (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions))
             (call-interactively this-command t))
         (setq ergoemacs-command-loop--single-command-keys nil)))))
   
