@@ -862,6 +862,8 @@ pressed the translated key by changing
 `ergoemacs-command-loop--single-command-keys'."
   (let ((trials (ergoemacs-translate--trials key))
         ret)
+    (setq ergoemacs-command-loop--shift-translated nil
+          this-command-keys-shift-translated nil)
     (catch 'found-command
       (dolist (cur-key trials)
         (when (and cur-key
@@ -956,25 +958,8 @@ For instance in QWERTY M-> is shift translated to M-."
   (let ((this-command-keys-shift-translated
          (or this-command-keys-shift-translated
              (if ergoemacs-command-loop--shift-translated t nil))))
-
-    (when (and ergoemacs-command-loop--shift-translated
-               (ergoemacs :movement-p function))
-      (cond
-       ((and shift-select-mode
-             ergoemacs-command-loop--mark-active
-             (not mark-active))
-        ;; Mark was active, then it was deactivated, now activate
-        ;; again.
-        (setq transient-mark-mode
-              (cons 'only
-                    (unless (eq transient-mark-mode 'lambda)
-                      transient-mark-mode))
-              mark-active t
-              deactivate-mark nil))
-       (t ;; Mark was not active, activate mark.
-        (setq this-command-keys-shift-translated t)
-        (handle-shift-selection)
-        (setq deactivate-mark nil))))))
+    (when (ergoemacs :movement-p function)
+      (handle-shift-selection))))
 
 (defun ergoemacs-command-loop--execute-rm-keyfreq (command)
   "Remove COMMAND from `keyfreq-mode' counts."
@@ -1045,11 +1030,14 @@ For instance in QWERTY M-> is shift translated to M-."
             ;; Run deferred pre-command hook.
             (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook)
             (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook t)
+            (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+            (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook t)
+            (run-hooks 'pre-command-hook)
             (run-hooks 'ergoemacs-pre-command-hook)
-            
+
+            (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
             (call-interactively this-command t))
-        (setq ergoemacs-command-loop--single-command-keys nil
-              ergoemacs-command-loop--shift-translated nil)))))
+        (setq ergoemacs-command-loop--single-command-keys nil)))))
   
   ;; I think these should be correct from the command loop:
   ;; - `last-event-frame' -- (should be correct from emacs command loop)
