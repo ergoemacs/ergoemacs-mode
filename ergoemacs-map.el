@@ -519,9 +519,9 @@ If LOOKUP-KEYMAP
         (old-key (lookup-key (ergoemacs :global-map) (this-single-command-keys))))
     (cond
      ((and old-key (not (integerp old-key)))
-      (error "%s is disabled! Use %s for %s instead." key (ergoemacs-key-description (where-is-internal old-key ergoemacs-keymap t)) old-key))
+      (message "%s is disabled! Use %s for %s instead." key (ergoemacs-key-description (where-is-internal old-key ergoemacs-keymap t)) old-key))
      (t
-      (error "%s is disabled!" key)))))
+      (message "%s is disabled!" key)))))
 
 (add-hook 'ergoemacs-mode-shutdown-hook 'ergoemacs-map--remove)
 

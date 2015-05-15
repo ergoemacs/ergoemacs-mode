@@ -340,43 +340,43 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
 (defun ergoemacs-translate--event-trials (event &optional exclude-basic extra-modifiers )
   "Gets a list of `ergoemacs-mode' event trials.
 When EXCLUDE-BASIC is non-nil, don't include the keys that are likely to produce a character when typing"
-  (if (not (integerp event))
-      (error "Event must be an integer."))
+  (if (not (or (integerp event) (symbolp event)))
+      (error "Event must be an integer or symbol."))
   (let* ((key event)
          (ret '())
          (basic (ergoemacs-translate--event-basic-type key))
          trial)
     (unless exclude-basic
       (setq trial (ergoemacs-translate--event-convert-list (append extra-modifiers (list basic))))
-      (unless (= trial key)
+      (unless (eq trial key)
         (push trial ret))
 
       (setq trial (ergoemacs-translate--event-convert-list (append extra-modifiers (list 'shift basic))))
-      (unless (= trial key)
+      (unless (eq trial key)
         (push trial ret)))
 
     (setq trial (ergoemacs-translate--event-convert-list (append extra-modifiers (list 'control basic))))
-    (unless (= trial key)
+    (unless (eq trial key)
       (push trial ret))
 
     (setq trial (ergoemacs-translate--event-convert-list (append extra-modifiers (list 'meta basic))))
-    (unless (= trial key)
+    (unless (eq trial key)
       (push trial ret))
 
     (setq trial (ergoemacs-translate--event-convert-list (append extra-modifiers (list 'meta 'control basic))))
-    (unless (= trial key)
+    (unless (eq trial key)
       (push trial ret))
 
     (setq trial (ergoemacs-translate--event-convert-list (append extra-modifiers (list 'shift 'control basic))))
-    (unless (= trial key)
+    (unless (eq trial key)
       (push trial ret))
 
     (setq trial (ergoemacs-translate--event-convert-list (append extra-modifiers (list 'shift 'meta basic))))
-    (unless (= trial key)
+    (unless (eq trial key)
       (push trial ret))
 
     (setq trial (ergoemacs-translate--event-convert-list (append extra-modifiers (list 'shift 'meta 'control basic))))
-    (unless (= trial key)
+    (unless (eq trial key)
       (push trial ret))
     
     (unless extra-modifiers
@@ -391,16 +391,18 @@ This list consists of:
 - 1: The key itself
 - 2: The `ergoemacs-mode' shift translation (if needed/applicable or nil) 
 - 3: The other translations"
+  ;; (nth 1 (ergoemacs-translate--trials (kbd "M-A"))) = (kbd "M-a")
   (let* ((key (vconcat key))
          (event (elt (substring key -1) 0))
          (base (substring key 0 -1))
          shift
          ret)
-    (dolist (new (ergoemacs-translate--event-trials event (= 0 (length base))))
+    (dolist (new (ergoemacs-translate--event-trials event (= 1 (length key))))
       (push (vconcat base (vector new)) ret))
     ;; Shift translation
-    (if (= 0 (length base))
-        (push (ergoemacs-translate--emacs-shift key 'ergoemacs-shift) ret)
+    (if (= 1 (length key))
+        (push (or (ergoemacs-translate--emacs-shift key 'shift)
+                  (ergoemacs-translate--emacs-shift key 'ergoemacs-shift)) ret)
       (push nil ret) ;; No shift translation
       )
     ;; Actual key
@@ -467,12 +469,12 @@ This function is made in `ergoemacs-translate--create'")
           (while (string-match "\\(hyper\\|super\\|shift\\|meta\\|control\\)" tmp)
             (cond
              ((string-match-p "cn?tr?l" (match-string 1 tmp))
-              (push 'conrtol cur-trans)))
-            ((string= "alt" (match-string 1 tmp))
-             (push 'meta cur-trans))
-            (t
-             (push (intern (match-string 1 tmp)) cur-trans)
-             (setq tmp (replace-match "" t t tmp)))))
+              (push 'conrtol cur-trans))
+             ((string= "alt" (match-string 1 tmp))
+              (push 'meta cur-trans))
+             (t
+              (push (intern (match-string 1 tmp)) cur-trans)
+              (setq tmp (replace-match "" t t tmp))))))
          (cur-trans
           (cond
            ((consp elt) ;; Assume list is correct.

@@ -224,7 +224,6 @@
   (global-set-key (kbd "C-x h") nil) ;; Mark whole buffer
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   
-  ;; (global-set-key (kbd "C-u") 'ergoemacs-read-key--universal-argument)
   (global-set-key (kbd "C-z") 'undo)
 
   ;; Take out undo-tree's redo bindings
@@ -870,8 +869,8 @@
   (global-set-key (kbd "<apps> TAB") 'indent-region)  ;; Already in CUA
   (global-set-key (kbd "<apps> SPC") 'set-mark-command)
   (global-set-key (kbd "<apps> a") 'mark-whole-buffer)
-  (global-set-key (kbd "<apps> d") '("C-x" ctl-to-alt))
-  (global-set-key (kbd "<apps> f") '("C-c" unchorded))
+  (global-set-key (kbd "<apps> d") '("C-x" :ctl-to-alt))
+  (global-set-key (kbd "<apps> f") '("C-c" :unchorded))
   (global-set-key (kbd "<apps> h") help-map)
   (global-set-key (kbd "<apps> h '") 'ergoemacs-display-current-svg)
   (global-set-key (kbd "<apps> h 1") 'describe-function)
@@ -887,7 +886,7 @@
   (global-set-key (kbd "<apps> h z") 'ergoemacs-clean)
   (global-set-key (kbd "<apps> h C-z") 'ergoemacs-clean-library)
   (global-set-key (kbd "<apps> h Z") 'ergoemacs-clean-nw)
-  (global-set-key (kbd "<apps> m") '("C-c C-c" nil))
+  (global-set-key (kbd "<apps> m") "C-c C-c")
   (global-set-key (kbd "<apps> s") 'save-buffer)
   (global-set-key (kbd "<apps> C-s") 'write-file)
   (global-set-key (kbd "<apps> o") 'find-file)
@@ -977,13 +976,13 @@
   ;; |------+-----------+---------+-----------------------|
 
   ;; No pinkies are used in this setup.
-  (global-set-key (kbd "<apps> k o") '("#" nil))
-  (global-set-key (kbd "<apps> k l") '("$" nil))
-  (global-set-key (kbd "<apps> k .") '(":" nil))
+  (global-set-key (kbd "<apps> k o") "#")
+  (global-set-key (kbd "<apps> k l") "$")
+  (global-set-key (kbd "<apps> k .") ":")
 
-  (global-set-key (kbd "<apps> k w") '("^" nil))
-  (global-set-key (kbd "<apps> k s") '("*" nil))
-  (global-set-key (kbd "<apps> k x") '("~" nil))
+  (global-set-key (kbd "<apps> k w") "^")
+  (global-set-key (kbd "<apps> k s") "*")
+  (global-set-key (kbd "<apps> k x") "~")
   
   (global-set-key (kbd "<apps> k i") 'ergoemacs-smart-bracket)
   (global-set-key (kbd "<apps> k k") 'ergoemacs-smart-paren)
@@ -991,23 +990,23 @@
   
   (global-set-key (kbd "<apps> k j") 'ergoemacs-smart-quote)
   (global-set-key (kbd "<apps> k u") 'ergoemacs-smart-apostrophe)
-  (global-set-key (kbd "<apps> k m") '("`" nil))
+  (global-set-key (kbd "<apps> k m") "`")
 
-  (global-set-key (kbd "<apps> k y") '("?" nil))
-  (global-set-key (kbd "<apps> k h") '("%" nil))
-  (global-set-key (kbd "<apps> k n") '("@" nil))
+  (global-set-key (kbd "<apps> k y") "?")
+  (global-set-key (kbd "<apps> k h") "%")
+  (global-set-key (kbd "<apps> k n") "@")
   
-  (global-set-key (kbd "<apps> k r") '(">" nil))
-  (global-set-key (kbd "<apps> k f") '("_" nil))
-  (global-set-key (kbd "<apps> k v") '("<" nil))
+  (global-set-key (kbd "<apps> k r") ">")
+  (global-set-key (kbd "<apps> k f") "_")
+  (global-set-key (kbd "<apps> k v") "<")
   
-  (global-set-key (kbd "<apps> k e") '("+" nil))
-  (global-set-key (kbd "<apps> k d") '("=" nil))
-  (global-set-key (kbd "<apps> k c") '("-" nil))
+  (global-set-key (kbd "<apps> k e") "+")
+  (global-set-key (kbd "<apps> k d") "=")
+  (global-set-key (kbd "<apps> k c") "-")
 
-  (global-set-key (kbd "<apps> k t") '("&" nil))
-  (global-set-key (kbd "<apps> k g") '("|" nil))
-  (global-set-key (kbd "<apps> k b") '("!" nil)))
+  (global-set-key (kbd "<apps> k t") "&")
+  (global-set-key (kbd "<apps> k g") "|")
+  (global-set-key (kbd "<apps> k b") "!"))
 
 (ergoemacs-component apps-swap ()
   "Apps/Menu swaps key sequence translations"

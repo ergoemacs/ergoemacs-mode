@@ -235,7 +235,7 @@ Allows the component not to be calculated."
              (gethash (nth 1 def) ergoemacs-translation-hash)))
     `(lambda(&optional arg)
        (interactive "P")
-       (ergoemacs-read-key ,(nth 0 def) ',(nth 1 def))))
+       (ergoemacs-command-loop ,(nth 0 def) ',(nth 1 def))))
    ((ergoemacs-keymapp (ergoemacs-sv def))
     (ergoemacs-sv def))
    (t def)))
