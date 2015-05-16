@@ -703,20 +703,22 @@ This sequence is compatible with `listify-key-sequence'."
   (cond
    ((and (eventp last-command-event)
          (consp last-command-event))
-    (let* ((form (interactive-form command))
-           (mods (event-modifiers last-command-event))
+    (let* ((mods (event-modifiers last-command-event))
            (l-event (length last-command-event))
            (posn (ignore-errors (car (cdr last-command-event))))
            (area (and posn (posnp posn) (posn-area posn)))
            (command command)
            (obj (and posn (posnp posn) (posn-object posn)))
-           tmp)
+           form tmp)
       (when area
         (setq command (key-binding (vconcat (list area last-command-event))))
         (when (and obj (setq tmp (get-text-property (cdr obj)  'local-map (car obj)))
                    (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
           (setq command tmp)))
+      (setq form (and (commandp command t) (interactive-form command)))
       (cond
+       ((keymapp command)
+        (popup-menu command nil current-prefix-arg))
        ((not (nth 1 form))
         (call-interactively command record-flag keys))
        
