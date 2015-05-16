@@ -703,10 +703,19 @@ This sequence is compatible with `listify-key-sequence'."
   (cond
    ((and (eventp last-command-event)
          (consp last-command-event))
-    ;; (setq ergoemacs-command-loop--mouse-event t)
-    (let ((form (interactive-form command))
-          (mods (event-modfiers last-command-event)))
-      (message "Mouse: %s" last-event)
+    (let* ((form (interactive-form command))
+           (mods (event-modifiers last-command-event))
+           (l-event (length last-command-event))
+           (posn (ignore-errors (car (cdr last-command-event))))
+           (area (and posn (posnp posn) (posn-area posn)))
+           (command command)
+           (obj (and posn (posnp posn) (posn-object posn)))
+           tmp)
+      (when area
+        (setq command (key-binding (vconcat (list area last-command-event))))
+        (when (and obj (setq tmp (get-text-property (cdr obj)  'local-map (car obj)))
+                   (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
+          (setq command tmp)))
       (cond
        ((not (nth 1 form))
         (call-interactively command record-flag keys))
@@ -732,8 +741,7 @@ This sequence is compatible with `listify-key-sequence'."
                                (funcall ',command last-command-event ,@(remove-if (lambda(elt) (eq '&optional elt)) (help-function-arglist command t))))
                             record-flag keys))
        (t
-        (error "Can't handle mouse try again..."))))
-    )
+        (error "Can't handle mouse try again...")))))
    (t
     (call-interactively command record-flag keys))))
 
