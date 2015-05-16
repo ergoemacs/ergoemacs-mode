@@ -340,8 +340,8 @@ translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
 (defun ergoemacs-translate--event-trials (event &optional exclude-basic extra-modifiers )
   "Gets a list of `ergoemacs-mode' event trials.
 When EXCLUDE-BASIC is non-nil, don't include the keys that are likely to produce a character when typing"
-  (if (not (or (integerp event) (symbolp event)))
-      (error "Event must be an integer or symbol."))
+  (if (not (eventp event))
+      (error "Need an event for event trials (%s)" event))
   (let* ((key event)
          (ret '())
          (basic (ergoemacs-translate--event-basic-type key))
@@ -387,7 +387,7 @@ When EXCLUDE-BASIC is non-nil, don't include the keys that are likely to produce
 
 (defun ergoemacs-translate--trials (key)
   "Get the `ergoemacs-mode' keys to lookup for KEY.
-This list consists of:
+For keys, the list consists of:
 - 1: The key itself
 - 2: The `ergoemacs-mode' shift translation (if needed/applicable or nil) 
 - 3: The other translations"
@@ -397,16 +397,18 @@ This list consists of:
          (base (substring key 0 -1))
          shift
          ret)
-    (dolist (new (ergoemacs-translate--event-trials event (= 1 (length key))))
-      (push (vconcat base (vector new)) ret))
-    ;; Shift translation
-    (if (= 1 (length key))
-        (push (or (ergoemacs-translate--emacs-shift key 'shift)
-                  (ergoemacs-translate--emacs-shift key 'ergoemacs-shift)) ret)
-      (push nil ret) ;; No shift translation
-      )
-    ;; Actual key
-    (push key ret)
+    (if (consp event)
+        (progn ;; Do not put any trials in just use the mouse event.
+          (push key ret)
+          ret)
+      (dolist (new (ergoemacs-translate--event-trials event (= 1 (length key))))
+        (push (vconcat base (vector new)) ret))
+      (if (= 1 (length key))
+          (push (or (ergoemacs-translate--emacs-shift key 'shift)
+                    (ergoemacs-translate--emacs-shift key 'ergoemacs-shift)) ret)
+        (push nil ret) ;; No shift translation
+        )
+      (push key ret))
     ret))
 
 (defstruct ergoemacs-translation-struct
