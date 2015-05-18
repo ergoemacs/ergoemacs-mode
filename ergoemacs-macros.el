@@ -427,6 +427,8 @@ When KEYMAP can be a property.  The following properties are supported:
                                :movement-p
                                :command-loop-p)))
     (cond
+     ((and keymap (symbolp keymap) (eq keymap :combine) property set-value)
+      `(ergoemacs-command-loop--combine ,property ,set-value))
      ((and keymap (symbolp keymap) (eq keymap :unicode-or-alt)
            property set-value)
       `(ergoemacs-key-description--unicode-char ,property ,set-value))

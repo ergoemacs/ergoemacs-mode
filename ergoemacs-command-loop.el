@@ -289,6 +289,17 @@ Currently this ensures:
 (defvar ergoemacs-command-loop-time-before-blink 2.5)
 (defvar ergoemacs-command-loop--last-event-time nil)
 
+(defun ergoemacs-command-loop--combine (current-key next-event)
+  "Combine two key and next event."
+  (let (tmp)
+    (cond
+     ((and (setq tmp (elt current-key 0))
+           (or (and (consp tmp) (symbolp (setq tmp (car tmp))))
+               (symbolp tmp))
+           (string-match-p "\\<mouse\\>" tmp))
+      (vector next-event))
+     (t (vconcat current-key (vector next-event))))))
+
 (defun ergoemacs-command-loop--history (&optional prompt seconds)
   "Read event and add to event history.
 Also add to `last-command-event' to allow `self-insert-character' to work appropriately.
@@ -350,7 +361,7 @@ Used to help with translation keymaps like `input-decode-map'"
       (when last-command-event ;; Since a key was read, save it to be read later.
         (push last-command-event new-ergoemacs-input))
       (if next-key
-          (setq current-key (vconcat current-key (vector next-key))
+          (setq current-key (ergoemacs :combine current-key next-key)
                 test-ret (lookup-key keymap current-key))
         (setq current-key nil)))
     (when (stringp test-ret) 
@@ -382,13 +393,13 @@ It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
     ;; Fix issues with `input-decode-map'
     (when input
       (setq input (ergoemacs-command-loop--decode-event input input-decode-map)
-            binding (key-binding (vconcat current-key (vector input))))
+            binding (key-binding (ergoemacs :combine current-key input)))
       ;; These should only be replaced if they are not bound.
       (unless binding
         (setq last-input input
               input (ergoemacs-command-loop--decode-event input local-function-key-map))
         (unless (eq last-input input)
-          (setq binding (key-binding (vconcat current-key (vector input))))))
+          (setq binding (key-binding (ergoemacs :combine current-key input)))))
       (unless binding
         (setq input (ergoemacs-command-loop--decode-event input key-translation-map))))
     input))
@@ -492,7 +503,7 @@ This uses `ergoemacs-command-loop--read-event'."
               input (ergoemacs-translate--event-mods input type))))
       (cond
        ((and input (not universal)
-             (not (commandp (key-binding (vconcat current-key (vector raw-input))) t))
+             (not (commandp (key-binding (ergoemacs :combine current-key raw-input)) t))
              (and local-keymap
                   (memq (lookup-key local-keymap (vector raw-input))
                         ergoemacs-command-loop--universal-functions)))
@@ -529,8 +540,8 @@ This uses `ergoemacs-command-loop--read-event'."
                      ergoemacs-command-loop--universal-functions)) ;; Toggle to key-sequence.
           (setq raw-input nil
                 universal nil))
-         ((or (memq (key-binding (vconcat current-key (vector input))) ergoemacs-universal-fns)
-              (not (commandp (key-binding (vconcat current-key (vector raw-input)))))
+         ((or (memq (key-binding (ergoemacs :combine current-key input)) ergoemacs-universal-fns)
+              (not (commandp (key-binding (ergoemacs :combine current-key raw-input))))
               (and local-keymap (memq (lookup-key local-keymap (vector raw-input)) ergoemacs-universal-fns)))
           ;; Universal argument called.
           (cond
@@ -580,7 +591,7 @@ This uses `ergoemacs-command-loop--read-event'."
                   input nil
                   raw-input nil))))))))
     ;; Return list of raw key, and translated current key
-    (list (vector raw-input) (vconcat current-key (vector input)))))
+    (list (vector raw-input) (ergoemacs :combine current-key input))))
 
 (defvar ergoemacs-command-loop--unread-command-events nil
   "List of events that `ergoemacs-command-loop' hasn't read.")
@@ -736,7 +747,7 @@ This sequence is compatible with `listify-key-sequence'."
                    (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
           (setq command tmp)))
       (setq form (and (commandp command t) (interactive-form command)))
-      (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
+      ;; (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
       ;; From `read-key-sequence':
       ;; /* Clicks in non-text areas get prefixed by the symbol
       ;; in their CHAR-ADDRESS field.  For example, a click on
