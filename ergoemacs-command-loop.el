@@ -288,6 +288,7 @@ Currently this ensures:
   "History of command loop locations.")
 (defvar ergoemacs-command-loop-time-before-blink 2.5)
 (defvar ergoemacs-command-loop--last-event-time nil)
+
 (defun ergoemacs-command-loop--history (&optional prompt seconds)
   "Read event and add to event history.
 Also add to `last-command-event' to allow `self-insert-character' to work appropriately.
@@ -298,8 +299,27 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
         (event (read-event (cond
                             ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
                             ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))) nil)
-                            (t prompt)) nil seconds)))
+                            (t prompt)) nil seconds))
+        click-event)
     (when (eventp event)
+      (when (and (consp event) (string= "down-" (substring (symbol-name (car event)) 0 5)))
+        (setq click-event (read-event nil nil double-click-time))
+        (cond
+         ((not click-event))
+         ((and (consp click-event) (string= "double-" (substring (symbol-name (car click-event)) 0 7)))
+          (setq event click-event)
+          (setq click-event (read-event nil nil double-click-time))
+          (cond
+           ((not click-event))
+           ((and (consp click-event) (string= "triple-" (substring (symbol-name (car click-event)) 0 7)))
+            (setq event click-event))
+           (t
+            (push click-event ergoemacs-command-loop--unread-command-events))))
+         ((and (consp click-event) (string= "mouse-" (substring (symbol-name (car click-event)) 0 6)))
+          ;; Swap out for click event.
+          ;; mouse-
+          (setq event click-event))
+         (t (push click-event ergoemacs-command-loop--unread-command-events))))
       (unless (consp event) ;; Don't record mouse events
         (push (list ergoemacs-command-loop--single-command-keys 
                     ergoemacs-command-loop--current-type 
@@ -716,6 +736,32 @@ This sequence is compatible with `listify-key-sequence'."
                    (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
           (setq command tmp)))
       (setq form (and (commandp command t) (interactive-form command)))
+      (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
+      ;; From `read-key-sequence':
+      ;; /* Clicks in non-text areas get prefixed by the symbol
+      ;; in their CHAR-ADDRESS field.  For example, a click on
+      ;; the mode line is prefixed by the symbol `mode-line'.
+      ;; Furthermore, key sequences beginning with mouse clicks
+      ;; are read using the keymaps of the buffer clicked on, not
+      ;; the current buffer.  So we may have to switch the buffer
+      ;; here.
+      ;; When we turn one event into two events, we must make sure
+      ;; that neither of the two looks like the original--so that,
+      ;; if we replay the events, they won't be expanded again.
+      ;; If not for this, such reexpansion could happen either here
+      ;; or when user programs play with this-command-keys.  */
+
+      ;;
+      ;; /* Arrange to go back to the original buffer once we're
+      ;; done reading the key sequence.  Note that we can't
+      ;; use save_excursion_{save,restore} here, because they
+      ;; save point as well as the current buffer; we don't
+      ;; want to save point, because redisplay may change it,
+      ;; to accommodate a Fset_window_start or something.  We
+      ;; don't want to do this at the top of the function,
+      ;; because we may get input from a subprocess which
+      ;; wants to change the selected window and stuff (say,
+      ;; emacsclient).  */
       (cond
        ((keymapp command)
         (popup-menu command nil current-prefix-arg))
