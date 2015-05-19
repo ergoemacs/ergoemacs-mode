@@ -273,6 +273,9 @@ This is to distinguish events in a terminal, like xterm.
 
 It needs to be less than `ergoemacs-command-loop-blink-rate'.")
 
+(define-obsolete-variable-alias 'ergoemacs-read-key-delay 'ergoemacs-command-loop--decode-event-delay)
+
+
 (defun ergoemacs-command-loop--ensure-sane-variables ()
   "Makes sure that certain variables won't lock up emacs.
 
@@ -866,7 +869,7 @@ Also in the loop, `universal-argument-num-events' is set to
                     continue-read nil)
               (cond
                ;; Handle local commands.
-               ((and (setq command (lookup-key local-keymap raw-key))
+               ((and (setq command (lookup-key local-keymap raw-key t))
                      ;; Already handled by `ergoemacs-command-loop--read-key'
                      (not (gethash command ergoemacs-command-loop--next-key-hash)) 
                      ;; If a command has :ergoemacs-local property of :force, don't
@@ -994,33 +997,35 @@ pressed the translated key by changing
       (dolist (cur-key trials)
         (let* ((orig-key cur-key)
                (bind (key-binding orig-key t))
-               (meta (ergoemacs-translate--meta-to-escape cur-key))
-               (esc (ergoemacs-translate--escape-to-meta cur-key))
-               (global (and (or meta esc)
+               (meta-key (ergoemacs-translate--meta-to-escape cur-key))
+               (esc-key (ergoemacs-translate--escape-to-meta cur-key))
+               (new-key (or meta esc))
+               (new-binding (and new-key (key-binding new-key)))
+               (global (and new-key
                             (list (lookup-key ergoemacs-keymap orig-key t)
-                                  (or (and meta (setq meta (key-binding meta t)))
-                                      (and esc (setq esc (key-binding esc t))))))))
+                                  (lookup-key ergoemacs-keymap new-key t)))))
           ;; Prefer non-global keys.
-          (when (or meta esc)
-            (cond
-             ((not (memq bind global)))
-             ((and esc (not (memq esc global)))
-              (setq bind esc))
-             ((and meta (not (memq meta global)))
-              (setq bind meta))))
+          (cond
+           ((not new-key)
+            (setq new-key orig-key))
+           ((not (memq bind global))
+            (setq new-key orig-key))
+           ((and new-binding (not (memq new-binding global)))
+            (setq bind new-binding)))
           (when (and orig-key
                      (setq ret bind
                            ret (if (and (eq ret 'ergoemacs-map-undefined)
                                         (not (equal orig-key (nth 0 trials)))) nil ret)))
             (cond
-             ((equal orig-key (nth 0 trials))) ;; Actual key
+             ((equal orig-key (nth 0 trials))
+              (setq ergoemacs-command-loop--single-command-keys new-key)) ;; Actual key
              ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
               (setq ergoemacs-command-loop--shift-translated t
                     this-command-keys-shift-translated t
-                    ergoemacs-command-loop--single-command-keys orig-key))
+                    ergoemacs-command-loop--single-command-keys (nth 0 trials)))
              (t
-              (ergoemacs-command-loop--message-binding key ret orig-key)
-              (setq ergoemacs-command-loop--single-command-keys orig-key)))
+              (ergoemacs-command-loop--message-binding key ret new-key)
+              (setq ergoemacs-command-loop--single-command-keys new-key)))
             (throw 'found-command ret)))))
     ret))
 
