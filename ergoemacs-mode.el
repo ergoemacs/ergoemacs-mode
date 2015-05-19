@@ -541,14 +541,8 @@ look for the command with or without modifiers."
   "When key is undefined, translate to an emacish key.
 For example in `org-mode' C-c C-n performs
 `outline-next-visible-heading'.  A QWERTY `ergoemacs-mode' key
-equivalent is <apps> f M-k.  When enabled, pressing this should also perfomr `outline-next-visible-heading'"
+equivalent is <apps> f M-k.  When enabled, pressing this should also perform `outline-next-visible-heading'"
   :type 'boolean
-  :group 'ergoemacs-read)
-
-(defcustom ergoemacs-read-key-delay 0.01
-  "Timeout for `ergoemacs-read-event'.
-This is to distinguish events in a terminal, like PuTTy."
-  :type 'number
   :group 'ergoemacs-read)
 
 (defcustom ergoemacs-echo-function 'on-translation
@@ -557,13 +551,6 @@ This is to distinguish events in a terminal, like PuTTy."
           (const :tag "Always echo" t)
           (const :tag "Echo on translations" on-translation)
           (const :tag "Don't Echo"))
-  :group 'ergoemacs-read)
-
-
-
-(defcustom ergoemacs-read-blink-timeout 0.4
-  "Timeout for `ergoemacs-read' blinking cursor."
-  :type 'number
   :group 'ergoemacs-read)
 
 (defcustom ergoemacs-backspace-will-undo-swap-translation t
