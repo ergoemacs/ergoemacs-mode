@@ -349,26 +349,26 @@ If LOOKUP-KEYMAP
         (maphash
          (lambda(key item)
            (cond
-            ;; Keys where `ergoemacs-mode' dominates...
-            ((and (setq tmp (lookup-key lookup-keymap key))
-                  (not (integerp tmp)))
-             (define-key ret key item)
-             (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
-               ;; Define the higher character meta as well...
-               (define-key ret tmp-key item)))
-            ((and (setq tmp-key (ergoemacs-translate--escape-to-meta key))
-                  (setq tmp (lookup-key lookup-keymap tmp-key))
-                  (not (integerp tmp)))
-             ;; Define both
-             (define-key ret tmp-key item)
-             (define-key ret key item))
             ;; Mode specific keys are translated to `ergoemacs-mode'
             ;; equivalent key binding
             ((setq tmp (ergoemacs lookup-keymap :new-command item))
              (define-key ret key tmp)
              (when tmp-key
                ;; Define the higher character as well.
-               (define-key ret tmp-key tmp)))))
+               (define-key ret tmp-key tmp)))
+            ;; Keys where `ergoemacs-mode' dominates...
+            ((and (setq tmp (lookup-key lookup-keymap key t))
+                  (not (integerp tmp)))
+             (define-key ret key item)
+             (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+               ;; Define the higher character meta as well...
+               (define-key ret tmp-key item)))
+            ((and (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+                  (setq tmp (lookup-key lookup-keymap tmp-key t))
+                  (not (integerp tmp)))
+             ;; Define both
+             (define-key ret tmp-key item)
+             (define-key ret key item))))
          ergoemacs-map--)
         
         (setq tmp (ergoemacs global-map :keys))
