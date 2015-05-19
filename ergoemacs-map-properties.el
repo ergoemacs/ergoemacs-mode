@@ -625,7 +625,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
          (if (not cmd-list) nil
            (catch 'found-new
              (dolist (key cmd-list)
-               (when (and (setq ret (lookup-key keymap key))
+               (when (and (setq ret (lookup-key keymap key t))
                           (and (integerp ret) (setq ret nil)))
                  (throw 'found-new t)))
              t)
