@@ -408,7 +408,8 @@ This uses `ergoemacs-command-loop--read-event'."
          (blink-on nil)
          input
          raw-input
-         mod-keys tmp)
+         mod-keys tmp
+         double)
     ;; (ergoemacs-command-loop--read-key (read-kbd-macro "C-x" t) :unchorded-ctl)
     (when (functionp text)
       (setq text (funcall text)))
@@ -416,22 +417,35 @@ This uses `ergoemacs-command-loop--read-event'."
     
     (when trans
       ;; Don't echo the uncommon hyper/super/alt translations (alt is
-      
       ;; not the alt key...)
       (dolist (tr trans)
         (unless (or (memq 'hyper (nth 0  tr)) (memq 'super (nth 0 tr)) (memq 'alt (nth 0 tr))
                     (and ergoemacs-command-loop-hide-shift-translations (memq 'shift (nth 0  tr))))
-          (push tr tmp)))
+          (if (member (list (nth 1 tr) (nth 0 tr)) trans)
+              (when (not (member (list (nth 1 tr) (nth 0 tr)) double))
+                (push tr double))
+            (push tr tmp))))
       (setq trans tmp))
     
-    (setq trans (or (and trans (concat "\nTranslations: "
-                                       (mapconcat
-                                        (lambda(elt)
-                                          (format "%s%s%s"
-                                                  (ergoemacs :modifier-desc (nth 0 elt))
-                                                  (ergoemacs :unicode-or-alt "→" "->")
-                                                  (ergoemacs :modifier-desc (nth 1 elt))))
-                                        trans ", "))) ""))
+    (setq trans (or (and (or trans double)
+                         (concat "\nTranslations: "
+                                 (or (and double
+                                          (mapconcat
+                                           (lambda(elt)
+                                             (format "%s%s%s"
+                                                     (ergoemacs :modifier-desc (nth 0 elt))
+                                                     (ergoemacs :unicode-or-alt "↔" "<->")
+                                                     (ergoemacs :modifier-desc (nth 1 elt))))
+                                           double ", "))
+                                     "")
+                                 (or (and double trans ", ") "")
+                                 (mapconcat
+                                  (lambda(elt)
+                                    (format "%s%s%s"
+                                            (ergoemacs :modifier-desc (nth 0 elt))
+                                            (ergoemacs :unicode-or-alt "→" "->")
+                                            (ergoemacs :modifier-desc (nth 1 elt))))
+                                  trans ", "))) ""))
     (maphash
      (lambda(key item)
        (let ((local-key (where-is-internal key local-keymap t))
