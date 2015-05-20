@@ -906,11 +906,9 @@ Also in the loop, `universal-argument-num-events' is set to
                 (setq ergoemacs-command-loop--single-command-keys current-key
                       universal-argument-num-events 0
                       ergoemacs-command-loop--current-type type
-                      ergoemacs-command-loop--universal universal
+                      ergoemacs-command-loop--universal nil
                       ergoemacs-command-loop--exit t)
 
-                ;; Handle the overloaded C-x and C-c commands.
-                
                 (unless (setq continue-read (ergoemacs-keymapp command))
                   (unless (eq ergoemacs-command-loop-type :test)
                     (ergoemacs-command-loop--enable-start-timer)
@@ -929,7 +927,8 @@ Also in the loop, `universal-argument-num-events' is set to
                   (setq current-key ergoemacs-command-loop--single-command-keys 
                         universal ergoemacs-command-loop--universal
                         ergoemacs-command-loop--single-command-keys nil
-                        continue-read (not ergoemacs-command-loop--exit))
+                        continue-read (not ergoemacs-command-loop--exit)
+                        current-prefix-arg (if ergoemacs-command-loop--universal current-prefix-arg nil))
                   (when (and (not continue-read)
                              (eq ergoemacs-command-loop--exit :ignore-post-command-hook))
                     (setq continue-read t)))
@@ -1002,61 +1001,62 @@ pressed the translated key by changing
           this-command-keys-shift-translated nil)
     (catch 'found-command
       (dolist (cur-key trials)
-        (let* ((orig-key cur-key)
-               (bind (key-binding orig-key t))
-               (meta-key (ergoemacs-translate--meta-to-escape cur-key))
-               (esc-key (ergoemacs-translate--escape-to-meta cur-key))
-               (new-key (or meta-key esc-key))
-               (new-binding (and new-key (key-binding new-key)))
-               (global (and new-key
-                            (list (lookup-key ergoemacs-keymap orig-key t)
-                                  (lookup-key ergoemacs-keymap new-key t)))))
-          ;; Prefer non-global keys.
-          (cond
-           ((not new-key)
-            (setq new-key orig-key))
-           ((not (memq bind global))
-            (setq new-key orig-key))
-           ((and new-binding (not (memq new-binding global)))
-            (setq bind new-binding)))
-          (when (and orig-key
-                     (setq ret bind
-                           ret (if (and (eq ret 'ergoemacs-map-undefined)
-                                        (not (equal orig-key (nth 0 trials)))) nil ret)))
+        (when cur-key
+          (let* ((orig-key cur-key)
+                 (bind (key-binding orig-key t))
+                 (meta-key (ergoemacs-translate--meta-to-escape cur-key))
+                 (esc-key (ergoemacs-translate--escape-to-meta cur-key))
+                 (new-key (or meta-key esc-key))
+                 (new-binding (and new-key (key-binding new-key)))
+                 (global (and new-key
+                              (list (lookup-key ergoemacs-keymap orig-key t)
+                                    (lookup-key ergoemacs-keymap new-key t)))))
+            ;; Prefer non-global keys.
             (cond
-             ((equal orig-key (nth 0 trials))
-              (setq ergoemacs-command-loop--single-command-keys new-key)
-              (when (and (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-                         (ergoemacs-keymapp ret)
-                         (setq tmp (lookup-key ret [ergoemacs-timeout])))
-                (cond
-                 ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-                  (setq ret tmp))
-                 ((not (region-active-p))) ;; its a key sequence.
-                 ;; Shift+Control+c
-                 ((and this-command-keys-shift-translated
-                       (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
+             ((not new-key)
+              (setq new-key orig-key))
+             ((not (memq bind global))
+              (setq new-key orig-key))
+             ((and new-binding (not (memq new-binding global)))
+              (setq bind new-binding)))
+            (when (and orig-key
+                       (setq ret bind
+                             ret (if (and (eq ret 'ergoemacs-map-undefined)
+                                          (not (equal orig-key (nth 0 trials)))) nil ret)))
+              (cond
+               ((equal orig-key (nth 0 trials))
+                (setq ergoemacs-command-loop--single-command-keys new-key)
+                (when (and (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
+                           (ergoemacs-keymapp ret)
+                           (setq tmp (lookup-key ret [ergoemacs-timeout])))
+                  (cond
+                   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+                    (setq ret tmp))
+                   ((not (region-active-p))) ;; its a key sequence.
+                   ;; Shift+Control+c
+                   ((and this-command-keys-shift-translated
+                         (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
 
-                 ;; Immediate
-                 ((and (not ergoemacs-ctl-c-or-ctl-x-delay)
-                       (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
-                  (setq command tmp))
-                 
-                 (t ;; with delay
-                  (setq tmp2 (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
-                               (ergoemacs-command-loop--read-event nil key)))
-                  (if (not tmp2)
-                      (setq ret tmp) ;; timeout, use copy/cut
-                    (setq ret (ergoemacs-command-loop--key-lookup (vconcat key (vector tmp2))))))))
-              ) ;; Actual key
-             ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
-              (setq ergoemacs-command-loop--shift-translated t
-                    this-command-keys-shift-translated t
-                    ergoemacs-command-loop--single-command-keys (nth 0 trials)))
-             (t
-              (ergoemacs-command-loop--message-binding key ret new-key)
-              (setq ergoemacs-command-loop--single-command-keys new-key)))
-            (throw 'found-command ret)))))
+                   ;; Immediate
+                   ((and (not ergoemacs-ctl-c-or-ctl-x-delay)
+                         (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
+                    (setq command tmp))
+                   
+                   (t ;; with delay
+                    (setq tmp2 (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
+                                 (ergoemacs-command-loop--read-event nil key)))
+                    (if (not tmp2)
+                        (setq ret tmp) ;; timeout, use copy/cut
+                      (setq ret (ergoemacs-command-loop--key-lookup (vconcat key (vector tmp2))))))))
+                ) ;; Actual key
+               ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
+                (setq ergoemacs-command-loop--shift-translated t
+                      this-command-keys-shift-translated t
+                      ergoemacs-command-loop--single-command-keys (nth 0 trials)))
+               (t
+                (ergoemacs-command-loop--message-binding key ret new-key)
+                (setq ergoemacs-command-loop--single-command-keys new-key)))
+              (throw 'found-command ret))))))
     ret))
 
 (defvar ergoemacs-command-loop--execute-modify-command-list
