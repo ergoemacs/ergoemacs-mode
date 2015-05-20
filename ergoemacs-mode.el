@@ -537,7 +537,14 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
           (const :tag "Replace emacs command loop (full)" :full)
           ;; (const :tag "Test mode; Don't actually run command " :test)
           (const :tag "No command loop support" nil))
-  :group 'ergoemacs-mode)
+  :group 'ergoemacs-comamnd-loop)
+
+(defcustom ergoemacs-command-loop-hide-shift-translations t
+  "Hide shift translations in the command loop help."
+  :type 'boolean
+  :group 'ergoemacs-command-loop)
+
+
 
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined

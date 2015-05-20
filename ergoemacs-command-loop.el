@@ -408,10 +408,21 @@ This uses `ergoemacs-command-loop--read-event'."
          (blink-on nil)
          input
          raw-input
-         mod-keys)
+         mod-keys tmp)
     ;; (ergoemacs-command-loop--read-key (read-kbd-macro "C-x" t) :unchorded-ctl)
     (when (functionp text)
       (setq text (funcall text)))
+
+    
+    (when trans
+      ;; Don't echo the uncommon hyper/super/alt translations (alt is
+      
+      ;; not the alt key...)
+      (dolist (tr trans)
+        (unless (or (memq 'hyper (nth 0  tr)) (memq 'super (nth 0 tr)) (memq 'alt (nth 0 tr))
+                    (and ergoemacs-command-loop-hide-shift-translations (memq 'shift (nth 0  tr))))
+          (push tr tmp)))
+      (setq trans tmp))
     
     (setq trans (or (and trans (concat "\nTranslations: "
                                        (mapconcat
@@ -428,8 +439,10 @@ This uses `ergoemacs-command-loop--read-event'."
          (when local-key
            (setq tmp (format "%s%s%s"
                              (ergoemacs-key-description local-key)
-                             (ergoemacs :unicode-or-alt "→" "->")
-                             (ergoemacs :modifier-desc item)))
+                             (if (eq (nth 1 item) :force)
+                                 (ergoemacs :unicode-or-alt "⇒" "=>")
+                               (ergoemacs :unicode-or-alt "→" "->"))
+                             (ergoemacs :modifier-desc (nth 0 item))))
            (push (elt local-key 0) mod-keys)
            (setq keys (or (and (not keys) tmp)
                           (and keys (concat keys ", " tmp)))))))
@@ -620,6 +633,8 @@ This sequence is compatible with `listify-key-sequence'."
     (setq ergoemacs-command-loop--exit :ignore-post-command-hook
           ergoemacs---this-single-command-keys (or (and key (read-kbd-macro key t))
                                                    ergoemacs---this-single-command-keys)
+          unread-command-events (or (and key (ergoemacs-command-loop--listify-key-sequence key initial-key-type))
+                                    unread-command-events)
           ergoemacs-command-loop--universal (if (and ergoemacs-command-loop--universal (not universal)) nil
                                               universal)
           ergoemacs-command-loop--current-type (or type ergoemacs-command-loop--current-type))))
