@@ -305,7 +305,6 @@
   (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
   
   (global-set-key (kbd "C-S-w") 'delete-frame)
-  (global-set-key (kbd "C-S-x") '("C-x" normal))
   
   (global-set-key (kbd "C-`") 'other-frame)
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
@@ -870,7 +869,7 @@
   (global-set-key (kbd "<apps> SPC") 'set-mark-command)
   (global-set-key (kbd "<apps> a") 'mark-whole-buffer)
   (global-set-key (kbd "<apps> d") '("C-x" :ctl-to-alt))
-  (global-set-key (kbd "<apps> f") '("C-c" :unchorded))
+  (global-set-key (kbd "<apps> f") '("C-c" :unchorded-ctl))
   (global-set-key (kbd "<apps> h") help-map)
   (global-set-key (kbd "<apps> h '") 'ergoemacs-display-current-svg)
   (global-set-key (kbd "<apps> h 1") 'describe-function)
