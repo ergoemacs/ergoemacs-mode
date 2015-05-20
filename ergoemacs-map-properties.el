@@ -685,9 +685,8 @@ This sequence is compatible with `listify-key-sequence'."
 This is done by checking if this is a command that supports shift
 selection or cua-mode's movement."
   (let ((intf (ignore-errors (car (cdr (interactive-form command))))))
-    (and intf (eq (type-of intf) 'string)
-         (or (and (symbolp command) (eq (get command 'CUA) 'move))
-             (string-match "^[@*]*\\^" intf)))))
+    (or (and (symbolp command) (eq (get command 'CUA) 'move))
+        (and intf (stringp intf) (string-match "^[@*]*\\^" intf)))))
 
 (defvar ergoemacs-map-properties--command-loop-functions
   '(ergoemacs-command-loop ergoemacs-read-key)
