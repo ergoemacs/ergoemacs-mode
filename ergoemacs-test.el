@@ -1186,8 +1186,8 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
 (ert-deftest ergoemacs-test-M-e-only-one-char-issue-306 ()
   "Tests Issue #306.
 `org-mode' should respect the keys used."
-  (let ((ergoemacs-test-fn t)
-        (ergoemacs-read-input-keys nil))
+  (let ((ergoemacs-command-loop-type :test)
+        test-fn)
     (ergoemacs-test-layout
      :layout "us"
      :theme "lvl2"
@@ -1197,10 +1197,9 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
        (delete-region (point-min) (point-max))
        (insert ergoemacs-test-lorem-ipsum)
        (fundamental-mode)
-       (with-timeout (0.2 nil) (ergoemacs-read-key "M-e"))
-       (should (or (eq ergoemacs-test-fn 'backward-kill-word)
-                   (eq ergoemacs-test-fn (command-remapping 'backward-kill-word (point)))))
-       (setq ergoemacs-test-fn nil)
+       (setq test-fn (with-timeout (0.2 nil) (ergoemacs-command-loop "M-e")))
+       (should (or (eq test-fn 'backward-kill-word)
+                   (eq test-fn (command-remapping 'backward-kill-word (point)))))
        (goto-char (point-max))
        (execute-kbd-macro macro)
        (should (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed

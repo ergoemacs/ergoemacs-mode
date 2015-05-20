@@ -531,6 +531,14 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation)
 
+(defcustom ergoemacs-command-loop-type :full
+  "Type of `ergoemacs-mode' command loop."
+  :type '(choice
+          (const :tag "Replace emacs command loop (full)" :full)
+          ;; (const :tag "Test mode; Don't actually run command " :test)
+          (const :tag "No command loop support" nil))
+  :group 'ergoemacs-mode)
+
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined
 look for the command with or without modifiers."
