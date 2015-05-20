@@ -684,8 +684,7 @@ This sequence is compatible with `listify-key-sequence'."
   "Determines if COMMAND is a movement command.
 This is done by checking if this is a command that supports shift
 selection or cua-mode's movement."
-  (let ((intf (condition-case err
-                  (car (cdr (interactive-form command))))))
+  (let ((intf (ignore-errors (car (cdr (interactive-form command))))))
     (and intf (eq (type-of intf) 'string)
          (or (and (symbolp command) (eq (get command 'CUA) 'move))
              (string-match "^[@*]*\\^" intf)))))
