@@ -263,10 +263,6 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
            "")
        (ergoemacs :unicode-or-alt "▸" ">"))))
 
-
-(defun ergoemacs-command-loop--read-key-universal (current-key &optional type)
-  )
-
 (defvar ergoemacs-command-loop--decode-event-delay 0.01
   "Timeout for `ergoemacs-command-loop--decode-event'.
 This is to distinguish events in a terminal, like xterm.
@@ -496,7 +492,7 @@ This uses `ergoemacs-command-loop--read-event'."
               input (ergoemacs-translate--event-mods input type))))
       (cond
        ((and input (not universal)
-             (not (commandp (key-binding (ergoemacs :combine current-key raw-input)) t))
+             (not (key-binding (ergoemacs :combine current-key raw-input)))
              (and local-keymap
                   (memq (lookup-key local-keymap (vector raw-input))
                         ergoemacs-command-loop--universal-functions)))
@@ -534,7 +530,7 @@ This uses `ergoemacs-command-loop--read-event'."
           (setq raw-input nil
                 universal nil))
          ((or (memq (key-binding (ergoemacs :combine current-key input) t) ergoemacs-universal-fns)
-              (not (commandp (key-binding (ergoemacs :combine current-key raw-input) t)))
+              (not (key-binding (ergoemacs :combine current-key raw-input) t))
               (and local-keymap (memq (lookup-key local-keymap (vector raw-input)) ergoemacs-universal-fns)))
           ;; Universal argument called.
           (cond
@@ -909,7 +905,8 @@ Also in the loop, `universal-argument-num-events' is set to
                       ergoemacs-command-loop--universal nil
                       ergoemacs-command-loop--exit t)
 
-                (unless (setq continue-read (ergoemacs-keymapp command))
+                (if (setq continue-read (ergoemacs-keymapp command))
+                    (setq universal nil)
                   (unless (eq ergoemacs-command-loop-type :test)
                     (ergoemacs-command-loop--enable-start-timer)
                     (with-local-quit
