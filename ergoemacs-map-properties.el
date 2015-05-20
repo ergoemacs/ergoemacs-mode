@@ -687,7 +687,7 @@ selection or cua-mode's movement."
   (let ((intf (condition-case err
                   (car (cdr (interactive-form command))))))
     (and intf (eq (type-of intf) 'string)
-         (or (eq (get command 'CUA) 'move)
+         (or (and (symbolp command) (eq (get command 'CUA) 'move))
              (string-match "^[@*]*\\^" intf)))))
 
 (defvar ergoemacs-map-properties--command-loop-functions
