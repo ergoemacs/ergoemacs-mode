@@ -317,7 +317,7 @@ If LOOKUP-KEYMAP
             (push tmp composed-list)))
 
         ;; The real `global-map'
-        (setq parent (ergoemacs :global-map))
+        (setq parent (copy-keymap (ergoemacs :global-map)))
 
         ;; The keys that will be unbound
         (setq ret (make-sparse-keymap))
@@ -353,6 +353,7 @@ If LOOKUP-KEYMAP
             ;; equivalent key binding
             ((setq tmp (ergoemacs lookup-keymap :new-command item))
              (define-key ret key tmp)
+             (setq tmp-key (ergoemacs-translate--escape-to-meta key))
              (when tmp-key
                ;; Define the higher character as well.
                (define-key ret tmp-key tmp)))
