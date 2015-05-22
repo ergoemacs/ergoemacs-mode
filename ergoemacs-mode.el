@@ -256,6 +256,7 @@ bindings the keymap is:
     (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
     (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
+    (setq overriding-terminal-local-map nil)
     (message "Ergoemacs-mode turned OFF.")))
 
 ;;;###autoload

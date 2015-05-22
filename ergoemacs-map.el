@@ -448,10 +448,10 @@ If LOOKUP-KEYMAP
         (local-map (get-text-property (point) 'local-map)))
 
     ;; Restore `overriding-terminal-local-map' if needed
-    (when (and (eq ergoemacs-command-loop-type :full) (not overriding-terminal-local-map))
+    (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full) (not overriding-terminal-local-map))
       (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))
     
-    (when overriding-terminal-local-map
+    (when (and ergoemacs-mode overriding-terminal-local-map)
       (cond
        ((and (eq ergoemacs-command-loop-type :full) ;; Correct `overriding-terminal-local-map'
              (eq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map)))
