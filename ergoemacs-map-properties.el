@@ -655,18 +655,19 @@ Values returned are:
   t -- `ergoemacs-mode' has been installed
   nil -- `ergoemacs-mode' has not modified this map.
 "
-  (let* ((parent (keymap-parent keymap))
-         (key (and parent (ergoemacs keymap :map-key)))
-         (ret (and (consp key) 
-                   (or (and (eq (nth 1 key) 'user) :protected-p)
-                       (and (eq (nth 1 key) 'cond-map) :cond-p)))))
-    (cond
-     ((eq ret :cond-p) ret)
-     ((not ret) nil)
-     ((and (setq key (ergoemacs parent :map-key)) (not (consp key))) ret)
-     ((eq (nth 1 key) 'ergoemacs-unbound) t)
-     ((and (ergoemacs parent :composed-p) (consp key)) t)
-     (t ret))))
+  (when keymap
+    (let* ((parent (keymap-parent keymap))
+           (key (and parent (ergoemacs keymap :map-key)))
+           (ret (and (consp key) 
+                     (or (and (eq (nth 1 key) 'user) :protected-p)
+                         (and (eq (nth 1 key) 'cond-map) :cond-p)))))
+      (cond
+       ((eq ret :cond-p) ret)
+       ((not ret) nil)
+       ((and (setq key (ergoemacs parent :map-key)) (not (consp key))) ret)
+       ((eq (nth 1 key) 'ergoemacs-unbound) t)
+       ((and (ergoemacs parent :composed-p) (consp key)) t)
+       (t ret)))))
 
 
 (defun ergoemacs-map-properties--sequence (key &rest _ignore)

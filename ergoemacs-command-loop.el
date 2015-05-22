@@ -916,11 +916,23 @@ This sequence is compatible with `listify-key-sequence'."
 
 (defun ergoemacs-command-loop--this-command-keys-vector ()
   "`ergoemacs-mode' command loop single command keys"
-  ergoemacs-command-loop--single-command-keys)
+  (or ergoemacs-command-loop--single-command-keys
+      (funcall ergoemacs---this-single-command-keys)))
 
-(defalias 'ergoemacs-command-loop--this-command-keys 'ergoemacs-command-loop--this-command-keys-vector)
-(defalias 'ergoemacs-command-loop--this-single-command-keys 'ergoemacs-command-loop--this-command-keys-vector)
-(defalias 'ergoemacs-command-loop--this-single-command-raw-keys 'ergoemacs-command-loop--this-command-keys-vector)
+(defun ergoemacs-command-loop--this-command-keys ()
+  "`ergoemacs-mode' command loop single command keys"
+  (or ergoemacs-command-loop--single-command-keys
+      (funcall ergoemacs---this-single-command-keys)))
+
+(defun ergoemacs-command-loop--this-single-command-keys ()
+  "`ergoemacs-mode' command loop single command keys"
+  (or ergoemacs-command-loop--single-command-keys
+      (funcall ergoemacs---this-single-command-keys)))
+
+(defun ergoemacs-command-loop--this-single-command-raw-keys ()
+  "`ergoemacs-mode' command loop single command keys"
+  (or ergoemacs-command-loop--single-command-keys
+      (funcall ergoemacs---this-single-command-keys)))
 
 (defun ergoemacs-command-loop-persistent-p ()
   "Is the `ergoemacs-mode' command loop persistent?"
@@ -929,8 +941,11 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop-start ()
   "Start `ergoemacs-command-loop'"
   (interactive)
+  (ergoemacs-command-loop--reset-functions)
   (ergoemacs-command-loop (this-single-command-keys)))
 
+(defvar ergoemacs-command-loop--echo-keystrokes nil
+  "")
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -964,9 +979,24 @@ when running the command loop:
 - `current-active-maps'
 - `describe-bindings'
 
+In the full `ergoemacs-mode' command loop, the command ignores
+ergoemacs keys in `overriding-terminal-local-map' using
+`ergoemacs-command-loop--displaced-overriding-terminal-local-map'
+in its place.
+
+While in the loop, the value of `echo-keystrokes' is saved to
+`ergoemacs-command-loop--echo-keystrokes' and then set to zero.
+That way emacs doesn't show a long list of keystrokes that have
+not started a command.  Currently `ergoemacs-mode' does not
+respect `echo-keystrokes'
+
+FIXME: modify `called-interactively' and `called-interactively-p'
+
 "
   (interactive)
   (setq ergoemacs---ergoemacs-command-loop (symbol-function 'ergoemacs-command-loop))
+  (setq ergoemacs-command-loop--echo-keystrokes echo-keystrokes
+        echo-keystrokes 0)
   (let* ((type (or type :normal))
          (continue-read t)
          (first-type type)
@@ -1088,8 +1118,10 @@ when running the command loop:
                   local-keymap (ergoemacs-translation-struct-keymap translation)
                   ergoemacs-command-loop--first-type first-type
                   ergoemacs-command-loop--history nil))
-          (setq inhibit-quit nil)))
-    (ergoemacs-command-loop--reset-functions)
+          (setq inhibit-quit nil))
+      (ergoemacs-command-loop--reset-functions)
+      (setq echo-keystrokes ergoemacs-command-loop--echo-keystrokes
+            ergoemacs-command-loop--echo-keystrokes nil))    
     command))
 
 (defun ergoemacs-command-loop--message (str &rest args)

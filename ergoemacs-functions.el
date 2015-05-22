@@ -1698,7 +1698,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
         (setq last-input-event tmp)
         (setq prefix-arg current-prefix-arg)
         (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
-        (ergoemacs-defer-post-command-hook)
+        ;;(ergoemacs-defer-post-command-hook)
         (reset-this-command-lengths))
     (if (region-active-p)
         (let ((p1 (region-beginning))
