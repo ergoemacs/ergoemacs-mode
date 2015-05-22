@@ -73,11 +73,6 @@
 
 
 
-(defvar ergoemacs---this-command-keys-vector (symbol-function 'this-command-keys-vector))
-(defvar ergoemacs---this-command-keys (symbol-function 'this-command-keys))
-(defvar ergoemacs---this-single-command-keys (symbol-function 'this-single-command-keys))
-(defvar ergoemacs---this-single-command-raw-keys (symbol-function 'this-single-command-raw-keys))
-
 (defvar ergoemacs---ergoemacs-command-loop nil)
 
 (defvar ergoemacs-command-loop--shift-translated nil
@@ -732,8 +727,8 @@ This sequence is compatible with `listify-key-sequence'."
         (ergoemacs-command-loop--reset-functions)
         (ergoemacs-command-loop key type initial-key-type universal))
     (setq ergoemacs-command-loop--exit :ignore-post-command-hook
-          ergoemacs---this-single-command-keys (or (and key (read-kbd-macro key t))
-                                                   ergoemacs---this-single-command-keys)
+          ergoemacs-command-loop--single-command-keys (or (and key (read-kbd-macro key t))
+                                                          ergoemacs-command-loop--single-command-keys)
           unread-command-events (or (and key (ergoemacs-command-loop--listify-key-sequence key initial-key-type))
                                     unread-command-events)
           ergoemacs-command-loop--universal (if (and ergoemacs-command-loop--universal (not universal)) nil
@@ -743,11 +738,6 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop--reset-functions ()
   "Reset functions"
   (interactive)
-  (dolist (fn '(this-command-keys-vector
-                this-command-keys
-                this-single-command-keys
-                this-single-command-raw-keys))
-    (fset fn (symbol-value (intern (format "ergoemacs---%s" (symbol-name fn))))))
   (when ergoemacs---ergoemacs-command-loop
     (fset 'ergoemacs-command-loop ergoemacs---ergoemacs-command-loop)
     (setq ergoemacs---ergoemacs-command-loop nil)))
@@ -804,6 +794,7 @@ This sequence is compatible with `listify-key-sequence'."
         deactivate-mark nil)
   
   (undo-boundary)
+  ;;  This (sort of) fixes `this-command-keys'
   (clear-this-command-keys t))
 
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
@@ -887,12 +878,6 @@ This sequence is compatible with `listify-key-sequence'."
    (t
     (call-interactively command record-flag keys))))
 
-
-(defun ergoemacs-command-loop--this-command-keys-vector ()
-  "`ergoemacs-mode' command loop single command keys"
-  (or ergoemacs-command-loop--single-command-keys
-      (funcall ergoemacs---this-single-command-keys)))
-
 (defun ergoemacs-command-loop-persistent-p ()
   "Is the `ergoemacs-mode' command loop persistent?"
   (and ergoemacs-mode (eq ergoemacs-command-loop-type :full)))
@@ -969,11 +954,11 @@ FIXME: modify `called-interactively' and `called-interactively-p'
         (progn
           ;; Replace functions temporarily
           (fset 'ergoemacs-command-loop 'ergoemacs-command-loop--internal)
-          (dolist (fn '(this-command-keys-vector
-                        this-command-keys
-                        this-single-command-keys
-                        this-single-command-raw-keys))
-            (fset fn #'ergoemacs-command-loop--this-command-keys-vector))
+          ;; (dolist (fn '(this-command-keys-vector
+          ;;               this-command-keys
+          ;;               this-single-command-keys
+          ;;               this-single-command-raw-keys))
+          ;;   (fset fn #'ergoemacs-command-loop--this-command-keys-vector))
           
           ;; Setup initial unread command events, first type and history
           (setq tmp (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
@@ -1293,16 +1278,12 @@ For instance in QWERTY M-> is shift translated to M-."
       ;; Handle Shift Selection
       (ergoemacs-command-loop--execute-handle-shift-selection this-command)
       (when keys
+        (setq ergoemacs-command-loop--single-command-keys keys)
+        
         ;; Modify the output for these functions when `keys' is not nil.
         ;; - `this-command-keys'
         ;; - `this-command-keys-vector'
         ;; - `this-single-command-keys'
-
-        ;; Also when `keys' are non-nil, modify `last-command-event' and
-        ;; `last-nonmenu-event'
-        
-        ;; This should allow `self-insert-command' to insert the correct key.
-        (setq ergoemacs-command-loop--single-command-keys keys)
 
         ;; Assume this is a nonmenu event if it isn't a mouse event
         (unless (consp last-command-event)
@@ -1324,6 +1305,10 @@ For instance in QWERTY M-> is shift translated to M-."
                   (run-hooks 'ergoemacs-pre-command-hook))
               (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
               (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions))
+            ;; The `deactivate-mark' should be nil here.  However, it
+            ;; usually isn't because local variables are being
+            ;; altered.  Therefore, set it explicitly.
+            (setq deactivate-mark nil) 
             (ergoemacs-command-loop--call-interactively command t))
         (setq ergoemacs-command-loop--single-command-keys nil)))))
   
