@@ -514,9 +514,9 @@ If LOOKUP-KEYMAP
         ergoemacs-map--alists (make-hash-table))
   (use-global-map ergoemacs-keymap)
   (ergoemacs-map--modify-active t)
-  (add-hook 'post-command-hook 'ergoemacs-map--modify-active))
+  (add-hook 'post-command-hook #'ergoemacs-map--modify-active))
 
-(add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-map--install)
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-map--install)
 
 (defvar ergoemacs-mode)
 (defun ergoemacs-map--remove ()
