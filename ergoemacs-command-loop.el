@@ -830,7 +830,8 @@ This sequence is compatible with `listify-key-sequence'."
         prefix-arg nil
         deactivate-mark nil)
   
-  (undo-boundary))
+  (undo-boundary)
+  (clear-this-command-keys t))
 
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
   "Call the command interactively.  Also handle mouse events (if possible.)"
