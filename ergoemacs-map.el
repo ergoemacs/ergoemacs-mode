@@ -447,34 +447,48 @@ If LOOKUP-KEYMAP
   (let ((char-map (get-char-property (point) 'keymap))
         (local-map (get-text-property (point) 'local-map)))
 
-  (when (and overriding-terminal-local-map
-             (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
+    ;; Restore `overriding-terminal-local-map' if needed
+    (when (and (eq ergoemacs-command-loop-type :full) (not overriding-terminal-local-map))
+      (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))
+    
+    (when overriding-terminal-local-map
+      (cond
+       ((and (eq ergoemacs-command-loop-type :full) ;; Correct `overriding-terminal-local-map'
+             (eq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map)))
+       ((and (eq ergoemacs-command-loop-type :full))
+        (if (ergoemacs overriding-terminal-local-map :installed-p)
+            (setq ergoemacs-command-loop--displaced-overriding-terminal-local-map overriding-terminal-local-map
+                  overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map)
+          (setq ergoemacs-command-loop--displaced-overriding-terminal-local-map (ergoemacs overriding-terminal-local-map)
+                overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map)))
+       
+       ((and (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
              (not (ergoemacs overriding-terminal-local-map :installed-p)))
-    (setq overriding-terminal-local-map (ergoemacs overriding-terminal-local-map)))
-  
-  (when (and overriding-local-map
-             (not (eq overriding-local-map ergoemacs-map--modify-active-last-overriding-local-map))
-             (not (ergoemacs overriding-local-map :installed-p)))
-    (setq overriding-local-map (ergoemacs overriding-local-map)))
+        (setq overriding-terminal-local-map (ergoemacs overriding-terminal-local-map)))))
+    
+    (when (and overriding-local-map
+               (not (eq overriding-local-map ergoemacs-map--modify-active-last-overriding-local-map))
+               (not (ergoemacs overriding-local-map :installed-p)))
+      (setq overriding-local-map (ergoemacs overriding-local-map)))
 
-  (when (and char-map
-             (not (eq char-map ergoemacs-map--modify-active-last-char-map))
-             (not (ergoemacs char-map :installed-p)))
-    (setf char-map (ergoemacs char-map)))
+    (when (and char-map
+               (not (eq char-map ergoemacs-map--modify-active-last-char-map))
+               (not (ergoemacs char-map :installed-p)))
+      (setf char-map (ergoemacs char-map)))
 
-  (when (and local-map
-             (not (eq local-map ergoemacs-map--modify-active-last-local-map))
-             (not (ergoemacs local-map :installed-p)))
-    (setf local-map (ergoemacs local-map)))
+    (when (and local-map
+               (not (eq local-map ergoemacs-map--modify-active-last-local-map))
+               (not (ergoemacs local-map :installed-p)))
+      (setf local-map (ergoemacs local-map)))
 
-  
-  (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map
-        ergoemacs-map--modify-active-last-overriding-local-map overriding-local-map
-        ergoemacs-map--modify-active-last-char-map char-map
-        ergoemacs-map--modify-active-last-local-map local-map)
-  (ergoemacs-map--emulation-mode-map-alists)
-  (ergoemacs-map--minor-mode-map-alist ini)
-  (ergoemacs-map--minor-mode-overriding-map-alist)))
+    
+    (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map
+          ergoemacs-map--modify-active-last-overriding-local-map overriding-local-map
+          ergoemacs-map--modify-active-last-char-map char-map
+          ergoemacs-map--modify-active-last-local-map local-map)
+    (ergoemacs-map--emulation-mode-map-alists)
+    (ergoemacs-map--minor-mode-map-alist ini)
+    (ergoemacs-map--minor-mode-overriding-map-alist)))
 
 (defun ergoemacs-map--install ()
   (interactive)

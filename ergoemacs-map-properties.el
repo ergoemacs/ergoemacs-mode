@@ -298,6 +298,8 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
 
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-map-properties--get-original-global-map)
 
+
+;;; FIXME: consider using `accessible-keymaps'
 (defun ergoemacs-map-properties--extract-prefixes (keymap &optional dont-ignore return-kbd)
   "Extract prefix commands for KEYMAP.
 Ignores command sequences starting with `ergoemacs-map-properties--ignored-prefixes'.

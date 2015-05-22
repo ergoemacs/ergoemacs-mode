@@ -885,7 +885,7 @@
   (global-set-key (kbd "<apps> h z") 'ergoemacs-clean)
   (global-set-key (kbd "<apps> h C-z") 'ergoemacs-clean-library)
   (global-set-key (kbd "<apps> h Z") 'ergoemacs-clean-nw)
-  (global-set-key (kbd "<apps> m") "C-c C-c")
+  (global-set-key (kbd "<apps> m") (kbd "C-c C-c"))
   (global-set-key (kbd "<apps> s") 'save-buffer)
   (global-set-key (kbd "<apps> C-s") 'write-file)
   (global-set-key (kbd "<apps> o") 'find-file)

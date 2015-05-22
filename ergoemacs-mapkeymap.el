@@ -49,7 +49,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Code:
-
+;;; FIXMXE: use `map-keymap' instead?
 (defvar ergoemacs-map-properties--plist-hash)
 
 (declare-function ergoemacs-map-properties--key-struct "ergoemacs-map-properties")
