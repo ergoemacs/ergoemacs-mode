@@ -1138,8 +1138,8 @@
     (global-set-key [remap shell] 'ergoemacs-shell-here)
     (global-set-key [remap universal-argument]
                     'ergoemacs-command-loop--universal-argument)
-    (global-set-key [remap describe-key]
-                    'ergoemacs-key-description)
+    ;; (global-set-key [remap describe-key]
+    ;;                 'ergoemacs-key-description)
     (global-set-key [remap describe-mode]
                     'ergoemacs-describe-major-mode)
     (global-set-key [remap ergoemacs-print-buffer-confirm]
