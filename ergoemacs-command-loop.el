@@ -50,6 +50,127 @@
 ;; 
 ;;; Code:
 
+(eval-when-compile 
+  (require 'cl)
+  (require 'ergoemacs-macros))
+
+(declare-function ergoemacs-key-description "ergoemacs-key-description")
+(declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
+
+(declare-function ergoemacs-map-properties--command-loop-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--movement-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+
+(declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
+(declare-function ergoemacs-translate--event-mods "ergoemacs-translate")
+(declare-function ergoemacs-translate--get "ergoemacs-translate")
+(declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
+(declare-function ergoemacs-translate--trials "ergoemacs-translate")
+(declare-function ergoemacs-translation-struct-keymap "ergoemacs-translate")
+(declare-function ergoemacs-translation-struct-text "ergoemacs-translate")
+(declare-function ergoemacs-translation-struct-translation "ergoemacs-translate")
+(declare-function ergoemacs-translation-struct-unchorded "ergoemacs-translate")
+
+
+
+(defvar ergoemacs---this-command-keys-vector (symbol-function 'this-command-keys-vector))
+(defvar ergoemacs---this-command-keys (symbol-function 'this-command-keys))
+(defvar ergoemacs---this-single-command-keys (symbol-function 'this-single-command-keys))
+(defvar ergoemacs---this-single-command-raw-keys (symbol-function 'this-single-command-raw-keys))
+
+(defvar ergoemacs---ergoemacs-command-loop nil)
+
+(defvar ergoemacs-command-loop--shift-translated nil
+  "This command is forced to be shift translated.")
+
+(defvar ergoemacs-command-loop--mark-active nil
+  "Determines if mark was active before ergoemacs command loop.")
+
+(defvar ergoemacs-command-loop--pre-command-hook nil
+  "Pre-command hook for `ergoemacs-mode' command loop.")
+
+(defvar ergoemacs-command-loop--displaced-overriding-terminal-local-map nil
+  "Displaced `overriding-terminal-local-map'")
+
+(defvar ergoemacs-command-loop--overriding-terminal-local-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [t] 'ergoemacs-command-loop-start)
+    (ergoemacs map :label most-positive-fixnum)
+    map)
+  "Command loop `overriding-terminal-local-map'")
+
+(defvar ergoemacs-command-loop--universal-functions '(universal-argument ergoemacs-universal-argument ergoemacs-command-loop--universal-argument)
+  "List of `ergoemacs-mode' recognized functions.")
+
+(define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions)
+
+(defvar ergoemacs-command-loop--next-key-hash (make-hash-table)
+  "Hash table of how functions force the unchorded next key translation to behave.")
+
+(defvar ergoemacs-command-loop--undo-functions
+  '(ergoemacs-read-key-undo-last
+    ergoemacs-command-loop--undo-last ergoemacs-read-key-force-undo-last ergoemacs-command-loop--force-undo-last)
+  "Undo functions recognized by `ergoemacs-mode'")
+
+(defvar ergoemacs-command-loop--help-last-key nil)
+
+(defvar ergoemacs-command-loop--decode-event-delay 0.01
+  "Timeout for `ergoemacs-command-loop--decode-event'.
+This is to distinguish events in a terminal, like xterm.
+
+It needs to be less than `ergoemacs-command-loop-blink-rate'.")
+
+(define-obsolete-variable-alias 'ergoemacs-read-key-delay 'ergoemacs-command-loop--decode-event-delay)
+
+(defvar ergoemacs-command-loop--history nil
+  "History of command loop locations.")
+
+(defvar ergoemacs-command-loop--last-event-time nil
+  "Stores the last event time.")
+
+(defvar ergoemacs-command-loop--first-type nil
+  "This is the first type for the `ergoemacs-mode' command loop.")
+(defvar ergoemacs-command-loop--current-type nil
+  "This is the current translation type for the `ergoemacs-mode' command loop.")
+(defvar ergoemacs-command-loop--universal nil
+  "This determines if `ergoemacs-mode' will start editing/completing universal arguments.")
+(defvar ergoemacs-command-loop--self-insert-command-count 0
+  "The count of `self-insert-command' to allow inserting correct undo boundaries.")
+;; (defvar ergoemacs-command-loop--mouse-event nil)
+(defvar ergoemacs-command-loop--exit nil
+  "External variable controlling if the `ergoemacs-command-loop' will exit.
+
+:ignore-post-command-hook means that the command will exit, and ignore the post-command hooks.
+")
+
+(defvar ergoemacs-command-loop--execute-modify-command-list
+  '(last-repeatable-command
+    this-command
+    this-original-command
+    mc--this-command)
+  "Commands that will be set to what `ergoemacs-command-loop' executes.")
+
+(defvar ergoemacs-command-loop--deferred-functions
+  '(delete-selection-pre-hook ac-handle-pre-command cua--pre-command-handler mc/make-a-note-of-the-command-being-run)
+  "Hooks that are moved to `ergoemacs-pre-command-hook'.
+These hooks are deferred to make sure `this-command' is set appropriately.")
+
+(defvar ergoemacs-command-loop--single-command-keys nil
+  "If defined, a vector of the command keys pressed in the `ergoemacs-command-loop'.")
+
+
+(defvar ergoemacs-command-loop-swap-translation)
+(defvar ergoemacs-command-loop-time-before-blink)
+(defvar ergoemacs-command-loop-blink-character)
+(defvar ergoemacs-command-loop-blink-rate)
+(defvar ergoemacs-command-loop-hide-shift-translations)
+(defvar ergoemacs-mode)
+(defvar ergoemacs-command-loop-type)
+(defvar ergoemacs-keymap)
+(defvar ergoemacs-handle-ctl-c-or-ctl-x)
+(defvar ergoemacs-ctl-c-or-ctl-x-delay)
+
+
 (defun ergoemacs-command-loop--redefine-quit-key (&optional key)
   "Redefines the quit-key in emacs.
 
@@ -68,6 +189,8 @@ with this function."
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--setup-quit-key)
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--redefine-quit-key)
+
+
 
 (defun ergoemacs-command-loop--universal-argument (&optional type)
   "Ergoemacs universal argument.
@@ -95,21 +218,6 @@ This is called through `ergoemacs-command-loop'"
 
 (defalias 'ergoemacs-universal-argument 'ergoemacs-command-loop--universal-argument)
 
-(defvar ergoemacs-command-loop--displaced-overriding-terminal-local-map nil
-  "Displaced `overriding-terminal-local-map'")
-
-(defvar ergoemacs-command-loop--overriding-terminal-local-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [t] 'ergoemacs-command-loop-start)
-    (ergoemacs map :label most-positive-fixnum)
-    map)
-  "Command loop `overriding-terminal-local-map'")
-
-(defvar ergoemacs-command-loop--universal-functions '(universal-argument ergoemacs-universal-argument ergoemacs-command-loop--universal-argument)
-  "List of `ergoemacs-mode' recognized functions.")
-
-(define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions)
-
 (defun ergoemacs-command-loop--digit-argument (&optional type)
   "Ergoemacs digit argument.
  This is called through `ergoemacs-command-loop'"
@@ -130,9 +238,6 @@ This is called through `ergoemacs-command-loop'"
   (ergoemacs-command-loop nil type nil t))
 
 (defalias 'ergoemacs-negative-argument 'ergoemacs-command-loop--negative-argument)
-
-(defvar ergoemacs-command-loop--next-key-hash (make-hash-table)
-  "Hash table of how functions force the unchorded next key translation to behave.")
 
 (dolist (arg '((next-key-is-alt (meta))
                (next-key-is-meta (meta))
@@ -187,17 +292,11 @@ This is actually a dummy function.  The actual work is done in `ergoemacs-comman
 (defalias 'ergoemacs-read-key-force-undo-last 'ergoemacs-command-loop--force-undo-last)
 (put 'ergoemacs-read-key-force-undo-last :ergoemacs-local :force)
 
-(defvar ergoemacs-command-loop--undo-functions
-  '(ergoemacs-read-key-undo-last
-    ergoemacs-command-loop--undo-last ergoemacs-read-key-force-undo-last ergoemacs-command-loop--force-undo-last)
-  "Undo functions recognized by `ergoemacs-mode'")
-
-
 (defun ergoemacs-command-loop--swap-translation ()
   "Function to swap translations.
 Uses the `ergoemacs-command-loop-swap-translation' variable."
   (interactive)
-  (let ((next-swap (assoc (list first-type current-type) ergoemacs-command-loop-swap-translation)))
+  (let ((next-swap (assoc (list ergoemacs-command-loop--first-type ergoemacs-command-loop--current-type) ergoemacs-command-loop-swap-translation)))
     (setq ergoemacs-command-loop--current-type
           (if next-swap
               (nth 1 next-swap)
@@ -205,7 +304,6 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
 
 (defalias 'ergoemacs-read-key-swap 'ergoemacs-command-loop--swap-translation)
 
-(defvar ergoemacs-command-loop--help-last-key nil)
 (defun ergoemacs-command-loop--help ()
   "Show help for the current sequence KEY."
   (interactive)
@@ -250,7 +348,7 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
            (concat (or
                     (and (not universal) "")
                     (and ergoemacs-command-loop-blink-character
-                         (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))
+                         (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
                              " "))
                     " ")
                    (or
@@ -264,22 +362,13 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
         (t current-prefix-arg))
        (or (and (not universal) "")
            (and ergoemacs-command-loop-blink-character
-                (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))
+                (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
                     " "))
            " ")
        (or (and (listp current-prefix-arg)
                 (format "%s" current-prefix-arg))
            "")
        (ergoemacs :unicode-or-alt "▸" ">"))))
-
-(defvar ergoemacs-command-loop--decode-event-delay 0.01
-  "Timeout for `ergoemacs-command-loop--decode-event'.
-This is to distinguish events in a terminal, like xterm.
-
-It needs to be less than `ergoemacs-command-loop-blink-rate'.")
-
-(define-obsolete-variable-alias 'ergoemacs-read-key-delay 'ergoemacs-command-loop--decode-event-delay)
-
 
 (defun ergoemacs-command-loop--ensure-sane-variables ()
   "Makes sure that certain variables won't lock up emacs.
@@ -291,11 +380,6 @@ Currently this ensures:
     (setq ergoemacs-command-loop--decode-event-delay (/ ergoemacs-command-loop-blink-rate 1000))))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--ensure-sane-variables)
-
-(defvar ergoemacs-command-loop--history nil
-  "History of command loop locations.")
-(defvar ergoemacs-command-loop-time-before-blink 2.5)
-(defvar ergoemacs-command-loop--last-event-time nil)
 
 (defun ergoemacs-command-loop--combine (current-key next-event)
   "Combine two key and next event."
@@ -323,12 +407,11 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
              (prompt (cond
                       ((or (minibufferp) isearch-mode) nil)
                       ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
-                      ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))) nil)
+                      ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))) nil)
                       (t prompt)))
              ;; Run (with-timeout) so that idle timers will work.
              (event (with-timeout (seconds nil)
-                      (read-event prompt)))
-             click-event)
+                      (read-event prompt))))
         (when (eventp event)
           ;; (setq event (ergoemacs-command-loop--decode-mouse event))
           (unless (consp event) ;; Don't record mouse events
@@ -355,8 +438,7 @@ Used to help with translation keymaps like `input-decode-map'"
     (while (and current-key
                 (keymapp test-ret))
       ;; The translation needs more keys...
-      (setq tmp nil
-            next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay))
+      (setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay))
       (when next-key ;; Since a key was read, save it to be read later.
         (push last-command-event new-ergoemacs-input))
       (if next-key
@@ -510,7 +592,7 @@ This uses `ergoemacs-command-loop--read-event'."
                             ;; Cursor
                             (or (and universal "")
                                 (and ergoemacs-command-loop-blink-character
-                                     (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))
+                                     (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
                                          " "))
                                 " ")
                             trans
@@ -538,7 +620,7 @@ This uses `ergoemacs-command-loop--read-event'."
                               ;; Cursor
                               (or (and universal "")
                                   (and ergoemacs-command-loop-blink-character
-                                       (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-read-blink "-"))
+                                       (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
                                            " "))
                                   " ")
                               "\n"
@@ -589,9 +671,9 @@ This uses `ergoemacs-command-loop--read-event'."
                      ergoemacs-command-loop--universal-functions)) ;; Toggle to key-sequence.
           (setq raw-input nil
                 universal nil))
-         ((or (memq (key-binding (ergoemacs :combine current-key input) t) ergoemacs-universal-fns)
+         ((or (memq (key-binding (ergoemacs :combine current-key input) t) ergoemacs-command-loop--universal-functions)
               (not (key-binding (ergoemacs :combine current-key raw-input) t))
-              (and local-keymap (memq (lookup-key local-keymap (vector raw-input)) ergoemacs-universal-fns)))
+              (and local-keymap (memq (lookup-key local-keymap (vector raw-input)) ergoemacs-command-loop--universal-functions)))
           ;; Universal argument called.
           (cond
            ((not current-prefix-arg)
@@ -664,10 +746,6 @@ This sequence is compatible with `listify-key-sequence'."
                  input))
     input))
 
-(defvar ergoemacs-command-loop--first-type nil)
-(defvar ergoemacs-command-loop--current-type nil)
-(defvar ergoemacs-command-loop--universal nil)
-
 (defun ergoemacs-command-loop--internal (&optional key type initial-key-type universal)
   "Process `ergoemacs-command-loop' while `ergoemacs-command-loop' is running."
   (interactive)
@@ -703,7 +781,6 @@ This sequence is compatible with `listify-key-sequence'."
 
 (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
 
-(defvar ergoemacs-command-loop--self-insert-command-count 0)
 (defun ergoemacs-command-loop--internal-end-command ()
   "Simulates the end of a command."
   ;; Simulate the end of an emacs command, since we are not
@@ -755,15 +832,12 @@ This sequence is compatible with `listify-key-sequence'."
   
   (undo-boundary))
 
-(defvar ergoemacs-command-loop--mouse-event nil)
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
   "Call the command interactively.  Also handle mouse events (if possible.)"
   (cond
    ((and (eventp last-command-event)
          (consp last-command-event))
-    (let* ((mods (event-modifiers last-command-event))
-           (l-event (length last-command-event))
-           (posn (ignore-errors (car (cdr last-command-event))))
+    (let* ((posn (ignore-errors (car (cdr last-command-event))))
            (area (and posn (posnp posn) (posn-area posn)))
            (command command)
            (obj (and posn (posnp posn) (posn-object posn)))
@@ -818,26 +892,27 @@ This sequence is compatible with `listify-key-sequence'."
        ((ignore-errors (and (stringp (nth 1 form)) (string= "e" (substring (nth 1 form) 0 1))))
         (call-interactively `(lambda,(cdr (help-function-arglist command t))
                                (interactive ,(substring (nth 1 form) 1) ,@(cdr (cdr form)))
-                               (funcall ',command last-command-event ,@(remove-if (lambda(elt) (eq '&optional elt)) (help-function-arglist command t))))
+                               (funcall ',command last-command-event ,@(let (ret)
+                                                                         (dolist (elt (help-function-arglist command t))
+                                                                           (unless (eq '&optional elt)
+                                                                             (push elt ret)))
+                                                                         (reverse ret))))
                             record-flag keys))
 
        ((ignore-errors (and (stringp (nth 1 form)) (string= "@e" (substring (nth 1 form) 0 2))))
         (call-interactively `(lambda,(cdr (help-function-arglist command t))
                                (interactive ,(substring (nth 1 form) 2) ,@(cdr (cdr form)))
-                               (funcall ',command last-command-event ,@(remove-if (lambda(elt) (eq '&optional elt)) (help-function-arglist command t))))
+                               (funcall ',command last-command-event ,@(let (ret)
+                                                                         (dolist (elt (help-function-arglist command t))
+                                                                           (unless (eq '&optional elt)
+                                                                             (push elt ret)))
+                                                                         (reverse ret))))
                             record-flag keys))
        (t ;; Assume that the "e" or "@e" specifications are not present.
         (call-interactively command record-flag keys)))))
    (t
     (call-interactively command record-flag keys))))
 
-
-(defvar ergoemacs---this-command-keys-vector (symbol-function 'this-command-keys-vector))
-(defvar ergoemacs---this-command-keys (symbol-function 'this-command-keys))
-(defvar ergoemacs---this-single-command-keys (symbol-function 'this-single-command-keys))
-(defvar ergoemacs---this-single-command-raw-keys (symbol-function 'this-single-command-raw-keys))
-
-(defvar ergoemacs---ergoemacs-command-loop nil)
 
 (defun ergoemacs-command-loop--this-command-keys-vector ()
   "`ergoemacs-mode' command loop single command keys"
@@ -898,7 +973,7 @@ when running the command loop:
          raw-key current-key
          (translation (ergoemacs-translate--get type))
          (local-keymap (ergoemacs-translation-struct-keymap translation))
-         tmp tmp2 local-quit command)
+         tmp command)
     (unwind-protect
         (progn
           ;; Replace functions temporarily
@@ -1009,7 +1084,6 @@ when running the command loop:
                   first-type :normal
                   raw-key nil
                   current-key nil
-                  next-key nil
                   translation (ergoemacs-translate--get type)
                   local-keymap (ergoemacs-translation-struct-keymap translation)
                   ergoemacs-command-loop--first-type first-type
@@ -1102,7 +1176,7 @@ pressed the translated key by changing
                    ;; Immediate
                    ((and (not ergoemacs-ctl-c-or-ctl-x-delay)
                          (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
-                    (setq command tmp))
+                    (setq ret tmp))
                    
                    (t ;; with delay
                     (setq tmp2 (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
@@ -1121,22 +1195,6 @@ pressed the translated key by changing
               (throw 'found-command ret))))))
     ret))
 
-(defvar ergoemacs-command-loop--execute-modify-command-list
-  '(last-repeatable-command
-    this-command
-    this-original-command
-    mc--this-command)
-  "Commands that will be set to what `ergoemacs-command-loop' executes.")
-
-(defvar ergoemacs-command-loop--shift-translated nil
-  "This command is forced to be shift translated.")
-
-(defvar ergoemacs-command-loop--mark-active nil
-  "Determines if mark was active before ergoemacs command loop.")
-
-(defvar ergoemacs-command-loop--pre-command-hook nil
-  "Pre-command hook for `ergoemacs-mode' command loop.")
-
 (defun ergoemacs-command-loop--pre-command-hook ()
   "Command loop `pre-command-hook.'"
   (setq ergoemacs-command-loop--mark-active mark-active)
@@ -1146,11 +1204,6 @@ pressed the translated key by changing
     (run-hooks 'ergoemacs-command-loop--pre-command-hook)))
 
 (add-hook 'ergoemacs-pre-command-hook #'ergoemacs-command-loop--pre-command-hook)
-
-(defvar ergoemacs-command-loop--deferred-functions
-  '(delete-selection-pre-hook ac-handle-pre-command cua--pre-command-handler mc/make-a-note-of-the-command-being-run)
-  "Hooks that are moved to `ergoemacs-pre-command-hook'.
-These hooks are deferred to make sure `this-command' is set appropriately.")
 
 (defun ergoemacs-command-loop--depopulate-pre-command-hook ()
   "Depopulate `ergoemacs-command-loop--pre-command-hook' with `pre-command-hook' values."
@@ -1219,7 +1272,6 @@ For instance in QWERTY M-> is shift translated to M-."
 ;;                  keyfreq-table)))))
 
 ;; (3) execute command
-(defvar ergoemacs-command-loop--single-command-keys nil)
 (defun ergoemacs-command-loop--execute (command &optional keys)
   "Execute COMMAND pretending that KEYS were pressed."
   (let ((keys (or keys ergoemacs-command-loop--single-command-keys)))

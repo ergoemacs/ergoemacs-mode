@@ -545,6 +545,12 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :type 'boolean
   :group 'ergoemacs-command-loop)
 
+(defcustom ergoemacs-command-loop-time-before-blink 2.5
+  "Time before a cursor starts blinking in the minibuffer.
+This indicates that `ergoemacs-command-loop' is active."
+  :type 'number
+  :group 'ergoemacs-command-loop)
+
 
 
 (defcustom ergoemacs-translate-keys t
