@@ -449,13 +449,15 @@ If LOOKUP-KEYMAP
 
     ;; Restore `overriding-terminal-local-map' if needed
     (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full) (not overriding-terminal-local-map))
-      (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))
+      (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map
+            ergoemacs-command-loop--displaced-overriding-terminal-local-map nil))
     
     (when (and ergoemacs-mode overriding-terminal-local-map)
       (cond
        ((and (eq ergoemacs-command-loop-type :full) ;; Correct `overriding-terminal-local-map'
              (eq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map)))
        ((and (eq ergoemacs-command-loop-type :full))
+        ;; Different `overriding-terminal-local-map'; modify and displace.
         (if (ergoemacs overriding-terminal-local-map :installed-p)
             (setq ergoemacs-command-loop--displaced-overriding-terminal-local-map overriding-terminal-local-map
                   overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map)
@@ -464,6 +466,7 @@ If LOOKUP-KEYMAP
        
        ((and (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
              (not (ergoemacs overriding-terminal-local-map :installed-p)))
+        ;; Modify `overriding-terminal-local-map'
         (setq overriding-terminal-local-map (ergoemacs overriding-terminal-local-map)))))
     
     (when (and overriding-local-map
