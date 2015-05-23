@@ -153,6 +153,14 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
 (defvar ergoemacs-command-loop--single-command-keys nil
   "If defined, a vector of the command keys pressed in the `ergoemacs-command-loop'.")
 
+(defvar ergoemacs-command-loop--echo-keystrokes 2
+  "The amount of time before `ergoemacs-mode' displays keystrokes.
+
+This will replace `echo-keystrokes' after the command loop exits.")
+
+(defvar ergoemacs-command-loop--echo-keystrokes-complete nil
+  "Echoed keystrokes, keep echoing active.")
+
 
 (defvar ergoemacs-command-loop-swap-translation)
 (defvar ergoemacs-command-loop-time-before-blink)
@@ -401,12 +409,32 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
                                   (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
              (prompt (cond
                       ((or (minibufferp) isearch-mode) nil)
-                      ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
-                      ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))) nil)
-                      (t prompt)))
+                      ((or (string= prompt "")
+                           (string= prompt (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))) nil)
+                      (ergoemacs-command-loop--universal prompt)
+                      (ergoemacs-command-loop--echo-keystrokes-complete prompt)
+                      ((not (numberp ergoemacs-command-loop--echo-keystrokes)) prompt)
+                      ((= 0 ergoemacs-command-loop--echo-keystrokes) prompt)
+                      ((< last-event-time ergoemacs-command-loop--echo-keystrokes) nil)
+                      ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
+                      ;;       (numberp ergoemacs-command-loop--echo-keystrokes)
+                      ;;       (or (= 0 ergoemacs-command-loop--echo-keystrokes)
+                      ;;           (< last-event-time ergoemacs-command-loop--echo-keystrokes))) nil)
+                      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
+                      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
+                      (t
+                       (setq ergoemacs-command-loop--echo-keystrokes-complete t)
+                       prompt)))
+             (echo-keystrokes 0)
              ;; Run (with-timeout) so that idle timers will work.
-             (event (with-timeout (seconds nil)
-                      (read-event prompt))))
+             (event (cond
+                     (prompt (with-timeout (seconds nil)
+                               (read-event prompt)))
+                     ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
+                           ergoemacs-command-loop--single-command-keys)
+                      (with-timeout (ergoemacs-command-loop--echo-keystrokes nil)
+                        (read-event)))
+                     (t (read-event)))))
         (when (eventp event)
           ;; (setq event (ergoemacs-command-loop--decode-mouse event))
           (unless (consp event) ;; Don't record mouse events
@@ -611,8 +639,10 @@ This uses `ergoemacs-command-loop--read-event'."
                         ergoemacs-command-loop--universal-functions)))
         (setq universal t
               raw-input nil
-              input nil))
+              input nil
+              ergoemacs-command-loop--echo-keystrokes-complete t))
        ((and raw-input universal) ;; Handle universal arguments.
+        (setq ergoemacs-command-loop--echo-keystrokes-complete t)
         (cond
          ((eq raw-input 45) ;; Negative argument
           (cond
@@ -791,7 +821,8 @@ This sequence is compatible with `listify-key-sequence'."
         last-prefix-arg prefix-arg
         this-command nil
         prefix-arg nil
-        deactivate-mark nil)
+        deactivate-mark nil
+        ergoemacs-command-loop--echo-keystrokes-complete nil)
   
   (undo-boundary)
   ;;  This (sort of) fixes `this-command-keys'
@@ -889,8 +920,6 @@ This sequence is compatible with `listify-key-sequence'."
   ;; Should work...
   (ergoemacs-command-loop (this-single-command-keys)))
 
-(defvar ergoemacs-command-loop--echo-keystrokes nil
-  "")
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -930,19 +959,11 @@ ergoemacs keys in `overriding-terminal-local-map' using
 `ergoemacs-command-loop--displaced-overriding-terminal-local-map'
 in its place.
 
-While in the loop, the value of `echo-keystrokes' is saved to
-`ergoemacs-command-loop--echo-keystrokes' and then set to zero.
-That way emacs doesn't show a long list of keystrokes that have
-not started a command.  Currently `ergoemacs-mode' does not
-respect `echo-keystrokes'
-
 FIXME: modify `called-interactively' and `called-interactively-p'
 
 "
   (interactive)
   (setq ergoemacs---ergoemacs-command-loop (symbol-function 'ergoemacs-command-loop))
-  (setq ergoemacs-command-loop--echo-keystrokes echo-keystrokes
-        echo-keystrokes 0)
   (let* ((type (or type :normal))
          (continue-read t)
          (first-type type)
@@ -989,7 +1010,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                      (not (gethash command ergoemacs-command-loop--next-key-hash)) 
                      ;; If a command has :ergoemacs-local property of :force, don't
                      ;; worry about looking up a key, just run the function.
-                     (or (eq (get command :ergoemacs-local) :force)
+                     (or (and (symbolp command) (eq (get command :ergoemacs-local) :force))
                          (not (key-binding current-key t))))
                 
                 (unless (eq ergoemacs-command-loop-type :test)
@@ -1062,9 +1083,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                   ergoemacs-command-loop--first-type first-type
                   ergoemacs-command-loop--history nil))
           (setq inhibit-quit nil))
-      (ergoemacs-command-loop--reset-functions)
-      (setq echo-keystrokes ergoemacs-command-loop--echo-keystrokes
-            ergoemacs-command-loop--echo-keystrokes nil))    
+      (ergoemacs-command-loop--reset-functions))    
     command))
 
 (defun ergoemacs-command-loop--message (str &rest args)
