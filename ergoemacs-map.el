@@ -359,21 +359,26 @@ If LOOKUP-KEYMAP
                (define-key ret tmp-key tmp)))
             ;; Accept default for other keys
             ((and (setq tmp (lookup-key lookup-keymap [t])) 
-                  (not (integerp tmp)))
-             ;; No need to define these keys
-             ;; (define-key ret key item)
-             ;; (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
-             ;;   ;; Define the higher character meta as well...
-             ;;   (define-key ret tmp-key item))
-             )
+                  (not (integerp tmp))))
             ;; Keys where `ergoemacs-mode' dominates...
             ((and (setq tmp (lookup-key lookup-keymap key t))
                   (not (integerp tmp)))
              (define-key ret key item)
              (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
                ;; Define the higher character meta as well...
+               (define-key ret tmp-key item))
+             (when (setq tmp-key (ergoemacs-translate--meta-to-escape key))
+               ;; Define the higher character meta as well...
                (define-key ret tmp-key item)))
+            ;; ESC q -> M-q
             ((and (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+                  (setq tmp (lookup-key lookup-keymap tmp-key t))
+                  (not (integerp tmp)))
+             ;; Define both
+             (define-key ret tmp-key item)
+             (define-key ret key item))
+            ;; M-q -> ESC q
+            ((and (setq tmp-key (ergoemacs-translate--meta-to-escape key))
                   (setq tmp (lookup-key lookup-keymap tmp-key t))
                   (not (integerp tmp)))
              ;; Define both
