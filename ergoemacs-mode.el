@@ -546,8 +546,11 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :group 'ergoemacs-command-loop)
 
 
-
-
+;; By default it is the same as emacs... why not?
+(defcustom ergoemacs-command-loop-echo-keystrokes 2
+  "The amount of time before `ergoemacs-mode' displays keystrokes."
+  :type 'number
+  :group 'ergoemacs-command-loop)
 
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined

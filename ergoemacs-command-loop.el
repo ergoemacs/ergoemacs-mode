@@ -153,14 +153,8 @@ These hooks are deferred to make sure `this-command' is set appropriately.")
 (defvar ergoemacs-command-loop--single-command-keys nil
   "If defined, a vector of the command keys pressed in the `ergoemacs-command-loop'.")
 
-(defvar ergoemacs-command-loop--echo-keystrokes 2
-  "The amount of time before `ergoemacs-mode' displays keystrokes.
-
-This will replace `echo-keystrokes' after the command loop exits.")
-
 (defvar ergoemacs-command-loop--echo-keystrokes-complete nil
   "Echoed keystrokes, keep echoing active.")
-
 
 (defvar ergoemacs-command-loop-swap-translation)
 (defvar ergoemacs-command-loop-time-before-blink)
@@ -413,13 +407,13 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
                            (string= prompt (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))) nil)
                       (ergoemacs-command-loop--universal prompt)
                       (ergoemacs-command-loop--echo-keystrokes-complete prompt)
-                      ((not (numberp ergoemacs-command-loop--echo-keystrokes)) prompt)
-                      ((= 0 ergoemacs-command-loop--echo-keystrokes) prompt)
-                      ((< last-event-time ergoemacs-command-loop--echo-keystrokes) nil)
+                      ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
+                      ((= 0 ergoemacs-command-loop-echo-keystrokes) prompt)
+                      ((< last-event-time ergoemacs-command-loop-echo-keystrokes) nil)
                       ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
-                      ;;       (numberp ergoemacs-command-loop--echo-keystrokes)
-                      ;;       (or (= 0 ergoemacs-command-loop--echo-keystrokes)
-                      ;;           (< last-event-time ergoemacs-command-loop--echo-keystrokes))) nil)
+                      ;;       (numberp ergoemacs-command-loop-echo-keystrokes)
+                      ;;       (or (= 0 ergoemacs-command-loop-echo-keystrokes)
+                      ;;           (< last-event-time ergoemacs-command-loop-echo-keystrokes))) nil)
                       ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
                       ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
                       (t
@@ -432,7 +426,7 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
                                (read-event prompt)))
                      ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
                            ergoemacs-command-loop--single-command-keys)
-                      (with-timeout (ergoemacs-command-loop--echo-keystrokes nil)
+                      (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
                         (read-event)))
                      (t (read-event)))))
         (when (eventp event)
