@@ -357,6 +357,15 @@ If LOOKUP-KEYMAP
              (when tmp-key
                ;; Define the higher character as well.
                (define-key ret tmp-key tmp)))
+            ;; Accept default for other keys
+            ((and (setq tmp (lookup-key lookup-keymap [t])) 
+                  (not (integerp tmp)))
+             ;; No need to define these keys
+             ;; (define-key ret key item)
+             ;; (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+             ;;   ;; Define the higher character meta as well...
+             ;;   (define-key ret tmp-key item))
+             )
             ;; Keys where `ergoemacs-mode' dominates...
             ((and (setq tmp (lookup-key lookup-keymap key t))
                   (not (integerp tmp)))
