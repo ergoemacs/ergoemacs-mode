@@ -181,7 +181,8 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 
 (font-lock-add-keywords 'emacs-lisp-mode ergoemacs-font-lock-keywords)
 
-(defvar ergoemacs-translation-hash (make-hash-table))
+(defvar ergoemacs-translation-hash (make-hash-table)
+  "Hash table of translations")
 
 (dolist (pkg '(ergoemacs-advice
                ergoemacs-lib
@@ -546,8 +547,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :group 'ergoemacs-command-loop)
 
 
-;; By default it is the same as emacs... why not?
-(defcustom ergoemacs-command-loop-echo-keystrokes 2
+(defcustom ergoemacs-command-loop-echo-keystrokes 1
   "The amount of time before `ergoemacs-mode' displays keystrokes."
   :type 'number
   :group 'ergoemacs-command-loop)

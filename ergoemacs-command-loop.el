@@ -71,6 +71,8 @@
 (declare-function ergoemacs-translation-struct-translation "ergoemacs-translate")
 (declare-function ergoemacs-translation-struct-unchorded "ergoemacs-translate")
 
+(defvar ergoemacs-command-loop-echo-keystrokes)
+
 
 
 (defvar ergoemacs---ergoemacs-command-loop nil)

@@ -55,6 +55,7 @@
   (require 'ergoemacs-macros))
 
 (defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-translation-hash)
 
 (declare-function ergoemacs-mode-line "ergoemacs-mode")
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
@@ -395,7 +396,6 @@ For keys, the list consists of:
   (let* ((key (vconcat key))
          (event (elt (substring key -1) 0))
          (base (substring key 0 -1))
-         shift
          ret)
     (if (consp event)
         (progn ;; Do not put any trials in just use the mouse event.
@@ -434,7 +434,7 @@ For keys, the list consists of:
         -negative-argument
         -digit-argument
         -modal
-        unchorded)
+        translation)
     ;; Create the functions 
     (dolist (type '("-universal-argument" "-negative-argument"
                     "-digit-argument" "-modal"))

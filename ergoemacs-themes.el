@@ -33,7 +33,9 @@
 
 (declare-function ergoemacs-theme-component--create-component "ergoemacs-theme")
 (declare-function ergoemacs-component-struct--create-component "ergoemacs-component")
-(declare-function ergoemacs-translation--create "ergoemacs-translate")
+(declare-function ergoemacs-translate--create "ergoemacs-translate")
+(declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
+
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-theme-comp-hash)
 (defvar ergoemacs-translation-hash)

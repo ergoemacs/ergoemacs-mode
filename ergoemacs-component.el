@@ -62,6 +62,7 @@
 (defvar ergoemacs-map-properties--unlabeled)
 (defvar ergoemacs-theme-version)
 (defvar ergoemacs-map-properties--original-global-map)
+(defvar ergoemacs-translation-hash)
 
 (declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
 

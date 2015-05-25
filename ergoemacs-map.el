@@ -54,15 +54,18 @@
   (require 'ergoemacs-macros)
   (require 'cl))
 
-(defvar ergoemacs-keyboard-layout)
 (defvar cl-struct-ergoemacs-component-struct-tags)
-(defvar ergoemacs-keymap)
-(defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-menu-keymap)
-(defvar ergoemacs-theme)
-(defvar ergoemacs-map-properties--plist-hash)
+(defvar ergoemacs-command-loop--displaced-overriding-terminal-local-map)
+(defvar ergoemacs-command-loop--overriding-terminal-local-map)
+(defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-dir)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-keymap)
+(defvar ergoemacs-map-properties--plist-hash)
+(defvar ergoemacs-menu-keymap)
 (defvar ergoemacs-mode)
+(defvar ergoemacs-theme)
 
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
@@ -98,6 +101,8 @@
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
+(declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
+(declare-function ergoemacs-mode-line "ergoemacs-mode.el")
 
 
 (defvar ergoemacs-map--hash (make-hash-table :test 'equal)
