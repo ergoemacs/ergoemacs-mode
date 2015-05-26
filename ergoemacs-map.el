@@ -465,7 +465,8 @@ If LOOKUP-KEYMAP
 (defun ergoemacs-map--modify-active (&optional ini)
   "Modifies Active maps."
   (let ((char-map (get-char-property (point) 'keymap))
-        (local-map (get-text-property (point) 'local-map)))
+        (local-map (get-text-property (point) 'local-map))
+        (current-local-map ))
 
     ;; Restore `overriding-terminal-local-map' if needed
     (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full) (not overriding-terminal-local-map))
@@ -503,6 +504,9 @@ If LOOKUP-KEYMAP
                (not (eq local-map ergoemacs-map--modify-active-last-local-map))
                (not (ergoemacs local-map :installed-p)))
       (setf local-map (ergoemacs local-map)))
+
+    (when (not (ergoemacs (current-local-map) :installed-p))
+      (use-local-map (ergoemacs (current-local-map))))
 
     
     (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map

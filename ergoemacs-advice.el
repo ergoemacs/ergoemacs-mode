@@ -127,17 +127,18 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
     (add-hook 'ergoemacs-command-loop--pre-command-hook function append local)
     (setq ergoemacs-mode t)))
 
+(defvar ergoemacs--original-local-map nil
+  "Original keymap used with `use-local-map'.")
+
 (ergoemacs-advice use-local-map (keymap)
-  "When `ergoemacs-mode' is enabled, install `ergoemacs-mode'
+  "When `ergoemacs-mode' is 
 bindings into this keymap (the original keymap is untouched)"
   ;; FIXME don't replace
-  :type :replace
-  (ergoemacs :label keymap)
-  (cond
-   (ergoemacs-mode
-    (ergoemacs-advice--real-use-local-map (ergoemacs keymap)))
-   (t
-    (ergoemacs-advice--real-use-local-map (ergoemacs keymap :original-user)))))
+  :type :after
+  (when (and ergoemacs-mode (not ergoemacs--original-local-map))
+    (set (make-local-variable 'ergoemacs--original-local-map) (copy-keymap (current-local-map)))
+    ;; (ergoemacs (current-local-map) :label (list (ergoemacs (current-local-map) :key-struct) 'local))
+    ))
 
 (ergoemacs-advice use-global-map (keymap)
   "When `ergoemacs-mode' is enabled and KEYMAP is the `global-map', set to `ergoemacs-keymap' instead.
