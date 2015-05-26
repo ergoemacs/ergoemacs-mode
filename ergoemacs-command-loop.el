@@ -1103,6 +1103,7 @@ KEY is the original key,
 LOOKUP is what will be run"
   (cond
    ((and lookup (ergoemacs-keymapp lookup)))
+   ((consp (elt key 0))) ;; Don't message mouse translations
    (lookup
     (ergoemacs-command-loop--message "%s%s%s%s"
                                      (ergoemacs-key-description key)

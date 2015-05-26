@@ -398,8 +398,39 @@ For keys, the list consists of:
          (base (substring key 0 -1))
          ret)
     (if (consp event)
-        (progn ;; Do not put any trials in just use the mouse event.
-          (push key ret)
+        (let ((mod (event-modifiers event))
+              (basic (event-basic-type event))
+              double-p
+              triple-p
+              strip-mod)
+          (when (or (setq double-p (memq 'double mod))
+                    (setq triple-p (memq 'triple mod)))
+            (dolist (a mod)
+              (unless (memq a '(double triple))
+                (push a strip-mod))))
+          (cond
+           (double-p
+            ;; Double -> single
+            (push (vector (list (event-convert-list (append strip-mod (list basic)))
+                                (cdr event)))
+                  ret)
+            (push nil ret)
+            (push key ret))
+           (triple-p
+            ;; double -> single
+            (push (vector (list (event-convert-list (append strip-mod (list basic)))
+                                (cdr event)))
+                  ret)
+            ;; triple->double
+            (push (vector (list (event-convert-list (append strip-mod (list 'double basic)))
+                                (cdr event)))
+                  ret)
+            (push nil ret)
+            (push key ret))
+           (t
+            ;; Do not put any trials in just use the mouse event.
+            (push key ret)
+            ))
           ret)
       (dolist (new (ergoemacs-translate--event-trials event (= 1 (length key))))
         (push (vconcat base (vector new)) ret))
