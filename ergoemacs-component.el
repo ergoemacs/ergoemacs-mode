@@ -58,7 +58,6 @@
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-translate--translation-hash)
-(defvar ergoemacs-map-properties--ignored-prefixes)
 (defvar ergoemacs-map-properties--unlabeled)
 (defvar ergoemacs-theme-version)
 (defvar ergoemacs-map-properties--original-global-map)
@@ -122,7 +121,6 @@
   (versions '())
   (undefined '())
   (unbind '())
-  (read-list '())
   (variables nil)
   (just-first-keys nil :read-only t)
   (variable-modifiers '(meta) :read-only t)
@@ -286,23 +284,6 @@ Allows the component not to be calculated."
         ;; Update dynamic/deferred keys
         (fset (ergoemacs-component-struct-dynamic-keys obj) new-dynamic)))))
 
-(defun ergoemacs-component-struct--define-key-add-prefix (key obj)
-  "Add appropriate KEY prefix to OBJ for `ergoemacs-read-key-defualt'"
-  (let (prefix lst)
-    (when (or (and (<= 3 (length key)) (eq 27 (elt key 0)) ;; M- prefix
-                   (setq prefix (substring key 0 2))
-                   (not (member prefix ergoemacs-map-properties--ignored-prefixes))
-                   (progn
-                     (setq lst (ergoemacs-component-struct-read-list obj))
-                     (not (member prefix lst))))
-              (and (<= 2 (length key)) ;; Typical prefix
-                   (setq prefix (substring key 0 1))
-                   (not (member prefix ergoemacs-map-properties--ignored-prefixes))
-                   (progn
-                     (setq lst (ergoemacs-component-struct-read-list obj))
-                     (not (member prefix lst)))))
-      (push prefix (ergoemacs-component-struct-read-list obj)))))
-
 (defun ergoemacs-component-struct--ini-map (obj)
   "Returns the map, if it hasn't been initialized, initialize with the label, and then return."
   (or (ergoemacs-component-struct-map obj)
@@ -396,14 +377,12 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                           (throw 'found-fn t)))
                       nil)
               ;; Not found
-              (define-key cur-map key `(lambda() (interactive) (error ,(format "This key is undefined without one of the following functions: %s" fn-lst))))
-              (ergoemacs-component-struct--define-key-add-prefix key obj))
+              (define-key cur-map key `(lambda() (interactive) (error ,(format "This key is undefined without one of the following functions: %s" fn-lst)))))
             (when fn-lst ;; Test for later
               (push (list keymap key fn-lst)
                     (ergoemacs-component-struct-dynamic-keys obj))))
            (t
-            (define-key cur-map key def)
-            (ergoemacs-component-struct--define-key-add-prefix key obj)))))))))
+            (define-key cur-map key def)))))))))
 
 (defvar ergoemacs-component-struct--hash (make-hash-table)
   "Hash table of `ergoemacs-mode' component structures.")

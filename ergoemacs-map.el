@@ -338,14 +338,7 @@ If LOOKUP-KEYMAP
         ;; Get the protecting user keys
         (setq tmp (ergoemacs parent :user))
         (when tmp
-          (setq ret (make-composed-keymap tmp ret)))
-        
-        ;; Define the read-key map
-        (dolist (cur-map map)
-          (dolist (read-key
-                   (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-read-list cur-map)))
-            (define-key read-map read-key 'ergoemacs-read-key-default)))
-        (ergoemacs read-map :label (list (ergoemacs (ergoemacs :global-map) :key-struct) 'ergoemacs-read (intern ergoemacs-keyboard-layout))))
+          (setq ret (make-composed-keymap tmp ret))))
        
        ;; Now create the keymap for a specified `lookup-keymap'
        (lookup-keymap
@@ -423,17 +416,7 @@ If LOOKUP-KEYMAP
         ;; Get the protecting user keys
         (setq tmp (ergoemacs parent :user))
         (when tmp
-          (setq ret (make-composed-keymap tmp ret)))
-
-        
-        ;; Define the read-key map
-        (dolist (cur-map map)
-          (dolist (read-key
-                   (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-read-list cur-map)))
-            (define-key read-map read-key 'ergoemacs-read-key-default)))
-        
-        (ergoemacs read-map :label (list (ergoemacs lookup-keymap :key-struct) 'ergoemacs-read (intern ergoemacs-keyboard-layout)))
-        ))
+          (setq ret (make-composed-keymap tmp ret)))))
       
       ;; (when lookup-key
       ;;   (puthash lookup-key ret ergoemacs-map--hash)
@@ -464,10 +447,8 @@ If LOOKUP-KEYMAP
 (defvar ergoemacs-map--modify-active-last-local-map nil)
 (defun ergoemacs-map--modify-active (&optional ini)
   "Modifies Active maps."
-  (let ((char-map (get-char-property (point) 'keymap))
-        (local-map (get-text-property (point) 'local-map))
-        (current-local-map ))
-
+  (let ((char-map (get-char-property-and-overlay (point) 'keymap))
+        (local-map (get-text-property (point) 'local-map)))
     ;; Restore `overriding-terminal-local-map' if needed
     (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full) (not overriding-terminal-local-map))
       (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map
@@ -495,15 +476,27 @@ If LOOKUP-KEYMAP
                (not (ergoemacs overriding-local-map :installed-p)))
       (setq overriding-local-map (ergoemacs overriding-local-map)))
 
-    (when (and char-map
-               (not (eq char-map ergoemacs-map--modify-active-last-char-map))
-               (not (ergoemacs char-map :installed-p)))
-      (setf char-map (ergoemacs char-map)))
-
-    (when (and local-map
+    (ergoemacs-save-buffer-state
+     (when (and (car char-map)
+                (not (eq (car char-map) ergoemacs-map--modify-active-last-char-map))
+                (not (ergoemacs (car char-map) :installed-p)))
+       (cond
+        ((cdr char-map)
+         ;; Overlay
+         (overlay-put (cdr char-map) 'keymap (ergoemacs (car char-map))))
+        (t ;; Text Property
+         (put-text-property (previous-single-char-property-change (point) 'keymap)
+                            (next-single-char-property-change (point) 'keymap)
+                            'keymap
+                            (ergoemacs (car char-map))))))
+     (when (and local-map
                (not (eq local-map ergoemacs-map--modify-active-last-local-map))
                (not (ergoemacs local-map :installed-p)))
-      (setf local-map (ergoemacs local-map)))
+      (put-text-property (previous-single-char-property-change (point) 'local-map)
+                         (next-single-char-property-change (point) 'local-map)
+                         'local-map (ergoemacs local-map))))
+
+    
 
     (when (not (ergoemacs (current-local-map) :installed-p))
       (use-local-map (ergoemacs (current-local-map))))

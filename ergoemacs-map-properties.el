@@ -64,17 +64,6 @@
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
-(defvar ergoemacs-map-properties--ignored-prefixes '(;; "C-h" "<f1>"
-                                                     [27]  [escape]
-                                                     [remap]
-                                                     [left-fringe]
-                                                     [vertical-line]
-                                                     [vertical-scroll-bar]
-                                                     [header-line]
-                                                     [mode-line]
-                                                     [menu-bar]
-                                                     [C-down-mouse-2]))
-
 (defvar ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal))
 
 (defun ergoemacs-map-properties--keymap-value (keymap &rest _ignore)
@@ -297,34 +286,6 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
         (ergoemacs-map-properties--get-original-global-map)))))
 
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-map-properties--get-original-global-map)
-
-
-;;; FIXME: consider using `accessible-keymaps'
-;; Using it is slower...
-(defun ergoemacs-map-properties--extract-prefixes (keymap &optional dont-ignore return-kbd)
-  "Extract prefix commands for KEYMAP.
-Ignores command sequences starting with `ergoemacs-map-properties--ignored-prefixes'.
-
-When DONT-IGNORE is non-nil, don't ignore sequences starting with `ergoemacs-map-properties--ignored-prefixes'.
-
-When RETURN-VECTOR is non-nil, return list of the keys in a vector form.
-"
-  (if (not (ergoemacs-keymapp keymap)) nil
-    ;; (ergoemacs-extract-keys keymap)
-    (when (not (ergoemacs-map-properties--key-struct keymap))
-      (ergoemacs :label keymap))
-    (let ((ret (ergoemacs keymap :extract-prefixes)) ret2)
-      (unless ret
-        (ergoemacs-mapkeymap nil keymap 'prefix)
-        (setq ret (ergoemacs keymap :extract-prefixes)))
-      (if (and dont-ignore (not return-kbd)) ret
-        (dolist (a ret)
-          (let ((tmp (key-description a)))
-            (when (or dont-ignore (not (member a ergoemacs-map-properties--ignored-prefixes)))
-              (if (not return-kbd)
-                  (push a ret2)
-                (push tmp ret2)))))
-        ret2))))
 
 (defvar ergoemacs-map-properties--indirect-keymaps (make-hash-table)
   "Variable listing indirect keymaps.")
@@ -621,15 +582,27 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
 (defun ergoemacs-map-properties--new-command (keymap command &optional relative-map)
   "Get the COMMAND equivalent binding in KEYMAP based on RELATIVE-MAP."
   (and command keymap
-       (let (ret
-             (cmd-list (gethash command (ergoemacs (or relative-map ergoemacs-map-properties--original-global-map) :where-is)))
-             ;; (lookup (ergoemacs keymap :lookup))
-             )
+       (let* (ret
+              (hash-table (ergoemacs (or relative-map ergoemacs-map-properties--original-global-map) :where-is))
+              (cmd-list (gethash command hash-table))
+              
+              ;; (lookup (ergoemacs keymap :lookup))
+              )
+         ;; (cond
+         ;;  ((equal cmd-list '([]))
+         ;;   (setq cmd-list nil))
+         ;;  (cmd-list)
+         ;;  (t
+         ;;   (setq cmd-list (setq cmd-list (where-is-internal 'save-buffer (ergoemacs :original global-map))))
+         ;;   (if cmd-list
+         ;;       (puthash command cmd-list hash-table)
+         ;;     (puthash command '([]) hash-table))))
          (if (not cmd-list) nil
            (catch 'found-new
              (dolist (key cmd-list)
                (when (and (setq ret (lookup-key keymap key t))
-                          (and (integerp ret) (setq ret nil)))
+                          (or (commandp ret t)
+                              (and (integerp ret) (setq ret nil))))
                  (throw 'found-new t)))
              t)
            ret))))
