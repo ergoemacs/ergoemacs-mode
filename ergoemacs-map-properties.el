@@ -576,9 +576,10 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
            (catch 'found-new
              (dolist (key cmd-list)
                (when (and (setq ret (lookup-key keymap key t))
-                          (or (commandp ret t)
+                          (or (and (commandp ret t) (not (memq ret ergoemacs-remap-ignore)))
                               (and (integerp ret) (setq ret nil))))
-                 (throw 'found-new t)))
+                 (throw 'found-new t))
+               (setq ret nil))
              t)
            ret))))
 
