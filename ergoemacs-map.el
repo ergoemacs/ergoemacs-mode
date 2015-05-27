@@ -327,7 +327,7 @@ If LOOKUP-KEYMAP
             (push tmp composed-list)))
 
         ;; The real `global-map'
-        (setq parent (copy-keymap (ergoemacs :global-map)))
+        (setq parent (ergoemacs :global-map))
 
         ;; The keys that will be unbound
         (setq ret (make-sparse-keymap))
