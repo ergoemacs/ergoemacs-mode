@@ -1288,8 +1288,9 @@ For instance in QWERTY M-> is shift translated to M-."
       
       ;; These are stored in `ergoemacs-command-loop--execute-modify-command-list'
       
-      (dolist (var ergoemacs-command-loop--execute-modify-command-list)
-        (set var command))
+      (ergoemacs-save-buffer-state
+       (dolist (var ergoemacs-command-loop--execute-modify-command-list)
+         (set var command)))
       
       ;; Handle Shift Selection
       (ergoemacs-command-loop--execute-handle-shift-selection this-command)
@@ -1309,22 +1310,19 @@ For instance in QWERTY M-> is shift translated to M-."
       (unwind-protect
           (progn
             ;; Run deferred pre-command hook.
-            (unwind-protect
-                (progn
-                  (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook)
-                  (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook t)
-                  (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-                  (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook t)
-                  (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
-                  (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions t)
-                  (run-hooks 'pre-command-hook)
-                  (run-hooks 'ergoemacs-pre-command-hook))
-              (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-              (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions))
-            ;; The `deactivate-mark' should be nil here.  However, it
-            ;; usually isn't because local variables are being
-            ;; altered.  Therefore, set it explicitly.
-            (setq deactivate-mark nil) 
+            (ergoemacs-save-buffer-state
+             (unwind-protect
+                 (progn
+                   (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook)
+                   (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook t)
+                   (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+                   (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook t)
+                   (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
+                   (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions t)
+                   (run-hooks 'pre-command-hook)
+                   (run-hooks 'ergoemacs-pre-command-hook))
+               (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+               (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)))
             (ergoemacs-command-loop--call-interactively command t))
         (setq ergoemacs-command-loop--single-command-keys nil)))))
   
