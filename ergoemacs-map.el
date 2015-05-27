@@ -273,8 +273,8 @@ If LOOKUP-KEYMAP
                    (ergoemacs-component-struct--get map cur-layout nil))
                   (t
                    (error "Cant calculate/lookup keymap.")))))
-        (ergoemacs-mapkeymap
-         (lambda(key item _prefix)
+        (ergoemacs-map-keymap
+         (lambda(key item)
            (unless (eq item 'ergoemacs-prefix)
              (puthash key item ergoemacs-map--)))
          ret)
@@ -387,8 +387,8 @@ If LOOKUP-KEYMAP
         (setq tmp (ergoemacs global-map :keys))
 
         ;; Define ergoemacs-mode remapping lookups.
-        (ergoemacs-mapkeymap
-         (lambda(key item _prefix)
+        (ergoemacs-map-keymap
+         (lambda(key item)
            (unless (eq item 'ergoemacs-prefix)
              (when (member key tmp)
                (define-key ret (vector 'ergoemacs-remap (gethash key (ergoemacs global-map :lookup)))

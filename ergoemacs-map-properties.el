@@ -56,11 +56,10 @@
   (require 'ergoemacs-macros))
 
 (defvar ergoemacs-dir)
-(defvar ergoemacs-map-properties--original-global-map)
 (defvar ergoemacs-map-properties--global-map-before-ergoemacs)
 (defvar ergoemacs-ignore-prev-global)
 
-(declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
+(declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
@@ -214,9 +213,9 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
           tmp
           keys)
       (goto-char (point-min))
-      (insert "(defvar ergoemacs-map-properties--plist-hash)(defvar ergoemacs-map-properties--original-global-map)(declare-function ergoemacs-map-properties--label \"ergoemacs-map-properties\")")
-      (ergoemacs-mapkeymap
-       (lambda (key item _prefix)
+      (insert "(defvar ergoemacs-map-properties--plist-hash)(declare-function ergoemacs-map-properties--label \"ergoemacs-map-properties\")")
+      (ergoemacs-map-keymap
+       (lambda (key item)
          (cond
           ((vectorp key)
            (push key keys)
@@ -224,40 +223,15 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
                (push key tmp)
              (puthash item (list key) where-is-hash)))))
        global-map)
-      (setq ergoemacs-map-properties--original-global-map (copy-keymap (ergoemacs-mapkeymap nil global-map)))
-      (ergoemacs :label ergoemacs-map-properties--original-global-map)
-      (ergoemacs :keys ergoemacs-map-properties--original-global-map) ;; Should calculate :where-is and :lookup
-      ;; (message "Keys: %s\nKey::%s" keys
-      ;;          (ergoemacs ergoemacs-map-properties--original-global-map :keys))
-
+      (ergoemacs :label global-map)
+      (ergoemacs :keys global-map) ;; Should calculate :where-is and :lookup from original map
+      
       (insert "(setq ergoemacs-map-properties--plist-hash '")
       (prin1 ergoemacs-map-properties--plist-hash (current-buffer))
       (goto-char (point-max))
       (insert ")")
       
-      (insert "(setq ergoemacs-map-properties--original-global-map '")
-      (prin1 ergoemacs-map-properties--original-global-map (current-buffer))
-      ;; (insert ")(setq ergoemacs-minibuffer-local-map '")
-      ;; (ergoemacs-mapkeymap nil minibuffer-local-map)
-      ;; (prin1 (ergoemacs-mapkeymap nil minibuffer-local-map t) (current-buffer))
-
-      ;; (insert ")(setq ergoemacs-minibuffer-local-ns-map '")
-      ;; (ergoemacs-mapkeymap nil minibuffer-local-ns-map)
-      ;; (prin1 (ergoemacs-mapkeymap nil minibuffer-local-ns-map t) (current-buffer))
-
-      ;; (insert ")(setq ergoemacs-minibuffer-local-completion-map '")
-      ;; (ergoemacs-mapkeymap nil minibuffer-local-completion-map)
-      ;; (prin1 (ergoemacs-mapkeymap nil minibuffer-local-completion-map t) (current-buffer))
-
-      ;; (insert ")(setq ergoemacs-minibuffer-local-must-match-map '")
-      ;; (ergoemacs-mapkeymap nil minibuffer-local-must-match-map)
-      ;; (prin1 (ergoemacs-mapkeymap nil minibuffer-local-must-match-map t) (current-buffer))
-
-      ;; (insert ")(setq ergoemacs-minibuffer-local-filename-completion-map '")
-      ;; (ergoemacs-mapkeymap nil minibuffer-local-filename-completion-map)
-      ;; (prin1 (ergoemacs-mapkeymap nil minibuffer-local-filename-completion-map t) (current-buffer))
-      (insert ")")
-
+      
       (message "global-map-list %s" (ergoemacs global-map :map-list))
       (dolist (map ergoemacs-map-properties--label-atoms-maps)
         (when (ergoemacs-map-properties--key-struct map)
@@ -506,8 +480,8 @@ The KEYMAP will have the structure
 (defun ergoemacs-map-properties--empty-p (keymap &rest _ignore)
   "Determines if a KEYMAP is empty."
   (catch 'found-key
-    (ergoemacs-mapkeymap
-     (lambda (cur-key item _prefix)
+    (ergoemacs-map-keymap
+     (lambda (cur-key item)
        (unless (equal cur-key [ergoemacs-labeled])
          (if (consp cur-key)
              (throw 'found-key nil)
@@ -540,16 +514,17 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((where-is-hash (make-hash-table))
         (lookup-hash (make-hash-table :test 'equal))
         keys tmp)
-    (ergoemacs-mapkeymap
-     (lambda (key item _prefix)
-       (cond
-        ((and (vectorp key)
-              (commandp item t))
-         (push key keys)
-         (if (setq tmp (gethash item where-is-hash))
-             (push key tmp)
-           (puthash item (list key) where-is-hash))
-         (puthash key item lookup-hash))))
+    (ergoemacs-map-keymap
+     (lambda (key item)
+       (unless (and (vectorp key) (eq (elt key (- (length key) 1)) 'ergoemacs-labeled))
+         (cond
+          ((and (vectorp key)
+                (commandp item t))
+           (push key keys)
+           (if (setq tmp (gethash item where-is-hash))
+               (push key tmp)
+             (puthash item (list key) where-is-hash))
+           (puthash key item lookup-hash)))))
      keymap)
     (ergoemacs keymap :extract-keys keys)
     (ergoemacs keymap :extract-where-is where-is-hash)
@@ -583,7 +558,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   "Get the COMMAND equivalent binding in KEYMAP based on RELATIVE-MAP."
   (and command keymap
        (let* (ret
-              (hash-table (ergoemacs (or relative-map ergoemacs-map-properties--original-global-map) :where-is))
+              (hash-table (ergoemacs (or relative-map global-map) :where-is))
               (cmd-list (gethash command hash-table))
               
               ;; (lookup (ergoemacs keymap :lookup))

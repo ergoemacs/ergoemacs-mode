@@ -60,10 +60,7 @@
 (defvar ergoemacs-translate--translation-hash)
 (defvar ergoemacs-map-properties--unlabeled)
 (defvar ergoemacs-theme-version)
-(defvar ergoemacs-map-properties--original-global-map)
 (defvar ergoemacs-translation-hash)
-
-(declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
 
 (declare-function ergoemacs-set "ergoemacs-lib")
 (declare-function ergoemacs-reset "ergoemacs-lib")
@@ -337,10 +334,10 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
             ;; Remove the key from the keymap, do not set it to
             ;; nil; Its as if it was never defined
             (setq ergoemacs-component-struct--define-key-temp-map (make-sparse-keymap))
-            (ergoemacs-mapkeymap
-             (lambda (cur-key item prefix)
+            (ergoemacs-map-keymap
+             (lambda (cur-key item)
                (if (consp cur-key)
-                   (warn "Keymap range currently not supported %s %s %s" cur-key item prefix)
+                   (warn "Keymap range currently not supported %s %s" cur-key item)
                  (unless (eq item 'ergoemacs-prefix)
                    (unless (equal key cur-key)
                      (define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
@@ -358,10 +355,10 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
             ;; Remove the key from the keymap.  Do not set it to nil.
             ;; Its as if it was never defined.
             (setq ergoemacs-component-struct--define-key-temp-map (make-sparse-keymap))
-            (ergoemacs-mapkeymap
-             (lambda (cur-key item prefix)
+            (ergoemacs-map-keymap
+             (lambda (cur-key item)
                (if (consp cur-key)
-                   (message "Key range not supported %s, %s, %s" cur-key item prefix)
+                   (message "Key range not supported %s, %s" cur-key item)
                  (unless (eq item 'ergoemacs-prefix)
                    (unless (equal key cur-key)
                      (define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
@@ -513,10 +510,10 @@ Cache using LOOKUP-KEY. "
       ret)
      (t
       (setq ergoemacs-component-struct--get-keymap (make-sparse-keymap))
-      (ergoemacs-mapkeymap
-       (lambda (key item prefix)
+      (ergoemacs-map-keymap
+       (lambda (key item)
          (if (consp key)
-             (warn "Keymap range currently not supported %s,%s %s" key item prefix)
+             (warn "Keymap range currently not supported %s,%s" key item)
            (unless (eq item 'ergoemacs-prefix)
              (define-key
               ergoemacs-component-struct--get-keymap
@@ -556,7 +553,7 @@ Cache using LOOKUP-KEY. "
   (let (ret map)
     (maphash
      (lambda(key value)
-       (setq map (ergoemacs-mapkeymap nil (make-composed-keymap value)))
+       (setq map (ergoemacs-map-keymap nil (make-composed-keymap value)))
        (ergoemacs map :label (list 'cond-map key (intern ergoemacs-keyboard-layout)))
        (push (cons key map) ret))
      (ergoemacs-component-struct--minor-mode-map-alist-hash obj))
@@ -593,7 +590,7 @@ Cache using LOOKUP-KEY. "
        (setq tmp (when (ergoemacs-keymapp (ergoemacs-sv key))
                    (ergoemacs-sv key))
              label (list 'hook-maps key (or layout ergoemacs-keyboard-layout) (if tmp t nil))
-             tmp (ergoemacs-mapkeymap nil (make-composed-keymap value tmp)))
+             tmp (ergoemacs-map-keymap nil (make-composed-keymap value tmp)))
        (ergoemacs tmp :label label)
        (push (cons key tmp) ret))
      (ergoemacs-component-struct--hook-hash hook layout obj))

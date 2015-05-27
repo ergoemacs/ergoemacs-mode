@@ -75,7 +75,6 @@
 (defvar ergoemacs-keyboard-layout)
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layouts")
-(declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
 
 
 ;; Fundamental ergoemacs functions
@@ -382,10 +381,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
-(defvar ergoemacs-map-properties--original-global-map nil
-  "Original emacs global map before any customizations are made.")
-
-(defvar ergoemacs-map-properties--global-map-before-ergoemacs (ergoemacs-mapkeymap nil global-map)
+(defvar ergoemacs-map-properties--global-map-before-ergoemacs (ergoemacs-map-keymap nil global-map)
   "A single keymap for the keys before `ergoemacs-mode' loads.")
 
 (defcustom ergoemacs-ignore-prev-global t
