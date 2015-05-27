@@ -221,6 +221,8 @@
 MAP-LIST is the list of theme components if not pre-specified."
   (md5 (format "%s" (ergoemacs-map--base-lookup-key (ergoemacs-component-struct--lookup-hash (or map-list (ergoemacs-theme-components)))))))
 
+(defvar ergoemacs-map--undefined-keys nil
+  "List of undefined keys for the global map.")
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
@@ -300,17 +302,20 @@ If LOOKUP-KEYMAP
                (setq unbind-list (append unbind-list
                                          (ergoemacs-component-struct--translated-list
                                           cur-map (ergoemacs-component-struct-unbind cur-map)))))
-             t)
-           )
+             t))
       (cond
        ((not lookup-keymap)
         ;; The `undefined-key' layer
         (setq tmp (make-sparse-keymap))
+        
         (dolist (cur-map map)
           (dolist (undefined-key
-                   (ergoemacs-component-struct--translated-list cur-map (ergoemacs-component-struct-undefined cur-map)))
-            (unless (member undefined-key ret)
-              (define-key tmp undefined-key 'ergoemacs-map-undefined))))
+                   (ergoemacs-component-struct-undefined cur-map) ;; (ergoemacs-component-struct--translated-list cur-map )
+                   )
+            (unless (member undefined-key ergoemacs-map--undefined-keys)
+              (push undefined-key ergoemacs-map--undefined-keys))))
+        (dolist (i ergoemacs-map--undefined-keys)
+          (define-key tmp i #'ergoemacs-map-undefined))
         (ergoemacs tmp :label (list (ergoemacs (ergoemacs :global-map) :key-struct) 'ergoemacs-undefined (intern ergoemacs-keyboard-layout)))
         
         (push tmp composed-list)
@@ -383,6 +388,21 @@ If LOOKUP-KEYMAP
              (define-key ret tmp-key item)
              (define-key ret key item))))
          ergoemacs-map--)
+        
+        ;; Fix any undefined keys. For example in `org-agenda-mode' C-x
+        ;; C-s is `org-save-all-org-buffers'.  `ergoemacs-mode' should
+        ;; remap this to C-s, and make C-x C-s undefined
+        (dolist (key ergoemacs-map--undefined-keys)
+          (when (and
+                 ;; 1. Global definition is `ergoemacs-map-undefined'
+                 (eq #'ergoemacs-map-undefined (lookup-key ergoemacs-keymap key))
+                 ;; 2. Defined on the keymap
+                 (setq tmp (lookup-key lookup-keymap key))
+                 (not (integerp tmp))
+                 ;; 3. Not defined on the `ergoemacs-mode' keymap
+                 (or (not (setq tmp (lookup-key ret key)))
+                     (integerp tmp)))
+            (define-key ret key #'ergoemacs-map-undefined)))
         
         (setq tmp (ergoemacs global-map :keys))
 
@@ -495,9 +515,7 @@ If LOOKUP-KEYMAP
       (put-text-property (previous-single-char-property-change (point) 'local-map)
                          (next-single-char-property-change (point) 'local-map)
                          'local-map (ergoemacs local-map))))
-
     
-
     (when (not (ergoemacs (current-local-map) :installed-p))
       (use-local-map (ergoemacs (current-local-map))))
 
