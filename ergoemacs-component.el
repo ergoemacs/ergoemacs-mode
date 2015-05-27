@@ -348,12 +348,10 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                   (copy-keymap ergoemacs-component-struct--define-key-temp-map))
             (setq ergoemacs-component-struct--define-key-temp-map nil))
            ((and global-map-p (not (eq keymap 'global-map)) (not when-condition) (not def));; Add to unbind keys
-            (message "Add %s to unbind keys" (ergoemacs-key-description key))
             (unless (member key (ergoemacs-component-struct-unbind obj))
               (push key (ergoemacs-component-struct-unbind obj))))
            ((and global-map-p (not when-condition) (not def)) ;; Add to undefined keys
             (unless (member key (ergoemacs-component-struct-undefined obj))
-              (message "Add %s to undefined keys" (ergoemacs-key-description key))
               (push key (ergoemacs-component-struct-undefined obj))))
            ((and (not when-condition) (lookup-key cur-map key) (not def))
             ;; Remove the key from the keymap.  Do not set it to nil.
