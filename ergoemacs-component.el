@@ -314,7 +314,8 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                             (and when-condition hook (ignore-errors (gethash keymap (gethash hook (ergoemacs-component-struct-hook-maps obj)))))))
                fn-lst
                (key (or (and (vectorp key) key)
-                        (and (stringp key) (vconcat key)))))
+                        (and (stringp key) (vconcat key))))
+               tmp)
           (cond
            ((and (not cur-map) (not when-condition))
             (pushnew keymap ergoemacs-map-properties--unlabeled)
@@ -330,7 +331,8 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
             (setq cur-map (make-sparse-keymap))
             (puthash keymap cur-map (gethash hook (ergoemacs-component-struct-hook-maps obj)))))
           (cond
-           ((and global-map-p (not when-condition) (not def) (lookup-key (ergoemacs-component-struct-map obj) key))
+           ((and global-map-p (not when-condition) (not def) (setq tmp (lookup-key (ergoemacs-component-struct-map obj) key))
+                 (not (integerp tmp)))
             ;; Remove the key from the keymap, do not set it to
             ;; nil; Its as if it was never defined
             (setq ergoemacs-component-struct--define-key-temp-map (make-sparse-keymap))
@@ -346,10 +348,12 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                   (copy-keymap ergoemacs-component-struct--define-key-temp-map))
             (setq ergoemacs-component-struct--define-key-temp-map nil))
            ((and global-map-p (not (eq keymap 'global-map)) (not when-condition) (not def));; Add to unbind keys
+            (message "Add %s to unbind keys" (ergoemacs-key-description key))
             (unless (member key (ergoemacs-component-struct-unbind obj))
               (push key (ergoemacs-component-struct-unbind obj))))
            ((and global-map-p (not when-condition) (not def)) ;; Add to undefined keys
             (unless (member key (ergoemacs-component-struct-undefined obj))
+              (message "Add %s to undefined keys" (ergoemacs-key-description key))
               (push key (ergoemacs-component-struct-undefined obj))))
            ((and (not when-condition) (lookup-key cur-map key) (not def))
             ;; Remove the key from the keymap.  Do not set it to nil.
