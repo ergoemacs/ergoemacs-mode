@@ -229,10 +229,8 @@
   (global-set-key (kbd "C-z") 'undo)
 
   ;; Take out undo-tree's redo bindings
-  (when ergoemacs-theme-hook
-    :modify-map t
-    (define-key undo-tree-map (kbd "C-?") nil) 
-    (define-key undo-tree-map (kbd "M-_") nil))
+  (define-key undo-tree-map (kbd "C-?") nil)
+  (define-key undo-tree-map (kbd "M-_") nil)
   
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
@@ -355,18 +353,15 @@
   
   (when icicle-ido-like-mode
     (global-set-key [remap ergoemacs-apropos-user-options] 'apropos-user-options))
-  
-  (when isearch-mode-hook
-    :modify-map t
-    :full-shortcut-map t
-    (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
-    (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
-    (define-key isearch-mode-map (kbd "<S-insert>") 'ergoemacs-paste)
-    (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
-    (define-key isearch-mode-map (kbd "C-c") 'isearch-yank-word-or-char)
-    (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
-    (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
-    (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)))
+
+  (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
+  (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
+  (define-key isearch-mode-map (kbd "<S-insert>") 'ergoemacs-paste)
+  (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
+  (define-key isearch-mode-map (kbd "C-c") 'isearch-yank-word-or-char)
+  (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
+  (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
+  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste))
 
 (ergoemacs-component tab-indents-region ()
   "Tab indents selected region"
@@ -477,15 +472,12 @@
   (define-key eshell-mode-map (kbd "<f11>") 'eshell-previous-matching-input-from-input)
   (define-key eshell-mode-map (kbd "S-<f12>") 'eshell-next-matching-input-from-input)
   (define-key eshell-mode-map (kbd "<M-f12>") 'eshell-next-matching-input-from-input)
-  
-  (when isearch-mode-hook
-    :modify-map t
-    :full-shortcut-map t
-    (define-key isearch-mode-map (kbd "<S-f3>") 'isearch-toggle-regexp)
-    (define-key isearch-mode-map (kbd "<f11>") 'isearch-ring-retreat)
-    (define-key isearch-mode-map (kbd "<f12>") 'isearch-ring-advance)
-    (define-key isearch-mode-map (kbd "S-<f11>") 'isearch-ring-advance)
-    (define-key isearch-mode-map (kbd "S-<f12>") 'isearch-ring-retreat))
+
+  (define-key isearch-mode-map (kbd "<S-f3>") 'isearch-toggle-regexp)
+  (define-key isearch-mode-map (kbd "<f11>") 'isearch-ring-retreat)
+  (define-key isearch-mode-map (kbd "<f12>") 'isearch-ring-advance)
+  (define-key isearch-mode-map (kbd "S-<f11>") 'isearch-ring-advance)
+  (define-key isearch-mode-map (kbd "S-<f12>") 'isearch-ring-retreat)
 
   (when icicle-minibuffer-setup-hook
     (define-key minibuffer-local-map (kbd "<f11>") 'previous-history-element)
@@ -503,33 +495,27 @@
 
 (ergoemacs-component f2-edit ()
   "Have <f2> edit"
-  (when ergoemacs-theme-hook
-    :modify-map t
-    (define-key ergoemacs-ctl-to-alt-translation-local-map [f2]
-      'ergoemacs-read-key--universal-argument)
-    (define-key ergoemacs-unchorded-translation-local-map [f2]
-      'ergoemacs-read-key--universal-argument)
-    (define-key ergoemacs-unchorded-translation-local-map [f2]
-      'ergoemacs-read-key--universal-argument)
-    (define-key ergoemacs-normal-translation-local-map [f2]
-      'ergoemacs-read-key--universal-argument))
-  (when isearch-mode-hook
-    :modify-map t
-    :full-shortcut-map t
-    (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)))
+  (define-key ergoemacs-ctl-to-alt-translation-local-map [f2]
+    'ergoemacs-read-key--universal-argument)
+  (define-key ergoemacs-unchorded-translation-local-map [f2]
+    'ergoemacs-read-key--universal-argument)
+  (define-key ergoemacs-unchorded-translation-local-map [f2]
+    'ergoemacs-read-key--universal-argument)
+  (define-key ergoemacs-normal-translation-local-map [f2]
+    'ergoemacs-read-key--universal-argument)
+  
+  (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string))
 
 (ergoemacs-component backspace-del-seq ()
   "Backspace deletes last key entered in command sequence"
-  (when ergoemacs-theme-hook
-    :modify-map t
-    (define-key ergoemacs-ctl-to-alt-translation-local-map (read-kbd-macro "DEL")
-      'ergoemacs-read-key-force-undo-last)
-    (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
-      'ergoemacs-read-key-force-undo-last)
-    (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
-      'ergoemacs-read-key-force-undo-last)
-    (define-key ergoemacs-normal-translation-local-map (read-kbd-macro "DEL")
-      'ergoemacs-read-key-force-undo-last)))
+  (define-key ergoemacs-ctl-to-alt-translation-local-map (read-kbd-macro "DEL")
+    'ergoemacs-read-key-force-undo-last)
+  (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
+    'ergoemacs-read-key-force-undo-last)
+  (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
+    'ergoemacs-read-key-force-undo-last)
+  (define-key ergoemacs-normal-translation-local-map (read-kbd-macro "DEL")
+    'ergoemacs-read-key-force-undo-last))
 
 (ergoemacs-component help ()
   "Help changes for ergoemacs-mode"
@@ -845,10 +831,8 @@
 (ergoemacs-component quit ()
   "Escape exits"
   (global-set-key (kbd "<escape>") 'keyboard-quit)
-  (when isearch-mode-hook
-    :modify-map t
-    :full-shortcut-keymap t
-    (define-key isearch-mode-map (kbd "<escape>") 'isearch-abort))
+  (define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
+
   (when org-read-date-minibuffer-setup-hook
     (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
   :version 5.3.7
@@ -1011,16 +995,8 @@
 
 (ergoemacs-component apps-swap ()
   "Apps/Menu swaps key sequence translations"
-  (when ergoemacs-theme-hook
-    :modify-map t
-    (define-key ergoemacs-ctl-to-alt-translation-local-map (if (eq system-type 'windows-nt) [apps] [menu])
-      'ergoemacs-read-key-swap)
-    (define-key ergoemacs-unchorded-translation-local-map (if (eq system-type 'windows-nt) [apps] [menu])
-      'ergoemacs-read-key-swap)
-    (define-key ergoemacs-unchorded-translation-local-map (if (eq system-type 'windows-nt) [apps] [menu])
-      'ergoemacs-read-key-swap)
-    (define-key ergoemacs-normal-translation-local-map (if (eq system-type 'windows-nt) [apps] [menu])
-      'ergoemacs-read-key-swap)))
+  (define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])
+    'ergoemacs-command-loop--swap-translation))
 
 (ergoemacs-component dired-to-wdired ()
   "C-c C-c enters wdired, <escape> exits."

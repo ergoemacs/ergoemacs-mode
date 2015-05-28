@@ -468,6 +468,7 @@ For keys, the list consists of:
         translation
         (local-keymap (or (plist-get plist :keymap) (make-sparse-keymap))))
     (ergoemacs :label local-keymap)
+    (ergoemacs local-keymap :only-local-modifications-p t)
     (eval (macroexpand
            `(progn
               (defvar ,(intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map")) nil
@@ -476,8 +477,11 @@ For keys, the list consists of:
                          " while completing a key sequence."))
               ;; Backward compatible names.
               (define-obsolete-variable-alias ',(intern (concat "ergoemacs-" (plist-get plist :name) "-translation-local-map"))
-                ',(intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map")))
-              )))
+                ',(intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map"))))))
+
+    ;; Assign `map-list-hash'
+    (ergoemacs local-keymap :map-list-hash (list (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map"))
+                                                 (intern (concat "ergoemacs-" (plist-get plist :name) "-translation-local-map"))))
     (set (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map")) local-keymap)
     ;; (ergoemacs local-keymap :map-list-hash (list (intern (concat "ergoemacs-" (plist-get plist :name) "-translation-local-map"))
     ;;                                              ;; (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map"))
@@ -590,6 +594,36 @@ If TYPE is unspecified, assume :normal translation"
                 (setq modifiers (nth 1 mod))
                 (throw 'found-mod t))) nil)
       (setq ret (ergoemacs-translate--event-convert-list `(,@modifiers ,basic))))
+    ret))
+
+(defvar ergoemacs-translate--parent-map (let ((map (make-sparse-keymap)))
+                                          (ergoemacs map :label (- most-positive-fixnum 1))
+                                          (ergoemacs map :only-local-modifications-p t)
+                                          (ergoemacs map :map-list-hash '(ergoemacs-translate--parent-map))
+                                          map)
+  "Parent map for keymaps when completing a key sequence.")
+  
+
+(defvar ergoemacs-translate--keymap-hash (make-hash-table)
+  "Translation keymaps")
+
+(defun ergoemacs-translate--keymap-reset ()
+  "Reset `ergoemacs-translate--keymap-hash'"
+  (setq ergoemacs-translate--keymap-hash (make-hash-table)))
+
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-translate--keymap-reset)
+
+(defun ergoemacs-translate--keymap (&optional translation)
+  "Get the keymap for TRANSLATION"
+  (let* ((translation (or (and (ergoemacs-translation-struct-p translation) translation)
+                          (ergoemacs-translate--get (or translation :normal))))
+         (key (ergoemacs-translation-struct-key translation))
+         (ret (gethash key ergoemacs-translate--keymap-hash))
+         keymap)
+    (unless ret
+      (setq keymap (ergoemacs-translation-struct-keymap translation)
+            ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map)))
+      (puthash key ret ergoemacs-translate--keymap-hash))
     ret))
 
 (provide 'ergoemacs-translate)

@@ -510,7 +510,7 @@ This uses `ergoemacs-command-loop--read-event'."
   (let* ((universal universal)
          (type (or type :normal))
          (translation (ergoemacs-translate--get type))
-         (local-keymap (ergoemacs-translation-struct-keymap translation))
+         (local-keymap (ergoemacs-translate--keymap translation))
          (text (ergoemacs-translation-struct-text translation))
          (unchorded (ergoemacs-translation-struct-unchorded translation))
          (trans (ergoemacs-translation-struct-translation translation))
@@ -825,7 +825,9 @@ This sequence is compatible with `listify-key-sequence'."
   (clear-this-command-keys t)
   ;; Sometimes the window buffer and selected buffer are out of sync.
   ;; Fix this issue.
-  (switch-to-buffer (window-buffer)))
+  (unless (eq (current-buffer) (window-buffer))
+    ;; use `switch-to-buffer' instead of `set-buffer'?? May run hooks twice..
+    (switch-to-buffer (window-buffer))))
 
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
   "Call the command interactively.  Also handle mouse events (if possible.)"
@@ -842,7 +844,7 @@ This sequence is compatible with `listify-key-sequence'."
         (when (and obj (setq tmp (get-text-property (cdr obj)  'local-map (car obj)))
                    (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
           (setq command tmp)))
-      (setq form (and (commandp command t) (interactive-form command)))
+      (setq form (and (symbolp command) (commandp command t) (interactive-form command)))
       ;; (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
       ;; From `read-key-sequence':
       ;; /* Clicks in non-text areas get prefixed by the symbol
@@ -966,20 +968,14 @@ FIXME: modify `called-interactively' and `called-interactively-p'
   (let* ((type (or type :normal))
          (continue-read t)
          (first-type type)
-         raw-key current-key
+         raw-key current-key last-current-key
          (translation (ergoemacs-translate--get type))
-         (local-keymap (ergoemacs-translation-struct-keymap translation))
+         (local-keymap (ergoemacs-translate--keymap translation))
          tmp command)
     (unwind-protect
         (progn
           ;; Replace functions temporarily
           (fset 'ergoemacs-command-loop 'ergoemacs-command-loop--internal)
-          ;; (dolist (fn '(this-command-keys-vector
-          ;;               this-command-keys
-          ;;               this-single-command-keys
-          ;;               this-single-command-raw-keys))
-          ;;   (fset fn #'ergoemacs-command-loop--this-command-keys-vector))
-          
           ;; Setup initial unread command events, first type and history
           (setq tmp (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
                 unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events))
@@ -999,33 +995,36 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                              (and (not unread-command-events) universal))
                     ergoemacs-command-loop--single-command-keys nil
                     universal-argument-num-events 0
+                    last-current-key current-key
                     current-key (nth 1 raw-key)
                     raw-key (nth 0 raw-key)
                     continue-read nil)
               (cond
                ;; Handle local commands.
-               ((and (setq command (lookup-key local-keymap raw-key t))
+               ((and (not (equal current-key raw-key))
+                     (setq command (lookup-key local-keymap raw-key))
+                     (not (ergoemacs-keymapp command)) ;; Ignore locally
                      ;; Already handled by `ergoemacs-command-loop--read-key'
-                     (not (gethash command ergoemacs-command-loop--next-key-hash)) 
+                     (not (gethash command ergoemacs-command-loop--next-key-hash))
                      ;; If a command has :ergoemacs-local property of :force, don't
                      ;; worry about looking up a key, just run the function.
                      (or (and (symbolp command) (eq (get command :ergoemacs-local) :force))
                          (not (key-binding current-key t))))
                 
-                (unless (eq ergoemacs-command-loop-type :test)
-                  (ergoemacs-command-loop--call-interactively command))
-
-                (setq ergoemacs-command-loop--single-command-keys current-key
+                (setq ergoemacs-command-loop--single-command-keys last-current-key
                       universal-argument-num-events 0
                       ergoemacs-command-loop--current-type type
                       ergoemacs-command-loop--universal universal
                       ergoemacs-command-loop--exit nil)
                 
+                (unless (eq ergoemacs-command-loop-type :test)
+                  (ergoemacs-command-loop--call-interactively command))
+                
                 ;; If the command changed anything, fix it here.
                 (when (not (equal type ergoemacs-command-loop--current-type))
                   (setq type ergoemacs-command-loop--current-type
                         translation (ergoemacs-translate--get type)
-                        local-keymap (ergoemacs-translation-struct-keymap translation)))
+                        local-keymap (ergoemacs-translate--keymap translation)))
                 
                 (setq current-key ergoemacs-command-loop--single-command-keys
                       universal ergoemacs-command-loop--universal
@@ -1054,7 +1053,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                   (when (not (equal type ergoemacs-command-loop--current-type))
                     (setq type ergoemacs-command-loop--current-type
                           translation (ergoemacs-translate--get type)
-                          local-keymap (ergoemacs-translation-struct-keymap translation)))
+                          local-keymap (ergoemacs-translate--keymap translation)))
                   (setq current-key ergoemacs-command-loop--single-command-keys 
                         universal ergoemacs-command-loop--universal
                         ergoemacs-command-loop--single-command-keys nil
@@ -1078,7 +1077,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                   raw-key nil
                   current-key nil
                   translation (ergoemacs-translate--get type)
-                  local-keymap (ergoemacs-translation-struct-keymap translation)
+                  local-keymap (ergoemacs-translate--keymap translation)
                   ergoemacs-command-loop--first-type first-type
                   ergoemacs-command-loop--history nil))
           (setq inhibit-quit nil))

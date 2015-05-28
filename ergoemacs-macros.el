@@ -482,8 +482,6 @@ When KEYMAP can be a property.  The following properties are supported:
        ((memq property '(:map-key :key))
         ;; FIXME Expire any ids that are no longer linked??
         `(ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist ,keymap) :map-key)))
-       ((eq property :prefixes)
-        `(ergoemacs-map-properties--extract-prefixes ,keymap))
        ((memq property map-properties-list)
         `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name property) 1))) ,keymap))
        (t
