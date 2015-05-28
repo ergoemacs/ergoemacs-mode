@@ -508,14 +508,7 @@
 
 (ergoemacs-component backspace-del-seq ()
   "Backspace deletes last key entered in command sequence"
-  (define-key ergoemacs-ctl-to-alt-translation-local-map (read-kbd-macro "DEL")
-    'ergoemacs-read-key-force-undo-last)
-  (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
-    'ergoemacs-read-key-force-undo-last)
-  (define-key ergoemacs-unchorded-translation-local-map (read-kbd-macro "DEL")
-    'ergoemacs-read-key-force-undo-last)
-  (define-key ergoemacs-normal-translation-local-map (read-kbd-macro "DEL")
-    'ergoemacs-read-key-force-undo-last))
+  (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last))
 
 (ergoemacs-component help ()
   "Help changes for ergoemacs-mode"

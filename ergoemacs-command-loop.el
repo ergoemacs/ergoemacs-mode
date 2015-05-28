@@ -907,6 +907,10 @@ This sequence is compatible with `listify-key-sequence'."
                             record-flag keys))
        (t ;; Assume that the "e" or "@e" specifications are not present.
         (call-interactively command record-flag keys)))))
+   ((and (symbolp command) (not (fboundp command)))
+    (ergoemacs-command-loop--message "Command `%s' is not found" command))
+   ((and (symbolp command) (not (commandp command t)))
+    (ergoemacs-command-loop--message "Command `%s' cannot be called from a key" command))
    (t
     (call-interactively command record-flag keys))))
 
@@ -1010,7 +1014,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                      ;; worry about looking up a key, just run the function.
                      (or (and (symbolp command) (eq (get command :ergoemacs-local) :force))
                          (not (key-binding current-key t))))
-                
+                (pop ergoemacs-command-loop--history) ;; Don't recored local events
                 (setq ergoemacs-command-loop--single-command-keys last-current-key
                       universal-argument-num-events 0
                       ergoemacs-command-loop--current-type type
@@ -1272,7 +1276,12 @@ For instance in QWERTY M-> is shift translated to M-."
      ((or (stringp command) (vectorp command))
       ;; If the command is a keyboard macro (string/vector) then execute
       ;; it though `execute-kbd-macro'
-      (execute-kbd-macro command))
+      (let ((tmp (prefix-numeric-value current-prefix-arg)))
+        (cond
+         ((<= tmp 0) ;; Unsure what to do here.
+          (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command))
+                                           tmp))
+         (t (execute-kbd-macro command tmp)))))
      (t
       ;; This should be a regular command.
       
