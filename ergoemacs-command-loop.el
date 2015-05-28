@@ -822,7 +822,10 @@ This sequence is compatible with `listify-key-sequence'."
   
   (undo-boundary)
   ;;  This (sort of) fixes `this-command-keys'
-  (clear-this-command-keys t))
+  (clear-this-command-keys t)
+  ;; Sometimes the window buffer and selected buffer are out of sync.
+  ;; Fix this issue.
+  (switch-to-buffer (window-buffer)))
 
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
   "Call the command interactively.  Also handle mouse events (if possible.)"
@@ -1323,7 +1326,7 @@ For instance in QWERTY M-> is shift translated to M-."
                    (run-hooks 'ergoemacs-pre-command-hook))
                (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)))
-            (ergoemacs-command-loop--call-interactively command t))
+            (ergoemacs-command-loop--call-interactively this-command t))
         (setq ergoemacs-command-loop--single-command-keys nil)))))
   
   ;; I think these should be correct from the command loop:
