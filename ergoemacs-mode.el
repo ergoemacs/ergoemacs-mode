@@ -75,6 +75,7 @@
 (defvar ergoemacs-keyboard-layout)
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layouts")
+(declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 
 
 ;; Fundamental ergoemacs functions
@@ -518,13 +519,13 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 (define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
 
 (defcustom ergoemacs-command-loop-swap-translation
-  '(((:normal :normal) :unchorded)
-    ((:normal :unchorded) :ctl-to-alt)
-    ((:normal :unchorded) :normal)
-    ((:ctl-to-alt :ctl-to-alt) :unchorded)
-    ((:ctl-to-alt :unchorded) :ctl-to-alt)
-    ((:unchorded :unchorded) :ctl-to-alt)
-    ((:unchorded :ctl-to-alt) :unchorded))
+  '(((:normal :normal) :unchorded-ctl)
+    ((:normal :unchorded-ctl) :ctl-to-alt)
+    ((:normal :unchorded-ctl) :normal)
+    ((:ctl-to-alt :ctl-to-alt) :unchorded-ctl)
+    ((:ctl-to-alt :unchorded-ctl) :ctl-to-alt)
+    ((:unchorded-ctl :unchorded-ctl) :ctl-to-alt)
+    ((:unchorded-ctl :ctl-to-alt) :unchorded-ctl))
   "How the translation will be swapped."
   :type '(repeat
           (list
