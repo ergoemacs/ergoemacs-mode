@@ -465,7 +465,23 @@ For keys, the list consists of:
         -negative-argument
         -digit-argument
         -modal
-        translation)
+        translation
+        (local-keymap (or (plist-get plist :keymap) (make-sparse-keymap))))
+    (ergoemacs :label local-keymap)
+    (eval (macroexpand
+           `(progn
+              (defvar ,(intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map")) nil
+                ,(concat "Ergoemacs local map for translation :"
+                         (plist-get plist :name)
+                         " while completing a key sequence."))
+              ;; Backward compatible names.
+              (define-obsolete-variable-alias ',(intern (concat "ergoemacs-" (plist-get plist :name) "-translation-local-map"))
+                ',(intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map")))
+              )))
+    (set (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map")) local-keymap)
+    ;; (ergoemacs local-keymap :map-list-hash (list (intern (concat "ergoemacs-" (plist-get plist :name) "-translation-local-map"))
+    ;;                                              ;; (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map"))
+    ;;                                              ))
     ;; Create the functions 
     (dolist (type '("-universal-argument" "-negative-argument"
                     "-digit-argument" "-modal"))
@@ -528,7 +544,7 @@ This function is made in `ergoemacs-translate--create'")
            :digit-argument -digit-argument
            :modal -modal
            :text (plist-get plist :text)
-           :keymap (or (plist-get plist :keymap) (make-sparse-keymap))
+           :keymap local-keymap
            :keymap-modal (or (plist-get plist :keymap-modal) (make-sparse-keymap))
            :modal-always (plist-get plist :modal-always)
            :key (plist-get plist :key)
