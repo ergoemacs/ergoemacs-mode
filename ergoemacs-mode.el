@@ -497,6 +497,31 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
            (string :tag "Version")))
   :group 'ergoemacs-theme)
 
+(defcustom ergoemacs-excluded-major-modes
+  '(conf-colon-mode
+    conf-xdefaults-mode conf-space-mode conf-javaprop-mode
+    conf-ppd-mode mail-mode
+    ebrowse-tree-mode diff-mode fundamental-mode emacs-lisp-byte-code-mode
+    R-transcript-mode S-transcript-mode XLS-mode tar-mode
+    git-commit-mode git-rebase-mode image-mode
+    archive-mode ses-mode)
+  "List of major modes excluded from ergoemacs' Languages menu."
+  :type '(repeat (symbol :tag "Excluded Major Mode"))
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-mode-names
+  '((conf-mode "Settings")
+    (ses-mode "Emacs Spreadsheet")
+    (m2-mode "Modula-2")
+    (snmpv2-mode "SNMPv2 MIBs")
+    (snmp-mode "SKMP MIBs"))
+  "Menu name for ergoemacs' Languages menu."
+  :type '(repeat
+          (list
+           (symbol :tag "Major Mode Name")
+           (text :tag "Alternative Description:")))
+  :group 'ergoemacs-mode)
+
 ;;; Command loop options.
 (defgroup ergoemacs-command-loop nil
   "Options for `ergoemacs-command-loop'."

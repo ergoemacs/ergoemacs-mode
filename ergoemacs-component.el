@@ -367,6 +367,8 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
              cur-map)
             (puthash keymap (copy-keymap ergoemacs-component-struct--define-key-temp-map) (ergoemacs-component-struct-maps obj))
             (setq ergoemacs-component-struct--define-key-temp-map nil))
+           ((and (consp def) (stringp (nth 0 def)) (symbolp (nth 1 def)) (eq (nth 1 def) 'keymap))
+            (define-key cur-map key def))
            ((and (consp def) (symbolp (nth 1 def))) ;; (fn1 fn2 fn3 fn4)
             (unless (catch 'found-fn
                       (dolist (cur-def def)

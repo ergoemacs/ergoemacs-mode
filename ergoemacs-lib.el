@@ -236,6 +236,119 @@ ergoemacs THEME.
                    ergoemacs-theme-hash)))))
   (ergoemacs-theme-option-on option t))
 
+
+(defvar ergoemacs-xah-emacs-lisp-tutorial-url
+  "http://ergoemacs.org/emacs/elisp.html")
+
+(defvar ergoemacs-mode-web-page-url
+  "http://ergoemacs.github.io/")
+
+
+(defun ergoemacs-menu--get-major-mode-name (mode)
+  "Gets the MODE language name.
+Tries to get the value from `ergoemacs-mode-names'.  If not guess the language name."
+  (let ((ret (assoc mode ergoemacs-mode-names)))
+    (if (not ret)
+        (setq ret (replace-regexp-in-string
+                   "-" " "
+                   (replace-regexp-in-string
+                    "-mode" ""
+                    (symbol-name mode))))
+      (setq ret (car (cdr ret))))
+    (setq ret (concat (upcase (substring ret 0 1))
+                      (substring ret 1)))
+    ret))
+
+(defun ergoemacs-menu--get-major-modes ()
+  "Gets a list of language modes known to `ergoemacs-mode'.
+This gets all major modes known from the variables:
+-  `interpreter-mode-alist';
+-  `magic-mode-alist'
+-  `magic-fallback-mode-alist'
+-  `auto-mode-alist'
+
+All other modes are assumed to be minor modes or unimportant.
+"
+  ;; Get known major modes
+  (let ((ret '())
+        all dups cur-lst current-letter
+        added-modes
+        (modes '()))
+    (dolist (elt (append
+                  interpreter-mode-alist
+                  magic-mode-alist
+                  magic-fallback-mode-alist
+                  auto-mode-alist))
+      (unless (memq (cdr elt) modes)
+        (when (and (functionp (cdr elt))
+                   (ignore-errors (string-match "-mode$" (symbol-name (cdr elt)))))
+          (unless (or (memq (cdr elt) ergoemacs-excluded-major-modes)
+                      (member (downcase (symbol-name (cdr elt))) added-modes))
+            (let* ((name (ergoemacs-menu--get-major-mode-name (cdr elt)))
+                   (first (upcase (substring name 0 1))))
+              (if (member first all)
+                  (unless (member first dups)
+                    (push first dups))
+                (push first all))
+              (push (list (cdr elt) 'menu-item
+                          name
+                          (cdr elt)) ret))
+            (push (downcase (symbol-name (cdr elt))) added-modes)
+            (push (cdr elt) modes)))))
+    (setq modes (sort ret (lambda(x1 x2) (string< (downcase (nth 2 x2))
+                                             (downcase (nth 2 x1))))))
+    (setq ret '())
+    (dolist (elt modes)
+      (let ((this-letter (upcase (substring (nth 2 elt) 0 1))))
+        (cond
+         ((not (member this-letter dups))
+          ;; not duplicated -- add prior list and push current element.
+          (when cur-lst
+            (push `(,(intern current-letter) menu-item ,current-letter
+                    (keymap ,@cur-lst)) ret))
+          (push elt ret)
+          (setq current-letter this-letter)
+          (setq cur-lst nil))
+         ((not (equal this-letter current-letter))
+          ;; duplicated, but not last letter.
+          (when cur-lst
+            (push `(,(intern current-letter) menu-item ,current-letter
+                    (keymap ,@cur-lst)) ret))
+          (setq cur-lst nil)
+          (setq current-letter this-letter)
+          (push elt cur-lst))
+         (t
+          ;; duplicated and last letter
+          (push elt cur-lst)))))
+    (when cur-lst
+      (push `(,(intern current-letter) menu-item ,current-letter
+              (keymap ,@cur-lst)) ret))
+    ;; Now create nested menu.
+    `(keymap ,@ret
+             (separator1 menu-item "--")
+             (package menu-item  "Manage Packages" list-packages))))
+
+(defun ergoemacs-menu-tabbar-toggle ()
+  "Enables/Disables (and installs if not present) a tab-bar for emacs."
+  (interactive)
+  (require 'package nil t)
+  (if (not (fboundp 'tabbar-mode))
+      (let ((package-archives '(("melpa" . "http://melpa.org/packages/"))))
+        (require 'tabbar-ruler nil t)
+        (if (fboundp 'tabbar-install-faces)
+            (tabbar-install-faces)
+          (when (fboundp 'package-install)
+            (package-refresh-contents)
+            (package-initialize)
+            (package-install 'tabbar-ruler)
+            (require 'tabbar-ruler nil t)
+            (tabbar-install-faces))))
+    (if (not (featurep 'tabbar-ruler))
+        (require 'tabbar-ruler nil t)
+      (if tabbar-mode
+          (tabbar-mode -1)
+        (tabbar-mode 1)))))
+
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-lib.el ends here

@@ -317,6 +317,7 @@ If LOOKUP-KEYMAP
               (push undefined-key ergoemacs-map--undefined-keys))))
         (dolist (i ergoemacs-map--undefined-keys)
           (define-key tmp i #'ergoemacs-map-undefined))
+        
         (ergoemacs tmp :label (list (ergoemacs (ergoemacs :global-map) :key-struct) 'ergoemacs-undefined (intern ergoemacs-keyboard-layout)))
         
         (push tmp composed-list)
@@ -328,7 +329,8 @@ If LOOKUP-KEYMAP
             (push tmp composed-list)))
 
         ;; The real `global-map'
-        (setq parent (ergoemacs :global-map))
+        (setq parent (copy-keymap (ergoemacs :global-map)))
+        
 
         ;; The keys that will be unbound
         (setq ret (make-sparse-keymap))
@@ -533,6 +535,7 @@ If LOOKUP-KEYMAP
     (ergoemacs-map--minor-mode-overriding-map-alist)))
 
 (defun ergoemacs-map--install ()
+  "Installs `ergoemacs-mode' into the appropriate keymaps."
   (interactive)
   (ergoemacs-mode-line)
   (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
@@ -546,7 +549,6 @@ If LOOKUP-KEYMAP
       (setq x (assq 'ergoemacs-mode minor-mode-map-alist)))
     (push (cons 'ergoemacs-mode ergoemacs-menu-keymap) minor-mode-map-alist))
   
-  (message "Global")
   (setq ergoemacs-map-- (make-hash-table :test 'equal)
         ergoemacs-keymap (ergoemacs)
         ergoemacs-map--alist (make-hash-table)

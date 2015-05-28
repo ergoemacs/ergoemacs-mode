@@ -1,6 +1,6 @@
 ;;; ergoemacs-themes.el --- ErgoEmacs keybindings and themes -*- lexical-binding: t -*-
 
-;; Copyright © 2013, 2014 Free Software Foundation, Inc.
+;; Copyright © 2013-2015 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -495,16 +495,7 @@
 
 (ergoemacs-component f2-edit ()
   "Have <f2> edit"
-  (define-key ergoemacs-ctl-to-alt-translation-local-map [f2]
-    'ergoemacs-read-key--universal-argument)
-  (define-key ergoemacs-unchorded-translation-local-map [f2]
-    'ergoemacs-read-key--universal-argument)
-  (define-key ergoemacs-unchorded-translation-local-map [f2]
-    'ergoemacs-read-key--universal-argument)
-  (define-key ergoemacs-normal-translation-local-map [f2]
-    'ergoemacs-read-key--universal-argument)
-  
-  (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string))
+  (define-key ergoemacs-translate--parent-map [f2] 'ergoemacs-command-loop--force-universal-argument))
 
 (ergoemacs-component backspace-del-seq ()
   "Backspace deletes last key entered in command sequence"
@@ -1169,6 +1160,692 @@
   (global-set-key (kbd "<menu> SPC y") (kbd "Y"))
   (global-set-key (kbd "<menu> SPC z") (kbd "Z")))
 
+(ergoemacs-component menu-bar-file ()
+  "File menu"
+  (global-set-key [menu-bar file]
+                  (cons "File"
+                        `(keymap
+                          (new-file menu-item "New" ergoemacs-new-empty-buffer)
+                          (make-frame menu-item "New Frame" make-frame-command)
+                          (open-file menu-item "Open..." find-file)
+                          (open-directory menu-item "Open Containing Folder"
+                                          (keymap
+                                           ;; FIXME add open in cmd/iTerm/xterm, etc
+                                           (open-directory-in-dired menu-item "In Dired" dired-jump)
+                                           (open-directory-in-desktop
+                                            menu-item  ,(cond
+                                                         ((eq system-type 'windows-nt) "In Explorer")
+                                                         ((eq system-type 'darwin) "In Finder")
+                                                         (t "In File Manager"))
+                                            ergoemacs-open-in-desktop)
+                                           (sep1 menu-item "--")
+                                           (open-eshell-here menu-item "In Emacs Shell" ergoemacs-eshell-here)
+                                           (open-shell-here menu-item ,(if (eq system-type 'windows-nt) "In Command Prompt" "In Shell") ergoemacs-shell-here)
+                                           ,(if (eq system-type 'windows-nt) '(powershell-here menu-item "In PowerShell" ergoemacs-powershell-here :enable (fboundp 'powershell)))
+                                           ))
+                          ;; FIXME -- Somehow put open last closed in recentf menu; It
+                          ;; seems to fit there the best
+                          ;; (open-last-closed menu-item "Open last closed" ergoemacs-open-last-closed)
+                          (kill-buffer menu-item "Close" ergoemacs-close-current-buffer)
+                          (separator1 menu-item "--")
+                          (save-buffer menu-item "Save" save-buffer)
+                          (write-file menu-item "Save As..." write-file)
+                          (revert-buffer menu-item "Revert to Saved" revert-buffer)
+                          (print-buffer menu-item "Print" ergoemacs-print-buffer-confirm)
+                          ;; (ps-print-buffer-faces menu-item "Print (font+color)" ps-print-buffer-faces)
+                          (separator4 menu-item "--")
+                          (split-window-below menu-item "Split Window"
+                                              split-window-below)
+                          (split-window-right menu-item "Split Window right"
+                                              split-window-right)
+                          (one-window menu-item "Unsplit Window"
+                                      delete-other-windows)
+                          (separator5 menu-item "--")
+                          (execute-command menu-item "Execute Command" execute-extended-command)
+                          (repeat-earlier-command menu-item "Repeat Earlier Command"
+                                                  repeat-complex-command)
+                          (separator6 menu-item "--")
+                          (exit-emacs menu-item "Quit" save-buffers-kill-emacs)
+                          "File")))
+  ;; (add-hook 'kill-emacs-hook 'ergoemacs-exit-customize-save-customized)
+  )
+
+(ergoemacs-component menu-bar-edit ()
+  "Edit menu"
+  (global-set-key [menu-bar edit]
+                  (cons "Edit"
+                        '(keymap
+                          (undo menu-item "Undo" undo
+                                :enable (and
+                                         (not buffer-read-only)
+                                         (not
+                                          (eq t buffer-undo-list))
+                                         (if
+                                             (eq last-command 'undo)
+                                             (listp pending-undo-list)
+                                           (consp buffer-undo-list)))
+                                :help "Undo last operation")
+                          (redo menu-item "Redo" ergoemacs-redo
+                                :enable (and
+                                         (not buffer-read-only)
+                                         (not (eq t buffer-undo-list))
+                                         (or
+                                          (not (and (boundp 'undo-tree-mode) undo-tree-mode))
+                                          (and (and (boundp 'undo-tree-mode) undo-tree-mode)
+                                               (null (undo-tree-node-next (undo-tree-current buffer-undo-tree)))))))
+                          (redo-sep menu-item "--")
+                          (cut menu-item "Cut" ergoemacs-cut-line-or-region
+                               :help "Delete text in Line/region and copy it to the clipboard"
+                               :enable (or (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+                                           (region-active-p)))
+                          (copy menu-item "Copy" ergoemacs-copy-line-or-region
+                                :help "Copy text in line/region to the clipboard"
+                                :enable (or (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+                                            (region-active-p)))
+                          (paste menu-item "Paste" ergoemacs-paste
+                                 :help "Paste text from clipboard")
+                          (paste-from-menu menu-item "Paste from Kill Menu" yank-menu
+                                           :enable (and
+                                                    (cdr yank-menu)
+                                                    (not buffer-read-only))
+                                           :help "Choose a string from the kill ring and paste it")
+                          (clear menu-item "Clear" delete-region
+                                 :enable (and mark-active (not buffer-read-only))
+                                 :help "Delete the text in region between mark and current position")
+                          (mark-whole-buffer menu-item "Select All" mark-whole-buffer
+                                             :help "Mark the whole buffer for a subsequent cut/copy")
+                          (separator-search menu-item "--")
+                          (blank-operations menu-item "Blank/Whitespace Operations"
+                                            (keymap
+                                             (trim-trailing-space menu-item
+                                                                  "Trim Trailing Space"
+                                                                  delete-trailing-whitespace
+                                                                  :help "Trim Trailing spaces on each line")
+                                             (separator-tabify menu-item "--")
+                                             (tabify-region menu-item
+                                                            "Change multiple spaces to tabs (Tabify)"
+                                                            (lambda() (interactive)
+                                                              (if mark-active
+                                                                  (tabify (region-beginning)
+                                                                          (region-end))
+                                                                (tabify (point-min) (point-max))))
+                                                            :help "Convert multiple spaces in the nonempty region to tabs when possible"
+                                                            :enable  (not buffer-read-only))
+                                             (untabify menu-item
+                                                       "Change Tabs To Spaces (Untabify)"
+                                                       (lambda() (interactive)
+                                                         (if mark-active
+                                                             (untabify (region-beginning)
+                                                                       (region-end))
+                                                           (untabify (point-min) (point-max))))
+                                                       :help "Convert all tabs in the nonempty region or buffer to multiple spaces"
+                                                       :enable (not buffer-read-only))))
+                          (copy-to-clipboard menu-item "Copy File/Path to Clipboard"
+                                             (keymap
+                                              (copy-full-path menu-item
+                                                              "Current Full File Path to Clipboard"
+                                                              ergoemacs-copy-full-path
+                                                              :enable (buffer-file-name))
+                                              (copy-file-name menu-item
+                                                              "Current File Name to Clipboard"
+                                                              ergoemacs-copy-file-name
+                                                              :enable (buffer-file-name))
+                                              (copy-dir-path menu-item
+                                                             "Current Dir. Path to Clipboard"
+                                                             ergoemacs-copy-dir-path
+                                                             :enable (buffer-file-name))))
+                          (convert-case-to menu-item "Convert Case To"
+                                           (keymap
+                                            (capitalize-region menu-item
+                                                               "Capitalize" capitalize-region
+                                                               :help "Capitalize (initial caps) words in the nonempty region"
+                                                               :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                                            (downcase-region menu-item
+                                                             "downcase" downcase-region
+                                                             :help "Make words in the nonempty region lower-case"
+                                                             :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                                            (upcase-region menu-item "UPCASE" upcase-region
+                                                           :help "Make words in the nonempty region upper-case"
+                                                           :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                                            (toggle-case-region menu-item "Toggle Capitalization/Case"
+                                                                ergoemacs-toggle-letter-case
+                                                                :enable (not buffer-read-only))
+                                            (toggle-camel menu-item "Toggle CamelCase to camel_case"
+                                                          ergoemacs-toggle-camel-case
+                                                          :enable (not buffer-read-only))))
+                          
+                          (eol-conversion menu-item "EOL Conversion"
+                                          (keymap
+                                           (windows menu-item
+                                                    "Windows/DOS"
+                                                    (lambda() (interactive)
+                                                      (ergoemacs-eol-conversion 'dos))
+                                                    :enable (not (ergoemacs-eol-p 'dos)))
+                                           (unix menu-item
+                                                 "Unix/OSX"
+                                                 (lambda() (interactive)
+                                                   (ergoemacs-eol-conversion 'unix))
+                                                 :enable (not (ergoemacs-eol-p 'unix)))
+                                           (mac menu-item
+                                                "Old Mac"
+                                                (lambda() (interactive)
+                                                  (ergoemacs-eol-conversion 'mac))
+                                                :enable (not (ergoemacs-eol-p 'mac)))))
+                          ;; Taken/Adapted from menu+ by Drew Adams.
+                          ;; (region menu-item "Region"
+                          ;;         (keymap
+                          ;;          (unaccent-region
+                          ;;           menu-item "Unaccent" unaccent-region ; Defined in `unaccent'.
+                          ;;                     :help "Replace accented chars in the nonempty region by unaccented chars"
+                          ;;                     :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                          ;;          (separator-chars menu-item "--")
+                          
+                          
+                          ;;         (comment-region menu-item
+                          ;;                         "(Un)Comment" comment-region
+                          ;;                         :help "Comment or uncomment each line in the nonempty region"
+                          ;;                         :enable (and comment-start  (not buffer-read-only)  mark-active
+                          ;;                                    (> (region-end) (region-beginning))))
+                          ;;         (center-region menu-item
+                          ;;                        "Center" center-region
+                          ;;                       :help "Center each nonblank line that starts in the nonempty region"
+                          ;;                       :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                          ;;         ;; (indent-rigidly-region menu-item "Rigid Indent"
+                          ;;         ;;                        indent-rigidly
+                          ;;         ;;               :help "Indent each line that starts in the nonempty region"
+                          ;;         ;;               :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                          ;;         (indent-region menu-item "Column/Mode Indent" indent-region
+                          ;;                       :help "Indent each nonblank line in the nonempty region"
+                          ;;                       :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+
+                          ;;         (separator-indent menu-item "--")
+                          ;;         (abbrevs-region "Expand Abbrevs..."
+                          ;;                         expand-region-abbrevs
+                          ;;                         :help "Expand each abbrev in the nonempty region (with confirmation)"
+                          ;;                         :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                          
+                          ;;         (macro-region menu-item
+                          ;;                       "Exec Keyboard Macro" apply-macro-to-region-lines
+                          ;;                       :help "Run keyboard macro at start of each line in the nonempty region"
+                          ;;                       :enable (and last-kbd-macro mark-active  (not buffer-read-only)
+                          ;;                                    (> (region-end) (region-beginning))))))
+                          ;; Taken/Adapted from menu+ by Drew Adams.
+                          (sort menu-item "Sort"
+                                (keymap
+                                 (regexp-fields menu-item
+                                                "Regexp Fields" sort-regexp-fields
+                                                :help "Sort the nonempty region lexicographically"
+                                                :enable (and last-kbd-macro
+                                                             (not buffer-read-only)
+                                                             mark-active
+                                                             (> (region-end) (region-beginning))))
+                                 (pages menu-item
+                                        "Pages" sort-pages
+                                        :help "Sort pages in the nonempty region alphabetically"
+                                        :enable (and last-kbd-macro
+                                                     (not buffer-read-only)
+                                                     mark-active
+                                                     (> (region-end) (region-beginning))))
+                                 (sort-paragraphs menu-item
+                                                  "Paragraphs" sort-paragraphs
+                                                  :help "Sort paragraphs in the nonempty region alphabetically"
+                                                  :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                                 (sort-numeric-fields menu-item
+                                                      "Numeric Field" sort-numeric-fields
+                                                      :help "Sort lines in the nonempty region numerically by the Nth field"
+                                                      :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                                 (sort-fields menu-item
+                                              "Field" sort-fields
+                                              :help "Sort lines in the nonempty region lexicographically by the Nth field"
+                                              :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                                 (sort-columns menu-item
+                                               "Columns" sort-columns
+                                               :help "Sort lines in the nonempty region alphabetically, by a certain range of columns"
+                                               :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                                 (sort-lines menu-item
+                                             "Lines" sort-lines
+                                             :help "Sort lines in the nonempty region alphabetically"
+                                             :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))
+                                 (reverse-region menu-item "Reverse" reverse-region
+                                                 :help "Reverse the order of the selected lines"
+                                                 :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))))
+                          
+                          
+                          ;; (search menu-item "Search"
+                          ;;         (keymap
+                          ;;          (search-forward menu-item "Text..." search-forward)
+                          ;;          (separator-repeat-search menu-item "--")
+                          ;;          (tags-srch menu-item "Search Tagged Files..." tags-search
+                          ;;                     :help "Search for a regexp in all tagged files")
+                          ;;          (tags-continue menu-item "Continue Tags Search" tags-loop-continue
+                          ;;                         :help "Continue last tags search operation")
+                          ;;          "Search"))
+                          
+                          ;; (i-search menu-item "Incremental Search"
+                          ;;           (keymap
+                          ;;            (isearch-forward menu-item "Forward String..." isearch-forward
+                          ;;                             :help "Search forward for a string as you type it")
+                          ;;            (isearch-backward menu-item "Backward String..." isearch-backward
+                          ;;                              :help "Search backwards for a string as you type it")
+                          ;;            (isearch-forward-regexp menu-item "Forward Regexp..." isearch-forward-regexp
+                          ;;                                    :help "Search forward for a regular expression as you type it")
+                          ;;            (isearch-backward-regexp menu-item "Backward Regexp..." isearch-backward-regexp
+                          ;;                                     :help "Search backwards for a regular expression as you type it")
+                          ;;            "Incremental Search"))
+                          
+                          ;; (replace menu-item "Replace"
+                          ;;          (keymap
+                          ;;           (query-replace menu-item "Replace String..." query-replace
+                          ;;                          :enable (not buffer-read-only)
+                          ;;                          :help "Replace string interactively, ask about each occurrence")
+                          ;;           (query-replace-regexp menu-item "Replace Regexp..." query-replace-regexp
+                          ;;                                 :enable (not buffer-read-only)
+                          ;;                                 :help "Replace regular expression interactively, ask about each occurrence")
+                          ;;           (separator-replace-tags menu-item "--")
+                          ;;           (tags-repl menu-item "Replace in Tagged Files..." tags-query-replace
+                          ;;                      :help "Interactively replace a regexp in all tagged files")
+                          ;;           (tags-repl-continue menu-item "Continue Replace" tags-loop-continue
+                          ;;                               :help "Continue last tags replace operation")
+                          ;;           "Replace"))
+                          
+                          ;; (goto menu-item "Go To"
+                          ;;       (keymap
+                          ;;        (go-to-line menu-item "Goto Line..." goto-line
+                          ;;                    :help "Read a line number and go to that line")
+                          ;;        (separator-tags menu-item "--")
+                          ;;        (find-tag menu-item "Find Tag..." find-tag
+                          ;;                  :help "Find definition of function or variable")
+                          ;;        (find-tag-otherw menu-item "Find Tag in Other Window..." find-tag-other-window
+                          ;;                         :help "Find function/variable definition in another window")
+                          ;;        (next-tag menu-item "Find Next Tag" menu-bar-next-tag
+                          ;;                  :enable (and
+                          ;;                           (boundp 'tags-location-ring)
+                          ;;                           (not
+                          ;;                            (ring-empty-p tags-location-ring)))
+                          ;;                  :help "Find next function/variable matching last tag name")
+                          ;;        (next-tag-otherw menu-item "Next Tag in Other Window" menu-bar-next-tag-other-window
+                          ;;                         :enable (and
+                          ;;                                  (boundp 'tags-location-ring)
+                          ;;                                  (not
+                          ;;                                   (ring-empty-p tags-location-ring)))
+                          ;;                         :help "Find next function/variable matching last tag name in another window")
+                          ;;        (apropos-tags menu-item "Tags Apropos..." tags-apropos
+                          ;;                      :help "Find function/variables whose names match regexp")
+                          ;;        (separator-tag-file menu-item "--")
+                          ;;        (set-tags-name menu-item "Set Tags File Name..." visit-tags-table
+                          ;;                       :help "Tell Tags commands which tag table file to use")
+                          ;;        "Go To"))
+                          
+                          ;; (bookmark menu-item "Bookmarks" menu-bar-bookmark-map)
+                          (separator-bookmark menu-item "--")
+                          (fill menu-item "Fill" fill-region
+                                :enable (and mark-active
+                                             (not buffer-read-only))
+                                :help "Fill text in region to fit between left and right margin")
+                          (props menu-item "Text Properties" facemenu-menu)
+                          "Edit"))))
+
+(ergoemacs-component menu-bar-search ()
+  "Search menu"
+  (global-set-key [menu-bar search]
+                  (cons "Search"
+                        '(keymap
+                          (isearch-forward menu-item "String Forward..." isearch-forward
+                                           :help "Search forward for a string as you type it")
+                          (isearch-backward menu-item "    Backward..." isearch-backward
+                                            :help "Search backwards for a string as you type it")
+                          (re-isearch-forward menu-item "Regexp Forward..." isearch-forward-regexp
+                                              :help "Search forward for a regular expression as you type it")
+                          (re-isearch-backward menu-item "    Backward..." isearch-backward-regexp
+                                               :help "Search backwards for a regular expression as you type it")
+                          (separator-repeat-search menu-item "--" )
+                          (repeat-forward menu-item "Repeat Forward" nonincremental-repeat-search-forward
+                                          :enable (or (and (memq menu-bar-last-search-type '(string word)) search-ring)
+                                                      (and (eq menu-bar-last-search-type 'regexp) regexp-search-ring))
+                                          :help "Repeat last search forward")
+                          (repeat-backward menu-item "    Repeat Backward" nonincremental-repeat-search-backward
+                                           :enable (or (and (memq menu-bar-last-search-type '(string word)) search-ring)
+                                                       (and (eq menu-bar-last-search-type 'regexp) regexp-search-ring))
+                                           :help "Repeat last search forward")
+                          (separator-isearch menu-item "--")
+                          (i-search menu-item "String Search"
+                                    (keymap
+                                     (search-forward menu-item "Forward String..." search-forward)
+                                     (search-backward menu-item "    Backward..." search-backward)
+                                     (search-forward-regexp menu-item "Forward Regexp..." re-search-forward)
+                                     (search-backward-regexp menu-item "    Backward..." re-search-backward)
+                                     "String Search"))
+                          
+                          (replace menu-item "Replace"
+                                   (keymap
+                                    (query-replace menu-item "Replace String..." query-replace
+                                                   :enable (not buffer-read-only)
+                                                   :help "Replace string interactively, ask about each occurrence")
+                                    (query-replace-regexp menu-item "Replace Regexp..." query-replace-regexp
+                                                          :enable (not buffer-read-only)
+                                                          :help "Replace regular expression interactively, ask about each occurrence")
+                                    (separator-replace-tags menu-item "--")
+                                    (tags-repl menu-item "Replace in Tagged Files..." tags-query-replace
+                                               :help "Interactively replace a regexp in all tagged files")
+                                    (tags-repl-continue menu-item "Continue Replace" tags-loop-continue
+                                                        :help "Continue last tags replace operation")
+                                    "Replace"))
+                          (grep menu-item "Grep..." grep
+                                :enable (executable-find "grep"))
+                          (occur menu-item "Occurrences in buffer..." occur
+                                 :help "Show Lines in a buffer that match a regular expression")
+                          (moccur menu-item "Occurrences in all buffers..." multi-occur
+                                  :help "Show Lines in all buffers that match a regular expression")
+                          (separator-go-to menu-item "--" )
+                          
+                          (goto menu-item "Go To"
+                                (keymap
+                                 (go-to-line menu-item "Goto Line..." goto-line
+                                             :help "Read a line number and go to that line")
+                                 (separator-tags menu-item "--")
+                                 (find-tag menu-item "Find Tag..." find-tag
+                                           :help "Find definition of function or variable")
+                                 (find-tag-otherw menu-item "Find Tag in Other Window..." find-tag-other-window
+                                                  :help "Find function/variable definition in another window")
+                                 (next-tag menu-item "Find Next Tag" menu-bar-next-tag
+                                           :enable (and
+                                                    (boundp 'tags-location-ring)
+                                                    (not
+                                                     (ring-empty-p tags-location-ring)))
+                                           :help "Find next function/variable matching last tag name")
+                                 (next-tag-otherw menu-item "Next Tag in Other Window" menu-bar-next-tag-other-window
+                                                  :enable (and
+                                                           (boundp 'tags-location-ring)
+                                                           (not
+                                                            (ring-empty-p tags-location-ring)))
+                                                  :help "Find next function/variable matching last tag name in another window")
+                                 (apropos-tags menu-item "Tags Apropos..." tags-apropos
+                                               :help "Find function/variables whose names match regexp")
+                                 (separator-tag-file menu-item "--")
+                                 (set-tags-name menu-item "Set Tags File Name..." visit-tags-table
+                                                :help "Tell Tags commands which tag table file to use")
+                                 "Go To")
+                                (separator-packages))
+                          
+                          (bookmark menu-item "Bookmarks" menu-bar-bookmark-map)
+                          "Search"))))
+
+(ergoemacs-component menu-bar-view ()
+  "View menu"
+  (global-set-key [menu-bar view]
+                  (cons "View"
+                        '(keymap
+                          (menu-font-size menu-item "Zoom"
+                                          (keymap
+                                           (zoom-in menu-item "Zoom In" text-scale-increase)
+                                           (zoom-out menu-item "Zoom Out" text-scale-decrease)
+                                           (zoom-reset menu-item "Zoom Reset" ergoemacs-text-scale-normal-size)))
+                          
+                          (menu-set-font menu-item "Set Default Font..." menu-set-font :visible
+                                         (display-multi-font-p)
+                                         :help "Select a default font")
+                          
+                          ,(when (fboundp 'customize-themes)
+                             '(color-theme menu-item "Customize Color Themes" customize-themes
+                                           :help "Customize Emacs Themes."))
+                          
+                          (separator-font-size menu-item "--")
+
+                          (highlight-current-line menu-item "Highlight Current Line" global-hl-line-mode
+                                                  :help "Have the cursor line always Highlighted"
+                                                  :button (:toggle . (and (boundp 'global-hl-line-mode)
+                                                                          global-hl-line-mode)))
+
+                          (paren-mode menu-item "Highlight Matching Parentheses" show-paren-mode
+                                      :button (:toggle . show-paren-mode))
+
+                          (ruler-mode menu-item "Ruler Mode" ruler-mode
+                                      :button (:toggle . ruler-mode))
+
+                          (blink-cursor menu-item "Cursor Blink" blink-cursor-mode
+                                        :button (:toggle . blink-cursor-mode))
+
+                          ;; (auto-pair menu-item "Insert Matching Parentheses/Bracket"
+                          ;;            (lambda() (interactive)
+                          ;;              (cond
+                          ;;               ((fboundp 'smartparens-mode)
+                          ;;                (smartparens-mode))
+                          ;;               ((fboundp 'autopair-global-mode)
+                          ;;                (autopair-global-mode))
+                          ;;               (t (electric-pair-mode))))
+                          ;;            :button (:toggle . 
+                          ;;                             (or
+                          ;;                              (and (boundp 'smartparens-mode) smartparens-mode)
+                          ;;                              (and (boundp 'auto-indent-mode) auto-indent-mode)
+                          ;;                              electric-pair-mode)))
+                          
+                          (tabbar-mode menu-item "Tabbar" ergoemacs-menu-tabbar-toggle
+                                       :button (:toggle . (and (boundp 'tabbar-mode)
+                                                               tabbar-mode)))
+                          
+                          
+                          ;; (showhide-tool-bar menu-item "Tool-bar" tool-bar-mode :help "Turn tool-bar on/off"
+                          ;;                    :button (:toggle . tool-bar-mode))
+                          
+                          ;; (menu-bar-mode menu-item "Menu-bar" toggle-menu-bar-mode-from-frame :help "Turn menu-bar on/off" :button
+                          ;;                (:toggle menu-bar-positive-p
+                          ;;                         (frame-parameter
+                          ;;                          (menu-bar-frame-for-menubar)
+                          ;;                          'menu-bar-lines))
+                          ;;                :keys "")
+
+                          ;; (showhide-tooltip-mode menu-item "Tooltips" tooltip-mode :help "Turn tooltips on/off" :visible
+                          ;;                        (and
+                          ;;                         (display-graphic-p)
+                          ;;                         (fboundp 'x-show-tip))
+                          ;;                        :button
+                          ;;                        (:toggle . tooltip-mode)
+                          ;;                        :keys "")
+                          (separator-speedbar menu-item "--")
+                          ;; (showhide-scroll-bar)
+                          ;; (showhide-fringe)
+
+                          (showhide-speedbar menu-item "Speedbar" speedbar-frame-mode :help "Display a Speedbar quick-navigation frame" :button
+                                             (:toggle and
+                                                      (boundp 'speedbar-frame)
+                                                      (frame-live-p
+                                                       speedbar-frame)
+                                                      (frame-visible-p
+                                                       speedbar-frame)))
+                          ;; (datetime-separator)
+                          ;; (showhide-date-time)
+                          (linecolumn-separator "--")
+                          (line-number-mode menu-item "Line Numbers" line-number-mode :help "Show the current line number in the mode line" :button
+                                            (:toggle and
+                                                     (default-boundp 'line-number-mode)
+                                                     (default-value 'line-number-mode)))
+                          (global-whitespace-mode menu-item "Show/Hide whitespaces" global-whitespace-mode :button
+                                                  (:toggle . global-whitespace-mode))
+                          (global-linum-mode menu-item "Show/Hide line numbers in margin" global-linum-mode :button
+                                             (:toggle . global-linum-mode))))))
+
+(ergoemacs-theme-component menu-bar-languages ()
+  "Languages menu"
+  (global-set-key [menu-bar languages] (cons "Languages" (ergoemacs-menu--get-major-modes))))
+
+(ergoemacs-theme-component menu-bar-help ()
+  "Help menu"
+  (global-set-key [menu-bar help-menu]
+                  (cons (if (eq system-type 'darwin) "Help" "?")
+                        `(keymap
+                          ;; Adapted from Menu-bar+
+                          (whoops menu-item "Whoops!?"
+                                  (keymap
+                                   (what-did-i-do
+                                    menu-item "What did I do !?"
+                                    view-lossage
+                                    :help "Display last 100 input keystrokes")
+                                   (exit-recurive-edit
+                                    menu-item "Exit Recursive Editing"
+                                    top-level
+                                    :help "Exit all Recursive editing Levels")
+                                   (keyboard-quit
+                                    menu-item "Cancel Current Action"
+                                    keyboard-quit
+                                    :help "Quit any operation in progress")))
+                          
+                          (help-for-help menu-item "Help for Help..."
+                                         help-for-help
+                                         :help "Emacs main help command")
+                          (separator-1 menu-item  "--")
+                          (apropos menu-item "Apropos (Find matching)"
+                                   (keymap
+                                    (commands menu-item "Commands..."
+                                              apropos-command
+                                              :help "Find commands matching a regular expression")
+                                    (user-options menu-item "User Options..."
+                                                  ergoemacs-apropos-user-options
+                                                  :help "Find user options matching a regular expression")
+                                    (all-vars menu-item "All Variables..."
+                                              apropos-variable
+                                              :help "Find a variable that matches a regular expression")
+                                    (var-values menu-item "Variable Values..."
+                                                apropos-value
+                                                :help "Find variable values that matches a regular expression.")
+                                    (symbols menu-item "Symbols..."
+                                             apropos
+                                             :help "Find functions/variables that match a regular expression.")
+                                    (symbol-desc menu-item "Symbol Descriptions (Doc)..."
+                                                 apropos-documentation
+                                                 :help "Find functions/variables whose documentation match a regular expression")
+                                    (tags menu-item "Tags..."
+                                          tags-apropos
+                                          :help "Find Tags Matching Regular Expression")))
+                          (describe menu-item "Describe"
+                                    (keymap
+                                     (function menu-item "Function..."
+                                               describe-function
+                                               :help "Describe command or other function")
+                                     (variable menu-item "Variable..."
+                                               describe-variable
+                                               :help "Describe an emacs user option or other variable.")
+                                     (face menu-item "Face..."
+                                           describe-face
+                                           :help "Describe a face")
+                                     (key menu-item "Key..."
+                                          describe-key
+                                          :help "Describe a command bound to a key")
+                                     (input menu-item "Input Method..."
+                                            describe-input-method)
+                                     (coding menu-item "Coding System..."
+                                             describe-coding-system)
+                                     (separator-curr-modes menu-item "--")
+                                     (curr-major-mode menu-item "Current Major Mode"
+                                                      ergoemacs-describe-major-mode
+                                                      :help "Describe this buffers major and minor modes.")
+                                     (curr-modes menu-item "Current Modes"
+                                                 (lambda() (interactive) (call-interactively 'describe-mode))
+                                                 :help "Describe this buffers major and minor modes.")
+                                     (curr-keys menu-item "Current Key Bindings"
+                                                describe-bindings
+                                                :help "List all key-bindings with brief descriptions.")
+                                     (curr-syntax menu-item "Current Syntax Table"
+                                                  describe-syntax
+                                                  :help "Describe the syntax specifications in the current syntax table")))
+                          (learn-more menu-item "Learn More"
+                                      (keymap
+                                       (emacs menu-item"Emacs"
+                                              (keymap
+                                               (manual menu-item
+                                                       "Manual"
+                                                       info-emacs-manual)
+                                               (command-desc menu-item
+                                                             "    Command Description..."
+                                                             Info-goto-emacs-command-node
+                                                             :help "Show emacs manual section about a command")
+                                               ;; Useless for ergoemacs...
+                                               ;; (key-desc menu-item
+                                               ;;           "    Key Description..."
+                                               ;;           Info-goto-emacs-key-command-node
+                                               ;;           :help "Show Emacs manual
+                                               ;;           section that describes a key
+                                               ;;           sequence.")
+                                               (index menu-item
+                                                      "    Index..."
+                                                      emacs-index-search
+                                                      :help "Lookup topic in Emacs manual")
+                                               (glossary menu-item
+                                                         "    Glossary"
+                                                         search-emacs-glossary)
+                                               (separator-emacs menu-item "--")
+                                               (faq menu-item
+                                                    "FAQ"
+                                                    view-emacs-FAQ
+                                                    :help "Read frequently asked questions about Emacs (with answers)")
+                                               (whats-new menu-item
+                                                          "What's new"
+                                                          view-emacs-news
+                                                          :help "New features of emacs")
+                                               (known-problems menu-item
+                                                               "Known problems"
+                                                               view-emacs-problems
+                                                               :help "Known problems of this Emacs version.")))
+                                       (emacs-lisp menu-item "Emacs Lisp"
+                                                   (keymap
+                                                    (xah-lisp menu-item
+                                                              "Xah Emacs Lisp Tutorial"
+                                                              (lambda() (interactive)
+                                                                (browse-url ergoemacs-xah-emacs-lisp-tutorial-url))
+                                                              :help "Read Emacs Lisp Tutorial")
+                                                    
+                                                    (intro menu-item
+                                                           "Intro to Elisp"
+                                                           (lambda() (interactive)
+                                                             (info "eintr"))
+                                                           :help "Read introduction to Emacs Lisp")
+                                                    (manual menu-item
+                                                            "Manual"
+                                                            (lambda() (interactive) (info "elisp"))
+                                                            :help "Read Emacs Lisp reference Manual")
+                                                    (index menu-item
+                                                           "    Index..."
+                                                           elisp-index-search
+                                                           :help "Lookup topic in emacs lisp manual")
+                                                    (elisp-separator menu-item "--")
+                                                    (locate-library menu-item "Locate Library"
+                                                                    locate-library
+                                                                    :help "Locate lisp library")))
+                                       (last-accessed-info menu-item "Last Accessed Manual (Info)"
+                                                           info
+                                                           :help "Open Info, at the last doc place visited.")
+                                       (info-dir menu-item "All Manuals (`Info')"
+                                                 Info-directory
+                                                 :help "Open a list of all the info docs.")
+                                       (man-dir menu-item "Unix Man Pages..."
+                                                woman
+                                                :help "Unix Manual entries (with WoMan)")))
+                          (separator-2 menu-item "--")
+
+                          (eroemacs-current-keybindings menu-item
+                                                        "Current Ergoemacs Keybindings"
+                                                        ergoemacs-display-current-svg)
+                          
+                          (ergoemacs-mode-web-page menu-item
+                                                   "Ergoemacs-mode web-page"
+                                                   (lambda() (interactive)
+                                                     (browse-url ergoemacs-mode-web-page-url))
+                                                   :help "Online help about ergoemacs.")
+                          
+                          (separator-3 menu-item "--")
+                          (send-bug-report menu-item "Send Emacs Bug Report"
+                                           report-emacs-bug
+                                           :help "Report an emacs bug.")
+                          
+                          (emacs-web-page menu-item "Emacs Web Page"
+                                          (lambda() (interactive)
+                                            (browse-url "http://www.gnu.org/software/emacs/"))
+                                          :help "Emacs Web Page")
+
+                          (separator-licence menu-item "--")
+                          (license menu-item "License"
+                                   describe-copying)
+                          ,(if (eq system-type 'darwin) "Help" "?")))))
+
 (ergoemacs-theme lvl0 ()
   "CUA-mode style"
   (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
@@ -1227,7 +1904,15 @@
                  multiple-cursors-remaps
                  quit
                  apps-swap
-                 save-options-on-exit)
+                 save-options-on-exit
+                 ;; Reverse menu-bar order
+                 menu-bar-help
+                 menu-bar-languages
+                 menu-bar-view
+                 menu-bar-search
+                 menu-bar-edit
+                 menu-bar-file
+                 )
   :optional-off '(guru
                   alt-backspace-is-undo
                   search-reg
@@ -1245,7 +1930,8 @@
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
-                  ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))))
+                  ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
+                  ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
