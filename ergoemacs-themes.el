@@ -1344,7 +1344,7 @@
   :control-super-hyper '(meta super hyper)
 
   :meta-super-hyper-shift '(control super hyper shift)
-  :control-super-hyper-shfift '(meta super hyper shift)
+  :control-super-hyper-shift '(meta super hyper shift)
   
   :modal-color "blue"
   :modal-always t
