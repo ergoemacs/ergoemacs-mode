@@ -460,10 +460,6 @@ When KEYMAP can be a property.  The following properties are supported:
      ((and keymap (symbolp keymap)
            (eq keymap :remap) property)
       `(call-interactively (or (key-binding (vector 'ergoemacs-remap ,property) t nil (point)) ,property)))
-
-     ((and keymap (symbolp keymap)
-           (eq keymap :md5))
-      `(ergoemacs-map--md5 ,property))
      
      ((and keymap (symbolp keymap)
            (eq keymap :layout))

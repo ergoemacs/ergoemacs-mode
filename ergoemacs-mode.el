@@ -508,6 +508,11 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   "List of major modes excluded from ergoemacs' Languages menu."
   :type '(repeat (symbol :tag "Excluded Major Mode"))
   :group 'ergoemacs-mode)
+;;; Menu options
+
+(defgroup ergoemacs-menus nil
+  "Options for `ergoemacs-command-loop'."
+  :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-mode-names
   '((conf-mode "Settings")
@@ -520,7 +525,12 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
           (list
            (symbol :tag "Major Mode Name")
            (text :tag "Alternative Description:")))
-  :group 'ergoemacs-mode)
+  :group 'ergoemacs-menus)
+
+(defcustom ergoemacs-menu-order '(file edit search view languages options buffers help)
+  "Menu order for `ergoemacs-mode' global menus"
+  :type '(repeat (sexp :tag "Menu-bar key"))
+  :group 'ergoemacs-menus)
 
 ;;; Command loop options.
 (defgroup ergoemacs-command-loop nil

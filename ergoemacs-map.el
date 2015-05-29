@@ -216,11 +216,6 @@
       t)
     lookup-key))
 
-(defun ergoemacs-map--md5 (&optional map-list)
-  "Get the MD5 for MAP-LIST.
-MAP-LIST is the list of theme components if not pre-specified."
-  (md5 (format "%s" (ergoemacs-map--base-lookup-key (ergoemacs-component-struct--lookup-hash (or map-list (ergoemacs-theme-components)))))))
-
 (defvar ergoemacs-map--undefined-keys nil
   "List of undefined keys for the global map.")
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
@@ -256,7 +251,10 @@ If LOOKUP-KEYMAP
          (read-map (make-sparse-keymap))
          tmp-key
          tmp
+         tmp2
+         tmp3
          ret
+         menu-bar
          only-modify-p)
     (cond
      ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
@@ -322,15 +320,46 @@ If LOOKUP-KEYMAP
         
         (push tmp composed-list)
         
+        (push (ergoemacs (ergoemacs :global-map) :original-menu-bar) menu-bar)
+        
         ;; Each ergoemacs theme component
         (dolist (cur-map (reverse map))
           (setq tmp (ergoemacs-map-- lookup-keymap layout cur-map t))
           (unless (ergoemacs tmp :empty-p)
-            (push tmp composed-list)))
+            (cond
+             ((setq tmp2 (lookup-key tmp [menu-bar]))
+              (push tmp2 menu-bar)
+              (setq tmp2 (make-sparse-keymap))
+              (map-keymap
+               (lambda (event item)
+                 (unless (eq event 'menu-bar)
+                   (define-key tmp2 (vector event) item)))
+               tmp)
+              (unless (ergoemacs tmp2 :empty-p)
+                (push tmp2 composed-list)))
+             (t (push tmp composed-list)))))
 
         ;; The real `global-map'
-        (setq parent (copy-keymap (ergoemacs :global-map)))
-        
+        (setq parent (copy-keymap (ergoemacs :global-map))
+              tmp (ergoemacs-map-keymap nil (make-composed-keymap menu-bar)))
+
+        (let ((i 0)
+              alst)
+          (dolist (menu ergoemacs-menu-order)
+            (push (list menu i) alst)
+            (setq i (+ i 1)))
+          (setq tmp (sort tmp (lambda(elt1 elt2)
+                                  (let ((i1 (or (and (eq elt1 'keymap) -1) (assq (car elt1) alst)))
+                                        (i2 (or (and (eq elt2 'keymap) -1) (assq (car elt2) alst))))
+                                    (if i1
+                                        (setq i1 (or (and (integerp i1) i1) (nth 1 i1)))
+                                      (setq i1 (length ergoemacs-menu-order)))
+                                    (if i2
+                                        (setq i2 (or (and (integerp i2) i2) (nth 1 i2)) )
+                                      (setq i2 (length ergoemacs-menu-order)))
+                                    (< i1 i2))))))
+
+        (define-key parent [menu-bar] tmp)
 
         ;; The keys that will be unbound
         (setq ret (make-sparse-keymap))
@@ -537,6 +566,11 @@ If LOOKUP-KEYMAP
 (defun ergoemacs-map--install ()
   "Installs `ergoemacs-mode' into the appropriate keymaps."
   (interactive)
+  ;; Save original [menu-bar]
+  (unless (ergoemacs (ergoemacs :global-map) :original-menu-bar)
+    (ergoemacs (ergoemacs :global-map)
+               :original-menu-bar
+               (copy-keymap (lookup-key global-map [menu-bar]))))
   (ergoemacs-mode-line)
   (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
     `("ErgoEmacs" . ,(ergoemacs-theme--menu (ergoemacs :current-theme))))
@@ -563,12 +597,18 @@ If LOOKUP-KEYMAP
 (defun ergoemacs-map--remove ()
   "Remove `ergoemacs-mode'"
   (interactive)
+  ;; Restore menu-bar
   ;; Not needed; Global map isn't modified...
   (let (ergoemacs-mode)
     (use-global-map global-map)
     (setq ergoemacs-map--alist (make-hash-table)
           ergoemacs-map--alists (make-hash-table))
-    (ergoemacs-map--modify-active t)))
+    (ergoemacs-map--modify-active t))
+  (let ((menu-bar (ergoemacs (ergoemacs :global-map) :original-menu-bar)))
+    (when menu-bar
+      ;; (message "menu-bar: %s" menu-bar)
+      ;; (global-set-key [menu-bar] menu-bar)
+      )))
 
 (defun ergoemacs-map-undefined ()
   "Lets the user know that this key is undefined in `ergoemacs-mode'."
