@@ -59,6 +59,8 @@
 (defvar ergoemacs-display-key-use-face-p)
 (defvar ergoemacs-display-small-symbols-for-key-modifiers)
 (defvar ergoemacs-display-use-unicode-brackets-around-keys)
+(defvar ergoemacs-display-without-brackets nil
+  "Display the key without brackets")
 
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")
@@ -235,7 +237,8 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
 (defun ergoemacs-key-description (kbd &optional layout)
   "Creates Pretty keyboard binding from kbd from M- to Alt+"
   (if (not kbd) ""
-    (let ((kbd (or (ergoemacs-translate--escape-to-meta kbd) kbd)))
+    (let ((kbd (or (ergoemacs-translate--escape-to-meta kbd)
+                   (and (stringp kbd) (vconcat kbd)) kbd)))
       (if (eq kbd (vector)) ""
         (let ((ret "")
               tmp
@@ -262,23 +265,25 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
                     ev (gethash (intern (format "s%s" ev))
                                 (ergoemacs-translate--event-modifier-hash layout)))))
             (setq tmp (format "%s%s%s%s"
-                              (or (and ergoemacs-display-key-use-face-p "")
+                              (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) "")
                                   (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs :unicode-or-alt "【" "["))
                                   "[")
                               (mapconcat #'ergoemacs-key-description--modifier
                                          mod "")
                               (ergoemacs-key-description--key ev mod)
-                              (or (and ergoemacs-display-key-use-face-p "")
+                              (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) "")
                                   (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs :unicode-or-alt "】" "]"))
                                   "]")))
             (when (and ergoemacs-display-small-symbols-for-key-modifiers ergoemacs-display-key-use-face-p)
               (add-text-properties 0 (length tmp)
                                    '(face ergoemacs-display-key-face) tmp))
             (setq ret (format "%s%s%s" ret
-                              (or (and ergoemacs-display-key-use-face-p " ")
-                                  (and ergoemacs-display-use-unicode-brackets-around-keys "")) tmp)))
-          (substring ret (or (and ergoemacs-display-key-use-face-p 1)
-                             (and ergoemacs-display-use-unicode-brackets-around-keys 0))))))))
+                              (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) " ")
+                                  (and ergoemacs-display-use-unicode-brackets-around-keys "")
+                                  " ") tmp)))
+          (substring ret (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) 1)
+                             (and ergoemacs-display-use-unicode-brackets-around-keys 0)
+                             1)))))))
 
 (defun ergoemacs-key-description-kbd (code)
   "Creates `ergoemacs-mode' style description of kbd macro CODE"
