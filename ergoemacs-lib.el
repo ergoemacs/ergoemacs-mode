@@ -1,35 +1,9 @@
-;;; ergoemacs-lib.el --- Ergoemacs map interface -*- lexical-binding: t -*-
+;;; ergoemacs-lib.el --- Ergoemacs libraries -*- lexical-binding: t -*-
 
 ;; Copyright © 2013-2015  Free Software Foundation, Inc.
 
-;; Filename: ergoemacs-lib.el
-;; Description:
-;; Author: Matthew L. Fidler
+;; Author: Matthew L. Fidler, Xah Lee
 ;; Maintainer: 
-;; Created: Sat Sep 28 20:10:56 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By: 
-;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
-;; 
-;; Features that might be required by this library:
-;;
-;;   None
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Commentary: 
-;; 
-;;
-;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Change Log:
-;; 
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
@@ -349,6 +323,98 @@ All other modes are assumed to be minor modes or unimportant.
           (tabbar-mode -1)
         (tabbar-mode 1)))))
 
+
+(defun ergoemacs-menu--key-shortcut (cmd)
+  "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
+  (cond
+   ((not cmd))
+   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
+         (eq cmd 'ergoemacs-cut-line-or-region)) (ergoemacs-key-description--menu (kbd "C-x")) )
+   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
+         (eq cmd 'ergoemacs-copy-line-or-region)) (ergoemacs-key-description--menu (kbd "C-c")))
+   (t
+    ;;; FIXME: faster startup by creating component alists
+    (let ((key (where-is-internal cmd nil 'meta nil t)))
+      (when (memq (elt key 0) '(menu-bar remap again redo cut copy paste help open find ergoemacs-remap execute))
+        (setq key nil))
+      (and key (ergoemacs-key-description--menu key))))))
+
+
+(defun ergoemacs-menu--key-menu-item (item)
+  "Key menu item."
+  (if (and (>= (safe-length item) 4)
+           (symbolp (car item))
+           (eq (cadr item) 'menu-item)
+           (stringp (caddr item))
+           (symbolp (cadddr item))
+           (not (keymapp (cadddr item))))
+      ;; Look if this item already has a :keys property
+      (if (catch 'found-keys
+            (dolist (i item)
+              (when (eq i ':keys)
+                (throw 'found-keys t))) nil)
+          nil
+        (ergoemacs-menu--key-shortcut (cadddr item)))
+    nil))
+
+;;;###autoload
+(defun ergoemacs-menu--preprocess (menu &optional fn)
+  "Put `ergoemacs-mode' key bindings on menus."
+  (let ((menu (or (and (not fn) menu)
+                  (funcall fn menu)))
+        tmp tmp2)
+    ;; (when fn
+    ;;   (message "%s:\n\t%s" fn menu))
+    (if (not (ignore-errors (keymapp menu)))
+        (progn
+          (when menu
+            (message "Invalid menu in ergoemacs-menu--preprocess %s" menu))
+          menu)
+      (when (symbolp menu)
+        (setq menu (ergoemacs-sv menu)))
+      ;; For each element in the menu
+      (ergoemacs-setcdr menu
+                        (mapcar (lambda (item)
+                                  (let (key)
+                                    (cond
+                                     ;; ((ergoemacs-keymapp item)
+                                     ;;  (ergoemacs-menu--preprocess item)
+                                     ;;  (message "1:%s..." (substring (format "%s" item) 0 (min (length (format "%s" item)) 60)))
+                                     ;;  item)
+                                     ((ergoemacs-keymapp (cdr (cdr item)))
+                                      ;; JIT processing
+                                      `(,(nth 0 item) menu-item ,(nth 1 item) ,(cdr (cdr item))
+                                        :filter ergoemacs-menu--preprocess))
+                                     ((ergoemacs-keymapp (car (cdr (cdr (cdr item)))))
+                                      ;; (message "3:%s..." (substring (format "%s" item) 0 (min (length (format "%s" item)) 60)))
+                                      (if (setq tmp (plist-get item :filter))
+                                          (mapcar
+                                           (lambda(elt)
+                                             (cond
+                                              ((eq elt :filter)
+                                               (setq tmp2 t)
+                                               :filter)
+                                              ((not tmp2)
+                                               elt)
+                                              ((eq elt 'ergoemacs-menu--preprocess)
+                                               (setq tmp2 nil)
+                                               'ergoemacs-menu--preprocess)
+                                              ((ignore-errors
+                                                 (and (consp elt)
+                                                      (eq (nth 0 elt) 'lambda)
+                                                      (eq (nth 0 (nth 2 elt)) 'ergoemacs-menu--preprocess)))
+                                               (setq tmp2 nil)
+                                               elt)
+                                              (t
+                                               (setq tmp2 nil)
+                                               `(lambda(bind) (ergoemacs-menu--preprocess bind ',tmp)))))
+                                           item)
+                                        `(,@item :filter ergoemacs-menu--preprocess)))
+                                     ((setq key (ergoemacs-menu--key-menu-item item))
+                                      (append item (cons :keys (cons key nil))))
+                                     (t item))))
+                                (cdr menu))))
+    menu))
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-lib.el ends here

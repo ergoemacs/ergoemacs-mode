@@ -234,6 +234,14 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
         (push m tmp))))
     tmp))
 
+(defun ergoemacs-key-description--menu (kbd &optional layout)
+  "Creates Pretty keyboard bindings for menus."
+  (let ((ergoemacs-display-without-brackets t)
+        (ergoemacs-display-key-use-face-p nil)
+        (ergoemacs-display-small-symbols-for-key-modifiers nil))
+    (ergoemacs-key-description kbd layout)))
+  
+
 (defun ergoemacs-key-description (kbd &optional layout)
   "Creates Pretty keyboard binding from kbd from M- to Alt+"
   (if (not kbd) ""

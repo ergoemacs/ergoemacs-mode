@@ -328,7 +328,7 @@ If LOOKUP-KEYMAP
           (unless (ergoemacs tmp :empty-p)
             (cond
              ((setq tmp2 (lookup-key tmp [menu-bar]))
-              (push tmp2 menu-bar)
+              (push (copy-keymap tmp2) menu-bar)
               (setq tmp2 (make-sparse-keymap))
               (map-keymap
                (lambda (event item)
@@ -343,6 +343,7 @@ If LOOKUP-KEYMAP
         (setq parent (copy-keymap (ergoemacs :global-map))
               tmp (ergoemacs-map-keymap nil (make-composed-keymap menu-bar)))
 
+        ;; The global `menu-bar'
         (let ((i 0)
               alst)
           (dolist (menu ergoemacs-menu-order)
@@ -358,7 +359,6 @@ If LOOKUP-KEYMAP
                                         (setq i2 (or (and (integerp i2) i2) (nth 1 i2)) )
                                       (setq i2 (length ergoemacs-menu-order)))
                                     (< i1 i2))))))
-
         (define-key parent [menu-bar] tmp)
 
         ;; The keys that will be unbound
@@ -588,6 +588,9 @@ If LOOKUP-KEYMAP
         ergoemacs-map--alist (make-hash-table)
         ergoemacs-map--alists (make-hash-table))
   (use-global-map ergoemacs-keymap)
+  ;; Put `ergoemacs-mode' style key shortcuts instead of emacs
+  ;; style shortcuts (They need to place the correct shortucts)
+  (ergoemacs-menu--preprocess (lookup-key ergoemacs-keymap [menu-bar]))
   (ergoemacs-map--modify-active t)
   (add-hook 'post-command-hook #'ergoemacs-map--modify-active))
 
