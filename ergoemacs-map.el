@@ -590,7 +590,7 @@ If LOOKUP-KEYMAP
   (use-global-map ergoemacs-keymap)
   ;; Put `ergoemacs-mode' style key shortcuts instead of emacs
   ;; style shortcuts (They need to place the correct shortucts)
-  (ergoemacs-menu--preprocess (lookup-key ergoemacs-keymap [menu-bar]))
+  (ergoemacs-menu--filter (lookup-key ergoemacs-keymap [menu-bar]))
   (ergoemacs-map--modify-active t)
   (add-hook 'post-command-hook #'ergoemacs-map--modify-active))
 

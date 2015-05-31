@@ -162,7 +162,6 @@
          ["Open Last Closed"
           ergoemacs-open-last-closed
           :help "Remove duplicates, and obsoletes files from the recent list"
-          :keys (ergoemacs-shortcut-for-command 'ergoemacs-open-last-closed)
           :active t]
          ["Cleanup list"
           recentf-cleanup

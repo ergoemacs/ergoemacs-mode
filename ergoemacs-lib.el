@@ -324,7 +324,7 @@ All other modes are assumed to be minor modes or unimportant.
         (tabbar-mode 1)))))
 
 
-(defun ergoemacs-menu--key-shortcut (cmd)
+(defun ergoemacs-menu--filter-key-shortcut (cmd &optional keymap)
   "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
   (cond
    ((not cmd))
@@ -334,13 +334,22 @@ All other modes are assumed to be minor modes or unimportant.
          (eq cmd 'ergoemacs-copy-line-or-region)) (ergoemacs-key-description--menu (kbd "C-c")))
    (t
     ;;; FIXME: faster startup by creating component alists
-    (let ((key (where-is-internal cmd nil 'meta nil t)))
+    ;; SLOW: 2-seconds 
+    (let ((key (where-is-internal cmd (or keymap ergoemacs-keymap) 'meta nil t)))
       (when (memq (elt key 0) '(menu-bar remap again redo cut copy paste help open find ergoemacs-remap execute))
         (setq key nil))
-      (and key (ergoemacs-key-description--menu key))))))
+      (and key (ergoemacs-key-description--menu key)))
+    
+    ;; (let ((key (gethash cmd (ergoemacs (ergoemacs :global-map) :where-is))))
+    ;;   (when key
+    ;;     (setq key (nth 0 key)))
+    ;;   (when (memq (elt key 0) '(menu-bar remap again redo cut copy paste help open find ergoemacs-remap execute))
+    ;;     (setq key nil))
+    ;;   (or (and key (ergoemacs-key-description--menu key)) ""))
+    )))
 
 
-(defun ergoemacs-menu--key-menu-item (item)
+(defun ergoemacs-menu--filter-key-menu-item (item &optional keymap)
   "Key menu item."
   (if (and (>= (safe-length item) 4)
            (symbolp (car item))
@@ -354,11 +363,11 @@ All other modes are assumed to be minor modes or unimportant.
               (when (eq i ':keys)
                 (throw 'found-keys t))) nil)
           nil
-        (ergoemacs-menu--key-shortcut (cadddr item)))
+        (ergoemacs-menu--filter-key-shortcut (cadddr item) keymap))
     nil))
 
 ;;;###autoload
-(defun ergoemacs-menu--preprocess (menu &optional fn)
+(defun ergoemacs-menu--filter (menu &optional fn keymap)
   "Put `ergoemacs-mode' key bindings on menus."
   (let ((menu (or (and (not fn) menu)
                   (funcall fn menu)))
@@ -368,7 +377,7 @@ All other modes are assumed to be minor modes or unimportant.
     (if (not (ignore-errors (keymapp menu)))
         (progn
           (when menu
-            (message "Invalid menu in ergoemacs-menu--preprocess %s" menu))
+            (message "Invalid menu in ergoemacs-menu--filter %s" menu))
           menu)
       (when (symbolp menu)
         (setq menu (ergoemacs-sv menu)))
@@ -378,13 +387,18 @@ All other modes are assumed to be minor modes or unimportant.
                                   (let (key)
                                     (cond
                                      ;; ((ergoemacs-keymapp item)
-                                     ;;  (ergoemacs-menu--preprocess item)
+                                     ;;  (ergoemacs-menu--filter item)
                                      ;;  (message "1:%s..." (substring (format "%s" item) 0 (min (length (format "%s" item)) 60)))
                                      ;;  item)
+                                     ((and (ergoemacs-keymapp keymap) (ergoemacs-keymapp (cdr (cdr item))))
+                                      ;; JIT processing
+                                      `(,(nth 0 item) menu-item ,(nth 1 item) ,(cdr (cdr item))
+                                        :filter (lambda(bind) (ergoemacs-menu--filter bind nil ',keymap))))
                                      ((ergoemacs-keymapp (cdr (cdr item)))
                                       ;; JIT processing
                                       `(,(nth 0 item) menu-item ,(nth 1 item) ,(cdr (cdr item))
-                                        :filter ergoemacs-menu--preprocess))
+                                        :filter ergoemacs-menu--filter))
+                                     
                                      ((ergoemacs-keymapp (car (cdr (cdr (cdr item)))))
                                       ;; (message "3:%s..." (substring (format "%s" item) 0 (min (length (format "%s" item)) 60)))
                                       (if (setq tmp (plist-get item :filter))
@@ -396,21 +410,21 @@ All other modes are assumed to be minor modes or unimportant.
                                                :filter)
                                               ((not tmp2)
                                                elt)
-                                              ((eq elt 'ergoemacs-menu--preprocess)
+                                              ((eq elt 'ergoemacs-menu--filter)
                                                (setq tmp2 nil)
-                                               'ergoemacs-menu--preprocess)
+                                               'ergoemacs-menu--filter)
                                               ((ignore-errors
                                                  (and (consp elt)
                                                       (eq (nth 0 elt) 'lambda)
-                                                      (eq (nth 0 (nth 2 elt)) 'ergoemacs-menu--preprocess)))
+                                                      (eq (nth 0 (nth 2 elt)) 'ergoemacs-menu--filter)))
                                                (setq tmp2 nil)
                                                elt)
                                               (t
                                                (setq tmp2 nil)
-                                               `(lambda(bind) (ergoemacs-menu--preprocess bind ',tmp)))))
+                                               `(lambda(bind) (ergoemacs-menu--filter bind ',tmp ',keymap)))))
                                            item)
-                                        `(,@item :filter ergoemacs-menu--preprocess)))
-                                     ((setq key (ergoemacs-menu--key-menu-item item))
+                                        `(,@item :filter ergoemacs-menu--filter)))
+                                     ((setq key (ergoemacs-menu--filter-key-menu-item item keymap))
                                       (append item (cons :keys (cons key nil))))
                                      (t item))))
                                 (cdr menu))))
