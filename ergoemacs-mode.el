@@ -591,6 +591,11 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :type 'number
   :group 'ergoemacs-command-loop)
 
+(defcustom ergoemacs-command-loop-timeout 2
+  "The number of seconds before hook has froze."
+  :type 'number
+  :group 'ergoemacs-command-loop)
+
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined
 look for the command with or without modifiers."

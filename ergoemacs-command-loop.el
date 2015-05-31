@@ -774,7 +774,8 @@ This sequence is compatible with `listify-key-sequence'."
   "Simulates the end of a command."
   ;; Simulate the end of an emacs command, since we are not
   ;; exiting the loop.
-  (run-hooks 'post-command-hook)
+  (with-timeout (ergoemacs-command-loop-timeout nil)
+    (ignore-errors (run-hooks 'post-command-hook)))
 
   ;; Deactivate mark.
   (when deactivate-mark
@@ -1198,7 +1199,8 @@ pressed the translated key by changing
   ;; Defer pre-command hook for functions that induce the
   ;; `ergoemacs-mode' command loop.
   (unless (ergoemacs :command-loop-p this-command)
-    (run-hooks 'ergoemacs-command-loop--pre-command-hook)))
+    (with-timeout (ergoemacs-command-loop-timeout nil)
+      (ignore-errors (run-hooks 'ergoemacs-command-loop--pre-command-hook)))))
 
 (add-hook 'ergoemacs-pre-command-hook #'ergoemacs-command-loop--pre-command-hook)
 
@@ -1330,8 +1332,9 @@ For instance in QWERTY M-> is shift translated to M-."
                    (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook t)
                    (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
                    (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions t)
-                   (run-hooks 'pre-command-hook)
-                   (run-hooks 'ergoemacs-pre-command-hook))
+                   (with-timeout (ergoemacs-command-loop-timeout nil)
+                     (ignore-errors (run-hooks 'pre-command-hook))
+                     (ignore-errors (run-hooks 'ergoemacs-pre-command-hook))))
                (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)))
             (ergoemacs-command-loop--call-interactively this-command t))
