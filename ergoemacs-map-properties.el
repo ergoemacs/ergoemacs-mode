@@ -312,26 +312,27 @@ composing or parent/child relationships)"
 
 (defun ergoemacs-map-properties--put (keymap property value)
   "Set ergoemacs-mode KEYMAP PROPERTY to VALUE."
-  (if (eq property :label)
-      (ergoemacs :label keymap value)
-    (let ((keymap (ergoemacs-map-properties--keymap-value keymap)))
-      (cond
-       ((not (ergoemacs-keymapp keymap))
-        (warn "Trying to put keymap property on non-keymap %s." keymap))
-       ((eq property :full)
-        (warn "Cannot set the keymap property :full"))
-       (t (let ((ret (ergoemacs-map-properties--map-fixed-plist keymap)) tmp)
-            (if (and ret (eq property ':map-key))
-                (progn
-                  (setq ret (plist-put ret property value))
-                  (ergoemacs :label keymap value))
-              (unless (hash-table-p ergoemacs-map-properties--plist-hash)
-                (setq ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)))
-              (setq tmp (gethash (ergoemacs-map-properties--key-struct keymap) ergoemacs-map-properties--plist-hash))
-              (unless (hash-table-p tmp)
-                (setq tmp (make-hash-table)))
-              (puthash property value tmp)
-              (puthash (ergoemacs-map-properties--key-struct keymap) tmp ergoemacs-map-properties--plist-hash))))))))
+  (prog1 value
+    (if (eq property :label)
+        (ergoemacs :label keymap value)
+      (let ((keymap (ergoemacs-map-properties--keymap-value keymap)))
+        (cond
+         ((not (ergoemacs-keymapp keymap))
+          (warn "Trying to put keymap property on non-keymap %s." keymap))
+         ((eq property :full)
+          (warn "Cannot set the keymap property :full"))
+         (t (let ((ret (ergoemacs-map-properties--map-fixed-plist keymap)) tmp)
+              (if (and ret (eq property ':map-key))
+                  (progn
+                    (setq ret (plist-put ret property value))
+                    (ergoemacs :label keymap value))
+                (unless (hash-table-p ergoemacs-map-properties--plist-hash)
+                  (setq ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)))
+                (setq tmp (gethash (ergoemacs-map-properties--key-struct keymap) ergoemacs-map-properties--plist-hash))
+                (unless (hash-table-p tmp)
+                  (setq tmp (make-hash-table)))
+                (puthash property value tmp)
+                (puthash (ergoemacs-map-properties--key-struct keymap) tmp ergoemacs-map-properties--plist-hash)))))))))
 
 (defun ergoemacs-map-properties--parent (keymap &optional force)
   "Returns a `ergoemacs-mode' map-key for the parent of KEYMAP."
