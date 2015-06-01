@@ -146,17 +146,14 @@ bindings into this keymap (the original keymap is untouched)"
 Also when `ergoemacs-mode' is enabled and KEYMAP is not the
 `global-map', install `ergoemacs-mode' modifications and then set the modified keymap.
 "
-  :type :replace
-  (ergoemacs :label keymap)
-  (cond
-   ((and ergoemacs-mode (eq keymap global-map))
-    (ergoemacs-advice--real-use-global-map ergoemacs-keymap))
-   ((and ergoemacs-mode (eq keymap ergoemacs-keymap))
-    (ergoemacs-advice--real-use-global-map ergoemacs-keymap))
-   (ergoemacs-mode
-    (ergoemacs-advice--real-use-global-map (ergoemacs keymap t)))
-   (t
-    (ergoemacs-advice--real-use-global-map keymap))))
+  :type :after
+  (let ((cgm (current-global-map)))
+    (cond
+     ((and ergoemacs-mode (eq cgm global-map))
+      (use-global-map ergoemacs-mode))
+     ((and ergoemacs-mode (eq cgm ergoemacs-mode)))
+     ((and ergoemacs-mode (not (ergoemacs cgm :installed-p)))
+      (use-global-map (ergoemacs keymap t))))))
 
 (ergoemacs-advice current-active-maps (&optional olp position)
   "This ignores `ergoemacs-mode' keys in `overriding-terminal-local-map'."
