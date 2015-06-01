@@ -422,12 +422,12 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
              ;; Run (with-timeout) so that idle timers will work.
              (event (cond
                      (prompt (with-timeout (seconds nil)
-                               (read-event prompt)))
+                               (ignore-errors (read-event prompt))))
                      ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
                            ergoemacs-command-loop--single-command-keys)
                       (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
-                        (read-event)))
-                     (t (read-event)))))
+                        (ignore-errors (read-event))))
+                     (t (ignore-errors (read-event))))))
         (when (eventp event)
           ;; (setq event (ergoemacs-command-loop--decode-mouse event))
           (unless (consp event) ;; Don't record mouse events
