@@ -638,10 +638,14 @@ This sequence is compatible with `listify-key-sequence'."
   "Determines if COMMAND is a movement command.
 This is done by checking if this is a command that supports shift
 selection or cua-mode's movement."
-  (and (commandp command)
-       (or (and (symbolp command) (eq (get command 'CUA) 'move))
-           (let ((intf (ignore-errors (car (cdr (interactive-form command))))))
-             (and intf (stringp intf) (string-match "^[@*]*\\^" intf))))))
+  (let (tmp)
+    (prog1 (and (commandp command)
+                (or (and (symbolp command) (eq (get command 'CUA) 'move))
+                    (setq tmp (let ((intf (ignore-errors (car (cdr (interactive-form command))))))
+                                (and intf (stringp intf) (string-match "^[@*]*\\^" intf))))))
+      ;; Put 'CUA movement command if it wasn't there.
+      (when (and tmp (symbolp command)) 
+        (put command 'CUA 'move)))))
 
 (defvar ergoemacs-map-properties--command-loop-functions
   '(ergoemacs-command-loop ergoemacs-read-key)
