@@ -1156,7 +1156,7 @@ pressed the translated key by changing
             (when (and orig-key
                        (setq ret bind
                              ret (if (and (eq ret 'ergoemacs-map-undefined)
-                                          (not (equal orig-key (nth 0 trials)))) nil ret)))
+                                          (equal orig-key (nth 0 trials))) nil ret)))
               (cond
                ((equal orig-key (nth 0 trials))
                 (setq ergoemacs-command-loop--single-command-keys new-key)
@@ -1281,8 +1281,7 @@ For instance in QWERTY M-> is shift translated to M-."
       (let ((tmp (prefix-numeric-value current-prefix-arg)))
         (cond
          ((<= tmp 0) ;; Unsure what to do here.
-          (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command))
-                                           tmp))
+          (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command)) tmp))
          (t (execute-kbd-macro command tmp)))))
      (t
       ;; This should be a regular command.
