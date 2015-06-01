@@ -771,8 +771,7 @@ This sequence is compatible with `listify-key-sequence'."
   "Simulates the end of a command."
   ;; Simulate the end of an emacs command, since we are not
   ;; exiting the loop.
-  (with-timeout (ergoemacs-command-loop-timeout nil)
-    (ignore-errors (run-hooks 'post-command-hook)))
+  (run-hooks 'post-command-hook)
 
   ;; Deactivate mark.
   (when deactivate-mark
@@ -1198,8 +1197,7 @@ pressed the translated key by changing
   ;; Defer pre-command hook for functions that induce the
   ;; `ergoemacs-mode' command loop.
   (unless (ergoemacs :command-loop-p this-command)
-    (with-timeout (ergoemacs-command-loop-timeout nil)
-      (ignore-errors (run-hooks 'ergoemacs-command-loop--pre-command-hook)))))
+    (run-hooks 'ergoemacs-command-loop--pre-command-hook)))
 
 (add-hook 'ergoemacs-pre-command-hook #'ergoemacs-command-loop--pre-command-hook)
 
@@ -1318,20 +1316,21 @@ For instance in QWERTY M-> is shift translated to M-."
       (unwind-protect
           (progn
             ;; Run deferred pre-command hook.
-            (ergoemacs-save-buffer-state
-             (unwind-protect
-                 (progn
+            (unwind-protect
+                (progn
+                  (ergoemacs-save-buffer-state
                    (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook)
                    (remove-hook 'ergoemacs-pre-command-hook #'ergoemacs-pre-command-hook t)
                    (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                    (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook t)
                    (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
-                   (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions t)
-                   (with-timeout (ergoemacs-command-loop-timeout nil)
-                     (ignore-errors (run-hooks 'pre-command-hook))
-                     (ignore-errors (run-hooks 'ergoemacs-pre-command-hook))))
-               (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-               (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)))
+                   (remove-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions t))
+                  (with-timeout (ergoemacs-command-loop-timeout nil)
+                    (ignore-errors (run-hooks 'pre-command-hook))
+                    (ignore-errors (run-hooks 'ergoemacs-pre-command-hook))))
+              (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+              (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions))
+            
             (ergoemacs-command-loop--call-interactively this-command t))
         (setq ergoemacs-command-loop--single-command-keys nil))))))
 
