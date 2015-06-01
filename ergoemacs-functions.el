@@ -1,6 +1,6 @@
 ;;; ergoemacs-functions.el --- miscellaneous functions for ErgoEmacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
+;; Copyright © 2013-2015 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Authors: Xah Lee, Matthew Fidler, Drew Adams, Ting-Yu Lin, David
@@ -90,8 +90,7 @@ The backup is determined by `find-backup-file-name'"
       (insert-file-contents (car backup-buffer))
       (goto-char opt))
      (t
-      (user-error "Did not revert buffer.")))
-    ))
+      (user-error "Did not revert buffer.")))))
 
 (defun ergoemacs-major-mode-p (value)
   "Return t if VALUE is a major mode function."
@@ -771,6 +770,7 @@ the prefix arguments of `beginning-of-buffer',
           (when pts
             (goto-char (nth 0 pts))))))))
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
+(put 'ergoemacs-beginning-of-line-or-what 'CUA 'move)
 
 ;; ergoemacs shortcut changes this-command
 (defun ergoemacs-end-of-line-or-what (&optional N )
@@ -915,6 +915,7 @@ the prefix arguments of `end-of-buffer',
          (t
           (goto-char (nth 0 pts)))))))
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
+(put 'ergoemacs-end-of-line-or-what 'CUA 'move)
 
 ;;; TEXT SELECTION RELATED
 
