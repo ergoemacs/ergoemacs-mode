@@ -77,9 +77,6 @@
 
 (defvar ergoemacs---ergoemacs-command-loop nil)
 
-(defvar ergoemacs-command-loop--shift-translated nil
-  "This command is forced to be shift translated.")
-
 (defvar ergoemacs-command-loop--mark-active nil
   "Determines if mark was active before ergoemacs command loop.")
 
@@ -1044,7 +1041,6 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                       ergoemacs-command-loop--current-type type
                       ergoemacs-command-loop--universal nil
                       ergoemacs-command-loop--exit t)
-
                 (if (setq continue-read (ergoemacs-keymapp command))
                     (setq universal nil)
                   (unless (eq ergoemacs-command-loop-type :test)
@@ -1131,8 +1127,7 @@ pressed the translated key by changing
 `ergoemacs-command-loop--single-command-keys'."
   (let ((trials (ergoemacs-translate--trials key))
         tmp tmp2 ret)
-    (setq ergoemacs-command-loop--shift-translated nil
-          this-command-keys-shift-translated nil)
+    (setq this-command-keys-shift-translated nil)
     (catch 'found-command
       (dolist (cur-key trials)
         (when cur-key
@@ -1160,14 +1155,14 @@ pressed the translated key by changing
               (cond
                ((equal orig-key (nth 0 trials))
                 (setq ergoemacs-command-loop--single-command-keys new-key)
-                (when (and (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-                           (ergoemacs-keymapp ret)
-                           (setq tmp (lookup-key ret [ergoemacs-timeout])))
+                (when (and (ergoemacs-keymapp ret)
+                           (setq tmp (lookup-key ret [ergoemacs-timeout]))
+                           (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)))
                   (cond
                    ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
                     (setq ret tmp))
                    ((not (region-active-p))) ;; its a key sequence.
-                   ;; Shift+Control+c
+                  
                    ((and this-command-keys-shift-translated
                          (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
 
@@ -1181,12 +1176,16 @@ pressed the translated key by changing
                                  (ergoemacs-command-loop--read-event nil key)))
                     (if (not tmp2)
                         (setq ret tmp) ;; timeout, use copy/cut
-                      (setq ret (ergoemacs-command-loop--key-lookup (vconcat key (vector tmp2))))))))
-                ) ;; Actual key
+                      ;; Actual key
+                      (setq ret (ergoemacs-command-loop--key-lookup (vconcat key (vector tmp2)))))))))
                ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
-                (setq ergoemacs-command-loop--shift-translated t
-                      this-command-keys-shift-translated t
-                      ergoemacs-command-loop--single-command-keys (nth 0 trials)))
+                (setq this-command-keys-shift-translated t
+                      ergoemacs-command-loop--single-command-keys (nth 0 trials))
+                ;; Shift+Control+c
+                (when (and (ergoemacs-keymapp ret)
+                           (setq tmp (lookup-key ret [ergoemacs-timeout]))
+                           (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
+                  (setq ret tmp)))
                (t
                 (ergoemacs-command-loop--message-binding key ret new-key)
                 (setq ergoemacs-command-loop--single-command-keys new-key)))
@@ -1246,11 +1245,8 @@ pressed the translated key by changing
   "Allow `ergoemacs-mode' command loop to handle shift selection.
 This allows shift-selection of non-letter keys.
 For instance in QWERTY M-> is shift translated to M-."
-  (let ((this-command-keys-shift-translated
-         (or this-command-keys-shift-translated
-             (if ergoemacs-command-loop--shift-translated t nil))))
-    (when (ergoemacs :movement-p function)
-      (handle-shift-selection))))
+  (when (ergoemacs :movement-p function)
+    (handle-shift-selection)))
 
 ;; (defun ergoemacs-command-loop--execute-rm-keyfreq (command)
 ;;   "Remove COMMAND from `keyfreq-mode' counts."
@@ -1337,17 +1333,7 @@ For instance in QWERTY M-> is shift translated to M-."
                (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)))
             (ergoemacs-command-loop--call-interactively this-command t))
-        (setq ergoemacs-command-loop--single-command-keys nil)))))
-  
-  ;; I think these should be correct from the command loop:
-  ;; - `last-event-frame' -- (should be correct from emacs command loop)
-  
-  ;; After executing, the emacs loop should copy `this-command' into
-  ;; `last-command'.
-  ;; It should also change `last-prefix-arg'
-
-  ;; The `post-command-hook' should be run by emacs
-  )
+        (setq ergoemacs-command-loop--single-command-keys nil))))))
 
 (provide 'ergoemacs-command-loop)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

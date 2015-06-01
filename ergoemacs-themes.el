@@ -297,7 +297,6 @@
   (global-set-key (kbd "C-?") 'info)
   (global-set-key (kbd "C-S-<next>") 'ergoemacs-next-emacs-buffer)
   (global-set-key (kbd "C-S-<prior>") 'ergoemacs-previous-emacs-buffer)
-  (global-set-key (kbd "C-S-c") '("C-c" normal)) 
   (global-set-key (kbd "C-S-f") 'occur)
   
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-external-app)
