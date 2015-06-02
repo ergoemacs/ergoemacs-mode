@@ -387,54 +387,60 @@ Currently this ensures:
   "Read event and add to event history.
 Also add to `last-command-event' to allow `self-insert-character' to work appropriately.
 I'm not sure the purpose of `last-event-frame', but this is modified as well"
-  (or (let ((event (pop unread-command-events)))
-        (setq last-command-event event
-              last-event-frame (selected-frame))
-        event)
-      (let* ((last-event-time (or (and ergoemacs-command-loop--last-event-time
-                                       (- (float-time) ergoemacs-command-loop--last-event-time))
-                                  (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
-             (prompt (cond
-                      ((or (minibufferp) isearch-mode) nil)
-                      ((or (string= prompt " ")
-                           (string= prompt (concat " " (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-")))) nil)
-                      (ergoemacs-command-loop--universal prompt)
-                      (ergoemacs-command-loop--echo-keystrokes-complete prompt)
-                      ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
-                      ((= 0 ergoemacs-command-loop-echo-keystrokes) prompt)
-                      ((< last-event-time ergoemacs-command-loop-echo-keystrokes) nil)
-                      ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
-                      ;;       (numberp ergoemacs-command-loop-echo-keystrokes)
-                      ;;       (or (= 0 ergoemacs-command-loop-echo-keystrokes)
-                      ;;           (< last-event-time ergoemacs-command-loop-echo-keystrokes))) nil)
-                      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
-                      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
-                      (t
-                       (setq ergoemacs-command-loop--echo-keystrokes-complete t)
-                       prompt)))
-             (echo-keystrokes 0)
-             ;; Run (with-timeout) so that idle timers will work.
-             (event (cond
-                     (prompt (with-timeout (seconds nil)
-                               (ignore-errors (read-event prompt))))
-                     ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
-                           ergoemacs-command-loop--single-command-keys)
-                      (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
-                        (ignore-errors (read-event))))
-                     (t (ignore-errors (read-event))))))
-        (when (eventp event)
-          ;; (setq event (ergoemacs-command-loop--decode-mouse event))
-          (unless (consp event) ;; Don't record mouse events
-            (push (list ergoemacs-command-loop--single-command-keys 
-                        ergoemacs-command-loop--current-type 
-                        ergoemacs-command-loop--universal
-                        current-prefix-arg
-                        last-command-event)
-                  ergoemacs-command-loop--history))
-          (setq ergoemacs-command-loop--last-event-time (float-time)
-                last-command-event event
-                last-event-frame (selected-frame)))
-        event)))
+  (let ((last-inhibit-quit inhibit-quit))
+    (unwind-protect
+        (progn
+          (setq inhibit-quit t)
+          (or (let ((event (pop unread-command-events)))
+                (setq last-command-event event
+                      last-event-frame (selected-frame))
+                event)
+              (let* ((last-event-time (or (and ergoemacs-command-loop--last-event-time
+                                               (- (float-time) ergoemacs-command-loop--last-event-time))
+                                          (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
+                     (prompt (cond
+                              ((or (minibufferp) isearch-mode) nil)
+                              ((or (string= prompt " ")
+                                   (string= prompt (concat " " (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-")))) nil)
+                              (ergoemacs-command-loop--universal prompt)
+                              (ergoemacs-command-loop--echo-keystrokes-complete prompt)
+                              ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
+                              ((= 0 ergoemacs-command-loop-echo-keystrokes) prompt)
+                              ((< last-event-time ergoemacs-command-loop-echo-keystrokes) nil)
+                              ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
+                              ;;       (numberp ergoemacs-command-loop-echo-keystrokes)
+                              ;;       (or (= 0 ergoemacs-command-loop-echo-keystrokes)
+                              ;;           (< last-event-time ergoemacs-command-loop-echo-keystrokes))) nil)
+                              ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
+                              ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
+                              (t
+                               (setq ergoemacs-command-loop--echo-keystrokes-complete t)
+                               prompt)))
+                     (echo-keystrokes 0)
+                     ;; Run (with-timeout) so that idle timers will work.
+                     (event (cond
+                             (prompt (with-timeout (seconds nil)
+                                       (ignore-errors (read-event prompt))))
+                             ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
+                                   ergoemacs-command-loop--single-command-keys)
+                              (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
+                                (ignore-errors (read-event))))
+                             (t (ignore-errors (read-event))))))
+                (when (eventp event)
+                  ;; (setq event (ergoemacs-command-loop--decode-mouse event))
+                  (unless (consp event) ;; Don't record mouse events
+                    (push (list ergoemacs-command-loop--single-command-keys 
+                                ergoemacs-command-loop--current-type 
+                                ergoemacs-command-loop--universal
+                                current-prefix-arg
+                                last-command-event)
+                          ergoemacs-command-loop--history))
+                  (setq ergoemacs-command-loop--last-event-time (float-time)
+                        last-command-event event
+                        last-event-frame (selected-frame)))
+                event)))
+      (setq quit-flag nil
+            inhibit-quit last-inhibit-quit))))
 
 (defun ergoemacs-command-loop--decode-event (event keymap)
   "Change EVENT based on KEYMAP.
@@ -829,6 +835,7 @@ This sequence is compatible with `listify-key-sequence'."
          (consp last-command-event))
     (let* ((posn (ignore-errors (car (cdr last-command-event))))
            (area (and posn (posnp posn) (posn-area posn)))
+           (original-command command)
            (command command)
            (obj (and posn (posnp posn) (posn-object posn)))
            form tmp)
@@ -838,70 +845,70 @@ This sequence is compatible with `listify-key-sequence'."
                    (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
           (setq command tmp)))
       (unless command
-        (setq form (and (symbolp command) (commandp command t) (interactive-form command)))
-        
-        ;; (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
-        ;; From `read-key-sequence':
-        ;; /* Clicks in non-text areas get prefixed by the symbol
-        ;; in their CHAR-ADDRESS field.  For example, a click on
-        ;; the mode line is prefixed by the symbol `mode-line'.
-        ;; Furthermore, key sequences beginning with mouse clicks
-        ;; are read using the keymaps of the buffer clicked on, not
-        ;; the current buffer.  So we may have to switch the buffer
-        ;; here.
-        ;; When we turn one event into two events, we must make sure
-        ;; that neither of the two looks like the original--so that,
-        ;; if we replay the events, they won't be expanded again.
-        ;; If not for this, such reexpansion could happen either here
-        ;; or when user programs play with this-command-keys.  */
-        
-        ;;
-        ;; /* Arrange to go back to the original buffer once we're
-        ;; done reading the key sequence.  Note that we can't
-        ;; use save_excursion_{save,restore} here, because they
-        ;; save point as well as the current buffer; we don't
-        ;; want to save point, because redisplay may change it,
-        ;; to accommodate a Fset_window_start or something.  We
-        ;; don't want to do this at the top of the function,
-        ;; because we may get input from a subprocess which
-        ;; wants to change the selected window and stuff (say,
-        ;; emacsclient).  */
-        (cond
-         ((keymapp command)
-          (popup-menu command nil current-prefix-arg))
-         ((not (nth 1 form))
-          (call-interactively command record-flag keys))
-         
-         ((and (stringp (nth 1 form)) (string= "e" (nth 1 form)))
-          (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (funcall ',command last-command-event)) record-flag keys))
-         
-         ((and (stringp (nth 1 form)) (string= "@e" (nth 1 form)))
-          (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command last-command-event)) record-flag keys))
-         
-         ((and (stringp (nth 1 form)) (string= "@" (nth 1 form)))
-          (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command)) record-flag keys))
-         
-         ((ignore-errors (and (stringp (nth 1 form)) (string= "e" (substring (nth 1 form) 0 1))))
-          (call-interactively `(lambda,(cdr (help-function-arglist command t))
-                                 (interactive ,(substring (nth 1 form) 1) ,@(cdr (cdr form)))
-                                 (funcall ',command last-command-event ,@(let (ret)
-                                                                           (dolist (elt (help-function-arglist command t))
-                                                                             (unless (eq '&optional elt)
-                                                                               (push elt ret)))
-                                                                           (reverse ret))))
-                              record-flag keys))
+        (setq command original-command))
+      (setq form (and (symbolp command) (commandp command t) (interactive-form command)))
+      ;; (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
+      ;; From `read-key-sequence':
+      ;; /* Clicks in non-text areas get prefixed by the symbol
+      ;; in their CHAR-ADDRESS field.  For example, a click on
+      ;; the mode line is prefixed by the symbol `mode-line'.
+      ;; Furthermore, key sequences beginning with mouse clicks
+      ;; are read using the keymaps of the buffer clicked on, not
+      ;; the current buffer.  So we may have to switch the buffer
+      ;; here.
+      ;; When we turn one event into two events, we must make sure
+      ;; that neither of the two looks like the original--so that,
+      ;; if we replay the events, they won't be expanded again.
+      ;; If not for this, such reexpansion could happen either here
+      ;; or when user programs play with this-command-keys.  */
 
-         ((ignore-errors (and (stringp (nth 1 form)) (string= "@e" (substring (nth 1 form) 0 2))))
-          (call-interactively `(lambda,(cdr (help-function-arglist command t))
-                                      (interactive ,(substring (nth 1 form) 2) ,@(cdr (cdr form)))
-                                      (funcall ',command last-command-event ,@(let (ret)
-                                                                                (dolist (elt (help-function-arglist command t))
-                                                                                  (unless (eq '&optional elt)
-                                                                                    (push elt ret)))
-                                                                                (reverse ret))))
-                              record-flag keys))
-         (t ;; Assume that the "e" or "@e" specifications are not present.
-          (call-interactively command record-flag keys))))))
+      ;;
+      ;; /* Arrange to go back to the original buffer once we're
+      ;; done reading the key sequence.  Note that we can't
+      ;; use save_excursion_{save,restore} here, because they
+      ;; save point as well as the current buffer; we don't
+      ;; want to save point, because redisplay may change it,
+      ;; to accommodate a Fset_window_start or something.  We
+      ;; don't want to do this at the top of the function,
+      ;; because we may get input from a subprocess which
+      ;; wants to change the selected window and stuff (say,
+      ;; emacsclient).  */
+      (cond
+       ((keymapp command)
+        (popup-menu command nil current-prefix-arg))
+       ((not (nth 1 form))
+        (call-interactively command record-flag keys))
+       
+       ((and (stringp (nth 1 form)) (string= "e" (nth 1 form)))
+        (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (funcall ',command last-command-event)) record-flag keys))
+       
+       ((and (stringp (nth 1 form)) (string= "@e" (nth 1 form)))
+        (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command last-command-event)) record-flag keys))
+       
+       ((and (stringp (nth 1 form)) (string= "@" (nth 1 form)))
+        (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command)) record-flag keys))
+       
+       ((ignore-errors (and (stringp (nth 1 form)) (string= "e" (substring (nth 1 form) 0 1))))
+        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+                               (interactive ,(substring (nth 1 form) 1) ,@(cdr (cdr form)))
+                               (funcall ',command last-command-event ,@(let (ret)
+                                                                         (dolist (elt (help-function-arglist command t))
+                                                                           (unless (eq '&optional elt)
+                                                                             (push elt ret)))
+                                                                         (reverse ret))))
+                            record-flag keys))
+
+       ((ignore-errors (and (stringp (nth 1 form)) (string= "@e" (substring (nth 1 form) 0 2))))
+        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+                               (interactive ,(substring (nth 1 form) 2) ,@(cdr (cdr form)))
+                               (funcall ',command last-command-event ,@(let (ret)
+                                                                         (dolist (elt (help-function-arglist command t))
+                                                                           (unless (eq '&optional elt)
+                                                                             (push elt ret)))
+                                                                         (reverse ret))))
+                            record-flag keys))
+       (t ;; Assume that the "e" or "@e" specifications are not present.
+        (call-interactively command record-flag keys)))))
    ((and (symbolp command) (not (fboundp command)))
     (ergoemacs-command-loop--message "Command `%s' is not found" command))
    ((and (symbolp command) (not (commandp command t)))
