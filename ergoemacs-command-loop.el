@@ -388,59 +388,54 @@ Currently this ensures:
 Also add to `last-command-event' to allow `self-insert-character' to work appropriately.
 I'm not sure the purpose of `last-event-frame', but this is modified as well"
   (let ((last-inhibit-quit inhibit-quit))
-    (unwind-protect
-        (progn
-          (setq inhibit-quit t)
-          (or (let ((event (pop unread-command-events)))
-                (setq last-command-event event
-                      last-event-frame (selected-frame))
-                event)
-              (let* ((last-event-time (or (and ergoemacs-command-loop--last-event-time
-                                               (- (float-time) ergoemacs-command-loop--last-event-time))
-                                          (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
-                     (prompt (cond
-                              ((or (minibufferp) isearch-mode) nil)
-                              ((or (string= prompt " ")
-                                   (string= prompt (concat " " (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-")))) nil)
-                              (ergoemacs-command-loop--universal prompt)
-                              (ergoemacs-command-loop--echo-keystrokes-complete prompt)
-                              ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
-                              ((= 0 ergoemacs-command-loop-echo-keystrokes) prompt)
-                              ((< last-event-time ergoemacs-command-loop-echo-keystrokes) nil)
-                              ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
-                              ;;       (numberp ergoemacs-command-loop-echo-keystrokes)
-                              ;;       (or (= 0 ergoemacs-command-loop-echo-keystrokes)
-                              ;;           (< last-event-time ergoemacs-command-loop-echo-keystrokes))) nil)
-                              ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
-                              ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
-                              (t
-                               (setq ergoemacs-command-loop--echo-keystrokes-complete t)
-                               prompt)))
-                     (echo-keystrokes 0)
-                     ;; Run (with-timeout) so that idle timers will work.
-                     (event (cond
-                             (prompt (with-timeout (seconds nil)
-                                       (ignore-errors (read-event prompt))))
-                             ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
-                                   ergoemacs-command-loop--single-command-keys)
-                              (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
-                                (ignore-errors (read-event))))
-                             (t (ignore-errors (read-event))))))
-                (when (eventp event)
-                  ;; (setq event (ergoemacs-command-loop--decode-mouse event))
-                  (unless (consp event) ;; Don't record mouse events
-                    (push (list ergoemacs-command-loop--single-command-keys 
-                                ergoemacs-command-loop--current-type 
-                                ergoemacs-command-loop--universal
-                                current-prefix-arg
-                                last-command-event)
-                          ergoemacs-command-loop--history))
-                  (setq ergoemacs-command-loop--last-event-time (float-time)
-                        last-command-event event
-                        last-event-frame (selected-frame)))
-                event)))
-      (setq quit-flag nil
-            inhibit-quit last-inhibit-quit))))
+    (or (let ((event (pop unread-command-events)))
+          (setq last-command-event event
+                last-event-frame (selected-frame))
+          event)
+        (let* ((last-event-time (or (and ergoemacs-command-loop--last-event-time
+                                         (- (float-time) ergoemacs-command-loop--last-event-time))
+                                    (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
+               (prompt (cond
+                        ((or (minibufferp) isearch-mode) nil)
+                        ((or (string= prompt " ")
+                             (string= prompt (concat " " (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-")))) nil)
+                        (ergoemacs-command-loop--universal prompt)
+                        (ergoemacs-command-loop--echo-keystrokes-complete prompt)
+                        ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
+                        ((= 0 ergoemacs-command-loop-echo-keystrokes) prompt)
+                        ((< last-event-time ergoemacs-command-loop-echo-keystrokes) nil)
+                        ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
+                        ;;       (numberp ergoemacs-command-loop-echo-keystrokes)
+                        ;;       (or (= 0 ergoemacs-command-loop-echo-keystrokes)
+                        ;;           (< last-event-time ergoemacs-command-loop-echo-keystrokes))) nil)
+                        ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
+                        ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
+                        (t
+                         (setq ergoemacs-command-loop--echo-keystrokes-complete t)
+                         prompt)))
+               (echo-keystrokes 0)
+               ;; Run (with-timeout) so that idle timers will work.
+               (event (cond
+                       (prompt (with-timeout (seconds nil)
+                                 (ignore-errors (read-event prompt))))
+                       ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
+                             ergoemacs-command-loop--single-command-keys)
+                        (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
+                          (ignore-errors (read-event))))
+                       (t (ignore-errors (read-event))))))
+          (when (eventp event)
+            ;; (setq event (ergoemacs-command-loop--decode-mouse event))
+            (unless (consp event) ;; Don't record mouse events
+              (push (list ergoemacs-command-loop--single-command-keys 
+                          ergoemacs-command-loop--current-type 
+                          ergoemacs-command-loop--universal
+                          current-prefix-arg
+                          last-command-event)
+                    ergoemacs-command-loop--history))
+            (setq ergoemacs-command-loop--last-event-time (float-time)
+                  last-command-event event
+                  last-event-frame (selected-frame)))
+          event))))
 
 (defun ergoemacs-command-loop--decode-event (event keymap)
   "Change EVENT based on KEYMAP.
