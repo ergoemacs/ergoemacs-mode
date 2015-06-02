@@ -154,19 +154,15 @@
   "Apply maps for ALISTS"
   (let (old-len)
     ;; Only modify if the list has changed length.
-    (unless (and symbol (setq old-len (gethash symbol ergoemacs-map--alists))
-                 (= (length alists) old-len))
-      (when symbol
-        (puthash symbol (length alists) ergoemacs-map--alists))
-      (mapcar
-       (lambda(elt)
-         (cond
-          ((consp elt)
-           (ergoemacs-map--alist (list elt)))
-          (t
-           (set elt (ergoemacs-map--alist (symbol-value elt) elt))
-           elt)))
-       alists))))
+    (mapcar
+     (lambda(elt)
+       (cond
+        ((consp elt)
+         (ergoemacs-map--alist (list elt)))
+        (t
+         (set elt (ergoemacs-map--alist (symbol-value elt) elt))
+         elt)))
+     alists)))
 
 (defun ergoemacs-map--emulation-mode-map-alists ()
   "Modify the `emulation-mode-map-alists'."
