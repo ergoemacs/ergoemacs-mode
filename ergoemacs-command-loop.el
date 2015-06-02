@@ -1342,12 +1342,9 @@ is specified, remove it from the HOOK."
         (unless (consp last-command-event)
           (setq last-nonmenu-event last-command-event)))
       
-
+      (ergoemacs-command-loop--pre-command-hook)
       (unwind-protect
-          (progn
-            ;; Run deferred pre-command hook.
-            (ergoemacs-command-loop--pre-command-hook)
-            (ergoemacs-command-loop--call-interactively this-command t))
+          (ergoemacs-command-loop--call-interactively this-command t)
         (setq ergoemacs-command-loop--single-command-keys nil))))))
 
 (provide 'ergoemacs-command-loop)
