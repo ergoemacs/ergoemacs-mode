@@ -117,7 +117,7 @@ bindings into this keymap (the original keymap is untouched)"
     ;; (ergoemacs (current-local-map) :label (list (ergoemacs (current-local-map) :key-struct) 'local))
     ))
 
-(defun ergoemacs-use-global-map--after ()
+(defun ergoemacs-use-global-map--after (keymap)
   "Function for `use-global-map' advice"
   (let ((cgm (current-global-map)))
     (cond
@@ -134,7 +134,7 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
 `global-map', install `ergoemacs-mode' modifications and then set the modified keymap.
 "
   :type :after
-  (ergoemacs-use-global-map--after))
+  (ergoemacs-use-global-map--after keymap))
 
 (ergoemacs-advice current-active-maps (&optional olp position)
   "This ignores `ergoemacs-mode' keys in `overriding-terminal-local-map'."
