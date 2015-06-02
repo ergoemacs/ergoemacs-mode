@@ -387,55 +387,54 @@ Currently this ensures:
   "Read event and add to event history.
 Also add to `last-command-event' to allow `self-insert-character' to work appropriately.
 I'm not sure the purpose of `last-event-frame', but this is modified as well"
-  (let ((last-inhibit-quit inhibit-quit))
-    (or (let ((event (pop unread-command-events)))
-          (setq last-command-event event
-                last-event-frame (selected-frame))
-          event)
-        (let* ((last-event-time (or (and ergoemacs-command-loop--last-event-time
-                                         (- (float-time) ergoemacs-command-loop--last-event-time))
-                                    (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
-               (prompt (cond
-                        ((or (minibufferp) isearch-mode) nil)
-                        ((or (string= prompt " ")
-                             (string= prompt (concat " " (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-")))) nil)
-                        (ergoemacs-command-loop--universal prompt)
-                        (ergoemacs-command-loop--echo-keystrokes-complete prompt)
-                        ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
-                        ((= 0 ergoemacs-command-loop-echo-keystrokes) prompt)
-                        ((< last-event-time ergoemacs-command-loop-echo-keystrokes) nil)
-                        ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
-                        ;;       (numberp ergoemacs-command-loop-echo-keystrokes)
-                        ;;       (or (= 0 ergoemacs-command-loop-echo-keystrokes)
-                        ;;           (< last-event-time ergoemacs-command-loop-echo-keystrokes))) nil)
-                        ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
-                        ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
-                        (t
-                         (setq ergoemacs-command-loop--echo-keystrokes-complete t)
-                         prompt)))
-               (echo-keystrokes 0)
-               ;; Run (with-timeout) so that idle timers will work.
-               (event (cond
-                       (prompt (with-timeout (seconds nil)
-                                 (ignore-errors (read-event prompt))))
-                       ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
-                             ergoemacs-command-loop--single-command-keys)
-                        (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
-                          (ignore-errors (read-event))))
-                       (t (ignore-errors (read-event))))))
-          (when (eventp event)
-            ;; (setq event (ergoemacs-command-loop--decode-mouse event))
-            (unless (consp event) ;; Don't record mouse events
-              (push (list ergoemacs-command-loop--single-command-keys 
-                          ergoemacs-command-loop--current-type 
-                          ergoemacs-command-loop--universal
-                          current-prefix-arg
-                          last-command-event)
-                    ergoemacs-command-loop--history))
-            (setq ergoemacs-command-loop--last-event-time (float-time)
-                  last-command-event event
-                  last-event-frame (selected-frame)))
-          event))))
+  (or (let ((event (pop unread-command-events)))
+        (setq last-command-event event
+              last-event-frame (selected-frame))
+        event)
+      (let* ((last-event-time (or (and ergoemacs-command-loop--last-event-time
+                                       (- (float-time) ergoemacs-command-loop--last-event-time))
+                                  (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
+             (prompt (cond
+                      ((or (minibufferp) isearch-mode) nil)
+                      ((or (string= prompt " ")
+                           (string= prompt (concat " " (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-")))) nil)
+                      (ergoemacs-command-loop--universal prompt)
+                      (ergoemacs-command-loop--echo-keystrokes-complete prompt)
+                      ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
+                      ((= 0 ergoemacs-command-loop-echo-keystrokes) prompt)
+                      ((< last-event-time ergoemacs-command-loop-echo-keystrokes) nil)
+                      ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
+                      ;;       (numberp ergoemacs-command-loop-echo-keystrokes)
+                      ;;       (or (= 0 ergoemacs-command-loop-echo-keystrokes)
+                      ;;           (< last-event-time ergoemacs-command-loop-echo-keystrokes))) nil)
+                      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
+                      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
+                      (t
+                       (setq ergoemacs-command-loop--echo-keystrokes-complete t)
+                       prompt)))
+             (echo-keystrokes 0)
+             ;; Run (with-timeout) so that idle timers will work.
+             (event (cond
+                     (prompt (with-timeout (seconds nil)
+                               (ignore-errors (read-event prompt))))
+                     ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
+                           ergoemacs-command-loop--single-command-keys)
+                      (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
+                        (ignore-errors (read-event))))
+                     (t (ignore-errors (read-event))))))
+        (when (eventp event)
+          ;; (setq event (ergoemacs-command-loop--decode-mouse event))
+          (unless (consp event) ;; Don't record mouse events
+            (push (list ergoemacs-command-loop--single-command-keys 
+                        ergoemacs-command-loop--current-type 
+                        ergoemacs-command-loop--universal
+                        current-prefix-arg
+                        last-command-event)
+                  ergoemacs-command-loop--history))
+          (setq ergoemacs-command-loop--last-event-time (float-time)
+                last-command-event event
+                last-event-frame (selected-frame)))
+        event)))
 
 (defun ergoemacs-command-loop--decode-event (event keymap)
   "Change EVENT based on KEYMAP.
@@ -925,6 +924,9 @@ This sequence is compatible with `listify-key-sequence'."
 (defvar ergoemacs-command-loop--spinner nil)
 (defvar ergoemacs-command-loop--spinner-i nil)
 (defvar ergoemacs-command-loop--spinner-list nil)
+(defvar ergoemacs-command-loop-spinner-rate)
+(defvar ergoemacs-command-loop-spinner)
+(defvar ergoemacs-command-loop-spinners)
 (defun ergoemacs-command-loop--spinner ()
   (interactive)
   (when ergoemacs-command-loop-spinner-rate
@@ -935,7 +937,6 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop--spinner-display ()
   (ergoemacs-command-loop--message "%s" (nth (mod (setq ergoemacs-command-loop--spinner-i (+ 1 ergoemacs-command-loop--spinner-i))
                                                   (length ergoemacs-command-loop--spinner-list)) ergoemacs-command-loop--spinner-list)))
-
 (defun ergoemacs-command-loop--spinner-end ()
   (when ergoemacs-command-loop--spinner
     (cancel-timer ergoemacs-command-loop--spinner)
@@ -1180,6 +1181,18 @@ pressed the translated key by changing
               (setq new-key orig-key))
              ((and new-binding (not (memq new-binding global)))
               (setq bind new-binding)))
+            (unless bind
+              (cond
+               ((or (ergoemacs-keymapp (setq tmp (lookup-key input-decode-map orig-key)))
+                    (and (not (integerp tmp)) (commandp tmp)))
+                (setq bind tmp))
+               ((or (ergoemacs-keymapp (setq tmp (lookup-key local-function-key-map orig-key)))
+                    (and (not (integerp tmp)) (commandp tmp)))
+                (setq bind tmp))
+               ((or (ergoemacs-keymapp (setq tmp (lookup-key key-translation-map orig-key)))
+                    (and (not (integerp tmp)) (commandp tmp)) )
+                (setq bind tmp))))
+            
             (when (and orig-key
                        (setq ret bind
                              ret (if (and (eq ret 'ergoemacs-map-undefined)
@@ -1231,14 +1244,15 @@ For instance in QWERTY M-> is shift translated to M-."
   (when (ergoemacs :movement-p function)
     (handle-shift-selection)))
 
+(defvar ergoemacs-command-loop-timeout)
 (defun ergoemacs-command-loop--wrap-hook (function &optional hook)
-  "Run FUNCTION with timout, and possibly remove from HOOK if there are problems.
+  "Run FUNCTION with timeout, and possibly remove from HOOK if there are problems.
 
 If the FUNCTION takes too long (more than
 `ergoemacs-command-loop-timeout'), or has an error and the HOOK
 is specified, remove it from the HOOK."
-  (condition-case err
-      (with-timeout (ergoemacs-command-loop-timeout (throw 'ergoemacs-command-loop-timeout))
+  (condition-case _err
+      (with-timeout (ergoemacs-command-loop-timeout (throw 'ergoemacs-command-loop-timeout t))
         (funcall function))
     (error
      (when hook
@@ -1327,7 +1341,7 @@ is specified, remove it from the HOOK."
   "Execute COMMAND pretending that KEYS were pressed."
   (unwind-protect
       (let ((keys (or keys ergoemacs-command-loop--single-command-keys)))
-        (ergoemacs-command-loop--spinner)
+        ;; (ergoemacs-command-loop--spinner)
         (cond
          ((or (stringp command) (vectorp command))
           ;; If the command is a keyboard macro (string/vector) then execute
@@ -1377,7 +1391,8 @@ is specified, remove it from the HOOK."
           (unwind-protect
               (ergoemacs-command-loop--call-interactively this-command t)
             (setq ergoemacs-command-loop--single-command-keys nil)))))
-    (ergoemacs-command-loop--spinner-end)))
+    ;; (ergoemacs-command-loop--spinner-end)
+    ))
 
 (provide 'ergoemacs-command-loop)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
