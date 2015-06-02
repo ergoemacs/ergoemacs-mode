@@ -336,6 +336,7 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
   (or (and (not current-prefix-arg)
            (concat (or
                     (and (not universal) "")
+                    " "
                     (and ergoemacs-command-loop-blink-character
                          (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
                              " "))
@@ -395,8 +396,8 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
                                   (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
              (prompt (cond
                       ((or (minibufferp) isearch-mode) nil)
-                      ((or (string= prompt "")
-                           (string= prompt (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))) nil)
+                      ((or (string= prompt " ")
+                           (string= prompt (concat " " (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-")))) nil)
                       (ergoemacs-command-loop--universal prompt)
                       (ergoemacs-command-loop--echo-keystrokes-complete prompt)
                       ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
@@ -575,6 +576,7 @@ This uses `ergoemacs-command-loop--read-event'."
                             (ergoemacs-key-description current-key)
                             unchorded
                             ;; Cursor
+                            " "
                             (or (and universal "")
                                 (and ergoemacs-command-loop-blink-character
                                      (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
@@ -603,6 +605,7 @@ This uses `ergoemacs-command-loop--read-event'."
                               (ergoemacs-key-description current-key)
                               unchorded
                               ;; Cursor
+                              " "
                               (or (and universal "")
                                   (and ergoemacs-command-loop-blink-character
                                        (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
