@@ -552,6 +552,32 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :type 'number
   :group 'ergoemacs-command-loop)
 
+(defcustom ergoemacs-command-loop-spinners
+  '((standard ("|" "/" "-" "\\"))
+    (arrows ("←" "↖" "↑" "↗" "→" "↘" "↓" "↙"))
+    (bar-vertical ("▁" "▃" "▄" "▅" "▆" "▇" "█" "▇" "▆" "▅" "▄" "▃"))
+    (bar-horizontal ("▉" "▊" "▋" "▌" "▍" "▎" "▏" "▎" "▍" "▌" "▋" "▊" "▉"))
+    (rotate-cross ("┤" "┘" "┴" "└" "├" "┌" "┬" "┐"))
+    (rotate-triangle ("◢" "◣" "◤" "◥"))
+    (rotate-balloons ("." "o" "O" "@" "*"))
+    (eyes ("◡◡" "⊙⊙" "◠◠"))
+    (dots ("⣾" "⣽" "⣻" "⢿" "⡿" "⣟" "⣯" "⣷"))
+    (dot ("⠁" "⠂" "⠄" "⡀" "⢀" "⠠" "⠐" "⠈"))
+    (fish (">))'>" " >))'>" "  >))'>" "   >))'>" "    >))'>" "   <'((<" "  <'((<" " <'((<")))
+  "Spinners for long commands with `ergoemacs-command-loop'"
+  :group 'ergoemacs-command-loop)
+
+(defcustom ergoemacs-command-loop-spinner 'standard
+  "What spinner to use for long commands with `ergoemacs-command-loop'"
+  :type 'sexp
+  :group 'ergoemacs-command-loop)
+
+(defcustom ergoemacs-command-loop-spinner-rate 0.4
+  "Spinner rate for long commands"
+  :type 'number
+  :group 'ergoemacs-command-loop)
+  
+  
 (define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
 
 (defcustom ergoemacs-command-loop-swap-translation

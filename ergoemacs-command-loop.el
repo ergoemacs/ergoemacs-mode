@@ -922,6 +922,27 @@ This sequence is compatible with `listify-key-sequence'."
   ;; Should work...
   (ergoemacs-command-loop (this-single-command-keys)))
 
+(defvar ergoemacs-command-loop--spinner nil)
+(defvar ergoemacs-command-loop--spinner-i nil)
+(defvar ergoemacs-command-loop--spinner-list nil)
+(defun ergoemacs-command-loop--spinner ()
+  (interactive)
+  (when ergoemacs-command-loop-spinner-rate
+    (setq ergoemacs-command-loop--spinner-list (nth 1 (assoc ergoemacs-command-loop-spinner ergoemacs-command-loop-spinners))
+          ergoemacs-command-loop--spinner (run-at-time (format "%s sec" ergoemacs-command-loop-spinner-rate) ergoemacs-command-loop-spinner-rate 'ergoemacs-command-loop--spinner-display)
+          ergoemacs-command-loop--spinner-i 0)))
+
+(defun ergoemacs-command-loop--spinner-display ()
+  (ergoemacs-command-loop--message "%s" (nth (mod (setq ergoemacs-command-loop--spinner-i (+ 1 ergoemacs-command-loop--spinner-i))
+                                                  (length ergoemacs-command-loop--spinner-list)) ergoemacs-command-loop--spinner-list)))
+
+(defun ergoemacs-command-loop--spinner-end ()
+  (when ergoemacs-command-loop--spinner
+    (cancel-timer ergoemacs-command-loop--spinner)
+    (setq ergoemacs-command-loop--spinner-list nil
+          ergoemacs-command-loop--spinner nil
+          ergoemacs-command-loop--spinner-i nil)))
+
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -1304,56 +1325,59 @@ is specified, remove it from the HOOK."
 ;; (3) execute command
 (defun ergoemacs-command-loop--execute (command &optional keys)
   "Execute COMMAND pretending that KEYS were pressed."
-  (let ((keys (or keys ergoemacs-command-loop--single-command-keys)))
-    (cond
-     ((or (stringp command) (vectorp command))
-      ;; If the command is a keyboard macro (string/vector) then execute
-      ;; it though `execute-kbd-macro'
-      (let ((tmp (prefix-numeric-value current-prefix-arg)))
+  (unwind-protect
+      (let ((keys (or keys ergoemacs-command-loop--single-command-keys)))
+        (ergoemacs-command-loop--spinner)
         (cond
-         ((<= tmp 0) ;; Unsure what to do here.
-          (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command)) tmp))
-         (t (execute-kbd-macro command tmp))))
-      (setq ergoemacs-command-loop--single-command-keys nil))
-     (t
-      ;; This should be a regular command.
-      
-      ;; Remove counting of `this-command' in `keyfreq-mode'
-      ;; Shouldn't be needed any more...
-      ;; (ergoemacs-command-loop--execute-rm-keyfreq this-command)
-      
-      ;; This command execute should modify the following variables:
-      ;; - `last-repeatable-command'
-      ;; - `this-command'
-      ;; - `this-original-command'
-      
-      ;; In addition, other minor modes may store the command, so these
-      ;; should be modified as well.
-      
-      ;; These are stored in `ergoemacs-command-loop--execute-modify-command-list'
-      
-      (ergoemacs-save-buffer-state
-       (dolist (var ergoemacs-command-loop--execute-modify-command-list)
-         (set var command)))
-      
-      ;; Handle Shift Selection
-      (ergoemacs-command-loop--execute-handle-shift-selection this-command)
-      (when keys
-        (setq ergoemacs-command-loop--single-command-keys keys)
-        
-        ;; Modify the output for these functions when `keys' is not nil.
-        ;; - `this-command-keys'
-        ;; - `this-command-keys-vector'
-        ;; - `this-single-command-keys'
+         ((or (stringp command) (vectorp command))
+          ;; If the command is a keyboard macro (string/vector) then execute
+          ;; it though `execute-kbd-macro'
+          (let ((tmp (prefix-numeric-value current-prefix-arg)))
+            (cond
+             ((<= tmp 0) ;; Unsure what to do here.
+              (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command)) tmp))
+             (t (execute-kbd-macro command tmp))))
+          (setq ergoemacs-command-loop--single-command-keys nil))
+         (t
+          ;; This should be a regular command.
+          
+          ;; Remove counting of `this-command' in `keyfreq-mode'
+          ;; Shouldn't be needed any more...
+          ;; (ergoemacs-command-loop--execute-rm-keyfreq this-command)
+          
+          ;; This command execute should modify the following variables:
+          ;; - `last-repeatable-command'
+          ;; - `this-command'
+          ;; - `this-original-command'
+          
+          ;; In addition, other minor modes may store the command, so these
+          ;; should be modified as well.
+          
+          ;; These are stored in `ergoemacs-command-loop--execute-modify-command-list'
+          
+          (ergoemacs-save-buffer-state
+           (dolist (var ergoemacs-command-loop--execute-modify-command-list)
+             (set var command)))
+          
+          ;; Handle Shift Selection
+          (ergoemacs-command-loop--execute-handle-shift-selection this-command)
+          (when keys
+            (setq ergoemacs-command-loop--single-command-keys keys)
+            
+            ;; Modify the output for these functions when `keys' is not nil.
+            ;; - `this-command-keys'
+            ;; - `this-command-keys-vector'
+            ;; - `this-single-command-keys'
 
-        ;; Assume this is a nonmenu event if it isn't a mouse event
-        (unless (consp last-command-event)
-          (setq last-nonmenu-event last-command-event)))
-      
-      (ergoemacs-command-loop--pre-command-hook)
-      (unwind-protect
-          (ergoemacs-command-loop--call-interactively this-command t)
-        (setq ergoemacs-command-loop--single-command-keys nil))))))
+            ;; Assume this is a nonmenu event if it isn't a mouse event
+            (unless (consp last-command-event)
+              (setq last-nonmenu-event last-command-event)))
+          
+          (ergoemacs-command-loop--pre-command-hook)
+          (unwind-protect
+              (ergoemacs-command-loop--call-interactively this-command t)
+            (setq ergoemacs-command-loop--single-command-keys nil)))))
+    (ergoemacs-command-loop--spinner-end)))
 
 (provide 'ergoemacs-command-loop)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
