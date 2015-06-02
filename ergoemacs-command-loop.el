@@ -1071,6 +1071,18 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                 (when (or (not ergoemacs-command-loop--exit)
                           (and (not continue-read) (setq continue-read unread-command-events)))
                   (ergoemacs-command-loop--internal-end-command)))
+               (quit-flag
+                (ergoemacs-command-loop--message "Quit!")
+                (setq quit-flag nil
+                      type :normal
+                      continue-read t
+                      first-type :normal
+                      raw-key nil
+                      current-key nil
+                      translation (ergoemacs-translate--get type)
+                      local-keymap (ergoemacs-translate--keymap translation)
+                      ergoemacs-command-loop--first-type first-type
+                      ergoemacs-command-loop--history nil))
                (t ;; Command not found exit.
                 (ergoemacs-command-loop--message "Key %s doesn't do anything." (ergoemacs-key-description current-key)))))
             (unless quit-flag
@@ -1306,7 +1318,8 @@ is specified, remove it from the HOOK."
         (cond
          ((<= tmp 0) ;; Unsure what to do here.
           (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command)) tmp))
-         (t (execute-kbd-macro command tmp)))))
+         (t (execute-kbd-macro command tmp))))
+      (setq ergoemacs-command-loop--single-command-keys nil))
      (t
       ;; This should be a regular command.
       
