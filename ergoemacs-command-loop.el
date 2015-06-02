@@ -834,69 +834,71 @@ This sequence is compatible with `listify-key-sequence'."
         (when (and obj (setq tmp (get-text-property (cdr obj)  'local-map (car obj)))
                    (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
           (setq command tmp)))
-      (setq form (and (symbolp command) (commandp command t) (interactive-form command)))
-      ;; (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
-      ;; From `read-key-sequence':
-      ;; /* Clicks in non-text areas get prefixed by the symbol
-      ;; in their CHAR-ADDRESS field.  For example, a click on
-      ;; the mode line is prefixed by the symbol `mode-line'.
-      ;; Furthermore, key sequences beginning with mouse clicks
-      ;; are read using the keymaps of the buffer clicked on, not
-      ;; the current buffer.  So we may have to switch the buffer
-      ;; here.
-      ;; When we turn one event into two events, we must make sure
-      ;; that neither of the two looks like the original--so that,
-      ;; if we replay the events, they won't be expanded again.
-      ;; If not for this, such reexpansion could happen either here
-      ;; or when user programs play with this-command-keys.  */
+      (unless command
+        (setq form (and (symbolp command) (commandp command t) (interactive-form command)))
+        
+        ;; (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
+        ;; From `read-key-sequence':
+        ;; /* Clicks in non-text areas get prefixed by the symbol
+        ;; in their CHAR-ADDRESS field.  For example, a click on
+        ;; the mode line is prefixed by the symbol `mode-line'.
+        ;; Furthermore, key sequences beginning with mouse clicks
+        ;; are read using the keymaps of the buffer clicked on, not
+        ;; the current buffer.  So we may have to switch the buffer
+        ;; here.
+        ;; When we turn one event into two events, we must make sure
+        ;; that neither of the two looks like the original--so that,
+        ;; if we replay the events, they won't be expanded again.
+        ;; If not for this, such reexpansion could happen either here
+        ;; or when user programs play with this-command-keys.  */
+        
+        ;;
+        ;; /* Arrange to go back to the original buffer once we're
+        ;; done reading the key sequence.  Note that we can't
+        ;; use save_excursion_{save,restore} here, because they
+        ;; save point as well as the current buffer; we don't
+        ;; want to save point, because redisplay may change it,
+        ;; to accommodate a Fset_window_start or something.  We
+        ;; don't want to do this at the top of the function,
+        ;; because we may get input from a subprocess which
+        ;; wants to change the selected window and stuff (say,
+        ;; emacsclient).  */
+        (cond
+         ((keymapp command)
+          (popup-menu command nil current-prefix-arg))
+         ((not (nth 1 form))
+          (call-interactively command record-flag keys))
+         
+         ((and (stringp (nth 1 form)) (string= "e" (nth 1 form)))
+          (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (funcall ',command last-command-event)) record-flag keys))
+         
+         ((and (stringp (nth 1 form)) (string= "@e" (nth 1 form)))
+          (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command last-command-event)) record-flag keys))
+         
+         ((and (stringp (nth 1 form)) (string= "@" (nth 1 form)))
+          (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command)) record-flag keys))
+         
+         ((ignore-errors (and (stringp (nth 1 form)) (string= "e" (substring (nth 1 form) 0 1))))
+          (call-interactively `(lambda,(cdr (help-function-arglist command t))
+                                 (interactive ,(substring (nth 1 form) 1) ,@(cdr (cdr form)))
+                                 (funcall ',command last-command-event ,@(let (ret)
+                                                                           (dolist (elt (help-function-arglist command t))
+                                                                             (unless (eq '&optional elt)
+                                                                               (push elt ret)))
+                                                                           (reverse ret))))
+                              record-flag keys))
 
-      ;;
-      ;; /* Arrange to go back to the original buffer once we're
-      ;; done reading the key sequence.  Note that we can't
-      ;; use save_excursion_{save,restore} here, because they
-      ;; save point as well as the current buffer; we don't
-      ;; want to save point, because redisplay may change it,
-      ;; to accommodate a Fset_window_start or something.  We
-      ;; don't want to do this at the top of the function,
-      ;; because we may get input from a subprocess which
-      ;; wants to change the selected window and stuff (say,
-      ;; emacsclient).  */
-      (cond
-       ((keymapp command)
-        (popup-menu command nil current-prefix-arg))
-       ((not (nth 1 form))
-        (call-interactively command record-flag keys))
-       
-       ((and (stringp (nth 1 form)) (string= "e" (nth 1 form)))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (funcall ',command last-command-event)) record-flag keys))
-       
-       ((and (stringp (nth 1 form)) (string= "@e" (nth 1 form)))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command last-command-event)) record-flag keys))
-       
-       ((and (stringp (nth 1 form)) (string= "@" (nth 1 form)))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command)) record-flag keys))
-       
-       ((ignore-errors (and (stringp (nth 1 form)) (string= "e" (substring (nth 1 form) 0 1))))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t))
-                               (interactive ,(substring (nth 1 form) 1) ,@(cdr (cdr form)))
-                               (funcall ',command last-command-event ,@(let (ret)
-                                                                         (dolist (elt (help-function-arglist command t))
-                                                                           (unless (eq '&optional elt)
-                                                                             (push elt ret)))
-                                                                         (reverse ret))))
-                            record-flag keys))
-
-       ((ignore-errors (and (stringp (nth 1 form)) (string= "@e" (substring (nth 1 form) 0 2))))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t))
-                               (interactive ,(substring (nth 1 form) 2) ,@(cdr (cdr form)))
-                               (funcall ',command last-command-event ,@(let (ret)
-                                                                         (dolist (elt (help-function-arglist command t))
-                                                                           (unless (eq '&optional elt)
-                                                                             (push elt ret)))
-                                                                         (reverse ret))))
-                            record-flag keys))
-       (t ;; Assume that the "e" or "@e" specifications are not present.
-        (call-interactively command record-flag keys)))))
+         ((ignore-errors (and (stringp (nth 1 form)) (string= "@e" (substring (nth 1 form) 0 2))))
+          (call-interactively `(lambda,(cdr (help-function-arglist command t))
+                                      (interactive ,(substring (nth 1 form) 2) ,@(cdr (cdr form)))
+                                      (funcall ',command last-command-event ,@(let (ret)
+                                                                                (dolist (elt (help-function-arglist command t))
+                                                                                  (unless (eq '&optional elt)
+                                                                                    (push elt ret)))
+                                                                                (reverse ret))))
+                              record-flag keys))
+         (t ;; Assume that the "e" or "@e" specifications are not present.
+          (call-interactively command record-flag keys))))))
    ((and (symbolp command) (not (fboundp command)))
     (ergoemacs-command-loop--message "Command `%s' is not found" command))
    ((and (symbolp command) (not (commandp command t)))
