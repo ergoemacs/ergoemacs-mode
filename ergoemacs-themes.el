@@ -338,12 +338,10 @@
   (define-key eshell-mode-map (kbd "<home>") 'eshell-bol)
   (define-key comint-mode-map (kbd "<home>") 'comint-bol)
 
-  (when helm-before-initialize-hook
-    :modify-map t
-    :full-shortcut-keymap t
-    (define-key helm-map [remap mark-whole-buffer] 'helm-mark-all)
-    (define-key helm-map (kbd "C-w") 'helm-keyboard-quit)
-    (define-key helm-map (kbd "C-z") nil))
+  (define-key helm-map [remap mark-whole-buffer] 'helm-mark-all)
+  (define-key helm-map (kbd "C-w") 'helm-keyboard-quit)
+  (define-key helm-map (kbd "C-z") nil)
+  
 
   ;; Compatibility with Icicle (allows the use of
   ;; `icicle-read-string-completing' directly)
@@ -373,8 +371,7 @@
   ;; C-i is TAB... This seems to cause issues?
   ;; (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
   (define-key org-mode-map (kbd "<tab>") 'org-cycle)
-  (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle)
-  )
+  (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle))
 
 (ergoemacs-component backspace-is-back ()
   "Backspace is back, as in browsers..."
@@ -387,38 +384,35 @@
 (ergoemacs-component fixed-newline ()
   "Newline and indent"
   (global-set-key (kbd "M-RET") 'newline-and-indent)
-  (when helm-before-initialize-hook
-    :modify-map t
-    :full-shortcut-keymap t
-    (define-key helm-map (kbd "M-RET") 'helm-execute-persistent-action)
-    (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
-    (define-key helm-map (kbd "M-S-RET") "C-u M-RET")
-    (define-key helm-map (kbd "<M-S-return>") "C-u M-RET")
-
-
-    (define-key helm-read-file-map [remap eshell] 'helm-ff-run-switch-to-eshell)
-    (define-key helm-read-file-map [remap ergoemacs-eshell-here] 'helm-ff-run-switch-to-eshell)
-    (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-read-file-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
-
-    (define-key helm-find-files-map [remap eshell] 'helm-ff-run-switch-to-eshell)
-    (define-key helm-find-files-map [remap ergoemacs-eshell-here] 'helm-ff-run-switch-to-eshell)
-    (define-key helm-find-files-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
-    (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-    (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-    (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)))
+  (define-key helm-map (kbd "M-RET") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "M-S-RET") "C-u M-RET")
+  (define-key helm-map (kbd "<M-S-return>") "C-u M-RET")
+  
+  
+  (define-key helm-read-file-map [remap eshell] 'helm-ff-run-switch-to-eshell)
+  (define-key helm-read-file-map [remap ergoemacs-eshell-here] 'helm-ff-run-switch-to-eshell)
+  (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
+  (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
+  (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+  (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
+  (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
+  (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
+  (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+  (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
+  (define-key helm-read-file-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
+  
+  (define-key helm-find-files-map [remap eshell] 'helm-ff-run-switch-to-eshell)
+  (define-key helm-find-files-map [remap ergoemacs-eshell-here] 'helm-ff-run-switch-to-eshell)
+  (define-key helm-find-files-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
+  (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
+  (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
+  (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+  (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
+  (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
+  (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
+  (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+  (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir))
 
 (ergoemacs-component fn-keys ()
   "Function Keys"
@@ -685,15 +679,13 @@
   (global-set-key (kbd "C-y") '(redo undo-tree-redo ergoemacs-redo))
 
   ;; Mode specific changes
-  (when isearch-mode-hook
-    :modify-keymap t
-    :full-shortcut-keymap t
-    (define-key isearch-mode-map (kbd "C-c") 'isearch-yank-word-or-char)
-    (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
-    (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
-    (define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
-    (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
-    (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle))
+  (define-key isearch-mode-map (kbd "C-c") 'isearch-yank-word-or-char)
+  (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
+  (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
+  (define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
+  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
+  (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
+  
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   (define-key browse-kill-ring-mode-map [remap undo] 'browse-kill-ring-undo-other-window)
@@ -714,10 +706,8 @@
   (global-set-key (kbd "M-%") '(vr/query-replace query-replace-regexp))
 
   ;; Mode specific changes
-  (when dired-mode-hook 
-    :modify-map t
-    (define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
-    (define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp))
+  (define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
+  (define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp)
 
   (define-key browse-kill-ring-mode-map [remap isearch-forward] 'browse-kill-ring-search-forward)
   (define-key browse-kill-ring-mode-map [remap isearch-backward] 'browse-kill-ring-search-backward)
@@ -793,11 +783,10 @@
 
   ;; ;; Hard-wrap/un-hard-wrap paragraph
   (global-set-key (kbd "M-q") 'ergoemacs-compact-uncompact-block)
-  (when isearch-mode-hook
-    :modify-map t
-    :full-shortcut-keymap t
-    (define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
-    (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold))
+
+  (define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
+  (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
+  
   
   (when iswitchb-define-mode-map-hook
     (define-key iswitchb-mode-map [remap ergoemacs-toggle-camel-case] 'iswitchb-toggle-case)
@@ -983,15 +972,11 @@
 
 (ergoemacs-component dired-to-wdired ()
   "C-c C-c enters wdired, <escape> exits."
-  (when dired-mode-hook
-    :modify-map t
-    (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode)))
+  (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode))
 
 (ergoemacs-component dired-tab ()
   "TAB expands a directory."
-  (when dired-mode-hook
-    :modify-map t
-    (define-key dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir)))
+  (define-key dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir))
 
 (ergoemacs-component guru ()
   "Unbind some commonly used keys such as <left> and <right> to get in the habit of using ergoemacs keybindings."

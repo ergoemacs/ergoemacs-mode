@@ -104,29 +104,6 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
 
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-advice--enable-permanent-replacements)
 
-
-(ergoemacs-advice remove-hook (hook function &optional local)
-  "Advice to allow `this-command' to be set correctly before
- running `pre-command-hook'."
-  :type :after
-  (when (and (boundp 'ergoemacs-mode) ergoemacs-mode
-             (eq hook 'pre-command-hook)
-             (memq hook ergoemacs-command-loop--deferred-functions))
-    (setq ergoemacs-mode nil)
-    (remove-hook 'ergoemacs-command-loop--pre-command-hook function local)
-    (setq ergoemacs-mode t)))
-
-(ergoemacs-advice add-hook (hook function &optional append local)
-  "Advice to allow `this-command' to be set correctly before
- running `pre-command-hook'."
-  :type :after
-  (when (and (boundp 'ergoemacs-mode) ergoemacs-mode (eq hook 'pre-command-hook)
-             (memq hook ergoemacs-command-loop--deferred-functions))
-    (setq ergoemacs-mode nil)
-    (remove-hook 'pre-command-hook function local)
-    (add-hook 'ergoemacs-command-loop--pre-command-hook function append local)
-    (setq ergoemacs-mode t)))
-
 (defvar ergoemacs--original-local-map nil
   "Original keymap used with `use-local-map'.")
 
@@ -140,13 +117,8 @@ bindings into this keymap (the original keymap is untouched)"
     ;; (ergoemacs (current-local-map) :label (list (ergoemacs (current-local-map) :key-struct) 'local))
     ))
 
-(ergoemacs-advice use-global-map (keymap)
-  "When `ergoemacs-mode' is enabled and KEYMAP is the `global-map', set to `ergoemacs-keymap' instead.
-
-Also when `ergoemacs-mode' is enabled and KEYMAP is not the
-`global-map', install `ergoemacs-mode' modifications and then set the modified keymap.
-"
-  :type :after
+(defun ergoemacs-use-global-map--after ()
+  "Function for `use-global-map' advice"
   (let ((cgm (current-global-map)))
     (cond
      ((and ergoemacs-mode (eq cgm global-map))
@@ -154,6 +126,15 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
      ((and ergoemacs-mode (eq cgm ergoemacs-mode)))
      ((and ergoemacs-mode (not (ergoemacs cgm :installed-p)))
       (use-global-map (ergoemacs keymap t))))))
+
+(ergoemacs-advice use-global-map (keymap)
+  "When `ergoemacs-mode' is enabled and KEYMAP is the `global-map', set to `ergoemacs-keymap' instead.
+
+Also when `ergoemacs-mode' is enabled and KEYMAP is not the
+`global-map', install `ergoemacs-mode' modifications and then set the modified keymap.
+"
+  :type :after
+  (ergoemacs-use-global-map--after))
 
 (ergoemacs-advice current-active-maps (&optional olp position)
   "This ignores `ergoemacs-mode' keys in `overriding-terminal-local-map'."

@@ -51,6 +51,10 @@
 ;;; Code:
 ;; (require 'guide-key nil t)
 
+(eval-when-compile
+  (require 'ergoemacs-macros)
+  (require 'cl))
+
 (require 'descr-text)
 (require 'faces)
 

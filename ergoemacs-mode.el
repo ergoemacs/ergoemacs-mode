@@ -368,6 +368,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 (autoload 'ergoemacs-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme "ergoemacs-macros")
+(autoload 'ergoemacs "ergoemacs-macros")
 
 (defcustom ergoemacs-keyboard-layout (or (getenv "ERGOEMACS_KEYBOARD_LAYOUT") "us")
   (concat "Specifies which keyboard layout to use.

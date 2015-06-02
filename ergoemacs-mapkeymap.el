@@ -50,6 +50,10 @@
 ;; 
 ;;; Code:
 
+(eval-when-compile
+  (require 'ergoemacs-macros)
+  (require 'cl))
+
 (defun ergoemacs-map-force-full-keymap (keymap)
   "Forces KEYMAP to be a full keymap."
   (if (ignore-errors (char-table-p (nth 1 keymap))) keymap

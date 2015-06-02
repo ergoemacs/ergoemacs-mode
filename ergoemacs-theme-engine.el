@@ -50,6 +50,10 @@
 ;; 
 ;;; Code:
 
+(eval-when-compile
+  (require 'ergoemacs-macros)
+  (require 'cl))
+
 (defvar ergoemacs-theme)
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme-version)
