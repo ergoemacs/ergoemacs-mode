@@ -96,7 +96,14 @@
 
 (define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions)
 
-(defvar ergoemacs-command-loop--next-key-hash (make-hash-table)
+(defvar ergoemacs-command-loop--next-key-hash (let ((hash (make-hash-table)))
+                                                (puthash 'event-apply-shift-modifier (list '(shift) :force) hash)
+                                                (puthash 'event-apply-alt-modifier (list '(alt) :force) hash)
+                                                (puthash 'event-apply-control-modifier (list '(control) :force) hash)
+                                                (puthash 'event-apply-hyper-modifier (list '(hyper) :force) hash)
+                                                (puthash 'event-apply-meta-modifier (list '(meta) :force) hash)
+                                                (puthash 'event-apply-super-modifier (list '(super) :force) hash)
+                                                hash)
   "Hash table of how functions force the unchorded next key translation to behave.")
 
 (defvar ergoemacs-command-loop--undo-functions
@@ -510,6 +517,7 @@ This uses `ergoemacs-command-loop--read-event'."
          input
          raw-input
          mod-keys tmp
+         reset-key-p
          double)
     ;; (ergoemacs-command-loop--read-key (read-kbd-macro "C-x" t) :unchorded-ctl)
     (when (functionp text)
@@ -586,8 +594,9 @@ This uses `ergoemacs-command-loop--read-event'."
                             keys))
                      current-key)))
       (cond
-       ((and (memq input mod-keys)
-             (setq trans (gethash (lookup-key local-keymap (vector input)) ergoemacs-command-loop--next-key-hash))
+       ((and (setq trans (or (and (memq input mod-keys)
+                                  (gethash (lookup-key local-keymap (vector input)) ergoemacs-command-loop--next-key-hash))
+                             (setq reset-key-p (gethash (lookup-key local-function-key-map (ergoemacs :combine current-key input)) ergoemacs-command-loop--next-key-hash))))
              (or (eq :force (nth 1 trans)) ;; Override any keys
                  (not (key-binding (vconcat current-key (ergoemacs-translate--event-mods input trans)) t)) ;; Don't use if bound.
                  ))
@@ -602,7 +611,7 @@ This uses `ergoemacs-command-loop--read-event'."
                         "%s" (concat
                               (ergoemacs-command-loop--read-key-help-text-prefix-argument blink-on universal)
                               text
-                              (ergoemacs-key-description current-key)
+                              (or (and reset-key-p "") (ergoemacs-key-description current-key))
                               unchorded
                               ;; Cursor
                               " "
@@ -615,11 +624,13 @@ This uses `ergoemacs-command-loop--read-event'."
                               "\n"))
                        current-key)))
         (setq raw-input input
-              input (ergoemacs-translate--event-mods input trans)))
+              input (ergoemacs-translate--event-mods input trans)
+              last-command-event input))
        (t
         ;; Translate the key appropriately.
         (setq raw-input input
-              input (ergoemacs-translate--event-mods input type))))
+              input (ergoemacs-translate--event-mods input type)
+              last-command-event input)))
       (cond
        ((and input (not universal)
              (not (key-binding (ergoemacs :combine current-key raw-input)))
@@ -712,7 +723,7 @@ This uses `ergoemacs-command-loop--read-event'."
                   input nil
                   raw-input nil))))))))
     ;; Return list of raw key, and translated current key
-    (list (vector raw-input) (ergoemacs :combine current-key input))))
+    (list (vector raw-input) (ergoemacs :combine (if reset-key-p nil current-key) input))))
 
 (defun ergoemacs-command-loop--listify-key-sequence (key &optional type)
   "Returns a key sequence from KEY.
@@ -746,6 +757,7 @@ This sequence is compatible with `listify-key-sequence'."
         (ergoemacs-command-loop--reset-functions)
         (ergoemacs-command-loop key type initial-key-type universal))
     (setq ergoemacs-command-loop--exit :ignore-post-command-hook
+          prefix-arg current-prefix-arg
           ergoemacs-command-loop--single-command-keys (or (and key (read-kbd-macro key t))
                                                           ergoemacs-command-loop--single-command-keys)
           unread-command-events (or (and key (ergoemacs-command-loop--listify-key-sequence key initial-key-type))
@@ -808,8 +820,9 @@ This sequence is compatible with `listify-key-sequence'."
   (setq last-command this-command
         real-last-command this-command ;; Hopefully doesn't throw an error.
         last-prefix-arg prefix-arg
-        this-command nil
+        current-prefix-arg prefix-arg
         prefix-arg nil
+        this-command nil
         deactivate-mark nil
         ergoemacs-command-loop--echo-keystrokes-complete nil)
   
@@ -1080,7 +1093,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                         universal ergoemacs-command-loop--universal
                         ergoemacs-command-loop--single-command-keys nil
                         continue-read (not ergoemacs-command-loop--exit)
-                        current-prefix-arg (if ergoemacs-command-loop--universal current-prefix-arg nil))
+                        current-prefix-arg (if ergoemacs-command-loop--universal current-prefix-arg prefix-arg))
                   (when (and (not continue-read)
                              (eq ergoemacs-command-loop--exit :ignore-post-command-hook))
                     (setq continue-read t)))
@@ -1190,7 +1203,7 @@ pressed the translated key by changing
                     (and (not (integerp tmp)) (commandp tmp)))
                 (setq bind tmp))
                ((or (ergoemacs-keymapp (setq tmp (lookup-key key-translation-map orig-key)))
-                    (and (not (integerp tmp)) (commandp tmp)) )
+                    (and (not (integerp tmp)) (commandp tmp)))
                 (setq bind tmp))))
             
             (when (and orig-key
