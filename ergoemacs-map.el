@@ -214,6 +214,7 @@
       t)
     lookup-key))
 
+(defvar ergoemacs-menu-order)
 (defvar ergoemacs-map--undefined-keys nil
   "List of undefined keys for the global map.")
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
@@ -246,11 +247,9 @@ If LOOKUP-KEYMAP
          unbind-list
          parent
          composed-list
-         (read-map (make-sparse-keymap))
          tmp-key
          tmp
          tmp2
-         tmp3
          ret
          menu-bar
          only-modify-p)
@@ -471,9 +470,6 @@ If LOOKUP-KEYMAP
           (when tmp
             (setq ret (make-composed-keymap tmp ret)))))))
 
-      ;; (when lookup-key
-      ;;   (puthash lookup-key ret ergoemacs-map--hash)
-      ;;   (puthash (cons 'read-map lookup-key) read-map ergoemacs-map--hash))
       ret)
      ((and (not composed-list) parent)
       (unwind-protect
