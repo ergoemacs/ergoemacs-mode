@@ -1153,7 +1153,15 @@ LOOKUP is what will be run"
   (cond
    ((and lookup (ergoemacs-keymapp lookup)))
    ((consp (elt key 0))) ;; Don't message mouse translations
-   (lookup
+   ((and (or (eq ergoemacs-echo-function :multi-key)
+             (not (and translated-key (eq ergoemacs-echo-function :on-translation)))
+             (not (eq ergoemacs-echo-function t)))
+         (vectorp key) (or (= (length key) 1) ;; Don't message single keys
+                           (and (eq 27 (elt key 0)) (= (length key) 2)))))
+   ((and lookup
+         (or (eq ergoemacs-echo-function t)
+             (and translated-key (eq ergoemacs-echo-function :on-translation))
+             (eq ergoemacs-echo-function :multi-key)))
     (ergoemacs-command-loop--message "%s%s%s%s"
                                      (ergoemacs-key-description key)
                                      (ergoemacs :unicode-or-alt "→" "->")
@@ -1161,7 +1169,7 @@ LOOKUP is what will be run"
                                      (or (and translated-key
                                               (format " (from %s)" (ergoemacs-key-description translated-key)))
                                          "")))
-   (t
+   ((not lookup)
     (ergoemacs-command-loop--message "%s is undefined!"
                                      (ergoemacs-key-description key)))))
 
@@ -1235,7 +1243,8 @@ pressed the translated key by changing
                     (if (not tmp2)
                         (setq ret tmp) ;; timeout, use copy/cut
                       ;; Actual key
-                      (setq ret (ergoemacs-command-loop--key-lookup (vconcat key (vector tmp2)))))))))
+                      (setq ret (ergoemacs-command-loop--key-lookup (vconcat key (vector tmp2))))))))
+                (ergoemacs-command-loop--message-binding new-key ret))
                ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
                 (setq this-command-keys-shift-translated t
                       ergoemacs-command-loop--single-command-keys (nth 0 trials))
@@ -1243,9 +1252,10 @@ pressed the translated key by changing
                 (when (and (ergoemacs-keymapp ret)
                            (setq tmp (lookup-key ret [ergoemacs-timeout]))
                            (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
-                  (setq ret tmp)))
+                  (setq ret tmp))
+                (ergoemacs-command-loop--message-binding new-key ret key))
                (t
-                (ergoemacs-command-loop--message-binding key ret new-key)
+                (ergoemacs-command-loop--message-binding new-key ret key)
                 (setq ergoemacs-command-loop--single-command-keys new-key)))
               (throw 'found-command ret))))))
     ret))

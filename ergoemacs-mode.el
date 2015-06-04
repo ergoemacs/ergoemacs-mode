@@ -623,6 +623,15 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :type 'number
   :group 'ergoemacs-command-loop)
 
+(defcustom ergoemacs-echo-function :on-translation
+  "Shows the function evaluated with a key."
+  :type '(choice
+          (const :tag "Always echo" t)
+          (const :tag "For multi-key commands" :multi-key)
+          (const :tag "Echo on translations" :on-translation)
+          (const :tag "Don't Echo" nil))
+  :group 'ergoemacs-command-loop)
+
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined
 look for the command with or without modifiers."
@@ -637,13 +646,7 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
   :type 'boolean
   :group 'ergoemacs-read)
 
-(defcustom ergoemacs-echo-function 'on-translation
-  "Shows the function evaluated with a key."
-  :type '(choice
-          (const :tag "Always echo" t)
-          (const :tag "Echo on translations" on-translation)
-          (const :tag "Don't Echo"))
-  :group 'ergoemacs-read)
+
 
 (defcustom ergoemacs-backspace-will-undo-swap-translation t
   "Backspace will undo a swapped keyboard translation."
