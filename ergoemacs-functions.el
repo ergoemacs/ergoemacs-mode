@@ -1579,8 +1579,7 @@ level, like in `ido-find-file'. "
      ((and ergoemacs-helm-ff-ido-style-backspace
            (looking-back "[/\\]"))
       (call-interactively
-       (let (ergoemacs-read-key)
-         (ergoemacs-real-key-binding (kbd "<left>")))))
+       (key-binding (kbd "<left>"))))
      (t
       (setq backspace (lookup-key
                        (current-global-map)
@@ -1889,6 +1888,7 @@ This does the same thing in `iseach-mode' using `isearch-yank-pop' and  `isearch
     ;; Call org-yank.
     (org-yank arg))))
 
+(defvar ergoemacs-keymap)
 (defun ergoemacs-lookup-key-and-run (key)
   "Looks up KEY in `ergoemacs-keymap' and runs the function"
   (let ((fun (lookup-key ergoemacs-keymap (read-kbd-macro key))))
