@@ -30,10 +30,22 @@
   (require 'cl))
 
 (defvar ergoemacs-mode)
+(defvar ergoemacs-keymap)
+(defvar package-archives)
 (defvar ergoemacs-theme-hash)
+(defvar ergoemacs-mode-names)
+(defvar ergoemacs-excluded-major-modes)
+
+(defvar tabbar-mode)
+(defvar ergoemacs-handle-ctl-c-or-ctl-x)
 
 (declare-function ergoemacs-theme--list "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-option-on "ergoemacs-theme-engine")
+
+(declare-function ergoemacs-key-description--menu "ergoemacs-key-description")
+
+(declare-function tabbar-install-faces "tabbar-ruler")
+(declare-function tabbar-mode "tabbar")
 
 (defvar ergoemacs-make-composed-keymap-p t)
 (when (not (fboundp 'make-composed-keymap))
@@ -364,9 +376,8 @@ All other modes are assumed to be minor modes or unimportant.
       ;; Look if this item already has a :keys property
       (if (catch 'found-keys
             (dolist (i item)
-              (when (eq i ':keys)
-                (throw 'found-keys t))) nil)
-          nil
+              (when (eq i :keys)
+                (throw 'found-keys t))) nil) nil
         (ergoemacs-menu--filter-key-shortcut (cadddr item) keymap))
     nil))
 
@@ -386,52 +397,54 @@ All other modes are assumed to be minor modes or unimportant.
       (when (symbolp menu)
         (setq menu (ergoemacs-sv menu)))
       ;; For each element in the menu
-      (ergoemacs-setcdr menu
-                        (mapcar (lambda (item)
-                                  (let (key)
-                                    (cond
-                                     ;; ((ergoemacs-keymapp item)
-                                     ;;  (ergoemacs-menu--filter item)
-                                     ;;  (message "1:%s..." (substring (format "%s" item) 0 (min (length (format "%s" item)) 60)))
-                                     ;;  item)
-                                     ((and (ergoemacs-keymapp keymap) (ergoemacs-keymapp (cdr (cdr item))))
-                                      ;; JIT processing
-                                      `(,(nth 0 item) menu-item ,(nth 1 item) ,(cdr (cdr item))
-                                        :filter (lambda(bind) (ergoemacs-menu--filter bind nil ',keymap))))
-                                     ((ergoemacs-keymapp (cdr (cdr item)))
-                                      ;; JIT processing
-                                      `(,(nth 0 item) menu-item ,(nth 1 item) ,(cdr (cdr item))
-                                        :filter ergoemacs-menu--filter))
-                                     
-                                     ((ergoemacs-keymapp (car (cdr (cdr (cdr item)))))
-                                      ;; (message "3:%s..." (substring (format "%s" item) 0 (min (length (format "%s" item)) 60)))
-                                      (if (setq tmp (plist-get item :filter))
-                                          (mapcar
-                                           (lambda(elt)
-                                             (cond
-                                              ((eq elt :filter)
-                                               (setq tmp2 t)
-                                               :filter)
-                                              ((not tmp2)
-                                               elt)
-                                              ((eq elt 'ergoemacs-menu--filter)
-                                               (setq tmp2 nil)
-                                               'ergoemacs-menu--filter)
-                                              ((ignore-errors
-                                                 (and (consp elt)
-                                                      (eq (nth 0 elt) 'lambda)
-                                                      (eq (nth 0 (nth 2 elt)) 'ergoemacs-menu--filter)))
-                                               (setq tmp2 nil)
-                                               elt)
-                                              (t
-                                               (setq tmp2 nil)
-                                               `(lambda(bind) (ergoemacs-menu--filter bind ',tmp ',keymap)))))
-                                           item)
-                                        `(,@item :filter ergoemacs-menu--filter)))
-                                     ((setq key (ergoemacs-menu--filter-key-menu-item item keymap))
-                                      (append item (cons :keys (cons key nil))))
-                                     (t item))))
-                                (cdr menu))))
+      (ergoemacs-setcdr
+       menu
+       (mapcar
+        (lambda (item)
+          (let (key)
+            (cond
+             ;; ((ergoemacs-keymapp item)
+             ;;  (ergoemacs-menu--filter item)
+             ;;  (message "1:%s..." (substring (format "%s" item) 0 (min (length (format "%s" item)) 60)))
+             ;;  item)
+             ((and (ergoemacs-keymapp keymap) (ergoemacs-keymapp (cdr (cdr item))))
+              ;; JIT processing
+              `(,(nth 0 item) menu-item ,(nth 1 item) ,(cdr (cdr item))
+                :filter (lambda(bind) (ergoemacs-menu--filter bind nil ',keymap))))
+             ((ergoemacs-keymapp (cdr (cdr item)))
+              ;; JIT processing
+              `(,(nth 0 item) menu-item ,(nth 1 item) ,(cdr (cdr item))
+                :filter ergoemacs-menu--filter))
+             
+             ((ergoemacs-keymapp (car (cdr (cdr (cdr item)))))
+              ;; (message "3:%s..." (substring (format "%s" item) 0 (min (length (format "%s" item)) 60)))
+              (if (setq tmp (plist-get item :filter))
+                  (mapcar
+                   (lambda(elt)
+                     (cond
+                      ((eq elt :filter)
+                       (setq tmp2 t)
+                       :filter)
+                      ((not tmp2)
+                       elt)
+                      ((eq elt 'ergoemacs-menu--filter)
+                       (setq tmp2 nil)
+                       'ergoemacs-menu--filter)
+                      ((ignore-errors
+                         (and (consp elt)
+                              (eq (nth 0 elt) 'lambda)
+                              (eq (nth 0 (nth 2 elt)) 'ergoemacs-menu--filter)))
+                       (setq tmp2 nil)
+                       elt)
+                      (t
+                       (setq tmp2 nil)
+                       `(lambda(bind) (ergoemacs-menu--filter bind ',tmp ',keymap)))))
+                   item)
+                `(,@item :filter ergoemacs-menu--filter)))
+             ((setq key (ergoemacs-menu--filter-key-menu-item item keymap))
+              (append item (cons :keys (cons key nil))))
+             (t item))))
+        (cdr menu))))
     menu))
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -61,6 +61,7 @@
 (declare-function ergoemacs-map-properties--movement-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
+(declare-function ergoemacs-translate--keymap "ergoemacs-translate")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-mods "ergoemacs-translate")
 (declare-function ergoemacs-translate--get "ergoemacs-translate")
@@ -72,6 +73,7 @@
 (declare-function ergoemacs-translation-struct-unchorded "ergoemacs-translate")
 
 (defvar ergoemacs-command-loop-echo-keystrokes)
+(defvar ergoemacs-echo-function)
 
 
 

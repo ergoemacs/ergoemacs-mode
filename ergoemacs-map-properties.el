@@ -58,6 +58,7 @@
 (defvar ergoemacs-dir)
 (defvar ergoemacs-map-properties--global-map-before-ergoemacs)
 (defvar ergoemacs-ignore-prev-global)
+(defvar ergoemacs-remap-ignore)
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")

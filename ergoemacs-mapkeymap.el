@@ -54,6 +54,9 @@
   (require 'ergoemacs-macros)
   (require 'cl))
 
+(declare-function ergoemacs-map-properties--all-sparse-p "ergoemacs-map-properties")
+(declare-function ergoemacs-setcdr "ergoemacs-lib")
+
 (defun ergoemacs-map-force-full-keymap (keymap)
   "Forces KEYMAP to be a full keymap."
   (if (ignore-errors (char-table-p (nth 1 keymap))) keymap

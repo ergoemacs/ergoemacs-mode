@@ -67,18 +67,21 @@
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme)
 
+(declare-function ergoemacs-menu--filter "ergoemacs-lib")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
-(declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-component")
-(declare-function ergoemacs-component-struct--minor-mode-map-alist "ergoemacs-component")
-(declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
+(declare-function ergoemacs-component-struct--create-hooks "ergoemacs-component")
 (declare-function ergoemacs-component-struct--get "ergoemacs-component")
+(declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-component")
 (declare-function ergoemacs-component-struct--lookup-list "ergoemacs-component")
+(declare-function ergoemacs-component-struct--minor-mode-map-alist "ergoemacs-component")
+(declare-function ergoemacs-component-struct--rm-hooks "ergoemacs-component")
+(declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
 
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme--menu "ergoemacs-theme-engine")
 
-(declare-function ergoemacs-mapkeymap "ergoemacs-mapkeymap")
+(declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 
 (declare-function ergoemacs-map-properties--composed-list "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--composed-p "ergoemacs-map-properties")

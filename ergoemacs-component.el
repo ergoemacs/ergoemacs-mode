@@ -82,6 +82,8 @@
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
+(declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
+
 ;; ergoemacs-translate
 
 (defcustom ergoemacs-ignore-prev-global t

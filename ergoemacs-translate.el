@@ -58,9 +58,16 @@
 (defvar ergoemacs-translation-hash)
 
 (declare-function ergoemacs-mode-line "ergoemacs-mode")
+
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 (declare-function ergoemacs-key-description-kbd "ergoemacs-key-description")
+
 (declare-function ergoemacs-layouts--current "ergoemacs-layouts")
+
+(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
+
+(declare-function ergoemacs-map-- "ergoemacs-map")
 
 
 (defvar ergoemacs-translate--hash (make-hash-table)
