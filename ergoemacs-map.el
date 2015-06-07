@@ -586,6 +586,7 @@ If LOOKUP-KEYMAP
   ;; style shortcuts (They need to place the correct shortucts)
   (ergoemacs-menu--filter (lookup-key ergoemacs-keymap [menu-bar]))
   (ergoemacs-map--modify-active t)
+  (ergoemacs-component-struct--create-hooks)
   (add-hook 'post-command-hook #'ergoemacs-map--modify-active))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-map--install)
@@ -605,7 +606,8 @@ If LOOKUP-KEYMAP
     (when menu-bar
       ;; (message "menu-bar: %s" menu-bar)
       ;; (global-set-key [menu-bar] menu-bar)
-      )))
+      ))
+  (ergoemacs-component-struct--rm-hooks))
 
 (defun ergoemacs-map-undefined ()
   "Lets the user know that this key is undefined in `ergoemacs-mode'."
