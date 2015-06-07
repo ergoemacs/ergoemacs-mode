@@ -563,6 +563,24 @@ Cache using LOOKUP-KEY. "
      (ergoemacs-component-struct--minor-mode-map-alist-hash obj))
     ret))
 
+(defun ergoemacs-component-struct--hooks (&optional obj ret)
+  "Gets a list of hooks that need to be defined eor OBJ."
+  (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
+        tmp
+        (ret ret))
+    (cond
+     ((consp obj)
+      (dolist (cur-obj obj)
+        (setq ret (ergoemacs-component-struct--hooks cur-obj ret)))
+      ret)
+     (t
+      (when (hash-table-p (setq tmp (ergoemacs-component-struct-hook-maps obj)))
+        (maphash
+         (lambda(hook _value)
+           (pushnew hook ret))
+         tmp))
+      ret))))
+
 (defun ergoemacs-component-struct--hook-hash (hook &optional layout obj)
   "Get hook hash"
   (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
@@ -587,7 +605,11 @@ Cache using LOOKUP-KEY. "
       hash))))
 
 (defun ergoemacs-component-struct--hook (hook &optional layout obj)
-  "Get hook"
+  "Get keymaps that should be applied in an alist similiar to `minor-mode-map-alist'.
+The `car' of the alist should be the keymap that should be
+modified, the `cdr' of the alsit should be the keymap that should
+be composed over the keymap.  This is done in
+`ergoemacs-component-struct--composed--composed-hook'."
   (let* (ret tmp label)
     (maphash
      (lambda(key value)
@@ -599,6 +621,29 @@ Cache using LOOKUP-KEY. "
        (push (cons key tmp) ret))
      (ergoemacs-component-struct--hook-hash hook layout obj))
     ret))
+
+(defun ergoemacs-component-struct--composed-hook (hook &optional layout obj)
+  "Apply keymaps defined in HOOK. "
+  (dolist (elt (ergoemacs-component-struct--hook hook layout obj))
+    (set (car elt) (make-composed-keymap (cdr elt) (symbol-value (car elt))))))
+
+(defvar ergoemacs-component-struct--create-hooks nil)
+(defun ergoemacs-component-struct--create-hooks (&optional obj)
+  "Gets a list of hooks that need to be defined eor OBJ."
+  (dolist (hook (ergoemacs-component-struct--hooks obj))
+    (eval `(progn
+             (defun ,(intern (concat "ergoemacs--" (symbol-name hook))) ()
+               ,(format "`ergoemacs-mode' hook for `%s'" (symbol-name hook))
+               (ergoemacs-component-struct--composed-hook ',hook))
+             ;; (push )
+             (push ',hook ergoemacs-component-struct--create-hooks)
+             (add-hook ',hook #',(intern (concat "ergoemacs--" (symbol-name hook))))))))
+
+(defun ergoemacs-component-struct--rm-hooks ()
+  "Remove hooks that were created with `ergoemacs-component-struct--create-hooks'"
+  (dolist (hook ergoemacs-component-struct--create-hooks)
+    (remove-hook hook (intern (concat "ergoemacs--" (symbol-name hook)))))
+  (setq ergoemacs-component-struct--create-hooks nil))
 
 (defun ergoemacs-component-struct--translated-list (obj list &optional layout)
   "Translate LIST based on OBJ translation and LAYOUT."
