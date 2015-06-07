@@ -1171,7 +1171,10 @@ LOOKUP is what will be run"
                                          "")))
    ((not lookup)
     (ergoemacs-command-loop--message "%s is undefined!"
-                                     (ergoemacs-key-description key)))))
+                                     (ergoemacs-key-description key)))
+   ((not (or (= (length key) 1) ;; Clear command completing message
+             (and (eq 27 (elt key 0)) (= (length key) 2))))
+    (ergoemacs-command-loop--message ""))))
 
 (defun ergoemacs-command-loop--key-lookup (key)
   "Find the KEY's function based on current bindings.
