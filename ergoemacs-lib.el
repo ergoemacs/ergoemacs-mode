@@ -446,6 +446,14 @@ All other modes are assumed to be minor modes or unimportant.
              (t item))))
         (cdr menu))))
     menu))
+
+;;;###autoload
+(defun ergoemacs-set-layout (layout)
+  "Set `ergoemacs-keyboard-layout' to LAYOUT and reset `ergoemacs-mode'.
+The reset is done with `ergoemacs-mode-reset'."
+  (setq ergoemacs-keyboard-layout layout)
+  (ergoemacs-mode-reset))
+
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-lib.el ends here
