@@ -74,6 +74,8 @@
 
 (defvar ergoemacs-command-loop-echo-keystrokes)
 (defvar ergoemacs-echo-function)
+(defvar keyfreq-mode)
+(defvar keyfreq-table)
 
 
 
