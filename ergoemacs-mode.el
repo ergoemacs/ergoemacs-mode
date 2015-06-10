@@ -632,6 +632,211 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
           (const :tag "Don't Echo" nil))
   :group 'ergoemacs-command-loop)
 
+
+(defgroup ergoemacs-modal nil
+  "Modal ergoemacs"
+  :group 'ergoemacs-mode)
+(defcustom ergoemacs-modal-ignored-buffers
+  '("^ \\*load\\*" "^[*]e?shell[*]" "^[*]R.*[*]$")
+  "Regular expression of bufferst that should come up in
+ErgoEmacs state, regardless of if a modal state is currently
+enabled."
+  :type '(repeat string)
+  :group 'ergoemacs-modal)
+
+(defcustom ergoemacs-default-cursor-color nil
+  "The default cursor color.
+This should be reset every time that the modal cursor changes color.  Otherwise this will be nil
+A color string as passed to `set-cursor-color'."
+  :type '(choice (const :tag "Don't change")
+                 (color :tag "Color"))
+  :group 'ergoemacs-modal)
+
+(define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color)
+
+(defcustom ergoemacs-modal-emacs-state-modes
+  '(archive-mode
+    bbdb-mode
+    bookmark-bmenu-mode
+    bookmark-edit-annotation-mode
+    browse-kill-ring-mode
+    bzr-annotate-mode
+    calc-mode
+    cfw:calendar-mode
+    completion-list-mode
+    Custom-mode
+    debugger-mode
+    delicious-search-mode
+    desktop-menu-blist-mode
+    desktop-menu-mode
+    doc-view-mode
+    dvc-bookmarks-mode
+    dvc-diff-mode
+    dvc-info-buffer-mode
+    dvc-log-buffer-mode
+    dvc-revlist-mode
+    dvc-revlog-mode
+    dvc-status-mode
+    dvc-tips-mode
+    ediff-mode
+    ediff-meta-mode
+    efs-mode
+    Electric-buffer-menu-mode
+    emms-browser-mode
+    emms-mark-mode
+    emms-metaplaylist-mode
+    emms-playlist-mode
+    etags-select-mode
+    fj-mode
+    gc-issues-mode
+    gdb-breakpoints-mode
+    gdb-disassembly-mode
+    gdb-frames-mode
+    gdb-locals-mode
+    gdb-memory-mode
+    gdb-registers-mode
+    gdb-threads-mode
+    gist-list-mode
+    gnus-article-mode
+    gnus-browse-mode
+    gnus-group-mode
+    gnus-server-mode
+    gnus-summary-mode
+    google-maps-static-mode
+    ibuffer-mode
+    jde-javadoc-checker-report-mode
+    magit-commit-mode
+    magit-diff-mode
+    magit-key-mode
+    magit-log-mode
+    magit-mode
+    magit-reflog-mode
+    magit-show-branches-mode
+    magit-branch-manager-mode ;; New name for magit-show-branches-mode
+    magit-stash-mode
+    magit-status-mode
+    magit-wazzup-mode
+    mh-folder-mode
+    monky-mode
+    notmuch-hello-mode
+    notmuch-search-mode
+    notmuch-show-mode
+    occur-mode
+    org-agenda-mode
+    package-menu-mode
+    proced-mode
+    rcirc-mode
+    rebase-mode
+    recentf-dialog-mode
+    reftex-select-bib-mode
+    reftex-select-label-mode
+    reftex-toc-mode
+    sldb-mode
+    slime-inspector-mode
+    slime-thread-control-mode
+    slime-xref-mode
+    shell-mode
+    sr-buttons-mode
+    sr-mode
+    sr-tree-mode
+    sr-virtual-mode
+    tar-mode
+    tetris-mode
+    tla-annotate-mode
+    tla-archive-list-mode
+    tla-bconfig-mode
+    tla-bookmarks-mode
+    tla-branch-list-mode
+    tla-browse-mode
+    tla-category-list-mode
+    tla-changelog-mode
+    tla-follow-symlinks-mode
+    tla-inventory-file-mode
+    tla-inventory-mode
+    tla-lint-mode
+    tla-logs-mode
+    tla-revision-list-mode
+    tla-revlog-mode
+    tla-tree-lint-mode
+    tla-version-list-mode
+    twittering-mode
+    urlview-mode
+    vc-annotate-mode
+    vc-dir-mode
+    vc-git-log-view-mode
+    vc-svn-log-view-mode
+    vm-mode
+    vm-summary-mode
+    w3m-mode
+    wab-compilation-mode
+    xgit-annotate-mode
+    xgit-changelog-mode
+    xgit-diff-mode
+    xgit-revlog-mode
+    xhg-annotate-mode
+    xhg-log-mode
+    xhg-mode
+    xhg-mq-mode
+    xhg-mq-sub-mode
+    xhg-status-extra-mode)
+  "Modes that should come up in ErgoEmacs state, regardless of if a
+modal state is currently enabled."
+  :type  '(repeat symbol)
+  :group 'ergoemacs-modal)
+
+(defvar ergoemacs-modal-list '())
+(defvar ergoemacs-translate--translation-hash)
+(defvar ergoemacs-modal-ignored-keymap
+  (let ((ret (make-sparse-keymap))
+        (mods '(control meta shift hyper super alt))
+        tmp
+        key)
+    (dolist (char '("<f1>" 
+                    "<f2>" 
+                    "<f3>" 
+                    "<f4>" 
+                    "<f5>" 
+                    "<f6>" 
+                    "<f7>" 
+                    "<f8>" 
+                    "<f9>" 
+                    "<f10>"
+                    "<f11>"
+                    "<f12>"
+                    "<apps>" "<menu>"
+                    "RET" "ESC" "DEL" "TAB"
+                    "<home>" 
+                    "<next>" 
+                    "<prior>"
+                    "<end>"
+                    "<insert>"
+                    "<deletechar>"))
+      (define-key ret (setq key (read-kbd-macro char t)) 'ergoemacs-ignore-modal)
+      (setq key (elt key 0))
+      (dolist (mod1 mods)
+        (setq tmp (vector (event-convert-list (list mod1 key))))
+        (ignore-errors (define-key ret tmp 'ignore))
+        (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
+          (ignore-errors (define-key ret tmp 'ignore)))
+        (dolist (mod2 mods)
+          (setq tmp (vector (event-convert-list (list mod1 mod2 key))))
+          (ignore-errors (define-key ret tmp 'ignore))
+          (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
+            (ignore-errors (define-key ret tmp 'ignore)))
+          (dolist (mod3 mods)
+            (setq tmp (vector (event-convert-list (list mod1 mod2 mod3 key))))
+            (ignore-errors (define-key ret tmp 'ignore))
+            (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
+              (ignore-errors (define-key ret tmp 'ignore)))
+            (dolist (mod4 mods)
+              (setq tmp (vector (event-convert-list (list mod1 mod2 mod3 mod4 key))))
+              (ignore-errors (define-key ret tmp 'ignore))
+              (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
+                (ignore-errors (define-key ret tmp 'ignore))))))))
+    ret)
+  "`ergoemacs-mode' keys to ignore the modal translation.
+Typically function keys")
+
 (defcustom ergoemacs-translate-keys t
   "When translation is enabled, when a command is not defined
 look for the command with or without modifiers."

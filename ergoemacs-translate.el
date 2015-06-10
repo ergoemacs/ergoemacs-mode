@@ -461,6 +461,7 @@ For keys, the list consists of:
   (keymap (make-sparse-keymap))
   (keymap-modal (make-sparse-keymap))
   (modal-always nil)
+  (modal-color nil)
   (key nil)
   (unchorded nil))
 
@@ -511,11 +512,12 @@ This function is made in `ergoemacs-translate--create'")
                   (,(intern (concat "ergoemacs-command-loop-" type)) ,(plist-get plist ':key)))
                 ;; Backward compatible names.
                 (defalias ',(intern (concat "ergoemacs-" (plist-get plist :name) type))
-                  '(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)))
-                ,(when (eq "-universal-argument" type)
+                  ',(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)))
+                ,(cond
+                  ((eq "-universal-argument" type)
                    `(progn
                       (push ',(intern (concat "ergoemacs-" (plist-get plist :name) type)) ergoemacs-command-loop--universal-functions)
-                      (push ',(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)) ergoemacs-command-loop--universal-functions)))))))
+                      (push ',(intern (concat "ergoemacs-translate--" (plist-get plist :name) type)) ergoemacs-command-loop--universal-functions))))))))
     (let (tmp
           cur-trans
           ret)
@@ -558,6 +560,7 @@ This function is made in `ergoemacs-translate--create'")
            :keymap local-keymap
            :keymap-modal (or (plist-get plist :keymap-modal) (make-sparse-keymap))
            :modal-always (plist-get plist :modal-always)
+           :modal-color (plist-get plist :modal-color)
            :key (plist-get plist :key)
            :unchorded (plist-get plist :unchorded)))
     (puthash (plist-get plist :key) struct ergoemacs-translation-hash)
@@ -609,7 +612,14 @@ If TYPE is unspecified, assume :normal translation"
                                           (ergoemacs map :map-list-hash '(ergoemacs-translate--parent-map))
                                           map)
   "Parent map for keymaps when completing a key sequence.")
-  
+
+
+(defvar ergoemacs-translate--modal-parent-map (let ((map (make-sparse-keymap)))
+                                          (ergoemacs map :label (- most-positive-fixnum 2))
+                                          (ergoemacs map :only-local-modifications-p t)
+                                          (ergoemacs map :map-list-hash '(ergoemacs-translate--modal-parent-map))
+                                          map)
+  "Parent map for modal `ergoemacs-mode'")  
 
 (defvar ergoemacs-translate--keymap-hash (make-hash-table)
   "Translation keymaps")
@@ -621,15 +631,25 @@ If TYPE is unspecified, assume :normal translation"
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-translate--keymap-reset)
 
 (defun ergoemacs-translate--keymap (&optional translation)
-  "Get the keymap for TRANSLATION"
-  (let* ((translation (or (and (ergoemacs-translation-struct-p translation) translation)
+  "Get the keymap for TRANSLATION.
+This takes into consideration the modal state of `ergoemacs-mode'."
+  (let* ((modal (ergoemacs :modal-p))
+         (translation (or (and (ergoemacs-translation-struct-p translation)
+                               (or (not modal) ;; prefer modal when :normal 
+                                   (not (eq :normal (ergoemacs-translation-struct-key translation))))
+                               translation)
+                          modal
                           (ergoemacs-translate--get (or translation :normal))))
-         (key (ergoemacs-translation-struct-key translation))
+         (key (or (and modal (intern (concat ":" (ergoemacs-translation-struct-name translation) "-modal")))
+                  (ergoemacs-translation-struct-key translation)))
          (ret (gethash key ergoemacs-translate--keymap-hash))
          keymap)
     (unless ret
-      (setq keymap (ergoemacs-translation-struct-keymap translation)
-            ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map)))
+      (if modal
+          (setq keymap (ergoemacs-translation-struct-keymap-modal translation)
+                ret keymap)
+        (setq keymap (ergoemacs-translation-struct-keymap translation)
+              ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map))))
       (puthash key ret ergoemacs-translate--keymap-hash))
     ret))
 
