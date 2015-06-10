@@ -195,24 +195,34 @@ Maybe be similar to use-package"
           body (nth 1 kb))
     (macroexpand-all
      `(let ((old-ergoemacs-theme (ergoemacs :current-theme))
+            (old-type ergoemacs-command-loop-type)
             (old-version (ergoemacs :current-version))
             (macro
              ,(if (plist-get plist :macro)
                   `(edmacro-parse-keys ,(plist-get plist :macro) t)))
-            (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout))
-        (setq ergoemacs-theme ,(plist-get plist ':currnt-theme))
-        (setq ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us"))
+            (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+            (reset-ergoemacs nil))
+        (setq ergoemacs-theme ,(plist-get plist ':currnt-theme)
+              ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us")
+              ergoemacs-command-loop-type nil)
         (ergoemacs-theme-set-version ,(or (plist-get plist ':version) nil))
-        (ergoemacs-mode-reset)
+        (unless (and (equal old-ergoemacs-theme ergoemacs-theme)
+                     (equal old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
+                     (equal old-version (ergoemacs :current-vresion)))
+          (setq reset-ergoemacs t)
+          (ergoemacs-mode-reset))
+        
         ,(if (plist-get plist :cua)
              `(cua-mode 1))
         (unwind-protect
             (progn
               ,@body)
-          (setq ergoemacs-theme old-ergoemacs-theme)
-          (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
+          (setq ergoemacs-command-loop-type old-type
+                ergoemacs-theme old-ergoemacs-theme
+                ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
           (ergoemacs-theme-set-version old-version)
-          (ergoemacs-mode-reset))))))
+          (when reset-ergoemacs
+            (ergoemacs-mode-reset)))))))
 
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
