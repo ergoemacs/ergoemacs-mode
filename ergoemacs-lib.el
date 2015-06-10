@@ -30,6 +30,7 @@
   (require 'cl))
 
 (defvar ergoemacs-mode)
+(defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
 (defvar package-archives)
 (defvar ergoemacs-theme-hash)
@@ -39,6 +40,7 @@
 (defvar tabbar-mode)
 (defvar ergoemacs-handle-ctl-c-or-ctl-x)
 
+(declare-function ergoemacs-mode-reset "ergoemacs-mode")
 (declare-function ergoemacs-theme--list "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-option-on "ergoemacs-theme-engine")
 
