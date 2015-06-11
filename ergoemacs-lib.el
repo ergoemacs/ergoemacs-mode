@@ -374,7 +374,7 @@ All other modes are assumed to be minor modes or unimportant.
            (eq (cadr item) 'menu-item)
            (stringp (caddr item))
            (symbolp (cadddr item))
-           (not (keymapp (cadddr item))))
+           (not (ergoemacs-keymapp (cadddr item))))
       ;; Look if this item already has a :keys property
       (if (catch 'found-keys
             (dolist (i item)
@@ -391,7 +391,7 @@ All other modes are assumed to be minor modes or unimportant.
         tmp tmp2)
     ;; (when fn
     ;;   (message "%s:\n\t%s" fn menu))
-    (if (not (ignore-errors (keymapp menu)))
+    (if (not (ergoemacs-keymapp menu) )
         (progn
           (when menu
             (message "Invalid menu in ergoemacs-menu--filter %s" menu))

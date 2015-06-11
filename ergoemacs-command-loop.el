@@ -538,7 +538,7 @@ Used to help with translation keymaps like `input-decode-map'"
          (test-ret (lookup-key keymap current-key))
          next-key)
     (while (and current-key
-                (keymapp test-ret))
+                (ergoemacs-keymapp test-ret))
       ;; The translation needs more keys...
       (setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay))
       (when next-key ;; Since a key was read, save it to be read later.
@@ -990,7 +990,7 @@ This sequence is compatible with `listify-key-sequence'."
       ;; wants to change the selected window and stuff (say,
       ;; emacsclient).  */
       (cond
-       ((keymapp command)
+       ((ergoemacs-keymapp command)
         (popup-menu command nil current-prefix-arg))
        ((not (nth 1 form))
         (call-interactively command record-flag keys))
