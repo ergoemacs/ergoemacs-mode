@@ -154,30 +154,46 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
                   (throw 'not-bound nil))
                 ret)) composed-list)))))
 
+(defvar ergoemacs-map-properties--key-struct (make-hash-table)
+  "Key struct hash table.")
 (defun ergoemacs-map-properties--key-struct (keymap &optional force)
   "Returns the maps linked to the current map, if it is an `ergoemacs-mode' map.
 
 :map-key is the key of the current map.
 :composed is a list of the `ergoemacs-map-properties--key-struct' of each of the composed maps.
-:parent is the `ergoemacs-map-properties--key-struct' of the current map
+:parent is the `ergoemacs-map-properties--key-struct' of the current map.
+
+This will return the keymap structure prior to `ergoemacs-mode' modifications
 "
+  ;;|-----------+------------+--------------+--------------|
+  ;;| Condition | Call Count | Elapsed Time | Average Time |
+  ;;|-----------+------------+--------------+--------------|
+  ;;| Pre Hash  |     237982 | 100.52800000 | 0.0004224185 |
+  ;;| Post Hash |     150045 | 40.600999999 | 0.0002705921 |
+  ;;|-----------+------------+--------------+--------------|
   (let* ((keymap (ergoemacs-map-properties--keymap-value keymap))
          (map-key (ergoemacs keymap :map-key))
          (composed (ergoemacs-map-properties--composed keymap force))
-         parent ret)
-    (when (and force (not (or map-key composed)))
-      (ergoemacs :label keymap)
-      (setq map-key (ergoemacs keymap :map-key)
-            composed (ergoemacs-map-properties--composed keymap)
-            parent (ergoemacs-map-properties--parent keymap)))
-    (when map-key
-      (setq ret (plist-put ret :map-key map-key)))
-    (when composed
-      (setq ret (plist-put ret :composed composed)))
-    (when (or map-key composed)
-      (setq parent (ergoemacs-map-properties--parent keymap t))
-      (when parent
-        (setq ret (plist-put ret :parent parent))))
+         parent
+         (hash-key (or (and (not composed) (integerp map-key) map-key)
+                       (and composed (not (consp map-key)) (cdr keymap))))
+         (ret (or (and (consp map-key) (car map-key))
+                  (and hash-key (gethash hash-key ergoemacs-map-properties--key-struct)))))
+    (unless ret
+      (when (and force (not (or map-key composed)))
+        (ergoemacs :label keymap)
+        (setq map-key (ergoemacs keymap :map-key)
+              composed (ergoemacs-map-properties--composed keymap)
+              parent (ergoemacs-map-properties--parent keymap)))
+      (when map-key
+        (setq ret (plist-put ret :map-key map-key)))
+      (when composed
+        (setq ret (plist-put ret :composed composed)))
+      (when (or map-key composed)
+        (setq parent (ergoemacs-map-properties--parent keymap t))
+        (when parent
+          (setq ret (plist-put ret :parent parent))))
+      (puthash hash-key ret ergoemacs-map-properties--key-struct))    
     ret))
 
 (defun ergoemacs-map-properties--default-global-file ()
