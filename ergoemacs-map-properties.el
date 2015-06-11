@@ -196,6 +196,39 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       (puthash hash-key ret ergoemacs-map-properties--key-struct))    
     ret))
 
+
+(defun ergoemacs-map-properties--key-hash (keymap &optional force)
+  "Returns the maps linked to the current map, if it is an `ergoemacs-mode' map.
+
+:map-key is the key of the current map.
+:composed is a list of the `ergoemacs-map-properties--key-struct' of each of the composed maps.
+:parent is the `ergoemacs-map-properties--key-struct' of the current map.
+
+This will return the keymap structure prior to `ergoemacs-mode' modifications
+"
+  ;;|-----------+------------+--------------+--------------|
+  ;;| Condition | Call Count | Elapsed Time | Average Time |
+  ;;|-----------+------------+--------------+--------------|
+  ;;| Pre Hash  |     237982 | 100.52800000 | 0.0004224185 |
+  ;;| Post Hash |     150045 | 40.600999999 | 0.0002705921 |
+  ;;| Hash Key  |      76379 | 15.183000000 | 0.0001987850 |
+  ;;|-----------+------------+--------------+--------------|
+  (when (ergoemacs-keymapp keymap)
+    (let* ((keymap (ergoemacs-map-properties--keymap-value keymap))
+           (map-key (ergoemacs keymap :map-key))
+           (composed (ergoemacs-map-properties--composed-list keymap force))
+           (parent (and composed (keymap-parent keymap)))
+           (ret (or (and (consp map-key) (car map-key))
+                    (and composed
+                         (append
+                          (mapcar
+                           (lambda(map)
+                             (ergoemacs map :map-key))
+                           composed)
+                          (list (and parent (ergoemacs parent :map-key)))))
+                    (and (integerp map-key) (list map-key)))))
+      ret)))
+
 (defun ergoemacs-map-properties--default-global-file ()
   "What is the global key hash file."
   (let* ((file (expand-file-name (format "ergoemacs-global-%s.el" emacs-version)
@@ -362,7 +395,7 @@ KEYMAP can be a keymap or keymap integer key."
   (if (ergoemacs-keymapp keymap)
       (let* (ret
              (keymap (ergoemacs keymap :original))
-             (map-p (ergoemacs keymap :key-struct)))
+             (map-p (ergoemacs keymap :key-hash)))
         (cond
          ((and map-p (not no-hash) (setq ret (ergoemacs keymap :map-list-hash)))
           (ergoemacs-map-properties--get-or-generate-map-key keymap)
@@ -520,11 +553,11 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((key (ergoemacs keymap :map-key))
         map)
     (when (integerp key)
-      (setq map (gethash (setq key (ergoemacs keymap :key-struct)) ergoemacs-map-properties--user-map-hash))
+      (setq map (gethash (setq key (ergoemacs keymap :key-hash)) ergoemacs-map-properties--user-map-hash))
       (unless map
         (puthash key (make-sparse-keymap) ergoemacs-map-properties--user-map-hash)
         (setq map (gethash key ergoemacs-map-properties--user-map-hash))
-        (ergoemacs map :label (list (ergoemacs keymap :key-struct) 'user))))
+        (ergoemacs map :label (list (ergoemacs keymap :key-hash) 'user))))
     map))
 
 (defun ergoemacs-map-properties--calculate-keys-and-where-is-hash (keymap &rest _ignore)

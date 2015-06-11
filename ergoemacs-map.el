@@ -87,7 +87,7 @@
 (declare-function ergoemacs-map-properties--composed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--get-or-generate-map-key "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--key-struct "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--key-hash "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keymap-value "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keys "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
@@ -288,11 +288,11 @@ If LOOKUP-KEYMAP
      ((and (consp map)
            (setq lookup-key (ergoemacs-map--base-lookup-key map))
            (not lookup-keymap)
-           (setq lookup-key (append (list (ergoemacs (ergoemacs :global-map) :key-struct)) lookup-key))
+           (setq lookup-key (append (list (ergoemacs (ergoemacs :global-map) :key-hash)) lookup-key))
            (setq ret (gethash lookup-key ergoemacs-map--hash)))
       ret)
      ((and (consp map) lookup-key lookup-keymap
-           (setq lookup-key (append (list (ergoemacs lookup-keymap :key-struct)) lookup-key))
+           (setq lookup-key (append (list (ergoemacs lookup-keymap :key-hash)) lookup-key))
            (setq ret (gethash lookup-key ergoemacs-map--hash)))
       ret)
      ((and (consp map) lookup-key
@@ -316,7 +316,7 @@ If LOOKUP-KEYMAP
         (dolist (i ergoemacs-map--undefined-keys)
           (define-key tmp i #'ergoemacs-map-undefined))
         
-        (ergoemacs tmp :label (list (ergoemacs (ergoemacs :global-map) :key-struct) 'ergoemacs-undefined (intern ergoemacs-keyboard-layout)))
+        (ergoemacs tmp :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-undefined (intern ergoemacs-keyboard-layout)))
         
         (push tmp composed-list)
         
@@ -367,7 +367,7 @@ If LOOKUP-KEYMAP
           (when (not lookup-keymap)
             (remhash key ergoemacs-map--))
           (define-key ret key nil))
-        (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-struct) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
+        (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
 
         
         (set-keymap-parent ret (make-composed-keymap composed-list parent))
@@ -446,7 +446,7 @@ If LOOKUP-KEYMAP
                  (define-key ret (vector 'ergoemacs-remap (gethash key (ergoemacs global-map :lookup)))
                    item))))
            lookup-keymap)
-          (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-struct) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
+          (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
         
         (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
         
@@ -465,7 +465,7 @@ If LOOKUP-KEYMAP
             (when (not lookup-keymap)
               (remhash key ergoemacs-map--))
             (define-key ret key nil))
-          (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-struct) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
+          (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
           
           (set-keymap-parent ret (make-composed-keymap composed-list parent))
           ;; Get the protecting user keys

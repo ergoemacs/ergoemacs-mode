@@ -114,9 +114,7 @@ bindings into this keymap (the original keymap is untouched)"
   ;; FIXME don't replace
   :type :after
   (when (and ergoemacs-mode (not ergoemacs--original-local-map))
-    (set (make-local-variable 'ergoemacs--original-local-map) (copy-keymap (current-local-map)))
-    ;; (ergoemacs (current-local-map) :label (list (ergoemacs (current-local-map) :key-struct) 'local))
-    ))
+    (set (make-local-variable 'ergoemacs--original-local-map) (copy-keymap (current-local-map)))))
 
 (defun ergoemacs-use-global-map--after (keymap)
   "Function for `use-global-map' advice"

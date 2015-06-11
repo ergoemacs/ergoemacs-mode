@@ -416,7 +416,7 @@ When KEYMAP can be a property.  The following properties are supported:
 - :remap - Use `ergoemacs-mode' to remap to an appropriate function.
 - :md5 -- returns an md5 of the currently enabled `ergoemacs-mode' options.
 - :theme-debug -- Debugs the theme by calling `ergoemacs-component--checkout'
-- :map-list,  :composed-p, :composed-list, :key-struct :empty-p calls ergoemacs-map-properties-- equivalent functions.
+- :map-list,  :composed-p, :composed-list, :key-hash :empty-p calls ergoemacs-map-properties-- equivalent functions.
 
 "
   (let ((map-properties-list '(:map-list
@@ -424,6 +424,7 @@ When KEYMAP can be a property.  The following properties are supported:
                                :composed-p
                                :composed-list
                                :key-struct
+                               :key-hash
                                :empty-p
                                :label
                                :current-local-map-p
@@ -493,7 +494,7 @@ When KEYMAP can be a property.  The following properties are supported:
        ((memq property map-properties-list)
         `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name property) 1))) ,keymap))
        (t
-        `(ignore-errors (gethash ,property (gethash (ergoemacs-map-properties--key-struct (ergoemacs-map-properties--keymap-value ,keymap)) ergoemacs-map-properties--plist-hash))))))
+        `(ignore-errors (gethash ,property (gethash (ergoemacs-map-properties--key-hash (ergoemacs-map-properties--keymap-value ,keymap)) ergoemacs-map-properties--plist-hash))))))
 
      ((and keymap property set-value
            (symbolp property)
