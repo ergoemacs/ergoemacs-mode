@@ -247,19 +247,24 @@ bindings the keymap is:
   :global t
   :group 'ergoemacs-mode
   :keymap ergoemacs-menu-keymap
-  (if ergoemacs-mode
-      (progn
-        (run-hooks 'ergoemacs-mode-startup-hook)
-        (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-        (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
-        (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
-        (message "Ergoemacs-mode turned ON."))
-    (run-hooks 'ergoemacs-mode-shutdown-hook)
-    (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
-    (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-    (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
-    (setq overriding-terminal-local-map nil)
-    (message "Ergoemacs-mode turned OFF.")))
+  (let ((refresh-p ergoemacs-component-struct--refresh-variables))
+    (if ergoemacs-mode
+        (progn
+          (run-hooks 'ergoemacs-mode-startup-hook)
+          (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+          (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
+          (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
+          (if refresh-p
+              (message "Ergoemacs-mode keys refreshed (%s:%s)"
+                       ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))
+            (message "Ergoemacs-mode turned ON (%s:%s)." ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))))
+      (run-hooks 'ergoemacs-mode-shutdown-hook)
+      (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
+      (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+      (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
+      (setq overriding-terminal-local-map nil)
+      (unless refresh-p
+        (message "Ergoemacs-mode turned OFF.")))))
 
 ;;;###autoload
 (defun ergoemacs-mode-start ()

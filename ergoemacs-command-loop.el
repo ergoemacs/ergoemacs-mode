@@ -57,6 +57,7 @@
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 
+(declare-function ergoemacs-mode-line "ergoemacs-mode")
 
 (declare-function ergoemacs-map-properties--command-loop-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--movement-p "ergoemacs-map-properties")

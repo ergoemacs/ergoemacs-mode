@@ -751,7 +751,6 @@ be composed over the keymap.  This is done in
 (defun ergoemacs-component-struct--remove-inits ()
   "Remove the applied initializations of modes and variables.
 This assumes the variables are stored in `ergoemacs-component-struct--applied-inits'"
-  (message "Remove Inits %s" ergoemacs-component-struct--refresh-variables)
   (if ergoemacs-component-struct--refresh-variables
       (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits)
     (dolist (init ergoemacs-component-struct--applied-inits)
