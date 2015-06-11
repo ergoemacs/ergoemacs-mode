@@ -69,6 +69,8 @@
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
+(declare-function ergoemacs-command-loop--modal-p "ergoemacs-command-loop")
+
 
 (defvar ergoemacs-translate--hash (make-hash-table)
   "")
