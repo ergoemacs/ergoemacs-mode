@@ -76,6 +76,7 @@
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layouts")
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
+(declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
 
 
 ;; Fundamental ergoemacs functions
