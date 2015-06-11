@@ -1020,9 +1020,16 @@ This sequence is compatible with `listify-key-sequence'."
                             record-flag keys))
        (t ;; Assume that the "e" or "@e" specifications are not present.
         (call-interactively command record-flag keys)))))
+   ((and (symbolp command) (not (commandp command))
+         ;; Install translation and call function
+         (string-match-p "^\\(ergoemacs-\\|ergoemacs-translate--\\)\\(.*\\)\\(-modal\\|-universal-argument\\|-negative-argument\\|-digit-argument\\|-modal\\)$" (symbol-name command))
+         (ergoemacs-translate--get (intern (replace-regexp-in-string "^\\(ergoemacs-\\|ergoemacs-translate--\\)\\(.*\\)\\(-modal\\|-universal-argument\\|-negative-argument\\|-digit-argument\\|-modal\\)$" ":\\2" (symbol-name command))))
+         
+         (commandp command))
+    (call-interactively command record-flag keys))
    ((and (symbolp command) (not (fboundp command)))
     (ergoemacs-command-loop--message "Command `%s' is not found" command))
-   ((and (symbolp command) (not (commandp command t)))
+   ((and (symbolp command) (not (commandp command)))
     (ergoemacs-command-loop--message "Command `%s' cannot be called from a key" command))
    (t
     (call-interactively command record-flag keys))))
