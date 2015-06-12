@@ -138,8 +138,7 @@
            elt)
           ((and ergoemacs-mode (eq :protected-p type))
            ;; Change protection into full ergoemacs-mode installation
-           (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original)))
-           )
+           (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original))))
           ((eq :protected-p type)
            ;; `ergoemacs-mode' already protected this map
            elt)
@@ -500,7 +499,8 @@ If LOOKUP-KEYMAP
 (defun ergoemacs-map--modify-active (&optional ini)
   "Modifies Active maps."
   (let ((char-map (get-char-property-and-overlay (point) 'keymap))
-        (local-map (get-text-property (point) 'local-map)))
+        (local-map (get-text-property (point) 'local-map))
+        (current-local-map (current-local-map)))
     ;; Restore `overriding-terminal-local-map' if needed
     (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full) (not overriding-terminal-local-map))
       (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map
@@ -548,8 +548,8 @@ If LOOKUP-KEYMAP
                          (next-single-char-property-change (point) 'local-map)
                          'local-map (ergoemacs local-map))))
     
-    (when (not (ergoemacs (current-local-map) :installed-p))
-      (use-local-map (ergoemacs (current-local-map))))
+    (when (and current-local-map (not (ergoemacs current-local-map :installed-p)))
+      (use-local-map (ergoemacs current-local-map)))
 
     
     (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map
