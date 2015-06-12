@@ -9,7 +9,7 @@
 ;; Created: Sat Sep 28 20:08:09 2013 (-0500)
 ;; Version: 
 ;; Last-Updated: 
-;;           By: 
+;;           By:
 ;;     Update #: 0
 ;; URL: 
 ;; Doc URL: 
@@ -1164,8 +1164,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                       raw-key (nth 0 raw-key)
                       continue-read nil)
                 (when (setq modal-p (ergoemacs :modal-p))
-                  (setq local-keymap (ergoemacs-translate--keymap translation))
-                  (message "Modal Local: %s %s" local-keymap (lookup-key local-keymap raw-key)))
+                  (setq local-keymap (ergoemacs-translate--keymap translation)))
                 (cond
                  ;; Handle local commands.
                  ((and (or modal-p
