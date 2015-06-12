@@ -321,10 +321,8 @@ If `narrow-to-region' is in effect, then cut that region only."
    ((and (boundp 'cua--rectangle) cua--rectangle cua-mode)
     (cua-copy-rectangle arg))
    ((and (region-active-p) cua-mode)
-    (setq last-command nil)
     (cua-copy-region arg))
    ((region-active-p)
-    (setq last-command nil)
     (kill-ring-save (region-beginning) (region-end)))
    (t
     ;; Hack away to support `org-mode' folded reg
