@@ -1,6 +1,6 @@
 ;;; ergoemacs-test.el --- tests for ErgoEmacs issues
 
-;; Copyright © 2013, 2014 Free Software Foundation, Inc.
+;; Copyright © 2013-2015 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -127,6 +127,7 @@ Issue #186."
      :cua t
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
        (insert ergoemacs-test-lorem-ipsum)
        (goto-char (point-min))
        (mark-word)
@@ -178,6 +179,7 @@ Issue #186."
      :layout "colemak"
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
        (insert ergoemacs-test-lorem-ipsum)
        (goto-char (point-min))
        (execute-kbd-macro (edmacro-parse-keys "M-E M-E" t))
@@ -196,6 +198,7 @@ Issue #186."
      :layout "colemak"
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
        (insert ergoemacs-test-lorem-ipsum)
        (subword-mode 1)
        (goto-char (point-max))
@@ -216,6 +219,7 @@ Issue #186."
      :macro "C-v"
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
        (insert ergoemacs-test-lorem-ipsum)
        (goto-char (point-min))
        (push-mark)
@@ -568,20 +572,21 @@ See Issue #138."
     (save-excursion
       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
       (delete-region (point-min) (point-max))
-      (ergoemacs-command-loop "C-x 8 !")
+      (with-timeout (1 nil)
+        (ergoemacs-command-loop "C-x 8 !"))
       (should (string= "¡" (buffer-string)))
       (kill-buffer (current-buffer)))))
 
 (ert-deftest ergoemacs-test-command-loop-C-x-8-A ()
   "Test that unicode translations work.
 See Issue #138."
-  (let (ergoemacs-command-loop-type)
-    (save-excursion
-      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-      (delete-region (point-min) (point-max))
-      (ergoemacs-command-loop "C-x 8 \" A")
-      (should (string= "Ä" (buffer-string)))
-      (kill-buffer (current-buffer)))))
+  (save-excursion
+    (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+    (delete-region (point-min) (point-max))
+    (with-timeout (1 nil)
+      (ergoemacs-command-loop "C-x 8 \" A"))
+    (should (string= "Ä" (buffer-string)))
+    (kill-buffer (current-buffer))))
 
 (ert-deftest ergoemacs-test-command-loop-overlay-paren ()
   "Test that overlays will send the appropriate parenthesis"
