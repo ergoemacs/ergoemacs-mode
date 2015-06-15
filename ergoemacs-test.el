@@ -568,14 +568,13 @@ Should test for Issue #143."
 (ert-deftest ergoemacs-test-command-loop-C-x-8-! ()
   "Test that unicode translations work.
 See Issue #138."
-  (let (ergoemacs-command-loop-type)
-    (save-excursion
-      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-      (delete-region (point-min) (point-max))
-      (with-timeout (1 nil)
-        (ergoemacs-command-loop "C-x 8 !"))
-      (should (string= "¡" (buffer-string)))
-      (kill-buffer (current-buffer)))))
+  (save-excursion
+    (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+    (delete-region (point-min) (point-max))
+    (with-timeout (0.5 nil)
+      (ergoemacs-command-loop "C-x 8 !"))
+    (should (string= "¡" (buffer-string)))
+    (kill-buffer (current-buffer))))
 
 (ert-deftest ergoemacs-test-command-loop-C-x-8-A ()
   "Test that unicode translations work.
@@ -583,7 +582,7 @@ See Issue #138."
   (save-excursion
     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
     (delete-region (point-min) (point-max))
-    (with-timeout (1 nil)
+    (with-timeout (0.5 nil)
       (ergoemacs-command-loop "C-x 8 \" A"))
     (should (string= "Ä" (buffer-string)))
     (kill-buffer (current-buffer))))
