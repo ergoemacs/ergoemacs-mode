@@ -168,22 +168,6 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
     (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full))
       (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))))
 
-(ergoemacs-advice execute-kbd-macro (macro &optional count loopfunc)
-  "This ignores `ergoemacs-mode' keys in `overriding-terminal-local-map'."
-  :type :around
-  (unwind-protect
-      (progn
-        (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full))
-          (remove-hook 'post-command-hook #'ergoemacs-map--modify-active)
-          (remove-hook 'post-command-hook #'ergoemacs-map--modify-active t)
-          (setq overriding-terminal-local-map ergoemacs-command-loop--displaced-overriding-terminal-local-map))
-        ad-do-it)
-    (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full))
-      (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map)
-      (add-hook 'post-command-hook #'ergoemacs-map--modify-active))))
-
-
-
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here

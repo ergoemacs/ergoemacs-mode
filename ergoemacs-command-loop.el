@@ -1042,7 +1042,8 @@ This sequence is compatible with `listify-key-sequence'."
 
 (defun ergoemacs-command-loop-persistent-p ()
   "Is the `ergoemacs-mode' command loop persistent?"
-  (and ergoemacs-mode (eq ergoemacs-command-loop-type :full)))
+  (and ergoemacs-mode (not executing-kbd-macro)
+       (eq ergoemacs-command-loop-type :full)))
 
 (defun ergoemacs-command-loop-start ()
   "Start `ergoemacs-command-loop'"
@@ -1146,7 +1147,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                                             tmp)
                   ergoemacs-command-loop--first-type first-type
                   ergoemacs-command-loop--history nil)
-            (while (ergoemacs-command-loop-persistent-p)
+            (while continue-read
               (setq inhibit-quit t)
               (while continue-read
                 ;; Read key
@@ -1238,7 +1239,6 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                   (ergoemacs-command-loop--message "Quit!")
                   (setq quit-flag nil
                         type :normal
-                        continue-read t
                         first-type :normal
                         raw-key nil
                         current-key nil
@@ -1252,7 +1252,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                 (ergoemacs-command-loop--internal-end-command))
               (setq quit-flag nil
                     type :normal
-                    continue-read t
+                    continue-read (ergoemacs-command-loop-persistent-p)
                     first-type :normal
                     raw-key nil
                     current-key nil
