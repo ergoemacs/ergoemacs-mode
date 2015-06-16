@@ -229,12 +229,12 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
                     (and (integerp map-key) (list map-key)))))
       ret)))
 
-(defun ergoemacs-map-properties--default-global-file ()
+(defun ergoemacs-map-properties--default-global-file (&optional other)
   "What is the global key hash file."
-  (let* ((file (expand-file-name (format "ergoemacs-global-%s-%s.el" emacs-version system-configuration)
+  (let* ((file (expand-file-name (format "ergoemacs-%s-%s-%s.el" (or other "global") emacs-version system-configuration)
                                  ergoemacs-dir))
          (extras (expand-file-name "ergoemacs-extras" user-emacs-directory))
-         (file2 (expand-file-name (format "ergoemacs-global-%s-%s.el" emacs-version system-configuration)
+         (file2 (expand-file-name (format "ergoemacs-%s-%s-%s.el" (or other "global") emacs-version system-configuration)
                                   extras)))
     (or
      (and (file-readable-p file2) file2)
