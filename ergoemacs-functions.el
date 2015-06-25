@@ -172,7 +172,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
     (when (or (equal current-prefix-arg '(4))
               (equal current-prefix-arg '(16)))
       (insert "Delete Byte Compiled Files:\n")
-      (dolist (file (directory-files default-directory t "\\(ergoemacs-global-.*elc?$\\|[.]elc$\\\)"))
+      (dolist (file (directory-files default-directory t "\\(ergoemacs-test-global-.*elc?$\\|ergoemacs-global-.*elc?$\\|[.]elc$\\\)"))
         (insert "\tDelete " file)
         (delete-file file)
         (insert "\n"))
