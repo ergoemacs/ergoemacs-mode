@@ -73,25 +73,28 @@
 This respects `ergoemacs-theme-options'."
   (let* ((theme (or theme (ergoemacs :current-theme)))
          (theme-plist (gethash theme ergoemacs-theme-hash))
-         components
-         opt)
+         components opt first)
     (if (not theme)
         (error "Could not figure out the theme that you are trying to use...")
-      (setq components (plist-get theme-plist ':components))
-      (dolist (x (reverse (plist-get theme-plist ':optional-on)))
+      (setq components (plist-get theme-plist :components))
+      (when (and (< 1 (length components)) (string= "theme" (substring (symbol-name (nth 1 components)) -5)))
+        (setq first (pop components)))
+      (dolist (x (reverse (plist-get theme-plist :optional-off)))
+        (let ((a (assoc x ergoemacs-theme-options)))
+          (when a
+            (setq a (car (cdr a)))
+            (when (eq a 'on)
+              (push x opt)))))
+      (dolist (x (reverse (plist-get theme-plist :optional-on)))
         (let ((a (assoc x ergoemacs-theme-options)))
           (if (not a)
               (push x opt)
             (setq a (car (cdr a)))
             (when (or (not a) (eq a 'on))
               (push x opt)))))
-      (dolist (x (reverse (plist-get theme-plist ':optional-off)))
-        (let ((a (assoc x ergoemacs-theme-options)))
-          (when a
-            (setq a (car (cdr a)))
-            (when (eq a 'on)
-              (push x opt)))))
-      (setq components (append (reverse opt) components)))
+      (setq components (append (reverse opt) components))
+      (when first
+        (push first components)))
     components))
 
 ;;;###autoload
