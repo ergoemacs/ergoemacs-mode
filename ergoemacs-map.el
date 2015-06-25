@@ -322,7 +322,7 @@ If LOOKUP-KEYMAP
         (push (ergoemacs (ergoemacs :global-map) :original-menu-bar) menu-bar)
         
         ;; Each ergoemacs theme component
-        (dolist (cur-map map)
+        (dolist (cur-map (reverse map))
           (setq tmp (ergoemacs-map-- lookup-keymap layout cur-map t))
           (unless (ergoemacs tmp :empty-p)
             (cond
