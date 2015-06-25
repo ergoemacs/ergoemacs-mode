@@ -705,6 +705,15 @@ Should test issue #142"
      (setq input-decode-map (copy-keymap old-map)))
     (should ret)))
 
+;;; Key inheritance 
+
+(ert-deftest ergoemacs-key-inheitance-alt-up-and-down ()
+  "Test M-up and M-down keys make sure they are moving lines"
+  (ergoemacs-require 'move-and-transpose-lines)
+  (ergoemacs-mode-reset)
+  (should (eq (key-binding [\M-up]) 'ergoemacs-move-text-up))
+  (should (eq (key-binding [\M-down]) 'ergoemacs-move-text-down)))
+
 ;;; Global map tests.
 
 (defun ergoemacs-test--reset-global-map ()
