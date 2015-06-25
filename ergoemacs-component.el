@@ -218,7 +218,9 @@ Allows the component not to be calculated."
             (push version (ergoemacs-component-struct-versions tmp))))
         (push version (ergoemacs-component-struct-versions new-obj))
         ;; Use the last object as the base of the new object
-        (setq ergoemacs-component-struct--define-key-current (copy-ergoemacs-component-struct obj))
+        (setq ergoemacs-component-struct--define-key-current (copy-tree obj t))
+        (setf (ergoemacs-component-struct-map ergoemacs-component-struct--define-key-current)
+              (copy-keymap (ergoemacs-component-struct-map ergoemacs-component-struct--define-key-current)))
         (setf (ergoemacs-component-struct-version ergoemacs-component-struct--define-key-current) version))))))
 
 (defvar ergoemacs-component-struct--define-key-temp-map nil)
