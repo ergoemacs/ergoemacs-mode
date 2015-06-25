@@ -272,7 +272,7 @@
   ;; Refresh should be <f5>; erogemacs uses <f5>.
   ;; C-r also should be refresh
   (global-set-key (kbd "C-r") 'revert-buffer)
-
+  
   ;; Text Formatting
   ;; Upper/Lower case toggle.
 
@@ -281,7 +281,6 @@
   (global-set-key (kbd "<M-f4>") 'ergoemacs-delete-frame) ;; Alt+f4 should work.
   
    ; Alt+→
-  (global-set-key (kbd "<M-up>") 'ergoemacs-backward-block) ; Alt+↑
   ;; Allow shift selection
   (global-set-key (kbd "<S-down-mouse-1>") 'mouse-save-then-kill)
   (global-set-key (kbd "<S-mouse-1>") 'ignore)
