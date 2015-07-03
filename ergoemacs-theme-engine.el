@@ -72,7 +72,7 @@
   "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."
   (let* ((theme (or theme (ergoemacs :current-theme)))
-         (theme-plist (gethash theme ergoemacs-theme-hash))
+         (theme-plist (ergoemacs-gethash theme ergoemacs-theme-hash))
          components opt first tmp)
     (if (not theme)
         (error "Could not figure out the theme that you are trying to use...")
@@ -170,14 +170,14 @@ When SILENT is true, also include silent themes"
            (lambda(x)
              x)
            (or (and silent
-                    (append (gethash "defined-themes" ergoemacs-theme-hash)
-                            (gethash "silent-themes" ergoemacs-theme-hash)))
-               (gethash "defined-themes" ergoemacs-theme-hash))))
+                    (append (ergoemacs-gethash "defined-themes" ergoemacs-theme-hash)
+                            (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash)))
+               (ergoemacs-gethash "defined-themes" ergoemacs-theme-hash))))
     ret))
 
 (defun ergoemacs-theme-option-enabled-p (option)
   "Determines if OPTION is enabled."
-  (let ((plist (gethash (ergoemacs :current-theme) ergoemacs-theme-hash))
+  (let ((plist (ergoemacs-gethash (ergoemacs :current-theme) ergoemacs-theme-hash))
         options-on options-off)
     (setq options-on (plist-get plist ':optional-on)
           options-off (plist-get plist ':optional-off))
@@ -189,7 +189,7 @@ When SILENT is true, also include silent themes"
 
 (defun ergoemacs-theme--menu-options (theme)
   "Gets the options menu for THEME."
-  (let ((plist (gethash theme ergoemacs-theme-hash))
+  (let ((plist (ergoemacs-gethash theme ergoemacs-theme-hash))
         (menu-list '())
         (menu-pre '())
         (options-on '())
@@ -292,7 +292,7 @@ When SILENT is true, also include silent themes"
      (keymap
       ,@(mapcar
          (lambda(theme)
-           `(,(intern theme) menu-item ,(concat theme " - " (plist-get (gethash theme ergoemacs-theme-hash) ':description))
+           `(,(intern theme) menu-item ,(concat theme " - " (plist-get (ergoemacs-gethash theme ergoemacs-theme-hash) ':description))
              (lambda() (interactive)
                (ergoemacs-save 'ergoemacs-theme ,theme))
              :button (:radio . (string= (ergoemacs :current-theme) ,theme))))

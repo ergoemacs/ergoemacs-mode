@@ -79,13 +79,13 @@
   "Gets the translation hash."
   (let* ((to (ergoemacs :layout  (or layout-to ergoemacs-keyboard-layout)))
          (from (ergoemacs :layout  (or layout-from "us")))
-         (hash-f (gethash from ergoemacs-translate--hash (make-hash-table)))
-         (hash-f-t (gethash to hash-f))
+         (hash-f (ergoemacs-gethash from ergoemacs-translate--hash (make-hash-table)))
+         (hash-f-t (ergoemacs-gethash to hash-f))
          (i 0)
          hash-t hash-t-f lay-t lay-f r-t r-f)
     (if hash-f-t hash-f-t
       (setq hash-f-t (make-hash-table)
-            hash-t (gethash to ergoemacs-translate--hash (make-hash-table))
+            hash-t (ergoemacs-gethash to ergoemacs-translate--hash (make-hash-table))
             hash-t-f (make-hash-table)
             lay-t (symbol-value to)
             lay-f (symbol-value from))
@@ -179,7 +179,7 @@ KEY-SEQ must be a vector or string.  If there is no need to change the sequence,
 (defun ergoemacs-translate--event-modifier-hash (&optional layout)
   "Gets the event modifier hash for LAYOUT."
   (let* ((layout-symbol (ergoemacs :layout  layout))
-         (hash (gethash layout-symbol ergoemacs-translate--event-hash)))
+         (hash (ergoemacs-gethash layout-symbol ergoemacs-translate--event-hash)))
     (if hash hash
       ;; Not present setup modifier hash
       (setq hash (make-hash-table))
@@ -210,7 +210,7 @@ This is different than `event-modifiers' in two ways:
     (unless (memq 'shift modifiers)
       ;; Add 'shift for # type events.
       (setq basic (event-basic-type event))
-      (when (gethash basic (ergoemacs-translate--event-modifier-hash layout))
+      (when (ergoemacs-gethash basic (ergoemacs-translate--event-modifier-hash layout))
         (push 'ergoemacs-shift modifiers)))
     ;; Also add 'ergoemacs-control to C-RET which translates to C-m
     (when (and (integerp event)
@@ -247,8 +247,8 @@ LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
             (if (not (memq m '(shift ergoemacs-shift)))
                 (push m new-modifiers)
               (setq new-event (ergoemacs-translate--event-convert-list (list m basic) layout-from))
-              (setq new-event (or (gethash new-event translation-hash) new-event))))
-        (setq new-event (or (gethash basic translation-hash) basic)
+              (setq new-event (or (ergoemacs-gethash new-event translation-hash) new-event))))
+        (setq new-event (or (ergoemacs-gethash basic translation-hash) basic)
               new-modifiers modifiers)))
     (ergoemacs-translate--event-convert-list (append new-modifiers (list new-event)) layout-to)))
 
@@ -257,7 +257,7 @@ LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
 This is different than `event-basic-type' because ?# would return
 ?3 on a QWERTY LAYOUT."
   (let* ((basic (event-basic-type event))
-         (new-basic (gethash basic (ergoemacs-translate--event-modifier-hash layout))))
+         (new-basic (ergoemacs-gethash basic (ergoemacs-translate--event-modifier-hash layout))))
     (or new-basic basic)))
 
 (defun ergoemacs-translate--event-convert-list (list &optional layout)
@@ -286,7 +286,7 @@ This is different than `event-convert-list' because:
          ((and cur-list (memq elt '(shift ergoemacs-shift))))
          
          ((and (not cur-list)
-               (setq tmp (gethash (intern (format "s%s" elt))
+               (setq tmp (ergoemacs-gethash (intern (format "s%s" elt))
                                   (ergoemacs-translate--event-modifier-hash layout))))
           ;; Special case.
           (setq new-list (append new-list (list tmp))))
@@ -570,7 +570,7 @@ This function is made in `ergoemacs-translate--create'")
 
 (defun ergoemacs-translate--get (type)
   "Get translation object TYPE"
-  (let ((ret (gethash type ergoemacs-translation-hash)))
+  (let ((ret (ergoemacs-gethash type ergoemacs-translation-hash)))
     (cond
      ((and ret (ergoemacs-translation-struct-p ret))
       ret)
@@ -644,7 +644,7 @@ This takes into consideration the modal state of `ergoemacs-mode'."
                           (ergoemacs-translate--get (or translation :normal))))
          (key (or (and modal (intern (concat ":" (ergoemacs-translation-struct-name translation) "-modal")))
                   (ergoemacs-translation-struct-key translation)))
-         (ret (gethash key ergoemacs-translate--keymap-hash))
+         (ret (ergoemacs-gethash key ergoemacs-translate--keymap-hash))
          keymap)
     (unless ret
       (if modal

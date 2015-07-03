@@ -694,8 +694,8 @@ This uses `ergoemacs-command-loop--read-event'."
                      current-key)))
       (cond
        ((and (setq trans (or (and (memq input mod-keys)
-                                  (gethash (lookup-key local-keymap (vector input)) ergoemacs-command-loop--next-key-hash))
-                             (setq reset-key-p (gethash (lookup-key local-function-key-map (ergoemacs :combine current-key input)) ergoemacs-command-loop--next-key-hash))))
+                                  (ergoemacs-gethash (lookup-key local-keymap (vector input)) ergoemacs-command-loop--next-key-hash))
+                             (setq reset-key-p (ergoemacs-gethash (lookup-key local-function-key-map (ergoemacs :combine current-key input)) ergoemacs-command-loop--next-key-hash))))
              (or (eq :force (nth 1 trans)) ;; Override any keys
                  (not (key-binding (vconcat current-key (ergoemacs-translate--event-mods input trans)) t)) ;; Don't use if bound.
                  ))
@@ -1173,7 +1173,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                        (setq command (lookup-key local-keymap raw-key))
                        (not (ergoemacs-keymapp command)) ;; Ignore locally
                        ;; Already handled by `ergoemacs-command-loop--read-key'
-                       (not (gethash command ergoemacs-command-loop--next-key-hash))
+                       (not (ergoemacs-gethash command ergoemacs-command-loop--next-key-hash))
                        ;; If a command has :ergoemacs-local property of :force, don't
                        ;; worry about looking up a key, just run the function.
                        (or modal-p
@@ -1482,7 +1482,7 @@ is specified, remove it from the HOOK."
   (when (featurep 'keyfreq)
     (when keyfreq-mode
       (let (count)
-        (setq count (gethash (cons major-mode command) keyfreq-table))
+        (setq count (ergoemacs-gethash (cons major-mode command) keyfreq-table))
         (cond
          ((not count))
          ((= count 1)
@@ -1491,7 +1491,7 @@ is specified, remove it from the HOOK."
           (puthash (cons major-mode command) (- count 1)
                    keyfreq-table)))
         ;; Add local-fn to counter.
-        (setq count (gethash (cons major-mode command) keyfreq-table))
+        (setq count (ergoemacs-gethash (cons major-mode command) keyfreq-table))
         (puthash (cons major-mode command) (if count (+ count 1) 1)
                  keyfreq-table)))))
 

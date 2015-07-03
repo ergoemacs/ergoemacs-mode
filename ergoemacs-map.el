@@ -115,7 +115,7 @@
 (defun ergoemacs-map--alist (alist &optional symbol)
   "Apply maps for ALIST."
   (let (type old-len)
-    (if (and symbol (setq old-len (gethash symbol ergoemacs-map--alist))
+    (if (and symbol (setq old-len (ergoemacs-gethash symbol ergoemacs-map--alist))
              (= (length alist) old-len)) alist
       (when symbol
         (puthash symbol (length alist) ergoemacs-map--alist))
@@ -156,7 +156,7 @@
   "Apply maps for ALISTS"
   (let (old-len)
     ;; Only modify if the list has changed length.
-    (if (and symbol (setq old-len (gethash symbol ergoemacs-map--alist))
+    (if (and symbol (setq old-len (ergoemacs-gethash symbol ergoemacs-map--alist))
              (= (length alists) old-len)) alists
       (when symbol
         (puthash symbol (length alists) ergoemacs-map--alist))
@@ -264,7 +264,7 @@ If LOOKUP-KEYMAP
                         (string= cur-layout (ergoemacs-component-struct-layout map)))
                    (ergoemacs-component-struct-map map))
                   ((and (not lookup-keymap)
-                        (setq ret (gethash
+                        (setq ret (ergoemacs-gethash
                                    (list nil (intern cur-layout))
                                    (ergoemacs-component-struct-calculated-layouts map))))
                    ret)
@@ -288,11 +288,11 @@ If LOOKUP-KEYMAP
            (setq lookup-key (ergoemacs-map--base-lookup-key map))
            (not lookup-keymap)
            (setq lookup-key (append (list (ergoemacs (ergoemacs :global-map) :key-hash)) lookup-key))
-           (setq ret (gethash lookup-key ergoemacs-map--hash)))
+           (setq ret (ergoemacs-gethash lookup-key ergoemacs-map--hash)))
       ret)
      ((and (consp map) lookup-key lookup-keymap
            (setq lookup-key (append (list (ergoemacs lookup-keymap :key-hash)) lookup-key))
-           (setq ret (gethash lookup-key ergoemacs-map--hash)))
+           (setq ret (ergoemacs-gethash lookup-key ergoemacs-map--hash)))
       ret)
      ((and (consp map) lookup-key
            (progn
@@ -442,7 +442,7 @@ If LOOKUP-KEYMAP
            (lambda(key item)
              (unless (eq item 'ergoemacs-prefix)
                (when (member key tmp)
-                 (define-key ret (vector 'ergoemacs-remap (gethash key (ergoemacs global-map :lookup)))
+                 (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup)))
                    item))))
            lookup-keymap)
           (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))

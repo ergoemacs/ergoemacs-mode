@@ -187,7 +187,7 @@ BODY is the body of function."
 Allows the component not to be calculated."
   (let* ((comp-name (or (and (symbolp component) (symbol-name component))
                         component))
-         (comp (gethash comp-name ergoemacs-component-hash)))
+         (comp (ergoemacs-gethash comp-name ergoemacs-component-hash)))
     (cond
      ((functionp comp)
       (replace-regexp-in-string "[\n ]*(fn)[ \n]*\\'" "" (documentation comp t)))
@@ -210,10 +210,10 @@ Allows the component not to be calculated."
                               (concat "::" (ergoemacs-component-struct-version obj))))
                  ergoemacs-component-struct--define-key-current ergoemacs-component-hash)
         ;; Get the base object without version changes
-        (setq new-obj (gethash (ergoemacs-component-struct-name obj) ergoemacs-component-hash))
+        (setq new-obj (ergoemacs-gethash (ergoemacs-component-struct-name obj) ergoemacs-component-hash))
         ;; Update all versions to include the new version information.
         (dolist (old-version (ergoemacs-component-struct-versions new-obj))
-          (setq tmp (gethash (concat (ergoemacs-component-struct-name new-obj) "::" old-version) ergoemacs-component-hash))
+          (setq tmp (ergoemacs-gethash (concat (ergoemacs-component-struct-name new-obj) "::" old-version) ergoemacs-component-hash))
           (when (ergoemacs-component-struct-p tmp)
             (push version (ergoemacs-component-struct-versions tmp))))
         (push version (ergoemacs-component-struct-versions new-obj))
@@ -230,7 +230,7 @@ Allows the component not to be calculated."
          (= 2 (length def))
          (stringp (nth 0 def))
          (or (not (nth 1 def))
-             (gethash (nth 1 def) ergoemacs-translation-hash)))
+             (ergoemacs-gethash (nth 1 def) ergoemacs-translation-hash)))
     `(lambda(&optional arg)
        (interactive "P")
        (ergoemacs-command-loop ,(nth 0 def) ',(nth 1 def))))
@@ -254,7 +254,7 @@ Allows the component not to be calculated."
                 fn-lst (nth 2 cur-lst)
                 global-map-p (eq keymap 'global-map)
                 cur-map (or (and global-map-p (ergoemacs-component-struct-map obj))
-                            (gethash keymap (ergoemacs-component-struct-maps obj)))
+                            (ergoemacs-gethash keymap (ergoemacs-component-struct-maps obj)))
                 new-fn-lst '())
           (if (catch 'found-fn
                 (dolist (fn fn-lst)
@@ -311,9 +311,9 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                (hook (ergoemacs-component-struct-hook obj))
                (cur-map (or (and global-map-p (not when-condition)
                                  (ergoemacs-component-struct--ini-map obj))
-                            (and (not when-condition) (gethash keymap (ergoemacs-component-struct-maps obj)))
-                            (and global-map-p when-condition (gethash when-condition (ergoemacs-component-struct-cond-maps obj)))
-                            (and when-condition hook (ignore-errors (gethash keymap (gethash hook (ergoemacs-component-struct-hook-maps obj)))))))
+                            (and (not when-condition) (ergoemacs-gethash keymap (ergoemacs-component-struct-maps obj)))
+                            (and global-map-p when-condition (ergoemacs-gethash when-condition (ergoemacs-component-struct-cond-maps obj)))
+                            (and when-condition hook (ignore-errors (ergoemacs-gethash keymap (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj)))))))
                fn-lst
                (key (or (and (vectorp key) key)
                         (and (stringp key) (vconcat key))))
@@ -327,11 +327,11 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
             (setq cur-map (make-sparse-keymap))
             (puthash when-condition cur-map (ergoemacs-component-struct-cond-maps obj)))
            ((and (not cur-map) when-condition hook)
-            (unless (gethash hook (ergoemacs-component-struct-hook-maps obj))
+            (unless (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj))
               (puthash hook (make-hash-table) (ergoemacs-component-struct-hook-maps obj)))
             (pushnew keymap ergoemacs-map-properties--unlabeled)
             (setq cur-map (make-sparse-keymap))
-            (puthash keymap cur-map (gethash hook (ergoemacs-component-struct-hook-maps obj)))))
+            (puthash keymap cur-map (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj)))))
           (cond
            ((and global-map-p (not when-condition) (not def) (setq tmp (lookup-key (ergoemacs-component-struct-map obj) key))
                  (not (integerp tmp)))
@@ -473,10 +473,10 @@ closest `ergoemacs-theme-version' calculated from
         (when (symbolp map) ;; If map is a symbol, change to string.
           (setq map (symbol-name map)))
         (when (stringp map) ;; If map is a string, get the component from `ergoemacs-component-hash'
-          (setq ret (gethash map ergoemacs-component-hash))
+          (setq ret (ergoemacs-gethash map ergoemacs-component-hash))
           (when (and ret (functionp ret))
             (funcall ret)
-            (setq ret (gethash map ergoemacs-component-hash))))
+            (setq ret (ergoemacs-gethash map ergoemacs-component-hash))))
         (ergoemacs-component-struct--lookup-closest ret)))))
 
 (defvar ergoemacs-component-struct--get-keymap nil)
@@ -493,7 +493,7 @@ closest `ergoemacs-theme-version' calculated from
         (dolist (cobj obj)
           (setq extra-hash (ergoemacs-component-struct-maps cobj))
           (dolist (map-name map-list)
-            (setq extra-map (gethash map-name extra-hash))
+            (setq extra-map (ergoemacs-gethash map-name extra-hash))
             (when extra-map
               (push (ergoemacs-component-struct--get cobj cur-layout map-name extra-map) ret)))))
     ret))
@@ -512,7 +512,7 @@ Cache using LOOKUP-KEY. "
      ((string= layout-from cur-layout)
       (setq ret (copy-keymap cmap))
       ret)
-     ((setq ret (gethash (list lookup-key (intern cur-layout)) hash))
+     ((setq ret (ergoemacs-gethash (list lookup-key (intern cur-layout)) hash))
       ret)
      (t
       (setq ergoemacs-component-struct--get-keymap (make-sparse-keymap))
@@ -543,7 +543,7 @@ Cache using LOOKUP-KEY. "
       (dolist (cur-obj obj)
         (maphash
          (lambda(key value)
-           (puthash key (append (gethash key hash) value) hash))
+           (puthash key (append (ergoemacs-gethash key hash) value) hash))
          (ergoemacs-component-struct--minor-mode-map-alist-hash cur-obj)))
       hash)
      (t
@@ -576,7 +576,8 @@ Cache using LOOKUP-KEY. "
         (setq ret (ergoemacs-component-struct--hooks cur-obj ret)))
       ret)
      (t
-      (when (hash-table-p (setq tmp (ergoemacs-component-struct-hook-maps obj)))
+      (when (and (setq tmp (ergoemacs-component-struct-hook-maps obj))
+                 (hash-table-p tmp))
         (maphash
          (lambda(hook _value)
            (pushnew hook ret))
@@ -594,11 +595,12 @@ Cache using LOOKUP-KEY. "
       (dolist (cur-obj obj)
         (maphash
          (lambda(key value)
-           (puthash key (append (gethash key hash) value) hash))
+           (puthash key (append (ergoemacs-gethash key hash) value) hash))
          (ergoemacs-component-struct--hook-hash hook layout cur-obj)))
       hash)
      (t
-      (when (hash-table-p (setq tmp (gethash hook (ergoemacs-component-struct-hook-maps obj))))
+      (when (and (setq tmp (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj)))
+                 (hash-table-p tmp))
         (maphash
          (lambda(key value)
            ;; Put the translated keymap in a list in the hash.

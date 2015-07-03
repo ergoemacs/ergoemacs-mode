@@ -715,29 +715,246 @@ Should test issue #142"
   (should (eq (key-binding [\M-down]) 'ergoemacs-move-text-down)))
 
 ;;; Global map tests.
+(defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global delete-def)
+  "Test the global key set before ergoemacs-mode is loaded."
+  (let* ((emacs-exe (ergoemacs-emacs-exe))
+         (ret nil)
+         (sk nil)
+         (test-key (or key "M-k"))
+         (w-file (expand-file-name "global-test" ergoemacs-dir))
+         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+    (setq sk
+          (format "(%s '(lambda() (interactive) (with-temp-file \"%s\" (insert \"Ok\"))))"
+                  (cond
+                   ((eq ergoemacs 'define-key)
+                    (format "define-key global-map (kbd \"%s\") " test-key))
+                   (ergoemacs
+                    (format "ergoemacs-key \"%s\" " test-key))
+                   (t
+                    (format "global-set-key (kbd \"%s\") " test-key)))
+                  w-file))
+    (with-temp-file temp-file
+      (if (boundp 'wait-for-me)
+          (insert "(setq debug-on-error t)")
+        (insert "(condition-case err (progn "))
+      (unless after
+        (when delete-def
+          (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
+        (insert sk))
+      (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
+      (insert "(setq ergoemacs-theme nil)")
+      (insert "(setq ergoemacs-keyboard-layout \"us\")")
+      (unless ignore-prev-global
+        (insert "(setq ergoemacs-ignore-prev-global nil)"))
+      (insert "(require 'ergoemacs-mode)(ergoemacs-mode 1)")
+      (insert
+       (format
+        "(setq ergoemacs-test-macro (edmacro-parse-keys \"%s\" t))"
+        test-key))
+      (when after
+        (when delete-def
+          (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
+        (insert sk))
+      (insert "(execute-kbd-macro ergoemacs-test-macro)")
+      (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
+      (unless (boundp 'wait-for-me)
+        (insert ") (error (message \"Error %s\" err)))")
+        (insert "(kill-emacs)")))
+    (message
+     "%s"
+     (shell-command-to-string
+      (format "%s %s -Q -l %s" emacs-exe (if (boundp 'wait-for-me) "" "--batch") temp-file)))
+    (delete-file temp-file)
+    (when (file-exists-p w-file)
+      (setq ret 't)
+      (delete-file w-file))
+    ret))
 
-(defun ergoemacs-test--reset-global-map ()
-  "Loads/Creates the default global map information."
-  (if (file-readable-p (ergoemacs-map-properties--default-global-file "test-global"))
-      (progn
-        (load (ergoemacs-map-properties--default-global-file "test-global")))
-    (if noninteractive
-        (warn "Could not find global map information")
-      (let* ((emacs-exe (ergoemacs-emacs-exe))
-             (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
-             (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" --load \"ergoemacs-test\" -Q --eval \"(ergoemacs-test--save-global-map) (kill-emacs)\"" emacs-exe default-directory)))
-        (message "%s" (shell-command-to-string cmd)))
-      (ergoemacs-test--reset-global-map))))
+(ert-deftest ergoemacs-test-global-key-set-before-1 ()
+  "Test global set key before ergoemacs-mode loads."
+  (should (equal (ergoemacs-test-global-key-set-before) t)))
 
-(defun ergoemacs-test--save-global-map ()
-  "Generates hash for default emacs maps."
-  (with-temp-file (ergoemacs-map-properties--default-global-file "test-global")
-    (let ((print-level nil)
-          (print-length nil))
-      (insert "(setq global-map '")
-      (prin1 global-map (current-buffer))
-      (goto-char (point-max))
-      (insert ")"))))
+(ert-deftest ergoemacs-test-global-key-set-before-2 ()
+  "Test global set key before ergoemacs-mode loads (define-key)."
+  (should (equal (ergoemacs-test-global-key-set-before nil nil 'define-key) t)))
+
+(ert-deftest ergoemacs-test-global-key-set-after ()
+  "Test global set key after ergoemacs loads."
+  (should (equal (ergoemacs-test-global-key-set-before 'after) t)))
+
+(ert-deftest ergoemacs-test-global-key-set-after-2 ()
+  "Test global set key after ergoemacs loads (define-key)."
+  (should (equal (ergoemacs-test-global-key-set-before 'after nil 'define-key) t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
+  "Test setting <apps> m c before loading."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps> m c"
+       "<menu> m c") nil nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-c-before-2 ()
+  "Test setting <apps> m c before loading (define-key)."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps> m c"
+       "<menu> m c") 'define-key nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-m-semi-before ()
+  "Test setting M-; before loading."
+  (should (equal (ergoemacs-test-global-key-set-before nil "M-;") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-m-semi-after ()
+  "Test setting M-; before loading."
+  (should (equal (ergoemacs-test-global-key-set-before t "M-;") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-before ()
+  "Test setting <apps> before loading."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps>"
+       "<menu>")) t)))
+
+
+(ert-deftest ergoemacs-test-global-key-set-apps-before-2 ()
+  "Test setting <apps> before loading (define-key)."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps>"
+       "<menu>") 'define-key) t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-before ()
+  "Test setting <apps> m before loading."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps> m"
+       "<menu> m") nil nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-before-2 ()
+  "Test setting <apps> m before loading (define-key)."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     nil
+     (if (eq system-type 'windows-nt)
+         "<apps> m"
+       "<menu> m") 'define-key nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-after ()
+  "Test setting <apps> m after loading"
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     'after
+     (if (eq system-type 'windows-nt)
+         "<apps> m"
+       "<menu> m") nil nil "<menu>") t)))
+
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-after-2 ()
+  "Test setting <apps> m after loading (define-key)"
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     'after
+     (if (eq system-type 'windows-nt)
+         "<apps> m"
+       "<menu> m") 'define-key nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-c-after ()
+  "Test setting <apps> m c after loading."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     'after
+     (if (eq system-type 'windows-nt)
+         "<apps> m c"
+       "<menu> m c") nil nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-m-c-after-2 ()
+  "Test setting <apps> m c after loading (define-key)."
+  (should
+   (equal
+    (ergoemacs-test-global-key-set-before
+     'after
+     (if (eq system-type 'windows-nt)
+         "<apps> m c"
+       "<menu> m c") 'define-key nil "<menu>") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-after-c-e ()
+  "Test C-e after"
+  (should
+   (ergoemacs-test-global-key-set-before
+    'after "C-e" 'ergoemacs-key)))
+
+(ert-deftest ergoemacs-test-global-key-set-after-220 ()
+"Test global C-c b"
+(should (equal (ergoemacs-test-global-key-set-before 'after "C-c b") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-apps-220-before ()
+  "Test global C-c b"
+  (should (equal (ergoemacs-test-global-key-set-before nil "C-c b") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-M-t-after ()
+  "Test global M-t"
+  (should (equal (ergoemacs-test-global-key-set-before 'after "M-t") t)))
+
+
+(ert-deftest ergoemacs-test-global-key-set-C-d-after ()
+  "Test global C-d"
+  (should (equal (ergoemacs-test-global-key-set-before 'after "C-d") t)))
+
+(ert-deftest ergoemacs-test-global-key-set-C-d-before ()
+  "Test global C-d"
+  (should (equal (ergoemacs-test-global-key-set-before nil "C-d") t)))
+
+(ert-deftest ergoemacs-test-issue-243 ()
+  "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
+  :expected-result :failed
+  (let ((emacs-exe (ergoemacs-emacs-exe))
+        (w-file (expand-file-name "global-test" ergoemacs-dir))
+        (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+    (with-temp-file temp-file
+      (insert "(condition-case err (progn ")
+      (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
+      (insert "(setq ergoemacs-theme nil)")
+      (insert "(setq ergoemacs-keyboard-layout \"us\")")
+      (insert "(setq ergoemacs-command-loop-type nil)")
+      (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(ergoemacs-mode 1)")
+      (insert "(global-set-key (kbd \"C-c C-c M-x\") 'execute-extended-command)")
+      (insert (format "(define-key ergoemacs-test-major-mode-map (kbd \"C-c C-c\") #'(lambda() (interactive (with-temp-file \"%s\" (insert \"Ok\")))))" w-file))
+      (insert
+       "(setq ergoemacs-test-macro (edmacro-parse-keys \"C-c C-c\" t))(ergoemacs-test-major-mode)")
+      (insert "(with-timeout (0.5 nil) (execute-kbd-macro ergoemacs-test-macro))")
+      (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
+      (insert ") (error (message \"Error %s\" err)))")
+      (unless (boundp 'wait-for-me)
+        (insert "(kill-emacs)")))
+    (message "%s"
+             (shell-command-to-string
+              (format "%s %s -Q -l %s"
+                      emacs-exe (if (boundp 'wait-for-me) "" "--batch")
+                      temp-file)))
+    (delete-file temp-file)
+    (should (file-exists-p w-file))
+    (when (file-exists-p w-file)
+      (delete-file w-file))))
+
 
 
 (provide 'ergoemacs-test)

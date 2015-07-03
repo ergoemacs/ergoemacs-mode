@@ -35,6 +35,11 @@
   "Error free check of keymap by `keymapp'"
   `(ignore-errors (keymapp ,keymap)))
 
+(defmacro ergoemacs-gethash (key table &optional dflt)
+  "Safe `gethash'.
+Will only use `gethash' when `table' is a hash table"
+  `(and ,table (hash-table-p ,table) (gethash ,key ,table ,dflt)))
+
 ;;;###autoload
 (defmacro ergoemacs-sv (symbol &optional default)
   "Error free `symbol-value'.
@@ -306,38 +311,39 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
       (setq tmp (plist-put (nth 0 kb) comp
                            (eval (plist-get (nth 0 kb) comp)))))
     
-    `(let* ((based-on (gethash ,based-on ergoemacs-theme-hash))
-            (curr-plist ',tmp)
-            (opt-on (plist-get curr-plist ':optional-on))
-            (opt-off (plist-get curr-plist ':optional-off))
-            (comp (plist-get curr-plist ':components))
-            (themes (gethash "defined-themes" ergoemacs-theme-hash))
-            (silent (gethash "silent-themes" ergoemacs-theme-hash))
-            (included (append opt-on opt-off comp)))
-       (push ,(plist-get (nth 0 kb) ':name) themes)
-       (push ,(plist-get (nth 0 kb) ':name) silent)
-       (if (not based-on)
-           (puthash ,(plist-get (nth 0 kb) ':name) curr-plist ergoemacs-theme-hash)
-         (dolist (type '(:optional-on :optional-off :components))
-           (dolist (comp (plist-get based-on type))
-             (unless (memq comp included)
-               (setq curr-plist
-                     (plist-put curr-plist type
-                                (append (plist-get curr-plist type)
-                                        (list comp)))))))
-         (when (and (not (plist-get curr-plist ':options-menu))
-                    (plist-get based-on ':options-menu))
-           (setq curr-plist
-                 (plist-put curr-plist ':options-menu
-                            (plist-get based-on ':options-menu))))
-         (puthash ,(plist-get (nth 0 kb) ':name) curr-plist
-                  ergoemacs-theme-hash))
-       (if ,(plist-get (nth 0 kb) ':silent)
-           (puthash "silent-themes" silent ergoemacs-theme-hash)
-         (puthash "defined-themes" themes ergoemacs-theme-hash))
-       (ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme")) ()
-         ,(format "Generated theme component for %s theme" (concat (plist-get (nth 0 kb) ':name) "-theme"))
-         ,@(nth 1 kb)))))
+    (macroexpand-all
+     `(let* ((based-on (ergoemacs-gethash ,based-on ergoemacs-theme-hash))
+             (curr-plist ',tmp)
+             (opt-on (plist-get curr-plist ':optional-on))
+             (opt-off (plist-get curr-plist ':optional-off))
+             (comp (plist-get curr-plist ':components))
+             (themes (ergoemacs-gethash "defined-themes" ergoemacs-theme-hash))
+             (silent (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
+             (included (append opt-on opt-off comp)))
+        (push ,(plist-get (nth 0 kb) ':name) themes)
+        (push ,(plist-get (nth 0 kb) ':name) silent)
+        (if (not based-on)
+            (puthash ,(plist-get (nth 0 kb) ':name) curr-plist ergoemacs-theme-hash)
+          (dolist (type '(:optional-on :optional-off :components))
+            (dolist (comp (plist-get based-on type))
+              (unless (memq comp included)
+                (setq curr-plist
+                      (plist-put curr-plist type
+                                 (append (plist-get curr-plist type)
+                                         (list comp)))))))
+          (when (and (not (plist-get curr-plist ':options-menu))
+                     (plist-get based-on ':options-menu))
+            (setq curr-plist
+                  (plist-put curr-plist ':options-menu
+                             (plist-get based-on ':options-menu))))
+          (puthash ,(plist-get (nth 0 kb) ':name) curr-plist
+                   ergoemacs-theme-hash))
+        (if ,(plist-get (nth 0 kb) ':silent)
+            (puthash "silent-themes" silent ergoemacs-theme-hash)
+          (puthash "defined-themes" themes ergoemacs-theme-hash))
+        (ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme")) ()
+          ,(format "Generated theme component for %s theme" (concat (plist-get (nth 0 kb) ':name) "-theme"))
+          ,@(nth 1 kb))))))
 
 ;;;###autoload
 (defmacro ergoemacs-deftheme (name _desc based-on &rest differences)
@@ -353,19 +359,20 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
 `ergoemacs-fixed-key' = defines/replace fixed key with function by (ergoemacs-fixed-key KEY FUNCTION DESCRIPTION)
 "
   (declare (indent 1))
-  `(let (silent pl tmp)
-     (setq pl (gethash (or ,based-on "standard") ergoemacs-theme-hash))
-     (plist-put pl ':name ,(symbol-name name))
-     (setq tmp (plist-get pl ':components))
-     (push (intern (concat ,(symbol-name name) "-theme")) tmp)
-     (setq tmp (plist-put pl ':components tmp))
-     (setq silent (gethash "silent-themes" ergoemacs-theme-hash))
-     (push ,(symbol-name name) silent)
-     (puthash "silent-themes" silent ergoemacs-theme-hash)
-     (puthash ,(symbol-name name) tmp ergoemacs-theme-hash)
-     (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
-       ,(format "Generated theme component for %s theme" (symbol-name name))
-       ,@differences)))
+  ((macroexpand-all
+    `(let (silent pl tmp)
+       (setq pl (ergoemacs-gethash (or ,based-on "standard") ergoemacs-theme-hash))
+       (plist-put pl ':name ,(symbol-name name))
+       (setq tmp (plist-get pl ':components))
+       (push (intern (concat ,(symbol-name name) "-theme")) tmp)
+       (setq tmp (plist-put pl ':components tmp))
+       (setq silent (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
+       (push ,(symbol-name name) silent)
+       (puthash "silent-themes" silent ergoemacs-theme-hash)
+       (puthash ,(symbol-name name) tmp ergoemacs-theme-hash)
+       (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
+         ,(format "Generated theme component for %s theme" (symbol-name name))
+         ,@differences))))
 
 ;;;###autoload
 (defmacro ergoemacs-save-buffer-state (&rest body)
@@ -496,7 +503,7 @@ When arg1 can be a property.  The following properties are supported:
        ((memq arg2 map-properties-list)
         `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg2) 1))) ,arg1))
        (t
-        `(ignore-errors (gethash ,arg2 (gethash (ergoemacs-map-properties--key-hash (ergoemacs-map-properties--keymap-value ,arg1)) ergoemacs-map-properties--plist-hash))))))
+        `(ignore-errors (ergoemacs-gethash ,arg2 (ergoemacs-gethash (ergoemacs-map-properties--key-hash (ergoemacs-map-properties--keymap-value ,arg1)) ergoemacs-map-properties--plist-hash))))))
 
      ((and arg1 arg2 arg3
            (symbolp arg2)

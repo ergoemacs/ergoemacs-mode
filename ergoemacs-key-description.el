@@ -274,7 +274,7 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
                 (unless (eq m 'ergoemacs-shift)
                   (push m tmp)))
               (setq mod tmp
-                    ev (gethash (intern (format "s%s" ev))
+                    ev (ergoemacs-gethash (intern (format "s%s" ev))
                                 (ergoemacs-translate--event-modifier-hash layout)))))
             (setq tmp (format "%s%s%s%s"
                               (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) "")

@@ -73,8 +73,8 @@ KEYMAP can be a symbol, keymap or ergoemacs-mode keymap"
     (or (and (listp keymap) (ergoemacs-keymapp keymap) keymap)
         (and (symbolp keymap) (ergoemacs-keymapp (setq tmp (symbol-value keymap))) tmp)
         (and (symbolp keymap) (ergoemacs-keymapp (setq tmp (symbol-function keymap))) tmp)
-        ;; (ignore-errors (and (setq tmp (gethash keymap ergoemacs-map-properties--plist-hash))
-        ;;                     (setq tmp (gethash :map-list tmp))
+        ;; (ignore-errors (and (setq tmp (ergoemacs-gethash keymap ergoemacs-map-properties--plist-hash))
+        ;;                     (setq tmp (ergoemacs-gethash :map-list tmp))
         ;;                     (symbol-value (car tmp))))
         ;; (ignore-errors (and (setq tmp (plist-get keymap :map-list)) (symbol-value (nth 0 tmp))))
         )))
@@ -178,7 +178,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
          (hash-key (or (and (not composed) (integerp map-key) map-key)
                        (and composed (not (consp map-key)) (cdr keymap))))
          (ret (or (and (consp map-key) (car map-key))
-                  (and hash-key (gethash hash-key ergoemacs-map-properties--key-struct)))))
+                  (and hash-key (ergoemacs-gethash hash-key ergoemacs-map-properties--key-struct)))))
     (unless ret
       (when (and force (not (or map-key composed)))
         (ergoemacs :label keymap)
@@ -269,7 +269,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
          (cond
           ((vectorp key)
            (push key keys)
-           (if (setq tmp (gethash item where-is-hash))
+           (if (setq tmp (ergoemacs-gethash item where-is-hash))
                (push key tmp)
              (puthash item (list key) where-is-hash)))))
        global-map)
@@ -320,7 +320,7 @@ Returns a plist of fixed keymap properties (not changed by
 composing or parent/child relationships)"
   (if (not (ergoemacs-keymapp keymap) ) nil
     (if (ignore-errors (symbol-function keymap))
-        (progn (gethash keymap ergoemacs-map-properties--indirect-keymaps))
+        (progn (ergoemacs-gethash keymap ergoemacs-map-properties--indirect-keymaps))
       (let ((ret (or
                   (ignore-errors ;; (keymap #char-table "Label" (ergoemacs-map-marker) (ergoemacs-map-list))
                     (and (char-table-p (car (cdr keymap)))
@@ -376,10 +376,10 @@ composing or parent/child relationships)"
                   (progn
                     (setq ret (plist-put ret property value))
                     (ergoemacs :label keymap value))
-                (unless (hash-table-p ergoemacs-map-properties--plist-hash)
+                (unless (and ergoemacs-map-properties--plist-hash (hash-table-p ergoemacs-map-properties--plist-hash))
                   (setq ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)))
-                (setq tmp (gethash (ergoemacs-map-properties--key-struct keymap) ergoemacs-map-properties--plist-hash))
-                (unless (hash-table-p tmp)
+                (setq tmp (ergoemacs-gethash (ergoemacs-map-properties--key-struct keymap) ergoemacs-map-properties--plist-hash))
+                (unless (and tmp (hash-table-p tmp))
                   (setq tmp (make-hash-table)))
                 (puthash property value tmp)
                 (puthash (ergoemacs-map-properties--key-struct keymap) tmp ergoemacs-map-properties--plist-hash)))))))))
@@ -490,7 +490,7 @@ The KEYMAP will have the structure
               (ignore-errors (set-keymap-parent map nil))
               (if (ergoemacs-keymapp (symbol-function keymap))
                   (setq indirect-p t ; Indirect keymap
-                        old-plist (gethash keymap ergoemacs-map-properties--indirect-keymaps))
+                        old-plist (ergoemacs-gethash keymap ergoemacs-map-properties--indirect-keymaps))
                 (setq old-plist (lookup-key map [ergoemacs-labeled]))
                 (if (eq (car map) 'keymap)
                     (setq map (cdr map))
@@ -553,10 +553,10 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((key (ergoemacs keymap :map-key))
         map)
     (when (integerp key)
-      (setq map (gethash (setq key (ergoemacs keymap :key-hash)) ergoemacs-map-properties--user-map-hash))
+      (setq map (ergoemacs-gethash (setq key (ergoemacs keymap :key-hash)) ergoemacs-map-properties--user-map-hash))
       (unless map
         (puthash key (make-sparse-keymap) ergoemacs-map-properties--user-map-hash)
-        (setq map (gethash key ergoemacs-map-properties--user-map-hash))
+        (setq map (ergoemacs-gethash key ergoemacs-map-properties--user-map-hash))
         (ergoemacs map :label (list (ergoemacs keymap :key-hash) 'user))))
     map))
 
@@ -572,7 +572,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
           ((and (vectorp key)
                 (commandp item t))
            (push key keys)
-           (if (setq tmp (gethash item where-is-hash))
+           (if (setq tmp (ergoemacs-gethash item where-is-hash))
                (push key tmp)
              (puthash item (list key) where-is-hash))
            (puthash key item lookup-hash)))))
@@ -610,7 +610,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (and command keymap
        (let* (ret
               (hash-table (ergoemacs (or relative-map global-map) :where-is))
-              (cmd-list (gethash command hash-table))
+              (cmd-list (ergoemacs-gethash command hash-table))
               
               ;; (lookup (ergoemacs keymap :lookup))
               )

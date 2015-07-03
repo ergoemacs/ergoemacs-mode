@@ -1,0 +1,26 @@
+git commit -m "More integration of ergoemacs-read-key"
+git checkout master
+git commit -a --amend -m "Start executing command loop."
+git commit -m "Byte compile cleanup."
+git commit -a -m "Byte compile cleanup."
+git checkout master
+rm *.elc
+git commit -m "Make the ergoemacs-command-loop semi-infinite."
+git checkout master
+rm *.elc
+git commit -m "Don't blink while awaiting first key (messages now show up correctly)."
+git commit -m "ergoemacs-mode overrides both the M- and ESC environments"
+git commit -m "Clean up byte compile"
+git commit -m "Support double/triple click translation (fixes mwheel scrolling)"
+rm *.elc
+git commit -m  "Remove exctracting prefixes"
+git commit -m "apps key now swaps translations"
+git commit -m "Implement ergoemacs-mode global menus as a theme component (can now be toggled)"
+git commit -m "Update menus to ergoemacs-mode keys by :filter"
+git commit -m "Add/rename menu filters"
+git commit -m "Better shift-selection support"
+git commit -m "Wrap pre/post command hook and fix byte compile issues"
+git commit -m "Start rewriting ergoemacs test to reflect new engine"
+git commit -m "Use ergoemacs-keymapp"
+git commit -m "Create and use faster :key-hash"
+git commit -m "Change component parsing order"
