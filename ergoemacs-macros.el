@@ -310,7 +310,6 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
     (dolist (comp '(:optional-on :optional-off :options-menu))
       (setq tmp (plist-put (nth 0 kb) comp
                            (eval (plist-get (nth 0 kb) comp)))))
-    
     (macroexpand-all
      `(let* ((based-on (ergoemacs-gethash ,based-on ergoemacs-theme-hash))
              (curr-plist ',tmp)
@@ -359,20 +358,20 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
 `ergoemacs-fixed-key' = defines/replace fixed key with function by (ergoemacs-fixed-key KEY FUNCTION DESCRIPTION)
 "
   (declare (indent 1))
-  ((macroexpand-all
-    `(let (silent pl tmp)
-       (setq pl (ergoemacs-gethash (or ,based-on "standard") ergoemacs-theme-hash))
-       (plist-put pl ':name ,(symbol-name name))
-       (setq tmp (plist-get pl ':components))
-       (push (intern (concat ,(symbol-name name) "-theme")) tmp)
-       (setq tmp (plist-put pl ':components tmp))
-       (setq silent (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
-       (push ,(symbol-name name) silent)
-       (puthash "silent-themes" silent ergoemacs-theme-hash)
-       (puthash ,(symbol-name name) tmp ergoemacs-theme-hash)
-       (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
-         ,(format "Generated theme component for %s theme" (symbol-name name))
-         ,@differences))))
+  (macroexpand-all
+   `(let (silent pl tmp)
+      (setq pl (ergoemacs-gethash (or ,based-on "standard") ergoemacs-theme-hash))
+      (plist-put pl ':name ,(symbol-name name))
+      (setq tmp (plist-get pl ':components))
+      (push (intern (concat ,(symbol-name name) "-theme")) tmp)
+      (setq tmp (plist-put pl ':components tmp))
+      (setq silent (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
+      (push ,(symbol-name name) silent)
+      (puthash "silent-themes" silent ergoemacs-theme-hash)
+      (puthash ,(symbol-name name) tmp ergoemacs-theme-hash)
+      (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
+        ,(format "Generated theme component for %s theme" (symbol-name name))
+        ,@differences))))
 
 ;;;###autoload
 (defmacro ergoemacs-save-buffer-state (&rest body)
