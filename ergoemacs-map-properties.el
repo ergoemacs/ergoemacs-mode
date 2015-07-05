@@ -290,7 +290,8 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
 
 (defun ergoemacs-map-properties--protect-global-map ()
   "Protects global map by adding a user-key layer to it"
-  (when (and (not noninteractive) (integerp (ergoemacs global-map :map-key)))
+  (when (and (or (not noninteractive) (file-readable-p (ergoemacs-map-properties--default-global-file)))
+             (integerp (ergoemacs global-map :map-key)))
     (let ((map (ergoemacs global-map :user)))
       (setq global-map (make-composed-keymap map global-map)))))
 
