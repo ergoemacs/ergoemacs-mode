@@ -288,12 +288,51 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
           (insert (format "(when (boundp '%s) (ergoemacs-map-properties--label %s %s))"
                           map map (ergoemacs (ergoemacs-sv map) :map-key))))))))
 
+(defvar ergoemacs-map-properties--before-ergoemacs nil
+  "Keymap describing changes before `ergoemacs-mode' loads.")
+
+(defun ergoemacs-map-properties--before-ergoemacs ()
+  "Get a list of keys that changed"
+  (or ergoemacs-map-properties--before-ergoemacs
+      (let ((hash-table (gethash :extract-lookup (gethash (list :map-key most-negative-fixnum) ergoemacs-map-properties--plist-hash)))
+            (original-global-map (ergoemacs :original global-map))
+            (before-map (make-sparse-keymap))
+            tmp)
+        (ergoemacs-map-keymap
+         (lambda (cur-key item)
+           (unless (or (consp cur-key) (eq item 'ergoemacs-prefix))
+             (setq tmp (gethash cur-key hash-table cur-key))
+             (cond
+              ;; bach mode doesn't save menu-bar or tool-bar information
+              ((memq (elt cur-key 0) '(menu-bar tool-bar iconify-frame make-frame-visible)))
+              ;; batch mode also doesn't save mouse-events
+              ((memq (event-basic-type (elt cur-key 0)) '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-4)))
+              ;; M-O is bound to facemenu keymap by default, except in
+              ;; terminal/batch mode
+              ((and (>= (length cur-key) 2)
+                    (eq (elt cur-key 0) 27)
+                    (eq (elt cur-key 1) 111)
+                    (eq (lookup-key original-global-map [27 111]) 'facemenu-keymap)))
+              ((eq 'ergoemacs-labeled (elt cur-key (- (length cur-key) 1))))
+              ((and (symbolp item) (string-match-p "clipboard" (symbol-name item))))
+              ((and (equal [27 115 104 102] cur-key) (eq item 'hi-lock-find-patterns)))
+              ((and tmp (not (equal tmp item)))
+               (define-key before-map cur-key item))
+              ((not tmp)
+               (define-key before-map cur-key tmp)))))
+         original-global-map t)
+        (setq ergoemacs-map-properties--before-ergoemacs before-map)
+        (ergoemacs before-map :label)
+        (ergoemacs before-map :map-list-hash '(ergoemacs-map-properties--before-ergoemacs))
+        before-map)))
+
 (defun ergoemacs-map-properties--protect-global-map ()
   "Protects global map by adding a user-key layer to it"
   (when (and (or (not noninteractive) (file-readable-p (ergoemacs-map-properties--default-global-file)))
              (integerp (ergoemacs global-map :map-key)))
-    (let ((map (ergoemacs global-map :user)))
-      (setq global-map (make-composed-keymap map global-map)))))
+    (let ((user-map (ergoemacs global-map :user)))
+      (ergoemacs :user-before)
+      (setq global-map (make-composed-keymap user-map global-map)))))
 
 (defun ergoemacs-map-properties--get-original-global-map ()
   "Loads/Creates the default global map information."

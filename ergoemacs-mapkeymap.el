@@ -69,9 +69,10 @@ If KEYMAP is not a full keymap, make it a full keymap."
   (set-char-table-range
    (nth 1 (ergoemacs-map-force-full-keymap keymap)) range value))
 
-(defun ergoemacs-map-keymap (function keymap &optional prefix flat-keymap nil-keys)
+(defun ergoemacs-map-keymap (function keymap &optional original prefix flat-keymap nil-keys)
   "Call FUNCTION for all keys in hash table KEYMAP.
-This is different from `map-keymap' because it sends keys instead of events, and recurses into keymaps."
+This is different from `map-keymap' because it sends keys instead of events, and recurses into keymaps.
+If ORIGINAL, use the original keys in all submaps."
   (let ((flat-keymap (or flat-keymap
                          (if (ergoemacs-map-properties--all-sparse-p keymap)
                              (make-sparse-keymap)
@@ -113,7 +114,7 @@ This is different from `map-keymap' because it sends keys instead of events, and
                                              (and (fboundp item) (setq tmp (symbol-function item))
                                                   (ergoemacs-keymapp tmp) tmp)))))))
              (when tmp
-               (ergoemacs-map-keymap function tmp
+               (ergoemacs-map-keymap function (if original (ergoemacs :original tmp) tmp) original
                                      key flat-keymap nil-keys)))
             (t
              (when function

@@ -373,10 +373,16 @@ If LOOKUP-KEYMAP
         (set-keymap-parent ret (make-composed-keymap composed-list parent))
         
         ;; Get the protecting user keys
+        (setq tmp2 (list))
+        (unless ergoemacs-ignore-prev-global
+          (setq tmp (ergoemacs :user-before))
+          (unless (ergoemacs tmp :empty-p)
+            (push tmp tmp2)))
         (setq tmp (ergoemacs parent :user))
-        (if tmp
-            (setq ret (make-composed-keymap (list ergoemacs-user-keymap tmp) ret))
-          (setq ret (make-composed-keymap tmp ret))))
+        (when tmp
+          (push tmp tmp2))
+        (push ergoemacs-user-keymap tmp2)
+        (setq ret (make-composed-keymap tmp2 ret)))
        
        ;; Now create the keymap for a specified `lookup-keymap'
        (lookup-keymap
