@@ -73,10 +73,12 @@
 
 (defvar ergoemacs-component-struct--refresh-variables)
 (defvar ergoemacs-keyboard-layout)
+
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layouts")
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
+(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
 
 ;; Fundamental ergoemacs functions
@@ -133,6 +135,8 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 
 (defvar ergoemacs-keymap (make-sparse-keymap)
   "ErgoEmacs minor mode keymap.  This replaces `global-map'.")
+
+
 
 (defvar ergoemacs-menu-keymap (make-sparse-keymap)
   "ErgoEmacs minor-mode menu keymap.")
@@ -201,6 +205,9 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
                ergoemacs-themes))
   (unless (featurep pkg)
     (load (symbol-name pkg))))
+
+(defvar ergoemacs-user-keymap (make-sparse-keymap)
+  "User `ergoemacs-mode' keymap.")
 
 ;; ErgoEmacs hooks
 

@@ -62,6 +62,7 @@
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
+(defvar ergoemacs-user-keymap)
 (defvar ergoemacs-map-properties--plist-hash)
 (defvar ergoemacs-menu-keymap)
 (defvar ergoemacs-mode)
@@ -373,7 +374,8 @@ If LOOKUP-KEYMAP
         
         ;; Get the protecting user keys
         (setq tmp (ergoemacs parent :user))
-        (when tmp
+        (if tmp
+            (setq ret (make-composed-keymap (list ergoemacs-user-keymap tmp) ret))
           (setq ret (make-composed-keymap tmp ret))))
        
        ;; Now create the keymap for a specified `lookup-keymap'
