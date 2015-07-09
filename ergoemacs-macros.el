@@ -431,6 +431,7 @@ When arg1 can be a property.  The following properties are supported:
                                :composed-list
                                :key-struct
                                :key-hash
+                               :key-lessp
                                :empty-p
                                :label
                                :current-local-map-p
@@ -442,7 +443,8 @@ When arg1 can be a property.  The following properties are supported:
                                :installed-p
                                :sequence
                                :movement-p
-                               :command-loop-p)))
+                               :command-loop-p
+                               )))
     (cond
      ((and arg1 (symbolp arg1) (eq arg1 :user-before) (not arg2) (not arg3))
       `(ergoemacs-map-properties--before-ergoemacs))

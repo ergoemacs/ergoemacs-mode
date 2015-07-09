@@ -745,6 +745,72 @@ selection or cua-mode's movement."
   "Determines if COMMAND induces the `ergoemacs-mode' command loop."
   (memq command ergoemacs-map-properties--command-loop-functions))
 
+(defun ergoemacs-map-properties--key-lessp (key1 key2)
+  "Compares KEY1 and KEY2"
+  (cond
+   ((and (not key1) (not key2)) t)
+   ((and key1 (not key2)) nil)
+   ((and key2 (not key1)) t)
+   (t
+    (let* ((seq1 (or (and (or (stringp key1) (vectorp key1))
+                          (listify-key-sequence 
+                           (or (ergoemacs-translate--escape-to-meta
+                                (vconcat key1))
+                               (vconcat key1))))
+                     key1))
+           (seq2 (or (and (or (stringp key2) (vectorp key2))
+                          (listify-key-sequence 
+                           (or (ergoemacs-translate--escape-to-meta
+                                (vconcat key2))
+                               (vconcat key2))))
+                     key2) )
+           (c1 (car seq1))
+           (c2 (car seq2))
+           (e1 (event-basic-type c1))
+           (e2 (event-basic-type c2))
+           (m1 (event-modifiers c1))
+           (m2 (event-modifiers c2)))
+      (cond
+       ;; Modifier lengths are different
+       ((< (length m1) (length m2)) t)
+       ((> (length m1) (length m2)) nil)
+
+       ;; meta first
+       ((and (not (memq 'meta m1)) (memq 'meta m2)) t)
+       ((and (memq 'meta m1) (not (memq 'meta m2))) nil)
+
+       ;; control next
+       ((and (not (memq 'control m1)) (memq 'control m2)) t)
+       ((and (memq 'control m1) (not (memq 'control m2))) nil)
+
+       ;; shift next
+       ((and (not (memq 'shift m1)) (memq 'shift m2)) t)
+       ((and (memq 'shift m1) (not (memq 'shift m2))) nil)
+
+       ;; hyper
+       ((and (not (memq 'hyper m1)) (memq 'hyper m2)) t)
+       ((and (memq 'hyper m1) (not (memq 'hyper m2))) nil)
+
+       ;; super
+       ((and (not (memq 'super m1)) (memq 'super m2)) t)
+       ((and (memq 'super m1) (not (memq 'super m2))) nil)
+
+       ;; 
+       ((and (integerp e1) (symbolp e2)) t)
+       ((and (symbolp e1) (integerp e2)) nil)
+
+       ((or (and (symbolp e1) (symbolp e2)
+                 (string= (symbol-name e1) (symbol-name e2)))
+            (and (integerp e1) (integerp e2) (= e1 e2)))
+        (ergoemacs-map-properties--key-lessp (cdr seq1) (cdr seq2)))
+       
+       ((and (symbolp e1) (symbolp e2))
+        (string-lessp (symbol-name e1) (symbol-name e2)))
+       
+       ((and (integerp e1) (integerp e2))
+        (< e1 e2))
+       (t t))))))
+
 (provide 'ergoemacs-map-properties)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-map-properties.el ends here

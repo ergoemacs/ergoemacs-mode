@@ -303,10 +303,39 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
     (save-match-data
       (ergoemacs-key-description (read-kbd-macro code t)))))
 
+(defvar ergoemacs-describe-keymap--ignore '(menu-bar header-line mode-line vertical-scroll-bar tool-bar left-fringe right-fringe remap switch-frame select-window delete-frame iconify-frame make-frame-visible find help vertical-line mouse-movement lwindow rwindow undo redo again)
+  "Ignored prefixes of keymaps")
 
-(defun ergoemacs-describe-bindings (mapvar)
+(defvar ergoemacs-describe-keymap--column-widths '(18 . 40)
+  "Ignored prefixes of keymaps")
+
+(defun ergoemacs-describe-keymap--item (&optional elt)
+  (let* ((column-widths ergoemacs-describe-keymap--column-widths)
+         (kd (or (and (consp elt) (ergoemacs-key-description (car elt)))
+                 (and (eq elt t) (make-string (- (car column-widths) 2) ?-))
+                 "Key"))
+         (item (or (and (consp elt) (format "%s" (cdr elt)))
+                   (and (eq elt t) (make-string (- (cdr column-widths) 2) ?-))
+                   "Command")))
+    (format "%s%s%s%s" kd (make-string (max 1 (- (car column-widths) (length kd))) ? )
+            item (make-string (max 1 (- (cdr column-widths) (length item))) ? ))))
+
+(defun ergoemacs-describe-keymap (mapvar)
   ""
-  (format "Describe bindings for MAPVAR %s" mapvar))
+  (let (ret)
+    (ergoemacs-map-keymap
+     (lambda (cur-key item)
+       (unless (eq item 'ergoemacs-prefix)
+         (cond
+          ((consp cur-key))
+          ((memq (elt cur-key 0) ergoemacs-describe-keymap--ignore))
+          ((consp item))
+          ((not item))
+          (t
+           (push (cons cur-key item) ret)))))
+     (symbol-value mapvar))
+    (setq ret (append (list nil t) (sort ret (lambda(e1 e2) (not (ergoemacs :key-lessp (car e1) (car e2)))))))
+    (concat "\n" (mapconcat #'ergoemacs-describe-keymap--item ret "\n"))))
 
 (defun ergoemacs-substitute-command-keys (string)
   "Substitute key descriptions for command names in STRING."
@@ -338,7 +367,7 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
                   rep-item "")
             (and
              (boundp cur-item)
-             (setq rep-item (ergoemacs-describe-bindings cur-item))))
+             (setq rep-item (ergoemacs-describe-keymap cur-item))))
            ((string-match "\\\\=\\(.\\)" cur-item)
             (setq ret-item (match-string 1 cur-item)))))
         (setq start (+ (match-beginning 0) (length rep-item)))
