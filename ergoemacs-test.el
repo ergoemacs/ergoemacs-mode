@@ -728,8 +728,6 @@ Should test issue #142"
                   (cond
                    ((eq ergoemacs 'define-key)
                     (format "define-key global-map (kbd \"%s\") " test-key))
-                   (ergoemacs
-                    (format "ergoemacs-key \"%s\" " test-key))
                    (t
                     (format "global-set-key (kbd \"%s\") " test-key)))
                   w-file))
@@ -896,11 +894,6 @@ Should test issue #142"
          "<apps> m c"
        "<menu> m c") 'define-key nil "<menu>") t)))
 
-(ert-deftest ergoemacs-test-global-key-set-after-c-e ()
-  "Test C-e after"
-  (should
-   (ergoemacs-test-global-key-set-before
-    'after "C-e" 'ergoemacs-key)))
 
 (ert-deftest ergoemacs-test-global-key-set-after-220 ()
 "Test global C-c b"
