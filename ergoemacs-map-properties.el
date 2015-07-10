@@ -70,7 +70,8 @@
   "Return the keymap value of KEYMAP.
 KEYMAP can be a symbol, keymap or ergoemacs-mode keymap"
   (let (tmp)
-    (or (and (listp keymap) (ergoemacs-keymapp keymap) keymap)
+    (or (and (integerp keymap) keymap)
+        (and (listp keymap) (ergoemacs-keymapp keymap) keymap)
         (and (symbolp keymap) (ergoemacs-keymapp (setq tmp (symbol-value keymap))) tmp)
         (and (symbolp keymap) (ergoemacs-keymapp (setq tmp (symbol-function keymap))) tmp)
         ;; (ignore-errors (and (setq tmp (ergoemacs-gethash keymap ergoemacs-map-properties--plist-hash))
@@ -213,7 +214,9 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
   ;;| Post Hash |     150045 | 40.600999999 | 0.0002705921 |
   ;;| Hash Key  |      76379 | 15.183000000 | 0.0001987850 |
   ;;|-----------+------------+--------------+--------------|
-  (when (ergoemacs-keymapp keymap)
+  (cond
+   ((integerp keymap) (list keymap))
+   ((ergoemacs-keymapp keymap)
     (let* ((keymap (ergoemacs-map-properties--keymap-value keymap))
            (map-key (ergoemacs keymap :map-key))
            (composed (ergoemacs-map-properties--composed-list keymap force))
@@ -227,7 +230,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
                            composed)
                           (list (and parent (ergoemacs parent :map-key)))))
                     (and (integerp map-key) (list map-key)))))
-      ret)))
+      ret))))
 
 (defun ergoemacs-map-properties--default-global-file (&optional other)
   "What is the global key hash file."
@@ -432,27 +435,37 @@ composing or parent/child relationships)"
 (defun ergoemacs-map-properties--map-list (keymap &optional no-hash)
   "Get the list of maps bound to KEYMAP.
 KEYMAP can be a keymap or keymap integer key."
-  (if (ergoemacs-keymapp keymap)
+  (if (or (ergoemacs-keymapp keymap) (integerp keymap))
       (let* (ret
-             (keymap (ergoemacs keymap :original))
+             (keymap (or (and (ergoemacs-keymapp keymap) (ergoemacs keymap :original))
+                         keymap))
              (map-p (ergoemacs keymap :key-hash)))
         (cond
          ((and map-p (not no-hash) (setq ret (ergoemacs keymap :map-list-hash)))
           (ergoemacs-map-properties--get-or-generate-map-key keymap)
           (setq map-p ret)
-          (setq ret nil)
-          (dolist (map map-p)
-            (when (eq keymap (ergoemacs (ergoemacs-sv map) :original))
-              (push map ret)))
+          (when keymap
+            (setq ret nil)
+            (dolist (map map-p)
+              (when (eq keymap (ergoemacs (ergoemacs-sv map) :original))
+                (push map ret))))
           (when (not ret);; Check again...
             (setq ret (ergoemacs-map-properties--map-list keymap t)))
           ret)
-         (map-p
+         ((and map-p (ergoemacs-keymapp keymap))
           (dolist (map ergoemacs-map-properties--label-atoms-maps)
             (when (eq keymap (ergoemacs (ergoemacs-sv map) :original))
               (push map ret)))
           (ergoemacs-map-properties--put keymap :map-list-hash ret)
-          ret)))))
+          ret)
+         ((and map-p (integerp keymap))
+          (dolist (map ergoemacs-map-properties--label-atoms-maps)
+            (when (eq keymap (ergoemacs (ergoemacs (ergoemacs-sv map) :original) :key))
+              (push map ret)))
+          (when ret
+            (ergoemacs-map-properties--put (ergoemacs-sv (nth 0 ret)) :map-list-hash ret))
+          ret)
+         ))))
 
 (defun ergoemacs-map-properties--label-map (map)
   "Label MAP"
@@ -746,7 +759,8 @@ selection or cua-mode's movement."
   (memq command ergoemacs-map-properties--command-loop-functions))
 
 (defun ergoemacs-map-properties--key-lessp (key1 key2)
-  "Compares KEY1 and KEY2"
+  "Compares KEY1 and KEY2, and determines if KEY1 is \"less than\" key2.
+Used for sorting keys in displays."
   (cond
    ((and (not key1) (not key2)) t)
    ((and key1 (not key2)) nil)
@@ -803,9 +817,14 @@ selection or cua-mode's movement."
                  (string= (symbol-name e1) (symbol-name e2)))
             (and (integerp e1) (integerp e2) (= e1 e2)))
         (ergoemacs-map-properties--key-lessp (cdr seq1) (cdr seq2)))
+
+       ((and (symbolp e1) (symbolp e2)
+             (string= "f" (substring (symbol-name e1) 0 1))
+             (string= "f" (substring (symbol-name e2) 0 1)))
+        (< (string-to-number (substring (symbol-name e1) 1)) (string-to-number (substring (symbol-name e2) 1))))
        
        ((and (symbolp e1) (symbolp e2))
-        (string-lessp (symbol-name e1) (symbol-name e2)))
+        (string-lessp (ergoemacs-key-description (vector e1)) (ergoemacs-key-description (vector e2))))
        
        ((and (integerp e1) (integerp e2))
         (< e1 e2))

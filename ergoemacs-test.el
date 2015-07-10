@@ -918,7 +918,6 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-issue-243 ()
   "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
-  :expected-result :failed
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (w-file (expand-file-name "global-test" ergoemacs-dir))
         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
@@ -947,6 +946,40 @@ Should test issue #142"
     (should (file-exists-p w-file))
     (when (file-exists-p w-file)
       (delete-file w-file))))
+
+
+(define-derived-mode ergoemacs-test-major-mode fundamental-mode "ET"
+  "Major mode for testing some issues with `ergoemacs-mode'.
+\\{ergoemacs-test-major-mode-map}"
+  (define-key ergoemacs-test-major-mode-map (read-kbd-macro "C-s") 'save-buffer))
+
+(let ((ergoemacs-is-user-defined-map-change-p t))
+  (add-hook 'ergoemacs-test-major-mode-hook
+            '(lambda()
+               (interactive)
+               (define-key ergoemacs-test-major-mode-map
+                 (read-kbd-macro "C-w") 'ergoemacs-close-current-buffer))))
+
+(ert-deftest ergoemacs-test-ignore-ctl-w ()
+  "Ignore user-defined C-w in major-mode `ergoemacs-test-major-mode'.
+Part of addressing Issue #147."
+  (let (ret
+        (ergoemacs-use-function-remapping t))
+    (with-temp-buffer
+      (ergoemacs-test-major-mode)
+      (setq ret (ergoemacs-shortcut-remap-list 'kill-region)))
+    (should (not ret))))
+
+(ert-deftest ergoemacs-test-keep-ctl-s ()
+  "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
+Part of addressing Issue #147."
+  (let (ret
+        (ergoemacs-use-function-remapping t))
+    (with-temp-buffer
+      (ergoemacs-test-major-mode)
+      (setq ret (ergoemacs-shortcuuut-remap-list 'isearch-forward)))
+    (eq (nth 0 (nth 0 ret)) 'save-buffer)))
+
 
 
 

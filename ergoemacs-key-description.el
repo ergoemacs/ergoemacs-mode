@@ -57,6 +57,7 @@
 
 (require 'descr-text)
 (require 'faces)
+(require 'help-mode)
 
 (defvar ergoemacs-display-unicode-characters)
 (defvar ergoemacs-display-capitalize-keys)
@@ -303,26 +304,140 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
     (save-match-data
       (ergoemacs-key-description (read-kbd-macro code t)))))
 
-(defvar ergoemacs-describe-keymap--ignore '(menu-bar header-line mode-line vertical-scroll-bar tool-bar left-fringe right-fringe remap switch-frame select-window delete-frame iconify-frame make-frame-visible find help vertical-line mouse-movement lwindow rwindow undo redo again)
+(defvar ergoemacs-describe-keymap--ignore
+  '(
+    again
+    begin
+    compose-last-chars
+    copy
+    cut
+    delete
+    delete-frame
+    deleteline
+    execute
+    find
+    header-line
+    help
+    iconify-frame
+    insertline
+    language-change
+    left-fringe
+    lwindow
+    make-frame-visible
+    menu-bar
+    mode-line
+    mouse-movement
+    open
+    paste
+    redo
+    remap
+    right-fringe
+    rwindow
+    select-window
+    switch-frame
+    tool-bar
+    undo
+    vertical-line
+    vertical-scroll-bar
+    XF86Back
+    XF86Forward
+    )
   "Ignored prefixes of keymaps")
 
 (defvar ergoemacs-describe-keymap--column-widths '(18 . 40)
   "Ignored prefixes of keymaps")
 
-(defun ergoemacs-describe-keymap--item (&optional elt)
+(defun ergoemacs-key-description--keymap-item-2 (item)
+  (cond
+   ((or (vectorp item) (stringp item))
+    (ergoemacs-key-description item))
+   ((listp item)
+    (cond
+     ((eq (car item) 'lambda) (ergoemacs :unicode-or-alt "λ" "lambda"))
+     ((eq (car item) 'closure) "#<closure>")
+     ((eq (car item) 'keymap) "#<keymap>")
+     (t (format "%s" item))))
+   ((symbolp item)
+    (if (fboundp item)
+        (save-match-data
+          (setq item (with-temp-buffer
+                       (insert (format "%s" item))
+                       (goto-char (point-min))
+                       (looking-at ".*")
+                       (help-xref-button 0 'help-function item)
+                       (buffer-string))))
+      (format "%s" item)))
+   (t (format"#<byte compiled %s>" (ergoemacs :unicode-or-alt "λ" "lambda")))))
+
+(defun ergoemacs-key-description--keymap-blame (key map)
+  "Find the source of KEY in MAP"
+  (let (composed-list parent ret tmp)
+    (cond
+     ((not map) (setq ret ""))
+     ((not key) (setq ret ""))
+     (t
+      (setq composed-list (ergoemacs :composed-list map)
+            parent (keymap-parent map))
+      (catch 'found-source
+        (when composed-list
+          (dolist (cur-map composed-list)
+            (when (and (setq tmp (lookup-key cur-map key)) (not (integerp tmp)))
+              (setq ret (ergoemacs cur-map :map-key))
+              (throw 'found-source t)))))
+      (when (and parent (not composed-list))
+        (unwind-protect
+            (progn
+              (set-keymap-parent map nil)
+              (when (and (setq tmp (lookup-key map key)) (not (integerp tmp)))
+                (setq ret (ergoemacs map :map-key))))
+          (set-keymap-parent map parent)))
+      (when (and (not parent) (not composed-list) (setq tmp (lookup-key map key)) (not (integerp tmp)))
+        (setq ret (ergoemacs map :map-key)))
+      (when (and (not ret) parent)
+        (setq ret (ergoemacs-key-description--keymap-blame key parent)))))
+    (cond
+     ((and ret (integerp ret))
+      (if (and (setq tmp (ergoemacs ret :map-list))
+               (setq tmp (nth 0 tmp)))
+          (if (boundp tmp)
+              (save-match-data
+                (setq ret (with-temp-buffer
+                            (insert (format "%s" tmp))
+                            (goto-char (point-min))
+                            (looking-at ".*")
+                            (help-xref-button 0 'help-variable tmp)
+                            (buffer-string))))
+            (setq ret (format "%s" tmp)))
+        (setq ret "?")))
+     ((and ret (consp ret))
+      (setq ret (with-temp-buffer
+                  (insert (format "%s" (nth 1 ret)))
+                  (goto-char (point-min))
+                  (looking-at ".*")
+                  (help-xref-button 0 'ergoemacs-component-help (nth 1 ret))
+                  (buffer-string)))))
+    ret))
+
+(defun ergoemacs-key-description--keymap-item (&optional elt keymap)
   (let* ((column-widths ergoemacs-describe-keymap--column-widths)
+         (last-column (- 80 (+ (car column-widths) (cdr column-widths) 3)))
          (kd (or (and (consp elt) (ergoemacs-key-description (car elt)))
                  (and (eq elt t) (make-string (- (car column-widths) 2) ?-))
                  "Key"))
-         (item (or (and (consp elt) (format "%s" (cdr elt)))
+         (item (or (and (consp elt) (ergoemacs-key-description--keymap-item-2 (cdr elt)))
                    (and (eq elt t) (make-string (- (cdr column-widths) 2) ?-))
-                   "Command")))
-    (format "%s%s%s%s" kd (make-string (max 1 (- (car column-widths) (length kd))) ? )
-            item (make-string (max 1 (- (cdr column-widths) (length item))) ? ))))
+                   "Command"))
+         (src (or (and (consp elt) (ergoemacs-key-description--keymap-blame (car elt) keymap))
+                  (and (eq elt t) (make-string (- last-column 2) ?-))
+                  "Source")))
+    (format "%s%s%s%s%s" kd (make-string (max 1 (- (car column-widths) (length kd))) ? )
+            item (make-string (max 1 (- (cdr column-widths) (length item))) ? ) src)))
 
-(defun ergoemacs-describe-keymap (mapvar)
-  ""
-  (let (ret)
+(defun ergoemacs-key-description--keymap (map)
+  "Describes the keymap MAP"
+  (let ((map (or (and (symbolp map) (symbol-value map))
+                 (and (consp map) (eq (car map) 'keymap) map)))
+        ret)
     (ergoemacs-map-keymap
      (lambda (cur-key item)
        (unless (eq item 'ergoemacs-prefix)
@@ -333,11 +448,11 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
           ((not item))
           (t
            (push (cons cur-key item) ret)))))
-     (symbol-value mapvar))
-    (setq ret (append (list nil t) (sort ret (lambda(e1 e2) (not (ergoemacs :key-lessp (car e1) (car e2)))))))
-    (concat "\n" (mapconcat #'ergoemacs-describe-keymap--item ret "\n"))))
+     map)
+    (setq ret (append (list nil t) (sort ret (lambda(e1 e2) (ergoemacs :key-lessp (car e1) (car e2))))))
+    (concat "\n" (mapconcat (lambda(x) (ergoemacs-key-description--keymap-item x map)) ret "\n"))))
 
-(defun ergoemacs-substitute-command-keys (string)
+(defun ergoemacs-key-description--substitute-command-keys (string)
   "Substitute key descriptions for command names in STRING."
   (save-match-data
     (let ((ret string)
@@ -367,12 +482,14 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
                   rep-item "")
             (and
              (boundp cur-item)
-             (setq rep-item (ergoemacs-describe-keymap cur-item))))
+             (setq rep-item (ergoemacs-key-description--keymap cur-item))))
            ((string-match "\\\\=\\(.\\)" cur-item)
             (setq ret-item (match-string 1 cur-item)))))
         (setq start (+ (match-beginning 0) (length rep-item)))
         (setq ret (replace-match rep-item t t ret)))
       ret)))
+
+(defalias 'ergoemacs-substitute-command-keys 'ergoemacs-key-description--substitute-command-keys)
 
 
 

@@ -55,6 +55,9 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
+(require 'help-mode)
+(require 'find-func)
+
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-translate--translation-hash)
@@ -813,6 +816,170 @@ If Object isn't specified assume it is for the current ergoemacs theme."
       (ergoemacs-debug-keymap (ergoemacs-component-struct--get obj ergoemacs-keyboard-layout))
       (unless dont-show
         (call-interactively 'ergoemacs-debug))))))
+
+(define-button-type 'ergoemacs-component-help
+  :supertype 'help-xref
+  'help-function #'ergoemacs-component-describe
+  'help-echo (purecopy "mouse-2, RET: describe this ergoemacs component"))
+
+(define-button-type 'ergoemacs-component-def
+  :supertype 'help-xref
+  'help-function #'ergoemacs-component-find-definition
+  'help-echo (purecopy "mouse-2, RET: find this ergoemacs component's definition"))
+
+
+(defcustom ergoemacs-component-find-regexp
+  (concat"^\\s-*(ergoemacs-\\(?:theme-\\)?component" find-function-space-re "%s\\(\\s-\\|$\\)")
+  "The regexp used by `ergoemacs-find-component' to search for a component definition.
+Note it must contain a `%s' at the place where `format'
+should insert the face name."
+  :type 'regexp
+  :group 'find-function
+  :version "22.1")
+
+(unless (assoc 'ergoemacs-component find-function-regexp-alist)
+  (push (cons 'ergoemacs-component 'ergoemacs-component-find-regexp) find-function-regexp-alist))
+
+
+
+(defun ergoemacs-component-find-no-select (component &optional type)
+  "Find COMPONENT"
+  (let* ((comp (ergoemacs-component-struct--lookup-hash (or component "")))
+         (plist (and comp (ergoemacs-component-struct-plist comp)))
+         (file (and comp (plist-get plist :file)))
+         (el-file (and file (concat (file-name-sans-extension file) ".el")))
+         loc)
+    (if (not comp)
+        (message "Invalide component %s" component)
+      (setq loc (find-function-search-for-symbol (intern (plist-get plist :name))
+                                                 (or type 'ergoemacs-component) el-file))
+      loc)))
+
+(defun ergoemacs-component-find-1 (symbol type switch-fn)
+  "Find `ergoemacs-mode' component or theme
+TYPE is nil to search for a component definition,
+
+The variable `find-function-recenter-line' controls how
+to recenter the display.  SWITCH-FN is the function to call
+to display and select the buffer.
+See also `find-function-after-hook'.
+
+Modified from `find-definition-noselect'.
+
+Set mark before moving, if the buffer already existed."
+  (let* ((orig-point (point))
+         (orig-buf (window-buffer))
+         (orig-buffers (buffer-list))
+         (buffer-point (save-excursion
+                         (ergoemacs-component-find-no-select symbol type)))
+         (new-buf (car buffer-point))
+         (new-point (cdr buffer-point)))
+    (when buffer-point
+      (when (memq new-buf orig-buffers)
+        (push-mark orig-point))
+      (funcall switch-fn new-buf)
+      (when new-point (goto-char new-point))
+      (recenter find-function-recenter-line)
+      (run-hooks 'find-function-after-hook))))
+
+(defun ergoemacs-component-find-definition (component)
+  "Find the definition of COMPONENT.  COMPONENT defaults to the name near point.
+
+Finds the `ergoemacs-mode' containing the definition of the component
+near point (selected by `ergoemacs-component-at-point') in a buffer and
+places point before the definition.
+
+Set mark before moving, if the buffer already existed.
+
+The library where FACE is defined is searched for in
+`find-function-source-path', if non-nil, otherwise in `load-path'.
+See also `find-function-recenter-line' and `find-function-after-hook'."
+  (interactive (list (ergoemacs-component-at-point)))
+  (ergoemacs-component-find-1 component 'ergoemacs-component 'switch-to-buffer))
+
+(defun ergoemacs-component-at-point ()
+  "Get the `ergoemacs-component' defined at or before point.
+Return 0 if there is no such symbol. Based on `variable-at-point'"
+  (with-syntax-table emacs-lisp-mode-syntax-table
+    (or (condition-case ()
+            (save-excursion
+              (skip-chars-forward "'")
+              (or (not (zerop (skip-syntax-backward "_w")))
+                  (eq (char-syntax (following-char)) ?w)
+                  (eq (char-syntax (following-char)) ?_)
+                  (forward-sexp -1))
+              (skip-chars-forward "'")
+              (let ((obj (read (current-buffer))))
+                (and (symbolp obj) (gethash (symbol-name obj) ergoemacs-theme-comp-hash) obj)))
+          (error nil))
+        (let* ((str (find-tag-default))
+               (sym (if str (intern str))))
+          (if (and sym (gethash (symbol-name sym) ergoemacs-theme-comp-hash))
+              sym
+            (save-match-data
+              (when (and str (string-match "\\`\\W*\\(.*?\\)\\W*\\'" str))
+                (setq sym (intern (match-string 1 str)))
+                (and (gethash (symbol-name sym) ergoemacs-theme-comp-hash) sym)))))
+        0)))
+
+(defun ergoemacs-component-describe (component &optional buffer frame)
+  "Display the full documentation of COMPONENT (a symbol or string)."
+  (interactive
+   (let ((c (ergoemacs-component-at-point))
+         (enable-recursive-minibuffers t)
+         val)
+     (setq val (completing-read (if (symbolp c)
+                                    (format
+                                     "Describe ergoemacs component (default %s): " c)
+                                  "Describe ergoemacs component: ")
+                                ergoemacs-theme-comp-hash
+                                nil
+                                ;; (lambda (vv)
+                                ;;   (or (get vv 'variable-documentation)
+                                ;;       (and (boundp vv) (not (keywordp vv)))))
+                                t nil nil
+                                (format "%s" c)))
+     (list (or (and (equal val "") (format "%s" c)) val))))
+  (let* ((component (and component
+                         (or (and (stringp component) component)
+                             (and (symbolp component) (symbol-name component)))))
+         (comp (ergoemacs-component-struct--lookup-hash (or component "")))
+         (plist (ergoemacs-component-struct-plist comp))
+         (file (plist-get plist :file))
+         (el-file (concat (file-name-sans-extension file) ".el")))
+    (if (not comp)
+        (message "You did not specify a valid ergoemacs component %s" component)
+      (help-setup-xref (list #'ergoemacs-component-describe (or component ""))
+                       (called-interactively-p 'interactive))
+      (with-help-window (help-buffer)
+        (princ (or component ""))
+        ;; Use " is " instead of a colon so that
+        ;; it is easier to get out the function name using forward-sexp.
+        (princ " is an `ergoemacs-mode' component")
+        (when (file-readable-p el-file)
+          (princ " defined in `")
+          (princ (file-name-nondirectory el-file))
+          (princ "'.")
+          (save-excursion
+            (when (re-search-backward "`\\(.*\\)'" nil t)
+              (help-xref-button 1 'ergoemacs-component-def component))))
+        (princ "\n\n")
+        (princ (plist-get (ergoemacs-component-struct-plist comp) :description))
+        (princ (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
+        (princ (format "Relative To: %s\n" (ergoemacs-component-struct-relative-to comp)))
+        (princ (format "Variable Modifiers: %s\n" (ergoemacs-component-struct-variable-modifiers comp)))
+        (princ (format "Variable Prefixes: %s\n" (mapconcat (lambda(x) (key-description x)) (ergoemacs-component-struct-variable-prefixes comp) ", ")))
+        (princ "True Keymap:\n")
+        (insert (ergoemacs-key-description--keymap (ergoemacs-component-struct-map comp)))
+        
+        ;; (ergoemacs-debug-keymap (ergoemacs-component-struct-map comp))
+        (princ (format "\nTranslated Keymap (%s):\n" ergoemacs-keyboard-layout))
+        (princ (ergoemacs-key-description--keymap (ergoemacs-component-struct--get comp ergoemacs-keyboard-layout)))
+        (with-current-buffer standard-output
+          ;; Return the text we displayed.
+          (buffer-string))))))
+
+(defalias 'describe-ergoemacs-component 'ergoemacs-component-describe)
 
 (provide 'ergoemacs-component)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
