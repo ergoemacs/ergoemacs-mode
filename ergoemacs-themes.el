@@ -1717,6 +1717,9 @@
                                             describe-input-method)
                                      (coding menu-item "Coding System..."
                                              describe-coding-system)
+                                     (separator-ergoemacs-describe "--")
+                                     (theme-component menu-item "Ergoemacs Theme Component"
+                                                      describe-ergoemacs-component)
                                      (separator-curr-modes menu-item "--")
                                      (curr-major-mode menu-item "Current Major Mode"
                                                       ergoemacs-describe-major-mode
