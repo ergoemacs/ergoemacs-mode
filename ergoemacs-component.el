@@ -817,6 +817,51 @@ If Object isn't specified assume it is for the current ergoemacs theme."
       (unless dont-show
         (call-interactively 'ergoemacs-debug))))))
 
+(defun ergoemacs-component--regexp (&optional at-end)
+  "Returns a regexp of `ergoemacs-mode' components."
+  (let (ret)
+    (maphash
+     (lambda(key _item) (push key ret))
+     ergoemacs-theme-comp-hash)
+    (setq ret (regexp-opt ret 'symbols))
+    (when at-end
+      (setq ret (concat ret "$")))
+    ret))
+
+
+(defun ergoemacs-component--help-link-1 ()
+  (goto-char (match-beginning 0))
+  ;; Link commands
+  (when (and (re-search-backward "\\_<\\(.*?\\)\\_> *\\=" nil t)
+             (setq tmp (intern (match-string 1)))
+             (fboundp tmp))
+    (help-xref-button 1 'help-function tmp))
+  ;; FIXME -- add button properties back
+  (end-of-line))
+
+(defun ergoemacs-component--help-link ()
+  "Links `ergoemacs-mode' components in help-mode buffer."
+  (when (eq major-mode 'help-mode)
+    (save-excursion
+      (goto-char (point-min))
+      (let ((inhibit-read-only t)
+            (re (ergoemacs-component--regexp t))
+            (rem (ergoemacs-map-properties--map-regexp t))
+            tmp)
+        (with-syntax-table emacs-lisp-mode-syntax-table
+          (when (re-search-forward "^\\(\\_<.*\\_>\\) is .* component defined in `\\(.*\\)'" nil t)
+            (help-xref-button 2 'ergoemacs-component-def (match-string 1)))
+          (goto-char (point-min))
+          (while (re-search-forward re  nil t)
+            (help-xref-button 1 'ergoemacs-component-help (match-string 1))
+            (ergoemacs-component--help-link-1))
+          (goto-char (point-min))
+          (while (re-search-forward rem  nil t)
+            (when (and (setq tmp (intern (match-string 1)))
+                       (boundp tmp))
+              (help-xref-button 1 'help-variable tmp))
+            (ergoemacs-component--help-link-1)))))))
+
 (define-button-type 'ergoemacs-component-help
   :supertype 'help-xref
   'help-function #'ergoemacs-component-describe
@@ -829,7 +874,7 @@ If Object isn't specified assume it is for the current ergoemacs theme."
 
 
 (defcustom ergoemacs-component-find-regexp
-  (concat"^\\s-*(ergoemacs-\\(?:theme-\\)?component" find-function-space-re "%s\\(\\s-\\|$\\)")
+  (concat"^\\s-*(ergoemacs-\\(?:theme-?\\)?\\(?:component\\)?" find-function-space-re "%s\\(\\s-\\|$\\)")
   "The regexp used by `ergoemacs-find-component' to search for a component definition.
 Note it must contain a `%s' at the place where `format'
 should insert the face name."
@@ -840,19 +885,22 @@ should insert the face name."
 (unless (assoc 'ergoemacs-component find-function-regexp-alist)
   (push (cons 'ergoemacs-component 'ergoemacs-component-find-regexp) find-function-regexp-alist))
 
-
-
 (defun ergoemacs-component-find-no-select (component &optional type)
   "Find COMPONENT"
   (let* ((comp (ergoemacs-component-struct--lookup-hash (or component "")))
          (plist (and comp (ergoemacs-component-struct-plist comp)))
          (file (and comp (plist-get plist :file)))
          (el-file (and file (concat (file-name-sans-extension file) ".el")))
+         (name (plist-get plist :name))
+         (sym (intern name))
          loc)
     (if (not comp)
-        (message "Invalide component %s" component)
-      (setq loc (find-function-search-for-symbol (intern (plist-get plist :name))
-                                                 (or type 'ergoemacs-component) el-file))
+        (message "Invalid component %s" component)
+      (setq loc (find-function-search-for-symbol sym (or type 'ergoemacs-component) el-file))
+      (when (and (not (cdr loc)) (< 6 (length name)))
+        (setq sym (intern (substring name 0 -6))
+              loc (find-function-search-for-symbol sym
+                   (or type 'ergoemacs-component) el-file)))
       loc)))
 
 (defun ergoemacs-component-find-1 (symbol type switch-fn)
@@ -896,6 +944,8 @@ The library where FACE is defined is searched for in
 See also `find-function-recenter-line' and `find-function-after-hook'."
   (interactive (list (ergoemacs-component-at-point)))
   (ergoemacs-component-find-1 component 'ergoemacs-component 'switch-to-buffer))
+
+
 
 (defun ergoemacs-component-at-point ()
   "Get the `ergoemacs-component' defined at or before point.
@@ -959,21 +1009,24 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
         (when (file-readable-p el-file)
           (princ " defined in `")
           (princ (file-name-nondirectory el-file))
-          (princ "'.")
-          (save-excursion
-            (when (re-search-backward "`\\(.*\\)'" nil t)
-              (help-xref-button 1 'ergoemacs-component-def component))))
+          (princ "'."))
         (princ "\n\n")
+        (princ "Documentation:\n")
         (princ (plist-get (ergoemacs-component-struct-plist comp) :description))
+        (princ "\n\n")
         (princ (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
         (princ (format "Relative To: %s\n" (ergoemacs-component-struct-relative-to comp)))
         (princ (format "Variable Modifiers: %s\n" (ergoemacs-component-struct-variable-modifiers comp)))
         (princ (format "Variable Prefixes: %s\n" (mapconcat (lambda(x) (key-description x)) (ergoemacs-component-struct-variable-prefixes comp) ", ")))
-        (princ "True Keymap:\n")
-        (insert (ergoemacs-key-description--keymap (ergoemacs-component-struct-map comp)))
+        (princ "\nTrue Keymap:\n")
+        (princ (make-string 80 ?-))
+        (princ (ergoemacs-key-description--keymap (ergoemacs-component-struct-map comp)))
         
-        ;; (ergoemacs-debug-keymap (ergoemacs-component-struct-map comp))
+        ;; (ergoemacs-debug-keymap (ergoemacs-component-struct-map
+        ;; comp))
+        (princ "\n")
         (princ (format "\nTranslated Keymap (%s):\n" ergoemacs-keyboard-layout))
+        (princ (make-string 80 ?-))
         (princ (ergoemacs-key-description--keymap (ergoemacs-component-struct--get comp ergoemacs-keyboard-layout)))
         (with-current-buffer standard-output
           ;; Return the text we displayed.

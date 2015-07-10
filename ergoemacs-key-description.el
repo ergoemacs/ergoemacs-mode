@@ -276,7 +276,7 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
                   (push m tmp)))
               (setq mod tmp
                     ev (ergoemacs-gethash (intern (format "s%s" ev))
-                                (ergoemacs-translate--event-modifier-hash layout)))))
+                                          (ergoemacs-translate--event-modifier-hash layout)))))
             (setq tmp (format "%s%s%s%s"
                               (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) "")
                                   (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs :unicode-or-alt "【" "["))
@@ -305,43 +305,42 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
       (ergoemacs-key-description (read-kbd-macro code t)))))
 
 (defvar ergoemacs-describe-keymap--ignore
-  '(
-    again
-    begin
-    compose-last-chars
-    copy
-    cut
-    delete
-    delete-frame
-    deleteline
-    execute
-    find
-    header-line
-    help
-    iconify-frame
-    insertline
-    language-change
-    left-fringe
-    lwindow
-    make-frame-visible
-    menu-bar
-    mode-line
-    mouse-movement
-    open
-    paste
-    redo
-    remap
-    right-fringe
-    rwindow
-    select-window
-    switch-frame
-    tool-bar
-    undo
-    vertical-line
-    vertical-scroll-bar
-    XF86Back
-    XF86Forward
-    )
+  (append '(again
+            begin
+            compose-last-chars
+            copy
+            cut
+            delete
+            delete-frame
+            deleteline
+            execute
+            find
+            header-line
+            help
+            iconify-frame
+            insertline
+            language-change
+            left-fringe
+            lwindow
+            make-frame-visible
+            menu-bar
+            mode-line
+            mouse-movement
+            open
+            paste
+            redo
+            remap
+            right-fringe
+            rwindow
+            select-window
+            switch-frame
+            tool-bar
+            undo
+            vertical-line
+            vertical-scroll-bar
+            XF86Back
+            XF86Forward)
+          (if (eq system-type 'windows-nt) '(menu) '(apps)))
   "Ignored prefixes of keymaps")
 
 (defvar ergoemacs-describe-keymap--column-widths '(18 . 40)
@@ -358,15 +357,8 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
      ((eq (car item) 'keymap) "#<keymap>")
      (t (format "%s" item))))
    ((symbolp item)
-    (if (fboundp item)
-        (save-match-data
-          (setq item (with-temp-buffer
-                       (insert (format "%s" item))
-                       (goto-char (point-min))
-                       (looking-at ".*")
-                       (help-xref-button 0 'help-function item)
-                       (buffer-string))))
-      (format "%s" item)))
+    ;; `help-mode' strips out properties need to add links at the end...
+    (format "%s" item))
    (t (format"#<byte compiled %s>" (ergoemacs :unicode-or-alt "λ" "lambda")))))
 
 (defun ergoemacs-key-description--keymap-blame (key map)
@@ -399,24 +391,16 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
      ((and ret (integerp ret))
       (if (and (setq tmp (ergoemacs ret :map-list))
                (setq tmp (nth 0 tmp)))
-          (if (boundp tmp)
-              (save-match-data
-                (setq ret (with-temp-buffer
-                            (insert (format "%s" tmp))
-                            (goto-char (point-min))
-                            (looking-at ".*")
-                            (help-xref-button 0 'help-variable tmp)
-                            (buffer-string))))
-            (setq ret (format "%s" tmp)))
+          (setq ret (format "%s" tmp))
         (setq ret "?")))
      ((and ret (consp ret))
-      (setq ret (with-temp-buffer
-                  (insert (format "%s" (nth 1 ret)))
-                  (goto-char (point-min))
-                  (looking-at ".*")
-                  (help-xref-button 0 'ergoemacs-component-help (nth 1 ret))
-                  (buffer-string)))))
+      (setq ret (nth 1 ret))))
     ret))
+
+(defun ergoemacs-key-description--setup-xrefs ()
+  (ergoemacs-component--help-link))
+
+(add-hook 'temp-buffer-show-hook 'ergoemacs-key-description--setup-xrefs)
 
 (defun ergoemacs-key-description--keymap-item (&optional elt keymap)
   (let* ((column-widths ergoemacs-describe-keymap--column-widths)
@@ -427,11 +411,11 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
          (item (or (and (consp elt) (ergoemacs-key-description--keymap-item-2 (cdr elt)))
                    (and (eq elt t) (make-string (- (cdr column-widths) 2) ?-))
                    "Command"))
+         (key-item (format "%s%s%s" kd (make-string (max 1 (- (car column-widths) (length kd))) ? ) item))
          (src (or (and (consp elt) (ergoemacs-key-description--keymap-blame (car elt) keymap))
                   (and (eq elt t) (make-string (- last-column 2) ?-))
                   "Source")))
-    (format "%s%s%s%s%s" kd (make-string (max 1 (- (car column-widths) (length kd))) ? )
-            item (make-string (max 1 (- (cdr column-widths) (length item))) ? ) src)))
+    (format "%s%s%s" key-item  (make-string (max 1 (- (+ (car column-widths) (cdr column-widths)) (length key-item))) ? ) src)))
 
 (defun ergoemacs-key-description--keymap (map)
   "Describes the keymap MAP"

@@ -251,6 +251,10 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
 (defvar ergoemacs-map-properties--const-keymaps nil
   "Variable listing constant keymaps.")
 
+(defun ergoemacs-map-properties--map-regexp (&optional at-end)
+  "Generates a regular expression of all known maps."
+  (concat (regexp-opt (mapcar (lambda(x) (symbol-name x)) ergoemacs-map-properties--label-atoms-maps) 'symbols) (or (and at-end "$") "")))
+
 (defun ergoemacs-map-properties--default-global-gen ()
   "Generates hash for default emacs maps."
   ;; (setq ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal))
