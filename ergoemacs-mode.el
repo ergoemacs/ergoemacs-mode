@@ -122,7 +122,8 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   "Ergoemacs Keyboard Layout Themes"
   :type '(choice
           (const :tag "Standard" :value nil)
-          (symbol :tag "Other"))
+          (choice (symbol :tag "Other (symbol)")
+                  (string :tag "Other (string)")))
   :set 'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
@@ -505,10 +506,11 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   '()
   "Each themes set version"
   :type '(repeat
-          (string :tag "Theme Component")
-          (choice
-           (const :tag "Latest Version" nil)
-           (string :tag "Version")))
+          (list
+           (string :tag "Theme Component")
+           (choice
+            (const :tag "Latest Version" nil)
+            (string :tag "Version"))))
   :group 'ergoemacs-theme)
 
 (defcustom ergoemacs-excluded-major-modes
