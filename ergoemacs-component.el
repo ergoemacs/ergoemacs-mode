@@ -449,19 +449,21 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
           ret)
       "")))
 
-(defun ergoemacs-component-struct--lookup-closest (comp)
-  "Looks up closest component version from `ergoemacs-component-hash'"
+(defun ergoemacs-component-struct--lookup-closest (comp &optional current-version)
+  "Looks up closest component version from `ergoemacs-component-hash'.
+Optionally assume that CURRENT-VERSION is active"
   (if (not (ergoemacs-component-struct-p comp)) nil
     (let (versions)
       (cond
        ((not (setq versions (ergoemacs-component-struct-versions comp)))
         comp)
-       ((string= "" (setq versions (ergoemacs-component-struct--closest-version (ergoemacs :current-version)  versions)))
+       ((string= "" (setq versions (ergoemacs-component-struct--closest-version
+                                    (or current-version (ergoemacs :current-version))  versions)))
         comp)
        (t
         (ergoemacs-component-struct--lookup-hash (concat (ergoemacs-component-struct-name comp) versions)))))))
 
-(defun ergoemacs-component-struct--lookup-hash (map-or-map-list)
+(defun ergoemacs-component-struct--lookup-hash (map-or-map-list &optional version)
   "Lookup `ergoemacs-component-hash' from MAP-OR-MAP-LIST if necessary.
 
 This takes into consideration any versions defined, and the
@@ -470,7 +472,7 @@ closest `ergoemacs-theme-version' calculated from
   (if (consp map-or-map-list)
       (mapcar #'ergoemacs-component-struct--lookup-hash map-or-map-list)
     (if (ergoemacs-component-struct-p map-or-map-list)
-        (ergoemacs-component-struct--lookup-closest map-or-map-list)
+        (ergoemacs-component-struct--lookup-closest map-or-map-list version)
       (let ((map map-or-map-list)
             ret)
         (when (symbolp map) ;; If map is a symbol, change to string.
@@ -480,7 +482,7 @@ closest `ergoemacs-theme-version' calculated from
           (when (and ret (functionp ret))
             (funcall ret)
             (setq ret (ergoemacs-gethash map ergoemacs-component-hash))))
-        (ergoemacs-component-struct--lookup-closest ret)))))
+        (ergoemacs-component-struct--lookup-closest ret version)))))
 
 (defvar ergoemacs-component-struct--get-keymap nil)
 (defvar ergoemacs-component-struct--get-keymap-extra nil)
@@ -834,7 +836,8 @@ If Object isn't specified assume it is for the current ergoemacs theme."
   ;; Link commands
   (when (and (re-search-backward "\\_<\\(.*?\\)\\_> *\\=" nil t)
              (setq tmp (intern (match-string 1)))
-             (fboundp tmp))
+             (fboundp tmp)
+             (commandp tmp))
     (help-xref-button 1 'help-function tmp))
   ;; FIXME -- add button properties back
   (end-of-line))
@@ -845,12 +848,16 @@ If Object isn't specified assume it is for the current ergoemacs theme."
     (save-excursion
       (goto-char (point-min))
       (let ((inhibit-read-only t)
+            (ree (format "^ - %s -- " (ergoemacs-component--regexp)))
             (re (ergoemacs-component--regexp t))
             (rem (ergoemacs-map-properties--map-regexp t))
             tmp)
         (with-syntax-table emacs-lisp-mode-syntax-table
           (when (re-search-forward "^\\(\\_<.*\\_>\\) is .* component defined in `\\(.*\\)'" nil t)
             (help-xref-button 2 'ergoemacs-component-def (match-string 1)))
+          (goto-char (point-min))
+          (while (re-search-forward ree nil t)
+            (help-xref-button 1 'ergoemacs-component-help (match-string 1)))
           (goto-char (point-min))
           (while (re-search-forward re  nil t)
             (help-xref-button 1 'ergoemacs-component-help (match-string 1))
@@ -899,8 +906,8 @@ should insert the face name."
       (setq loc (find-function-search-for-symbol sym (or type 'ergoemacs-component) el-file))
       (when (and (not (cdr loc)) (< 6 (length name)))
         (setq sym (intern (substring name 0 -6))
-              loc (find-function-search-for-symbol sym
-                   (or type 'ergoemacs-component) el-file)))
+              loc (find-function-search-for-symbol
+                   sym (or type 'ergoemacs-component) el-file)))
       loc)))
 
 (defun ergoemacs-component-find-1 (symbol type switch-fn)
@@ -947,56 +954,69 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
 
 
 
-(defun ergoemacs-component-at-point ()
+(defun ergoemacs-component-at-point (&optional theme-instead)
   "Get the `ergoemacs-component' defined at or before point.
 Return 0 if there is no such symbol. Based on `variable-at-point'"
-  (with-syntax-table emacs-lisp-mode-syntax-table
-    (or (condition-case ()
-            (save-excursion
-              (skip-chars-forward "'")
-              (or (not (zerop (skip-syntax-backward "_w")))
-                  (eq (char-syntax (following-char)) ?w)
-                  (eq (char-syntax (following-char)) ?_)
-                  (forward-sexp -1))
-              (skip-chars-forward "'")
-              (let ((obj (read (current-buffer))))
-                (and (symbolp obj) (gethash (symbol-name obj) ergoemacs-theme-comp-hash) obj)))
-          (error nil))
-        (let* ((str (find-tag-default))
-               (sym (if str (intern str))))
-          (if (and sym (gethash (symbol-name sym) ergoemacs-theme-comp-hash))
-              sym
-            (save-match-data
-              (when (and str (string-match "\\`\\W*\\(.*?\\)\\W*\\'" str))
-                (setq sym (intern (match-string 1 str)))
-                (and (gethash (symbol-name sym) ergoemacs-theme-comp-hash) sym)))))
-        0)))
+  (let ((hash-table (or (and theme-instead ergoemacs-theme-hash)
+                        ergoemacs-theme-comp-hash)))
+    (with-syntax-table emacs-lisp-mode-syntax-table
+      (or (condition-case ()
+              (save-excursion
+                (skip-chars-forward "'")
+                (or (not (zerop (skip-syntax-backward "_w")))
+                    (eq (char-syntax (following-char)) ?w)
+                    (eq (char-syntax (following-char)) ?_)
+                    (forward-sexp -1))
+                (skip-chars-forward "'")
+                (let ((obj (read (current-buffer))))
+                  (and (symbolp obj)
+                       (gethash (symbol-name obj) hash-table) obj)))
+            (error nil))
+          (let* ((str (find-tag-default))
+                 (sym (if str (intern str))))
+            (if (and sym (gethash (symbol-name sym) hash-table))
+                sym
+              (save-match-data
+                (when (and str (string-match "\\`\\W*\\(.*?\\)\\W*\\'" str))
+                  (setq sym (intern (match-string 1 str)))
+                  (and (gethash (symbol-name sym) hash-table) sym)))))
+          0))))
+
+(defun ergoemacs-component--prompt (&optional theme-instead)
+  "Prompt for component or theme (when THEME-INSTEAD is non-nil)."
+  (let ((c (ergoemacs-component-at-point theme-instead))
+        (enable-recursive-minibuffers t)
+        val)
+    (setq val (completing-read (if (symbolp c)
+                                   (format
+                                    "Describe ergoemacs %s (default %s): "
+                                    (or (and theme-instead "theme") "component")
+                                    c)
+                                 (format
+                                  "Describe ergoemacs %s: "
+                                  (or (and theme-instead "theme") "component")))
+                               (or (and theme-instead ergoemacs-theme-hash)
+                                   ergoemacs-theme-comp-hash)
+                               nil
+                               ;; (lambda (vv)
+                               ;;   (or (get vv 'variable-documentation)
+                               ;;       (and (boundp vv) (not (keywordp vv)))))
+                               t nil nil
+                               (format "%s" c)))
+    (list (or (and (equal val "") (format "%s" c)) val))))
 
 (defun ergoemacs-component-describe (component &optional buffer frame)
   "Display the full documentation of COMPONENT (a symbol or string)."
-  (interactive
-   (let ((c (ergoemacs-component-at-point))
-         (enable-recursive-minibuffers t)
-         val)
-     (setq val (completing-read (if (symbolp c)
-                                    (format
-                                     "Describe ergoemacs component (default %s): " c)
-                                  "Describe ergoemacs component: ")
-                                ergoemacs-theme-comp-hash
-                                nil
-                                ;; (lambda (vv)
-                                ;;   (or (get vv 'variable-documentation)
-                                ;;       (and (boundp vv) (not (keywordp vv)))))
-                                t nil nil
-                                (format "%s" c)))
-     (list (or (and (equal val "") (format "%s" c)) val))))
+  (interactive (ergoemacs-component--prompt))
   (let* ((component (and component
                          (or (and (stringp component) component)
                              (and (symbolp component) (symbol-name component)))))
          (comp (ergoemacs-component-struct--lookup-hash (or component "")))
          (plist (ergoemacs-component-struct-plist comp))
          (file (plist-get plist :file))
-         (el-file (concat (file-name-sans-extension file) ".el")))
+         (el-file (concat (file-name-sans-extension file) ".el"))
+         tmp tmp2 vers
+         lst)
     (if (not comp)
         (message "You did not specify a valid ergoemacs component %s" component)
       (help-setup-xref (list #'ergoemacs-component-describe (or component ""))
@@ -1017,17 +1037,60 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
         (princ (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
         (princ (format "Relative To: %s\n" (ergoemacs-component-struct-relative-to comp)))
         (princ (format "Variable Modifiers: %s\n" (ergoemacs-component-struct-variable-modifiers comp)))
-        (princ (format "Variable Prefixes: %s\n" (mapconcat (lambda(x) (key-description x)) (ergoemacs-component-struct-variable-prefixes comp) ", ")))
-        (princ "\nTrue Keymap:\n")
-        (princ (make-string 80 ?-))
-        (princ (ergoemacs-key-description--keymap (ergoemacs-component-struct-map comp)))
+        (princ (format "Variable Prefixes: %s\n"
+                       (mapconcat
+                        (lambda(x) (ergoemacs-key-description x))
+                        (ergoemacs-component-struct-variable-prefixes comp) ", ")))
+
+        (when (setq tmp (ergoemacs-component-struct-unbind comp))
+          (princ (format "Unbound keys: %s\n"
+                         (mapconcat
+                          (lambda(x) (ergoemacs-key-description x)) tmp ", "))))
+
+        (when (setq tmp (ergoemacs-component-struct-undefined comp))
+          (princ (format "Masked emacs keys: %s\n"
+                         (mapconcat
+                          (lambda(x) (ergoemacs-key-description x)) tmp ", "))))
+
+        ;; FIXME: Describe major-mode / minor-mode differences
         
-        ;; (ergoemacs-debug-keymap (ergoemacs-component-struct-map
-        ;; comp))
-        (princ "\n")
-        (princ (format "\nTranslated Keymap (%s):\n" ergoemacs-keyboard-layout))
-        (princ (make-string 80 ?-))
-        (princ (ergoemacs-key-description--keymap (ergoemacs-component-struct--get comp ergoemacs-keyboard-layout)))
+        ;; FIXME: Describe what keys are deferred, and what they would
+        ;; possibly bind to...
+
+        (if (not (setq vers (ergoemacs-component-struct-versions comp)))
+            (setq lst `(("Specified Keymap" ,(ergoemacs-component-struct-map comp))
+                        (,(format "Translated Keymap (%s)" ergoemacs-keyboard-layout) ,(ergoemacs-component-struct--get comp ergoemacs-keyboard-layout))))
+          (princ (format "Versions: %s, %s\n" ergoemacs-mode-version
+                         (mapconcat
+                          (lambda(x) x) vers ", ")))
+          
+          (setq lst `((,(format "Specified Keymap (%s)" (or (ergoemacs-theme--get-version) ergoemacs-mode-version))
+                       ,(ergoemacs-component-struct-map comp))
+                      ,@(mapcar
+                         (lambda(ver)
+                           (unless (string= ver (ergoemacs-theme--get-version))
+                             ;; (ergoemacs-component-struct--get (ergoemacs-component-struct--lookup-hash 'search  "5.7.5"))
+                             `(,(format "Specified keymap for Version %s" ver)
+                               ,(ergoemacs-component-struct-map (ergoemacs-component-struct--lookup-hash component ver)))))
+                         vers)
+                      (,(format "Translated Keymap (%s; %s)" ergoemacs-keyboard-layout (or (ergoemacs-theme--get-version) ergoemacs-mode-version))
+                       ,(ergoemacs-component-struct--get comp ergoemacs-keyboard-layout))
+                      ,@(mapcar
+                         (lambda(ver)
+                           (unless (string= ver (ergoemacs-theme--get-version))
+                             `(,(format "Translated keymap for Version %s" ver)
+                               ,(ergoemacs-component-struct--get (ergoemacs-component-struct--lookup-hash component ver) ergoemacs-keyboard-layout))))
+                         vers)
+                      )))
+        
+        (dolist (elt lst)
+          (unless (or (not elt) (ergoemacs (nth 1 elt) :empty-p))
+            (princ "\n")
+            (princ (nth 0 elt))
+            (princ ":\n")
+            (princ (make-string 78 ?-))
+            (princ (ergoemacs-key-description--keymap (nth 1 elt)))
+            (princ "\n")))
         (with-current-buffer standard-output
           ;; Return the text we displayed.
           (buffer-string))))))

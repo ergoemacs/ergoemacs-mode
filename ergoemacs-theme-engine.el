@@ -177,11 +177,12 @@ When SILENT is true, also include silent themes"
 
 (defun ergoemacs-theme-option-enabled-p (option)
   "Determines if OPTION is enabled."
-  (let ((plist (ergoemacs-gethash (ergoemacs :current-theme) ergoemacs-theme-hash))
-        options-on options-off)
-    (setq options-on (plist-get plist ':optional-on)
-          options-off (plist-get plist ':optional-off))
-    (or (and (member option options-on)
+  (let* ((plist (ergoemacs-gethash (ergoemacs :current-theme) ergoemacs-theme-hash))
+         (options-on (plist-get plist :optional-on))
+         (options-off (plist-get plist :optional-off))
+         (required (plist-get plist :components)))
+    (or (member option required)
+        (and (member option options-on)
              (not (member (list option 'off) ergoemacs-theme-options)))
         (and (member option options-off)
              (member (list option 'on) ergoemacs-theme-options)))))
@@ -388,6 +389,69 @@ When SILENT is true, also include silent themes"
     (ergoemacs-mode-exit
      menu-item "Exit ergoemacs-mode"
      (lambda() (interactive) (ergoemacs-mode -1)))))
+
+(defun ergoemacs-theme-at-point ()
+  "Get the `ergoemacs-theme' defined at or before point.
+Return 0 if there is no such symbol. Uses `ergoemacs-component-at-point'."
+  (ergoemacs-component-at-point t))
+
+
+(defun ergoemacs-theme-describe (theme &optional buffer frame)
+  "Display the full documentation of THEME (a symbol or string)."
+  (interactive (ergoemacs-component--prompt t))
+  (let* ((theme (and theme
+                         (or (and (stringp theme) theme)
+                             (and (symbolp theme) (symbol-name theme)))))
+         (plist (gethash (or theme "") ergoemacs-theme-hash))
+         (file (plist-get plist :file))
+         (el-file (concat (file-name-sans-extension file) ".el"))
+         tmp)
+    (if (not plist)
+        (message "You did not specify a valid ergoemacs theme %s" theme)
+      (help-setup-xref (list #'ergoemacs-theme-describe (or theme ""))
+                       (called-interactively-p 'interactive))
+      (with-help-window (help-buffer)
+        (princ (or theme ""))
+        ;; Use " is " instead of a colon so that
+        ;; it is easier to get out the function name using forward-sexp.
+        (princ " is an `ergoemacs-mode' theme")
+        (when (file-readable-p el-file)
+          (princ " defined in `")
+          (princ (file-name-nondirectory el-file))
+          (princ "'."))
+        (princ "\n\n")
+        (princ "Documentation:\n")
+        (princ (plist-get plist :description))
+        (princ "\n\n")
+        (when (setq tmp (plist-get plist :based-on))
+          (princ (format "This theme is based on: %s\n\n" tmp)))
+
+        (when (member theme (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
+          (princ (format "This theme does not appear in menus because of the :silent option.\n\n")))
+
+        (dolist (elt '((:components . "Reqired Components")
+                       (:optional-on . "Optional Components (enabled by default)")
+                       (:optional-off . "Optional Components (disabled by default)")))
+          (when (setq tmp (plist-get plist (car elt)))
+            (princ (cdr elt))
+            (princ ":\n")
+            (dolist (comp tmp)
+              (princ (format " - %s -- %s (currently %s)\n"
+                             comp
+                             (ergoemacs-component-struct--component-description comp)
+                             (or (and (ergoemacs-theme-option-enabled-p comp)
+                                      "enabled") "disabled"))))
+            (princ "\n")))
+        
+        
+        ;; (when (setq tmp (plist-get plist :options-menu))
+        ;;   )
+        
+        (with-current-buffer standard-output
+          ;; Return the text we displayed.
+          (buffer-string))))))
+
+(defalias 'describe-ergoemacs-theme 'ergoemacs-theme-describe)
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
