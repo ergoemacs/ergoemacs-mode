@@ -322,8 +322,8 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
              (silent (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
              (included (append opt-on opt-off comp))
              (fn (or load-file-name (buffer-file-name))))
-        (push ,(plist-get (nth 0 kb) ':name) themes)
-        (push ,(plist-get (nth 0 kb) ':name) silent)
+        (push ,(plist-get (nth 0 kb) :name) themes)
+        (push ,(plist-get (nth 0 kb) :name) silent)
         (setq curr-plist (plist-put curr-plist :file fn))
         (if (not based-on)
             (puthash ,(plist-get (nth 0 kb) ':name) curr-plist ergoemacs-theme-hash)
@@ -334,18 +334,18 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
                       (plist-put curr-plist type
                                  (append (plist-get curr-plist type)
                                          (list comp)))))))
-          (when (and (not (plist-get curr-plist ':options-menu))
-                     (plist-get based-on ':options-menu))
+          (when (and (not (plist-get curr-plist :options-menu))
+                     (plist-get based-on :options-menu))
             (setq curr-plist
-                  (plist-put curr-plist ':options-menu
-                             (plist-get based-on ':options-menu))))
-          (puthash ,(plist-get (nth 0 kb) ':name) curr-plist
+                  (plist-put curr-plist :options-menu
+                             (plist-get based-on :options-menu))))
+          (puthash ,(plist-get (nth 0 kb) :name) curr-plist
                    ergoemacs-theme-hash))
-        (if ,(plist-get (nth 0 kb) ':silent)
+        (if ,(plist-get (nth 0 kb) :silent)
             (puthash "silent-themes" silent ergoemacs-theme-hash)
           (puthash "defined-themes" themes ergoemacs-theme-hash))
-        (ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) ':name) "-theme")) ()
-          ,(format "Generated theme component for %s theme" (concat (plist-get (nth 0 kb) ':name) "-theme"))
+        (ergoemacs-theme-component ,(intern (concat (plist-get (nth 0 kb) :name) "-theme")) ()
+          ,(format "Generated theme component for %s theme" (plist-get (nth 0 kb) :name))
           ,@(nth 1 kb))))))
 
 ;;;###autoload
@@ -475,10 +475,6 @@ When arg1 can be a property.  The following properties are supported:
      ((and arg1 arg2 (eq arg2 :new-command) arg3)
       ;; (ergoemacs arg1 :new-command 'next-line)
       `(ergoemacs-map-properties--new-command ,arg1 ,arg3))
-     
-     ((and arg1 (symbolp arg1)
-           (memq arg1 '(:debug-theme :theme-debug :debug)))
-      `(ergoemacs-component--checkout ,arg2 ,arg3))
 
      ((and arg1 (symbolp arg1)
            (eq arg1 :global-map))

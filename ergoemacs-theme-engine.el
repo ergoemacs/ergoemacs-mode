@@ -395,6 +395,42 @@ When SILENT is true, also include silent themes"
 Return 0 if there is no such symbol. Uses `ergoemacs-component-at-point'."
   (ergoemacs-component-at-point t))
 
+(defcustom ergoemacs-theme-find-regexp
+  (concat"^\\s-*(ergoemacs-theme" find-function-space-re "%s\\(\\s-\\|$\\)")
+  "The regexp used by `ergoemacs-find-theme' to search for a component definition.
+Note it must contain a `%s' at the place where `format'
+should insert the face name."
+  :type 'regexp
+  :group 'find-function
+  :version "22.1")
+
+(unless (assoc 'ergoemacs-theme find-function-regexp-alist)
+  (push (cons 'ergoemacs-theme 'ergoemacs-theme-find-regexp) find-function-regexp-alist))
+
+(define-button-type 'ergoemacs-theme-help
+  :supertype 'help-xref
+  'help-function #'ergoemacs-theme-describe
+  'help-echo (purecopy "mouse-2, RET: describe this ergoemacs theme"))
+
+(define-button-type 'ergoemacs-theme-def
+  :supertype 'help-xref
+  'help-function #'ergoemacs-theme-find-definition
+  'help-echo (purecopy "mouse-2, RET: find this ergoemacs theme's definition"))
+
+(defun ergoemacs-theme-find-definition (theme)
+  "Find the definition of THEME.  THEME defaults to the name near point.
+
+Finds the `ergoemacs-mode' containing the definition of the component
+near point (selected by `ergoemacs-theme-at-point') in a buffer and
+places point before the definition.
+
+Set mark before moving, if the buffer already existed.
+
+The library where FACE is defined is searched for in
+`find-function-source-path', if non-nil, otherwise in `load-path'.
+See also `find-function-recenter-line' and `find-function-after-hook'."
+  (interactive (list (ergoemacs-theme-at-point)))
+  (ergoemacs-component-find-1 theme 'ergoemacs-theme 'switch-to-buffer))
 
 (defun ergoemacs-theme-describe (theme &optional buffer frame)
   "Display the full documentation of THEME (a symbol or string)."
@@ -424,6 +460,8 @@ Return 0 if there is no such symbol. Uses `ergoemacs-component-at-point'."
         (princ (plist-get plist :description))
         (princ "\n\n")
         (when (setq tmp (plist-get plist :based-on))
+          (when (eq (car tmp) 'quote)
+            (setq tmp (car (cdr tmp))))
           (princ (format "This theme is based on: %s\n\n" tmp)))
 
         (when (member theme (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
