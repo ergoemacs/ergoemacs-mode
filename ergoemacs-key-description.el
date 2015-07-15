@@ -367,7 +367,7 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
     (cond
      ((not map) (setq ret ""))
      ((not key) (setq ret ""))
-     (t
+     ((ergoemacs-keymapp map)
       (setq composed-list (ergoemacs :composed-list map)
             parent (keymap-parent map))
       (catch 'found-source
@@ -437,41 +437,43 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
     (concat "\n" (mapconcat (lambda(x) (ergoemacs-key-description--keymap-item x map)) ret "\n"))))
 
 (defun ergoemacs-key-description--substitute-command-keys (string)
-  "Substitute key descriptions for command names in STRING."
-  (save-match-data
-    (let ((ret string)
-          (current-map (current-global-map))
-          (cur-item "")
-          (rep-item "")
-          (start 0) tmp)
-      (while (string-match "\\(\\\\\\[.*\\]\\|\\\\[{].*[}]\\|\\\\<.*>\\|\\\\=.\\)" ret start)
-        (setq cur-item (match-string 1 ret))
-        (save-match-data
-          (cond
-           ((string-match "\\[\\(.*\\)\\]" cur-item)
-            (setq tmp (intern (match-string 1 cur-item))
-                  cur-item (where-is-internal tmp current-map t))
-            (if cur-item
-                (setq rep-item (ergoemacs-key-description cur-item))
-              (setq rep-item (format "M-x %s" cur-item))))
-           ((string-match "<\\(.*\\)>" cur-item)
-            (setq cur-item (intern (match-string 1 cur-item)))
-            (and (boundp cur-item)
-                 (setq cur-item (symbol-value cur-item))
-                 (ergoemacs-keymapp cur-item)
-                 (setq current-map cur-item))
-            (setq rep-item ""))
-           ((string-match "[{]\\(.*\\)[}]" cur-item)
-            (setq cur-item (intern (match-string 1 cur-item))
-                  rep-item "")
-            (and
-             (boundp cur-item)
-             (setq rep-item (ergoemacs-key-description--keymap cur-item))))
-           ((string-match "\\\\=\\(.\\)" cur-item)
-            (setq ret-item (match-string 1 cur-item)))))
-        (setq start (+ (match-beginning 0) (length rep-item)))
-        (setq ret (replace-match rep-item t t ret)))
-      ret)))
+  "Substitute key descriptions for command names in STRING.
+A replacement for `substitute-command-keys'."
+  (if (not (stringp string)) nil
+    (save-match-data
+      (let ((ret string)
+            (current-map nil)
+            (cur-item "")
+            (rep-item "")
+            (start 0) tmp)
+        (while (string-match "\\(\\\\\\[.*\\]\\|\\\\[{].*[}]\\|\\\\<.*>\\|\\\\=.\\)" ret start)
+          (setq cur-item (match-string 1 ret))
+          (save-match-data
+            (cond
+             ((string-match "\\[\\(.*\\)\\]" cur-item)
+              (setq tmp (intern (match-string 1 cur-item))
+                    cur-item (where-is-internal tmp current-map t))
+              (if cur-item
+                  (setq rep-item (ergoemacs-key-description cur-item))
+                (setq rep-item (format "M-x %s" cur-item))))
+             ((string-match "<\\(.*\\)>" cur-item)
+              (setq cur-item (intern (match-string 1 cur-item)))
+              (and (boundp cur-item)
+                   (setq cur-item (symbol-value cur-item))
+                   (ergoemacs-keymapp cur-item)
+                   (setq current-map cur-item))
+              (setq rep-item ""))
+             ((string-match "[{]\\(.*\\)[}]" cur-item)
+              (setq cur-item (intern (match-string 1 cur-item))
+                    rep-item "")
+              (and
+               (boundp cur-item)
+               (setq rep-item (ergoemacs-key-description--keymap cur-item))))
+             ((string-match "\\\\=\\(.\\)" cur-item)
+              (setq ret-item (match-string 1 cur-item)))))
+          (setq start (+ (match-beginning 0) (length rep-item)))
+          (setq ret (replace-match rep-item t t ret)))
+        ret))))
 
 (defalias 'ergoemacs-substitute-command-keys 'ergoemacs-key-description--substitute-command-keys)
 
