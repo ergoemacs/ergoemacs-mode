@@ -12,7 +12,7 @@
 ;;           By: 
 ;;     Update #: 0
 ;; URL: 
-;; Doc URL: 
+;; Doc URL:
 ;; Keywords: 
 ;; Compatibility: 
 ;; 
@@ -333,6 +333,31 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
         (ergoemacs before-map :label)
         (ergoemacs before-map :map-list-hash '(ergoemacs-map-properties--before-ergoemacs))
         before-map)))
+
+(defun ergoemacs-map-properties--put-local-hook (hook &optional map)
+  "Puts a HOOK map onto the `current-local-map' or MAP.
+Will also drop any empty hook maps."
+  (let* ((local (or map (current-local-map)))
+         (map (and local hook (make-sparse-keymap)))
+         map-list tmp parent)
+    (when (ergoemacs-keymapp local)
+      (setq map-list (ergoemacs (current-local-map) :composed-list))
+      (if map-list
+          (setq parent (keymap-parent local))
+        (setq parent local))
+      ;; Drop any empty 'hook-map
+      (while (and (<= 1 (length map-list))
+                  (ergoemacs (nth 0 map-list) :empty-p)
+                  (setq tmp (ergoemacs (nth 0 map-list) :key))
+                  (consp tmp)
+                  (eq (car tmp) 'hook-map))
+        (setq map-list (cdr map-list)))
+      (when map
+        (ergoemacs map :label (list 'hook-map hook))
+        (push map map-list))
+      (if map-list
+          (use-local-map (make-composed-keymap map-list parent))
+        (use-local-map parent)))))
 
 (defun ergoemacs-map-properties--protect-global-map ()
   "Protects global map by adding a user-key layer to it"
@@ -669,19 +694,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (and command keymap
        (let* (ret
               (hash-table (ergoemacs (or relative-map global-map) :where-is))
-              (cmd-list (ergoemacs-gethash command hash-table))
-              
-              ;; (lookup (ergoemacs keymap :lookup))
-              )
-         ;; (cond
-         ;;  ((equal cmd-list '([]))
-         ;;   (setq cmd-list nil))
-         ;;  (cmd-list)
-         ;;  (t
-         ;;   (setq cmd-list (setq cmd-list (where-is-internal 'save-buffer (ergoemacs :original global-map))))
-         ;;   (if cmd-list
-         ;;       (puthash command cmd-list hash-table)
-         ;;     (puthash command '([]) hash-table))))
+              (cmd-list (ergoemacs-gethash command hash-table)))
          (if (not cmd-list) nil
            (catch 'found-new
              (dolist (key cmd-list)
@@ -689,9 +702,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
                           (or (and (commandp ret t) (not (memq ret ergoemacs-remap-ignore)))
                               (and (integerp ret) (setq ret nil))))
                  (throw 'found-new t))
-               (setq ret nil))
-             t)
-           ret))))
+               (setq ret nil)) t) ret))))
 
 (defun ergoemacs-map-properties--original (keymap &rest _ignore)
   "Gets the original keymap."
