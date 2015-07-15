@@ -145,6 +145,8 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
       (setq ret "PgUp"))
      ((eq key 'next)
       (setq ret "PgDn"))
+     ((eq key 'ergoemacs-timeout)
+      (setq ret (ergoemacs :unicode-or-alt "⌚" "ergoemacs-timeout")))
      ((integerp key)
       (setq ret (or (and (or (and (eq ergoemacs-display-capitalize-keys 'with-modifiers)
                                   mod)

@@ -808,15 +808,21 @@ If Object isn't specified assume it is for the current ergoemacs theme."
 
 
 (defun ergoemacs-component--help-link-1 ()
-  (goto-char (match-beginning 0))
-  ;; Link commands
-  (when (and (re-search-backward "\\_<\\(.*?\\)\\_> *\\=" nil t)
-             (setq tmp (intern (match-string 1)))
-             (fboundp tmp)
-             (commandp tmp))
-    (help-xref-button 1 'help-function tmp))
-  ;; FIXME -- add button properties back
-  (end-of-line))
+  (let (tmp)
+    ;; Link commands
+    (goto-char (match-beginning 0))
+    (when (and (re-search-backward "\\_<\\(.*?\\)\\_> *\\=" nil t)
+               (setq tmp (intern (match-string 1)))
+               (fboundp tmp)
+               (commandp tmp))
+      (help-xref-button 1 'help-function tmp))
+    ;; Add button properties back
+    (when (and tmp ergoemacs-display-key-use-face-p)
+      (setq tmp (point))
+      (beginning-of-line)
+      (while (and (not (looking-at "Relative To:")) (re-search-forward "\\(.*?\\)[ +]" tmp t))
+        (add-text-properties (match-beginning 1) (match-end 1) '(face ergoemacs-display-key-face))))
+    (end-of-line)))
 
 (defun ergoemacs-component--help-link ()
   "Links `ergoemacs-mode' components in help-mode buffer."
@@ -831,6 +837,10 @@ If Object isn't specified assume it is for the current ergoemacs theme."
         (with-syntax-table emacs-lisp-mode-syntax-table
           (when (re-search-forward "^\\(\\_<.*\\_>\\) is .* component defined in `\\(.*\\)'" nil t)
             (help-xref-button 2 'ergoemacs-component-def (match-string 1)))
+          (goto-char (point-min))
+          (while (re-search-forward "\\(Variable Prefixes:\\|Unbound keys:\\|Masked emacs keys:\\) +" nil t)
+            (while (and (not (looking-at " *$")) (re-search-forward "\\(.*?\\)\\(, +\\| *$\\|[+ ]+\\)" (point-at-eol) t))
+              (add-text-properties (match-beginning 1) (match-end 1) '(face ergoemacs-display-key-face))))
           (goto-char (point-min))
           (when (re-search-forward "^\\(\\_<.*\\_>\\) is .* theme defined in `\\(.*\\)'" nil t)
             (help-xref-button 2 'ergoemacs-theme-def (match-string 1)))

@@ -71,11 +71,15 @@
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
 
+(require 'unicode-fonts nil t)
+(when (featurep 'unicode-fonts)
+  (unicode-fonts-setup))
+
 (defvar ergoemacs-component-struct--refresh-variables)
 (defvar ergoemacs-keyboard-layout)
 
-(declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
-(declare-function ergoemacs-layouts--customization-type "ergoemacs-layouts")
+(declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
+(declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
@@ -553,7 +557,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character)
 
-(defcustom ergoemacs-command-loop-blink-character "•"
+(defcustom ergoemacs-command-loop-blink-character (if (featurep 'unicode-fonts) "·" "•")
   "Blink character."
   :type '(choice
           (string :tag "Cursor")
