@@ -168,6 +168,13 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
     (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full))
       (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))))
 
+(ergoemacs-advice substitute-command-keys (string)
+  "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
+  :type :replace
+  (if ergoemacs-mode
+      (ergoemacs-substitute-command-keys string)
+    (ergoemacs-advice--real-substitute-command-keys string)))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here

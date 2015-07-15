@@ -82,7 +82,8 @@ KEYMAP can be a symbol, keymap or ergoemacs-mode keymap"
 
 (defun ergoemacs-map-properties--composed-p (keymap &rest _ignore)
   "Determine if the KEYMAP is a composed keymap."
-  (and (ignore-errors (eq 'keymap (car keymap)))
+  (and (ergoemacs-keymapp keymap)
+       (ignore-errors (eq 'keymap (car keymap)))
        (ignore-errors (eq 'keymap (caadr keymap)))))
 
 ;; FIXME: Write test or function
@@ -433,8 +434,9 @@ composing or parent/child relationships)"
 
 (defun ergoemacs-map-properties--parent (keymap &optional force)
   "Returns a `ergoemacs-mode' map-key for the parent of KEYMAP."
-  (let ((parent (keymap-parent keymap)))
-    (and parent (ergoemacs-map-properties--key-struct parent force))))
+  (if (not (ergoemacs-keymapp keymap)) nil
+    (let ((parent (keymap-parent keymap)))
+      (and parent (ergoemacs-map-properties--key-struct parent force)))))
 
 (defun ergoemacs-map-properties--map-list (keymap &optional no-hash)
   "Get the list of maps bound to KEYMAP.
@@ -693,12 +695,13 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
 
 (defun ergoemacs-map-properties--original (keymap &rest _ignore)
   "Gets the original keymap."
-  (let ((ret keymap))
-    (while (and (or (and (not (ergoemacs ret :map-key)) (ergoemacs ret :label)) t) ;; Apply label if needed.
-                (not (integerp (ergoemacs ret :map-key)))
-                (setq ret (keymap-parent ret)))
-      t)
-    ret))
+  (if (not (ergoemacs-keymapp keymap)) nil
+    (let ((ret keymap))
+      (while (and (or (and (not (ergoemacs ret :map-key)) (ergoemacs ret :label)) t) ;; Apply label if needed.
+                  (not (integerp (ergoemacs ret :map-key)))
+                  (setq ret (keymap-parent ret)))
+        t)
+      ret)))
 
 (defun ergoemacs-map-properties--original-user (keymap &rest _ignore)
   "Gets the original keymap with the user protecting layer."
@@ -712,7 +715,7 @@ Values returned are:
   t -- `ergoemacs-mode' has been installed
   nil -- `ergoemacs-mode' has not modified this map.
 "
-  (when keymap
+  (when (and keymap (ergoemacs-keymapp keymap))
     (let* ((parent (keymap-parent keymap))
            (key (and parent (ergoemacs keymap :map-key)))
            (ret (and (consp key) 

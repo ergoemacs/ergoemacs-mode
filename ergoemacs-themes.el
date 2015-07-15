@@ -1718,8 +1718,10 @@
                                      (coding menu-item "Coding System..."
                                              describe-coding-system)
                                      (separator-ergoemacs-describe "--")
-                                     (theme-component menu-item "Ergoemacs Theme Component"
+                                     (theme-component menu-item "Ergoemacs Component"
                                                       describe-ergoemacs-component)
+                                     (theme menu-item "Ergoemacs Theme"
+                                            describe-ergoemacs-theme)
                                      (separator-curr-modes menu-item "--")
                                      (curr-major-mode menu-item "Current Major Mode"
                                                       ergoemacs-describe-major-mode
