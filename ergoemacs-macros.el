@@ -438,7 +438,6 @@ When arg1 can be a property.  The following properties are supported:
                                :key-lessp
                                :empty-p
                                :label
-                               :current-local-map-p
                                :keys
                                :where-is
                                :lookup

@@ -59,7 +59,6 @@
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
-(declare-function ergoemacs-map-properties--current-local-map-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")

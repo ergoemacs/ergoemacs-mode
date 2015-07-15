@@ -129,21 +129,6 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
           (setq ret (append '(keymap) ret))))
       ret)))
 
-(defun ergoemacs-map-properties--current-local-map-p (keymap &rest _ignore)
-  "Determines if the KEYMAP is installed in `current-local-map'."
-  ;; Make sure they both have labels
-  (if (or (not (current-local-map))
-          (not (ergoemacs-keymapp keymap))) nil
-    (ergoemacs keymap :label)
-    (ergoemacs (current-local-map) :label)
-    (let ((local-map-key (ergoemacs (current-local-map) :map-key))
-          (map-key (ergoemacs keymap :map-key)))
-      (when (consp local-map-key)
-        (setq local-map-key (plist-get (car local-map-key) :map-key)))
-      (when (consp map-key)
-        (setq map-key (plist-get (car map-key) :map-key)))
-      (= map-key local-map-key))))
-
 (defun ergoemacs-map-properties--composed (keymap &optional force)
   "Returns a list of `ergoemacs-mode' map-key for the composed keymap list"
   (let ((composed-list (ergoemacs-map-properties--composed-list keymap nil force)))
@@ -450,7 +435,7 @@ composing or parent/child relationships)"
                     (setq ret (plist-put ret property value))
                     (ergoemacs :label keymap value))
                 (unless (and ergoemacs-map-properties--plist-hash (hash-table-p ergoemacs-map-properties--plist-hash))
-                  (setq ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)))
+                  (setq ergoemacs-map-properties--plist-hash (make-hash-table :twest 'equal)))
                 (setq tmp (ergoemacs-gethash (ergoemacs-map-properties--key-struct keymap) ergoemacs-map-properties--plist-hash))
                 (unless (and tmp (hash-table-p tmp))
                   (setq tmp (make-hash-table)))
