@@ -183,7 +183,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (require 'lookup-word-on-internet nil "NOERROR")
 
 (defconst ergoemacs-font-lock-keywords
-  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
+  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
      (1 font-lock-keyword-face)
      (2 font-lock-constant-face nil t))))
 
@@ -887,7 +887,48 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 ;;   :initialize #'custom-initialize-default
 ;;   :group 'ergoemacs-mode)
 
+(require 'persistent-soft nil t)
+(defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
+  (let (sym val found-p)
+    (dolist (a args)
+      (cond
+       ((and (symbolp a) (not store-p)) ;; Fetch
+        (setq sym a)
+        (when (featurep 'persistent-soft)
+          (setq val (persistent-soft-fetch sym "ergoemacs-mode"))
+          (when val
+            (setq found-p t)
+            (set sym val))))
+       ((symbolp a) ;; Store
+        (setq sym a)
+        (when (featurep 'persistent-soft)
+          (persistent-soft-store sym (symbol-value sym) "ergoemacs-mode")))
+       ((and (not found-p) (not store-p) (not (symbol-value sym)))
+        ;; Setup empty symbol.
+        (set sym a)
+        (setq found-p nil))
+       (t
+        (setq found-p nil))))))
 
+(defun ergoemacs-mode--setup-hash-tables (&optional store-p)
+  "Load hash-tables using `persistent-soft' when available.
+When `store-p' is non-nil, save the tables."
+  (ergoemacs-mode--setup-hash-tables--setq
+   store-p
+   'ergoemacs-component-hash (make-hash-table :test 'equal)
+   'ergoemacs-component-struct--hash (make-hash-table)
+   'ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)
+   'ergoemacs-map-properties--key-struct (make-hash-table)
+   'ergoemacs-map-properties--indirect-keymaps (make-hash-table)
+   ;;'ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
+   'ergoemacs-map--hash (make-hash-table :test 'equal)
+   ;'ergoemacs-map--alist (make-hash-table)
+   ;'ergoemacs-map--alists (make-hash-table)
+   ;'ergoemacs-map-- (make-hash-table :test 'equal))
+  ))
+
+(ergoemacs-mode--setup-hash-tables)
+  
 (defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
   "Run functions for anything that is loaded after emacs starts up."
   (run-hooks 'ergoemacs-mode-after-load-hook))
@@ -901,7 +942,6 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
   (run-with-idle-timer 0.05 nil 'ergoemacs-mode-after-init-emacs))
 
 (run-hooks 'ergoemacs-mode-intialize-hook)
-
 
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

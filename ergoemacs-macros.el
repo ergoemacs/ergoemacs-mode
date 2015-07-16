@@ -611,6 +611,19 @@ When :type is :replace that replaces a function (like `define-key')"
                                `(push ',function ergoemacs-advice--permanent-replace-functions)
                              `(push ',function ergoemacs-advice--temp-replace-functions))))))))
 
+(defmacro ergoemacs-cache (item &rest body)
+  "Either read ITEM's cache or evaluate BODY, cache ITEM and return value."
+  (declare (indent 1))
+  (or (and (symbolp item)
+           (macroexpand-all
+            `(or (ergoemacs-map--cache-- ',item)
+                 (ergoemacs-map--cache--
+                  ',item (progn ,@body)))))
+      (macroexpand-all
+       `(let ((--hash-key ,item))
+          (or (ergoemacs-map--cache-- --hash-key)
+              (ergoemacs-map--cache-- --hash-key (progn ,@body)))))))
+
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here

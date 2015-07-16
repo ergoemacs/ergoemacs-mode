@@ -109,8 +109,19 @@
 (declare-function ergoemacs-mode-line "ergoemacs-mode.el")
 
 
-(defvar ergoemacs-map--hash (make-hash-table :test 'equal)
+(defvar ergoemacs-map--hash nil
   "Hash of calculated maps")
+
+(defvar ergoemacs-map--hashkey nil
+  "Current hashkey for theme options keyboard layout and version.")
+
+(defun ergoemacs-map--hashkey (&optional symbol)
+  "Generate hashkey for maps.
+When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
+  (or (and symbol ergoemacs-map--hashkey
+           (intern (format "%s-%s" symbol ergoemacs-map--hashkey)))
+      (setq ergoemacs-map--hashkey
+        (intern (md5 (format "%s" (append (list ergoemacs-keyboard-layout (ergoemacs :current-version)) (ergoemacs-theme-components))))))))
 
 (defvar ergoemacs-map--alist (make-hash-table))
 (defun ergoemacs-map--alist (alist &optional symbol)
@@ -197,29 +208,29 @@
     (setq minor-mode-map-alist ret)
     ret))
 
-(defun ergoemacs-map--base-lookup-key (map-list)
-  "Lookup Base key for MAP-LIST"
-  (let ((map map-list)
-        lookup-key)
-    (catch 'all-struct
-      (dolist (cur-map map)
-        (if (ergoemacs-component-struct-p cur-map)
-            (push (intern (format "%s%s"
-                                  (ergoemacs-component-struct-name cur-map)
-                                  (or (and (ergoemacs-component-struct-version cur-map)
-                                           (concat "::" (ergoemacs-component-struct-version cur-map)))
-                                      ""))) lookup-key)
-          (throw 'all-struct
-                 (setq lookup-key nil))))
-      (setq lookup-key (reverse lookup-key))
-      (push (or (and (stringp ergoemacs-keyboard-layout) (intern ergoemacs-keyboard-layout)) ergoemacs-keyboard-layout)
-            lookup-key)
-      t)
-    lookup-key))
-
 (defvar ergoemacs-menu-order)
 (defvar ergoemacs-map--undefined-keys nil
   "List of undefined keys for the global map.")
+
+(defvar ergoemacs-map--cache--save nil
+  "Should cache be saved on emacs exit?")
+
+(defun ergoemacs-map--cache-save ()
+  "Save ergoemacs cache for startup."
+  (when ergoemacs-map--cache--save
+    (ergoemacs-mode--setup-hash-tables t)
+    (setq ergoemacs-map--cache--save nil)))
+(add-hook 'kill-emacs-hook 'ergoemacs-map--cache-save)
+
+(defun ergoemacs-map--cache-- (what &optional save)
+  "Get WHAT cache.  If SAVE is non-nil, save cache to WHAT"
+  (or (and (not what) save)
+      (let* ((key (ergoemacs-map--hashkey what))
+             (val (or save (ergoemacs-gethash key ergoemacs-map--hash))))
+        (when save
+          (puthash key (copy-tree val t) ergoemacs-map--hash))
+        val)))
+
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
@@ -286,91 +297,93 @@ If LOOKUP-KEYMAP
                (equal lookup-keymap (make-keymap))))
       lookup-keymap)
      ((and (consp map)
-           (setq lookup-key (ergoemacs-map--base-lookup-key map))
-           (not lookup-keymap)
-           (setq lookup-key (append (list (ergoemacs (ergoemacs :global-map) :key-hash)) lookup-key))
-           (setq ret (ergoemacs-gethash lookup-key ergoemacs-map--hash)))
-      ret)
-     ((and (consp map) lookup-key lookup-keymap
-           (setq lookup-key (append (list (ergoemacs lookup-keymap :key-hash)) lookup-key))
-           (setq ret (ergoemacs-gethash lookup-key ergoemacs-map--hash)))
-      ret)
-     ((and (consp map) lookup-key
            (progn
-             (dolist (cur-map map)
-               (setq unbind-list (append unbind-list
-                                         (ergoemacs-component-struct--translated-list
-                                          cur-map (ergoemacs-component-struct-unbind cur-map)))))
-             t))
+             (setq unbind-list
+                   (ergoemacs-cache unbind-list
+                     (dolist (cur-map map)
+                       (setq unbind-list
+                             (append unbind-list
+                                     (ergoemacs-component-struct--translated-list
+                                      cur-map (ergoemacs-component-struct-unbind cur-map)))))
+                     unbind-list)) t))
       (cond
        ((not lookup-keymap)
         ;; The `undefined-key' layer
-        (setq tmp (make-sparse-keymap))
-        
-        (dolist (cur-map map)
-          (dolist (undefined-key
-                   (ergoemacs-component-struct-undefined cur-map) ;; (ergoemacs-component-struct--translated-list cur-map )
-                   )
-            (unless (member undefined-key ergoemacs-map--undefined-keys)
-              (push undefined-key ergoemacs-map--undefined-keys))))
-        (dolist (i ergoemacs-map--undefined-keys)
-          (define-key tmp i #'ergoemacs-map-undefined))
-        
-        (ergoemacs tmp :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-undefined (intern ergoemacs-keyboard-layout)))
-        
-        (push tmp composed-list)
-        
-        (push (ergoemacs (ergoemacs :global-map) :original-menu-bar) menu-bar)
-        
-        ;; Each ergoemacs theme component
-        (dolist (cur-map (reverse map))
-          (setq tmp (ergoemacs-map-- lookup-keymap layout cur-map t))
-          (unless (ergoemacs tmp :empty-p)
-            (cond
-             ((setq tmp2 (lookup-key tmp [menu-bar]))
-              (push (copy-keymap tmp2) menu-bar)
-              (setq tmp2 (make-sparse-keymap))
-              (map-keymap
-               (lambda (event item)
-                 (unless (eq event 'menu-bar)
-                   (define-key tmp2 (vector event) item)))
-               tmp)
-              (unless (ergoemacs tmp2 :empty-p)
-                (push tmp2 composed-list)))
-             (t (push tmp composed-list)))))
+        (setq tmp (ergoemacs-cache global-menu
+                    (setq tmp (make-sparse-keymap))
+                    
+                    (dolist (cur-map map)
+                      (dolist (undefined-key
+                               (ergoemacs-component-struct-undefined cur-map) ;; (ergoemacs-component-struct--translated-list cur-map )
+                               )
+                        (unless (member undefined-key ergoemacs-map--undefined-keys)
+                          (push undefined-key ergoemacs-map--undefined-keys))))
+                    (dolist (i ergoemacs-map--undefined-keys)
+                      (define-key tmp i #'ergoemacs-map-undefined))
+                    
+                    (ergoemacs tmp :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-undefined (intern ergoemacs-keyboard-layout)))
+                    
+                    (push tmp composed-list)
+                    
+                    (push (ergoemacs (ergoemacs :global-map) :original-menu-bar) menu-bar)
+                    
+                    ;; Each ergoemacs theme component
+                    (dolist (cur-map (reverse map))
+                      (setq tmp (ergoemacs-map-- lookup-keymap layout cur-map t))
+                      (unless (ergoemacs tmp :empty-p)
+                        (cond
+                         ((setq tmp2 (lookup-key tmp [menu-bar]))
+                          (push (copy-keymap tmp2) menu-bar)
+                          (setq tmp2 (make-sparse-keymap))
+                          (map-keymap
+                           (lambda (event item)
+                             (unless (eq event 'menu-bar)
+                               (define-key tmp2 (vector event) item)))
+                           tmp)
+                          (unless (ergoemacs tmp2 :empty-p)
+                            (push tmp2 composed-list)))
+                         (t (push tmp composed-list)))))
 
-        ;; The real `global-map'
+                    ;; The real `global-map'
+                    (setq tmp (ergoemacs-map-keymap nil (make-composed-keymap menu-bar)))
+
+                    ;; The global `menu-bar'
+                    (let ((i 0)
+                          alst)
+                      (dolist (menu ergoemacs-menu-order)
+                        (push (list menu i) alst)
+                        (setq i (+ i 1)))
+                      (setq tmp (sort tmp (lambda(elt1 elt2)
+                                            (let ((i1 (or (and (eq elt1 'keymap) -1) (assq (car elt1) alst)))
+                                                  (i2 (or (and (eq elt2 'keymap) -1) (assq (car elt2) alst))))
+                                              (if i1
+                                                  (setq i1 (or (and (integerp i1) i1) (nth 1 i1)))
+                                                (setq i1 (length ergoemacs-menu-order)))
+                                              (if i2
+                                                  (setq i2 (or (and (integerp i2) i2) (nth 1 i2)) )
+                                                (setq i2 (length ergoemacs-menu-order)))
+                                              (< i1 i2))))))
+                    
+                    
+                    ;; The keys that will be unbound
+                    (setq ret (make-sparse-keymap))
+                    (dolist (key unbind-list)
+                      (when (not lookup-keymap)
+                        (remhash key ergoemacs-map--))
+                      (define-key ret key nil))
+                    (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
+                    tmp))
         (setq parent (copy-keymap (ergoemacs :global-map))
-              tmp (ergoemacs-map-keymap nil (make-composed-keymap menu-bar)))
-
-        ;; The global `menu-bar'
-        (let ((i 0)
-              alst)
-          (dolist (menu ergoemacs-menu-order)
-            (push (list menu i) alst)
-            (setq i (+ i 1)))
-          (setq tmp (sort tmp (lambda(elt1 elt2)
-                                  (let ((i1 (or (and (eq elt1 'keymap) -1) (assq (car elt1) alst)))
-                                        (i2 (or (and (eq elt2 'keymap) -1) (assq (car elt2) alst))))
-                                    (if i1
-                                        (setq i1 (or (and (integerp i1) i1) (nth 1 i1)))
-                                      (setq i1 (length ergoemacs-menu-order)))
-                                    (if i2
-                                        (setq i2 (or (and (integerp i2) i2) (nth 1 i2)) )
-                                      (setq i2 (length ergoemacs-menu-order)))
-                                    (< i1 i2))))))
+              composed-list (ergoemacs-cache global-composed-list composed-list)
+              ret (ergoemacs-cache global-ret ret)
+              ergoemacs-map-- (ergoemacs-cache ergoemacs-map-- ergoemacs-map--)
+              ergoemacs-map--undefined-keys (ergoemacs-cache undefined-keys ergoemacs-map--undefined-keys))
         (define-key parent [menu-bar] tmp)
-
-        ;; The keys that will be unbound
-        (setq ret (make-sparse-keymap))
-        (dolist (key unbind-list)
-          (when (not lookup-keymap)
-            (remhash key ergoemacs-map--))
-          (define-key ret key nil))
-        (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
-
-        
         (set-keymap-parent ret (make-composed-keymap composed-list parent))
+        ;; Save hash
+        (puthash lookup-key ret ergoemacs-map--hash)
+        (puthash (ergoemacs-map--hashkey 'ergoemacs-map--) ergoemacs-map-- ergoemacs-map--hash)
+        (puthash (ergoemacs-map--hashkey 'ergoemacs-map--undefined-keys) ergoemacs-map--undefined-keys ergoemacs-map--hash)
         
         ;; Get the protecting user keys
         (setq tmp2 (list))
@@ -378,6 +391,7 @@ If LOOKUP-KEYMAP
           (setq tmp (ergoemacs :user-before))
           (unless (ergoemacs tmp :empty-p)
             (push tmp tmp2)))
+        
         (setq tmp (ergoemacs parent :user))
         (when tmp
           (push tmp tmp2))
@@ -387,79 +401,82 @@ If LOOKUP-KEYMAP
        ;; Now create the keymap for a specified `lookup-keymap'
        (lookup-keymap
         (setq lookup-keymap (ergoemacs lookup-keymap :original))
-        (setq ret nil
-              only-modify-p (ergoemacs lookup-keymap :only-local-modifications-p))
-        (unless only-modify-p
-          (setq ret (make-sparse-keymap))
-          (maphash
-           (lambda(key item)
-             (cond
-              ;; Mode specific keys are translated to `ergoemacs-mode'
-              ;; equivalent key binding
-              ((setq tmp (ergoemacs lookup-keymap :new-command item))
-               (define-key ret key tmp)
-               (setq tmp-key (ergoemacs-translate--escape-to-meta key))
-               (when tmp-key
-                 ;; Define the higher character as well.
-                 (define-key ret tmp-key tmp)))
-              ;; Accept default for other keys
-              ((and (setq tmp (lookup-key lookup-keymap [t])) 
-                    (not (integerp tmp))))
-              ;; Keys where `ergoemacs-mode' dominates...
-              ((and (setq tmp (lookup-key lookup-keymap key t))
-                    (not (integerp tmp)))
-               (define-key ret key item)
-               (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
-                 ;; Define the higher character meta as well...
-                 (define-key ret tmp-key item))
-               (when (setq tmp-key (ergoemacs-translate--meta-to-escape key))
-                 ;; Define the higher character meta as well...
-                 (define-key ret tmp-key item)))
-              ;; ESC q -> M-q
-              ((and (setq tmp-key (ergoemacs-translate--escape-to-meta key))
-                    (setq tmp (lookup-key lookup-keymap tmp-key t))
-                    (not (integerp tmp)))
-               ;; Define both
-               (define-key ret tmp-key item)
-               (define-key ret key item))
-              ;; M-q -> ESC q
-              ((and (setq tmp-key (ergoemacs-translate--meta-to-escape key))
-                    (setq tmp (lookup-key lookup-keymap tmp-key t))
-                    (not (integerp tmp)))
-               ;; Define both
-               (define-key ret tmp-key item)
-               (define-key ret key item))))
-           ergoemacs-map--)
-          ;; Fix any undefined keys. For example in `org-agenda-mode' C-x
-          ;; C-s is `org-save-all-org-buffers'.  `ergoemacs-mode' should
-          ;; remap this to C-s, and make C-x C-s undefined
-          (dolist (key ergoemacs-map--undefined-keys)
-            (when (and
-                   ;; 1. Global definition is `ergoemacs-map-undefined'
-                   (eq #'ergoemacs-map-undefined (lookup-key ergoemacs-keymap key))
-                   ;; 2. Defined on the keymap
-                   (setq tmp (lookup-key lookup-keymap key))
-                   (not (integerp tmp))
-                   ;; 3. Not defined on the `ergoemacs-mode' keymap
-                   (or (not (setq tmp (lookup-key ret key)))
-                       (integerp tmp)))
-              (define-key ret key #'ergoemacs-map-undefined)))
-          (setq tmp (ergoemacs global-map :keys))
-          ;; Define ergoemacs-mode remapping lookups.
-          (ergoemacs-map-keymap
-           (lambda(key item)
-             (unless (eq item 'ergoemacs-prefix)
-               (when (member key tmp)
-                 (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup)))
-                   item))))
-           lookup-keymap)
-          (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
-        
-        (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
-        
-        (setq composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp)
-              ret nil
+        (setq only-modify-p (ergoemacs lookup-keymap :only-local-modifications-p)
+              lookup-key (ergoemacs lookup-keymap :map-list)
+              lookup-key (or (and (consp lookup-key) (car lookup-key))
+                             (ergoemacs lookup-keymap :map-key))
+              lookup-key (and (not (eq (current-local-map) lookup-keymap)) lookup-key)
+              ret (make-sparse-keymap)
+              composed-list (ergoemacs-cache (and lookup-key (intern (format "%s-composed-key" lookup-key)))
+                              (unless only-modify-p
+                                (maphash
+                                 (lambda(key item)
+                                   (cond
+                                    ;; Mode specific keys are translated to `ergoemacs-mode'
+                                    ;; equivalent key binding
+                                    ((setq tmp (ergoemacs lookup-keymap :new-command item))
+                                     (define-key ret key tmp)
+                                     (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+                                     (when tmp-key
+                                       ;; Define the higher character as well.
+                                       (define-key ret tmp-key tmp)))
+                                    ;; Accept default for other keys
+                                    ((and (setq tmp (lookup-key lookup-keymap [t])) 
+                                          (not (integerp tmp))))
+                                    ;; Keys where `ergoemacs-mode' dominates...
+                                    ((and (setq tmp (lookup-key lookup-keymap key t))
+                                          (not (integerp tmp)))
+                                     (define-key ret key item)
+                                     (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+                                       ;; Define the higher character meta as well...
+                                       (define-key ret tmp-key item))
+                                     (when (setq tmp-key (ergoemacs-translate--meta-to-escape key))
+                                       ;; Define the higher character meta as well...
+                                       (define-key ret tmp-key item)))
+                                    ;; ESC q -> M-q
+                                    ((and (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+                                          (setq tmp (lookup-key lookup-keymap tmp-key t))
+                                          (not (integerp tmp)))
+                                     ;; Define both
+                                     (define-key ret tmp-key item)
+                                     (define-key ret key item))
+                                    ;; M-q -> ESC q
+                                    ((and (setq tmp-key (ergoemacs-translate--meta-to-escape key))
+                                          (setq tmp (lookup-key lookup-keymap tmp-key t))
+                                          (not (integerp tmp)))
+                                     ;; Define both
+                                     (define-key ret tmp-key item)
+                                     (define-key ret key item))))
+                                 ergoemacs-map--)
+                                ;; Fix any undefined keys. For example in `org-agenda-mode' C-x
+                                ;; C-s is `org-save-all-org-buffers'.  `ergoemacs-mode' should
+                                ;; remap this to C-s, and make C-x C-s undefined
+                                (dolist (key ergoemacs-map--undefined-keys)
+                                  (when (and
+                                         ;; 1. Global definition is `ergoemacs-map-undefined'
+                                         (eq #'ergoemacs-map-undefined (lookup-key ergoemacs-keymap key))
+                                         ;; 2. Defined on the keymap
+                                         (setq tmp (lookup-key lookup-keymap key))
+                                         (not (integerp tmp))
+                                         ;; 3. Not defined on the `ergoemacs-mode' keymap
+                                         (or (not (setq tmp (lookup-key ret key)))
+                                             (integerp tmp)))
+                                    (define-key ret key #'ergoemacs-map-undefined)))
+                                (setq tmp (ergoemacs global-map :keys))
+                                ;; Define ergoemacs-mode remapping lookups.
+                                (ergoemacs-map-keymap
+                                 (lambda(key item)
+                                   (unless (eq item 'ergoemacs-prefix)
+                                     (when (member key tmp)
+                                       (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup)))
+                                         item))))
+                                 lookup-keymap)
+                                (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
+                              (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
+                              (setq composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp))            
+                              composed-list)
               parent (and (not recursive) lookup-keymap))
+        
         (cond
          ((and only-modify-p composed-list)
           (setq ret (make-composed-keymap composed-list parent)))
@@ -467,14 +484,17 @@ If LOOKUP-KEYMAP
           (setq ret parent))
          (t
           ;; The keys that will be unbound
-          (setq ret (make-sparse-keymap))
-          (dolist (key unbind-list)
-            (when (not lookup-keymap)
-              (remhash key ergoemacs-map--))
-            (define-key ret key nil))
-          (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
+          (setq ret (ergoemacs-cache (and lookup-key (intern (format "%s-unbound-keymap" lookup-key)))
+                      (setq ret (make-sparse-keymap))
+                      (dolist (key unbind-list)
+                        (when (not lookup-keymap)
+                          (remhash key ergoemacs-map--))
+                        (define-key ret key nil))
+                      (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
+                      ret))
           
           (set-keymap-parent ret (make-composed-keymap composed-list parent))
+          
           ;; Get the protecting user keys
           (setq tmp (ergoemacs parent :user))
           (when tmp
@@ -498,7 +518,11 @@ If LOOKUP-KEYMAP
         composed-list)
        (ergoemacs-map-- parent layout map t)))
      (t
-      (error "Component map isn't a proper argument")))))
+      (warn "Component map isn't a proper argument for `ergoemacs-map'")
+      (warn "\tLookup:%s" lookup-keymap)
+      (warn "\tLayout:%s" layout)
+      (warn "\tMap:%s" map)
+      (warn "\tRecursive:%s" recursive)))))
 
 (defvar ergoemacs-map--modify-active-last-overriding-terminal-local-map nil)
 (defvar ergoemacs-map--modify-active-last-overriding-local-map nil)
@@ -571,6 +595,7 @@ If LOOKUP-KEYMAP
 (defun ergoemacs-map--install ()
   "Installs `ergoemacs-mode' into the appropriate keymaps."
   (interactive)
+  (ergoemacs-map--hashkey)
   ;; Save original [menu-bar]
   (unless (ergoemacs (ergoemacs :global-map) :original-menu-bar)
     (ergoemacs (ergoemacs :global-map)

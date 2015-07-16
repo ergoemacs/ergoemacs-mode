@@ -64,7 +64,7 @@
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
-(defvar ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal))
+(defvar ergoemacs-map-properties--plist-hash nil)
 
 (defun ergoemacs-map-properties--keymap-value (keymap &rest _ignore)
   "Return the keymap value of KEYMAP.
@@ -369,7 +369,7 @@ Will also drop any empty hook maps."
 
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-map-properties--get-original-global-map)
 
-(defvar ergoemacs-map-properties--indirect-keymaps (make-hash-table)
+(defvar ergoemacs-map-properties--indirect-keymaps nil
   "Variable listing indirect keymaps.")
 
 (defun ergoemacs-map-properties--map-fixed-plist (keymap &rest _ignore)
@@ -435,7 +435,7 @@ composing or parent/child relationships)"
                     (setq ret (plist-put ret property value))
                     (ergoemacs :label keymap value))
                 (unless (and ergoemacs-map-properties--plist-hash (hash-table-p ergoemacs-map-properties--plist-hash))
-                  (setq ergoemacs-map-properties--plist-hash (make-hash-table :twest 'equal)))
+                  (setq ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)))
                 (setq tmp (ergoemacs-gethash (ergoemacs-map-properties--key-struct keymap) ergoemacs-map-properties--plist-hash))
                 (unless (and tmp (hash-table-p tmp))
                   (setq tmp (make-hash-table)))

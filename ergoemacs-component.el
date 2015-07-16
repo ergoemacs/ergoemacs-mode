@@ -390,7 +390,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
            (t
             (define-key cur-map key def)))))))))
 
-(defvar ergoemacs-component-struct--hash (make-hash-table)
+(defvar ergoemacs-component-struct--hash nil
   "Hash table of `ergoemacs-mode' component structures.")
 
 (defun ergoemacs-component-struct--clear-cache (struct-map)

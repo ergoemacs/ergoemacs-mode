@@ -479,8 +479,6 @@ A replacement for `substitute-command-keys'."
 
 (defalias 'ergoemacs-substitute-command-keys 'ergoemacs-key-description--substitute-command-keys)
 
-
-
 (provide 'ergoemacs-key-description)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-key-description.el ends here
