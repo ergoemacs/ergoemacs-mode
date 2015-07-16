@@ -64,6 +64,9 @@
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
+(declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
+(declare-function ergoemacs-key-description "ergoemacs-key-description")
+
 (defvar ergoemacs-map-properties--plist-hash nil)
 
 (defun ergoemacs-map-properties--keymap-value (keymap &rest _ignore)

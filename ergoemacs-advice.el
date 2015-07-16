@@ -63,6 +63,7 @@
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
+(declare-function ergoemacs-key-description--substitute-command-keys "ergoemacs-key-description")
 
 (defvar ergoemacs-advice--temp-replace-functions nil
   "List of `ergoemacs-mode' replacement functions that are turned
@@ -171,7 +172,7 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
   "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
   :type :replace
   (if ergoemacs-mode
-      (ergoemacs-substitute-command-keys string)
+      (ergoemacs-key-description--substitute-command-keys string)
     (ergoemacs-advice--real-substitute-command-keys string)))
 
 (provide 'ergoemacs-advice)

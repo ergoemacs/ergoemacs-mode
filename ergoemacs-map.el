@@ -67,6 +67,7 @@
 (defvar ergoemacs-menu-keymap)
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme)
+(defvar ergoemacs-ignore-prev-global)
 
 (declare-function ergoemacs-menu--filter "ergoemacs-lib")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
@@ -101,6 +102,14 @@
 (declare-function ergoemacs-map-properties--user-original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
+
+(declare-function ergoemacs-map-properties--before-ergoemacs "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
+
+(declare-function ergoemacs-theme--get-version "ergoemacs-theme")
+
+(declare-function ergoemacs-mode--setup-hash-tables "ergoemacs-mode")
+
 
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 

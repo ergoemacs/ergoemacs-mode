@@ -72,6 +72,15 @@
 (declare-function ergoemacs-translate--event-basic-type "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-modifier-hash "ergoemacs-translate")
 
+(declare-function ergoemacs-map-properties--composed-list "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--key-lessp "ergoemacs-map-properties")
+
+(declare-function ergoemacs-component--help-link "ergoemacs-component")
+
+(declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
+
 (defvar ergoemacs-key-description--display-char-cache nil
   "List of characters and fonts and if they display or not.")
 
@@ -145,6 +154,8 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
       (setq ret "PgUp"))
      ((eq key 'next)
       (setq ret "PgDn"))
+     ((eq key 'remap)
+      (setq ret (ergoemacs :unicode-or-alt "➩" "remap")))
      ((eq key 'ergoemacs-timeout)
       (setq ret (ergoemacs :unicode-or-alt "⌚" "ergoemacs-timeout")))
      ((integerp key)
@@ -331,7 +342,7 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
             open
             paste
             redo
-            remap
+            ;; remap
             right-fringe
             rwindow
             select-window
@@ -472,7 +483,7 @@ A replacement for `substitute-command-keys'."
                (boundp cur-item)
                (setq rep-item (ergoemacs-key-description--keymap cur-item))))
              ((string-match "\\\\=\\(.\\)" cur-item)
-              (setq ret-item (match-string 1 cur-item)))))
+              (setq rep-item (match-string 1 cur-item)))))
           (setq start (+ (match-beginning 0) (length rep-item)))
           (setq ret (replace-match rep-item t t ret)))
         ret))))

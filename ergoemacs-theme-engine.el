@@ -64,6 +64,9 @@
 (declare-function ergoemacs-component-struct--component-description "ergoemacs-component")
 (declare-function ergoemacs-component-struct--versions "ergoemacs-component")
 (declare-function ergoemacs-layouts--menu "ergoemacs-layouts")
+(declare-function ergoemacs-component-at-point "ergoemacs-component")
+(declare-function ergoemacs-component-find-1 "ergoemacs-component")
+(declare-function ergoemacs-component--prompt "ergoemacs-component")
 
 (defvar ergoemacs-theme-hash (make-hash-table :test 'equal)
   "Hash of `ergoemacs-mode' themes")
@@ -432,7 +435,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
   (interactive (list (ergoemacs-theme-at-point)))
   (ergoemacs-component-find-1 theme 'ergoemacs-theme 'switch-to-buffer))
 
-(defun ergoemacs-theme-describe (theme &optional buffer frame)
+(defun ergoemacs-theme-describe (theme)
   "Display the full documentation of THEME (a symbol or string)."
   (interactive (ergoemacs-component--prompt t))
   (let* ((theme (and theme

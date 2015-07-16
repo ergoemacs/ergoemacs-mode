@@ -71,10 +71,6 @@
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
 
-(require 'unicode-fonts nil t)
-(when (featurep 'unicode-fonts)
-  (unicode-fonts-setup))
-
 (defvar ergoemacs-component-struct--refresh-variables)
 (defvar ergoemacs-keyboard-layout)
 
@@ -83,6 +79,15 @@
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+
+
+(declare-function unicode-fonts-setup "unicode-fonts")
+(declare-function persistent-soft-fetch "persistent-soft")
+(declare-function persistent-soft-store "persistent-soft")
+
+(require 'unicode-fonts nil t)
+(when (featurep 'unicode-fonts)
+  (unicode-fonts-setup))
 
 
 ;; Fundamental ergoemacs functions

@@ -64,6 +64,10 @@
 (defvar ergoemacs-map-properties--unlabeled)
 (defvar ergoemacs-theme-version)
 (defvar ergoemacs-translation-hash)
+(defvar ergoemacs-theme-comp-hash)
+(defvar ergoemacs-display-key-use-face-p)
+(defvar ergoemacs-theme-hash)
+(defvar ergoemacs-mode-version)
 
 (declare-function ergoemacs-set "ergoemacs-lib")
 (declare-function ergoemacs-reset "ergoemacs-lib")
@@ -76,6 +80,8 @@
 (declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--key-hash "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--map-regexp "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
 
 (declare-function ergoemacs-debug "ergoemacs-debug")
 (declare-function ergoemacs-debug-heading "ergoemacs-debug")
@@ -86,6 +92,10 @@
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
+
+(declare-function ergoemacs-key-description "ergoemacs-key-description")
+(declare-function ergoemacs-key-description--keymap "ergoemacs-key-description")
+
 
 ;; ergoemacs-translate
 
@@ -919,7 +929,6 @@ Modified from `find-definition-noselect'.
 
 Set mark before moving, if the buffer already existed."
   (let* ((orig-point (point))
-         (orig-buf (window-buffer))
          (orig-buffers (buffer-list))
          (buffer-point (save-excursion
                          (ergoemacs-component-find-no-select symbol type)))
@@ -1001,7 +1010,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
                                (format "%s" c)))
     (list (or (and (equal val "") (format "%s" c)) val))))
 
-(defun ergoemacs-component-describe (component &optional buffer frame)
+(defun ergoemacs-component-describe (component)
   "Display the full documentation of COMPONENT (a symbol or string)."
   (interactive (ergoemacs-component--prompt))
   (let* ((component (and component
@@ -1011,7 +1020,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
          (plist (ergoemacs-component-struct-plist comp))
          (file (plist-get plist :file))
          (el-file (concat (file-name-sans-extension file) ".el"))
-         tmp tmp2 vers
+         tmp vers
          lst)
     (if (not comp)
         (message "You did not specify a valid ergoemacs component %s" component)

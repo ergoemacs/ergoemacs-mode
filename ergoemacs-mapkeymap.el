@@ -56,6 +56,7 @@
 
 (declare-function ergoemacs-map-properties--all-sparse-p "ergoemacs-map-properties")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
+(declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 
 (defun ergoemacs-map-force-full-keymap (keymap)
   "Forces KEYMAP to be a full keymap."
