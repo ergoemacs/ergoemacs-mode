@@ -240,6 +240,24 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
           (puthash key (copy-tree val t) ergoemacs-map--hash))
         val)))
 
+(defvar ergoemacs-map--lookup-keymap-key-volitile-maps
+  '()
+  "Keymaps that are always calculated when they are the `current-local-map'.")
+
+(defun ergoemacs-map--lookup-keymap-key (lookup-keymap)
+  "Looks up key based on caching algorithms"
+  (let ((lookup-key (ergoemacs lookup-keymap :map-list))
+        mode-hook)
+    (setq lookup-key (and (consp lookup-key) (car lookup-key)))
+    (when (and lookup-key (eq (current-local-map) lookup-keymap))
+      (if (memq lookup-key ergoemacs-map--lookup-keymap-key-volitile-maps)
+          (setq lookup-key nil)
+        (if (minibufferp)
+            (setq lookup-key (intern (format "%s-%s" lookup-key (md5 (format "%s" minibuffer-setup-hook)))))
+          (when (and (setq mode-hook (intern (format "%s-hook" major-mode))) (boundp mode-hook))
+            (setq lookup-key (intern (format "%s-%s" lookup-key (md5 (format "%s" (symbol-value mode-hook))))))))))
+    lookup-key))
+
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
@@ -411,10 +429,7 @@ If LOOKUP-KEYMAP
        (lookup-keymap
         (setq lookup-keymap (ergoemacs lookup-keymap :original))
         (setq only-modify-p (ergoemacs lookup-keymap :only-local-modifications-p)
-              lookup-key (ergoemacs lookup-keymap :map-list)
-              lookup-key (or (and (consp lookup-key) (car lookup-key))
-                             (ergoemacs lookup-keymap :map-key))
-              lookup-key (and (not (eq (current-local-map) lookup-keymap)) lookup-key)
+              lookup-key (ergoemacs-map--lookup-keymap-key lookup-keymap)
               ret (make-sparse-keymap)
               composed-list (ergoemacs-cache (and lookup-key (intern (format "%s-composed-key" lookup-key)))
                               (unless only-modify-p
