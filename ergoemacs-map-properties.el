@@ -327,6 +327,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
 Will also drop any empty hook maps."
   (let* ((local (or map (current-local-map)))
          (map (and local hook (make-sparse-keymap)))
+         (hook (or (and (symbolp hook) hook) 'lambda))
          map-list tmp parent)
     (when (ergoemacs-keymapp local)
       (setq map-list (ergoemacs (current-local-map) :composed-list))
@@ -346,6 +347,59 @@ Will also drop any empty hook maps."
       (if map-list
           (use-local-map (make-composed-keymap map-list parent))
         (use-local-map parent)))))
+
+(defun ergoemacs-map-properties--protect-local (hook)
+  "Protect a local map's modification with information about what hook is running."
+  (let ((major-mode-map (intern (format "%s-map" major-mode))))
+    (when (and (boundp major-mode-map) (ergoemacs-keymapp (symbol-value major-mode-map)))
+      (ergoemacs-map-properties--put-local-hook hook (symbol-value major-mode-map)))
+    (ergoemacs-map-properties--put-local-hook hook)))
+
+
+(defun ergoemacs-map-properties--modify-run-mode-hooks (&rest hooks)
+  "Modify HOOKS to run `ergoemacs-map-properties--protect-local' before hook."
+  (let (tmp)
+    (dolist (hook hooks)
+      (set hook
+           (mapcar
+            (lambda(fn)
+              (if (and (setq tmp (documentation fn))
+                       (stringp tmp)
+                       (string-match-p  "^Ergoemacs protect local" tmp))
+                  fn
+                `(lambda() "Ergoemacs protect local"
+                   (ergoemacs-map-properties--protect-local ',fn)
+                   (funcall ',fn))))
+            (symbol-value hook))))))
+
+
+(defun ergoemacs-map-properties--reset-run-mode-hooks (&rest hooks)
+  "Reset HOOKS as if `ergoemacs-map-properties--modify-run-mode-hooks' wasn't run."
+  (let (tmp)
+    (dolist (hook hooks)
+      (set hook
+           (mapcar
+            (lambda(fn)
+              (if (and (setq tmp (documentation fn))
+                       (stringp tmp)
+                       (string-match-p  "^Ergoemacs protect local" tmp)
+                       (setq tmp (ignore-errors (car (cdr (nth 1 (nth 4 fn)))))))
+                  tmp
+                fn))
+            (symbol-value hook))))))
+
+(defun ergoemacs-map-properties--run-hooks (&rest hooks)
+  "Replacement for `run-hooks' while running `run-mode-hooks'
+Adds a ergoemacs keymap label indicating what function "
+  (dolist (hook hooks)
+    (run-hook-wrapped hook
+                      (lambda(fun &rest _args)
+                        (ergoemacs-map-properties--protect-local fun)
+                        (funcall fun)
+                        t)))
+  )
+
+
 
 (defun ergoemacs-map-properties--protect-global-map ()
   "Protects global map by adding a user-key layer to it"
