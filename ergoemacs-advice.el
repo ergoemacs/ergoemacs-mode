@@ -175,7 +175,7 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
       (ergoemacs-key-description--substitute-command-keys string)
     (ergoemacs-advice--real-substitute-command-keys string)))
 
-(ergoemacs-advice run-hooks (&rest hooks)
+(ergoemacs-advice run-mode-hooks (&rest hooks)
   "Setup properties for `ergoemacs-map-properties--protect-local' before each function is run."
   :type :around
   (unwind-protect
