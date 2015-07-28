@@ -55,6 +55,7 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
+(require 'package)
 (defvar ergoemacs-dir)
 (defvar ergoemacs-map-properties--global-map-before-ergoemacs)
 (defvar ergoemacs-ignore-prev-global)
@@ -322,85 +323,140 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
         (ergoemacs before-map :map-list-hash '(ergoemacs-map-properties--before-ergoemacs))
         before-map)))
 
-(defun ergoemacs-map-properties--put-local-hook (hook &optional map)
-  "Puts a HOOK map onto the `current-local-map' or MAP.
-Will also drop any empty hook maps."
-  (let* ((local (or map (current-local-map)))
-         (map (and local hook (make-sparse-keymap)))
-         (hook (or (and (symbolp hook) hook) 'lambda))
-         map-list tmp parent)
-    (when (ergoemacs-keymapp local)
-      (setq map-list (ergoemacs (current-local-map) :composed-list))
-      (if map-list
-          (setq parent (keymap-parent local))
-        (setq parent local))
-      ;; Drop any empty 'hook-map
-      (while (and (<= 1 (length map-list))
-                  (ergoemacs (nth 0 map-list) :empty-p)
-                  (setq tmp (ergoemacs (nth 0 map-list) :key))
-                  (consp tmp)
-                  (eq (car tmp) 'hook-map))
-        (setq map-list (cdr map-list)))
-      (when map
-        (ergoemacs map :label (list 'hook-map hook))
-        (push map map-list))
-      (if map-list
-          (use-local-map (make-composed-keymap map-list parent))
-        (use-local-map parent)))))
-
-(defun ergoemacs-map-properties--protect-local (hook)
+(defvar ergoemacs-map-properties--protect-local nil)
+(defun ergoemacs-map-properties--protect-local (hook fn)
   "Protect a local map's modification with information about what hook is running."
-  (let ((major-mode-map (intern (format "%s-map" major-mode))))
-    (when (and (boundp major-mode-map) (ergoemacs-keymapp (symbol-value major-mode-map)))
-      (ergoemacs-map-properties--put-local-hook hook (symbol-value major-mode-map)))
-    (ergoemacs-map-properties--put-local-hook hook)))
+  (let ((fn (or (and (symbolp fn) fn) 'lambda)))
+    (if (not hook)
+        (setq ergoemacs-map-properties--protect-local nil)
+      (setq ergoemacs-map-properties--protect-local (list hook fn)))))
 
 
 (defun ergoemacs-map-properties--modify-run-mode-hooks (&rest hooks)
   "Modify HOOKS to run `ergoemacs-map-properties--protect-local' before hook."
   (let (tmp)
     (dolist (hook hooks)
-      (set hook
-           (mapcar
-            (lambda(fn)
-              (if (and (setq tmp (documentation fn))
-                       (stringp tmp)
-                       (string-match-p  "^Ergoemacs protect local" tmp))
-                  fn
-                `(lambda() "Ergoemacs protect local"
-                   (ergoemacs-map-properties--protect-local ',fn)
-                   (funcall ',fn))))
-            (symbol-value hook))))))
+      (if (consp hook)
+          (dolist (lhook hook)
+            (ergoemacs-map-properties--modify-run-mode-hooks lhook))
+        (when (boundp hook)
+          (set hook
+               (mapcar
+                (lambda(fn)
+                  (if (or (eq fn t) (and (setq tmp (documentation fn))
+                           (stringp tmp)
+                           (string-match-p  "^Ergoemacs protect local" tmp)))
+                      fn
+                    `(lambda() "Ergoemacs protect local"
+                       (ergoemacs-map-properties--protect-local ',hook ',fn)
+                       (funcall ',fn))))
+                (symbol-value hook))))))))
 
 
 (defun ergoemacs-map-properties--reset-run-mode-hooks (&rest hooks)
   "Reset HOOKS as if `ergoemacs-map-properties--modify-run-mode-hooks' wasn't run."
   (let (tmp)
     (dolist (hook hooks)
-      (set hook
-           (mapcar
-            (lambda(fn)
-              (if (and (setq tmp (documentation fn))
-                       (stringp tmp)
-                       (string-match-p  "^Ergoemacs protect local" tmp)
-                       (setq tmp (ignore-errors (car (cdr (nth 1 (nth 4 fn)))))))
-                  tmp
-                fn))
-            (symbol-value hook))))))
-
-(defun ergoemacs-map-properties--run-hooks (&rest hooks)
-  "Replacement for `run-hooks' while running `run-mode-hooks'
-Adds a ergoemacs keymap label indicating what function "
-  (dolist (hook hooks)
-    (run-hook-wrapped hook
-                      (lambda(fun &rest _args)
-                        (ergoemacs-map-properties--protect-local fun)
-                        (funcall fun)
-                        t)))
-  )
+      (if (consp hook)
+          (dolist (lhook hook)
+            (ergoemacs-map-properties--reset-run-mode-hooks lhook))
+        (when (boundp hook)
+          (set hook
+               (mapcar
+                (lambda(fn)
+                  (if (or (eq fn t) (and (setq tmp (documentation fn))
+                           (stringp tmp)
+                           (string-match-p  "^Ergoemacs protect local" tmp)
+                           (setq tmp (ignore-errors (car (cdr (nth 1 (nth 4 fn))))))))
+                      tmp
+                    fn))
+                (symbol-value hook))))))))
 
 
+(defvar ergoemacs-map-properties--hook-map-hash (make-hash-table :test 'equal)
+  "Hash table of user hook maps that `ergoemacs-mode' saves")
 
+(defun ergoemacs-map-properties--hook-define-key (keymap key def)
+  "Save hook-defined keys on separate keymaps.
+These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
+  (ergoemacs keymap :label)
+  (let* ((kbd key)
+         (key (ergoemacs keymap :map-key))
+         key2 tmp map)
+    (when (integerp key)
+      (setq key2 key
+            tmp (gethash key2 ergoemacs-map-properties--hook-map-hash)
+            map (ergoemacs-gethash
+                 (setq key `(,(ergoemacs keymap :key-hash) ,@ergoemacs-map-properties--protect-local))
+                 ergoemacs-map-properties--hook-map-hash))
+      (push key tmp)
+      (puthash key2 tmp ergoemacs-map-properties--hook-map-hash)
+      (unless map
+        (puthash key (make-sparse-keymap) ergoemacs-map-properties--hook-map-hash)
+        (setq map (ergoemacs-gethash key ergoemacs-map-properties--hook-map-hash))
+        (ergoemacs map :label `(hook-map ,@ergoemacs-map-properties--protect-local)))
+      (unwind-protect
+          (progn
+            (setq tmp ergoemacs-map-properties--protect-local
+                  ergoemacs-map-properties--protect-local nil)
+            (define-key map kbd def))
+        (setq ergoemacs-map-properties--protect-local nil)))))
+
+(defun ergoemacs-map-properties--override-maps (keymap &rest _ignore)
+  "Returns a list of overriding maps based on hooks run."
+  (let* ((key (ergoemacs keymap :map-key))
+         lst
+         ret)
+    (when (integerp key)
+      (setq lst (ergoemacs-gethash key ergoemacs-map-properties--hook-map-hash))
+      (dolist (map-key lst)
+        (when (ergoemacs map-key :override-map-p)
+          (push (ergoemacs-gethash map-key ergoemacs-map-properties--hook-map-hash) ret))))
+    ret))
+
+(defun ergoemacs-map-properties--deferred-maps (keymap &rest _ignore)
+  "Returns a list of overriding maps based on hooks run."
+  (let* ((key (ergoemacs keymap :map-key))
+         lst
+         ret)
+    (when (integerp key)
+      (setq lst (ergoemacs-gethash key ergoemacs-map-properties--hook-map-hash))
+      (dolist (map-key lst)
+        (when (not (ergoemacs map-key :override-map-p))
+          (push (ergoemacs-gethash map-key ergoemacs-map-properties--hook-map-hash) ret))))
+    ret))
+
+
+(defvar ergoemacs-map-properties--override-map-hash (make-hash-table)
+  "Hash Table of defined/undefined keys")
+
+(defvar ergoemacs-map-properties--deferred-hooks-directory-regexp
+  (concat "\\`" (regexp-opt (append package-directory-list
+                                    (list package-user-dir)
+                                    (list (file-name-directory (locate-library "abbrev")))
+                                    ergoemacs-directories-where-keys-from-hook-are-deferred) t))
+  "Regular experssion of libraries where maps are deferred")
+
+(defun ergoemacs-map-properties--override-map-p (keymap)
+  "Determine if KEYMAP should override `ergoemacs-mode' keys."
+  (let ((key (or (and (ergoemacs-keymapp keymap) (ergoemacs keymap :map-key)) keymap))
+        tmp)
+    (and (consp key)
+         (or (eq (car key) 'hook-map)
+             (and (consp (car key)) (integerp (car (car key)))))
+         (or (memq (nth 1 key) ergoemacs-hooks-that-always-override-ergoemacs-mode)
+             (memq (nth 2 key) ergoemacs-functions-that-always-override-ergoemacs-mode)
+             (progn
+               (setq tmp (gethash (nth 2 key) ergoemacs-map-properties--override-map-hash))
+               (if tmp
+                   (if (eq tmp :override-p) t nil)
+                 (if (not (functionp (nth 2 key))) nil
+                   (if (string-match-p ergoemacs-map-properties--deferred-hooks-directory-regexp (find-lisp-object-file-name (nth 2 key) (symbol-function (nth 2 key))))
+                       (progn
+                         (puthash (nth 2 key) :deferred-p ergoemacs-map-properties--override-map-hash)
+                         nil)
+                     (puthash (nth 2 key) :override-p ergoemacs-map-properties--override-map-hash)
+                     t))))))))
 (defun ergoemacs-map-properties--protect-global-map ()
   "Protects global map by adding a user-key layer to it"
   (when (and (or (not noninteractive) (file-readable-p (ergoemacs-map-properties--default-global-file)))

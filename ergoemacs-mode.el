@@ -197,6 +197,28 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defvar ergoemacs-translation-hash (make-hash-table)
   "Hash table of translations")
 
+
+
+
+(defcustom ergoemacs-hooks-that-always-override-ergoemacs-mode '()
+  "List of hooks that when defining keys override `ergoemacs-mode' keys."
+  :type '(repeat
+          (symbol :tag "Hook"))
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-functions-that-always-override-ergoemacs-mode '(lambda)
+  "List of functions run from a hook that when defining keys override `ergoemacs-mode' keys.
+lambda is a special undefined function"
+  :type '(repeat
+          (symbol :tag "Function"))
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-directories-where-keys-from-hook-are-deferred '()
+  "Directories where `ergoemacs-mode' defers hooks that gerenate key changes."
+  :type '(repeat
+          (directory :tag "Deferred Directory: "))
+  :group 'ergoemacs-mode)
+
 (dolist (pkg '(ergoemacs-advice
                ergoemacs-lib
                ergoemacs-mapkeymap
@@ -873,12 +895,11 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
   :type 'boolean
   :group 'ergoemacs-read)
 
-
-
 (defcustom ergoemacs-backspace-will-undo-swap-translation t
   "Backspace will undo a swapped keyboard translation."
   :type 'boolean
   :group 'ergoemacs-read)
+
 
 ;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "")
 

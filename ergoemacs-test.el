@@ -948,40 +948,45 @@ Should test issue #142"
       (delete-file w-file))))
 
 
+;;; Not sure why this doesn't actually use `ergoemacs-test-major-mode-map'.
 (define-derived-mode ergoemacs-test-major-mode fundamental-mode "ET"
   "Major mode for testing some issues with `ergoemacs-mode'.
-\\{ergoemacs-test-major-mode-map}"
-  (define-key ergoemacs-test-major-mode-map (read-kbd-macro "C-s") 'save-buffer))
+\\{ergoemacs-test-major-mode-map}")
+
+(define-key ergoemacs-test-major-mode-map (kbd "C-s") 'search-forward)
 
 (let ((ergoemacs-is-user-defined-map-change-p t))
   (add-hook 'ergoemacs-test-major-mode-hook
             '(lambda()
                (interactive)
-               (define-key ergoemacs-test-major-mode-map
-                 (read-kbd-macro "C-w") 'ergoemacs-close-current-buffer))))
+               (define-key ergoemacs-test-major-mode-map (kbd "C-w") 'ergoemacs-close-current-buffer))))
 
-;; (ert-deftest ergoemacs-test-ignore-ctl-w ()
-;;   "Ignore user-defined C-w in major-mode `ergoemacs-test-major-mode'.
-;; Part of addressing Issue #147."
-;;   (let (ret
-;;         (ergoemacs-use-function-remapping t))
-;;     (with-temp-buffer
-;;       (ergoemacs-test-major-mode)
-;;       (setq ret (ergoemacs-shortcut-remap-list 'kill-region)))
-;;     (should (not ret))))
+(ert-deftest ergoemacs-test-ignore-ctl-w ()
+  "Keep user-defined C-w in major-mode `ergoemacs-test-major-mode'.
+Part of addressing Issue #147."
+  (let (ret
+        (ergoemacs-use-function-remapping t))
+    (with-temp-buffer
+      (ergoemacs-test-major-mode)
+      (when (not (current-local-map))
+        (use-local-map ergoemacs-test-major-mode-map))
+      (ergoemacs-map--modify-active)
+      (should (eq (key-binding (kbd "C-w")) 'ergoemacs-close-current-buffer))
+      ;; The user-defined C-w should not affect kill-region remaps.
+      (should (not (eq (key-binding [ergoemacs-remap kill-region]) 'ergoemacs-close-current-buffer))))))
 
-;; (ert-deftest ergoemacs-test-keep-ctl-s ()
-;;   "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
-;; Part of addressing Issue #147."
-;;   (let (ret
-;;         (ergoemacs-use-function-remapping t))
-;;     (with-temp-buffer
-;;       (ergoemacs-test-major-mode)
-;;       (setq ret (ergoemacs-shortcut-remap-list 'isearch-forward)))
-;;     (eq (nth 0 (nth 0 ret)) 'save-buffer)))
-
-
-
+(ert-deftest ergoemacs-test-keep-ctl-s ()
+  "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
+Part of addressing Issue #147."
+  (let (ret
+        (ergoemacs-use-function-remapping t))
+    (with-temp-buffer
+      (ergoemacs-test-major-mode)
+      (when (not (current-local-map))
+        (use-local-map ergoemacs-test-major-mode-map))
+      (ergoemacs-map--modify-active)
+      (should (eq (key-binding (kbd "C-s")) 'save-buffer))
+      (should (eq (key-binding [ergoemacs-remap isearch-forward]) 'search-forward)))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

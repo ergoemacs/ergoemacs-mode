@@ -447,7 +447,9 @@ When arg1 can be a property.  The following properties are supported:
                                :sequence
                                :movement-p
                                :command-loop-p
-                               )))
+                               :override-map-p
+                               :override-maps
+                               :deferred-maps)))
     (cond
      ((and arg1 (symbolp arg1) (eq arg1 :user-before) (not arg2) (not arg3))
       `(ergoemacs-map-properties--before-ergoemacs))
@@ -568,7 +570,6 @@ This also creates functions:
 The structure is (ergoemacs-advice function args tags body-and-plist)
 
 When the tag :type equals :replace, the advice replaces the function.
-
 
 When :type is :replace that replaces a function (like `define-key')"
   (declare (doc-string 2)

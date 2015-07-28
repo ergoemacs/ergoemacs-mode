@@ -175,9 +175,32 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
       (ergoemacs-key-description--substitute-command-keys string)
     (ergoemacs-advice--real-substitute-command-keys string)))
 
+(ergoemacs-advice run-hooks (&rest hooks)
+  "Setup properties for `ergoemacs-map-properties--protect-local' before each function is run."
+  :type :around
+  (unwind-protect
+      (progn
+        (when (and (fboundp 'ergoemacs-map-properties--modify-run-mode-hooks)
+                   (boundp 'ergoemacs-mode))
+          (ergoemacs-map-properties--modify-run-mode-hooks hooks))
+        ad-do-it)
+    (when (and (fboundp 'ergoemacs-map-properties--reset-run-mode-hooks)
+               (boundp 'ergoemacs-mode))
+      (ergoemacs-map-properties--reset-run-mode-hooks hooks))))
+
+(ergoemacs-advice define-key (keymap key def)
+  "Protect keymaps when changing keys from a hook."
+  :type :after
+  (when (and (boundp 'ergoemacs-map-properties--protect-local)
+             ergoemacs-map-properties--protect-local)
+    (ergoemacs-map-properties--hook-define-key keymap key def)))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
 ;; Local Variables:
 ;; coding: utf-8-emacs
 ;; End:
+
+
+
