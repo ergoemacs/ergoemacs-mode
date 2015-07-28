@@ -465,7 +465,7 @@ Currently this ensures:
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--ensure-sane-variables)
 
 (defun ergoemacs-command-loop--combine (current-key next-event)
-  "Combine two key and next event."
+  "Combine CURRENT-KEY and NEXT-EVENT into a vector."
   (let (tmp)
     (cond
      ((and (setq tmp (elt current-key 0))

@@ -60,6 +60,9 @@
 (defvar ergoemacs-map-properties--global-map-before-ergoemacs)
 (defvar ergoemacs-ignore-prev-global)
 (defvar ergoemacs-remap-ignore)
+(defvar ergoemacs-directories-where-keys-from-hook-are-deferred)
+(defvar ergoemacs-hooks-that-always-override-ergoemacs-mode)
+(defvar ergoemacs-functions-that-always-override-ergoemacs-mode)
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")

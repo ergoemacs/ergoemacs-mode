@@ -48,6 +48,46 @@
 (defvar ergoemacs-dir)
 (defvar apropos-do-all)
 
+
+(declare-function browse-url-default-windows-browser "browse-url")
+
+(declare-function cua-copy-rectangle "cua-base")
+(declare-function cua-copy-region "cua-base")
+(declare-function cua-cut-rectangle-as-text "cua-rect")
+(declare-function cua-cut-region "cua-base")
+(declare-function cua-paste "cua-base")
+(declare-function cua-set-rectangle-mark "cua-rect")
+
+(declare-function dired-get-marked-files "dired")
+
+;;ergoemacs-gen-svg
+(declare-function ergoemacs-ini-mode "ergoemacs-mode")
+(declare-function ergoemacs-map-- "ergoemacs-map")
+(declare-function ergoemacs-mode "ergoemacs-mode")
+
+(declare-function helm-attrset "helm")
+(declare-function helm-basename "helm-utils")
+(declare-function helm-execute-persistent-action "helm")
+(declare-function helm-exit-minibuffer "helm")
+
+(declare-function minibuffer-keyboard-quit "delsel")
+
+(declare-function org-at-heading-p "org")
+(declare-function org-at-item-p "org-list")
+(declare-function org-at-table-p "org")
+(declare-function org-edit-src-save "org-src")
+(declare-function org-emphasize "org")
+(declare-function org-insert-heading-respect-content "org")
+(declare-function org-region-active-p "org-compat")
+(declare-function org-with-limited-levels "org-macs")
+(declare-function org-yank "org")
+
+(declare-function server-edit "server")
+
+(declare-function shell-dirtrack-mode "shell")
+
+(declare-function undo-tree-mode "undo-tree")
+
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
   "Backward char will edit isearch."
   :type 'boolean
@@ -297,7 +337,7 @@ If `pr-interface' is available, use that function instead."
   "Call the command that has keyboard shortcut M-TAB."
   (interactive)
   (call-interactively
-   (ergoemacs-real-key-binding (kbd "M-TAB"))))
+   (key-binding (kbd "M-TAB"))))
 
 (defun ergoemacs-copy-all ()
   "Put the whole buffer content into the `kill-ring'.

@@ -37,6 +37,25 @@
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme)
 (defvar ergoemacs-command-loop-type)
+(defvar ergoemacs-dir)
+
+(declare-function ergoemacs-command-loop "ergoemacs-command-loop")
+
+(declare-function ergoemacs-copy-line-or-region "ergoemacs-functions")
+(declare-function ergoemacs-cut-line-or-region "ergoemacs-functions")
+(declare-function ergoemacs-emacs-exe "ergoemacs-functions")
+(declare-function ergoemacs-paste "ergoemacs-functions")
+
+(declare-function ergoemacs-map-- "ergoemacs-map")
+(declare-function ergoemacs-map--modify-active "ergoemacs-map")
+
+(declare-function ergoemacs-require "ergoemacs-lib")
+
+(declare-function ergoemacs-theme--get-version "ergoemacs-theme")
+(declare-function ergoemacs-theme-set-version "ergoemacs-theme")
+
+(declare-function ergoemacs-translate--get "ergoemacs-translate")
+(declare-function ergoemacs-unchorded-alt-modal "ergoemacs-translate")
 
 (require 'ert)
 (require 'elp)
@@ -173,20 +192,19 @@ Issue #186."
 
 (ert-deftest ergoemacs-test-shift-select-reduction ()
   "Test that shift selection works properly in reduction."
-  (let (ret)
-    (ergoemacs-test-layout
-     :theme "reduction"
-     :layout "colemak"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       (execute-kbd-macro (edmacro-parse-keys "M-E M-E" t))
-       (call-interactively 'ergoemacs-cut-line-or-region)
-       (setq ret (= (point) (point-min)))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
+  (ergoemacs-test-layout
+   :theme "reduction"
+   :layout "colemak"
+   :macro "M-E M-E"
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (insert ergoemacs-test-lorem-ipsum)
+     (goto-char (point-min))
+     (execute-kbd-macro macro)
+     (call-interactively 'ergoemacs-cut-line-or-region)
+     (should (= (point) (point-min)))
+     (kill-buffer (current-buffer)))))
 
 
 (ert-deftest ergoemacs-test-shift-select-subword ()
@@ -986,7 +1004,7 @@ Part of addressing Issue #147."
         (use-local-map ergoemacs-test-major-mode-map))
       (ergoemacs-map--modify-active)
       (should (eq (key-binding (kbd "C-s")) 'save-buffer))
-      (should (eq (key-binding [ergoemacs-remap isearch-forward]) 'search-forward)))))
+      (should (eq (key-binding [ergoemacs-remap isearch-foward]) 'search-forward)))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

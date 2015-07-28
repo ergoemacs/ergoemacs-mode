@@ -87,8 +87,10 @@
 
 (declare-function ergoemacs-map-properties--composed-list "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--composed-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--deferred-maps "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--get-or-generate-map-key "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--key-hash "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keymap-value "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keys "ergoemacs-map-properties")
@@ -97,11 +99,11 @@
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--new-command "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--override-maps "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user-original "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 
 (declare-function ergoemacs-map-properties--before-ergoemacs "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
@@ -291,7 +293,6 @@ If LOOKUP-KEYMAP
          tmp-key
          tmp
          tmp2
-         tmp3
          ret
          menu-bar
          only-modify-p

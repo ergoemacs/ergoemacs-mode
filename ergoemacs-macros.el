@@ -558,10 +558,10 @@ This also creates functions:
   (let ((kb (make-symbol "kb")))
     (setq kb (ergoemacs-theme-component--parse-keys-and-body body-and-plist))
     
-    `(puthash ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
-              (lambda() ,(plist-get (nth 0 kb) ':description)
-                (ergoemacs-translate--create :key ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
-                 ,@(nth 0 kb))) ergoemacs-translation-hash)))
+    `(progn (puthash ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
+                     (lambda() ,(plist-get (nth 0 kb) ':description)
+                       (ergoemacs-translate--create :key ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
+                                                    ,@(nth 0 kb))) ergoemacs-translation-hash))))
 
 ;;;###autoload
 (defmacro ergoemacs-advice (function args &rest body-and-plist)
@@ -579,20 +579,23 @@ When :type is :replace that replaces a function (like `define-key')"
     (cond
      ((eq (plist-get (nth 0 kb) :type) :around)
       ;; FIXME: use `nadvice' for emacs 24.4+
-      (macroexpand-all `(defadvice ,function (around ,(intern (format "ergoemacs-advice--%s" (symbol-name function))) ,args activate)
-                          ,(plist-get (nth 0 kb) :description)
-                          ,@(nth 1 kb))))
+      (macroexpand-all `(progn
+                          (defadvice ,function (around ,(intern (format "ergoemacs-advice--%s" (symbol-name function))) ,args activate)
+                            ,(plist-get (nth 0 kb) :description)
+                            ,@(nth 1 kb)))))
      ((eq (plist-get (nth 0 kb) :type) :after)
       ;; FIXME: use `nadvice' for emacs 24.4+
       (macroexpand-all
-       `(defadvice ,function (after ,(intern (format "ergoemacs-advice--after-%s" (symbol-name function))) ,args activate)
-          ,(plist-get (nth 0 kb) :description)
-          ,@(nth 1 kb))))
+       `(progn
+          (defadvice ,function (after ,(intern (format "ergoemacs-advice--after-%s" (symbol-name function))) ,args activate)
+            ,(plist-get (nth 0 kb) :description)
+            ,@(nth 1 kb)))))
      ((eq (plist-get (nth 0 kb) :type) :before)
       ;; FIXME: use `nadvice' for emacs 24.4+
-      (macroexpand-all `(defadvice ,function (before ,(intern (format "ergoemacs-advice--%s" (symbol-name function))) ,args activate)
-                          ,(plist-get (nth 0 kb) :description)
-                          ,@(nth 1 kb))))
+      (macroexpand-all `(progn
+                          (defadvice ,function (before ,(intern (format "ergoemacs-advice--%s" (symbol-name function))) ,args activate)
+                            ,(plist-get (nth 0 kb) :description)
+                            ,@(nth 1 kb)))))
      ((eq (plist-get (nth 0 kb) :type) :replace)
       (macroexpand-all `(progn
                           (defalias ',(intern (format "ergoemacs-advice--real-%s" (symbol-name function)))
@@ -617,9 +620,10 @@ When :type is :replace that replaces a function (like `define-key')"
   (declare (indent 1))
   (or (and (symbolp item)
            (macroexpand-all
-            `(or (ergoemacs-map--cache-- ',item)
-                 (ergoemacs-map--cache--
-                  ',item (progn ,@body)))))
+            `(progn
+               (or (ergoemacs-map--cache-- ',item)
+                   (ergoemacs-map--cache--
+                    ',item (progn ,@body))))))
       (macroexpand-all
        `(let ((--hash-key ,item))
           (or (ergoemacs-map--cache-- --hash-key)

@@ -23,13 +23,11 @@ TRAVIS_FILE=.travis.yml
 build :
 	$(EMACS) $(EMACS_BATCH) -L . --eval             \
 	    "(progn                                \
-	      (setq byte-compile-error-on-warn t)  \
 	      (batch-byte-compile))" *.el
 
 build2 : 
 	$(EMACS) $(EMACS_BATCH) -L . -l ergoemacs-mode --eval             \
 	    "(progn                                \
-	      (setq byte-compile-error-on-warn t)  \
 	      (batch-byte-compile))" *.el
 
 autoloads :
