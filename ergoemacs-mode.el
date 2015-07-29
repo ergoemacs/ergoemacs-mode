@@ -354,6 +354,27 @@ Will reload `ergoemacs-mode' after setting the values."
              (boundp 'ergoemacs-mode) ergoemacs-mode)
     (ergoemacs-mode-reset)))
 
+
+(defvar ergoemacs-override-keymap (make-sparse-keymap)
+  "ErgoEmacs override keymap.")
+
+(defvar ergoemacs-override-alist nil
+  "ErgoEmacs override keymaps.")
+
+(defun ergoemacs-setup-override-keymap ()
+  (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-override-keymap)))
+  (add-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
+
+(defun ergoemacs-remove-override-keymap ()
+  (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
+
+(add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-setup-override-keymap)
+(add-hook 'ergoemacs-mode-shudown-hook 'ergoemacs-setup-override-keymap)
+
+
+
+
+
 
 
 ;;; Frequently used commands as aliases

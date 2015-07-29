@@ -180,6 +180,19 @@ This accepts the following keywords:
 
     Default: nil
 
+:bind-keymap -- A keymap to bind.  Similar to :bind but used for
+    keymaps.  This is processed before :bind keywords
+
+    Default: nil
+
+:bind* -- Keys to bind above minor modes (in `ergoemacs-override-keymap').
+
+   Default: nil
+
+:bind-keymap* -- Keymap to bind above minor modes (in `ergoemacs-override-keymap').
+
+    Default: nil
+
 :commands -- List of commands to create autoloads for.  This can take a command like:
 
     :commands ace-jump-mode

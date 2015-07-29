@@ -162,9 +162,30 @@ BODY is the body of function."
                :variable-prefixes (or (plist-get plist :variable-prefixes) '([apps] [menu] [27]))
                :package-name (plist-get plist :package-name)
                :layout (or (plist-get plist :layout) "us")))
-        (let ((tmp (plist-get plist :bind))
+        (let ((tmp (plist-get plist :bind-keymap))
               (package-name (plist-get plist :package-name)))
+          
+          ;; Handle :bind-keymap commands
+          (cond
+           ((and (consp tmp) (stringp (car tmp)))
+            (ergoemacs-component-struct--define-key 'global-map (kbd (car tmp)) (symbol-value (cdr tmp))))
+           ((and (consp tmp) (consp (car tmp)))
+            (dolist (elt tmp)
+              (when (and (consp elt) (stringp (car elt)))
+                (ergoemacs-component-struct--define-key 'global-map (kbd (car elt)) (symbol-value (cdr elt)))))))
+
+          ;; Handle :bind-keymap* commands
+          (setq tmp (plist-get :bind-keymap*))
+          (cond
+           ((and (consp tmp) (stringp (car tmp)))
+            (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car tmp)) (symbol-value (cdr tmp))))
+           ((and (consp tmp) (consp (car tmp)))
+            (dolist (elt tmp)
+              (when (and (consp elt) (stringp (car elt)))
+                (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car elt)) (symbol-value (cdr elt)))))))
+          
           ;; Handle :bind keys
+          (setq tmp (plist-get plist :bind))
           (cond
            ((and (consp tmp) (stringp (car tmp)))
             ;; :bind ("C-." . ace-jump-mode)
@@ -173,6 +194,18 @@ BODY is the body of function."
             (dolist (elt tmp)
               (when (and (consp elt) (stringp (car elt)))
                 (ergoemacs-component-struct--define-key 'global-map (kbd (car elt)) (cdr elt))))))
+
+          ;; Handle :bind* commands
+          (setq tmp (plist-get plist :bind*))
+          (cond
+           ((and (consp tmp) (stringp (car tmp)))
+            ;; :bind ("C-." . ace-jump-mode)
+            (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car tmp)) (cdr tmp)))
+           ((and (consp tmp) (consp (car tmp)))
+            (dolist (elt tmp)
+              (when (and (consp elt) (stringp (car elt)))
+                (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car elt)) (cdr elt))))))
+          
           ;; Handle :commands
           (setq tmp (plist-get plist :commands))
           (when package-name
