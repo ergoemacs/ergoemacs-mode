@@ -66,6 +66,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
   "In parsing, this function converts
 - `define-key' is converted to `ergoemacs-component-struct--define-key' and keymaps are quoted
 - `global-set-key' is converted to `ergoemacs-component-struct--define-key' with keymap equal to `global-map'
+- `bind-key' is converted to `ergoemacs-component-struct--define-key'
 - `global-unset-key' is converted to `ergoemacs-component-struct--define-key' with keymap equal to `global-map' and function definition is `nil'
 - `global-reset-key' is converted `ergoemacs-component-struct--define-key'
 - `setq' and `set' is converted to `ergoemacs-component-struct--set'
@@ -116,6 +117,21 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
                    `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
                  `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
+              
+              ;; (bind-key "C-c x" 'my-ctrl-c-x-command)
+              ((ignore-errors (and (eq (nth 0 elt) 'bind-key)
+                                   (= (length elt) 3)))
+               (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
+                   `(ergoemacs-component-struct--define-key 'global-map (kbd ,(nth 1 elt)) (quote ,(nth 2 elt)))
+                 `(ergoemacs-component-struct--define-key 'global-map (kbd ,(nth 1 elt)) ,(nth 2 elt))))
+
+              ;; (bind-key "C-c x" 'my-ctrl-c-x-command some-other-map)
+              ((ignore-errors (and (eq (nth 0 elt) 'bind-key)
+                                   (= (length elt) 4)))
+               (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
+                   `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(nth 1 elt)) (quote ,(nth 2 elt)))
+                 `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(nth 1 elt)) ,(nth 2 elt))))
+              
               ((ignore-errors (eq (nth 0 elt) 'define-key))
                (if (equal (nth 1 elt) '(current-global-map))
                    (if (ergoemacs-keymapp (ergoemacs-sv (nth 3 elt))) 
@@ -146,7 +162,78 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 
 ;;;###autoload
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
-  "A component of an ergoemacs-theme."
+  "A component of an ergoemacs-theme.
+This accepts the following keywords:
+
+:bind -- What keys to bind.  This is compatible with use-package
+    definitions.  That is it can take a command like:
+
+    :bind (\"C-.\" . ace-jump-mode)
+
+    or list of commands
+
+    :bind ((\"M-o l\" . highlight-lines-matching-regexp)
+           (\"M-o r\" . highlight-regexp)
+           (\"M-o w\" . highlight-phrase))
+
+    When package-name is non-nil, create autoloads for undefined commands.
+
+    Default: nil
+
+:commands -- List of commands to create autoloads for.  This can take a command like:
+
+    :commands ace-jump-mode
+
+    Or
+
+    :commands (isearch-moccur isearch-all)
+
+    When :package-name is non-nil, this will create autoloads for the commands.
+
+
+:package-name -- Name of package to load.  When non-nil any key
+    defition to a single command will create an autoload for that
+    command.
+
+    Default: nil
+
+:require -- when non-nil, this ergoemacs-component is required with `ergoemacs-require'
+   Dy default this is disabled
+
+:just-first-keys -- Keys where a fixed amount of the key is based
+    on variable keyboard placement, then the rest of the key is
+    based on letter.  For example with the apps component, the
+    just first keys are defined to be [apps ?h], which means the
+    [apps h] will be defined based on finger placement, but the
+    keys afterward would be based on letter.
+
+    By default this is defined as nil, meaning no special keys like this occur.
+
+:just-first-keys (list [apps ?h] [menu ?h])
+    Defaults to nil
+
+:variable-modifiers -- Modifiers that are considierd variable.
+    These modifiers have keys change among various keyboard
+    layouts.  That is keys are bound based on finger placement
+    among various keyboard layouts.
+
+    Defaults to '(meta)
+
+:variable-prefixes -- Keyboard prefixes that are considiered
+    variable.  After these keys are pressed, the keyboard layout
+    dictates the keys.  That is, keys are bound based on finger
+    placement among various keyboard layouts.
+
+    Defaults to '([apps] [menu] [27])
+
+:layout -- Layout that the key bindings are based on.
+
+    Defaults to us (QWERTY)
+
+Please do not use the following tags, since they are parsed based on the definition
+:name -- Component Name
+:description -- Component Description
+:file -- File where the component was defined."
   (declare (doc-string 2)
            (indent 2))
   (let ((kb (make-symbol "body-and-plist")))
@@ -155,20 +242,20 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
        (unless (boundp 'ergoemacs-component-hash)
          (defvar ergoemacs-component-hash (make-hash-table :test 'equal)
            "Hash of ergoemacs theme components"))
-       (puthash ,(plist-get (nth 0 kb) ':name)
-                (lambda() ,(plist-get (nth 0 kb) ':description)
+       (puthash ,(plist-get (nth 0 kb) :name)
+                (lambda() ,(plist-get (nth 0 kb) :description)
                   (ergoemacs-theme-component--create-component
                    (append (list :file fn)
                            ',(nth 0 kb))
                    '(lambda () ,@(nth 1 kb)))) ergoemacs-theme-comp-hash)
-       (puthash ,(plist-get (nth 0 kb) ':name)
-                (lambda() ,(plist-get (nth 0 kb) ':description)
+       (puthash ,(plist-get (nth 0 kb) :name)
+                (lambda() ,(plist-get (nth 0 kb) :description)
                   (ergoemacs-component-struct--create-component
                    (append (list :file fn)
                            ',(nth 0 kb))
                    '(lambda () ,@(nth 1 kb)))) ergoemacs-component-hash)
-       ,(when (plist-get (nth 0 kb) ':require)
-          `(ergoemacs-require ',(intern (plist-get (nth 0 kb) ':name)))))))
+       ,(when (plist-get (nth 0 kb) :require)
+          `(ergoemacs-require ',(intern (plist-get (nth 0 kb) :name)))))))
 
 (defmacro ergoemacs-package (name &rest keys-and-body)
   "Defines a required package named NAME.
@@ -185,12 +272,16 @@ Maybe be similar to use-package"
     (when (equal (car body) '())
       (setq body (cdr body)))
     (setq doc (if (stringp (car body)) (pop body) (symbol-name name)))
-    (unless (plist-get plist ':require) ;; Its a required theme component.
-      (setq plist (plist-put plist ':require name)))
+    (unless (plist-get plist :require) ;; Its a required theme component.
+      (setq plist (plist-put plist :require name)))
+    (unless (plist-get plist :package-name)
+      (setq plist (plist-put plist :package-name name)))
     (macroexpand-all
      `(ergoemacs-theme-component ,name ()
         ,doc
-        ,@plist ,@body))))
+        ,@plist
+        ;; (require ',name)
+        ,@body))))
 
 ;;;###autoload
 (defmacro ergoemacs-test-layout (&rest keys-and-body)

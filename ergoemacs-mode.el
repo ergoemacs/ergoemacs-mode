@@ -924,7 +924,16 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
           (setq val (persistent-soft-fetch sym "ergoemacs-mode"))
           (when val
             (setq found-p t)
-            (set sym val))))
+            (set sym val)
+            ;; Setup autoloads
+            (when (eq sym 'ergoemacs-component-struct--hash)
+              (maphash
+               (lambda (_key value)
+                 (when (ergoemacs-component-struct-p value)
+                   (dolist (a (ergoemacs-component-struct-autoloads value))
+                     (autoload (car a) (cdr a) nil t))))
+               val))
+            )))
        ((symbolp a) ;; Store
         (setq sym a)
         (when (featurep 'persistent-soft)

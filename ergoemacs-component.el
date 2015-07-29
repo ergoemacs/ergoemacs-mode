@@ -137,6 +137,8 @@
   (just-first-keys nil :read-only t)
   (variable-modifiers '(meta) :read-only t)
   (variable-prefixes '([apps] [menu] [27]) :read-only t)
+  (package-name nil)
+  (autoloads nil)
   (layout "us" :read-only t)
   (calculated-layouts (make-hash-table :test 'equal))
   (relative-to 'global-map))
@@ -158,7 +160,31 @@ BODY is the body of function."
                :just-first-keys (or (plist-get plist :just-first-keys) nil)
                :variable-modifiers (or (plist-get plist :variable-modifiers) '(meta))
                :variable-prefixes (or (plist-get plist :variable-prefixes) '([apps] [menu] [27]))
+               :package-name (plist-get plist :package-name)
                :layout (or (plist-get plist :layout) "us")))
+        (let ((tmp (plist-get plist :bind))
+              (package-name (plist-get plist :package-name)))
+          ;; Handle :bind keys
+          (cond
+           ((and (consp tmp) (stringp (car tmp)))
+            ;; :bind ("C-." . ace-jump-mode)
+            (ergoemacs-component-struct--define-key 'global-map (kbd (car tmp)) (cdr tmp)))
+           ((and (consp tmp) (consp (car tmp)))
+            (dolist (elt tmp)
+              (when (and (consp elt) (stringp (car elt)))
+                (ergoemacs-component-struct--define-key 'global-map (kbd (car elt)) (cdr elt))))))
+          ;; Handle :commands
+          (setq tmp (plist-get plist :commands))
+          (when package-name
+            (cond
+             ((symbolp tmp)
+              (autoload tmp package-name nil t)
+              (push (cons tmp package-name) (ergoemacs-component-struct-autoloads ergoemacs-component-struct--define-key-current)))
+             ((consp tmp)
+              (dolist (f tmp)
+                (when (symbolp f)
+                  (autoload f package-name nil t)
+                  (push (cons f package-name) (ergoemacs-component-struct-autoloads ergoemacs-component-struct--define-key-current))))))))
         (funcall body))
     (puthash (concat (ergoemacs-component-struct-name ergoemacs-component-struct--define-key-current)
                      (and (ergoemacs-component-struct-version ergoemacs-component-struct--define-key-current)
@@ -327,6 +353,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                             (and (not when-condition) (ergoemacs-gethash keymap (ergoemacs-component-struct-maps obj)))
                             (and global-map-p when-condition (ergoemacs-gethash when-condition (ergoemacs-component-struct-cond-maps obj)))
                             (and when-condition hook (ignore-errors (ergoemacs-gethash keymap (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj)))))))
+               (package-name (ergoemacs-component-struct-package-name obj))
                fn-lst
                (key (or (and (vectorp key) key)
                         (and (stringp key) (vconcat key))))
@@ -398,7 +425,11 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
               (push (list keymap key fn-lst)
                     (ergoemacs-component-struct-dynamic-keys obj))))
            (t
-            (define-key cur-map key def)))))))))
+            (define-key cur-map key def)
+            (when (and package-name (not (fboundp def)))
+              ;; Create autoload.
+              (autoload def package-name nil t)
+              (push (cons def package-name) (ergoemacs-component-struct-autoloads obj)))))))))))
 
 (defvar ergoemacs-component-struct--hash nil
   "Hash table of `ergoemacs-mode' component structures.")
