@@ -168,6 +168,17 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
     (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full))
       (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))))
 
+(ergoemacs-advice read-key-sequence (prompt &optional continue-echo dont-downcase-last can-return-switch-frame cmd-loop)
+  "This ignores `ergoemacs-mode' keys in `overriding-terminal-local-map'."
+  :type :around
+  (unwind-protect
+      (progn
+        (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full))
+          (setq overriding-terminal-local-map ergoemacs-command-loop--displaced-overriding-terminal-local-map))
+        ad-do-it)
+    (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full))
+      (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))))
+
 (ergoemacs-advice substitute-command-keys (string)
   "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
   :type :replace
