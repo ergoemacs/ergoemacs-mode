@@ -1004,7 +1004,7 @@ Part of addressing Issue #147."
         (use-local-map ergoemacs-test-major-mode-map))
       (ergoemacs-map--modify-active)
       (should (eq (key-binding (kbd "C-s")) 'save-buffer))
-      (should (eq (key-binding [ergoemacs-remap isearch-foward]) 'search-forward)))))
+      (should (eq (key-binding [ergoemacs-remap isearch-forward]) 'search-forward)))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
