@@ -139,6 +139,7 @@
   (variable-prefixes '([apps] [menu] [27]) :read-only t)
   (package-name nil)
   (autoloads nil)
+  (ensure nil)
   (layout "us" :read-only t)
   (calculated-layouts (make-hash-table :test 'equal))
   (relative-to 'global-map))
@@ -147,6 +148,21 @@
   "Hash of ergoemacs-components")
 
 (defvar ergoemacs-component-struct--define-key-current nil)
+
+
+(defvar ergoemacs-component-struct--ensure-refreshed-p nil)
+(defun ergoemacs-component-struct--ensure (package)
+  "Ensure PACKAGE is installed."
+  (when package
+    (let ((package (or (and (symbolp package) package)
+                       (and (stringp package) (intern package)))))
+      (unless package--initialized
+        (package-initialize))
+      (if (package-installed-p package) t
+        (unless ergoemacs-component-struct--ensure-refreshed-p
+          (package-refresh-contents)
+          (setq ergoemacs-component-struct--ensure-refreshed-p t))
+        (package-install package)))))
 
 (defun ergoemacs-component-struct--create-component (plist body)
   "PLIST is the component properties
@@ -161,6 +177,7 @@ BODY is the body of function."
                :variable-modifiers (or (plist-get plist :variable-modifiers) '(meta))
                :variable-prefixes (or (plist-get plist :variable-prefixes) '([apps] [menu] [27]))
                :package-name (plist-get plist :package-name)
+               :ensure (plist-get plist :ensure)
                :layout (or (plist-get plist :layout) "us")))
         (let ((tmp (plist-get plist :bind-keymap))
               (package-name (plist-get plist :package-name)))
@@ -175,7 +192,7 @@ BODY is the body of function."
                 (ergoemacs-component-struct--define-key 'global-map (kbd (car elt)) (symbol-value (cdr elt)))))))
 
           ;; Handle :bind-keymap* commands
-          (setq tmp (plist-get :bind-keymap*))
+          (setq tmp (plist-get plist :bind-keymap*))
           (cond
            ((and (consp tmp) (stringp (car tmp)))
             (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car tmp)) (symbol-value (cdr tmp))))
@@ -210,13 +227,13 @@ BODY is the body of function."
           (setq tmp (plist-get plist :commands))
           (when package-name
             (cond
-             ((symbolp tmp)
-              (autoload tmp package-name nil t)
+             ((and tmp (symbolp tmp))
+              (autoload tmp (format "%s" package-name) nil t)
               (push (cons tmp package-name) (ergoemacs-component-struct-autoloads ergoemacs-component-struct--define-key-current)))
              ((consp tmp)
               (dolist (f tmp)
-                (when (symbolp f)
-                  (autoload f package-name nil t)
+                (when (and f (symbolp f))
+                  (autoload f (format "%s" package-name) nil t)
                   (push (cons f package-name) (ergoemacs-component-struct-autoloads ergoemacs-component-struct--define-key-current))))))))
         (funcall body))
     (puthash (concat (ergoemacs-component-struct-name ergoemacs-component-struct--define-key-current)
@@ -298,6 +315,18 @@ Allows the component not to be calculated."
 (defun ergoemacs-component-struct--define-key-get-def (def)
   "Gets the `ergoemacs-mode' function definition for DEF."
   (cond
+   ((and (consp def) (memq (nth 0 def) '(kbd read-kbd-macro))
+         (stringp (nth 1 def)))
+    (read-kbd-macro (nth 1 def)))
+   ((and (consp def) (= 1 (length def)) (symbolp (nth 0 def)))
+    (nth 0 def))
+   ((and (consp def) (= 1 (length def)) (consp (nth 0 def))
+         (= 2 (length (nth 0 def)))
+         (eq (nth 0 (nth 0 def)) 'quote)
+         (symbolp (nth 1 (nth 0 def))))
+    (nth 1 (nth 0 def)))
+   ((and (consp def) (= 2 (length def)) (eq (nth 1 def) 'quote) (symbolp (nth 1 def)))
+    (nth 1 def))
    ((and (consp def)
          (= 2 (length def))
          (stringp (nth 0 def))
@@ -374,6 +403,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
     (error "`ergoemacs-component-struct--define-key' is confused"))
    (t
     (let ((obj (or object ergoemacs-component-struct--define-key-current))
+          (key (or (and (consp key) (memq (car key) '(kbd read-kbd-macro)) (stringp (nth 1 key)) (read-kbd-macro (nth 1 key))) key))
           (def (ergoemacs-component-struct--define-key-get-def def)))
       (if (not (ergoemacs-component-struct-p obj))
           (error "OBJECT not a ergoemacs-component-structure.")
@@ -459,9 +489,9 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                     (ergoemacs-component-struct-dynamic-keys obj))))
            (t
             (define-key cur-map key def)
-            (when (and package-name (not (fboundp def)))
+            (when (and package-name def (not (fboundp def)))
               ;; Create autoload.
-              (autoload def package-name nil t)
+              (autoload def (format "%s" package-name) nil t)
               (push (cons def package-name) (ergoemacs-component-struct-autoloads obj)))))))))))
 
 (defvar ergoemacs-component-struct--hash nil
@@ -772,11 +802,33 @@ be composed over the keymap.  This is done in
 (defvar ergoemacs-component-struct--refresh-variables nil)
 (defvar ergoemacs-component-struct--applied-inits '())
 
+(defvar ergoemacs-component-struct--apply-inits-first-p t)
 (defun ergoemacs-component-struct--apply-inits (&optional _file obj)
   "Apply the initializations from the OBJ."
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
-  (let ((obj (or obj (ergoemacs-theme-components))))
+  (let* ((obj (or obj (ergoemacs-theme-components)))
+         package-name ensure comp)
+    (when ergoemacs-component-struct--apply-inits-first-p
+      (dolist (elt obj)
+        (setq comp (ergoemacs-component-struct--lookup-hash elt)
+              package-name (ergoemacs-component-struct-package-name comp)
+              ensure (ergoemacs-component-struct-ensure comp))
+        (cond
+         ((eq ensure t)
+          (ergoemacs-component-struct--ensure package-name))
+         ((and ensure (symbolp ensure))
+          (ergoemacs-component-struct--ensure ensure))
+         ((consp ensure)
+          (dolist (elt ensure)
+            (cond
+             ((and elt (symbolp elt))
+              (ergoemacs-component-struct--ensure elt))
+             ((stringp elt)
+              (ergoemacs-component-struct--ensure (intern elt))))))
+         ((stringp ensure)
+          (ergoemacs-component-struct--ensure (intern ensure))))))
+    (setq ergoemacs-component-struct--apply-inits-first-p nil)
     (dolist (init (ergoemacs-component-struct--variables obj))
       (let ((x (and ergoemacs-component-struct--refresh-variables (boundp (nth 0 init))
                     (assq (nth 0 init) ergoemacs-component-struct--refresh-variables))))

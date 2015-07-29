@@ -203,6 +203,10 @@ This accepts the following keywords:
 
     When :package-name is non-nil, this will create autoloads for the commands.
 
+:ensure -- If the package should be installed by `package' if not present
+   When t and :package-name is specified, the ensured package is the same as `package-name'
+   When a symbol, ensure the package is installed.
+
 
 :package-name -- Name of package to load.  When non-nil any key
     defition to a single command will create an autoload for that
@@ -273,8 +277,7 @@ Please do not use the following tags, since they are parsed based on the definit
 (defmacro ergoemacs-package (name &rest keys-and-body)
   "Defines a required package named NAME.
 Maybe be similar to use-package"
-  (declare (doc-string 2)
-           (indent 2))
+  (declare (indent 2))
   (let ((kb (make-symbol "body-and-plist"))
         (plist (make-symbol "plist"))
         (body (make-symbol "body"))
@@ -285,7 +288,7 @@ Maybe be similar to use-package"
     (when (equal (car body) '())
       (setq body (cdr body)))
     (setq doc (if (stringp (car body)) (pop body) (symbol-name name)))
-    (unless (plist-get plist :require) ;; Its a required theme component.
+    (unless (memq :require plist) ;; Its a required theme component.
       (setq plist (plist-put plist :require name)))
     (unless (plist-get plist :package-name)
       (setq plist (plist-put plist :package-name name)))
@@ -313,7 +316,7 @@ Maybe be similar to use-package"
                   `(edmacro-parse-keys ,(plist-get plist :macro) t)))
             (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
             (reset-ergoemacs nil))
-        (setq ergoemacs-theme ,(plist-get plist ':currnt-theme)
+        (setq ergoemacs-theme ,(plist-get plist ':current-theme)
               ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us")
               ergoemacs-command-loop-type nil)
         (ergoemacs-theme-set-version ,(or (plist-get plist ':version) nil))

@@ -74,6 +74,13 @@
 (defvar ergoemacs-component-struct--refresh-variables)
 (defvar ergoemacs-keyboard-layout)
 
+(require 'package)
+
+(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
+;; (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+
+
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
@@ -188,7 +195,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (require 'lookup-word-on-internet nil "NOERROR")
 
 (defconst ergoemacs-font-lock-keywords
-  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
+  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\|-package\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
      (1 font-lock-keyword-face)
      (2 font-lock-constant-face nil t))))
 
@@ -219,45 +226,33 @@ lambda is a special undefined function"
           (directory :tag "Deferred Directory: "))
   :group 'ergoemacs-mode)
 
-(dolist (pkg '(ergoemacs-advice
-               ergoemacs-lib
-               ergoemacs-mapkeymap
-               ergoemacs-map-properties
-               ergoemacs-layouts
-               ergoemacs-translate
-               ergoemacs-key-description
-               ergoemacs-debug
-               ergoemacs-component
-               ergoemacs-command-loop
-               ergoemacs-map
-               ergoemacs-functions
-               ergoemacs-theme-engine
-               ergoemacs-themes))
-  (unless (featurep pkg)
-    (load (symbol-name pkg))))
 
-(defvar ergoemacs-user-keymap (make-sparse-keymap)
-  "User `ergoemacs-mode' keymap.")
+(defgroup ergoemacs-themes nil
+  "Default Ergoemacs Layout"
+  :group 'ergoemacs-mode)
 
-;; ErgoEmacs hooks
+(defcustom ergoemacs-theme-options
+  '()
+  "List of theme options"
+  :type '(repeat
+          (list
+           (sexp :tag "Theme Component")
+           (choice
+            (const :tag "Force Off" off)
+            (const :tag "Force On" on)
+            (const :tag "Let theme decide" nil))))
+  :group 'ergoemacs-themes)
 
-
-(require 'cus-edit)
-
-(defvar ergoemacs-mode-startup-hook nil
-  "Hook for starting `ergoemacs-mode'")
-
-(defvar ergoemacs-mode-shutdown-hook nil
-  "Hook for shutting down `ergoemacs-mode'")
-
-(defvar ergoemacs-mode-intialize-hook nil
-  "Hook for initializing `ergoemacs-mode'")
-
-(defvar ergoemacs-mode-init-hook nil
-  "Hook for running after emacs loads")
-
-(defvar ergoemacs-mode-after-load-hook nil
-  "Hook for running after a library loads")
+(defcustom ergoemacs-theme-version
+  '()
+  "Each themes set version"
+  :type '(repeat
+          (list
+           (string :tag "Theme Component")
+           (choice
+            (const :tag "Latest Version" nil)
+            (string :tag "Version"))))
+  :group 'ergoemacs-theme)
 
 
 ;; ErgoEmacs minor mode
@@ -302,6 +297,49 @@ bindings the keymap is:
       (setq overriding-terminal-local-map nil)
       (unless refresh-p
         (message "Ergoemacs-mode turned OFF.")))))
+
+(dolist (pkg '(ergoemacs-advice
+               ergoemacs-lib
+               ergoemacs-mapkeymap
+               ergoemacs-map-properties
+               ergoemacs-layouts
+               ergoemacs-translate
+               ergoemacs-key-description
+               ergoemacs-debug
+               ergoemacs-component
+               ergoemacs-command-loop
+               ergoemacs-map
+               ergoemacs-functions
+               ergoemacs-theme-engine
+	       ergoemacs-themes))
+  (unless (featurep pkg)
+    (load (symbol-name pkg))))
+
+
+
+(defvar ergoemacs-user-keymap (make-sparse-keymap)
+  "User `ergoemacs-mode' keymap.")
+
+;; ErgoEmacs hooks
+
+
+(require 'cus-edit)
+
+(defvar ergoemacs-mode-startup-hook nil
+  "Hook for starting `ergoemacs-mode'")
+
+(defvar ergoemacs-mode-shutdown-hook nil
+  "Hook for shutting down `ergoemacs-mode'")
+
+(defvar ergoemacs-mode-intialize-hook nil
+  "Hook for initializing `ergoemacs-mode'")
+
+(defvar ergoemacs-mode-init-hook nil
+  "Hook for running after emacs loads")
+
+(defvar ergoemacs-mode-after-load-hook nil
+  "Hook for running after a library loads")
+
 
 ;;;###autoload
 (defun ergoemacs-mode-start ()
@@ -352,8 +390,8 @@ Will reload `ergoemacs-mode' after setting the values."
   (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
                  (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
              (boundp 'ergoemacs-mode) ergoemacs-mode)
-    (ergoemacs-mode-reset)))
-
+    (ergoemacs-mode-reset))
+)
 
 (defvar ergoemacs-override-keymap (make-sparse-keymap)
   "ErgoEmacs override keymap.")
@@ -535,33 +573,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   ;; :set #'ergoemacs-set-default
   ;; :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
-
-(defgroup ergoemacs-themes nil
-  "Default Ergoemacs Layout"
-  :group 'ergoemacs-mode)
-
-(defcustom ergoemacs-theme-options
-  '()
-  "List of theme options"
-  :type '(repeat
-          (list
-           (sexp :tag "Theme Component")
-           (choice
-            (const :tag "Force Off" off)
-            (const :tag "Force On" on)
-            (const :tag "Let theme decide" nil))))
-  :group 'ergoemacs-themes)
-
-(defcustom ergoemacs-theme-version
-  '()
-  "Each themes set version"
-  :type '(repeat
-          (list
-           (string :tag "Theme Component")
-           (choice
-            (const :tag "Latest Version" nil)
-            (string :tag "Version"))))
-  :group 'ergoemacs-theme)
 
 (defcustom ergoemacs-excluded-major-modes
   '(conf-colon-mode
@@ -935,6 +946,7 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 ;;   :group 'ergoemacs-mode)
 
 (require 'persistent-soft nil t)
+(defvar ergoemacs-mode--fast-p nil)
 (defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
   (let (sym val found-p)
     (dolist (a args)
@@ -948,11 +960,12 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
             (set sym val)
             ;; Setup autoloads
             (when (eq sym 'ergoemacs-component-struct--hash)
+              (setq ergoemacs-mode--fast-p t)
               (maphash
                (lambda (_key value)
                  (when (ergoemacs-component-struct-p value)
                    (dolist (a (ergoemacs-component-struct-autoloads value))
-                     (autoload (car a) (cdr a) nil t))))
+                     (autoload (car a) (format (cdr a)) nil t))))
                val))
             )))
        ((symbolp a) ;; Store
@@ -984,6 +997,9 @@ When `store-p' is non-nil, save the tables."
   ))
 
 (ergoemacs-mode--setup-hash-tables)
+
+;(unless nil ;ergoemacs-mode--fast-p
+                                        ;  (load "ergoemacs-themes"))
   
 (defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
   "Run functions for anything that is loaded after emacs starts up."

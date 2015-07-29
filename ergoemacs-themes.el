@@ -46,6 +46,13 @@
 
 (require 'advice)
 
+(ergoemacs-package unicode-fonts
+    :ensure t
+    (unicode-fonts-setup))
+
+(ergoemacs-package undo-tree
+    :ensure t)
+
 (ergoemacs-component standard-vars ()
   "Enabled/changed variables/modes"
   (setq org-CUA-compatible t
@@ -1920,12 +1927,29 @@
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
+
+(ergoemacs-package multiple-cursors
+    :bind (("M-*" mc/mark-next-like-this)
+           ("M-&" mc/edit-lines))
+    :ensure t
+    :require nil)
+
+(ergoemacs-package ace-jump-mode
+    :bind ("M-," 'ace-jump-mode)
+    :ensure t
+    :require nil)
+
+(ergoemacs-package expand-region
+    :bind (("M-8" er/expand-region)
+           ("M-9" er/contract-region)
+           ("M-*". er/mark-inside-quotes))
+    :ensure t
+    :require nil)
+
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
   :based-on 'standard
-  (global-set-key (kbd "M-*") 'mc/mark-next-like-this)
-  (global-set-key (kbd "M-&") 'mc/edit-lines)
-  (global-set-key (kbd "M-,") 'ace-jump-mode)
+  :components '(multiple-cursors ace-jump-mode expand-region)
   (global-set-key (kbd "M-<") 'zap-to-char)
   (global-set-key (kbd "M-g") 'kill-line)
   (global-set-key (kbd "M-b") 'ergoemacs-kill-line-backward)
@@ -1936,7 +1960,6 @@
   (global-set-key (kbd "M-h") 'isearch-forward)
   (global-set-key (kbd "M-H") 'isearch-forward-regexp)
   (global-set-key (kbd "M-a") 'ergoemacs-move-cursor-previous-pane)
-  (global-set-key (kbd "M-9") 'er/contract-region)
   (global-set-key (kbd "M-;") 'execute-extended-command)
   ;;
   ;; Overwrite previous global definitions in `ergoemacs-mode'
