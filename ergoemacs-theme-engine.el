@@ -68,9 +68,6 @@
 (declare-function ergoemacs-component-find-1 "ergoemacs-component")
 (declare-function ergoemacs-component--prompt "ergoemacs-component")
 
-(defvar ergoemacs-theme-hash (make-hash-table :test 'equal)
-  "Hash of `ergoemacs-mode' themes")
-
 (defun ergoemacs-theme-components (&optional theme)
   "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."

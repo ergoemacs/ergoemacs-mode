@@ -119,10 +119,6 @@
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
 (declare-function ergoemacs-mode-line "ergoemacs-mode.el")
 
-
-(defvar ergoemacs-map--hash nil
-  "Hash of calculated maps")
-
 (defvar ergoemacs-map--hashkey nil
   "Current hashkey for theme options keyboard layout and version.")
 
@@ -225,8 +221,7 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 
 (defun ergoemacs-map--cache-save ()
   "Save ergoemacs cache for startup."
-  (when nil
-    (ergoemacs-mode--setup-hash-tables t)))
+  (ergoemacs-mode--setup-hash-tables t))
 
 (add-hook 'kill-emacs-hook 'ergoemacs-map--cache-save)
 

@@ -71,10 +71,6 @@
 
 (declare-function ergoemacs-command-loop--modal-p "ergoemacs-command-loop")
 
-
-(defvar ergoemacs-translate--hash (make-hash-table)
-  "")
-
 (defun ergoemacs-translate--get-hash (&optional layout-to layout-from)
   "Gets the translation hash."
   (let* ((to (ergoemacs :layout  (or layout-to ergoemacs-keyboard-layout)))
@@ -172,9 +168,6 @@ KEY-SEQ must be a vector or string.  If there is no need to change the sequence,
          (t
           (push event seq))))
       (and found (vconcat seq)))))
-
-(defvar ergoemacs-translate--event-hash (make-hash-table)
-  "Event modifiers not covered by standard emacs")
 
 (defun ergoemacs-translate--event-modifier-hash (&optional layout)
   "Gets the event modifier hash for LAYOUT."

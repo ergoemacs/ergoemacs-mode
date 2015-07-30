@@ -144,9 +144,6 @@
   (calculated-layouts (make-hash-table :test 'equal))
   (relative-to 'global-map))
 
-(defvar ergoemacs-component-hash (make-hash-table :test 'equal)
-  "Hash of ergoemacs-components")
-
 (defvar ergoemacs-component-struct--define-key-current nil)
 
 
@@ -493,9 +490,6 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
               ;; Create autoload.
               (autoload def (format "%s" package-name) nil t)
               (push (cons def package-name) (ergoemacs-component-struct-autoloads obj)))))))))))
-
-(defvar ergoemacs-component-struct--hash nil
-  "Hash table of `ergoemacs-mode' component structures.")
 
 (defun ergoemacs-component-struct--clear-cache (struct-map)
   "Clears STRUCT-MAP's cache of keymaps.

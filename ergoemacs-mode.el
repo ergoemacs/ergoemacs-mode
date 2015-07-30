@@ -201,10 +201,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 
 (font-lock-add-keywords 'emacs-lisp-mode ergoemacs-font-lock-keywords)
 
-(defvar ergoemacs-translation-hash (make-hash-table)
-  "Hash table of translations")
-
-
 
 
 (defcustom ergoemacs-hooks-that-always-override-ergoemacs-mode '()
@@ -298,6 +294,103 @@ bindings the keymap is:
       (unless refresh-p
         (message "Ergoemacs-mode turned OFF.")))))
 
+(require 'persistent-soft nil t)
+(defvar ergoemacs-mode--fast-p nil)
+(defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
+  (let (sym val found-p)
+    (dolist (a args)
+      (cond
+       ((and (symbolp a) (not store-p)) ;; Fetch
+        (setq sym a)
+        (when (featurep 'persistent-soft)
+          (setq val (persistent-soft-fetch sym "ergoemacs-mode"))
+          (when val
+            (setq found-p t)
+            (set sym val)
+            ;; Setup autoloads
+            (when (eq sym 'ergoemacs-component-struct--hash)
+              (setq ergoemacs-mode--fast-p t)
+              (maphash
+               (lambda (_key value)
+                 (when (ergoemacs-component-struct-p value)
+                   (dolist (a (ergoemacs-component-struct-autoloads value))
+                     (autoload (car a) (format (cdr a)) nil t))))
+               val))
+            ;; (message "Found %s->%s" sym val)
+            )))
+       ((symbolp a) ;; Store
+        (setq sym a)
+        (when (featurep 'persistent-soft)
+          (persistent-soft-store sym (symbol-value sym) "ergoemacs-mode")))
+       ((and (not found-p) (not store-p) (not (symbol-value sym)))
+        ;; Setup empty symbol.
+        ;; (message "Empty %s->%s" sym a)
+        (set sym a)
+        (setq found-p nil))
+       (t
+        (setq found-p nil))))))
+
+(defvar ergoemacs-component-hash nil
+  "Hash of ergoemacs-components")
+
+(defvar ergoemacs-component-struct--hash nil
+  "Hash table of `ergoemacs-mode' component structures.")
+
+(defvar ergoemacs-map--hash nil
+  "Hash of calculated maps")
+
+(defvar ergoemacs-map-properties--indirect-keymaps nil
+  "Variable listing indirect keymaps.")
+
+(defvar ergoemacs-map-properties--key-struct nil
+  "Key struct hash table.")
+
+(defvar ergoemacs-map-properties--plist-hash nil)
+
+(defvar ergoemacs-theme-hash nil
+  "Hash of `ergoemacs-mode' themes")
+
+(defvar ergoemacs-translate--event-hash nil
+  "Event modifiers not covered by standard emacs")
+
+(defvar ergoemacs-translate--hash nil
+  "")
+
+(defvar ergoemacs-translation-hash nil
+  "Hash table of translations")
+
+(defvar ergoemacs-map-properties--create-label-function nil)
+
+(defvar ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum)
+
+(defun ergoemacs-mode--setup-hash-tables (&optional store-p)
+  "Load hash-tables using `persistent-soft' when available.
+When `store-p' is non-nil, save the tables."
+  (when store-p
+    (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
+  (ergoemacs-mode--setup-hash-tables--setq
+   store-p
+   'ergoemacs-component-hash (make-hash-table :test 'equal)
+   'ergoemacs-component-struct--hash (make-hash-table)
+   'ergoemacs-map--hash (make-hash-table :test 'equal)
+   'ergoemacs-map-properties--indirect-keymaps (make-hash-table)
+   'ergoemacs-map-properties--key-struct (make-hash-table)
+   'ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)
+   'ergoemacs-theme-hash (make-hash-table :test 'equal)
+   'ergoemacs-translate--event-hash (make-hash-table)
+   'ergoemacs-translate--hash (make-hash-table)
+   'ergoemacs-translation-hash (make-hash-table)
+   'ergoemacs-map-properties--create-label-function nil
+   'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
+   ;;'ergoemacs-map-- (make-hash-table :test 'equal))
+   ;;'ergoemacs-map--alist (make-hash-table)
+   ;;'ergoemacs-map--alists (make-hash-table)
+   ;;'ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
+   ;;'ergoemacs-translate--keymap-hash (make-hash-table)
+   ))
+
+(ergoemacs-mode--setup-hash-tables)
+
 (dolist (pkg '(ergoemacs-advice
                ergoemacs-lib
                ergoemacs-mapkeymap
@@ -311,11 +404,16 @@ bindings the keymap is:
                ergoemacs-map
                ergoemacs-functions
                ergoemacs-theme-engine
-	       ergoemacs-themes))
+	       ;; ergoemacs-themes
+               ))
   (unless (featurep pkg)
     (load (symbol-name pkg))))
 
+(unless ergoemacs-mode--fast-p
+  (load "ergoemacs-themes"))
 
+(when (functionp ergoemacs-map-properties--create-label-function)
+  (funcall ergoemacs-map-properties--create-label-function))
 
 (defvar ergoemacs-user-keymap (make-sparse-keymap)
   "User `ergoemacs-mode' keymap.")
@@ -390,8 +488,7 @@ Will reload `ergoemacs-mode' after setting the values."
   (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
                  (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
              (boundp 'ergoemacs-mode) ergoemacs-mode)
-    (ergoemacs-mode-reset))
-)
+    (ergoemacs-mode-reset)))
 
 (defvar ergoemacs-override-keymap (make-sparse-keymap)
   "ErgoEmacs override keymap.")
@@ -408,10 +505,6 @@ Will reload `ergoemacs-mode' after setting the values."
 
 (add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-setup-override-keymap)
 (add-hook 'ergoemacs-mode-shudown-hook 'ergoemacs-setup-override-keymap)
-
-
-
-
 
 
 
@@ -944,62 +1037,6 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 ;;   :set 'ergoemacs-set-default
 ;;   :initialize #'custom-initialize-default
 ;;   :group 'ergoemacs-mode)
-
-(require 'persistent-soft nil t)
-(defvar ergoemacs-mode--fast-p nil)
-(defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
-  (let (sym val found-p)
-    (dolist (a args)
-      (cond
-       ((and (symbolp a) (not store-p)) ;; Fetch
-        (setq sym a)
-        (when (featurep 'persistent-soft)
-          (setq val (persistent-soft-fetch sym "ergoemacs-mode"))
-          (when val
-            (setq found-p t)
-            (set sym val)
-            ;; Setup autoloads
-            (when (eq sym 'ergoemacs-component-struct--hash)
-              (setq ergoemacs-mode--fast-p t)
-              (maphash
-               (lambda (_key value)
-                 (when (ergoemacs-component-struct-p value)
-                   (dolist (a (ergoemacs-component-struct-autoloads value))
-                     (autoload (car a) (format (cdr a)) nil t))))
-               val))
-            )))
-       ((symbolp a) ;; Store
-        (setq sym a)
-        (when (featurep 'persistent-soft)
-          (persistent-soft-store sym (symbol-value sym) "ergoemacs-mode")))
-       ((and (not found-p) (not store-p) (not (symbol-value sym)))
-        ;; Setup empty symbol.
-        (set sym a)
-        (setq found-p nil))
-       (t
-        (setq found-p nil))))))
-
-(defun ergoemacs-mode--setup-hash-tables (&optional store-p)
-  "Load hash-tables using `persistent-soft' when available.
-When `store-p' is non-nil, save the tables."
-  (ergoemacs-mode--setup-hash-tables--setq
-   store-p
-   'ergoemacs-component-hash (make-hash-table :test 'equal)
-   'ergoemacs-component-struct--hash (make-hash-table)
-   'ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)
-   'ergoemacs-map-properties--key-struct (make-hash-table)
-   'ergoemacs-map-properties--indirect-keymaps (make-hash-table)
-   ;;'ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
-   'ergoemacs-map--hash (make-hash-table :test 'equal)
-   ;'ergoemacs-map--alist (make-hash-table)
-   ;'ergoemacs-map--alists (make-hash-table)
-   ;'ergoemacs-map-- (make-hash-table :test 'equal))
-  ))
-
-(ergoemacs-mode--setup-hash-tables)
-
-;(unless nil ;ergoemacs-mode--fast-p
-                                        ;  (load "ergoemacs-themes"))
   
 (defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
   "Run functions for anything that is loaded after emacs starts up."

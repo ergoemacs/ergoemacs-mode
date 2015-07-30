@@ -71,8 +71,6 @@
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 
-(defvar ergoemacs-map-properties--plist-hash nil)
-
 (defun ergoemacs-map-properties--keymap-value (keymap &rest _ignore)
   "Return the keymap value of KEYMAP.
 KEYMAP can be a symbol, keymap or ergoemacs-mode keymap"
@@ -148,8 +146,7 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
                   (throw 'not-bound nil))
                 ret)) composed-list)))))
 
-(defvar ergoemacs-map-properties--key-struct (make-hash-table)
-  "Key struct hash table.")
+
 (defun ergoemacs-map-properties--key-struct (keymap &optional force)
   "Returns the maps linked to the current map, if it is an `ergoemacs-mode' map.
 
@@ -287,6 +284,20 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
         (when (ergoemacs-map-properties--key-struct map)
           (insert (format "(when (boundp '%s) (ergoemacs-map-properties--label %s %s))"
                           map map (ergoemacs (ergoemacs-sv map) :map-key))))))))
+
+(defun ergoemacs-map-properties--create-label-function ()
+  "Creates a function to label known keymaps."
+  (let ((ret nil)
+        tmp)
+    (dolist (map ergoemacs-map-properties--label-atoms-maps)
+      (when (ergoemacs-map-properties--key-struct map)
+        (setq tmp (find-lisp-object-file-name map 'defvar))
+        (unless (or (not tmp) (eq tmp 'C-source))
+          (setq ret (append ret `((eval-after-load ,(file-name-sans-extension (file-name-nondirectory tmp)) '(when (boundp ',map) (ergoemacs-map-properties--label ,map ,(ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))))))))))
+    (push 'progn ret)
+    `(lambda() ,ret)))
+
+
 
 (defvar ergoemacs-map-properties--before-ergoemacs nil
   "Keymap describing changes before `ergoemacs-mode' loads.")
@@ -473,7 +484,8 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
   (ergoemacs-map-properties--label-atoms)
   (if (file-readable-p (ergoemacs-map-properties--default-global-file))
       (progn
-        (load (ergoemacs-map-properties--default-global-file))
+        (unless ergoemacs-mode--fast-p
+          (load (ergoemacs-map-properties--default-global-file)))
         (ergoemacs-map-properties--protect-global-map))
     (if noninteractive
         (warn "Could not find global map information")
@@ -484,9 +496,6 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
         (ergoemacs-map-properties--get-original-global-map)))))
 
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-map-properties--get-original-global-map)
-
-(defvar ergoemacs-map-properties--indirect-keymaps nil
-  "Variable listing indirect keymaps.")
 
 (defun ergoemacs-map-properties--map-fixed-plist (keymap &rest _ignore)
   "Determines if this is an `ergoemacs-mode' KEYMAP.
@@ -641,7 +650,6 @@ KEYMAP can be a keymap or keymap integer key."
 (add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
 (add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
 
-(defvar ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum)
 (defun ergoemacs-map-properties--get-or-generate-map-key (keymap &rest _ignore)
   "Gets the key for the KEYMAP."
   (let ((ret (ergoemacs-map-properties--map-fixed-plist (ergoemacs-map-properties--keymap-value keymap))))
