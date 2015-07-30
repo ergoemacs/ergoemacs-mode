@@ -555,7 +555,7 @@ composing or parent/child relationships)"
          ((eq property :full)
           (warn "Cannot set the keymap property :full"))
          (t (let ((ret (ergoemacs-map-properties--map-fixed-plist keymap)) tmp)
-              (if (and ret (eq property ':map-key))
+              (if (and ret (eq property :map-key))
                   (progn
                     (setq ret (plist-put ret property value))
                     (ergoemacs :label keymap value))
@@ -654,6 +654,7 @@ KEYMAP can be a keymap or keymap integer key."
   "Gets the key for the KEYMAP."
   (let ((ret (ergoemacs-map-properties--map-fixed-plist (ergoemacs-map-properties--keymap-value keymap))))
     (or (and ret (plist-get ret :map-key))
+        (and ergoemacs-map--breadcrumb (ergoemacs-gethash (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash))
         (setq ergoemacs-map-properties--get-or-generate-map-key
               (+ 1 ergoemacs-map-properties--get-or-generate-map-key)))))
 

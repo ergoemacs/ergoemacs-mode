@@ -363,6 +363,9 @@ bindings the keymap is:
 
 (defvar ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum)
 
+(defvar ergoemacs-breadcrumb-hash nil
+  "Hash table of map breadcrumbs.")
+
 (defun ergoemacs-mode--setup-hash-tables (&optional store-p)
   "Load hash-tables using `persistent-soft' when available.
 When `store-p' is non-nil, save the tables."
@@ -380,6 +383,7 @@ When `store-p' is non-nil, save the tables."
    'ergoemacs-translate--event-hash (make-hash-table)
    'ergoemacs-translate--hash (make-hash-table)
    'ergoemacs-translation-hash (make-hash-table)
+   'ergoemacs-breadcrumb-hash (make-hash-table)
    'ergoemacs-map-properties--create-label-function nil
    'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
    ;;'ergoemacs-map-- (make-hash-table :test 'equal))

@@ -128,57 +128,69 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
   (or (and symbol ergoemacs-map--hashkey
            (intern (format "%s-%s" symbol ergoemacs-map--hashkey)))
       (setq ergoemacs-map--hashkey
-        (intern (md5 (format "%s" (append (list ergoemacs-keyboard-layout (ergoemacs :current-version)) (ergoemacs-theme-components))))))))
+            (intern (md5 (format "%s" (append (list ergoemacs-keyboard-layout (ergoemacs :current-version)) (ergoemacs-theme-components))))))))
 
+
+(defvar ergoemacs-map--breadcrumb "")
 (defvar ergoemacs-map--alist (make-hash-table))
 (defun ergoemacs-map--alist (alist &optional symbol)
   "Apply maps for ALIST."
-  (let (type old-len)
+  (let ((old-breadcrumb ergoemacs-map--breadcrumb)
+        breadcrumb-base type old-len)
     (if (and symbol (setq old-len (ergoemacs-gethash symbol ergoemacs-map--alist))
              (= (length alist) old-len)) alist
       (when symbol
-        (puthash symbol (length alist) ergoemacs-map--alist))
-      (mapcar
-       (lambda(elt)
-         (cond
-          ;; ((not (ergoemacs-sv (car elt)))
-          ;;  ;; not enabled, ignore any changes to this map...?
-          ;;  elt)
-          ((eq (car elt) 'ergoemacs-mode) elt)
-          
-          ((and (not (setq type (ergoemacs (cdr elt) :installed-p))) ergoemacs-mode)
-           ;; Install `ergoemacs-mode' into the keymap
-           (cons (car elt) (ergoemacs (cdr elt))))
-          ((not type)
-           ;; Install `ergoemacs-mode' user protection into the keymap.
-           (cons (car elt) (ergoemacs (cdr elt) :original-user)))
-          ((eq :cond-map type)
-           ;; Don't change conditional maps.  Change in alists...?
-           elt)
-          ((and ergoemacs-mode (eq :protected-p type))
-           ;; Change protection into full ergoemacs-mode installation
-           (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original))))
-          ((eq :protected-p type)
-           ;; `ergoemacs-mode' already protected this map
-           elt)
-          ((and ergoemacs-mode type)
-           ;; `ergoemacs-mode' already installed
-           elt)
-          ((and (not ergoemacs-mode) type)
-           ;; Change full `ergoemacs-mode' installation to user
-           ;; installation
-           (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original-user))))))
-       alist))))
+        (puthash symbol (length alist) ergoemacs-map--alist)
+        (setq breadcrumb-base (format "%s:%s" old-breadcrumb symbol)))
+      (prog1 (mapcar
+              (lambda(elt)
+                (cond
+                 ;; ((not (ergoemacs-sv (car elt)))
+                 ;;  ;; not enabled, ignore any changes to this map...?
+                 ;;  elt)
+                 ((eq (car elt) 'ergoemacs-mode) elt)
+                 
+                 ((and (not (setq type (ergoemacs (cdr elt) :installed-p))) ergoemacs-mode)
+                  ;; Install `ergoemacs-mode' into the keymap
+                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  (cons (car elt) (ergoemacs (cdr elt))))
+                 ((not type)
+                  ;; Install `ergoemacs-mode' user protection into the
+                  ;; keymap.
+                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  (cons (car elt) (ergoemacs (cdr elt) :original-user)))
+                 ((eq :cond-map type)
+                  ;; Don't change conditional maps.  Change in alists...?
+                  elt)
+                 ((and ergoemacs-mode (eq :protected-p type))
+                  ;; Change protection into full ergoemacs-mode installation
+                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original))))
+                 ((eq :protected-p type)
+                  ;; `ergoemacs-mode' already protected this map
+                  elt)
+                 ((and ergoemacs-mode type)
+                  ;; `ergoemacs-mode' already installed
+                  elt)
+                 ((and (not ergoemacs-mode) type)
+                  ;; Change full `ergoemacs-mode' installation to user
+                  ;; installation
+                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original-user))))))
+              alist)
+        (setq ergoemacs-map--breadcrumb old-breadcrumb)))))
 
 (defvar ergoemacs-map--alists (make-hash-table))
 (defun ergoemacs-map--alists (alists &optional symbol)
   "Apply maps for ALISTS"
   (let (old-len)
     ;; Only modify if the list has changed length.
-    (if (and symbol (setq old-len (ergoemacs-gethash symbol ergoemacs-map--alist))
+    (if (and symbol
+             (setq old-len (ergoemacs-gethash symbol ergoemacs-map--alist))
              (= (length alists) old-len)) alists
       (when symbol
-        (puthash symbol (length alists) ergoemacs-map--alist))
+        (puthash symbol (length alists) ergoemacs-map--alist)
+        (setq ergoemacs-map--breadcrumb (format "%s:%s" ergoemacs-map--breadcrumb symbol)))
       (mapcar
        (lambda(elt)
          (cond
@@ -191,11 +203,13 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 
 (defun ergoemacs-map--emulation-mode-map-alists ()
   "Modify the `emulation-mode-map-alists'."
-  (setq emulation-mode-map-alists (ergoemacs-map--alists emulation-mode-map-alists 'emulation-mode-map-alists)))
+  (setq ergoemacs-map--breadcrumb ""
+        emulation-mode-map-alists (ergoemacs-map--alists emulation-mode-map-alists 'emulation-mode-map-alists)))
 
 (defun ergoemacs-map--minor-mode-overriding-map-alist ()
   "Modify `minor-mode-overriding-map-alist'"
-  (setq minor-mode-overriding-map-alist (ergoemacs-map--alist minor-mode-overriding-map-alist 'minor-mode-overriding-map-alist)))
+  (setq ergoemacs-map--breadcrumb ""
+        minor-mode-overriding-map-alist (ergoemacs-map--alist minor-mode-overriding-map-alist 'minor-mode-overriding-map-alist)))
 
 (defun ergoemacs-map--minor-mode-map-alist (&optional ini)
   "Modify `minor-mode-map-alist'"
@@ -208,7 +222,8 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
             (push elt new-lst)))
         (setq minor-mode-map-alist (reverse new-lst))))
     
-    (setq ret (ergoemacs-map--alist minor-mode-map-alist 'minor-mode-map-alist))
+    (setq ergoemacs-map--breadcrumb ""
+          ret (ergoemacs-map--alist minor-mode-map-alist 'minor-mode-map-alist))
 
     (when (and ini ergoemacs-mode ret (not (ignore-errors (eq 'cond-map (car (ergoemacs (cdr (last ret)) :map-key))))))
       (setq ret (append ret (ergoemacs-component-struct--minor-mode-map-alist))))
@@ -225,12 +240,18 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 
 (add-hook 'kill-emacs-hook 'ergoemacs-map--cache-save)
 
+(defvar ergoemacs-map--cache--last-breadcrumb "")
 (defun ergoemacs-map--cache-- (what &optional save)
   "Get WHAT cache.  If SAVE is non-nil, save cache to WHAT"
   (or (and (not what) save)
       (let* ((key (ergoemacs-map--hashkey what))
              (val (or save (ergoemacs-gethash key ergoemacs-map--hash))))
         (when save
+          (unless (or (string= ergoemacs-map--breadcrumb "")
+                      (string= ergoemacs-map--breadcrumb ergoemacs-map--cache--last-breadcrumb))
+            (unless (minibufferp)
+              (message "Inject ergoemacs at: %s (will be cached)" ergoemacs-map--breadcrumb))
+            (setq ergoemacs-map--cache--last-breadcrumb ergoemacs-map--breadcrumb))
           (puthash key (copy-tree val t) ergoemacs-map--hash))
         val)))
 
@@ -240,9 +261,11 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 
 (defun ergoemacs-map--lookup-keymap-key (lookup-keymap)
   "Looks up key based on caching algorithms"
-  (let ((lookup-key (ergoemacs lookup-keymap :map-list))
+  (let ((lookup-key (or (and (not (string= "" ergoemacs-map--breadcrumb)) ergoemacs-map--breadcrumb)
+                        (ergoemacs lookup-keymap :map-list)))
         mode-hook)
-    (setq lookup-key (and (consp lookup-key) (car lookup-key)))
+    (setq lookup-key (or (and (stringp lookup-key) (intern lookup-key))
+                         (and (consp lookup-key) (car lookup-key))))
     (when (and lookup-key (eq (current-local-map) lookup-keymap))
       (if (memq lookup-key ergoemacs-map--lookup-keymap-key-volitile-maps)
           (setq lookup-key nil)
@@ -424,6 +447,11 @@ If LOOKUP-KEYMAP
        
        ;; Now create the keymap for a specified `lookup-keymap'
        (lookup-keymap
+        (unless (string= "" ergoemacs-map--breadcrumb)
+          (when (not (ergoemacs lookup-keymap :map-key))
+            (ergoemacs lookup-keymap :label)
+            (puthash (intern ergoemacs-map--breadcrumb) (ergoemacs lookup-keymap :map-key) ergoemacs-breadcrumb-hash)
+            (puthash (ergoemacs lookup-keymap :map-key) (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash)))
         (setq lookup-keymap (ergoemacs lookup-keymap :original)
               hook-overrides (ergoemacs lookup-keymap :override-maps))
         (setq only-modify-p (ergoemacs lookup-keymap :only-local-modifications-p)
@@ -641,8 +669,11 @@ If LOOKUP-KEYMAP
                          'local-map (ergoemacs local-map))))
     
     (when (and current-local-map (not (ergoemacs current-local-map :installed-p)))
-      (use-local-map (ergoemacs current-local-map)))
-
+      (setq ergoemacs-map--breadcrumb (format "%s" major-mode))
+      (when (eq major-mode 'ess-mode)
+        (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language)))
+      (use-local-map (ergoemacs current-local-map))
+      (setq ergoemacs-map--breadcrumb ""))
     
     (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map
           ergoemacs-map--modify-active-last-overriding-local-map overriding-local-map
