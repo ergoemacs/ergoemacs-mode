@@ -842,10 +842,6 @@ be composed over the keymap.  This is done in
          package-name ensure defer comp)
     (when ergoemacs-component-struct--apply-inits-first-p
       (setq ergoemacs-component-struct--apply-inits-first-p nil)
-      (when ergoemacs-require
-        (dolist (elt ergoemacs-require)
-          (apply #'ergoemacs-require elt))
-        (setq obj (ergoemacs-theme-components)))
       (dolist (elt obj)
         (setq comp (ergoemacs-component-struct--lookup-hash elt)
               package-name (ergoemacs-component-struct-package-name comp)

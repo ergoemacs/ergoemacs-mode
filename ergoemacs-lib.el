@@ -155,13 +155,14 @@ KEEP can change remove to nil.
 
 (defvar ergoemacs-require nil
   "List of required theme compinents.")
+(defvar ergoemacs-require--ini-p nil)
 (defun ergoemacs-require (option &optional theme type remove)
   "Requires an OPTION on ergoemacs themes.
 
 THEME can be a single theme or list of themes to apply the option
 to.  If unspecified, it is all themes.
 
-TYPE can be nil, where the option will be turned on by default
+TYPE can be 'on, where the option will be turned on by default
 but shown as something at can be toggled in the ergoemacs-mode
 menu.
 
@@ -171,10 +172,12 @@ and it dosen't show up on the ergoemacs-mode menu.
 TYPE can also be 'off, where the option will be included in the
 theme, but assumed to be disabled by default.
 
+When TYPE is nil, assume the type is 'required-hidden
+
 REMOVE represents when you would remove the OPTION from the
 ergoemacs THEME.
 "
-  (if ergoemacs-component-struct--apply-inits-first-p
+  (if (not ergoemacs-require--ini-p)
       (push (list option theme type remove) ergoemacs-require)
     (if (eq (type-of option) 'cons)
         (dolist (new-option option)
@@ -196,18 +199,19 @@ ergoemacs THEME.
                   off (delq option-sym off))
             (cond
              (remove) ;; Don't do anything.
-             ((eq type 'required-hidden)
+             ((or (not type) (memq type '(required-hidden :required-hidden)))
               (push option-sym comp))
-             ((eq type 'off)
+             ((memq type '(off :off))
               (push option-sym off))
-             (t
+             ((memq type '(on :on))
               (push option-sym on)))
             (setq theme-plist (plist-put theme-plist :components comp))
             (setq theme-plist (plist-put theme-plist :optional-on on))
             (setq theme-plist (plist-put theme-plist :optional-off off))
             (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
                      ergoemacs-theme-hash)))))
-    (ergoemacs-theme-option-on option t)))
+    (unless (eq ergoemacs-require--ini-p :ini)
+      (ergoemacs-theme-option-on option t))))
 
 
 (defvar ergoemacs-xah-emacs-lisp-tutorial-url

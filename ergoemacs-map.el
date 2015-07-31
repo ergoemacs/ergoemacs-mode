@@ -247,11 +247,14 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
       (let* ((key (ergoemacs-map--hashkey what))
              (val (or save (ergoemacs-gethash key ergoemacs-map--hash))))
         (when save
-          (unless (or (string= ergoemacs-map--breadcrumb "")
-                      (string= ergoemacs-map--breadcrumb ergoemacs-map--cache--last-breadcrumb))
+          (cond
+           ((not (or (string= ergoemacs-map--breadcrumb "")
+                     (string= ergoemacs-map--breadcrumb ergoemacs-map--cache--last-breadcrumb)))
             (unless (minibufferp)
-              (ergoemacs-command-loop--spinner-display "Inject ergoemacs at: %s (will be cached)" (substring ergoemacs-map--breadcrumb 1)))
-            (setq ergoemacs-map--cache--last-breadcrumb ergoemacs-map--breadcrumb))
+              (ergoemacs-command-loop--spinner-display "Inject ergoemacs at: %s (will be cached)" (replace-regexp-in-string "^:" "" ergoemacs-map--breadcrumb))))
+           ((and (string= ergoemacs-map--breadcrumb ""))
+            (unless (minibufferp)
+              (ergoemacs-command-loop--spinner-display "Cache: %s" what))))
           (puthash key (copy-tree val t) ergoemacs-map--hash))
         val)))
 

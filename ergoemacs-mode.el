@@ -269,6 +269,13 @@ bindings the keymap is:
   :group 'ergoemacs-mode
   :keymap ergoemacs-menu-keymap
   (setq ergoemacs-map--hashkey nil)
+  (unless ergoemacs-require--ini-p
+    (setq ergoemacs-require--ini-p :ini)
+    (let* ((obj (ergoemacs-theme-components))
+           package-name ensure defer comp)
+      (when ergoemacs-require
+        (dolist (elt ergoemacs-require)
+          (apply #'ergoemacs-require elt)))))
   (let ((refresh-p ergoemacs-component-struct--refresh-variables))
     (if ergoemacs-mode
         (progn
