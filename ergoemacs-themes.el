@@ -160,7 +160,6 @@
   (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
   ;; (dolist (hook '(dired-after-readin-hook after-change-major-mode-hook))
   ;;   (add-hook hook 'ergoemacs-setup-local-prefixes))
-  (undo-tree-mode 1)
   (shift-select-mode t)
   (delete-selection-mode 1)
   (setq recentf-menu-before "Close"
@@ -695,7 +694,9 @@
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   (define-key browse-kill-ring-mode-map [remap undo] 'browse-kill-ring-undo-other-window)
-  (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window))
+  (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
+  (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
+  (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo))
 
 (ergoemacs-component search ()
   "Search and Replace"
