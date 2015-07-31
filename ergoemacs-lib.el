@@ -153,6 +153,8 @@ KEEP can change remove to nil.
 "
   (ergoemacs-require option theme (or type 'off) (if keep nil t)))
 
+(defvar ergoemacs-require nil
+  "List of required theme compinents.")
 (defun ergoemacs-require (option &optional theme type remove)
   "Requires an OPTION on ergoemacs themes.
 
@@ -160,7 +162,7 @@ THEME can be a single theme or list of themes to apply the option
 to.  If unspecified, it is all themes.
 
 TYPE can be nil, where the option will be turned on by default
-but shown as something that can be toggled in the ergoemacs-mode
+but shown as something at can be toggled in the ergoemacs-mode
 menu.
 
 TYPE can also be 'required-hidden, where the option is turned on,
@@ -172,38 +174,40 @@ theme, but assumed to be disabled by default.
 REMOVE represents when you would remove the OPTION from the
 ergoemacs THEME.
 "
-  (if (eq (type-of option) 'cons)
-      (dolist (new-option option)
-        (let (ergoemacs-mode)
-          (ergoemacs-require new-option theme type)))
-    (let ((option-sym
-           (or (and (stringp option) (intern option)) option)))
-      (dolist (theme (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
-                         (ergoemacs-theme--list)))
-        (let ((theme-plist (ergoemacs-gethash (if (stringp theme) theme
-                                      (symbol-name theme))
-                                    ergoemacs-theme-hash))
-              comp on off)
-          (setq comp (plist-get theme-plist ':components)
-                on (plist-get theme-plist ':optional-on)
-                off (plist-get theme-plist ':optional-off))
-          (setq comp (delq option-sym comp)
-                on (delq option-sym on)
-                off (delq option-sym off))
-          (cond
-           (remove) ;; Don't do anything.
-           ((eq type 'required-hidden)
-            (push option-sym comp))
-           ((eq type 'off)
-            (push option-sym off))
-           (t
-            (push option-sym on)))
-          (setq theme-plist (plist-put theme-plist ':components comp))
-          (setq theme-plist (plist-put theme-plist ':optional-on on))
-          (setq theme-plist (plist-put theme-plist ':optional-off off))
-          (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
-                   ergoemacs-theme-hash)))))
-  (ergoemacs-theme-option-on option t))
+  (if ergoemacs-component-struct--apply-inits-first-p
+      (push (list option theme type remove) ergoemacs-require)
+    (if (eq (type-of option) 'cons)
+        (dolist (new-option option)
+          (let (ergoemacs-mode)
+            (ergoemacs-require new-option theme type)))
+      (let ((option-sym
+             (or (and (stringp option) (intern option)) option)))
+        (dolist (theme (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
+                           (ergoemacs-theme--list)))
+          (let ((theme-plist (ergoemacs-gethash (if (stringp theme) theme
+                                                  (symbol-name theme))
+                                                ergoemacs-theme-hash))
+                comp on off)
+            (setq comp (plist-get theme-plist :components)
+                  on (plist-get theme-plist :optional-on)
+                  off (plist-get theme-plist :optional-off))
+            (setq comp (delq option-sym comp)
+                  on (delq option-sym on)
+                  off (delq option-sym off))
+            (cond
+             (remove) ;; Don't do anything.
+             ((eq type 'required-hidden)
+              (push option-sym comp))
+             ((eq type 'off)
+              (push option-sym off))
+             (t
+              (push option-sym on)))
+            (setq theme-plist (plist-put theme-plist :components comp))
+            (setq theme-plist (plist-put theme-plist :optional-on on))
+            (setq theme-plist (plist-put theme-plist :optional-off off))
+            (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
+                     ergoemacs-theme-hash)))))
+    (ergoemacs-theme-option-on option t)))
 
 
 (defvar ergoemacs-xah-emacs-lisp-tutorial-url

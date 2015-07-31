@@ -149,7 +149,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                    '(lambda () ,@(nth 1 tmp)))))
               ((ignore-errors (memq (nth 0 elt) '(mapcar mapc dolist when if)))
                (macroexpand-all (ergoemacs-theme-component--parse-remaining elt)))
-              (t elt)))
+              (t `(ergoemacs-component-struct--deferred ',elt))))
            remaining)))
     remaining))
 
@@ -181,7 +181,9 @@ This accepts the following keywords:
     Default: nil
 
 :bind-keymap -- A keymap to bind.  Similar to :bind but used for
-    keymaps.  This is processed before :bind keywords
+    keymaps.  This is processed before :bind keywords.  While
+    this is necessary for use-package, it is not necessary for
+    `ergoemacs-mode'.  However, this keyword is provided for convenience. 
 
     Default: nil
 
@@ -202,6 +204,11 @@ This accepts the following keywords:
     :commands (isearch-moccur isearch-all)
 
     When :package-name is non-nil, this will create autoloads for the commands.
+
+:defer -- Should this package's loading be deferred?
+    When using :commands :bind :bind* :bind-keymap :bind-keymap*
+   :mode or :interperter, defer is implied.  When :package-name
+   is nil, this dosen't do anything.
 
 :ensure -- If the package should be installed by `package' if not present
    When t and :package-name is specified, the ensured package is the same as `package-name'

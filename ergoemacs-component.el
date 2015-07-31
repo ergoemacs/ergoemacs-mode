@@ -142,13 +142,13 @@
   (ensure nil)
   (layout "us" :read-only t)
   (calculated-layouts (make-hash-table :test 'equal))
-  (relative-to 'global-map))
+  (relative-to 'global-map)
+  (defer nil))
 
 (defvar ergoemacs-component-struct--define-key-current nil)
 
-
 (defvar ergoemacs-component-struct--ensure-refreshed-p nil)
-(defun ergoemacs-component-struct--ensure (package)
+(defun ergoemacs-component-struct--ensure (package &optional defer)
   "Ensure PACKAGE is installed."
   (when package
     (let ((package (or (and (symbolp package) package)
@@ -159,7 +159,11 @@
         (unless ergoemacs-component-struct--ensure-refreshed-p
           (package-refresh-contents)
           (setq ergoemacs-component-struct--ensure-refreshed-p t))
-        (package-install package)))))
+        (package-install package))
+      (unless defer
+        (load (format "%s" package)))
+      (when (numberp defer)
+        (run-with-idle-timer defer nil #'load (format "%s" package))))))
 
 (defun ergoemacs-component-struct--create-component (plist body)
   "PLIST is the component properties
@@ -175,11 +179,17 @@ BODY is the body of function."
                :variable-prefixes (or (plist-get plist :variable-prefixes) '([apps] [menu] [27]))
                :package-name (plist-get plist :package-name)
                :ensure (plist-get plist :ensure)
-               :layout (or (plist-get plist :layout) "us")))
-        (let ((tmp (plist-get plist :bind-keymap))
-              (package-name (plist-get plist :package-name)))
+               :layout (or (plist-get plist :layout) "us")
+               :defer (plist-get plist :defer)))
+        (let* ((tmp (plist-get plist :bind-keymap))
+               (package-name (plist-get plist :package-name))
+               (defer (plist-get plist :defer))
+               (defer-present-p (or defer (memq :defer plist))))
           
           ;; Handle :bind-keymap commands
+          (when (and tmp (not defer-present-p) (not defer))
+            (setq defer-present t defer t)
+            (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (cond
            ((and (consp tmp) (stringp (car tmp)))
             (ergoemacs-component-struct--define-key 'global-map (kbd (car tmp)) (symbol-value (cdr tmp))))
@@ -190,6 +200,9 @@ BODY is the body of function."
 
           ;; Handle :bind-keymap* commands
           (setq tmp (plist-get plist :bind-keymap*))
+          (when (and tmp (not defer-present-p) (not defer))
+            (setq defer-present t defer t)
+            (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (cond
            ((and (consp tmp) (stringp (car tmp)))
             (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car tmp)) (symbol-value (cdr tmp))))
@@ -200,6 +213,9 @@ BODY is the body of function."
           
           ;; Handle :bind keys
           (setq tmp (plist-get plist :bind))
+          (when (and tmp (not defer-present-p) (not defer))
+            (setq defer-present t defer t)
+            (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (cond
            ((and (consp tmp) (stringp (car tmp)))
             ;; :bind ("C-." . ace-jump-mode)
@@ -211,6 +227,9 @@ BODY is the body of function."
 
           ;; Handle :bind* commands
           (setq tmp (plist-get plist :bind*))
+          (when (and tmp (not defer-present-p) (not defer))
+            (setq defer-present t defer t)
+            (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (cond
            ((and (consp tmp) (stringp (car tmp)))
             ;; :bind ("C-." . ace-jump-mode)
@@ -222,6 +241,9 @@ BODY is the body of function."
           
           ;; Handle :commands
           (setq tmp (plist-get plist :commands))
+          (when (and tmp (not defer-present-p) (not defer))
+            (setq defer-present t defer t)
+            (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (when package-name
             (cond
              ((and tmp (symbolp tmp))
@@ -232,7 +254,10 @@ BODY is the body of function."
                 (when (and f (symbolp f))
                   (autoload f (format "%s" package-name) nil t)
                   (push (cons f package-name) (ergoemacs-component-struct-autoloads ergoemacs-component-struct--define-key-current))))))))
-        (funcall body))
+        (funcall body)
+        (setf (ergoemacs-component-struct-variables ergoemacs-component-struct--define-key-current)
+              (reverse (ergoemacs-component-struct-variables ergoemacs-component-struct--define-key-current))))
+    
     (puthash (concat (ergoemacs-component-struct-name ergoemacs-component-struct--define-key-current)
                      (and (ergoemacs-component-struct-version ergoemacs-component-struct--define-key-current)
                           (concat "::" (ergoemacs-component-struct-version ergoemacs-component-struct--define-key-current))))
@@ -780,6 +805,17 @@ be composed over the keymap.  This is done in
           (error "OBJECT is not an ergoemacs-component-structure.")
         (push (list symbol newval hook) (ergoemacs-component-struct-variables obj)))))))
 
+(defun ergoemacs-component-struct--deferred (what &optional object)
+  "Setup deferred initilizations."
+  (cond
+   ((and (not ergoemacs-component-struct--define-key-current) (not object)) ;; Old
+    (error "`ergoemacs-component-struct--deferred' is confused."))
+   (t
+    (let ((obj (or object ergoemacs-component-struct--define-key-current)))
+      (if (not (ergoemacs-component-struct-p obj))
+          (error "OBJECT is not an ergoemacs-component-structure.")
+        (push (list what nil nil) (ergoemacs-component-struct-variables obj)))))))
+
 (defun ergoemacs-component-struct--variables (&optional obj)
   "Get a list of variables for the OBJ."
   (let ((obj (or obj (ergoemacs-theme-components))))
@@ -795,6 +831,7 @@ be composed over the keymap.  This is done in
 
 (defvar ergoemacs-component-struct--refresh-variables nil)
 (defvar ergoemacs-component-struct--applied-inits '())
+(defvar ergoemacs-component-struct--deferred-functions '())
 
 (defvar ergoemacs-component-struct--apply-inits-first-p t)
 (defun ergoemacs-component-struct--apply-inits (&optional _file obj)
@@ -802,67 +839,79 @@ be composed over the keymap.  This is done in
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
   (let* ((obj (or obj (ergoemacs-theme-components)))
-         package-name ensure comp)
+         package-name ensure defer comp)
     (when ergoemacs-component-struct--apply-inits-first-p
+      (setq ergoemacs-component-struct--apply-inits-first-p nil)
+      (when ergoemacs-require
+        (dolist (elt ergoemacs-require)
+          (apply #'ergoemacs-require elt))
+        (setq obj (ergoemacs-theme-components)))
       (dolist (elt obj)
         (setq comp (ergoemacs-component-struct--lookup-hash elt)
               package-name (ergoemacs-component-struct-package-name comp)
-              ensure (ergoemacs-component-struct-ensure comp))
+              ensure (ergoemacs-component-struct-ensure comp)
+              defer (ergoemacs-component-struct-defer comp))
         (cond
          ((eq ensure t)
-          (ergoemacs-component-struct--ensure package-name))
+          (ergoemacs-component-struct--ensure package-name defer))
          ((and ensure (symbolp ensure))
-          (ergoemacs-component-struct--ensure ensure))
+          (ergoemacs-component-struct--ensure ensure defer))
          ((consp ensure)
           (dolist (elt ensure)
             (cond
              ((and elt (symbolp elt))
-              (ergoemacs-component-struct--ensure elt))
+              (ergoemacs-component-struct--ensure elt defer))
              ((stringp elt)
-              (ergoemacs-component-struct--ensure (intern elt))))))
+              (ergoemacs-component-struct--ensure (intern elt) defer)))))
          ((stringp ensure)
-          (ergoemacs-component-struct--ensure (intern ensure))))))
-    (setq ergoemacs-component-struct--apply-inits-first-p nil)
+          (ergoemacs-component-struct--ensure (intern ensure) defer))))
+      ;; Load non-deferred packages.
+      )
     (dolist (init (ergoemacs-component-struct--variables obj))
-      (let ((x (and ergoemacs-component-struct--refresh-variables (boundp (nth 0 init))
-                    (assq (nth 0 init) ergoemacs-component-struct--refresh-variables))))
-        (cond
-         ((and x
-               (not (nth 2 init))
-               (not
-                (equal (ergoemacs-sv (nth 0 init))
-                       (funcall (nth 1 init)))))
-          ;; Values have changed, so reapply.
-          (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)
-                x nil))
-         ((and x (nth 2 init))
-          ;; Reapply hooks
-          (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)
-                x nil)))
-        (cond
-         (x ;; Values have not changed
-          (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)))
-         ((not (boundp (nth 0 init))) ;; Do nothing, not bound yet.
-          )
-         ((assq (nth 0 init) ergoemacs-component-struct--applied-inits)
-          ;; Already applied, Do nothing for now.
-          )
-         ((nth 2 init)
-          ;; Hook
-          (let ((add-hook-p (nth 0 (nth 2 init)))
-                (append-p (nth 1 (nth 2 init)))
-                (local-p (nth 2 (nth 2 init))))
-            (if add-hook-p
-                (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
-              (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))
-            (push (list (nth 0 init) (nth 1 init)
-                        (list (not add-hook-p) append-p local-p))
-                  ergoemacs-component-struct--applied-inits)))
-         (t
-          ;; (Nth 0 Init)iable state change
-          (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
-                ergoemacs-component-struct--applied-inits)
-          (ergoemacs-set (nth 0 init) (funcall (nth 1 init))))))))
+      (if (and (consp (nth 0 init)) (not (nth 1 init)) (not (nth 2 init)))
+          (unless (member (nth 0 init) ergoemacs-component-struct--deferred-functions)
+            (when (ignore-errors (fboundp (car (nth 0 init))))
+              (apply (car (nth 0 init)) (cdr (nth 0 init)))
+              (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+        (let ((x (and ergoemacs-component-struct--refresh-variables (boundp (nth 0 init))
+                      (assq (nth 0 init) ergoemacs-component-struct--refresh-variables))))
+          (cond
+           ((and x
+                 (not (nth 2 init))
+                 (not
+                  (equal (ergoemacs-sv (nth 0 init))
+                         (funcall (nth 1 init)))))
+            ;; Values have changed, so reapply.
+            (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)
+                  x nil))
+           ((and x (nth 2 init))
+            ;; Reapply hooks
+            (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)
+                  x nil)))
+          (cond
+           (x ;; Values have not changed
+            (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)))
+           ((not (boundp (nth 0 init))) ;; Do nothing, not bound yet.
+            )
+           ((assq (nth 0 init) ergoemacs-component-struct--applied-inits)
+            ;; Already applied, Do nothing for now.
+            )
+           ((nth 2 init)
+            ;; Hook
+            (let ((add-hook-p (nth 0 (nth 2 init)))
+                  (append-p (nth 1 (nth 2 init)))
+                  (local-p (nth 2 (nth 2 init))))
+              (if add-hook-p
+                  (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
+                (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))
+              (push (list (nth 0 init) (nth 1 init)
+                          (list (not add-hook-p) append-p local-p))
+                    ergoemacs-component-struct--applied-inits)))
+           (t
+            ;; (Nth 0 Init)iable state change
+            (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
+                  ergoemacs-component-struct--applied-inits)
+            (ergoemacs-set (nth 0 init) (funcall (nth 1 init)))))))))
   ;; Now remove things that were not set
   (when ergoemacs-component-struct--refresh-variables
     (let ((tmp ergoemacs-component-struct--applied-inits))

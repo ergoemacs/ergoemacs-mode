@@ -1065,9 +1065,17 @@ This sequence is compatible with `listify-key-sequence'."
           ergoemacs-command-loop--spinner (run-at-time (format "%s sec" ergoemacs-command-loop-spinner-rate) ergoemacs-command-loop-spinner-rate 'ergoemacs-command-loop--spinner-display)
           ergoemacs-command-loop--spinner-i 0)))
 
-(defun ergoemacs-command-loop--spinner-display ()
-  (ergoemacs-command-loop--message "%s" (nth (mod (setq ergoemacs-command-loop--spinner-i (+ 1 ergoemacs-command-loop--spinner-i))
-                                                  (length ergoemacs-command-loop--spinner-list)) ergoemacs-command-loop--spinner-list)))
+(defun ergoemacs-command-loop--spinner-display (&optional string &rest args)
+  "Spinner display"
+  (let ((rest (or (and (not string) "")
+                  (concat " " (apply #'format string args)))))
+    (when (not ergoemacs-command-loop--spinner-list)
+      (setq ergoemacs-command-loop--spinner-list (nth 1 (assoc ergoemacs-command-loop-spinner ergoemacs-command-loop-spinners))
+            ergoemacs-command-loop--spinner-i 0))
+    (ergoemacs-command-loop--message "%s%s" (nth (mod (setq ergoemacs-command-loop--spinner-i (+ 1 ergoemacs-command-loop--spinner-i))
+                                                      (length ergoemacs-command-loop--spinner-list)) ergoemacs-command-loop--spinner-list)
+                                     rest)))
+
 (defun ergoemacs-command-loop--spinner-end ()
   (when ergoemacs-command-loop--spinner
     (cancel-timer ergoemacs-command-loop--spinner)

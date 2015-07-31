@@ -250,7 +250,7 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
           (unless (or (string= ergoemacs-map--breadcrumb "")
                       (string= ergoemacs-map--breadcrumb ergoemacs-map--cache--last-breadcrumb))
             (unless (minibufferp)
-              (message "Inject ergoemacs at: %s (will be cached)" ergoemacs-map--breadcrumb))
+              (ergoemacs-command-loop--spinner-display "Inject ergoemacs at: %s (will be cached)" (substring ergoemacs-map--breadcrumb 1)))
             (setq ergoemacs-map--cache--last-breadcrumb ergoemacs-map--breadcrumb))
           (puthash key (copy-tree val t) ergoemacs-map--hash))
         val)))
@@ -669,9 +669,10 @@ If LOOKUP-KEYMAP
                          'local-map (ergoemacs local-map))))
     
     (when (and current-local-map (not (ergoemacs current-local-map :installed-p)))
-      (setq ergoemacs-map--breadcrumb (format "%s" major-mode))
-      (when (eq major-mode 'ess-mode)
-        (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language)))
+      (unless (minibufferp)
+        (setq ergoemacs-map--breadcrumb (format "%s" major-mode))
+        (when (eq major-mode 'ess-mode)
+          (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language))))
       (use-local-map (ergoemacs current-local-map))
       (setq ergoemacs-map--breadcrumb ""))
     

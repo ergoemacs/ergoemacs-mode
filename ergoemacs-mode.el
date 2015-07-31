@@ -92,9 +92,6 @@
 (declare-function persistent-soft-fetch "persistent-soft")
 (declare-function persistent-soft-store "persistent-soft")
 
-(require 'unicode-fonts nil t)
-(when (featurep 'unicode-fonts)
-  (unicode-fonts-setup))
 
 
 ;; Fundamental ergoemacs functions
@@ -143,10 +140,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :set 'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
-
-
-(defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
-  "Hash of ergoemacs theme components")
 
 ;;; ergoemacs-keymap
 
@@ -275,6 +268,7 @@ bindings the keymap is:
   :global t
   :group 'ergoemacs-mode
   :keymap ergoemacs-menu-keymap
+  (setq ergoemacs-map--hashkey nil)
   (let ((refresh-p ergoemacs-component-struct--refresh-variables))
     (if ergoemacs-mode
         (progn
@@ -366,6 +360,9 @@ bindings the keymap is:
 (defvar ergoemacs-breadcrumb-hash nil
   "Hash table of map breadcrumbs.")
 
+(defvar ergoemacs-theme-comp-hash nil
+  "Hash of ergoemacs theme components")
+
 (defun ergoemacs-mode--setup-hash-tables (&optional store-p)
   "Load hash-tables using `persistent-soft' when available.
 When `store-p' is non-nil, save the tables."
@@ -380,6 +377,7 @@ When `store-p' is non-nil, save the tables."
    'ergoemacs-map-properties--key-struct (make-hash-table)
    'ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)
    'ergoemacs-theme-hash (make-hash-table :test 'equal)
+   'ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
    'ergoemacs-translate--event-hash (make-hash-table)
    'ergoemacs-translate--hash (make-hash-table)
    'ergoemacs-translation-hash (make-hash-table)
