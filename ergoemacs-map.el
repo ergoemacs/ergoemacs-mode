@@ -246,7 +246,7 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
   (or (and (not what) save)
       (let* ((key (ergoemacs-map--hashkey what))
              (val (or save (ergoemacs-gethash key ergoemacs-map--hash))))
-        (when save
+        (when (and ergoemacs-mode save)
           (cond
            ((not (or (string= ergoemacs-map--breadcrumb "")
                      (string= ergoemacs-map--breadcrumb ergoemacs-map--cache--last-breadcrumb)))
