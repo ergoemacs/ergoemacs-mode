@@ -396,7 +396,23 @@ When `store-p' is non-nil, save the tables."
    ;;'ergoemacs-map--alists (make-hash-table)
    ;;'ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
    ;;'ergoemacs-translate--keymap-hash (make-hash-table)
-   ))
+   )
+  (when store-p
+    (persistent-soft-flush "ergoemacs-mode")
+    (when (eq system-type 'windows-nt)
+      ;; Fix for stupid  endings
+      (with-temp-buffer
+        (insert-file-contents (concat pcache-directory "ergoemacs-mode"))
+        (persistent-soft-location-destroy "ergoemacs-mode")
+        (goto-char (point-min))
+        (while (re-search-forward "+$" nil t)
+          (replace-match ""))
+        ;; Update timestamp.
+        (when (re-search-backward ":timestamp +[0-9.]+" nil t)
+          (replace-match (format ":timestamp %s" (float-time (current-time)))))
+        (write-region (point-min) (point-max)
+                      (concat pcache-directory "ergoemacs-mode")
+                      nil 1)))))
 
 (ergoemacs-mode--setup-hash-tables)
 
