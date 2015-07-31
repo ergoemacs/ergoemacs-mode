@@ -745,7 +745,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   "Spinners for long commands with `ergoemacs-command-loop'"
   :group 'ergoemacs-command-loop)
 
-(defcustom ergoemacs-command-loop-spinner 'standard
+(defcustom ergoemacs-command-loop-spinner 'dots
   "What spinner to use for long commands with `ergoemacs-command-loop'"
   :type 'sexp
   :group 'ergoemacs-command-loop)
