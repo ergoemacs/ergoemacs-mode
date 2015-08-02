@@ -820,48 +820,48 @@
 (ergoemacs-component apps ()
   "General Apps Key Sequence"
   :just-first-keys (list [apps ?h] [menu ?h])
-  :bind (("<apps> '" . ergoemacs-org-edit-src)
-         ("<apps> 2" . delete-window)
-         ("<apps> 3" . delete-other-windows)
-         ("<apps> 4" . split-window-vertically)
-         ("<apps> 5" . query-replace)
-         ("<apps> <f2>" . ergoemacs-cut-all)
-         ("<apps> <f3>" . ergoemacs-copy-all)
-         ("<apps> <return>" . execute-extended-command)
-         ("<apps> RET" . execute-extended-command)
-         ("<apps> TAB" . indent-region)  ;; Already in CUA
-         ("<apps> SPC" . set-mark-command)
-         ("<apps> a" . mark-whole-buffer)
-         ("<apps> d" . ("C-x" :ctl-to-alt))
-         ("<apps> f" . ("C-c" :unchorded-ctl))
-         ("<apps> h" . help-map)
-         ("<apps> h '" . ergoemacs-display-current-svg)
-         ("<apps> h 1" . describe-function)
-         ("<apps> h 2" . describe-variable)
-         ("<apps> h 3" . describe-key)
-         ("<apps> h 4" . describe-char)
-         ("<apps> h 5" . man)
-         ("<apps> h 7" . ergoemacs-lookup-google)
-         ("<apps> h 8" . ergoemacs-lookup-wikipedia)
-         ("<apps> h 9" . ergoemacs-lookup-word-definition)
-         ("<apps> h `" . elisp-index-search)
-         ("<apps> h o" . ergoemacs-where-is-old-binding)
-         ("<apps> h z" . ergoemacs-clean)
-         ("<apps> h C-z" . ergoemacs-clean-library)
-         ("<apps> h Z" . ergoemacs-clean-nw)
-         ("<apps> m" . (kbd "C-c C-c"))
-         ("<apps> s" . save-buffer)
-         ("<apps> C-s" . write-file)
-         ("<apps> o" . find-file)
-         ("<apps> g" . ergoemacs-read-key--universal-argument)
-         ("<apps> w" . ergoemacs-close-current-buffer)
-         ("<apps> x" . ergoemacs-cut-line-or-region)
-         ("<apps> c" . ergoemacs-copy-line-or-region)
-         ("<apps> v" . ergoemacs-paste)
-         ("<apps> b" . (redo undo-tree-redo ergoemacs-redo))
-         ("<apps> t" . switch-to-buffer)
-         ("<apps> z" . undo)
-         ("<apps> r" . goto-map)))
+  :bind ("<apps> '"         ergoemacs-org-edit-src
+         "<apps> 2"         delete-window
+         "<apps> 3"         delete-other-windows
+         "<apps> 4"         split-window-vertically
+         "<apps> 5"         query-replace
+         "<apps> <f2>"      ergoemacs-cut-all
+         "<apps> <f3>"      ergoemacs-copy-all
+         "<apps> <return>"  execute-extended-command
+         "<apps> RET"       execute-extended-command
+         "<apps> TAB"       indent-region  ;; Already in CUA
+         "<apps> SPC"       set-mark-command
+         "<apps> a"         mark-whole-buffer
+         "<apps> d"         ("C-x" :ctl-to-alt)
+         "<apps> f"         ("C-c" :unchorded-ctl)
+         "<apps> h"         help-map
+         "<apps> h '"       ergoemacs-display-current-svg
+         "<apps> h 1"       describe-function
+         "<apps> h 2"       describe-variable
+         "<apps> h 3"       describe-key
+         "<apps> h 4"       describe-char
+         "<apps> h 5"       man
+         "<apps> h 7"       ergoemacs-lookup-google
+         "<apps> h 8"       ergoemacs-lookup-wikipedia
+         "<apps> h 9"       ergoemacs-lookup-word-definition
+         "<apps> h `"       elisp-index-search
+         "<apps> h o"       ergoemacs-where-is-old-binding
+         "<apps> h z"       ergoemacs-clean
+         "<apps> h C-z"     ergoemacs-clean-library
+         "<apps> h Z"       ergoemacs-clean-nw
+         "<apps> m"         (kbd "C-c C-c")
+         "<apps> s"         save-buffer
+         "<apps> C-s"       write-file
+         "<apps> o"         find-file
+         "<apps> g"         ergoemacs-read-key--universal-argument
+         "<apps> w"         ergoemacs-close-current-buffer
+         "<apps> x"         ergoemacs-cut-line-or-region
+         "<apps> c"         ergoemacs-copy-line-or-region
+         "<apps> v"         ergoemacs-paste
+         "<apps> b"         (redo undo-tree-redo ergoemacs-redo)
+         "<apps> t"         switch-to-buffer
+         "<apps> z"         undo
+         "<apps> r"         goto-map))
 
 (ergoemacs-component apps-toggle ()
   "Toggle States and applications"

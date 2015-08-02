@@ -176,6 +176,14 @@ This accepts the following keywords:
            (\"M-o r\" . highlight-regexp)
            (\"M-o w\" . highlight-phrase))
 
+    This list of commands can just be a list without the extra
+    parentheses for each command:
+
+    :bind (\"M-o l\" . highlight-lines-matching-regexp
+           \"M-o r\" . highlight-regexp
+           \"M-o w\" . highlight-phrase)
+
+
     Note that these keys may change based on keyboard layouts,
     and also these keys can accept special ergoemacs-commands and
     keymaps (unlike use-package).
@@ -191,15 +199,18 @@ This accepts the following keywords:
 
     Default: nil
 
-:bind* -- Keys to bind above minor modes (in `ergoemacs-override-keymap').
+:bind* -- Keys to bind above minor modes (in
+  `ergoemacs-override-keymap').
 
    Default: nil
 
-:bind-keymap* -- Keymap to bind above minor modes (in `ergoemacs-override-keymap').
+:bind-keymap* -- Keymap to bind above minor modes (in
+   `ergoemacs-override-keymap').
 
     Default: nil
 
-:commands -- List of commands to create autoloads for.  This can take a command like:
+:commands -- List of commands to create autoloads for.  This can
+    take a command like:
 
     :commands ace-jump-mode
 
@@ -207,7 +218,8 @@ This accepts the following keywords:
 
     :commands (isearch-moccur isearch-all)
 
-    When :package-name is non-nil, this will create autoloads for the commands.
+    When :package-name is non-nil, this will create autoloads for
+    the commands.
 
 :defer -- Should this package's loading be deferred?
     When using :commands :bind :bind* :bind-keymap :bind-keymap*
@@ -224,10 +236,10 @@ This accepts the following keywords:
 
     By default this is nil. 
 
-:ensure -- If the package should be installed by `package' if not present
-   When t and :package-name is specified, the ensured package is the same as `package-name'
-   When a symbol, ensure the package is installed.
+:ensure -- If the package should be installed by `package' if not present.
 
+   This can be t to install the :package-name symbol.  Otherwise
+   it can be a list of symbols or single symbol.
 
 :package-name -- Name of package to load.  When non-nil any key
     defition to a single command will create an autoload for that
@@ -270,7 +282,9 @@ This accepts the following keywords:
 
     Defaults to us (QWERTY)
 
-Please do not use the following tags, since they are parsed based on the definition
+Please do not use the following tags, since they are parsed based
+on the definition:
+
 :name -- Component Name
 :description -- Component Description
 :file -- File where the component was defined."

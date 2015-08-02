@@ -162,6 +162,29 @@
           (setq ergoemacs-component-struct--ensure-refreshed-p t))
         (package-install package)))))
 
+
+(defun ergoemacs-component-struct--handle-bind (bind &optional keymap)
+  "Handle :bind and related keywords."
+  (let ((keymap (or keymap 'global-map))
+        key def)
+    (cond
+     ((ignore-errors (and (consp bind) (> (length bind) 2)
+                          (setq key (pop bind))
+                          (setq def (pop bind))))
+      (while (and key def)
+        (when (stringp key)
+          (ergoemacs-component-struct--define-key keymap (kbd key) def))
+        (setq key (pop bind)
+              def (pop bind))))
+     ((and (consp bind) (stringp (car bind)))
+      ;; :bind ("C-." . ace-jump-mode)
+      (ergoemacs-component-struct--define-key keymap (kbd (car bind)) (cdr bind)))
+     ((and (consp bind) (consp (car bind)))
+      (dolist (elt bind)
+        (when (and (consp elt) (stringp (car elt)))
+          (ergoemacs-component-struct--define-key keymap (kbd (car elt)) (cdr elt)))))
+     )))
+
 (defun ergoemacs-component-struct--create-component (plist body)
   "PLIST is the component properties
 BODY is the body of function."
@@ -188,54 +211,28 @@ BODY is the body of function."
           (when (and tmp (not defer-present-p) (not defer))
             (setq defer-present t defer t)
             (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
-          (cond
-           ((and (consp tmp) (stringp (car tmp)))
-            (ergoemacs-component-struct--define-key 'global-map (kbd (car tmp)) (symbol-value (cdr tmp))))
-           ((and (consp tmp) (consp (car tmp)))
-            (dolist (elt tmp)
-              (when (and (consp elt) (stringp (car elt)))
-                (ergoemacs-component-struct--define-key 'global-map (kbd (car elt)) (symbol-value (cdr elt)))))))
+          (ergoemacs-component-struct--handle-bind tmp)
 
           ;; Handle :bind-keymap* commands
           (setq tmp (plist-get plist :bind-keymap*))
           (when (and tmp (not defer-present-p) (not defer))
             (setq defer-present t defer t)
             (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
-          (cond
-           ((and (consp tmp) (stringp (car tmp)))
-            (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car tmp)) (symbol-value (cdr tmp))))
-           ((and (consp tmp) (consp (car tmp)))
-            (dolist (elt tmp)
-              (when (and (consp elt) (stringp (car elt)))
-                (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car elt)) (symbol-value (cdr elt)))))))
+          (ergoemacs-component-struct--handle-bind tmp 'ergoemacs-override-keymap)
           
           ;; Handle :bind keys
           (setq tmp (plist-get plist :bind))
           (when (and tmp (not defer-present-p) (not defer))
             (setq defer-present t defer t)
             (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
-          (cond
-           ((and (consp tmp) (stringp (car tmp)))
-            ;; :bind ("C-." . ace-jump-mode)
-            (ergoemacs-component-struct--define-key 'global-map (kbd (car tmp)) (cdr tmp)))
-           ((and (consp tmp) (consp (car tmp)))
-            (dolist (elt tmp)
-              (when (and (consp elt) (stringp (car elt)))
-                (ergoemacs-component-struct--define-key 'global-map (kbd (car elt)) (cdr elt))))))
-
+          (ergoemacs-component-struct--handle-bind tmp)
+          
           ;; Handle :bind* commands
           (setq tmp (plist-get plist :bind*))
           (when (and tmp (not defer-present-p) (not defer))
             (setq defer-present t defer t)
             (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
-          (cond
-           ((and (consp tmp) (stringp (car tmp)))
-            ;; :bind ("C-." . ace-jump-mode)
-            (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car tmp)) (cdr tmp)))
-           ((and (consp tmp) (consp (car tmp)))
-            (dolist (elt tmp)
-              (when (and (consp elt) (stringp (car elt)))
-                (ergoemacs-component-struct--define-key 'ergoemacs-override-keymap (kbd (car elt)) (cdr elt))))))
+          (ergoemacs-component-struct--handle-bind tmp 'ergoemacs-override-keymap)
           
           ;; Handle :commands
           (setq tmp (plist-get plist :commands))
