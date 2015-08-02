@@ -1933,19 +1933,19 @@
     :bind (("M-*" mc/mark-next-like-this)
            ("M-&" mc/edit-lines))
     :ensure t
-    :require nil)
+    :ergoemacs-require nil)
 
 (ergoemacs-package ace-jump-mode
     :bind ("M-," 'ace-jump-mode)
     :ensure t
-    :require nil)
+    :ergoemacs-require nil)
 
 (ergoemacs-package expand-region
     :bind (("M-8" er/expand-region)
            ("M-9" er/contract-region)
            ("M-*". er/mark-inside-quotes))
     :ensure t
-    :require nil)
+    :ergoemacs-require nil)
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"

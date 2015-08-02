@@ -68,6 +68,7 @@
 (defvar ergoemacs-display-key-use-face-p)
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-mode-version)
+(defvar package--initialized)
 
 (declare-function ergoemacs-set "ergoemacs-lib")
 (declare-function ergoemacs-reset "ergoemacs-lib")
@@ -148,7 +149,7 @@
 (defvar ergoemacs-component-struct--define-key-current nil)
 
 (defvar ergoemacs-component-struct--ensure-refreshed-p nil)
-(defun ergoemacs-component-struct--ensure (package &optional defer)
+(defun ergoemacs-component-struct--ensure (package)
   "Ensure PACKAGE is installed."
   (when package
     (let ((package (or (and (symbolp package) package)
@@ -159,11 +160,7 @@
         (unless ergoemacs-component-struct--ensure-refreshed-p
           (package-refresh-contents)
           (setq ergoemacs-component-struct--ensure-refreshed-p t))
-        (package-install package))
-      (unless defer
-        (load (format "%s" package)))
-      (when (numberp defer)
-        (run-with-idle-timer defer nil #'load (format "%s" package))))))
+        (package-install package)))))
 
 (defun ergoemacs-component-struct--create-component (plist body)
   "PLIST is the component properties
@@ -183,8 +180,9 @@ BODY is the body of function."
                :defer (plist-get plist :defer)))
         (let* ((tmp (plist-get plist :bind-keymap))
                (package-name (plist-get plist :package-name))
-               (defer (plist-get plist :defer))
-               (defer-present-p (or defer (memq :defer plist))))
+               (demand (plist-get plist :demand))
+               (defer (if demand nil (plist-get plist :defer)))
+               (defer-present-p (or demand defer (memq :defer plist))))
           
           ;; Handle :bind-keymap commands
           (when (and tmp (not defer-present-p) (not defer))
@@ -846,23 +844,28 @@ be composed over the keymap.  This is done in
         (setq comp (ergoemacs-component-struct--lookup-hash elt)
               package-name (ergoemacs-component-struct-package-name comp)
               ensure (ergoemacs-component-struct-ensure comp)
+              plist (ergoemacs-component-struct-plist comp)
               defer (ergoemacs-component-struct-defer comp))
         (cond
          ((eq ensure t)
-          (ergoemacs-component-struct--ensure package-name defer))
+          (ergoemacs-component-struct--ensure package-name))
          ((and ensure (symbolp ensure))
-          (ergoemacs-component-struct--ensure ensure defer))
+          (ergoemacs-component-struct--ensure ensure))
          ((consp ensure)
           (dolist (elt ensure)
             (cond
              ((and elt (symbolp elt))
-              (ergoemacs-component-struct--ensure elt defer))
+              (ergoemacs-component-struct--ensure elt))
              ((stringp elt)
-              (ergoemacs-component-struct--ensure (intern elt) defer)))))
+              (ergoemacs-component-struct--ensure (intern elt))))))
          ((stringp ensure)
-          (ergoemacs-component-struct--ensure (intern ensure) defer))))
+          (ergoemacs-component-struct--ensure (intern ensure)))))
       ;; Load non-deferred packages.
-      )
+      (when package-name
+        (unless (or defer (plist-get plist :no-require) (plist-get plist :no-load))
+          (load (format "%s" package-name)))
+        (when (numberp defer)
+          (run-with-idle-timer defer nil #'load (format "%s" package-name)))))
     (dolist (init (ergoemacs-component-struct--variables obj))
       (if (and (consp (nth 0 init)) (not (nth 1 init)) (not (nth 2 init)))
           (unless (member (nth 0 init) ergoemacs-component-struct--deferred-functions)

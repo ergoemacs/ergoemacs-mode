@@ -114,7 +114,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
               ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
                `(ergoemacs-component-struct--set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
-               (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
+               (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt)))
                    `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
                  `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
               
@@ -176,6 +176,10 @@ This accepts the following keywords:
            (\"M-o r\" . highlight-regexp)
            (\"M-o w\" . highlight-phrase))
 
+    Note that these keys may change based on keyboard layouts,
+    and also these keys can accept special ergoemacs-commands and
+    keymaps (unlike use-package).
+
     When package-name is non-nil, create autoloads for undefined commands.
 
     Default: nil
@@ -210,6 +214,16 @@ This accepts the following keywords:
    :mode or :interperter, defer is implied.  When :package-name
    is nil, this dosen't do anything.
 
+:demand -- Prevent deferred loading in all cases
+
+:diminish -- Diminish this mode.  It can be of the following forms:
+
+    :diminish t -- Assumes that :package-name is diminshed
+    :diminish package-name -- Diminshes package-name
+    :diminish (package-name \" New Description\")
+
+    By default this is nil. 
+
 :ensure -- If the package should be installed by `package' if not present
    When t and :package-name is specified, the ensured package is the same as `package-name'
    When a symbol, ensure the package is installed.
@@ -221,8 +235,10 @@ This accepts the following keywords:
 
     Default: nil
 
-:require -- when non-nil, this ergoemacs-component is required with `ergoemacs-require'
-   Dy default this is disabled
+:no-load / :no-require -- Don't load/require the package-name.
+
+:ergoemacs-require -- when non-nil, this ergoemacs-component is
+   required with `ergoemacs-require'. By default this is disabled
 
 :just-first-keys -- Keys where a fixed amount of the key is based
     on variable keyboard placement, then the rest of the key is
@@ -260,8 +276,21 @@ Please do not use the following tags, since they are parsed based on the definit
 :file -- File where the component was defined."
   (declare (doc-string 2)
            (indent 2))
-  (let ((kb (make-symbol "body-and-plist")))
+  (let ((kb (make-symbol "body-and-plist"))
+        (tmp (make-symbol "tmp"))
+        (pkg (make-symbol "pkg")))
     (setq kb (ergoemacs-theme-component--parse body-and-plist))
+    ;; :diminish keyword support
+    (when (setq tmp (plist-get (nth 0 kb) :diminish))
+      (cond
+       ((and (eq tmp t) (setq pkg (plist-get (nth 0 kb) :package-name)))
+        (setf (nth 1 kb) (append (nth 1 kb) `((require 'diminish) (ergoemacs-component-struct--deferred '(diminish ',(intern (format "%s" pkg))))))))
+       ((and tmp (symbolp tmp))
+        (setf (nth 1 kb) (append (nth 1 kb) `((require 'diminish) (ergoemacs-component-struct--deferred '(diminish ',tmp))))))
+       ((and tmp (consp tmp) (symbolp (car tmp)) (setq pkg (car tmp))
+             (or (and (stringp (cdr tmp)) (setq tmp (cdr tmp)))
+                 (ignore-errors (and (stringp (nth 1 tmp)) (setq tmp (nth 1 tmp))))))
+        (setf (nth 1 kb) (append (nth 1 kb) `((require 'diminish) (ergoemacs-component-struct--deferred '(diminish ',pkg ,tmp))))))))
     `(let ((fn (or load-file-name (buffer-file-name))))
        (unless (boundp 'ergoemacs-component-hash)
          (defvar ergoemacs-component-hash (make-hash-table :test 'equal)
@@ -278,7 +307,7 @@ Please do not use the following tags, since they are parsed based on the definit
                    (append (list :file fn)
                            ',(nth 0 kb))
                    '(lambda () ,@(nth 1 kb)))) ergoemacs-component-hash)
-       ,(when (plist-get (nth 0 kb) :require)
+       ,(when (plist-get (nth 0 kb) :ergoemacs-require)
           `(ergoemacs-require ',(intern (plist-get (nth 0 kb) :name)))))))
 
 (defmacro ergoemacs-package (name &rest keys-and-body)
@@ -295,8 +324,8 @@ Maybe be similar to use-package"
     (when (equal (car body) '())
       (setq body (cdr body)))
     (setq doc (if (stringp (car body)) (pop body) (symbol-name name)))
-    (unless (memq :require plist) ;; Its a required theme component.
-      (setq plist (plist-put plist :require name)))
+    (unless (memq :ergoemacs-require plist) ;; Its a required theme component.
+      (setq plist (plist-put plist :ergoemacs-require name)))
     (unless (plist-get plist :package-name)
       (setq plist (plist-put plist :package-name name)))
     (macroexpand-all
