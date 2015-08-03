@@ -370,6 +370,8 @@ bindings the keymap is:
 (defvar ergoemacs-theme-comp-hash nil
   "Hash of ergoemacs theme components")
 
+(defun ergoemacs-mode--remove-hash ())
+
 (defun ergoemacs-mode--setup-hash-tables (&optional store-p)
   "Load hash-tables using `persistent-soft' when available.
 When `store-p' is non-nil, save the tables."
@@ -415,6 +417,13 @@ When `store-p' is non-nil, save the tables."
                       nil 1)))))
 
 (ergoemacs-mode--setup-hash-tables)
+
+(defun ergoemacs-mode-clear-cache ()
+  "Clear the cache for next ergoemacs-mode load."
+  (interactive)
+  (setq ergoemacs-map--cache-save :remove)
+  (ergoemacs-map--cache-save)
+  (message "Clear cache for next startup."))
 
 (dolist (pkg '(ergoemacs-advice
                ergoemacs-lib
