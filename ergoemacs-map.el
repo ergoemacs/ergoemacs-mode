@@ -133,10 +133,11 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 
 (defvar ergoemacs-map--breadcrumb "")
 (defvar ergoemacs-map--alist (make-hash-table))
+(defvar ergoemacs-map--alist-t (make-hash-table))
 (defun ergoemacs-map--alist (alist &optional symbol)
   "Apply maps for ALIST."
   (let ((old-breadcrumb ergoemacs-map--breadcrumb)
-        breadcrumb-base type old-len)
+        breadcrumb-base type old-len tmp )
     (if (and symbol (setq old-len (ergoemacs-gethash symbol ergoemacs-map--alist))
              (= (length alist) old-len)) alist
       (when symbol
@@ -154,9 +155,14 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
                   ;; Install `ergoemacs-mode' into the keymap
                   (cond
                    ((eq t (car elt))
-                    (setq ergoemacs-map--breadcrumb ""))
-                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))))
-                  (cons (car elt) (ergoemacs (cdr elt))))
+                    (setq ergoemacs-map--breadcrumb "")
+                    (setq tmp (gethash (cdr (cdr elt)) ergoemacs-map--alist-t))
+                    (unless tmp
+                      (setq tmp (ergoemacs (cdr elt)))
+                      (puthash (cdr (cdr elt)) tmp ergoemacs-map--alist-t)))
+                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                      (setq tmp (ergoemacs (cdr elt)))))
+                  (cons (car elt) tmp))
                  ((not type)
                   ;; Install `ergoemacs-mode' user protection into the
                   ;; keymap.
@@ -173,9 +179,14 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
                   ;; installation
                   (cond
                    ((eq t (car elt))
-                    (setq ergoemacs-map--breadcrumb ""))
-                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))))
-                  (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original))))
+                    (setq ergoemacs-map--breadcrumb "")
+                    (setq tmp (gethash (cdr (ergoemacs (cdr elt) :original)) ergoemacs-map--alist-t))
+                    (unless tmp
+                      (setq tmp (ergoemacs (ergoemacs (cdr elt) :original)))
+                      (puthash (cdr (ergoemacs (cdr elt) :original)) tmp ergoemacs-map--alist-t)))
+                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt))
+                            tmp (ergoemacs (ergoemacs (cdr elt) :original)))))
+                  (cons (car elt) tmp))
                  ((eq :protected-p type)
                   ;; `ergoemacs-mode' already protected this map
                   elt)
@@ -188,9 +199,14 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
                   (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
                   (cond
                    ((eq t (car elt))
-                    (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (md5 (format "%s" (cdr elt))))))
-                   (t (setq ergoemacs-map--breadcrumb "")))
-                  (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original-user))))))
+                    (setq ergoemacs-map--breadcrumb ""
+                          tmp (gethash (cdr (ergoemacs (cdr elt) :original-user)) ergoemacs-map--alist-t))
+                    (unless tmp
+                      (setq tmp (ergoemacs (ergoemacs (cdr elt) :original-user)))
+                      (puthash (cdr (ergoemacs (cdr elt) :original-user)) tmp ergoemacs-map--alist-t)))
+                   (t (setq ergoemacs-map--breadcrumb ""
+                            tmp (ergoemacs (ergoemacs (cdr elt) :original-user)))))
+                  (cons (car elt) tmp))))
               alist)
         (setq ergoemacs-map--breadcrumb old-breadcrumb)))))
 
@@ -594,7 +610,12 @@ If LOOKUP-KEYMAP
                       (dolist (key unbind-list)
                         (when (not lookup-keymap)
                           (remhash key ergoemacs-map--))
-                        (define-key ret key nil))
+                        (if (not lookup-keymap)
+                            (define-key ret key nil)
+                          (setq tmp (lookup-key lookup-keymap key))
+                          (if (or (not tmp) (integerp tmp))
+                              (define-key ret key nil)
+                            (define-key ret key tmp))))
                       (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
                       ret))
           
