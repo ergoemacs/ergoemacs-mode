@@ -234,7 +234,12 @@ This accepts the following keywords:
     :diminish package-name -- Diminshes package-name
     :diminish (package-name \" New Description\")
 
-    By default this is nil. 
+    By default this is nil.
+
+:delight -- Delight this mode.  It takes the same arguments
+    as :diminish.  It also makes sure delight is installed.
+
+    By default this is nil.
 
 :ensure -- If the package should be installed by `package' if not present.
 
@@ -378,22 +383,65 @@ Maybe be similar to use-package"
             (ergoemacs-mode-reset)))))))
 
 (defvar ergoemacs-theme-component--tags
-  '(:diminish)
+  '(:diminish
+    :delight)
   "Tags that are known to `ergoemacs-theme-component'")
 
+(defvar ergoemacs-theme-components--modified-plist nil
+  "Modified plist.")
+
+(defun ergoemacs-theme-component--add-ensure (plist pkg)
+  "Add PKG to the :ensure keyword."
+  (let ((cur-ensure (plist-get plist :ensure))
+        (cur-pkg (intern (format "%s" (plist-get plist :package-name)))))
+    (cond
+     ((eq cur-ensure t)
+      (setq ergoemacs-theme-components--modified-plist
+            (plist-put plist :ensure (list pkg cur-pkg))))
+     ((not cur-ensure)
+      (setq ergoemacs-theme-components--modified-plist
+            (plist-put plist :ensure pkg)))
+     ((not (memq pkg cur-ensure))
+      (push pkg cur-ensure)
+      (setq ergoemacs-theme-components--modified-plist
+            (plist-put plist :ensure cur-ensure))))))
+
 (defun ergoemacs-theme-component--tag-diminish (plist tag-value remaining)
-  "Handle :diminish tag for `ergoemacs-theme-component'"
+  "Handle :diminish tag for `ergoemacs-theme-component'.
+
+Will add (diminish 'package-name) for :diminish t"
   ;; :diminish keyword support
-  (let (pkg ret)
+  (let ((tag-value tag-value)
+        pkg ret)
     (cond
      ((and (eq tag-value t) (setq pkg (plist-get plist :package-name)))
       (setq ret `((require 'diminish) (diminish ',(intern (format "%s" pkg))) ,@remaining)))
      ((and tag-value (symbolp tag-value))
-      `((require 'diminish) (diminish ',tag-value ,@remaining)))
+      (setq ret `((require 'diminish) (diminish ',tag-value) ,@remaining)))
      ((and tag-value (consp tag-value) (symbolp (car tag-value)) (setq pkg (car tag-value))
            (or (and (stringp (cdr tag-value)) (setq tag-value (cdr tag-value)))
                (ignore-errors (and (stringp (nth 1 tag-value)) (setq tag-value (nth 1 tag-value))))))
-      (setq ret`((require 'diminish) (diminish ',pkg ,tag-value) ,@remaining)))
+      (setq ret `((require 'diminish) (diminish ',pkg ,tag-value) ,@remaining)))
+     (t (setq ret remaining)))
+    ret))
+
+(defun ergoemacs-theme-component--tag-delight (plist tag-value remaining)
+  "Handle :delight tag for `ergoemacs-theme-component'.
+This tag implies :ensure delight"
+  (let ((tag-value tag-value)
+        pkg ret)
+    (cond
+     ((and (eq tag-value t) (setq pkg (plist-get plist :package-name)))
+      (ergoemacs-theme-component--add-ensure plist 'delight)
+      (setq ret `((require 'delight) (delight ',(intern (format "%s" pkg))) ,@remaining)))
+     ((and tag-value (symbolp tag-value))
+      (ergoemacs-theme-component--add-ensure plist 'delight)
+      (setq ret `((require 'delight) (delight ',tag-value ,@remaining))))
+     ((and tag-value (consp tag-value) (symbolp (car tag-value)) (setq pkg (car tag-value))
+           (or (and (stringp (cdr tag-value)) (setq tag-value (cdr tag-value)))
+               (ignore-errors (and (stringp (nth 1 tag-value)) (setq tag-value (nth 1 tag-value))))))
+      (ergoemacs-theme-component--add-ensure plist 'delight)
+      (setq ret `((require 'delight) (delight ',pkg ,tag-value) ,@remaining)))
      (t (setq ret remaining)))
     ret))
 
@@ -449,7 +497,10 @@ additional parsing routines defined by PARSE-FUNCTION."
                   (when (and (setq tag-value (plist-get plist tag))
                              (fboundp (setq tag-fn (intern (concat "ergoemacs-theme-component--tag-" (substring (symbol-name tag) 1)))))
                              (setq tag-fn (funcall tag-fn plist tag-value remaining)))
-                    (setq remaining tag-fn))))
+                    (setq remaining tag-fn)
+                    (when ergoemacs-theme-components--modified-plist
+                      (setq plist ergoemacs-theme-components--modified-plist
+                            ergoemacs-theme-components--modified-plist nil)))))
               (setq remaining
                     (funcall parse-function remaining)))
             (list plist remaining))))
