@@ -294,17 +294,6 @@ on the definition:
         (tmp (make-symbol "tmp"))
         (pkg (make-symbol "pkg")))
     (setq kb (ergoemacs-theme-component--parse body-and-plist))
-    ;; :diminish keyword support
-    (when (setq tmp (plist-get (nth 0 kb) :diminish))
-      (cond
-       ((and (eq tmp t) (setq pkg (plist-get (nth 0 kb) :package-name)))
-        (setf (nth 1 kb) (append (nth 1 kb) `((require 'diminish) (ergoemacs-component-struct--deferred '(diminish ',(intern (format "%s" pkg))))))))
-       ((and tmp (symbolp tmp))
-        (setf (nth 1 kb) (append (nth 1 kb) `((require 'diminish) (ergoemacs-component-struct--deferred '(diminish ',tmp))))))
-       ((and tmp (consp tmp) (symbolp (car tmp)) (setq pkg (car tmp))
-             (or (and (stringp (cdr tmp)) (setq tmp (cdr tmp)))
-                 (ignore-errors (and (stringp (nth 1 tmp)) (setq tmp (nth 1 tmp))))))
-        (setf (nth 1 kb) (append (nth 1 kb) `((require 'diminish) (ergoemacs-component-struct--deferred '(diminish ',pkg ,tmp))))))))
     `(let ((fn (or load-file-name (buffer-file-name))))
        (unless (boundp 'ergoemacs-component-hash)
          (defvar ergoemacs-component-hash (make-hash-table :test 'equal)
@@ -388,6 +377,26 @@ Maybe be similar to use-package"
           (when reset-ergoemacs
             (ergoemacs-mode-reset)))))))
 
+(defvar ergoemacs-theme-component--tags
+  '(:diminish)
+  "Tags that are known to `ergoemacs-theme-component'")
+
+(defun ergoemacs-theme-component--tag-diminish (plist tag-value remaining)
+  "Handle :diminish tag for `ergoemacs-theme-component'"
+  ;; :diminish keyword support
+  (let (pkg ret)
+    (cond
+     ((and (eq tag-value t) (setq pkg (plist-get plist :package-name)))
+      (setq ret `((require 'diminish) (diminish ',(intern (format "%s" pkg))) ,@remaining)))
+     ((and tag-value (symbolp tag-value))
+      `((require 'diminish) (diminish ',tag-value ,@remaining)))
+     ((and tag-value (consp tag-value) (symbolp (car tag-value)) (setq pkg (car tag-value))
+           (or (and (stringp (cdr tag-value)) (setq tag-value (cdr tag-value)))
+               (ignore-errors (and (stringp (nth 1 tag-value)) (setq tag-value (nth 1 tag-value))))))
+      (setq ret`((require 'diminish) (diminish ',pkg ,tag-value) ,@remaining)))
+     (t (setq ret remaining)))
+    ret))
+
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
           "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
@@ -406,6 +415,7 @@ Afterward it was modified for use with `ergoemacs-mode' to use
 additional parsing routines defined by PARSE-FUNCTION."
           (let ((extracted-key-accu '())
                 plist
+                tag-value
                 (remaining keys-and-body))
             ;; Allow
             ;; (component name)
@@ -429,12 +439,19 @@ additional parsing routines defined by PARSE-FUNCTION."
                         keys-and-body))
                 (push (cons keyword (pop remaining)) extracted-key-accu)))
             (setq extracted-key-accu (nreverse extracted-key-accu))
-            (when parse-function
-              (setq remaining
-                    (funcall parse-function remaining)))
             (setq plist (loop for (key . value) in extracted-key-accu
                               collect key
                               collect value))
+            (when parse-function
+              (when (eq parse-function 'ergoemacs-theme-component--parse-remaining)
+                ;; Handle known tags.
+                (dolist (tag ergoemacs-theme-component--tags)
+                  (when (and (setq tag-value (plist-get plist tag))
+                             (fboundp (setq tag-fn (intern (concat "ergoemacs-theme-component--tag-" (substring (symbol-name tag) 1)))))
+                             (setq tag-fn (funcall tag-fn plist tag-value remaining)))
+                    (setq remaining tag-fn))))
+              (setq remaining
+                    (funcall parse-function remaining)))
             (list plist remaining))))
 
 ;;;###autoload
