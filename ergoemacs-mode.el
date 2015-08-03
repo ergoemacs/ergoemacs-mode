@@ -1,6 +1,6 @@
 ;;; ergoemacs-mode.el --- Emacs mode based on common modern interface and ergonomics. -*- lexical-binding: t -*-
 
-;; Copyright © 2007-2010, 2012-2014  Free Software Foundation, Inc.
+;; Copyright © 2007-2010, 2012-2015  Free Software Foundation, Inc.
 
 ;; Author: Xah Lee <xah@xahlee.org>
 ;;         David Capello <davidcapello@gmail.com>
