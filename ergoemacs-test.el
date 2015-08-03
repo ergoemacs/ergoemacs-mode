@@ -995,7 +995,7 @@ Should test issue #142"
       (insert (format "(define-key ergoemacs-test-major-mode-map (kbd \"<f6>\") #'(lambda() (interactive (with-temp-file \"%s\" (insert \"Ok\")))))" w-file))
       (insert "(global-unset-key (kbd \"<f6>\"))")
       (insert
-       "(setq ergoemacs-test-macro (edmacro-parse-keys \"C-c C-c\" t))(ergoemacs-test-major-mode)")
+       "(setq ergoemacs-test-macro (edmacro-parse-keys \"<f6>\" t))(ergoemacs-test-major-mode)(run-hooks 'post-command-hook)")
       (insert "(with-timeout (0.5 nil) (execute-kbd-macro ergoemacs-test-macro))")
       (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
       (insert ") (error (message \"Error %s\" err)))")

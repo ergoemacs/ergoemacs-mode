@@ -127,7 +127,8 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 
               ;; (bind-key "C-c x" 'my-ctrl-c-x-command some-other-map)
               ((ignore-errors (and (eq (nth 0 elt) 'bind-key)
-                                   (= (length elt) 4))) (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
+                                   (= (length elt) 4)))
+               (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
                    `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(nth 1 elt)) (quote ,(nth 2 elt)))
                  `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(nth 1 elt)) ,(nth 2 elt))))
               
@@ -178,9 +179,9 @@ This accepts the following keywords:
     This list of commands can just be a list without the extra
     parentheses for each command:
 
-    :bind (\"M-o l\"  highlight-lines-matching-regexp
-           \"M-o r\"  highlight-regexp
-           \"M-o w\"  highlight-phrase)
+    :bind (\"M-o l\" . highlight-lines-matching-regexp
+           \"M-o r\" . highlight-regexp
+           \"M-o w\" . highlight-phrase)
 
 
     Note that these keys may change based on keyboard layouts,

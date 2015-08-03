@@ -308,6 +308,9 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
             (setq lookup-key (intern (format "%s-%s" lookup-key (md5 (format "%s" (symbol-value mode-hook))))))))))
     lookup-key))
 
+(defvar ergoemacs-map--unbound-keys nil
+  "Unbound keys")
+
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
@@ -607,7 +610,7 @@ If LOOKUP-KEYMAP
           ;; The keys that will be unbound
           (setq ret (ergoemacs-cache (and lookup-key (intern (format "%s-unbound-keymap" lookup-key)))
                       (setq ret (make-sparse-keymap))
-                      (dolist (key unbind-list)
+                      (dolist (key (append unbind-list ergoemacs-map--unbound-keys))
                         (when (not lookup-keymap)
                           (remhash key ergoemacs-map--))
                         (if (not lookup-keymap)

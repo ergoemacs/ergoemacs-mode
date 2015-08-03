@@ -202,6 +202,9 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
 (ergoemacs-advice define-key (keymap key def)
   "Protect keymaps when changing keys from a hook."
   :type :after
+  (when (and (not def) (eq keymap (current-global-map)))
+    (unless (member key ergoemacs-map--unbound-keys)
+      (push key ergoemacs-map--unbound-keys)))
   (when (and (boundp 'ergoemacs-map-properties--protect-local)
              ergoemacs-map-properties--protect-local)
     (ergoemacs-map-properties--hook-define-key keymap key def)))
