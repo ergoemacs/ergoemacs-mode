@@ -152,19 +152,29 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
                  
                  ((and (not (setq type (ergoemacs (cdr elt) :installed-p))) ergoemacs-mode)
                   ;; Install `ergoemacs-mode' into the keymap
-                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  (cond
+                   ((eq t (car elt))
+                    (setq ergoemacs-map--breadcrumb ""))
+                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))))
                   (cons (car elt) (ergoemacs (cdr elt))))
                  ((not type)
                   ;; Install `ergoemacs-mode' user protection into the
                   ;; keymap.
-                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  (cond
+                   ((eq t (car elt))
+                    (setq ergoemacs-map--breadcrumb ""))
+                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))))
                   (cons (car elt) (ergoemacs (cdr elt) :original-user)))
                  ((eq :cond-map type)
                   ;; Don't change conditional maps.  Change in alists...?
                   elt)
                  ((and ergoemacs-mode (eq :protected-p type))
-                  ;; Change protection into full ergoemacs-mode installation
-                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  ;; Change protection into full ergoemacs-mode
+                  ;; installation
+                  (cond
+                   ((eq t (car elt))
+                    (setq ergoemacs-map--breadcrumb ""))
+                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))))
                   (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original))))
                  ((eq :protected-p type)
                   ;; `ergoemacs-mode' already protected this map
@@ -176,6 +186,10 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
                   ;; Change full `ergoemacs-mode' installation to user
                   ;; installation
                   (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  (cond
+                   ((eq t (car elt))
+                    (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (md5 (format "%s" (cdr elt))))))
+                   (t (setq ergoemacs-map--breadcrumb "")))
                   (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original-user))))))
               alist)
         (setq ergoemacs-map--breadcrumb old-breadcrumb)))))
