@@ -62,6 +62,15 @@
 ;;; Code:
 
 
+;; Include extra files
+(defvar ergoemacs-dir
+  (file-name-directory
+   (or
+    load-file-name
+    (buffer-file-name)))
+  "Ergoemacs directory.")
+(push ergoemacs-dir load-path)
+
 (eval-when-compile
   (require 'cl)
   (require 'ergoemacs-macros))
@@ -108,16 +117,6 @@
 
 
 ;; Fundamental ergoemacs functions
-
-
-;; Include extra files
-(defvar ergoemacs-dir
-  (file-name-directory
-   (or
-    load-file-name
-    (buffer-file-name)))
-  "Ergoemacs directory.")
-(add-to-list 'load-path ergoemacs-dir)
 
 
 ;; (unless (featurep 'ergoemacs-map)
