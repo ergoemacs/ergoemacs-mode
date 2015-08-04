@@ -5,7 +5,7 @@
 ;; Filename: ergoemacs-map.el
 ;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer:
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
 ;; Version: 
 ;; Last-Updated: 
@@ -189,6 +189,14 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
                   elt)
                  ((and ergoemacs-mode (eq :protected-p type))
                   ;; Change protection into full ergoemacs-mode installation
+                  (ergoemacs-map--alist-atom (car elt) (ergoemacs (cdr elt) :original) breadcrumb-base))
+                 ((eq :protected-p type)
+                  ;; Already protected.
+                  elt)
+                 ((and ergoemacs-mode type)
+                  ;; Already installed
+                  elt)
+                 ((and (not ergoemacs-mode) type)
                   (ergoemacs-map--alist-atom (car elt) (ergoemacs (cdr elt) :original-user) breadcrumb-base))))
               alist)
         (setq ergoemacs-map--breadcrumb old-breadcrumb)))))
