@@ -68,6 +68,7 @@
 (defvar ergoemacs-display-key-use-face-p)
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-mode-version)
+(defvar ergoemacs-component-hash)
 (defvar package--initialized)
 
 (declare-function ergoemacs-set "ergoemacs-lib")

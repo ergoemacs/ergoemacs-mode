@@ -134,6 +134,24 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 (defvar ergoemacs-map--breadcrumb "")
 (defvar ergoemacs-map--alist (make-hash-table))
 (defvar ergoemacs-map--alist-t (make-hash-table))
+(defvar ergoemacs-map--alist-t-o (make-hash-table))
+
+(defun ergoemacs-map--alist-atom (a b breadcrumb-base &optional original-user)
+  (let ((tmp)
+        (hash-table (or (and original-user ergoemacs-map--alist-t-o) ergoemacs-map--alist-t))
+        (breadcrumb-add (or (and original-user (format "%s:o" a)) (format "%s" a))))
+    (cond
+     ((eq a t)
+      (setq ergoemacs-map--breadcrumb ""
+            tmp (ergoemacs-gethash (cdr b) hash-table))
+      (unless tmp
+        (setq tmp (or (and original-user (ergoemacs b :original-user)) (ergoemacs b)))
+        (puthash (cdr b) tmp hash-table)))
+     (t
+      (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base breadcrumb-add)
+            tmp (or (and original-user (ergoemacs b :original-user)) (ergoemacs b)))))
+    (cons a tmp)))
+
 (defun ergoemacs-map--alist (alist &optional symbol)
   "Apply maps for ALIST."
   (let ((old-breadcrumb ergoemacs-map--breadcrumb)
@@ -153,31 +171,17 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
                  
                  ((and (not (setq type (ergoemacs (cdr elt) :installed-p))) ergoemacs-mode)
                   ;; Install `ergoemacs-mode' into the keymap
-                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
-                  (cons (car elt) (ergoemacs (cdr elt))))
+                  (ergoemacs-map--alist-atom (car elt) (cdr elt) breadcrumb-base))
                  ((not type)
                   ;; Install `ergoemacs-mode' user protection into the
                   ;; keymap.
-                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
-                  (cons (car elt) (ergoemacs (cdr elt) :original-user)))
+                  (ergoemacs-map--alist-atom (car elt) (cdr elt) breadcrumb-base t))
                  ((eq :cond-map type)
                   ;; Don't change conditional maps.  Change in alists...?
                   elt)
                  ((and ergoemacs-mode (eq :protected-p type))
                   ;; Change protection into full ergoemacs-mode installation
-                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
-                  (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original))))
-                 ((eq :protected-p type)
-                  ;; `ergoemacs-mode' already protected this map
-                  elt)
-                 ((and ergoemacs-mode type)
-                  ;; `ergoemacs-mode' already installed
-                  elt)
-                 ((and (not ergoemacs-mode) type)
-                  ;; Change full `ergoemacs-mode' installation to user
-                  ;; installation
-                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
-                  (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original-user))))))
+                  (ergoemacs-map--alist-atom (car elt) (ergoemacs (cdr elt) :original-user) breadcrumb-base))))
               alist)
         (setq ergoemacs-map--breadcrumb old-breadcrumb)))))
 
@@ -250,7 +254,13 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 (defvar ergoemacs-map--cache--last-breadcrumb "")
 (defun ergoemacs-map--cache-- (what &optional save)
   "Get WHAT cache.  If SAVE is non-nil, save cache to WHAT"
-  (or (and (not what) save)
+  (or (and (not what) save
+           (or (not ergoemacs-mode)
+               (not (minibufferp))
+               (and ergoemacs-mode
+                    ;; (warn "Uncached %s:%s" ergoemacs-mode save)
+                    (ergoemacs-command-loop--spinner-display "Uncached...")))
+           save)
       (let* ((key (ergoemacs-map--hashkey what))
              (val (or save (ergoemacs-gethash key ergoemacs-map--hash))))
         (when (and ergoemacs-mode save)
@@ -259,10 +269,10 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
            ((not (or (string= ergoemacs-map--breadcrumb "")
                      (string= ergoemacs-map--breadcrumb ergoemacs-map--cache--last-breadcrumb)))
             (unless (minibufferp)
-              (ergoemacs-command-loop--spinner-display "Inject ergoemacs at: %s (will be cached)" (replace-regexp-in-string "^:" "" ergoemacs-map--breadcrumb))))
+              (ergoemacs-command-loop--spinner-display "ergoemacs->%s" (replace-regexp-in-string "^:" "" ergoemacs-map--breadcrumb))))
            ((and (string= ergoemacs-map--breadcrumb ""))
             (unless (minibufferp)
-              (ergoemacs-command-loop--spinner-display "Cache: %s" what))))
+              (ergoemacs-command-loop--spinner-display "ergoemacs->%s" what))))
           (puthash key (copy-tree val t) ergoemacs-map--hash))
         val)))
 
@@ -727,7 +737,9 @@ If LOOKUP-KEYMAP
   (setq ergoemacs-map-- (make-hash-table :test 'equal)
         ergoemacs-keymap (ergoemacs)
         ergoemacs-map--alist (make-hash-table)
-        ergoemacs-map--alists (make-hash-table))
+        ergoemacs-map--alists (make-hash-table)
+        ergoemacs-map--alist-t (make-hash-table)
+        ergoemacs-map--alist-t-o (make-hash-table))
   (use-global-map ergoemacs-keymap)
   ;; Put `ergoemacs-mode' style key shortcuts instead of emacs
   ;; style shortcuts (They need to place the correct shortucts)

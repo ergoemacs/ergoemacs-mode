@@ -293,7 +293,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       (when (ergoemacs-map-properties--key-struct map)
         (setq tmp (find-lisp-object-file-name map 'defvar))
         (unless (or (not tmp) (eq tmp 'C-source))
-          (setq ret (append ret `((eval-after-load ,(file-name-sans-extension (file-name-nondirectory tmp)) '(when (boundp ',map) (ergoemacs-map-properties--label ,map ,(ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))))))))))
+          (setq ret (append ret `((eval-after-load ,(file-name-sans-extension (file-name-nondirectory tmp)) '(when (boundp ',map) (ergoemacs-command-loop--spinner-display "Label %s" ',map)(ergoemacs-map-properties--label ,map ,(ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))))))))))
     (push 'progn ret)
     `(lambda() ,ret)))
 
