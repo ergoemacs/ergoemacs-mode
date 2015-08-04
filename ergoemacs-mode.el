@@ -305,6 +305,8 @@ bindings the keymap is:
       (unless refresh-p
         (message "Ergoemacs-mode turned OFF.")))))
 
+(defun ergoemacs-mode--pcache-repository ()
+  (format "ergoemacs-mode-%s-%s" emacs-version system-configuration))
 (require 'persistent-soft nil t)
 (defvar ergoemacs-mode--fast-p nil)
 (defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
@@ -314,7 +316,7 @@ bindings the keymap is:
        ((and (symbolp a) (not store-p)) ;; Fetch
         (setq sym a)
         (when (featurep 'persistent-soft)
-          (setq val (persistent-soft-fetch sym "ergoemacs-mode"))
+          (setq val (persistent-soft-fetch sym (ergoemacs-mode--pcache-repository)))
           (when val
             (setq found-p t)
             (set sym val)
@@ -332,7 +334,7 @@ bindings the keymap is:
        ((symbolp a) ;; Store
         (setq sym a)
         (when (featurep 'persistent-soft)
-          (persistent-soft-store sym (symbol-value sym) "ergoemacs-mode")))
+          (persistent-soft-store sym (symbol-value sym) (ergoemacs-mode--pcache-repository))))
        ((and (not found-p) (not store-p) (not (symbol-value sym)))
         ;; Setup empty symbol.
         ;; (message "Empty %s->%s" sym a)
@@ -410,12 +412,12 @@ When `store-p' is non-nil, save the tables."
    ;;'ergoemacs-translate--keymap-hash (make-hash-table)
    )
   (when store-p
-    (persistent-soft-flush "ergoemacs-mode")
+    (persistent-soft-flush (ergoemacs-mode--pcache-repository))
     (when (eq system-type 'windows-nt)
       ;; Fix for stupid  endings
       (with-temp-buffer
-        (insert-file-contents (concat pcache-directory "ergoemacs-mode"))
-        (persistent-soft-location-destroy "ergoemacs-mode")
+        (insert-file-contents (concat pcache-directory (ergoemacs-mode--pcache-repository)))
+        (persistent-soft-location-destroy (ergoemacs-mode--pcache-repository))
         (goto-char (point-min))
         (while (re-search-forward "+$" nil t)
           (replace-match ""))
@@ -423,7 +425,7 @@ When `store-p' is non-nil, save the tables."
         (when (re-search-backward ":timestamp +[0-9.]+" nil t)
           (replace-match (format ":timestamp %s" (float-time (current-time)))))
         (write-region (point-min) (point-max)
-                      (concat pcache-directory "ergoemacs-mode")
+                      (concat pcache-directory (ergoemacs-mode--pcache-repository))
                       nil 1)))))
 
 (ergoemacs-mode--setup-hash-tables)
