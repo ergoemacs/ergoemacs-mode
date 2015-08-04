@@ -11,7 +11,7 @@
 ;; Last-Updated: 
 ;;           By:
 ;;     Update #: 0
-;; URL: 
+;; URL:
 ;; Doc URL: 
 ;; Keywords: 
 ;; Compatibility: 
@@ -879,7 +879,9 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop--reset-functions ()
   "Reset functions"
   (interactive)
-  (when ergoemacs---ergoemacs-command-loop
+  (when (eq ergoemacs-command-loop--overriding-terminal-local-map overriding-terminal-local-map)
+    (setq overriding-terminal-local-map nil))
+  (when (and ergoemacs-mode ergoemacs---ergoemacs-command-loop)
     (fset 'ergoemacs-command-loop ergoemacs---ergoemacs-command-loop)
     (setq ergoemacs---ergoemacs-command-loop nil)))
 
@@ -1048,10 +1050,10 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop-start ()
   "Start `ergoemacs-command-loop'"
   (interactive)
+  (ergoemacs-command-loop--reset-functions)
   (when (not ergoemacs-mode)
     (setq overriding-terminal-local-map nil)
     (error "Refusing to start ergoemacs-mode command loop outside of ergoemacs-mode"))
-  (ergoemacs-command-loop--reset-functions)
   ;; Should work...
   (ergoemacs-command-loop (this-single-command-keys)))
 
