@@ -1048,6 +1048,9 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop-start ()
   "Start `ergoemacs-command-loop'"
   (interactive)
+  (when (not ergoemacs-mode)
+    (setq overriding-terminal-local-map nil)
+    (error "Refusing to start ergoemacs-mode command loop outside of ergoemacs-mode"))
   (ergoemacs-command-loop--reset-functions)
   ;; Should work...
   (ergoemacs-command-loop (this-single-command-keys)))
