@@ -153,40 +153,20 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
                  
                  ((and (not (setq type (ergoemacs (cdr elt) :installed-p))) ergoemacs-mode)
                   ;; Install `ergoemacs-mode' into the keymap
-                  (cond
-                   ((eq t (car elt))
-                    (setq ergoemacs-map--breadcrumb "")
-                    (setq tmp (gethash (cdr (cdr elt)) ergoemacs-map--alist-t))
-                    (unless tmp
-                      (setq tmp (ergoemacs (cdr elt)))
-                      (puthash (cdr (cdr elt)) tmp ergoemacs-map--alist-t)))
-                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
-                      (setq tmp (ergoemacs (cdr elt)))))
-                  (cons (car elt) tmp))
+                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  (cons (car elt) (ergoemacs (cdr elt))))
                  ((not type)
                   ;; Install `ergoemacs-mode' user protection into the
                   ;; keymap.
-                  (cond
-                   ((eq t (car elt))
-                    (setq ergoemacs-map--breadcrumb ""))
-                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))))
+                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
                   (cons (car elt) (ergoemacs (cdr elt) :original-user)))
                  ((eq :cond-map type)
                   ;; Don't change conditional maps.  Change in alists...?
                   elt)
                  ((and ergoemacs-mode (eq :protected-p type))
-                  ;; Change protection into full ergoemacs-mode
-                  ;; installation
-                  (cond
-                   ((eq t (car elt))
-                    (setq ergoemacs-map--breadcrumb "")
-                    (setq tmp (gethash (cdr (ergoemacs (cdr elt) :original)) ergoemacs-map--alist-t))
-                    (unless tmp
-                      (setq tmp (ergoemacs (ergoemacs (cdr elt) :original)))
-                      (puthash (cdr (ergoemacs (cdr elt) :original)) tmp ergoemacs-map--alist-t)))
-                   (t (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt))
-                            tmp (ergoemacs (ergoemacs (cdr elt) :original)))))
-                  (cons (car elt) tmp))
+                  ;; Change protection into full ergoemacs-mode installation
+                  (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
+                  (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original))))
                  ((eq :protected-p type)
                   ;; `ergoemacs-mode' already protected this map
                   elt)
@@ -197,16 +177,7 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
                   ;; Change full `ergoemacs-mode' installation to user
                   ;; installation
                   (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base (car elt)))
-                  (cond
-                   ((eq t (car elt))
-                    (setq ergoemacs-map--breadcrumb ""
-                          tmp (gethash (cdr (ergoemacs (cdr elt) :original-user)) ergoemacs-map--alist-t))
-                    (unless tmp
-                      (setq tmp (ergoemacs (ergoemacs (cdr elt) :original-user)))
-                      (puthash (cdr (ergoemacs (cdr elt) :original-user)) tmp ergoemacs-map--alist-t)))
-                   (t (setq ergoemacs-map--breadcrumb ""
-                            tmp (ergoemacs (ergoemacs (cdr elt) :original-user)))))
-                  (cons (car elt) tmp))))
+                  (cons (car elt) (ergoemacs (ergoemacs (cdr elt) :original-user))))))
               alist)
         (setq ergoemacs-map--breadcrumb old-breadcrumb)))))
 
