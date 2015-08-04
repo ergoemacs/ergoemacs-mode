@@ -95,6 +95,8 @@
 ;; (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
 
+(when (string= package-user-dir (locate-user-emacs-file "elpa"))
+  (setq package-user-dir (locate-user-emacs-file (format "elpa-%s-%s" emacs-version system-configuration))))
 
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")
