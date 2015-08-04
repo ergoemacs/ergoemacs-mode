@@ -63,6 +63,13 @@
 (defvar ergoemacs-directories-where-keys-from-hook-are-deferred)
 (defvar ergoemacs-hooks-that-always-override-ergoemacs-mode)
 (defvar ergoemacs-functions-that-always-override-ergoemacs-mode)
+(defvar ergoemacs-map-properties--key-struct)
+(defvar ergoemacs-map-properties--plist-hash)
+(defvar ergoemacs-mode--fast-p)
+(defvar ergoemacs-map-properties--indirect-keymaps)
+(defvar ergoemacs-map--breadcrumb)
+(defvar ergoemacs-breadcrumb-hash)
+(defvar ergoemacs-map-properties--get-or-generate-map-key)
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")

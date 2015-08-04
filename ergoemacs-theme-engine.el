@@ -58,6 +58,7 @@
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme-version)
 (defvar ergoemacs-theme-options)
+(defvar ergoemacs-theme-hash)
 
 (declare-function ergoemacs-save "ergoemacs-lib")
 (declare-function ergoemacs-mode-reset "ergoemacs-lib")
@@ -67,6 +68,7 @@
 (declare-function ergoemacs-component-at-point "ergoemacs-component")
 (declare-function ergoemacs-component-find-1 "ergoemacs-component")
 (declare-function ergoemacs-component--prompt "ergoemacs-component")
+(declare-function ergoemacs-require "ergoemacs-lib")
 
 (defun ergoemacs-theme-components (&optional theme)
   "Get a list of components used for the current theme.

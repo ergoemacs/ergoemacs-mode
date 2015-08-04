@@ -98,6 +98,8 @@
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 (declare-function ergoemacs-key-description--keymap "ergoemacs-key-description")
 
+(declare-function package-installed-p "package")
+
 
 ;; ergoemacs-translate
 
@@ -210,35 +212,35 @@ BODY is the body of function."
           
           ;; Handle :bind-keymap commands
           (when (and tmp (not defer-present-p) (not defer))
-            (setq defer-present t defer t)
+            (setq defer-present-p t defer t)
             (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (ergoemacs-component-struct--handle-bind tmp)
 
           ;; Handle :bind-keymap* commands
           (setq tmp (plist-get plist :bind-keymap*))
           (when (and tmp (not defer-present-p) (not defer))
-            (setq defer-present t defer t)
+            (setq defer-present-p t defer t)
             (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (ergoemacs-component-struct--handle-bind tmp 'ergoemacs-override-keymap)
           
           ;; Handle :bind keys
           (setq tmp (plist-get plist :bind))
           (when (and tmp (not defer-present-p) (not defer))
-            (setq defer-present t defer t)
+            (setq defer-present-p t defer t)
             (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (ergoemacs-component-struct--handle-bind tmp)
           
           ;; Handle :bind* commands
           (setq tmp (plist-get plist :bind*))
           (when (and tmp (not defer-present-p) (not defer))
-            (setq defer-present t defer t)
+            (setq defer-present-p t defer t)
             (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (ergoemacs-component-struct--handle-bind tmp 'ergoemacs-override-keymap)
           
           ;; Handle :commands
           (setq tmp (plist-get plist :commands))
           (when (and tmp (not defer-present-p) (not defer))
-            (setq defer-present t defer t)
+            (setq defer-present-p t defer t)
             (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
           (when package-name
             (cond
@@ -835,7 +837,7 @@ be composed over the keymap.  This is done in
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
   (let* ((obj (or obj (ergoemacs-theme-components)))
-         package-name ensure defer comp)
+         package-name ensure defer comp plist)
     (when ergoemacs-component-struct--apply-inits-first-p
       (setq ergoemacs-component-struct--apply-inits-first-p nil)
       (dolist (elt obj)

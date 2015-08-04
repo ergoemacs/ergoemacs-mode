@@ -71,8 +71,14 @@
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
 
+(defvar cl-struct-ergoemacs-component-struct-tags)
 (defvar ergoemacs-component-struct--refresh-variables)
 (defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-map--cache-save)
+(defvar ergoemacs-map--hashkey)
+(defvar ergoemacs-require--ini-p)
+(defvar ergoemacs-require)
+(defvar pcache-directory)
 
 (require 'package)
 
@@ -83,14 +89,21 @@
 
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")
+
+(declare-function ergoemacs-map--cache-save "ergoemacs-map")
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
-(declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
+(declare-function ergoemacs-map-properties--create-label-function "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
+(declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
+(declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
+
+(declare-function persistent-soft-fetch "persistent-soft")
+(declare-function persistent-soft-flush "persistent-soft")
+(declare-function persistent-soft-location-destroy "persistent-flush")
+(declare-function persistent-soft-store "persistent-soft")
 
 (declare-function unicode-fonts-setup "unicode-fonts")
-(declare-function persistent-soft-fetch "persistent-soft")
-(declare-function persistent-soft-store "persistent-soft")
 
 
 
@@ -271,11 +284,9 @@ bindings the keymap is:
   (setq ergoemacs-map--hashkey nil)
   (unless ergoemacs-require--ini-p
     (setq ergoemacs-require--ini-p :ini)
-    (let* ((obj (ergoemacs-theme-components))
-           package-name ensure defer comp)
-      (when ergoemacs-require
-        (dolist (elt ergoemacs-require)
-          (apply #'ergoemacs-require elt)))))
+    (when ergoemacs-require
+      (dolist (elt ergoemacs-require)
+        (apply #'ergoemacs-require elt))))
   (let ((refresh-p ergoemacs-component-struct--refresh-variables))
     (if ergoemacs-mode
         (progn

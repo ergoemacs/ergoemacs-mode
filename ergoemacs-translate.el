@@ -56,6 +56,8 @@
 
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-translation-hash)
+(defvar ergoemacs-translate--hash)
+(defvar ergoemacs-translate--event-hash)
 
 (declare-function ergoemacs-mode-line "ergoemacs-mode")
 

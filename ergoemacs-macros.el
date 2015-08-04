@@ -295,9 +295,7 @@ on the definition:
 :file -- File where the component was defined."
   (declare (doc-string 2)
            (indent 2))
-  (let ((kb (make-symbol "body-and-plist"))
-        (tmp (make-symbol "tmp"))
-        (pkg (make-symbol "pkg")))
+  (let ((kb (make-symbol "body-and-plist")))
     (setq kb (ergoemacs-theme-component--parse body-and-plist))
     `(let ((fn (or load-file-name (buffer-file-name))))
        (unless (boundp 'ergoemacs-component-hash)
@@ -390,21 +388,22 @@ Maybe be similar to use-package"
 (defvar ergoemacs-theme-components--modified-plist nil
   "Modified plist.")
 
-(defun ergoemacs-theme-component--add-ensure (plist pkg)
-  "Add PKG to the :ensure keyword."
-  (let ((cur-ensure (plist-get plist :ensure))
-        (cur-pkg (intern (format "%s" (plist-get plist :package-name)))))
-    (cond
-     ((eq cur-ensure t)
-      (setq ergoemacs-theme-components--modified-plist
-            (plist-put plist :ensure (list pkg cur-pkg))))
-     ((not cur-ensure)
-      (setq ergoemacs-theme-components--modified-plist
-            (plist-put plist :ensure pkg)))
-     ((not (memq pkg cur-ensure))
-      (push pkg cur-ensure)
-      (setq ergoemacs-theme-components--modified-plist
-            (plist-put plist :ensure cur-ensure))))))
+(fset 'ergoemacs-theme-component--add-ensure
+      #'(lambda  (plist pkg)
+         "Add PKG to the :ensure keyword."
+         (let ((cur-ensure (plist-get plist :ensure))
+               (cur-pkg (intern (format "%s" (plist-get plist :package-name)))))
+           (cond
+            ((eq cur-ensure t)
+             (setq ergoemacs-theme-components--modified-plist
+                   (plist-put plist :ensure (list pkg cur-pkg))))
+            ((not cur-ensure)
+             (setq ergoemacs-theme-components--modified-plist
+                   (plist-put plist :ensure pkg)))
+            ((not (memq pkg cur-ensure))
+             (push pkg cur-ensure)
+             (setq ergoemacs-theme-components--modified-plist
+                   (plist-put plist :ensure cur-ensure)))))))
 
 (defun ergoemacs-theme-component--tag-diminish (plist tag-value remaining)
   "Handle :diminish tag for `ergoemacs-theme-component'.
@@ -464,6 +463,7 @@ additional parsing routines defined by PARSE-FUNCTION."
           (let ((extracted-key-accu '())
                 plist
                 tag-value
+                tag-fn
                 (remaining keys-and-body))
             ;; Allow
             ;; (component name)

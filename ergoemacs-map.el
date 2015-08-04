@@ -68,9 +68,15 @@
 (defvar ergoemacs-mode)
 (defvar ergoemacs-theme)
 (defvar ergoemacs-ignore-prev-global)
+(defvar ergoemacs-map--hash)
+(defvar ergoemacs-breadcrumb-hash)
+(defvar ess-language)
+
 
 (declare-function ergoemacs-menu--filter "ergoemacs-lib")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
+
+(declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 
 (declare-function ergoemacs-component-struct--create-hooks "ergoemacs-component")
 (declare-function ergoemacs-component-struct--get "ergoemacs-component")
@@ -117,7 +123,9 @@
 
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
-(declare-function ergoemacs-mode-line "ergoemacs-mode.el")
+(declare-function ergoemacs-mode-line "ergoemacs-mode")
+
+(declare-function persistent-soft-location-destroy "persistent-soft")
 
 (defvar ergoemacs-map--hashkey nil
   "Current hashkey for theme options keyboard layout and version.")
@@ -155,7 +163,7 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 (defun ergoemacs-map--alist (alist &optional symbol)
   "Apply maps for ALIST."
   (let ((old-breadcrumb ergoemacs-map--breadcrumb)
-        breadcrumb-base type old-len tmp )
+        breadcrumb-base type old-len)
     (if (and symbol (setq old-len (ergoemacs-gethash symbol ergoemacs-map--alist))
              (= (length alist) old-len)) alist
       (when symbol
