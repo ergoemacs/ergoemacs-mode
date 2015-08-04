@@ -348,6 +348,8 @@ If LOOKUP-KEYMAP
          tmp-key
          tmp
          tmp2
+         tmp3
+         unbound-passthrough
          ret
          menu-bar
          only-modify-p
@@ -574,7 +576,8 @@ If LOOKUP-KEYMAP
           ;; This is done here because hooks can change, and the
           ;; cached map would be invalid.
           (setq tmp (ergoemacs global-map :keys)
-                tmp2 (make-sparse-keymap))
+                tmp2 (make-sparse-keymap)
+                tmp3 (make-composed-keymap hook-overrides))
           (ergoemacs tmp2 :label '(fix-hook-remaps))
           (ergoemacs-map-keymap
            (lambda(key item) (unless (or (eq item 'ergoemacs-prefix)
@@ -582,7 +585,7 @@ If LOOKUP-KEYMAP
                (let ((key (vconcat key)))
                  (when (member key tmp)
                    (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup))) nil)))))
-           (make-composed-keymap hook-overrides))
+           tmp3)
           (unless (ergoemacs tmp2 :empty-p)
             (push tmp2 hook-overrides))
           (setq composed-list (append hook-overrides composed-list)))
@@ -591,15 +594,29 @@ If LOOKUP-KEYMAP
                 tmp2 (make-sparse-keymap))
           (ergoemacs tmp2 :label '(fix-hook-remaps))
           (ergoemacs-map-keymap
-           (lambda(key item) (unless (or (eq item 'ergoemacs-prefix)
-                                    (consp key))
-                          (let ((key (vconcat key)))
-                            (when (member key tmp)
-                              (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup))) item)))))
+           (lambda(key item)
+             (unless (or (eq item 'ergoemacs-prefix)
+                         (consp key))
+               (let ((key (vconcat key)))
+                 (when (member key tmp)
+                   (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup))) item)))))
            (make-composed-keymap hook-deferred))
           (unless (ergoemacs tmp2 :empty-p)
             (push tmp2 hook-deferred))
           (setq composed-list (append composed-list hook-deferred)))
+        (setq unbound-passthrough (make-sparse-keymap))
+        (when (or hook-overrides hook-deferred)
+          (setq tmp3 (make-composed-keymap (append hook-overrides hook-deferred))
+                tmp (append unbind-list ergoemacs-map--unbound-keys))
+          (ergoemacs-map-keymap
+           (lambda (key item)
+             (unless (or (eq item 'ergoemacs-prefix)
+                         (consp key))
+               (let ((key (vconcat key)))
+                 (when (member key tmp)
+                   (define-key unbound-passthrough key item)))))
+           tmp3)
+          (ergoemacs unbound-passthrough :label '(unbound-passthrough)))
         (cond
          ((and only-modify-p composed-list)
           ;; Get the protecting user keys
@@ -627,6 +644,10 @@ If LOOKUP-KEYMAP
                       ret))
           
           (set-keymap-parent ret (make-composed-keymap composed-list parent))
+          ;; Put the unbound keys that are passed through the
+          ;; `ergoemacs-mode' layer of keys.
+          (unless (ergoemacs unbound-passthrough :empty-p)
+            (setq ret (make-composed-keymap unbound-passthrough ret)))
           
           ;; Get the protecting user keys
           (setq tmp (ergoemacs parent :user))
