@@ -1,6 +1,6 @@
 ;;; ergoemacs-mode.el --- Emacs mode based on common modern interface and ergonomics. -*- lexical-binding: t -*-
 
-;; Copyright © 2007-2010, 2012-2014  Free Software Foundation, Inc.
+;; Copyright © 2007-2010, 2012-2015  Free Software Foundation, Inc.
 
 ;; Author: Xah Lee <xah@xahlee.org>
 ;;         David Capello <davidcapello@gmail.com>
@@ -62,214 +62,6 @@
 ;;; Code:
 
 
-(eval-when-compile (require 'cl))
-;; FIXME: Use cl-lib when available.
-;;(require 'cl)
-(require 'easymenu)
-(require 'undo-tree nil t)
-(provide 'ergoemacs-mode)
-
-(defun ergoemacs-flatten-composed-keymap--define-key (keymap parent &optional pre-vector)
-  "Define keys in KEYMAP in PARENT keymap recursively.
-PRE-VECTOR is to help define the full key-vector sequence."
-  (dolist (item keymap)
-    (let ((key (ignore-errors (or (and pre-vector (vconcat pre-vector (vector (car item)))) (vector (car item)))))
-          i)
-      (cond
-       ((eq item 'keymap))
-       ((and key (cdr item)
-             (ignore-errors (or (symbolp (cdr item)) (commandp (cdr item) t))))
-        (setq i (lookup-key parent key))
-        (when (integerp i)
-          (define-key parent (substring key 0 i) nil))
-        (define-key parent key (cdr item)))
-       ((and key (equal key [menu-bar]))
-        (define-key parent key nil)
-        (define-key parent key (cdr item)))
-       ((and key (ignore-errors (eq 'keymap (nth 1 item))))
-        (ergoemacs-flatten-composed-keymap--define-key (cdr item) parent key))
-       ((and key (equal key [keymap]) (keymapp item))
-        (ergoemacs-flatten-composed-keymap--define-key item parent pre-vector))
-       (t
-        ;; (message "This: %s %s %s" pre-vector key item)
-        )))))
-
-(defvar ergoemacs-movement-functions
-  '(scroll-down
-    move-beginning-of-line move-end-of-line scroll-up
-    scroll-down forward-block backward-block
-    forward-word backward-word next-line previous-line
-    forward-char backward-char ergoemacs-backward-block
-    ergoemacs-forward-block ergoemacs-backward-open-bracket
-    ergoemacs-forward-close-bracket move-end-of-line
-    move-beginning-of-line backward-word forward-word
-    subword-backward subword-forward
-    beginning-of-buffer end-of-buffer)
-  "Movement functions.")
-
-(defun ergoemacs-setcdr (var val)
-  "Use `setcdr' on VAL to VAL.
-If VAL is a symbol, use `ergoemacs-sv' to determine the value.
-If VAR is nil, return nil and do nothing. "
-  (if (symbolp var)
-      (setcdr (ergoemacs-sv var) val)
-    (if var
-        (setcdr var val)
-      nil)))
-
-(defvar ergoemacs-original-map-hash)
-(defun ergoemacs-original-keymap (keymap &optional replace)
-  "Return a copy of original keymap, or the current keymap."
-  (if (not keymap) nil
-    (if (symbolp keymap)
-        (ergoemacs-original-keymap (ergoemacs-sv keymap) replace)    
-      (let (ret)
-        (setq ret
-              (copy-keymap
-               (if (ignore-errors
-                     (and (string= "ergoemacs-modified" (nth 1 keymap))
-                          (setq ret (gethash (car (nth 2 keymap)) ergoemacs-original-map-hash))))
-                   (progn
-                     (setq ret (cdr ret))
-                     (push (nth 2 keymap) ret)
-                     (push "ergoemacs-unmodified" ret)
-                     (push 'keymap ret)
-                     ret)
-                 (copy-keymap keymap))))
-        ;; Deal with composed keymaps
-        (setq ret
-              (mapcar
-               (lambda(map)
-                 (if (ignore-errors (keymapp map))
-                     (ergoemacs-original-keymap map)
-                   map))
-               ret))
-        ;; Substitute parent maps too.
-        (when (keymap-parent ret)
-          (set-keymap-parent ret (ergoemacs-original-keymap (keymap-parent ret))))
-        (when replace
-          (ergoemacs-setcdr keymap (cdr ret)))
-        ret))))
-
-(declare-function ergoemacs-translate "ergoemacs-translate.el")
-(defun ergoemacs-flatten-composed-keymap (keymap &optional force-shifted)
-  "Flattens a composed KEYMAP.
-If it is not a composed KEYMAP, return the keymap as is.
-
-This will also install
-`ergoemacs-shortcut-movement-force-shift-select' when
-FORCE-SHIFTED is non-nil."
-  (if (not (ignore-errors (and (keymapp keymap) (eq (nth 0 (nth 1 keymap)) 'keymap)))) keymap
-    (let* (new-keymap
-           trans
-           (remaining (cdr keymap))
-           (keymap-list '()))
-      (while (keymapp (car remaining))
-        (push (pop remaining) keymap-list)) ;; Should be reversed
-      ;; Parent keymap
-      (if (keymapp remaining)
-          (setq new-keymap (copy-keymap remaining))
-        (setq new-keymap (make-sparse-keymap)))
-      (dolist (sub-keymap keymap-list)
-        (ergoemacs-flatten-composed-keymap--define-key sub-keymap new-keymap))
-      (when force-shifted
-        (dolist (move-fn (append ergoemacs-movement-functions
-                                  '(ergoemacs-shortcut-movement)))
-          (dolist (move-key (where-is-internal move-fn new-keymap))
-            (setq trans (plist-get (ergoemacs-translate move-key) ':caps-translated-key))
-            (when (and trans (not (lookup-key new-keymap trans)))
-              (define-key new-keymap trans 'ergoemacs-shortcut-movement-force-shift-select)))))
-      (ergoemacs-setcdr keymap (cdr new-keymap))
-      keymap)))
-
-(when (not (fboundp 'make-composed-keymap))
-  (defun make-composed-keymap (maps &optional parent)
-    "Construct a new keymap composed of MAPS and inheriting from PARENT.
-
-This does not work in emacs 23 or below, but ergoemacs-mode uses
-it to create the same structure and flatten them later.
-
-In emacs 24, this is how the function behaves:
-
-When looking up a key in the returned map, the key is looked in each
-keymap of MAPS in turn until a binding is found.
-If no binding is found in MAPS, the lookup continues in PARENT, if non-nil.
-As always with keymap inheritance, a nil binding in MAPS overrides
-any corresponding binding in PARENT, but it does not override corresponding
-bindings in other keymaps of MAPS.
-MAPS can be a list of keymaps or a single keymap.
-PARENT if non-nil should be a keymap."
-    `(keymap
-      ,@(if (keymapp maps) (list maps) maps)
-      ,@parent)))
-
-
-(defvar ergoemacs-debug ""
-  "Debugging for `ergoemacs-mode'.")
-
-(defvar ergoemacs-debug-buffer " *ErgoEmacs-mode Debug Log*"
-  "Variable for ergoemacs debugging buffer.")
-
-(defvar ergoemacs-debug-keymap--temp-map nil)
-(defun ergoemacs-debug-keymap (keymap)
-  "Print keymap bindings."
-  (if (not (ignore-errors (symbolp (symbol-name keymap))))
-      (progn
-        (setq ergoemacs-debug-keymap--temp-map keymap)
-        (ergoemacs-debug "%s" (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")))
-    (ergoemacs-debug-heading "%s"
-                             (format "Keymap Description: %s" (symbol-name keymap)))
-    (ergoemacs-debug "%s" (substitute-command-keys (format "\\{%s}" (symbol-name keymap))))))
-
-(defvar ergoemacs-debug-heading-start-time (float-time))
-(defvar ergoemacs-debug-heading-last-time (float-time))
-
-(defun ergoemacs-debug-heading (&rest arg)
-  "Ergoemacs debugging heading."
-  (ergoemacs-debug (concat "** "
-                           (condition-case err
-                               (apply 'format arg)
-                             (error (format "Bad format string: %s (%s)" arg err)))))
-  (ergoemacs-debug "Time Since Start ergoemacs-mode: %1f sec" (- (float-time) ergoemacs-debug-heading-start-time))
-  (ergoemacs-debug "Time Since Last Heading: %1f sec" (- (float-time) ergoemacs-debug-heading-last-time))
-  (setq ergoemacs-debug-heading-last-time (float-time)))
-
-(defun ergoemacs-debug (&rest arg)
-  "Ergoemacs debugging facility."
-  (interactive)
-  (if (called-interactively-p 'any)
-      (progn
-        (ergoemacs-debug-flush)
-        (switch-to-buffer-other-window (get-buffer-create ergoemacs-debug-buffer))
-        (setq ergoemacs-debug-buffer (replace-regexp-in-string "^ +" "" ergoemacs-debug-buffer))
-        (rename-buffer ergoemacs-debug-buffer)
-        (unless (eq major-mode 'org-mode)
-          (call-interactively 'org-mode)))
-    (setq ergoemacs-debug
-          (format "%s\n%s"
-                  ergoemacs-debug
-                  (condition-case err
-                      (apply 'format arg)
-                    (error (format "Bad Format String: %s (%s)" arg err)))))))
-
-(defun ergoemacs-debug-clear ()
-  "Clears the variable `ergoemacs-debug' and `ergoemacs-debug-buffer'"
-  (setq ergoemacs-debug "")
-  (save-excursion
-    (with-current-buffer (get-buffer-create ergoemacs-debug-buffer) 
-      (delete-region (point-min) (point-max)))))
-
-(defun ergoemacs-debug-flush ()
-  "Flushes ergoemacs debug to `ergoemacs-debug-buffer'"
-  (save-excursion
-    (with-current-buffer (get-buffer-create ergoemacs-debug-buffer) 
-      (goto-char (point-max))
-      (unless (looking-back "\n")
-        (insert "\n"))
-      (insert ergoemacs-debug)
-      (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point))))
-  (setq ergoemacs-debug ""))
-
 ;; Include extra files
 (defvar ergoemacs-dir
   (file-name-directory
@@ -277,11 +69,62 @@ PARENT if non-nil should be a keymap."
     load-file-name
     (buffer-file-name)))
   "Ergoemacs directory.")
-(add-to-list 'load-path ergoemacs-dir)
+(push ergoemacs-dir load-path)
+
+(eval-when-compile
+  (require 'cl)
+  (require 'ergoemacs-macros))
+;; FIXME: Use cl-lib when available.
+;;(require 'cl)
+(require 'easymenu)
+(require 'undo-tree nil t)
+(provide 'ergoemacs-mode)
+
+(defvar cl-struct-ergoemacs-component-struct-tags)
+(defvar ergoemacs-component-struct--refresh-variables)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-map--cache-save)
+(defvar ergoemacs-map--hashkey)
+(defvar ergoemacs-require--ini-p)
+(defvar ergoemacs-require)
+(defvar pcache-directory)
+
+(require 'package)
+
+(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
+;; (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+
+(when (string= package-user-dir (locate-user-emacs-file "elpa"))
+  (setq package-user-dir (locate-user-emacs-file (format "elpa-%s-%s" emacs-version system-configuration))))
+
+(declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
+(declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")
+
+(declare-function ergoemacs-map--cache-save "ergoemacs-map")
+(declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
+(declare-function ergoemacs-map-properties--create-label-function "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+
+(declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
+(declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
+
+(declare-function persistent-soft-fetch "persistent-soft")
+(declare-function persistent-soft-flush "persistent-soft")
+(declare-function persistent-soft-location-destroy "persistent-flush")
+(declare-function persistent-soft-store "persistent-soft")
+
+(declare-function unicode-fonts-setup "unicode-fonts")
 
 
-(unless (featurep 'ergoemacs-layouts)
-  (load "ergoemacs-layouts"))
+
+;; Fundamental ergoemacs functions
+
+
+;; (unless (featurep 'ergoemacs-map)
+;;   (load "ergoemacs-map"))
+
+
 
 ;; Ergoemacs-keybindings version
 (defconst ergoemacs-mode-version "5.14.7.3"
@@ -296,117 +139,32 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :group 'convenience
   :group 'emulations)
 
-(defcustom ergoemacs-mode-used nil
-  "Ergoemacs-keybindings minor mode version number used."
-  :type 'string
-  :group 'ergoemacs-mode)
-
-(defvar ergoemacs-deletion-functions
-  '(delete-backward-char
-    delete-char backward-kill-word kill-word kill-line
-    ergoemacs-shrink-whitespaces ergoemacs-kill-line-backward)
-  "Deletion functions.")
-
-(defvar ergoemacs-undo-redo-functions
-  '(undo
-    redo
-    undo-tree-undo
-    undo-tree-redo)
-  "Undo and redo functions that ErgoEmacs is aware of...")
-(declare-function ergoemacs-theme-reset "ergoemacs-theme-engine.el")
-(defun ergoemacs-set-default (symbol new-value)
-  "Ergoemacs equivalent to set-default.
-Will reload `ergoemacs-mode' after setting the values."
-  (set-default symbol new-value)
-  (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
-                 (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
-             (boundp 'ergoemacs-mode) ergoemacs-mode)
-    (ergoemacs-theme-reset)))
-
-(declare-function ergoemacs-get-layouts-doc "ergoemacs-layouts.el")
-(declare-function ergoemacs-get-layouts-type "ergoemacs-layouts.el")
-(defcustom ergoemacs-keyboard-layout (or (getenv "ERGOEMACS_KEYBOARD_LAYOUT") "us")
-  (concat "Specifies which keyboard layout to use.
-This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.
-
-Valid values are:
-
-" (ergoemacs-get-layouts-doc))
-  :type (ergoemacs-get-layouts-type)
+(defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
+                               ergoemacs-variant
+                             (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
+                                 ergoemacs-theme
+                               (if (getenv "ERGOEMACS_THEME")
+                                   (getenv "ERGOEMACS_THEME")
+                                 nil)))
+  "Ergoemacs Keyboard Layout Themes"
+  :type '(choice
+          (const :tag "Standard" :value nil)
+          (choice (symbol :tag "Other (symbol)")
+                  (string :tag "Other (string)")))
   :set 'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
-
-(defcustom ergoemacs-cua-rect-modifier 'super
-  "Change the CUA rectangle modifier to this key."
-  :type '(choice
-          (const :tag "Do not modify the cua-rectangle modifier" nil)
-          (const :tag "Meta Modifier" meta)
-          (const :tag "Super Modifier" super)
-          (const :tag "Hyper Modifier" hyper)
-          (const :tag "Alt Modifier" alt))
-  :set 'ergoemacs-set-default
-  :initialize #'custom-initialize-default
-  :group 'ergoemacs-mode)
-
-(defcustom ergoemacs-repeat-movement-commands nil
-  "Allow movement commands to be repeated without pressing the ALT key."
-  :group 'ergoemacs-mode
-  :type '(choice
-          (const :tag "Do not allow fast repeat commands." nil)
-          (const :tag "Allow fast repeat command of the current movement command" single)
-          (const :tag "Allow fast repeat of all movement commands" all)))
-
-(defvar ergoemacs-curr-prefix-arg nil)
-(defvar ergoemacs-repeat-keys nil)
-(defvar ergoemacs-shortcut-keys nil)
-(defvar ergoemacs-no-shortcut-keys nil)
-(defvar ergoemacs-unbind-keys nil)
-(defvar ergoemacs-read-input-keys nil)
-
-(unless (featurep 'ergoemacs-theme-engine)
-  (cond
-   ((and (file-exists-p (expand-file-name "ergoemacs-theme-engine.elc" ergoemacs-dir))
-         (file-newer-than-file-p
-          (expand-file-name "ergoemacs-theme-engine.elc" ergoemacs-dir)
-          (expand-file-name "ergoemacs-theme-engine.el" ergoemacs-dir)))
-    (load "ergoemacs-theme-engine"))
-   (t
-    (byte-compile-file (expand-file-name "ergoemacs-theme-engine.el" ergoemacs-dir) t))))
-
-(defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
-  "Hash of ergoemacs theme components")
-
-(unless (featurep 'ergoemacs-themes)
-  (load "ergoemacs-themes"))
-(unless (featurep 'ergoemacs-unbind)
-  (load "ergoemacs-unbind"))
 
 ;;; ergoemacs-keymap
 
 (defvar ergoemacs-keymap (make-sparse-keymap)
-  "ErgoEmacs minor mode keymap.")
+  "ErgoEmacs minor mode keymap.  This replaces `global-map'.")
 
-(defvar ergoemacs-unbind-keymap (make-sparse-keymap)
-  "Keymap for `ergoemacs-unbind-keys'")
+(defvar ergoemacs-menu-keymap (make-sparse-keymap)
+  "ErgoEmacs minor-mode menu keymap.")
 
-(defvar ergoemacs-shortcut-keymap (make-sparse-keymap)
-  "ErgoEmacs minor mode shortcut keymap")
-
-(defvar ergoemacs-no-shortcut-keymap (make-sparse-keymap)
-  "ErgoEmacs minor mode shortcut-free keymap")
-
-(defvar ergoemacs-read-input-keymap (make-sparse-keymap)
-  "Ergoemacs minor mode shortcut input keymap.")
-
-(unless (featurep 'ergoemacs-modal)
-  (load "ergoemacs-modal"))
-(unless (featurep 'ergoemacs-functions)
-  (load "ergoemacs-functions"))
-(unless (featurep 'ergoemacs-translate)
-  (load "ergoemacs-translate"))
-(unless (featurep 'ergoemacs-shortcuts)
-  (load "ergoemacs-shortcuts"))
+(defvar ergoemacs-global-changed-keymap (make-sparse-keymap)
+  "This keymap shows the global keys that were changed before `ergoemacs-mode' loaded.")
 
 (defvar ergoemacs-theme)
 (defcustom ergoemacs-mode-line t
@@ -416,9 +174,9 @@ Valid values are:
 	  (const :tag "Do not show layout" no-layout)
 	  (const :tag "Never Show Mode Line" nil))
   :group 'ergoemacs-mode)
+
 (defun ergoemacs-mode-line (&optional text)
   "Set ergoemacs-mode-line"
-  ;; (ergoemacs-debug-heading "Set Mode Line to %s" (or text "Default"))
   (let ((new-text (and text (or (and (not ergoemacs-mode-line) "") text))))
     (if new-text
         (setq minor-mode-alist
@@ -433,116 +191,72 @@ Valid values are:
                           x
                         `(ergoemacs-mode ,(if (or (not ergoemacs-mode-line) (eq ergoemacs-mode-line 'no-layout)) ""
                                             (concat
-                                             (if (string= "standard" (or ergoemacs-theme "standard"))
+                                             (if (string= "standard" (ergoemacs :current-theme))
                                                  " ErgoEmacs"
                                                (concat " Ergo"
-                                                       (upcase (substring ergoemacs-theme 0 1))
-                                                       (substring ergoemacs-theme 1)))
+                                                       (upcase (substring (ergoemacs :current-theme) 0 1))
+                                                       (substring (ergoemacs :current-theme) 1)))
                                              "[" ergoemacs-keyboard-layout "]")))))
-                    minor-mode-alist))))
-  (ergoemacs-debug-flush))
+                    minor-mode-alist)))))
 
 (require 'lookup-word-on-internet nil "NOERROR")
-(unless (featurep 'ergoemacs-extras)
-  (load "ergoemacs-extras"))
 
-;; ErgoEmacs hooks
-(declare-function ergoemacs-setup-keys-for-layout "ergoemacs-translate.el")
-(declare-function ergoemacs-theme-install "ergoemacs-theme-engine.el")
-(defun ergoemacs-setup-keys (&optional no-check)
-  "Setups keys based on a particular layout. Based on `ergoemacs-keyboard-layout'."
-  (interactive)
-  (ergoemacs-debug "Ergoemacs layout: %s" ergoemacs-keyboard-layout)
-  (ergoemacs-debug "Ergoemacs theme: %s" (or ergoemacs-theme "standard"))
-  (ergoemacs-debug "Emacs Version: %s" (emacs-version))
-  (let ((ergoemacs-state (if (boundp 'ergoemacs-mode) ergoemacs-mode nil))
-        (layout
-         (intern-soft
-          (concat "ergoemacs-layout-" ergoemacs-keyboard-layout))))
-    (unless no-check
-      (when ergoemacs-state
-        (when (fboundp 'ergoemacs-mode)
-          (ergoemacs-mode -1))))
-    (cond
-     (layout
-      (ergoemacs-setup-keys-for-layout ergoemacs-keyboard-layout))
-     (t ; US qwerty by default
-      (ergoemacs-setup-keys-for-layout "us")))
-    (ergoemacs-theme-install (or ergoemacs-theme 'standard))
-    (unless no-check
-      (when ergoemacs-state
-        (ergoemacs-mode 1)))))
+(defconst ergoemacs-font-lock-keywords
+  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\|-package\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
+     (1 font-lock-keyword-face)
+     (2 font-lock-constant-face nil t))))
+
+(font-lock-add-keywords 'emacs-lisp-mode ergoemacs-font-lock-keywords)
 
 
-(require 'cus-edit)
 
-;; (add-hook 'emacs-startup-hook 'ergoemacs-check-for-new-version)
-(defvar ergoemacs-old-ns-command-modifier nil)
-(defvar ergoemacs-old-ns-alternate-modifier nil)
-
-(defcustom ergoemacs-use-mac-command-as-meta t
-  "Use Mac's command/apple key as emacs meta-key when enabled."
-  :type 'boolean
+(defcustom ergoemacs-hooks-that-always-override-ergoemacs-mode '()
+  "List of hooks that when defining keys override `ergoemacs-mode' keys."
+  :type '(repeat
+          (symbol :tag "Hook"))
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-use-menus t
-  "Use ergoemacs menus"
-  :type 'boolean
-  :set 'ergoemacs-set-default
-  :initialize #'custom-initialize-default
+(defcustom ergoemacs-functions-that-always-override-ergoemacs-mode '(lambda)
+  "List of functions run from a hook that when defining keys override `ergoemacs-mode' keys.
+lambda is a special undefined function"
+  :type '(repeat
+          (symbol :tag "Function"))
   :group 'ergoemacs-mode)
 
-(defvar ergoemacs-modal-emulation-mode-map-alist nil
-  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+(defcustom ergoemacs-directories-where-keys-from-hook-are-deferred '()
+  "Directories where `ergoemacs-mode' defers hooks that gerenate key changes."
+  :type '(repeat
+          (directory :tag "Deferred Directory: "))
+  :group 'ergoemacs-mode)
 
-(defvar ergoemacs-repeat-emulation-mode-map-alist nil
-  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
 
-(defvar ergoemacs-read-emulation-mode-map-alist nil
-  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+(defgroup ergoemacs-themes nil
+  "Default Ergoemacs Layout"
+  :group 'ergoemacs-mode)
 
-(defvar ergoemacs-read-local-emulation-mode-map-alist nil
-  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+(defcustom ergoemacs-theme-options
+  '()
+  "List of theme options"
+  :type '(repeat
+          (list
+           (sexp :tag "Theme Component")
+           (choice
+            (const :tag "Force Off" off)
+            (const :tag "Force On" on)
+            (const :tag "Let theme decide" nil))))
+  :group 'ergoemacs-themes)
 
-(defvar ergoemacs-local-emulation-mode-map-alist nil
-  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
+(defcustom ergoemacs-theme-version
+  '()
+  "Each themes set version"
+  :type '(repeat
+          (list
+           (string :tag "Theme Component")
+           (choice
+            (const :tag "Latest Version" nil)
+            (string :tag "Version"))))
+  :group 'ergoemacs-theme)
 
-(defvar ergoemacs-emulation-mode-map-alist nil
-  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
-
-(defvar ergoemacs-shortcut-emulation-mode-map-alist nil
-  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
-
-(defvar ergoemacs-no-shortcut-emulation-mode-map-alist nil
-  "Override keys in `ergoemacs-mode' for `emulation-mode-map-alist'")
-
-(defun ergoemacs-emulations (&optional remove)
-  "Add ergoemacs emulations to `emulation-mode-map-alist'.
-When REMOVE is true, remove the emulations."
-  (dolist (hook (reverse '(ergoemacs-modal-emulation-mode-map-alist
-                           ergoemacs-read-emulation-mode-map-alist
-                           ergoemacs-read-local-emulation-mode-map-alist
-                           ergoemacs-local-emulation-mode-map-alist
-                           ergoemacs-repeat-emulation-mode-map-alist
-                           ergoemacs-emulation-mode-map-alist
-                           ergoemacs-shortcut-emulation-mode-map-alist
-                           ergoemacs-no-shortcut-emulation-mode-map-alist)))
-    (funcall (if remove #'remove-hook #'add-hook) 'emulation-mode-map-alists hook)))
-
-(defvar ergoemacs-global-map nil
-  "Saves the current global map to make sure the global changes are true.")
-(defvar ns-alternate-modifier)
-(defvar mac-alternate-modifier)
-(defvar ergoemacs-read-key-overriding-overlay-save)
-(defvar ergoemacs-read-key-overriding-terminal-local-save)
-(defvar ergoemacs-modal)
-(defvar ergoemacs-modal-list)
-(defvar ergoemacs-modal-save)
-(declare-function ergoemacs-menus-on "ergoemacs-menus.el")
-(declare-function ergoemacs-menus-off "ergoemacs-menus.el")
-(declare-function ergoemacs-theme-remove "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-enable-c-advices "ergoemacs-advices.el")
-(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
 
 ;; ErgoEmacs minor mode
 ;;;###autoload
@@ -567,102 +281,238 @@ bindings the keymap is:
   :lighter " ErgoEmacs"
   :global t
   :group 'ergoemacs-mode
-  :keymap ergoemacs-keymap
+  :keymap ergoemacs-menu-keymap
+  (setq ergoemacs-map--hashkey nil)
+  (unless ergoemacs-require--ini-p
+    (setq ergoemacs-require--ini-p :ini)
+    (when ergoemacs-require
+      (dolist (elt ergoemacs-require)
+        (apply #'ergoemacs-require elt))))
+  (let ((refresh-p ergoemacs-component-struct--refresh-variables))
+    (if ergoemacs-mode
+        (progn
+          (run-hooks 'ergoemacs-mode-startup-hook)
+          (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+          (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
+          (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
+          (if refresh-p
+              (message "Ergoemacs-mode keys refreshed (%s:%s)"
+                       ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))
+            (message "Ergoemacs-mode turned ON (%s:%s)." ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))))
+      (run-hooks 'ergoemacs-mode-shutdown-hook)
+      (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
+      (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+      (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
+      (setq overriding-terminal-local-map nil)
+      (unless refresh-p
+        (message "Ergoemacs-mode turned OFF.")))))
+
+(defun ergoemacs-mode--pcache-repository ()
+  (format "ergoemacs-mode-%s-%s" emacs-version system-configuration))
+(require 'persistent-soft nil t)
+(defvar ergoemacs-mode--fast-p nil)
+(defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
+  (let (sym val found-p)
+    (dolist (a args)
+      (cond
+       ((and (symbolp a) (not store-p)) ;; Fetch
+        (setq sym a)
+        (when (featurep 'persistent-soft)
+          (setq val (persistent-soft-fetch sym (ergoemacs-mode--pcache-repository)))
+          (when val
+            (setq found-p t)
+            (set sym val)
+            ;; Setup autoloads
+            (when (eq sym 'ergoemacs-component-struct--hash)
+              (setq ergoemacs-mode--fast-p t)
+              (maphash
+               (lambda (_key value)
+                 (when (ergoemacs-component-struct-p value)
+                   (dolist (a (ergoemacs-component-struct-autoloads value))
+                     (autoload (car a) (format (cdr a)) nil t))))
+               val))
+            ;; (message "Found %s->%s" sym val)
+            )))
+       ((symbolp a) ;; Store
+        (setq sym a)
+        (when (featurep 'persistent-soft)
+          (persistent-soft-store sym (symbol-value sym) (ergoemacs-mode--pcache-repository))))
+       ((and (not found-p) (not store-p) (not (symbol-value sym)))
+        ;; Setup empty symbol.
+        ;; (message "Empty %s->%s" sym a)
+        (set sym a)
+        (setq found-p nil))
+       (t
+        (setq found-p nil))))))
+
+(defvar ergoemacs-component-hash nil
+  "Hash of ergoemacs-components")
+
+(defvar ergoemacs-component-struct--hash nil
+  "Hash table of `ergoemacs-mode' component structures.")
+
+(defvar ergoemacs-map--hash nil
+  "Hash of calculated maps")
+
+(defvar ergoemacs-map-properties--indirect-keymaps nil
+  "Variable listing indirect keymaps.")
+
+(defvar ergoemacs-map-properties--key-struct nil
+  "Key struct hash table.")
+
+(defvar ergoemacs-map-properties--plist-hash nil)
+
+(defvar ergoemacs-theme-hash nil
+  "Hash of `ergoemacs-mode' themes")
+
+(defvar ergoemacs-translate--event-hash nil
+  "Event modifiers not covered by standard emacs")
+
+(defvar ergoemacs-translate--hash nil
+  "")
+
+(defvar ergoemacs-translation-hash nil
+  "Hash table of translations")
+
+(defvar ergoemacs-map-properties--create-label-function nil)
+
+(defvar ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum)
+
+(defvar ergoemacs-breadcrumb-hash nil
+  "Hash table of map breadcrumbs.")
+
+(defvar ergoemacs-theme-comp-hash nil
+  "Hash of ergoemacs theme components")
+
+(defun ergoemacs-mode--remove-hash ())
+
+(defun ergoemacs-mode--setup-hash-tables (&optional store-p)
+  "Load hash-tables using `persistent-soft' when available.
+When `store-p' is non-nil, save the tables."
+  (when store-p
+    (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
+  (ergoemacs-mode--setup-hash-tables--setq
+   store-p
+   'ergoemacs-component-hash (make-hash-table :test 'equal)
+   'ergoemacs-component-struct--hash (make-hash-table)
+   'ergoemacs-map--hash (make-hash-table :test 'equal)
+   'ergoemacs-map-properties--indirect-keymaps (make-hash-table)
+   'ergoemacs-map-properties--key-struct (make-hash-table)
+   'ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)
+   'ergoemacs-theme-hash (make-hash-table :test 'equal)
+   'ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
+   'ergoemacs-translate--event-hash (make-hash-table)
+   'ergoemacs-translate--hash (make-hash-table)
+   'ergoemacs-translation-hash (make-hash-table)
+   'ergoemacs-breadcrumb-hash (make-hash-table)
+   'ergoemacs-map-properties--create-label-function nil
+   'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
+   ;;'ergoemacs-map-- (make-hash-table :test 'equal))
+   ;;'ergoemacs-map--alist (make-hash-table)
+   ;;'ergoemacs-map--alists (make-hash-table)
+   ;;'ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
+   ;;'ergoemacs-translate--keymap-hash (make-hash-table)
+   )
+  (when store-p
+    (persistent-soft-flush (ergoemacs-mode--pcache-repository))
+    (when (eq system-type 'windows-nt)
+      ;; Fix for stupid  endings
+      (with-temp-buffer
+        (insert-file-contents (concat pcache-directory (ergoemacs-mode--pcache-repository)))
+        (persistent-soft-location-destroy (ergoemacs-mode--pcache-repository))
+        (goto-char (point-min))
+        (while (re-search-forward "+$" nil t)
+          (replace-match ""))
+        ;; Update timestamp.
+        (when (re-search-backward ":timestamp +[0-9.]+" nil t)
+          (replace-match (format ":timestamp %s" (float-time (current-time)))))
+        (write-region (point-min) (point-max)
+                      (concat pcache-directory (ergoemacs-mode--pcache-repository))
+                      nil 1)))))
+
+(ergoemacs-mode--setup-hash-tables)
+
+(defun ergoemacs-mode-clear-cache ()
+  "Clear the cache for next ergoemacs-mode load."
+  (interactive)
+  (setq ergoemacs-map--cache-save :remove)
+  (ergoemacs-map--cache-save)
+  (message "Clear cache for next startup."))
+
+(dolist (pkg '(ergoemacs-advice
+               ergoemacs-lib
+               ergoemacs-mapkeymap
+               ergoemacs-map-properties
+               ergoemacs-layouts
+               ergoemacs-translate
+               ergoemacs-key-description
+               ergoemacs-debug
+               ergoemacs-component
+               ergoemacs-command-loop
+               ergoemacs-map
+               ergoemacs-functions
+               ergoemacs-theme-engine
+	       ;; ergoemacs-themes
+               ))
+  (unless (featurep pkg)
+    (load (symbol-name pkg))))
+
+(unless ergoemacs-mode--fast-p
+  (load "ergoemacs-themes"))
+
+(defcustom ergoemacs-command-loop-spinners
+  '((standard ("|" "/" "-" "\\"))
+    (arrows ("←" "↖" "↑" "↗" "→" "↘" "↓" "↙"))
+    (bar-vertical ("▁" "▃" "▄" "▅" "▆" "▇" "█" "▇" "▆" "▅" "▄" "▃"))
+    (bar-horizontal ("▉" "▊" "▋" "▌" "▍" "▎" "▏" "▎" "▍" "▌" "▋" "▊" "▉"))
+    (rotate-cross ("┤" "┘" "┴" "└" "├" "┌" "┬" "┐"))
+    (rotate-triangle ("◢" "◣" "◤" "◥"))
+    (rotate-balloons ("." "o" "O" "@" "*"))
+    (eyes ("◡◡" "⊙⊙" "◠◠"))
+    (dots ("⣾" "⣽" "⣻" "⢿" "⡿" "⣟" "⣯" "⣷"))
+    (dot ("⠁" "⠂" "⠄" "⡀" "⢀" "⠠" "⠐" "⠈"))
+    (fish (">))'>" " >))'>" "  >))'>" "   >))'>" "    >))'>" "   <'((<" "  <'((<" " <'((<")))
+  "Spinners for long commands with `ergoemacs-command-loop'"
+  :group 'ergoemacs-command-loop)
+
+(defcustom ergoemacs-command-loop-spinner 'dots
+  "What spinner to use for long commands with `ergoemacs-command-loop'"
+  :type 'sexp
+  :group 'ergoemacs-command-loop)
+
+(defcustom ergoemacs-command-loop-spinner-rate 0.4
+  "Spinner rate for long commands"
+  :type 'number
+  :group 'ergoemacs-command-loop)
   
-  ;; Try to turn on only rectangle support, global mark mode, and
-  ;; other features of CUA mode.  Let ergoemacs handle C-c and C-v.
-  ;; This will possibly allow swapping of C-c and M-c.
-  (if ergoemacs-mode
-      (progn
-        (setq ergoemacs-debug-heading-start-time (float-time)
-              ergoemacs-debug-heading-last-time (float-time)
-              ergoemacs-global-map (current-global-map))
-        (ergoemacs-debug "* Ergoemacs-mode is turning ON.")
-        (when cua-mode
-          (cua-mode -1)
-          (cua-selection-mode 1))
-        (ergoemacs-emulations)
-        ;; Setup keys
-        (ergoemacs-debug-heading "Ergoemacs Keys have loaded.")
-        (when (and ergoemacs-use-mac-command-as-meta
-                   (eq system-type 'darwin))
-          (let ((cm (or (and (boundp 'ns-command-modifier) 'ns-command-modifier)
-                        (and (boundp 'mac-command-modifier) 'mac-command-modifier)))
-                (am (or (and (boundp 'ns-alternate-modifier) 'ns-alternate-modifier)
-                        (and (boundp 'mac-alternate-modifier) 'mac-alternate-modifier))))
-            (when cm
-              (setq ergoemacs-old-ns-command-modifier (ergoemacs-sv cm))
-              (set cm 'meta))
-            (when am
-              (setq ergoemacs-old-ns-alternate-modifier (ergoemacs-sv am))
-              (set am nil))))
-        ;; (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
-        ;;   (if (not ergoemacs-read-key-overriding-overlay-save)
-        ;;       (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
-        ;;     (delete-overlay ergoemacs-read-key-overriding-overlay-save)
-        ;;     (setq ergoemacs-read-key-overriding-overlay-save nil)))
-        ;; Fix `substitute-command-keys'
-        (ergoemacs-enable-c-advices)
-        (ergoemacs-setup-keys t)
-        ;; Turn on menu
-        (if ergoemacs-use-menus
-            (progn
-              (require 'ergoemacs-menus)
-              (ergoemacs-menus-on))
-          (when (featurep 'ergoemacs-menus)
-            (ergoemacs-menus-off)))
-        (ergoemacs-debug-heading "Ergoemacs Menus have loaded.")
-        (add-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
-        (ergoemacs-populate-pre-command-hook)
-        (ergoemacs-debug-heading "Ergoemacs-mode turned ON.")
-        (message "Ergoemacs-mode turned ON."))
-    ;; turn off ergoemacs-mode
-    (ergoemacs-debug-heading "Ergoemacs-mode is turning OFF.")
-    (setq ergoemacs-modal                  nil
-          ergoemacs-modal-list             '()
-          ergoemacs-modal-save             nil)
-    (set-default 'ergoemacs-modal nil)
-    ;; (customize-save-variable 'ergoemacs-mode nil)
-    ;; (customize-save-variable 'ergoemacs-ini-mode nil)
-    (when (featurep 'ergoemacs-menus)
-      (ergoemacs-menus-off))
-    (ergoemacs-theme-remove)
-    (when (and ergoemacs-use-mac-command-as-meta (eq system-type 'darwin))
-      (let ((cm (or (and (boundp 'ns-command-modifier) 'ns-command-modifier)
-                    (and (boundp 'mac-command-modifier) 'mac-command-modifier)))
-            (am (or (and (boundp 'ns-alternate-modifier) 'ns-alternate-modifier)
-                    (and (boundp 'mac-alternate-modifier) 'mac-alternate-modifier))))
-        (when cm
-          (set cm ergoemacs-old-ns-command-modifier))
-        (when am
-          (set am ergoemacs-old-ns-alternate-modifier))))
-    (remove-hook 'pre-command-hook 'ergoemacs-pre-command-hook)
-    (ergoemacs-populate-pre-command-hook t)
-    ;; Revert `substitute-command-keys' and `completing-read'
-    (ergoemacs-enable-c-advices 'disable)
-    (ergoemacs-debug-heading "Ergoemacs-mode turned OFF.")
-    (message "Ergoemacs-mode turned OFF."))
-  ;; Always have `ergoemacs-post-command-hook' on so that it will
-  ;; uninstall ergoemacs keymaps that were installed to overlays and
-  ;; text-properties and anything above `emulation-mode-map-alists'.
-  (add-hook 'post-command-hook 'ergoemacs-post-command-hook) 
-  (ergoemacs-debug "post-command-hook: %s" post-command-hook)
-  (ergoemacs-debug "pre-command-hook: %s" pre-command-hook)
-  (ergoemacs-debug "ergoemacs-shortcut-keys: %s" ergoemacs-shortcut-keys)
-  (ergoemacs-debug "ergoemacs-read-input-keys: %s"
-                   ergoemacs-read-input-keys)
-  (ergoemacs-debug "ergoemacs-unbind-keys: %s" ergoemacs-unbind-keys)
-  (ergoemacs-debug "ergoemacs-mode %s" ergoemacs-mode)
-  (ergoemacs-debug "emulation-mode-map-alists: %s" emulation-mode-map-alists)
-  (ergoemacs-debug "ergoemacs-emulation-mode-map-alist: %s"
-                   (mapcar
-                    (lambda(x) (nth 0 x))
-                    ergoemacs-emulation-mode-map-alist))
-  (ergoemacs-debug "minor-mode-map-alist: %s"
-                   (mapcar
-                    (lambda(x) (nth 0 x))
-                    minor-mode-map-alist))
-  (ergoemacs-debug-flush))
+  
+
+(when (functionp ergoemacs-map-properties--create-label-function)
+  (funcall ergoemacs-map-properties--create-label-function))
+
+(defvar ergoemacs-user-keymap (make-sparse-keymap)
+  "User `ergoemacs-mode' keymap.")
+
+;; ErgoEmacs hooks
+
+
+(require 'cus-edit)
+
+(defvar ergoemacs-mode-startup-hook nil
+  "Hook for starting `ergoemacs-mode'")
+
+(defvar ergoemacs-mode-shutdown-hook nil
+  "Hook for shutting down `ergoemacs-mode'")
+
+(defvar ergoemacs-mode-intialize-hook nil
+  "Hook for initializing `ergoemacs-mode'")
+
+(defvar ergoemacs-mode-init-hook nil
+  "Hook for running after emacs loads")
+
+(defvar ergoemacs-mode-after-load-hook nil
+  "Hook for running after a library loads")
+
 
 ;;;###autoload
 (defun ergoemacs-mode-start ()
@@ -670,6 +520,7 @@ bindings the keymap is:
   (unless ergoemacs-mode
     (ergoemacs-mode 1)))
 
+;;;###autoload
 (define-minor-mode ergoemacs-ini-mode
   "Dummy mode to call `ergoemacs-mode' at the very last second if not already loaded."
   nil
@@ -682,30 +533,55 @@ bindings the keymap is:
    ((not ergoemacs-ini-mode)
     (remove-hook 'emacs-startup-hook 'ergoemacs-mode-start))))
 
+(defvar ergoemacs-pre-command-hook nil)
+(defun ergoemacs-pre-command-hook ()
+  "Run `ergoemacs-mode' pre command hooks."
+  (run-hooks 'ergoemacs-pre-command-hook))
 
+(defvar ergoemacs-post-command-hook nil)
+(defun ergoemacs-post-command-hook ()
+  "Run `ergoemacs-mode' post command hooks."
+  (run-hooks 'ergoemacs-post-command-hook))
 
+(defvar ergoemacs-after-load-functions nil)
+(defun ergoemacs-after-load-functions (absoulte-file-name)
+  "Run `ergoemacs-mode' after load functions."
+  (run-hook-with-args 'ergoemacs-after-load-functions absoulte-file-name))
+
+;;;###autoload
+(defun ergoemacs-mode-reset ()
+  "Resets the `ergoemacs-mode' without toggling unnecessary variables."
+  (setq ergoemacs-component-struct--refresh-variables t)
+  (ergoemacs-mode -1)
+  (ergoemacs-mode 1))
+
+;;;###autoload
+(defun ergoemacs-set-default (symbol new-value)
+  "Ergoemacs equivalent to set-default.
+Will reload `ergoemacs-mode' after setting the values."
+  (set-default symbol new-value)
+  (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
+                 (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
+             (boundp 'ergoemacs-mode) ergoemacs-mode)
+    (ergoemacs-mode-reset)))
+
+(defvar ergoemacs-override-keymap (make-sparse-keymap)
+  "ErgoEmacs override keymap.")
+
+(defvar ergoemacs-override-alist nil
+  "ErgoEmacs override keymaps.")
+
+(defun ergoemacs-setup-override-keymap ()
+  (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-override-keymap)))
+  (add-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
+
+(defun ergoemacs-remove-override-keymap ()
+  (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
+
+(add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-setup-override-keymap)
+(add-hook 'ergoemacs-mode-shudown-hook 'ergoemacs-setup-override-keymap)
 
 
-(defvar ergoemacs-hook-functions '(delete-selection-pre-hook 
-                                   ac-handle-pre-command
-                                   cua--pre-command-handler
-                                   mc/make-a-note-of-the-command-being-run)
-  "Hooks that are moved to `ergoemacs-pre-command-hook'.
-These hooks are deferred to make sure `this-command' is set appropriately.")
-(unless (featurep 'ergoemacs-advices)
-  (load "ergoemacs-advices"))
-
-(defcustom ergoemacs-ignore-prev-global t
-  "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."
-  :type 'boolean
-  :group 'ergoemacs-mode)
-
-(declare-function ergoemacs-ignore-prev-global "ergoemacs-unbind.el")
-(declare-function ergoemacs-reset-global-where-is "ergoemacs-unbind.el")
-(if ergoemacs-ignore-prev-global
-    (ergoemacs-ignore-prev-global)
-  (ergoemacs-reset-global-where-is))
-
 
 ;;; Frequently used commands as aliases
 
@@ -759,208 +635,472 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 (when ergoemacs-use-aliases
   (ergoemacs-load-aliases))
 
-(defun ergoemacs-shuffle-keys (&optional force-update)
-  "Shuffle ergoemacs keymaps in `minor-mode-map-alist'."
-  (when (or force-update (not (eq (car (nth 0 minor-mode-map-alist)) 'ergoemacs-mode)))
-    (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
-      (while x
-        (setq minor-mode-map-alist (delq x minor-mode-map-alist))
-        ;; Multiple menus sometimes happen because of multiple 
-        ;; ergoemacs-mode variables in minor-mode-map-alist
-        (setq x (assq 'ergoemacs-mode minor-mode-map-alist)))
-      (push (cons 'ergoemacs-mode ergoemacs-keymap) minor-mode-map-alist)))
-  (when (or force-update (not (eq (car (nth (- 1 (length minor-mode-map-alist)) minor-mode-map-alist)) 'ergoemacs-unbind-keys)))
-    (let ((x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
-      (while x
-        (setq minor-mode-map-alist (delq x minor-mode-map-alist))
-        (setq x (assq 'ergoemacs-unbind-keys minor-mode-map-alist)))
-      (setq minor-mode-map-alist (append minor-mode-map-alist
-                                         (list (cons 'ergoemacs-unbind-keys ergoemacs-unbind-keymap)))))))
-
-(defun ergoemacs-is-movement-command-p (command)
-  "Determines if COMMAND is a movement command.
-This is done by checking if this is a command that supports shift selection or cua-mode's movement."
-  (let ((intf (condition-case err
-                  (car (cdr (interactive-form command))))))
-    (and intf (eq (type-of intf) 'string)
-         (or (eq (get command 'CUA) 'move)
-             (string-match "^[@*]*\\^" intf)))))
-
-(defvar ergoemacs-this-command nil)
-(defvar ergoemacs-pre-command-hook nil
-  "Pre-command hook for `ergoemacs-mode'")
-(defvar ergoemacs-this-command-fake '(this-command
-                                      this-original-command
-                                      mc--this-command)
-  "Commands to set `this-command' to the command run by `ergoemacs-shortcut'")
-
-(defun ergoemacs-populate-pre-command-hook (&optional depopulate)
-  "Populate `ergoemacs-pre-command-hook' with `pre-command-hook' values."
-  (let ((from-hook (or (and depopulate 'ergoemacs-pre-command-hook)
-                       'pre-command-hook))
-        do-append ergoemacs-mode)
-    (dolist (item (default-value from-hook))
-      (if (eq item t)
-          (setq do-append t)
-        (unless (or depopulate (not (memq item ergoemacs-hook-functions)))
-          (add-hook 'ergoemacs-pre-command-hook item do-append nil)
-          (remove-hook 'pre-command-hook item nil))
-        (when depopulate
-          (add-hook 'pre-command-hook item do-append nil)
-          (remove-hook 'ergoemacs-pre-command-hook item do-append))))
-    (save-excursion
-      (dolist (buf (buffer-list))
-        (with-current-buffer buf
-          (unless (equal (default-value from-hook)
-                         (ergoemacs-sv from-hook))
-            (setq do-append nil)
-            (dolist (item (ergoemacs-sv from-hook))
-              (if (eq item t)
-                  (setq do-append t)
-                (unless (or depopulate (not (memq item ergoemacs-hook-functions)))
-                  (add-hook 'ergoemacs-pre-command-hook item do-append t)
-                  (remove-hook 'pre-command-hook item t))
-                (when depopulate
-                  (add-hook 'pre-command-hook item do-append t)
-                  (remove-hook 'ergoemacs-pre-command-hook item t))))))))))
-
-(defvar ergoemacs-smart-functions
-  '(ergoemacs-shortcut
-    ergoemacs-shortcut-movement-no-shift-select
-    ergoemacs-shortcut-movement-force-shift-select
-    ergoemacs-shortcut-movement
-    ergoemacs-read-key
-    ergoemacs-modal-default
-    ergoemacs-modal-movement
-    ergoemacs-modal-movement-no-shift-select
-    ergoemacs-read-key-default
-    ergoemacs-ctl-x
-    ergoemacs-ctl-c))
-
-(defun ergoemacs-smart-function-p (var)
-  "Is VAR an `ergoemacs-mode' smart function?"
-  (and (symbolp var) (fboundp var) (memq var ergoemacs-smart-functions)))
-
-(defvar ergoemacs-last-command nil)
-(defvar ergoemacs-mark-active)
-(defvar ergoemacs-repeat-keymap)
-(defvar ergoemacs-read-key-overriding-overlay-save)
-(defvar ergoemacs-read-key-overriding-terminal-local-save)
-(defvar ergoemacs-first-keymaps)
-(declare-function ergoemacs-restore-post-command-hook "ergoemacs-shortcuts.el")
-(declare-function ergoemacs-install-shortcuts-up "ergoemacs-shortcuts.el")
-(declare-function ergoemacs-delete-repeat-cache "ergoemacs-shortcuts.el")
-(defvar ergoemacs-force-shift-select-mark-active nil)
-(defvar ergoemacs-cache-movement-commands-command-keys)
-(defun ergoemacs-pre-command-hook ()
-  "Ergoemacs pre-command-hook."
-  (setq ergoemacs-force-shift-select-mark-active mark-active)
-  (when (and ergoemacs-mark-active
-             (not ergoemacs-read-input-keys)
-             (not mark-active))
-    (set-mark (mark t))
-    (when transient-mark-mode ;; restore transient-mark-mode state
-      (setq transient-mark-mode ergoemacs-mark-active)))
-  (let (deactivate-mark)
-    (ignore-errors
-      (progn
-        (ergoemacs-restore-post-command-hook)
-        (when (and (not ergoemacs-repeat-keys) ergoemacs-repeat-keymap)
-          (setq ergoemacs-repeat-keymap t))
-        (when (and ergoemacs-repeat-keys
-                   (keymapp ergoemacs-repeat-keymap)
-                   (or
-                    (and ergoemacs-cache-movement-commands-command-keys
-                         (not ergoemacs-repeat-movement-commands)
-                         (not (equal ergoemacs-repeat-movement-commands
-                                     (this-single-command-keys))))
-                    (and (not ergoemacs-cache-movement-commands-command-keys)
-                         ergoemacs-repeat-movement-commands
-                         (not (lookup-key ergoemacs-repeat-keymap (this-single-command-keys))))))
-          (setq ergoemacs-cache-movement-commands-command-keys nil)
-          (ergoemacs-delete-repeat-cache))
-        (when (and (not ergoemacs-read-input-keys)
-                   (not unread-command-events))
-          (setq ergoemacs-read-input-keys t)
-          (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
-            (if (not ergoemacs-read-key-overriding-overlay-save)
-                (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
-              (delete-overlay ergoemacs-read-key-overriding-overlay-save)
-              (setq ergoemacs-read-key-overriding-overlay-save nil))))
-        (setq ergoemacs-this-command this-command)
-        (when ergoemacs-mode
-          ;; Raise shortcuts and modal modes.
-          (ergoemacs-shuffle-keys)
-          (let ((ergoemacs-real-key-binding
-                 (read-kbd-macro
-                  (format
-                   "<override> %s" (key-description (this-single-command-keys))))))
-            (cond
-             ((commandp ergoemacs-real-key-binding t)
-              (setq this-command ergoemacs-real-key-binding))))
-          ;; Used to check for `saved-overriding-map', but changed
-          ;; in emacs 24.4, and `ergoemacs-mode' deals with
-          ;; universal functions independent of emacs...
-          (ergoemacs-install-shortcuts-up)))))
-  (unless (ergoemacs-smart-function-p this-command)
-    (run-hooks 'ergoemacs-pre-command-hook))
-  t)
-
-(defvar ergoemacs-single-command-keys)
-(declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
-(defun ergoemacs-post-command-hook ()
-  "Ergoemacs post-command-hook"
-  (when ergoemacs-read-input-keys
-    (if (and mark-active deactivate-mark
-             (or (ergoemacs-is-movement-command-p this-command)
-                 (ignore-errors
-                   (string-match "\\<mark\\>" (symbol-name this-command)))))
-        (progn
-          (setq deactivate-mark nil))))
-  (let (deactivate-mark)
-    (when (and shift-select-mode
-               this-command-keys-shift-translated
-               mark-active
-               (not (eq (car-safe transient-mark-mode) 'only)))
-      (when (ergoemacs-is-movement-command-p this-command)
-        (setq transient-mark-mode
-              (cons 'only
-                    (unless (eq transient-mark-mode 'lambda)
-                      transient-mark-mode)))))
-    (condition-case err
-        (progn
-          (when ergoemacs-mode
-            (dolist (item ergoemacs-first-keymaps)
-              (let ((hook (car item)))
-                (unless (ignore-errors (keymapp (ergoemacs-sv hook)))
-                  (dolist (fn (cdr item))
-                    (remove-hook hook fn)
-                    (add-hook hook fn)))))
-            (setq ergoemacs-shortcut-keys t)
-            (setq ergoemacs-no-shortcut-keys nil)
-            (ergoemacs-shuffle-keys)
-            (when (not unread-command-events)
-              (ergoemacs-install-shortcuts-up)))
-          (when (not ergoemacs-mode)
-            (ergoemacs-remove-shortcuts)))
-      (error (message "Error %s" err))))
-  (when ergoemacs-modal-save
-    (setq ergoemacs-modal ergoemacs-modal-save)
-    (set-default 'ergoemacs-modal ergoemacs-modal-save)
-    (setq ergoemacs-modal-save nil))
-  (unless unread-command-events
-    (when (ergoemacs-real-key-binding [ergoemacs-single-command-keys])
-      (if (not ergoemacs-read-key-overriding-overlay-save)
-          (setq overriding-terminal-local-map ergoemacs-read-key-overriding-terminal-local-save)
-        (delete-overlay ergoemacs-read-key-overriding-overlay-save)
-        (setq ergoemacs-read-key-overriding-overlay-save nil)))
-    (setq ergoemacs-read-input-keys t)
-    (setq ergoemacs-single-command-keys nil))
-  t)
-
 (autoload 'ergoemacs-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme "ergoemacs-macros")
+(autoload 'ergoemacs "ergoemacs-macros")
+
+(defcustom ergoemacs-keyboard-layout (or (getenv "ERGOEMACS_KEYBOARD_LAYOUT") "us")
+  (concat "Specifies which keyboard layout to use.
+  This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.
+
+  Valid values are:
+
+  " (ergoemacs-layouts--custom-documentation)
+  )
+  :type (ergoemacs-layouts--customization-type)
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-remap-ignore '(undo-tree-visualize)
+  "Functions to ignore in `ergoemacs-mode' remaps"
+  :type '(repeat (sexp :tag "Function"))
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
+
+(defvar ergoemacs-map-properties--global-map-before-ergoemacs (ergoemacs-map-keymap nil global-map)
+  "A single keymap for the keys before `ergoemacs-mode' loads.")
+
+(defcustom ergoemacs-ignore-prev-global t
+  "Ignore global keys that were changed before `ergoemacs-mode' was loaded."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
+
+(defgroup ergoemacs-dispaly nil
+  "Display Options for `ergoemacs-mode'."
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-display-unicode-characters t
+  "Use unicode characters when available."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters)
+
+(defcustom ergoemacs-display-ergoemacs-key-descriptions t
+  "Use ergoemacs key descriptions (Alt+) instead of emacs key descriptors (M-)"
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-use-ergoemacs-key-descriptions 'ergoemacs-display-ergoemacs-key-descriptions)
+
+
+(defcustom ergoemacs-display-use-unicode-brackets-around-keys t
+  "Use unicode brackets."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys) 
+
+
+(defcustom ergoemacs-display-small-symbols-for-key-modifiers nil
+  "Use small symbols to represent alt+ ctl+ etc. on windows/linux."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-use-small-symbols 'ergoemacs-display-small-symbols-for-key-modifiers)
+
+(defcustom ergoemacs-display-capitalize-keys 'with-modifiers
+  "Capitalize keys like Ctrl+C.
+`ergoemacs-mode' should show Ctrl+Shift+C if you are pressing these keys."
+  :type '(choice
+          (const :tag "Don't Capitalize Keys" nil)
+          (const :tag "Capitalize Keys with modifiers" with-modifiers)
+          (const :tag "Capitalize Keys" t))
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-capitalize-keys 'ergoemacs-display-capitalize-keys)
+
+(defcustom ergoemacs-display-key-use-face-p t
+  "Use a button face for keys."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p)
+
+
+(defface ergoemacs-display-key-face
+  '((t :inverse-video t :box (:line-width 1 :style released-button) :weight bold))
+  "Button Face for an `ergoemacs-mode' pretty key."
+  ;; :set #'ergoemacs-set-default
+  ;; :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+(defcustom ergoemacs-excluded-major-modes
+  '(conf-colon-mode
+    conf-xdefaults-mode conf-space-mode conf-javaprop-mode
+    conf-ppd-mode mail-mode
+    ebrowse-tree-mode diff-mode fundamental-mode emacs-lisp-byte-code-mode
+    R-transcript-mode S-transcript-mode XLS-mode tar-mode
+    git-commit-mode git-rebase-mode image-mode
+    archive-mode ses-mode)
+  "List of major modes excluded from ergoemacs' Languages menu."
+  :type '(repeat (symbol :tag "Excluded Major Mode"))
+  :group 'ergoemacs-mode)
+;;; Menu options
+
+(defgroup ergoemacs-menus nil
+  "Options for `ergoemacs-command-loop'."
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-mode-names
+  '((conf-mode "Settings")
+    (ses-mode "Emacs Spreadsheet")
+    (m2-mode "Modula-2")
+    (snmpv2-mode "SNMPv2 MIBs")
+    (snmp-mode "SKMP MIBs"))
+  "Menu name for ergoemacs' Languages menu."
+  :type '(repeat
+          (list
+           (symbol :tag "Major Mode Name")
+           (text :tag "Alternative Description:")))
+  :group 'ergoemacs-menus)
+
+(defcustom ergoemacs-menu-order '(file edit search view languages options buffers help)
+  "Menu order for `ergoemacs-mode' global menus"
+  :type '(repeat (sexp :tag "Menu-bar key"))
+  :group 'ergoemacs-menus)
+
+;;; Command loop options.
+(defgroup ergoemacs-command-loop nil
+  "Options for `ergoemacs-command-loop'."
+  :group 'ergoemacs-mode)
+
+(define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character)
+
+(defcustom ergoemacs-command-loop-blink-character (if (featurep 'unicode-fonts) "·" "•")
+  "Blink character."
+  :type '(choice
+          (string :tag "Cursor")
+          (const :tag "No cursor" nil))
+  :group 'ergoemacs-command-loop)
+
+(defcustom ergoemacs-command-loop-blink-rate 0.4
+  "Rate that the ergoemacs-command loop cursor blinks."
+  :type 'number
+  :group 'ergoemacs-command-loop)
+
+(define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
+
+(defcustom ergoemacs-command-loop-swap-translation
+  '(((:normal :normal) :unchorded-ctl)
+    ((:normal :unchorded-ctl) :ctl-to-alt)
+    ((:normal :unchorded-ctl) :normal)
+    ((:ctl-to-alt :ctl-to-alt) :unchorded-ctl)
+    ((:ctl-to-alt :unchorded-ctl) :ctl-to-alt)
+    ((:unchorded-ctl :unchorded-ctl) :ctl-to-alt)
+    ((:unchorded-ctl :ctl-to-alt) :unchorded-ctl))
+  "How the translation will be swapped."
+  :type '(repeat
+          (list
+           (list
+            (sexp :tag "First Type")
+            (sexp :tag "Current Type"))
+           (sexp :tag "Translated Type")))
+  :group 'ergoemacs-command-loop)
+
+(define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation)
+
+(defcustom ergoemacs-command-loop-type :full
+  "Type of `ergoemacs-mode' command loop."
+  :type '(choice
+          (const :tag "Replace emacs command loop (full)" :full)
+          ;; (const :tag "Test mode; Don't actually run command " :test)
+          (const :tag "No command loop support" nil))
+  :group 'ergoemacs-comamnd-loop)
+
+(defcustom ergoemacs-command-loop-hide-shift-translations t
+  "Hide shift translations in the command loop help."
+  :type 'boolean
+  :group 'ergoemacs-command-loop)
+
+
+(defcustom ergoemacs-command-loop-echo-keystrokes 1
+  "The amount of time before `ergoemacs-mode' displays keystrokes."
+  :type 'number
+  :group 'ergoemacs-command-loop)
+
+(defcustom ergoemacs-command-loop-timeout 2
+  "The number of seconds before hook has froze."
+  :type 'number
+  :group 'ergoemacs-command-loop)
+
+(defcustom ergoemacs-echo-function :on-translation
+  "Shows the function evaluated with a key."
+  :type '(choice
+          (const :tag "Always echo" t)
+          (const :tag "For multi-key commands" :multi-key)
+          (const :tag "Echo on translations" :on-translation)
+          (const :tag "Don't Echo" nil))
+  :group 'ergoemacs-command-loop)
+
+
+(defgroup ergoemacs-modal nil
+  "Modal ergoemacs"
+  :group 'ergoemacs-mode)
+(defcustom ergoemacs-modal-ignored-buffers
+  '("^ \\*load\\*" "^[*]e?shell[*]" "^[*]R.*[*]$")
+  "Regular expression of bufferst that should come up in
+ErgoEmacs state, regardless of if a modal state is currently
+enabled."
+  :type '(repeat string)
+  :group 'ergoemacs-modal)
+
+(defcustom ergoemacs-default-cursor-color nil
+  "The default cursor color.
+This should be reset every time that the modal cursor changes color.  Otherwise this will be nil
+A color string as passed to `set-cursor-color'."
+  :type '(choice (const :tag "Don't change")
+                 (color :tag "Color"))
+  :group 'ergoemacs-modal)
+
+(define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color)
+
+(defcustom ergoemacs-modal-emacs-state-modes
+  '(archive-mode
+    bbdb-mode
+    bookmark-bmenu-mode
+    bookmark-edit-annotation-mode
+    browse-kill-ring-mode
+    bzr-annotate-mode
+    calc-mode
+    cfw:calendar-mode
+    completion-list-mode
+    Custom-mode
+    debugger-mode
+    delicious-search-mode
+    desktop-menu-blist-mode
+    desktop-menu-mode
+    doc-view-mode
+    dvc-bookmarks-mode
+    dvc-diff-mode
+    dvc-info-buffer-mode
+    dvc-log-buffer-mode
+    dvc-revlist-mode
+    dvc-revlog-mode
+    dvc-status-mode
+    dvc-tips-mode
+    ediff-mode
+    ediff-meta-mode
+    efs-mode
+    Electric-buffer-menu-mode
+    emms-browser-mode
+    emms-mark-mode
+    emms-metaplaylist-mode
+    emms-playlist-mode
+    etags-select-mode
+    fj-mode
+    gc-issues-mode
+    gdb-breakpoints-mode
+    gdb-disassembly-mode
+    gdb-frames-mode
+    gdb-locals-mode
+    gdb-memory-mode
+    gdb-registers-mode
+    gdb-threads-mode
+    gist-list-mode
+    gnus-article-mode
+    gnus-browse-mode
+    gnus-group-mode
+    gnus-server-mode
+    gnus-summary-mode
+    google-maps-static-mode
+    ibuffer-mode
+    jde-javadoc-checker-report-mode
+    magit-commit-mode
+    magit-diff-mode
+    magit-key-mode
+    magit-log-mode
+    magit-mode
+    magit-reflog-mode
+    magit-show-branches-mode
+    magit-branch-manager-mode ;; New name for magit-show-branches-mode
+    magit-stash-mode
+    magit-status-mode
+    magit-wazzup-mode
+    mh-folder-mode
+    monky-mode
+    notmuch-hello-mode
+    notmuch-search-mode
+    notmuch-show-mode
+    occur-mode
+    org-agenda-mode
+    package-menu-mode
+    proced-mode
+    rcirc-mode
+    rebase-mode
+    recentf-dialog-mode
+    reftex-select-bib-mode
+    reftex-select-label-mode
+    reftex-toc-mode
+    sldb-mode
+    slime-inspector-mode
+    slime-thread-control-mode
+    slime-xref-mode
+    shell-mode
+    sr-buttons-mode
+    sr-mode
+    sr-tree-mode
+    sr-virtual-mode
+    tar-mode
+    tetris-mode
+    tla-annotate-mode
+    tla-archive-list-mode
+    tla-bconfig-mode
+    tla-bookmarks-mode
+    tla-branch-list-mode
+    tla-browse-mode
+    tla-category-list-mode
+    tla-changelog-mode
+    tla-follow-symlinks-mode
+    tla-inventory-file-mode
+    tla-inventory-mode
+    tla-lint-mode
+    tla-logs-mode
+    tla-revision-list-mode
+    tla-revlog-mode
+    tla-tree-lint-mode
+    tla-version-list-mode
+    twittering-mode
+    urlview-mode
+    vc-annotate-mode
+    vc-dir-mode
+    vc-git-log-view-mode
+    vc-svn-log-view-mode
+    vm-mode
+    vm-summary-mode
+    w3m-mode
+    wab-compilation-mode
+    xgit-annotate-mode
+    xgit-changelog-mode
+    xgit-diff-mode
+    xgit-revlog-mode
+    xhg-annotate-mode
+    xhg-log-mode
+    xhg-mode
+    xhg-mq-mode
+    xhg-mq-sub-mode
+    xhg-status-extra-mode)
+  "Modes that should come up in ErgoEmacs state, regardless of if a
+modal state is currently enabled."
+  :type  '(repeat symbol)
+  :group 'ergoemacs-modal)
+
+(defvar ergoemacs-modal-list '())
+(defvar ergoemacs-translate--translation-hash)
+(defvar ergoemacs-modal-ignored-keymap
+  (let ((ret (make-sparse-keymap))
+        (mods '(control meta shift hyper super alt))
+        tmp
+        key)
+    (dolist (char '("<f1>" 
+                    "<f2>" 
+                    "<f3>" 
+                    "<f4>" 
+                    "<f5>" 
+                    "<f6>" 
+                    "<f7>" 
+                    "<f8>" 
+                    "<f9>" 
+                    "<f10>"
+                    "<f11>"
+                    "<f12>"
+                    "<apps>" "<menu>"
+                    "RET" "ESC" "DEL" "TAB"
+                    "<home>" 
+                    "<next>" 
+                    "<prior>"
+                    "<end>"
+                    "<insert>"
+                    "<deletechar>"))
+      (define-key ret (setq key (read-kbd-macro char t)) 'ergoemacs-ignore-modal)
+      (setq key (elt key 0))
+      (dolist (mod1 mods)
+        (setq tmp (vector (event-convert-list (list mod1 key))))
+        (ignore-errors (define-key ret tmp 'ignore))
+        (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
+          (ignore-errors (define-key ret tmp 'ignore)))
+        (dolist (mod2 mods)
+          (setq tmp (vector (event-convert-list (list mod1 mod2 key))))
+          (ignore-errors (define-key ret tmp 'ignore))
+          (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
+            (ignore-errors (define-key ret tmp 'ignore)))
+          (dolist (mod3 mods)
+            (setq tmp (vector (event-convert-list (list mod1 mod2 mod3 key))))
+            (ignore-errors (define-key ret tmp 'ignore))
+            (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
+              (ignore-errors (define-key ret tmp 'ignore)))
+            (dolist (mod4 mods)
+              (setq tmp (vector (event-convert-list (list mod1 mod2 mod3 mod4 key))))
+              (ignore-errors (define-key ret tmp 'ignore))
+              (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
+                (ignore-errors (define-key ret tmp 'ignore))))))))
+    ret)
+  "`ergoemacs-mode' keys to ignore the modal translation.
+Typically function keys")
+
+(defcustom ergoemacs-translate-keys t
+  "When translation is enabled, when a command is not defined
+look for the command with or without modifiers."
+  :type 'boolean
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-translate-emacs-keys t
+  "When key is undefined, translate to an emacish key.
+For example in `org-mode' C-c C-n performs
+`outline-next-visible-heading'.  A QWERTY `ergoemacs-mode' key
+equivalent is <apps> f M-k.  When enabled, pressing this should also perform `outline-next-visible-heading'"
+  :type 'boolean
+  :group 'ergoemacs-read)
+
+(defcustom ergoemacs-backspace-will-undo-swap-translation t
+  "Backspace will undo a swapped keyboard translation."
+  :type 'boolean
+  :group 'ergoemacs-read)
+
+
+;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "")
+
+;;; Options not supported now
+
+;; (defcustom ergoemacs-change-fixed-layout-to-variable-layout nil
+;;   "Change the fixed layout to variable layout keys.
+;; For example, on dvorak, change C-j to C-c (copy/command)."
+;;   :type 'boolean
+;;   :set 'ergoemacs-set-default
+;;   :initialize #'custom-initialize-default
+;;   :group 'ergoemacs-mode)
+  
+(defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
+  "Run functions for anything that is loaded after emacs starts up."
+  (run-hooks 'ergoemacs-mode-after-load-hook))
+
+(defun ergoemacs-mode-after-init-emacs ()
+  "Run functions after emacs loads."
+  (run-hooks 'ergoemacs-mode-init-hook)
+  (add-hook 'after-load-functions 'ergoemacs-mode-after-startup-run-load-hooks))
+
+(unless init-file-user
+  (run-with-idle-timer 0.05 nil 'ergoemacs-mode-after-init-emacs))
+
+(run-hooks 'ergoemacs-mode-intialize-hook)
+
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-mode.el ends here

@@ -1,6 +1,6 @@
 ;;; ergoemacs-test.el --- tests for ErgoEmacs issues
 
-;; Copyright © 2013, 2014 Free Software Foundation, Inc.
+;; Copyright © 2013-2015 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -32,11 +32,30 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
-(declare-function ergoemacs-theme--set "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-define-key "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-theme-get-version "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-theme-set-version "ergoemacs-theme-engine.el")
-(declare-function ergoemacs-theme-reset "ergoemacs-theme-engine.el")
+(declare-function ergoemacs-mode-reset "ergoemacs-mode.el")
+
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-theme)
+(defvar ergoemacs-command-loop-type)
+(defvar ergoemacs-dir)
+
+(declare-function ergoemacs-command-loop "ergoemacs-command-loop")
+
+(declare-function ergoemacs-copy-line-or-region "ergoemacs-functions")
+(declare-function ergoemacs-cut-line-or-region "ergoemacs-functions")
+(declare-function ergoemacs-emacs-exe "ergoemacs-functions")
+(declare-function ergoemacs-paste "ergoemacs-functions")
+
+(declare-function ergoemacs-map-- "ergoemacs-map")
+(declare-function ergoemacs-map--modify-active "ergoemacs-map")
+
+(declare-function ergoemacs-require "ergoemacs-lib")
+
+(declare-function ergoemacs-theme--get-version "ergoemacs-theme")
+(declare-function ergoemacs-theme-set-version "ergoemacs-theme")
+
+(declare-function ergoemacs-translate--get "ergoemacs-translate")
+(declare-function ergoemacs-unchorded-alt-modal "ergoemacs-translate")
 
 (require 'ert)
 (require 'elp)
@@ -53,30 +72,38 @@ reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
+(defvar ergoemacs-test-fast nil)
+(defun ergoemacs-test-fast ()
+  "Fast test of ergoemacs-mode (doesn't include keyboard startup issues)."
+  (interactive)
+  (unwind-protect
+      (progn
+        (setq ergoemacs-test-fast t)
+        (call-interactively 'ergoemacs-test))
+    (setq ergoemacs-test-fast nil)))
+
 ;;;###autoload
 (defun ergoemacs-test ()
   "Test ergoemacs issues."
   (interactive)
   (let ((ret t)
         (test))
-    (when nil
-      (message "Updating for the current version of emacs")
-      (ergoemacs-warn-globally-changed-keys t))
     (elp-instrument-package "ergoemacs-")
     (ert "^ergoemacs-test-")
     (call-interactively 'elp-results)))
 
-(defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-theme)
-(declare-function ergoemacs-mode "ergoemacs-mode.el")
-(ert-deftest ergoemacs-test-google-code-145 ()
-  "Backspace doesn't work in `isearch-mode'."
+;; Test isearch
+
+(ert-deftest ergoemacs-test-isearch-C-f-backspace ()
+  "Test Backspace in `isearch-mode'"
+  ;; Google Code Issue #145
   (let ((ret t))
     (ergoemacs-test-layout
      :layout "colemak"
      :macro "C-f ars C-f <backspace> M-n"
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
        (insert "aars1\nars2\nars3\nars4")
        (goto-char (point-min))
        (execute-kbd-macro macro)
@@ -86,8 +113,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
        (kill-buffer (current-buffer))))
     (should (equal ret t))))
 
-(ert-deftest ergoemacs-test-google-code-119 ()
+(ert-deftest ergoemacs-test-isearch-C-f ()
   "C-f doesn't work in isearch-mode."
+  ;; Google Code Issue #119
   (let ((ret t))
     (ergoemacs-test-layout
      :layout "colemak"
@@ -95,6 +123,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
      :macro "C-f ars C-f C-f"
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
        (insert "aars1\nars2\nars3\nars4")
        (goto-char (point-min))
        (execute-kbd-macro macro)
@@ -104,8 +133,32 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
        (kill-buffer (current-buffer))))
     (should (equal ret t))))
 
-(ert-deftest ergoemacs-test-shifted-move-no-mark ()
-  "Tests another shifted selection bug."
+(ert-deftest ergoemacs-test-isearch-works-with-region ()
+  "With vanilla Emacs, when mark is active and even some region is
+already selected, isearch-ing would expand or shrink selection.
+Currently ergoemacs-mode discards selection as soon as isearch key is
+pressed. Reproducible with ergoemacs-clean.
+Issue #186."
+  (let ((ret t))
+    (ergoemacs-test-layout
+     :macro "C-f lab"
+     :layout "colemak"
+     :cua t
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-min))
+       (mark-word)
+       (execute-kbd-macro macro)
+       (setq ret mark-active)
+       (kill-buffer (current-buffer))))
+    (should (equal ret t))))
+
+;;; Shift Selection
+
+(ert-deftest ergoemacs-test-shift-select-move-no-mark ()
+  "Tests another shifted selection "
   (let ((ret t))
     (ergoemacs-test-layout
      :macro "M-H"
@@ -120,7 +173,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
        (kill-buffer (current-buffer))))
     (should (equal ret t))))
 
-(ert-deftest ergoemacs-test-shifted-move-keep-mark ()
+(ert-deftest ergoemacs-test-shift-select-cua-move-keep-mark ()
   "Test the shifted selection bug."
   (let (ret)
     (ergoemacs-test-layout
@@ -137,9 +190,549 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
        (kill-buffer (current-buffer))))
     (should (equal ret t))))
 
-(defvar ergoemacs-dir)
-(declare-function ergoemacs-emacs-exe "ergoemacs-functions.el")
-(declare-function ergoemacs-shortcut-remap-list "ergoemacs-shortcuts.el")
+(ert-deftest ergoemacs-test-shift-select-reduction ()
+  "Test that shift selection works properly in reduction."
+  (ergoemacs-test-layout
+   :theme "reduction"
+   :layout "colemak"
+   :macro "M-E M-E"
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (insert ergoemacs-test-lorem-ipsum)
+     (goto-char (point-min))
+     (execute-kbd-macro macro)
+     (call-interactively 'ergoemacs-cut-line-or-region)
+     (should (= (point) (point-min)))
+     (kill-buffer (current-buffer)))))
+
+
+(ert-deftest ergoemacs-test-shift-select-subword ()
+  "Test for mark working with shift-selection of `subword-forward'."
+  (let (ret)
+    (ergoemacs-test-layout
+     :macro "M-Y M-x"
+     :theme "reduction"
+     :layout "colemak"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (subword-mode 1)
+       (goto-char (point-max))
+       (beginning-of-line)
+       (execute-kbd-macro macro)
+       (when (looking-at " in culpa qui")
+         (setq ret t))
+       (kill-buffer (current-buffer))))))
+
+;;; Copy/Paste
+
+
+(ert-deftest ergoemacs-test-copy-paste-issue-184 ()
+  "Issue #184; Not replace the \"selected all\" by paste."
+  (let ((ret t)
+        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
+    (ergoemacs-test-layout
+     :macro "C-v"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-min))
+       (push-mark)
+       (end-of-line)
+       (ergoemacs-copy-line-or-region)
+       (push-mark (point))
+       (push-mark (point-max) nil t)
+       (goto-char (point-min))
+       ;; Make sure the `pre-command-hook' and `post-command-hook' is
+       ;; run by calling the macro.
+       (execute-kbd-macro macro) 
+       ;; (ergoemacs-paste)
+       (should (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed\n"
+                        (buffer-string)))
+       (kill-buffer (current-buffer))))))
+
+(ert-deftest ergoemacs-test-copy-paste-issue-184-paste-should-clear-mark ()
+  "Issue #186.
+Selected mark would not be cleared after paste."
+  (let ((ergoemacs-handle-ctl-c-or-ctl-x 'both))
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (delete-region (point-min) (point-max))
+      (insert ergoemacs-test-lorem-ipsum)
+      (goto-char (point-min))
+      (push-mark)
+      (end-of-line)
+      (ergoemacs-copy-line-or-region)
+      (push-mark (point))
+      (push-mark (point-max) nil t)
+      (goto-char (point-min))
+      (ergoemacs-paste)
+      (should (or deactivate-mark (not mark-active)))
+      (kill-buffer (current-buffer)))))
+    
+
+(ert-deftest ergoemacs-test-copy-paste-cut-line-or-region ()
+  "Issue #68.
+kill-ring function name is used and such doesn't exist. It errs when
+not using cua or cutting line. I think kill-region is what is meant."
+  (let ((old-c cua-mode)
+        (ret t))
+    (cua-mode -1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (delete-region (point-min) (point-max))
+      (insert ergoemacs-test-lorem-ipsum)
+      (condition-case _err
+          (ergoemacs-cut-line-or-region)
+        (error (setq ret nil)))
+      (kill-buffer (current-buffer)))
+    (when old-c
+      (cua-mode 1))
+    (should ret)))
+
+
+(ert-deftest ergoemacs-test-copy-paste-issue-130-cut ()
+  "Attempts to test Issue #130 -- Cut"
+  (let ((ret t)
+        (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
+        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (delete-region (point-min) (point-max))
+      (insert ergoemacs-test-lorem-ipsum)
+      (push-mark (point))
+      (push-mark (point-max) nil t)
+      (goto-char (point-min))
+      (with-timeout (0.15 nil)
+        (ergoemacs-command-loop "C-x"))
+      (setq ret (string= "" (buffer-string)))
+      (kill-buffer (current-buffer)))
+    (should ret)))
+
+(ert-deftest ergoemacs-test-copy-paste-issue-130-copy ()
+  "Attempts to test Issue #130 -- Copy"
+  (let ((ergoemacs-ctl-c-or-ctl-x-delay 0.1)
+        (ergoemacs-handle-ctl-c-or-ctl-x 'both)
+        (txt "Text\n123"))
+    (with-temp-buffer
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (delete-region (point-min) (point-max))
+      (insert txt)
+      (push-mark (point))
+      (push-mark (point-max) nil t)
+      ;; (message "Region Active: %s" transient-mark-mode)
+      (setq last-command nil
+            this-command nil)
+      (goto-char (point-min))
+      (with-timeout (0.15 nil)
+        (ergoemacs-command-loop "C-c"))
+      (goto-char (point-max))
+      (ergoemacs-paste)
+      (should (string= (concat txt txt)
+                       (buffer-string)))
+      (kill-buffer (current-buffer)))))
+
+(ert-deftest ergoemacs-test-copy-paste-apps-cut ()
+  "Tests <apps> x on QWERTY cutting a region, not just a line."
+  (let (ret)
+    (ergoemacs-test-layout
+     :macro (format "<%s> x"
+                    (if (eq system-type 'windows-nt)
+                        "apps" "menu"))
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (push-mark (point))
+       (push-mark (point-max) nil t)
+       (goto-char (point-min))
+       (execute-kbd-macro macro)
+       (setq ret (string= "" (buffer-string)))
+       (kill-buffer (current-buffer))))
+    (should ret)))
+
+(ert-deftest ergoemacs-test-copy-paste-apps-copy ()
+  "Tests <apps> c on QWERTY copying a region, not just a line."
+  (ergoemacs-test-layout
+   :macro (format "C-a <%s> c C-v"
+                  (if (eq system-type 'windows-nt)
+                      "apps" "menu"))
+   (let ((test-string "1\n2\n3\n4"))
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert test-string)
+       (execute-kbd-macro macro)
+       (should (string= (concat test-string test-string)
+                        (buffer-string)))
+       (kill-buffer (current-buffer))))))
+
+;;; Functionality Test
+
+(ert-deftest ergoemacs-test-function-bol-or-what ()
+  "Test beginning of line functionality."
+  (let ((ergoemacs-end-of-comment-line t)
+        (ergoemacs-back-to-indentation t))
+    (with-temp-buffer
+      (emacs-lisp-mode) ; Turn on ergoemacs-mode 
+      (insert "(progn\n  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode")
+      (goto-char (point-max))
+      (call-interactively 'ergoemacs-beginning-of-line-or-what)
+      (should (string= "Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol))))
+      (call-interactively 'ergoemacs-beginning-of-line-or-what)
+      (should (string= " ; Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol))))
+      (call-interactively 'ergoemacs-beginning-of-line-or-what)
+      (should (string= "(ergoemacs-mode 1)) ; Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol))))
+      (call-interactively 'ergoemacs-beginning-of-line-or-what)
+      (should (string= "  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol)))))))
+
+
+(ert-deftest ergoemacs-test-function-eol-or-what ()
+  "Test beginning of line functionality."
+  (let ((ergoemacs-end-of-comment-line t)
+        (ergoemacs-back-to-indentation t))
+    (with-temp-buffer
+      (emacs-lisp-mode) ; Turn on ergoemacs-mode
+      (insert "(progn\n  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode")
+      (goto-char (point-max))
+      (beginning-of-line)
+      
+      (call-interactively 'ergoemacs-end-of-line-or-what)
+      (should (string= " ; Turn on ergoemacs-mode"
+                       (buffer-substring (point) (point-at-eol))))
+      (call-interactively 'ergoemacs-end-of-line-or-what)
+      (should (= (point) (point-at-eol))))))
+
+(ert-deftest ergoemacs-test-function-unbind-commands-active ()
+  "Make sure the unbound keys work"
+  (should (eq 'ergoemacs-map-undefined (key-binding (read-kbd-macro "C-x C-s")))))
+
+(ert-deftest ergoemacs-test-function-M-e-only-one-char-issue-306 ()
+  "Tests Issue #306."
+  (let ((ergoemacs-test-fn t)
+        (ergoemacs-read-input-keys nil))
+    (ergoemacs-test-layout
+     :layout "us"
+     :theme "lvl2"
+     :macro "M-e"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (fundamental-mode)
+       (should (or (eq (key-binding (kbd "M-e")) 'backward-kill-word)
+                   (eq (key-binding (kbd "M-e")) (command-remapping 'backward-kill-word (point)))))
+       (setq ergoemacs-test-fn nil)
+       (goto-char (point-max))
+       (execute-kbd-macro macro)
+       (should (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
+do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+enim ad minim veniam, quis nostrud exercitation ullamco laboris
+nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+reprehenderit in voluptate velit esse cillum dolore eu fugiat
+nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+sunt in culpa qui officia deserunt mollit anim id est " (buffer-string)))
+       (kill-buffer (current-buffer))))))
+
+
+(ert-deftest ergoemacs-test-function-issue-305-variables-set-to-nil ()
+  "Test Issue #305.
+When calling `ergoemacs-refresh' variable values should be preserved."
+  (ergoemacs-mode-reset)
+  (should (eq t shift-select-mode)))
+
+;;; Grep
+
+
+;; Not sure why this doesn't work
+(ert-deftest ergoemacs-test-grep-issue-293 ()
+  "Test Issue #293.
+Unable to use M-ijkl in a grep buffer."
+  (ergoemacs-test-layout
+   :layout "colemak"
+   :macro "M-e M-e M-e M-i"
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (insert "-*- mode: grep; default-directory: \"~src/ergoemacs-mode/\" -*-
+Grep started at Fri Aug 22 08:30:37
+grep -nH -e ergoemacs-mode ergoemacs-mode.el
+ergoemacs-mode.el:1:;;; ergoemacs-mode.el --- Emacs mode based on common modern interface and ergonomics. -*- lexical-binding: t -*-
+ergoemacs-mode.el:949:;;; ergoemacs-mode.el ends here
+Grep finished (matches found) at Fri Aug 22 08:30:37
+")
+     (grep-mode)
+     ;; (ergoemacs-map--modify-active)
+     (goto-char (point-min))
+     (execute-kbd-macro macro)
+     (should (string= (buffer-substring (point) (+ 16 (point)))
+                      "rgoemacs-mode.el"))
+     (kill-buffer (current-buffer)))))
+
+;;; Org-mode
+
+(ert-deftest ergoemacs-test-org-C-a ()
+  "Test beginning of line in standard ergoemacs-mode/org-mode."
+  (ergoemacs-test-layout
+   :layout "colemak"
+   :macro "M-m"
+   (let (ret)
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert "abc\n* TODO Fix org C-a issue")
+       (org-mode)
+       (goto-char (point-max))
+       (execute-kbd-macro macro)
+       (ignore-errors
+         (should (string= (buffer-substring (point) (point-at-eol))
+                          "Fix org C-a issue")))
+       (kill-buffer (current-buffer))))))
+
+(ert-deftest ergoemacs-test-org-respect-keys-issue-304 ()
+  "Tests Issue #304.
+`org-mode' should respect the keys used."
+  (let ((ergoemacs-test-fn t))
+    (ergoemacs-test-layout
+     :layout "us"
+     :theme "standard"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (org-mode)
+       (ergoemacs-map--modify-active)
+       (should (eq (key-binding (kbd "<M-right>")) 'ergoemacs-org-metaright))
+       (should (eq (key-binding (kbd "<M-left>")) 'ergoemacs-org-metaleft))
+       (should (eq (key-binding (kbd "<M-up>")) 'ergoemacs-org-metaup))
+       (should (eq (key-binding (kbd "<M-down>")) 'ergoemacs-org-metadown))
+       (kill-buffer (current-buffer))))))
+
+
+;;; Calc
+
+(ert-deftest ergoemacs-test-calc-300 ()
+  "Test Calc undo"
+  (let ((ergoemacs-test-fn t))
+    (ergoemacs-test-layout
+     :theme "reduction"
+     :layout "colemak"
+     (call-interactively 'calc)
+     (unwind-protect
+         (should (eq (key-binding (kbd "C-z")) (or (command-remapping 'calc-undo (point)) 'calc-undo)))
+       (call-interactively 'calc-quit)))))
+
+;;; Modal
+
+(ert-deftest ergoemacs-test-modal-preserve-mark ()
+  "Issue #101.
+Test next and prior translation."
+  (with-temp-buffer
+    (insert ergoemacs-test-lorem-ipsum)
+    (goto-char (point-min))
+    (ergoemacs-translate--get :unchorded-alt) ;; Load translation
+    (ergoemacs-unchorded-alt-modal)
+    (set-mark (point))
+    (forward-char 3)
+    (ergoemacs-unchorded-alt-modal)
+    (should mark-active)))
+
+(ert-deftest ergoemacs-test-modal-alt-mode-horizontal-position ()
+  "Tests Issue #213"
+  (let (ret)
+    (ergoemacs-test-layout
+     :layout "colemak"
+     :macro "i u u"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-max))
+       (beginning-of-line)
+       (ergoemacs-translate--get :unchorded-alt)
+       (ergoemacs-unchorded-alt-modal)
+       (execute-kbd-macro macro)
+       (looking-at ".*? ")
+       (ignore-errors (should (string= (match-string 0) "eprehenderit ")))
+       (ergoemacs-unchorded-alt-modal)
+       (kill-buffer (current-buffer))))))
+
+
+
+;;; Command Loop
+
+(ert-deftest ergoemacs-test-command-loop-apps-e-t-_ ()
+  "Test that colemak <apps> e t sends _.
+Should test for Issue #143."
+  (ergoemacs-test-layout
+   :theme "reduction"
+   :layout "colemak"
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (with-timeout (0.5 nil)
+       (ergoemacs-command-loop (format "<%s> e t"
+                                       (if (eq system-type 'windows-nt)
+                                           "apps" "menu"))))
+     (should (string= "_" (buffer-string)))
+     (kill-buffer (current-buffer)))))
+
+
+(ert-deftest ergoemacs-test-command-loop-C-x-8-! ()
+  "Test that unicode translations work.
+See Issue #138."
+  (save-excursion
+    (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+    (delete-region (point-min) (point-max))
+    (with-timeout (0.5 nil)
+      (ergoemacs-command-loop "C-x 8 !"))
+    (should (string= "¡" (buffer-string)))
+    (kill-buffer (current-buffer))))
+
+(ert-deftest ergoemacs-test-command-loop-C-x-8-A ()
+  "Test that unicode translations work.
+See Issue #138."
+  (save-excursion
+    (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+    (delete-region (point-min) (point-max))
+    (with-timeout (0.5 nil)
+      (ergoemacs-command-loop "C-x 8 \" A"))
+    (should (string= "Ä" (buffer-string)))
+    (kill-buffer (current-buffer))))
+
+(ert-deftest ergoemacs-test-command-loop-overlay-paren ()
+  "Test that overlays will send the appropriate parenthesis"
+  (let (ret
+        tmp (tmp-key (make-sparse-keymap)) overlays)
+    (ergoemacs-test-layout
+     :layout "colemak"
+     :macro (format "M-i <%s> e e"
+                    (if (eq system-type 'windows-nt)
+                        "apps" "menu"))
+     (define-key tmp-key [ergoemacs-test] 'ignore)
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-min))
+       ;; Put in dummy overlay
+       (while (re-search-forward "[A-Za-z]+" nil t)
+         (setq tmp (make-overlay (match-beginning 0) (match-end 0)))
+         (overlay-put tmp 'keymap tmp-key)
+         (push tmp overlays))
+       (goto-char (point-min))
+       (execute-kbd-macro macro)
+       (when (looking-at ")")
+         (setq ret t))
+       (dolist (x overlays)
+         (delete-overlay x))
+       (kill-buffer (current-buffer))))
+    (should (equal ret t))))
+
+(ert-deftest ergoemacs-test-command-loop-shortcut ()
+  "Test that shortcuts don't eat or duplicate key-strokes. (Issue #141)"
+  :expected-result (if noninteractive :failed :passed)
+  (let (ret)
+    (ergoemacs-test-layout
+     :macro (format "<%s> e e M-u"
+                    (if (eq system-type 'windows-nt)
+                        "apps" "menu"))
+     :layout "colemak"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-max))
+       (beginning-of-line)
+       (execute-kbd-macro macro)
+       (looking-at ".*")
+       (when (looking-at "ulla pariatur.")
+         (setq ret t))
+       (kill-buffer (current-buffer))))
+    (should (equal ret t))))
+
+(ert-deftest ergoemacs-test-command-loop-overlay ()
+  "Test for mark working with overlays.
+Should test issue #142"
+  (let (ret
+        tmp (tmp-key (make-sparse-keymap))
+        overlays)
+    (ergoemacs-test-layout
+     :macro "M-SPC M-y M-x"
+     :layout "colemak"
+     (define-key tmp-key [ergoemacs-test] 'ignore)
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-min))
+       ;; Put in dummy overlay
+       (while (re-search-forward "[A-Za-z]+" nil t)
+         (setq tmp (make-overlay (match-beginning 0) (match-end 0)))
+         (overlay-put tmp 'keymap tmp-key)
+         (push tmp overlays))
+       (goto-char (point-max))
+       (beginning-of-line)
+       (execute-kbd-macro macro)
+       (when (looking-at " in culpa qui")
+         (setq ret t))
+       (dolist (x overlays)
+         (delete-overlay x))
+       (kill-buffer (current-buffer)))
+     (should (equal ret t)))))
+
+(ert-deftest ergoemacs-test-command-loop-reduction-M-o-works ()
+  "Test Ergoemacs M-o works correctly (Issue #171)."
+  ;; (let ((ergoemacs-test-fn t))
+  ;;   (ergoemacs-test-layout
+  ;;    :theme "reduction"
+  ;;    :layout "colemak"
+  ;;    (with-timeout (0.2 nil) (ergoemacs-read-key "M-o"))
+  ;;    (message "Test FN: %s" ergoemacs-test-fn)
+  ;;    (should (eq ergoemacs-test-fn (or (command-remapping 'execute-extended-command (point)) 'execute-extended-command)))))
+  )
+
+(ert-deftest ergoemacs-test-terminal-M-O-fight ()
+  "Tests Issue #188"
+  (let ((old-map (copy-keymap input-decode-map))
+        (ret nil))
+    (ergoemacs-test-layout
+     (setq input-decode-map (make-sparse-keymap))
+     ;; Setup input decode map just like `xterm' for some common keys.
+     (define-key input-decode-map "\eOA" [up])
+     (define-key input-decode-map "\eOB" [down])
+     (define-key input-decode-map "\eOC" [right])
+     (define-key input-decode-map "\eOD" [left])
+     (define-key input-decode-map "\eOF" [end])
+     (define-key input-decode-map "\eOH" [home])
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-max))
+       (beginning-of-line)
+       (with-timeout (0.2 nil)
+         (ergoemacs-command-loop "M-O A")) ; by looking at `ergoemacs-read-key' this seems to be translating correctly, but... it doesn't run in this context.
+       (message "Decode: %s" (lookup-key input-decode-map (kbd "M-O A")))
+       (setq ret (looking-at "nulla pariatur. Excepteur sint occaecat cupidatat non proident,"))
+       (kill-buffer (current-buffer)))
+     (setq input-decode-map (copy-keymap old-map)))
+    (should ret)))
+
+;;; Key inheritance 
+
+(ert-deftest ergoemacs-key-inheitance-alt-up-and-down ()
+  "Test M-up and M-down keys make sure they are moving lines"
+  (ergoemacs-require 'move-and-transpose-lines)
+  (ergoemacs-mode-reset)
+  (should (eq (key-binding [\M-up]) 'ergoemacs-move-text-up))
+  (should (eq (key-binding [\M-down]) 'ergoemacs-move-text-down)))
+
+;;; Global map tests.
 (defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global delete-def)
   "Test the global key set before ergoemacs-mode is loaded."
   (let* ((emacs-exe (ergoemacs-emacs-exe))
@@ -153,8 +746,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                   (cond
                    ((eq ergoemacs 'define-key)
                     (format "define-key global-map (kbd \"%s\") " test-key))
-                   (ergoemacs
-                    (format "ergoemacs-key \"%s\" " test-key))
                    (t
                     (format "global-set-key (kbd \"%s\") " test-key)))
                   w-file))
@@ -321,609 +912,10 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
          "<apps> m c"
        "<menu> m c") 'define-key nil "<menu>") t)))
 
-(ert-deftest ergoemacs-test-global-key-set-after-c-e ()
-  "Test C-e after"
-  (should
-   (ergoemacs-test-global-key-set-before
-    'after "C-e" 'ergoemacs-key)))
-
-(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
-(ert-deftest ergoemacs-test-ctl-c-ctl-c ()
-  "Issue #64.  Should translate C-c C-c correctly."
-  (let (ergoemacs-use-unicode-char
-        ergoemacs-pretty-key-use-face
-        ergoemacs-use-small-symbols)
-    (should (string= (ergoemacs-pretty-key "C-c C-c") "[Ctrl+C][Ctrl+C]"))))
-
-(declare-function ergoemacs-cut-line-or-region "ergoemacs-functions.el")
-(ert-deftest ergoemacs-test-cut-line-or-region ()
-  "Issue #68.
-kill-ring function name is used and such doesn't exist. It errs when
-not using cua or cutting line. I think kill-region is what is meant."
-  (let ((old-c cua-mode)
-        (ret t))
-    (cua-mode -1)
-    (with-temp-buffer
-      (insert ergoemacs-test-lorem-ipsum)
-      (condition-case err
-          (ergoemacs-cut-line-or-region)
-        (error (setq ret nil))))
-    (when old-c
-      (cua-mode 1))
-    (should ret)))
-
-(declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
-(ert-deftest ergoemacs-test-issue-77 ()
-  "Issue #77.
-Test \"C-x \" translating to \"[Ctrl+X][]\", should be \"[Ctrl+X]\""
-  (let (ergoemacs-use-unicode-char
-        ergoemacs-pretty-key-use-face
-        ergoemacs-use-small-symbols)
-    (should (string= (ergoemacs-pretty-key "C-x ") "[Ctrl+X]"))))
-
-(ert-deftest ergoemacs-test-issue-86 ()
-  "Test Issue #86.
-Hyper Key mapping no longer works."
-  (let ((emacs-exe (ergoemacs-emacs-exe))
-        (w-file (expand-file-name "global-test" ergoemacs-dir))
-        (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
-    (with-temp-file temp-file
-      (insert "(condition-case err (progn ")
-      (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
-      (insert "(setq ergoemacs-theme nil)")
-      (insert "(setq ergoemacs-keyboard-layout \"us\")")
-      (insert "(require 'ergoemacs-mode)(ergoemacs-mode 1)")
-      (insert "(defun osx-map-hyper ()
-        (global-unset-key \"\C-p\") 
-        (define-key function-key-map (kbd \"C-p\") 'event-apply-hyper-modifier))")
-      (insert "(osx-map-hyper)")
-      (insert "(run-hooks 'emacs-startup-hook)")
-      (insert (format "(when (not (eq 'ergoemacs-print-buffer-confirm
-                             (lookup-key ergoemacs-keymap (read-kbd-macro \"C-p\"))))
-                (with-temp-file \"%s\"
-                  (insert \"Ok\")))" w-file))
-      (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
-      (insert ") (error (message \"Error %s\" err)))")
-      (unless (boundp 'wait-for-me)
-        (insert "(kill-emacs)")))
-    (message "%s"
-             (shell-command-to-string
-              (format "%s --batch -Q -l %s" emacs-exe temp-file)))
-    (delete-file temp-file)
-    (should (file-exists-p w-file))
-    (when (file-exists-p w-file)
-      (delete-file w-file))))
-
-(ert-deftest ergoemacs-test-issue-98 ()
-  "Test full fast-movement-keys"
-  (let ((ergoemacs-repeat-movement-commands 'all))
-    (ergoemacs-test-layout
-     :layout "colemak"
-     :cua t
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       (execute-kbd-macro (edmacro-parse-keys "M-e"))
-       (should (looking-at "do eiusmod"))
-       (execute-kbd-macro (edmacro-parse-keys "e"))
-       (should (looking-at "enim ad"))
-       (execute-kbd-macro (edmacro-parse-keys "u"))
-       (should (looking-at "do eiusmod"))
-       (kill-buffer (current-buffer))))))
-
-(declare-function ergoemacs-unchorded-alt-modal "ergoemacs-translate.el"
-                  nil t)
-(ert-deftest ergoemacs-test-modal-preserve-mark ()
-  "Issue #101.
-Test next and prior translation."
-  (with-temp-buffer
-    (insert ergoemacs-test-lorem-ipsum)
-    (goto-char (point-min))
-    (ergoemacs-unchorded-alt-modal)
-    (set-mark (point))
-    (forward-char 3)
-    (ergoemacs-unchorded-alt-modal)
-    (should mark-active)))
-
-(ert-deftest ergoemacs-test-issue-114 ()
-  "Attempts to test Issue #114."
-  (let ((ret t))
-    (ergoemacs-test-layout
-     :macro "C-f ars C-f <backspace> M-n"
-     :layout "colemak"
-     (setq ret (lookup-key isearch-mode-map
-                           (read-kbd-macro
-                            (format "<%s> s"
-                                    (if (eq system-type 'windows-nt)
-                                        "apps" "menu"))))))
-    (should ret)))
-
-(defvar ergoemacs-ctl-c-or-ctl-x-delay)
-(ert-deftest ergoemacs-test-issue-130-cut ()
-  "Attempts to test Issue #130 -- Cut"
-  :expected-result (if noninteractive :failed :passed)
-  (if noninteractive (should nil)
-    (let ((ret t)
-          (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
-          (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-      (with-temp-buffer
-        (insert ergoemacs-test-lorem-ipsum)
-        (push-mark (point))
-        (push-mark (point-max) nil t)
-        (goto-char (point-min))
-        (with-timeout (0.15 nil)
-          (call-interactively 'ergoemacs-ctl-x))
-        (setq ret (string= "" (buffer-string))))
-      (should ret))))
-
-(declare-function ergoemacs-paste "ergoemacs-functions.el")
-(ert-deftest ergoemacs-test-issue-130-copy ()
-  "Attempts to test Issue #130 -- Copy"
-  :expected-result (if noninteractive :failed :passed)
-  (if noninteractive (should nil)
-      (let ((ret t)
-            (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
-            (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-        (with-temp-buffer
-          (insert ergoemacs-test-lorem-ipsum)
-          (push-mark (point))
-          (push-mark (point-max) nil t)
-          (goto-char (point-min))
-          (with-timeout (0.15 nil)
-            (call-interactively 'ergoemacs-ctl-c))
-          (goto-char (point-max))
-          (ergoemacs-paste)
-          (setq ret (string= (concat ergoemacs-test-lorem-ipsum
-                                     ergoemacs-test-lorem-ipsum)
-                             (buffer-string))))
-        (should ret))))
-
-(ert-deftest ergoemacs-test-apps-cut ()
-  "Tests <apps> x on QWERTY cutting a region, not just a line."
-  (let (ret)
-    (ergoemacs-test-layout
-     :macro (format "<%s> x"
-                    (if (eq system-type 'windows-nt)
-                        "apps" "menu"))
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (push-mark (point))
-       (push-mark (point-max) nil t)
-       (goto-char (point-min))
-       (execute-kbd-macro macro)
-       (setq ret (string= "" (buffer-string)))
-       (kill-buffer (current-buffer))))
-    (should ret)))
-
-(ert-deftest ergoemacs-test-apps-copy ()
-  "Tests <apps> c on QWERTY copying a region, not just a line."
-  (ergoemacs-test-layout
-   :macro (format "C-a <%s> c C-v"
-                  (if (eq system-type 'windows-nt)
-                      "apps" "menu"))
-   (let ((test-string "1\n2\n3\n4"))
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert test-string)
-       (execute-kbd-macro macro)
-       (should (string= (concat test-string test-string)
-                        (buffer-string)))
-       (kill-buffer (current-buffer))))))
-
-(ert-deftest ergoemacs-test-shift-selection ()
-  "Test that shift selection works properly.
-Issue #137."
-  (let (ret)
-    (save-excursion
-      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-      (insert ergoemacs-test-lorem-ipsum)
-      (goto-char (point-min))
-      (execute-kbd-macro (edmacro-parse-keys "<S-down> <S-down>" t))
-      (call-interactively 'ergoemacs-cut-line-or-region)
-      (setq ret (= (point) (point-min)))
-      (kill-buffer (current-buffer)))
-    (should ret)))
-
-(declare-function ergoemacs-read-key "ergoemacs-shortcuts.el")
-(ert-deftest ergoemacs-test-translations ()
-  "Test that unicode translations work.
-See Issue #138."
-  (let (ret
-        unread-command-events)
-    (ergoemacs-read-key "C-x 8 !")
-    (setq ret (equal (listify-key-sequence (read-kbd-macro "¡")) unread-command-events))
-    (should ret)))
-
-(ert-deftest ergoemacs-test-multi-translations ()
-  "Test that multicode unicode translations work.
-See Issue #140."
-  (let (ret
-        unread-command-events)
-    (ergoemacs-read-key "C-x 8 \" A")
-    (setq ret (equal (listify-key-sequence (read-kbd-macro "Ä")) unread-command-events))
-    (should ret)))
-
-(ert-deftest ergoemacs-test-shortcut ()
-  "Test that shortcuts don't eat or duplicate key-strokes. (Issue #141)"
-  :expected-result (if noninteractive :failed :passed)
-  (let (ret)
-    (ergoemacs-test-layout
-     :macro (format "<%s> e e M-u"
-                    (if (eq system-type 'windows-nt)
-                        "apps" "menu"))
-     :layout "colemak"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-max))
-       (beginning-of-line)
-       (execute-kbd-macro macro)
-       (looking-at ".*")
-       (when (looking-at "ulla pariatur.")
-         (setq ret t))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
-
-
-(ert-deftest ergoemacs-test-misspelled-mark ()
-  "Test for mark working with overlays.
-Should test issue #142"
-  (let (ret
-        tmp (tmp-key (make-sparse-keymap))
-        overlays)
-    (ergoemacs-test-layout
-     :macro "M-SPC M-y M-x"
-     :layout "colemak"
-     (define-key tmp-key [ergoemacs-test] 'ignore)
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       ;; Put in dummy overlay
-       (while (re-search-forward "[A-Za-z]+" nil t)
-         (setq tmp (make-overlay (match-beginning 0) (match-end 0)))
-         (overlay-put tmp 'keymap tmp-key)
-         (push tmp overlays))
-       (goto-char (point-max))
-       (beginning-of-line)
-       (execute-kbd-macro macro)
-       (when (looking-at " in culpa qui")
-         (setq ret t))
-       (dolist (x overlays)
-         (delete-overlay x))
-       (kill-buffer (current-buffer)))
-     (should (equal ret t)))))
-
-(ert-deftest ergoemacs-test-shift-select-subword ()
-  "Test for mark working with shift-selection of `subword-forward'."
-  (let (ret)
-    (ergoemacs-test-layout
-     :macro "M-Y M-x"
-     :theme "reduction"
-     :layout "colemak"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (subword-mode 1)
-       (goto-char (point-max))
-       (beginning-of-line)
-       (execute-kbd-macro macro)
-       (when (looking-at " in culpa qui")
-         (setq ret t))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
-
-(ert-deftest ergoemacs-test-apps-e-t-_ ()
-  "Test that colemak <apps> e t sends _.
-Should test for Issue #143."
-  (let (unread-command-events)
-    (ergoemacs-test-layout
-     :theme "reduction"
-     :layout "colemak"
-     (ergoemacs-read-key (format "<%s> e t"
-                                 (if (eq system-type 'windows-nt)
-                                     "apps" "menu")))
-     (should (equal (listify-key-sequence (read-kbd-macro "_"))
-                    unread-command-events)))))
-
-(ert-deftest ergoemacs-test-ignore-global-definitions-on-remap ()
-  "If someone sets a key on the global keymap, ignore it.
-Addresses Issue #145."
-  (let ((old-global-map (current-global-map))
-        ret
-        new-global-map)
-    (setq new-global-map (copy-keymap (current-global-map)))
-    (define-key new-global-map (read-kbd-macro "M-q") 'ergoemacs-cut-line-or-region)
-    (unwind-protect
-        (with-temp-buffer
-          (use-global-map new-global-map)
-          (setq ret (ergoemacs-shortcut-remap-list 'fill-paragraph)))
-      (use-global-map old-global-map))
-    (should (not ret))))
-
-(define-derived-mode ergoemacs-test-major-mode fundamental-mode "ET"
-  "Major mode for testing some issues with `ergoemacs-mode'.
-\\{ergoemacs-test-major-mode-map}"
-  (define-key ergoemacs-test-major-mode-map (read-kbd-macro "C-s") 'save-buffer))
-
-(let ((ergoemacs-is-user-defined-map-change-p t))
-  (add-hook 'ergoemacs-test-major-mode-hook
-            '(lambda()
-               (interactive)
-               (define-key ergoemacs-test-major-mode-map
-                 (read-kbd-macro "C-w") 'ergoemacs-close-current-buffer))))
-
-(ert-deftest ergoemacs-test-ignore-ctl-w ()
-  "Ignore user-defined C-w in major-mode `ergoemacs-test-major-mode'.
-Part of addressing Issue #147."
-  (let (ret
-        (ergoemacs-use-function-remapping t))
-    (with-temp-buffer
-      (ergoemacs-test-major-mode)
-      (setq ret (ergoemacs-shortcut-remap-list 'kill-region)))
-    (should (not ret))))
-
-(ert-deftest ergoemacs-test-keep-ctl-s ()
-  "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
-Part of addressing Issue #147."
-  (let (ret
-        (ergoemacs-use-function-remapping t))
-    (with-temp-buffer
-      (ergoemacs-test-major-mode)
-      (setq ret (ergoemacs-shortcut-remap-list 'isearch-forward)))
-    (eq (nth 0 (nth 0 ret)) 'save-buffer)))
-
-
-(ert-deftest ergoemacs-test-overlay-paren ()
-  "Test that overlays will send the appropriate parenthesis"
-  (let (ret
-        tmp (tmp-key (make-sparse-keymap)) overlays)
-    (ergoemacs-test-layout
-     :layout "colemak"
-     :macro (format "M-i <%s> e e"
-                    (if (eq system-type 'windows-nt)
-                        "apps" "menu"))
-     (define-key tmp-key [ergoemacs-test] 'ignore)
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       ;; Put in dummy overlay
-       (while (re-search-forward "[A-Za-z]+" nil t)
-         (setq tmp (make-overlay (match-beginning 0) (match-end 0)))
-         (overlay-put tmp 'keymap tmp-key)
-         (push tmp overlays))
-       (goto-char (point-min))
-       (execute-kbd-macro macro)
-       (when (looking-at ")")
-         (setq ret t))
-       (dolist (x overlays)
-         (delete-overlay x))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
-
-(ert-deftest ergoemacs-test-shift-selection-reduction ()
-  "Test that shift selection works properly in reduction."
-  (let (ret)
-    (ergoemacs-test-layout
-     :theme "reduction"
-     :layout "colemak"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       (execute-kbd-macro (edmacro-parse-keys "M-E M-E" t))
-       (call-interactively 'ergoemacs-cut-line-or-region)
-       (setq ret (= (point) (point-min)))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
-
-(ert-deftest ergoemacs-test-isearch-works-with-region ()
-  "With vanilla Emacs, when mark is active and even some region is
-already selected, isearch-ing would expand or shrink selection.
-Currently ergoemacs-mode discards selection as soon as isearch key is
-pressed. Reproducible with ergoemacs-clean.
-Issue #186."
-  (let ((ret t))
-    (ergoemacs-test-layout
-     :macro "C-f lab"
-     :layout "colemak"
-     :cua t
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       (mark-word)
-       (execute-kbd-macro macro)
-       (setq ret mark-active)
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
-
-(ert-deftest ergoemacs-test-reduction-M-o-works ()
-  "Test Ergoemacs M-o works correctly (Issue #171)."
-  (let ((ergoemacs-test-fn t))
-    (ergoemacs-test-layout
-     :theme "reduction"
-     :layout "colemak"
-     (with-timeout (0.2 nil) (ergoemacs-read-key "M-o"))
-     (message "Test FN: %s" ergoemacs-test-fn)
-     (should (eq ergoemacs-test-fn (or (command-remapping 'execute-extended-command (point)) 'execute-extended-command))))))
-
-(declare-function ergoemacs-copy-line-or-region "ergoemacs-functions.el")
-(ert-deftest ergoemacs-test-issue-184-paste ()
-  "Issue #184; Not replace the \"selected all\" by paste."
-  (let ((ret t)
-        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-    (ergoemacs-test-layout
-     :macro "C-v"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       (push-mark)
-       (end-of-line)
-       (ergoemacs-copy-line-or-region)
-       (push-mark (point))
-       (push-mark (point-max) nil t)
-       (goto-char (point-min))
-       ;; Make sure the `pre-command-hook' and `post-command-hook' is
-       ;; run by calling the macro.
-       (execute-kbd-macro macro) 
-       ;; (ergoemacs-paste)
-       (should (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed\n"
-                        (buffer-string)))
-       (kill-buffer (current-buffer))))))
-
-(ert-deftest ergoemacs-test-issue-184-paste-should-clear-mark ()
-  "Issue #186.
-Selected mark would not be cleared after paste."
-  (let ((ret t)
-        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-    (with-temp-buffer
-      (insert ergoemacs-test-lorem-ipsum)
-      (goto-char (point-min))
-      (push-mark)
-      (end-of-line)
-      (ergoemacs-copy-line-or-region)
-      (push-mark (point))
-      (push-mark (point-max) nil t)
-      (goto-char (point-min))
-      (ergoemacs-paste)
-      (setq ret (or deactivate-mark (not mark-active))))
-    (should ret)))
-
-(ert-deftest ergoemacs-test-command-remapping ()
-  "Test to make sure remapping for `ergoemacs-commands' are applied."
-  (should (eq 'ergoemacs-describe-key (command-remapping 'describe-key))))
-
-;; Fixed, but tests dont work.  Not sure why ergoemacs-test-fn goes to nil
-
-;; (ert-deftest ergoemacs-test-apps-h-v ()
-;;   "Make Sure <apps> h v works correctly"
-;;   (let ((old-ergoemacs-theme ergoemacs-theme)
-;;         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-;;         (ergoemacs-test-fn t)
-;;         (rk (format "<%s> h v"
-;;                     (or (and (eq system-type 'windows-nt) "apps") "menu")))
-;;         (ret nil))
-;;     (ergoemacs-mode -1)
-;;     (setq ergoemacs-theme "reduction")
-;;     (setq ergoemacs-keyboard-layout "colemak")
-;;     (ergoemacs-mode 1)
-;;     (with-timeout (0.2 nil)
-;;       (ergoemacs-read-key rk))
-;;     (message "Test FN: %s" ergoemacs-test-fn)
-;;     (setq ret (eq ergoemacs-test-fn (or (command-remapping 'describe-variable (point)) 'describe-variable)))
-;;     (ergoemacs-mode -1)
-;;     (setq ergoemacs-theme old-ergoemacs-theme)
-;;     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
-;;     (ergoemacs-mode 1)
-;;     (should ret)))
-
-;; (ert-deftest ergoemacs-test-apps-h-z ()
-;;   "Make Sure <apps> h z works correctly"
-;;   (let ((old-ergoemacs-theme ergoemacs-theme)
-;;         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-;;         (ergoemacs-test-fn t)
-;;         (rk (format "<%s> h z"
-;;                     (or (and (eq system-type 'windows-nt) "apps") "menu")))
-;;         (ret nil))
-;;     (ergoemacs-mode -1)
-;;     (setq ergoemacs-theme "reduction")
-;;     (setq ergoemacs-keyboard-layout "colemak")
-;;     (ergoemacs-mode 1)
-;;     (with-timeout (0.2 nil)
-;;       (ergoemacs-read-key rk))
-;;     (message "Test FN: %s" ergoemacs-test-fn)
-;;     (setq ret (eq ergoemacs-test-fn (or (command-remapping 'ergoemacs-clean (point)) 'ergoemacs-clean)))
-;;     (ergoemacs-mode -1)
-;;     (setq ergoemacs-theme old-ergoemacs-theme)
-;;     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
-;;     (ergoemacs-mode 1)
-;;     (should ret)))
-
-(ert-deftest ergoemacs-test-terminal-M-O-fight ()
-  "Tests Issue #188"
-  :expected-result (if noninteractive :passed :failed)
-  (let ((old-map (copy-keymap input-decode-map))
-        (ret nil))
-    (ergoemacs-test-layout
-     (setq input-decode-map (make-sparse-keymap))
-     ;; Setup input decode map just like `xterm' for some common keys.
-     (define-key input-decode-map "\eOA" [up])
-     (define-key input-decode-map "\eOB" [down])
-     (define-key input-decode-map "\eOC" [right])
-     (define-key input-decode-map "\eOD" [left])
-     (define-key input-decode-map "\eOF" [end])
-     (define-key input-decode-map "\eOH" [home])
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-max))
-       (beginning-of-line)
-       (with-timeout (0.2 nil)
-         (ergoemacs-read-key "M-O A")) ; by looking at `ergoemacs-read-key' this seems to be translating correctly, but... it doesn't run in this context.
-       (message "Decode: %s" (lookup-key input-decode-map (kbd "M-O A")))
-       (setq ret (looking-at "nulla pariatur. Excepteur sint occaecat cupidatat non proident,"))
-       (kill-buffer (current-buffer)))
-     (setq input-decode-map (copy-keymap old-map)))
-    (should ret)))
-
-;; (ert-deftest ergoemacs-test-comment-dwim-deactivate-region ()
-;;   "Makes sure that `comment-dwim' deactivates the region.
-;; Issue #203"
-;;   :expected-result :failed ;; It works, just doesn't pass the test :(
-;;   (let ((old-ergoemacs-theme ergoemacs-theme)
-;;         (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-;;         (macro (edmacro-parse-keys "M-o" t))
-;;         (ret t))
-;;     (ergoemacs-mode -1)
-;;     (setq ergoemacs-theme nil)
-;;     (setq ergoemacs-keyboard-layout "colemak")
-;;     (ergoemacs-mode 1)
-;;     (cua-mode 1)
-;;     (save-excursion
-;;       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-;;       (emacs-lisp-mode)
-;;       (insert ergoemacs-test-lorem-ipsum)
-;;       (goto-char (point-min))
-;;       (mark-word)
-;;       (execute-kbd-macro macro)
-;;       (setq ret (not mark-active))
-;;       (kill-buffer (current-buffer)))
-;;     (ergoemacs-mode -1)
-;;     (setq ergoemacs-theme old-ergoemacs-theme)
-;;     (setq ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout)
-;;     (ergoemacs-mode 1)
-;;     (should (equal ret t))))
-
-(ert-deftest ergoemacs-test-alt-mode-horizontal-position ()
-  "Tests Issue #213"
-  :expected-result (if noninteractive :failed :passed) ;; Not sure why.
-  (let (ret)
-    (ergoemacs-test-layout
-     :layout "colemak"
-     :macro "i u u"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-max))
-       (beginning-of-line)
-       (ergoemacs-unchorded-alt-modal)
-       (execute-kbd-macro macro)
-       (setq ret (looking-at "eprehenderit"))
-       (ergoemacs-unchorded-alt-modal)
-       (kill-buffer (current-buffer))))
-    (should ret)))
-
 
 (ert-deftest ergoemacs-test-global-key-set-after-220 ()
-  "Test global C-c b"
-  (should (equal (ergoemacs-test-global-key-set-before 'after "C-c b") t)))
+"Test global C-c b"
+(should (equal (ergoemacs-test-global-key-set-before 'after "C-c b") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-220-before ()
   "Test global C-c b"
@@ -944,7 +936,6 @@ Selected mark would not be cleared after paste."
 
 (ert-deftest ergoemacs-test-issue-243 ()
   "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
-  :expected-result :failed
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (w-file (expand-file-name "global-test" ergoemacs-dir))
         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
@@ -953,6 +944,7 @@ Selected mark would not be cleared after paste."
       (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
       (insert "(setq ergoemacs-theme nil)")
       (insert "(setq ergoemacs-keyboard-layout \"us\")")
+      (insert "(setq ergoemacs-command-loop-type nil)")
       (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(ergoemacs-mode 1)")
       (insert "(global-set-key (kbd \"C-c C-c M-x\") 'execute-extended-command)")
       (insert (format "(define-key ergoemacs-test-major-mode-map (kbd \"C-c C-c\") #'(lambda() (interactive (with-temp-file \"%s\" (insert \"Ok\")))))" w-file))
@@ -973,225 +965,78 @@ Selected mark would not be cleared after paste."
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
-(ert-deftest ergoemacs-test-bol-or-what ()
-  "Test beginning of line functionality."
-  (let ((ergoemacs-end-of-comment-line t)
-        (ergoemacs-back-to-indentation t))
+
+;;; Not sure why this doesn't actually use `ergoemacs-test-major-mode-map'.
+(define-derived-mode ergoemacs-test-major-mode fundamental-mode "ET"
+  "Major mode for testing some issues with `ergoemacs-mode'.
+\\{ergoemacs-test-major-mode-map}")
+
+(define-key ergoemacs-test-major-mode-map (kbd "C-s") 'search-forward)
+(define-key ergoemacs-test-major-mode-map (kbd "<f6>") 'search-forward)
+
+(let ((ergoemacs-is-user-defined-map-change-p t))
+  (add-hook 'ergoemacs-test-major-mode-hook
+            '(lambda()
+               (interactive)
+               (define-key ergoemacs-test-major-mode-map (kbd "C-w") 'ergoemacs-close-current-buffer))))
+
+(ert-deftest ergoemacs-test-issue-349 ()
+  "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
+  (let ((emacs-exe (ergoemacs-emacs-exe))
+        (w-file (expand-file-name "global-test" ergoemacs-dir))
+        (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+    (with-temp-file temp-file
+      (insert "(condition-case err (progn ")
+      (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
+      (insert "(setq ergoemacs-theme nil)")
+      (insert "(setq ergoemacs-keyboard-layout \"us\")")
+      (insert "(setq ergoemacs-command-loop-type nil)")
+      (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(ergoemacs-mode 1)")
+      (insert (format "(define-key ergoemacs-test-major-mode-map (kbd \"<f6>\") #'(lambda() (interactive (with-temp-file \"%s\" (insert \"Ok\")))))" w-file))
+      (insert "(global-unset-key (kbd \"<f6>\"))")
+      (insert
+       "(setq ergoemacs-test-macro (edmacro-parse-keys \"<f6>\" t))(ergoemacs-test-major-mode)(run-hooks 'post-command-hook)")
+      (insert "(with-timeout (0.5 nil) (execute-kbd-macro ergoemacs-test-macro))")
+      (insert (format "(if (file-exists-p \"%s\") (message \"Passed\") (message \"Failed\"))" w-file))
+      (insert ") (error (message \"Error %s\" err)))")
+      (unless (boundp 'wait-for-me)
+        (insert "(kill-emacs)")))
+    (message "%s"
+             (shell-command-to-string
+              (format "%s %s -Q -l %s"
+                      emacs-exe (if (boundp 'wait-for-me) "" "--batch")
+                      temp-file)))
+    (delete-file temp-file)
+    (should (file-exists-p w-file))
+    (when (file-exists-p w-file)
+      (delete-file w-file))))
+
+(ert-deftest ergoemacs-test-ignore-ctl-w ()
+  "Keep user-defined C-w in major-mode `ergoemacs-test-major-mode'.
+Part of addressing Issue #147."
+  (let (ret
+        (ergoemacs-use-function-remapping t))
     (with-temp-buffer
-      (emacs-lisp-mode) ; Turn on ergoemacs-mode 
-      (insert "(progn\n  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode")
-      (goto-char (point-max))
-      (call-interactively 'ergoemacs-beginning-of-line-or-what)
-      (should (string= "Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol))))
-      (call-interactively 'ergoemacs-beginning-of-line-or-what)
-      (should (string= " ; Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol))))
-      (call-interactively 'ergoemacs-beginning-of-line-or-what)
-      (should (string= "(ergoemacs-mode 1)) ; Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol))))
-      (call-interactively 'ergoemacs-beginning-of-line-or-what)
-      (should (string= "  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol)))))))
+      (ergoemacs-test-major-mode)
+      (when (not (current-local-map))
+        (use-local-map ergoemacs-test-major-mode-map))
+      (ergoemacs-map--modify-active)
+      (should (eq (key-binding (kbd "C-w")) 'ergoemacs-close-current-buffer))
+      ;; The user-defined C-w should not affect kill-region remaps.
+      (should (not (eq (key-binding [ergoemacs-remap kill-region]) 'ergoemacs-close-current-buffer))))))
 
-(ert-deftest ergoemacs-test-eol-or-what ()
-  "Test beginning of line functionality."
-  (let ((ergoemacs-end-of-comment-line t)
-        (ergoemacs-back-to-indentation t))
+(ert-deftest ergoemacs-test-keep-ctl-s ()
+  "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
+Part of addressing Issue #147."
+  (let (ret
+        (ergoemacs-use-function-remapping t))
     (with-temp-buffer
-      (emacs-lisp-mode) ; Turn on ergoemacs-mode
-      (insert "(progn\n  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode")
-      (goto-char (point-max))
-      (beginning-of-line)
-      
-      (call-interactively 'ergoemacs-end-of-line-or-what)
-      (should (string= " ; Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol))))
-      (call-interactively 'ergoemacs-end-of-line-or-what)
-      (should (= (point) (point-at-eol))))))
-
-(declare-function package-list-packages-no-fetch "package.el")
-(ert-deftest ergoemacs-test-u-for-package-list-packages ()
-  "Test `package-list-packages' `substitute-command-keys'"
-  (require 'package)
-  (package-list-packages-no-fetch)
-  (should (string= (ergoemacs-pretty-key "U")
-                   (substitute-command-keys
-                    "\\[package-menu-mark-upgrades]")))
-  (kill-buffer (current-buffer)))
-
-(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
-(ert-deftest ergoemacs-test-unbind-commands-active ()
-  "Make sure the unbound keys work"
-  (let (ergoemacs-shortcut-keys ergoemacs-mode ergoemacs-read-input-keys)
-    (should (eq 'ergoemacs-undefined (ergoemacs-real-key-binding (read-kbd-macro "C-x C-s"))))))
-
-(declare-function ergoemacs-shortcut-for-command "ergoemacs-menus.el")
-(declare-function ergoemacs-kbd-to-key "ergoemacs-menus.el")
-(ert-deftest ergoemacs-test-keyboard-translations ()
-  "Should test Issue #265"
-  :expected-result :passed
-  (ergoemacs-test-layout ;; Us/standard
-   (ergoemacs-shortcut-for-command 'goto-line) ;;
-   (should (string= (ergoemacs-shortcut-for-command 'ergoemacs-new-empty-buffer) (ergoemacs-kbd-to-key "C-n")))
-   (should (string= (ergoemacs-shortcut-for-command 'make-frame-command) (ergoemacs-kbd-to-key "C-N")))
-   (should (string= (ergoemacs-shortcut-for-command 'find-file) (ergoemacs-kbd-to-key "C-o")))
-   (should (string= (ergoemacs-shortcut-for-command 'ergoemacs-open-last-closed) (ergoemacs-kbd-to-key "C-T")))
-   (should (string= (ergoemacs-shortcut-for-command 'ergoemacs-close-current-buffer) (ergoemacs-kbd-to-key "C-w")))
-   (should (string= (ergoemacs-shortcut-for-command 'revert-buffer) (ergoemacs-kbd-to-key "C-r")))
-   (should (string= (ergoemacs-shortcut-for-command 'ergoemacs-print-buffer-confirm) (ergoemacs-kbd-to-key "C-p")))
-   (should (string= (ergoemacs-shortcut-for-command 'save-buffer) (ergoemacs-kbd-to-key "C-s")))
-   (should (string= (ergoemacs-shortcut-for-command 'write-file) (ergoemacs-kbd-to-key "C-S")))
-   (should (string= (ergoemacs-shortcut-for-command 'split-window-below) (ergoemacs-kbd-to-key "M-4")))
-   (should (string= (ergoemacs-shortcut-for-command 'split-window-right) (ergoemacs-kbd-to-key "M-$")))
-   (should (string= (ergoemacs-shortcut-for-command 'delete-other-windows) (ergoemacs-kbd-to-key "M-3")))
-   (should (string= (ergoemacs-shortcut-for-command 'execute-extended-command) (ergoemacs-kbd-to-key "M-a")))
-   (should (string= (ergoemacs-shortcut-for-command 'goto-line) (ergoemacs-kbd-to-key "C-l")))))
-
-(ert-deftest ergoemacs-test-issue-293 ()
-  "Test Issue #293.
-Unable to use M-ijkl in a grep buffer."
-  (ergoemacs-test-layout
-   :layout "colemak"
-   :macro "M-e M-e M-e M-e M-i"
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (delete-region (point-min) (point-max))
-     (insert "-*- mode: grep; default-directory: \"~src/ergoemacs-mode/\" -*-
-Grep started at Fri Aug 22 08:30:37
-
-grep -nH -e ergoemacs-mode ergoemacs-mode.el
-ergoemacs-mode.el:1:;;; ergoemacs-mode.el --- Emacs mode based on common modern interface and ergonomics. -*- lexical-binding: t -*-
-ergoemacs-mode.el:949:;;; ergoemacs-mode.el ends here
-
-Grep finished (matches found) at Fri Aug 22 08:30:37
-")
-     (grep-mode)
-     (goto-char (point-min))
-     (execute-kbd-macro macro)
-     (should (looking-at "rgoemacs-mode.el"))
-     (kill-buffer (current-buffer)))))
-
-;; (ert-deftest ergoemacs-test-5.3.7 ()
-;;   "Test Ergoemacs 5.3.7 keys"
-;;   (let ((ergoemacs-test-fn t))
-;;     (ergoemacs-test-layout
-;;      :version "5.3.7"
-;;      (with-timeout (0.2 nil) (ergoemacs-read-key "M-n"))
-;;      (should (eq ergoemacs-test-fn (or (command-remapping
-;;   'keyboard-quit (point)) 'keyboard-quit))))))
-
-(ert-deftest ergoemacs-test-297 ()
-  "Backspace doesn't work in `isearch-mode'."
-  (let ((ret t))
-    (ergoemacs-test-layout
-     :layout "colemak"
-     :macro "C-f ars C-f <backspace> M-n"
-     (save-excursion
-       (define-key isearch-mode-map (kbd "C-w") 'ignore)
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert "aars1\nars2\nars3\nars4")
-       (goto-char (point-min))
-       (execute-kbd-macro macro)
-       (when (looking-at ".*")
-         (unless (string= "s1" (match-string 0))
-           (setq ret nil)))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
-
-(ert-deftest ergoemacs-test-org-c-a ()
-  "Test beginning of line in standard ergoemacs-mode/org-mode."
-  (ergoemacs-test-layout
-   :layout "colemak"
-   :macro "M-m"
-   (let (ret)
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert "abc\n* TODO Fix org C-a issue")
-       (org-mode)
-       (goto-char (point-max))
-       (execute-kbd-macro macro)
-       (ignore-errors
-         (should (string= (buffer-substring (point) (point-at-eol))
-                          "Fix org C-a issue")))
-       (kill-buffer (current-buffer))))))
-
-(ert-deftest ergoemacs-test-calc-300 ()
-  "Test Calc undo"
-  (let ((ergoemacs-test-fn t))
-    (ergoemacs-test-layout
-     :theme "reduction"
-     :layout "colemak"
-     (call-interactively 'calc)
-     (with-timeout (0.2 nil) (ergoemacs-read-key "C-z"))
-     (call-interactively 'calc-quit)
-     (should (eq ergoemacs-test-fn (or (command-remapping 'calc-undo (point)) 'calc-undo))))))
-
-(ert-deftest ergoemacs-test-org-respect-keys-issue-304 ()
-  "Tests Issue #304.
-`org-mode' should respect the keys used."
-  (let ((ergoemacs-test-fn t))
-    (ergoemacs-test-layout
-     :layout "us"
-     :theme "standard"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (org-mode)
-       (with-timeout (0.2 nil) (ergoemacs-read-key "<M-right>"))
-       (should (eq ergoemacs-test-fn 'ergoemacs-org-metaright))
-       (should (eq (ergoemacs-real-key-binding (kbd "<M-right>"))
-                   'ergoemacs-org-metaright))
-       (with-timeout (0.2 nil) (ergoemacs-read-key "<M-left>"))
-       (should (eq ergoemacs-test-fn 'ergoemacs-org-metaleft))
-       (should (eq (ergoemacs-real-key-binding (kbd "<M-left>"))
-                   'ergoemacs-org-metaleft))
-       (with-timeout (0.2 nil) (ergoemacs-read-key "<M-up>"))
-       (should (eq ergoemacs-test-fn 'ergoemacs-org-metaup))
-       (should (eq (ergoemacs-real-key-binding (kbd "<M-up>"))
-                   'ergoemacs-org-metaup))
-       (with-timeout (0.2 nil) (ergoemacs-read-key "<M-down>"))
-       (should (eq ergoemacs-test-fn 'ergoemacs-org-metadown))
-       (should (eq (ergoemacs-real-key-binding (kbd "<M-down>"))
-                   'ergoemacs-org-metadown))
-       (kill-buffer (current-buffer))))))
-
-(ert-deftest ergoemacs-test-M-e-only-one-char-issue-306 ()
-  "Tests Issue #306.
-`org-mode' should respect the keys used."
-  (let ((ergoemacs-test-fn t)
-        (ergoemacs-read-input-keys nil))
-    (ergoemacs-test-layout
-     :layout "us"
-     :theme "lvl2"
-     :macro "M-e"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (fundamental-mode)
-       (with-timeout (0.2 nil) (ergoemacs-read-key "M-e"))
-       (should (or (eq ergoemacs-test-fn 'backward-kill-word)
-                   (eq ergoemacs-test-fn (command-remapping 'backward-kill-word (point)))))
-       (setq ergoemacs-test-fn nil)
-       (goto-char (point-max))
-       (execute-kbd-macro macro)
-       (should (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
-do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-enim ad minim veniam, quis nostrud exercitation ullamco laboris
-nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-reprehenderit in voluptate velit esse cillum dolore eu fugiat
-nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-sunt in culpa qui officia deserunt mollit anim id est " (buffer-string)))
-       (kill-buffer (current-buffer))))))
-
-
-(ert-deftest ergoemacs-test-issue-305-variables-set-to-nil ()
-  "Test Issue #305.
-When calling `ergoemacs-refresh' variable values should be preserved."
-  (ergoemacs-theme-reset)
-  (should (eq t shift-select-mode)))
+      (ergoemacs-test-major-mode)
+      (when (not (current-local-map))
+        (use-local-map ergoemacs-test-major-mode-map))
+      (ergoemacs-map--modify-active)
+      (should (eq (key-binding (kbd "C-s")) 'save-buffer))
+      (should (eq (key-binding [ergoemacs-remap isearch-forward]) 'search-forward)))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

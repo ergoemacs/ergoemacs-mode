@@ -318,20 +318,23 @@
 
 
 
+(defvar ergoemacs-keyboard-layout)
+(declare-function ergoemacs-save "ergoemacs-lib")
+
+(defun ergoemacs-layouts--current (&optional layout)
+  "Gets the LAYOUT symbol.
+If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
+  (intern (format "ergoemacs-layout-%s" (or layout ergoemacs-keyboard-layout))))
+
 ;;; Layout Functions
-(defun ergoemacs-get-layouts-type ()
+(defun ergoemacs-layouts--customization-type ()
   "Gets the customization types for `ergoemacs-keyboard-layout'."
   `(choice ,@(mapcar
               (lambda(elt)
                 `(const :tag ,elt :value ,elt))
-              (sort (ergoemacs-get-layouts t) 'string<))))
+              (sort (ergoemacs-layouts--list t) 'string<))))
 
-(declare-function ergoemacs-save "ergoemacs-theme-engine.el")
-(defun ergoemacs-set-layout (layout)
-  "Set the ergoemacs layout to LAYOUT."
-  (ergoemacs-save 'ergoemacs-keyboard-layout layout))
-
-(defun ergoemacs-get-layouts-menu ()
+(defun ergoemacs-layouts--menu ()
   "Gets the keymap entry for ergoemacs-layouts."
   `(ergoemacs-keyboard-layout
     menu-item "Keyboard Layouts"
@@ -353,11 +356,11 @@
               (lambda() (interactive)
                 (ergoemacs-set-layout ,lay))
               :button (:radio . (string= ergoemacs-keyboard-layout ,lay)))))
-        (sort (ergoemacs-get-layouts) 'string<)))))
+        (sort (ergoemacs-layouts--list) 'string<)))))
 
-(defun ergoemacs-get-layouts-doc ()
+(defun ergoemacs-layouts--custom-documentation ()
   "Gets the list of all known layouts and the documentation associated with the layouts."
-  (let ((lays (sort (ergoemacs-get-layouts t) 'string<)))
+  (let ((lays (sort (ergoemacs-layouts--list t) 'string<)))
     (mapconcat
      (lambda(lay)
        (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
@@ -373,23 +376,23 @@
          (concat "\"" lay "\" (" doc ")" (if is-alias ", alias" ""))))
      lays "\n")))
 
-(defvar ergoemacs-get-layouts-no-aliases nil)
-(defvar ergoemacs-get-layouts-aliases nil)
+(defvar ergoemacs-layouts--no-aliases nil)
+(defvar ergoemacs-layouts--aliases nil)
 
-(defun ergoemacs-reset-layouts ()
+(defun ergoemacs-layouts--reset ()
   "Reset Layout information."
   (interactive)
-  (setq ergoemacs-get-layouts-no-aliases nil)
-  (setq ergoemacs-get-layouts-aliases nil))
+  (setq ergoemacs-layouts--no-aliases nil)
+  (setq ergoemacs-layouts--aliases nil))
 
-(defun ergoemacs-get-layouts (&optional aliases ob)
+(defun ergoemacs-layouts--list (&optional aliases ob)
   "Get the list of all known layouts."
-  (if (and ergoemacs-get-layouts-no-aliases
+  (if (and ergoemacs-layouts--no-aliases
            (not aliases))
-      ergoemacs-get-layouts-no-aliases
-    (if (and ergoemacs-get-layouts-aliases
+      ergoemacs-layouts--no-aliases
+    (if (and ergoemacs-layouts--aliases
              aliases)
-        ergoemacs-get-layouts-aliases
+        ergoemacs-layouts--aliases
       (let (ret)
         (mapatoms
          (lambda(s)
@@ -402,9 +405,16 @@
                       (setq ret (cons (replace-regexp-in-string "ergoemacs-layout-" "" sn) ret))))))
          ob)
         (if aliases
-            (setq ergoemacs-get-layouts-aliases nil)
-          (setq ergoemacs-get-layouts-no-aliases nil))
+            (setq ergoemacs-layouts--aliases nil)
+          (setq ergoemacs-layouts--no-aliases nil))
         ret))))
+
+(defun ergoemacs-layout (layout)
+  "Set the ergoemacs layout to LAYOUT."
+  (ergoemacs-save 'ergoemacs-keyboard-layout layout))
+
+(defalias 'ergoemacs-layout 'ergoemacs-set-layout)
+
 
 (provide 'ergoemacs-layouts)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -199,7 +199,7 @@ modal state is currently enabled."
   :group 'ergoemacs-modal)
 
 (defvar ergoemacs-modal-list '())
-(defvar ergoemacs-translations)
+(defvar ergoemacs-translate--translation-hash)
 (defvar ergoemacs-modal-ignored-keymap
   (let ((ret (make-sparse-keymap)))
     (dolist (char '("<f1>" 
@@ -236,7 +236,7 @@ Typically function keys")
 If so return the hash of translation values."
   (if (not ergoemacs-modal-list) nil
     (let* ((type (nth 0 ergoemacs-modal-list))
-           (hash (gethash type ergoemacs-translations))
+           (hash (ergoemacs-gethash type ergoemacs-translate--translation-hash))
            (always (plist-get hash ':modal-always))
            (ret hash))
       (cond
@@ -259,7 +259,7 @@ If so return the hash of translation values."
         (setq ret nil)))
       ret)))
 
-(defvar ergoemacs-translation-text)
+(defvar ergoemacs-translate--text-hash)
 (declare-function ergoemacs-read-key "ergoemacs-shortcuts.el")
 (declare-function ergoemacs-mode-line "ergoemacs-mode.el")
 
@@ -268,7 +268,7 @@ If so return the hash of translation values."
 It sends `this-single-command-keys' to `ergoemacs-read-key' with
 the translation type defined by `ergoemacs-modal-list' as long as it should."
   (let* ((type (nth 0 ergoemacs-modal-list))
-         (hash (gethash type ergoemacs-translations))
+         (hash (ergoemacs-gethash type ergoemacs-translate--translation-hash))
          tmp)
     (when (not (ergoemacs-modal-p))
       (setq type nil))
@@ -286,7 +286,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
               (set-cursor-color tmp)
             (when ergoemacs-default-cursor
               (set-cursor-color ergoemacs-default-cursor)))
-          (setq tmp (if ergoemacs-modal-list (gethash (nth 0 ergoemacs-modal-list) ergoemacs-translation-text) nil))
+          (setq tmp (if ergoemacs-modal-list (ergoemacs-gethash (nth 0 ergoemacs-modal-list) ergoemacs-translate--text-hash) nil))
           (if tmp
               (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
                (concat " " (nth 5 tmp)))
@@ -329,9 +329,9 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
 (defvar ergoemacs-modal-base-keymap nil
   "`ergoemacs-mode' modal keymap.  Attempts to capture ALL keystrokes.")
 
-(declare-function ergoemacs-translate-shifted "ergoemacs-translate.el")
-(declare-function ergoemacs-get-layouts "ergoemacs-layouts.el")
-(declare-function ergoemacs-local-map "ergoemacs-translate.el")
+(declare-function ergoemacs-translate--shifted "ergoemacs-translate.el")
+(declare-function ergoemacs-layouts--list "ergoemacs-layouts.el")
+(declare-function ergoemacs-translate--local-map "ergoemacs-translate.el")
 (defun ergoemacs-modal-base-keymap  (&optional map)
   "Returns the ergoemacs-modal keymap"
   (if ergoemacs-modal-base-keymap
@@ -339,12 +339,12 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
           (make-composed-keymap (list map ergoemacs-modal-base-keymap))
         ergoemacs-modal-base-keymap)
     (let ((ret (make-sparse-keymap)))
-      (dolist (lay (ergoemacs-get-layouts))
+      (dolist (lay (ergoemacs-layouts--list))
         (dolist (char (ergoemacs-sv (intern (concat "ergoemacs-layout-" lay))))
           (unless (string= char "")
             (dolist (mod '("" "C-" "M-" "C-M-"))
               (let ((key (read-kbd-macro
-                          (ergoemacs-translate-shifted
+                          (ergoemacs-translate--shifted
                            (concat mod char)))))
                 (unless (lookup-key ret key)
                   (define-key ret key 'ergoemacs-modal-default)))))))
@@ -377,10 +377,10 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
 
 (defvar ergoemacs-modal-emulation-mode-map-alist)
 (defvar ergoemacs-ignore-advice)
-(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-mode.el")
+(declare-function ergoemacs-flatten-composed-keymap "ergoemacs-map.el")
 (defun ergoemacs-modal-toggle (type)
   "Toggle ergoemacs command modes."
-  (let* ((help-list (gethash type ergoemacs-translation-text))
+  (let* ((help-list (ergoemacs-gethash type ergoemacs-translate--text-hash))
          (type type)
          tmp
          (ergoemacs-ignore-advice t))
@@ -391,7 +391,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
       (push type ergoemacs-modal-list)
       (setq ergoemacs-modal-keymap
             (make-composed-keymap
-             (list (ergoemacs-local-map type t)
+             (list (ergoemacs-translate--local-map type t)
                    (ergoemacs-modal-base-keymap))))
       (setq ergoemacs-modal-emulation-mode-map-alist
             `((ergoemacs-modal ,@ergoemacs-modal-keymap)))
@@ -400,7 +400,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
       (unless ergoemacs-default-cursor
         (setq ergoemacs-default-cursor
               (or (frame-parameter nil 'cursor-color) "black")))
-      (let ((hash (gethash type ergoemacs-translations))
+      (let ((hash (ergoemacs-gethash type ergoemacs-translate--translation-hash))
             tmp)
         (when hash
           (setq tmp (plist-get hash ':modal-color))
@@ -421,11 +421,11 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
           (setq type (nth 0 ergoemacs-modal-list))))
       (if type
           (progn ;; Turn off current modal, turn on last modal.
-            (setq help-list (gethash type ergoemacs-translation-text))
+            (setq help-list (ergoemacs-gethash type ergoemacs-translate--text-hash))
             (setq ergoemacs-modal-keymap
                   (ergoemacs-flatten-composed-keymap
                    (make-composed-keymap
-                    (list (ergoemacs-local-map type t)
+                    (list (ergoemacs-translate--local-map type t)
                           (ergoemacs-modal-base-keymap)))))
             (setq ergoemacs-modal-emulation-mode-map-alist
                   `((ergoemacs-modal ,@ergoemacs-modal-keymap)))
@@ -434,7 +434,7 @@ the translation type defined by `ergoemacs-modal-list' as long as it should."
             (unless ergoemacs-default-cursor
               (setq ergoemacs-default-cursor
                     (or (frame-parameter nil 'cursor-color) "black")))
-            (let ((hash (gethash type ergoemacs-translations))
+            (let ((hash (ergoemacs-gethash type ergoemacs-translate--translation-hash))
                   tmp)
               (when hash
                 (setq tmp (plist-get hash ':modal-color))
