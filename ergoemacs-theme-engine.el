@@ -70,21 +70,37 @@
 (declare-function ergoemacs-component--prompt "ergoemacs-component")
 (declare-function ergoemacs-require "ergoemacs-lib")
 
+(defun ergoemacs-theme-components--required-p (comp)
+  "Is COMP a required component?"
+  (let ((comp (or (and (stringp comp) (intern comp)) comp))
+        e2)
+    (catch 'found
+      (dolist (r ergoemacs-require)
+        (setq e2 (or (and (stringp (car r)) (intern (car r)))
+                     (car r)))
+        (when (eq comp e2)
+          (throw 'found t)))
+      nil)))
+
 (defun ergoemacs-theme-components (&optional theme)
   "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."
   (let* ((theme (or theme (ergoemacs :current-theme)))
          (theme-plist (ergoemacs-gethash theme ergoemacs-theme-hash))
-         components opt first tmp)
+         components opt first tmp required)
     (if (not theme)
         (error "Could not figure out the theme that you are trying to use...")
       (setq components (plist-get theme-plist :components))
+      (while (and (< 1 (length components))
+                  (ergoemacs-theme-components--required-p (nth 0 components)))
+        (push (pop components) required))
       (when (and (< 1 (length components))
                  (symbolp (nth 1 components))
                  (setq tmp (symbol-name (nth 1 components)))
                  (< 5 (length tmp))
                  (string= "theme" (substring tmp -5)))
         (setq first (pop components)))
+      
       (dolist (x (reverse (plist-get theme-plist :optional-off)))
         (let ((a (assoc x ergoemacs-theme-options)))
           (when a
@@ -98,7 +114,7 @@ This respects `ergoemacs-theme-options'."
             (setq a (car (cdr a)))
             (when (or (not a) (eq a 'on))
               (push x opt)))))
-      (setq components (append (reverse opt) components))
+      (setq components (append (reverse required) (reverse opt) components))
       (when first
         (push first components)))
     components))

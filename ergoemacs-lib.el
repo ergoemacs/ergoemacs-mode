@@ -181,39 +181,40 @@ When TYPE is nil, assume the type is 'required-hidden
 REMOVE represents when you would remove the OPTION from the
 ergoemacs THEME.
 "
-  (if (not ergoemacs-require--ini-p)
-      (push (list option theme type remove) ergoemacs-require)
-    (if (eq (type-of option) 'cons)
-        (dolist (new-option option)
-          (let (ergoemacs-mode)
-            (ergoemacs-require new-option theme type)))
-      (let ((option-sym
-             (or (and (stringp option) (intern option)) option)))
-        (dolist (theme (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
-                           (ergoemacs-theme--list)))
-          (let ((theme-plist (ergoemacs-gethash (if (stringp theme) theme
-                                                  (symbol-name theme))
-                                                ergoemacs-theme-hash))
-                comp on off)
-            (setq comp (plist-get theme-plist :components)
-                  on (plist-get theme-plist :optional-on)
-                  off (plist-get theme-plist :optional-off))
-            (setq comp (delq option-sym comp)
-                  on (delq option-sym on)
-                  off (delq option-sym off))
-            (cond
-             (remove) ;; Don't do anything.
-             ((or (not type) (memq type '(required-hidden :required-hidden)))
-              (push option-sym comp))
-             ((memq type '(off :off))
-              (push option-sym off))
-             ((memq type '(on :on))
-              (push option-sym on)))
-            (setq theme-plist (plist-put theme-plist :components comp))
-            (setq theme-plist (plist-put theme-plist :optional-on on))
-            (setq theme-plist (plist-put theme-plist :optional-off off))
-            (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
-                     ergoemacs-theme-hash)))))
+  (unless (member (list option theme type remove) ergoemacs-require)
+    (push (list option theme type remove) ergoemacs-require))
+  (if ergoemacs-require--ini-p
+      (if (eq (type-of option) 'cons)
+          (dolist (new-option option)
+            (let (ergoemacs-mode)
+              (ergoemacs-require new-option theme type)))
+        (let ((option-sym
+               (or (and (stringp option) (intern option)) option)))
+          (dolist (theme (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
+                             (ergoemacs-theme--list)))
+            (let ((theme-plist (ergoemacs-gethash (if (stringp theme) theme
+                                                    (symbol-name theme))
+                                                  ergoemacs-theme-hash))
+                  comp on off)
+              (setq comp (plist-get theme-plist :components)
+                    on (plist-get theme-plist :optional-on)
+                    off (plist-get theme-plist :optional-off))
+              (setq comp (delq option-sym comp)
+                    on (delq option-sym on)
+                    off (delq option-sym off))
+              (cond
+               (remove) ;; Don't do anything.
+               ((or (not type) (memq type '(required-hidden :required-hidden)))
+                (push option-sym comp))
+               ((memq type '(off :off))
+                (push option-sym off))
+               ((memq type '(on :on))
+                (push option-sym on)))
+              (setq theme-plist (plist-put theme-plist :components comp))
+              (setq theme-plist (plist-put theme-plist :optional-on on))
+              (setq theme-plist (plist-put theme-plist :optional-off off))
+              (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
+                       ergoemacs-theme-hash)))))
     (unless (eq ergoemacs-require--ini-p :ini)
       (ergoemacs-theme-option-on option t))))
 
