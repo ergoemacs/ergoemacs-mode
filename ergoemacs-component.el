@@ -181,12 +181,11 @@
               def (pop bind))))
      ((and (consp bind) (stringp (car bind)))
       ;; :bind ("C-." . ace-jump-mode)
-      (ergoemacs-component-struct--define-key keymap (kbd (car bind)) (cdr bind)))
+      (ergoemacs-component-struct--define-key keymap (read-kbd-macro (car bind)) (cdr bind)))
      ((and (consp bind) (consp (car bind)))
       (dolist (elt bind)
         (when (and (consp elt) (stringp (car elt)))
-          (ergoemacs-component-struct--define-key keymap (kbd (car elt)) (cdr elt)))))
-     )))
+          (ergoemacs-component-struct--define-key keymap (read-kbd-macro (car elt)) (cdr elt))))))))
 
 (defun ergoemacs-component-struct--create-component (plist body)
   "PLIST is the component properties
