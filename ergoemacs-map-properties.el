@@ -360,13 +360,13 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       (if (consp hook)
           (dolist (lhook hook)
             (ergoemacs-map-properties--modify-run-mode-hooks lhook))
-        (when (boundp hook)
+        (when (and hook (boundp hook))
           (set hook
                (mapcar
                 (lambda(fn)
                   (if (or (eq fn t) (and (setq tmp (documentation fn))
-                           (stringp tmp)
-                           (string-match-p  "^Ergoemacs protect local" tmp)))
+                                         (stringp tmp)
+                                         (string-match-p  "^Ergoemacs protect local" tmp)))
                       fn
                     `(lambda() "Ergoemacs protect local"
                        (ergoemacs-map-properties--protect-local ',hook ',fn)
@@ -381,14 +381,14 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       (if (consp hook)
           (dolist (lhook hook)
             (ergoemacs-map-properties--reset-run-mode-hooks lhook))
-        (when (boundp hook)
+        (when (and hook (boundp hook))
           (set hook
                (mapcar
                 (lambda(fn)
                   (if (or (eq fn t) (and (setq tmp (documentation fn))
-                           (stringp tmp)
-                           (string-match-p  "^Ergoemacs protect local" tmp)
-                           (setq tmp (ignore-errors (car (cdr (nth 1 (nth 4 fn))))))))
+                                         (stringp tmp)
+                                         (string-match-p  "^Ergoemacs protect local" tmp)
+                                         (setq tmp (ignore-errors (car (cdr (nth 1 (nth 4 fn))))))))
                       tmp
                     fn))
                 (symbol-value hook))))))))
