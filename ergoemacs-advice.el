@@ -111,10 +111,8 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
 (ergoemacs-advice use-local-map (keymap)
   "When `ergoemacs-mode' is 
 bindings into this keymap (the original keymap is untouched)"
-  ;; FIXME don't replace
-  :type :after
-  (when (and ergoemacs-mode (not ergoemacs--original-local-map))
-    (set (make-local-variable 'ergoemacs--original-local-map) (copy-keymap (current-local-map)))))
+  :type :before
+  (set (make-local-variable 'ergoemacs--original-local-map) keymap))
 
 (defun ergoemacs-use-global-map--after (keymap)
   "Function for `use-global-map' advice"

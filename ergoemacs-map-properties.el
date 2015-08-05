@@ -585,9 +585,11 @@ KEYMAP can be a keymap or keymap integer key."
                          keymap))
              (map-p (ergoemacs keymap :key-hash)))
         (cond
-         ((and map-p (not no-hash) (setq ret (ergoemacs keymap :map-list-hash)))
+         ((and map-p (not no-hash)
+               (setq ret (ergoemacs keymap :map-list-hash)))
           (ergoemacs-map-properties--get-or-generate-map-key keymap)
           (setq map-p ret)
+          (message "Found %s" map-p)
           (when keymap
             (setq ret nil)
             (dolist (map map-p)
@@ -595,30 +597,39 @@ KEYMAP can be a keymap or keymap integer key."
                 (push map ret))))
           (when (not ret);; Check again...
             (setq ret (ergoemacs-map-properties--map-list keymap t)))
-          (unless ret
-            (setq ret (ergoemacs-map-properties--map-list keymap :local)))
           ret)
          ((and map-p (eq no-hash :local)
                (eq (current-local-map) keymap)
-               (setq tmp (intern (format "%s-map")))
-               (message "Check %s" tmp)
-               (boundp tmp)
-               (eq (ergoemacs (ergoemacs-sv tmp) :map-key)
-                   (ergoemacs (ergoemacs-sv keymap) :map-key)))
+               (or
+                (and (setq tmp (intern (format "%s-map" major-mode)))
+                     (boundp tmp)
+                     (ergoemacs-keymapp (default-value tmp)))
+                (and (setq tmp (intern (format "%s-keymap" major-mode)))
+                     (boundp tmp)
+                     (ergoemacs-keymapp (default-value tmp))))
+               (eq (default-value tmp)
+                   ergoemacs--original-local-map))
           (push tmp ret)
+          (ergoemacs-map-properties--get-or-generate-map-key (default-value tmp))
           (when ret
-            (ergoemacs-map-properties--put (ergoemacs-sv (nth 0 ret)) :map-list-hash ret))
+            (ergoemacs-map-properties--put
+             (default-value tmp) :map-list-hash ret))
           ret)
          ((and map-p (not (eq no-hash :local)) (ergoemacs-keymapp keymap))
           (dolist (map ergoemacs-map-properties--label-atoms-maps)
             (when (eq keymap (ergoemacs (ergoemacs-sv map) :original))
               (push map ret)))
-          (ergoemacs-map-properties--put keymap :map-list-hash ret)
+          (unless ret
+            (setq ret (ergoemacs-map-properties--map-list keymap :local)))
+          (when ret
+            (ergoemacs-map-properties--put keymap :map-list-hash ret))
           ret)
          ((and map-p (not (eq no-hash :local)) (integerp keymap))
           (dolist (map ergoemacs-map-properties--label-atoms-maps)
             (when (eq keymap (ergoemacs (ergoemacs (ergoemacs-sv map) :original) :key))
               (push map ret)))
+          (unless ret
+            (setq ret (ergoemacs-map-properties--map-list keymap :local)))
           (when ret
             (ergoemacs-map-properties--put (ergoemacs-sv (nth 0 ret)) :map-list-hash ret))
           ret)))))
