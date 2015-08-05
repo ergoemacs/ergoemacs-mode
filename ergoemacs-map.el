@@ -236,10 +236,13 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
   "Modify `minor-mode-map-alist'"
   (let (ret)
     (when (and ini (not ergoemacs-mode))
-      (let (new-lst)
+      (let (new-lst tmp)
         (dolist (elt minor-mode-map-alist)
           (unless (or (eq (car elt) 'ergoemacs-mode)
-                      (eq 'cond-map (car (ergoemacs (cdr elt) :map-key))))
+                      (and
+                       (setq tmp (ergoemacs (cdr elt) :map-key))
+                       (consp tmp)
+                       (eq 'cond-map (car tmp))))
             (push elt new-lst)))
         (setq minor-mode-map-alist (reverse new-lst))))
     
