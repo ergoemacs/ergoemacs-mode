@@ -44,11 +44,17 @@ test-autoloads : autoloads
 test-travis :
 	@if test -z "$$TRAVIS" && test -e $(TRAVIS_FILE); then travis-lint $(TRAVIS_FILE); fi
 
-test : ert build build2 test-dep-1 test-autoloads ert
+test : ert build build2 test-dep-1 test-autoloads erti
 
 ert :
 	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
 	    "(progn                                          \
+	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" (not (tag :interactive)))))" || exit 1; \
+
+erti :
+	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
+	    "(progn                                          \
+	      (fset 'ert--print-backtrace 'ignore) 
 	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" (not (tag :interactive)))))" || exit 1; \
 
 clean :
