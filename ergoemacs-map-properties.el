@@ -57,7 +57,6 @@
 
 (require 'package)
 (defvar ergoemacs-dir)
-(defvar ergoemacs-map-properties--global-map-before-ergoemacs)
 (defvar ergoemacs-ignore-prev-global)
 (defvar ergoemacs-remap-ignore)
 (defvar ergoemacs-directories-where-keys-from-hook-are-deferred)
@@ -285,14 +284,11 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       (goto-char (point-max))
       (insert ")")
       
-      
       (message "global-map-list %s" (ergoemacs global-map :map-list))
-      (dolist (map ergoemacs-map-properties--label-atoms-maps)
-        (when (ergoemacs-map-properties--key-struct map)
-          (insert (format "(when (boundp '%s) (ergoemacs-map-properties--label %s %s))"
-                          map map (ergoemacs (ergoemacs-sv map) :map-key))))))))
+      (prin1 (ergoemacs-map-properties--create-label-function t)
+             (current-buffer)))))
 
-(defun ergoemacs-map-properties--create-label-function ()
+(defun ergoemacs-map-properties--create-label-function (&optional no-lambda)
   "Creates a function to label known keymaps."
   (let ((ret nil)
         tmp)
@@ -302,7 +298,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
         (unless (or (not tmp) (eq tmp 'C-source))
           (setq ret (append ret `((eval-after-load ,(file-name-sans-extension (file-name-nondirectory tmp)) '(when (boundp ',map) (ergoemacs-command-loop--spinner-display "Label %s" ',map)(ergoemacs-map-properties--label ,map ,(ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))))))))))
     (push 'progn ret)
-    `(lambda() ,ret)))
+    (or (and no-lambda ret) `(lambda() ,ret))))
 
 
 
@@ -584,7 +580,7 @@ composing or parent/child relationships)"
   "Get the list of maps bound to KEYMAP.
 KEYMAP can be a keymap or keymap integer key."
   (if (or (ergoemacs-keymapp keymap) (integerp keymap))
-      (let* (ret
+      (let* (ret tmp
              (keymap (or (and (ergoemacs-keymapp keymap) (ergoemacs keymap :original))
                          keymap))
              (map-p (ergoemacs keymap :key-hash)))
@@ -599,21 +595,33 @@ KEYMAP can be a keymap or keymap integer key."
                 (push map ret))))
           (when (not ret);; Check again...
             (setq ret (ergoemacs-map-properties--map-list keymap t)))
+          (unless ret
+            (setq ret (ergoemacs-map-properties--map-list keymap :local)))
           ret)
-         ((and map-p (ergoemacs-keymapp keymap))
+         ((and map-p (eq no-hash :local)
+               (eq (current-local-map) keymap)
+               (setq tmp (intern (format "%s-map")))
+               (message "Check %s" tmp)
+               (boundp tmp)
+               (eq (ergoemacs (ergoemacs-sv tmp) :map-key)
+                   (ergoemacs (ergoemacs-sv keymap) :map-key)))
+          (push tmp ret)
+          (when ret
+            (ergoemacs-map-properties--put (ergoemacs-sv (nth 0 ret)) :map-list-hash ret))
+          ret)
+         ((and map-p (not (eq no-hash :local)) (ergoemacs-keymapp keymap))
           (dolist (map ergoemacs-map-properties--label-atoms-maps)
             (when (eq keymap (ergoemacs (ergoemacs-sv map) :original))
               (push map ret)))
           (ergoemacs-map-properties--put keymap :map-list-hash ret)
           ret)
-         ((and map-p (integerp keymap))
+         ((and map-p (not (eq no-hash :local)) (integerp keymap))
           (dolist (map ergoemacs-map-properties--label-atoms-maps)
             (when (eq keymap (ergoemacs (ergoemacs (ergoemacs-sv map) :original) :key))
               (push map ret)))
           (when ret
             (ergoemacs-map-properties--put (ergoemacs-sv (nth 0 ret)) :map-list-hash ret))
-          ret)
-         ))))
+          ret)))))
 
 (defun ergoemacs-map-properties--label-map (map)
   "Label MAP"
