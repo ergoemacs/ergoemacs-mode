@@ -176,7 +176,7 @@
                           (setq def (pop bind))))
       (while (and key def)
         (when (stringp key)
-          (ergoemacs-component-struct--define-key keymap (kbd key) def))
+          (ergoemacs-component-struct--define-key keymap (read-kbd-macro key) def))
         (setq key (pop bind)
               def (pop bind))))
      ((and (consp bind) (stringp (car bind)))
