@@ -257,83 +257,85 @@ Issue #186."
 (ert-deftest ergoemacs-test-copy-paste-issue-184-paste-should-clear-mark ()
   "Issue #186.
 Selected mark would not be cleared after paste."
-  (let ((ergoemacs-handle-ctl-c-or-ctl-x 'both))
-    (save-excursion
-      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-      (delete-region (point-min) (point-max))
-      (insert ergoemacs-test-lorem-ipsum)
-      (goto-char (point-min))
-      (push-mark)
-      (end-of-line)
-      (ergoemacs-copy-line-or-region)
-      (push-mark (point))
-      (push-mark (point-max) nil t)
-      (goto-char (point-min))
-      (ergoemacs-paste)
-      (should (or deactivate-mark (not mark-active)))
-      (kill-buffer (current-buffer)))))
-    
+  (ergoemacs-test-layout
+   (let ((ergoemacs-handle-ctl-c-or-ctl-x 'both))
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-min))
+       (push-mark)
+       (end-of-line)
+       (ergoemacs-copy-line-or-region)
+       (push-mark (point))
+       (push-mark (point-max) nil t)
+       (goto-char (point-min))
+       (ergoemacs-paste)
+       (should (or deactivate-mark (not mark-active)))
+       (kill-buffer (current-buffer))))))
+
 
 (ert-deftest ergoemacs-test-copy-paste-cut-line-or-region ()
   "Issue #68.
 kill-ring function name is used and such doesn't exist. It errs when
 not using cua or cutting line. I think kill-region is what is meant."
-  (let ((old-c cua-mode)
-        (ret t))
-    (cua-mode -1)
-    (save-excursion
-      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-      (delete-region (point-min) (point-max))
-      (insert ergoemacs-test-lorem-ipsum)
-      (condition-case _err
-          (ergoemacs-cut-line-or-region)
-        (error (setq ret nil)))
-      (kill-buffer (current-buffer)))
-    (when old-c
-      (cua-mode 1))
-    (should ret)))
+  (ergoemacs-test-layout
+   (let ((old-c cua-mode)
+         (ret t))
+     (cua-mode -1)
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (condition-case _err
+           (ergoemacs-cut-line-or-region)
+         (error (setq ret nil)))
+       (kill-buffer (current-buffer)))
+     (when old-c
+       (cua-mode 1))
+     (should ret))))
 
 
 (ert-deftest ergoemacs-test-copy-paste-issue-130-cut ()
   "Attempts to test Issue #130 -- Cut"
-  (let ((ret t)
-        (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
-        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-    (save-excursion
-      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-      (delete-region (point-min) (point-max))
-      (insert ergoemacs-test-lorem-ipsum)
-      (push-mark (point))
-      (push-mark (point-max) nil t)
-      (goto-char (point-min))
-      (with-timeout (0.15 nil)
-        (ergoemacs-command-loop "C-x"))
-      (setq ret (string= "" (buffer-string)))
-      (kill-buffer (current-buffer)))
-    (should ret)))
+  (ergoemacs-test-layout
+   (let ((ret t)
+         (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
+         (ergoemacs-handle-ctl-c-or-ctl-x 'both))
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (push-mark (point))
+       (push-mark (point-max) nil t)
+       (goto-char (point-min))
+       (ergoemacs-command-loop "C-x <ergoemacs-timeout>")
+       (setq ret (string= "" (buffer-string)))
+       (kill-buffer (current-buffer)))
+     (should ret))))
 
 (ert-deftest ergoemacs-test-copy-paste-issue-130-copy ()
   "Attempts to test Issue #130 -- Copy"
-  (let ((ergoemacs-ctl-c-or-ctl-x-delay 0.1)
-        (ergoemacs-handle-ctl-c-or-ctl-x 'both)
-        (txt "Text\n123"))
-    (with-temp-buffer
-      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-      (delete-region (point-min) (point-max))
-      (insert txt)
-      (push-mark (point))
-      (push-mark (point-max) nil t)
-      ;; (message "Region Active: %s" transient-mark-mode)
-      (setq last-command nil
-            this-command nil)
-      (goto-char (point-min))
-      (with-timeout (0.15 nil)
-        (ergoemacs-command-loop "C-c"))
-      (goto-char (point-max))
-      (ergoemacs-paste)
-      (should (string= (concat txt txt)
-                       (buffer-string)))
-      (kill-buffer (current-buffer)))))
+  (ergoemacs-test-layout
+   (let ((ergoemacs-ctl-c-or-ctl-x-delay 0.1)
+         (ergoemacs-handle-ctl-c-or-ctl-x 'both)
+         (txt "Text\n123"))
+     (with-temp-buffer
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert txt)
+       (push-mark (point))
+       (push-mark (point-max) nil t)
+       ;; (message "Region Active: %s" transient-mark-mode)
+       (setq last-command nil
+             this-command nil)
+       (goto-char (point-min))
+       (ergoemacs-command-loop "C-c <ergoemacs-timeout>")
+       (goto-char (point-max))
+       (ergoemacs-paste)
+       (should (string= (concat txt txt)
+                        (buffer-string)))
+       (kill-buffer (current-buffer))))))
 
 (ert-deftest ergoemacs-test-copy-paste-apps-cut ()
   "Tests <apps> x on QWERTY cutting a region, not just a line."
@@ -916,8 +918,8 @@ Should test issue #142"
 
 
 (ert-deftest ergoemacs-test-global-key-set-after-220 ()
-"Test global C-c b"
-(should (equal (ergoemacs-test-global-key-set-before 'after "C-c b") t)))
+  "Test global C-c b"
+  (should (equal (ergoemacs-test-global-key-set-before 'after "C-c b") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-220-before ()
   "Test global C-c b"
