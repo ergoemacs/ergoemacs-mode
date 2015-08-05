@@ -1047,6 +1047,8 @@ This sequence is compatible with `listify-key-sequence'."
   (and ergoemacs-mode (not executing-kbd-macro)
        (eq ergoemacs-command-loop-type :full)))
 
+
+(defvar ergoemacs-command-loop-start nil)
 (defun ergoemacs-command-loop-start ()
   "Start `ergoemacs-command-loop'"
   (interactive)
@@ -1055,6 +1057,7 @@ This sequence is compatible with `listify-key-sequence'."
     (setq overriding-terminal-local-map nil)
     (error "Refusing to start ergoemacs-mode command loop outside of ergoemacs-mode"))
   ;; Should work...
+  (setq ergoemacs-command-loop-start t)
   (ergoemacs-command-loop (this-single-command-keys)))
 
 (defvar ergoemacs-command-loop--spinner nil)
@@ -1143,6 +1146,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
   (setq ergoemacs---ergoemacs-command-loop (symbol-function 'ergoemacs-command-loop))
   (letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys))
     (let* ((type (or type :normal))
+           (from-start-p ergoemacs-command-loop-start)
            (continue-read t)
            (first-type type)
            raw-key current-key last-current-key
@@ -1150,6 +1154,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
            (local-keymap (ergoemacs-translate--keymap translation))
            modal-p
            tmp command)
+      (setq ergoemacs-command-loop-start nil)
       (unwind-protect
           (progn
             ;; Replace functions temporarily
@@ -1265,7 +1270,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                 (ergoemacs-command-loop--internal-end-command))
               (setq quit-flag nil
                     type :normal
-                    continue-read (ergoemacs-command-loop-persistent-p)
+                    continue-read (and from-start-p (ergoemacs-command-loop-persistent-p))
                     first-type :normal
                     raw-key nil
                     current-key nil

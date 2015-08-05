@@ -589,10 +589,11 @@ Should test for Issue #143."
   "Test that unicode translations work.
 See Issue #138."
   (save-excursion
+    (unless ergoemacs-mode
+      (ergoemacs-mode))
     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
     (delete-region (point-min) (point-max))
-    (with-timeout (0.5 nil)
-      (ergoemacs-command-loop "C-x 8 !"))
+    (ergoemacs-command-loop "C-x 8 !")
     (should (string= "¡" (buffer-string)))
     (kill-buffer (current-buffer))))
 
@@ -601,9 +602,10 @@ See Issue #138."
 See Issue #138."
   (save-excursion
     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+    (unless ergoemacs-mode
+      (ergoemacs-mode))
     (delete-region (point-min) (point-max))
-    (with-timeout (0.5 nil)
-      (ergoemacs-command-loop "C-x 8 \" A"))
+    (ergoemacs-command-loop "C-x 8 \" A")
     (should (string= "Ä" (buffer-string)))
     (kill-buffer (current-buffer))))
 
