@@ -44,7 +44,7 @@ test-autoloads : autoloads
 test-travis :
 	@if test -z "$$TRAVIS" && test -e $(TRAVIS_FILE); then travis-lint $(TRAVIS_FILE); fi
 
-test : ert build build2 test-dep-1 test-autoloads erti
+test : clean ert build build2 test-dep-1 test-autoloads erti
 
 ert :
 	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
