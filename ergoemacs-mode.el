@@ -386,6 +386,12 @@ bindings the keymap is:
 (defvar ergoemacs-theme-comp-hash nil
   "Hash of ergoemacs theme components")
 
+(defvar ergoemacs-map-properties--before-ergoemacs nil
+  "Keymap describing changes before `ergoemacs-mode' loads.")
+
+(defvar ergoemacs-require nil
+  "List of required theme components.")
+
 (defun ergoemacs-mode--remove-hash ())
 
 (defun ergoemacs-mode--setup-hash-tables (&optional store-p)
@@ -395,6 +401,7 @@ When `store-p' is non-nil, save the tables."
     (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
   (ergoemacs-mode--setup-hash-tables--setq
    store-p
+   'ergoemacs-require nil
    'ergoemacs-component-hash (make-hash-table :test 'equal)
    'ergoemacs-component-struct--hash (make-hash-table)
    'ergoemacs-map--hash (make-hash-table :test 'equal)
@@ -409,6 +416,7 @@ When `store-p' is non-nil, save the tables."
    'ergoemacs-breadcrumb-hash (make-hash-table)
    'ergoemacs-map-properties--create-label-function nil
    'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
+   'ergoemacs-map-properties--before-ergoemacs nil
    ;;'ergoemacs-map-- (make-hash-table :test 'equal))
    ;;'ergoemacs-map--alist (make-hash-table)
    ;;'ergoemacs-map--alists (make-hash-table)

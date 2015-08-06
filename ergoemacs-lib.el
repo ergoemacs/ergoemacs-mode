@@ -153,8 +153,6 @@ KEEP can change remove to nil.
 "
   (ergoemacs-require option theme (or type 'off) (if keep nil t)))
 
-(defvar ergoemacs-require nil
-  "List of required theme components.")
 (defvar ergoemacs-require--ini-p nil)
 (defun ergoemacs-require--ini-p ()
   (setq ergoemacs-require--ini-p t))

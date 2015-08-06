@@ -300,11 +300,6 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
     (push 'progn ret)
     (or (and no-lambda ret) `(lambda() ,ret))))
 
-
-
-(defvar ergoemacs-map-properties--before-ergoemacs nil
-  "Keymap describing changes before `ergoemacs-mode' loads.")
-
 (defun ergoemacs-map-properties--before-ergoemacs ()
   "Get a list of keys that changed"
   (or ergoemacs-map-properties--before-ergoemacs
