@@ -54,7 +54,7 @@ ert :
 erti :
 	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
 	    "(progn                                          \
-	      (fset 'ert--print-backtrace 'ignore) 
+	      (fset 'ert--print-backtrace 'ignore)  \
 	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" (not (tag :interactive)))))" || exit 1; \
 
 clean :
