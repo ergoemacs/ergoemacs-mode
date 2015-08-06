@@ -1156,6 +1156,13 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 
 (run-hooks 'ergoemacs-mode-intialize-hook)
 
+(require 'unicode-fonts nil t)
+(when (featurep 'unicode-fonts)
+  (if (file-readable-p (concat pcache-directory "unicode-fonts"))
+      (unicode-fonts-setup)
+    ;; (warn "Enhanced Unicode font support not setup.  See https://github.com/rolandwalker/unicode-fonts")
+    ))
+
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-mode.el ends here
