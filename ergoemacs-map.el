@@ -259,17 +259,6 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 (defvar ergoemacs-map--undefined-keys nil
   "List of undefined keys for the global map.")
 
-(defvar ergoemacs-map--cache-save nil)
-(defun ergoemacs-map--cache-save ()
-  "Save ergoemacs cache for startup."
-  (cond
-   ((eq ergoemacs-map--cache-save :remove)
-    (persistent-soft-location-destroy "ergoemacs-mode"))
-   (ergoemacs-map--cache-save
-    (ergoemacs-mode--setup-hash-tables t)
-    (setq ergoemacs-map--cache-save nil))))
-
-(add-hook 'kill-emacs-hook 'ergoemacs-map--cache-save)
 
 (defvar ergoemacs-map--cache--last-breadcrumb "")
 (defun ergoemacs-map--cache-- (what &optional save)

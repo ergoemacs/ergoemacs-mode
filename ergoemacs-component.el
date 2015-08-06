@@ -852,6 +852,22 @@ be composed over the keymap.  This is done in
          package-name ensure defer comp plist)
     (when ergoemacs-component-struct--apply-inits-first-p
       (setq ergoemacs-component-struct--apply-inits-first-p nil)
+      (when ergoemacs-mode--fast-p
+        ;; Check to see if emacs state has changed.
+        (setq ergoemacs--start-emacs-state-2 (ergoemacs--emacs-state))
+        (ergoemacs-mode--setup-hash-tables--setq
+         nil
+         'ergoemacs--last-start-emacs-state-2 nil)
+        (unless (equal ergoemacs--last-start-emacs-state-2 ergoemacs--start-emacs-state-2)
+          (if (not ergoemacs--last-start-emacs-state-2)
+              (progn
+                (message "Saving fast startup state.")
+                (setq ergoemacs--last-start-emacs-state-2 ergoemacs--start-emacs-state-2)
+                (ergoemacs-mode--setup-hash-tables--setq
+                 t
+                 'ergoemacs--last-start-emacs-state-2 ergoemacs--last-start-emacs-state-2))
+            (ergoemacs-mode-clear-cache t)
+            (warn "ergoemacs-mode cache reset AFTER loading; Keys may be slightly inconsistent until emacs restart."))))
       (dolist (elt obj)
         (setq comp (ergoemacs-component-struct--lookup-hash elt)
               package-name (ergoemacs-component-struct-package-name comp)

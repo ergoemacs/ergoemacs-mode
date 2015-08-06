@@ -83,7 +83,6 @@
 (defvar cl-struct-ergoemacs-component-struct-tags)
 (defvar ergoemacs-component-struct--refresh-variables)
 (defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-map--cache-save)
 (defvar ergoemacs-map--hashkey)
 (defvar ergoemacs-require--ini-p)
 (defvar ergoemacs-require)
@@ -103,7 +102,6 @@
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")
 
-(declare-function ergoemacs-map--cache-save "ergoemacs-map")
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-map-properties--create-label-function "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
@@ -311,7 +309,6 @@ bindings the keymap is:
 
 (defun ergoemacs-mode--pcache-repository ()
   (format "ergoemacs-mode-%s" ergoemacs--system))
-(require 'persistent-soft nil t)
 (defvar ergoemacs-mode--fast-p nil)
 (defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
   (let (sym val found-p)
@@ -392,13 +389,67 @@ bindings the keymap is:
 (defvar ergoemacs-require nil
   "List of required theme components.")
 
-(defun ergoemacs-mode--remove-hash ())
+(defun ergoemacs--emacs-state ()
+  "Returns a MD5 of the current emacs state"
+  (let* ((state (format "%s %s %s %s" ergoemacs--system features package-alist load-path))
+         (md5 (md5 state)))
+    ;; (message "%s->%s" md5 state)
+    md5))
+
+(defvar ergoemacs--start-emacs-state (ergoemacs--emacs-state))
+(defvar ergoemacs--last-start-emacs-state nil)
+
+(defvar ergoemacs--start-emacs-state-2 nil)
+(defvar ergoemacs--last-start-emacs-state-2 nil)
+
+
+(require 'persistent-soft nil t)
+
+(defun ergoemacs-mode-clear-cache (&optional no-message)
+  "Clear the cache for next ergoemacs-mode load."
+  (interactive)
+  (setq ergoemacs-map--cache-save :remove)
+  (ergoemacs-map--cache-save)
+  (unless no-message
+    (message "Clear cache for next startup.")))
+
+(defvar ergoemacs-map--cache-save nil)
+(defun ergoemacs-map--cache-save (&optional remove)
+  "Save ergoemacs cache for startup."
+  (cond
+   ((and (featurep 'persistent-soft)
+         (featurep 'pcache)
+         (or remove (eq ergoemacs-map--cache-save :remove)))
+    (pcache-clear (pcache-repository (ergoemacs-mode--pcache-repository)))
+    (persistent-soft-location-destroy (ergoemacs-mode--pcache-repository)))
+   ((or remove (eq ergoemacs-map--cache-save :remove)))
+   (ergoemacs-map--cache-save
+    (ergoemacs-mode--setup-hash-tables t)
+    (setq ergoemacs-map--cache-save nil))))
+
+(add-hook 'kill-emacs-hook 'ergoemacs-map--cache-save)
+
 
 (defun ergoemacs-mode--setup-hash-tables (&optional store-p)
   "Load hash-tables using `persistent-soft' when available.
 When `store-p' is non-nil, save the tables."
   (when store-p
     (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
+  ;; Check if system state has expired the cache.
+  (unless store-p
+    (ergoemacs-mode--setup-hash-tables--setq
+     nil
+     'ergoemacs--last-start-emacs-state nil)
+    (unless (equal ergoemacs--last-start-emacs-state ergoemacs--start-emacs-state)
+      (ergoemacs-mode-clear-cache t)
+      (message "Cache reset before loading.")
+      (setq ergoemacs-map--cache-save t)
+      (setq ergoemacs--last-start-emacs-state ergoemacs--start-emacs-state)
+      (ergoemacs-mode--setup-hash-tables--setq
+       t
+       'ergoemacs--last-start-emacs-state ergoemacs--last-start-emacs-state)
+      (ergoemacs-mode--setup-hash-tables--setq nil 'ergoemacs-require nil)))
+  
   (ergoemacs-mode--setup-hash-tables--setq
    store-p
    'ergoemacs-require nil
@@ -442,13 +493,6 @@ When `store-p' is non-nil, save the tables."
 
 (ergoemacs-mode--setup-hash-tables)
 
-(defun ergoemacs-mode-clear-cache ()
-  "Clear the cache for next ergoemacs-mode load."
-  (interactive)
-  (setq ergoemacs-map--cache-save :remove)
-  (ergoemacs-map--cache-save)
-  (message "Clear cache for next startup."))
-
 (dolist (pkg '(ergoemacs-advice
                ergoemacs-lib
                ergoemacs-mapkeymap
@@ -467,7 +511,8 @@ When `store-p' is non-nil, save the tables."
   (unless (featurep pkg)
     (load (symbol-name pkg))))
 
-(unless ergoemacs-mode--fast-p
+(if ergoemacs-mode--fast-p
+    (provide 'ergoemacs-themes)
   (load "ergoemacs-themes"))
 
 (defcustom ergoemacs-command-loop-spinners
