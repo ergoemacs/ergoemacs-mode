@@ -422,10 +422,23 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
     (error "`ergoemacs-component-struct--define-key' is confused"))
    (t
     (let ((obj (or object ergoemacs-component-struct--define-key-current))
-          (key (or (and (consp key) (memq (car key) '(kbd read-kbd-macro)) (stringp (nth 1 key)) (read-kbd-macro (nth 1 key))) key))
+          (key (or (and (consp key) (memq (car key) '(kbd read-kbd-macro))
+                        (stringp (nth 1 key)) (read-kbd-macro (nth 1 key)))
+                   key))
           (def (ergoemacs-component-struct--define-key-get-def def)))
       (if (not (ergoemacs-component-struct-p obj))
           (error "OBJECT not a ergoemacs-component-structure.")
+        ;; Change apps <-> menu
+        (setq key (vconcat key)
+              key (vconcat
+                   (mapcar
+                    (lambda(x)
+                      (cond
+                       ((and (eq system-type 'windows-nt) (eq x 'menu))
+                        'apps)
+                       ((and (not (eq system-type 'windows-nt)) (eq x 'apps))
+                        'menu)
+                       (t x))) key)))
         (let* ((global-map-p (or (eq keymap 'global-map) (eq keymap 'ergoemacs-mode-map)
                                  (eq keymap 'ergoemacs-keymap)))
                (when-condition (ergoemacs-component-struct-when-condition obj))
