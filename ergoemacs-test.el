@@ -358,7 +358,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-copy-paste-apps-copy ()
   "Tests <apps> c on QWERTY copying a region, not just a line."
-  :interactive t
+  :tags :interactive
   (ergoemacs-test-layout
    :macro (format "C-a <%s> c C-v"
                   (if (eq system-type 'windows-nt)
