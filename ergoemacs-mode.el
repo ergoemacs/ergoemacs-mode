@@ -95,8 +95,10 @@
 ;; (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
 
+(defvar ergoemacs--system (replace-regexp-in-string "[^0-9A-Za-z]+" "-" (concat emacs-version "-" system-configuration)))
+
 (when (string= package-user-dir (locate-user-emacs-file "elpa"))
-  (setq package-user-dir (locate-user-emacs-file (format "elpa-%s-%s" emacs-version system-configuration))))
+  (setq package-user-dir (locate-user-emacs-file (format "elpa-%s" ergoemacs--system))))
 
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")
@@ -308,7 +310,7 @@ bindings the keymap is:
         (message "Ergoemacs-mode turned OFF.")))))
 
 (defun ergoemacs-mode--pcache-repository ()
-  (format "ergoemacs-mode-%s-%s" emacs-version system-configuration))
+  (format "ergoemacs-mode-%s" ergoemacs--system))
 (require 'persistent-soft nil t)
 (defvar ergoemacs-mode--fast-p nil)
 (defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
