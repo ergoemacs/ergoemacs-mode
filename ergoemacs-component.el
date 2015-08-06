@@ -157,13 +157,16 @@
   (when package
     (let ((package (or (and (symbolp package) package)
                        (and (stringp package) (intern package)))))
-      (unless package--initialized
-        (package-initialize))
-      (if (package-installed-p package) t
-        (unless ergoemacs-component-struct--ensure-refreshed-p
-          (package-refresh-contents)
-          (setq ergoemacs-component-struct--ensure-refreshed-p t))
-        (package-install package)))))
+      (unless (featurep package)
+        (require package nil t))
+      (unless (featurep package)
+        (unless package--initialized
+          (package-initialize))
+        (if (package-installed-p package) t
+          (unless ergoemacs-component-struct--ensure-refreshed-p
+            (package-refresh-contents)
+            (setq ergoemacs-component-struct--ensure-refreshed-p t))
+          (package-install package))))))
 
 
 (defun ergoemacs-component-struct--handle-bind (bind &optional keymap)
