@@ -474,7 +474,7 @@ When `store-p' is non-nil, save the tables."
    ;;'ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
    ;;'ergoemacs-translate--keymap-hash (make-hash-table)
    )
-  (when store-p
+  (when (and store-p (featurep 'persistent-soft))
     (persistent-soft-flush (ergoemacs-mode--pcache-repository))
     (when (eq system-type 'windows-nt)
       ;; Fix for stupid  endings
