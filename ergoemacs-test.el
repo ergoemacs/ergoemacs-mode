@@ -76,11 +76,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (defun ergoemacs-test-fast ()
   "Fast test of ergoemacs-mode (doesn't include keyboard startup issues)."
   (interactive)
-  (unwind-protect
-      (progn
-        (setq ergoemacs-test-fast t)
-        (call-interactively 'ergoemacs-test))
-    (setq ergoemacs-test-fast nil)))
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (not (tag :slow))))
+  (call-interactively 'elp-results))
 
 ;;;###autoload
 (defun ergoemacs-test ()
@@ -358,7 +356,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-copy-paste-apps-copy ()
   "Tests <apps> c on QWERTY copying a region, not just a line."
-  :tags '(:interactive)
+  ;; :tags '(:interactive)
   (ergoemacs-test-layout
    :macro (format "C-a <%s> c C-v"
                   (if (eq system-type 'windows-nt)
@@ -454,7 +452,6 @@ When calling `ergoemacs-refresh' variable values should be preserved."
 ;;; Grep
 
 
-;; Not sure why this doesn't work
 (ert-deftest ergoemacs-test-grep-issue-293 ()
   "Test Issue #293.
 Unable to use M-ijkl in a grep buffer."
@@ -740,6 +737,7 @@ Should test issue #142"
 ;;; Global map tests.
 (defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global delete-def)
   "Test the global key set before ergoemacs-mode is loaded."
+  :tags '(:slow)
   (let* ((emacs-exe (ergoemacs-emacs-exe))
          (ret nil)
          (sk nil)
@@ -793,22 +791,27 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-before-1 ()
   "Test global set key before ergoemacs-mode loads."
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before) t)))
 
 (ert-deftest ergoemacs-test-global-key-set-before-2 ()
   "Test global set key before ergoemacs-mode loads (define-key)."
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before nil nil 'define-key) t)))
 
 (ert-deftest ergoemacs-test-global-key-set-after ()
   "Test global set key after ergoemacs loads."
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before 'after) t)))
 
 (ert-deftest ergoemacs-test-global-key-set-after-2 ()
   "Test global set key after ergoemacs loads (define-key)."
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before 'after nil 'define-key) t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
   "Test setting <apps> m c before loading."
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -819,6 +822,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before-2 ()
   "Test setting <apps> m c before loading (define-key)."
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -829,14 +833,17 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-m-semi-before ()
   "Test setting M-; before loading."
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before nil "M-;") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-m-semi-after ()
   "Test setting M-; before loading."
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before t "M-;") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-before ()
   "Test setting <apps> before loading."
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -848,6 +855,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-before-2 ()
   "Test setting <apps> before loading (define-key)."
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -858,6 +866,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-before ()
   "Test setting <apps> m before loading."
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -868,6 +877,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-before-2 ()
   "Test setting <apps> m before loading (define-key)."
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -878,6 +888,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-after ()
   "Test setting <apps> m after loading"
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -889,6 +900,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-after-2 ()
   "Test setting <apps> m after loading (define-key)"
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -899,6 +911,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-after ()
   "Test setting <apps> m c after loading."
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -909,6 +922,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-after-2 ()
   "Test setting <apps> m c after loading (define-key)."
+  :tags '(:slow)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -920,27 +934,33 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-after-220 ()
   "Test global C-c b"
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before 'after "C-c b") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-apps-220-before ()
   "Test global C-c b"
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before nil "C-c b") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-M-t-after ()
   "Test global M-t"
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before 'after "M-t") t)))
 
 
 (ert-deftest ergoemacs-test-global-key-set-C-d-after ()
   "Test global C-d"
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before 'after "C-d") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-C-d-before ()
   "Test global C-d"
+  :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before nil "C-d") t)))
 
 (ert-deftest ergoemacs-test-issue-243 ()
   "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
+  :tags '(:slow)
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (w-file (expand-file-name "global-test" ergoemacs-dir))
         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
@@ -987,6 +1007,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-issue-349 ()
   "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
+  :tags '(:slow)
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (w-file (expand-file-name "global-test" ergoemacs-dir))
         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
