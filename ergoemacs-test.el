@@ -1064,6 +1064,57 @@ Part of addressing Issue #147."
       (should (eq (key-binding (kbd "C-s")) 'save-buffer))
       (should (eq (key-binding [ergoemacs-remap isearch-forward]) 'search-forward)))))
 
+(ert-deftest ergoemacs-test-dired-sort-files ()
+  "Test Issue #340"
+  (add-hook 'dired-mode-hook (lambda ()
+                               (interactive)
+                               (make-local-variable  'dired-sort-map)
+                               (setq dired-sort-map (make-sparse-keymap))
+                               (define-key dired-mode-map "s" dired-sort-map)
+                               (define-key dired-sort-map "s"
+                                 '(lambda () "sort by Size"
+                                    (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso"))))
+                               (define-key dired-sort-map "."
+                                 '(lambda () "sort by eXtension"
+                                    (interactive) (dired-sort-other (concat dired-listing-switches "X"))))
+                               (define-key dired-sort-map "t"
+                                 '(lambda () "sort by Time"
+                                    (interactive) (dired-sort-other (concat dired-listing-switches "t"))))
+                               (define-key dired-sort-map "n"
+                                 '(lambda () "sort by Name"
+                                    (interactive) (dired-sort-other (concat dired-listing-switches ""))))
+                               ;; Use "|", not "r".
+                               (define-key dired-mode-map "|" 'dired-sort-menu-toggle-reverse)
+                               ))
+  (dired ergoemacs-dir)
+  (ergoemacs-map--modify-active)
+  (should (equal (key-binding (kbd "s s")) '(lambda () "sort by Size" (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso")))))
+  (should (equal (key-binding (kbd "s .")) '(lambda () "sort by eXtension" (interactive) (dired-sort-other (concat dired-listing-switches "X")))))
+  (should (equal (key-binding (kbd "s t")) '(lambda () "sort by Time" (interactive) (dired-sort-other (concat dired-listing-switches "t")))))
+  (should (equal (key-binding (kbd "s n")) '(lambda () "sort by Name" (interactive) (dired-sort-other (concat dired-listing-switches "")))))
+  (should (equal (key-binding (kbd "|")) 'dired-sort-menu-toggle-reverse))
+  (kill-buffer (current-buffer))
+  (remove-hook 'dired-mode-hook (lambda ()
+    (interactive)
+    (make-local-variable  'dired-sort-map)
+    (setq dired-sort-map (make-sparse-keymap))
+    (define-key dired-mode-map "s" dired-sort-map)
+    (define-key dired-sort-map "s"
+      '(lambda () "sort by Size"
+         (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso"))))
+    (define-key dired-sort-map "."
+      '(lambda () "sort by eXtension"
+         (interactive) (dired-sort-other (concat dired-listing-switches "X"))))
+    (define-key dired-sort-map "t"
+      '(lambda () "sort by Time"
+         (interactive) (dired-sort-other (concat dired-listing-switches "t"))))
+    (define-key dired-sort-map "n"
+      '(lambda () "sort by Name"
+         (interactive) (dired-sort-other (concat dired-listing-switches ""))))
+    ;; Use "|", not "r".
+    (define-key dired-mode-map "|" 'dired-sort-menu-toggle-reverse)
+    )))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
