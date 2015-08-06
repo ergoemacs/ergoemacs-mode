@@ -96,7 +96,8 @@
 
 (defvar ergoemacs--system (replace-regexp-in-string "[^0-9A-Za-z]+" "-" (concat emacs-version "-" system-configuration)))
 
-(when (string= package-user-dir (locate-user-emacs-file "elpa"))
+(when (and (string= package-user-dir (locate-user-emacs-file "elpa"))
+           (not (file-exists-p (locate-user-emacs-file "elpa"))))
   (setq package-user-dir (locate-user-emacs-file (format "elpa-%s" ergoemacs--system))))
 
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
