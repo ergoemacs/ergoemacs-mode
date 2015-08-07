@@ -77,12 +77,18 @@ reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
-(defvar ergoemacs-test-fast nil)
 (defun ergoemacs-test-fast ()
   "Fast test of ergoemacs-mode (doesn't include keyboard startup issues)."
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (not (tag :slow))))
+  (call-interactively 'elp-results))
+
+(defun ergoemacs-test-search ()
+  "Fast test of ergoemacs-mode (doesn't include keyboard startup issues)."
+  (interactive)
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (tag :search)))
   (call-interactively 'elp-results))
 
 ;;;###autoload
@@ -99,6 +105,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-isearch-C-f-backspace ()
   "Test Backspace in `isearch-mode'"
+  :tags '(:search)
   ;; Google Code Issue #145
   (ergoemacs-test-layout
    :layout "colemak"
@@ -115,6 +122,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-isearch-C-f ()
   "C-f doesn't work in isearch-mode."
+  :tags '(:search)
   ;; Google Code Issue #119
   (ergoemacs-test-layout
    :layout "colemak"
@@ -136,6 +144,7 @@ already selected, isearch-ing would expand or shrink selection.
 Currently ergoemacs-mode discards selection as soon as isearch key is
 pressed. Reproducible with ergoemacs-clean.
 Issue #186."
+  :tags '(:search)
   (let ((ret t))
     (ergoemacs-test-layout
      :macro "C-f lab"
@@ -152,10 +161,29 @@ Issue #186."
        (kill-buffer (current-buffer))))
     (should (equal ret t))))
 
+(ert-deftest ergoemacs-test-isearch-exits-with-ergoemacs-movement-keys ()
+  "Tests if isearch exits the search with movement keys.
+Tests issue #347"
+  :tags '(:search)
+  (ergoemacs-test-layout
+   :macro "C-f ars M-e"
+   :layout "colemak"
+  (save-excursion
+    (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+    (delete-region (point-min) (point-max))
+    (insert "aars1\nars2\nars3\nars4")
+    (goto-char (point-min))
+    (execute-kbd-macro macro)
+    (should (not isearch-mode))
+    (when isearch-mode
+      (isearch-mode -1))
+    (kill-buffer (current-buffer)))))
+
+
 ;;; Shift Selection
 
 (ert-deftest ergoemacs-test-shift-select-move-no-mark ()
-  "Tests another shifted selection "
+  "Tests another shifted selection"
   (let ((ret t))
     (ergoemacs-test-layout
      :macro "M-H"
