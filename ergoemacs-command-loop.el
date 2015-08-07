@@ -891,6 +891,15 @@ This sequence is compatible with `listify-key-sequence'."
 
 (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
 
+(unless (fboundp 'posnp)
+  ;; For emacs 24.1
+  (defun posnp (obj)
+    "Return non-nil if OBJ appears to be a valid `posn' object."
+    (and (windowp (car-safe obj))
+         (atom (car-safe (setq obj (cdr obj))))                ;AREA-OR-POS.
+         (integerp (car-safe (car-safe (setq obj (cdr obj))))) ;XOFFSET.
+         (integerp (car-safe (cdr obj))))))
+
 (defun ergoemacs-command-loop--internal-end-command ()
   "Simulates the end of a command."
   ;; Simulate the end of an emacs command, since we are not

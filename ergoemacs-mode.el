@@ -74,20 +74,12 @@
 (eval-when-compile
   (require 'cl)
   (require 'ergoemacs-macros))
+
 ;; FIXME: Use cl-lib when available.
 ;;(require 'cl)
 (require 'easymenu)
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
-
-(defvar cl-struct-ergoemacs-component-struct-tags)
-(defvar ergoemacs-component-struct--refresh-variables)
-(defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-map--hashkey)
-(defvar ergoemacs-require--ini-p)
-(defvar ergoemacs-require)
-(defvar pcache-directory)
-
 (require 'package)
 
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
@@ -100,6 +92,20 @@
            (not (file-exists-p (locate-user-emacs-file "elpa"))))
   (setq package-user-dir (locate-user-emacs-file (format "elpa-%s" ergoemacs--system))))
 
+(defvar cl-struct-ergoemacs-component-struct-tags)
+(defvar ergoemacs-component-struct--refresh-variables)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-map--hashkey)
+(defvar ergoemacs-require--ini-p)
+(defvar ergoemacs-require)
+(defvar pcache-directory)
+
+(require 'package)
+
+
+
+
+(declare-function ergoemacs-require "ergoemacs-lib")
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")
 

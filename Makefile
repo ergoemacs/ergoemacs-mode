@@ -1,5 +1,10 @@
 EMACS=emacs
 
+unexport EMACSLOADPATH
+unexport EMACSDOC
+unexport EMACSDATA
+unexport EMACS_SERVER_FILE
+
 EMACS_CLEAN=-Q
 EMACS_BATCH=$(EMACS_CLEAN) --batch
 #TESTS=ergoemacs-
@@ -18,6 +23,22 @@ TRAVIS_FILE=.travis.yml
 .PHONY : build downloads downloads-latest autoloads test-autoloads test-travis \
          test test-interactive clean edit test-dep-1 test-dep-2 test-dep-3     \
          test-dep-4 test-dep-5 test-dep-6 test-dep-7 test-dep-8 test-dep-9
+
+24.1 :
+	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.1\bin\emacs.exe")
+
+24.2 :
+	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.2\bin\emacs.exe")
+
+24.3 :
+	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.3\bin\emacs.exe")
+
+24.4 :
+	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.4.50\bin\emacs.exe")
+
+24.5:
+	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.5\bin\emacs.exe")
+
 
 build :
 	$(EMACS) $(EMACS_BATCH) -L . --eval             \
@@ -43,7 +64,13 @@ test-autoloads : autoloads
 test-travis :
 	@if test -z "$$TRAVIS" && test -e $(TRAVIS_FILE); then travis-lint $(TRAVIS_FILE); fi
 
-test : build build2 test-dep-1 test-autoloads erti
+test : clean build build2 test-dep-1 test-autoloads ert
+
+start: clean build start0
+startel: clean start0
+
+start0:
+	$(EMACS) -Q -L . -L .. -l ergoemacs-mode -l ergoemacs-test --eval "(ergoemacs-mode)"
 
 ert :
 	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
@@ -60,3 +87,9 @@ clean :
 	@rm -f $(AUTOLOADS_FILE) 
 	@rm -f *.elc 
 	@rm -f *~ 
+	@rm -f \#*\#
+
+clean-global :
+	@rm -f ergoemacs-global-*.el 
+	@rm -f ergoemacs-global-*.elc
+

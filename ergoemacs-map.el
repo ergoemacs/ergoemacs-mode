@@ -670,7 +670,8 @@ If LOOKUP-KEYMAP
       (warn "\tLookup:%s" lookup-keymap)
       (warn "\tLayout:%s" layout)
       (warn "\tMap:%s" map)
-      (warn "\tRecursive:%s" recursive)))))
+      (warn "\tRecursive:%s" recursive)
+      lookup-keymap))))
 
 (defvar ergoemacs-map--modify-active-last-overriding-terminal-local-map nil)
 (defvar ergoemacs-map--modify-active-last-overriding-local-map nil)
