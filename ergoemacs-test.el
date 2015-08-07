@@ -102,7 +102,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   ;; Google Code Issue #145
   (ergoemacs-test-layout
    :layout "colemak"
-   :macro "C-f ars C-f <backspace> M-n"
+   :macro "C-f a r s C-f <backspace> M-n"
    (save-excursion
      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
      (delete-region (point-min) (point-max))
@@ -119,7 +119,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (ergoemacs-test-layout
    :layout "colemak"
    :cua t
-   :macro "C-f ars C-f C-f"
+   :macro "C-f a r s C-f C-f"
    (save-excursion
      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
      (delete-region (point-min) (point-max))
