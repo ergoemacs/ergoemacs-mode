@@ -2274,12 +2274,15 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
 
 (defun ergoemacs-shell-here-directory-change-hook ()
   "Renames buffer to reflect directory name."
-  (rename-buffer
-   (generate-new-buffer-name
-    (concat (replace-regexp-in-string "\\`\\([*].*[@]\\).*\\'" "\\1" (buffer-name) t)
-            (if (eq system-type 'windows-nt)
-                (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
-              (abbreviate-file-name default-directory)) "*"))))
+  (let ((nbn (concat (cond
+                      ((eq major-mode 'eshell-mode) "*eshell@")
+                      (t (replace-regexp-in-string "\\([*][^@]*[@]\\).*" "\\1" (buffer-name) t)))
+                     (if (eq system-type 'windows-nt)
+                         (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
+                       (abbreviate-file-name default-directory)) "*")))
+    (unless (string= nbn (buffer-name))
+      (setq nbn (generate-new-buffer-name nbn))
+      (rename-buffer nbn))))
 
 ;; (add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
 
