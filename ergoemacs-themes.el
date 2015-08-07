@@ -40,6 +40,7 @@
 
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-theme-comp-hash)
+(defvar ergoemacs-theme-component-hash)
 (defvar ergoemacs-translation-hash)
 
 (autoload 'dired-jump "dired-x" nil t)

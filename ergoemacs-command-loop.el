@@ -78,6 +78,8 @@
 (declare-function ergoemacs-translation-struct-translation "ergoemacs-translate")
 (declare-function ergoemacs-translation-struct-unchorded "ergoemacs-translate")
 
+(declare-function ergoemacs-key-description--modifier "ergoemacs-key-description")
+
 (defvar ergoemacs-command-loop-echo-keystrokes)
 (defvar ergoemacs-echo-function)
 (defvar keyfreq-mode)
@@ -86,6 +88,8 @@
 (defvar ergoemacs-modal-emacs-state-modes)
 (defvar ergoemacs-modal-ignored-buffers)
 (defvar ergoemacs-modal-ignored-keymap)
+
+(defvar universal-argument-num-events) ;; Not in Emacs 24.5
 
 
 

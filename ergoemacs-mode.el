@@ -516,10 +516,6 @@ When `store-p' is non-nil, save the tables."
   (unless (featurep pkg)
     (load (symbol-name pkg))))
 
-(if ergoemacs-mode--fast-p
-    (provide 'ergoemacs-themes)
-  (load "ergoemacs-themes"))
-
 (defcustom ergoemacs-command-loop-spinners
   '((standard ("|" "/" "-" "\\"))
     (arrows ("←" "↖" "↑" "↗" "→" "↘" "↓" "↙"))
@@ -544,11 +540,6 @@ When `store-p' is non-nil, save the tables."
   "Spinner rate for long commands"
   :type 'number
   :group 'ergoemacs-command-loop)
-  
-  
-
-(when (functionp ergoemacs-map-properties--create-label-function)
-  (funcall ergoemacs-map-properties--create-label-function))
 
 (defvar ergoemacs-user-keymap (make-sparse-keymap)
   "User `ergoemacs-mode' keymap.")
@@ -692,8 +683,8 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   (dolist (x ergoemacs-aliases)
     (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))))))
 
-(when ergoemacs-use-aliases
-  (ergoemacs-load-aliases))
+
+
 
 (autoload 'ergoemacs-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme-component "ergoemacs-macros")
@@ -1156,17 +1147,31 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
   (run-hooks 'ergoemacs-mode-init-hook)
   (add-hook 'after-load-functions 'ergoemacs-mode-after-startup-run-load-hooks))
 
-(unless init-file-user
-  (run-with-idle-timer 0.05 nil 'ergoemacs-mode-after-init-emacs))
-
-(run-hooks 'ergoemacs-mode-intialize-hook)
-
 (require 'unicode-fonts nil t)
 (when (featurep 'unicode-fonts)
   (if (file-readable-p (concat pcache-directory "unicode-fonts"))
       (unicode-fonts-setup)
     ;; (warn "Enhanced Unicode font support not setup.  See https://github.com/rolandwalker/unicode-fonts")
     ))
+
+
+(when (functionp ergoemacs-map-properties--create-label-function)
+  (funcall ergoemacs-map-properties--create-label-function))
+
+(if ergoemacs-mode--fast-p
+    (provide 'ergoemacs-themes)
+  (load "ergoemacs-themes"))
+
+
+(when ergoemacs-use-aliases
+  (ergoemacs-load-aliases))
+
+
+(unless init-file-user
+  (run-with-idle-timer 0.05 nil 'ergoemacs-mode-after-init-emacs))
+
+(run-hooks 'ergoemacs-mode-intialize-hook)
+
 
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
