@@ -1054,15 +1054,16 @@ Part of addressing Issue #147."
 (ert-deftest ergoemacs-test-keep-ctl-s ()
   "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
 Part of addressing Issue #147."
-  (let (ret
-        (ergoemacs-use-function-remapping t))
-    (with-temp-buffer
-      (ergoemacs-test-major-mode)
-      (when (not (current-local-map))
-        (use-local-map ergoemacs-test-major-mode-map))
-      (ergoemacs-map--modify-active)
-      (should (eq (key-binding (kbd "C-s")) 'save-buffer))
-      (should (eq (key-binding [ergoemacs-remap isearch-forward]) 'search-forward)))))
+  (ergoemacs-test-layout
+   (let (ret
+         (ergoemacs-use-function-remapping t))
+     (with-temp-buffer
+       (ergoemacs-test-major-mode)
+       (when (not (current-local-map))
+         (use-local-map ergoemacs-test-major-mode-map))
+       (ergoemacs-map--modify-active)
+       (should (eq (key-binding (kbd "C-s")) 'save-buffer))
+       (should (eq (key-binding [ergoemacs-remap isearch-forward]) 'search-forward))))))
 
 (ert-deftest ergoemacs-test-dired-sort-files ()
   "Test Issue #340"
