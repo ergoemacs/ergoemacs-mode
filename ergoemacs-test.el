@@ -100,41 +100,35 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (ert-deftest ergoemacs-test-isearch-C-f-backspace ()
   "Test Backspace in `isearch-mode'"
   ;; Google Code Issue #145
-  (let ((ret t))
-    (ergoemacs-test-layout
-     :layout "colemak"
-     :macro "C-f ars C-f <backspace> M-n"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert "aars1\nars2\nars3\nars4")
-       (goto-char (point-min))
-       (execute-kbd-macro macro)
-       (when (looking-at ".*")
-         (unless (string= "s1" (match-string 0))
-           (setq ret nil)))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
+  (ergoemacs-test-layout
+   :layout "colemak"
+   :macro "C-f ars C-f <backspace> M-n"
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (insert "aars1\nars2\nars3\nars4")
+     (goto-char (point-min))
+     (execute-kbd-macro macro)
+     (when (looking-at ".*")
+       (should (string= "s1" (match-string 0))))
+     (kill-buffer (current-buffer)))))
 
 (ert-deftest ergoemacs-test-isearch-C-f ()
   "C-f doesn't work in isearch-mode."
   ;; Google Code Issue #119
-  (let ((ret t))
-    (ergoemacs-test-layout
-     :layout "colemak"
-     :cua t
-     :macro "C-f ars C-f C-f"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert "aars1\nars2\nars3\nars4")
-       (goto-char (point-min))
-       (execute-kbd-macro macro)
-       (when (looking-at ".*")
-         (unless (string= "3" (match-string 0))
-           (setq ret nil)))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
+  (ergoemacs-test-layout
+   :layout "colemak"
+   :cua t
+   :macro "C-f ars C-f C-f"
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (insert "aars1\nars2\nars3\nars4")
+     (goto-char (point-min))
+     (execute-kbd-macro macro)
+     (when (looking-at ".*")
+       (should (string= "3" (match-string 0))))
+     (kill-buffer (current-buffer)))))
 
 (ert-deftest ergoemacs-test-isearch-works-with-region ()
   "With vanilla Emacs, when mark is active and even some region is
