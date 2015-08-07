@@ -2,10 +2,8 @@ EMACS=emacs
 
 EMACS_CLEAN=-Q
 EMACS_BATCH=$(EMACS_CLEAN) --batch
-#TESTS=ergoemacs-test-apps-copy
-#TESTS=ergoemacs-test-issue-184-paste
 #TESTS=ergoemacs-
-TESTS=ergoemacs-test-keep-ctl-s
+TESTS=ergoemacs-test-isearch-C-f
 
 CURL=curl --silent
 TMP1=$(shell pwd)
