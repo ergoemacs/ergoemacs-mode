@@ -38,6 +38,11 @@
 (defvar ergoemacs-theme)
 (defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-dir)
+(defvar ergoemacs-mode)
+(defvar dired-sort-map)
+(defvar dired-mode-map)
+
+(declare-function ergoemacs-mode "ergoemacs-mode")
 
 (declare-function ergoemacs-command-loop "ergoemacs-command-loop")
 

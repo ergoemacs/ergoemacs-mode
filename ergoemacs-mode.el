@@ -115,6 +115,9 @@
 (declare-function persistent-soft-location-destroy "persistent-flush")
 (declare-function persistent-soft-store "persistent-soft")
 
+(declare-function pcache-clear "pcache")
+(declare-function pcache-repository "pcache")
+
 (declare-function unicode-fonts-setup "unicode-fonts")
 
 
@@ -406,6 +409,8 @@ bindings the keymap is:
 
 (require 'persistent-soft nil t)
 
+(defvar ergoemacs-map--cache-save nil)
+
 (defun ergoemacs-mode-clear-cache (&optional no-message)
   "Clear the cache for next ergoemacs-mode load."
   (interactive)
@@ -414,7 +419,6 @@ bindings the keymap is:
   (unless no-message
     (message "Clear cache for next startup.")))
 
-(defvar ergoemacs-map--cache-save nil)
 (defun ergoemacs-map--cache-save (&optional remove)
   "Save ergoemacs cache for startup."
   (cond

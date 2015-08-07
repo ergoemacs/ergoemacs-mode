@@ -54,6 +54,7 @@
   (require 'ergoemacs-macros)
   (require 'cl))
 
+(defvar ergoemacs-map--cache-save)
 (defvar cl-struct-ergoemacs-component-struct-tags)
 (defvar ergoemacs-command-loop--displaced-overriding-terminal-local-map)
 (defvar ergoemacs-command-loop--overriding-terminal-local-map)

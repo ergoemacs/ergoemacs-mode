@@ -54,11 +54,12 @@
   (require 'ergoemacs-macros)
   (require 'cl))
 
-(defvar ergoemacs-theme)
 (defvar ergoemacs-mode)
-(defvar ergoemacs-theme-version)
-(defvar ergoemacs-theme-options)
+(defvar ergoemacs-require)
+(defvar ergoemacs-theme)
 (defvar ergoemacs-theme-hash)
+(defvar ergoemacs-theme-options)
+(defvar ergoemacs-theme-version)
 
 (declare-function ergoemacs-save "ergoemacs-lib")
 (declare-function ergoemacs-mode-reset "ergoemacs-lib")

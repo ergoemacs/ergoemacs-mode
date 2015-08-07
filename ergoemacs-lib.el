@@ -29,13 +29,15 @@
   (require 'ergoemacs-macros)
   (require 'cl))
 
-(defvar ergoemacs-mode)
+(defvar ergoemacs-excluded-major-modes)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
-(defvar package-archives)
-(defvar ergoemacs-theme-hash)
+(defvar ergoemacs-mode)
 (defvar ergoemacs-mode-names)
-(defvar ergoemacs-excluded-major-modes)
+(defvar ergoemacs-require)
+(defvar ergoemacs-theme-hash)
+
+(defvar package-archives)
 
 (defvar tabbar-mode)
 (defvar ergoemacs-handle-ctl-c-or-ctl-x)
