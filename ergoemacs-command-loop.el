@@ -99,16 +99,6 @@
   "Determines if mark was active before ergoemacs command loop.")
 
 
-(defvar ergoemacs-command-loop--displaced-overriding-terminal-local-map nil
-  "Displaced `overriding-terminal-local-map'")
-
-(defvar ergoemacs-command-loop--overriding-terminal-local-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [t] 'ergoemacs-command-loop-start)
-    (ergoemacs map :label most-positive-fixnum)
-    map)
-  "Command loop `overriding-terminal-local-map'")
-
 (defvar ergoemacs-command-loop--universal-functions '(universal-argument ergoemacs-universal-argument ergoemacs-command-loop--universal-argument)
   "List of `ergoemacs-mode' recognized functions.")
 
@@ -883,13 +873,24 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop--reset-functions ()
   "Reset functions"
   (interactive)
-  (when (eq ergoemacs-command-loop--overriding-terminal-local-map overriding-terminal-local-map)
-    (setq overriding-terminal-local-map nil))
   (when (and ergoemacs-mode ergoemacs---ergoemacs-command-loop)
     (fset 'ergoemacs-command-loop ergoemacs---ergoemacs-command-loop)
     (setq ergoemacs---ergoemacs-command-loop nil)))
 
 (add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
+
+
+(defvar ergoemacs-command-loop-p nil
+  "Variable to tell if ergoemacs-command loop is running.")
+
+(defun ergoemacs-command-loop--start-with-pre-command-hook ()
+  (when (and (eq ergoemacs-command-loop-type :full)
+             (not ergoemacs-command-loop-p))
+    (message "Start ergoemacs command loop.")
+    (setq ergoemacs-command-loop-start this-command
+          this-command 'ergoemacs-command-loop-start)))
+
+(add-hook 'ergoemacs-pre-command-hook #'ergoemacs-command-loop--start-with-pre-command-hook)
 
 (unless (fboundp 'posnp)
   ;; For emacs 24.1
@@ -1066,12 +1067,10 @@ This sequence is compatible with `listify-key-sequence'."
   "Start `ergoemacs-command-loop'"
   (interactive)
   (ergoemacs-command-loop--reset-functions)
-  (when (not ergoemacs-mode)
-    (setq overriding-terminal-local-map nil)
-    (error "Refusing to start ergoemacs-mode command loop outside of ergoemacs-mode"))
   ;; Should work...
-  (setq ergoemacs-command-loop-start t)
-  (ergoemacs-command-loop (this-single-command-keys)))
+  (unless ergoemacs-command-loop-start
+    (setq ergoemacs-command-loop-start t))
+  (ergoemacs-command-loop))
 
 (defvar ergoemacs-command-loop--spinner nil)
 (defvar ergoemacs-command-loop--spinner-i nil)
@@ -1108,6 +1107,7 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop--this-command-keys ()
   "Return `ergoemacs-command-loop--single-command-keys'.
 Used to replace:
+
 
 - `this-command-keys-vector'
 - `this-command-keys'
@@ -1156,7 +1156,12 @@ FIXME: modify `called-interactively' and `called-interactively-p'
 "
   (interactive)
   (ergoemacs-command-loop--execute-rm-keyfreq 'ergoemacs-command-loop)
-  (setq ergoemacs---ergoemacs-command-loop (symbol-function 'ergoemacs-command-loop))
+  (setq ergoemacs---ergoemacs-command-loop (symbol-function 'ergoemacs-command-loop)
+        ergoemacs-command-loop-p t)
+  ;; Call the startup command
+  (when (commandp ergoemacs-command-loop-start)
+    (ergoemacs-command-loop--call-interactively ergoemacs-command-loop-start)
+    (ergoemacs-command-loop--internal-end-command))
   (letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys))
     (let* ((type (or type :normal))
            (from-start-p ergoemacs-command-loop-start)
@@ -1167,21 +1172,21 @@ FIXME: modify `called-interactively' and `called-interactively-p'
            (local-keymap (ergoemacs-translate--keymap translation))
            modal-p
            tmp command)
-      (setq ergoemacs-command-loop-start nil)
       (unwind-protect
           (progn
             ;; Replace functions temporarily
             (fset 'ergoemacs-command-loop 'ergoemacs-command-loop--internal)
             ;; Setup initial unread command events, first type and history
             (setq tmp (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
-                  unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events))
-                                            tmp)
+                  unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events)) tmp)
                   ergoemacs-command-loop--first-type first-type
                   ergoemacs-command-loop--history nil)
+            
             (while continue-read
               (setq inhibit-quit t)
               (while continue-read
                 ;; Read key
+                (setq ergoemacs-command-loop-start nil)
                 (setq ergoemacs-command-loop--single-command-keys current-key
                       ergoemacs-command-loop--current-type type
                       ergoemacs-command-loop--universal universal
@@ -1292,6 +1297,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                     ergoemacs-command-loop--first-type first-type
                     ergoemacs-command-loop--history nil))
             (setq inhibit-quit nil))
+        (setq ergoemacs-command-loop-p nil)
         (ergoemacs-command-loop--reset-functions))    
       command)))
 

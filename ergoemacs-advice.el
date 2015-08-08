@@ -133,57 +133,6 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
   :type :after
   (ergoemacs-use-global-map--after keymap))
 
-(ergoemacs-advice current-active-maps (&optional olp position)
-  "This ignores `ergoemacs-mode' keys in `overriding-terminal-local-map'."
-  :type :around
-  (unwind-protect
-      (progn
-        (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full)
-                   (eq ergoemacs-command-loop--overriding-terminal-local-map overriding-terminal-local-map))
-          (setq overriding-terminal-local-map ergoemacs-command-loop--displaced-overriding-terminal-local-map))
-        ad-do-it)
-    (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full))
-      (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))))
-
-(ergoemacs-advice key-binding (key &optional accept-defaults no-remap position)
-  "This ignores `ergoemacs-mode' keys in `overriding-terminal-local-map'."
-  :type :around
-  (unwind-protect
-      (progn
-        (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full)
-                   (eq ergoemacs-command-loop--overriding-terminal-local-map overriding-terminal-local-map))
-          (setq overriding-terminal-local-map ergoemacs-command-loop--displaced-overriding-terminal-local-map))
-        ad-do-it)
-    (when (and (eq ergoemacs-command-loop-type :full)
-               (eq ergoemacs-command-loop--displaced-overriding-terminal-local-map overriding-terminal-local-map))
-      (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))))
-
-(ergoemacs-advice describe-bindings  (&optional prefix buffer-or-name)
-  "This ignores `ergoemacs-mode' keys in `overriding-terminal-local-map'."
-  :type :around
-  (unwind-protect
-      (progn
-        (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full)
-                   (eq ergoemacs-command-loop--overriding-terminal-local-map overriding-terminal-local-map))
-          (setq overriding-terminal-local-map ergoemacs-command-loop--displaced-overriding-terminal-local-map))
-        ad-do-it)
-    (when (and (eq ergoemacs-command-loop-type :full)
-               (eq ergoemacs-command-loop--displaced-overriding-terminal-local-map overriding-terminal-local-map)) 
-      (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))))
-
-(ergoemacs-advice read-key-sequence (prompt &optional continue-echo dont-downcase-last can-return-switch-frame cmd-loop)
-  "This ignores `ergoemacs-mode' keys in `overriding-terminal-local-map'."
-  :type :around
-  (unwind-protect
-      (progn
-        (when (and ergoemacs-mode (eq ergoemacs-command-loop-type :full)
-                   (eq ergoemacs-command-loop--overriding-terminal-local-map overriding-terminal-local-map))
-          (setq overriding-terminal-local-map ergoemacs-command-loop--displaced-overriding-terminal-local-map))
-        ad-do-it)
-    (when (and (eq ergoemacs-command-loop-type :full)
-               (eq ergoemacs-command-loop--displaced-overriding-terminal-local-map overriding-terminal-local-map))
-      (setq overriding-terminal-local-map ergoemacs-command-loop--overriding-terminal-local-map))))
-
 (ergoemacs-advice substitute-command-keys (string)
   "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
   :type :replace
