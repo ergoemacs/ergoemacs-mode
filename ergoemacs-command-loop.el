@@ -81,13 +81,14 @@
 (declare-function ergoemacs-key-description--modifier "ergoemacs-key-description")
 
 (defvar ergoemacs-command-loop-echo-keystrokes)
-(defvar ergoemacs-echo-function)
-(defvar keyfreq-mode)
-(defvar keyfreq-table)
+(defvar ergoemacs-command-loop-start)
 (defvar ergoemacs-default-cursor-color)
+(defvar ergoemacs-echo-function)
 (defvar ergoemacs-modal-emacs-state-modes)
 (defvar ergoemacs-modal-ignored-buffers)
 (defvar ergoemacs-modal-ignored-keymap)
+(defvar keyfreq-mode)
+(defvar keyfreq-table)
 
 (defvar universal-argument-num-events) ;; Not in Emacs 24.5
 
