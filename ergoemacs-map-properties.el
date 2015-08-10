@@ -300,7 +300,12 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       (when (ergoemacs-map-properties--key-struct map)
         (setq tmp (find-lisp-object-file-name map 'defvar))
         (unless (or (not tmp) (eq tmp 'C-source))
-          (setq ret (append ret `((eval-after-load ,(file-name-sans-extension (file-name-nondirectory tmp)) '(when (boundp ',map) (ergoemacs-command-loop--spinner-display "Label %s" ',map)(ergoemacs-map-properties--label ,map ,(ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))))))))))
+          (setq ret
+                (append ret
+                        `((eval-after-load ,(file-name-sans-extension (file-name-nondirectory tmp))
+                            '(when (boundp ',map)
+                               (ergoemacs-command-loop--spinner-display "Label %s" ',map)
+                               (ergoemacs-map-properties--label ,map ,(ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))))))))))
     (push 'progn ret)
     (or (and no-lambda ret) `(lambda() ,ret))))
 
@@ -355,7 +360,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       (if (consp hook)
           (dolist (lhook hook)
             (ergoemacs-map-properties--modify-run-mode-hooks lhook))
-        (when (and hook (boundp hook))
+        (when (and hook (boundp hook) (and (string-match-p "mode-hook" (symbol-name hook))))
           (set hook
                (mapcar
                 (lambda(fn)
@@ -376,7 +381,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       (if (consp hook)
           (dolist (lhook hook)
             (ergoemacs-map-properties--reset-run-mode-hooks lhook))
-        (when (and hook (boundp hook))
+        (when (and hook (boundp hook) (and (string-match-p "mode-hook" (symbol-name hook))))
           (set hook
                (mapcar
                 (lambda(fn)
