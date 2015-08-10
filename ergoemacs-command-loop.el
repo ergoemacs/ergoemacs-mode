@@ -886,7 +886,7 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   (when (and (eq ergoemacs-command-loop-type :full)
              (not ergoemacs-command-loop-p))
-    (message "Start ergoemacs command loop.")
+    (ergoemacs-command-loop--message "Start ergoemacs command loop.")
     (setq ergoemacs-command-loop-start this-command
           this-command 'ergoemacs-command-loop-start)))
 
@@ -1156,8 +1156,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
 "
   (interactive)
   (ergoemacs-command-loop--execute-rm-keyfreq 'ergoemacs-command-loop)
-  (setq ergoemacs---ergoemacs-command-loop (symbol-function 'ergoemacs-command-loop)
-        ergoemacs-command-loop-p t)
+  (setq ergoemacs---ergoemacs-command-loop (symbol-function 'ergoemacs-command-loop))
   ;; Call the startup command
   (when (commandp ergoemacs-command-loop-start)
     (ergoemacs-command-loop--call-interactively ergoemacs-command-loop-start)
@@ -1462,9 +1461,10 @@ is specified, remove it from the HOOK."
 (defvar ergoemacs-command-loop--pre-command-hook nil
   "`ergoemacs-mode' pre-command-hook")
 (defun ergoemacs-command-loop--pre-command-hook ()
-  "Run `pre-command-hook' safely in `ergoemacs-mode' command lop"
+  "Run `pre-command-hook' safely in `ergoemacs-mode' command loop"
   (let (local-hook
         global-hook)
+    (setq ergoemacs-command-loop-p t)
     (unless (or (eq (symbol-value 'pre-command-hook)
                     (default-value 'pre-command-hook))
                 (eq (symbol-value 'ergoemacs-command-loop--pre-command-hook-count)
@@ -1483,7 +1483,8 @@ is specified, remove it from the HOOK."
           (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'pre-command-hook))) global-hook)))
       (set-default 'ergoemacs-command-loop--pre-command-hook global-hook)
       (set-default 'ergoemacs-command-loop--pre-command-hook-count (length (default-value 'pre-command-hook))))
-    (run-hooks 'ergoemacs-command-loop--pre-command-hook)))
+    (run-hooks 'ergoemacs-command-loop--pre-command-hook)
+    (setq ergoemacs-command-loop-p nil)))
 
 (defvar ergoemacs-command-loop--post-command-hook-count nil
   "`ergoemacs-mode' post-command-hook count")
