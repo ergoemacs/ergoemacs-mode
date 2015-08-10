@@ -308,6 +308,10 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 (defvar ergoemacs-map--unbound-keys nil
   "Unbound keys")
 
+(defvar ergoemacs-map--mirrored-maps
+  '((isearch-mode-map isearch--saved-overriding-local-map))
+  "List of mirrored maps (for compatability)")
+
 (defvar ergoemacs-map--modified-maps nil
   "List of maps modified by `ergoemacs-mode'.")
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
@@ -639,8 +643,6 @@ If LOOKUP-KEYMAP
           ;; The keys that will be unbound
           (setq ret (ergoemacs-cache (and lookup-key (intern (format "%s-unbound-keymap" lookup-key)))
                       (setq ret (make-sparse-keymap))
-                      (when (and (boundp 'isearch-mode-map) (eq lookup-keymap isearch-mode-map))
-                        (message "Local Unbind List: %s" (mapconcat (lambda(x) (key-description x)) local-unbind-list ", ")))
                       (dolist (key (append unbind-list ergoemacs-map--unbound-keys local-unbind-list))
                         (unless (equal key [ergoemacs-labeled])
                           (when (not lookup-keymap)
@@ -678,6 +680,13 @@ If LOOKUP-KEYMAP
             (when (eq (symbol-value map) lookup-keymap)
               (ergoemacs-command-loop--spinner-display "ergoemacs->%s (local)" map)
               (set map ret))
+            (when (setq tmp (assoc map ergoemacs-map--mirrored-maps))
+              (dolist (mirror (cdr tmp))
+                (message "map->mirror : %s->%s" map mirror)
+                (when (and mirror (boundp mirror))
+                  (ergoemacs-command-loop--spinner-display "ergoemacs->%s (mirror)" map)
+                  (set mirror ret)
+                  (push mirror ergoemacs-map--modified-maps))))
             (push map ergoemacs-map--modified-maps))))))
       ret)
      ((and (not composed-list) parent)
