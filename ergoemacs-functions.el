@@ -2331,8 +2331,9 @@ Sends shell prompt string to process, then turns on
                                  (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
                                (abbreviate-file-name default-directory)) "*"))
          (eshell-exists-p (get-buffer eshell-buffer-name)))
-    (call-interactively 'eshell)
-    (unless eshell-exists-p
+    (if eshell-exists-p
+        (switch-to-buffer eshell-exists-p)
+      (call-interactively 'eshell)
       (ergoemacs-shell-here-directory-change-hook))))
 
 (defun ergoemacs-powershell-here ()
