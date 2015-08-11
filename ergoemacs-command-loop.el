@@ -886,9 +886,12 @@ This sequence is compatible with `listify-key-sequence'."
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   (when (and (eq ergoemacs-command-loop-type :full)
+             (not executing-kbd-macro)
              (not ergoemacs-command-loop-p))
     (ergoemacs-command-loop--message "Start ergoemacs command loop.")
+    (ergoemacs-command-loop--reset-functions)
     (setq ergoemacs-command-loop-start this-command
+          ergoemacs-command-loop--single-command-keys (this-single-command-keys)
           this-command 'ergoemacs-command-loop-start)))
 
 (add-hook 'ergoemacs-pre-command-hook #'ergoemacs-command-loop--start-with-pre-command-hook)
