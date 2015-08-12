@@ -81,7 +81,6 @@
 (declare-function ergoemacs-key-description--modifier "ergoemacs-key-description")
 
 (defvar ergoemacs-command-loop-echo-keystrokes)
-(defvar ergoemacs-command-loop-start)
 (defvar ergoemacs-default-cursor-color)
 (defvar ergoemacs-echo-function)
 (defvar ergoemacs-modal-emacs-state-modes)
@@ -883,6 +882,7 @@ This sequence is compatible with `listify-key-sequence'."
 
 (defvar ergoemacs-command-loop-p nil
   "Variable to tell if ergoemacs-command loop is running.")
+(defvar ergoemacs-command-loop-start nil)
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   (when (and (eq ergoemacs-command-loop-type :full)
@@ -1067,7 +1067,6 @@ This sequence is compatible with `listify-key-sequence'."
        (eq ergoemacs-command-loop-type :full)))
 
 
-(defvar ergoemacs-command-loop-start nil)
 (defun ergoemacs-command-loop-start ()
   "Start `ergoemacs-command-loop'"
   (interactive)
@@ -1184,13 +1183,13 @@ FIXME: modify `called-interactively' and `called-interactively-p'
             (setq tmp (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
                   unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events)) tmp)
                   ergoemacs-command-loop--first-type first-type
-                  ergoemacs-command-loop--history nil)
+                  ergoemacs-command-loop--history nil
+                  ergoemacs-command-loop-start nil)
             
             (while continue-read
               (setq inhibit-quit t)
               (while continue-read
                 ;; Read key
-                (setq ergoemacs-command-loop-start nil)
                 (setq ergoemacs-command-loop--single-command-keys current-key
                       ergoemacs-command-loop--current-type type
                       ergoemacs-command-loop--universal universal
