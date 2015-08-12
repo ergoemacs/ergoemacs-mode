@@ -85,10 +85,17 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-search ()
-  "Fast test of ergoemacs-mode (doesn't include keyboard startup issues)."
+  "Search tests for ergoemacs-mode."
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :search)))
+  (call-interactively 'elp-results))
+
+(defun ergoemacs-test-copy ()
+  "Copy/Paste test for ergoemacs-mode"
+  (interactive)
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (tag :copy)))
   (call-interactively 'elp-results))
 
 ;;;###autoload
@@ -256,6 +263,7 @@ Tests issue #347"
 
 (ert-deftest ergoemacs-test-copy-paste-issue-184 ()
   "Issue #184; Not replace the \"selected all\" by paste."
+  :tags '(:copy)
   (let ((ret t)
         (ergoemacs-handle-ctl-c-or-ctl-x 'both))
     (ergoemacs-test-layout
@@ -282,6 +290,7 @@ Tests issue #347"
 (ert-deftest ergoemacs-test-copy-paste-issue-184-paste-should-clear-mark ()
   "Issue #186.
 Selected mark would not be cleared after paste."
+  :tags '(:copy)
   (ergoemacs-test-layout
    (let ((ergoemacs-handle-ctl-c-or-ctl-x 'both))
      (save-excursion
@@ -323,6 +332,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-copy-paste-issue-130-cut ()
   "Attempts to test Issue #130 -- Cut"
+  :tags '(:copy)
   (ergoemacs-test-layout
    (let ((ret t)
          (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
@@ -341,6 +351,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-copy-paste-issue-130-copy ()
   "Attempts to test Issue #130 -- Copy"
+  :tags '(:copy)
   (ergoemacs-test-layout
    (let ((ergoemacs-ctl-c-or-ctl-x-delay 0.1)
          (ergoemacs-handle-ctl-c-or-ctl-x 'both)
@@ -364,6 +375,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-copy-paste-apps-cut ()
   "Tests <apps> x on QWERTY cutting a region, not just a line."
+  :tags '(:copy)
   (let (ret)
     (ergoemacs-test-layout
      :macro (format "<%s> x"
@@ -381,8 +393,11 @@ not using cua or cutting line. I think kill-region is what is meant."
        (kill-buffer (current-buffer))))
     (should ret)))
 
+;; [1 apps 99 22]
+
 (ert-deftest ergoemacs-test-copy-paste-apps-copy ()
   "Tests <apps> c on QWERTY copying a region, not just a line."
+  :tags '(:copy)
   ;; :tags '(:interactive)
   (ergoemacs-test-layout
    :macro (format "C-a <%s> c C-v"
@@ -393,7 +408,7 @@ not using cua or cutting line. I think kill-region is what is meant."
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
        (delete-region (point-min) (point-max))
        (insert test-string)
-       (ergoemacs-command-loop macro)
+       (execute-kbd-macro macro)
        (should (string= (concat test-string test-string)
                         (buffer-string)))
        (kill-buffer (current-buffer))))))
