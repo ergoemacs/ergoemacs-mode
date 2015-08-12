@@ -868,7 +868,6 @@
 (ergoemacs-component apps-toggle ()
   "Toggle States and applications"
   :just-first-keys (list [apps ?i] [menu ?i])
-  :first-is-variable-reg "<\\(apps\\|menu\\)> i"
   (global-set-key (kbd "<apps> i c") 'column-number-mode)
   (global-set-key (kbd "<apps> i d") 'toggle-debug-on-error)
   (global-set-key (kbd "<apps> i e") 'toggle-debug-on-error)
@@ -881,7 +880,6 @@
 (ergoemacs-component apps-apps ()
   "Applications"
   :just-first-keys (list [apps ?n] [menu ?n])
-  :first-is-variable-reg "<\\(apps\\|menu\\)> n"
   (global-set-key (kbd "<apps> n a") 'org-agenda)
   (global-set-key (kbd "<apps> n A") 'org-capture)
   (global-set-key (kbd "<apps> n C-a") 'org-capture)
