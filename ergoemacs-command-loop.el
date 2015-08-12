@@ -887,6 +887,7 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   (when (and (eq ergoemacs-command-loop-type :full)
              (not executing-kbd-macro)
+             (not unread-command-events)
              (not ergoemacs-command-loop-p))
     (ergoemacs-command-loop--message "Start ergoemacs command loop.")
     (ergoemacs-command-loop--reset-functions)
@@ -1291,7 +1292,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                 (ergoemacs-command-loop--internal-end-command))
               (setq quit-flag nil
                     type :normal
-                    continue-read (and from-start-p (ergoemacs-command-loop-persistent-p))
+                    continue-read (or unread-command-events (and from-start-p (ergoemacs-command-loop-persistent-p)))
                     first-type :normal
                     raw-key nil
                     current-key nil
@@ -1300,7 +1301,6 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                     ergoemacs-command-loop--first-type first-type
                     ergoemacs-command-loop--history nil))
             (setq inhibit-quit nil))
-        (setq ergoemacs-command-loop-p nil)
         (ergoemacs-command-loop--reset-functions))    
       command)))
 
