@@ -988,6 +988,59 @@ Used for sorting keys in displays."
         (< e1 e2))
        (t t))))))
 
+
+(defvar ergoemacs-map-properties--use-local-unbind-list '(isearch-mode-map)
+  "List of maps that will unbind ergoemacs-mode keys instead of using them directly.")
+
+(defun ergoemacs-map-properties--use-local-unbind-list-p (keymap &rest _ignore)
+  "Determines if ergoemacs-mode keys should be unbound in KEYMAP.
+Looks in `ergoemacs-use-local-unbind-list' to determine what maps will unbind ergoemacs keys.
+
+ This is useful in supporting isearch in emacs 24.4+."
+  (let ((local-unbind-list-p (ergoemacs keymap :use-local-unbind-list-key)))
+    (cond
+     ((eq local-unbind-list-p 'no) nil)
+     (local-unbind-list-p local-unbind-list-p)
+     (ergoemacs-map-properties--use-local-unbind-list
+      (let ((map-list (ergoemacs keymap :map-list)))
+        (prog1 (catch 'found-use-local
+                 (dolist (map map-list)
+                   (when (memq map ergoemacs-map-properties--use-local-unbind-list)
+                     (setq local-unbind-list-p t)
+                     (throw 'found-use-local t)))
+                 (setq local-unbind-list-p 'no)
+                 nil)
+          (ergoemacs keymap :use-local-unbind-list-key local-unbind-list-p))))
+     (t nil))))
+
+(defvar ergoemacs-map-properties--set-map-list '(isearch-mode-map)
+  "List of maps that assign the map values to ergoemacs-mode's
+modification, instead of modifying them in the current active
+maps.")
+
+(defun ergoemacs-map-properties--set-map-p (keymap &rest _ignore)
+  "Determines if ergoemacs-mode should make sure to set the original keymap to the caluclated value.
+
+ This is useful in supporting isearch in emacs 24.4+."
+  (let ((set-map-p (ergoemacs keymap :use-set-map-key)))
+    (cond
+     ((eq set-map-p 'no) nil)
+     (set-map-p set-map-p)
+     (ergoemacs-map-properties--set-map-list
+      (let ((map-list (ergoemacs keymap :map-list)))
+        (prog1 (catch 'found-use-local
+                 (dolist (map map-list)
+                   (when (memq map ergoemacs-map-properties--set-map-list)
+                     (setq set-map-p t)
+                     (throw 'found-use-local t)))
+                 (setq set-map-p 'no)
+                 nil)
+          (ergoemacs keymap :use-set-map-key set-map-p))))
+     (t nil))))
+
+
+
+
 (provide 'ergoemacs-map-properties)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-map-properties.el ends here

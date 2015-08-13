@@ -8,7 +8,7 @@
 ;; Maintainer:
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
 ;; Version: 
-;; Last-Updated: 
+;; Last-Updated:
 ;;           By: 
 ;;     Update #: 0
 ;; URL: 
@@ -312,24 +312,6 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
   '((isearch-mode-map isearch--saved-overriding-local-map))
   "List of mirrored maps (for compatability)")
 
-(defvar ergoemacs-use-local-unbind-list nil
-  "List of maps that will unbind ergoemacs-mode keys instead of using them directly.")
-
-(unless (version<= "24.3" (format "%s.%s" emacs-major-version emacs-minor-version))
-  (push 'isearch-mode-map ergoemacs-use-local-unbind-list))
-
-(defun ergoemacs-use-local-unbind-list-p (keymap)
-  "Determines if ergoemacs-mode keys should be unbound in KEYMAP.
-Looks in `ergoemacs-use-local-unbind-list' to determine what maps will unbind ergoemacs keys.
-
- This is useful in supporting isearch in emacs 24.4+."
-  (when ergoemacs-use-local-unbind-list
-    (let ((map-list (ergoemacs keymap :map-list)))
-      (catch 'found-use-local
-        (dolist (map map-list)
-          (when (memq map ergoemacs-use-local-unbind-list)
-            (throw 'found-use-local t)))
-        nil))))
 
 (defvar ergoemacs-map--modified-maps nil
   "List of maps modified by `ergoemacs-mode'.")
@@ -516,7 +498,7 @@ If LOOKUP-KEYMAP
             (puthash (ergoemacs lookup-keymap :map-key) (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash)))
         (setq lookup-keymap (ergoemacs lookup-keymap :original)
               hook-overrides (ergoemacs lookup-keymap :override-maps)
-              use-local-unbind-list-p (ergoemacs-use-local-unbind-list-p lookup-keymap))
+              use-local-unbind-list-p (ergoemacs lookup-keymap :use-local-unbind-list-p))
         (setq only-modify-p (ergoemacs lookup-keymap :only-local-modifications-p)
               lookup-key (ergoemacs-map--lookup-keymap-key lookup-keymap)
               ret (make-sparse-keymap)
@@ -686,7 +668,6 @@ If LOOKUP-KEYMAP
                                 (define-key ret key tmp))))))
                       (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
                       ret))
-          
           (set-keymap-parent ret (make-composed-keymap composed-list parent))
           ;; Put the unbound keys that are passed through the
           ;; `ergoemacs-mode' layer of keys.
@@ -698,26 +679,26 @@ If LOOKUP-KEYMAP
           (when tmp
             (setq ret (make-composed-keymap tmp ret)))
           ;; Set the overall map values too...
-          (dolist (map (ergoemacs lookup-keymap :map-list))
-            (when (eq lookup-keymap overriding-local-map)
-              (setq overriding-local-map ret))
-            (when (eq lookup-keymap overriding-terminal-local-map)
-              (setq overriding-terminal-local-map ret))
-            (when (eq (default-value map) lookup-keymap)
-              (ergoemacs-command-loop--spinner-display "ergoemacs->%s (default)" map)
-              (set-default map ret))
-            (when (eq (symbol-value map) lookup-keymap)
-              (ergoemacs-command-loop--spinner-display "ergoemacs->%s (local)" map)
-              (set map ret))
-            (when (setq tmp (assoc map ergoemacs-map--mirrored-maps))
-              (dolist (mirror (cdr tmp))
-                (message "map->mirror : %s->%s" map mirror)
-                (when (and mirror (boundp mirror))
-                  (ergoemacs-command-loop--spinner-display "ergoemacs->%s (mirror)" map)
-                  (set mirror ret)
-                  (push mirror ergoemacs-map--modified-maps))))
-            (push map ergoemacs-map--modified-maps))
-          ))))
+          (when (ergoemacs lookup-keymap :set-map-p)
+            (dolist (map (ergoemacs lookup-keymap :map-list))
+              (when (eq lookup-keymap overriding-local-map)
+                (setq overriding-local-map ret))
+              (when (eq lookup-keymap overriding-terminal-local-map)
+                (setq overriding-terminal-local-map ret))
+              (when (eq (default-value map) lookup-keymap)
+                (ergoemacs-command-loop--spinner-display "ergoemacs->%s (default)" map)
+                (set-default map ret))
+              (when (eq (symbol-value map) lookup-keymap)
+                (ergoemacs-command-loop--spinner-display "ergoemacs->%s (local)" map)
+                (set map ret))
+              (when (setq tmp (assoc map ergoemacs-map--mirrored-maps))
+                (dolist (mirror (cdr tmp))
+                  (message "map->mirror : %s->%s" map mirror)
+                  (when (and mirror (boundp mirror))
+                    (ergoemacs-command-loop--spinner-display "ergoemacs->%s (mirror)" map)
+                    (set mirror ret)
+                    (push mirror ergoemacs-map--modified-maps))))
+              (push map ergoemacs-map--modified-maps)))))))
       ret)
      ((and (not composed-list) parent)
       (unwind-protect

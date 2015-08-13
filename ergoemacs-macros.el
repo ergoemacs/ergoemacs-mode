@@ -691,7 +691,9 @@ When arg1 can be a property.  The following properties are supported:
                                :command-loop-p
                                :override-map-p
                                :override-maps
-                               :deferred-maps)))
+                               :deferred-maps
+                               :use-local-unbind-list-p
+                               :set-map-p)))
     (cond
      ((and arg1 (symbolp arg1) (eq arg1 :user-before) (not arg2) (not arg3))
       `(ergoemacs-map-properties--before-ergoemacs))
