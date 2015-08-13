@@ -237,14 +237,13 @@ Tests issue #347"
   (ergoemacs-test-layout
    :theme "reduction"
    :layout "colemak"
-   :macro "M-E M-E"
+   :macro "M-E M-E M-x"
    (save-excursion
      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
      (delete-region (point-min) (point-max))
      (insert ergoemacs-test-lorem-ipsum)
      (goto-char (point-min))
      (execute-kbd-macro macro)
-     (call-interactively 'ergoemacs-cut-line-or-region)
      (should (= (point) (point-min)))
      (kill-buffer (current-buffer)))))
 
