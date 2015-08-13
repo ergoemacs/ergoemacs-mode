@@ -98,6 +98,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (ert '(and "ergoemacs-" (tag :copy)))
   (call-interactively 'elp-results))
 
+(defun ergoemacs-test-shift-select ()
+  "Copy/Paste test for ergoemacs-mode"
+  (interactive)
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (tag :shift-select)))
+  (call-interactively 'elp-results))
+
 ;;;###autoload
 (defun ergoemacs-test ()
   "Test ergoemacs issues."
@@ -191,6 +198,7 @@ Tests issue #347"
 
 (ert-deftest ergoemacs-test-shift-select-move-no-mark ()
   "Tests another shifted selection"
+  :tags '(:shift-select)
   (let ((ret t))
     (ergoemacs-test-layout
      :macro "M-H"
@@ -207,6 +215,7 @@ Tests issue #347"
 
 (ert-deftest ergoemacs-test-shift-select-cua-move-keep-mark ()
   "Test the shifted selection bug."
+  :tags '(:shift-select)
   (let (ret)
     (ergoemacs-test-layout
      :macro "M-SPC M-h M-I"
@@ -224,6 +233,7 @@ Tests issue #347"
 
 (ert-deftest ergoemacs-test-shift-select-reduction ()
   "Test that shift selection works properly in reduction."
+  :tags '(:shift-select)
   (ergoemacs-test-layout
    :theme "reduction"
    :layout "colemak"
@@ -241,6 +251,7 @@ Tests issue #347"
 
 (ert-deftest ergoemacs-test-shift-select-subword ()
   "Test for mark working with shift-selection of `subword-forward'."
+  :tags '(:shift-select)
   (let (ret)
     (ergoemacs-test-layout
      :macro "M-Y M-x"
