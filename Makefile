@@ -7,8 +7,8 @@ unexport EMACS_SERVER_FILE
 
 EMACS_CLEAN=-Q
 EMACS_BATCH=$(EMACS_CLEAN) --batch
-#TESTS=ergoemacs-
-TESTS=ergoemacs-test-isearch-C-f
+TESTS=ergoemacs-
+#TESTS=ergoemacs-test-isearch-C-f
 
 CURL=curl --silent
 TMP1=$(shell pwd)
