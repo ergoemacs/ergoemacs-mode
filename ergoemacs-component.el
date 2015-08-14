@@ -173,7 +173,9 @@
           (unless ergoemacs-component-struct--ensure-refreshed-p
             (package-refresh-contents)
             (setq ergoemacs-component-struct--ensure-refreshed-p t))
-          (package-install package))))))
+          (unless (progn (ignore-errors (package-install package))
+                         (package-installed-p package))
+            (warn "ergoemacs-mode could not install %s." package)))))))
 
 
 (defun ergoemacs-component-struct--handle-bind (bind &optional keymap)
