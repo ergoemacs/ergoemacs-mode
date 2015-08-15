@@ -301,6 +301,9 @@ on the definition:
        (unless (boundp 'ergoemacs-component-hash)
          (defvar ergoemacs-component-hash (make-hash-table :test 'equal)
            "Hash of ergoemacs theme components"))
+       (unless (boundp 'ergoemacs-component-hash)
+         (defvar ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
+           "Hash of ergoemacs themes"))
        (puthash ,(plist-get (nth 0 kb) :name)
                 (lambda() ,(plist-get (nth 0 kb) :description)
                   (ergoemacs-theme-component--create-component
