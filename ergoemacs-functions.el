@@ -1357,18 +1357,16 @@ the last misspelled word with
 User buffers are those whose name does not start with *."
   (interactive)
   (next-buffer)
-  (let ((i 0))
-    (while (and (string-equal "*" (substring (buffer-name) 0 1)) (< i 20))
-      (setq i (1+ i)) (next-buffer))))
+  (while (string-equal "*" (substring (buffer-name) 0 1))
+    (next-buffer)))
 
 (defun ergoemacs-previous-user-buffer ()
   "Switch to the previous user buffer.
 User buffers are those whose name does not start with *."
   (interactive)
   (previous-buffer)
-  (let ((i 0))
-    (while (and (string-equal "*" (substring (buffer-name) 0 1)) (< i 20))
-      (setq i (1+ i)) (previous-buffer) )))
+  (while (and (string-equal "*" (substring (buffer-name) 0 1)))
+    (previous-buffer)))
 
 (defun ergoemacs-next-emacs-buffer ()
   "Switch to the next emacs buffer.
