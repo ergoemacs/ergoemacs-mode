@@ -338,6 +338,10 @@ This is called through `ergoemacs-command-loop'"
             (puthash ',(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) :force) ergoemacs-command-loop--next-key-hash)
             (puthash ',(intern (concat "ergoemacs-read-key-force-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) :force) ergoemacs-command-loop--next-key-hash)))))
 
+
+(defvar ergoemacs-last-command-event nil
+  "ergoemacs-mode command loop last read command")
+
 (defun ergoemacs-command-loop--undo-last ()
   "Function to undo the last key-press.
 Uses the `ergoemacs-command-loop--history' variable/function."
@@ -348,7 +352,8 @@ Uses the `ergoemacs-command-loop--history' variable/function."
               ergoemacs-command-loop--current-type (nth 1 tmp)
               ergoemacs-command-loop--universal (nth 2 tmp)
               current-prefix-arg (nth 3 tmp)
-              last-command-event (nth 4 tmp)))
+              last-command-event (nth 4 tmp)
+              ergoemacs-last-command-event last-command-event))
     ;; Nothing to undo, exit the command loop.
     (setq ergoemacs-command-loop--exit t)))
 
@@ -473,6 +478,7 @@ Also add to `last-command-event' to allow `self-insert-character' to work approp
 I'm not sure the purpose of `last-event-frame', but this is modified as well"
   (or (let ((event (pop unread-command-events)))
         (setq last-command-event event
+              ergoemacs-last-command-event last-command-event
               last-event-frame (selected-frame))
         event)
       (let* ((last-event-time (or (and ergoemacs-command-loop--last-event-time
@@ -517,6 +523,7 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
                   ergoemacs-command-loop--history))
           (setq ergoemacs-command-loop--last-event-time (float-time)
                 last-command-event event
+                ergoemacs-last-command-event last-command-event
                 last-event-frame (selected-frame)))
         event)))
 
@@ -715,7 +722,8 @@ This uses `ergoemacs-command-loop--read-event'."
                        current-key)))
         (setq raw-input input
               input (ergoemacs-translate--event-mods input trans)
-              last-command-event input))
+              last-command-event input
+              ergoemacs-last-command-event last-command-event))
        (t
         ;; Translate the key appropriately.
         (when (and modal (lookup-key ergoemacs-modal-ignored-keymap (vector input)))
@@ -731,7 +739,8 @@ This uses `ergoemacs-command-loop--read-event'."
                 tmp nil))
         (setq raw-input input
               input (ergoemacs-translate--event-mods input type)
-              last-command-event input)))
+              last-command-event input
+              ergoemacs-last-command-event last-command-event)))
       (cond
        ((and input (not universal)
              (not (key-binding (ergoemacs :combine current-key raw-input)))
@@ -852,12 +861,15 @@ This sequence is compatible with `listify-key-sequence'."
   "Determine if `ergoemacs-mode' is running its command loop.
 This is done by looking at the current `backtrace' and making
 sure that `ergoemacs-command-loop--internal' hasn't been called."
-  (ergoemacs-save-buffer-state
-   (let ((standard-output t))
-     (with-temp-buffer
-       (setq standard-output (current-buffer))
-       (backtrace)
-       (save-match-data (re-search-backward "^ *\\<ergoemacs-command-loop--internal\\> *(" nil t))))))
+  (eq ergoemacs-last-command-event last-command-event)
+  ;; (ergoemacs-save-buffer-state
+  ;;  (if  t
+  ;;    (let ((standard-output t))
+  ;;      (with-temp-buffer
+  ;;        (setq standard-output (current-buffer))
+  ;;        (backtrace)
+  ;;        (save-match-data (re-search-backward "^ *\\<ergoemacs-command-loop--internal\\> *(" nil t))))))
+  )
 
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Process `ergoemacs-command-loop'.
