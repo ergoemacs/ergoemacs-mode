@@ -852,11 +852,12 @@ This sequence is compatible with `listify-key-sequence'."
   "Determine if `ergoemacs-mode' is running its command loop.
 This is done by looking at the current `backtrace' and making
 sure that `ergoemacs-command-loop--internal' hasn't been called."
-  (let ((standard-output t))
-    (with-temp-buffer
-      (setq standard-output (current-buffer))
-      (backtrace)
-      (save-match-data (re-search-backward "^ *\\<ergoemacs-command-loop--internal\\> *(" nil t)))))
+  (ergoemacs-save-buffer-state
+   (let ((standard-output t))
+     (with-temp-buffer
+       (setq standard-output (current-buffer))
+       (backtrace)
+       (save-match-data (re-search-backward "^ *\\<ergoemacs-command-loop--internal\\> *(" nil t))))))
 
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Process `ergoemacs-command-loop'.
