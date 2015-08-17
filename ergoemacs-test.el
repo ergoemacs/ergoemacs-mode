@@ -354,7 +354,7 @@ not using cua or cutting line. I think kill-region is what is meant."
        (push-mark (point))
        (push-mark (point-max) nil t)
        (goto-char (point-min))
-       (ergoemacs-command-loop "C-x <ergoemacs-timeout>")
+       (ergoemacs-command-loop--internal "C-x <ergoemacs-timeout>")
        (setq ret (string= "" (buffer-string)))
        (kill-buffer (current-buffer)))
      (should ret))))
@@ -376,7 +376,7 @@ not using cua or cutting line. I think kill-region is what is meant."
        (setq last-command nil
              this-command nil)
        (goto-char (point-min))
-       (ergoemacs-command-loop "C-c <ergoemacs-timeout>")
+       (ergoemacs-command-loop--internal "C-c <ergoemacs-timeout>")
        (goto-char (point-max))
        (ergoemacs-paste)
        (should (string= (concat txt txt)
@@ -398,7 +398,7 @@ not using cua or cutting line. I think kill-region is what is meant."
        (push-mark (point))
        (push-mark (point-max) nil t)
        (goto-char (point-min))
-       (ergoemacs-command-loop macro)
+       (ergoemacs-command-loop--internal macro)
        (setq ret (string= "" (buffer-string)))
        (kill-buffer (current-buffer))))
     (should ret)))
@@ -630,7 +630,7 @@ Should test for Issue #143."
      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
      (delete-region (point-min) (point-max))
      (with-timeout (0.5 nil)
-       (ergoemacs-command-loop (format "<%s> e t"
+       (ergoemacs-command-loop--internal (format "<%s> e t"
                                        (if (eq system-type 'windows-nt)
                                            "apps" "menu"))))
      (should (string= "_" (buffer-string)))
@@ -645,7 +645,7 @@ See Issue #138."
       (ergoemacs-mode))
     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
     (delete-region (point-min) (point-max))
-    (ergoemacs-command-loop "C-x 8 !")
+    (ergoemacs-command-loop--internal "C-x 8 !")
     (should (string= "¡" (buffer-string)))
     (kill-buffer (current-buffer))))
 
@@ -657,7 +657,7 @@ See Issue #138."
     (unless ergoemacs-mode
       (ergoemacs-mode))
     (delete-region (point-min) (point-max))
-    (ergoemacs-command-loop "C-x 8 \" A")
+    (ergoemacs-command-loop--internal "C-x 8 \" A")
     (should (string= "Ä" (buffer-string)))
     (kill-buffer (current-buffer))))
 
@@ -770,7 +770,7 @@ Should test issue #142"
        (goto-char (point-max))
        (beginning-of-line)
        (with-timeout (0.2 nil)
-         (ergoemacs-command-loop "M-O A")) ; by looking at `ergoemacs-read-key' this seems to be translating correctly, but... it doesn't run in this context.
+         (ergoemacs-command-loop--internal "M-O A")) ; by looking at `ergoemacs-read-key' this seems to be translating correctly, but... it doesn't run in this context.
        (message "Decode: %s" (lookup-key input-decode-map (kbd "M-O A")))
        (setq ret (looking-at "nulla pariatur. Excepteur sint occaecat cupidatat non proident,"))
        (kill-buffer (current-buffer)))
