@@ -691,7 +691,6 @@ When arg1 can be a property.  The following properties are supported:
                                :installed-p
                                :sequence
                                :movement-p
-                               :command-loop-p
                                :override-map-p
                                :override-maps
                                :deferred-maps

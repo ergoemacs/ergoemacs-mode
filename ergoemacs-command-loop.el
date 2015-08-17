@@ -59,7 +59,6 @@
 
 (declare-function ergoemacs-mode-line "ergoemacs-mode")
 
-(declare-function ergoemacs-map-properties--command-loop-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--movement-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
@@ -92,8 +91,6 @@
 (defvar universal-argument-num-events) ;; Not in Emacs 24.5
 
 
-
-(defvar ergoemacs---ergoemacs-command-loop nil)
 
 (defvar ergoemacs-command-loop--mark-active nil
   "Determines if mark was active before ergoemacs command loop.")
@@ -273,10 +270,10 @@ with this function."
 This is called through `ergoemacs-command-loop'"
   (interactive)
   (cond
-   ((not ergoemacs---ergoemacs-command-loop)
-    ;; Command loop hasn't started.
-    (setq current-prefix-arg '(4))
-    (ergoemacs-command-loop nil type nil t))
+   ;; ((not (ergoemacs :command-loop-p))
+   ;;  ;; Command loop hasn't started.
+   ;;  (setq current-prefix-arg '(4))
+   ;;  (ergoemacs-command-loop nil type nil t))
    ((not current-prefix-arg)
     (setq current-prefix-arg '(4)
           ergoemacs-command-loop--universal t
@@ -851,15 +848,25 @@ This sequence is compatible with `listify-key-sequence'."
                  input))
     input))
 
-(defun ergoemacs-command-loop--internal (&optional key type initial-key-type universal)
-  "Process `ergoemacs-command-loop' while `ergoemacs-command-loop' is running."
+(defun ergoemacs-command-loop-p ()
+  "Determine if `ergoemacs-mode' is running its command loop.
+This is done by looking at the current `backtrace' and making
+sure that `ergoemacs-command-loop--internal' hasn't been called."
+  (let ((standard-output t))
+    (with-temp-buffer
+      (setq standard-output (current-buffer))
+      (backtrace)
+      (save-match-data (re-search-backward "^ *\\<ergoemacs-command-loop--internal\\> *(" nil t)))))
+
+(defun ergoemacs-command-loop (&optional key type initial-key-type universal)
+  "Process `ergoemacs-command-loop'.
+The true work is done in `ergoemacs-command-loop--internal'."
   (interactive)
-  (if (and ergoemacs---ergoemacs-command-loop
-           (called-interactively-p 'interactive))
-      (progn ;; Somehow this wasn't reset correctly...
-        (message "Abnormal `ergoemacs-command-loop' exit, reseting `ergoemacs-command-loop'.")
-        (ergoemacs-command-loop--reset-functions)
-        (ergoemacs-command-loop key type initial-key-type universal))
+  (cond
+   ((and ergoemacs-command-loop-start (not (ergoemacs-command-loop-p)))
+    (ergoemacs-command-loop--message "Start ergoemacs-mode command loop." )
+    (ergoemacs-command-loop--internal key type initial-key-type universal))
+   (t
     (setq ergoemacs-command-loop--exit :ignore-post-command-hook
           prefix-arg current-prefix-arg
           ergoemacs-command-loop--single-command-keys (or (and key (read-kbd-macro key t))
@@ -868,29 +875,19 @@ This sequence is compatible with `listify-key-sequence'."
                                     unread-command-events)
           ergoemacs-command-loop--universal (if (and ergoemacs-command-loop--universal (not universal)) nil
                                               universal)
-          ergoemacs-command-loop--current-type (or type ergoemacs-command-loop--current-type))))
+          ergoemacs-command-loop--current-type (or type ergoemacs-command-loop--current-type)))))
 
-(defun ergoemacs-command-loop--reset-functions ()
-  "Reset functions"
-  (interactive)
-  (when (and ergoemacs-mode ergoemacs---ergoemacs-command-loop)
-    (fset 'ergoemacs-command-loop ergoemacs---ergoemacs-command-loop)
-    (setq ergoemacs---ergoemacs-command-loop nil)))
+(defvar ergoemacs-command-loop--running-pre-command-hook-p nil
+  "Variable to tell if ergoemacs-command loop is running the pre-command-hook")
 
-(add-hook 'pre-command-hook #'ergoemacs-command-loop--reset-functions)
-
-
-(defvar ergoemacs-command-loop-p nil
-  "Variable to tell if ergoemacs-command loop is running.")
 (defvar ergoemacs-command-loop-start nil)
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   (when (and (eq ergoemacs-command-loop-type :full)
              (not executing-kbd-macro)
              (not unread-command-events)
-             (not ergoemacs-command-loop-p))
-    (ergoemacs-command-loop--message "Start ergoemacs command loop.")
-    (ergoemacs-command-loop--reset-functions)
+             (not ergoemacs-command-loop--running-pre-command-hook-p)
+             (not (ergoemacs-command-loop-p)))
     (setq ergoemacs-command-loop-start this-command
           ergoemacs-command-loop--single-command-keys (this-single-command-keys)
           this-command 'ergoemacs-command-loop-start)))
@@ -1070,7 +1067,6 @@ This sequence is compatible with `listify-key-sequence'."
 (defun ergoemacs-command-loop-start ()
   "Start `ergoemacs-command-loop'"
   (interactive)
-  (ergoemacs-command-loop--reset-functions)
   ;; Should work...
   (unless ergoemacs-command-loop-start
     (setq ergoemacs-command-loop-start t))
@@ -1121,7 +1117,7 @@ Used to replace:
   (or (and ergoemacs-mode ergoemacs-command-loop--single-command-keys)
       (funcall ergoemacs-command-loop--this-command-keys)))
 
-(defun ergoemacs-command-loop (&optional key type initial-key-type universal)
+(defun ergoemacs-command-loop--internal (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
 read the whole keymap.
@@ -1160,7 +1156,6 @@ FIXME: modify `called-interactively' and `called-interactively-p'
 "
   (interactive)
   (ergoemacs-command-loop--execute-rm-keyfreq 'ergoemacs-command-loop)
-  (setq ergoemacs---ergoemacs-command-loop (symbol-function 'ergoemacs-command-loop))
   ;; Call the startup command
   (when (commandp ergoemacs-command-loop-start)
     (ergoemacs-command-loop--call-interactively ergoemacs-command-loop-start)
@@ -1178,7 +1173,6 @@ FIXME: modify `called-interactively' and `called-interactively-p'
       (unwind-protect
           (progn
             ;; Replace functions temporarily
-            (fset 'ergoemacs-command-loop 'ergoemacs-command-loop--internal)
             ;; Setup initial unread command events, first type and history
             (setq tmp (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
                   unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events)) tmp)
@@ -1299,8 +1293,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                     local-keymap (ergoemacs-translate--keymap translation)
                     ergoemacs-command-loop--first-type first-type
                     ergoemacs-command-loop--history nil))
-            (setq inhibit-quit nil))
-        (ergoemacs-command-loop--reset-functions))    
+            (setq inhibit-quit nil)))    
       command)))
 
 (defun ergoemacs-command-loop--message (str &rest args)
@@ -1467,14 +1460,13 @@ is specified, remove it from the HOOK."
   "Run `pre-command-hook' safely in `ergoemacs-mode' command loop"
   (let (local-hook
         global-hook)
-    (setq ergoemacs-command-loop-p t)
+    (setq ergoemacs-command-loop--running-pre-command-hook-p t)
     (unless (or (eq (symbol-value 'pre-command-hook)
                     (default-value 'pre-command-hook))
                 (eq (symbol-value 'ergoemacs-command-loop--pre-command-hook-count)
                     (length (symbol-value 'pre-command-hook))))
       (dolist (function (reverse (symbol-value 'pre-command-hook)))
-        (unless (memq function '(ergoemacs-command-loop--reset-functions))
-          (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'pre-command-hook))) local-hook)))
+        (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'pre-command-hook))) local-hook))
       (ergoemacs-save-buffer-state
        (set (make-local-variable 'ergoemacs-command-loop--pre-command-hook) local-hook)
        (set (make-local-variable 'ergoemacs-command-loop--pre-command-hook-count) (length (symbol-value 'pre-command-hook)))))
@@ -1482,12 +1474,11 @@ is specified, remove it from the HOOK."
     (unless (eq (default-value 'ergoemacs-command-loop--pre-command-hook-count)
                 (length (default-value 'pre-command-hook)))
       (dolist (function (reverse (default-value 'pre-command-hook)))
-        (unless (memq function '(ergoemacs-command-loop--reset-functions))
-          (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'pre-command-hook))) global-hook)))
+        (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'pre-command-hook))) global-hook))
       (set-default 'ergoemacs-command-loop--pre-command-hook global-hook)
       (set-default 'ergoemacs-command-loop--pre-command-hook-count (length (default-value 'pre-command-hook))))
     (run-hooks 'ergoemacs-command-loop--pre-command-hook)
-    (setq ergoemacs-command-loop-p nil)))
+    (setq ergoemacs-command-loop--running-pre-command-hook-p nil)))
 
 (defvar ergoemacs-command-loop--post-command-hook-count nil
   "`ergoemacs-mode' post-command-hook count")
@@ -1502,8 +1493,7 @@ is specified, remove it from the HOOK."
                 (eq (symbol-value 'ergoemacs-command-loop--post-command-hook-count)
                     (length (symbol-value 'post-command-hook))))
       (dolist (function (reverse (symbol-value 'post-command-hook)))
-        (unless (memq function '(ergoemacs-command-loop--reset-functions))
-          (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'post-command-hook))) local-hook)))
+        (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'post-command-hook))) local-hook))
       (ergoemacs-save-buffer-state
        (set (make-local-variable 'ergoemacs-command-loop--post-command-hook) local-hook)
        (set (make-local-variable 'ergoemacs-command-loop--post-command-hook-count) (length (symbol-value 'post-command-hook)))))
@@ -1511,8 +1501,7 @@ is specified, remove it from the HOOK."
     (unless (eq (default-value 'ergoemacs-command-loop--post-command-hook-count)
                 (length (default-value 'post-command-hook)))
       (dolist (function (reverse (default-value 'post-command-hook)))
-        (unless (memq function '(ergoemacs-command-loop--reset-functions))
-          (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'post-command-hook))) global-hook)))
+        (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'post-command-hook))) global-hook))
       (set-default 'ergoemacs-command-loop--post-command-hook global-hook)
       (set-default 'ergoemacs-command-loop--post-command-hook-count (length (default-value 'post-command-hook))))
     (run-hooks 'ergoemacs-command-loop--post-command-hook)))

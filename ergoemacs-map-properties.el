@@ -908,14 +908,6 @@ selection or cua-mode's movement."
       (when (and tmp (symbolp command)) 
         (put command 'CUA 'move)))))
 
-(defvar ergoemacs-map-properties--command-loop-functions
-  '(ergoemacs-command-loop ergoemacs-read-key)
-  "Determine if the function is a command-loop inducing function.")
-
-(defun ergoemacs-map-properties--command-loop-p (command &rest _ignore)
-  "Determines if COMMAND induces the `ergoemacs-mode' command loop."
-  (memq command ergoemacs-map-properties--command-loop-functions))
-
 (defun ergoemacs-map-properties--key-lessp (key1 key2)
   "Compares KEY1 and KEY2, and determines if KEY1 is \"less than\" key2.
 Used for sorting keys in displays."
@@ -1037,9 +1029,6 @@ maps.")
                  nil)
           (ergoemacs keymap :use-set-map-key set-map-p))))
      (t nil))))
-
-
-
 
 (provide 'ergoemacs-map-properties)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
