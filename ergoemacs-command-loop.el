@@ -472,7 +472,8 @@ Currently this ensures:
       (vector next-event))
      (t (vconcat current-key (vector next-event))))))
 
-(defun ergoemacs-command-loop--history (&optional prompt seconds)
+(defvar ergoemacs-comand-loop--untranslated-event nil)
+(defun ergoemacs-command-loop--history (&optional prompt seconds current-key)
   "Read event and add to event history.
 Also add to `last-command-event' to allow `self-insert-character' to work appropriately.
 I'm not sure the purpose of `last-event-frame', but this is modified as well"
@@ -506,15 +507,21 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
              ;; Run (with-timeout) so that idle timers will work.
              (event (cond
                      (prompt (with-timeout (seconds nil)
-                               (ignore-errors (read-event prompt t))))
+                               (ignore-errors (read-event prompt))))
                      ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
                            ergoemacs-command-loop--single-command-keys)
                       (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
-                        (ignore-errors (read-event nil t))))
-                     (t (ignore-errors (read-event nil t))))))
+                        (ignore-errors (read-event))))
+                     (t (ignore-errors (read-event)))))
+             translate)
         (when (eventp event)
-          ;; (setq event (ergoemacs-command-loop--decode-mouse event))
+          (setq ergoemacs-comand-loop--untranslated-event event)
           (unless (consp event) ;; Don't record mouse events
+            (when (and current-input-method (not current-key)
+                       (setq translate (ignore-errors (funcall input-method-function event))))
+              (setq event (pop translate))
+              (when translate
+                (setq unread-command-events (append translate unread-command-events))))
             (push (list ergoemacs-command-loop--single-command-keys 
                         ergoemacs-command-loop--current-type 
                         ergoemacs-command-loop--universal
@@ -527,7 +534,7 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
                 last-event-frame (selected-frame)))
         event)))
 
-(defun ergoemacs-command-loop--decode-event (event keymap)
+(defun ergoemacs-command-loop--decode-event (event keymap &optional current-key)
   "Change EVENT based on KEYMAP.
 Used to help with translation keymaps like `input-decode-map'"
   (let* ((new-event event)
@@ -539,7 +546,7 @@ Used to help with translation keymaps like `input-decode-map'"
     (while (and current-key
                 (ergoemacs-keymapp test-ret))
       ;; The translation needs more keys...
-      (setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay))
+      (setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key))
       (when next-key ;; Since a key was read, save it to be read later.
         (push last-command-event new-ergoemacs-input))
       (if next-key
@@ -568,21 +575,21 @@ This respects `input-decode-map', `local-function-key-map' and `key-translation-
 It also inputs real read events into the history with `ergoemacs-command-loop--history'
 
 It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
-  (let ((input (ergoemacs-command-loop--history prompt ergoemacs-command-loop-blink-rate))
+  (let ((input (ergoemacs-command-loop--history prompt ergoemacs-command-loop-blink-rate current-key))
         last-input
         binding)
     ;; Fix issues with `input-decode-map'
     (when input
-      (setq input (ergoemacs-command-loop--decode-event input input-decode-map)
+      (setq input (ergoemacs-command-loop--decode-event input input-decode-map current-key)
             binding (key-binding (ergoemacs :combine current-key input) t))
       ;; These should only be replaced if they are not bound.
       (unless binding
         (setq last-input input
-              input (ergoemacs-command-loop--decode-event input local-function-key-map))
+              input (ergoemacs-command-loop--decode-event input local-function-key-map current-key))
         (unless (eq last-input input)
           (setq binding (key-binding (ergoemacs :combine current-key input) t))))
       (unless binding
-        (setq input (ergoemacs-command-loop--decode-event input key-translation-map))))
+        (setq input (ergoemacs-command-loop--decode-event input key-translation-map current-key))))
     input))
 
 (defun ergoemacs-command-loop--read-key (&optional current-key type universal)
