@@ -650,6 +650,88 @@ This takes into consideration the modal state of `ergoemacs-mode'."
       (puthash key ret ergoemacs-translate--keymap-hash))
     ret))
 
+(defun ergoemacs-translate--ergoemacs-to-quail (layout)
+  "Translates an ergoemacs-mode layout to a quail layout."
+  (let ((lay layout)
+        (ret (make-string 32 ? ))
+        (i 2))
+    (while (< i 14)
+      (setq ret (concat ret (or (and (string= "" (nth i lay)) " ")
+                                (nth i lay))
+                        (or (and (string= "" (nth (+ i 60) lay)) " ")
+                            (nth (+ i 60) lay)))
+            i (+ i 1)))
+    (setq i 1
+          ret (concat ret (or (and (string= "" (nth i lay)) " ")
+                              (nth i lay))
+                      (or (and (string= "" (nth (+ i 60) lay)) " ")
+                          (nth (+ i 60) lay))
+                      (make-string 4 ? ))
+          i 17)
+    (while (< i 29)
+      (setq ret (concat ret (or (and (string= "" (nth i lay)) " ")
+                                (nth i lay))
+                        (or (and (string= "" (nth (+ i 60) lay)) " ")
+                            (nth (+ i 60) lay)))
+            i (+ i 1)))
+    (setq ret (concat ret (make-string 6 ? ))
+          i 32)
+    (while (< i 43)
+      (setq ret (concat ret (or (and (string= "" (nth i lay)) " ")
+                                (nth i lay))
+                        (or (and (string= "" (nth (+ i 60) lay)) " ")
+                            (nth (+ i 60) lay)))
+            i (+ i 1)))
+    (setq i 29
+          ret (concat ret (or (and (string= "" (nth i lay)) " ")
+                              (nth i lay))
+                      (or (and (string= "" (nth (+ i 60) lay)) " ")
+                          (nth (+ i 60) lay))
+                      (make-string 6 ? ))
+          i 47)
+    (while (< i 57)
+      (setq ret (concat ret (or (and (string= "" (nth i lay)) " ")
+                                (nth i lay))
+                        (or (and (string= "" (nth (+ i 60) lay)) " ")
+                            (nth (+ i 60) lay)))
+            i (+ i 1)))
+    (setq ret (concat ret (make-string 38 ? )))
+    ret))
+
+(defun ergoemacs-translate--quail-to-ergoemacs (quail)
+  quail)
+
+(defun ergoemacs-translate-layout (&optional layout type)
+  "Translates keyboard LAYOUT to between ergoemacs and different types of keyboard layouts.
+
+If :type is :ergoemacs use the 120 length list that `ergoemacs-mode' uses.
+
+If :type is :quail use the 180 length string that
+`quail-insert-keyboard-layout' uses.
+"
+  (cond
+   ((or (not type) (eq type :ergoemacs))
+    (cond
+     ((and (listp layout) (= 120 (length layout))) layout)
+     ((and (stringp layout) (= (length layout) 180))
+      (ergoemacs-translate--quail-to-ergoemacs layout))
+     (t (let ((ret (ergoemacs :layout  (or layout ergoemacs-keyboard-layout))))
+          (when ret
+            (setq ret (symbol-value ret)
+                  ret (ergoemacs-translate-layout ret :ergoemacs)))
+          ret))))
+   ((eq type :quail)
+    (cond
+     ((and (stringp layout) (= 180 (length layout))) layout)
+     ((and (listp layout) (= 120 (length layout)))
+      (ergoemacs-translate--ergoemacs-to-quail layout))
+     (t (let ((ret (ergoemacs :layout  (or layout ergoemacs-keyboard-layout))))
+          (when ret
+            (setq ret (symbol-value ret)
+                  ret (ergoemacs-translate-layout ret :quail)))
+          ret))
+     ))))
+
 (provide 'ergoemacs-translate)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-translate.el ends here
