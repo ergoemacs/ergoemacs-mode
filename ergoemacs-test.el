@@ -105,6 +105,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (ert '(and "ergoemacs-" (tag :shift-select)))
   (call-interactively 'elp-results))
 
+(defun ergoemacs-test-translate ()
+  "Copy/Paste test for ergoemacs-mode"
+  (interactive)
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (tag :translate)))
+  (call-interactively 'elp-results))
+
 ;;;###autoload
 (defun ergoemacs-test ()
   "Test ergoemacs issues."
@@ -1171,7 +1178,28 @@ Part of addressing Issue #147."
 
 (ert-deftest ergoemacs-test-quail-translations ()
   "Test if quail to ergoemacs-mode translations work."
+  :tags '(:translate)
   (should (equal ergoemacs-layout-us (ergoemacs-translate--quail-to-ergoemacs (ergoemacs-translate-layout 'us :quail)))))
+
+(ert-deftest ergoemacs-test-input-methods ()
+  "Make sure that `ergoemacs-mode' works with input methods."
+  :tags '(:translate)
+  (ergoemacs-test-layout
+   :layout "colemak"
+   :macro "arst"
+   (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+   (delete-region (point-min) (point-max))
+   (set-input-method "greek")
+   (message "%s" current-input-method)
+   (ergoemacs-command-loop--internal "arst")
+   (should (string= "αρστ" (buffer-string)))
+   (quail-set-keyboard-layout "colemak")
+   (delete-region (point-min) (point-max))
+   (ergoemacs-command-loop--internal "arst")
+   (quail-set-keyboard-layout "standard")
+   (should (string= "ασδφ" (buffer-string)))
+   (set-input-method nil)
+   (kill-buffer (current-buffer))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
