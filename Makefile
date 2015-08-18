@@ -34,7 +34,7 @@ TRAVIS_FILE=.travis.yml
 	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.3\bin\emacs.exe")
 
 24.4 :
-	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.4.50\bin\emacs.exe")
+	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.4\bin\emacs.exe")
 
 24.5:
 	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.5\bin\emacs.exe")
