@@ -477,7 +477,15 @@ Currently this ensures:
   "Read event and add to event history.
 Also add to `last-command-event' to allow `self-insert-character' to work appropriately.
 I'm not sure the purpose of `last-event-frame', but this is modified as well"
-  (or (let ((event (pop unread-command-events)))
+  (or (let ((event (pop unread-command-events))
+            translate)
+        (setq ergoemacs-comand-loop--untranslated-event event)
+        (when (and current-input-method (not current-key)
+                   (not overriding-local-map) (not overriding-terminal-local-map)
+                   (setq translate (ignore-errors (funcall input-method-function event))))
+          (setq event (pop translate))
+          (when translate
+            (setq unread-command-events (append translate unread-command-events))))
         (setq last-command-event event
               ergoemacs-last-command-event last-command-event
               last-event-frame (selected-frame))
