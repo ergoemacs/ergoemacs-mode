@@ -1168,6 +1168,11 @@ Part of addressing Issue #147."
     (define-key dired-mode-map "|" 'dired-sort-menu-toggle-reverse)
     )))
 
+
+(ert-deftest ergoemacs-test-quail-translations ()
+  "Test if quail to ergoemacs-mode translations work."
+  (should (equal ergoemacs-layout-us (ergoemacs-translate--quail-to-ergoemacs (ergoemacs-translate-layout 'us :quail)))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
