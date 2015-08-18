@@ -438,11 +438,17 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
                      (cons lay (ergoemacs-translate-layout lay :quail)))
                    (ergoemacs-layouts--list)))))))
 
+(defcustom ergoemacs-layout-use-us-for-input-methods nil
+  "Use the \"us\" layout for input methods.
+Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-layout--update-quail ()
   "Tell quail of your currently used `ergoemacs-mode' layout."
   (when (featurep 'quail)
-    ;; (quail-set-keyboard-layout (replace-regexp-in-string "ergoemacs-layout-" "" (symbol-name (ergoemacs :layout))))
-    ))
+    (when ergoemacs-layout-use-us-for-input-methods
+      (quail-set-keyboard-layout (replace-regexp-in-string "ergoemacs-layout-" "" (symbol-name (ergoemacs :layout)))))))
 
 (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail)
 
