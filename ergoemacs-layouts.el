@@ -441,7 +441,8 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
 (defun ergoemacs-layout--update-quail ()
   "Tell quail of your currently used `ergoemacs-mode' layout."
   (when (featurep 'quail)
-    (quail-set-keyboard-layout (replace-regexp-in-string "ergoemacs-layout-" "" (symbol-name (ergoemacs :layout))))))
+    ;; (quail-set-keyboard-layout (replace-regexp-in-string "ergoemacs-layout-" "" (symbol-name (ergoemacs :layout))))
+    ))
 
 (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail)
 
