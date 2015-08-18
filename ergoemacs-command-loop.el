@@ -519,11 +519,7 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
           (unless (consp event) ;; Don't record mouse events
             (when (and current-input-method (not current-key)
                        (not overriding-local-map) (not overriding-terminal-local-map)
-                       (progn
-                         (if (or (eq 'ergoemacs-layout-us (ergoemacs :layout)) ergoemacs-layout-use-us-for-input-methods)
-                             (setq translate event) ;; Handled by quail.
-                           (setq translate (ergoemacs-translate--event-layout event ergoemacs-keyboard-layout "us")))
-                         (setq translate (ignore-errors (funcall input-method-function translate)))))
+                       (setq translate (ignore-errors (funcall input-method-function event))))
               (setq event (pop translate))
               (when translate
                 (setq unread-command-events (append translate unread-command-events))))
