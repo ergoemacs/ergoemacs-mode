@@ -126,7 +126,7 @@
     "" "~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+"  ""
     "" ""  "Ŝ" "Ĝ" "E" "R" "T" "Ŭ" "U" "I" "O" "P" "Ĵ" "Ĥ" "|"
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "" "" ""
-    ""  "Z" "Ĉ" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
+    "" ""  "Z" "Ĉ" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
   "Esperanto layout.")
 
 (defvar ergoemacs-layout-eo-displaced
@@ -412,6 +412,43 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
 (defun ergoemacs-layout (layout)
   "Set the ergoemacs layout to LAYOUT."
   (ergoemacs-save 'ergoemacs-keyboard-layout layout))
+
+(defvar ergoemacs-layout--quail-alist nil)
+(defun ergoemacs-layout--quail-alist (&optional restore)
+  (cond
+   ((and ergoemacs-layout--quail-alist (eq restore :refresh))
+    (setq quail-keyboard-layout-alist
+          (append ergoemacs-layout--quail-alist
+                  (mapcar
+                   (lambda(lay)
+                     (cons lay (ergoemacs-translate-layout lay :quail)))
+                   (ergoemacs-layouts--list)))))
+   ((and ergoemacs-layout--quail-alist restore)
+    (setq quail-keyboard-layout-alist ergoemacs-layout--quail-alist
+          ergoemacs-layout--quail-alist nil))
+   ;; Do nothing
+   (ergoemacs-layout--quail-alist)
+   (t
+    ;; Add ergoemacs-mode layouts to `quail-keyboard-layout-alist'.
+    (setq ergoemacs-layout--quail-alist quail-keyboard-layout-alist
+          quail-keyboard-layout-alist
+          (append quail-keyboard-layout-alist
+                  (mapcar
+                   (lambda(lay)
+                     (cons lay (ergoemacs-translate-layout lay :quail)))
+                   (ergoemacs-layouts--list)))))))
+
+(defun ergoemacs-layout--update-quail ()
+  "Tell quail of your currently used `ergoemacs-mode' layout."
+  (when (featurep 'quail)
+    (quail-set-keyboard-layout (replace-regexp-in-string "ergoemacs-layout-" "" (symbol-name (ergoemacs :layout))))))
+
+(add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail)
+
+(eval-after-load 'quail
+  '(progn
+     (ergoemacs-layout--quail-alist)
+     (ergoemacs-layout--update-quail)))
 
 (defalias 'ergoemacs-layout 'ergoemacs-set-layout)
 
