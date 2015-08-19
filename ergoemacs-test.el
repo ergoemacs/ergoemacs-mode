@@ -1102,6 +1102,43 @@ Should test issue #142"
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
+
+(ert-deftest ergoemacs-test-M-J-347 ()
+  "Test keys that are not working in #347."
+  :tags '(:slow)
+  (let* ((emacs-exe (ergoemacs-emacs-exe))
+         (w-file (expand-file-name "global-test" ergoemacs-dir))
+         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+    (with-temp-file temp-file
+      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+              "(setq ergoemacs-keyboard-layout \"sw\")\n"
+              "(require 'ergoemacs-mode)\n"
+              "(message \"Binding 1: %s\" (key-binding (kbd \"M-J\")))\n"
+              "(global-unset-key (kbd \"M-J\"))\n"
+              "(message \"Binding 2: %s\" (key-binding (kbd \"M-J\")))\n"
+              "(global-set-key (kbd \"M-J\") 'beginning-of-buffer)\n"
+              "(message \"Binding 3: %s\" (key-binding (kbd \"M-J\")))\n"
+              "(ergoemacs-mode 1)"
+              "(message \"Binding 4: %s\" (key-binding (kbd \"M-J\")))\n"
+              "(when (eq (key-binding (kbd \"M-J\")) 'beginning-of-buffer)\n"
+              "(with-temp-file \"" w-file "\")\n"
+              "   (message \"Passed\")"
+              "  (insert \"Found\"))\n"
+              (or (and (boundp 'wait-for-me) "")
+                  "(kill-emacs)")))
+    (message "%s"
+             (shell-command-to-string
+              (format "%s %s -Q -L %s -l %s -l %s"
+                      emacs-exe (if (boundp 'wait-for-me) "" "--batch")
+                      (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
+                      (expand-file-name (file-name-sans-extension (locate-library "ergoemacs-mode")))
+                      temp-file)))
+    (should (file-exists-p w-file))
+    (when  (file-exists-p temp-file)
+      (delete-file temp-file))
+    (when (file-exists-p w-file)
+      (delete-file w-file))))
+
 ;;; Not sure why this doesn't actually use `ergoemacs-test-major-mode-map'.
 (define-derived-mode ergoemacs-test-major-mode fundamental-mode "ET"
   "Major mode for testing some issues with `ergoemacs-mode'.
