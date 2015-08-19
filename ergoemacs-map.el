@@ -482,7 +482,9 @@ If LOOKUP-KEYMAP
           (setq tmp (ergoemacs :user-before))
           (unless (ergoemacs tmp :empty-p)
             (push tmp tmp2)))
-        
+        (setq tmp (ergoemacs :user-after))
+        (unless (ergoemacs tmp :empty-p)
+          (push tmp tmp2))
         (setq tmp (ergoemacs parent :user))
         (when tmp
           (push tmp tmp2))

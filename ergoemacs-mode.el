@@ -397,6 +397,9 @@ bindings the keymap is:
 (defvar ergoemacs-map-properties--before-ergoemacs nil
   "Keymap describing changes before `ergoemacs-mode' loads.")
 
+(defvar ergoemacs-map-properties--after-ergoemacs nil
+  "Keymap describing changes before `ergoemacs-mode' loads.")
+
 (defvar ergoemacs-require nil
   "List of required theme components.")
 

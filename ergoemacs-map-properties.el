@@ -67,6 +67,7 @@
 (defvar ergoemacs-ignore-prev-global)
 (defvar ergoemacs-map--breadcrumb)
 (defvar ergoemacs-map-properties--before-ergoemacs)
+(defvar ergoemacs-map-properties--after-ergoemacs)
 (defvar ergoemacs-map-properties--get-or-generate-map-key)
 (defvar ergoemacs-map-properties--indirect-keymaps)
 (defvar ergoemacs-map-properties--key-struct)
@@ -309,9 +310,10 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
     (push 'progn ret)
     (or (and no-lambda ret) `(lambda() ,ret))))
 
-(defun ergoemacs-map-properties--before-ergoemacs ()
+(defun ergoemacs-map-properties--before-ergoemacs (&optional after)
   "Get a list of keys that changed"
-  (or ergoemacs-map-properties--before-ergoemacs
+  (or (and (not after) ergoemacs-map-properties--before-ergoemacs)
+      (and after ergoemacs-map-properties--after-ergoemacs)
       (let ((hash-table (gethash :extract-lookup (gethash (list :map-key most-negative-fixnum) ergoemacs-map-properties--plist-hash)))
             (original-global-map (ergoemacs :original global-map))
             (before-map (make-sparse-keymap))
@@ -334,14 +336,23 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
               ((eq 'ergoemacs-labeled (elt cur-key (- (length cur-key) 1))))
               ((and (symbolp item) (string-match-p "clipboard" (symbol-name item))))
               ((and (equal [27 115 104 102] cur-key) (eq item 'hi-lock-find-patterns)))
-              ((and tmp (not (equal tmp item)))
+              ((and tmp (not (equal tmp item))
+                    (or (not after)
+                        (not (eq item (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
                (define-key before-map cur-key item))
-              ((not tmp)
+              ((and (not tmp)
+                    (or (not after)
+                        (not (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key))))
                (define-key before-map cur-key tmp)))))
          original-global-map t)
-        (setq ergoemacs-map-properties--before-ergoemacs before-map)
-        (ergoemacs before-map :label)
-        (ergoemacs before-map :map-list-hash '(ergoemacs-map-properties--before-ergoemacs))
+        (if after
+            (progn
+              (setq ergoemacs-map-properties--after-ergoemacs before-map)
+              (ergoemacs before-map :label)
+              (ergoemacs before-map :map-list-hash '(ergoemacs-map-properties--after-ergoemacs)))
+          (setq ergoemacs-map-properties--before-ergoemacs before-map)
+          (ergoemacs before-map :label)
+          (ergoemacs before-map :map-list-hash '(ergoemacs-map-properties--before-ergoemacs)))
         before-map)))
 
 (defvar ergoemacs-map-properties--protect-local nil)
@@ -776,7 +787,8 @@ The KEYMAP will have the structure
 KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((key (ergoemacs keymap :map-key))
         map)
-    (when (integerp key)
+    (if (not (integerp key))
+        (setq map (ergoemacs (ergoemacs keymap :original) :user))
       (setq map (ergoemacs-gethash (setq key (ergoemacs keymap :key-hash)) ergoemacs-map-properties--user-map-hash))
       (unless map
         (puthash key (make-sparse-keymap) ergoemacs-map-properties--user-map-hash)

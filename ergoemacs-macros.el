@@ -698,6 +698,8 @@ When arg1 can be a property.  The following properties are supported:
     (cond
      ((and arg1 (symbolp arg1) (eq arg1 :user-before) (not arg2) (not arg3))
       `(ergoemacs-map-properties--before-ergoemacs))
+     ((and arg1 (symbolp arg1) (eq arg1 :user-after) (not arg2) (not arg3))
+      `(ergoemacs-map-properties--before-ergoemacs t))
      ((and arg1 (symbolp arg1) (eq arg1 :modal-p))
       `(ergoemacs-command-loop--modal-p))
      ((and arg1 (symbolp arg1) (eq arg1 :combine) arg2 arg3)
