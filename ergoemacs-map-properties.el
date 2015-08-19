@@ -315,7 +315,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
   (or (and (not after) ergoemacs-map-properties--before-ergoemacs)
       (and after ergoemacs-map-properties--after-ergoemacs)
       (let ((hash-table (ergoemacs-gethash :extract-lookup (ergoemacs-gethash (list :map-key most-negative-fixnum) ergoemacs-map-properties--plist-hash)))
-            (original-global-map (ergoemacs :original global-map))
+            (original-global-map (ergoemacs :global-map))
             (before-map (make-sparse-keymap))
             tmp)
         (ergoemacs-map-keymap
@@ -847,7 +847,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   "Get the COMMAND equivalent binding in KEYMAP based on RELATIVE-MAP."
   (and command keymap
        (let* (ret
-              (hash-table (ergoemacs (or relative-map global-map) :where-is))
+              (hash-table (ergoemacs (or relative-map ergoemacs-saved-global-map global-map) :where-is))
               (cmd-list (ergoemacs-gethash command hash-table)))
          (if (not cmd-list) nil
            (catch 'found-new

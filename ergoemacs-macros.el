@@ -726,7 +726,7 @@ When arg1 can be a property.  The following properties are supported:
 
      ((and arg1 (symbolp arg1)
            (eq arg1 :global-map))
-      `(ergoemacs-map-properties--original global-map))
+      `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map)))
      
      ((and arg1 (symbolp arg1)
            (eq arg1 :remap) arg2)
