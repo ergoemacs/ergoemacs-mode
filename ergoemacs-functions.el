@@ -299,14 +299,14 @@ If TERMINAL is non-nil, run the terminal version"
 (defun ergoemacs-clean ()
   "Run ergoemacs in a bootstrap environment.
 C-u deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
-C-u C=u deletes old byte compilde `ergoemacs-mode' files."
+C-u C-u deletes old byte compilde `ergoemacs-mode' files."
   (interactive)
   (ergoemacs-clean-recompile-then-run))
 
 (defun ergoemacs-clean-nw ()
   "Run ergoemacs in bootstrap environment in terminal.
 C-u deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
-C-u C=u deletes old byte compilde `ergoemacs-mode' files."
+C-u C-u deletes old byte compilde `ergoemacs-mode' files."
   (interactive)
   (ergoemacs-clean-recompile-then-run t))
 
