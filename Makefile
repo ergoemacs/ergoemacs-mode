@@ -8,7 +8,7 @@ unexport EMACS_SERVER_FILE
 EMACS_CLEAN=-Q
 EMACS_BATCH=$(EMACS_CLEAN) --batch
 TESTS=ergoemacs-
-#TESTS=ergoemacs-test-isearch-C-f
+SELECT=
 
 CURL=curl --silent
 TMP1=$(shell pwd)
@@ -64,6 +64,27 @@ test-autoloads : autoloads
 test-travis :
 	@if test -z "$$TRAVIS" && test -e $(TRAVIS_FILE); then travis-lint $(TRAVIS_FILE); fi
 
+search :
+    $(eval SELECT:=(tag :search))
+
+copy :
+    $(eval SELECT:=(tag :copy))
+
+slow :
+    $(eval SELECT:=(tag :slow))
+
+shift-select :
+    $(eval SELECT:=(tag :shift-select))
+
+translate :
+    $(eval SELECT:=(tag :translate))
+
+
+other :
+    $(eval SELECT:=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate)))
+
+
+
 test : clean build build2 test-dep-1 test-autoloads ert
 
 start: clean build start0
@@ -75,13 +96,13 @@ start0:
 ert :
 	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
 	    "(progn                                          \
-	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" (not (tag :interactive)))))" || exit 1; \
+	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" $(SELECT) (not (tag :interactive)))))" || exit 1; \
 
 erti :
 	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
 	    "(progn                                          \
 	      (fset 'ert--print-backtrace 'ignore)  \
-	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" (not (tag :interactive)))))" || exit 1; \
+	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" $(SELECT) (not (tag :interactive)))))" || exit 1; \
 
 clean :
 	@rm -f $(AUTOLOADS_FILE) 
