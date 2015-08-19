@@ -1154,7 +1154,7 @@ Should test issue #142"
                (define-key ergoemacs-test-major-mode-map (kbd "C-w") 'ergoemacs-close-current-buffer))))
 
 (ert-deftest ergoemacs-test-issue-349 ()
-  "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
+  "Unbind <f6>"
   :tags '(:slow)
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (w-file (expand-file-name "global-test" ergoemacs-dir))

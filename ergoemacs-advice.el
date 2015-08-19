@@ -169,13 +169,16 @@ Also when `ergoemacs-mode' is enabled and KEYMAP is not the
 (ergoemacs-advice define-key (keymap key def)
   "Protect keymaps when changing keys from a hook."
   :type :after
-  
-  (when (and (not def) (eq keymap global-map))
-    (unless (member key ergoemacs-map--unbound-keys)
-      (push key ergoemacs-map--unbound-keys)))
-  (when (and (eq keymap global-map)
-             ergoemacs-map-properties--after-ergoemacs)
-    (define-key ergoemacs-map-properties--after-ergoemacs key def))
+  (when (eq keymap (current-global-map))
+    (let ((map-key (ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist (ergoemacs-map-properties--original keymap)) :map-key))))
+      (cond
+       ((not (integerp map-key)))
+       ((not (= map-key most-negative-fixnum)))
+       ((not def)
+        (unless (member key ergoemacs-map--unbound-keys)
+          (push key ergoemacs-map--unbound-keys)))
+       (ergoemacs-map-properties--after-ergoemacs
+        (define-key ergoemacs-map-properties--after-ergoemacs key def)))))
   (when (and (boundp 'ergoemacs-map-properties--protect-local)
              ergoemacs-map-properties--protect-local)
     (ergoemacs-map-properties--hook-define-key keymap key def)))
