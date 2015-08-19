@@ -159,6 +159,16 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
        (should (string= "3" (match-string 0))))
      (kill-buffer (current-buffer)))))
 
+(ert-deftest ergoemacs-test-isearch-in-eshell ()
+  "Test Issue #322"
+  :tags '(:search)
+  (ergoemacs-test-layout
+   :layout "us"
+   (ergoemacs-eshell-here)
+   (should (eq 'isearch-forward (key-binding (kbd "C-f"))))
+   (should (eq 'isearch-forward (key-binding (kbd "M-y"))))
+   (kill-buffer (current-buffer))))
+
 (ert-deftest ergoemacs-test-isearch-works-with-region ()
   "With vanilla Emacs, when mark is active and even some region is
 already selected, isearch-ing would expand or shrink selection.
