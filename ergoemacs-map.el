@@ -786,9 +786,10 @@ If LOOKUP-KEYMAP
     (ergoemacs-map--emulation-mode-map-alists)
     (ergoemacs-map--minor-mode-map-alist ini)
     (ergoemacs-map--minor-mode-overriding-map-alist)
-    (unless (and (eq (current-global-map) global-map)
+    (ergoemacs-save-buffer-state
+     (unless (and (eq (current-global-map) global-map)
                  (not (ergoemacs (current-global-map) :installed-p)))
-      (use-global-map (ergoemacs (current-global-map))))))
+      (use-global-map (ergoemacs (current-global-map)))))))
 
 (defun ergoemacs-map--install ()
   "Installs `ergoemacs-mode' into the appropriate keymaps."
