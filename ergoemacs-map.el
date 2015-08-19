@@ -471,7 +471,10 @@ If LOOKUP-KEYMAP
               ret (ergoemacs-cache global-ret ret)
               ergoemacs-map-- (ergoemacs-cache ergoemacs-map-- ergoemacs-map--)
               ergoemacs-map--undefined-keys (ergoemacs-cache undefined-keys ergoemacs-map--undefined-keys))
-        (define-key parent [menu-bar] tmp)
+        (map-keymap
+         (lambda (event item)
+           (define-key parent (vector menu-bar event) item))
+         tmp)
         (set-keymap-parent ret (make-composed-keymap composed-list parent))
         ;; Save hash
         (puthash lookup-key ret ergoemacs-map--hash)
