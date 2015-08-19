@@ -936,8 +936,8 @@ The true work is done in `ergoemacs-command-loop--internal'."
   "Simulates the end of a command."
   ;; Simulate the end of an emacs command, since we are not
   ;; exiting the loop.
-  (ergoemacs-command-loop--post-command-hook)
-
+  (run-hooks 'post-command-hook)
+  
   ;; Deactivate mark.
   (when deactivate-mark
     (deactivate-mark)
@@ -1464,78 +1464,6 @@ For instance in QWERTY M-> is shift translated to M-."
   (when (ergoemacs :movement-p function)
     (handle-shift-selection)))
 
-(defvar ergoemacs-command-loop-timeout)
-(defun ergoemacs-command-loop--wrap-hook (function &optional hook)
-  "Run FUNCTION with timeout, and possibly remove from HOOK if there are problems.
-
-If the FUNCTION takes too long (more than
-`ergoemacs-command-loop-timeout'), or has an error and the HOOK
-is specified, remove it from the HOOK."
-  (condition-case _err
-      (with-timeout (ergoemacs-command-loop-timeout (throw 'ergoemacs-command-loop-timeout t))
-        (funcall function))
-    (error
-     (when hook
-       (dolist (current-hook (or (and (consp hook) hook) (list hook)))
-         (ergoemacs-save-buffer-state
-          (remove-hook current-hook function)
-          (remove-hook current-hook function t)))))))
-
-(defvar ergoemacs-command-loop--pre-command-hook-count nil
-  "`ergoemacs-mode' pre-command-hook count")
-(defvar ergoemacs-command-loop--pre-command-hook nil
-  "`ergoemacs-mode' pre-command-hook")
-(defun ergoemacs-command-loop--pre-command-hook ()
-  "Run `pre-command-hook' safely in `ergoemacs-mode' command loop"
-  (let (local-hook
-        global-hook)
-    (setq ergoemacs-command-loop--running-pre-command-hook-p t)
-    (unless (or (eq (symbol-value 'pre-command-hook)
-                    (default-value 'pre-command-hook))
-                (eq (symbol-value 'ergoemacs-command-loop--pre-command-hook-count)
-                    (length (symbol-value 'pre-command-hook))))
-      (dolist (function (reverse (symbol-value 'pre-command-hook)))
-        (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'pre-command-hook))) local-hook))
-      (ergoemacs-save-buffer-state
-       (set (make-local-variable 'ergoemacs-command-loop--pre-command-hook) local-hook)
-       (set (make-local-variable 'ergoemacs-command-loop--pre-command-hook-count) (length (symbol-value 'pre-command-hook)))))
-    
-    (unless (eq (default-value 'ergoemacs-command-loop--pre-command-hook-count)
-                (length (default-value 'pre-command-hook)))
-      (dolist (function (reverse (default-value 'pre-command-hook)))
-        (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'pre-command-hook))) global-hook))
-      (set-default 'ergoemacs-command-loop--pre-command-hook global-hook)
-      (set-default 'ergoemacs-command-loop--pre-command-hook-count (length (default-value 'pre-command-hook))))
-    (run-hooks 'ergoemacs-command-loop--pre-command-hook)
-    (setq ergoemacs-command-loop--running-pre-command-hook-p nil)))
-
-(defvar ergoemacs-command-loop--post-command-hook-count nil
-  "`ergoemacs-mode' post-command-hook count")
-(defvar ergoemacs-command-loop--post-command-hook nil
-  "`ergoemacs-mode' post-command-hook")
-(defun ergoemacs-command-loop--post-command-hook ()
-  "Run `post-command-hook' safely in `ergoemacs-mode' command lop"
-  (let (local-hook
-        global-hook)
-    (unless (or (eq (symbol-value 'post-command-hook)
-                    (default-value 'post-command-hook))
-                (eq (symbol-value 'ergoemacs-command-loop--post-command-hook-count)
-                    (length (symbol-value 'post-command-hook))))
-      (dolist (function (reverse (symbol-value 'post-command-hook)))
-        (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'post-command-hook))) local-hook))
-      (ergoemacs-save-buffer-state
-       (set (make-local-variable 'ergoemacs-command-loop--post-command-hook) local-hook)
-       (set (make-local-variable 'ergoemacs-command-loop--post-command-hook-count) (length (symbol-value 'post-command-hook)))))
-    
-    (unless (eq (default-value 'ergoemacs-command-loop--post-command-hook-count)
-                (length (default-value 'post-command-hook)))
-      (dolist (function (reverse (default-value 'post-command-hook)))
-        (push (or (and (eq function t) t) `(lambda() (ergoemacs-command-loop--wrap-hook ',function 'post-command-hook))) global-hook))
-      (set-default 'ergoemacs-command-loop--post-command-hook global-hook)
-      (set-default 'ergoemacs-command-loop--post-command-hook-count (length (default-value 'post-command-hook))))
-    (run-hooks 'ergoemacs-command-loop--post-command-hook)))
-
-
 (defun ergoemacs-command-loop--execute-rm-keyfreq (command)
   "Remove COMMAND from `keyfreq-mode' counts."
   (when (featurep 'keyfreq)
@@ -1601,8 +1529,11 @@ is specified, remove it from the HOOK."
             ;; Assume this is a nonmenu event if it isn't a mouse event
             (unless (consp last-command-event)
               (setq last-nonmenu-event last-command-event)))
-          
-          (ergoemacs-command-loop--pre-command-hook)
+          (unwind-protect
+              (progn
+                (setq ergoemacs-command-loop--running-pre-command-hook-p t)
+                (run-hooks 'pre-command-hook))
+            (setq ergoemacs-command-loop--running-pre-command-hook-p nil))
           (unwind-protect
               (ergoemacs-command-loop--call-interactively this-command t)
             (setq ergoemacs-command-loop--single-command-keys nil)))))
