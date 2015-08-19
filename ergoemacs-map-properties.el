@@ -338,11 +338,13 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
               ((and (equal [27 115 104 102] cur-key) (eq item 'hi-lock-find-patterns)))
               ((and tmp (not (equal tmp item))
                     (or (not after)
-                        (not (eq item (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
+                        (not (and ergoemacs-map-properties--before-ergoemacs
+                                  (eq item (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key))))))
                (define-key before-map cur-key item))
               ((and (not tmp)
                     (or (not after)
-                        (not (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key))))
+                        (not (and ergoemacs-map-properties--before-ergoemacs
+                                  (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
                (define-key before-map cur-key tmp)))))
          original-global-map t)
         (if after
