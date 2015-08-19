@@ -105,7 +105,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-shift-select ()
-  "Copy/Paste test for ergoemacs-mode"
+  "Shift-selection test for ergoemacs-mode"
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :shift-select)))
@@ -1106,7 +1106,7 @@ Should test issue #142"
     (byte-compile-file temp-file)
     (message "%s"
              (shell-command-to-string
-              (format "%s %s -Q -L %s -l %s -l %s"
+              (format "%s %s --debug-init -Q -L %s -l %s -l %s"
                       emacs-exe (if (boundp 'wait-for-me) "" "--batch")
                       (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
                       (expand-file-name (file-name-sans-extension (locate-library "ergoemacs-mode")))
