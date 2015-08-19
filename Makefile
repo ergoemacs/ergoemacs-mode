@@ -83,6 +83,9 @@ translate :
 other :
     $(eval SELECT:=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate)))
 
+default-select :
+    $(eval SELECT:=)
+
 
 
 test : clean build build2 test-dep-1 test-autoloads ert
