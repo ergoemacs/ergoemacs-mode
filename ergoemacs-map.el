@@ -108,6 +108,8 @@
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--override-maps "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--set-map-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--use-local-unbind-list-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user-original "ergoemacs-map-properties")
 
@@ -780,7 +782,10 @@ If LOOKUP-KEYMAP
           ergoemacs-map--modify-active-last-local-map local-map)
     (ergoemacs-map--emulation-mode-map-alists)
     (ergoemacs-map--minor-mode-map-alist ini)
-    (ergoemacs-map--minor-mode-overriding-map-alist)))
+    (ergoemacs-map--minor-mode-overriding-map-alist)
+    (unless (and (eq (current-global-map) global-map)
+                 (not (ergoemacs (current-global-map) :installed-p)))
+      (use-global-map (ergoemacs (current-global-map))))))
 
 (defun ergoemacs-map--install ()
   "Installs `ergoemacs-mode' into the appropriate keymaps."
@@ -808,8 +813,11 @@ If LOOKUP-KEYMAP
         ergoemacs-map--alist (make-hash-table)
         ergoemacs-map--alists (make-hash-table)
         ergoemacs-map--alist-t (make-hash-table)
-        ergoemacs-map--alist-t-o (make-hash-table))
-  (use-global-map ergoemacs-keymap)
+        ergoemacs-map--alist-t-o (make-hash-table)
+        ergoemacs-saved-global-map global-map
+        global-map ergoemacs-keymap)
+  (use-global-map global-map)
+  
   ;; Put `ergoemacs-mode' style key shortcuts instead of emacs
   ;; style shortcuts (They need to place the correct shortucts)
   (ergoemacs-menu--filter (lookup-key ergoemacs-keymap [menu-bar]))
@@ -828,7 +836,10 @@ If LOOKUP-KEYMAP
   (let (ergoemacs-mode)
     (use-global-map global-map)
     (setq ergoemacs-map--alist (make-hash-table)
-          ergoemacs-map--alists (make-hash-table))
+          ergoemacs-map--alists (make-hash-table)
+          global-map ergoemacs-saved-global-map
+          ergoemacs-saved-global-map  nil)
+    (use-global-map global-map)
     (ergoemacs-map--modify-active t)
     (dolist (map ergoemacs-map--modified-maps)
       (ergoemacs-command-loop--spinner-display "rm ergoemacs->%s" map)

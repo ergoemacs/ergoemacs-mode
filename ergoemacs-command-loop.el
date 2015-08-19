@@ -265,7 +265,7 @@ with this function."
 
 
 
-(defun ergoemacs-command-loop--universal-argument (&optional type)
+(defun ergoemacs-command-loop--universal-argument (&rest _ignore)
   "Ergoemacs universal argument.
 This is called through `ergoemacs-command-loop'"
   (interactive)
@@ -549,19 +549,19 @@ Used to help with translation keymaps like `input-decode-map'"
   (let* ((new-event event)
          (old-ergoemacs-input unread-command-events)
          new-ergoemacs-input
-         (current-key (vector event))
-         (test-ret (lookup-key keymap current-key))
+         (current-test-key (vector event))
+         (test-ret (lookup-key keymap current-test-key))
          next-key)
-    (while (and current-key
+    (while (and current-test-key
                 (ergoemacs-keymapp test-ret))
       ;; The translation needs more keys...
       (setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key))
       (when next-key ;; Since a key was read, save it to be read later.
         (push last-command-event new-ergoemacs-input))
       (if next-key
-          (setq current-key (ergoemacs :combine current-key next-key)
-                test-ret (lookup-key keymap current-key))
-        (setq current-key nil)))
+          (setq current-test-key (ergoemacs :combine current-test-key next-key)
+                test-ret (lookup-key keymap current-test-key))
+        (setq current-test-key nil)))
     (when (stringp test-ret) 
       (setq test-ret (read-kbd-macro test-ret t)))
     (if (and (vectorp test-ret)
@@ -887,6 +887,7 @@ sure that `ergoemacs-command-loop--internal' hasn't been called."
   ;;        (save-match-data (re-search-backward "^ *\\<ergoemacs-command-loop--internal\\> *(" nil t))))))
   )
 
+(defvar ergoemacs-command-loop-start nil)
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Process `ergoemacs-command-loop'.
 The true work is done in `ergoemacs-command-loop--internal'."
@@ -909,7 +910,6 @@ The true work is done in `ergoemacs-command-loop--internal'."
 (defvar ergoemacs-command-loop--running-pre-command-hook-p nil
   "Variable to tell if ergoemacs-command loop is running the pre-command-hook")
 
-(defvar ergoemacs-command-loop-start nil)
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   (when (and (eq ergoemacs-command-loop-type :full)

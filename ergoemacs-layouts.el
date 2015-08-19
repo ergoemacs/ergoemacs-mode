@@ -28,6 +28,8 @@
 
 ;;; Code:
 
+(defvar quail-keyboard-layout-alist)
+
 (defvar ergoemacs-layout-asset
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
     "" ""  "q" "w" "j" "f" "g" "y" "p" "u" "l" ";" "[" "]" "\\"
@@ -320,6 +322,7 @@
 
 (defvar ergoemacs-keyboard-layout)
 (declare-function ergoemacs-save "ergoemacs-lib")
+(declare-function ergoemacs-translate-layout "ergoemacs-translate")
 
 (defun ergoemacs-layouts--current (&optional layout)
   "Gets the LAYOUT symbol.
@@ -398,10 +401,11 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
          (lambda(s)
            (let ((sn (symbol-name s)))
              (and (string-match "^ergoemacs-layout-" sn)
-                  (if (or aliases
-                          (and (not aliases)
-                               (documentation-property
-                                (intern sn) 'variable-documentation)))
+                  (if (and (not (functionp s))
+                           (or aliases
+                               (and (not aliases)
+                                    (documentation-property
+                                     (intern sn) 'variable-documentation))))
                       (setq ret (cons (replace-regexp-in-string "ergoemacs-layout-" "" sn) ret))))))
          ob)
         (if aliases
@@ -438,7 +442,7 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
                      (cons lay (ergoemacs-translate-layout lay :quail)))
                    (ergoemacs-layouts--list)))))))
 
-(defcustom ergoemacs-layout-use-us-for-input-methods nil
+(defcustom ergoemacs-layouts-use-us-for-input-methods nil
   "Use the \"us\" layout for input methods.
 Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
   :type 'boolean
@@ -447,7 +451,7 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
 (defun ergoemacs-layout--update-quail ()
   "Tell quail of your currently used `ergoemacs-mode' layout."
   (when (featurep 'quail)
-    (when ergoemacs-layout-use-us-for-input-methods
+    (when ergoemacs-layouts-use-us-for-input-methods
       (quail-set-keyboard-layout (replace-regexp-in-string "ergoemacs-layout-" "" (symbol-name (ergoemacs :layout)))))))
 
 (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail)

@@ -114,25 +114,6 @@ bindings into this keymap (the original keymap is untouched)"
   :type :before
   (set (make-local-variable 'ergoemacs--original-local-map) keymap))
 
-(defun ergoemacs-use-global-map--after (keymap)
-  "Function for `use-global-map' advice"
-  (let ((cgm (current-global-map)))
-    (cond
-     ((and ergoemacs-mode (eq cgm global-map))
-      (use-global-map ergoemacs-mode))
-     ((and ergoemacs-mode (eq cgm ergoemacs-mode)))
-     ((and ergoemacs-mode (not (ergoemacs cgm :installed-p)))
-      (use-global-map (ergoemacs keymap t))))))
-
-(ergoemacs-advice use-global-map (keymap)
-  "When `ergoemacs-mode' is enabled and KEYMAP is the `global-map', set to `ergoemacs-keymap' instead.
-
-Also when `ergoemacs-mode' is enabled and KEYMAP is not the
-`global-map', install `ergoemacs-mode' modifications and then set the modified keymap.
-"
-  :type :after
-  (ergoemacs-use-global-map--after keymap))
-
 (ergoemacs-advice substitute-command-keys (string)
   "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
   :type :replace
