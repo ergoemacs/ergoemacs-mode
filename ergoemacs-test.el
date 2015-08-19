@@ -598,6 +598,17 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
          (should (eq (key-binding (kbd "C-z")) (or (command-remapping 'calc-undo (point)) 'calc-undo)))
        (call-interactively 'calc-quit)))))
 
+(ert-deftest ergoemacs-test-calc-fries-ergoemacs-mode ()
+  "After calc has entered some numbers, it fries ergoemacs-mode."
+  (let ((ergoemacs-test-fn t))
+    (ergoemacs-test-layout
+     :theme "reduction"
+     :layout "colemak"
+     (call-interactively 'calc)
+     (execute-kbd-macro "1 1 +")
+     (call-interactively 'calc-quit)
+     (should (eq (key-binding (kbd "M-u")) 'previous-line)))))
+
 ;;; Modal
 
 (ert-deftest ergoemacs-test-modal-preserve-mark ()
