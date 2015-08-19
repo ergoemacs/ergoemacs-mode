@@ -457,7 +457,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
   (let* ((theme (and theme
                          (or (and (stringp theme) theme)
                              (and (symbolp theme) (symbol-name theme)))))
-         (plist (gethash (or theme "") ergoemacs-theme-hash))
+         (plist (ergoemacs-gethash (or theme "") ergoemacs-theme-hash))
          (file (plist-get plist :file))
          (el-file (concat (file-name-sans-extension file) ".el"))
          tmp)

@@ -314,14 +314,14 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
   "Get a list of keys that changed"
   (or (and (not after) ergoemacs-map-properties--before-ergoemacs)
       (and after ergoemacs-map-properties--after-ergoemacs)
-      (let ((hash-table (gethash :extract-lookup (gethash (list :map-key most-negative-fixnum) ergoemacs-map-properties--plist-hash)))
+      (let ((hash-table (ergoemacs-gethash :extract-lookup (ergoemacs-gethash (list :map-key most-negative-fixnum) ergoemacs-map-properties--plist-hash)))
             (original-global-map (ergoemacs :original global-map))
             (before-map (make-sparse-keymap))
             tmp)
         (ergoemacs-map-keymap
          (lambda (cur-key item)
            (unless (or (consp cur-key) (eq item 'ergoemacs-prefix))
-             (setq tmp (gethash cur-key hash-table cur-key))
+             (setq tmp (ergoemacs-gethash cur-key hash-table cur-key))
              (cond
               ;; bach mode doesn't save menu-bar or tool-bar information
               ((memq (elt cur-key 0) '(menu-bar tool-bar iconify-frame make-frame-visible)))
@@ -417,7 +417,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
          key2 tmp map)
     (when (integerp key)
       (setq key2 key
-            tmp (gethash key2 ergoemacs-map-properties--hook-map-hash)
+            tmp (ergoemacs-gethash key2 ergoemacs-map-properties--hook-map-hash)
             map (ergoemacs-gethash
                  (setq key `(,(ergoemacs keymap :key-hash) ,@ergoemacs-map-properties--protect-local))
                  ergoemacs-map-properties--hook-map-hash))
@@ -479,7 +479,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
          (or (memq (nth 1 key) ergoemacs-hooks-that-always-override-ergoemacs-mode)
              (memq (nth 2 key) ergoemacs-functions-that-always-override-ergoemacs-mode)
              (progn
-               (setq tmp (gethash (nth 2 key) ergoemacs-map-properties--override-map-hash))
+               (setq tmp (ergoemacs-gethash (nth 2 key) ergoemacs-map-properties--override-map-hash))
                (if tmp
                    (if (eq tmp :override-p) t nil)
                  (if (not (functionp (nth 2 key))) nil

@@ -1173,16 +1173,16 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
                 (skip-chars-forward "'")
                 (let ((obj (read (current-buffer))))
                   (and (symbolp obj)
-                       (gethash (symbol-name obj) hash-table) obj)))
+                       (ergoemacs-gethash (symbol-name obj) hash-table) obj)))
             (error nil))
           (let* ((str (find-tag-default))
                  (sym (if str (intern str))))
-            (if (and sym (gethash (symbol-name sym) hash-table))
+            (if (and sym (ergoemacs-gethash (symbol-name sym) hash-table))
                 sym
               (save-match-data
                 (when (and str (string-match "\\`\\W*\\(.*?\\)\\W*\\'" str))
                   (setq sym (intern (match-string 1 str)))
-                  (and (gethash (symbol-name sym) hash-table) sym)))))
+                  (and (ergoemacs-gethash (symbol-name sym) hash-table) sym)))))
           0))))
 
 (defun ergoemacs-component--prompt (&optional theme-instead)
