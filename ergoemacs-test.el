@@ -1187,19 +1187,36 @@ Part of addressing Issue #147."
   (ergoemacs-test-layout
    :layout "colemak"
    :macro "arst"
-   (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-   (delete-region (point-min) (point-max))
-   (set-input-method "greek")
-   (message "%s" current-input-method)
-   (ergoemacs-command-loop--internal "arst")
-   (should (string= "αρστ" (buffer-string)))
-   (quail-set-keyboard-layout "colemak")
-   (delete-region (point-min) (point-max))
-   (ergoemacs-command-loop--internal "arst")
-   (quail-set-keyboard-layout "standard")
-   (should (string= "ασδφ" (buffer-string)))
-   (set-input-method nil)
-   (kill-buffer (current-buffer))))
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (set-input-method "greek")
+     (message "%s" current-input-method)
+     (ergoemacs-command-loop--internal "arst")
+     (should (string= "αρστ" (buffer-string)))
+     (quail-set-keyboard-layout "colemak")
+     (delete-region (point-min) (point-max))
+     (ergoemacs-command-loop--internal "arst")
+     (quail-set-keyboard-layout "standard")
+     (should (string= "ασδφ" (buffer-string)))
+     (set-input-method nil)
+     (kill-buffer (current-buffer)))))
+
+(ert-deftest ergoemacs-test-table-insert ()
+  "Tests that table can insert without hanging emacs."
+  :tags '(:table)
+  (save-excursion
+    (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+    (delete-region (point-min) (point-max))
+    (table-insert 1 2)
+    (ergoemacs-command-loop--internal "abc <tab> abc <tab>")
+    (should (string= (buffer-string) "+-----+
+|abc  |
++-----+
+|abc  |
++-----+
+"))
+    (kill-buffer (current-buffer))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
