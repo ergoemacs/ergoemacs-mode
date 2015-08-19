@@ -34,6 +34,7 @@
 
 (declare-function ergoemacs-mode-reset "ergoemacs-mode.el")
 
+(defvar ergoemacs-layout-us)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme)
 (defvar ergoemacs-command-loop-type)
@@ -42,13 +43,16 @@
 (defvar dired-sort-map)
 (defvar dired-mode-map)
 
+
 (declare-function ergoemacs-mode "ergoemacs-mode")
 
 (declare-function ergoemacs-command-loop "ergoemacs-command-loop")
+(declare-function ergoemacs-command-loop--internal "ergoemacs-command-loop")
 
 (declare-function ergoemacs-copy-line-or-region "ergoemacs-functions")
 (declare-function ergoemacs-cut-line-or-region "ergoemacs-functions")
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
+(declare-function ergoemacs-eshell-here "ergoemacs-functions")
 (declare-function ergoemacs-paste "ergoemacs-functions")
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
@@ -59,6 +63,8 @@
 (declare-function ergoemacs-theme--get-version "ergoemacs-theme")
 (declare-function ergoemacs-theme-set-version "ergoemacs-theme")
 
+(declare-function ergoemacs-translate--quail-to-ergoemacs "ergoemacs-translate")
+(declare-function ergoemacs-translate-layout "ergoemacs-translate")
 (declare-function ergoemacs-translate--get "ergoemacs-translate")
 (declare-function ergoemacs-unchorded-alt-modal "ergoemacs-translate")
 

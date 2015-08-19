@@ -67,6 +67,7 @@
 (defvar ergoemacs-map-properties--unlabeled)
 (defvar ergoemacs-mode--fast-p)
 (defvar ergoemacs-mode-version)
+(defvar ergoemacs-saved-global-map)
 (defvar ergoemacs-theme-comp-hash)
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-theme-version)

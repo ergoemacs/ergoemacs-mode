@@ -54,22 +54,23 @@
   (require 'ergoemacs-macros)
   (require 'cl))
 
-(defvar ergoemacs-map--cache-save)
 (defvar cl-struct-ergoemacs-component-struct-tags)
+(defvar ergoemacs-breadcrumb-hash)
 (defvar ergoemacs-command-loop--overriding-terminal-local-map)
 (defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-dir)
+(defvar ergoemacs-ignore-prev-global)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
-(defvar ergoemacs-user-keymap)
+(defvar ergoemacs-map--cache-save)
+(defvar ergoemacs-map--hash)
 (defvar ergoemacs-map-properties--plist-hash)
 (defvar ergoemacs-menu-keymap)
 (defvar ergoemacs-mode)
+(defvar ergoemacs-saved-global-map)
 (defvar ergoemacs-theme)
-(defvar ergoemacs-ignore-prev-global)
-(defvar ergoemacs-map--hash)
-(defvar ergoemacs-breadcrumb-hash)
+(defvar ergoemacs-user-keymap)
 (defvar ess-language)
 
 
@@ -769,27 +770,24 @@ If LOOKUP-KEYMAP
                (not (ergoemacs local-map :installed-p)))
       (put-text-property (previous-single-char-property-change (point) 'local-map)
                          (next-single-char-property-change (point) 'local-map)
-                         'local-map (ergoemacs local-map))))
-    
-    (when (and current-local-map (not (ergoemacs current-local-map :installed-p)))
-      (unless (minibufferp)
-        (setq ergoemacs-map--breadcrumb (format "%s" major-mode))
-        (when (eq major-mode 'ess-mode)
-          (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language))))
-      (use-local-map (ergoemacs current-local-map))
-      (setq ergoemacs-map--breadcrumb ""))
-    
+                         'local-map (ergoemacs local-map)))
+     (unless (and (eq (current-global-map) global-map)
+                  (not (ergoemacs (current-global-map) :installed-p)))
+       (use-global-map (ergoemacs (current-global-map))))
+     (when (and current-local-map (not (ergoemacs current-local-map :installed-p)))
+       (unless (minibufferp)
+         (setq ergoemacs-map--breadcrumb (format "%s" major-mode))
+         (when (eq major-mode 'ess-mode)
+           (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language))))
+       (use-local-map (ergoemacs current-local-map))
+       (setq ergoemacs-map--breadcrumb "")))
     (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map
           ergoemacs-map--modify-active-last-overriding-local-map overriding-local-map
           ergoemacs-map--modify-active-last-char-map char-map
           ergoemacs-map--modify-active-last-local-map local-map)
     (ergoemacs-map--emulation-mode-map-alists)
     (ergoemacs-map--minor-mode-map-alist ini)
-    (ergoemacs-map--minor-mode-overriding-map-alist)
-    (ergoemacs-save-buffer-state
-     (unless (and (eq (current-global-map) global-map)
-                 (not (ergoemacs (current-global-map) :installed-p)))
-      (use-global-map (ergoemacs (current-global-map)))))))
+    (ergoemacs-map--minor-mode-overriding-map-alist)))
 
 (defun ergoemacs-map--install ()
   "Installs `ergoemacs-mode' into the appropriate keymaps."
