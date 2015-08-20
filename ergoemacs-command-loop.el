@@ -932,6 +932,13 @@ The true work is done in `ergoemacs-command-loop--internal'."
          (integerp (car-safe (car-safe (setq obj (cdr obj))))) ;XOFFSET.
          (integerp (car-safe (cdr obj))))))
 
+(defun ergoemacs-command-loop--sync-point ()
+  ;; Sometimes the window buffer and selected buffer are out of sync.
+  ;; Fix this issue.
+  (unless (eq (current-buffer) (window-buffer))
+    (switch-to-buffer (window-buffer))
+    (goto-char (window-point))))
+
 (defun ergoemacs-command-loop--internal-end-command ()
   "Simulates the end of a command."
   ;; Simulate the end of an emacs command, since we are not
@@ -987,13 +994,11 @@ The true work is done in `ergoemacs-command-loop--internal'."
   ;;  This (sort of) fixes `this-command-keys'
   ;; But it doesn't fix it for keyboard macros.
   (clear-this-command-keys t)
-  ;; Sometimes the window buffer and selected buffer are out of sync.
-  ;; Fix this issue.
-  (switch-to-buffer (window-buffer))
-  (goto-char (window-point)))
+  (ergoemacs-command-loop--sync-point))
 
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
   "Call the command interactively.  Also handle mouse events (if possible.)"
+  (ergoemacs-command-loop--sync-point)
   (cond
    ((and (eventp last-command-event)
          (consp last-command-event))
@@ -1376,6 +1381,8 @@ LOOKUP is what will be run"
 If `ergoemacs-mode' has translated this, make emacs think you
 pressed the translated key by changing
 `ergoemacs-command-loop--single-command-keys'."
+  ;; Make sure to lookup the keys in the selected buffer
+  (ergoemacs-command-loop--sync-point) 
   (let ((trials (ergoemacs-translate--trials key))
         tmp tmp2 ret)
     (setq this-command-keys-shift-translated nil)
