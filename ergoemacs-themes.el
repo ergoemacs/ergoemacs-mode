@@ -39,7 +39,6 @@
 (declare-function ergoemacs-require "ergoemacs-lib")
 
 (defvar ergoemacs-theme-hash)
-(defvar ergoemacs-theme-comp-hash)
 (defvar ergoemacs-theme-component-hash)
 (defvar ergoemacs-translation-hash)
 (defvar ergoemacs-component-hash)

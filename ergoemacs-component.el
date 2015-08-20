@@ -68,7 +68,6 @@
 (defvar ergoemacs-mode--fast-p)
 (defvar ergoemacs-mode-version)
 (defvar ergoemacs-saved-global-map)
-(defvar ergoemacs-theme-comp-hash)
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-theme-version)
 (defvar ergoemacs-translate--translation-hash)
@@ -200,15 +199,16 @@
         (when (and (consp elt) (stringp (car elt)))
           (ergoemacs-component-struct--define-key keymap (read-kbd-macro (car elt)) (cdr elt))))))))
 
-(defun ergoemacs-component-struct--create-component (plist body)
+(defun ergoemacs-component-struct--create-component (plist body file)
   "PLIST is the component properties
-BODY is the body of function."
+BODY is the body of function.
+FILE is the file name where the component was created"
   (unwind-protect
       (progn
         (setq ergoemacs-component-struct--define-key-current
               (make-ergoemacs-component-struct
                :name (plist-get plist :name)
-               :plist plist
+               :plist (plist-put plist :file file)
                :just-first-keys (or (plist-get plist :just-first-keys) nil)
                :variable-modifiers (or (plist-get plist :variable-modifiers) '(meta))
                :variable-prefixes (or (plist-get plist :variable-prefixes) '([apps] [menu] [27]))
@@ -1009,7 +1009,7 @@ If Object isn't specified assume it is for the current ergoemacs theme."
   (let (ret)
     (maphash
      (lambda(key _item) (push key ret))
-     ergoemacs-theme-comp-hash)
+     ergoemacs-component-hash)
     (setq ret (regexp-opt ret 'symbols))
     (when at-end
       (setq ret (concat ret "$")))
@@ -1162,7 +1162,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
   "Get the `ergoemacs-component' defined at or before point.
 Return 0 if there is no such symbol. Based on `variable-at-point'"
   (let ((hash-table (or (and theme-instead ergoemacs-theme-hash)
-                        ergoemacs-theme-comp-hash)))
+                        ergoemacs-component-hash)))
     (with-syntax-table emacs-lisp-mode-syntax-table
       (or (condition-case ()
               (save-excursion
@@ -1200,7 +1200,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
                                   "Describe ergoemacs %s: "
                                   (or (and theme-instead "theme") "component")))
                                (or (and theme-instead ergoemacs-theme-hash)
-                                   ergoemacs-theme-comp-hash)
+                                   ergoemacs-component-hash)
                                nil
                                ;; (lambda (vv)
                                ;;   (or (get vv 'variable-documentation)

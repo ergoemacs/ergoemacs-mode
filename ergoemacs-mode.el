@@ -394,9 +394,6 @@ bindings the keymap is:
 (defvar ergoemacs-breadcrumb-hash nil
   "Hash table of map breadcrumbs.")
 
-(defvar ergoemacs-theme-comp-hash nil
-  "Hash of ergoemacs theme components")
-
 (defvar ergoemacs-map-properties--before-ergoemacs nil
   "Keymap describing changes before `ergoemacs-mode' loads.")
 
@@ -478,7 +475,6 @@ When `store-p' is non-nil, save the tables."
    'ergoemacs-map-properties--key-struct (make-hash-table)
    'ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)
    'ergoemacs-theme-hash (make-hash-table :test 'equal)
-   'ergoemacs-theme-comp-hash (make-hash-table :test 'equal)
    'ergoemacs-translate--event-hash (make-hash-table)
    'ergoemacs-translate--hash (make-hash-table)
    'ergoemacs-translation-hash (make-hash-table)
