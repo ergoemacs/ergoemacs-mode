@@ -1336,6 +1336,11 @@ Part of addressing Issue #147."
 "))
     (kill-buffer (current-buffer))))
 
+;; File variables
+(ert-deftest ergoemacs-test-component-location ()
+  "Make sure that the locations are correct."
+  (should (string= "ergoemacs-themes" (file-name-sans-extension (file-name-nondirectory (plist-get (ergoemacs-component-struct-plist (ergoemacs-component-struct--lookup-hash "standard-fixed")) :file))))))
+
 ;; multiple cursors
 (ert-deftest ergoemacs-test-mc-mark-next ()
   "Test Issue #342."
