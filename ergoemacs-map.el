@@ -365,6 +365,8 @@ If LOOKUP-KEYMAP
     (cond
      ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
       lookup-keymap)
+     ((and lookup-keymap (ergoemacs lookup-keymap :dont-modify-p))
+      lookup-keymap)
      ((ergoemacs-component-struct-p map)
       (let ((ret (cond
                   ((and (not lookup-keymap)
@@ -733,6 +735,16 @@ If LOOKUP-KEYMAP
       (warn "\tRecursive:%s" recursive)
       lookup-keymap))))
 
+(defun ergoemacs-map--temporary-map-properties (map)
+  "Set transient and temporary maps to not be touched by
+ergoemacs-mode unless they are bound to a known keymap."
+  (unless ergoemacs-modify-transient-maps
+    (let ((map-key (ergoemacs map :map-key)))
+      (unless map-key
+        (ergoemacs map :label '(temporary-map))
+        (ergoemacs map :dont-modify-p t)))))
+
+
 (defvar ergoemacs-map--modify-active-last-overriding-terminal-local-map nil)
 (defvar ergoemacs-map--modify-active-last-overriding-local-map nil)
 (defvar ergoemacs-map--modify-active-last-char-map nil)
@@ -749,11 +761,13 @@ If LOOKUP-KEYMAP
     (when (and overriding-terminal-local-map
                (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
                (not (ergoemacs overriding-terminal-local-map :installed-p)))
+      (ergoemacs-map--temporary-map-properties overriding-terminal-local-map)
       (setq overriding-terminal-local-map (ergoemacs overriding-terminal-local-map)))
     
     (when (and overriding-local-map
                (not (eq overriding-local-map ergoemacs-map--modify-active-last-overriding-local-map))
                (not (ergoemacs overriding-local-map :installed-p)))
+      (ergoemacs-map--temporary-map-properties overriding-local-map)
       (setq overriding-local-map (ergoemacs overriding-local-map)))
 
     (ergoemacs-save-buffer-state

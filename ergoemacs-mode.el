@@ -1134,6 +1134,11 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
   :type 'boolean
   :group 'ergoemacs-read)
 
+(defcustom ergoemacs-modify-transient-maps nil
+  "Modify Transient maps that are not bound to anything."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 
 ;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "")
 

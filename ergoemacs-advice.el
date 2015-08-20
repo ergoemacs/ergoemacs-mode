@@ -177,6 +177,37 @@ bindings into this keymap (the original keymap is untouched)"
   :type :after
   (ergoemacs-define-key-after keymap key def))
 
+
+(ergoemacs-advice set-temporary-overlay-map (map &optional keep-pred on-exit)
+  "Assume map properties"
+  :type :before
+  (ergoemacs-map--temporary-map-properties map))
+
+(ergoemacs-advice set-transient-map (map &optional keep-pred on-exit)
+  "Assume map properties"
+  :type :before
+  (ergoemacs-map--temporary-map-properties map))
+
+(ergoemacs-advice er/prepare-for-more-expansions ()
+  "Don't let `ergoemacs-mode' modify the transient keymap."
+  :type :around
+  (let ((old ergoemacs-modify-transient-maps))
+    (unwind-protect
+        (progn
+          (setq ergoemacs-modify-transient-maps t)
+          ad-do-it)
+      (setq ergoemacs-modify-transient-maps old))))
+
+(ergoemacs-advice ace-jump-do (re-query-string)
+  "Don't let `ergoemacs-mode' modify the transient keymap."
+  :type :around
+  (let ((old ergoemacs-modify-transient-maps))
+    (unwind-protect
+        (progn
+          (setq ergoemacs-modify-transient-maps t)
+          ad-do-it)
+      (setq ergoemacs-modify-transient-maps old))))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
