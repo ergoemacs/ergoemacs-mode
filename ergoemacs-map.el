@@ -740,7 +740,8 @@ If LOOKUP-KEYMAP
   "Modifies Active maps."
   (let ((char-map (get-char-property-and-overlay (point) 'keymap))
         (local-map (get-text-property (point) 'local-map))
-        (current-local-map (current-local-map)))
+        (current-local-map (current-local-map))
+        tmp)
     ;; Restore `overriding-terminal-local-map' if needed
     (when (and overriding-terminal-local-map
                (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
@@ -771,9 +772,11 @@ If LOOKUP-KEYMAP
       (put-text-property (previous-single-char-property-change (point) 'local-map)
                          (next-single-char-property-change (point) 'local-map)
                          'local-map (ergoemacs local-map)))
-     (unless (and (eq (current-global-map) global-map)
-                  (not (ergoemacs (current-global-map) :installed-p)))
-       (use-global-map (ergoemacs (current-global-map))))
+     (when (and (setq tmp (current-global-map))
+                (ergoemacs-keymapp tmp)
+                (not (eq tmp global-map))
+                (not (ergoemacs tmp :installed-p)))
+       (use-global-map (ergoemacs tmp)))
      (when (and current-local-map (not (ergoemacs current-local-map :installed-p)))
        (unless (minibufferp)
          (setq ergoemacs-map--breadcrumb (format "%s" major-mode))
@@ -836,10 +839,9 @@ If LOOKUP-KEYMAP
   ;; Restore menu-bar
   ;; Not needed; Global map isn't modified...
   (let (ergoemacs-mode)
-    (use-global-map global-map)
     (setq ergoemacs-map--alist (make-hash-table)
           ergoemacs-map--alists (make-hash-table)
-          global-map ergoemacs-saved-global-map
+          global-map (ergoemacs :global-map)
           ergoemacs-saved-global-map  nil)
     (use-global-map global-map)
     (ergoemacs-map--modify-active t)

@@ -1084,6 +1084,8 @@ Should test issue #142"
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (with-temp-file temp-file
       (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+              (or (and (boundp 'wait-for-me)
+                       "(setq debug-on-error t)") "")
               "(ergoemacs-theme-component my-theme01 ()\n"
               "\"My ergoemacs-mode theme component\"\n"
               "(global-set-key (kbd \"C-x 1\") 'delete-other-windows)\n"
@@ -1106,7 +1108,7 @@ Should test issue #142"
     (byte-compile-file temp-file)
     (message "%s"
              (shell-command-to-string
-              (format "%s %s --debug-init -Q -L %s -l %s -l %s"
+              (format "%s %s -Q -L %s -l %s -l %s"
                       emacs-exe (if (boundp 'wait-for-me) "" "--batch")
                       (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
                       (expand-file-name (file-name-sans-extension (locate-library "ergoemacs-mode")))
