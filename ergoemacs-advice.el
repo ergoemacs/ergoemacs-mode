@@ -156,7 +156,7 @@ bindings into this keymap (the original keymap is untouched)"
 (defun ergoemacs-define-key-after (keymap key def)
   "Get hook information for KEYMAP, and adjust ergoemacs keys based on global modifications."
   (when (eq keymap (current-global-map))
-    (let ((map-key (ergoemacs keymap :map-key)))
+    (let ((map-key (ergoemacs (ergoemacs keymap :original) :map-key)))
       (cond
        ((not (integerp map-key)))
        ((not (= map-key most-negative-fixnum)))
