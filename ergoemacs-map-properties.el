@@ -1045,6 +1045,18 @@ maps.")
           (ergoemacs keymap :use-set-map-key set-map-p))))
      (t nil))))
 
+(defvar ergoemacs-map-properties--major-modes-that-modify-global-keymap
+  '(calc-mode calc-trail-mode calc-edit-mode)
+  "List of major modes that modify the global map.")
+
+(defvar ergoemacs-map-properties--ignore-global-changes-p nil
+  "When set, `ergoemacs-mode' may ignore changes in the `global-map'")
+
+(defun ergoemacs-map-properties--ignore-global-changes-p ()
+  "Determines if `ergoemacs-mode' ignores the changes in the `global-map'."
+  (or ergoemacs-map-properties--ignore-global-changes-p
+      (memq major-mode ergoemacs-map-properties--major-modes-that-modify-global-keymap)))
+
 (provide 'ergoemacs-map-properties)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-map-properties.el ends here

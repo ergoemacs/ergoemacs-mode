@@ -147,24 +147,29 @@ bindings into this keymap (the original keymap is untouched)"
                (boundp 'ergoemacs-mode))
       (ergoemacs-map-properties--reset-run-mode-hooks hooks))))
 
-(ergoemacs-advice define-key (keymap key def)
-  "Protect keymaps when changing keys from a hook."
-  :type :after
+(defun ergoemacs-define-key-after (keymap key def)
+  "Get hook information for KEYMAP, and adjust ergoemacs keys based on global modifications."
   (when (eq keymap (current-global-map))
-    (let ((map-key (ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist (ergoemacs-map-properties--original keymap)) :map-key))))
+    (let ((map-key (ergoemacs keymap :map-key)))
       (cond
        ((not (integerp map-key)))
        ((not (= map-key most-negative-fixnum)))
+       ((ergoemacs :ignore-global-changes-p))
        ((not def)
         (unless (member key ergoemacs-map--unbound-keys)
           (push key ergoemacs-map--unbound-keys))
         (when (ergoemacs-keymapp ergoemacs-saved-global-map)
           (define-key ergoemacs-saved-global-map key nil)))
        ((ergoemacs-keymapp ergoemacs-saved-global-map)
-        (define-key ergoemacs-saved-global-map key def)))))
+        (define-key ergoemacs-saved-global-map key def))))))
   (when (and (boundp 'ergoemacs-map-properties--protect-local)
              ergoemacs-map-properties--protect-local)
-    (ergoemacs-map-properties--hook-define-key keymap key def)))
+    (ergoemacs-map-properties--hook-define-key keymap key def))
+
+(ergoemacs-advice define-key (keymap key def)
+  "Protect keymaps when changing keys from a hook."
+  :type :after
+  (ergoemacs-define-key-after keymap key def))
 
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

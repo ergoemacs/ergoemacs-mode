@@ -687,6 +687,8 @@ When arg1 can be a property.  The following properties are supported:
                                :use-local-unbind-list-p
                                :set-map-p)))
     (cond
+     ((and arg1 (symbolp arg1) (eq arg1 :ignore-global-changes-p) (not arg2) (not arg3))
+      `(ergoemacs-map-properties--ignore-global-changes-p))
      ((and arg1 (symbolp arg1) (eq arg1 :user-before) (not arg2) (not arg3))
       `(ergoemacs-map-properties--before-ergoemacs))
      ((and arg1 (symbolp arg1) (eq arg1 :user-after) (not arg2) (not arg3))
