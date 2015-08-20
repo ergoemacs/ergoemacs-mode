@@ -97,6 +97,7 @@
 (declare-function ergoemacs-map-properties--deferred-maps "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--get-or-generate-map-key "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--ignore-global-changes-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--key-hash "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keymap-value "ergoemacs-map-properties")

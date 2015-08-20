@@ -56,14 +56,20 @@
 
 (defvar ergoemacs-mode)
 (defvar ergoemacs-keymap)
+(defvar ergoemacs-map--unbound-keys)
+(defvar ergoemacs-saved-global-map)
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
+(declare-function ergoemacs-map-properties--hook-define-key "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--ignore-global-changes-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
+
 (declare-function ergoemacs-key-description--substitute-command-keys "ergoemacs-key-description")
+
 
 (defvar ergoemacs-advice--temp-replace-functions nil
   "List of `ergoemacs-mode' replacement functions that are turned
@@ -161,10 +167,10 @@ bindings into this keymap (the original keymap is untouched)"
         (when (ergoemacs-keymapp ergoemacs-saved-global-map)
           (define-key ergoemacs-saved-global-map key nil)))
        ((ergoemacs-keymapp ergoemacs-saved-global-map)
-        (define-key ergoemacs-saved-global-map key def))))))
+        (define-key ergoemacs-saved-global-map key def)))))
   (when (and (boundp 'ergoemacs-map-properties--protect-local)
              ergoemacs-map-properties--protect-local)
-    (ergoemacs-map-properties--hook-define-key keymap key def))
+    (ergoemacs-map-properties--hook-define-key keymap key def)))
 
 (ergoemacs-advice define-key (keymap key def)
   "Protect keymaps when changing keys from a hook."
