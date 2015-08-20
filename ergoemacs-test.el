@@ -1336,6 +1336,24 @@ Part of addressing Issue #147."
 "))
     (kill-buffer (current-buffer))))
 
+;; multiple cursors
+(ert-deftest ergoemacs-test-mc-mark-next ()
+  "Test Issue #342."
+  :tags '(:mc)
+  (ergoemacs-test-layout
+   :layout "colemak"
+   :theme "reduction"
+   :macro "M-SPC M-y M-* n o t SPC f o o <return>"
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (emacs-lisp-mode)
+     (insert "foo bar bar bar foo bar")
+     (goto-char (point-min))
+     (execute-kbd-macro macro)
+     (should (string= (buffer-string) "not foo bar bar bar not foo bar"))
+     (kill-buffer (current-buffer)))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
