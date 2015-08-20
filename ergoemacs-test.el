@@ -104,6 +104,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (ert '(and "ergoemacs-" (tag :copy)))
   (call-interactively 'elp-results))
 
+(defun ergoemacs-test-calc ()
+  "Tests for calc"
+  (interactive)
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (tag :calc)))
+  (call-interactively 'elp-results))
+
 (defun ergoemacs-test-shift-select ()
   "Shift-selection test for ergoemacs-mode"
   (interactive)
@@ -167,7 +174,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-isearch-in-eshell ()
   "Test Issue #322"
-  :tags '(:search)
+  :tags '(:search :calc)
   (ergoemacs-test-layout
    :layout "us"
    (ergoemacs-eshell-here)
@@ -256,7 +263,7 @@ Tests issue #347"
 
 (ert-deftest ergoemacs-test-shift-select-reduction ()
   "Test that shift selection works properly in reduction."
-  :tags '(:shift-select)
+  :tags '(:shift-select :calc)
   (ergoemacs-test-layout
    :theme "reduction"
    :layout "colemak"
@@ -492,6 +499,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-function-M-e-only-one-char-issue-306 ()
   "Tests Issue #306."
+  :tags '(:calc)
   (let ((ergoemacs-test-fn t)
         (ergoemacs-read-input-keys nil))
     (ergoemacs-test-layout
@@ -595,6 +603,7 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
 
 (ert-deftest ergoemacs-test-calc-300 ()
   "Test Calc undo"
+  :tags '(:calc)
   (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
      :theme "reduction"
@@ -606,6 +615,7 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
 
 (ert-deftest ergoemacs-test-calc-fries-ergoemacs-mode ()
   "After calc has entered some numbers, it fries ergoemacs-mode."
+  :tags '(:calc)
   (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
      :theme "reduction"
