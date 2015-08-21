@@ -936,8 +936,8 @@ the prefix arguments of `end-of-buffer',
           (save-excursion
             ;; See http://www.emacswiki.org/emacs/EndOfLineNoComments
             (goto-char (point-at-bol))
-            (while (re-search-backward (format "%s" comment-start-skip) (point-at-bol) t))
-            (while (re-search-forward (format "\\=%s" comment-start-skip) (point-at-eol) t))
+            (when (re-search-forward (format "%s" comment-start-skip) (point-at-eol) t)
+              (goto-char (match-beginning 0)))
             (skip-syntax-backward " " (point-at-bol))
             (push (point) pts)))
         (when pts
