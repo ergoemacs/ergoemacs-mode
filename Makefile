@@ -88,7 +88,8 @@ default-select :
 
 
 
-test : clean build build2 test-dep-1 test-autoloads ert
+#test : clean build build2 test-dep-1 test-autoloads ert
+test : clean ert  # Source!
 
 start: clean build start0
 startel: clean start0
