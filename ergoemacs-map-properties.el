@@ -785,7 +785,7 @@ The KEYMAP will have the structure
 (defvar ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
   "Hash table of the user maps that `ergoemacs-mode' saves.")
 
-(defun ergoemacs-map-properties--user (keymap &optional no-recursion &rest _ignore)
+(defun ergoemacs-map-properties--user (keymap &rest _ignore)
   "Gets the user KEYMAP with `ergoemacs-mode' identifiers installed.
 KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((key (ergoemacs keymap :map-key))
