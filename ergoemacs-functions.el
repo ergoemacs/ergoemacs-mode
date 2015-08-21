@@ -785,12 +785,14 @@ the prefix arguments of `beginning-of-buffer',
             (when (not (eolp))
               (forward-char 1))
             (save-excursion
-              (when (ignore-errors (comment-search-backward (point-at-bol) t))
-                (push (point) pts)
-                (when (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
-                  (while (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
-                    (skip-syntax-backward " " (point-at-bol)))
-                  (push (point) pts))))))
+              (while (re-search-backward (format "%s" comment-start-skip) (point-at-bol) t))
+              (while (re-search-forward (format "\\=%s" comment-start-skip) (point-at-eol) t))
+              (push (point) pts)
+              (when (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
+                (while (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
+                  (skip-chars-backward " \t" (point-at-bol)))
+                (skip-chars-backward " \t" (point-at-bol))
+                (push (point) pts)))))
         (cond
          ((not pts)
           (let ((pt (point)))
@@ -933,11 +935,11 @@ the prefix arguments of `end-of-buffer',
         (when ergoemacs-end-of-comment-line
           (save-excursion
             ;; See http://www.emacswiki.org/emacs/EndOfLineNoComments
-            (let ((cs (ignore-errors (comment-search-forward (point-at-eol) t))))
-              (when cs
-                (goto-char cs)
-                (skip-syntax-backward " " (point-at-bol))
-                (push (point) pts)))))
+            (goto-char (point-at-bol))
+            (while (re-search-backward (format "%s" comment-start-skip) (point-at-bol) t))
+            (while (re-search-forward (format "\\=%s" comment-start-skip) (point-at-eol) t))
+            (skip-syntax-backward " " (point-at-bol))
+            (push (point) pts)))
         (when pts
           (setq pts (sort pts '<))
           (dolist (x pts)
