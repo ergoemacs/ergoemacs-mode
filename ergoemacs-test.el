@@ -115,17 +115,24 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-shift-select ()
-  "Shift-selection test for ergoemacs-mode"
+  "Shift-selection tests for ergoemacs-mode"
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :shift-select)))
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-translate ()
-  "Copy/Paste test for ergoemacs-mode"
+  "Translation tests for ergoemacs-mode"
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :translate)))
+  (call-interactively 'elp-results))
+
+(defun ergoemacs-test-interactive ()
+  "Interactive tests for ergoemacs-mode"
+  (interactive)
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (tag :interactive)))
   (call-interactively 'elp-results))
 
 ;;;###autoload
@@ -159,12 +166,12 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-isearch-C-f ()
   "C-f doesn't work in isearch-mode."
-  :tags '(:search)
+  :tags '(:search :interactive)
   ;; Google Code Issue #119
   (ergoemacs-test-layout
    :layout "colemak"
    :cua t
-   :macro "C-f a r s C-f C-f"
+   :macro "C-f ars C-f C-f"
    (save-excursion
      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
      (delete-region (point-min) (point-max))
@@ -266,7 +273,7 @@ Tests issue #347"
 
 (ert-deftest ergoemacs-test-shift-select-reduction ()
   "Test that shift selection works properly in reduction."
-  :tags '(:shift-select :calc)
+  :tags '(:shift-select :calc :interactive)
   (ergoemacs-test-layout
    :theme "reduction"
    :layout "colemak"
@@ -306,7 +313,7 @@ Tests issue #347"
 
 (ert-deftest ergoemacs-test-copy-paste-issue-184 ()
   "Issue #184; Not replace the \"selected all\" by paste."
-  :tags '(:copy)
+  :tags '(:copy :interactive)
   (let ((ret t)
         (ergoemacs-handle-ctl-c-or-ctl-x 'both))
     (ergoemacs-test-layout
@@ -375,7 +382,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-copy-paste-issue-130-cut ()
   "Attempts to test Issue #130 -- Cut"
-  :tags '(:copy)
+  :tags '(:copy :interactive)
   (ergoemacs-test-layout
    (let ((ret t)
          (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
@@ -394,7 +401,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-copy-paste-issue-130-copy ()
   "Attempts to test Issue #130 -- Copy"
-  :tags '(:copy)
+  :tags '(:copy :interactive)
   (ergoemacs-test-layout
    (let ((ergoemacs-ctl-c-or-ctl-x-delay 0.1)
          (ergoemacs-handle-ctl-c-or-ctl-x 'both)
@@ -418,7 +425,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-copy-paste-apps-cut ()
   "Tests <apps> x on QWERTY cutting a region, not just a line."
-  :tags '(:copy)
+  :tags '(:copy :interactive)
   (let (ret)
     (ergoemacs-test-layout
      :macro (format "<%s> x"
@@ -440,7 +447,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-copy-paste-apps-copy ()
   "Tests <apps> c on QWERTY copying a region, not just a line."
-  :tags '(:copy)
+  :tags '(:copy :interactive)
   ;; :tags '(:interactive)
   (ergoemacs-test-layout
    :macro (format "C-a <%s> c C-v"
@@ -606,7 +613,7 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
 
 (ert-deftest ergoemacs-test-calc-300 ()
   "Test Calc undo"
-  :tags '(:calc)
+  :tags '(:calc :interactive)
   (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
      :theme "reduction"
@@ -618,7 +625,7 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
 
 (ert-deftest ergoemacs-test-calc-fries-ergoemacs-mode ()
   "After calc has entered some numbers, it fries ergoemacs-mode."
-  :tags '(:calc)
+  :tags '(:calc :interactive)
   (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
      :theme "reduction"
@@ -738,7 +745,6 @@ See Issue #138."
 
 (ert-deftest ergoemacs-test-command-loop-shortcut ()
   "Test that shortcuts don't eat or duplicate key-strokes. (Issue #141)"
-  :expected-result (if noninteractive :failed :passed)
   (let (ret)
     (ergoemacs-test-layout
      :macro (format "<%s> e e M-u"
@@ -760,6 +766,7 @@ See Issue #138."
 (ert-deftest ergoemacs-test-command-loop-overlay ()
   "Test for mark working with overlays.
 Should test issue #142"
+  :tags '(:interactive)
   (let (ret
         tmp (tmp-key (make-sparse-keymap))
         overlays)
@@ -1234,6 +1241,7 @@ Part of addressing Issue #147."
 (ert-deftest ergoemacs-test-keep-ctl-s ()
   "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
 Part of addressing Issue #147."
+  :tags '(:interactive)
   (ergoemacs-test-layout
    (let (ret
          (ergoemacs-use-function-remapping t))
@@ -1348,6 +1356,7 @@ Part of addressing Issue #147."
 (ert-deftest ergoemacs-test-mc-mark-next ()
   "Test Issue #342."
   :tags '(:mc)
+  :expected-result :failed
   (ergoemacs-test-layout
    :layout "colemak"
    :theme "reduction"

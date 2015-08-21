@@ -36,8 +36,31 @@ TRAVIS_FILE=.travis.yml
 24.4 :
 	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.4\bin\emacs.exe")
 
-24.5:
+24.5 :
 	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.5\bin\emacs.exe")
+
+search :
+	$(eval SELECT:=(tag :search))
+
+copy :
+	$(eval SELECT:=(tag :copy))
+
+slow :
+	$(eval SELECT:=(tag :slow))
+
+shift-select :
+	$(eval SELECT:=(tag :shift-select))
+
+translate :
+	$(eval SELECT:=(tag :translate))
+
+
+other :
+	$(eval SELECT:=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate)))
+
+default-select :
+	$(eval SELECT:=)
+
 
 
 build :
@@ -64,32 +87,12 @@ test-autoloads : autoloads
 test-travis :
 	@if test -z "$$TRAVIS" && test -e $(TRAVIS_FILE); then travis-lint $(TRAVIS_FILE); fi
 
-search :
-    $(eval SELECT:=(tag :search))
 
-copy :
-    $(eval SELECT:=(tag :copy))
+test: source compile
 
-slow :
-    $(eval SELECT:=(tag :slow))
+compile : clean build build2 test-autoloads erti
 
-shift-select :
-    $(eval SELECT:=(tag :shift-select))
-
-translate :
-    $(eval SELECT:=(tag :translate))
-
-
-other :
-    $(eval SELECT:=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate)))
-
-default-select :
-    $(eval SELECT:=)
-
-
-
-#test : clean build build2 test-dep-1 test-autoloads ert
-test : clean ert  # Source!
+source : clean ert
 
 start: clean build start0
 startel: clean start0
@@ -99,12 +102,12 @@ start0:
 
 ert :
 	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
-	    "(progn                                          \
+	    "(progn (setq ergoemacs-command-loop-type nil)                                          \
 	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" $(SELECT) (not (tag :interactive)))))" || exit 1; \
 
 erti :
 	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
-	    "(progn                                          \
+	    "(progn (setq ergoemacs-command-loop-type nil)                                         \
 	      (fset 'ert--print-backtrace 'ignore)  \
 	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" $(SELECT) (not (tag :interactive)))))" || exit 1; \
 
