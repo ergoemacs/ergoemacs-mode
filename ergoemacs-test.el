@@ -745,6 +745,7 @@ See Issue #138."
 
 (ert-deftest ergoemacs-test-command-loop-shortcut ()
   "Test that shortcuts don't eat or duplicate key-strokes. (Issue #141)"
+  :tags '(:interactive)
   (let (ret)
     (ergoemacs-test-layout
      :macro (format "<%s> e e M-u"
@@ -897,12 +898,12 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-before-1 ()
   "Test global set key before ergoemacs-mode loads."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should (equal (ergoemacs-test-global-key-set-before) t)))
 
 (ert-deftest ergoemacs-test-global-key-set-before-2 ()
   "Test global set key before ergoemacs-mode loads (define-key)."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should (equal (ergoemacs-test-global-key-set-before nil nil 'define-key) t)))
 
 (ert-deftest ergoemacs-test-global-key-set-after ()
@@ -917,7 +918,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
   "Test setting <apps> m c before loading."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -928,7 +929,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-c-before-2 ()
   "Test setting <apps> m c before loading (define-key)."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -939,7 +940,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-m-semi-before ()
   "Test setting M-; before loading."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should (equal (ergoemacs-test-global-key-set-before nil "M-;") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-m-semi-after ()
@@ -949,7 +950,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-before ()
   "Test setting <apps> before loading."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -961,7 +962,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-before-2 ()
   "Test setting <apps> before loading (define-key)."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -972,7 +973,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-before ()
   "Test setting <apps> m before loading."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -983,7 +984,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-m-before-2 ()
   "Test setting <apps> m before loading (define-key)."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should
    (equal
     (ergoemacs-test-global-key-set-before
@@ -1045,7 +1046,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-apps-220-before ()
   "Test global C-c b"
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should (equal (ergoemacs-test-global-key-set-before nil "C-c b") t)))
 
 (ert-deftest ergoemacs-test-global-key-set-M-t-after ()
@@ -1061,7 +1062,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-global-key-set-C-d-before ()
   "Test global C-d"
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (should (equal (ergoemacs-test-global-key-set-before nil "C-d") t)))
 
 (ert-deftest ergoemacs-test-issue-243 ()
@@ -1144,7 +1145,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-M-J-347 ()
   "Test keys that are not working in #347."
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (let* ((emacs-exe (ergoemacs-emacs-exe))
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
@@ -1194,7 +1195,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-issue-349 ()
   "Unbind <f6>"
-  :tags '(:slow)
+  :tags '(:slow :interactive)
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (w-file (expand-file-name "global-test" ergoemacs-dir))
         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
