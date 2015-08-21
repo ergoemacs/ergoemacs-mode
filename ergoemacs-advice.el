@@ -66,6 +66,7 @@
 (declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 
 (declare-function ergoemacs-key-description--substitute-command-keys "ergoemacs-key-description")

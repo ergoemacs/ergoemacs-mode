@@ -42,12 +42,15 @@
 (defvar ergoemacs-mode)
 (defvar dired-sort-map)
 (defvar dired-mode-map)
+(defvar cl-struct-ergoemacs-component-struct-tags)
 
 
 (declare-function ergoemacs-mode "ergoemacs-mode")
 
 (declare-function ergoemacs-command-loop "ergoemacs-command-loop")
 (declare-function ergoemacs-command-loop--internal "ergoemacs-command-loop")
+
+(declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-compononent")
 
 (declare-function ergoemacs-copy-line-or-region "ergoemacs-functions")
 (declare-function ergoemacs-cut-line-or-region "ergoemacs-functions")

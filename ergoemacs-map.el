@@ -72,6 +72,7 @@
 (defvar ergoemacs-theme)
 (defvar ergoemacs-user-keymap)
 (defvar ess-language)
+(defvar ergoemacs-modify-transient-maps)
 
 
 (declare-function ergoemacs-menu--filter "ergoemacs-lib")
