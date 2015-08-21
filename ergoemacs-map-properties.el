@@ -785,18 +785,34 @@ The KEYMAP will have the structure
 (defvar ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
   "Hash table of the user maps that `ergoemacs-mode' saves.")
 
-(defun ergoemacs-map-properties--user (keymap &rest _ignore)
+(defun ergoemacs-map-properties--user (keymap &optional no-recursion &rest _ignore)
   "Gets the user KEYMAP with `ergoemacs-mode' identifiers installed.
 KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((key (ergoemacs keymap :map-key))
-        map)
-    (if (not (integerp key))
-        (setq map (ergoemacs (ergoemacs keymap :original) :user))
+        original map)
+    (cond
+     ((not key)
+      (ergoemacs :label keymap)
+      (setq key (ergoemacs keymap :map-key))
+      (puthash key (make-sparse-keymap) ergoemacs-map-properties--user-map-hash)
+      (setq map (ergoemacs-gethash key ergoemacs-map-properties--user-map-hash))
+      (ergoemacs map :label (list (ergoemacs keymap :key-hash) 'user)))
+     ((not (integerp key))
+      (setq original (ergoemacs keymap :original)
+            key (ergoemacs original :map-key))
+      (if (integerp key)
+          (setq map (ergoemacs original :user))
+        (setq map (ergoemacs-gethash key ergoemacs-map-properties--user-map-hash))
+        (unless map
+          (puthash key (make-sparse-keymap) ergoemacs-map-properties--user-map-hash)
+          (setq map (ergoemacs-gethash key ergoemacs-map-properties--user-map-hash))
+          (ergoemacs map :label (list key 'user)))))
+     (t
       (setq map (ergoemacs-gethash (setq key (ergoemacs keymap :key-hash)) ergoemacs-map-properties--user-map-hash))
       (unless map
         (puthash key (make-sparse-keymap) ergoemacs-map-properties--user-map-hash)
         (setq map (ergoemacs-gethash key ergoemacs-map-properties--user-map-hash))
-        (ergoemacs map :label (list (ergoemacs keymap :key-hash) 'user))))
+        (ergoemacs map :label (list (ergoemacs keymap :key-hash) 'user)))))
     map))
 
 (defun ergoemacs-map-properties--calculate-keys-and-where-is-hash (keymap &rest _ignore)
