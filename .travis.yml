@@ -49,7 +49,9 @@ env:
 
 matrix:
   fast_finish: true
-#   allow_failures:
+   allow_failures:
+  - EMACS=emacs-24.1-bin METHOD=evm
+  - EMACS=emacs-24.2-bin METHOD=evm
 #     - env: EMACS=xemacs21
 #     - env: EMACS=emacs22
 #     - env: EMACS=emacs-snapshot
