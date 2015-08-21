@@ -385,7 +385,9 @@
   (define-key Info-mode-map (kbd "<S-backspace>") 'Info-history-forward)
   (define-key Info-mode-map (kbd "<M-backspace>") 'Info-history-forward)
   (define-key help-mode-map (kbd "<backspace>") 'help-go-back)
-  (define-key help-mode-map (kbd "<S-backspace>") 'help-go-forward))
+  (define-key help-mode-map (kbd "<S-backspace>") 'help-go-forward)
+  (define-key eww-mode-map (kbd "<backspace>") 'eww-back-url)
+  (define-key eww-mode-map (kbd "<S-backspace>") 'eww-forward-url))
 
 (ergoemacs-component fixed-newline ()
   "Newline and indent"
