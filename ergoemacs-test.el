@@ -149,7 +149,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-isearch-C-f-backspace ()
   "Test Backspace in `isearch-mode'"
-  :tags '(:search)
+  :tags '(:search :interactive)
   ;; Google Code Issue #145
   (ergoemacs-test-layout
    :layout "colemak"
