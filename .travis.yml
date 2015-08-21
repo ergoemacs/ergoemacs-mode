@@ -195,7 +195,7 @@ before_script:
 ###
 
 script:
-  echo "Method is $METHOD" && echo "Tests to run are $TST" && $EMACS --version && make test EMACS="$EMACS SELECT=$TST"
+  echo "Method is $METHOD" && echo "Tests to run are $TST" && $EMACS --version && make test EMACS="$EMACS" SELECT=$TST
 
 ###
 ### settings
