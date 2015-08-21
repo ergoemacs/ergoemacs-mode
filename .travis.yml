@@ -29,65 +29,15 @@ language: emacs-lisp
 ###
 
 env:
-  #- EMACS=emacs-23.4-bin METHOD=evm TST=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate))
-  - EMACS=emacs-24.1-bin METHOD=evm TST=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate))
-  - EMACS=emacs-24.2-bin METHOD=evm TST=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate))
-  # - EMACS=emacs-24.2 METHOD=evm TST=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate))
-  - EMACS=emacs-24.3-bin METHOD=evm TST=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate))
-  - EMACS=emacs-24.4-bin METHOD=evm TST=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate))
-  - EMACS=emacs-24.5-bin METHOD=evm TST=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate))
-  - EMACS=emacs24 METHOD=manual TST=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate))
-  - EMACS=emacs-snapshot METHOD=manual TST=(not (tag :search)) (not (tag :copy)) (not (tag :slow))  (not (tag :shift-select)) (not (tag :translate))
-
-  #- EMACS=emacs-23.4-bin METHOD=evm TST=(tag :search)
-  - EMACS=emacs-24.1-bin METHOD=evm TST=(tag :search)
-  - EMACS=emacs-24.2-bin METHOD=evm TST=(tag :search)
-  # - EMACS=emacs-24.2 METHOD=evm TST=(tag :search)
-  - EMACS=emacs-24.3-bin METHOD=evm TST=(tag :search)
-  - EMACS=emacs-24.4-bin METHOD=evm TST=(tag :search)
-  - EMACS=emacs-24.5-bin METHOD=evm TST=(tag :search)
-  - EMACS=emacs24 METHOD=manual TST=(tag :search)
-  - EMACS=emacs-snapshot METHOD=manual TST=(tag :search)
-
-  #- EMACS=emacs-23.4-bin METHOD=evm TST=(tag :copy)
-  - EMACS=emacs-24.1-bin METHOD=evm TST=(tag :copy)
-  - EMACS=emacs-24.2-bin METHOD=evm TST=(tag :copy)
-  # - EMACS=emacs-24.2 METHOD=evm TST=(tag :copy)
-  - EMACS=emacs-24.3-bin METHOD=evm TST=(tag :copy)
-  - EMACS=emacs-24.4-bin METHOD=evm TST=(tag :copy)
-  - EMACS=emacs-24.5-bin METHOD=evm TST=(tag :copy)
-  - EMACS=emacs24 METHOD=manual TST=(tag :copy)
-  - EMACS=emacs-snapshot METHOD=manual TST=(tag :copy)
-
-  #- EMACS=emacs-23.4-bin METHOD=evm TST=(tag :slow)
-  - EMACS=emacs-24.1-bin METHOD=evm TST=(tag :slow)
-  - EMACS=emacs-24.2-bin METHOD=evm TST=(tag :slow)
-  # - EMACS=emacs-24.2 METHOD=evm TST=(tag :slow)
-  - EMACS=emacs-24.3-bin METHOD=evm TST=(tag :slow)
-  - EMACS=emacs-24.4-bin METHOD=evm TST=(tag :slow)
-  - EMACS=emacs-24.5-bin METHOD=evm TST=(tag :slow)
-  - EMACS=emacs24 METHOD=manual TST=(tag :slow)
-  - EMACS=emacs-snapshot METHOD=manual TST=(tag :slow)
-
-  #- EMACS=emacs-23.4-bin METHOD=evm TST=(tag :shift-select)
-  - EMACS=emacs-24.1-bin METHOD=evm TST=(tag :shift-select)
-  - EMACS=emacs-24.2-bin METHOD=evm TST=(tag :shift-select)
-  # - EMACS=emacs-24.2 METHOD=evm TST=(tag :shift-select)
-  - EMACS=emacs-24.3-bin METHOD=evm TST=(tag :shift-select)
-  - EMACS=emacs-24.4-bin METHOD=evm TST=(tag :shift-select)
-  - EMACS=emacs-24.5-bin METHOD=evm TST=(tag :shift-select)
-  - EMACS=emacs24 METHOD=manual TST=(tag :shift-select)
-  - EMACS=emacs-snapshot METHOD=manual TST=(tag :shift-select)
-
-  #- EMACS=emacs-23.4-bin METHOD=evm TST=(tag :translate)
-  - EMACS=emacs-24.1-bin METHOD=evm TST=(tag :translate)
-  - EMACS=emacs-24.2-bin METHOD=evm TST=(tag :translate)
-  # - EMACS=emacs-24.2 METHOD=evm TST=(tag :translate)
-  - EMACS=emacs-24.3-bin METHOD=evm TST=(tag :translate)
-  - EMACS=emacs-24.4-bin METHOD=evm TST=(tag :translate)
-  - EMACS=emacs-24.5-bin METHOD=evm TST=(tag :translate)
-  - EMACS=emacs24 METHOD=manual TST=(tag :translate)
-  - EMACS=emacs-snapshot METHOD=manual TST=(tag :translate)
+  #- EMACS=emacs-23.4-bin METHOD=evm
+  - EMACS=emacs-24.1-bin METHOD=evm
+  - EMACS=emacs-24.2-bin METHOD=evm
+  # - EMACS=emacs-24.2 METHOD=evm
+  - EMACS=emacs-24.3-bin METHOD=evm
+  - EMACS=emacs-24.4-bin METHOD=evm
+  - EMACS=emacs-24.5-bin METHOD=evm
+  - EMACS=emacs24 METHOD=manual
+  - EMACS=emacs-snapshot METHOD=manual
 
 #  matrix:
 #  global:
@@ -195,7 +145,7 @@ before_script:
 ###
 
 script:
-  echo "Method is $METHOD" && echo "Tests to run are $TST" && $EMACS --version && make test EMACS="$EMACS" SELECT=$TST
+  echo "Method is $METHOD" && $EMACS --version && make test EMACS="$EMACS"
 
 ###
 ### settings
