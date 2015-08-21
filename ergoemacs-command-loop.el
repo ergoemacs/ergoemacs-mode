@@ -877,15 +877,7 @@ This sequence is compatible with `listify-key-sequence'."
   "Determine if `ergoemacs-mode' is running its command loop.
 This is done by looking at the current `backtrace' and making
 sure that `ergoemacs-command-loop--internal' hasn't been called."
-  (eq ergoemacs-last-command-event last-command-event)
-  ;; (ergoemacs-save-buffer-state
-  ;;  (if  t
-  ;;    (let ((standard-output t))
-  ;;      (with-temp-buffer
-  ;;        (setq standard-output (current-buffer))
-  ;;        (backtrace)
-  ;;        (save-match-data (re-search-backward "^ *\\<ergoemacs-command-loop--internal\\> *(" nil t))))))
-  )
+  (eq ergoemacs-last-command-event last-command-event))
 
 (defvar ergoemacs-command-loop-start nil)
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
@@ -1010,7 +1002,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
            form tmp)
       (when area
         (setq command (key-binding (vconcat (list area last-command-event)) t))
-        (when (and obj (setq tmp (get-text-property (cdr obj)  'local-map (car obj)))
+        (when (and obj (consp obj) (setq tmp (get-text-property (cdr obj)  'local-map (car obj)))
                    (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
           (setq command tmp)))
       (unless command
