@@ -476,10 +476,11 @@ If LOOKUP-KEYMAP
               ret (ergoemacs-cache global-ret ret)
               ergoemacs-map-- (ergoemacs-cache ergoemacs-map-- ergoemacs-map--)
               ergoemacs-map--undefined-keys (ergoemacs-cache undefined-keys ergoemacs-map--undefined-keys))
-        (map-keymap
-         (lambda (event item)
-           (define-key parent (vector menu-bar event) item))
-         tmp)
+        (define-key parent [menu-bar] tmp)
+        ;; (map-keymap
+        ;;  (lambda (event item)
+        ;;    (define-key parent (vector menu-bar event) item))
+        ;;  tmp)
         (set-keymap-parent ret (make-composed-keymap composed-list parent))
         ;; Save hash
         (puthash lookup-key ret ergoemacs-map--hash)
@@ -881,9 +882,7 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
       (set-default map (ergoemacs (ergoemacs-sv map) :original))))
   (let ((menu-bar (ergoemacs (ergoemacs :global-map) :original-menu-bar)))
     (when menu-bar
-      ;; (message "menu-bar: %s" menu-bar)
-      ;; (global-set-key [menu-bar] menu-bar)
-      ))
+      (global-set-key [menu-bar] menu-bar)))
   (ergoemacs-component-struct--rm-hooks))
 
 (defun ergoemacs-map-undefined ()
