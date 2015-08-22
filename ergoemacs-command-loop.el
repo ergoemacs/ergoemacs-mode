@@ -1007,7 +1007,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
           (setq command tmp)))
       (unless command
         (setq command original-command))
-      (setq form (and (symbolp command) (commandp command t) (interactive-form command)))
+      (setq form (and command (symbolp command) (commandp command t) (interactive-form command)))
       ;; (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
       ;; From `read-key-sequence':
       ;; /* Clicks in non-text areas get prefixed by the symbol
@@ -1026,7 +1026,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
       ;;
       ;; /* Arrange to go back to the original buffer once we're
       ;; done reading the key sequence.  Note that we can't
-      ;; use save_excursion_{save,restore} here, because they
+      ;; use save_excursion_{save,ore} here, because they
       ;; save point as well as the current buffer; we don't
       ;; want to save point, because redisplay may change it,
       ;; to accommodate a Fset_window_start or something.  We
@@ -1041,32 +1041,63 @@ The true work is done in `ergoemacs-command-loop--internal'."
         (call-interactively command record-flag keys))
        
        ((and (stringp (nth 1 form)) (string= "e" (nth 1 form)))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (funcall ',command last-command-event)) record-flag keys))
+        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+                               (interactive)
+                               (funcall ',command last-command-event
+                                        ,@(let (ret)
+                                            (dolist (elt (cdr (help-function-arglist command t)))
+                                              (unless (or (eq '&optional elt)
+                                                          (eq '&rest elt))
+                                                (push elt ret)))
+                                            (reverse ret))))
+                            record-flag keys))
        
        ((and (stringp (nth 1 form)) (string= "@e" (nth 1 form)))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command last-command-event)) record-flag keys))
+        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+                               (interactive)
+                               (select-window (posn-window (event-start last-command-event)))
+                               (funcall ',command last-command-event
+                                        ,@(let (ret)
+                                            (dolist (elt (cdr (help-function-arglist command t)))
+                                              (unless (or (eq '&optional elt)
+                                                          (eq '&rest elt))
+                                                (push elt ret)))
+                                            (reverse ret))))
+                            record-flag keys))
        
        ((and (stringp (nth 1 form)) (string= "@" (nth 1 form)))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t)) (interactive) (select-window (posn-window (event-start last-command-event))) (funcall ',command)) record-flag keys))
+        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+                               (interactive)
+                               (select-window (posn-window (event-start last-command-event)))
+                               (funcall ',command
+                                        ,@(let (ret)
+                                            (dolist (elt (help-function-arglist command t))
+                                              (unless (or (eq '&optional elt)
+                                                          (eq '&rest elt))
+                                                (push elt ret)))
+                                            (reverse ret)))) record-flag keys))
        
        ((ignore-errors (and (stringp (nth 1 form)) (string= "e" (substring (nth 1 form) 0 1))))
         (call-interactively `(lambda,(cdr (help-function-arglist command t))
                                (interactive ,(substring (nth 1 form) 1) ,@(cdr (cdr form)))
-                               (funcall ',command last-command-event ,@(let (ret)
-                                                                         (dolist (elt (help-function-arglist command t))
-                                                                           (unless (eq '&optional elt)
-                                                                             (push elt ret)))
-                                                                         (reverse ret))))
+                               (funcall ',command last-command-event
+                                        ,@(let (ret)
+                                            (dolist (elt (cdr (help-function-arglist command t)))
+                                              (unless (or (eq '&optional elt)
+                                                          (eq '&rest elt))
+                                                (push elt ret)))
+                                            (reverse ret))))
                             record-flag keys))
 
        ((ignore-errors (and (stringp (nth 1 form)) (string= "@e" (substring (nth 1 form) 0 2))))
         (call-interactively `(lambda,(cdr (help-function-arglist command t))
                                (interactive ,(substring (nth 1 form) 2) ,@(cdr (cdr form)))
-                               (funcall ',command last-command-event ,@(let (ret)
-                                                                         (dolist (elt (help-function-arglist command t))
-                                                                           (unless (eq '&optional elt)
-                                                                             (push elt ret)))
-                                                                         (reverse ret))))
+                               (funcall ',command last-command-event
+                                        ,@(let (ret)
+                                            (dolist (elt (cdr (help-function-arglist command t)))
+                                              (unless (eq '&optional elt)
+                                                (push elt ret)))
+                                            (reverse ret))))
                             record-flag keys))
        (t ;; Assume that the "e" or "@e" specifications are not present.
         (call-interactively command record-flag keys)))))
