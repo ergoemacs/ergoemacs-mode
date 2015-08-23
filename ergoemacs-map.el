@@ -423,7 +423,7 @@ If LOOKUP-KEYMAP
                     
                     (push tmp composed-list)
                     
-                    (push (ergoemacs (ergoemacs :global-map) :original-menu-bar) menu-bar)
+                    (push (lookup-key (ergoemacs :global-map) [menu-bar]) menu-bar)
                     
                     ;; Each ergoemacs theme component
                     (dolist (cur-map (reverse map))
@@ -828,11 +828,6 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
   "Installs `ergoemacs-mode' into the appropriate keymaps."
   (interactive)
   (ergoemacs-map--hashkey)
-  ;; Save original [menu-bar]
-  (unless (ergoemacs (ergoemacs :global-map) :original-menu-bar)
-    (ergoemacs (ergoemacs :global-map)
-               :original-menu-bar
-               (copy-keymap (lookup-key global-map [menu-bar]))))
   (ergoemacs-mode-line)
   (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
     `("ErgoEmacs" . ,(ergoemacs-theme--menu (ergoemacs :current-theme))))
@@ -880,9 +875,6 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
     (dolist (map ergoemacs-map--modified-maps)
       (ergoemacs-command-loop--spinner-display "rm ergoemacs->%s" map)
       (set-default map (ergoemacs (ergoemacs-sv map) :original))))
-  (let ((menu-bar (ergoemacs (ergoemacs :global-map) :original-menu-bar)))
-    (when menu-bar
-      (global-set-key [menu-bar] menu-bar)))
   (ergoemacs-component-struct--rm-hooks))
 
 (defun ergoemacs-map-undefined ()
