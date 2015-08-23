@@ -465,6 +465,7 @@ Currently this ensures:
   (let (tmp)
     (cond
      ((and (setq tmp (elt current-key 0))
+           tmp
            (or (and (consp tmp) (symbolp (setq tmp (car tmp))) (setq tmp (symbol-name tmp)))
                (and (symbolp tmp) (setq tmp (symbol-name tmp))))
            (string-match-p "\\<mouse\\>" tmp))
