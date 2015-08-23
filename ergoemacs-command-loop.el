@@ -988,6 +988,39 @@ The true work is done in `ergoemacs-command-loop--internal'."
   (clear-this-command-keys t)
   (ergoemacs-command-loop--sync-point))
 
+(defun ergoemacs-command-loop--mouse-command-drop-first (args &optional fn-arg-p)
+  (let (ret rest-p)
+    (cond
+     ((eq (car args) '&rest)
+      ;;(&rest arg)
+      (if fn-arg-p args 
+        (cdr args)))
+     ((eq (car args) '&optional)
+      ;;(&optional ...)
+      (if fn-arg-p
+          (cond
+           ((not (cdr (cdr args)))
+            ;; (&optional arg) -> nil
+            nil)
+           ((eq '&rest (car (cdr (cdr args))))
+            ;; (&optional arg &rest rest) -> (&rest rest)
+            (cdr (cdr args)))
+           (t
+            ;; (&optional arg1 arg2 &rest rest)-> (&optional arg2 &rest rest)
+            ;; (&optional arg1 arg2 arg3)-> (&optional arg2 arg3)
+            `(&optional ,@(cdr (cdr args)))))
+        (dolist (a (cdr (cdr args)))
+          (unless (eq a '&rest)
+            (push a ret)))
+        (reverse ret)))
+     (t
+      (if fn-arg-p
+          (cdr args)
+        (dolist (a (cdr args))
+          (unless (memq a '(&rest &optional))
+            (push a ret)))
+        (reverse ret))))))
+
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
   "Call the command interactively.  Also handle mouse events (if possible.)"
   (ergoemacs-command-loop--sync-point)
@@ -1037,36 +1070,31 @@ The true work is done in `ergoemacs-command-loop--internal'."
       (cond
        ((ergoemacs-keymapp command)
         (popup-menu command nil current-prefix-arg))
+       
        ((not (nth 1 form))
         (call-interactively command record-flag keys))
        
        ((and (stringp (nth 1 form)) (string= "e" (nth 1 form)))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+        (call-interactively `(lambda,(ergoemacs-command-loop--mouse-command-drop-first
+                                 (help-function-arglist command t) t)
                                (interactive)
                                (funcall ',command last-command-event
-                                        ,@(let (ret)
-                                            (dolist (elt (cdr (help-function-arglist command t)))
-                                              (unless (or (eq '&optional elt)
-                                                          (eq '&rest elt))
-                                                (push elt ret)))
-                                            (reverse ret))))
+                                      ,@(ergoemacs-command-loop--mouse-command-drop-first 
+                                         (help-function-arglist command t))))
                             record-flag keys))
        
        ((and (stringp (nth 1 form)) (string= "@e" (nth 1 form)))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+        (call-interactively `(lambda,(ergoemacs-command-loop--mouse-command-drop-first
+                                 (help-function-arglist command t) t)
                                (interactive)
                                (select-window (posn-window (event-start last-command-event)))
                                (funcall ',command last-command-event
-                                        ,@(let (ret)
-                                            (dolist (elt (cdr (help-function-arglist command t)))
-                                              (unless (or (eq '&optional elt)
-                                                          (eq '&rest elt))
-                                                (push elt ret)))
-                                            (reverse ret))))
+                                      ,@(ergoemacs-command-loop--mouse-command-drop-first 
+                                         (help-function-arglist command t))))
                             record-flag keys))
        
        ((and (stringp (nth 1 form)) (string= "@" (nth 1 form)))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+        (call-interactively `(lambda,(help-function-arglist command t)
                                (interactive)
                                (select-window (posn-window (event-start last-command-event)))
                                (funcall ',command
@@ -1078,26 +1106,21 @@ The true work is done in `ergoemacs-command-loop--internal'."
                                             (reverse ret)))) record-flag keys))
        
        ((ignore-errors (and (stringp (nth 1 form)) (string= "e" (substring (nth 1 form) 0 1))))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+        (call-interactively `(lambda,(ergoemacs-command-loop--mouse-command-drop-first
+                                 (help-function-arglist command t) t)
                                (interactive ,(substring (nth 1 form) 1) ,@(cdr (cdr form)))
                                (funcall ',command last-command-event
-                                        ,@(let (ret)
-                                            (dolist (elt (cdr (help-function-arglist command t)))
-                                              (unless (or (eq '&optional elt)
-                                                          (eq '&rest elt))
-                                                (push elt ret)))
-                                            (reverse ret))))
+                                      ,@(ergoemacs-command-loop--mouse-command-drop-first
+                                         (help-function-arglist command t))))
                             record-flag keys))
 
        ((ignore-errors (and (stringp (nth 1 form)) (string= "@e" (substring (nth 1 form) 0 2))))
-        (call-interactively `(lambda,(cdr (help-function-arglist command t))
+        (call-interactively `(lambda,(ergoemacs-command-loop--mouse-command-drop-first
+                                 (help-function-arglist command t) t)
                                (interactive ,(substring (nth 1 form) 2) ,@(cdr (cdr form)))
                                (funcall ',command last-command-event
-                                        ,@(let (ret)
-                                            (dolist (elt (cdr (help-function-arglist command t)))
-                                              (unless (eq '&optional elt)
-                                                (push elt ret)))
-                                            (reverse ret))))
+                                        ,@(ergoemacs-command-loop--mouse-command-drop-first
+                                           (help-function-arglist command t))))
                             record-flag keys))
        (t ;; Assume that the "e" or "@e" specifications are not present.
         (call-interactively command record-flag keys)))))
