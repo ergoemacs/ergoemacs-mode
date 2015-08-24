@@ -400,6 +400,13 @@ When SILENT is true, also include silent themes"
      (lambda ()
        (interactive)
        (ergoemacs-exit-customize-save-customized)))
+
+    (ergoemacs-reset-cache
+     menu-item "Reset ergoemacs-mode cache"
+     (lambda ()
+       (interactive)
+       (ergoemacs-mode-clear-cache)))
+    
     (ergoemacs-customize
      menu-item "Customize ErgoEmacs"
      (lambda ()
