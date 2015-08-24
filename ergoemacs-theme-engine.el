@@ -383,18 +383,7 @@ When SILENT is true, also include silent themes"
      (lambda()
        (interactive)
        (call-interactively 'ergoemacs-display-current-svg)))
-    ;; (ergoemacs-menus
-    ;;  menu-item "Use Menus"
-    ;;  (lambda() (interactive)
-    ;;    ;; (ergoemacs-save 'ergoemacs-use-menus (not ergoemacs-use-menus))
-    ;;    ;; (if ergoemacs-use-menus
-    ;;    ;;     (progn
-    ;;    ;;       (require 'ergoemacs-menus)
-    ;;    ;;       (ergoemacs-menus-on))
-    ;;    ;;   (when (featurep 'ergoemacs-menus)
-    ;;    ;;     (ergoemacs-menus-off)))
-    ;;    )
-    ;;  :button (:radio . ergoemacs-use-menus))
+
     (ergoemacs-save
      menu-item "Save Settings for Future Sessions"
      (lambda ()
