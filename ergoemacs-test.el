@@ -1376,15 +1376,30 @@ Part of addressing Issue #147."
   "Part of test for Sub issue described in #351"
   (should (equal '(&rest arg) (ergoemacs-command-loop--mouse-command-drop-first '(&rest arg) t)))
   (should (equal '(arg) (ergoemacs-command-loop--mouse-command-drop-first '(&rest arg))))
+  (should (equal 'arg (ergoemacs-command-loop--mouse-command-drop-first '(&rest arg) :rest)))
+
+  (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&rest arg) :drop-rest)))
   
   (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg) t)))
   (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg))))
+  (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg) :rest)))
+  (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg) :drop-rest)))
 
   (should (equal '(&optional arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2) t)))
   (should (equal '(arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2))))
+  (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2) :rest)))
+  (should (equal '(arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2) :drop-rest)))
 
   (should (equal '(&rest arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 &rest arg2) t)))
-  (should (equal '(arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 &rest arg2)))))
+  (should (equal '(arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 &rest arg2))))
+  (should (equal 'arg2 (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 &rest arg2) :rest)))
+  (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 &rest arg2) :drop-rest)))
+
+  (should (equal '(&optional arg2 &rest arg3) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) t)))
+  (should (equal '(arg2 arg3) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3))))
+  (should (equal 'arg3 (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) :rest)))
+  (should (equal '(arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) :drop-rest)))
+  )
 
 
 (provide 'ergoemacs-test)

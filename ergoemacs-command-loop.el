@@ -990,8 +990,21 @@ The true work is done in `ergoemacs-command-loop--internal'."
   (ergoemacs-command-loop--sync-point))
 
 (defun ergoemacs-command-loop--mouse-command-drop-first (args &optional fn-arg-p)
-  (let (ret rest-p)
+  "Internal function for processing mouse commands."
+  (let (ret)
     (cond
+     ((eq fn-arg-p :drop-rest)
+      (if (and (<= 2 (length args))
+               (eq (nth (- (length args) 2) args) '&rest))
+          (if (= (length args) 2)
+              nil
+            (ergoemacs-command-loop--mouse-command-drop-first (butlast args 2)))
+        (ergoemacs-command-loop--mouse-command-drop-first args)))
+     ((eq fn-arg-p :rest)
+      (if (and (<= 2 (length args))
+               (eq (nth (- (length args) 2) args) '&rest))
+          (nth (- (length args) 1) args)
+        nil))
      ((eq (car args) '&rest)
       ;;(&rest arg)
       (if fn-arg-p args 
@@ -1079,9 +1092,14 @@ The true work is done in `ergoemacs-command-loop--internal'."
         (call-interactively `(lambda,(ergoemacs-command-loop--mouse-command-drop-first
                                  (help-function-arglist command t) t)
                                (interactive)
-                               (funcall ',command last-command-event
-                                      ,@(ergoemacs-command-loop--mouse-command-drop-first 
-                                         (help-function-arglist command t))))
+                               (if ,(ergoemacs-command-loop--mouse-command-drop-first
+                                     (help-function-arglist command t) :rest)
+                                   (funcall ',command last-command-event
+                                            ,@(ergoemacs-command-loop--mouse-command-drop-first 
+                                               (help-function-arglist command t)))
+                                 (funcall ',command last-command-event
+                                          ,@(ergoemacs-command-loop--mouse-command-drop-first 
+                                             (help-function-arglist command t) :drop-rest))))
                             record-flag keys))
        
        ((and (stringp (nth 1 form)) (string= "@e" (nth 1 form)))
@@ -1089,9 +1107,14 @@ The true work is done in `ergoemacs-command-loop--internal'."
                                  (help-function-arglist command t) t)
                                (interactive)
                                (select-window (posn-window (event-start last-command-event)))
-                               (funcall ',command last-command-event
+                               (if ,(ergoemacs-command-loop--mouse-command-drop-first 
+                                     (help-function-arglist command t) :rest)
+                                   (funcall ',command last-command-event
                                       ,@(ergoemacs-command-loop--mouse-command-drop-first 
-                                         (help-function-arglist command t))))
+                                         (help-function-arglist command t)))
+                                 (funcall ',command last-command-event
+                                          ,@(ergoemacs-command-loop--mouse-command-drop-first 
+                                             (help-function-arglist command t)) :drop-rest)))
                             record-flag keys))
        
        ((and (stringp (nth 1 form)) (string= "@" (nth 1 form)))
@@ -1110,18 +1133,28 @@ The true work is done in `ergoemacs-command-loop--internal'."
         (call-interactively `(lambda,(ergoemacs-command-loop--mouse-command-drop-first
                                  (help-function-arglist command t) t)
                                (interactive ,(substring (nth 1 form) 1) ,@(cdr (cdr form)))
-                               (funcall ',command last-command-event
-                                      ,@(ergoemacs-command-loop--mouse-command-drop-first
-                                         (help-function-arglist command t))))
+                               (if ,(ergoemacs-command-loop--mouse-command-drop-first
+                                     (help-function-arglist command t) :rest)
+                                   (funcall ',command last-command-event
+                                            ,@(ergoemacs-command-loop--mouse-command-drop-first
+                                               (help-function-arglist command t)))
+                                 (funcall ',command last-command-event
+                                          ,@(ergoemacs-command-loop--mouse-command-drop-first
+                                             (help-function-arglist command t) :drop-rest))))
                             record-flag keys))
 
        ((ignore-errors (and (stringp (nth 1 form)) (string= "@e" (substring (nth 1 form) 0 2))))
         (call-interactively `(lambda,(ergoemacs-command-loop--mouse-command-drop-first
                                  (help-function-arglist command t) t)
                                (interactive ,(substring (nth 1 form) 2) ,@(cdr (cdr form)))
-                               (funcall ',command last-command-event
-                                        ,@(ergoemacs-command-loop--mouse-command-drop-first
-                                           (help-function-arglist command t))))
+                               (if ,(ergoemacs-command-loop--mouse-command-drop-first
+                                     (help-function-arglist command t) :rest)
+                                   (funcall ',command last-command-event
+                                            ,@(ergoemacs-command-loop--mouse-command-drop-first
+                                               (help-function-arglist command t)))
+                                 (funcall ',command last-command-event
+                                          ,@(ergoemacs-command-loop--mouse-command-drop-first
+                                             (help-function-arglist command t) :drop-rest))))
                             record-flag keys))
        (t ;; Assume that the "e" or "@e" specifications are not present.
         (call-interactively command record-flag keys)))))
