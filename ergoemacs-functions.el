@@ -1354,39 +1354,66 @@ the last misspelled word with
 
 ;;; BUFFER RELATED
 
-(defun ergoemacs-next-user-buffer ()
+(defun ergoemacs-change-buffer (&optional number previous-buffer-p emacs-buffer-p)
+  "Switch to the next/previous emacs/user buffer.
+
+By default this switches to the next user buffer.
+
+This function switches forward/backward NUMBER emacs/user buffers.
+This can be specified by a prefix argument.
+
+When PREVIOUS-BUFFER-P is non-nil, switch to a previous buffer.
+When EMACS-BUFFER-P is non-nil switch to an emacs buffer.
+User buffers are those whose name does not start with *.
+Emacs buffers are those whos name starts with *."
+  (interactive)
+  (let ((curr-buffer (current-buffer))
+        (number (or (and number (abs number)) 1))
+        (i 0))
+    (while (< i number)
+      (if previous-buffer-p
+          (previous-buffer)
+        (next-buffer))
+      (while (and (or (and (not emacs-buffer-p)
+                           (string= "*" (substring (buffer-name) 0 1)))
+                      (and emacs-buffer-p 
+                           (not (string= "*" (substring (buffer-name) 0 1)))))
+                  (not (eq curr-buffer (current-buffer))))
+        (if previous-buffer-p
+            (previous-buffer)
+          (next-buffer)))
+      (when (and (eq curr-buffer (current-buffer)) (= i 0))
+        (if emacs-buffer-p
+            (message "Could not find any %semacs buffers."
+                     (or (and (string-match-p "^[*]" (buffer-name)) "other ") ""))
+          (message "Could not find any %suser buffers."
+                   (or (and (string-match-p "^[^*]" (buffer-name)) "other ") "")))
+        (setq i (+ number 1)))
+      (setq i (+ 1 i)))))
+
+(defun ergoemacs-next-user-buffer (&optional number)
   "Switch to the next user buffer.
 User buffers are those whose name does not start with *."
-  (interactive)
-  (next-buffer)
-  (while (string-equal "*" (substring (buffer-name) 0 1))
-    (next-buffer)))
+  (interactive "p")
+  (ergoemacs-change-buffer number))
 
-(defun ergoemacs-previous-user-buffer ()
+(defun ergoemacs-previous-user-buffer (&optional number)
   "Switch to the previous user buffer.
 User buffers are those whose name does not start with *."
-  (interactive)
-  (previous-buffer)
-  (while (and (string-equal "*" (substring (buffer-name) 0 1)))
-    (previous-buffer)))
+  (interactive "p")
+  (ergoemacs-change-buffer number t))
 
-(defun ergoemacs-next-emacs-buffer ()
+(defun ergoemacs-next-emacs-buffer (&optional number)
   "Switch to the next emacs buffer.
 Emacs buffers are those whose name starts with *."
-  (interactive)
-  (next-buffer)
-  (let ((i 0))
-    (while (and (not (string-equal "*" (substring (buffer-name) 0 1))) (< i 20))
-      (setq i (1+ i)) (next-buffer) )))
+  (interactive "p")
+  (ergoemacs-change-buffer number nil t))
 
 (defun ergoemacs-previous-emacs-buffer ()
   "Switch to the previous emacs buffer.
 Emacs buffers are those whose name starts with *."
   (interactive)
-  (previous-buffer)
-  (let ((i 0))
-    (while (and (not (string-equal "*" (substring (buffer-name) 0 1))) (< i 20))
-      (setq i (1+ i)) (previous-buffer) )))
+  (ergoemacs-change-buffer number t t))
 
 (defun ergoemacs-new-empty-buffer ()
   "Opens a new empty buffer."
