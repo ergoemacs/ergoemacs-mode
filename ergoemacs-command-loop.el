@@ -353,6 +353,7 @@ Uses the `ergoemacs-command-loop--history' variable/function."
               ergoemacs-command-loop--universal (nth 2 tmp)
               current-prefix-arg (nth 3 tmp)
               last-command-event (nth 4 tmp)
+              last-input-event last-command-event
               ergoemacs-last-command-event last-command-event))
     ;; Nothing to undo, exit the command loop.
     (setq ergoemacs-command-loop--exit t)))
@@ -468,6 +469,7 @@ Currently this ensures:
            tmp
            (or (and (consp tmp) (symbolp (setq tmp (car tmp))) (setq tmp (symbol-name tmp)))
                (and (symbolp tmp) (setq tmp (symbol-name tmp))))
+           (stringp tmp)
            (string-match-p "\\<mouse\\>" tmp))
       (warn "Dropping events %s" current-key)
       (vector next-event))
@@ -488,6 +490,7 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
           (when translate
             (setq unread-command-events (append translate unread-command-events))))
         (setq last-command-event event
+              last-input-event last-command-event
               ergoemacs-last-command-event last-command-event
               last-event-frame (selected-frame))
         event)
@@ -540,6 +543,7 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
                   ergoemacs-command-loop--history))
           (setq ergoemacs-command-loop--last-event-time (float-time)
                 last-command-event event
+                last-input-event last-command-event
                 ergoemacs-last-command-event last-command-event
                 last-event-frame (selected-frame)))
         event)))
@@ -740,6 +744,7 @@ This uses `ergoemacs-command-loop--read-event'."
         (setq raw-input input
               input (ergoemacs-translate--event-mods input trans)
               last-command-event input
+              last-input-event input
               ergoemacs-last-command-event last-command-event))
        (t
         ;; Translate the key appropriately.
@@ -757,6 +762,7 @@ This uses `ergoemacs-command-loop--read-event'."
         (setq raw-input input
               input (ergoemacs-translate--event-mods input type)
               last-command-event input
+              last-input-event input
               ergoemacs-last-command-event last-command-event)))
       (cond
        ((and input (not universal)
@@ -1038,7 +1044,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
 (defun ergoemacs-command-loop--modify-mouse-command (command)
   "Modify mouse command to work with ergoemacs command loop."
   (let* ((iform (interactive-form command))
-         (form (and iform (consp iform) (= 2 (length iform)) (nth 1 iform)))
+         (form (and iform (consp iform) (= 2 (length iform)) (stringp (nth 1 iform)) (nth 1 iform)))
          (args (help-function-arglist command t))
          (fn-args (ergoemacs-command-loop--mouse-command-drop-first args t))
          (rest-p (ergoemacs-command-loop--mouse-command-drop-first args :rest))
@@ -1051,17 +1057,22 @@ The true work is done in `ergoemacs-command-loop--internal'."
     (cond
      ((not event-p)
       command)
-     
      (rest-p
       `(lambda ,fn-args
          (interactive ,new-form)
          ,(when select-window-p
             '(select-window (posn-window (event-start last-command-event))))
          (if ,rest-p
-             (,command last-command-event ,@fn-args)
+             (apply ',command last-command-event ,@fn-args)
            (,command last-command-event ,@drop-rest))))
      
      ((not rest-p)
+      (when (eq command 'mwheel-scrool)
+        (message "Scroll: %s" `(lambda ,fn-args
+                         (interactive ,new-form)
+                         ,(when select-window-p
+                            '(select-window (posn-window (event-start last-command-event))))
+                         (,command last-command-event ,@fn-args))))
       `(lambda ,fn-args
          (interactive ,new-form)
          ,(when select-window-p
