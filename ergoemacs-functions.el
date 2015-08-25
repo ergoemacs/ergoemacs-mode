@@ -1365,7 +1365,7 @@ This can be specified by a prefix argument.
 When PREVIOUS-BUFFER-P is non-nil, switch to a previous buffer.
 When EMACS-BUFFER-P is non-nil switch to an emacs buffer.
 User buffers are those whose name does not start with *.
-Emacs buffers are those whos name starts with *."
+Emacs buffers are those whose name starts with *."
   (interactive)
   (let ((curr-buffer (current-buffer))
         (number (or (and number (abs number)) 1))
