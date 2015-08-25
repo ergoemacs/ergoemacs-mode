@@ -1409,10 +1409,10 @@ Emacs buffers are those whose name starts with *."
   (interactive "p")
   (ergoemacs-change-buffer number nil t))
 
-(defun ergoemacs-previous-emacs-buffer ()
+(defun ergoemacs-previous-emacs-buffer (&optional number)
   "Switch to the previous emacs buffer.
 Emacs buffers are those whose name starts with *."
-  (interactive)
+  (interactive "p")
   (ergoemacs-change-buffer number t t))
 
 (defun ergoemacs-new-empty-buffer ()
