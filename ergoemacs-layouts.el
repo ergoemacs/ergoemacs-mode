@@ -463,6 +463,52 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
 
 (defalias 'ergoemacs-layout 'ergoemacs-set-layout)
 
+(defun ergoemacs-layout-describe (&optional layout)
+  "Display the full documentation an `ergoemacs-mode' layout (a symbol or string)."
+  (interactive (ergoemacs-component--prompt :layout))
+  (let* ((layout (or (and layout
+                          (or (and (stringp layout) layout)
+                              (and (symbolp layout) (symbol-name layout))))
+                     "us"))
+         (s (intern (concat "ergoemacs-layout-" layout)))
+         (sv (and (boundp s) (symbol-value s)))
+         (el-file (find-lisp-object-file-name s 'defvar))
+         (alias (condition-case nil
+                    (indirect-variable s)
+                  (error s)))
+         (doc (or (documentation-property
+                   s 'variable-documentation)
+                  (documentation-property
+                   s 'variable-documentation))))
+    (unless (featurep 'quail)
+      (require 'quail))
+    (if (not sv)
+        (message "You did not specify a valid ergoemacs layout %s" layout)
+      (help-setup-xref (list #'ergoemacs-layout-describe (or layout "us"))
+                       (called-interactively-p 'interactive))
+      (with-help-window (help-buffer)
+        (princ "`")
+        (princ s)
+        ;; Use " is " instead of a colon so that
+        ;; it is easier to get out the function name using forward-sexp.
+        (princ "' is an `ergoemacs-mode' layout")
+        (when (file-readable-p el-file)
+          (princ " defined in `")
+          (princ (file-name-nondirectory el-file))
+          (princ "'."))
+        (princ "\n\n")
+        (princ "Documentation:\n")
+        (with-current-buffer standard-output
+          (insert (or doc "Not documented as a layout.")))
+        (princ "\n\n")
+        (princ "ASCII Layout (Quail):\n")
+        (with-current-buffer standard-output
+          (quail-insert-kbd-layout (ergoemacs-translate-layout sv :quail)))
+        (with-current-buffer standard-output
+          ;; Return the text we displayed.
+          (buffer-string))))))
+
+(defalias 'describe-ergoemacs-layout 'ergoemacs-layout-describe)
 
 (provide 'ergoemacs-layouts)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

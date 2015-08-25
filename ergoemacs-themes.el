@@ -1730,6 +1730,8 @@
                                                       describe-ergoemacs-component)
                                      (theme menu-item "Ergoemacs Theme"
                                             describe-ergoemacs-theme)
+                                     (layout menu-item "Ergoemacs Layout"
+                                            describe-ergoemacs-layout)
                                      (separator-curr-modes menu-item "--")
                                      (curr-major-mode menu-item "Current Major Mode"
                                                       ergoemacs-describe-major-mode

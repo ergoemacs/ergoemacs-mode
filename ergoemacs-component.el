@@ -1188,18 +1188,21 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
 
 (defun ergoemacs-component--prompt (&optional theme-instead)
   "Prompt for component or theme (when THEME-INSTEAD is non-nil)."
-  (let ((c (ergoemacs-component-at-point theme-instead))
+  (let ((c (or (and (eq theme-instead :layout) ergoemacs-keyboard-layout)
+               (ergoemacs-component-at-point theme-instead)))
         (enable-recursive-minibuffers t)
         val)
     (setq val (completing-read (if (symbolp c)
                                    (format
                                     "Describe ergoemacs %s (default %s): "
-                                    (or (and theme-instead "theme") "component")
+                                    (or (and (eq theme-instead :layout) "layout")
+                                        (and theme-instead "theme") "component")
                                     c)
                                  (format
                                   "Describe ergoemacs %s: "
                                   (or (and theme-instead "theme") "component")))
-                               (or (and theme-instead ergoemacs-theme-hash)
+                               (or (and (eq theme-instead :layout) (ergoemacs-layouts--list))
+                                   (and theme-instead ergoemacs-theme-hash)
                                    ergoemacs-component-hash)
                                nil
                                ;; (lambda (vv)
