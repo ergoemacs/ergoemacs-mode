@@ -1192,7 +1192,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
                (ergoemacs-component-at-point theme-instead)))
         (enable-recursive-minibuffers t)
         val)
-    (setq val (completing-read (if (symbolp c)
+    (setq val (completing-read (if (or (symbolp c) (stringp c))
                                    (format
                                     "Describe ergoemacs %s (default %s): "
                                     (or (and (eq theme-instead :layout) "layout")
@@ -1200,7 +1200,8 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
                                     c)
                                  (format
                                   "Describe ergoemacs %s: "
-                                  (or (and theme-instead "theme") "component")))
+                                  (or (and (eq theme-instead :layout) "layout")
+                                      (and theme-instead "theme") "component")))
                                (or (and (eq theme-instead :layout) (ergoemacs-layouts--list))
                                    (and theme-instead ergoemacs-theme-hash)
                                    ergoemacs-component-hash)
