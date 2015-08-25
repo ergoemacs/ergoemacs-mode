@@ -1047,6 +1047,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
          (form (and iform (consp iform) (= 2 (length iform)) (stringp (nth 1 iform)) (nth 1 iform)))
          (args (help-function-arglist command t))
          (fn-args (ergoemacs-command-loop--mouse-command-drop-first args t))
+         (strip-args (ergoemacs-command-loop--mouse-command-drop-first args))
          (rest-p (ergoemacs-command-loop--mouse-command-drop-first args :rest))
          (drop-rest (ergoemacs-command-loop--mouse-command-drop-first args :drop-rest))
          (select-window-p (and form (string-match-p "^[*^]*[@]" form)))
@@ -1054,30 +1055,30 @@ The true work is done in `ergoemacs-command-loop--internal'."
          (new-form (and form
                         (or (and (not event-p) form)
                             (and event-p (replace-regexp-in-string "^\\([*@^]*\\)e\n*\\(.*\\)" "\\1\\2" form))))))
+    (when (and new-form (string= new-form ""))
+      (setq new-form nil))
     (cond
      ((not event-p)
       command)
      (rest-p
       `(lambda ,fn-args
-         (interactive ,new-form)
+         ,(if new-form
+              `(interactive ,new-form)
+            `(interactive))
          ,(when select-window-p
             '(select-window (posn-window (event-start last-command-event))))
          (if ,rest-p
-             (apply ',command last-command-event ,@fn-args)
+             (apply ',command last-command-event ,@strip-args)
            (,command last-command-event ,@drop-rest))))
      
      ((not rest-p)
-      (when (eq command 'mwheel-scrool)
-        (message "Scroll: %s" `(lambda ,fn-args
-                         (interactive ,new-form)
-                         ,(when select-window-p
-                            '(select-window (posn-window (event-start last-command-event))))
-                         (,command last-command-event ,@fn-args))))
       `(lambda ,fn-args
-         (interactive ,new-form)
+         ,(if new-form
+              `(interactive ,new-form)
+            `(interactive))
          ,(when select-window-p
             '(select-window (posn-window (event-start last-command-event))))
-         (,command last-command-event ,@fn-args))))))
+         (,command last-command-event ,@strip-args))))))
 
 (defun ergoemacs-command-loop--call-mouse-command (command &optional record-flag keys)
   "Call a possible mouse command."
