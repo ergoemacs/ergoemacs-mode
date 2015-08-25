@@ -39,6 +39,10 @@ TRAVIS_FILE=.travis.yml
 24.5 :
 	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.5\bin\emacs.exe")
 
+25.0 :
+	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.5\bin\emacs.exe")
+
+
 search :
 	$(eval SELECT:=(tag :search))
 
