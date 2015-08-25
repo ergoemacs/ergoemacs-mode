@@ -171,6 +171,17 @@ KEY-SEQ must be a vector or string.  If there is no need to change the sequence,
           (push event seq))))
       (and found (vconcat seq)))))
 
+(defun ergoemacs-translate--define-key (keymap key def)
+  "Similar to `define-key', but defines meta keys as both meta and escape sequences."
+  (let ((key key)
+        (esc-key (ergoemacs-translate--escape-to-meta key))
+        (meta-key (ergoemacs-translate--meta-to-escape key)))
+    (define-key keymap key def)
+    (when esc-key
+      (define-key keymap esc-key def))
+    (when meta-key
+      (define-key keymap meta-key def))))
+
 (defun ergoemacs-translate--event-modifier-hash (&optional layout)
   "Gets the event modifier hash for LAYOUT."
   (let* ((layout-symbol (ergoemacs :layout  layout))

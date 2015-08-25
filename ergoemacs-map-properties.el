@@ -341,12 +341,12 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
                     (or (not after)
                         (not (and ergoemacs-map-properties--before-ergoemacs
                                   (eq item (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key))))))
-               (define-key before-map cur-key item))
+               (ergoemacs :define-key before-map cur-key item))
               ((and (not tmp)
                     (or (not after)
                         (not (and ergoemacs-map-properties--before-ergoemacs
                                   (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
-               (define-key before-map cur-key tmp)))))
+               (ergoemacs :define-key before-map cur-key tmp)))))
          original-global-map t)
         (if after
             (progn
@@ -434,7 +434,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
           (progn
             (setq tmp ergoemacs-map-properties--protect-local
                   ergoemacs-map-properties--protect-local nil)
-            (define-key map kbd def))
+            (ergoemacs :define-key map kbd def))
         (setq ergoemacs-map-properties--protect-local nil)))))
 
 (defun ergoemacs-map-properties--override-maps (keymap &rest _ignore)

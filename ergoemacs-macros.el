@@ -653,7 +653,7 @@ This was stole/modified from `c-save-buffer-state'"
             (set-buffer-modified-p nil)))))
 
 ;;;###autoload
-(defmacro ergoemacs (&optional arg1 arg2 arg3)
+(defmacro ergoemacs (&optional arg1 arg2 arg3 arg4)
   "Get/Set keymaps and `ergoemacs-mode' properties
 
 When arg1 can be a property.  The following properties are supported:
@@ -687,6 +687,8 @@ When arg1 can be a property.  The following properties are supported:
                                :use-local-unbind-list-p
                                :set-map-p)))
     (cond
+     ((and arg1 (symbolp arg1) (eq arg1 :define-key) arg2 arg3)
+      `(ergoemacs-translate--define-key ,arg2 ,arg3 ,arg4))
      ((and arg1 (symbolp arg1) (eq arg1 :ignore-global-changes-p) (not arg2) (not arg3))
       `(ergoemacs-map-properties--ignore-global-changes-p))
      ((and arg1 (symbolp arg1) (eq arg1 :user-before) (not arg2) (not arg3))
