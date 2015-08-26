@@ -372,7 +372,7 @@ When SILENT is true, also include silent themes"
     (ergoemacs-bash
      menu-item "Make Bash aware of ergoemacs keys"
      (lambda () (interactive)
-       (call-interactively 'ergoemacs-bash)))
+       (call-interactively 'ergoemacs-theme-create-bash)))
     (ergoemacs-ahk
      menu-item "Make Windows aware of ergoemacs keys (Requires Autohotkey)"
      (lambda () (interactive)
@@ -505,6 +505,53 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
           (buffer-string))))))
 
 (defalias 'describe-ergoemacs-theme 'ergoemacs-theme-describe)
+
+(defvar ergoemacs-theme-create-bash-functions
+  '((backward-char)
+    (forward-char)
+    (previous-history)
+    (next-history)
+    (beginning-of-line ergoemacs-beginning-of-line-or-what)
+    (end-of-line ergoemacs-end-of-line-or-what)
+    (backward-word subward-backward backward-sexp)
+    (forward-word subword-forward forward-sexp)
+    (kill-line ergoemacs-cut-line-or-region)
+    (backward-kill-word)
+    (kill-word)
+    (backward-delete-char)
+    (delete-char)
+    (undo undo-tree-undo)
+    (kill-region ergoemacs-cut-line-or-region)
+    (copy-region-as-kill ergoemacs-copy-line-or-region)
+    (yank ergoemacs-paste)
+    (forward-search-history isearch-forward)
+    (reverse-search-history isearch-backward)))
+
+;;;###autoload
+(defun ergoemacs-theme-create-bash ()
+  "Creates a bash ~/.inputrc for use with bash"
+  (interactive)
+  (let ((ret "# Based on Brendan Miller's initial bash .inputrc
+# INSTALL
+# to install, rename this file to just \".inputrc\"
+# place this file in your home dir. e.g. ~/.inputrc
+# restart your terminal. Then, bash's keybinding for editing
+# should be like ErgoEmacs.
+# If no key works, try replace all \\e to \\M-. That's means change Esc to Meta key.
+\nset editing-mode emacs") tmp)
+    (with-temp-buffer
+      (dolist (cmds ergoemacs-theme-create-bash-functions)
+        (dolist (cmd cmds)
+          (when (setq tmp (where-is-internal cmd nil t))
+            (setq ret (concat ret "\n\"\\" (key-description tmp) "\": "
+                              (symbol-name (nth 0 cmds)))))) t))
+    (with-temp-file "~/.inputrc"
+      (insert ret)
+      (insert "\n"))
+    (message "Wrote current ergoemacs bindings to ~/.inputrc")))
+
+;;;###autoload
+(defalias 'ergoemacs-bash 'ergoemacs-theme-create-bash)
 
 (provide 'ergoemacs-theme-engine)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
