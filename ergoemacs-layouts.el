@@ -28,8 +28,6 @@
 
 ;;; Code:
 
-(defvar quail-keyboard-layout-alist)
-
 (defvar ergoemacs-layout-asset
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
     "" ""  "q" "w" "j" "f" "g" "y" "p" "u" "l" ";" "[" "]" "\\"
@@ -320,9 +318,14 @@
 
 
 
+(require 'help-mode)
+(defvar quail-keyboard-layout-alist)
 (defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-dir)
 (declare-function ergoemacs-save "ergoemacs-lib")
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
+(declare-function ergoemacs-component--prompt "ergoemacs-component")
+(declare-function quail-insert-kbd-layout "quail")
 
 (defun ergoemacs-layouts--current (&optional layout)
   "Gets the LAYOUT symbol.

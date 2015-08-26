@@ -63,16 +63,17 @@
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
+(defvar ergoemacs-map--breadcrumb)
 (defvar ergoemacs-map--cache-save)
 (defvar ergoemacs-map--hash)
 (defvar ergoemacs-map-properties--plist-hash)
 (defvar ergoemacs-menu-keymap)
 (defvar ergoemacs-mode)
+(defvar ergoemacs-modify-transient-maps)
 (defvar ergoemacs-saved-global-map)
 (defvar ergoemacs-theme)
 (defvar ergoemacs-user-keymap)
 (defvar ess-language)
-(defvar ergoemacs-modify-transient-maps)
 
 
 (declare-function ergoemacs-menu--filter "ergoemacs-lib")
@@ -145,7 +146,6 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
         (setq ergoemacs-map--hashkey (intern md5)))))
 
 
-(defvar ergoemacs-map--breadcrumb "")
 (defvar ergoemacs-map--alist (make-hash-table))
 (defvar ergoemacs-map--alist-t (make-hash-table))
 (defvar ergoemacs-map--alist-t-o (make-hash-table))

@@ -71,6 +71,8 @@
 
 (declare-function ergoemacs-key-description--substitute-command-keys "ergoemacs-key-description")
 
+(declare-function ergoemacs-translate--define-key "ergoemacs-translate")
+
 
 (defvar ergoemacs-advice--temp-replace-functions nil
   "List of `ergoemacs-mode' replacement functions that are turned

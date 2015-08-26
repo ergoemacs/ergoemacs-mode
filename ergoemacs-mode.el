@@ -179,6 +179,18 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defvar ergoemacs-global-changed-keymap (make-sparse-keymap)
   "This keymap shows the global keys that were changed before `ergoemacs-mode' loaded.")
 
+(defvar ergoemacs-map--breadcrumb ""
+  "Breadcrumb that is used to figure out what map is being modified.")
+
+(defcustom ergoemacs-keyboard-layout (or (getenv "ERGOEMACS_KEYBOARD_LAYOUT") "us")
+  (concat "Specifies which keyboard layout to use.
+  This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.")
+  :type 'sexp
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
+
+
 (defvar ergoemacs-theme)
 (defcustom ergoemacs-mode-line t
   "Determines when the ergoemacs-mode modeline indicator is shown."
@@ -507,12 +519,12 @@ When `store-p' is non-nil, save the tables."
 
 (ergoemacs-mode--setup-hash-tables)
 
-(dolist (pkg '(ergoemacs-advice
+(dolist (pkg '(ergoemacs-map-properties 
+	       ergoemacs-translate
+	       ergoemacs-advice
                ergoemacs-lib
                ergoemacs-mapkeymap
-               ergoemacs-map-properties
                ergoemacs-layouts
-               ergoemacs-translate
                ergoemacs-key-description
                ergoemacs-debug
                ergoemacs-component

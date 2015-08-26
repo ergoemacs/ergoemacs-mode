@@ -84,6 +84,7 @@
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-translate "ergoemacs-translate")
+(declare-function ergoemacs-translate--define-key "ergoemacs-translate")
 
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
@@ -106,6 +107,9 @@
 (declare-function ergoemacs-key-description--keymap "ergoemacs-key-description")
 
 (declare-function package-installed-p "package")
+
+(declare-function ergoemacs-layout--regexp "ergoemacs-layouts")
+(declare-function ergoemacs-layouts-list "ergoemacs-layouts")
 
 
 ;; ergoemacs-translate

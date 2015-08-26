@@ -49,6 +49,7 @@
 
 (declare-function ergoemacs-command-loop "ergoemacs-command-loop")
 (declare-function ergoemacs-command-loop--internal "ergoemacs-command-loop")
+(declare-function ergoemacs-command-loop--mouse-command-drop-first "ergoemacs-command-loop")
 
 (declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-compononent")
 

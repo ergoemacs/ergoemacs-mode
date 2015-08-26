@@ -54,13 +54,19 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
+
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 
 (declare-function ergoemacs-mode-line "ergoemacs-mode")
 
+(declare-function ergoemacs-layout--regexp "ergoemacs-layouts")
+(declare-function ergoemacs-layouts--list "ergoemacs-layouts")
+
 (declare-function ergoemacs-map-properties--movement-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+
+(declare-function ergoemacs-translate--define-key "ergoemacs-translate")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-mods "ergoemacs-translate")
 (declare-function ergoemacs-translate--get "ergoemacs-translate")
@@ -1099,7 +1105,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
            (original-command command)
            (command command)
            (obj (and posn (posnp posn) (posn-object posn)))
-           form tmp)
+           tmp)
       ;; From `read-key-sequence':
       ;; /* Clicks in non-text areas get prefixed by the symbol
       ;; in their CHAR-ADDRESS field.  For example, a click on
