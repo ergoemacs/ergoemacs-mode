@@ -492,10 +492,23 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
         ;; Use " is " instead of a colon so that
         ;; it is easier to get out the function name using forward-sexp.
         (princ "' is an `ergoemacs-mode' layout")
+        (with-current-buffer standard-output
+          (save-excursion
+            (re-search-backward "`\\(ergoemacs-mode\\)'" nil t)
+            (help-xref-button 1 'help-function-def 'ergoemacs-mode
+                              (concat ergoemacs-dir "ergoemacs-mode.el"))))
         (when (file-readable-p el-file)
           (princ " defined in `")
           (princ (file-name-nondirectory el-file))
-          (princ "'."))
+          (princ "'.")
+          (with-current-buffer standard-output
+            (save-excursion
+              (re-search-backward "`\\([^`']+\\)'" nil t)
+              (help-xref-button 1 'help-variable-def
+                                s el-file)
+              (re-search-backward "^`\\([^`']+\\)'" nil t)
+              (help-xref-button 1 'help-variable-def
+                                s el-file))))
         (princ "\n\n")
         (princ "Documentation:\n")
         (with-current-buffer standard-output
