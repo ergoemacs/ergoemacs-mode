@@ -463,6 +463,19 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
 
 (defalias 'ergoemacs-layout 'ergoemacs-set-layout)
 
+(define-button-type 'ergoemacs-layout-help
+  :supertype 'help-xref
+  'help-function #'ergoemacs-layout-describe
+  'help-echo (purecopy "mouse-2, RET: find this ergoemacs layout's definition"))
+
+(defun ergoemacs-layout--regexp (&optional base)
+  (let ((reg (regexp-opt (ergoemacs-layouts--list t) t))
+        (f1 "[\"`']\\(%s\\)[\"`']")
+        (f2 "Base Layout: \\(%s\\)"))
+    (format (cond
+             (base f2)
+             (t f1)) (regexp-opt (ergoemacs-layouts--list) t))))
+
 (defun ergoemacs-layout-describe (&optional layout)
   "Display the full documentation an `ergoemacs-mode' layout (a symbol or string)."
   (interactive (ergoemacs-component--prompt :layout))
