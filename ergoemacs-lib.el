@@ -41,12 +41,16 @@
 
 (defvar tabbar-mode)
 (defvar ergoemacs-handle-ctl-c-or-ctl-x)
+(defvar ergoemacs-dir)
 
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
 (declare-function ergoemacs-theme--list "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-option-on "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-key-description--menu "ergoemacs-key-description")
+
+(declare-function ergoemacs-emacs-exe "ergoemacs-functions")
+(declare-function ergoemacs-translate--ahk-ini "ergoemacs-translate")
 
 (declare-function tabbar-install-faces "tabbar-ruler")
 (declare-function tabbar-mode "tabbar")

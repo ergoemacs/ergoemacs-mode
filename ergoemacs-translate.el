@@ -58,6 +58,14 @@
 (defvar ergoemacs-translation-hash)
 (defvar ergoemacs-translate--hash)
 (defvar ergoemacs-translate--event-hash)
+(defvar ergoemacs-dir)
+(defvar ergoemacs-theme)
+
+(declare-function ergoemacs-layouts--list "ergoemacs-layouts")
+(declare-function ergoemacs-theme--list "ergoemacs-theme-engine")
+(declare-function ergoemacs-mode-reset "ergoemacs-mode")
+(declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
+(declare-function ergoemacs-theme--custom-documentation "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-mode-line "ergoemacs-mode")
 

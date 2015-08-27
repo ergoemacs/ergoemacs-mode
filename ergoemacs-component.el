@@ -82,6 +82,7 @@
 (declare-function ergoemacs-reset "ergoemacs-lib")
 
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
+(declare-function ergoemacs-theme--regexp "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-translate "ergoemacs-translate")
 (declare-function ergoemacs-translate--define-key "ergoemacs-translate")
@@ -110,6 +111,7 @@
 
 (declare-function ergoemacs-layout--regexp "ergoemacs-layouts")
 (declare-function ergoemacs-layouts-list "ergoemacs-layouts")
+(declare-function ergoemacs-layouts--list "ergoemacs-layouts")
 
 
 ;; ergoemacs-translate

@@ -113,7 +113,10 @@
 (declare-function ergoemacs-map-properties--create-label-function "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
+(declare-function ergoemacs-theme--custom-documentation "ergoemacs-theme-engine")
+(declare-function ergoemacs-theme--customization-type "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
+
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
 
 (declare-function persistent-soft-fetch "persistent-soft")
