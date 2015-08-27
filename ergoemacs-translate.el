@@ -835,11 +835,12 @@ This takes into consideration the modal state of `ergoemacs-mode'."
     (unwind-protect
         (setq ret (with-temp-buffer
                     (insert "[Layouts]\n"
-                            (ergoemacs-layouts--custom-documentation layouts t))
+                            (ergoemacs-layouts--custom-documentation layouts t) "\n")
                     (dolist (lay layouts)
                       (insert (ergoemacs-translate--ahk-layout lay)))
                     (insert "[Themes]\n"
-                            (ergoemacs-theme--custom-documentation themes t))
+                            (ergoemacs-theme--custom-documentation themes t)
+                            "\n")
                     (dolist (lay layouts)
                       (dolist (theme themes)
                         (message "Getting information from %s-%s" lay theme)
@@ -847,7 +848,8 @@ This takes into consideration the modal state of `ergoemacs-mode'."
                               ergoemacs-theme theme)
                         (ergoemacs-mode-reset)
                         (insert "[" lay "-" theme "]"
-                                (ergoemacs-translate--ahk-functions-ini))))
+                                (ergoemacs-translate--ahk-functions-ini)
+                                "\n")))
                     (buffer-string)))
       (setq ergoemacs-keyboard-layout original-layout
             ergoemacs-theme original-theme)
