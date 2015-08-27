@@ -774,6 +774,86 @@ This takes into consideration the modal state of `ergoemacs-mode'."
     (push "" retl)
     (append retl retu)))
 
+(defun ergoemacs-translate--ahk-code (event)
+  "Get event code for AHK ini file."
+  (let* ((event (or (and (vectorp event) (elt event 0)) event))
+         (mod (event-modifiers event))
+         (basic (event-basic-type event))
+         (code 0))
+    (when (memq 'shift mod)
+      (setq code (+ 8 code)))
+    (when (memq 'meta mod)
+      (setq code (+ 2 code)))
+    (when (memq 'control mod)
+      (setq code (+ 4 code)))
+    (format "%s%s" code basic)))
+
+(defun ergoemacs-translate--ahk-layout (&optional layout)
+  "Translate LAYOUT to that used in the windows autohotkey script"
+  (let* ((layout (or layout ergoemacs-keyboard-layout))
+         (sym (ergoemacs :layout layout))
+         (val (symbol-value sym))
+         (i 1))
+    (with-temp-buffer
+      (insert "[" layout "]\n")
+      (dolist (v val)
+        (insert (format "%s=%s\n" i (string-to-char v)))
+        (setq i (+ i 1)))
+      (buffer-string))))
+
+(defun ergoemacs-translate--ahk-functions ()
+  "Get a list of functions supported by the autohotkey script."
+  (let (ret tmp)
+    (with-temp-buffer
+      (insert-file-contents (expand-file-name "ahk-us.ahk" ergoemacs-dir))
+      (goto-char (point-min))
+      (while (re-search-forward "^\\(.*\\):" nil t)
+        (setq tmp (intern (match-string 1)))
+        (when (fboundp tmp)
+          (push tmp ret))))
+    ret))
+
+(defun ergoemacs-translate--ahk-functions-ini ()
+  "Gets the autohotkey ini section for the current layout and theme."
+  (let ((ret ""))
+    (dolist (f (ergoemacs-translate--ahk-functions))
+      (dolist (key (where-is-internal f))
+        (when (and (= (length key) 1) (integerp (event-basic-type (elt key 0))))
+          (setq ret (format "%s\n%s=%s" ret f (ergoemacs-translate--ahk-code key))))))
+    ret))
+
+(defun ergoemacs-translate--ahk-ini (&optional all-layouts all-themes)
+  "Creates the ini file used with the autohotkey script."
+  (let ((layouts (or (and all-layouts (sort (ergoemacs-layouts--list) 'string<))
+                     (and (eq (ergoemacs :layout) 'ergoemacs-layout-us) (list "us"))
+                     (list "us" ergoemacs-keyboard-layout)))
+        (themes (or (and all-themes (sort (ergoemacs-theme--list) 'string<))
+                    (list ergoemacs-theme)))
+        (original-layout ergoemacs-keyboard-layout)
+        (original-theme ergoemacs-theme)
+        ret)
+    (unwind-protect
+        (setq ret (with-temp-buffer
+                    (insert "[Layouts]\n"
+                            (ergoemacs-layouts--custom-documentation layouts t))
+                    (dolist (lay layouts)
+                      (insert (ergoemacs-translate--ahk-layout lay)))
+                    (insert "[Themes]\n"
+                            (ergoemacs-theme--custom-documentation themes t))
+                    (dolist (lay layouts)
+                      (dolist (theme themes)
+                        (message "Getting information from %s-%s" lay theme)
+                        (setq ergoemacs-keyboard-layout lay
+                              ergoemacs-theme theme)
+                        (ergoemacs-mode-reset)
+                        (insert "[" lay "-" theme "]"
+                                (ergoemacs-translate--ahk-functions-ini))))
+                    (buffer-string)))
+      (setq ergoemacs-keyboard-layout original-layout
+            ergoemacs-theme original-theme)
+      (ergoemacs-mode-reset))
+    ret))
+
 (defun ergoemacs-translate-layout (&optional layout type)
   "Translates keyboard LAYOUT to between ergoemacs and different types of keyboard layouts.
 

@@ -714,16 +714,38 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
 
 (defcustom ergoemacs-keyboard-layout (or (getenv "ERGOEMACS_KEYBOARD_LAYOUT") "us")
   (concat "Specifies which keyboard layout to use.
-  This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.
+This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.
 
-  Valid values are:
-
-  " (ergoemacs-layouts--custom-documentation)
+Valid values are:
+" (ergoemacs-layouts--custom-documentation)
   )
   :type (ergoemacs-layouts--customization-type)
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
+
+
+(defun ergoemacs-mode--update-theme-description ()
+  "Updates the theme description based on loaded themes."
+  (defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
+                                 ergoemacs-variant
+                               (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
+                                   ergoemacs-theme
+                                 (if (getenv "ERGOEMACS_THEME")
+                                     (getenv "ERGOEMACS_THEME")
+                                   nil)))
+    (concat"Ergoemacs Keyboard Layout Themes.
+This is a mirror of the environment variable ERGOEMACS_THEME.
+
+Valid values are:
+"
+           (ergoemacs-theme--custom-documentation))
+    :type (ergoemacs-theme--customization-type)
+    :set 'ergoemacs-set-default
+    :initialize #'custom-initialize-default
+    :group 'ergoemacs-mode))
+
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-mode--update-theme-description)
 
 (defcustom ergoemacs-remap-ignore '(undo-tree-visualize)
   "Functions to ignore in `ergoemacs-mode' remaps"

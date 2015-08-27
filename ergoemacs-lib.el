@@ -446,6 +446,37 @@ The reset is done with `ergoemacs-mode-reset'."
   (setq ergoemacs-keyboard-layout layout)
   (ergoemacs-mode-reset))
 
+;;;###autoload
+(defun ergoemacs-gen-ahk (&optional all)
+  "Generates autohotkey for all layouts and themes"
+  (interactive)
+  (if (called-interactively-p 'any)
+      (progn
+        (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode --eval \"(ergoemacs-gen-ahk %s)\" &"
+                               (ergoemacs-emacs-exe)
+                               ergoemacs-dir (if current-prefix-arg "t" "nil"))))
+    (let ((xtra "ahk")
+          (extra-dir)
+          file-temp)
+      (setq extra-dir (expand-file-name "ergoemacs-extras" user-emacs-directory))
+      (if (not (file-exists-p extra-dir))
+          (make-directory extra-dir t))
+      (setq extra-dir (expand-file-name xtra extra-dir))
+      (if (not (file-exists-p extra-dir))
+          (make-directory extra-dir t))
+      (setq file-temp (expand-file-name "ergoemacs.ini" extra-dir))
+      (with-temp-file file-temp
+        (set-buffer-file-coding-system 'utf-8)
+        (ergoemacs-translate--ahk-ini all all))
+      (setq file-temp (expand-file-name "ergoemacs.ahk" extra-dir))
+      (with-temp-file file-temp
+        (set-buffer-file-coding-system 'utf-8)
+        (insert-file-contents (expand-file-name "ahk-us.ahk" ergoemacs-dir)))
+      (message "Generated ergoemacs.ahk")
+      (when (executable-find "ahk2exe")
+        (shell-command (format "ahk2exe /in %s" file-temp))
+        (message "Generated ergoemacs.exe")))))
+
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-lib.el ends here

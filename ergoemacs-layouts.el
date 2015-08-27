@@ -335,7 +335,8 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
 ;;; Layout Functions
 (defun ergoemacs-layouts--customization-type ()
   "Gets the customization types for `ergoemacs-keyboard-layout'."
-  `(choice ,@(mapcar
+  `(choice
+    ,@(mapcar
               (lambda(elt)
                 `(const :tag ,elt :value ,elt))
               (sort (ergoemacs-layouts--list t) 'string<))))
@@ -364,9 +365,9 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
               :button (:radio . (string= ergoemacs-keyboard-layout ,lay)))))
         (sort (ergoemacs-layouts--list) 'string<)))))
 
-(defun ergoemacs-layouts--custom-documentation ()
+(defun ergoemacs-layouts--custom-documentation (&optional lays ini)
   "Gets the list of all known layouts and the documentation associated with the layouts."
-  (let ((lays (sort (ergoemacs-layouts--list t) 'string<)))
+  (let ((lays (or lays (sort (ergoemacs-layouts--list t) 'string<))))
     (mapconcat
      (lambda(lay)
        (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
@@ -379,7 +380,9 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
                        (progn
                          (setq is-alias t)
                          (documentation-property alias 'variable-documentation))))
-         (concat "\"" lay "\" (" doc ")" (if is-alias ", alias" ""))))
+         (if ini
+             (concat lay "=" doc)
+           (concat "\"" lay "\" (" doc ")" (if is-alias ", alias" "")))))
      lays "\n")))
 
 (defvar ergoemacs-layouts--no-aliases nil)
