@@ -896,25 +896,34 @@ If :type is :quail use the 180 length string that
 
 (defun ergoemacs-translate--svg-quote (char)
   "Quote Character."
-  (let* ((case-fold-search nil))
-    (save-match-data
-      (cond
-       ((string= char "")
-        " ")
-       ((string= char ">")
-        "&gt;")
-       ((string= char ">")
-        "&lt;")
-       ((string= char "\"")
-        "&quot;")
-       ((string-match "[a-zA-Z0-9]" char)
-        char)
-       (t
-        (format "&#x%04X;"
-                (encode-char
-                 (with-temp-buffer
-                   (insert char)
-                   (char-before)) 'unicode)))))))
+  (let ((case-fold-search nil)
+        (i 0)
+        (ret ""))
+    (if (= (length char) 1)
+        (save-match-data
+          (cond
+           ((string= char "")
+            " ")
+           ((string= char "&")
+            "&amp;")
+           ((string= char ">")
+            "&gt;")
+           ((string= char ">")
+            "&lt;")
+           ((string= char "\"")
+            "&quot;")
+           ((string-match "[a-zA-Z0-9]" char)
+            char)
+           (t
+            (format "&#x%04X;"
+                    (encode-char
+                     (with-temp-buffer
+                       (insert char)
+                       (char-before)) 'unicode)))))
+      (while (< i (length char))
+        (setq ret (concat ret (ergoemacs-translate--svg-quote (substring char i (+ i 1))))
+              i (+ i 1)))
+      ret)))
 
 (defvar ergoemacs-translate--svg-layout nil)
 (defun ergoemacs-translate--svg-layout (&optional layout reread)
