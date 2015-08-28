@@ -99,9 +99,9 @@
         (let ((display (describe-char-display (point-min) (char-after (point-min)))))
           (if (display-graphic-p (selected-frame))
               (if display
-                  (setq ret t))
+                  (setq ret (font-at (point-min))))
             (if display
-                (setq ret t))))
+                (setq ret (font-at (point-min))))))
         (switch-to-buffer buf)
         ;; Save it so the user doesn't see the buffer popup very much
         ;; (if at all).

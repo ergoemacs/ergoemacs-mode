@@ -898,7 +898,8 @@ If :type is :quail use the 180 length string that
   "Quote Character."
   (let ((case-fold-search nil)
         (i 0)
-        (ret ""))
+        (ret "")
+        (default-font (face-attribute 'default :font)))
     (if (= (length char) 1)
         (save-match-data
           (cond
@@ -915,11 +916,24 @@ If :type is :quail use the 180 length string that
            ((string-match "[a-zA-Z0-9]" char)
             char)
            (t
-            (format "&#x%04X;"
-                    (encode-char
-                     (with-temp-buffer
-                       (insert char)
-                       (char-before)) 'unicode)))))
+            (setq ret (format "&#x%04X;"
+                               (encode-char
+                                (with-temp-buffer
+                                  (insert char)
+                                  (char-before)) 'unicode))
+                  font (ergoemacs-key-description--display-char-p char))
+            (when font
+              (setq font (or (font-get font :name)
+                             (font-get font :family)))
+              (when (and font (symbolp font))
+                (setq font (symbol-name font)))
+              (setq default-font (or (font-get default-font :name)
+                                     (font-get default-font :family)))
+              (when (and default-font (symbolp default-font))
+                (setq default-font (symbol-name default-font)))
+              (unless (string= font default-font)
+                (setq ret (format "<text style=\"font-family: '%s'\">%s</text>" font ret))))
+            ret)))
       (while (< i (length char))
         (setq ret (concat ret (ergoemacs-translate--svg-quote (substring char i (+ i 1))))
               i (+ i 1)))
