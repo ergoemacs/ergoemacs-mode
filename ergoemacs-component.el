@@ -871,7 +871,8 @@ be composed over the keymap.  This is done in
          package-name ensure defer comp plist)
     (when ergoemacs-component-struct--apply-inits-first-p
       (setq ergoemacs-component-struct--apply-inits-first-p nil)
-      (when ergoemacs-mode--fast-p
+      (if (not ergoemacs-mode--fast-p)
+          (setq ergoemacs--start-emacs-state-2 (ergoemacs--emacs-state))
         ;; Check to see if emacs state has changed.
         (setq ergoemacs--start-emacs-state-2 (ergoemacs--emacs-state))
         (ergoemacs-mode--setup-hash-tables--setq

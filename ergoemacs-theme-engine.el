@@ -808,12 +808,12 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
          (theme (or theme ergoemacs-theme))
          (layout (symbol-value (ergoemacs :layout  lay)))
          (file-dir (expand-file-name "bindings" (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-         (file-name (expand-file-name (concat ergoemacs-theme "-" lay "-" (ergoemacs--emacs-state) ".svg") file-dir))
+         (file-name (expand-file-name (concat ergoemacs-theme "-" lay "-" ergoemacs--start-emacs-state-2 ".svg") file-dir))
          (reread reread)
          pt ret)
     (if (and (file-exists-p file-name) (not reread))
         (progn
-          (setq ret (file-expand-wildcards (expand-file-name (concat ergoemacs-theme "-" lay "-*-" (ergoemacs--emacs-state) ".svg") file-dir)))
+          (setq ret (file-expand-wildcards (expand-file-name (concat ergoemacs-theme "-" lay "-*-" ergoemacs--start-emacs-state-2 ".svg") file-dir)))
           (push file-name ret)
           ret)
       (when (eq reread :svg)
@@ -910,7 +910,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (setq ergoemacs-theme--svg-prefix (pop ergoemacs-theme--svg-prefixes)
               file-name (expand-file-name (concat ergoemacs-theme "-" lay "-"
                                                   (replace-regexp-in-string "[^A-Za-z0-9-]+" "_" (key-description ergoemacs-theme--svg-prefix))
-                                                  "-" (ergoemacs--emacs-state) ".svg") file-dir))
+                                                  "-" ergoemacs--start-emacs-state-2 ".svg") file-dir))
         (ergoemacs-command-loop--spinner-display "%s->%s" (ergoemacs-key-description ergoemacs-theme--svg-prefix) file-name)
         (with-temp-file file-name
           (dolist (w ergoemacs-theme--svg)
