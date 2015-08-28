@@ -894,7 +894,79 @@ If :type is :quail use the 180 length string that
                   ret (ergoemacs-translate-layout ret :quail)))
           ret))))))
 
-(provide 'ergoemacs-translate)
+(defun ergoemacs-translate--svg-quote (char)
+  "Quote Character."
+  (let* ((case-fold-search nil))
+    (save-match-data
+      (cond
+       ((string= char "")
+        " ")
+       ((string= char ">")
+        "&gt;")
+       ((string= char ">")
+        "&lt;")
+       ((string= char "\"")
+        "&quot;")
+       ((string-match "[a-zA-Z0-9]" char)
+        char)
+       (t
+        (format "&#x%04X;"
+                (encode-char
+                 (with-temp-buffer
+                   (insert char)
+                   (char-before)) 'unicode)))))))
+
+(defvar ergoemacs-translate--svg-layout nil)
+(defun ergoemacs-translate--svg-layout (&optional layout reread)
+  "Create SVG for LAYOUT. Optionally REREAD kbd.svg before creating svg."
+  (let* ((lay (or layout ergoemacs-keyboard-layout))
+         (layout (symbol-value (ergoemacs :layout  lay)))
+         (file-dir (expand-file-name "layouts" (expand-file-name "ergoemacs-extras" user-emacs-directory)))
+         (file-name (expand-file-name (concat lay ".svg") file-dir))
+         (reread reread)
+         pt)
+    (if (and (file-exists-p file-name) (not reread)) file-name
+      (when (eq reread :svg)
+        (setq reread nil))
+      (unless (file-exists-p file-dir)
+        (make-directory file-dir t))
+      (when reread
+        (setq ergoemacs-translate--svg-layout nil))
+      (unless ergoemacs-translate--svg-layout
+        (with-temp-buffer
+          (insert-file-contents (expand-file-name "kbd.svg" ergoemacs-dir))
+          (goto-char (point-min))
+          (setq pt (point))
+          (while (re-search-forward ">\\([0-9]+\\)<" nil t)
+            (push (buffer-substring pt (match-beginning 0)) ergoemacs-translate--svg-layout)
+            (push (string-to-number (match-string 1)) ergoemacs-translate--svg-layout)
+            (setq pt (match-end 0)))
+          (push (buffer-substring pt (point-max)) ergoemacs-translate--svg-layout)
+          (setq ergoemacs-translate--svg-layout (reverse ergoemacs-translate--svg-layout))))
+      (with-temp-file file-name
+        (dolist (w ergoemacs-translate--svg-layout)
+          (cond
+           ((stringp w)
+            (insert w))
+           ((integerp w)
+            (insert ">" (ergoemacs-translate--svg-quote (nth w layout)) "<"))))))
+    file-name))
+
+(defun ergoemacs-translate--png-layout (&optional layout reread)
+  "Get png file for layout, or create one.
+Requires `ergoemacs-inkscape' to be specified."
+  (let* ((svg-file (ergoemacs-translate--svg-layout layout reread))
+         (png-file (concat (file-name-sans-extension svg-file) ".png")))
+    (if (file-exists-p png-file) png-file
+      (if (and ergoemacs-inkscape (file-readable-p ergoemacs-inkscape))
+          (progn
+            (message "Converting to png.")
+            (shell-command (format "%s -z -f \"%s\" -e \"%s\"" ergoemacs-inkscape svg-file png-file))
+            png-file)
+        (message "Need inkscape and to specify inkscape location with `ergoemacs-inkscape'.")
+        nil))))
+
+    (provide 'ergoemacs-translate)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-translate.el ends here
 ;; Local Variables:

@@ -322,8 +322,11 @@
 (defvar quail-keyboard-layout-alist)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-dir)
+(defvar ergoemacs-inkscape)
 (declare-function ergoemacs-save "ergoemacs-lib")
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
+(declare-function ergoemacs-translate--svg-layout "ergoemacs-translate")
+(declare-function ergoemacs-translate--png-layout "ergoemacs-translate")
 (declare-function ergoemacs-component--prompt "ergoemacs-component")
 (declare-function quail-insert-kbd-layout "quail")
 
@@ -498,7 +501,9 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
          (doc (or (documentation-property
                    s 'variable-documentation)
                   (documentation-property
-                   s 'variable-documentation))))
+                   s 'variable-documentation)))
+         pt
+         png svg)
     (unless (featurep 'quail)
       (require 'quail))
     (if (not sv)
@@ -532,6 +537,31 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
         (princ "Documentation:\n")
         (with-current-buffer standard-output
           (insert (or doc "Not documented as a layout.")))
+        (princ "\n\n")
+        (princ "Layout:\n")
+        (cond
+         ((and (setq svg (ergoemacs-translate--svg-layout (format "%s" layout)))
+               (setq png (ergoemacs-translate--png-layout (format "%s" layout)))
+               (image-type-available-p 'png))
+          (with-current-buffer standard-output
+            (insert-image (create-image png))
+            (insert "\n")))
+         ((and svg (image-type-available-p 'svg))
+          (with-current-buffer standard-output
+            (insert-image (create-image svg))
+            (princ "\n"))))
+        (with-current-buffer standard-output
+          (if png
+              (insert "[svg] [png]")
+            (insert "[svg]"))
+          (beginning-of-line)
+          (if (looking-at "\\(\\[svg\\]\\) \\(\\[png\\]\\)")
+              (progn
+                (help-xref-button 1 'help-url svg)
+                (help-xref-button 2 'help-url png))
+            (if (looking-at "\\(\\[svg\\]\\)")
+                (help-xref-button 1 'help-url svg)))
+          (goto-char (point-max)))
         (princ "\n\n")
         (princ "ASCII Layout (Quail):\n")
         (with-current-buffer standard-output
