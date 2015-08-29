@@ -522,19 +522,19 @@ When `store-p' is non-nil, save the tables."
 
 (ergoemacs-mode--setup-hash-tables)
 
-(dolist (pkg '(ergoemacs-map-properties 
-	       ergoemacs-translate
-	       ergoemacs-advice
-               ergoemacs-lib
-               ergoemacs-mapkeymap
-               ergoemacs-layouts
-               ergoemacs-key-description
-               ergoemacs-debug
-               ergoemacs-component
+(dolist (pkg '(ergoemacs-advice
                ergoemacs-command-loop
-               ergoemacs-map
+               ergoemacs-component
+               ergoemacs-debug
                ergoemacs-functions
+               ergoemacs-key-description
+               ergoemacs-layouts
+               ergoemacs-lib
+               ergoemacs-map
+               ergoemacs-map-properties 
+               ergoemacs-mapkeymap
                ergoemacs-theme-engine
+	       ergoemacs-translate
 	       ;; ergoemacs-themes
                ))
   (unless (featurep pkg)

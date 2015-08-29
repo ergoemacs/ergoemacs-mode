@@ -622,20 +622,33 @@ If TYPE is unspecified, assume :normal translation"
       (setq ret (ergoemacs-translate--event-convert-list `(,@modifiers ,basic))))
     ret))
 
-(defvar ergoemacs-translate--parent-map (let ((map (make-sparse-keymap)))
-                                          (ergoemacs map :label (- most-positive-fixnum 1))
-                                          (ergoemacs map :only-local-modifications-p t)
-                                          (ergoemacs map :map-list-hash '(ergoemacs-translate--parent-map))
-                                          map)
+(defvar ergoemacs-translate--parent-map nil
   "Parent map for keymaps when completing a key sequence.")
 
+(defun ergoemacs-translate--parent-map ()
+  (or ergoemacs-translate--parent-map
+      (let ((map (make-sparse-keymap)))
+        (ergoemacs map :label (- most-positive-fixnum 1))
+        (ergoemacs map :only-local-modifications-p t)
+        (ergoemacs map :map-list-hash '(ergoemacs-translate--parent-map))
+        (setq ergoemacs-translate--parent-map map)
+        map)))
 
-(defvar ergoemacs-translate--modal-parent-map (let ((map (make-sparse-keymap)))
-                                          (ergoemacs map :label (- most-positive-fixnum 2))
-                                          (ergoemacs map :only-local-modifications-p t)
-                                          (ergoemacs map :map-list-hash '(ergoemacs-translate--modal-parent-map))
-                                          map)
-  "Parent map for modal `ergoemacs-mode'")  
+(add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--parent-map)
+
+
+(defvar ergoemacs-translate--modal-parent-map nil
+  "Parent map for modal `ergoemacs-mode'")
+
+(defun ergoemacs-translate--modal-parent-map ()
+  (or ergoemacs-translate--modal-parent-map
+      (let ((map (make-sparse-keymap)))
+        (ergoemacs map :label (- most-positive-fixnum 2))
+        (ergoemacs map :only-local-modifications-p t)
+        (ergoemacs map :map-list-hash '(ergoemacs-translate--modal-parent-map))
+        (setq ergoemacs-translate--modal-parent-map map)
+        map)))
+(add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--modal-parent-map)
 
 (defvar ergoemacs-translate--keymap-hash (make-hash-table)
   "Translation keymaps")
@@ -644,7 +657,7 @@ If TYPE is unspecified, assume :normal translation"
   "Reset `ergoemacs-translate--keymap-hash'"
   (setq ergoemacs-translate--keymap-hash (make-hash-table)))
 
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-translate--keymap-reset)
+(add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--keymap-reset)
 
 (defun ergoemacs-translate--keymap (&optional translation)
   "Get the keymap for TRANSLATION.
