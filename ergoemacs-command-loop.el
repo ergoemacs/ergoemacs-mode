@@ -1275,7 +1275,6 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                   ergoemacs-command-loop--first-type first-type
                   ergoemacs-command-loop--history nil
                   ergoemacs-command-loop-start nil)
-            
             (while continue-read
               (setq inhibit-quit t)
               (while continue-read
@@ -1296,6 +1295,16 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                 (when (setq modal-p (ergoemacs :modal-p))
                   (setq local-keymap (ergoemacs-translate--keymap translation)))
                 (cond
+                 ;; Handle quit commands
+                 ((and last-current-key
+                       (or (lookup-key ergoemacs-map--quit-map raw-key)
+                           (and (equal raw-key [27])
+                                (lookup-key ergoemacs-map--quit-map [escape]))))
+                  (ergoemacs-command-loop--message
+                   "Key sequence %s aborted by %s"
+                   (ergoemacs-key-description last-current-key)
+                   (ergoemacs-key-description raw-key))
+                  (setq quit-flag t))
                  ;; Handle local commands.
                  ((and (or modal-p
                            (not (equal current-key raw-key)))

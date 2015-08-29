@@ -824,6 +824,10 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
     (ergoemacs-map--minor-mode-map-alist ini)
     (ergoemacs-map--minor-mode-overriding-map-alist)))
 
+
+(defvar ergoemacs-map--quit-map nil
+  "Keymap of quit keys for local keymap.")
+
 (defun ergoemacs-map--install ()
   "Installs `ergoemacs-mode' into the appropriate keymaps."
   (interactive)
@@ -846,9 +850,15 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
         ergoemacs-map--alists (make-hash-table)
         ergoemacs-map--alist-t (make-hash-table)
         ergoemacs-map--alist-t-o (make-hash-table)
+        ergoemacs-map--quit-map (make-sparse-keymap)
         ergoemacs-saved-global-map global-map
         global-map ergoemacs-keymap)
   (use-global-map global-map)
+  ;; Setup the quit map
+  (dolist (key (where-is-internal 'keyboard-quit))
+    (when (= 1 (length key))
+      (define-key ergoemacs-map--quit-map key 'keyboard-quit)))
+  (ergoemacs ergoemacs-map--quit-map :label '(ergoemacs-quit))
   
   ;; Put `ergoemacs-mode' style key shortcuts instead of emacs
   ;; style shortcuts (They need to place the correct shortucts)
