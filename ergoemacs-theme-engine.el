@@ -480,9 +480,11 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
          (plist (ergoemacs-gethash (or theme "") ergoemacs-theme-hash))
          (file (plist-get plist :file))
          (el-file (concat (file-name-sans-extension file) ".el"))
-         tmp)
+         svg png tmp)
     (if (not plist)
         (message "You did not specify a valid ergoemacs theme %s" theme)
+      (setq svg (ergoemacs-theme--svg theme)
+            png (ergoemacs-theme--png theme))
       (help-setup-xref (list #'ergoemacs-theme-describe (or theme ""))
                        (called-interactively-p 'interactive))
       (with-help-window (help-buffer)
@@ -497,6 +499,30 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (princ "\n\n")
         (princ "Documentation:\n")
         (princ (plist-get plist :description))
+        (princ "\n\n")
+        (princ "Diagram:\n")
+        (cond
+         ((and (image-type-available-p 'png)
+               (file-exists-p (car png)))
+          (with-current-buffer standard-output
+            (insert-image (create-image (car png)))
+            (insert "\n")))
+         ((and (file-exists-p (car svg)) (image-type-available-p 'svg))
+          (with-current-buffer standard-output
+            (insert-image (create-image (car svg)))
+            (princ "\n"))))
+        (with-current-buffer standard-output
+          (if (file-exists-p (car png))
+              (insert "[svg] [png]")
+            (insert "[svg]"))
+          (beginning-of-line)
+          (if (looking-at "\\(\\[svg\\]\\) \\(\\[png\\]\\)")
+              (progn
+                (help-xref-button 1 'help-url (car svg))
+                (help-xref-button 2 'help-url (car png)))
+            (if (looking-at "\\(\\[svg\\]\\)")
+                (help-xref-button 1 'help-url (car svg))))
+          (goto-char (point-max)))
         (princ "\n\n")
         (when (setq tmp (plist-get plist :based-on))
           (when (eq (car tmp) 'quote)
@@ -802,144 +828,166 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
 (defvar ergoemacs-theme--svg nil)
 (defvar ergoemacs-theme--svg-prefixes nil)
 (defvar ergoemacs-theme--svg-prefix nil)
-(defun ergoemacs-theme--svg (&optional theme layout reread)
+(defun ergoemacs-theme--svg (&optional theme layout full-p reread)
   "Creates SVG based THEME and  LAYOUT"
-  (let* ((lay (or layout ergoemacs-keyboard-layout))
-         (theme (or theme ergoemacs-theme))
-         (layout (symbol-value (ergoemacs :layout  lay)))
-         (file-dir (expand-file-name "bindings" (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-         (file-name (expand-file-name (concat ergoemacs-theme "-" lay "-" ergoemacs--start-emacs-state-2 ".svg") file-dir))
-         (reread reread)
-         pt ret)
-    (if (and (file-exists-p file-name) (not reread))
-        (progn
-          (setq ret (file-expand-wildcards (expand-file-name (concat ergoemacs-theme "-" lay "-*-" ergoemacs--start-emacs-state-2 ".svg") file-dir)))
-          (push file-name ret)
-          ret)
-      (when (eq reread :svg)
-        (setq reread nil))
-      (when reread
-        (setq ergoemacs-theme--svg nil))
-      (unless (file-exists-p file-dir)
-        (make-directory file-dir t))
-      (unless ergoemacs-theme--svg
-        (with-temp-buffer
-          (insert-file-contents (expand-file-name "kbd-ergo.svg" ergoemacs-dir))
-          (goto-char (point-min))
-          (setq pt (point))
-          (while (re-search-forward ">\\([TMCAN][SMCA]?\\|title\\)\\(F?[0-9]+\\|-SPC\\|\\)<" nil t)
-            (push (buffer-substring pt (match-beginning 0)) ergoemacs-theme--svg)
-            (cond
-             ((and (string= "T" (match-string 1)))
-              (push (string-to-number (match-string 2)) ergoemacs-theme--svg))
-             ((and (string= "M" (match-string 1)))
-              (push (list (string-to-number (match-string 2)) 'meta) ergoemacs-theme--svg))
-             ((and (string= "C" (match-string 1)))
-              (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))
-             ((and (string= "A" (match-string 1)))
-              (push (list (string-to-number (match-string 2)) 'apps) ergoemacs-theme--svg))
-             ((string= "title" (match-string 1))
-              (push 'title ergoemacs-theme--svg))
-             ((string= "N" (match-string 1))
-              (push (list (match-string 2)) ergoemacs-theme--svg))
-             ((string= "MM" (match-string 1))
-              (cond
-               ((string= "" (match-string 2))
-                (push 'meta ergoemacs-theme--svg))
-               ((string= "-SPC" (match-string 2))
-                (push (list 32 'meta) ergoemacs-theme--svg))
-               ((string-match-p "^F" (match-string 2))
-                (push (list (match-string 2) 'meta) ergoemacs-theme--svg))
-               (t
-                (push (list (string-to-number (match-string 2)) 'meta) ergoemacs-theme--svg))))
-             ((string= "MS" (match-string 1))
-              (cond
-               ((string= "" (match-string 2))
-                (push 'meta-shift ergoemacs-theme--svg))
-               ((string= "-SPC" (match-string 2))
-                (push (list 32 'meta 'shift) ergoemacs-theme--svg))
-               ((string-match-p "^F" (match-string 2))
-                (push (list (match-string 2) 'meta 'shift) ergoemacs-theme--svg))
-               (t
-                (push (list (string-to-number (match-string 2)) 'meta 'shift) ergoemacs-theme--svg))))
-             ((string= "CS" (match-string 1))
-              (cond
-               ((string= "" (match-string 2))
-                (push 'control-shift ergoemacs-theme--svg))
-               ((string= "-SPC" (match-string 2))
-                (push (list 32 'control 'shift) ergoemacs-theme--svg))
-               ((string-match-p "^F" (match-string 2))
-                (push (list (match-string 2) 'control 'shift) ergoemacs-theme--svg))
-               (t
-                (push (list (string-to-number (match-string 2)) 'control 'shift) ergoemacs-theme--svg))))
-             ((string= "CC" (match-string 1))
-              (cond
-               ((string= "" (match-string 2))
-                (push 'control ergoemacs-theme--svg))
-               ((string= "-SPC" (match-string 2))
-                (push (list 32 'control) ergoemacs-theme--svg))
-               ((string-match-p "^F" (match-string 2))
-                (push (list (match-string 2) 'control) ergoemacs-theme--svg))
-               (t
-                (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))))
-             ((string= "AA" (match-string 1))
-              (cond
-               ((string= "" (match-string 2))
-                (push 'apps ergoemacs-theme--svg))
-               ((string= "-SPC" (match-string 2))
-                (push (list 32 'apps) ergoemacs-theme--svg))
-               ((string-match-p "^F" (match-string 2))
-                (push (list (match-string 2) 'apps) ergoemacs-theme--svg))
-               (t
-                (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))))
-             (t (push nil ergoemacs-theme--svg)))
-            (setq pt (match-end 0)))
-          (push (buffer-substring pt (point-max)) ergoemacs-theme--svg))
-        (setq ergoemacs-theme--svg (reverse ergoemacs-theme--svg)))
-      (setq ergoemacs-theme--svg-prefixes nil
-            ergoemacs-theme--svg-prefix nil)
-      (with-temp-file file-name
-        (dolist (w ergoemacs-theme--svg)
-          (cond
-           ((stringp w)
-            (insert w))
-           (t
-            (insert ">" (ergoemacs-theme--svg-elt w theme layout lay) "<")))))
-      (push file-name ret)
-      (while ergoemacs-theme--svg-prefixes
-        (setq ergoemacs-theme--svg-prefix (pop ergoemacs-theme--svg-prefixes)
-              file-name (expand-file-name (concat ergoemacs-theme "-" lay "-"
-                                                  (replace-regexp-in-string "[^A-Za-z0-9-]+" "_" (key-description ergoemacs-theme--svg-prefix))
-                                                  "-" ergoemacs--start-emacs-state-2 ".svg") file-dir))
-        (ergoemacs-command-loop--spinner-display "%s->%s" (ergoemacs-key-description ergoemacs-theme--svg-prefix) file-name)
-        (with-temp-file file-name
-          (dolist (w ergoemacs-theme--svg)
-            (cond
-             ((stringp w)
-              (insert w))
-             (t
-              (insert ">" (ergoemacs-theme--svg-elt w theme layout lay) "<")))))
-        (push file-name ret))
-      ret)))
+  (save-excursion
+    (let* ((lay (or layout ergoemacs-keyboard-layout))
+           (theme (or theme ergoemacs-theme))
+           (layout (symbol-value (ergoemacs :layout  lay)))
+           (file-dir (expand-file-name "bindings" (expand-file-name "ergoemacs-extras" user-emacs-directory)))
+           (file-name (expand-file-name (concat theme "-" lay "-" ergoemacs--start-emacs-state-2 ".svg") file-dir))
+           (reread reread)
+           (old-theme ergoemacs-theme)
+           (old-layout ergoemacs-keyboard-layout)
+           pt ret)
+      (if (and (file-exists-p file-name) (not reread))
+          (progn
+            (setq ret (file-expand-wildcards (expand-file-name (concat theme "-" lay "-*-" ergoemacs--start-emacs-state-2 ".svg") file-dir)))
+            (push file-name ret)
+            ret)
+        (unless (and (equal theme old-theme)
+                     (equal lay old-layout))
+          (setq ergoemacs-theme theme
+                ergoemacs-keyboard-layout lay)
+          (ergoemacs-mode-reset))
+        (unwind-protect
+            (progn
+              (when (eq reread :svg)
+                (setq reread nil))
+              (when reread
+                (setq ergoemacs-theme--svg nil))
+              (unless (file-exists-p file-dir)
+                (make-directory file-dir t))
+              (unless ergoemacs-theme--svg
+                (with-temp-buffer
+                  (insert-file-contents (expand-file-name "kbd-ergo.svg" ergoemacs-dir))
+                  (goto-char (point-min))
+                  (setq pt (point))
+                  (while (re-search-forward ">\\([TMCAN][SMCA]?\\|title\\)\\(F?[0-9]+\\|-SPC\\|\\)<" nil t)
+                    (push (buffer-substring pt (match-beginning 0)) ergoemacs-theme--svg)
+                    (cond
+                     ((and (string= "T" (match-string 1)))
+                      (push (string-to-number (match-string 2)) ergoemacs-theme--svg))
+                     ((and (string= "M" (match-string 1)))
+                      (push (list (string-to-number (match-string 2)) 'meta) ergoemacs-theme--svg))
+                     ((and (string= "C" (match-string 1)))
+                      (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))
+                     ((and (string= "A" (match-string 1)))
+                      (push (list (string-to-number (match-string 2)) 'apps) ergoemacs-theme--svg))
+                     ((string= "title" (match-string 1))
+                      (push 'title ergoemacs-theme--svg))
+                     ((string= "N" (match-string 1))
+                      (push (list (match-string 2)) ergoemacs-theme--svg))
+                     ((string= "MM" (match-string 1))
+                      (cond
+                       ((string= "" (match-string 2))
+                        (push 'meta ergoemacs-theme--svg))
+                       ((string= "-SPC" (match-string 2))
+                        (push (list 32 'meta) ergoemacs-theme--svg))
+                       ((string-match-p "^F" (match-string 2))
+                        (push (list (match-string 2) 'meta) ergoemacs-theme--svg))
+                       (t
+                        (push (list (string-to-number (match-string 2)) 'meta) ergoemacs-theme--svg))))
+                     ((string= "MS" (match-string 1))
+                      (cond
+                       ((string= "" (match-string 2))
+                        (push 'meta-shift ergoemacs-theme--svg))
+                       ((string= "-SPC" (match-string 2))
+                        (push (list 32 'meta 'shift) ergoemacs-theme--svg))
+                       ((string-match-p "^F" (match-string 2))
+                        (push (list (match-string 2) 'meta 'shift) ergoemacs-theme--svg))
+                       (t
+                        (push (list (string-to-number (match-string 2)) 'meta 'shift) ergoemacs-theme--svg))))
+                     ((string= "CS" (match-string 1))
+                      (cond
+                       ((string= "" (match-string 2))
+                        (push 'control-shift ergoemacs-theme--svg))
+                       ((string= "-SPC" (match-string 2))
+                        (push (list 32 'control 'shift) ergoemacs-theme--svg))
+                       ((string-match-p "^F" (match-string 2))
+                        (push (list (match-string 2) 'control 'shift) ergoemacs-theme--svg))
+                       (t
+                        (push (list (string-to-number (match-string 2)) 'control 'shift) ergoemacs-theme--svg))))
+                     ((string= "CC" (match-string 1))
+                      (cond
+                       ((string= "" (match-string 2))
+                        (push 'control ergoemacs-theme--svg))
+                       ((string= "-SPC" (match-string 2))
+                        (push (list 32 'control) ergoemacs-theme--svg))
+                       ((string-match-p "^F" (match-string 2))
+                        (push (list (match-string 2) 'control) ergoemacs-theme--svg))
+                       (t
+                        (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))))
+                     ((string= "AA" (match-string 1))
+                      (cond
+                       ((string= "" (match-string 2))
+                        (push 'apps ergoemacs-theme--svg))
+                       ((string= "-SPC" (match-string 2))
+                        (push (list 32 'apps) ergoemacs-theme--svg))
+                       ((string-match-p "^F" (match-string 2))
+                        (push (list (match-string 2) 'apps) ergoemacs-theme--svg))
+                       (t
+                        (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))))
+                     (t (push nil ergoemacs-theme--svg)))
+                    (setq pt (match-end 0)))
+                  (push (buffer-substring pt (point-max)) ergoemacs-theme--svg))
+                (setq ergoemacs-theme--svg (reverse ergoemacs-theme--svg)))
+              (setq ergoemacs-theme--svg-prefixes nil
+                    ergoemacs-theme--svg-prefix nil)
+              (with-temp-file file-name
+                (dolist (w ergoemacs-theme--svg)
+                  (cond
+                   ((stringp w)
+                    (insert w))
+                   (t
+                    (insert ">" (ergoemacs-theme--svg-elt w theme layout lay) "<")))))
+              (push file-name ret)
+              (unless full-p
+                (setq ergoemacs-theme--svg-prefixes nil))
+              (while ergoemacs-theme--svg-prefixes
+                (setq ergoemacs-theme--svg-prefix (pop ergoemacs-theme--svg-prefixes)
+                      file-name (expand-file-name (concat ergoemacs-theme "-" lay "-"
+                                                          (replace-regexp-in-string "[^A-Za-z0-9-]+" "_" (key-description ergoemacs-theme--svg-prefix))
+                                                          "-" ergoemacs--start-emacs-state-2 ".svg") file-dir))
+                (ergoemacs-command-loop--spinner-display "%s->%s" (ergoemacs-key-description ergoemacs-theme--svg-prefix) file-name)
+                (with-temp-file file-name
+                  (dolist (w ergoemacs-theme--svg)
+                    (cond
+                     ((stringp w)
+                      (insert w))
+                     (t
+                      (insert ">" (ergoemacs-theme--svg-elt w theme layout lay) "<")))))
+                (push file-name ret)))
+          (unless (and (equal theme old-theme)
+                       (equal lay old-layout))
+            (setq ergoemacs-theme old-theme
+                  ergoemacs-keyboard-layout old-layout)
+            (ergoemacs-mode-reset)))
+        ret))))
 
 
 (defun ergoemacs-theme--png--process (&rest _ignore)
-  (let* ((png-info (pop ergoemacs-theme--png))
-         process)
-    (if (not png-info)
-        (progn
-          (ergoemacs-command-loop--message "Done creating png files.")
-          (kill-buffer (get-buffer "*ergoemacs-theme-png-convert*")))
-      (ergoemacs-command-loop--spinner-display "%s" (nth 0 png-info))
-      (setq process (start-process-shell-command "ergoemacs-png-convert"
-                                                 "*ergoemacs-theme-png-convert*"
-                                                 (nth 1 png-info)))
-      (set-process-sentinel process 'ergoemacs-theme--png--process))))
+  "Process the `ergoemacs-theme--png' list to convert svg files
+to png files."
+  (save-excursion
+    (let* ((png-info (pop ergoemacs-theme--png))
+           process help-buffer)
+      (if (not png-info)
+          (progn
+            (ergoemacs-command-loop--message "Done creating png files.")
+            ;; FIXME: Update images...
+            )
+        (ergoemacs-command-loop--spinner-display "%s" (nth 0 png-info))
+        (setq process (start-process-shell-command "ergoemacs-png-convert"
+                                                   "*ergoemacs-theme-png-convert*"
+                                                   (nth 1 png-info)))
+        (set-process-sentinel process 'ergoemacs-theme--png--process)))))
+
 (defvar ergoemacs-theme--png nil)
-(defun ergoemacs-theme--png (&optional theme layout reread)
+(defun ergoemacs-theme--png (&optional theme layout full-p reread)
   "Get png file for layout, or create one.
 Requires `ergoemacs-inkscape' to be specified."
-  (let* ((svg-files (ergoemacs-theme--svg theme layout reread))
+  (let* ((svg-files (ergoemacs-theme--svg theme layout full-p reread))
          png-file ret)
     (dolist (svg-file svg-files)
       (setq png-file (concat (file-name-sans-extension svg-file) ".png"))

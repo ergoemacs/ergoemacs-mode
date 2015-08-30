@@ -1073,7 +1073,7 @@ If Object isn't specified assume it is for the current ergoemacs theme."
           (when (re-search-forward "^\\(\\_<.*\\_>\\) is .* theme defined in `\\(.*\\)'" nil t)
             (help-xref-button 2 'ergoemacs-theme-def (match-string 1)))
           (goto-char (point-min))
-          (when (re-search-forward "^This theme is based on: *\\(\\_<.(\\_>\\)" nil t)
+          (when (re-search-forward "^This theme is based on: *\\(\\_<.*\\_>\\)" nil t)
             (help-xref-button 1 'ergoemacs-theme-help (match-string 1)))
           (goto-char (point-min))
           (while (re-search-forward ret nil t)
