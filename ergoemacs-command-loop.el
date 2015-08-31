@@ -93,6 +93,7 @@
 (defvar ergoemacs-modal-ignored-keymap)
 (defvar keyfreq-mode)
 (defvar keyfreq-table)
+(defvar ergoemacs-map--quit-map)
 
 (defvar universal-argument-num-events) ;; Not in Emacs 24.5
 
@@ -941,7 +942,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
   ;; Sometimes the window buffer and selected buffer are out of sync.
   ;; Fix this issue.
   (unless (eq (current-buffer) (window-buffer))
-    (switch-to-buffer (window-buffer))
+    (ignore-errors (switch-to-buffer (window-buffer) t t))
     (goto-char (window-point))))
 
 (defun ergoemacs-command-loop--internal-end-command ()
