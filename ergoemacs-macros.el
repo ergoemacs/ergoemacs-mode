@@ -61,9 +61,26 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
            'ergoemacs-theme-component--parse-remaining
            skip-first)))
 
+(defun ergoemacs-theme-component--parse-key-str (str)
+  "Wraps C-i, C-m and C-[ in <>."
+  (cond
+   ((not (stringp str)) str)
+   ((string-match-p "^C-[im[]$" str) (concat "<" str ">"))
+   (t str)))
+
+(defun ergoemacs-theme-component--parse-key (item)
+  "Changes `kbd' and `read-kbd-macro' on C-i, C-m, and C-[ to allow calling on GUI."
+  (cond
+   ((not (consp item)) item)
+   ((eq (nth 0 item) 'kbd)
+    (list 'kbd (ergoemacs-theme-component--parse-key-str (nth 1 item))))
+   ((eq (nth 0 item) 'read-kbd-macro)
+    (list 'read-kbd-macro (ergoemacs-theme-component--parse-key-str (nth 1 item)) (nth 2 item)))
+   (t item)))
+
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
-  "In parsing, this function converts
+  "In parsing, this function converts:
 - `define-key' is converted to `ergoemacs-component-struct--define-key' and keymaps are quoted
 - `global-set-key' is converted to `ergoemacs-component-struct--define-key' with keymap equal to `global-map'
 - `bind-key' is converted to `ergoemacs-component-struct--define-key'
@@ -76,6 +93,9 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
   `ergoemacs-component-struct--set'
 - Allows :version statement expansion to `ergoemacs-component-struct--new-version'
 - Adds with-hook syntax or (when -hook) or (when -mode) using `ergoemacs-component-struct--with-hook'
+
+Keys are also converted.
+ C-i -> <C-i>; C-m -> <C-m>; C-[ -> <C-[>  These keys only work in a GUI.
 "
   (let* ((last-was-version nil)
          (remaining
@@ -91,9 +111,9 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                (setq last-was-version t)
                nil)
               ((ignore-errors (eq (nth 0 elt) 'global-reset-key))
-               `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) nil))
+               `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 1 elt)) nil))
               ((ignore-errors (eq (nth 0 elt) 'global-unset-key))
-               `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) nil))
+               `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 1 elt)) nil))
               ((ignore-errors (eq (nth 0 elt) 'set))
                ;; Currently doesn't support (setq a b c d ), but it should.
                `(ergoemacs-component-struct--set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
@@ -115,31 +135,31 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
                `(ergoemacs-component-struct--set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
                (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt)))
-                   `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) (quote ,(nth 2 elt)))
-                 `(ergoemacs-component-struct--define-key 'global-map ,(nth 1 elt) ,(nth 2 elt))))
+                   `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 1 elt)) (quote ,(nth 2 elt)))
+                 `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 1 elt)) ,(nth 2 elt))))
               
               ;; (bind-key "C-c x" 'my-ctrl-c-x-command)
               ((ignore-errors (and (eq (nth 0 elt) 'bind-key)
                                    (= (length elt) 3)))
                (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
-                   `(ergoemacs-component-struct--define-key 'global-map (kbd ,(nth 1 elt)) (quote ,(nth 2 elt)))
-                 `(ergoemacs-component-struct--define-key 'global-map (kbd ,(nth 1 elt)) ,(nth 2 elt))))
+                   `(ergoemacs-component-struct--define-key 'global-map (kbd ,(ergoemacs-theme-component--parse-key-str (nth 1 elt))) (quote ,(nth 2 elt)))
+                 `(ergoemacs-component-struct--define-key 'global-map (kbd ,(ergoemacs-theme-component--parse-key-str (nth 1 elt))) ,(nth 2 elt))))
 
               ;; (bind-key "C-c x" 'my-ctrl-c-x-command some-other-map)
               ((ignore-errors (and (eq (nth 0 elt) 'bind-key)
                                    (= (length elt) 4)))
                (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
-                   `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(nth 1 elt)) (quote ,(nth 2 elt)))
-                 `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(nth 1 elt)) ,(nth 2 elt))))
+                   `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(ergoemacs-theme-component--parse-key-str (nth 1 elt))) (quote ,(nth 2 elt)))
+                 `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(ergoemacs-theme-component--parse-key-str (nth 1 elt))) ,(nth 2 elt))))
               
               ((ignore-errors (eq (nth 0 elt) 'define-key))
                (if (equal (nth 1 elt) '(current-global-map))
                    (if (ergoemacs-keymapp (ergoemacs-sv (nth 3 elt))) 
-                       `(ergoemacs-component-struct--define-key 'global-map ,(nth 2 elt) (quote ,(nth 3 elt)))
-                     `(ergoemacs-component-struct--define-key 'global-map ,(nth 2 elt) ,(nth 3 elt)))
+                       `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 2 elt)) (quote ,(nth 3 elt)))
+                     `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 2 elt)) ,(nth 3 elt)))
                  (if (ergoemacs-keymapp (ergoemacs-sv (nth 3 elt))) 
-                     `(ergoemacs-component-struct--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) (quote ,(nth 3 elt)))
-                   `(ergoemacs-component-struct--define-key (quote ,(nth 1 elt)) ,(nth 2 elt) ,(nth 3 elt)) )))
+                     `(ergoemacs-component-struct--define-key (quote ,(nth 1 elt)) ,(ergoemacs-theme-component--parse-key (nth 2 elt)) (quote ,(nth 3 elt)))
+                   `(ergoemacs-component-struct--define-key (quote ,(nth 1 elt)) ,(ergoemacs-theme-component--parse-key (nth 2 elt)) ,(nth 3 elt)) )))
               ((or (ignore-errors (eq (nth 0 elt) 'with-hook))
                    (and (ignore-errors (eq (nth 0 elt) 'when))
                         (ignore-errors (string-match "\\(-hook\\|-mode\\|^mark-active\\)$" (symbol-name (nth 1 elt))))))
@@ -660,7 +680,6 @@ When arg1 can be a property.  The following properties are supported:
 - :layout - returns the current (or specified by PROPERTY) keyboard layout.
 - :remap - Use `ergoemacs-mode' to remap to an appropriate function.
 - :md5 -- returns an md5 of the currently enabled `ergoemacs-mode' options.
-- :theme-debug -- Debugs the theme by calling `ergoemacs-component--checkout'
 - :map-list,  :composed-p, :composed-list, :key-hash :empty-p calls ergoemacs-map-properties-- equivalent functions.
 
 "
@@ -767,8 +786,7 @@ When arg1 can be a property.  The following properties are supported:
       `(ergoemacs-map--minor-mode-map-alist ,arg2))
 
      (t
-      `(ergoemacs-map-- ,arg1))
-     )))
+      `(ergoemacs-map-- ,arg1)))))
 
 ;;;###autoload
 (defmacro ergoemacs-translation (&rest body-and-plist)
