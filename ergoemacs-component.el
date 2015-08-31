@@ -1090,7 +1090,10 @@ If Object isn't specified assume it is for the current ergoemacs theme."
             (when (and (setq tmp (intern (match-string 1)))
                        (boundp tmp))
               (help-xref-button 1 'help-variable tmp))
-            (ergoemacs-component--help-link-1)))))))
+            (ergoemacs-component--help-link-1))
+          (goto-char (point-min))
+          (when (search-forward "an `ergoemacs-mode' layout defined" nil t)
+            (setq bidi-display-reordering nil)))))))
 
 (define-button-type 'ergoemacs-component-help
   :supertype 'help-xref
