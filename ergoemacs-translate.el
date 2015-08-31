@@ -287,16 +287,22 @@ This also translates <C-i> to ?i, <C-m> to ?m <C-[> to ?[
    "Convert the event description list EVENT-DESC to an event type.
 This is different than `event-convert-list' because:
  -  '(shift ?3) or '(ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT.
- -  '(ergoemacs-control control ?m) produces C-RET"
+ -  '(ergoemacs-control control ?m) produces C-RET
+ -  '(ergoemacs-gui control ?m) produces <C-m>. this applies for ?i and ?[ as well"
   (let ((cur-list list)
         elt
         tmp
         control-p
-        new-list)
-    (when (memq 'ergoemacs-control cur-list)
+        new-list
+        (gui-p (memq 'ergoemacs-gui list)))
+    (when (or gui-p (memq 'ergoemacs-control cur-list))
       (setq control-p t)
-      (dolist (elt (reverse cur-list))
-        (unless (equal elt 'ergoemacs-control)
+      (setq cur-list (reverse cur-list))
+      (if (and gui-p (memq (car cur-list) (list ?\[ ?m ?i)))
+          (setq gui-p (pop cur-list))
+        (setq gui-p nil))
+      (dolist (elt cur-list)
+        (unless (memq elt '(ergoemacs-control ergoemacs-gui))
           (push elt new-list)))
       (setq cur-list new-list)
       (setq new-list nil))
@@ -318,9 +324,10 @@ This is different than `event-convert-list' because:
           (setq new-list (append new-list (list elt))))
          (t
           (push elt new-list)))))
-    (if control-p
-        (aref (read-kbd-macro (concat "C-" (key-description (vector (event-convert-list new-list)))) t) 0)
-      (event-convert-list new-list))))
+    (cond
+     (gui-p (aref (read-kbd-macro (replace-regexp-in-string "ack" (make-string 1 gui-p) (key-description (vector (event-convert-list (append new-list (list 'ack))))))) 0))
+     (control-p (aref (read-kbd-macro (concat "C-" (key-description (vector (event-convert-list new-list)))) t) 0))
+     (t (event-convert-list new-list)))))
 
 
 (defun ergoemacs-translate (kbd &optional just-first-keys variable-modifiers variable-prefixes layout-to layout-from)
