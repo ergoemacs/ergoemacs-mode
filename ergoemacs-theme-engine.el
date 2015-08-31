@@ -60,6 +60,11 @@
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-theme-options)
 (defvar ergoemacs-theme-version)
+(defvar ergoemacs-keymap)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs--start-emacs-state-2)
+(defvar ergoemacs-dir)
+(defvar ergoemacs-inkscape)
 
 (declare-function ergoemacs-save "ergoemacs-lib")
 (declare-function ergoemacs-mode-reset "ergoemacs-lib")
@@ -70,6 +75,14 @@
 (declare-function ergoemacs-component-find-1 "ergoemacs-component")
 (declare-function ergoemacs-component--prompt "ergoemacs-component")
 (declare-function ergoemacs-require "ergoemacs-lib")
+(declare-function ergoemacs-command-loop--message "ergoemacs-command-loop")
+(declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
+(declare-function ergoemacs-key-description "ergoemacs-key-description")
+(declare-function ergoemacs-key-description--keymap "ergoemacs-key-description")
+(declare-function ergoemacs-key-description--modifier "ergoemacs-key-description")
+(declare-function ergoemacs-layouts--current "ergoemacs-layouts")
+(declare-function ergoemacs-map--hashkey "ergoemacs-map")
+(declare-function ergoemacs-translate--svg-quote "ergoemacs-translate")
 
 (defun ergoemacs-theme-components--required-p (comp)
   "Is COMP a required component?"
@@ -406,7 +419,7 @@ When SILENT is true, also include silent themes"
      menu-item "Generate/Open Key binding Cheat Sheet"
      (lambda()
        (interactive)
-       (call-interactively 'ergoemacs-display-current-svg)))
+       (call-interactively 'ergoemacs-display-current-theme)))
 
     (ergoemacs-save
      menu-item "Save Settings for Future Sessions"
@@ -480,6 +493,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
          (plist (ergoemacs-gethash (or theme "") ergoemacs-theme-hash))
          (file (plist-get plist :file))
          (el-file (concat (file-name-sans-extension file) ".el"))
+         (old-theme ergoemacs-theme)
          svg png tmp)
     (if (not plist)
         (message "You did not specify a valid ergoemacs theme %s" theme)
@@ -523,6 +537,16 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
             (if (looking-at "\\(\\[svg\\]\\)")
                 (help-xref-button 1 'help-url (car svg))))
           (goto-char (point-max)))
+        (princ "\n")
+        (if (equal (format "%s"old-theme) (format "%s" theme))
+            (princ (ergoemacs-key-description--keymap ergoemacs-keymap))
+          (unwind-protect
+              (progn
+                (setq ergoemacs-theme theme)
+                (ergoemacs-mode-reset)
+                (princ (ergoemacs-key-description--keymap ergoemacs-keymap)))
+            (setq ergoemacs-theme old-theme)
+            (ergoemacs-mode-reset)))
         (princ "\n\n")
         (when (setq tmp (plist-get plist :based-on))
           (when (eq (car tmp) 'quote)
@@ -604,23 +628,28 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
 (defalias 'ergoemacs-bash 'ergoemacs-theme-create-bash)
 
 
-(setq ergoemacs-function-short-names
+(defcustom ergoemacs-function-short-names
       '(
-        (count-words-region "Count Words")
-        (goto-line "Goto line")
+        (abort-recursive-edit "Abort Edit")
         (ace-jump-mode "Ace Jump")
         (backward-char  "← char")
         (backward-kill-word "⌫ word")
         (backward-paragraph "↑ ¶")
         (backward-word "← word")
+        (bm-next "Next Bookmark")
+        (bm-toggle "Toggle bookmark")
         (comment-dwim "cmt dwim")
+        (count-words-region "Count Words")
+        (cua-set-mark "Set Mark")
         (delete-backward-char "⌫ char")
         (delete-char "⌦ char")
         (delete-frame "x Frame")
+        (delete-indentation "⌧ indentation")
         (delete-other-windows "x other pane")
         (delete-other-windows "x other pane")
         (delete-window "x pane")
         (delete-window "x pane")
+        (digit-argument "#Argument")
         (er/contract-region "→ region ←")
         (er/expand-region "←region→")
         (er/expand-region "←region→")
@@ -631,6 +660,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-beginning-or-end-of-buffer "↑ Top*")
         (ergoemacs-call-keyword-completion "↯ compl")
         (ergoemacs-close-current-buffer "x Close Buffer")
+        (ergoemacs-command-loop--universal-argument "Argument")
         (ergoemacs-compact-uncompact-block "fill/unfill ¶")
         (ergoemacs-copy-all "copy all")
         (ergoemacs-copy-all "copy all")
@@ -640,6 +670,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-cut-all "✂ all")
         (ergoemacs-cut-all "✂ all")
         (ergoemacs-cut-line-or-region "✂ region")
+        (ergoemacs-delete-frame "Close Frame")
         (ergoemacs-end-of-line-or-what "→ line/*")
         (ergoemacs-end-or-beginning-of-buffer "↓ Bottom*")
         (ergoemacs-extend-selection "←region→")
@@ -650,19 +681,17 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-move-cursor-next-pane "next pane")
         (ergoemacs-move-cursor-previous-pane "prev pane")
         (ergoemacs-new-empty-buffer "New")
-        (make-frame-command "New Frame")
         (ergoemacs-open-in-external-app "OS Open")
         (ergoemacs-open-last-closed "Open Last Closed")
+        (ergoemacs-org-edit-src "Edit Source")
         (ergoemacs-paste "paste")
         (ergoemacs-paste-cycle "paste ↑")
         (ergoemacs-print-buffer-confirm "Print")
+        (ergoemacs-read-key--universal-argument "Argument")
         (ergoemacs-select-current-block "Sel. Block")
         (ergoemacs-select-current-line "Sel. Line")
         (ergoemacs-select-text-in-quote "←quote→")
         (ergoemacs-shrink-whitespaces "⌧ white")
-        (delete-indentation "⌧ indentation")
-        (insert-parentheses "()")
-        (move-past-close-and-reindent "→) ↹Tab")
         (ergoemacs-switch-to-next-frame "next frame")
         (ergoemacs-switch-to-previous-frame "prev frame")
         (ergoemacs-text-scale-normal-size "Reset Zoom")
@@ -670,35 +699,36 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-toggle-letter-case "tog. case")
         (ergoemacs-unchorded-alt-modal "Alt+ Mode")
         (ergoemacs-universal-argument "Argument")
-        (universal-argument "Argument")
-        (digit-argument "#Argument")
-        (negative-argument "-Argument")
-        (mc/edit-lines "Edit Lines")
-        (mc/mark-next-like-this "Mark Next")
-        (ergoemacs-read-key--universal-argument "Argument")
-        (ergoemacs-command-loop--universal-argument "Argument")
-        (indent-for-tab-command "↹Tab")
         (execute-extended-command "M-x")
         (find-file "Open")
         (flyspell-auto-correct-word "flyspell")
         (forward-char "→ char")
-        (ergoemacs-org-edit-src "Edit Source")
         (forward-paragraph "↓ ¶")
         (forward-word "→ word")
+        (goto-line "Goto line")
+        (ido-write-file "Save As")
+        (indent-for-tab-command "↹Tab")
         (indent-region "indent-region")  ;; Already in CUA
-        (newline-and-indent "Enter↵ Tab↹")
+        (insert-parentheses "()")
         (isearch-backward "← isearch")
-        (isearch-forward "→ isearch")
         (isearch-backward-regexp "← reg isearch")
+        (isearch-forward "→ isearch")
         (isearch-forward-regexp "→ reg isearch")
         (keyboard-quit "Stop Command")
-        (abort-recursive-edit "Abort Edit")
         (kill-line "⌦ line")
         (kill-word "⌦ word")
         (left-word  "← word")
+        (make-frame-command "New Frame")
         (mark-paragraph "Sel ¶")
         (mark-whole-buffer "Sel All")
+        (mc/edit-lines "Edit Lines")
+        (mc/mark-next-like-this "Mark Next")
+        (menu-bar-open "Menu bar")
+        (move-past-close-and-reindent "→) ↹Tab")
+        (negative-argument "-Argument")
+        (newline-and-indent "Enter↵ Tab↹")
         (next-line "↓ line")
+        (pr-interface)
         (previous-line "↑ line")
         (query-replace "rep")
         (query-replace "rep")
@@ -713,7 +743,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (scroll-up "↓ page")
         (scroll-up-command "↓ page")
         (set-mark-command "Set Mark")
-        (cua-set-mark "Set Mark")
         (shell-command "shell cmd")
         (split-window-below "split —")
         (split-window-horizontally "split —")
@@ -724,22 +753,14 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (text-scale-increase "Zoom In")
         (undo "↶ undo")
         (undo-tree-redo "↷ redo")
+        (universal-argument "Argument")
         (vr/query-replace "rep reg")
-        (pr-interface)
-        (write-file "Save As")
-        (ido-write-file "Save As")
-        (ergoemacs-delete-frame "Close Frame")
-        (bm-next "Next Bookmark")
-        (bm-toggle "Toggle bookmark")
-        (menu-bar-open "Menu bar")
-        ;; (insert-parentheses "()")
-        )
-  ;; "Ergoemacs short command names"
-  ;; :group 'ergoemacs-themes
-  ;; :type '(repeat :tag "Command abbreviation"
-  ;;                (list (sexp :tag "Command")
-  ;;                      (string :tag "Short Name")))
-  )
+        (write-file "Save As"))
+  "Ergoemacs short command names"
+  :group 'ergoemacs-themes
+  :type '(repeat :tag "Command abbreviation"
+                 (list (sexp :tag "Command")
+                       (string :tag "Short Name"))))
 
 (defvar ergoemacs-theme-remove-prefixes
   '("kmacro" "ergoemacs" "help" "w32"))
@@ -751,6 +772,12 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
     ("-" " ")
     ("describe" "📖")
     ("about" "📖")))
+
+(defvar ergoemacs-theme--svg nil)
+(defvar ergoemacs-theme--svg-prefixes nil)
+(defvar ergoemacs-theme--svg-prefix nil)
+
+
 (defun ergoemacs-theme--svg-elt-nonabbrev (what)
   (let (ret)
     (cond
@@ -769,7 +796,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
 (defun ergoemacs-theme--svg-elt (elt theme layout lay)
   "Handle ELT"
   (ergoemacs-translate--svg-quote
-   (let (key binding short no-push-p)
+   (let (key binding no-push-p)
      (cond
       ((integerp elt) (nth elt layout))
       ((and (listp elt) (or (integerp (car elt))
@@ -825,9 +852,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
            (setq key (concat (substring key 0 10) "…")))
          key)))))
 
-(defvar ergoemacs-theme--svg nil)
-(defvar ergoemacs-theme--svg-prefixes nil)
-(defvar ergoemacs-theme--svg-prefix nil)
 (defun ergoemacs-theme--svg (&optional theme layout full-p reread)
   "Creates SVG based THEME and  LAYOUT"
   (save-excursion
@@ -835,14 +859,14 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
            (theme (or theme ergoemacs-theme))
            (layout (symbol-value (ergoemacs :layout  lay)))
            (file-dir (expand-file-name "bindings" (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-           (file-name (expand-file-name (concat theme "-" lay "-" ergoemacs--start-emacs-state-2 ".svg") file-dir))
+           (file-name (expand-file-name (concat theme "-" lay "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir))
            (reread reread)
            (old-theme ergoemacs-theme)
            (old-layout ergoemacs-keyboard-layout)
            pt ret)
       (if (and (file-exists-p file-name) (not reread))
           (progn
-            (setq ret (file-expand-wildcards (expand-file-name (concat theme "-" lay "-*-" ergoemacs--start-emacs-state-2 ".svg") file-dir)))
+            (setq ret (file-expand-wildcards (expand-file-name (concat theme "-" lay "-*-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir)))
             (push file-name ret)
             ret)
         (unless (and (equal theme old-theme)
@@ -948,7 +972,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                 (setq ergoemacs-theme--svg-prefix (pop ergoemacs-theme--svg-prefixes)
                       file-name (expand-file-name (concat ergoemacs-theme "-" lay "-"
                                                           (replace-regexp-in-string "[^A-Za-z0-9-]+" "_" (key-description ergoemacs-theme--svg-prefix))
-                                                          "-" ergoemacs--start-emacs-state-2 ".svg") file-dir))
+                                                          "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir))
                 (ergoemacs-command-loop--spinner-display "%s->%s" (ergoemacs-key-description ergoemacs-theme--svg-prefix) file-name)
                 (with-temp-file file-name
                   (dolist (w ergoemacs-theme--svg)
@@ -965,13 +989,13 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
             (ergoemacs-mode-reset)))
         ret))))
 
-
+(defvar ergoemacs-theme--png nil)
 (defun ergoemacs-theme--png--process (&rest _ignore)
   "Process the `ergoemacs-theme--png' list to convert svg files
 to png files."
   (save-excursion
     (let* ((png-info (pop ergoemacs-theme--png))
-           process help-buffer)
+           process)
       (if (not png-info)
           (progn
             (ergoemacs-command-loop--message "Done creating png files.")
@@ -983,7 +1007,6 @@ to png files."
                                                    (nth 1 png-info)))
         (set-process-sentinel process 'ergoemacs-theme--png--process)))))
 
-(defvar ergoemacs-theme--png nil)
 (defun ergoemacs-theme--png (&optional theme layout full-p reread)
   "Get png file for layout, or create one.
 Requires `ergoemacs-inkscape' to be specified."

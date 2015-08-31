@@ -57,10 +57,9 @@
 (declare-function cua-cut-region "cua-base")
 (declare-function cua-paste "cua-base")
 (declare-function cua-set-rectangle-mark "cua-rect")
-
+(declare-function describe-ergoemacs-theme "ergoemacs-theme-engine")
 (declare-function dired-get-marked-files "dired")
 
-;;ergoemacs-gen-svg
 (declare-function ergoemacs-ini-mode "ergoemacs-mode")
 (declare-function ergoemacs-map-- "ergoemacs-map")
 (declare-function ergoemacs-mode "ergoemacs-mode")
@@ -2169,56 +2168,11 @@ If arg is a negative prefix, copy file path only"
   :type 'string
   :group 'ergoemacs-mode)
 
-(defun ergoemacs-display-current-svg ()
-  "Generates the current ergoemacs layout, unless it already exists and opens it in a browser.
-With a prefix, force regeneration. "
+(defun ergoemacs-display-current-theme ()
+  "Generates the current ergoemacs layout, unless it already
+exists and opens it in emacs, if possible."
   (interactive)
-  (let* ((var (ergoemacs :current-theme))
-         (layout ergoemacs-keyboard-layout)
-         (extra (concat var "/ergo-layouts"))
-         (md5 (ergoemacs :md5))
-         (dir (expand-file-name extra
-                                (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-         (png (expand-file-name (concat "ergoemacs-layout-" layout md5 ".png") dir))
-         (file (expand-file-name (concat "ergoemacs-layout-" layout md5 ".svg") dir)))
-    
-    (unless (and (not current-prefix-arg) (file-exists-p file))
-      (message "Generating SVG file...")
-      (unless (featurep 'ergoemacs-extras)
-        (require 'ergoemacs-extras))
-      (ergoemacs-gen-svg layout "kbd-ergo.svg" extra)
-      (message "Generated!")
-      ;; Sigh this isn't being sent appropriately.  Issue #291
-      ;; (if (called-interactively-p 'any)
-      ;;     (let ((temp-file (make-temp-file "ergoemacs-gen" nil ".el")))
-      ;;       (with-temp-file temp-file
-      ;;         (insert (format "(setq ergoemacs-theme %s)\n(setq ergoemacs-keyboard-layout \"%s\")\n(setq ergoemacs-theme-options '"
-      ;;                         (if var
-      ;;                             (concat "\"" var "\"")
-      ;;                           "nil")
-      ;;                         layout))
-      ;;         (let ((print-level nil)
-      ;;               (print-length nil))
-      ;;           (prin1 ergoemacs-theme-options (current-buffer)))
-      ;;         (insert ")\n(ergoemacs-mode 1)\n(ergoemacs-display-current-svg 1)"))
-            
-      ;;       (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode -l %s &"
-      ;;                              (ergoemacs-emacs-exe)
-      ;;                              ergoemacs-dir temp-file))))
-      )
-    
-    (when (file-exists-p png)
-      (setq file png))
-    
-    (if (not(file-exists-p file))
-        (message "Need to generate/download layout.")
-      (when (called-interactively-p 'interactive)
-        (condition-case err
-            (browse-url-of-file file)
-          (error
-           (message "Error opening with browser (%s), try opening in an external app." err)
-           (ergoemacs-open-in-external-app file)))))
-    file))
+  (describe-ergoemacs-theme ergoemacs-theme))
 
 ;;; Unaccent region taken and modified from Drew Adam's unaccent.el
 

@@ -60,6 +60,7 @@
 (defvar ergoemacs-translate--event-hash)
 (defvar ergoemacs-dir)
 (defvar ergoemacs-theme)
+(defvar ergoemacs-inkscape)
 
 (declare-function ergoemacs-layouts--list "ergoemacs-layouts")
 (declare-function ergoemacs-theme--list "ergoemacs-theme-engine")
@@ -71,6 +72,7 @@
 
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 (declare-function ergoemacs-key-description-kbd "ergoemacs-key-description")
+(declare-function ergoemacs-key-description--display-char-p "ergoemacs-key-description")
 
 (declare-function ergoemacs-layouts--current "ergoemacs-layouts")
 
@@ -912,7 +914,8 @@ If :type is :quail use the 180 length string that
   (let ((case-fold-search nil)
         (i 0)
         (ret "")
-        (default-font (face-attribute 'default :font)))
+        (default-font (face-attribute 'default :font))
+        font)
     (if (= (length char) 1)
         (save-match-data
           (cond

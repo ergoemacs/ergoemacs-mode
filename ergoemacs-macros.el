@@ -65,7 +65,7 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
   "Wraps C-i, C-m and C-[ in <>."
   (cond
    ((not (stringp str)) str)
-   ((string-match-p "^C-[im[]$" str) (concat "<" str ">"))
+   ((string-match-p "^\\(?:M-\\|S-\\)*C-\\(?:M-\\|S-\\)*[im[]$" str) (concat "<" str ">"))
    (t str)))
 
 (defun ergoemacs-theme-component--parse-key (item)

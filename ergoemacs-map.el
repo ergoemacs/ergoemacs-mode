@@ -865,7 +865,8 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
   (ergoemacs-menu--filter (lookup-key ergoemacs-keymap [menu-bar]))
   (ergoemacs-map--modify-active t)
   (ergoemacs-component-struct--create-hooks)
-  (add-hook 'post-command-hook #'ergoemacs-map--modify-active))
+  (add-hook 'post-command-hook #'ergoemacs-map--modify-active)
+  (ergoemacs-map--decodes))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-map--install)
 
@@ -898,10 +899,52 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
      (t
       (message "%s is disabled!" key)))))
 
-(add-hook 'ergoemacs-mode-shutdown-hook 'ergoemacs-map--remove)
+;; Fix C-i C-[ and the like
+;; See http://emacs.stackexchange.com/questions/10271/how-to-bind-c-for-real-seriously-for-real-this-time/15174
+(defvar ergoemacs-map--decodes
+  `(([?\C-\[] ,(kbd "<C-[>"));; C-[ and escape
+    ([?\C-i] ,(kbd "<C-i>"));; C-i and TAB
+    ;; ([?\C-j] (kbd "<C-j>"));; C-j and newline
+    ([?\C-m] ,(kbd "<C-m>"));; C-i and TAB
+    )
+  "Decodes for C-[, C-i, and C-m")
+
+(defun ergoemacs-map--decodes- (key lst extra)
+  (let ((basic (event-basic-type (aref key 0))))
+    (ignore-errors
+      (define-key input-decode-map
+        (vector (event-convert-list (append lst (list 'shift basic))))
+        (vector (intern (format "%sS-%s" extra (make-string 1 basic))))))
+    (ignore-errors (define-key input-decode-map
+                     (vector (event-convert-list (append lst (list 'meta basic))))
+                     (vector (intern (format "%sM-%s" extra (make-string 1 basic))))))
+    (ignore-errors (define-key input-decode-map
+                     (vector (event-convert-list (append lst (list 'shift 'meta basic))))
+                     (vector (intern (format "%sS-M-%s" extra (make-string 1 basic))))))))
+
+(defun ergoemacs-map--decodes (&rest _ignore)
+  "Apply the decodes for C-i C-m and C-[
+Currently M-C-[ and anything similar is broken."
+  (let (basic)
+    (when ergoemacs-mode
+      (dolist (var ergoemacs-map--decodes)
+        (define-key input-decode-map (nth 0 var) (nth 1 var))
+        (ergoemacs-map--decodes- (nth 0 var) '(control) "C-")
+        (ergoemacs-map--decodes- (nth 0 var) '(control hyper) "C-h-")
+        (ergoemacs-map--decodes- (nth 0 var) '(control super) "C-s-")
+        (ergoemacs-map--decodes- (nth 0 var) '(control alt) "C-a-")
+        (ergoemacs-map--decodes- (nth 0 var) '(control hyper alt) "C-h-a-")
+        (ergoemacs-map--decodes- (nth 0 var) '(control super alt) "C-s-a-")
+        (ergoemacs-map--decodes- (nth 0 var) '(control hyper alt super) "C-h-a-s-")))))
+
+(add-hook 'after-make-frame-functions #'ergoemacs-map--decodes)
+
+(add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-map--decodes)
+
+(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-map--remove)
 
 (autoload 'ergoemacs (expand-file-name "ergoemacs-macros.el" ergoemacs-dir) nil t)
-(provide 'ergoemacs)
+(provide 'ergoemacs-map)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-map.el ends here
 ;; Local Variables:
