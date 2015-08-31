@@ -271,13 +271,20 @@ LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
 (defun ergoemacs-translate--event-basic-type (event &optional layout)
   "Return the basic type of the given event (all modifiers removed).
 This is different than `event-basic-type' because ?# would return
-?3 on a QWERTY LAYOUT."
+?3 on a QWERTY LAYOUT.
+
+This also translates <C-i> to ?i, <C-m> to ?m <C-[> to ?[
+"
   (let* ((basic (event-basic-type event))
-         (new-basic (ergoemacs-gethash basic (ergoemacs-translate--event-modifier-hash layout))))
-    (or new-basic basic)))
+         (new-basic (and basic (ergoemacs-gethash basic (ergoemacs-translate--event-modifier-hash layout)))))
+    (or new-basic basic
+        (and (symbolp event)
+             (setq basic (symbol-name event))
+             (string-match "\\([im[]\\)$" basic)
+             (aref (match-string 1 basic) 0)))))
 
 (defun ergoemacs-translate--event-convert-list (list &optional layout)
-  "Convert the event description list EVENT-DESC to an event type.
+   "Convert the event description list EVENT-DESC to an event type.
 This is different than `event-convert-list' because:
  -  '(shift ?3) or '(ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT.
  -  '(ergoemacs-control control ?m) produces C-RET"
