@@ -298,7 +298,7 @@ This is different than `event-convert-list' because:
     (when (or gui-p (memq 'ergoemacs-control cur-list))
       (setq control-p t)
       (setq cur-list (reverse cur-list))
-      (if (and gui-p (memq (car cur-list) (list ?\[ ?m ?i)))
+      (if (and gui-p (memq (car cur-list) (list '\[ 'm 'i ?\[ ?m ?i)))
           (setq gui-p (pop cur-list))
         (setq gui-p nil))
       (dolist (elt cur-list)
@@ -325,7 +325,7 @@ This is different than `event-convert-list' because:
          (t
           (push elt new-list)))))
     (cond
-     (gui-p (aref (read-kbd-macro (replace-regexp-in-string "ack" (make-string 1 gui-p) (key-description (vector (event-convert-list (append new-list (list 'ack))))))) 0))
+     (gui-p (aref (read-kbd-macro (concat (substring (key-description (vector (event-convert-list (append new-list (list 'ack))))) 0 -4) (or (and (symbolp gui-p) (symbol-name gui-p)) (make-string 1 gui-p)) ">")) 0))
      (control-p (aref (read-kbd-macro (concat "C-" (key-description (vector (event-convert-list new-list)))) t) 0))
      (t (event-convert-list new-list)))))
 
@@ -385,7 +385,11 @@ When EXCLUDE-BASIC is non-nil, don't include the keys that are likely to produce
   (let* ((key event)
          (ret '())
          (basic (ergoemacs-translate--event-basic-type key))
+         (gui-p (and (symbolp key) (memq basic '(m i \[ ?m ?i ?\[))))
+         (extra-modifiers extra-modifiers)
          trial)
+    (when gui-p
+      (push 'ergoemacs-gui extra-modifiers))
     (unless exclude-basic
       (setq trial (ergoemacs-translate--event-convert-list (append extra-modifiers (list basic))))
       (unless (eq trial key)
@@ -423,6 +427,11 @@ When EXCLUDE-BASIC is non-nil, don't include the keys that are likely to produce
       (setq ret (append (ergoemacs-translate--event-trials event exclude-basic (list 'hyper)) ret))
       (setq ret (append (ergoemacs-translate--event-trials event exclude-basic (list 'super)) ret))
       (setq ret (append (ergoemacs-translate--event-trials event exclude-basic (list 'hyper 'super)) ret)))
+
+    (when gui-p
+      (setq extra-modifiers (cdr extra-modifiers)
+            event (ergoemacs-translate--event-convert-list (append extra-modifiers (list basic))))
+      (setq ret (append (ergoemacs-translate--event-trials event exclude-basic nil) ret)))
     ret))
 
 (defun ergoemacs-translate--trials (key)
