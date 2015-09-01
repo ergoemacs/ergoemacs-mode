@@ -5,7 +5,7 @@
 ;; Filename: ergoemacs-command-loop.el
 ;; Description: 
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer:
 ;; Created: Sat Sep 28 20:08:09 2013 (-0500)
 ;; Version: 
 ;; Last-Updated: 
@@ -66,6 +66,7 @@
 (declare-function ergoemacs-map-properties--movement-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
+(declare-function ergoemacs-translate--event-convert-list "ergoemacs-translate")
 (declare-function ergoemacs-translate--define-key "ergoemacs-translate")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-mods "ergoemacs-translate")
@@ -598,11 +599,23 @@ It also inputs real read events into the history with `ergoemacs-command-loop--h
 It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
   (let ((input (ergoemacs-command-loop--history prompt ergoemacs-command-loop-blink-rate current-key))
         last-input
-        binding)
+        basic mods
+        binding gui)
     ;; Fix issues with `input-decode-map'
     (when input
-      (setq input (ergoemacs-command-loop--decode-event input input-decode-map current-key)
-            binding (key-binding (ergoemacs :combine current-key input) t))
+      ;; Fix input as if you defined C-i -> <C-i> on `input-decode-map'
+      ;; http://emacs.stackexchange.com/questions/10271/how-to-bind-c-for-real-seriously-for-real-this-time/15174
+      (if (and (display-graphic-p)
+               (setq basic (event-basic-type input))
+               (memq basic (list 'i 'm '\[ ?i ?m ?\[))
+               (setq mods (event-modifiers input))
+               (memq 'control mods)
+               (setq gui (ergoemacs-translate--event-convert-list (append (list 'ergoemacs-gui) mods (list basic))))
+               (setq binding (key-binding (ergoemacs :combine current-key input) t)))
+          (setq input gui)
+        (setq input (ergoemacs-command-loop--decode-event input input-decode-map current-key)
+              binding (key-binding (ergoemacs :combine current-key input) t)))
+      
       ;; These should only be replaced if they are not bound.
       (unless binding
         (setq last-input input
@@ -900,7 +913,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
   (interactive)
   (cond
    ((and ergoemacs-command-loop-start (not (ergoemacs-command-loop-p)))
-    (ergoemacs-command-loop--message "Start ergoemacs-mode command loop." )
+    ;; (ergoemacs-command-loop--message "Start ergoemacs-mode command loop." )
     (ergoemacs-command-loop--internal key type initial-key-type universal))
    (t
     (setq ergoemacs-command-loop--exit :ignore-post-command-hook
@@ -1213,6 +1226,27 @@ Used to replace:
 "
   (or (and ergoemacs-mode ergoemacs-command-loop--single-command-keys)
       (funcall ergoemacs-command-loop--this-command-keys)))
+
+(defvar ergoemacs-command-loop--timer nil
+  "Timer to startup `ergoemacs-mode' command loop.")
+(defun ergoemacs-command-loop--timer ()
+  "Start `ergoemacs-command-loop--internal' if not currently running."
+  (unless (and (ergoemacs-command-loop-persistent-p)
+               (ergoemacs-command-loop-p))
+    (ergoemacs-command-loop--internal)))
+
+(defun ergoemacs-command-loop--install-timer ()
+  "Install the `ergoemacs-command-loop--timer'"
+  (setq ergoemacs-command-loop--timer
+        (run-with-idle-timer 0.1 t #'ergoemacs-command-loop--timer)))
+
+(defun ergoemacs-command-loop--remove-timer ()
+  "Remove `ergoemacs-command-loop--timer'"
+  (when ergoemacs-command-loop--timer
+    (cancel-timer ergoemacs-command-loop--timer)))
+
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--install-timer)
+(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--remove-timer)
 
 (defun ergoemacs-command-loop--internal (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.

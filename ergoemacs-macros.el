@@ -61,22 +61,24 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
            'ergoemacs-theme-component--parse-remaining
            skip-first)))
 
-(defun ergoemacs-theme-component--parse-key-str (str)
-  "Wraps C-i, C-m and C-[ in <>."
-  (cond
-   ((not (stringp str)) str)
-   ((string-match-p "^\\(?:M-\\|S-\\)*C-\\(?:M-\\|S-\\)*[im[]$" str) (concat "<" str ">"))
-   (t str)))
+(fset 'ergoemacs-theme-component--parse-key-str
+      #'(lambda (str)
+          "Wraps C-i, C-m and C-[ in <>."
+          (cond
+           ((not (stringp str)) str)
+           ((string-match-p "^\\(?:M-\\|S-\\)*C-\\(?:M-\\|S-\\)*[im[]$" str) (concat "<" str ">"))
+           (t str))))
 
-(defun ergoemacs-theme-component--parse-key (item)
-  "Changes `kbd' and `read-kbd-macro' on C-i, C-m, and C-[ to allow calling on GUI."
-  (cond
-   ((not (consp item)) item)
-   ((eq (nth 0 item) 'kbd)
-    (list 'kbd (ergoemacs-theme-component--parse-key-str (nth 1 item))))
-   ((eq (nth 0 item) 'read-kbd-macro)
-    (list 'read-kbd-macro (ergoemacs-theme-component--parse-key-str (nth 1 item)) (nth 2 item)))
-   (t item)))
+(fset 'ergoemacs-theme-component--parse-key
+      #'(lambda  (item)
+          "Changes `kbd' and `read-kbd-macro' on C-i, C-m, and C-[ to allow calling on GUI."
+          (cond
+           ((not (consp item)) item)
+           ((eq (nth 0 item) 'kbd)
+            (list 'kbd (ergoemacs-theme-component--parse-key-str (nth 1 item))))
+           ((eq (nth 0 item) 'read-kbd-macro)
+            (list 'read-kbd-macro (ergoemacs-theme-component--parse-key-str (nth 1 item)) (nth 2 item)))
+           (t item))))
 
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
