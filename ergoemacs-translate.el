@@ -295,10 +295,10 @@ This is different than `event-convert-list' because:
         control-p
         new-list
         (gui-p (memq 'ergoemacs-gui list)))
-    (when (or gui-p (memq 'ergoemacs-control cur-list))
-      (setq control-p t)
+    (when (or gui-p (setq control-p(memq 'ergoemacs-control cur-list)))
       (setq cur-list (reverse cur-list))
-      (if (and gui-p (memq (car cur-list) (list '\[ 'm 'i ?\[ ?m ?i)))
+      (if (and gui-p (memq (car cur-list) (list '\[ 'm 'i ?\[ ?m ?i))
+               (memq 'control cur-list))
           (setq gui-p (pop cur-list))
         (setq gui-p nil))
       (dolist (elt cur-list)
