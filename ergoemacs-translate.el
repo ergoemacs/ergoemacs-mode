@@ -637,8 +637,8 @@ If TYPE is unspecified, assume :normal translation"
                               ((eq 'ergoemacs-control e) 'control)
                               (t e)))
                            e-mod) #'string<))
-         (ambiguous-p (and (memq basic (list ?m ?i ?\[))
-                           (memq 'control e-mod)))
+         (special-p (memq basic (list ?m ?i ?\[)))
+         (ambiguous-p (and special-p (memq 'control e-mod)))
          tmp
          (ret event))
     (when ambiguous-p
@@ -655,9 +655,13 @@ If TYPE is unspecified, assume :normal translation"
                              (and (consp type) (list (list nil type)))))
               (when (equal (nth 0 mod) modifiers)
                 (setq modifiers (nth 1 mod))
-                (when (and ambiguous-p
-                           (memq 'control modifiers))
+                (cond
+                 ((and ambiguous-p
+                       (memq 'control modifiers))
                   (push 'ergoemacs-control modifiers))
+                 ((and special-p (display-graphic-p)
+                       (memq 'control modifiers))
+                  (push 'ergoemacs-gui modifiers)))
                 (throw 'found-mod t))) nil)
       (if ambiguous-p
           (setq ret (ergoemacs-translate--event-convert-list `(control ,@modifiers ,basic)))
