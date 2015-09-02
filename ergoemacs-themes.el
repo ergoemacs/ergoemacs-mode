@@ -505,7 +505,7 @@
 
 (ergoemacs-component help ()
   "Help changes for ergoemacs-mode"
-  (global-set-key (kbd "C-h '") 'ergoemacs-display-current-svg)
+  (global-set-key (kbd "C-h '") 'ergoemacs-describe-current-theme)
   (global-set-key (kbd "C-h 1") 'describe-function)
   (global-set-key (kbd "C-h 2") 'describe-variable)
   (global-set-key (kbd "C-h 3") 'describe-key)
@@ -518,7 +518,7 @@
   (global-set-key (kbd "C-h o") 'ergoemacs-where-is-old-binding)
   (global-set-key (kbd "C-h z") 'ergoemacs-clean)
   (global-set-key (kbd "C-h C-z") 'ergoemacs-clean-library)
-  (global-set-key (kbd "<f1> '") 'ergoemacs-display-current-svg)
+  (global-set-key (kbd "<f1> '") 'ergoemacs-describe-current-theme)
   (global-set-key (kbd "<f1> 1") 'describe-function)
   (global-set-key (kbd "<f1> 2") 'describe-variable)
   (global-set-key (kbd "<f1> 3") 'describe-key)
@@ -839,7 +839,7 @@
          "<apps> d"         ("C-x" :ctl-to-alt)
          "<apps> f"         ("C-c" :unchorded-ctl)
          "<apps> h"         help-map
-         "<apps> h '"       ergoemacs-display-current-svg
+         "<apps> h '"       ergoemacs-describe-current-theme
          "<apps> h 1"       describe-function
          "<apps> h 2"       describe-variable
          "<apps> h 3"       describe-key
@@ -1824,7 +1824,7 @@
 
                           (eroemacs-current-keybindings menu-item
                                                         "Current Ergoemacs Keybindings"
-                                                        ergoemacs-display-current-svg)
+                                                        ergoemacs-describe-current-theme)
                           
                           (ergoemacs-mode-web-page menu-item
                                                    "Ergoemacs-mode web-page"

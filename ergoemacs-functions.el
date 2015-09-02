@@ -2595,6 +2595,11 @@ With a prefix argument like \\[universial-argument] in an
      (t
       (call-interactively 'org-babel-detangle)))))
 
+(defun ergoemacs-describe-current-theme ()
+  "Describe the current theme."
+  (interactive)
+  (ergoemacs-theme-describe ergoemacs-theme))
+
 ;; Ergoemacs Test suite
 (unless (fboundp 'ergoemacs-test)
   (autoload 'ergoemacs-test (expand-file-name "ergoemacs-test.el" ergoemacs-dir) nil t))
