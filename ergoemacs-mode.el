@@ -418,9 +418,10 @@ bindings the keymap is:
 (defvar ergoemacs-require nil
   "List of required theme components.")
 
+(defvar ergoemacs--component-file-mod-time-list nil)
 (defun ergoemacs--emacs-state ()
   "Returns a MD5 of the current emacs state"
-  (let* ((state (format "%s %s %s %s" ergoemacs--system features package-alist load-path))
+  (let* ((state (format "%s %s %s %s %s" ergoemacs--system features package-alist load-path ergoemacs--component-file-mod-time-list))
          (md5 (md5 state)))
     ;; (message "%s->%s" md5 state)
     md5))
