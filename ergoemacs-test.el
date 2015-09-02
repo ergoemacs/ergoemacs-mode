@@ -1349,7 +1349,25 @@ Part of addressing Issue #147."
   
   (should (string= (key-description (kbd "M-TAB")) (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-TAB" t) 0) :ctl-to-alt)))))
 
-  )
+  (letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) t)))
+    ;; Test M-i -> ^i -> TAB
+    (should (string= "<C-i>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
+    
+    ;; Test M-[ -> ^[ -> ESC
+    (should (string= "<C-[>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-[" t) 0) :ctl-to-alt)))))
+    
+    ;; Test M-m -> ^m -> RET
+    (should (string= "<C-m>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-m" t) 0) :ctl-to-alt))))))
+
+  (letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) nil)))
+    ;; Test M-i -> ^i -> TAB
+    (should (string= "TAB" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
+    
+    ;; Test M-[ -> ^[ -> ESC
+    (should (string= "ESC" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-[" t) 0) :ctl-to-alt)))))
+    
+    ;; Test M-m -> ^m -> RET
+    (should (string= "RET" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-m" t) 0) :ctl-to-alt)))))))
 
 (ert-deftest ergoemacs-test-input-methods ()
   "Make sure that `ergoemacs-mode' works with input methods."
