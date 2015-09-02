@@ -7,7 +7,7 @@
 ;; Author: Matthew L. Fidler
 ;; Maintainer:
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
-;; Version: 
+;; Version:
 ;; Last-Updated:
 ;;           By: 
 ;;     Update #: 0
@@ -364,6 +364,8 @@ If LOOKUP-KEYMAP
          hook-overrides
          hook-deferred)
     (cond
+     ((and lookup-keymap (symbolp lookup-keymap) (ergoemacs-gethash lookup-keymap ergoemacs-translation-hash))
+      (ergoemacs-command-loop--modal lookup-keymap))
      ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
       lookup-keymap)
      ((and lookup-keymap (ergoemacs lookup-keymap :dont-modify-p))
