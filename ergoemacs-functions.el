@@ -130,7 +130,8 @@ The backup is determined by `find-backup-file-name'"
         bind)
     (cond
      ((and (setq bind (key-binding [?g]))
-           (not (string-match-p "self-insert" (symbol-name bind))))
+           (not (string-match-p "self-insert" (symbol-name bind)))
+           (not (memq bind '(ergoemacs-revert-buffer revert-buffer))))
       (call-interactively bind))
      ((and (not (eq last-command 'ergoemacs-revert-buffer))
            (buffer-modified-p (current-buffer)))
