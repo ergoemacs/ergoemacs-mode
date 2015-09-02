@@ -112,17 +112,25 @@
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-revert-buffer ()
-  "Calls `revert-buffer' or reverts to backup.
+  "Ergoemacs replacement of `revert-buffer'.
+Does one of the following:
+
+ - When \"g\" is bound to a non-self-insert function, call that function.
+ - When buffer is modified, call `revert-buffer' (or major/minor mode replacement)
+ - When buffer is unmodified, revert to the last backup.
+
 The backup is determined by `find-backup-file-name'"
   (interactive)
-  (let ((backup-buffer nil;; (and (buffer-file-name) (find-backup-file-name (buffer-file-name)))
-                       )
-        (opt (point)))
+  (let ((backup-buffer (and (not (buffer-modified-p (current-buffer))) (buffer-file-name) (find-backup-file-name (buffer-file-name))))
+        (opt (point))
+        bind)
     (cond
+     ((and (setq bind (key-binding [?g]))
+           (not (string-match-p "self-insert" (symbol-name bind))))
+      (call-interactively bind))
      ((buffer-modified-p (current-buffer))
-      (call-interactively 'revert-buffer))
-     ;; FIXME -- not working for some reason.
-     ((and backup-buffer (file-readable-p (car backup-buffer))
+      (ergoemacs :remap 'revert-buffer))
+     ((and backup-buffer (file-readable-p (nth 0 backup-buffer))
            (yes-or-no-p (format "Revert buffer to backup saved on disk (%s)?" (car backup-buffer))))
       (delete-region (point-min) (point-max))
       ;; FIXME -- Allow cycling through past backups with repeated command.

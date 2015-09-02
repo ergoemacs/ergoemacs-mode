@@ -278,6 +278,7 @@
 
   ;; Refresh should be <f5>; erogemacs uses <f5>.
   ;; C-r also should be refresh
+  (global-set-key (kbd "<f5>") 'revert-buffer)
   (global-set-key (kbd "C-r") 'revert-buffer)
   
   ;; Text Formatting
@@ -1086,6 +1087,7 @@
   (when mark-active
     (global-set-key (kbd "TAB") 'indent-region))
   (when ergoemacs-mode
+    (global-set-key [remap revert-buffer] 'ergoemacs-revert-buffer)
     (global-set-key [remap eshell] 'ergoemacs-eshell-here)
     (global-set-key [remap powershell] 'ergoemacs-powershell-here)
     (global-set-key [remap shell] 'ergoemacs-shell-here)
