@@ -234,8 +234,13 @@ This is different than `event-modifiers' in two ways:
                (memq 'control modifiers))
       (unless basic
         (setq basic (event-basic-type event)))
-      (when (memq basic '(?m ?i ?\[))
-        (push 'ergoemacs-control modifiers)))
+      (cond
+       ((and (memq basic '(?m ?\[))
+                 (string-match-p "C-" (key-description (vector event))))
+        (push 'ergoemacs-control modifiers))
+       ((and (eq basic ?i)
+             (string-match-p "C-.*TAB" (key-description (vector event))))
+        (push 'ergoemacs-control modifiers))))
     modifiers))
 
 (defun ergoemacs-translate--event-layout (event &optional layout-to layout-from basic modifiers)
@@ -621,21 +626,28 @@ This function is made in `ergoemacs-translate--create'")
 (defun ergoemacs-translate--event-mods (event &optional type)
   "Translate EVENT modifiers by the translation TYPE.
 If TYPE is unspecified, assume :normal translation"
-  ;; A:(key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0))))
-  ;; M-A:(key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0) :unchorded-alt)))
-  ;; C-S-A:(key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0) :unchorded-ctl)))
-  ;; M-A: (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-S-A" t) 0) :ctl-to-alt)))
   (let* ((type (or type :normal))
          (translation (and (symbolp type) (ergoemacs-translate--get type)))
          (basic (ergoemacs-translate--event-basic-type event))
+         (e-mod (ergoemacs-translate--event-modifiers event))
          (modifiers (sort (mapcar
                            (lambda(e)
                              (cond
                               ((eq 'ergoemacs-shift e) 'shift)
                               ((eq 'ergoemacs-control e) 'control)
                               (t e)))
-                           (ergoemacs-translate--event-modifiers event)) #'string<))
+                           e-mod) #'string<))
+         (ambiguous-p (and (memq basic (list ?m ?i ?\[))
+                           (memq 'control e-mod)))
+         tmp
          (ret event))
+    (when ambiguous-p
+      (dolist (m modifiers)
+        (unless (eq 'control m)
+          (push m tmp)))
+      (when (memq 'ergoemacs-control e-mod)
+        (push 'control tmp))
+      (setq modifiers tmp))
     (when (catch 'found-mod
             (dolist (mod (or (and (ergoemacs-translation-struct-p translation)
                                   (ergoemacs-translation-struct-translation translation))
@@ -643,8 +655,13 @@ If TYPE is unspecified, assume :normal translation"
                              (and (consp type) (list (list nil type)))))
               (when (equal (nth 0 mod) modifiers)
                 (setq modifiers (nth 1 mod))
+                (when (and ambiguous-p
+                           (memq 'control modifiers))
+                  (push 'ergoemacs-control modifiers))
                 (throw 'found-mod t))) nil)
-      (setq ret (ergoemacs-translate--event-convert-list `(,@modifiers ,basic))))
+      (if ambiguous-p
+          (setq ret (ergoemacs-translate--event-convert-list `(control ,@modifiers ,basic)))
+        (setq ret (ergoemacs-translate--event-convert-list `(,@modifiers ,basic)))))
     ret))
 
 (defvar ergoemacs-translate--parent-map nil
