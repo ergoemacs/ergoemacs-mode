@@ -111,6 +111,7 @@
           (const :tag "C-c/C-x copy/paste when region active, Emacs C-c/C-x otherwise." both))
   :group 'ergoemacs-mode)
 
+(defvar ergoemacs-revert-buffer 0)
 (defun ergoemacs-revert-buffer ()
   "Ergoemacs replacement of `revert-buffer'.
 Does one of the following:
@@ -121,20 +122,35 @@ Does one of the following:
 
 The backup is determined by `find-backup-file-name'"
   (interactive)
-  (let ((backup-buffer (and (not (buffer-modified-p (current-buffer))) (buffer-file-name) (find-backup-file-name (buffer-file-name))))
+  (let ((backup-buffer (and (or (eq last-command 'ergoemacs-revert-buffer)
+                                (not (buffer-modified-p (current-buffer))))
+                            (buffer-file-name)
+                            (find-backup-file-name (buffer-file-name))))
         (opt (point))
         bind)
     (cond
      ((and (setq bind (key-binding [?g]))
            (not (string-match-p "self-insert" (symbol-name bind))))
       (call-interactively bind))
-     ((buffer-modified-p (current-buffer))
-      (ergoemacs :remap 'revert-buffer))
-     ((and backup-buffer (file-readable-p (nth 0 backup-buffer))
-           (yes-or-no-p (format "Revert buffer to backup saved on disk (%s)?" (car backup-buffer))))
-      (delete-region (point-min) (point-max))
-      ;; FIXME -- Allow cycling through past backups with repeated command.
-      (insert-file-contents (car backup-buffer))
+     ((and (not (eq last-command 'ergoemacs-revert-buffer))
+           (buffer-modified-p (current-buffer)))
+      (ergoemacs :remap 'revert-buffer)
+      (goto-char opt))
+     ((and backup-buffer
+           (or (and (not (eq last-command 'ergoemacs-revert-buffer))
+                    (setq ergoemacs-revert-buffer 0)
+                    (file-readable-p (nth ergoemacs-revert-buffer backup-buffer))
+                    (yes-or-no-p (format "Revert buffer to backup saved on disk (%s)?" (nth 0 backup-buffer))))
+               (and (eq last-command 'ergoemacs-revert-buffer)
+                    (setq ergoemacs-revert-buffer (+ ergoemacs-revert-buffer 1)))))
+      (if (= ergoemacs-revert-buffer (length backup-buffer))
+          (progn
+            (revert-buffer nil t)
+            (setq ergoemacs-revert-buffer -1)
+            (message "Reverted to saved version"))
+        (delete-region (point-min) (point-max))
+        (insert-file-contents (nth ergoemacs-revert-buffer backup-buffer))
+        (message "Reverted to autosave: %s" (nth ergoemacs-revert-buffer backup-buffer)))
       (goto-char opt))
      (t
       (user-error "Did not revert buffer.")))))
