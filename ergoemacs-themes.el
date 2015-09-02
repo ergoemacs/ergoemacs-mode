@@ -1865,6 +1865,15 @@
   :components '(move-char
                 move-word))
 
+
+(ergoemacs-component join-line ()
+  "Join Line"; Thanks for the suggestion tuhdo
+  ;;I suggest the key bindings for joining lines are Alt + [ to
+  ;;join-top-line and Alt + ] for stock join-line.
+  (global-set-key (kbd "M-]") 'delete-indentation)
+  (global-set-key (kbd "M-[") 'ergoemacs-top-join-line))
+
+
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
   :components '(copy
@@ -1923,7 +1932,8 @@
                   move-sexp
                   helm-switch-sources
                   helm-files-up
-                  ido-prev-next-instead-of-left-right)
+                  ido-prev-next-instead-of-left-right
+                  join-line)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Helm Options" (helm-switch-sources helm-files-up))
@@ -1932,6 +1942,7 @@
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
+                  ("Extra Functionality" (join-line))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 
@@ -1953,13 +1964,16 @@
     :ensure t
     :ergoemacs-require nil)
 
+
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
   :based-on 'standard
   :components '(multiple-cursors ace-jump-mode expand-region)
   (global-set-key (kbd "M-<") 'zap-to-char)
   (global-set-key (kbd "M-g") 'kill-line)
+  (global-set-key (kbd "M-G") 'ergoemacs-top-join-line)
   (global-set-key (kbd "M-b") 'ergoemacs-kill-line-backward)
+  (global-set-key (kbd "M-B") 'delete-indentation)
   (global-set-key (kbd "M-.") 'ergoemacs-end-of-line-or-what)
   (global-set-key (kbd "M-m") 'ergoemacs-beginning-of-line-or-what)
   (global-set-key (kbd "M-y") 'isearch-backward)

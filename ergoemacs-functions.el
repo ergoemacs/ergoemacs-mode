@@ -1117,6 +1117,11 @@ When there is a text selection, act on the region."
             (ergoemacs :remap 'fill-paragraph))))
       (put this-command 'stateIsCompact-p (if current-state-is-compact nil t)))))
 
+(defun ergoemacs-top-join-line ()
+  "Join the current line with the line beneath it."
+  (interactive)
+  (delete-indentation 1))
+
 (defun ergoemacs-shrink-whitespaces ()
   "Remove white spaces around cursor to just one or none.
 If current line does have visible chars, then shrink whitespace surrounding cursor to just one space.
