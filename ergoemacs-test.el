@@ -67,6 +67,7 @@
 (declare-function ergoemacs-theme--get-version "ergoemacs-theme")
 (declare-function ergoemacs-theme-set-version "ergoemacs-theme")
 
+(declare-function ergoemacs-translate--event-mods "ergoemacs-translate")
 (declare-function ergoemacs-translate--quail-to-ergoemacs "ergoemacs-translate")
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
 (declare-function ergoemacs-translate--get "ergoemacs-translate")
@@ -1312,6 +1313,44 @@ Part of addressing Issue #147."
   :tags '(:translate)
   (should (equal ergoemacs-layout-us (ergoemacs-translate--quail-to-ergoemacs (ergoemacs-translate-layout 'us :quail)))))
 
+(ert-deftest ergoemacs-test-translations ()
+  "Test ergoemacs-mode translations"
+  :tags '(:translate)
+  (should (string= "A" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0))))))
+  (should (string= "M-A" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0) :unchorded-alt)))))
+  (should (string= "C-S-a" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0) :unchorded-ctl)))))
+  (should (string= "M-A" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-S-a" t) 0) :ctl-to-alt)))))
+
+  ;; DEL = ^?, doesn't seem to have the issues that RET, ESC, and TAB has.
+  (should (string= "DEL" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "DEL" t) 0) :ctl-to-alt)))))
+  
+  (should (string= "C-DEL" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-DEL" t) 0) :ctl-to-alt)))))
+  
+  (should (string= "M-DEL" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-DEL" t) 0) :ctl-to-alt)))))
+
+  ;; RET = ^M
+  (should (string= "RET" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "RET" t) 0) :ctl-to-alt)))))
+
+  (should (string= "M-RET" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-RET" t) 0) :ctl-to-alt)))))
+
+  (should (string= "C-RET" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-RET" t) 0) :ctl-to-alt)))))
+
+  ;; ESC = ^[
+  (should (string= "ESC" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "ESC" t) 0) :ctl-to-alt)))))
+
+  (should (string= "C-ESC" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-ESC" t) 0) :ctl-to-alt)))))
+
+  (should (string= "M-ESC" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-ESC" t) 0) :ctl-to-alt)))))
+
+  ;; TAB = ^i
+  (should (string= "TAB" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "TAB" t) 0) :ctl-to-alt)))))
+
+  (should (string= "C-TAB" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-TAB" t) 0) :ctl-to-alt)))))
+  
+  (should (string= (key-description (kbd "M-TAB")) (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-TAB" t) 0) :ctl-to-alt)))))
+
+  )
+
 (ert-deftest ergoemacs-test-input-methods ()
   "Make sure that `ergoemacs-mode' works with input methods."
   :tags '(:translate)
@@ -1399,9 +1438,7 @@ Part of addressing Issue #147."
   (should (equal '(&optional arg2 &rest arg3) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) t)))
   (should (equal '(arg2 arg3) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3))))
   (should (equal 'arg3 (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) :rest)))
-  (should (equal '(arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) :drop-rest)))
-  )
-
+  (should (equal '(arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) :drop-rest))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
