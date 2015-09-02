@@ -770,7 +770,7 @@
   "Misc Commands"
   (global-unset-key (kbd "C-l"))
   (global-set-key (kbd "M-p") 'recenter-top-bottom)
-  (global-set-key (kbd "M-b") 'ace-jump-mode))
+  (global-set-key (kbd "M-b") 'avy-goto-word-or-subword-1))
 
 (ergoemacs-component kill-line ()
   "Kill Line"
@@ -1959,10 +1959,20 @@
     :ensure t
     :ergoemacs-require nil)
 
-(ergoemacs-package ace-jump-mode
-    :bind ("M-," 'ace-jump-mode)
+(ergoemacs-package avy
+    :bind ("M-," 'avy-goto-word-or-subword-1)
     :ensure t
     :ergoemacs-require nil)
+
+(ergoemacs-package ace-window
+    :bind ("M-s" 'ace-window)
+    :ensure t
+    :ergoemacs-require nil
+    ;; layout based aw-keys
+    (setq aw-keys (mapcar
+                   (lambda(key)
+                     (ergoemacs-translate--event-layout key ergoemacs-keyboard-layout "us"))
+                   (list ?f ?j ?d ?k ?r ?u ?e ?i ?s ?l ?w ?o))))
 
 (ergoemacs-package expand-region
     :bind (("M-8" er/expand-region)
@@ -1975,7 +1985,7 @@
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
   :based-on 'standard
-  :components '(multiple-cursors ace-jump-mode expand-region open-line)
+  :components '(multiple-cursors avy ace-window expand-region open-line)
   (global-set-key (kbd "M-<") 'zap-to-char)
   (global-set-key (kbd "M-g") 'kill-line)
   (global-set-key (kbd "M-G") 'ergoemacs-top-join-line)
@@ -2000,8 +2010,8 @@
   (define-key ergoemacs-keymap (kbd "M-U") nil)
   (define-key ergoemacs-keymap (kbd "M-O") nil)
   (define-key ergoemacs-keymap (kbd "M-N") nil)
-  (define-key ergoemacs-keymap (kbd "M-G") nil)
-  (define-key ergoemacs-keymap (kbd "M-S") nil)
+  ;; (define-key ergoemacs-keymap (kbd "M-G") nil)
+  ;; (define-key ergoemacs-keymap (kbd "M-S") nil)
   (define-key ergoemacs-keymap (kbd "M-A") nil)
   (define-key ergoemacs-keymap (kbd "M-J") nil)
   (define-key ergoemacs-keymap (kbd "M-L") nil))
