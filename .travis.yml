@@ -51,6 +51,7 @@ matrix:
    allow_failures:
       - env: EMACS=emacs-24.1-bin METHOD=evm
       - env: EMACS=emacs-24.2-bin METHOD=evm
+      - env: EMACS=emacs-snapshot METHOD=manual
 #     - env: EMACS=xemacs21
 #     - env: EMACS=emacs22
 #     - env: EMACS=emacs-snapshot
