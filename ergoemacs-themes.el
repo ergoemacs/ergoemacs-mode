@@ -1087,6 +1087,7 @@
   (when mark-active
     (global-set-key (kbd "TAB") 'indent-region))
   (when ergoemacs-mode
+    (global-set-key [remap keyboard-quit] 'ergoemacs-keyboard-quit)
     (global-set-key [remap revert-buffer] 'ergoemacs-revert-buffer)
     (global-set-key [remap eshell] 'ergoemacs-eshell-here)
     (global-set-key [remap powershell] 'ergoemacs-powershell-here)

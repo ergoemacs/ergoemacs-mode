@@ -1561,6 +1561,28 @@ Installs `undo-tree' if not present."
 
 (add-hook 'server-switch-hook 'ergoemacs-server-switch-hook)
 
+(defun ergoemacs-keyboard-quit ()
+  "Quit the current command/process.
+Similar to `keyboard-quit', with the following changes:
+• In the minibuffer, use `minibuffer-keyboard-quit'
+• When `ergoemacs-mode' is in a modal command mode, exit that command mode.
+• When \"q\" is bound to something other than self-insert commands, run that command.
+• Otherwise run `keyboard-quit'
+"
+  (interactive)
+  (let (bind)
+    (cond
+     ((minibufferp)
+      (minibuffer-keyboard-quit))
+     (ergoemacs-command-loop--modal-stack
+      (ergoemacs-command-loop--modal-pop))
+     ((and (setq bind (key-binding [?q]))
+           (not (string-match-p "self-insert" (symbol-name bind)))
+           (not (eq bind 'ergoemacs-keyboard-quit)))
+      (call-interactively bind))
+     (t
+      (keyboard-quit)))))
+
 (defun ergoemacs-close-current-buffer ()
   "Close the current buffer.
 
@@ -1593,7 +1615,7 @@ Else it is a user buffer."
             (save-buffer)
           (set-buffer-modified-p nil)))
       (server-edit))
-     ((string= major-mode "minibuffer-inactive-mode")
+     ((minibufferp)
       (minibuffer-keyboard-quit))
      (org-capture-p
       (if (y-or-n-p "Capture not saved, do you want to save?")

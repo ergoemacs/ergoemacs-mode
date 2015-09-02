@@ -233,6 +233,11 @@ If so return the translation "
           (setq ret translation))))
       ret)))
 
+(defun ergoemacs-command-loop--modal-pop ()
+  "Turn off the last ergoemacs modal in the modal-stack."
+  (when ergoemacs-command-loop--modal-stack
+    (ergoemacs-command-loop--modal (ergoemacs-translation-struct-key (nth 0 ergoemacs-command-loop--modal-stack)))))
+
 (defun ergoemacs-command-loop--modal (type)
   "Toggle ergoemacs command modes."
   (cond
