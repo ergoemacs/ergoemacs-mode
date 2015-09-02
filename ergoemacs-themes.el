@@ -395,6 +395,8 @@
   (global-set-key (kbd "M-RET") 'newline-and-indent)
   (define-key helm-map (kbd "M-RET") 'helm-execute-persistent-action)
   (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
+  (define-key helm-map [remap ergoemacs-open-line-below] 'helm-execute-persistent-action)
+  (define-key helm-map [remap ergoemacs-open-line-above] "C-u M-RET")
   (define-key helm-map (kbd "M-S-RET") "C-u M-RET")
   (define-key helm-map (kbd "<M-S-return>") "C-u M-RET")
   
@@ -404,10 +406,7 @@
   (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-  (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
-  (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-  (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-  (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
+  (define-key helm-read-file-map [remap ergoemacs-open-line-below] 'ergoemacs-helm-ff-execute-dired-dir)
   (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
   (define-key helm-read-file-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
   
@@ -418,6 +417,7 @@
   (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
   (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
+  (define-key helm-find-files-map [remap ergoemacs-open-line-below] 'ergoemacs-helm-ff-execute-dired-dir)
   (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
@@ -1873,6 +1873,12 @@
   (global-set-key (kbd "M-]") 'delete-indentation)
   (global-set-key (kbd "M-[") 'ergoemacs-top-join-line))
 
+(ergoemacs-component open-line ()
+  "Open line + Indenting Return"
+  (global-set-key (kbd "RET") 'newline-and-indent)
+  (global-set-key (kbd "M-RET") 'ergoemacs-open-line-below)
+  (global-set-key (kbd "<M-S-return>") 'ergoemacs-open-line-above))
+
 
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
@@ -1933,7 +1939,8 @@
                   helm-switch-sources
                   helm-files-up
                   ido-prev-next-instead-of-left-right
-                  join-line)
+                  join-line
+                  open-line)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Helm Options" (helm-switch-sources helm-files-up))
@@ -1942,7 +1949,7 @@
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
-                  ("Extra Functionality" (join-line))
+                  ("Extra Functionality" (join-line open-line))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 
@@ -1968,7 +1975,7 @@
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
   :based-on 'standard
-  :components '(multiple-cursors ace-jump-mode expand-region)
+  :components '(multiple-cursors ace-jump-mode expand-region open-line)
   (global-set-key (kbd "M-<") 'zap-to-char)
   (global-set-key (kbd "M-g") 'kill-line)
   (global-set-key (kbd "M-G") 'ergoemacs-top-join-line)
@@ -1982,6 +1989,8 @@
   (global-set-key (kbd "M-H") 'isearch-forward-regexp)
   (global-set-key (kbd "M-a") 'ergoemacs-move-cursor-previous-pane)
   (global-set-key (kbd "M-;") 'execute-extended-command)
+  ;; Open line
+  
   ;;
   ;; Overwrite previous global definitions in `ergoemacs-mode'
   ;;

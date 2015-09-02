@@ -1122,6 +1122,21 @@ When there is a text selection, act on the region."
   (interactive)
   (delete-indentation 1))
 
+(defun ergoemacs-open-line-below ()
+  "Open line below.
+If a major/minor mode rebinds the default M-RET command, use that instead."
+  (interactive)
+  (end-of-line)
+  (newline-and-indent))
+
+(defun ergoemacs-open-line-above ()
+  "Open line above"
+  (interactive)
+  (beginning-of-line)
+  (newline-and-indent)
+  (forward-line -1)
+  (indent-for-tab-command))
+
 (defun ergoemacs-shrink-whitespaces ()
   "Remove white spaces around cursor to just one or none.
 If current line does have visible chars, then shrink whitespace surrounding cursor to just one space.
