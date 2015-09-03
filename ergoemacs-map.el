@@ -72,6 +72,7 @@
 (defvar ergoemacs-modify-transient-maps)
 (defvar ergoemacs-saved-global-map)
 (defvar ergoemacs-theme)
+(defvar ergoemacs-translation-hash)
 (defvar ergoemacs-user-keymap)
 (defvar ess-language)
 
@@ -79,6 +80,7 @@
 (declare-function ergoemacs-menu--filter "ergoemacs-lib")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
+(declare-function ergoemacs-command-loop--modal "ergoemacs-command-loop")
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 
 (declare-function ergoemacs-component-struct--create-hooks "ergoemacs-component")
@@ -502,6 +504,7 @@ If LOOKUP-KEYMAP
         (when tmp
           (push tmp tmp2))
         (push ergoemacs-user-keymap tmp2)
+        (define-key ret [ergoemacs-ignore] 'ignore)
         (setq ret (make-composed-keymap tmp2 ret)))
        
        ;; Now create the keymap for a specified `lookup-keymap'

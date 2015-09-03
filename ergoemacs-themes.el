@@ -42,6 +42,7 @@
 (defvar ergoemacs-theme-component-hash)
 (defvar ergoemacs-translation-hash)
 (defvar ergoemacs-component-hash)
+(defvar ergoemacs--component-file-mod-time-list)
 
 (autoload 'dired-jump "dired-x" nil t)
 

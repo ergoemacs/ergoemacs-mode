@@ -936,16 +936,26 @@ The true work is done in `ergoemacs-command-loop--internal'."
 
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
-  (when (and (eq ergoemacs-command-loop-type :full)
+  (when (and (not ergoemacs-command-loop--running-pre-command-hook-p)
+             (eq ergoemacs-command-loop-type :full)
              (not executing-kbd-macro)
              (not unread-command-events)
-             (not ergoemacs-command-loop--running-pre-command-hook-p)
              (not (ergoemacs-command-loop-p)))
     (setq ergoemacs-command-loop-start this-command
           ergoemacs-command-loop--single-command-keys (this-single-command-keys)
           this-command 'ergoemacs-command-loop-start)))
 
 (add-hook 'ergoemacs-pre-command-hook #'ergoemacs-command-loop--start-with-pre-command-hook)
+
+
+(defvar ergoemacs-command-loop--internal-end-command-p nil)
+(defun ergoemacs-command-loop--start-with-post-command-hook ()
+  (when (and (not ergoemacs-command-loop--internal-end-command-p)
+             (eq ergoemacs-command-loop-type :full)
+             (not executing-kbd-macro))
+    (push 'ergoemacs-ignore unread-command-events)))
+
+(add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
 
 (unless (fboundp 'posnp)
   ;; For emacs 24.1
@@ -967,7 +977,10 @@ The true work is done in `ergoemacs-command-loop--internal'."
   "Simulates the end of a command."
   ;; Simulate the end of an emacs command, since we are not
   ;; exiting the loop.
-  (run-hooks 'post-command-hook)
+  (setq ergoemacs-command-loop--internal-end-command-p t)
+  (unwind-protect
+      (run-hooks 'post-command-hook)
+    (setq ergoemacs-command-loop--internal-end-command-p nil))
   
   ;; Deactivate mark.
   (when deactivate-mark
@@ -1293,7 +1306,8 @@ FIXME: modify `called-interactively' and `called-interactively-p'
   (interactive)
   (ergoemacs-command-loop--execute-rm-keyfreq 'ergoemacs-command-loop)
   ;; Call the startup command
-  (when (commandp ergoemacs-command-loop-start)
+  (when (and (commandp ergoemacs-command-loop-start)
+             (not (eq ergoemacs-command-loop-start 'ignore)))
     (ergoemacs-command-loop--call-interactively ergoemacs-command-loop-start)
     (ergoemacs-command-loop--internal-end-command))
   (letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys))

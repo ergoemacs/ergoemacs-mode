@@ -35,18 +35,19 @@
 
 (require 'redo "redo.elc" t) ; for redo shortcut
 
-(defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-theme)
-(defvar helm-buffer)
-(defvar ergoemacs-mode)
-(defvar helm-ff-default-directory)
-(defvar helm-ff-last-expanded)
-(defvar ergoemacs-single-command-keys)
-(defvar org-table-any-line-regexp)
+(defvar apropos-do-all)
 (defvar cua--last-killed-rectangle)
 (defvar dirtrack-list)
+(defvar ergoemacs-command-loop--modal-stack)
 (defvar ergoemacs-dir)
-(defvar apropos-do-all)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-mode)
+(defvar ergoemacs-single-command-keys)
+(defvar ergoemacs-theme)
+(defvar helm-buffer)
+(defvar helm-ff-default-directory)
+(defvar helm-ff-last-expanded)
+(defvar org-table-any-line-regexp)
 
 
 (declare-function browse-url-default-windows-browser "browse-url")
@@ -63,6 +64,9 @@
 (declare-function ergoemacs-ini-mode "ergoemacs-mode")
 (declare-function ergoemacs-map-- "ergoemacs-map")
 (declare-function ergoemacs-mode "ergoemacs-mode")
+
+(declare-function ergoemacs-command-loop--modal-pop "ergoemacs-command-loop")
+(declare-function ergoemacs-theme-describe "ergoemacs-theme-engine")
 
 (declare-function helm-attrset "helm")
 (declare-function helm-basename "helm-utils")
