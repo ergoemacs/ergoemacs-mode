@@ -1870,13 +1870,6 @@
   (global-set-key (kbd "M-]") 'delete-indentation)
   (global-set-key (kbd "M-[") 'ergoemacs-top-join-line))
 
-(ergoemacs-component open-line ()
-  "Open line + Indenting Return"
-  ;; (global-set-key [remap newline] 'newline-and-indent)
-  ;; (global-set-key [remap newline-and-indent] 'ergoemacs-open-line-below)
-  (global-set-key (kbd "<M-S-return>") 'ergoemacs-open-line-above))
-
-
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
   :components '(copy
@@ -1936,8 +1929,7 @@
                   helm-switch-sources
                   helm-files-up
                   ido-prev-next-instead-of-left-right
-                  join-line
-                  open-line)
+                  join-line)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Helm Options" (helm-switch-sources helm-files-up))
@@ -1946,7 +1938,7 @@
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
-                  ("Extra Functionality" (join-line open-line))
+                  ("Extra Functionality" (join-line))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 
@@ -1974,11 +1966,10 @@
            ("M-*". er/mark-inside-quotes))
     :ensure t)
 
-
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
   :based-on 'standard
-  :components '(multiple-cursors avy ace-window expand-region open-line)
+  :components '(multiple-cursors avy ace-window expand-region)
   (global-set-key (kbd "M-<") 'zap-to-char)
   (global-set-key (kbd "M-g") 'kill-line)
   (global-set-key (kbd "M-G") 'ergoemacs-top-join-line)
