@@ -1875,7 +1875,7 @@
 
 (ergoemacs-component open-line ()
   "Open line + Indenting Return"
-  (global-set-key (kbd "RET") 'newline-and-indent)
+  (global-set-key [remap newline] 'newline-and-indent)
   (global-set-key (kbd "M-RET") 'ergoemacs-open-line-below)
   (global-set-key (kbd "<M-S-return>") 'ergoemacs-open-line-above))
 
