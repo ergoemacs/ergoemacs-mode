@@ -108,7 +108,7 @@
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-handle-ctl-c-or-ctl-x 'both
-  "Type of C-c and C-x handling for `ergoemacs-mode'"
+  "Type of C-c and C-x handling for `ergoemacs-mode'."
   :type '(choice
           (const :tag "C-c/C-x only copy/cut" only-copy-cut)
           (const :tag "C-c/C-x only Emacs C-c and C-x" only-C-c-and-C-x)
@@ -120,8 +120,12 @@
   "Ergoemacs replacement of `revert-buffer'.
 Does one of the following:
 
- - When \"g\" is bound to a non-self-insert function, call that function.
- - When buffer is modified, call `revert-buffer' (or major/minor mode replacement)
+ - When buffer is modified, call `revert-buffer' (or major/minor
+   mode replacement)
+
+ - When \"g\" is bound to a non-self-insert function, call that
+   function.
+
  - When buffer is unmodified, revert to the last backup.
 
 The backup is determined by `find-backup-file-name'"
@@ -203,16 +207,23 @@ The backup is determined by `find-backup-file-name'"
 
 
 (defun ergoemacs-exit-customize-save-customized (&optional reinit)
-  "Call `customize-save-customized' on exit emacs.
+  "Call `customize-save-customized' on exit Emacs.
 
 Also:
 
 - Deactivates `ergoemacs-mode'
+
 - Activates `ergoemacs-ini-mode', to try to run `ergoemacs-mode'
   when called for or at the last second.
+
 - Saves `ergoemacs-mode' options by calling
   `customize-save-customized'
-If an error occurs, display the error, and sit for 2 seconds before exiting"
+
+If an error occurs, display the error, and sit for 2 seconds
+before exiting.
+
+If REINIT is non-nil, then turn off `ergoemacs-ini-mode' then
+turn on `ergoemacs-mode'."
   (ergoemacs-mode -1)
   (ergoemacs-ini-mode 1)
   
@@ -255,10 +266,11 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
       (ergoemacs-run-clean nil nil))))
 
 (defvar ergoemacs-run-clean nil
-  "Library to load and run instead of `ergoemacs-mode'")
-(defun ergoemacs-run-clean (process change)
-  "Run the clean environment"
-  (message "Run ergoemacs-clean (%s;%s)" process change)
+  "Library to load and run instead of `ergoemacs-mode'.")
+(defun ergoemacs-run-clean (process _change)
+  "Run the clean environment.
+The PROCESS is the process where the clean environment is run."
+  (message "Run ergoemacs-clean (%s)" process)
   (let ((emacs-exe (ergoemacs-emacs-exe))
         (inhibit-read-only t)
         (ergoemacs-load (or ergoemacs-run-clean
@@ -312,7 +324,7 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
     (delete-file ergoemacs-batch-file)))
 
 (defun ergoemacs-clean-library (library &optional terminal)
-  "Runs a clean LIBRARY with an `ergoemacs-mode' autoload.
+  "Run a clean LIBRARY with an `ergoemacs-mode' autoload.
 If TERMINAL is non-nil, run the terminal version"
   (interactive "aLibrary: \n")
   (let* ((lib-file (expand-file-name (find-lisp-object-file-name library (symbol-function library))))
@@ -326,15 +338,15 @@ If TERMINAL is non-nil, run the terminal version"
 
 (defun ergoemacs-clean ()
   "Run ergoemacs in a bootstrap environment.
-C-u deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
-C-u C-u deletes old byte compilde `ergoemacs-mode' files."
+\\[universal-argument] deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
+\\[universal-argument] \\[universal-argument] deletes old byte compilde `ergoemacs-mode' files."
   (interactive)
   (ergoemacs-clean-recompile-then-run))
 
 (defun ergoemacs-clean-nw ()
   "Run ergoemacs in bootstrap environment in terminal.
-C-u deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
-C-u C-u deletes old byte compilde `ergoemacs-mode' files."
+\\[universal-argument] deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
+\\[universal-argument] \\[universal-argument] deletes old byte compilde `ergoemacs-mode' files."
   (interactive)
   (ergoemacs-clean-recompile-then-run t))
 
@@ -347,7 +359,7 @@ C-u C-u deletes old byte compilde `ergoemacs-mode' files."
     full-exe))
 
 (defun ergoemacs-open-line ()
-  "Inserts an indented newline after the current line and moves the point to it."
+  "Insert and move to an indented newline after the current line."
   (interactive "P")
   (end-of-line)
   (newline-and-indent))
@@ -382,7 +394,8 @@ If `narrow-to-region' is in effect, then cut that region only."
   (delete-region (point-min) (point-max)))
 
 (defun ergoemacs-copy-line-or-region (&optional arg)
-  "Copy current line, or current text selection."
+  "Copy current line, or current text selection.
+Pass prefix ARG to the respective copy functions."
   (interactive "P")
   (cond
    ;;; cua-copy-rectangle
