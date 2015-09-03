@@ -334,7 +334,21 @@ on the definition:
 
 (defmacro ergoemacs-package (name &rest keys-and-body)
   "Defines a required package named NAME.
-Maybe be similar to use-package"
+
+KEYS-AND-BODY will be processed by
+`ergoemacs-theme-component--parse-keys-and-body'.
+
+The documentation of the supported keys are in
+`ergoemacs-theme-component'.
+
+The NAME will be assumed to be the :package-name keyword.
+
+By default, this package also set the :ergoemacs-require to t,
+requiring the ergoemacs theme component immediately.  To turn off
+this feature, you can specify :ergoemacs-require nil in the body
+of the `ergoemacs-package' macro.  Another option is to use
+`ergoemacs-autoload', which is the same as `ergoemacs-package'
+with :ergoemacs-require set to nil."
   (declare (indent 2))
   (let ((kb (make-symbol "body-and-plist"))
         (plist (make-symbol "plist"))
@@ -355,6 +369,44 @@ Maybe be similar to use-package"
         ,doc
         ,@plist
         ;; (require ',name)
+        ,@body))))
+
+(defmacro ergoemacs-autoload (name &rest keys-and-body)
+  "Defines a required package named NAME.
+
+KEYS-AND-BODY will be processed by
+`ergoemacs-theme-component--parse-keys-and-body'.
+
+The documentation of the supported keys are in
+`ergoemacs-theme-component'.
+
+The NAME will be assumed to be the :package-name keyword.
+
+By default, this package also set the :ergoemacs-require to nil,
+deferring the ergoemacs theme component until it is required by
+the user by either `ergoemacs-require' or turning it on/off in an
+ergoemacs-mode theme.  To turn off this feature, you can
+specify :ergoemacs-require t in the body of the
+`ergoemacs-autoload' macro.  Another option is to use
+`ergoemacs-package', which is the same as `ergoemacs-autoload'
+with :ergoemacs-require set to t."
+  (declare (indent 2))
+  (let ((kb (make-symbol "body-and-plist"))
+        (plist (make-symbol "plist"))
+        (body (make-symbol "body"))
+        (doc (make-symbol "doc")))
+    (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
+          plist (nth 0 kb)
+          body (nth 1 kb))
+    (when (equal (car body) '())
+      (setq body (cdr body)))
+    (setq doc (if (stringp (car body)) (pop body) (symbol-name name)))
+    (unless (plist-get plist :package-name)
+      (setq plist (plist-put plist :package-name name)))
+    (macroexpand-all
+     `(ergoemacs-theme-component ,name ()
+        ,doc
+        ,@plist
         ,@body))))
 
 ;;;###autoload

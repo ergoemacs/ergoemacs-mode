@@ -396,8 +396,6 @@
   (global-set-key (kbd "M-RET") 'newline-and-indent)
   (define-key helm-map (kbd "M-RET") 'helm-execute-persistent-action)
   (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
-  (define-key helm-map [remap ergoemacs-open-line-below] 'helm-execute-persistent-action)
-  (define-key helm-map [remap ergoemacs-open-line-above] "C-u M-RET")
   (define-key helm-map (kbd "M-S-RET") "C-u M-RET")
   (define-key helm-map (kbd "<M-S-return>") "C-u M-RET")
   
@@ -407,7 +405,6 @@
   (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-  (define-key helm-read-file-map [remap ergoemacs-open-line-below] 'ergoemacs-helm-ff-execute-dired-dir)
   (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
   (define-key helm-read-file-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
   
@@ -418,7 +415,6 @@
   (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
   (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
-  (define-key helm-find-files-map [remap ergoemacs-open-line-below] 'ergoemacs-helm-ff-execute-dired-dir)
   (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
   (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
@@ -1876,8 +1872,8 @@
 
 (ergoemacs-component open-line ()
   "Open line + Indenting Return"
-  (global-set-key (kbd "RET") 'newline-and-indent)
-  (global-set-key (kbd "M-RET") 'ergoemacs-M-RET)
+  ;; (global-set-key [remap newline] 'newline-and-indent)
+  ;; (global-set-key [remap newline-and-indent] 'ergoemacs-open-line-below)
   (global-set-key (kbd "<M-S-return>") 'ergoemacs-open-line-above))
 
 
@@ -1954,33 +1950,29 @@
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 
-(ergoemacs-package multiple-cursors
+(ergoemacs-autoload multiple-cursors
     :bind (("M-*" mc/mark-next-like-this)
            ("M-&" mc/edit-lines))
-    :ensure t
-    :ergoemacs-require nil)
+    :ensure t)
 
-(ergoemacs-package avy
+(ergoemacs-autoload avy
     :bind ("M-," 'avy-goto-word-or-subword-1)
-    :ensure t
-    :ergoemacs-require nil)
+    :ensure t)
 
-(ergoemacs-package ace-window
+(ergoemacs-autoload ace-window
     :bind ("M-s" 'ace-window)
     :ensure t
-    :ergoemacs-require nil
     ;; layout based aw-keys
     (setq aw-keys (mapcar
                    (lambda(key)
                      (ergoemacs-translate--event-layout key ergoemacs-keyboard-layout "us"))
                    (list ?f ?j ?d ?k ?r ?u ?e ?i ?s ?l ?w ?o))))
 
-(ergoemacs-package expand-region
+(ergoemacs-autoload expand-region
     :bind (("M-8" er/expand-region)
            ("M-9" er/contract-region)
            ("M-*". er/mark-inside-quotes))
-    :ensure t
-    :ergoemacs-require nil)
+    :ensure t)
 
 
 (ergoemacs-theme reduction ()
