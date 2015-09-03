@@ -1876,8 +1876,8 @@
 
 (ergoemacs-component open-line ()
   "Open line + Indenting Return"
-  (global-set-key [remap newline] 'newline-and-indent)
-  (global-set-key [remap newline-and-indent] 'ergoemacs-open-line-below)
+  (global-set-key (kbd "RET") 'newline-and-indent)
+  (global-set-key (kbd "M-RET") 'ergoemacs-M-RET)
   (global-set-key (kbd "<M-S-return>") 'ergoemacs-open-line-above))
 
 
@@ -2000,8 +2000,6 @@
   (global-set-key (kbd "M-H") 'isearch-forward-regexp)
   (global-set-key (kbd "M-a") 'ergoemacs-move-cursor-previous-pane)
   (global-set-key (kbd "M-;") 'execute-extended-command)
-  ;; Open line
-  
   ;;
   ;; Overwrite previous global definitions in `ergoemacs-mode'
   ;;
