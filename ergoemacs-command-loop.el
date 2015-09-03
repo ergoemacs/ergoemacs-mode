@@ -1266,6 +1266,18 @@ Used to replace:
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--install-timer)
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--remove-timer)
 
+(defun ergoemacs-command-loop--ignore (&rest _ignore)
+  "Do nothing and return nil.
+This function accepts any number of arguments, but ignores them.
+
+Unlike `ignore', this command pretends `ignore' command was never
+run, by changing `this-command' to `last-command'"
+  (interactive)
+  (dolist (s ergoemacs-command-loop--execute-modify-command-list)
+    (when (boundp s)
+      (set s last-command)))
+  nil)
+
 (defun ergoemacs-command-loop--internal (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
 The KEY is the keyboard input where the reading begins.  If nil,
@@ -1306,8 +1318,7 @@ FIXME: modify `called-interactively' and `called-interactively-p'
   (interactive)
   (ergoemacs-command-loop--execute-rm-keyfreq 'ergoemacs-command-loop)
   ;; Call the startup command
-  (when (and (commandp ergoemacs-command-loop-start)
-             (not (eq ergoemacs-command-loop-start 'ignore)))
+  (when (commandp ergoemacs-command-loop-start)
     (ergoemacs-command-loop--call-interactively ergoemacs-command-loop-start)
     (ergoemacs-command-loop--internal-end-command))
   (letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys))

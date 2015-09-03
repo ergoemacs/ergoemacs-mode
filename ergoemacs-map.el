@@ -504,7 +504,7 @@ If LOOKUP-KEYMAP
         (when tmp
           (push tmp tmp2))
         (push ergoemacs-user-keymap tmp2)
-        (define-key ret [ergoemacs-ignore] 'ignore)
+        (define-key ret [ergoemacs-ignore] 'ergoemacs-command-loop--ignore)
         (setq ret (make-composed-keymap tmp2 ret)))
        
        ;; Now create the keymap for a specified `lookup-keymap'
