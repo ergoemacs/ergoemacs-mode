@@ -297,7 +297,7 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
   "Keymaps that are always calculated when they are the `current-local-map'.")
 
 (defun ergoemacs-map--lookup-keymap-key (lookup-keymap)
-  "Looks up key based on caching algorithms"
+  "Calculates the cache key based on LOOKUP-KEYMAP."
   (let ((lookup-key (or (and (not (string= "" ergoemacs-map--breadcrumb)) ergoemacs-map--breadcrumb)
                         (ergoemacs lookup-keymap :map-list)))
         mode-hook)
@@ -313,11 +313,11 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
     lookup-key))
 
 (defvar ergoemacs-map--unbound-keys nil
-  "Unbound keys")
+  "Unbound keys.")
 
 (defvar ergoemacs-map--mirrored-maps
   '((isearch-mode-map isearch--saved-overriding-local-map))
-  "List of mirrored maps (for compatability)")
+  "List of mirrored maps (for compatability).")
 
 
 (defvar ergoemacs-map--modified-maps nil
