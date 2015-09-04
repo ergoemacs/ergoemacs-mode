@@ -919,13 +919,24 @@ be composed over the keymap.  This is done in
           (unless (member (nth 0 init) ergoemacs-component-struct--deferred-functions)
             (when (ignore-errors (fboundp (car (nth 0 init))))
               (cond
-               ((eq (nth 0 init) 'add-to-list)
+               ((eq (car (nth 0 init)) 'add-to-list)
                 (when (ignore-errors (boundp (nth 1 (nth 0 init))))
                   (ignore-errors
                     (apply (car (nth 0 init)) (cdr (nth 0 init)))
-                    (push (nth 0 init) ergoemacs-component-struct--deferred-functions))))
-               ((memq (nth 0 init) '(push pushnew))
+                    (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+                (when (ignore-errors (eq 'quote (nth 0 (nth 1 (nth 0 init)))))
+                  (if (ignore-errors (eq 'quote (nth 0 (nth 2 (nth 0 init)))))
+                      (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (nth 1 (nth 2 (nth 0 init))) (cdr (cdr (cdr (nth 0 init)))))
+                    (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init)))))))
+               ((memq (car (nth 0 init)) '(push pushnew))
                 (when (ignore-errors (boundp (nth 2 (nth 0 init))))
+                  (if (ignore-errors (eq 'quote (nth 1 (nth 1 (nth 0 init)))))
+                      (ignore-errors
+                        (apply (car (nth 0 init)) (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
+                        (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
+                    (ignore-errors
+                      (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                      (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
                   (ignore-errors
                     (apply (car (nth 0 init)) (cdr (nth 0 init)))
                     (push (nth 0 init) ergoemacs-component-struct--deferred-functions))))
