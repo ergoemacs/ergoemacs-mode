@@ -918,8 +918,18 @@ be composed over the keymap.  This is done in
       (if (and (consp (nth 0 init)) (not (nth 1 init)) (not (nth 2 init)))
           (unless (member (nth 0 init) ergoemacs-component-struct--deferred-functions)
             (when (ignore-errors (fboundp (car (nth 0 init))))
-              (apply (car (nth 0 init)) (cdr (nth 0 init)))
-              (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+              (cond
+               ((eq (nth 0 init) 'add-to-list)
+                (when (ignore-errors (boundp (nth 1 (nth 0 init))))
+                  (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                  (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+               ((memq (nth 0 init) '(push pushnew))
+                (when (ignore-errors (boundp (nth 2 (nth 0 init))))
+                  (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                  (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+               (t
+                (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))))
         (let ((x (and ergoemacs-component-struct--refresh-variables (boundp (nth 0 init))
                       (assq (nth 0 init) ergoemacs-component-struct--refresh-variables))))
           (cond
