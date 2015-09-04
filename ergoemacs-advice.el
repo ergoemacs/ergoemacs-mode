@@ -226,7 +226,8 @@ bindings into this keymap (the original keymap is untouched)"
 (ergoemacs-advice eval-buffer (&optional buffer printflag filename unibyte do-allow-print)
   "Apply `ergoemacs-component-struct--apply-inits' after evaluating buffer."
   :type :after
-  (ergoemacs-component-struct--apply-inits))
+  (when (called-interactively-p 'any)
+    (ergoemacs-component-struct--apply-inits)))
 
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

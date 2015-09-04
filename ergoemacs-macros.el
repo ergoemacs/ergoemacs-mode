@@ -184,6 +184,27 @@ Keys are also converted.
            (indent 2))
   (macroexpand-all `(ergoemacs-theme-component ,@body-and-plist)))
 
+
+(defvar ergoemacs-theme-component-properties
+  '(:bind
+    :bind-keymap
+    :bind*
+    :bind-keymap*
+    :commands
+    :defer
+    :demand
+    :deminish
+    :delight
+    :ensure
+    :package-name
+    :ergoemacs-require
+    :no-load
+    :no-require
+    :just-first-keys
+    :variable-modifiers
+    :variable-prefixes
+    :layout)
+  "List of ergoemacs-theme-component properties.")
 ;;;###autoload
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
   "A component of an ergoemacs-theme.
@@ -781,7 +802,7 @@ When arg1 can be a property.  The following properties are supported:
       `(ergoemacs-command-loop--modal-p))
      ((and arg1 (symbolp arg1) (eq arg1 :combine) arg2 arg3)
       `(ergoemacs-command-loop--combine ,arg2 ,arg3))
-     ((and arg1 (symbolp arg1) (eq arg1 :unicode-or-alt)
+     ((and arg1 (symbolp arg1) (memq arg1 '(:unicode-or-alt :unicode))
            arg2 arg3)
       `(ergoemacs-key-description--unicode-char ,arg2 ,arg3))
      ((and arg1 (symbolp arg1) (eq arg1 :modifier-desc)
