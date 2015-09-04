@@ -222,11 +222,6 @@ bindings into this keymap (the original keymap is untouched)"
           ad-do-it)
       (setq ergoemacs-modify-transient-maps old))))
 
-(ergoemacs-advice window-live-p (object)
-  "Ignore `window-live-p' errors..."
-  :type :around
-  (ignore-errors ad-do-it))
-
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
