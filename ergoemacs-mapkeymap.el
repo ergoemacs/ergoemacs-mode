@@ -59,21 +59,33 @@
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 
 (defun ergoemacs-map-force-full-keymap (keymap)
-  "Forces KEYMAP to be a full keymap."
+  "Force KEYMAP to be a full keymap."
   (if (ignore-errors (char-table-p (nth 1 keymap))) keymap
     (ergoemacs-setcdr keymap (cons (nth 1 (make-keymap)) (cdr keymap)))
     keymap))
 
 (defun ergoemacs-map-set-char-table-range (keymap range value)
-  "Sets the KEYMAP's char-table RANGE to VALUE.
-If KEYMAP is not a full keymap, make it a full keymap."
+  "Set the KEYMAP's char-table RANGE to VALUE.
+If KEYMAP is sparse keymap, make it a full keymap."
   (set-char-table-range
    (nth 1 (ergoemacs-map-force-full-keymap keymap)) range value))
 
 (defun ergoemacs-map-keymap (function keymap &optional original prefix flat-keymap nil-keys)
   "Call FUNCTION for all keys in hash table KEYMAP.
-This is different from `map-keymap' because it sends keys instead of events, and recurses into keymaps.
-If ORIGINAL, use the original keys in all submaps."
+
+This is different from `map-keymap' because it sends keys instead
+of events, and recurses into keymaps.
+
+If ORIGINAL is non-nil, use the original keys in all submaps.
+
+This function is called recursively, so PREFIX represents the
+prefix key that is being explored in the keymap.
+
+When non-nil, FLAT-KEYMAP will changed a composed keymap, or a
+keymap with parent to a un-composed keymap without any parent keymaps.
+
+NIL-KEYS is a list of keys that are defined as nil.  This allows
+them to be masked when mapping over the keymap."
   (let ((flat-keymap (or flat-keymap
                          (if (ergoemacs-map-properties--all-sparse-p keymap)
                              (make-sparse-keymap)
