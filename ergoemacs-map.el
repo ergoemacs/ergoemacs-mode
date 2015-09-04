@@ -96,6 +96,7 @@
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 
+(declare-function ergoemacs-map-properties--before-ergoemacs "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--composed-list "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--composed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--deferred-maps "ergoemacs-map-properties")
@@ -109,18 +110,17 @@
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--lookup "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--new-command "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--override-maps "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--revert-original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--set-map-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--use-local-unbind-list-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user-original "ergoemacs-map-properties")
-
-(declare-function ergoemacs-map-properties--before-ergoemacs "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
 
 (declare-function ergoemacs-theme--get-version "ergoemacs-theme")
 
@@ -414,7 +414,7 @@ It takes the following arguments:
   keys should be locally unbound.  This is useful for
   `isearch-mode-map' keymap in Emacs 24.4+."
   (let ((ret (make-sparse-keymap))
-        tmp composed-list local-unbind-list tmp-key)
+        tmp composed-list local-unbind-list)
     (ergoemacs-cache (and lookup-key (intern (format "%s-composed-key" lookup-key)))
       (unless only-modify-p
         (maphash
