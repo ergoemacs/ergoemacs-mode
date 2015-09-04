@@ -1939,22 +1939,27 @@
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
                   ("Extra Functionality" (join-line))
-                  ("Packages" (ace-window avy multiple-cursors expand-region))
+                  ("Packages" (ace-window avy multiple-cursors expand-region golden-ratio))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 
 (ergoemacs-autoload multiple-cursors
+    "Multiple Cursors"
     :bind (("M-*" mc/mark-next-like-this)
            ("M-&" mc/edit-lines))
     :ensure t)
 
 (ergoemacs-autoload avy
+    "Avy"
     :bind ("M-," 'avy-goto-word-or-subword-1)
     :ensure t)
 
-(ergoemacs-autoload golden-ratio)
+(ergoemacs-autoload golden-ratio
+    "Golden Ratio"
+  (golden-ratio-mode))
 
 (ergoemacs-autoload ace-window
+    "Ace Window"
     :bind ("M-s" 'ace-window)
     :ensure t
     ;; layout based aw-keys
@@ -1969,6 +1974,7 @@
         (golden-ratio))))
 
 (ergoemacs-autoload expand-region
+    "Expand Region"
     :bind (("M-8" er/expand-region)
            ("M-9" er/contract-region)
            ("M-*". er/mark-inside-quotes))
