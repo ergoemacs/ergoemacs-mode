@@ -236,12 +236,27 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
         emulation-mode-map-alists (ergoemacs-map--alists emulation-mode-map-alists 'emulation-mode-map-alists)))
 
 (defun ergoemacs-map--minor-mode-overriding-map-alist ()
-  "Modify `minor-mode-overriding-map-alist'"
+  "Modify `minor-mode-overriding-map-alist'."
   (setq ergoemacs-map--breadcrumb ""
         minor-mode-overriding-map-alist (ergoemacs-map--alist minor-mode-overriding-map-alist 'minor-mode-overriding-map-alist)))
 
 (defun ergoemacs-map--minor-mode-map-alist (&optional ini)
-  "Modify `minor-mode-map-alist'"
+  "Modify `minor-mode-map-alist'.
+
+When INI is non-nil, and the `ergoemacs-mode' variable is nil,
+the conditional maps are added to `minor-mode-map-alist'.  This
+condition should only be true in the function
+`ergoemacs-map--install'.
+
+When INI is non-nil, and `ergoemacs-mode' variables it non-nil,
+the conditional maps are removed from
+`minor-mode-map-alist'.  This should only be used in the function
+`ergoemacs-map--remove'.
+
+Otherwise, when INI is non-nil, modify any maps in the
+`minor-mode-mode-map-alist' list that have not yet applied
+ergoemacs-mode keys to them.  The bulk of the modifications are
+done in `ergoemacs-map--alist'."
   (let (ret)
     (when (and ini (not ergoemacs-mode))
       (let (new-lst tmp)
@@ -268,6 +283,7 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 
 
 (defvar ergoemacs-map--cache--last-breadcrumb "")
+
 (defun ergoemacs-map--cache-- (what &optional save)
   "Get WHAT cache.  If SAVE is non-nil, save cache to WHAT."
   (or (and (not what) save
@@ -323,7 +339,6 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
   "List of maps modified by `ergoemacs-mode'.")
 
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
-
 
 (defun ergoemacs-map--composed-list (lookup-keymap lookup-key only-modify-p use-local-unbind-list-p)
   "Calculate majority of keys for LOOKUP-KEYMAP.
@@ -498,7 +513,8 @@ If LOOKUP-KEYMAP
                    (error "Cant calculate/lookup keymap.")))))
         (ergoemacs-map-keymap
          (lambda(key item)
-           (unless (eq item 'ergoemacs-prefix)
+           (unless (or (eq item 'ergoemacs-prefix)
+                       (ignore-errors (eq (aref key 0) 'ergoemacs-labeled)))
              (puthash key item ergoemacs-map--)))
          ret)
         ret))
