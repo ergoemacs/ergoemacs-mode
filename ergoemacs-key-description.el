@@ -86,33 +86,43 @@
 
 (defun ergoemacs-key-description--display-char-p (char)
   "Determines if CHAR can be displayed."
-  (ignore-errors
-    (let* (ret
-           (buf (current-buffer))
-           (face (font-xlfd-name (face-attribute 'default :font)))
-           (found (assoc (list face char window-system) ergoemacs-key-description--display-char-cache)))
-      (if found
-          (nth 0 (cdr found))
-        (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
-        (delete-region (point-min) (point-max))
-        (insert char)
-        (let ((display (describe-char-display (point-min) (char-after (point-min)))))
-          (if (display-graphic-p (selected-frame))
+  (cond
+   ((= 1 (length char))
+    (ignore-errors
+      (let* (ret
+             (buf (current-buffer))
+             (face (font-xlfd-name (face-attribute 'default :font)))
+             (found (assoc (list face char window-system) ergoemacs-key-description--display-char-cache)))
+        (if found
+            (nth 0 (cdr found))
+          (switch-to-buffer (get-buffer-create " *ergoemacs-display-char-p*") t)
+          (delete-region (point-min) (point-max))
+          (insert char)
+          (let ((display (describe-char-display (point-min) (char-after (point-min)))))
+            (if (display-graphic-p (selected-frame))
+                (if display
+                    (setq ret (font-at (point-min))))
               (if display
-                  (setq ret (font-at (point-min))))
-            (if display
-                (setq ret (font-at (point-min))))))
-        (switch-to-buffer buf)
-        ;; Save it so the user doesn't see the buffer popup very much
-        ;; (if at all).
-        (push (list (list face char window-system) ret) ergoemacs-key-description--display-char-cache)
-        ret))))
+                  (setq ret (font-at (point-min))))))
+          (switch-to-buffer buf)
+          ;; Save it so the user doesn't see the buffer popup very much
+          ;; (if at all).
+          (push (list (list face char window-system) ret) ergoemacs-key-description--display-char-cache)
+          ret))))
+   ((stringp char)
+    (catch 'does-not-display
+      (dolist (c (mapcar (lambda(x) (make-string 1 x)) (vconcat char)))
+        (when (not (ergoemacs-key-description--display-char-p c))
+          (throw 'does-not-display nil)))
+      t))
+   (t nil)))
 
 (defun ergoemacs-key-description--unicode-char (char alt-char)
   "Uses CHAR if it can be displayed, otherwise use ALT-CHAR.
 This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
 `ergoemacs-display-unicode-characters' is nil display ALT-CHAR"
-  (if (and ergoemacs-display-unicode-characters (ergoemacs-key-description--display-char-p char))
+  (if (and ergoemacs-display-unicode-characters
+           (ergoemacs-key-description--display-char-p char))
       char
     alt-char))
 
