@@ -876,15 +876,44 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
                  (throw 'found-new t))
                (setq ret nil)) t) ret))))
 
-(defun ergoemacs-map-properties--original (keymap &rest _ignore)
-  "Gets the original keymap."
+(defun ergoemacs-map-properties--revert-original (keymap &rest type)
+  "Revert KEYMAP.
+
+This is the same as calling `ergoemacs-map-properties--original'
+with the TYPE set to :setcdr.
+
+You may specify TYPE to be :flatten to return a flattend copy of
+the original instead."
+  (ergoemacs-map-properties--original keymap (or type :setcdr)))
+(defun ergoemacs-map-properties--original (keymap &optional type)
+  "Get original KEYMAP.
+
+When TYPE is :flatten, the return keymap is not composed and has
+no parents.
+
+When TYPE is :setcdr, the function modifies any submaps so they
+are original keymaps as well as modifying KEYMAP to be the
+original keymap.
+
+When TYPE is nil, return the original keymap, but any sub keymaps
+are not original, and the keymap may be composed or have a parent
+keymap."
   (if (not (ergoemacs-keymapp keymap)) nil
     (let ((ret keymap))
-      (while (and (or (and (not (ergoemacs ret :map-key)) (ergoemacs ret :label)) t) ;; Apply label if needed.
+      (while (and (or (and (not (ergoemacs ret :map-key))
+                           ;; Apply label if needed.
+                           (ergoemacs ret :label)) t)
                   (not (integerp (ergoemacs ret :map-key)))
                   (setq ret (keymap-parent ret)))
         t)
-      ret)))
+      (cond
+       ((eq type :flatten)
+        (ergoemacs-map-keymap nil ret t))
+       ((eq type :submaps)
+        (ergoemacs-setcdr (cdr ret)
+                          (cdr (ergoemacs-map-keymap nil ret :setcdr)))
+        ret)
+       (t ret)))))
 
 (defun ergoemacs-map-properties--original-user (keymap &rest _ignore)
   "Gets the original keymap with the user protecting layer."

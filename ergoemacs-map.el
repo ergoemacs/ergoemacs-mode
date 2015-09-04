@@ -920,20 +920,20 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
 
 (defvar ergoemacs-mode)
 (defun ergoemacs-map--remove ()
-  "Remove `ergoemacs-mode'"
+  "Remove `ergoemacs-mode' keybindings."
   (interactive)
   ;; Restore menu-bar
   ;; Not needed; Global map isn't modified...
   (let (ergoemacs-mode)
     (setq ergoemacs-map--alist (make-hash-table)
           ergoemacs-map--alists (make-hash-table)
-          global-map (ergoemacs :global-map)
+          global-map (ergoemacs :revert-global-map)
           ergoemacs-saved-global-map  nil)
     (use-global-map global-map)
     (ergoemacs-map--modify-active t)
     (dolist (map ergoemacs-map--modified-maps)
       (ergoemacs-command-loop--spinner-display "rm ergoemacs->%s" map)
-      (set-default map (ergoemacs (ergoemacs-sv map) :original))))
+      (ergoemacs (ergoemacs-sv map) :revert-original)))
   (ergoemacs-component-struct--rm-hooks))
 
 (defun ergoemacs-map-undefined ()

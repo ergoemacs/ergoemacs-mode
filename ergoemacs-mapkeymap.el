@@ -5,7 +5,7 @@
 ;; Filename: ergoemacs-mapkeymap.el
 ;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer: Matthew L. Fidler
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
 ;; Version: 
 ;; Last-Updated: 
@@ -76,7 +76,13 @@ If KEYMAP is sparse keymap, make it a full keymap."
 This is different from `map-keymap' because it sends keys instead
 of events, and recurses into keymaps.
 
-If ORIGINAL is non-nil, use the original keys in all submaps.
+If ORIGINAL is :setcdr, use `ergoemacs-setdcdr' to modify the
+subkeymaps to have the original keymaps.
+
+If ORIGINAL is non-nil, use the original keys in all submaps, but
+don't modify the sub-keymaps.
+
+If ORIGINAL is nil, use the subkeymaps as they stand.
 
 This function is called recursively, so PREFIX represents the
 prefix key that is being explored in the keymap.
@@ -127,7 +133,15 @@ them to be masked when mapping over the keymap."
                                              (and (fboundp item) (setq tmp (symbol-function item))
                                                   (ergoemacs-keymapp tmp) tmp)))))))
              (when tmp
-               (ergoemacs-map-keymap function (if original (ergoemacs :original tmp) tmp) original
+               (ergoemacs-map-keymap function
+                                     (cond
+                                      ((eq original :setcdr)
+                                       (ergoemacs-setcdr (cdr tmp)
+                                                         (cdr (ergoemacs :original tmp))))
+                                      (original
+                                       (ergoemacs :original tmp))
+                                      (t tmp))
+                                      original
                                      key flat-keymap nil-keys)))
             (t
              (when function
