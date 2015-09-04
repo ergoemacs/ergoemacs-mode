@@ -222,6 +222,12 @@ bindings into this keymap (the original keymap is untouched)"
           ad-do-it)
       (setq ergoemacs-modify-transient-maps old))))
 
+
+(ergoemacs-advice eval-buffer (&optional buffer printflag filename unibyte do-allow-print)
+  "Apply `ergoemacs-component-struct--apply-inits' after evaluating buffer."
+  :type :after
+  (ergoemacs-component-struct--apply-inits))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
