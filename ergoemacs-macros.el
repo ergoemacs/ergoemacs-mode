@@ -171,6 +171,8 @@ Keys are also converted.
                    '(lambda () ,@(nth 1 tmp)))))
               ((ignore-errors (memq (nth 0 elt) '(mapcar mapc dolist when if)))
                (macroexpand-all (ergoemacs-theme-component--parse-remaining elt)))
+              ((ignore-errors (memq (nth 0 elt) '(ergoemacs-advice defadvice)))
+               (macroexpand-all elt))
               (t `(ergoemacs-component-struct--deferred ',elt))))
            remaining)))
     remaining))

@@ -1870,6 +1870,47 @@
   (global-set-key (kbd "M-]") 'delete-indentation)
   (global-set-key (kbd "M-[") 'ergoemacs-top-join-line))
 
+
+(ergoemacs-autoload multiple-cursors
+    "Multiple Cursors"
+    :bind (("M-*" mc/mark-next-like-this)
+           ("M-&" mc/edit-lines))
+    :ensure t)
+
+(ergoemacs-autoload avy
+    "Avy"
+    :bind ("M-," 'avy-goto-word-or-subword-1)
+    :ensure t)
+
+(ergoemacs-autoload golden-ratio
+    "Golden Ratio"
+  :commands golden-ratio-mode
+  :ensure t
+  (golden-ratio-mode)
+  (ergoemacs-advice ace-window (arg)
+    "Enable golden ratio to work with `ace-window'."
+    :type :after
+    (when (fboundp 'golden-ratio)
+      (golden-ratio))))
+
+(ergoemacs-autoload ace-window
+    "Ace Window"
+    :bind ("M-s" 'ace-window)
+    :ensure t
+    ;; layout based aw-keys
+    (setq aw-keys (mapcar
+                   (lambda(key)
+                     (ergoemacs-translate--event-layout key ergoemacs-keyboard-layout "us"))
+                   (list ?f ?j ?d ?k ?r ?u ?e ?i ?s ?l ?w ?o))))
+
+(ergoemacs-autoload expand-region
+    "Expand Region"
+    :bind (("M-8" er/expand-region)
+           ("M-9" er/contract-region)
+           ("M-*". er/mark-inside-quotes))
+    :ensure t)
+
+
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
   :components '(copy
@@ -1941,44 +1982,6 @@
                   ("Extra Functionality" (join-line))
                   ("Packages" (ace-window avy multiple-cursors expand-region golden-ratio))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
-
-
-(ergoemacs-autoload multiple-cursors
-    "Multiple Cursors"
-    :bind (("M-*" mc/mark-next-like-this)
-           ("M-&" mc/edit-lines))
-    :ensure t)
-
-(ergoemacs-autoload avy
-    "Avy"
-    :bind ("M-," 'avy-goto-word-or-subword-1)
-    :ensure t)
-
-(ergoemacs-autoload golden-ratio
-    "Golden Ratio"
-  (golden-ratio-mode))
-
-(ergoemacs-autoload ace-window
-    "Ace Window"
-    :bind ("M-s" 'ace-window)
-    :ensure t
-    ;; layout based aw-keys
-    (setq aw-keys (mapcar
-                   (lambda(key)
-                     (ergoemacs-translate--event-layout key ergoemacs-keyboard-layout "us"))
-                   (list ?f ?j ?d ?k ?r ?u ?e ?i ?s ?l ?w ?o)))
-    (ergoemacs-advice ace-window (arg)
-      "Enable golden ratio to work with `ace-window'."
-      :type :after
-      (when (fboundp 'golden-ratio)
-        (golden-ratio))))
-
-(ergoemacs-autoload expand-region
-    "Expand Region"
-    :bind (("M-8" er/expand-region)
-           ("M-9" er/contract-region)
-           ("M-*". er/mark-inside-quotes))
-    :ensure t)
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
