@@ -1882,17 +1882,6 @@
     :bind ("M-," 'avy-goto-word-or-subword-1)
     :ensure t)
 
-(ergoemacs-autoload golden-ratio
-    "Golden Ratio"
-  :commands golden-ratio-mode
-  :ensure t
-  (golden-ratio-mode)
-  (ergoemacs-advice ace-window (arg)
-    "Enable golden ratio to work with `ace-window'."
-    :type :after
-    (when (fboundp 'golden-ratio)
-      (golden-ratio))))
-
 (ergoemacs-autoload ace-window
     "Ace Window"
     :bind ("M-s" 'ace-window)
@@ -1980,7 +1969,7 @@
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
                   ("Extra Functionality" (join-line))
-                  ("Packages" (ace-window avy multiple-cursors expand-region golden-ratio))
+                  ("Packages" (ace-window avy multiple-cursors expand-region))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 (ergoemacs-theme reduction ()
