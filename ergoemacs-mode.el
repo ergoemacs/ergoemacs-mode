@@ -541,6 +541,7 @@ When `store-p' is non-nil, save the tables."
                ergoemacs-mapkeymap
                ergoemacs-theme-engine
 	       ergoemacs-translate
+               ergoemacs-macros
 	       ;; ergoemacs-themes
                ))
   (unless (featurep pkg)
