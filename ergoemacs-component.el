@@ -921,15 +921,18 @@ be composed over the keymap.  This is done in
               (cond
                ((eq (nth 0 init) 'add-to-list)
                 (when (ignore-errors (boundp (nth 1 (nth 0 init))))
-                  (apply (car (nth 0 init)) (cdr (nth 0 init)))
-                  (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+                  (ignore-errors
+                    (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                    (push (nth 0 init) ergoemacs-component-struct--deferred-functions))))
                ((memq (nth 0 init) '(push pushnew))
                 (when (ignore-errors (boundp (nth 2 (nth 0 init))))
-                  (apply (car (nth 0 init)) (cdr (nth 0 init)))
-                  (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+                  (ignore-errors
+                    (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                    (push (nth 0 init) ergoemacs-component-struct--deferred-functions))))
                (t
-                (apply (car (nth 0 init)) (cdr (nth 0 init)))
-                (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))))
+                (ignore-errors
+                  (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                  (push (nth 0 init) ergoemacs-component-struct--deferred-functions))))))
         (let ((x (and ergoemacs-component-struct--refresh-variables (boundp (nth 0 init))
                       (assq (nth 0 init) ergoemacs-component-struct--refresh-variables))))
           (cond
