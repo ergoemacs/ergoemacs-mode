@@ -1131,10 +1131,10 @@ If Object isn't specified assume it is for the current ergoemacs theme."
 
 
 (defcustom ergoemacs-component-find-regexp
-  (concat"^\\s-*(ergoemacs-\\(?:theme-?\\)?\\(?:component\\)?" find-function-space-re "%s\\(\\s-\\|$\\)")
+  (concat"^\\s-*(ergoemacs-\\(?:theme-?\\)?\\(?:component\\|package\\|autoload\\)?" find-function-space-re "%s\\(\\s-\\|$\\)")
   "The regexp used by `ergoemacs-find-component' to search for a component definition.
-Note it must contain a `%s' at the place where `format'
-should insert the face name."
+Note it must contain a `%s' at the place where `format' should
+insert the face name."
   :type 'regexp
   :group 'find-function
   :version "22.1")
@@ -1262,6 +1262,22 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
                                (format "%s" c)))
     (list (or (and (equal val "") (format "%s" c)) val))))
 
+(defun ergoemacs-component-cached-p (component)
+  "Determine if COMPONENT is cached instead of loaded."
+  (let* ((component (and component
+                       (or (and (stringp component) component)
+                           (and (symbolp component) (symbol-name component)))))
+         (comp (ergoemacs-component-struct--lookup-hash (or component "")))
+         (plist (ergoemacs-component-struct-plist comp))
+         (file (plist-get plist :file))
+         (el-file (concat (file-name-sans-extension file) ".el"))
+         (elc-file (concat (file-name-sans-extension file) ".elc")))
+    (catch 'loaded
+      (dolist (load load-history)
+        (when (or (string= elc-file (car load))
+                  (string= el-file (car load)))
+          (throw 'loaded nil))) t)))
+
 (defun ergoemacs-component-describe (component)
   "Display the full documentation of COMPONENT (a symbol or string)."
   (interactive (ergoemacs-component--prompt))
@@ -1291,6 +1307,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
         (princ "Documentation:\n")
         (princ (plist-get (ergoemacs-component-struct-plist comp) :description))
         (princ "\n\n")
+        (princ (format "Cached instead of loaded: %s\n" (or (and (ergoemacs-component-cached-p component) "Yes") "No")))
         (princ (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
         (princ (format "Relative To: %s\n" (ergoemacs-component-struct-relative-to comp)))
         (princ (format "Variable Modifiers: %s\n" (ergoemacs-component-struct-variable-modifiers comp)))
