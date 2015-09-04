@@ -7,5 +7,6 @@ out/*
 /out/
 *-autoloads.el
 *-pkg.el
+flycheck_*
 ergoemacs-global*.el
 /.cask/
