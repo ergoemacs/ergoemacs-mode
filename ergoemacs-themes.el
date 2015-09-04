@@ -1939,6 +1939,7 @@
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
                   ("Extra Functionality" (join-line))
+                  ("Packages" (ace-window avy multiple-cursors expand-region))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 
