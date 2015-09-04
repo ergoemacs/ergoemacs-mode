@@ -1951,6 +1951,8 @@
     :bind ("M-," 'avy-goto-word-or-subword-1)
     :ensure t)
 
+(ergoemacs-autoload golden-ratio)
+
 (ergoemacs-autoload ace-window
     :bind ("M-s" 'ace-window)
     :ensure t
@@ -1958,7 +1960,12 @@
     (setq aw-keys (mapcar
                    (lambda(key)
                      (ergoemacs-translate--event-layout key ergoemacs-keyboard-layout "us"))
-                   (list ?f ?j ?d ?k ?r ?u ?e ?i ?s ?l ?w ?o))))
+                   (list ?f ?j ?d ?k ?r ?u ?e ?i ?s ?l ?w ?o)))
+    (ergoemacs-advice ace-window (arg)
+      "Enable golden ratio to work with `ace-window'."
+      :type :after
+      (when (fboundp 'golden-ratio)
+        (golden-ratio))))
 
 (ergoemacs-autoload expand-region
     :bind (("M-8" er/expand-region)
