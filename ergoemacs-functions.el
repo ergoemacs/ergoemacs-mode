@@ -154,7 +154,7 @@ The backup is determined by `find-backup-file-name'"
                     (setq ergoemacs-revert-buffer (+ ergoemacs-revert-buffer 1)))))
       (if (= ergoemacs-revert-buffer (length backup-buffer))
           (progn
-            (revert-buffer nil t)
+            (revert-buffer t t)
             (setq ergoemacs-revert-buffer -1)
             (message "Reverted to saved version"))
         (delete-region (point-min) (point-max))
