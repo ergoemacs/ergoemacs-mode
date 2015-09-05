@@ -639,7 +639,18 @@ closest `ergoemacs-theme-version' calculated from
 (defvar ergoemacs-component-struct--get-keymap nil)
 (defvar ergoemacs-component-struct--get-keymap-extra nil)
 (defun ergoemacs-component-struct--lookup-list (lookup-keymap &optional layout obj map-list)
-  "Get list of extra maps based on LOOKUP-KEYMAP"
+  "Get list of extra maps based on LOOKUP-KEYMAP.
+
+The LAYOUT argument specifies the ergoemacs layout to use.
+Otherwise, the layout used is `ergoemacs-keyboard-layout'.
+
+The OBJ list is the list of ergoemacs theme components to use.
+If it is nil, it is the components specifed by
+`ergoemacs-theme-components'.
+
+The MAP-LIST is the list symbols that LOOKUP-KEYMAP is bound to.
+If unspecified, use `ergoemacs-map-properties--map-list' to try
+to figure out what variables LOOKUP-KEYMAP is bound to."
   (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (reverse (ergoemacs-theme-components)))))
         (cur-layout (or layout ergoemacs-keyboard-layout))
         (map-list (or map-list (ergoemacs lookup-keymap :map-list)))
