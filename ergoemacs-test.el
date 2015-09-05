@@ -96,42 +96,42 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-search ()
-  "Search tests for ergoemacs-mode."
+  "Test search functionality in ergoemacs-mode."
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :search)))
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-copy ()
-  "Copy/Paste test for ergoemacs-mode"
+  "Copy/Paste test for ergoemacs-mode."
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :copy)))
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-calc ()
-  "Tests for calc"
+  "Test for calc."
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :calc)))
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-shift-select ()
-  "Shift-selection tests for ergoemacs-mode"
+  "Shift-selection test for ergoemacs-mode."
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :shift-select)))
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-translate ()
-  "Translation tests for ergoemacs-mode"
+  "Translation test for ergoemacs-mode."
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :translate)))
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-interactive ()
-  "Interactive tests for ergoemacs-mode"
+  "Interactive test for ergoemacs-mode."
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :interactive)))
@@ -184,8 +184,25 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
        (should (string= "3" (match-string 0))))
      (kill-buffer (current-buffer)))))
 
+(ert-deftest ergoemacs-test-isearch-exit-C-s ()
+  "Make sure C-s works outside of `ergoemacs-mode'. Issue #361."
+  :tags '(:search)
+  (ergoemacs-mode -1)
+  (should (eq (lookup-key isearch-mode-map (kbd "C-s")) 'isearch-repeat-forward))
+  (should (eq (lookup-key isearch-mode-map (kbd "C-r")) 'isearch-repeat-backward))
+  (save-excursion
+    (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+    (delete-region (point-min) (point-max))
+    (insert "aars1\nars2\nars3\nars4")
+    (goto-char (point-min))
+    (execute-kbd-macro (read-kbd-macro "C-s ars C-s C-s"))
+    (when (looking-at ".*")
+      (should (string= "3" (match-string 0))))
+    (kill-buffer (current-buffer)))
+  (ergoemacs-mode 1))
+
 (ert-deftest ergoemacs-test-isearch-in-eshell ()
-  "Test Issue #322"
+  "Test Issue #322."
   :tags '(:search :calc)
   (ergoemacs-test-layout
    :layout "us"
