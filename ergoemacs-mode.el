@@ -632,12 +632,16 @@ When `store-p' is non-nil, save the tables."
   "Run `ergoemacs-mode' after load functions."
   (run-hook-with-args 'ergoemacs-after-load-functions absoulte-file-name))
 
+(defvar ergoemacs-mode-reset nil
+  "Does `ergoemacs-mode' need to be reset?")
+
 ;;;###autoload
 (defun ergoemacs-mode-reset ()
-  "Resets the `ergoemacs-mode' without toggling unnecessary variables."
+  "Reset `ergoemacs-mode' without toggling unnecessary variables."
   (setq ergoemacs-component-struct--refresh-variables t)
   (ergoemacs-mode -1)
-  (ergoemacs-mode 1))
+  (ergoemacs-mode 1)
+  (setq ergoemacs-mode-reset nil))
 
 ;;;###autoload
 (defun ergoemacs-set-default (symbol new-value)

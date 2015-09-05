@@ -227,7 +227,9 @@ bindings into this keymap (the original keymap is untouched)"
   "Apply `ergoemacs-component-struct--apply-inits' after evaluating buffer."
   :type :after
   (when (called-interactively-p 'any)
-    (ergoemacs-component-struct--apply-inits)))
+    (ergoemacs-component-struct--apply-inits)
+    (when ergoemacs-mode-reset
+      (ergoemacs-mode-reset))))
 
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
