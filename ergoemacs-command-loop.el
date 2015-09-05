@@ -267,7 +267,7 @@ with this function."
     (when (> 1 (length new-key))
       (error "Will not set a key sequence to the emacs key sequence"))
     (setf (nth 3 cur-input) new-key)
-    (apply 'set-input-mode cur-input)))
+    (ignore-errors (and (apply 'set-input-mode cur-input) t))))
 
 (defun ergoemacs-command-loop--setup-quit-key ()
   "Setup the `ergoemacs-mode' quit key."
