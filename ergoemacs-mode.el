@@ -618,12 +618,14 @@ When `store-p' is non-nil, save the tables."
 (defvar ergoemacs-pre-command-hook nil)
 (defun ergoemacs-pre-command-hook ()
   "Run `ergoemacs-mode' pre command hooks."
-  (run-hooks 'ergoemacs-pre-command-hook))
+  (when ergoemacs-mode
+    (run-hooks 'ergoemacs-pre-command-hook)))
 
 (defvar ergoemacs-post-command-hook nil)
 (defun ergoemacs-post-command-hook ()
   "Run `ergoemacs-mode' post command hooks."
-  (run-hooks 'ergoemacs-post-command-hook))
+  (when ergoemacs-mode
+    (run-hooks 'ergoemacs-post-command-hook)))
 
 (defvar ergoemacs-after-load-functions nil)
 (defun ergoemacs-after-load-functions (absoulte-file-name)

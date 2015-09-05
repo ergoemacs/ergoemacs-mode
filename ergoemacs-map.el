@@ -914,7 +914,7 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
   (ergoemacs-menu--filter (lookup-key ergoemacs-keymap [menu-bar]))
   (ergoemacs-map--modify-active t)
   (ergoemacs-component-struct--create-hooks)
-  (add-hook 'post-command-hook #'ergoemacs-map--modify-active))
+  (add-hook 'ergoemacs-post-command-hook #'ergoemacs-map--modify-active))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-map--install)
 
@@ -931,13 +931,16 @@ This occurs when the keymap is not known to `ergoemacs-mode' and it is not a com
           ergoemacs-saved-global-map  nil)
     (use-global-map global-map)
     (ergoemacs-map--modify-active t)
+    (ergoemacs-component-struct--rm-hooks)
     (dolist (map ergoemacs-map--modified-maps)
       (ergoemacs-command-loop--spinner-display "rm ergoemacs->%s" map)
-      (ergoemacs (ergoemacs-sv map) :revert-original)))
-  (ergoemacs-component-struct--rm-hooks))
+      (set map (ergoemacs (ergoemacs-sv map) :revert-original)))))
 
 (defun ergoemacs-map-undefined ()
-  "Lets the user know that this key is undefined in `ergoemacs-mode'."
+  "This key is undefined in `ergoemacs-mode'.
+
+If `ergoemacs-mode' knows what the new key or key sequence that
+runs the same command, tell the user."
   (interactive)
   (let ((key (ergoemacs-key-description (this-single-command-keys)))
         (old-key (lookup-key (ergoemacs :global-map) (this-single-command-keys))))
