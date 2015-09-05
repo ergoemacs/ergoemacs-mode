@@ -1305,9 +1305,16 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
           (princ "'."))
         (princ "\n\n")
         (princ "Documentation:\n")
-        (princ (plist-get (ergoemacs-component-struct-plist comp) :description))
+        (princ (plist-get plist :description))
         (princ "\n\n")
         (princ (format "Cached instead of loaded: %s\n" (or (and (ergoemacs-component-cached-p component) "Yes") "No")))
+
+        (princ "\nKnown component properties:\n")
+        (dolist (prop ergoemacs-theme-component-properties)
+          (when (setq tmp (plist-get plist prop))
+            (princ (format "  %s -- %s\n" prop tmp))))
+        (princ "\n")
+        
         (princ (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
         (princ (format "Relative To: %s\n" (ergoemacs-component-struct-relative-to comp)))
         (princ (format "Variable Modifiers: %s\n" (ergoemacs-component-struct-variable-modifiers comp)))
