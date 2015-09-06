@@ -206,9 +206,13 @@
           (ergoemacs-component-struct--define-key keymap (read-kbd-macro (car elt)) (cdr elt))))))))
 
 (defun ergoemacs-component-struct--create-component (plist body file)
-  "PLIST is the component properties
+  "Create ergoemacs component.
+
+PLIST is the component properties
+
 BODY is the body of function.
-FILE is the file name where the component was created"
+
+FILE is the file name where the component was created."
   (unwind-protect
       (progn
         (setq ergoemacs-component-struct--define-key-current
@@ -874,6 +878,7 @@ be composed over the keymap.  This is done in
 (defvar ergoemacs-component-struct--deferred-functions '())
 
 (defvar ergoemacs-component-struct--apply-inits-first-p t)
+(defvar ergoemacs-component-struct--apply-ensure-p nil)
 (defun ergoemacs-component-struct--apply-inits (&optional _file obj)
   "Apply the initializations from the OBJ."
   (when (eq ergoemacs-component-struct--refresh-variables t)
@@ -881,7 +886,8 @@ be composed over the keymap.  This is done in
   (let* ((obj (or obj (ergoemacs-theme-components)))
          package-name ensure defer comp plist)
     (when ergoemacs-component-struct--apply-inits-first-p
-      (setq ergoemacs-component-struct--apply-inits-first-p nil)
+      (setq ergoemacs-component-struct--apply-inits-first-p nil
+            ergoemacs-component-struct--apply-ensure-p t)
       (if (not ergoemacs-mode--fast-p)
           (setq ergoemacs--start-emacs-state-2 (ergoemacs--emacs-state))
         ;; Check to see if emacs state has changed.
@@ -898,7 +904,10 @@ be composed over the keymap.  This is done in
                  t
                  'ergoemacs--last-start-emacs-state-2 ergoemacs--last-start-emacs-state-2))
             (ergoemacs-mode-clear-cache t)
-            (warn "ergoemacs-mode cache reset AFTER loading; Keys may be slightly inconsistent until emacs restart."))))
+            (warn "ergoemacs-mode cache reset AFTER loading; Keys may be slightly inconsistent until emacs restart.")))))
+    (when ergoemacs-component-struct--apply-ensure-p
+      (setq ergoemacs-component-struct--apply-ensure-p nil)
+      ;; Ensure variables
       (dolist (elt obj)
         (setq comp (ergoemacs-component-struct--lookup-hash elt)
               package-name (ergoemacs-component-struct-package-name comp)
@@ -937,8 +946,12 @@ be composed over the keymap.  This is done in
                     (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
                 (when (ignore-errors (eq 'quote (nth 0 (nth 1 (nth 0 init)))))
                   (if (ignore-errors (eq 'quote (nth 0 (nth 2 (nth 0 init)))))
-                      (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (nth 1 (nth 2 (nth 0 init))) (cdr (cdr (cdr (nth 0 init)))))
-                    (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init)))))))
+                      (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
+                        (apply 'add-to-list  (nth 1 (nth 2 (nth 0 init))) (cdr (cdr (cdr (nth 0 init)))))
+                        (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
+                    (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
+                      (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
+                      (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))))
                ((memq (car (nth 0 init)) '(push pushnew))
                 (when (ignore-errors (boundp (nth 2 (nth 0 init))))
                   (if (ignore-errors (eq 'quote (nth 1 (nth 1 (nth 0 init)))))
@@ -1325,6 +1338,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
           (when (setq tmp (plist-get plist prop))
             (princ (format "  %s -- %s\n" prop tmp))))
         (princ "\n")
+        (princ (format "Plist: %s" plist))
         
         (princ (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
         (princ (format "Relative To: %s\n" (ergoemacs-component-struct-relative-to comp)))
