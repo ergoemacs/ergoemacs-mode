@@ -82,23 +82,51 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
-  "In parsing, this function converts:
-- `define-key' is converted to `ergoemacs-component-struct--define-key' and keymaps are quoted
-- `global-set-key' is converted to `ergoemacs-component-struct--define-key' with keymap equal to `global-map'
-- `bind-key' is converted to `ergoemacs-component-struct--define-key'
-- `global-unset-key' is converted to `ergoemacs-component-struct--define-key' with keymap equal to `global-map' and function definition is `nil'
-- `global-reset-key' is converted `ergoemacs-component-struct--define-key'
-- `setq' and `set' is converted to `ergoemacs-component-struct--set'
-- `add-hook' and `remove-hook' is converted to `ergoemacs-component-struct--set'
+  "Parse the REMAINING list, and convert:
+
+- `define-key' is converted to
+  `ergoemacs-component-struct--define-key' and keymaps are quoted.
+
+- `global-set-key' is converted to
+  `ergoemacs-component-struct--define-key' with keymap equal to
+  `global-map'.
+
+- `bind-key' is converted to
+  `ergoemacs-component-struct--define-key'.
+
+- `global-unset-key' is converted to
+  `ergoemacs-component-struct--define-key' with keymap equal to
+  `global-map' and function definition is nil.
+
+- `global-reset-key' is converted
+  `ergoemacs-component-struct--define-key'
+
+- `setq' and `set' is converted to
+  `ergoemacs-component-struct--set'
+
+- `add-hook' and `remove-hook' is converted to
+  `ergoemacs-component-struct--set'
+
 - Mode initialization like (delete-selection-mode 1)
   or (delete-selection) is converted to
   `ergoemacs-component-struct--set'
-- Allows :version statement expansion to `ergoemacs-component-struct--new-version'
-- Adds with-hook syntax or (when -hook) or (when -mode) using `ergoemacs-component-struct--with-hook'
 
-Keys are also converted.
- C-i -> <C-i>; C-m -> <C-m>; C-[ -> <C-[>  These keys only work in a GUI.
-"
+- Allows :version statement expansion to
+  `ergoemacs-component-struct--new-version'
+
+- Adds with-hook syntax or (when -hook) or (when -mode) using
+  `ergoemacs-component-struct--with-hook'
+
+Since `ergoemacs-mode' tries to distinguish return, escape, and
+tab from their ASCII equivalents In the GUI, the following Emacs
+keyboard codes are converted to keys that `ergoemacs-mode' can
+distinguish from the ASCII equivalents:
+
+- C-i (TAB) is changed to <C-i>
+
+- C-m (RET) is changed to <C-m>
+
+- C-[ (ESC)  is changed to <C-]>"
   (let* ((last-was-version nil)
          (remaining
           (mapcar
@@ -179,7 +207,10 @@ Keys are also converted.
 
 ;;;###autoload
 (defmacro ergoemacs-component (&rest body-and-plist)
-  "A component of an ergoemacs-theme."
+  "A component of an ergoemacs-theme.
+
+This places BODY-AND-PLIST in the `ergoemacs-theme-component'
+macro."
   (declare (doc-string 2)
            (indent 2))
   (macroexpand-all `(ergoemacs-theme-component ,@body-and-plist)))
@@ -208,6 +239,10 @@ Keys are also converted.
 ;;;###autoload
 (defmacro ergoemacs-theme-component (&rest body-and-plist)
   "A component of an ergoemacs-theme.
+
+This macro parses BODY-AND-PLIST to Emacs code to generate an
+`erogemacs-mode' theme component.
+
 This accepts the following keywords:
 
 :bind -- What keys to bind.  This is compatible with use-package
@@ -309,7 +344,8 @@ This accepts the following keywords:
     [apps h] will be defined based on finger placement, but the
     keys afterward would be based on letter.
 
-    By default this is defined as nil, meaning no special keys like this occur.
+    By default this is defined as nil, meaning no special keys
+    like this occur.
 
 :just-first-keys (list [apps ?h] [menu ?h])
     Defaults to nil
@@ -336,7 +372,9 @@ Please do not use the following tags, since they are parsed based
 on the definition:
 
 :name -- Component Name
+
 :description -- Component Description
+
 :file -- File where the component was defined."
   (declare (doc-string 2)
            (indent 2))
@@ -490,11 +528,6 @@ with :ergoemacs-require set to t."
           (when reset-ergoemacs
             (ergoemacs-mode-reset)))))))
 
-(defvar ergoemacs-theme-component--tags
-  '(:diminish
-    :delight)
-  "Tags that are known to `ergoemacs-theme-component'")
-
 (defvar ergoemacs-theme-components--modified-plist nil
   "Modified plist.")
 
@@ -514,45 +547,6 @@ with :ergoemacs-require set to t."
              (push pkg cur-ensure)
              (setq ergoemacs-theme-components--modified-plist
                    (plist-put plist :ensure cur-ensure)))))))
-
-(defun ergoemacs-theme-component--tag-diminish (plist tag-value remaining)
-  "Handle :diminish tag for `ergoemacs-theme-component'.
-
-Will add (diminish 'package-name) for :diminish t"
-  ;; :diminish keyword support
-  (let ((tag-value tag-value)
-        pkg ret)
-    (cond
-     ((and (eq tag-value t) (setq pkg (plist-get plist :package-name)))
-      (setq ret `((require 'diminish) (diminish ',(intern (format "%s" pkg))) ,@remaining)))
-     ((and tag-value (symbolp tag-value))
-      (setq ret `((require 'diminish) (diminish ',tag-value) ,@remaining)))
-     ((and tag-value (consp tag-value) (symbolp (car tag-value)) (setq pkg (car tag-value))
-           (or (and (stringp (cdr tag-value)) (setq tag-value (cdr tag-value)))
-               (ignore-errors (and (stringp (nth 1 tag-value)) (setq tag-value (nth 1 tag-value))))))
-      (setq ret `((require 'diminish) (diminish ',pkg ,tag-value) ,@remaining)))
-     (t (setq ret remaining)))
-    ret))
-
-(defun ergoemacs-theme-component--tag-delight (plist tag-value remaining)
-  "Handle :delight tag for `ergoemacs-theme-component'.
-This tag implies :ensure delight"
-  (let ((tag-value tag-value)
-        pkg ret)
-    (cond
-     ((and (eq tag-value t) (setq pkg (plist-get plist :package-name)))
-      (ergoemacs-theme-component--add-ensure plist 'delight)
-      (setq ret `((require 'delight) (delight ',(intern (format "%s" pkg))) ,@remaining)))
-     ((and tag-value (symbolp tag-value))
-      (ergoemacs-theme-component--add-ensure plist 'delight)
-      (setq ret `((require 'delight) (delight ',tag-value ,@remaining))))
-     ((and tag-value (consp tag-value) (symbolp (car tag-value)) (setq pkg (car tag-value))
-           (or (and (stringp (cdr tag-value)) (setq tag-value (cdr tag-value)))
-               (ignore-errors (and (stringp (nth 1 tag-value)) (setq tag-value (nth 1 tag-value))))))
-      (ergoemacs-theme-component--add-ensure plist 'delight)
-      (setq ret `((require 'delight) (delight ',pkg ,tag-value) ,@remaining)))
-     (t (setq ret remaining)))
-    ret))
 
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
@@ -601,16 +595,6 @@ additional parsing routines defined by PARSE-FUNCTION."
                               collect key
                               collect value))
             (when parse-function
-              (when (eq parse-function 'ergoemacs-theme-component--parse-remaining)
-                ;; Handle known tags.
-                (dolist (tag ergoemacs-theme-component--tags)
-                  (when (and (setq tag-value (plist-get plist tag))
-                             (fboundp (setq tag-fn (intern (concat "ergoemacs-theme-component--tag-" (substring (symbol-name tag) 1)))))
-                             (setq tag-fn (funcall tag-fn plist tag-value remaining)))
-                    (setq remaining tag-fn)
-                    (when ergoemacs-theme-components--modified-plist
-                      (setq plist ergoemacs-theme-components--modified-plist
-                            ergoemacs-theme-components--modified-plist nil)))))
               (setq remaining
                     (funcall parse-function remaining)))
             (list plist remaining))))
@@ -618,16 +602,27 @@ additional parsing routines defined by PARSE-FUNCTION."
 ;;;###autoload
 (defmacro ergoemacs-theme (&rest body-and-plist)
   "Define an ergoemacs-theme.
-:components -- list of components that this theme uses. These can't be seen or toggled
-:optional-on -- list of components that are optional and are on by default
-:optional-off -- list of components that are optional and off by default
-:options-menu -- Menu options list
-:silent -- If this theme is \"silent\", i.e. doesn't show up in the Themes menu.
 
-:based-on
+This macro parses BODY-AND-PLIST into an `ergoemacs-mode' theme.
 
-The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
-"
+- :components -- list of components that this theme uses.  These
+  can't be seen or toggled.
+
+- :optional-on -- list of components that are optional and are on
+  by default
+
+- :optional-off -- list of components that are optional and off
+  by default
+
+- :options-menu -- Menu options list
+
+- :silent -- If this theme is \"silent\", i.e. doesn't show up in
+  the Themes menu.
+
+- :based-on -- what `ergoemacs-mode' theme this is based on.
+
+The rest of the body is an `ergoemacs-theme-component' named
+ THEME-NAME-theme."
   (declare (doc-string 2)
            (indent 2))
   (let ((kb (make-symbol "body-and-plist"))
@@ -689,18 +684,25 @@ The rest of the body is an `ergoemacs-theme-component' named THEME-NAME-theme
           ,@(nth 1 kb))))))
 
 ;;;###autoload
-(defmacro ergoemacs-deftheme (name _desc based-on &rest differences)
-  "Creates a theme layout for Ergoemacs keybindings -- Compatability layer.
+(defmacro ergoemacs-deftheme (name desc based-on &rest differences)
+  "Create theme layout for `ergoemacs-mode' key-bindings.
 
-NAME is the theme name.
-_DESC is the theme description and is currently ignored.
-BASED-ON is the base name theme that the new theme is based on.
+This is compatibility layer.
 
-DIFFERENCES are the differences from the layout based on the functions.  These are based on the following functions:
+- NAME is the theme name.
 
-`ergoemacs-key' = defines/replaces variable key with function by (ergoemacs-key QWERTY-KEY FUNCTION DESCRIPTION ONLY-FIRST)
-`ergoemacs-fixed-key' = defines/replace fixed key with function by (ergoemacs-fixed-key KEY FUNCTION DESCRIPTION)
-"
+- DESC is the theme description
+
+- BASED-ON is the base name theme that the new theme is based on.
+
+- DIFFERENCES are the differences from the layout based on the
+  functions.  These are based on the following functions:
+
+- `ergoemacs-key' = defines/replaces variable key with function
+  by (ergoemacs-key QWERTY-KEY FUNCTION DESCRIPTION ONLY-FIRST)
+
+- `ergoemacs-fixed-key' = defines/replace fixed key with function
+   by (ergoemacs-fixed-key KEY FUNCTION DESCRIPTION)."
   (declare (indent 1))
   (macroexpand-all
    `(let (silent pl tmp)
@@ -714,7 +716,7 @@ DIFFERENCES are the differences from the layout based on the functions.  These a
       (puthash "silent-themes" silent ergoemacs-theme-hash)
       (puthash ,(symbol-name name) tmp ergoemacs-theme-hash)
       (ergoemacs-theme-component ,(intern (concat (symbol-name name) "-theme")) ()
-        ,(format "Generated theme component for %s theme" (symbol-name name))
+        ,(or desc (format "Generated theme component for %s theme" (symbol-name name)))
         ,@differences))))
 
 ;;;###autoload
