@@ -80,9 +80,6 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
             (list 'read-kbd-macro (ergoemacs-theme-component--parse-key-str (nth 1 item)) (nth 2 item)))
            (t item))))
 
-(defvar ergoemacs-theme-component--parse-vars nil
-  "Variables that the theme has parsed.")
-
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
   "In parsing, this function converts:
@@ -100,8 +97,8 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
 - Adds with-hook syntax or (when -hook) or (when -mode) using `ergoemacs-component-struct--with-hook'
 
 Keys are also converted.
-
- C-i -> <C-i>; C-m -> <C-m>; C-[ -> <C-[>  These keys only work in a GUI."
+ C-i -> <C-i>; C-m -> <C-m>; C-[ -> <C-[>  These keys only work in a GUI.
+"
   (let* ((last-was-version nil)
          (remaining
           (mapcar
@@ -120,16 +117,12 @@ Keys are also converted.
               ((ignore-errors (eq (nth 0 elt) 'global-unset-key))
                `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 1 elt)) nil))
               ((ignore-errors (eq (nth 0 elt) 'set))
-               ;; Currently doesn't support (setq a b c d ), but it
-               ;; should.
-               (push (nth 1 elt) ergoemacs-theme-component--parse-vars)
+               ;; Currently doesn't support (setq a b c d ), but it should.
                `(ergoemacs-component-struct--set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
               ((ignore-errors (eq (nth 0 elt) 'add-hook))
-               (push (nth 1 elt) ergoemacs-theme-component--parse-vars)
                `(ergoemacs-component-struct--set ,(nth 1 elt) ,(nth 2 elt)
                                (list t ,(nth 3 elt) ,(nth 4 elt))))
               ((ignore-errors (eq (nth 0 elt) 'remove-hook))
-               (push (nth 1 elt) ergoemacs-theme-component--parse-vars)
                `(ergoemacs-component-struct--set ,(nth 1 elt) ,(nth 2 elt)
                                (list nil nil ,(nth 3 elt))))
               ((ignore-errors (eq (nth 0 elt) 'setq))
@@ -137,11 +130,10 @@ Keys are also converted.
                      (ret '()))
                  (pop tmp-elt)
                  (while (and (= 0 (mod (length tmp-elt) 2)) (< 0 (length tmp-elt)))
-                   (push `(ergoemacs-component-struct--set (quote ,(progn (push (pop tmp-elt) ergoemacs-theme-component--parse-vars) (car ergoemacs-theme-component--parse-vars))) '(lambda() ,(pop tmp-elt))) ret))
+                   (push `(ergoemacs-component-struct--set (quote ,(pop tmp-elt)) '(lambda() ,(pop tmp-elt))) ret))
                  (push 'progn ret)
                  ret))
               ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
-               (push (nth 0 elt) ergoemacs-theme-component--parse-vars)
                `(ergoemacs-component-struct--set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
                (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt)))
@@ -348,12 +340,9 @@ on the definition:
 :file -- File where the component was defined."
   (declare (doc-string 2)
            (indent 2))
-  (setq ergoemacs-theme-component--parse-vars nil)
   (let ((kb (make-symbol "body-and-plist")))
     (setq kb (ergoemacs-theme-component--parse body-and-plist))
-    `(progn
-       (progn ,@(mapcar (lambda(x) `(defvar ,x)) ergoemacs-theme-component--parse-vars))
-       (let ((plist ',(nth 0 kb))
+    `(let ((plist ',(nth 0 kb))
            (fun '(lambda () ,@(nth 1 kb))))
        (unless (boundp 'ergoemacs-component-hash)
          (defvar ergoemacs-component-hash (make-hash-table :test 'equal)
@@ -366,7 +355,7 @@ on the definition:
                    ',plist ',fun ,(or load-file-name buffer-file-name)))
                 ergoemacs-component-hash)
        ,(when (plist-get (nth 0 kb) :ergoemacs-require)
-          `(ergoemacs-require ',(intern (plist-get (nth 0 kb) :name))))))))
+          `(ergoemacs-require ',(intern (plist-get (nth 0 kb) :name)))))))
 
 (defmacro ergoemacs-package (name &rest keys-and-body)
   "Defines a required package named NAME.
