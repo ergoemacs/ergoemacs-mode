@@ -1037,7 +1037,7 @@
 (ergoemacs-component icy-reclaim ()
   "Reclaim some icicle key bindings."
   (setq icicle-key-complete-keys-for-minibuffer
-        (list (ergoemacs-kbd "M-T")))
+        (list (ergoemacs-translate--event-layout (read-kbd-macro "M-T"))))
   (when icicle-minibuffer-setup-hook
     ;; (define-key minibuffer-local-map (kbd "M-p") 'icicle-insert-history-element)
     ;; (define-key minibuffer-local-map (kbd "C-M-h") 'icicle-insert-list-join-string)
