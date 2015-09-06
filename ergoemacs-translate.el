@@ -245,33 +245,46 @@ This is different than `event-modifiers' in two ways:
 
 (defun ergoemacs-translate--event-layout (event &optional layout-to layout-from basic modifiers)
   "Translate EVENT to the appropriate keyboard layout.
-BASIC is the precalculated basic event from `ergoemacs-translate--event-basic-type'
-MODIFIERS is the precalculated modifiers from `ergoemacs-translate--event-modifiers'
-LAYOUT-TO is the layout to translate to, (default `ergoemacs-keyboard-layout')
-LAYOUT-FROM is the layout to translate from, (defualt is \"us\" or QWERTY)"
-  (let* ((basic (or basic (ergoemacs-translate--event-basic-type event layout-from)))
-         (modifiers (or modifiers (ergoemacs-translate--event-modifiers event layout-from)))
-         new-modifiers
-         new-event
-         (translation-hash (ergoemacs-translate--get-hash layout-to layout-from)))
-    (cond
-     ((and (eq system-type 'windows-nt) (eq basic 'menu))
-      (setq basic 'apps))
-     ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
-      (setq basic 'menu)))
-    (if (memq 'ergoemacs-control modifiers)
-        (setq new-event basic
-              new-modifiers modifiers)
-      (if (or (memq 'shift modifiers)
-              (memq 'ergoemacs-shift modifiers))
-          (dolist (m modifiers)
-            (if (not (memq m '(shift ergoemacs-shift)))
-                (push m new-modifiers)
-              (setq new-event (ergoemacs-translate--event-convert-list (list m basic) layout-from))
-              (setq new-event (or (ergoemacs-gethash new-event translation-hash) new-event))))
-        (setq new-event (or (ergoemacs-gethash basic translation-hash) basic)
-              new-modifiers modifiers)))
-    (ergoemacs-translate--event-convert-list (append new-modifiers (list new-event)) layout-to)))
+
+EVENT can be an event, or a vector.  When EVENT is a vector,
+each of the events within the vector/key are translated.
+
+LAYOUT-TO is the layout to translate to, (default
+`ergoemacs-keyboard-layout')
+
+LAYOUT-FROM is the layout to translate from, (default: \"us\")
+
+BASIC is the precalculated basic event from
+`ergoemacs-translate--event-basic-type'.
+
+MODIFIERS is the precalculated modifiers from
+`ergoemacs-translate--event-modifiers'."
+  (if (vectorp event)
+      (progn
+        (apply 'vector (mapcar (lambda(x) (ergoemacs-translate--event-layout x layout-to layout-from basic modifiers)) event)))
+    (let* ((basic (or basic (ergoemacs-translate--event-basic-type event layout-from)))
+           (modifiers (or modifiers (ergoemacs-translate--event-modifiers event layout-from)))
+           new-modifiers
+           new-event
+           (translation-hash (ergoemacs-translate--get-hash layout-to layout-from)))
+      (cond
+       ((and (eq system-type 'windows-nt) (eq basic 'menu))
+        (setq basic 'apps))
+       ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
+        (setq basic 'menu)))
+      (if (memq 'ergoemacs-control modifiers)
+          (setq new-event basic
+                new-modifiers modifiers)
+        (if (or (memq 'shift modifiers)
+                (memq 'ergoemacs-shift modifiers))
+            (dolist (m modifiers)
+              (if (not (memq m '(shift ergoemacs-shift)))
+                  (push m new-modifiers)
+                (setq new-event (ergoemacs-translate--event-convert-list (list m basic) layout-from))
+                (setq new-event (or (ergoemacs-gethash new-event translation-hash) new-event))))
+          (setq new-event (or (ergoemacs-gethash basic translation-hash) basic)
+                new-modifiers modifiers)))
+      (ergoemacs-translate--event-convert-list (append new-modifiers (list new-event)) layout-to))))
 
 (defun ergoemacs-translate--event-basic-type (event &optional layout)
   "Return the basic type of the given event (all modifiers removed).
@@ -335,17 +348,32 @@ This is different than `event-convert-list' because:
      (t (event-convert-list new-list)))))
 
 
-(defun ergoemacs-translate (kbd &optional just-first-keys variable-modifiers variable-prefixes layout-to layout-from)
-  "Translates between ergoemacs-mode keyboard layouts.
+(defun ergoemacs-translate (kbd &optional just-first-keys variable-modifiers
+                                variable-prefixes layout-to layout-from)
+  "Translate between ergoemacs-mode keyboard layouts.
+
 KBD is the key.
-VARIABLE-MODIFIERS are the modifiers that cause translation
-between keyboards to occur.
-VARIABLE-PREFIXES are the list of prefix keys that are variable.
+
 JUST-FIRST-KEYS is a list of keys where the keyboard translation
 stops.  For example when JUST-FIRST-KEYS is [apps ?n] would
 translate QWERTY [apps ?n ?n] to colemak [apps ?k ?n] instead of
- [apps ?k ?k]
-"
+ [apps ?k ?k]. 
+
+VARIABLE-MODIFIERS are the modifiers that cause translation
+between keyboards to occur.
+
+
+VARIABLE-PREFIXES are the list of prefix keys that are variable.
+
+LAYOUT-TO is the layout that `ergoemacs-mode' will translate
+to.  By default it is the layout specified by
+`ergoemacs-keyboard-layout'.
+
+LAYOUT-FROM is the layout that `ergoemacs-mode' will translate
+from.  By default this is the us layout.
+
+This uses the function `ergoemacs-translate--event-layout' to
+make the translation."
   (let ((var-mod variable-modifiers)
         (var-pre variable-prefixes)
         (ret [])
