@@ -566,8 +566,6 @@ Afterward it was modified for use with `ergoemacs-mode' to use
 additional parsing routines defined by PARSE-FUNCTION."
           (let ((extracted-key-accu '())
                 plist
-                tag-value
-                tag-fn
                 (remaining keys-and-body))
             ;; Allow
             ;; (component name)

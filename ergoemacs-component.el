@@ -879,12 +879,14 @@ be composed over the keymap.  This is done in
 
 (defvar ergoemacs-component-struct--apply-inits-first-p t)
 (defvar ergoemacs-component-struct--apply-ensure-p nil)
+(defvar ergoemacs-component-struct--applied-plists nil)
+
 (defun ergoemacs-component-struct--apply-inits (&optional _file obj)
   "Apply the initializations from the OBJ."
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
   (let* ((obj (or obj (ergoemacs-theme-components)))
-         package-name ensure defer comp plist)
+         package-name ensure defer comp plist tmp)
     (when ergoemacs-component-struct--apply-inits-first-p
       (setq ergoemacs-component-struct--apply-inits-first-p nil
             ergoemacs-component-struct--apply-ensure-p t)
@@ -934,6 +936,35 @@ be composed over the keymap.  This is done in
           (load (format "%s" package-name)))
         (when (numberp defer)
           (run-with-idle-timer defer nil #'load (format "%s" package-name)))))
+    ;; Turn on options...
+    (dolist (elt obj)
+      (unless (memq elt ergoemacs-component-struct--applied-plists)
+        (let* ((comp (ergoemacs-component-struct--lookup-hash elt))
+               (plist (ergoemacs-component-struct-plist comp))
+               fn)
+          (dolist (elt plist)
+            (when (and (symbolp elt)
+                       (setq fn (intern (format "ergoemacs-component--%s-on"
+                                                (substring (symbol-name elt) 1))))
+                       (fboundp fn))
+              (funcall fn plist)))
+          (push elt ergoemacs-component-struct--applied-plists))))
+    
+    ;; Turn off options
+    (setq tmp nil)
+    (dolist (elt ergoemacs-component-struct--applied-plists)
+      (if (memq elt obj)
+          (push elt tmp)
+        (let* ((comp (ergoemacs-component-struct--lookup-hash elt))
+               (plist (ergoemacs-component-struct-plist comp))
+               fn)
+          (dolist (elt plist)
+            (when (and (symbolp elt)
+                       (setq fn (intern (format "ergoemacs-component--%s-off"
+                                                (substring (symbol-name elt) 1))))
+                       (fboundp fn))
+              (funcall fn plist))))))
+    (setq ergoemacs-component-struct--applied-plists tmp)
     (dolist (init (ergoemacs-component-struct--variables obj))
       (if (and (consp (nth 0 init)) (not (nth 1 init)) (not (nth 2 init)))
           (unless (member (nth 0 init) ergoemacs-component-struct--deferred-functions)
@@ -1402,6 +1433,107 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
           (buffer-string))))))
 
 (defalias 'describe-ergoemacs-component 'ergoemacs-component-describe)
+
+(defun ergoemacs-component--diminish-on (plist &optional dim off)
+  "Apply `diminish' to PLIST for theme component.
+
+The :dimininish tag can be of the form:
+
+- t -- Removes the package name (PLIST :package-name) from the
+  minor mode display list.
+
+- minor-mode symbol -- Removes the symbol from the minor mode
+  display list.
+
+- string -- Replace the minor mode symbol with a string.
+
+- (string1 string2) -- Unicode (string1) and terminal (string2)
+  displays.  The display is determined by
+  `ergoemacs-key-description--unicode-char'.
+
+- (minor-mode-symbol) -- Suppress minor mode symbol 
+
+- (minor-mode-symbol string) -- Replace minor mode symbol
+  modeline indicator with string
+
+- (minor-mode-symbol string1 string2) -- Replace
+  minor-mode-symbol indicator with unicode (string1) or
+  terminal (string2) indicators.  The display is determined by
+  `ergoemacs-key-description--unicode-char'.
+
+- List of minor mode symbols, or list specifications that include
+  the minor- mode symbol, so that multiple minor modes may be
+   processed by a single :diminish specifciation. 
+
+DIM is the replacement for the PLIST :diminish, this is used in
+recursive calls to `ergoemacs-component--diminish-on' to process lists.
+
+When OFF is non-nil, the function turns off the diminish
+modifications with `diminish-undo'"
+  (ignore-errors (ergoemacs-component-struct--ensure 'diminish))
+  (require 'diminish nil t)
+  (if (not (featurep 'diminish))
+      (message "Error installing diminish package.")
+    (let ((diminish-symbol (or (plist-get plist :package-name)
+                               (intern (plist-get plist :name))))
+          (dim (or dim (plist-get plist :diminish))))
+      (cond
+       ;; :diminish t
+       ((eq t dim)
+        (if off (diminish-undo diminish-symbol)
+          (eval-after-load diminish-symbol
+            `(diminish ',diminish-symbol))))
+       ;; :diminish mode
+       ((symbolp dim)
+        (if off (diminish-undo dim)
+          (eval-after-load diminish-symbol
+            `(diminish ',dim))))
+       ;; :diminish " g"
+       ((stringp dim)
+        (if off (diminish-undo diminish-symbol)
+          (eval-after-load diminish-symbol
+            `(diminish ',diminish-symbol ,dim))))
+       ((and (consp dim)
+             (= 1 (length dim))
+             (symbolp (nth 0 dim)))
+        (if off (diminish-undo (nth 0 dim))
+          (eval-after-load diminish-symbol
+            `(diminish ',(nth 0 dim)))))
+       ;; :diminish (" " " g")
+       ((and (consp dim)
+             (= 2 (length dim))
+             (stringp (nth 0 dim))
+             (stringp (nth 1 dim)))
+        (if off (diminish-undo diminish-symbol)
+          (eval-after-load diminish-symbol
+            `(diminish ',diminish-symbol
+                       ,(ergoemacs :unicode (nth 0 dim) (nth 1 dim))))))
+       ;; :diminish (mode " " " g")
+       ((and (consp dim)
+             (= 3 (length dim))
+             (symbolp (nth 0 dim))
+             (stringp (nth 1 dim))
+             (stringp (nth 2 dim)))
+        (if off (diminish-undo (nth 0 dim))
+          (eval-after-load diminish-symbol
+            `(diminish ',(nth 0 dim)
+                       ,(ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))
+       ;; :diminish (mode " ")
+       ((and (consp dim)
+             (= 2 (length dim))
+             (symbolp (nth 0 dim))
+             (stringp (nth 1 dim)))
+        (if off (diminish-undo (nth 0 dim))
+          (eval-after-load diminish-symbol
+            `(diminish ',(nth 0 dim) ,(nth 1 dim)))))
+       ((consp dim)
+        (dolist (elt dim)
+          (ergoemacs-component--diminish-on plist elt off)))))))
+
+(defun ergoemacs-component--diminish-off (plist)
+  "Remove `diminish' top PLIST for theme component.
+Wrapper for `ergoemacs-component--diminish-on'."
+  (ergoemacs-component--diminish-on plist nil t))
 
 (provide 'ergoemacs-component)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
