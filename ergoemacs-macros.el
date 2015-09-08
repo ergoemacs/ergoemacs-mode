@@ -197,8 +197,14 @@ distinguish from the ASCII equivalents:
                  `(ergoemacs-component-struct--with-hook
                    ',(nth 1 elt) ',(nth 0 tmp)
                    '(lambda () ,@(nth 1 tmp)))))
-              ((ignore-errors (memq (nth 0 elt) '(mapcar mapc dolist when if)))
-               (macroexpand-all (ergoemacs-theme-component--parse-remaining elt)))
+              ((ignore-errors (memq (nth 0 elt) '(dolist when unless if)))
+               `(,(car elt) ,(car (cdr elt)) ,@(macroexpand-all (ergoemacs-theme-component--parse-remaining (cdr (cdr elt))))))
+              ((ignore-errors (memq (nth 0 elt) '(defun)))
+               elt)
+              ;; FIXME mapcar and mapc
+              
+              ;; ((ignore-errors (memq (nth 0 elt) '(mapcar mapc dolist when unless if)))
+              ;;  `(,(car elt) ,(macroexpand-all (ergoemacs-theme-component--parse-remaining (cdr elt)))))
               ((ignore-errors (memq (nth 0 elt) '(ergoemacs-advice defadvice)))
                (macroexpand-all elt))
               (t `(ergoemacs-component-struct--deferred ',elt))))
