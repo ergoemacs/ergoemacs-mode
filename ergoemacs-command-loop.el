@@ -420,14 +420,14 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
           (setq ergoemacs-command-loop--help-last-key ergoemacs-command-loop--single-command-keys)
           (unless (member (key-description ergoemacs-command-loop--single-command-keys) guide-key/guide-key-sequence)
             (push (key-description ergoemacs-command-loop--single-command-keys) guide-key/guide-key-sequence))
-          (guide-key/popup-function key)))))r
-          (t (let ((cb (current-buffer))
-                   (key ergoemacs-command-loop--single-command-keys))
-               (save-excursion
-                 (with-help-window (help-buffer)
-                   (set-buffer (help-buffer))
-                   (describe-buffer-bindings cb key)))
-               (setq ergoemacs-command-loop--exit t))))))
+          (guide-key/popup-function key)))))
+     (t (let ((cb (current-buffer))
+              (key ergoemacs-command-loop--single-command-keys))
+          (save-excursion
+            (with-help-window (help-buffer)
+              (set-buffer (help-buffer))
+              (describe-buffer-bindings cb key)))
+          (setq ergoemacs-command-loop--exit t))))))
 
 (defalias 'ergoemacs-read-key-help 'ergoemacs-command-loop--help)
 
