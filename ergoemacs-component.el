@@ -1434,7 +1434,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
 
 (defalias 'describe-ergoemacs-component 'ergoemacs-component-describe)
 
-(defun ergoemacs-component--diminish-on (plist &optional dim off)
+(defun ergoemacs-component--diminish-on (plist &optional dim type)
   "Apply `diminish' to PLIST for theme component.
 
 The :dimininish tag can be of the form:
@@ -1468,7 +1468,7 @@ The :dimininish tag can be of the form:
 DIM is the replacement for the PLIST :diminish, this is used in
 recursive calls to `ergoemacs-component--diminish-on' to process lists.
 
-When OFF is non-nil, the function turns off the diminish
+When TYPE is non-nil, the function turns off the diminish
 modifications with `diminish-undo'"
   (ignore-errors (ergoemacs-component-struct--ensure 'diminish))
   (require 'diminish nil t)
@@ -1480,52 +1480,61 @@ modifications with `diminish-undo'"
       (cond
        ;; :diminish t
        ((eq t dim)
-        (if off (diminish-undo diminish-symbol)
-          (eval-after-load diminish-symbol
-            `(diminish ',diminish-symbol))))
+        (cond
+         (type (diminish-undo diminish-symbol))
+         (t (eval-after-load diminish-symbol
+              `(diminish ',diminish-symbol)))))
        ;; :diminish mode
        ((symbolp dim)
-        (if off (diminish-undo dim)
-          (eval-after-load diminish-symbol
-            `(diminish ',dim))))
+        (cond
+         (type (diminish-undo dim))
+         (t (eval-after-load diminish-symbol
+              `(diminish ',dim)))))
+
        ;; :diminish " g"
        ((stringp dim)
-        (if off (diminish-undo diminish-symbol)
-          (eval-after-load diminish-symbol
-            `(diminish ',diminish-symbol ,dim))))
+        (cond
+         (type (diminish-undo diminish-symbol))
+         (t (eval-after-load diminish-symbol
+              `(diminish ',diminish-symbol ,dim)))))
        ((and (consp dim)
              (= 1 (length dim))
              (symbolp (nth 0 dim)))
-        (if off (diminish-undo (nth 0 dim))
-          (eval-after-load diminish-symbol
-            `(diminish ',(nth 0 dim)))))
+        (cond
+         (type (diminish-undo (nth 0 dim)))
+         (t (eval-after-load diminish-symbol
+              `(diminish ',(nth 0 dim))))))
+       
        ;; :diminish (" " " g")
        ((and (consp dim)
              (= 2 (length dim))
              (stringp (nth 0 dim))
              (stringp (nth 1 dim)))
-        (if off (diminish-undo diminish-symbol)
-          (eval-after-load diminish-symbol
-            `(diminish ',diminish-symbol
-                       ,(ergoemacs :unicode (nth 0 dim) (nth 1 dim))))))
+        (cond
+         (type (diminish-undo diminish-symbol))
+         (t (eval-after-load diminish-symbol
+              `(diminish ',diminish-symbol
+                         ,(ergoemacs :unicode (nth 0 dim) (nth 1 dim)))))))
        ;; :diminish (mode " " " g")
        ((and (consp dim)
              (= 3 (length dim))
              (symbolp (nth 0 dim))
              (stringp (nth 1 dim))
              (stringp (nth 2 dim)))
-        (if off (diminish-undo (nth 0 dim))
-          (eval-after-load diminish-symbol
-            `(diminish ',(nth 0 dim)
-                       ,(ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))
+        (cond
+         (type (diminish-undo (nth 0 dim)))
+         (t (eval-after-load diminish-symbol
+              `(diminish ',(nth 0 dim)
+                         ,(ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))
        ;; :diminish (mode " ")
        ((and (consp dim)
              (= 2 (length dim))
              (symbolp (nth 0 dim))
              (stringp (nth 1 dim)))
-        (if off (diminish-undo (nth 0 dim))
-          (eval-after-load diminish-symbol
-            `(diminish ',(nth 0 dim) ,(nth 1 dim)))))
+        (cond
+         (type (diminish-undo (nth 0 dim)))
+         (t (eval-after-load diminish-symbol
+              `(diminish ',(nth 0 dim) ,(nth 1 dim))))))
        ((consp dim)
         (dolist (elt dim)
           (ergoemacs-component--diminish-on plist elt off)))))))

@@ -225,7 +225,6 @@ macro."
     :defer
     :demand
     :deminish
-    :delight
     :ensure
     :package-name
     :ergoemacs-require
@@ -313,11 +312,9 @@ This accepts the following keywords:
     :diminish t -- Assumes that :package-name is diminshed
     :diminish package-name -- Diminshes package-name
     :diminish (package-name \" New Description\")
+    :diminish (package-name \" unicode\" \" str\")
 
-    By default this is nil.
-
-:delight -- Delight this mode.  It takes the same arguments
-    as :diminish.  It also makes sure delight is installed.
+    For more information, see `ergoemacs-component--diminish-on'.
 
     By default this is nil.
 
