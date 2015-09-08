@@ -74,6 +74,9 @@
 (defvar ergoemacs-translation-hash)
 (defvar package--initialized)
 
+(declare-function diminish "diminish")
+(declare-function diminish-undo "diminish")
+
 (declare-function ergoemacs--emacs-state "ergoemacs-mode")
 (declare-function ergoemacs-mode--setup-hash-tables--setq "ergoemacs-mode")
 (declare-function ergoemacs-mode-clear-cache "ergoemacs-mode")
@@ -106,6 +109,7 @@
 
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 (declare-function ergoemacs-key-description--keymap "ergoemacs-key-description")
+(declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 
 (declare-function package-installed-p "package")
 
@@ -1537,7 +1541,7 @@ modifications with `diminish-undo'"
               `(diminish ',(nth 0 dim) ,(nth 1 dim))))))
        ((consp dim)
         (dolist (elt dim)
-          (ergoemacs-component--diminish-on plist elt off)))))))
+          (ergoemacs-component--diminish-on plist elt type)))))))
 
 (defun ergoemacs-component--diminish-off (plist)
   "Remove `diminish' top PLIST for theme component.

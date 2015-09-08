@@ -55,6 +55,9 @@
   (require 'ergoemacs-macros))
 
 
+(declare-function guide-key/close-guide-buffer "guide-key")
+(declare-function guide-key/popup-function "guide-key")
+
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 
@@ -95,6 +98,8 @@
 (defvar keyfreq-mode)
 (defvar keyfreq-table)
 (defvar ergoemacs-map--quit-map)
+(defvar guide-key/guide-key-sequence)
+
 
 (defvar universal-argument-num-events) ;; Not in Emacs 24.5
 
