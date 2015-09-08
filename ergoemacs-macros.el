@@ -224,7 +224,7 @@ macro."
     :commands
     :defer
     :demand
-    :deminish
+    :diminish
     :ensure
     :package-name
     :ergoemacs-require

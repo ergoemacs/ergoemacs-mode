@@ -407,26 +407,27 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
      ;;  (let ((key (vconcat ergoemacs-command-loop--single-command-keys [ergoemacs-ignore])))
      ;;    (ergoemacs-read-key-call 'icicle-complete-keys nil key)))
      ;; FIXME:
-     ;; ((and (boundp 'guide-key-mode) guide-key-mode)
-     ;;  (let ((key ergoemacs-command-loop--single-command-keys))
-     ;;    (if (equal ergoemacs-command-loop--help-last-key ergoemacs-command-loop--single-command-keys)
-     ;;        (progn
-     ;;          (setq ergoemacs-command-loop--help-last-key nil
-     ;;                guide-key/guide-key-sequence (delete (key-description ergoemacs-command-loop--single-command-keys) guide-key/guide-key-sequence))
-     ;;          (guide-key/close-guide-buffer))
-     ;;      ;; Not using pushnew because the test is equal and
-     ;;      ;; guide-key/guide-key-sequence is a global variable.
-     ;;      (add-to-list 'guide-key/guide-key-sequence (key-description ergoemacs-command-loop--single-command-keys)
-     ;;                   ergoemacs-command-loop--help-last-key ergoemacs-read-key)
-     ;;      (guide-key/popup-function key))
-     ;;    t))
-     (t (let ((cb (current-buffer))
-              (key ergoemacs-command-loop--single-command-keys))
-          (save-excursion
-            (with-help-window (help-buffer)
-              (set-buffer (help-buffer))
-              (describe-buffer-bindings cb key)))
-          (setq ergoemacs-command-loop--exit t))))))
+     ((and (boundp 'guide-key-mode) guide-key-mode)
+      (let ((key ergoemacs-command-loop--single-command-keys))
+        (cond
+         ((equal ergoemacs-command-loop--help-last-key ergoemacs-command-loop--single-command-keys)
+          (setq ergoemacs-command-loop--help-last-key nil
+                guide-key/guide-key-sequence (delete (key-description ergoemacs-command-loop--single-command-keys) guide-key/guide-key-sequence))
+          (guide-key/close-guide-buffer))
+         (t
+          ;; Not using pushnew because the test is equal and
+          ;; guide-key/guide-key-sequence is a global variable.
+          (setq ergoemacs-command-loop--help-last-key ergoemacs-command-loop--single-command-keys)
+          (unless (member (key-description ergoemacs-command-loop--single-command-keys) guide-key/guide-key-sequence)
+            (push (key-description ergoemacs-command-loop--single-command-keys) guide-key/guide-key-sequence))
+          (guide-key/popup-function key)))))r
+          (t (let ((cb (current-buffer))
+                   (key ergoemacs-command-loop--single-command-keys))
+               (save-excursion
+                 (with-help-window (help-buffer)
+                   (set-buffer (help-buffer))
+                   (describe-buffer-bindings cb key)))
+               (setq ergoemacs-command-loop--exit t))))))
 
 (defalias 'ergoemacs-read-key-help 'ergoemacs-command-loop--help)
 
