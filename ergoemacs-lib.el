@@ -69,8 +69,7 @@ If DEFAULT is non-nil set the default value, instead of the symbol value."
 ;;;###autoload
 (defun ergoemacs-set (variable value &optional force)
   "Sets VARIABLE to VALUE without disturbing customize or setq.
-If FORCE is true, set it even if it changed.
-"
+If FORCE is true, set it even if it changed."
   (let* ((minor-mode-p (and (string= "mode" (substring (symbol-name variable) -4))
                             (commandp variable t)))
          (new-value (or (and (not minor-mode-p) value)
@@ -86,26 +85,22 @@ If FORCE is true, set it even if it changed.
       (funcall variable new-value))
      ((not (equal last-value value))
       (cond
+       ((and minor-mode-p (not new-value))
+        (funcall variable -1))
+       ((and minor-mode-p new-value)
+        (funcall variable new-value))
        ((and (custom-variable-p variable) (or force (not (get variable 'save-value))))
-        ;; (message "Changed customizable %s" variable)
         (unless (get variable 'ergoemacs-save-value)
           (put variable 'ergoemacs-save-value (ergoemacs-sv variable)))
         (customize-set-variable variable new-value)
-        (customize-mark-to-save variable)
-        (when (and minor-mode-p (not new-value))
-          (funcall variable -1)))
+        (customize-mark-to-save variable))
        ((or force (equal (ergoemacs-sv variable) (default-value variable)))
         (unless (get variable 'ergoemacs-save-value)
           (put variable 'ergoemacs-save-value (ergoemacs-sv variable)))
-        ;; (message "Changed variable %s" variable)
         (set variable new-value)
         (set-default variable new-value)
         (unless (get variable 'ergoemacs-save-value)
-          (put variable 'ergoemacs-save-value (ergoemacs-sv variable)))
-        (when minor-mode-p
-          (if new-value
-              (funcall variable new-value)
-            (funcall variable -1))))
+          (put variable 'ergoemacs-save-value (ergoemacs-sv variable))))
        (t
         ;; (message "%s changed outside ergoemacs-mode, respecting." variable)
         )))
@@ -185,6 +180,7 @@ When TYPE is nil, assume the type is 'required-hidden
 REMOVE represents when you would remove the OPTION from the
 ergoemacs THEME.
 "
+  (setq ergoemacs-component-struct--apply-ensure-p t)
   (unless (member (list option theme type remove) ergoemacs-require)
     (push (list option theme type remove) ergoemacs-require))
   (if ergoemacs-require--ini-p

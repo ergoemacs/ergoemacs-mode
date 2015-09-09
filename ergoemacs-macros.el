@@ -149,11 +149,13 @@ distinguish from the ASCII equivalents:
                `(ergoemacs-component-struct--set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
               ((ignore-errors (eq (nth 0 elt) 'add-hook))
                `(ergoemacs-component-struct--set ,(nth 1 elt) ,(nth 2 elt)
-                               (list t ,(nth 3 elt) ,(nth 4 elt))))
+                                                 (list t ,(nth 3 elt) ,(nth 4 elt))))
               ((ignore-errors (eq (nth 0 elt) 'remove-hook))
                `(ergoemacs-component-struct--set ,(nth 1 elt) ,(nth 2 elt)
-                               (list nil nil ,(nth 3 elt))))
-              ((ignore-errors (eq (nth 0 elt) 'setq))
+                                                 (list nil nil ,(nth 3 elt))))
+              ((ignore-errors (memq (nth 0 elt) '(setq setq-default)))
+               ;; in the theme component `setq' is equivalent to
+               ;; `seq-default' since the component uses `set' and `set-default'
                (let ((tmp-elt elt)
                      (ret '()))
                  (pop tmp-elt)
@@ -199,12 +201,6 @@ distinguish from the ASCII equivalents:
                    '(lambda () ,@(nth 1 tmp)))))
               ((ignore-errors (memq (nth 0 elt) '(dolist when unless if)))
                `(,(car elt) ,(car (cdr elt)) ,@(macroexpand-all (ergoemacs-theme-component--parse-remaining (cdr (cdr elt))))))
-              ((ignore-errors (memq (nth 0 elt) '(defun)))
-               elt)
-              ;; FIXME mapcar and mapc
-              
-              ;; ((ignore-errors (memq (nth 0 elt) '(mapcar mapc dolist when unless if)))
-              ;;  `(,(car elt) ,(macroexpand-all (ergoemacs-theme-component--parse-remaining (cdr elt)))))
               ((ignore-errors (memq (nth 0 elt) '(ergoemacs-advice defadvice)))
                (macroexpand-all elt))
               (t `(ergoemacs-component-struct--deferred ',elt))))
