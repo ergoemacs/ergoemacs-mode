@@ -261,7 +261,7 @@ turn on `ergoemacs-mode'."
                (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
                (process (start-process-shell-command "ergoemacs-byte-compile"
                                                      "*ergoemacs-clean*"
-                                                     (format "%s -L %s -Q --batch -f batch-byte-compile *.el" emacs-exe default-directory))))
+                                                     (format "%s -L %s -Q --batch -f batch-byte-compile ergoemacs-*.el" emacs-exe default-directory))))
           (set-process-sentinel process 'ergoemacs-run-clean))
       (ergoemacs-run-clean nil nil))))
 
