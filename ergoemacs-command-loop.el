@@ -1199,7 +1199,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
 
 
 (defun ergoemacs-command-loop-start ()
-  "Start `ergoemacs-command-loop'"
+  "Start `ergoemacs-command-loop'."
   (interactive)
   ;; Should work...
   (unless ergoemacs-command-loop-start
@@ -1220,7 +1220,10 @@ The true work is done in `ergoemacs-command-loop--internal'."
           ergoemacs-command-loop--spinner-i 0)))
 
 (defun ergoemacs-command-loop--spinner-display (&optional string &rest args)
-  "Spinner display"
+  "Spinner display.
+
+Display STRING with a spinner pre-pended.  Additional
+arguments (ARGS) will be applied with `format'."
   (let ((rest (or (and (not string) "")
                   (concat " " (apply #'format string args)))))
     (when (not ergoemacs-command-loop--spinner-list)
@@ -1231,6 +1234,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
                                      rest)))
 
 (defun ergoemacs-command-loop--spinner-end ()
+  "Cancel the `ergoemacs-command-loop--spinner' timer."
   (when ergoemacs-command-loop--spinner
     (cancel-timer ergoemacs-command-loop--spinner)
     (setq ergoemacs-command-loop--spinner-list nil
@@ -1246,8 +1250,7 @@ Used to replace:
 - `this-command-keys-vector'
 - `this-command-keys'
 - `this-single-command-keys'
-- `this-single-command-raw-keys'
-"
+- `this-single-command-raw-keys'"
   (or (and ergoemacs-mode ergoemacs-command-loop--single-command-keys)
       (funcall ergoemacs-command-loop--this-command-keys)))
 
@@ -1260,12 +1263,12 @@ Used to replace:
     (ergoemacs-command-loop--internal)))
 
 (defun ergoemacs-command-loop--install-timer ()
-  "Install the `ergoemacs-command-loop--timer'"
+  "Install the `ergoemacs-command-loop--timer'."
   (setq ergoemacs-command-loop--timer
         (run-with-idle-timer 0.1 t #'ergoemacs-command-loop--timer)))
 
 (defun ergoemacs-command-loop--remove-timer ()
-  "Remove `ergoemacs-command-loop--timer'"
+  "Remove `ergoemacs-command-loop--timer'."
   (when ergoemacs-command-loop--timer
     (cancel-timer ergoemacs-command-loop--timer)))
 
@@ -1276,7 +1279,7 @@ Used to replace:
   "Do nothing and return nil.
 This function accepts any number of arguments, but ignores them.
 
-Unlike `ignore', this command pretends `ignore' command was never
+Unlike `ignore', this command pretends `ergoemacs-command-loop--ignore' command was never
 run, by changing `this-command' to `last-command'"
   (interactive)
   (dolist (s ergoemacs-command-loop--execute-modify-command-list)
