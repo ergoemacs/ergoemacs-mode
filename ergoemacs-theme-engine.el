@@ -494,6 +494,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
          (file (plist-get plist :file))
          (el-file (concat (file-name-sans-extension file) ".el"))
          (old-theme ergoemacs-theme)
+         required-p
          svg png tmp)
     (if (not plist)
         (message "You did not specify a valid ergoemacs theme %s" theme)
@@ -517,16 +518,18 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (princ "Diagram:\n")
         (cond
          ((and (image-type-available-p 'png)
+               (car png)
                (file-exists-p (car png)))
           (with-current-buffer standard-output
             (insert-image (create-image (car png)))
             (insert "\n")))
-         ((and (file-exists-p (car svg)) (image-type-available-p 'svg))
+         ((and (car svg)
+               (file-exists-p (car svg)) (image-type-available-p 'svg))
           (with-current-buffer standard-output
             (insert-image (create-image (car svg)))
             (princ "\n"))))
         (with-current-buffer standard-output
-          (if (file-exists-p (car png))
+          (if (and (car png) (file-exists-p (car png)))
               (insert "[svg] [png]")
             (insert "[svg]"))
           (beginning-of-line)
@@ -537,16 +540,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
             (if (looking-at "\\(\\[svg\\]\\)")
                 (help-xref-button 1 'help-url (car svg))))
           (goto-char (point-max)))
-        (princ "\n")
-        (if (equal (format "%s"old-theme) (format "%s" theme))
-            (princ (ergoemacs-key-description--keymap ergoemacs-keymap))
-          (unwind-protect
-              (progn
-                (setq ergoemacs-theme theme)
-                (ergoemacs-mode-reset)
-                (princ (ergoemacs-key-description--keymap ergoemacs-keymap)))
-            (setq ergoemacs-theme old-theme)
-            (ergoemacs-mode-reset)))
         (princ "\n\n")
         (when (setq tmp (plist-get plist :based-on))
           (when (eq (car tmp) 'quote)
@@ -556,21 +549,37 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (when (member theme (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
           (princ (format "This theme does not appear in menus because of the :silent option.\n\n")))
 
-        (dolist (elt '((:components . "Reqired Components")
+        (setq required-p t)
+        (dolist (elt '((:components . "Applied Components (from `ergoemacs-require')")
+                       (:components . "Theme Required Components")
                        (:optional-on . "Optional Components (enabled by default)")
                        (:optional-off . "Optional Components (disabled by default)")))
           (when (setq tmp (plist-get plist (car elt)))
             (princ (cdr elt))
             (princ ":\n")
             (dolist (comp tmp)
-              (princ (format " - %s -- %s (currently %s)\n"
-                             comp
-                             (ergoemacs-component-struct--component-description comp)
-                             (or (and (ergoemacs-theme-option-enabled-p comp)
-                                      "enabled") "disabled"))))
-            (princ "\n")))
+              (when (or (and (eq (car elt) :components)
+                             (or (and required-p (memq comp (mapcar (lambda(x) (car x)) ergoemacs-require)))
+                                 (and (not required-p) (not (memq comp (mapcar (lambda(x) (car x)) ergoemacs-require))))))
+                        (not (eq (car elt) :components)))
+                (princ (format " - %s -- %s (currently %s)\n"
+                               comp
+                               (ergoemacs-component-struct--component-description comp)
+                               (or (and (ergoemacs-theme-option-enabled-p comp)
+                                        "enabled") "disabled")))))
+            (princ "\n"))
+          (setq required-p nil))
         
-        
+        (princ "\n\n")
+        (if (equal (format "%s" old-theme) (format "%s" theme))
+            (princ (ergoemacs-key-description--keymap ergoemacs-keymap))
+          (unwind-protect
+              (progn
+                (setq ergoemacs-theme theme)
+                (ergoemacs-mode-reset)
+                (princ (ergoemacs-key-description--keymap ergoemacs-keymap)))
+            (setq ergoemacs-theme old-theme)
+            (ergoemacs-mode-reset)))
         ;; (when (setq tmp (plist-get plist :options-menu))
         ;;   )
         
@@ -603,7 +612,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
 
 ;;;###autoload
 (defun ergoemacs-theme-create-bash ()
-  "Creates a bash ~/.inputrc for use with bash"
+  "Create bash ~/.inputrc for use with bash."
   (interactive)
   (let ((ret "# Based on Brendan Miller's initial bash .inputrc
 # INSTALL
@@ -756,14 +765,16 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (universal-argument "Argument")
         (vr/query-replace "rep reg")
         (write-file "Save As"))
-  "Ergoemacs short command names"
+  "Ergoemacs short command names."
   :group 'ergoemacs-themes
   :type '(repeat :tag "Command abbreviation"
                  (list (sexp :tag "Command")
                        (string :tag "Short Name"))))
 
 (defvar ergoemacs-theme-remove-prefixes
-  '("kmacro" "ergoemacs" "help" "w32"))
+  '("kmacro" "ergoemacs" "help" "w32")
+  "When replacing functions, remove the namespaces listed here.")
+
 (defvar ergoemacs-theme-replacements
   '(("view" "🔎")
     ("lookup" "🔎")
@@ -771,7 +782,8 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
     ("display" "🔎")
     ("-" " ")
     ("describe" "📖")
-    ("about" "📖")))
+    ("about" "📖"))
+  "What unicode characters should unknown functions be replaced with?")
 
 (defvar ergoemacs-theme--svg nil)
 (defvar ergoemacs-theme--svg-prefixes nil)
@@ -779,6 +791,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
 
 
 (defun ergoemacs-theme--svg-elt-nonabbrev (what)
+  "Replace WHAT with ergoemacs abbreviation of function."
   (let (ret)
     (cond
      ((eq what 'ergoemacs-map-undefined) "")
@@ -864,7 +877,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
            (old-theme ergoemacs-theme)
            (old-layout ergoemacs-keyboard-layout)
            pt ret)
-      (if (and (file-exists-p file-name) (not reread))
+      (if (and file-name (file-exists-p file-name) (not reread))
           (progn
             (setq ret (file-expand-wildcards (expand-file-name (concat theme "-" lay "-*-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir)))
             (push file-name ret)
@@ -880,7 +893,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                 (setq reread nil))
               (when reread
                 (setq ergoemacs-theme--svg nil))
-              (unless (file-exists-p file-dir)
+              (unless (and file-dir (file-exists-p file-dir))
                 (make-directory file-dir t))
               (unless ergoemacs-theme--svg
                 (with-temp-buffer
@@ -1014,7 +1027,7 @@ Requires `ergoemacs-inkscape' to be specified."
          png-file ret)
     (dolist (svg-file svg-files)
       (setq png-file (concat (file-name-sans-extension svg-file) ".png"))
-      (if (and (file-exists-p png-file) (not reread)) (push png-file ret)
+      (if (and png-file (file-exists-p png-file) (not reread)) (push png-file ret)
         (if (and ergoemacs-inkscape (file-readable-p ergoemacs-inkscape))
             (progn
               (push (list (format "%s->%s" (file-name-nondirectory svg-file) (file-name-nondirectory png-file))
