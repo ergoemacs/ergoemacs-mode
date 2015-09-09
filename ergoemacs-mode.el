@@ -129,7 +129,6 @@
 
 (declare-function unicode-fonts-setup "unicode-fonts")
 
-
 
 ;; Fundamental ergoemacs functions
 
@@ -204,7 +203,9 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-mode-line (&optional text)
-  "Set ergoemacs-mode-line"
+  "Set ergoemacs-mode-line.
+
+The TEXT will be what the mode-line is set to be."
   (let ((new-text (and text (or (and (not ergoemacs-mode-line) "") text))))
     (if new-text
         (setq minor-mode-alist
@@ -285,6 +286,8 @@ lambda is a special undefined function"
             (string :tag "Version"))))
   :group 'ergoemacs-theme)
 
+(defvar ergoemacs-mode--default-frame-alist nil
+  "List that saves default frame parameters.")
 
 ;; ErgoEmacs minor mode
 ;;;###autoload
@@ -320,6 +323,9 @@ bindings the keymap is:
                 (let ((refresh-p ergoemacs-component-struct--refresh-variables))
                   (if ergoemacs-mode
                       (progn
+                        (setq ergoemacs-mode--default-frame-alist nil)
+                        (dolist (elt (reverse default-frame-alist))
+                          (push elt ergoemacs-mode--default-frame-alist))
                         (run-hooks 'ergoemacs-mode-startup-hook)
                         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                         (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
@@ -329,6 +335,10 @@ bindings the keymap is:
                             (message "Ergoemacs-mode keys refreshed (%s:%s)"
                                      ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))
                           (message "Ergoemacs-mode turned ON (%s:%s)." ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))))
+                    (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
+                    (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)
+                      (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
+                    (setq ergoemacs-mode--default-frame-alist nil)
                     (run-hooks 'ergoemacs-mode-shutdown-hook)
                     (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
                     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
@@ -511,25 +521,27 @@ When `store-p' is non-nil, save the tables."
    )
   (when (and store-p (featurep 'persistent-soft))
     (persistent-soft-flush (ergoemacs-mode--pcache-repository))
-    (when (eq system-type 'windows-nt)
-      ;; Fix for stupid  endings
-      (with-temp-buffer
-        (insert-file-contents (concat pcache-directory (ergoemacs-mode--pcache-repository)))
-        (persistent-soft-location-destroy (ergoemacs-mode--pcache-repository))
-        (goto-char (point-min))
-        (while (re-search-forward "+$" nil t)
-          (replace-match ""))
-        ;; Update timestamp.
-        (when (re-search-backward ":timestamp +[0-9.]+" nil t)
-          (replace-match (format ":timestamp %s" (float-time (current-time)))))
-        (write-region (point-min) (point-max)
-                      (concat pcache-directory (ergoemacs-mode--pcache-repository))
-                      nil 1)))))
+    (with-temp-buffer
+      (insert-file-contents (concat pcache-directory (ergoemacs-mode--pcache-repository)))
+      (persistent-soft-location-destroy (ergoemacs-mode--pcache-repository))
+      (goto-char (point-min))
+      (while (re-search-forward "+$" nil t)
+        (replace-match ""))
+      (goto-char (point-min))
+      ;; Add utf-8-emacs coding to the top.
+      (insert ";; -*- coding: utf-8-emacs -*-")
+      (goto-char (point-max))
+      ;; Update timestamp.
+      (when (re-search-backward ":timestamp +[0-9.]+" nil t)
+        (replace-match (format ":timestamp %s" (float-time (current-time)))))
+      (write-region (point-min) (point-max)
+                    (concat pcache-directory (ergoemacs-mode--pcache-repository))
+                    nil 1))))
 
 (ergoemacs-mode--setup-hash-tables)
 
-(dolist (pkg '(ergoemacs-advice
-               ergoemacs-command-loop
+(dolist (pkg '(ergoemacs-command-loop
+               ergoemacs-advice
                ergoemacs-component
                ergoemacs-debug
                ergoemacs-functions
@@ -540,9 +552,9 @@ When `store-p' is non-nil, save the tables."
                ergoemacs-map-properties 
                ergoemacs-mapkeymap
                ergoemacs-theme-engine
-	       ergoemacs-translate
+               ergoemacs-translate
                ergoemacs-macros
-	       ;; ergoemacs-themes
+               ;; ergoemacs-themes
                ))
   (unless (featurep pkg)
     (load (symbol-name pkg))))
