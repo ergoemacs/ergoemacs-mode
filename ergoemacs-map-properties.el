@@ -370,43 +370,53 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
 
 (defun ergoemacs-map-properties--modify-run-mode-hooks (&rest hooks)
   "Modify HOOKS to run `ergoemacs-map-properties--protect-local' before hook."
-  (let (tmp)
-    (dolist (hook hooks)
+  (let (tmp hook-value)
+    (dolist (hook (or (and (consp hooks) hooks) (list hooks)))
       (if (consp hook)
           (dolist (lhook hook)
             (ergoemacs-map-properties--modify-run-mode-hooks lhook))
         (when (and hook (boundp hook) (and (string-match-p "mode-hook" (symbol-name hook))))
           (set hook
-               (mapcar
-                (lambda(fn)
-                  (if (or (eq fn t) (and (setq tmp (documentation fn))
-                                         (stringp tmp)
-                                         (string-match-p  "^Ergoemacs protect local" tmp)))
-                      fn
-                    `(lambda() "Ergoemacs protect local"
-                       (ergoemacs-map-properties--protect-local ',hook ',fn)
-                       (funcall ',fn))))
-                (symbol-value hook))))))))
+               (cond
+                ((and (setq hook-value (symbol-value hook))
+                      (consp hook-value))
+                 (mapcar
+                  (lambda(fn)
+                    (if (or (eq fn t) (and (setq tmp (documentation fn))
+                                           (stringp tmp)
+                                           (string-match-p  "^Ergoemacs protect local" tmp)))
+                        fn
+                      `(lambda() "Ergoemacs protect local"
+                         (ergoemacs-map-properties--protect-local ',hook ',fn)
+                         (funcall ',fn))))
+                  hook-value))
+                (t ;; For now do nothing
+                 hook-value))))))))
 
 
 (defun ergoemacs-map-properties--reset-run-mode-hooks (&rest hooks)
   "Reset HOOKS as if `ergoemacs-map-properties--modify-run-mode-hooks' wasn't run."
-  (let (tmp)
-    (dolist (hook hooks)
+  (let (tmp hook-value)
+    (dolist (hook (or (and (consp hooks) hooks) (list hooks)))
       (if (consp hook)
           (dolist (lhook hook)
             (ergoemacs-map-properties--reset-run-mode-hooks lhook))
         (when (and hook (boundp hook) (and (string-match-p "mode-hook" (symbol-name hook))))
           (set hook
-               (mapcar
-                (lambda(fn)
-                  (if (or (eq fn t) (and (setq tmp (documentation fn))
-                                         (stringp tmp)
-                                         (string-match-p  "^Ergoemacs protect local" tmp)
-                                         (setq tmp (ignore-errors (car (cdr (nth 1 (nth 4 fn))))))))
-                      tmp
-                    fn))
-                (symbol-value hook))))))))
+               (cond
+                ((and (setq hook-value (symbol-value hook))
+                      (consp hook))
+                 (mapcar
+                  (lambda(fn)
+                    (if (or (eq fn t) (and (setq tmp (documentation fn))
+                                           (stringp tmp)
+                                           (string-match-p  "^Ergoemacs protect local" tmp)
+                                           (setq tmp (ignore-errors (car (cdr (nth 1 (nth 4 fn))))))))
+                        tmp
+                      fn))
+                  hook-value))
+                (t ;; For now don't touch these.
+                 hook-value))))))))
 
 
 (defvar ergoemacs-map-properties--hook-map-hash (make-hash-table :test 'equal)
