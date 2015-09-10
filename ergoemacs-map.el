@@ -340,63 +340,6 @@ done in `ergoemacs-map--alist'."
 
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
 
-
-(defun ergoemacs-map--composed-list-internal (key item lookup-keymap return-keymap use-local-unbind-list-p local-unbind-list)
-  "Internal function for `ergoemacs-map-composed-list'."
-  (let ((tmp (ergoemacs lookup-keymap :new-command item))
-        tmp-key)
-    (cond
-     ;; Mode specific keys are translated to `ergoemacs-mode'
-     ;; equivalent key binding
-     (tmp
-      (define-key return-keymap key tmp)
-      (setq tmp-key (ergoemacs-translate--escape-to-meta key))
-      (when tmp-key
-        ;; Define the higher character as well.
-        (define-key return-keymap tmp-key tmp)))
-     ;; Accept default for other keys
-     ((and (setq tmp (lookup-key lookup-keymap [t])) 
-           (not (integerp tmp))))
-     ;; Keys where `ergoemacs-mode' dominates...
-     ((and (setq tmp (lookup-key lookup-keymap key t))
-           (not (integerp tmp)))
-      (if use-local-unbind-list-p
-          (push key local-unbind-list)
-        (define-key return-keymap key item))
-      (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
-        ;; Define the higher character
-        ;; meta as well...
-        (if use-local-unbind-list-p
-            (push tmp-key local-unbind-list)
-          (define-key return-keymap key item)))
-      (when (setq tmp-key (ergoemacs-translate--meta-to-escape key))
-        ;; Define the higher character meta as well...
-        (if use-local-unbind-list-p
-            (push tmp-key local-unbind-list)
-          (define-key return-keymap tmp-key item))))
-     ;; ESC q -> M-q
-     ((and (setq tmp-key (ergoemacs-translate--escape-to-meta key))
-           (setq tmp (lookup-key lookup-keymap tmp-key t))
-           (not (integerp tmp)))
-      ;; Define both
-      (if use-local-unbind-list-p
-          (progn
-            (push tmp-key local-unbind-list)
-            (push key local-unbind-list))
-        (define-key return-keymap tmp-key item)
-        (define-key return-keymap key item)))
-     ;; M-q -> ESC q
-     ((and (setq tmp-key (ergoemacs-translate--meta-to-escape key))
-           (setq tmp (lookup-key lookup-keymap tmp-key t))
-           (not (integerp tmp)))
-      ;; Define both
-      (if use-local-unbind-list-p
-          (progn
-            (push tmp-key local-unbind-list)
-            (push tmp local-unbind-list))
-        (define-key return-keymap tmp-key item)
-        (define-key return-keymap key item))))))
-
 (defun ergoemacs-map--composed-list (lookup-keymap lookup-key only-modify-p use-local-unbind-list-p)
   "Calculate majority of keys for LOOKUP-KEYMAP.
 
@@ -419,8 +362,58 @@ It takes the following arguments:
       (unless only-modify-p
         (maphash
          (lambda(key item)
-           (ergoemacs-map--composed-list-internal
-            key item lookup-keymap ret use-local-unbind-list-p local-unbind-list))
+           (cond
+            ;; Mode specific keys are translated to `ergoemacs-mode'
+            ;; equivalent key binding
+            ((setq tmp (ergoemacs lookup-keymap :new-command item))
+             (define-key ret key tmp)
+             (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+             (when tmp-key
+               ;; Define the higher character as well.
+               (define-key ret tmp-key tmp)))
+            ;; Accept default for other keys
+            ((and (setq tmp (lookup-key lookup-keymap [t])) 
+                  (not (integerp tmp))))
+            ;; Keys where `ergoemacs-mode' dominates...
+            ((and (setq tmp (lookup-key lookup-keymap key t))
+                  (not (integerp tmp)))
+             (if use-local-unbind-list-p
+                 (push key local-unbind-list)
+               (define-key ret key item))
+             (when (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+               ;; Define the higher character
+               ;; meta as well...
+               (if use-local-unbind-list-p
+                   (push tmp-key local-unbind-list)
+                 (define-key ret key item)))
+             (when (setq tmp-key (ergoemacs-translate--meta-to-escape key))
+               ;; Define the higher character meta as well...
+               (if use-local-unbind-list-p
+                   (push tmp-key local-unbind-list)
+                 (define-key ret tmp-key item))
+               ))
+            ;; ESC q -> M-q
+            ((and (setq tmp-key (ergoemacs-translate--escape-to-meta key))
+                  (setq tmp (lookup-key lookup-keymap tmp-key t))
+                  (not (integerp tmp)))
+             ;; Define both
+             (if use-local-unbind-list-p
+                 (progn
+                   (push tmp-key local-unbind-list)
+                   (push key local-unbind-list))
+               (define-key ret tmp-key item)
+               (define-key ret key item)))
+            ;; M-q -> ESC q
+            ((and (setq tmp-key (ergoemacs-translate--meta-to-escape key))
+                  (setq tmp (lookup-key lookup-keymap tmp-key t))
+                  (not (integerp tmp)))
+             ;; Define both
+             (if use-local-unbind-list-p
+                 (progn
+                   (push tmp-key local-unbind-list)
+                   (push tmp local-unbind-list))
+               (define-key ret tmp-key item)
+               (define-key ret key item)))))
          ergoemacs-map--)
         ;; Fix any undefined keys. For example in `org-agenda-mode' C-x
         ;; C-s is `org-save-all-org-buffers'.  `ergoemacs-mode' should
