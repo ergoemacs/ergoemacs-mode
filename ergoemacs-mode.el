@@ -99,6 +99,7 @@
 (defvar ergoemacs-require--ini-p)
 (defvar ergoemacs-require)
 (defvar pcache-directory)
+(defvar ergoemacs-component-struct--apply-ensure-p)
 
 (require 'package)
 
@@ -330,7 +331,8 @@ bindings the keymap is:
                         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                         (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
                         (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
-                        (setq ergoemacs-require--ini-p t)
+                        (setq ergoemacs-require--ini-p t
+                              ergoemacs-component-struct--apply-ensure-p t)
                         (if refresh-p
                             (message "Ergoemacs-mode keys refreshed (%s:%s)"
                                      ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))
@@ -338,7 +340,8 @@ bindings the keymap is:
                     (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
                     (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)
                       (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
-                    (setq ergoemacs-mode--default-frame-alist nil)
+                    (setq ergoemacs-mode--default-frame-alist nil
+                          ergoemacs-component-struct--apply-ensure-p t)
                     (run-hooks 'ergoemacs-mode-shutdown-hook)
                     (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
                     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
@@ -1230,7 +1233,6 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
     ;; (warn "Enhanced Unicode font support not setup.  See https://github.com/rolandwalker/unicode-fonts")
     ))
 
-
 (when (functionp ergoemacs-map-properties--create-label-function)
   (funcall ergoemacs-map-properties--create-label-function))
 
@@ -1238,10 +1240,8 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
     (provide 'ergoemacs-themes)
   (load "ergoemacs-themes"))
 
-
 (when ergoemacs-use-aliases
   (ergoemacs-load-aliases))
-
 
 (unless init-file-user
   (run-with-idle-timer 0.05 nil 'ergoemacs-mode-after-init-emacs))
