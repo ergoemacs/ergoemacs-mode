@@ -357,7 +357,7 @@ It takes the following arguments:
   keys should be locally unbound.  This is useful for
   `isearch-mode-map' keymap in Emacs 24.4+."
   (let ((ret (make-sparse-keymap))
-        tmp composed-list local-unbind-list)
+        tmp composed-list local-unbind-list tmp-key)
     (ergoemacs-cache (and lookup-key (intern (format "%s-composed-key" lookup-key)))
       (unless only-modify-p
         (maphash
@@ -659,10 +659,10 @@ If LOOKUP-KEYMAP
           (ergoemacs tmp2 :label '(fix-hook-remaps))
           (ergoemacs-map-keymap
            (lambda(key item) (unless (or (eq item 'ergoemacs-prefix)
-                         (consp key))
-               (let ((key (vconcat key)))
-                 (when (member key tmp)
-                   (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup))) nil)))))
+                                         (consp key))
+                               (let ((key (vconcat key)))
+                                 (when (member key tmp)
+                                   (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup))) nil)))))
            tmp3)
           (unless (ergoemacs tmp2 :empty-p)
             (push tmp2 hook-overrides))
