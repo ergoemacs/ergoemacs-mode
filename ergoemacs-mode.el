@@ -290,6 +290,9 @@ lambda is a special undefined function"
 (defvar ergoemacs-mode--default-frame-alist nil
   "List that saves default frame parameters.")
 
+
+(defvar ergoemacs-mode--start-p nil
+  "Determines if `ergoemacs-mode' will start.")
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -314,7 +317,10 @@ bindings the keymap is:
   :global t
   :group 'ergoemacs-mode
   :keymap ergoemacs-menu-keymap
-  :after-hook (progn
+  :after-hook (if (not ergoemacs-mode--start-p)
+                  (if ergoemacs-mode
+                      (message "Ergoemacs will be started.")
+                    (message "Ergoemacs startup canceled."))
                 (setq ergoemacs-map--hashkey nil)
                 (unless ergoemacs-require--ini-p
                   (setq ergoemacs-require--ini-p :ini)
@@ -610,26 +616,6 @@ When `store-p' is non-nil, save the tables."
 (defvar ergoemacs-mode-after-load-hook nil
   "Hook for running after a library loads")
 
-
-;;;###autoload
-(defun ergoemacs-mode-start ()
-  "Start `ergoemacs-mode' if not already started."
-  (unless ergoemacs-mode
-    (ergoemacs-mode 1)))
-
-;;;###autoload
-(define-minor-mode ergoemacs-ini-mode
-  "Dummy mode to call `ergoemacs-mode' at the very last second if not already loaded."
-  nil
-  :global t
-  :group 'ergoemacs-mode
-  (cond
-   (ergoemacs-mode)
-   (ergoemacs-ini-mode
-    (add-hook 'emacs-startup-hook 'ergoemacs-mode-start))
-   ((not ergoemacs-ini-mode)
-    (remove-hook 'emacs-startup-hook 'ergoemacs-mode-start))))
-
 (defvar ergoemacs-pre-command-hook nil)
 (defun ergoemacs-pre-command-hook ()
   "Run `ergoemacs-mode' pre command hooks."
@@ -749,7 +735,7 @@ This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.
 
 Valid values are:
 " (ergoemacs-layouts--custom-documentation)
-  )
+)
   :type (ergoemacs-layouts--customization-type)
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
@@ -1216,15 +1202,18 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 ;;   :set 'ergoemacs-set-default
 ;;   :initialize #'custom-initialize-default
 ;;   :group 'ergoemacs-mode)
-  
+
 (defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
   "Run functions for anything that is loaded after emacs starts up."
   (run-hooks 'ergoemacs-mode-after-load-hook))
 
 (defun ergoemacs-mode-after-init-emacs ()
   "Run functions after emacs loads."
-  (run-hooks 'ergoemacs-mode-init-hook)
-  (add-hook 'after-load-functions 'ergoemacs-mode-after-startup-run-load-hooks))
+  (unless ergoemacs-mode--start-p
+    (setq ergoemacs-mode--start-p t)
+    (ergoemacs-mode ergoemacs-mode)
+    (run-hooks 'ergoemacs-mode-init-hook)
+    (add-hook 'after-load-functions 'ergoemacs-mode-after-startup-run-load-hooks)))
 
 (require 'unicode-fonts nil t)
 (when (featurep 'unicode-fonts)
@@ -1243,11 +1232,10 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 (when ergoemacs-use-aliases
   (ergoemacs-load-aliases))
 
-(unless init-file-user
-  (run-with-idle-timer 0.05 nil 'ergoemacs-mode-after-init-emacs))
+(run-with-idle-timer 0.05 nil #'ergoemacs-mode-after-init-emacs)
+(add-hook 'emacs-startup-hook #'ergoemacs-mode-after-init-emacs)
 
 (run-hooks 'ergoemacs-mode-intialize-hook)
-
 
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
