@@ -1365,87 +1365,94 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
       (help-setup-xref (list #'ergoemacs-component-describe (or component ""))
                        (called-interactively-p 'interactive))
       (with-help-window (help-buffer)
-        (princ (or component ""))
-        ;; Use " is " instead of a colon so that
-        ;; it is easier to get out the function name using forward-sexp.
-        (princ " is an `ergoemacs-mode' component")
-        (when (file-readable-p el-file)
-          (princ " defined in `")
-          (princ (file-name-nondirectory el-file))
-          (princ "'."))
-        (princ "\n\n")
-        (princ "Documentation:\n")
-        (princ (plist-get plist :description))
-        (princ "\n\n")
-        (princ (format "Cached instead of loaded: %s\n" (or (and (ergoemacs-component-cached-p component) "Yes") "No")))
-
-        (princ "\nKnown component properties:\n")
-        (dolist (prop ergoemacs-theme-component-properties)
-          (when (setq tmp (plist-get plist prop))
-            (princ (format "  %s -- %s\n" prop tmp))))
-        (princ "\n")
-        (princ (format "Plist: %s" plist))
-        
-        (princ (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
-        (princ (format "Relative To: %s\n" (ergoemacs-component-struct-relative-to comp)))
-        (princ (format "Variable Modifiers: %s\n" (ergoemacs-component-struct-variable-modifiers comp)))
-        (princ (format "Variable Prefixes: %s\n"
-                       (mapconcat
-                        (lambda(x) (ergoemacs-key-description x))
-                        (ergoemacs-component-struct-variable-prefixes comp) ", ")))
-
-        (when (setq tmp (ergoemacs-component-struct-unbind comp))
-          (princ (format "Unbound keys: %s\n"
-                         (mapconcat
-                          (lambda(x) (ergoemacs-key-description x)) tmp ", "))))
-
-        (when (setq tmp (ergoemacs-component-struct-undefined comp))
-          (princ (format "Masked emacs keys: %s\n"
-                         (mapconcat
-                          (lambda(x) (ergoemacs-key-description x)) tmp ", "))))
-
-        ;; FIXME: Describe major-mode / minor-mode differences
-        
-        ;; FIXME: Describe what keys are deferred, and what they would
-        ;; possibly bind to...
-
-        (if (not (setq vers (ergoemacs-component-struct-versions comp)))
-            (setq lst `(("Specified Keymap" ,(ergoemacs-component-struct-map comp))
-                        (,(format "Translated Keymap (%s)" ergoemacs-keyboard-layout) ,(ergoemacs-component-struct--get comp ergoemacs-keyboard-layout))))
-          (princ (format "Versions: %s, %s\n" ergoemacs-mode-version
-                         (mapconcat
-                          (lambda(x) x) vers ", ")))
-          
-          (setq lst `((,(format "Specified Keymap (%s)" (or (ergoemacs-theme--get-version) ergoemacs-mode-version))
-                       ,(ergoemacs-component-struct-map comp))
-                      ,@(mapcar
-                         (lambda(ver)
-                           (unless (string= ver (ergoemacs-theme--get-version))
-                             ;; (ergoemacs-component-struct--get (ergoemacs-component-struct--lookup-hash 'search  "5.7.5"))
-                             `(,(format "Specified keymap for Version %s" ver)
-                               ,(ergoemacs-component-struct-map (ergoemacs-component-struct--lookup-hash component ver)))))
-                         vers)
-                      (,(format "Translated Keymap (%s; %s)" ergoemacs-keyboard-layout (or (ergoemacs-theme--get-version) ergoemacs-mode-version))
-                       ,(ergoemacs-component-struct--get comp ergoemacs-keyboard-layout))
-                      ,@(mapcar
-                         (lambda(ver)
-                           (unless (string= ver (ergoemacs-theme--get-version))
-                             `(,(format "Translated keymap for Version %s" ver)
-                               ,(ergoemacs-component-struct--get (ergoemacs-component-struct--lookup-hash component ver) ergoemacs-keyboard-layout))))
-                         vers)
-                      )))
-        
-        (dolist (elt lst)
-          (unless (or (not elt) (ergoemacs (nth 1 elt) :empty-p))
-            (princ "\n")
-            (princ (nth 0 elt))
-            (princ ":\n")
-            (princ (make-string 78 ?-))
-            (princ (ergoemacs-key-description--keymap (nth 1 elt)))
-            (princ "\n")))
         (with-current-buffer standard-output
-          ;; Return the text we displayed.
-          (buffer-string))))))
+          (insert (or component ""))
+          ;; Use " is " instead of a colon so that
+          ;; it is easier to get out the function name using forward-sexp.
+          (insert " is an `ergoemacs-mode' component")
+          (when (file-readable-p el-file)
+            (insert " defined in `")
+            (insert (file-name-nondirectory el-file))
+            (when (looking-back "`\\(.*\\)")
+              (help-xref-button 1 'ergoemacs-component-def component))
+            (insert "'."))
+          (insert "\n\n")
+          (insert "Documentation:\n")
+          (insert (plist-get plist :description))
+          (insert "\n\n")
+          (insert (format "Cached instead of loaded: %s\n" (or (and (ergoemacs-component-cached-p component) "Yes") "No")))
+
+          (insert "\nKnown component properties:\n")
+          (dolist (prop ergoemacs-theme-component-properties)
+            (when (setq tmp (plist-get plist prop))
+              (insert (format "  %s -- %s\n" prop tmp))))
+          (insert "\n")
+          (insert (format "Plist: %s" plist))
+          
+          (insert (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
+          (when (looking-back ": \\(.*\\)\n")
+            (help-xref-button 1 'ergoemacs-layout-help (match-string 1)))
+          (insert (format "Relative To: %s\n" (ergoemacs-component-struct-relative-to comp)))
+          (when (looking-back ": \\(.*\\)\n")
+            (help-xref-button 1 'ergoemacs-layout-help (match-string 1)))
+          (insert (format "Variable Modifiers: %s\n" (ergoemacs-component-struct-variable-modifiers comp)))
+          (insert (format "Variable Prefixes: %s\n"
+                          (mapconcat
+                           (lambda(x) (ergoemacs-key-description x))
+                           (ergoemacs-component-struct-variable-prefixes comp) ", ")))
+
+          (when (setq tmp (ergoemacs-component-struct-unbind comp))
+            (insert (format "Unbound keys: %s\n"
+                            (mapconcat
+                             (lambda(x) (ergoemacs-key-description x)) tmp ", "))))
+
+          (when (setq tmp (ergoemacs-component-struct-undefined comp))
+            (insert (format "Masked emacs keys: %s\n"
+                            (mapconcat
+                             (lambda(x) (ergoemacs-key-description x)) tmp ", "))))
+
+          ;; FIXME: Describe major-mode / minor-mode differences
+          
+          ;; FIXME: Describe what keys are deferred, and what they would
+          ;; possibly bind to...
+
+          (if (not (setq vers (ergoemacs-component-struct-versions comp)))
+              (setq lst `(("Specified Keymap" ,(ergoemacs-component-struct-map comp))
+                          (,(format "Translated Keymap (%s)" ergoemacs-keyboard-layout) ,(ergoemacs-component-struct--get comp ergoemacs-keyboard-layout))))
+            (insert (format "Versions: %s, %s\n" ergoemacs-mode-version
+                            (mapconcat
+                             (lambda(x) x) vers ", ")))
+            
+            (setq lst `((,(format "Specified Keymap (%s)" (or (ergoemacs-theme--get-version) ergoemacs-mode-version))
+                         ,(ergoemacs-component-struct-map comp))
+                        ,@(mapcar
+                           (lambda(ver)
+                             (unless (string= ver (ergoemacs-theme--get-version))
+                               ;; (ergoemacs-component-struct--get (ergoemacs-component-struct--lookup-hash 'search  "5.7.5"))
+                               `(,(format "Specified keymap for Version %s" ver)
+                                 ,(ergoemacs-component-struct-map (ergoemacs-component-struct--lookup-hash component ver)))))
+                           vers)
+                        (,(format "Translated Keymap (%s; %s)" ergoemacs-keyboard-layout (or (ergoemacs-theme--get-version) ergoemacs-mode-version))
+                         ,(ergoemacs-component-struct--get comp ergoemacs-keyboard-layout))
+                        ,@(mapcar
+                           (lambda(ver)
+                             (unless (string= ver (ergoemacs-theme--get-version))
+                               `(,(format "Translated keymap for Version %s" ver)
+                                 ,(ergoemacs-component-struct--get (ergoemacs-component-struct--lookup-hash component ver) ergoemacs-keyboard-layout))))
+                           vers)
+                        )))
+          
+          (dolist (elt lst)
+            (unless (or (not elt) (ergoemacs (nth 1 elt) :empty-p))
+              (insert "\n")
+              (insert (nth 0 elt))
+              (insert ":\n")
+              (insert (make-string 78 ?-))
+              (insert (ergoemacs-key-description--keymap (nth 1 elt)))
+              (insert "\n")))
+          (with-current-buffer standard-output
+            ;; Return the text we displayed.
+            (buffer-string)))))))
 
 (defalias 'describe-ergoemacs-component 'ergoemacs-component-describe)
 
