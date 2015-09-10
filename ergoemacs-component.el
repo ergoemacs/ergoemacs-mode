@@ -874,7 +874,9 @@ be composed over the keymap.  This is done in
           (setq ret (append ret (ergoemacs-component-struct--variables cur-obj))))
         ret))
      ((ergoemacs-component-struct-p obj)
-      (ergoemacs-component-struct-variables obj))
+      (mapcar (lambda(x)
+		(append x (list (ergoemacs-component-struct-name obj))))
+	      (ergoemacs-component-struct-variables obj)))
      (t (ergoemacs-component-struct--variables (ergoemacs-component-struct--lookup-hash obj))))))
 
 (defvar ergoemacs-component-struct--refresh-variables nil)
@@ -972,9 +974,46 @@ be composed over the keymap.  This is done in
     (dolist (init (ergoemacs-component-struct--variables obj))
       (if (and (consp (nth 0 init)) (not (nth 1 init)) (not (nth 2 init)))
           (unless (member (nth 0 init) ergoemacs-component-struct--deferred-functions)
-            (when (ignore-errors (fboundp (car (nth 0 init))))
-              (eval (nth 0 init))
-              (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+            (cond
+             ((eq (car (nth 0 init)) 'add-to-list)
+              (when (ignore-errors (boundp (nth 1 (nth 0 init))))
+                (ignore-errors
+                  (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                  (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+              (when (ignore-errors (eq 'quote (nth 0 (nth 1 (nth 0 init)))))
+                (if (ignore-errors (eq 'quote (nth 0 (nth 2 (nth 0 init)))))
+                    (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
+                      (apply 'add-to-list  (nth 1 (nth 2 (nth 0 init))) (cdr (cdr (cdr (nth 0 init)))))
+                      (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
+                  (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
+                    (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
+                    (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))))
+             ((memq (car (nth 0 init)) '(push pushnew))
+              (when (ignore-errors (boundp (nth 2 (nth 0 init))))
+                (if (ignore-errors (eq 'quote (nth 1 (nth 1 (nth 0 init)))))
+                    (ignore-errors
+                      (apply (car (nth 0 init)) (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
+                      (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
+                  (ignore-errors
+                    (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                    (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+                (ignore-errors
+                  (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                  (push (nth 0 init) ergoemacs-component-struct--deferred-functions))))
+             ((eq (car (nth 0 init)) 'require)
+              (require (nth 1 (nth 1 (nth 0 init))) nil t)
+              (when (not (featurep (nth 1 (nth 1 (nth 0 init)))))
+		;; Attempt to ensure the feature, if specified.
+		
+                (warn "Could not load %s; %s" (nth 1 (nth 1 (nth 0 init)))
+		      (nth 3 init))))
+             (t
+              (condition-case err
+		  (eval (nth 0 init))
+		(error (warn "Ergoemacs: error %s while evaluating" err (nth 0 init))))
+              (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
+             ;; (t (warn "Theme did not handle: %s" (nth 0 init)))
+             ))
         (let ((x (and ergoemacs-component-struct--refresh-variables (boundp (nth 0 init))
                       (assq (nth 0 init) ergoemacs-component-struct--refresh-variables))))
           (cond
@@ -1442,8 +1481,9 @@ The :dimininish tag can be of the form:
    processed by a single :diminish specifciation. 
 
 DIM is the replacement for the PLIST :diminish, this is used in
-recursive calls to `ergoemacs-component--diminish-on' to process lists.
-
+recursive calls to `ergoemacs-component--diminish-on' to process
+lists.  It can also be the symbol name of the package.
+uu
 When TYPE is non-nil, the function turns off the diminish
 modifications with `diminish-undo'"
   (ignore-errors (ergoemacs-component-struct--ensure 'diminish))
@@ -1451,19 +1491,30 @@ modifications with `diminish-undo'"
   (if (not (featurep 'diminish))
       (message "Error installing diminish package.")
     (let ((diminish-symbol (or (plist-get plist :package-name)
-                               (intern (plist-get plist :name))))
+                               (plist-get plist :name)
+                               plist))
           (dim (or dim (plist-get plist :diminish))))
+      (message "diminish: %s %s" diminish-symbol dim)
+      (when (and diminish-symbol (stringp diminish-symbol))
+        (setq diminish-symbol (intern diminish-symbol)))
+
       (cond
+       ((not dim))
        ;; :diminish t
        ((eq t dim)
         (cond
          (type (diminish-undo diminish-symbol))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+                              (diminish diminish-symbol)))
+          )
          (t (eval-after-load diminish-symbol
               `(diminish ',diminish-symbol)))))
        ;; :diminish mode
        ((symbolp dim)
         (cond
          (type (diminish-undo dim))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+                              (diminish dim))))
          (t (eval-after-load diminish-symbol
               `(diminish ',dim)))))
 
@@ -1471,6 +1522,8 @@ modifications with `diminish-undo'"
        ((stringp dim)
         (cond
          (type (diminish-undo diminish-symbol))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+                              (diminish diminish-symbol dim))))
          (t (eval-after-load diminish-symbol
               `(diminish ',diminish-symbol ,dim)))))
        ((and (consp dim)
@@ -1478,6 +1531,8 @@ modifications with `diminish-undo'"
              (symbolp (nth 0 dim)))
         (cond
          (type (diminish-undo (nth 0 dim)))
+         ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
+                              (diminish (nth 0 dim) dim))))
          (t (eval-after-load diminish-symbol
               `(diminish ',(nth 0 dim))))))
        
@@ -1488,6 +1543,8 @@ modifications with `diminish-undo'"
              (stringp (nth 1 dim)))
         (cond
          (type (diminish-undo diminish-symbol))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+                              (diminish diminish-symbol (ergoemacs :unicode (nth 0 dim) (nth 1 dim))))))
          (t (eval-after-load diminish-symbol
               `(diminish ',diminish-symbol
                          ,(ergoemacs :unicode (nth 0 dim) (nth 1 dim)))))))
@@ -1499,6 +1556,8 @@ modifications with `diminish-undo'"
              (stringp (nth 3 dim)))
         (cond
          (type (diminish-undo diminish-symbol))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+                              (diminish diminish-symbol (ergoemacs :unicode (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))
          (t (eval-after-load diminish-symbol
               `(diminish ',diminish-symbol
                          ,(ergoemacs :unicode (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))))
@@ -1510,6 +1569,8 @@ modifications with `diminish-undo'"
              (stringp (nth 2 dim)))
         (cond
          (type (diminish-undo (nth 0 dim)))
+         ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
+                              (diminish (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))
          (t (eval-after-load diminish-symbol
               `(diminish ',(nth 0 dim)
                          ,(ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))
@@ -1522,6 +1583,8 @@ modifications with `diminish-undo'"
              (stringp (nth 3 dim)))
         (cond
          (type (diminish-undo (nth 0 dim)))
+         ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
+                              (diminish (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (ergoemacs :unicode (nth 2 dim) (nth 3 dim)))))))
          (t (eval-after-load diminish-symbol
               `(diminish ',(nth 0 dim)
                          ,(ergoemacs :unicode (nth 1 dim) (ergoemacs :unicode (nth 2 dim) (nth 3 dim))))))))
@@ -1532,6 +1595,8 @@ modifications with `diminish-undo'"
              (stringp (nth 1 dim)))
         (cond
          (type (diminish-undo (nth 0 dim)))
+         ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
+                              (diminish (nth 0 dim) (nth 1 dim)))))
          (t (eval-after-load diminish-symbol
               `(diminish ',(nth 0 dim) ,(nth 1 dim))))))
        ((consp dim)
