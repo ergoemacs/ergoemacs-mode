@@ -1546,8 +1546,9 @@ modifications with `diminish-undo'"
          ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
                               (diminish diminish-symbol (ergoemacs :unicode (nth 0 dim) (nth 1 dim))))))
          (t (eval-after-load diminish-symbol
-              `(diminish ',diminish-symbol
-                         ,(ergoemacs :unicode (nth 0 dim) (nth 1 dim)))))))
+               `(ignore-errors
+		  (diminish ',diminish-symbol
+                         ,(ergoemacs :unicode (nth 0 dim) (nth 1 dim))))))))
        ;;:diminish (" 🌈" " ⓡ" " r")
        ((and (consp dim)
              (= 3 (length dim))
@@ -1559,8 +1560,9 @@ modifications with `diminish-undo'"
          ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
                               (diminish diminish-symbol (ergoemacs :unicode (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))
          (t (eval-after-load diminish-symbol
-              `(diminish ',diminish-symbol
-                         ,(ergoemacs :unicode (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))))
+               `(ignore-errors
+		  (diminish ',diminish-symbol
+                         ,(ergoemacs :unicode (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))))
        ;; :diminish (mode " " " g")
        ((and (consp dim)
              (= 3 (length dim))
@@ -1572,8 +1574,9 @@ modifications with `diminish-undo'"
          ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
                               (diminish (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))
          (t (eval-after-load diminish-symbol
-              `(diminish ',(nth 0 dim)
-                         ,(ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))
+               `(ignore-errors
+		  (diminish ',(nth 0 dim)
+                         ,(ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))))
        ;; :diminish (rainbow-mode " 🌈" " ⓡ" " r")
        ((and (consp dim)
              (= 4 (length dim))
@@ -1586,8 +1589,9 @@ modifications with `diminish-undo'"
          ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
                               (diminish (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (ergoemacs :unicode (nth 2 dim) (nth 3 dim)))))))
          (t (eval-after-load diminish-symbol
-              `(diminish ',(nth 0 dim)
-                         ,(ergoemacs :unicode (nth 1 dim) (ergoemacs :unicode (nth 2 dim) (nth 3 dim))))))))
+               `(ignore-errors
+		  (diminish ',(nth 0 dim)
+                         ,(ergoemacs :unicode (nth 1 dim) (ergoemacs :unicode (nth 2 dim) (nth 3 dim)))))))))
        ;; :diminish (mode " ")
        ((and (consp dim)
              (= 2 (length dim))
