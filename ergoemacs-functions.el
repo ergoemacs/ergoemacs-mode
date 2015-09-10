@@ -2615,7 +2615,7 @@ With a prefix argument like \\[universial-argument] in an
 (defun ergoemacs-describe-current-theme ()
   "Describe the current theme."
   (interactive)
-  (ergoemacs-theme-describe ergoemacs-theme))
+  (ergoemacs-theme-describe (or ergoemacs-theme "standard")))
 
 ;; Ergoemacs Test suite
 (unless (fboundp 'ergoemacs-test)
