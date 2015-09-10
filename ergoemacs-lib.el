@@ -36,6 +36,7 @@
 (defvar ergoemacs-mode-names)
 (defvar ergoemacs-require)
 (defvar ergoemacs-theme-hash)
+(defvar ergoemacs-component-struct--apply-ensure-p)
 
 (defvar package-archives)
 
@@ -86,9 +87,13 @@ If FORCE is true, set it even if it changed."
      ((not (equal last-value value))
       (cond
        ((and minor-mode-p (not new-value))
-        (funcall variable -1))
+        (funcall variable -1)
+        (unless (get variable 'ergoemacs-save-value)
+          (put variable 'ergoemacs-save-value (ergoemacs-sv variable))))
        ((and minor-mode-p new-value)
-        (funcall variable new-value))
+        (funcall variable new-value)
+        (unless (get variable 'ergoemacs-save-value)
+          (put variable 'ergoemacs-save-value (ergoemacs-sv variable))))
        ((and (custom-variable-p variable) (or force (not (get variable 'save-value))))
         (unless (get variable 'ergoemacs-save-value)
           (put variable 'ergoemacs-save-value (ergoemacs-sv variable)))
