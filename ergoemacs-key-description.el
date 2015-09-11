@@ -232,7 +232,10 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
      ((memq mod '(control ergoemacs-control))
       (setq ret (format "%sCtrl+"
                         (or (and (eq 'windows-nt system-type)
-                                 (ergoemacs :unicode "✲" ""))))))
+                                 (ergoemacs :unicode "✲" ""))
+                            (and (eq 'gnu/linux system-type)
+                                 (ergoemacs :unicode "⎈" ""))
+                            ""))))
      ((eq mod 'meta)
       (setq ret "Alt+"))
      ((and (eq mod 'super) ergoemacs-display-small-symbols-for-key-modifiers
