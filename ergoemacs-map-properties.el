@@ -585,7 +585,7 @@ composing or parent/child relationships)"
       (let ((keymap (ergoemacs-map-properties--keymap-value keymap)))
         (cond
          ((not (ergoemacs-keymapp keymap))
-          (warn "Trying to put keymap property on non-keymap %s." keymap))
+          (error "Trying to put keymap property on non-keymap %s." keymap))
          ((eq property :full)
           (warn "Cannot set the keymap property :full"))
          (t (let ((ret (ergoemacs-map-properties--map-fixed-plist keymap)) tmp)
@@ -1062,21 +1062,22 @@ Used for sorting keys in displays."
 Looks in `ergoemacs-use-local-unbind-list' to determine what maps will unbind ergoemacs keys.
 
  This is useful in supporting isearch in emacs 24.4+."
-  (let ((local-unbind-list-p (ergoemacs keymap :use-local-unbind-list-key)))
-    (cond
-     ((eq local-unbind-list-p 'no) nil)
-     (local-unbind-list-p local-unbind-list-p)
-     (ergoemacs-map-properties--use-local-unbind-list
-      (let ((map-list (ergoemacs keymap :map-list)))
-        (prog1 (catch 'found-use-local
-                 (dolist (map map-list)
-                   (when (memq map ergoemacs-map-properties--use-local-unbind-list)
-                     (setq local-unbind-list-p t)
-                     (throw 'found-use-local t)))
-                 (setq local-unbind-list-p 'no)
-                 nil)
-          (ergoemacs keymap :use-local-unbind-list-key local-unbind-list-p))))
-     (t nil))))
+  (when (ergoemacs-keymapp keymap)
+    (let ((local-unbind-list-p (ergoemacs keymap :use-local-unbind-list-key)))
+      (cond
+       ((eq local-unbind-list-p 'no) nil)
+       (local-unbind-list-p local-unbind-list-p)
+       (ergoemacs-map-properties--use-local-unbind-list
+        (let ((map-list (ergoemacs keymap :map-list)))
+          (prog1 (catch 'found-use-local
+                   (dolist (map map-list)
+                     (when (memq map ergoemacs-map-properties--use-local-unbind-list)
+                       (setq local-unbind-list-p t)
+                       (throw 'found-use-local t)))
+                   (setq local-unbind-list-p 'no)
+                   nil)
+            (ergoemacs keymap :use-local-unbind-list-key local-unbind-list-p))))
+       (t nil)))))
 
 (defvar ergoemacs-map-properties--set-map-list '(isearch-mode-map)
   "List of maps that assign the map values to ergoemacs-mode's
