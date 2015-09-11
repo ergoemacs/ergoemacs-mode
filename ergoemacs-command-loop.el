@@ -1172,6 +1172,8 @@ The true work is done in `ergoemacs-command-loop--internal'."
       (when area
         (setq command (key-binding (vconcat (list area last-command-event)) t))
         (when (and obj (consp obj) (setq tmp (get-text-property (cdr obj)  'local-map (car obj)))
+                   (setq tmp (or (and (symbolp tmp) (ergoemacs-sv tmp)) tmp))
+                   (ergoemacs-keymapp tmp)
                    (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
           (setq command tmp)))
       (unless command
@@ -1182,7 +1184,6 @@ The true work is done in `ergoemacs-command-loop--internal'."
          ;; Install translation and call function
          (string-match-p "^\\(ergoemacs-\\|ergoemacs-translate--\\)\\(.*\\)\\(-modal\\|-universal-argument\\|-negative-argument\\|-digit-argument\\|-modal\\)$" (symbol-name command))
          (ergoemacs-translate--get (intern (replace-regexp-in-string "^\\(ergoemacs-\\|ergoemacs-translate--\\)\\(.*\\)\\(-modal\\|-universal-argument\\|-negative-argument\\|-digit-argument\\|-modal\\)$" ":\\2" (symbol-name command))))
-         
          (commandp command))
     (call-interactively command record-flag keys))
    ((and (symbolp command) (not (fboundp command)))
@@ -1577,7 +1578,7 @@ pressed the translated key by changing
                    ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
                     (setq ret tmp))
                    ((not (region-active-p))) ;; its a key sequence.
-                  
+                   
                    ((and this-command-keys-shift-translated
                          (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
 
