@@ -35,6 +35,7 @@
 
 (require 'redo "redo.elc" t) ; for redo shortcut
 
+(defvar ergoemacs-set-ignore-customize)
 (defvar apropos-do-all)
 (defvar cua--last-killed-rectangle)
 (defvar dirtrack-list)
@@ -205,7 +206,7 @@ The backup is determined by `find-backup-file-name'"
       t)))
 
 
-(defun ergoemacs-exit-customize-save-customized (&optional reinit)
+(defun ergoemacs-exit-customize-save-customized ()
   "Call `customize-save-customized' on exit Emacs."
   (let (set save val)
     (dolist (elt ergoemacs-set-ignore-customize)

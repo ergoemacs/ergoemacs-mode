@@ -52,6 +52,7 @@
 
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
 (declare-function ergoemacs-translate--ahk-ini "ergoemacs-translate")
+(declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 
 (declare-function tabbar-install-faces "tabbar-ruler")
 (declare-function tabbar-mode "tabbar")

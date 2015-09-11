@@ -1090,6 +1090,7 @@ maps.")
 
  This is useful in supporting isearch in emacs 24.4+."
   (when (ergoemacs-keymapp keymap)
+
     (let ((set-map-p (ergoemacs keymap :use-set-map-key)))
       (cond
        ((eq set-map-p 'no) nil)
