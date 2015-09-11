@@ -67,6 +67,9 @@ If DEFAULT is non-nil set the default value, instead of the symbol value."
     (if (not var) nil
       (setcdr var val))))
 
+(defvar ergoemacs-set-ignore-customize nil
+  "List of variables that should not be saved by customize.")
+
 ;;;###autoload
 (defun ergoemacs-set (variable value &optional force)
   "Sets VARIABLE to VALUE without disturbing customize or setq.
@@ -81,36 +84,52 @@ If FORCE is true, set it even if it changed."
       (setq last-value -1))
     (cond
      ((and minor-mode-p (not (boundp variable)))
-      (unless (get variable 'ergoemacs-save-value)
-        (put variable 'ergoemacs-save-value (if new-value nil 1)))
-      (funcall variable new-value))
+      (unless (get variable :ergoemacs-save-value)
+        (put variable :ergoemacs-save-value (if new-value nil 1)))
+      (ergoemacs-command-loop--spinner-display "Call (%s %s)" variable new-value)
+      (funcall variable new-value)
+      (ergoemacs-command-loop--spinner-display "Done (%s %s)" variable new-value)
+      (put variable :ergoemacs-set-value (ergoemacs-sv variable))
+      (pushnew variable ergoemacs-set-ignore-customize))
      ((not (equal last-value value))
       (cond
        ((and minor-mode-p (not new-value))
+        (ergoemacs-command-loop--spinner-display "Call (%s -1)" variable)
         (funcall variable -1)
-        (unless (get variable 'ergoemacs-save-value)
-          (put variable 'ergoemacs-save-value (ergoemacs-sv variable))))
+        (ergoemacs-command-loop--spinner-display "Done (%s -1)" variable)
+        (unless (get variable :ergoemacs-save-value)
+          (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
+        (put variable :ergoemacs-set-value (ergoemacs-sv variable))
+        (pushnew variable ergoemacs-set-ignore-customize))
        ((and minor-mode-p new-value)
+        (ergoemacs-command-loop--spinner-display "Call (%s %s)" variable new-value)
         (funcall variable new-value)
-        (unless (get variable 'ergoemacs-save-value)
-          (put variable 'ergoemacs-save-value (ergoemacs-sv variable))))
+        (ergoemacs-command-loop--spinner-display "Done (%s %s)" variable new-value)
+        (unless (get variable :ergoemacs-save-value)
+          (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
+        (put variable :ergoemacs-set-value (ergoemacs-sv variable))
+        (pushnew variable ergoemacs-set-ignore-customize))
        ((and (custom-variable-p variable) (or force (not (get variable 'save-value))))
-        (unless (get variable 'ergoemacs-save-value)
-          (put variable 'ergoemacs-save-value (ergoemacs-sv variable)))
+        (unless (get variable :ergoemacs-save-value)
+          (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
         (customize-set-variable variable new-value)
-        (customize-mark-to-save variable))
+        ;; Don't save ergoemacs-mode intilization
+        (put variable :ergoemacs-set-value (ergoemacs-sv variable))
+        (pushnew variable ergoemacs-set-ignore-customize))
        ((or force (equal (ergoemacs-sv variable) (default-value variable)))
-        (unless (get variable 'ergoemacs-save-value)
-          (put variable 'ergoemacs-save-value (ergoemacs-sv variable)))
+        (unless (get variable :ergoemacs-save-value)
+          (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
         (set variable new-value)
         (set-default variable new-value)
-        (unless (get variable 'ergoemacs-save-value)
-          (put variable 'ergoemacs-save-value (ergoemacs-sv variable))))
+        (unless (get variable :ergoemacs-save-value)
+          (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
+        (put variable :ergoemacs-set-value (ergoemacs-sv variable))
+        (pushnew variable ergoemacs-set-ignore-customize))
        (t
-        ;; (message "%s changed outside ergoemacs-mode, respecting." variable)
-        )))
+        (warn "%s changed outside ergoemacs-mode, respecting." variable))))
      (t
-      ;; (message "%s not changed" variable)
+      ;; (message "%s was not changed by ergoemacs-mode, since it has the same value.\n\tlast-value: %s\n\tnew-value: %s" variable
+      ;;          last-value new-value)
       ))))
 
 ;;;###autoload
@@ -123,27 +142,28 @@ If FORCE is true, set it even if it changed."
 
 (defun ergoemacs-reset (variable)
   "Sets VARIABLE to VALUE without disturbing customize or setq.
-If FORCE is true, set it even if it changed.
-"
+If FORCE is true, set it even if it changed."
   (let* ((minor-mode-p (and (string= "mode" (substring (symbol-name variable) -4))
                             (commandp variable t)))
-         (value (get variable 'ergoemacs-save-value))
+         (value (get variable :ergoemacs-save-value))
          (new-value (or (and (not minor-mode-p) value)
                         (and (integerp value) (< 0 value) value)
                         (and (not (integerp value)) value)
                         ;; Otherwise negative integers are the same as nil
                         )))
-    (put variable 'ergoemacs-save-value nil)
+    (put variable :ergoemacs-save-value nil)
     (if (and minor-mode-p (not (boundp variable)))
         (funcall variable new-value)
       (if (custom-variable-p variable)
           (progn
             (customize-set-variable variable new-value)
-            (customize-mark-to-save variable)
+            ;; (customize-mark-to-save variable)
             (when (and minor-mode-p (not new-value))
               (funcall variable -1)))
         (set variable new-value)
         (set-default variable new-value)
+        (put variable :ergoemacs-set-value (ergoemacs-sv variable))
+        (pushnew variable ergoemacs-set-ignore-customize)
         (when minor-mode-p ;; Change minor mode
           (if new-value
               (funcall variable new-value)
@@ -155,8 +175,7 @@ If FORCE is true, set it even if it changed.
 Calls `ergoemacs-require' with TYPE defaulting to 'off and
 remove defaulting to t.
 
-KEEP can change remove to nil.
-"
+KEEP can change remove to nil."
   (ergoemacs-require option theme (or type 'off) (if keep nil t)))
 
 (defvar ergoemacs-require--ini-p nil)
@@ -183,8 +202,7 @@ theme, but assumed to be disabled by default.
 When TYPE is nil, assume the type is 'required-hidden
 
 REMOVE represents when you would remove the OPTION from the
-ergoemacs THEME.
-"
+ergoemacs THEME."
   (setq ergoemacs-component-struct--apply-ensure-p t)
   (unless (member (list option theme type remove) ergoemacs-require)
     (push (list option theme type remove) ergoemacs-require))
@@ -222,7 +240,6 @@ ergoemacs THEME.
                        ergoemacs-theme-hash)))))
     (unless (eq ergoemacs-require--ini-p :ini)
       (ergoemacs-theme-option-on option t))))
-
 
 (defvar ergoemacs-xah-emacs-lisp-tutorial-url
   "http://ergoemacs.org/emacs/elisp.html")
@@ -283,7 +300,7 @@ All other modes are assumed to be minor modes or unimportant.
             (push (downcase (symbol-name (cdr elt))) added-modes)
             (push (cdr elt) modes)))))
     (setq modes (sort ret (lambda(x1 x2) (string< (downcase (nth 2 x2))
-                                             (downcase (nth 2 x1))))))
+                                                  (downcase (nth 2 x1))))))
     (setq ret '())
     (dolist (elt modes)
       (let ((this-letter (upcase (substring (nth 2 elt) 0 1))))
@@ -336,7 +353,6 @@ All other modes are assumed to be minor modes or unimportant.
           (tabbar-mode -1)
         (tabbar-mode 1)))))
 
-
 (defun ergoemacs-menu--filter-key-shortcut (cmd &optional keymap)
   "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
   (cond
@@ -352,7 +368,6 @@ All other modes are assumed to be minor modes or unimportant.
       (when (memq (elt key 0) '(menu-bar remap again redo cut copy paste help open find ergoemacs-remap execute))
         (setq key nil))
       (and key (ergoemacs-key-description--menu key)))
-    
     ;; (let ((key (ergoemacs-gethash cmd (ergoemacs (ergoemacs :global-map) :where-is))))
     ;;   (when key
     ;;     (setq key (nth 0 key)))
@@ -412,7 +427,6 @@ All other modes are assumed to be minor modes or unimportant.
               ;; JIT processing
               `(,(nth 0 item) menu-item ,(nth 1 item) ,(cdr (cdr item))
                 :filter ergoemacs-menu--filter))
-             
              ((ergoemacs-keymapp (car (cdr (cdr (cdr item)))))
               ;; (message "3:%s..." (substring (format "%s" item) 0 (min (length (format "%s" item)) 60)))
               (if (setq tmp (plist-get item :filter))

@@ -1197,9 +1197,7 @@
                                                   repeat-complex-command)
                           (separator6 menu-item "--")
                           (exit-emacs menu-item "Quit" save-buffers-kill-emacs)
-                          "File")))
-  ;; (add-hook 'kill-emacs-hook 'ergoemacs-exit-customize-save-customized)
-  )
+                          "File"))))
 
 (ergoemacs-component menu-bar-edit ()
   "Edit menu"

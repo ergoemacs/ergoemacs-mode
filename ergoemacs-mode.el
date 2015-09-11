@@ -103,9 +103,6 @@
 
 (require 'package)
 
-
-
-
 (declare-function ergoemacs-require "ergoemacs-lib")
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")

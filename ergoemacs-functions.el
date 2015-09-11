@@ -61,7 +61,6 @@
 (declare-function describe-ergoemacs-theme "ergoemacs-theme-engine")
 (declare-function dired-get-marked-files "dired")
 
-(declare-function ergoemacs-ini-mode "ergoemacs-mode")
 (declare-function ergoemacs-map-- "ergoemacs-map")
 (declare-function ergoemacs-mode "ergoemacs-mode")
 
@@ -207,30 +206,25 @@ The backup is determined by `find-backup-file-name'"
 
 
 (defun ergoemacs-exit-customize-save-customized (&optional reinit)
-  "Call `customize-save-customized' on exit Emacs.
-
-Also:
-
-- Deactivates `ergoemacs-mode'
-
-- Activates `ergoemacs-ini-mode', to try to run `ergoemacs-mode'
-  when called for or at the last second.
-
-- Saves `ergoemacs-mode' options by calling
-  `customize-save-customized'
-
-If an error occurs, display the error, and sit for 2 seconds
-before exiting.
-
-If REINIT is non-nil, then turn off `ergoemacs-ini-mode' then
-turn on `ergoemacs-mode'."
-  (ergoemacs-mode -1)
-  (ergoemacs-ini-mode 1)
-  
-  (ignore-errors (unless noninteractive (customize-save-customized)))
-  (when reinit
-    (ergoemacs-ini-mode -1)
-    (ergoemacs-mode 1)))
+  "Call `customize-save-customized' on exit Emacs."
+  (let (set save val)
+    (dolist (elt ergoemacs-set-ignore-customize)
+      (when (custom-variable-p elt)
+        (setq set (get elt :ergoemacs-set-value)
+              save (get elt :ergoemacs-save-value)
+              val (ergoemacs-sv elt))
+        (if (not (equal set val))
+            (progn
+              (message "%s was changed outside of ergoemacs-mode\n\tPrior: %s\n\tErgoemacs: %s\n\tFinal: %s" elt
+                       save
+                       set
+                       val)
+              (customize-mark-to-save elt))
+          (set elt save)
+          (set-default elt save)
+          (customize-mark-to-save elt)
+          (put elt 'saved-value nil))))
+    (ignore-errors (unless noninteractive (customize-save-customized)))))
 
 (defvar ergoemacs-terminal
   "Local variable to determine if `ergoemacs-clean' is running a terminal `ergoemacs-mode'")
@@ -353,9 +347,9 @@ If TERMINAL is non-nil, run the terminal version"
 (defun ergoemacs-emacs-exe ()
   "Get the Emacs executable for testing purposes."
   (let* ((emacs-exe (invocation-name))
-        (emacs-dir (invocation-directory))
-        (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
-                          "\"")))
+         (emacs-dir (invocation-directory))
+         (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
+                           "\"")))
     full-exe))
 
 (defun ergoemacs-open-line ()
@@ -492,10 +486,10 @@ With a negative prefix NUMBER, move forward NUMBER open brackets."
            (> 0 number))
       (ergoemacs-forward-open-bracket (- 0 number))
     (search-backward-regexp
-   (eval-when-compile
-     (regexp-opt
-      '("\"" "(" "{" "[" "<" "〔" "【" "〖" "〈" "《" "「"
-        "『" "“" "‘" "‹" "«"))) nil t number)))
+     (eval-when-compile
+       (regexp-opt
+        '("\"" "(" "{" "[" "<" "〔" "【" "〖" "〈" "《" "「"
+          "『" "“" "‘" "‹" "«"))) nil t number)))
 
 (defun ergoemacs-forward-close-bracket (&optional number)
   "Move cursor to the next occurrence of right bracket or quotation mark.
@@ -534,9 +528,9 @@ With a negative prefix argument NUMBER, move backward NUMBER blocks."
   (if (and number
            (> 0 number))
       (ergoemacs-backward-block (- 0 number))
-  (if (search-forward-regexp "\n[[:blank:]\n]*\n+" nil "NOERROR" number)
-      (progn (backward-char))
-    (progn (goto-char (point-max))))))
+    (if (search-forward-regexp "\n[[:blank:]\n]*\n+" nil "NOERROR" number)
+        (progn (backward-char))
+      (progn (goto-char (point-max))))))
 
 (defun ergoemacs-backward-block (&optional number)
   "Move cursor backward to previous text block.
@@ -660,13 +654,13 @@ This will not honor `shift-select-mode'."
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (eobp))
         (let ((pt (point)))
           (ergoemacs :remap
-           'beginning-of-buffer)
+                     'beginning-of-buffer)
           (when (= pt (point))
             (call-interactively 'beginning-of-buffer))))
        (t
         (let ((pt (point)))
           (ergoemacs :remap
-           'end-of-buffer)
+                     'end-of-buffer)
           (when (= pt (point))
             (call-interactively 'end-of-buffer))))))
     (when (and (not ma) (region-active-p))
@@ -779,7 +773,7 @@ the prefix arguments of `beginning-of-buffer',
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
             (let ((pt (point)))
               (ergoemacs :remap
-               'beginning-of-buffer)
+                         'beginning-of-buffer)
               (when (= pt (point))
                 (call-interactively 'beginning-of-buffer)))
             (setq this-command 'beginning-of-buffer))
@@ -789,7 +783,7 @@ the prefix arguments of `beginning-of-buffer',
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
             (let ((pt (point)))
               (ergoemacs :remap
-               'scroll-down-command)
+                         'scroll-down-command)
               (when (= pt (point))
                 (call-interactively 'scroll-down-command)))
             (setq this-command 'scroll-down-command)))
@@ -805,7 +799,7 @@ the prefix arguments of `beginning-of-buffer',
           (setq current-prefix-arg nil)
           (let ((pt (point)))
             (ergoemacs :remap
-             'move-beginning-of-line)
+                       'move-beginning-of-line)
             (when (= pt (point))
               (call-interactively 'move-beginning-of-line)))
           (push (point) pts)
@@ -813,7 +807,7 @@ the prefix arguments of `beginning-of-buffer',
             (backward-char 1)
             (let ((pt (point)))
               (ergoemacs :remap
-               'move-beginning-of-line)
+                         'move-beginning-of-line)
               (when (= pt (point))
                 (call-interactively 'move-beginning-of-line)))
             (push (point) pts)))
@@ -838,7 +832,7 @@ the prefix arguments of `beginning-of-buffer',
          ((not pts)
           (let ((pt (point)))
             (ergoemacs :remap
-             'move-beginning-of-line)
+                       'move-beginning-of-line)
             (when (= pt (point))
               (call-interactively 'move-beginning-of-line))))
          (t
@@ -932,7 +926,7 @@ the prefix arguments of `end-of-buffer',
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
             (let ((pt (point)))
               (ergoemacs :remap
-               'end-of-buffer)
+                         'end-of-buffer)
               (when (= pt (point))
                 (call-interactively 'end-of-buffer)))
             (setq this-command 'end-of-buffer))
@@ -942,7 +936,7 @@ the prefix arguments of `end-of-buffer',
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
             (let ((pt (point)))
               (ergoemacs :remap
-               'scroll-up-command)
+                         'scroll-up-command)
               (when (= pt (point))
                 (call-interactively 'scroll-up-command)))
             (setq this-command 'scroll-up-command)
@@ -959,7 +953,7 @@ the prefix arguments of `end-of-buffer',
         (save-excursion
           (let ((pt (point)))
             (ergoemacs :remap
-             'move-end-of-line)
+                       'move-end-of-line)
             (when (= pt (point))
               (call-interactively 'move-end-of-line)))
           (push (point) pts)
@@ -969,7 +963,7 @@ the prefix arguments of `end-of-buffer',
             (forward-char 1)
             (let ((pt (point)))
               (ergoemacs :remap
-               'move-end-of-line)
+                         'move-end-of-line)
               (when (= pt (point))
                 (call-interactively 'move-end-of-line)))
             (push (point) pts)))
@@ -991,7 +985,7 @@ the prefix arguments of `end-of-buffer',
          ((not pts)
           (let ((pt (point)))
             (ergoemacs :remap
-             'move-end-of-line)
+                       'move-end-of-line)
             (when (= pt (point))
               (call-interactively 'move-end-of-line)))
           (setq this-command 'move-end-of-line))
