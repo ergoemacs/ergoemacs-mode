@@ -2025,7 +2025,7 @@ This does the same thing in `iseach-mode' using `isearch-yank-pop' and  `isearch
    ((and mark-active (boundp 'cua--rectangle) cua--rectangle)
     ;; call cua-paste
     (cua-paste arg))
-   ((and cua--last-killed-rectangle
+   ((and (boundp 'cua--last-killed-rectangle) cua--last-killed-rectangle
          (eq (and kill-ring (car kill-ring)) (car cua--last-killed-rectangle)))
     ;; Call cua-paste
     (cua-paste arg))
