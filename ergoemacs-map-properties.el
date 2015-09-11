@@ -1063,6 +1063,7 @@ Looks in `ergoemacs-use-local-unbind-list' to determine what maps will unbind er
 
  This is useful in supporting isearch in emacs 24.4+."
   (when (ergoemacs-keymapp keymap)
+    
     (let ((local-unbind-list-p (ergoemacs keymap :use-local-unbind-list-key)))
       (cond
        ((eq local-unbind-list-p 'no) nil)

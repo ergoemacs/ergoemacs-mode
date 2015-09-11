@@ -1387,7 +1387,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
             (when (setq tmp (plist-get plist prop))
               (insert (format "  %s -- %s\n" prop tmp))))
           (insert "\n")
-          (insert (format "Plist: %s" plist))
+          (insert (format "Plist: %s\n" plist))
           
           (insert (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
           (when (looking-back ": \\(.*\\)\n")
@@ -1448,7 +1448,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
               (insert (nth 0 elt))
               (insert ":\n")
               (insert (make-string 78 ?-))
-              (insert (ergoemacs-key-description--keymap (nth 1 elt)))
+              (ergoemacs-key-description--keymap (nth 1 elt) t)
               (insert "\n")))
           (with-current-buffer standard-output
             ;; Return the text we displayed.

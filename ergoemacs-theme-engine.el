@@ -577,14 +577,14 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
               (insert "\n"))
             (setq required-p nil))
           
-          (princ "\n\n")
+          (insert "\n\n")
           (if (equal (format "%s" old-theme) (format "%s" theme))
-              (insert (ergoemacs-key-description--keymap ergoemacs-keymap))
+              (ergoemacs-key-description--keymap ergoemacs-keymap t)
             (unwind-protect
                 (progn
                   (setq ergoemacs-theme theme)
                   (ergoemacs-mode-reset)
-                  (insert (ergoemacs-key-description--keymap ergoemacs-keymap)))
+                  (ergoemacs-key-description--keymap ergoemacs-keymap t))
               (setq ergoemacs-theme old-theme)
               (ergoemacs-mode-reset)))
           (buffer-string))))))

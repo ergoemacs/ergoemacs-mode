@@ -314,7 +314,8 @@ bindings the keymap is:
   :global t
   :group 'ergoemacs-mode
   :keymap ergoemacs-menu-keymap
-  :after-hook (if (not ergoemacs-mode--start-p)
+  :after-hook (if (and (not noninteractive)
+                       (not ergoemacs-mode--start-p))
                   (if ergoemacs-mode
                       (message "Ergoemacs will be started.")
                     (message "Ergoemacs startup canceled."))
@@ -636,7 +637,7 @@ When `store-p' is non-nil, save the tables."
 ;;;###autoload
 (defun ergoemacs-mode-reset ()
   "Reset `ergoemacs-mode' without toggling unnecessary variables."
-  (when ergoemacs-mode--start-p
+  (when (or ergoemacs-mode--start-p noninteractive)
     (setq ergoemacs-component-struct--refresh-variables t)
     (ergoemacs-mode -1)
     (ergoemacs-mode 1)
