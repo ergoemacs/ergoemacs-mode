@@ -890,7 +890,7 @@ Should test issue #142"
       (insert "(setq ergoemacs-keyboard-layout \"us\")")
       (unless ignore-prev-global
         (insert "(setq ergoemacs-ignore-prev-global nil)"))
-      (insert "(require 'ergoemacs-mode)(ergoemacs-mode 1)")
+      (insert "(require 'ergoemacs-mode)(setq ergoemacs-mode--start-p t)(ergoemacs-mode 1)")
       (insert
        (format
         "(setq ergoemacs-test-macro (edmacro-parse-keys \"%s\" t))"
@@ -1095,7 +1095,7 @@ Should test issue #142"
       (insert "(setq ergoemacs-theme nil)")
       (insert "(setq ergoemacs-keyboard-layout \"us\")")
       (insert "(setq ergoemacs-command-loop-type nil)")
-      (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(ergoemacs-mode 1)")
+      (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(setq ergoemacs-mode--start-p t)(ergoemacs-mode 1)")
       (insert "(global-set-key (kbd \"C-c C-c M-x\") 'execute-extended-command)")
       (insert (format "(define-key ergoemacs-test-major-mode-map (kbd \"C-c C-c\") #'(lambda() (interactive (with-temp-file \"%s\" (insert \"Ok\")))))" w-file))
       (insert
@@ -1135,6 +1135,7 @@ Should test issue #142"
               "(add-hook 'ergoemacs-mode-hook\n"
               "(lambda ()\n"
               "  (ergoemacs-require 'my-theme01)))\n"
+              "(setq ergoemacs-mode--start-p t)"
               "(ergoemacs-mode 1)\n"
               "(when (and (eq (key-binding (kbd \"C-x 1\")) 'delete-other-windows)\n"
               "           (eq (key-binding (kbd \"C-x 2\")) 'split-window-vertically)\n"
@@ -1176,7 +1177,7 @@ Should test issue #142"
               "(message \"Binding 2: %s\" (key-binding (kbd \"M-J\")))\n"
               "(global-set-key (kbd \"M-J\") 'beginning-of-buffer)\n"
               "(message \"Binding 3: %s\" (key-binding (kbd \"M-J\")))\n"
-              "(ergoemacs-mode 1)"
+              "(setq ergoemacs-mode--start-p t)(ergoemacs-mode 1)"
               "(message \"Binding 4: %s\" (key-binding (kbd \"M-J\")))\n"
               "(when (eq (key-binding (kbd \"M-J\")) 'beginning-of-buffer)\n"
               "(with-temp-file \"" w-file "\")\n"
@@ -1223,7 +1224,7 @@ Should test issue #142"
       (insert "(setq ergoemacs-theme nil)")
       (insert "(setq ergoemacs-keyboard-layout \"us\")")
       (insert "(setq ergoemacs-command-loop-type nil)")
-      (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(ergoemacs-mode 1)")
+      (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(setq ergoemacs-mode--start-p t)(ergoemacs-mode 1)")
       (insert (format "(define-key ergoemacs-test-major-mode-map (kbd \"<f6>\") #'(lambda() (interactive (with-temp-file \"%s\" (insert \"Ok\")))))" w-file))
       (insert "(global-unset-key (kbd \"<f6>\"))")
       (insert
