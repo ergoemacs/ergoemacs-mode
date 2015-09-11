@@ -421,11 +421,11 @@ Allows the component not to be calculated."
                          (eq (nth 0 key) keymap))
                  ;; Update keymap (in place).
                  (ergoemacs :define-key value
-                   (ergoemacs-translate
-                    key (ergoemacs-component-struct-just-first-keys obj)
-                    (ergoemacs-component-struct-variable-modifiers obj)
-                    (ergoemacs-component-struct-variable-prefixes obj) cur-layout
-                    (ergoemacs-component-struct-layout obj)) new-fn)))
+                            (ergoemacs-translate
+                             key (ergoemacs-component-struct-just-first-keys obj)
+                             (ergoemacs-component-struct-variable-modifiers obj)
+                             (ergoemacs-component-struct-variable-prefixes obj) cur-layout
+                             (ergoemacs-component-struct-layout obj)) new-fn)))
              (ergoemacs-component-struct-calculated-layouts obj))))
         ;; Update dynamic/deferred keys
         (fset (ergoemacs-component-struct-dynamic-keys obj) new-dynamic)))))
@@ -698,10 +698,10 @@ Cache using LOOKUP-KEY. "
              (warn "Keymap range currently not supported %s,%s" key item)
            (unless (eq item 'ergoemacs-prefix)
              (ergoemacs :define-key
-              ergoemacs-component-struct--get-keymap
-              (ergoemacs-translate
-               key just-first-keys variable-modifiers
-               variable-prefixes cur-layout layout-from) item))))
+                        ergoemacs-component-struct--get-keymap
+                        (ergoemacs-translate
+                         key just-first-keys variable-modifiers
+                         variable-prefixes cur-layout layout-from) item))))
        cmap)
       (setq ret (copy-keymap ergoemacs-component-struct--get-keymap))
       (ergoemacs ret :label (list (or lookup-key (ergoemacs (ergoemacs :global-map) :key-hash)) (intern (format "%s%s" (ergoemacs-component-struct-name map) (or (ergoemacs-component-struct-version map) ""))) (intern cur-layout)))
@@ -971,88 +971,103 @@ be composed over the keymap.  This is done in
                        (fboundp fn))
               (funcall fn plist))))))
     (setq ergoemacs-component-struct--applied-plists tmp)
-    (dolist (init (ergoemacs-component-struct--variables obj))
-      (if (and (consp (nth 0 init)) (not (nth 1 init)) (not (nth 2 init)))
-          (unless (member (nth 0 init) ergoemacs-component-struct--deferred-functions)
-            (cond
-             ((eq (car (nth 0 init)) 'add-to-list)
-              (when (ignore-errors (boundp (nth 1 (nth 0 init))))
-                (ignore-errors
-                  (apply (car (nth 0 init)) (cdr (nth 0 init)))
-                  (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
-              (when (ignore-errors (eq 'quote (nth 0 (nth 1 (nth 0 init)))))
-                (if (ignore-errors (eq 'quote (nth 0 (nth 2 (nth 0 init)))))
-                    (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
-                      (apply 'add-to-list  (nth 1 (nth 2 (nth 0 init))) (cdr (cdr (cdr (nth 0 init)))))
-                      (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
-                  (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
-                    (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
-                    (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))))
-             ((memq (car (nth 0 init)) '(push pushnew))
-              (when (ignore-errors (boundp (nth 2 (nth 0 init))))
-                (if (ignore-errors (eq 'quote (nth 1 (nth 1 (nth 0 init)))))
-                    (ignore-errors
-                      (apply (car (nth 0 init)) (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
-                      (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
+    (dolist (cur-obj obj)
+      (dolist (init (ergoemacs-component-struct--variables cur-obj))
+        (if (and (consp (nth 0 init)) (not (nth 1 init)) (not (nth 2 init)))
+            (unless (member (nth 0 init) ergoemacs-component-struct--deferred-functions)
+              (cond
+               ((eq (car (nth 0 init)) 'add-to-list)
+                (when (ignore-errors (boundp (nth 1 (nth 0 init))))
                   (ignore-errors
                     (apply (car (nth 0 init)) (cdr (nth 0 init)))
                     (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
-                (ignore-errors
-                  (apply (car (nth 0 init)) (cdr (nth 0 init)))
-                  (push (nth 0 init) ergoemacs-component-struct--deferred-functions))))
-             ((eq (car (nth 0 init)) 'require)
-              (require (nth 1 (nth 1 (nth 0 init))) nil t)
-              (when (not (featurep (nth 1 (nth 1 (nth 0 init)))))
-		;; Attempt to ensure the feature, if specified.
-		
-                (warn "Could not load %s; %s" (nth 1 (nth 1 (nth 0 init)))
-		      (nth 3 init))))
-             (t
-              (condition-case err
-		  (eval (nth 0 init))
-		(error (warn "Ergoemacs: error %s while evaluating" err (nth 0 init))))
-              (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
-             ;; (t (warn "Theme did not handle: %s" (nth 0 init)))
-             ))
-        (let ((x (and ergoemacs-component-struct--refresh-variables (boundp (nth 0 init))
-                      (assq (nth 0 init) ergoemacs-component-struct--refresh-variables))))
-          (cond
-           ((and x
-                 (not (nth 2 init))
-                 (not
-                  (equal (ergoemacs-sv (nth 0 init))
-                         (funcall (nth 1 init)))))
-            ;; Values have changed, so reapply.
-            (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)
-                  x nil))
-           ((and x (nth 2 init))
-            ;; Reapply hooks
-            (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)
-                  x nil)))
-          (cond
-           (x ;; Values have not changed
-            (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)))
-           ((not (boundp (nth 0 init))) ;; Do nothing, not bound yet.
-            )
-           ((assq (nth 0 init) ergoemacs-component-struct--applied-inits)
-            ;; Already applied, Do nothing for now.
-            )
-           ((nth 2 init)
-            ;; Hook
-            (let ((add-hook-p (nth 0 (nth 2 init)))
-                  (append-p (nth 1 (nth 2 init)))
-                  (local-p (nth 2 (nth 2 init))))
+                (when (ignore-errors (eq 'quote (nth 0 (nth 1 (nth 0 init)))))
+                  (if (ignore-errors (eq 'quote (nth 0 (nth 2 (nth 0 init)))))
+                      (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
+                        (apply 'add-to-list  (nth 1 (nth 2 (nth 0 init))) (cdr (cdr (cdr (nth 0 init)))))
+                        (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
+                    (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
+                      (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
+                      (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))))
+               ((memq (car (nth 0 init)) '(push pushnew))
+                (when (ignore-errors (boundp (nth 2 (nth 0 init))))
+                  (if (ignore-errors (eq 'quote (nth 1 (nth 1 (nth 0 init)))))
+                      (ignore-errors
+                        (apply (car (nth 0 init)) (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
+                        (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
+                    (ignore-errors
+                      (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                      (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))
+                  (ignore-errors
+                    (apply (car (nth 0 init)) (cdr (nth 0 init)))
+                    (push (nth 0 init) ergoemacs-component-struct--deferred-functions))))
+               ((eq (car (nth 0 init)) 'require)
+                (require (nth 1 (nth 1 (nth 0 init))) nil t)
+                (when (not (featurep (nth 1 (nth 1 (nth 0 init)))))
+                  ;; Attempt to ensure the feature, if specified.
+                  
+                  (warn "Could not load %s; %s" (nth 1 (nth 1 (nth 0 init)))
+                        (nth 3 init))))
+               (t
+                (condition-case err
+                    (eval (nth 0 init))
+                  (error (warn "Ergoemacs: error %s while evaluating" err (nth 0 init))))
+                (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
+               ;; (t (warn "Theme did not handle: %s" (nth 0 init)))
+               ))
+          (let ((x (and ergoemacs-component-struct--refresh-variables (boundp (nth 0 init))
+                        (assq (nth 0 init) ergoemacs-component-struct--refresh-variables)))
+                add-hook-p append-p local-p)
+            (cond
+             ((and x
+                   (not (nth 2 init))
+                   (not
+                    (equal (ergoemacs-sv (nth 0 init))
+                           (funcall (nth 1 init)))))
+              ;; Values have changed, so reapply.
+              (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)
+                    x nil))
+             ((and x (nth 2 init))
+              ;; Reapply hooks
+              (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)
+                    x nil)))
+            (cond
+             (x ;; Values have not changed
+              (setq ergoemacs-component-struct--refresh-variables (delq x ergoemacs-component-struct--refresh-variables)))
+             ((not (boundp (nth 0 init))) ;; Do nothing, not bound yet.
+              )
+             ((and (nth 2 init) ;; Already applied hook?
+                   (setq add-hook-p (nth 0 (nth 2 init))
+                         append-p (nth 1 (nth 2 init))
+                         local-p (nth 2 (nth 2 init)))
+                   (member (list (nth 0 init) (nth 1 init)
+                                 (list (not add-hook-p) append-p local-p))
+                           ergoemacs-component-struct--applied-inits)))
+             ((nth 2 init)
+              ;; Hook
               (if add-hook-p
-                  (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
-                (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p))
+                  (progn
+                    (funcall 'add-hook (nth 0 init) (nth 1 init) append-p local-p)
+                    ;; (message "%s: (add-hook %s %s %s %s)"
+                    ;;          cur-obj (nth 0 init) (nth 1 init)
+                    ;;          append-p local-p)
+                    )
+                (funcall 'remove-hook (nth 0 init) (nth 1 init) local-p)
+                ;; (message "%s: (remove-hook %s %s %s %s)"
+                ;;          cur-obj (nth 0 init) (nth 1 init)
+                ;;          append-p local-p)
+                )
               (push (list (nth 0 init) (nth 1 init)
                           (list (not add-hook-p) append-p local-p))
-                    ergoemacs-component-struct--applied-inits)))
-           (t
-            ;; (Nth 0 Init)iable state change
-            (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
-                  ergoemacs-component-struct--applied-inits)
-            (ergoemacs-set (nth 0 init) (funcall (nth 1 init)))))))))
+                    ergoemacs-component-struct--applied-inits))
+             ((and (not (nth 2 init)) (assq (nth 0 init) ergoemacs-component-struct--applied-inits))
+              ;; Already applied, Do nothing for now.
+              )
+             (t
+              ;; (Nth 0 Init)iable state change
+              (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
+                    ergoemacs-component-struct--applied-inits)
+              (ergoemacs-set (nth 0 init) (funcall (nth 1 init))))))))))
   ;; Now remove things that were not set
   (when ergoemacs-component-struct--refresh-variables
     (let ((tmp ergoemacs-component-struct--applied-inits))
@@ -1335,8 +1350,8 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
 (defun ergoemacs-component-cached-p (component)
   "Determine if COMPONENT is cached instead of loaded."
   (let* ((component (and component
-                       (or (and (stringp component) component)
-                           (and (symbolp component) (symbol-name component)))))
+                         (or (and (stringp component) component)
+                             (and (symbolp component) (symbol-name component)))))
          (comp (ergoemacs-component-struct--lookup-hash (or component "")))
          (plist (ergoemacs-component-struct-plist comp))
          (file (plist-get plist :file))
@@ -1553,9 +1568,9 @@ modifications with `diminish-undo'"
          ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
                               (diminish diminish-symbol (ergoemacs :unicode (nth 0 dim) (nth 1 dim))))))
          (t (eval-after-load diminish-symbol
-               `(ignore-errors
-		  (diminish ',diminish-symbol
-                         ,(ergoemacs :unicode (nth 0 dim) (nth 1 dim))))))))
+              `(ignore-errors
+                 (diminish ',diminish-symbol
+                           ,(ergoemacs :unicode (nth 0 dim) (nth 1 dim))))))))
        ;;:diminish (" 🌈" " ⓡ" " r")
        ((and (consp dim)
              (= 3 (length dim))
@@ -1567,9 +1582,9 @@ modifications with `diminish-undo'"
          ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
                               (diminish diminish-symbol (ergoemacs :unicode (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))
          (t (eval-after-load diminish-symbol
-               `(ignore-errors
-		  (diminish ',diminish-symbol
-                         ,(ergoemacs :unicode (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))))
+              `(ignore-errors
+                 (diminish ',diminish-symbol
+                           ,(ergoemacs :unicode (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))))
        ;; :diminish (mode " " " g")
        ((and (consp dim)
              (= 3 (length dim))
@@ -1581,9 +1596,9 @@ modifications with `diminish-undo'"
          ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
                               (diminish (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))
          (t (eval-after-load diminish-symbol
-               `(ignore-errors
-		  (diminish ',(nth 0 dim)
-                         ,(ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))))
+              `(ignore-errors
+                 (diminish ',(nth 0 dim)
+                           ,(ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))))
        ;; :diminish (rainbow-mode " 🌈" " ⓡ" " r")
        ((and (consp dim)
              (= 4 (length dim))
@@ -1596,9 +1611,9 @@ modifications with `diminish-undo'"
          ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
                               (diminish (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (ergoemacs :unicode (nth 2 dim) (nth 3 dim)))))))
          (t (eval-after-load diminish-symbol
-               `(ignore-errors
-		  (diminish ',(nth 0 dim)
-                         ,(ergoemacs :unicode (nth 1 dim) (ergoemacs :unicode (nth 2 dim) (nth 3 dim)))))))))
+              `(ignore-errors
+                 (diminish ',(nth 0 dim)
+                           ,(ergoemacs :unicode (nth 1 dim) (ergoemacs :unicode (nth 2 dim) (nth 3 dim)))))))))
        ;; :diminish (mode " ")
        ((and (consp dim)
              (= 2 (length dim))
