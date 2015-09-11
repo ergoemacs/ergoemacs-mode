@@ -138,9 +138,11 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
             (dolist (map (reverse (cdr keymap)))
               (when label
                 (ergoemacs :label map))
-              (if melt
-                  (setq ret (append (cdr map) ret))
-                (push (cons (car map) (cdr map)) ret))))
+              (if (consp map)
+                  (if melt
+                      (setq ret (append (cdr map) ret))
+                    (push (cons (car map) (cdr map)) ret))
+                (push map ret))))
         (when parent
           (set-keymap-parent keymap parent))
         (when melt
@@ -610,9 +612,9 @@ composing or parent/child relationships)"
 KEYMAP can be a keymap or keymap integer key."
   (if (or (ergoemacs-keymapp keymap) (integerp keymap))
       (let* (ret tmp
-             (keymap (or (and (ergoemacs-keymapp keymap) (ergoemacs keymap :original))
-                         keymap))
-             (map-p (ergoemacs keymap :key-hash)))
+                 (keymap (or (and (ergoemacs-keymapp keymap) (ergoemacs keymap :original))
+                             keymap))
+                 (map-p (ergoemacs keymap :key-hash)))
         (cond
          ((and map-p (not no-hash)
                (setq ret (ergoemacs keymap :map-list-hash)))
