@@ -44,7 +44,6 @@
 (defvar dired-mode-map)
 (defvar cl-struct-ergoemacs-component-struct-tags)
 
-
 (declare-function ergoemacs-mode "ergoemacs-mode")
 
 (declare-function ergoemacs-command-loop "ergoemacs-command-loop")
@@ -1125,7 +1124,7 @@ Should test issue #142"
     (with-temp-file temp-file
       (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
               (or (and (boundp 'wait-for-me)
-                       "(setq debug-on-error t)") "")
+                       "(setq debug-on-error t debug-on-quit t)") "")
               "(ergoemacs-theme-component my-theme01 ()\n"
               "\"My ergoemacs-mode theme component\"\n"
               "(global-set-key (kbd \"C-x 1\") 'delete-other-windows)\n"
@@ -1149,7 +1148,7 @@ Should test issue #142"
     (message "%s"
              (shell-command-to-string
               (format "%s %s -Q -L %s -l %s -l %s"
-                      emacs-exe (if (boundp 'wait-for-me) "" "--batch")
+                      emacs-exe (if (boundp 'wait-for-me) "-debug-init" "--batch")
                       (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
                       (expand-file-name (file-name-sans-extension (locate-library "ergoemacs-mode")))
                       temp-file)))
