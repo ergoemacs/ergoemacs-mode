@@ -1089,21 +1089,22 @@ maps.")
   "Determines if ergoemacs-mode should make sure to set the original keymap to the caluclated value.
 
  This is useful in supporting isearch in emacs 24.4+."
-  (let ((set-map-p (ergoemacs keymap :use-set-map-key)))
-    (cond
-     ((eq set-map-p 'no) nil)
-     (set-map-p set-map-p)
-     (ergoemacs-map-properties--set-map-list
-      (let ((map-list (ergoemacs keymap :map-list)))
-        (prog1 (catch 'found-use-local
-                 (dolist (map map-list)
-                   (when (memq map ergoemacs-map-properties--set-map-list)
-                     (setq set-map-p t)
-                     (throw 'found-use-local t)))
-                 (setq set-map-p 'no)
-                 nil)
-          (ergoemacs keymap :use-set-map-key set-map-p))))
-     (t nil))))
+  (when (ergoemacs-keymapp keymap)
+    (let ((set-map-p (ergoemacs keymap :use-set-map-key)))
+      (cond
+       ((eq set-map-p 'no) nil)
+       (set-map-p set-map-p)
+       (ergoemacs-map-properties--set-map-list
+        (let ((map-list (ergoemacs keymap :map-list)))
+          (prog1 (catch 'found-use-local
+                   (dolist (map map-list)
+                     (when (memq map ergoemacs-map-properties--set-map-list)
+                       (setq set-map-p t)
+                       (throw 'found-use-local t)))
+                   (setq set-map-p 'no)
+                   nil)
+            (ergoemacs keymap :use-set-map-key set-map-p))))
+       (t nil)))))
 
 (defvar ergoemacs-map-properties--major-modes-that-modify-global-keymap
   '(calc-mode calc-trail-mode calc-edit-mode)
