@@ -2581,13 +2581,15 @@ See also `ergoemacs-lookup-word-on-internet'."
    (t (ergoemacs-move-text-internal arg))))
 
 (defun ergoemacs-org-edit-src ()
-  "Deal with org source blocks.
+  "Deal with org source blocks and other narrowed regions.
 
-In `org-mode' run `org-edit-special'. If `user-error' is raised
+In `org-mode' run `org-edit-special'.  If `user-error' is raised
 run `org-babel-tangle'.
 
 In org source buffers run `org-edit-src-exit'
-In other functions run `org-babel-detangle'.
+
+In other source buffer that `ergoemacs-mode' recoginzes as a
+org-mode buffer, run `org-babel-detangle'.
 
 With a prefix argument like \\[universial-argument] in an
 `org-mode' buffer, run `org-babel-tangle'."
@@ -2604,7 +2606,14 @@ With a prefix argument like \\[universial-argument] in an
         (error (call-interactively 'org-babel-tangle))))
      (org-p
       (call-interactively 'org-edit-src-exit))
-     (t
+     ((buffer-narrowed-p)
+      (call-interactively 'widen))
+     ((region-active-p)
+      (call-interactively 'narrow-to-region))
+     ((setq org-p
+            (save-excursion
+              (goto-char (point-min))
+              (re-search-forward (concat comment-start-skip ".*:1 ends here") nil t)))
       (call-interactively 'org-babel-detangle)))))
 
 (defun ergoemacs-describe-current-theme ()
