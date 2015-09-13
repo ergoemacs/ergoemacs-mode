@@ -756,6 +756,37 @@ This was stole/modified from `c-save-buffer-state'"
             (buffer-modified-p)
             (set-buffer-modified-p nil)))))
 
+(defvar ergoemacs--map-properties-list
+  '(
+    :composed-list
+    :composed-p
+    :deferred-maps
+    :empty-p
+    :installed-p
+    :key-hash
+    :key-lessp
+    :key-struct
+    :keys
+    :label
+    :lookup
+    :movement-p
+    :original
+    :original-user
+    :override-map-p
+    :override-maps
+    :revert-original
+    :sequence
+    :set-map-p
+    :use-local-unbind-list-p
+    :user
+    :where-is
+    :map-list
+    )
+  "Partial list of `ergoemacs' supported properties.
+
+These proprerties are aliaes for ergoemacs-map-properties--
+functions.")
+
 ;;;###autoload
 (defmacro ergoemacs (&optional arg1 arg2 arg3 arg4)
   "Get/Set keymaps and `ergoemacs-mode' properties
@@ -767,115 +798,81 @@ When arg1 can be a property.  The following properties are supported:
 - :map-list,  :composed-p, :composed-list, :key-hash :empty-p calls ergoemacs-map-properties-- equivalent functions.
 
 "
-  (let ((map-properties-list '(:map-list
-                               :user
-                               :composed-p
-                               :composed-list
-                               :key-struct
-                               :key-hash
-                               :key-lessp
-                               :empty-p
-                               :label
-                               :keys
-                               :where-is
-                               :lookup
-                               :original
-                               :revert-original
-                               :original-user
-                               :installed-p
-                               :sequence
-                               :movement-p
-                               :override-map-p
-                               :override-maps
-                               :deferred-maps
-                               :use-local-unbind-list-p
-                               :set-map-p)))
+  (cond
+   ((and arg1 (symbolp arg1) (eq arg1 :define-key) arg2 arg3)
+    `(ergoemacs-translate--define-key ,arg2 ,arg3 ,arg4))
+   ((and arg1 (symbolp arg1) (eq arg1 :ignore-global-changes-p) (not arg2) (not arg3))
+    `(ergoemacs-map-properties--ignore-global-changes-p))
+   ((and arg1 (symbolp arg1) (eq arg1 :user-before) (not arg2) (not arg3))
+    `(ergoemacs-map-properties--before-ergoemacs))
+   ((and arg1 (symbolp arg1) (eq arg1 :user-after) (not arg2) (not arg3))
+    `(ergoemacs-map-properties--before-ergoemacs t))
+   ((and arg1 (symbolp arg1) (eq arg1 :modal-p))
+    `(ergoemacs-command-loop--modal-p))
+   ((and arg1 (symbolp arg1) (eq arg1 :combine) arg2 arg3)
+    `(ergoemacs-command-loop--combine ,arg2 ,arg3))
+   ((and arg1 (symbolp arg1) (memq arg1 '(:unicode-or-alt :unicode))
+         arg2 arg3)
+    `(ergoemacs-key-description--unicode-char ,arg2 ,arg3))
+   ((and arg1 (symbolp arg1) (eq arg1 :modifier-desc)
+         arg2)
+    `(mapconcat #'ergoemacs-key-description--modifier ,arg2 ""))
+   ((and arg1 (symbolp arg1) (eq arg1 :current-version))
+    `(ergoemacs-theme--get-version))
+   ((and arg1 (symbolp arg1) (eq arg1 :current-theme))
+    `(or (and ergoemacs-theme (stringp ergoemacs-theme) ergoemacs-theme)
+         (and ergoemacs-theme (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))
+         "standard"))
+   ((and arg1 (symbolp arg1)
+         (memq arg1 ergoemacs--map-properties-list))
+    `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg1) 1))) ,arg2 ,arg3))
+
+   ((and arg1 arg2 (eq arg2 :new-command) arg3)
+    ;; (ergoemacs arg1 :new-command 'next-line)
+    `(ergoemacs-map-properties--new-command ,arg1 ,arg3))
+   ((and arg1 (symbolp arg1)
+         (eq arg1 :global-map))
+    `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map)))
+   ((and arg1 (symbolp arg1)
+         (eq arg1 :revert-global-map))
+    `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map) :setcdr))
+   ((and arg1 (symbolp arg1)
+         (eq arg1 :remap) arg2)
+    `(progn
+       (setq this-command (or (key-binding (vector 'ergoemacs-remap ,arg2) t nil (point)) ,arg2))
+       (call-interactively (or (key-binding (vector 'ergoemacs-remap ,arg2) t nil (point)) ,arg2))))
+   ((and arg1 (symbolp arg1)
+         (eq arg1 :layout))
+    `(ergoemacs-layouts--current ,arg2))
+   ((and arg1 arg2 (not arg3)
+         (symbolp arg2)
+         (string= ":" (substring (symbol-name arg2) 0 1)))
+    ;; Get a arg2
     (cond
-     ((and arg1 (symbolp arg1) (eq arg1 :define-key) arg2 arg3)
-      `(ergoemacs-translate--define-key ,arg2 ,arg3 ,arg4))
-     ((and arg1 (symbolp arg1) (eq arg1 :ignore-global-changes-p) (not arg2) (not arg3))
-      `(ergoemacs-map-properties--ignore-global-changes-p))
-     ((and arg1 (symbolp arg1) (eq arg1 :user-before) (not arg2) (not arg3))
-      `(ergoemacs-map-properties--before-ergoemacs))
-     ((and arg1 (symbolp arg1) (eq arg1 :user-after) (not arg2) (not arg3))
-      `(ergoemacs-map-properties--before-ergoemacs t))
-     ((and arg1 (symbolp arg1) (eq arg1 :modal-p))
-      `(ergoemacs-command-loop--modal-p))
-     ((and arg1 (symbolp arg1) (eq arg1 :combine) arg2 arg3)
-      `(ergoemacs-command-loop--combine ,arg2 ,arg3))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:unicode-or-alt :unicode))
-           arg2 arg3)
-      `(ergoemacs-key-description--unicode-char ,arg2 ,arg3))
-     ((and arg1 (symbolp arg1) (eq arg1 :modifier-desc)
-           arg2)
-      `(mapconcat #'ergoemacs-key-description--modifier ,arg2 ""))
-     ((and arg1 (symbolp arg1) (eq arg1 :current-version))
-      `(ergoemacs-theme--get-version))
-     ((and arg1 (symbolp arg1) (eq arg1 :current-theme))
-      `(or (and ergoemacs-theme (stringp ergoemacs-theme) ergoemacs-theme)
-           (and ergoemacs-theme (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))
-           "standard"))
-     ((and arg1 (symbolp arg1)
-           (memq arg1 map-properties-list))
-      `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg1) 1))) ,arg2 ,arg3))
-
-     ((and arg1 arg2 (eq arg2 :new-command) arg3)
-      ;; (ergoemacs arg1 :new-command 'next-line)
-      `(ergoemacs-map-properties--new-command ,arg1 ,arg3))
-
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :global-map))
-      `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map)))
-
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :revert-global-map))
-      `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map) :setcdr))
-     
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :remap) arg2)
-      `(progn
-         (setq this-command (or (key-binding (vector 'ergoemacs-remap ,arg2) t nil (point)) ,arg2))
-         (call-interactively (or (key-binding (vector 'ergoemacs-remap ,arg2) t nil (point)) ,arg2))))
-     
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :layout))
-      `(ergoemacs-layouts--current ,arg2))
-     
-     ((and arg1 arg2 (not arg3)
-           (symbolp arg2)
-           (string= ":" (substring (symbol-name arg2) 0 1)))
-      
-      ;; Get a arg2
-      (cond
-       ((eq arg2 :full)
-        `(ignore-errors (char-table-p (nth 1 (ergoemacs-map-properties--keymap-value ,arg1)))))
-       ((eq arg2 :indirect)
-        (macroexpand-all `(ergoemacs-keymapp (symbol-function ,arg1))))
-       ((memq arg2 '(:map-key :key))
-        ;; FIXME Expire any ids that are no longer linked??
-        `(ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist ,arg1) :map-key)))
-       ((memq arg2 map-properties-list)
-        `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg2) 1))) ,arg1))
-       (t
-        `(ignore-errors (ergoemacs-gethash ,arg2 (ergoemacs-gethash (ergoemacs-map-properties--key-hash (ergoemacs-map-properties--keymap-value ,arg1)) ergoemacs-map-properties--plist-hash))))))
-
-     ((and arg1 arg2 arg3
-           (symbolp arg2)
-           (string= ":" (substring (symbol-name arg2) 0 1)))
-      ;; Assign a property.
-      `(ergoemacs-map-properties--put ,arg1 ,arg2 ,arg3))
-     
-     ((and (not arg3) (eq arg1 'emulation-mode-map-alists))
-      `(ergoemacs-map--emulation-mode-map-alists ,arg2))
-     
-     ((and (not arg3) (eq arg1 'minor-mode-overriding-map-alist))
-      `(ergoemacs-map--minor-mode-overriding-map-alist ,arg2))
-
-     ((and (not arg3) (eq arg1 'minor-mode-map-alist))
-      `(ergoemacs-map--minor-mode-map-alist ,arg2))
-
+     ((eq arg2 :full)
+      `(ignore-errors (char-table-p (nth 1 (ergoemacs-map-properties--keymap-value ,arg1)))))
+     ((eq arg2 :indirect)
+      (macroexpand-all `(ergoemacs-keymapp (symbol-function ,arg1))))
+     ((memq arg2 '(:map-key :key))
+      ;; FIXME Expire any ids that are no longer linked??
+      `(ignore-errors (plist-get (ergoemacs-map-properties--map-fixed-plist ,arg1) :map-key)))
+     ((memq arg2 ergoemacs--map-properties-list)
+      `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg2) 1))) ,arg1))
      (t
-      `(ergoemacs-map-- ,arg1)))))
+      `(ignore-errors (ergoemacs-gethash ,arg2 (ergoemacs-gethash (ergoemacs-map-properties--key-hash (ergoemacs-map-properties--keymap-value ,arg1)) ergoemacs-map-properties--plist-hash))))))
+   ((and arg1 arg2 arg3
+         (symbolp arg2)
+         (string= ":" (substring (symbol-name arg2) 0 1)))
+    ;; Assign a property.
+    `(ergoemacs-map-properties--put ,arg1 ,arg2 ,arg3))
+   ((and (not arg3) (eq arg1 'emulation-mode-map-alists))
+    `(ergoemacs-map--emulation-mode-map-alists ,arg2))
+   ((and (not arg3) (eq arg1 'minor-mode-overriding-map-alist))
+    `(ergoemacs-map--minor-mode-overriding-map-alist ,arg2))
+   ((and (not arg3) (eq arg1 'minor-mode-map-alist))
+    `(ergoemacs-map--minor-mode-map-alist ,arg2))
+   (t
+    `(ergoemacs-map-- ,arg1))))
 
 ;;;###autoload
 (defmacro ergoemacs-translation (&rest body-and-plist)
