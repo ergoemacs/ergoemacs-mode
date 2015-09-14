@@ -781,8 +781,12 @@ If LOOKUP-KEYMAP
       lookup-keymap))))
 
 (defun ergoemacs-map--temporary-map-properties (map)
-  "Possibly assign MAP to be a transient map that `ergoemacs-mode' does not touch.
-This occurs when the keymap is not known to `ergoemacs-mode' and it is not a composed keymap."
+  "Test if MAP is a transient map that `ergoemacs-mode' does not touch.
+
+This occurs when the keymap is not known to `ergoemacs-mode' and
+it is not a composed keymap.
+
+If it is a tranisent map, assign the :dont-modify-p property to t."
   (unless ergoemacs-modify-transient-maps
     (let ((map-key (ergoemacs map :map-key)))
       (unless (or map-key (ergoemacs map :composed-p))
