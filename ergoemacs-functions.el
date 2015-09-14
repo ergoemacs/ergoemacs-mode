@@ -1596,9 +1596,21 @@ Installs `undo-tree' if not present."
 (defun ergoemacs-keyboard-quit ()
   "Quit the current command/process.
 Similar to `keyboard-quit', with the following changes:
+
 • In the minibuffer, use `minibuffer-keyboard-quit'
-• When `ergoemacs-mode' is in a modal command mode, exit that command mode.
-• When \"q\" is bound to something other than self-insert commands, run that command.
+
+• When a region is active, (see `region-active-p') deactivate the
+  region with the function `deactivate-mark'.
+
+• When `ergoemacs-mode' is in a modal command mode, exit that
+  command mode.
+
+• When \"C-g\" is bound to something other than ergoemacs /
+  standard quit commands, run that command.
+
+• When \"q\" is bound to something other than self-insert
+  commands, run that command.
+
 • Otherwise run `keyboard-quit'
 "
   (interactive)
@@ -1612,12 +1624,15 @@ Similar to `keyboard-quit', with the following changes:
         (deactivate-mark)))
      (ergoemacs-command-loop--modal-stack
       (ergoemacs-command-loop--modal-pop))
-     ((and (setq bind (key-binding [?q]))
-           (not (string-match-p "self-insert" (symbol-name bind)))
-           (not (eq bind 'ergoemacs-keyboard-quit)))
-      (call-interactively bind))
-     (t
-      (keyboard-quit)))))
+     ((and (setq bind (key-binding [7])) ;; C-g
+           (not (memq bind '(ergoemacs-keyboard-quit minibuffer-keyboard-quit keyboard-quit))))
+      (call-interactively bind))r
+      ((and (setq bind (key-binding [?q]))
+            (not (string-match-p "self-insert" (symbol-name bind)))
+            (not (eq bind 'ergoemacs-keyboard-quit)))
+       (call-interactively bind))
+      (t
+       (keyboard-quit)))))
 
 (defun ergoemacs-close-current-buffer ()
   "Close the current buffer.
