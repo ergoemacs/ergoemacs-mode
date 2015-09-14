@@ -1606,6 +1606,10 @@ Similar to `keyboard-quit', with the following changes:
     (cond
      ((minibufferp)
       (minibuffer-keyboard-quit))
+     ((region-active-p)
+      (setq saved-region-selection nil)
+      (let (select-active-regions)
+        (deactivate-mark)))
      (ergoemacs-command-loop--modal-stack
       (ergoemacs-command-loop--modal-pop))
      ((and (setq bind (key-binding [?q]))
