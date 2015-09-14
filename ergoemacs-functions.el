@@ -1020,12 +1020,12 @@ the prefix arguments of `end-of-buffer',
 Delimiters are paired characters:
  () [] {} «» ‹› “” 〖〗 【】 「」 『』 （） 〈〉 《》 〔〕 ⦗⦘ 〘〙 ⦅⦆ 〚〛 ⦃⦄ ⟨⟩
  For practical purposes, also: \"\", but not single quotes."
- (interactive)
- (let (p1)
-   (skip-chars-backward "^<>([{“「『‹«（〈《〔【〖⦗〘⦅〚⦃⟨\"")
-   (setq p1 (point))
-   (skip-chars-forward "^<>)]}”」』›»）〉》〕】〗⦘〙⦆〛⦄⟩\"")
-   (set-mark p1)))
+  (interactive)
+  (let (p1)
+    (skip-chars-backward "^<>([{“「『‹«（〈《〔【〖⦗〘⦅〚⦃⟨\"")
+    (setq p1 (point))
+    (skip-chars-forward "^<>)]}”」』›»）〉》〕】〗⦘〙⦆〛⦄⟩\"")
+    (set-mark p1)))
 
 ;; by Nikolaj Schumacher, 2008-10-20. Released under GPL.
 (defun ergoemacs-semnav-up (arg)
@@ -1611,8 +1611,7 @@ Similar to `keyboard-quit', with the following changes:
 • When \"q\" is bound to something other than self-insert
   commands, run that command.
 
-• Otherwise run `keyboard-quit'
-"
+• Otherwise run `keyboard-quit'"
   (interactive)
   (let (bind)
     (cond
@@ -1626,13 +1625,13 @@ Similar to `keyboard-quit', with the following changes:
       (ergoemacs-command-loop--modal-pop))
      ((and (setq bind (key-binding [7])) ;; C-g
            (not (memq bind '(ergoemacs-keyboard-quit minibuffer-keyboard-quit keyboard-quit))))
-      (call-interactively bind))r
-      ((and (setq bind (key-binding [?q]))
-            (not (string-match-p "self-insert" (symbol-name bind)))
-            (not (eq bind 'ergoemacs-keyboard-quit)))
-       (call-interactively bind))
-      (t
-       (keyboard-quit)))))
+      (call-interactively bind))
+     ((and (setq bind (key-binding [?q]))
+           (not (string-match-p "self-insert" (symbol-name bind)))
+           (not (eq bind 'ergoemacs-keyboard-quit)))
+      (call-interactively bind))
+     (t
+      (keyboard-quit)))))
 
 (defun ergoemacs-close-current-buffer ()
   "Close the current buffer.
@@ -2428,13 +2427,13 @@ Sends shell prompt string to process, then turns on
 (defvar ergoemacs-all-dictionaries nil
   "A vector of dictionaries. Used by `lookup-ergoemacs-all-dictionaries'. http://wordyenglish.com/words/dictionary_tools.html ")
 (setq ergoemacs-all-dictionaries [
-                        "http://www.dict.org/bin/Dict?Form=Dict2&Database=*&Query=�" ; 1913 Webster, WordNet
-                        "http://www.thefreedictionary.com/�"                         ; AHD
-                        "http://www.answers.com/main/ntquery?s=�"                    ; AHD
-                        "http://en.wiktionary.org/wiki/�"
-                        "http://www.google.com/search?q=define:+�" ; google
-                        "http://www.etymonline.com/index.php?search=�" ; etymology
-                        ] )
+                                  "http://www.dict.org/bin/Dict?Form=Dict2&Database=*&Query=�" ; 1913 Webster, WordNet
+                                  "http://www.thefreedictionary.com/�"                         ; AHD
+                                  "http://www.answers.com/main/ntquery?s=�"                    ; AHD
+                                  "http://en.wiktionary.org/wiki/�"
+                                  "http://www.google.com/search?q=define:+�" ; google
+                                  "http://www.etymonline.com/index.php?search=�" ; etymology
+                                  ] )
 
 (defun ergoemacs-lookup-word-on-internet (&optional input-word site-to-use)
   "Look up current word or text selection in a online reference site.
