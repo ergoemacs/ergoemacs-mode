@@ -1125,12 +1125,24 @@ The true work is done in `ergoemacs-command-loop--internal'."
          (,command last-command-event ,@strip-args))))))
 
 (defun ergoemacs-command-loop--call-mouse-command (command &optional record-flag keys)
-  "Call a possible mouse command."
+  "Call a possible mouse COMMAND.
+
+The COMMAND is modified to take out any event information and
+replace it with `last-event-command' information.  This
+modifciation isd one by
+`ergoemacs-command-loop--modify-mouse-command'.
+
+Mouse commands are also wrapped in `ignore-errors'.  This takes
+care of `window-live-p' errors that occur when running the
+Emacs detects keys when outside of Emacs.
+
+The RECORD-FLAG and KEYS arguments are passed to
+`call-interactively' for the mouse command."
   (cond
    ((ergoemacs-keymapp command)
     (popup-menu command nil current-prefix-arg))
    (t
-    (call-interactively (ergoemacs-command-loop--modify-mouse-command command) record-flag keys))))
+    (ignore-errors (call-interactively (ergoemacs-command-loop--modify-mouse-command command) record-flag keys)))))
 
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
   "Call the command interactively.  Also handle mouse events (if possible.)"
