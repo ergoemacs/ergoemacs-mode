@@ -488,7 +488,11 @@ If LOOKUP-KEYMAP
                      (ergoemacs-map--puthash tmp2 tmp3))
                    (when (setq tmp2 (ergoemacs-translate--escape-to-meta old-key))
                      (ergoemacs-map--puthash tmp2 tmp3)))))
-             (puthash key item ergoemacs-map--)))
+             (puthash key item ergoemacs-map--)
+             (when (setq tmp2 (ergoemacs-translate--meta-to-escape key))
+               (puthash tmp2 item ergoemacs-map--))
+             (when (setq tmp2 (ergoemacs-translate--escape-to-meta key))
+               (puthash tmp2 item ergoemacs-map--))))
          ret)
         ret))
      ((and (consp map) ;; Don't do anything with blank keymaps.

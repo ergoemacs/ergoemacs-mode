@@ -1407,6 +1407,16 @@ Part of addressing Issue #147."
      (set-input-method nil)
      (kill-buffer (current-buffer)))))
 
+(ert-deftest ergoemacs-test-translate-bound ()
+  "Make sure that bound keys are put in the `ergoemacs-map--'
+hash appropriaetly."
+  :tags '(:translate)
+  (ergoemacs-test-layout
+   :layout "colemak"
+   :theme "reduction"
+   (should (equal (ergoemacs-gethash (read-kbd-macro "M-r" t) ergoemacs-map--)
+                  (ergoemacs-gethash (ergoemacs-translate--meta-to-escape (read-kbd-macro "M-r" t)) ergoemacs-map--)))))
+
 (ert-deftest ergoemacs-test-table-insert ()
   "Tests that table can insert without hanging emacs."
   :tags '(:table)
