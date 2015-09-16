@@ -303,7 +303,7 @@ done in `ergoemacs-map--alist'."
            ((not (or (string= ergoemacs-map--breadcrumb "")
                      (string= ergoemacs-map--breadcrumb ergoemacs-map--cache--last-breadcrumb)))
             (unless (minibufferp)
-              (ergoemacs-command-loop--spinner-display "ergoemacs->%s" (replace-regexp-in-string "^:" "" ergoemacs-map--breadcrumb))))
+              (ergoemacs-command-loop--spinner-display (ergoemacs-key-description--unicode-char "⌨→%s" "ergoemacs→%s" "ergoemacs->%s") (replace-regexp-in-string "^:" "" ergoemacs-map--breadcrumb))))
            ((and (string= ergoemacs-map--breadcrumb ""))
             (unless (minibufferp)
               (ergoemacs-command-loop--spinner-display "ergoemacs->%s" what))))

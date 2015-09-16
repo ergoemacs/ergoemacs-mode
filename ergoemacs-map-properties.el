@@ -304,18 +304,19 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
     (dolist (map ergoemacs-map-properties--label-atoms-maps)
       (when (ergoemacs-map-properties--key-struct map)
         (setq tmp (find-lisp-object-file-name map 'defvar))
-        (unless (or (not tmp) (eq tmp 'C-source))
+        (unless (or (not tmp) (eq tmp 'C-source)
+                    (eq map 'global-map))
           (setq ret
                 (append ret
                         `((eval-after-load ,(file-name-sans-extension (file-name-nondirectory tmp))
                             '(when (boundp ',map)
-                               (ergoemacs-command-loop--spinner-display "Label %s" ',map)
+                               (ergoemacs-command-loop--spinner-display (ergoemacs-key-description--unicode-char "🎫→%s" "Label→%s" "Label->%s") ',map)
                                (ergoemacs-map-properties--label ,map ,(ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))))))))))
     (push 'progn ret)
     (or (and no-lambda ret) `(lambda() ,ret))))
 
 (defun ergoemacs-map-properties--before-ergoemacs (&optional after)
-  "Get a list of keys that changed"
+  "Get a list of keys that changed."
   (or (and (not after) ergoemacs-map-properties--before-ergoemacs)
       (and after ergoemacs-map-properties--after-ergoemacs)
       (let ((hash-table (ergoemacs-gethash :extract-lookup (ergoemacs-gethash (list :map-key most-negative-fixnum) ergoemacs-map-properties--plist-hash)))
@@ -681,6 +682,10 @@ KEYMAP can be a keymap or keymap integer key."
      ((or (equal sv (make-sparse-keymap)) ;; Empty
           (equal sv (make-keymap)))
       nil)
+     ((ergoemacs sv :installed-p) ;; Already modified.
+      (put map :ergoemacs-labeled t))
+     ((ergoemacs sv :composed-p) ;; Already modified.
+      (warn "Composed map %s not labeled." map))
      (t ;;Label
       (when sv
         (let (key)
@@ -727,7 +732,7 @@ The KEYMAP will have the structure
     (if (ergoemacs-map-properties--composed-p keymap)
         (cond
          (map-key
-          (warn "Will not label a composed map's members to %s" map-key))
+          (error "Will not label a composed map's members to %s" map-key))
          (t
           (dolist (map (ergoemacs-map-properties--composed-list keymap))
             (ergoemacs-map-properties--label map map-key))))
