@@ -101,6 +101,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (ert '(and "ergoemacs-" (tag :search)))
   (call-interactively 'elp-results))
 
+(defun ergoemacs-test-map-keymap ()
+  "Test search functionality in ergoemacs-mode."
+  (interactive)
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (tag :map-keymap)))
+  (call-interactively 'elp-results))
+
 (defun ergoemacs-test-copy ()
   "Copy/Paste test for ergoemacs-mode."
   (interactive)
@@ -1486,8 +1493,9 @@ hash appropriaetly."
   (should (equal '(arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) :drop-rest))))
 
 
-(ert-deftest ergoemacs-test-map-keymap ()
+(ert-deftest ergoemacs-test-map-keymap-prefix ()
   "Tests mapping multiple keymaps defining a prefix."
+  :tags '(:map-keymap)
   (let ((parent (make-sparse-keymap))
         (map (make-sparse-keymap))
         list)

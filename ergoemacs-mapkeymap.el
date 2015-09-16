@@ -55,6 +55,7 @@
   (require 'cl))
 
 (declare-function ergoemacs-map-properties--all-sparse-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--composed-list "ergoemacs-map-properties")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 
@@ -69,6 +70,48 @@
 If KEYMAP is sparse keymap, make it a full keymap."
   (set-char-table-range
    (nth 1 (ergoemacs-map-force-full-keymap keymap)) range value))
+
+(defun ergoemacs-map-keymap--expose-keymap (keymap)
+  "Change KEYMAP into the keymap value.
+
+This accepts symbols, functions, or autoloads.
+
+If `ergoemacs-mode' cant determine the value, return nil."
+  (let (tmp)
+    (or (and (listp keymap) keymap)
+        (and (symbolp keymap) (boundp keymap) (setq tmp (symbol-value keymap))
+             (ergoemacs-keymapp tmp) tmp)
+        (and (symbolp keymap) (fboundp keymap)
+             (setq tmp (symbol-function keymap))
+             (or (and (ergoemacs-keymapp tmp) tmp)
+                 (and (eq 'autoload (car tmp))
+                      ;; load required keymap.
+                      (load (nth 1 tmp))
+                      (or (and (boundp keymap) (setq tmp (symbol-value keymap))
+                               (ergoemacs-keymapp tmp) tmp)
+                          (and (fboundp keymap) (setq tmp (symbol-function keymap))
+                               (ergoemacs-keymapp tmp) tmp))))))))
+
+(defun ergoemacs-map-keymap--map-submap (sub-keymap function &optional original prefix flat-keymap nil-keys)
+  "Expose SUB-KEYMAP, then apply `ergoemacs-map-keymap'.
+
+The sub-keymap is exposed by
+`ergoemacs-map-keymap--expose-keymap'.
+
+The `ergoemacs-map-keymap' uses the FUNCTION, ORIGINAL PREFIX
+FLAT-KEYMAP and NIL-KEYS arguments.  It is missing the keymap
+argument, since it is calculated from the exposed sub-keymap."
+  (let ((tmp (ergoemacs-map-keymap--expose-keymap sub-keymap)))
+    (when tmp
+      (ergoemacs-map-keymap function
+                            (cond
+                             ((eq original :setcdr)
+                              (ergoemacs-setcdr (cdr tmp)
+                                                (cdr (ergoemacs :original tmp))))
+                             (original
+                              (ergoemacs :original tmp))
+                             (t tmp))
+                            original prefix flat-keymap nil-keys))))
 
 (defun ergoemacs-map-keymap (function keymap &optional original prefix flat-keymap nil-keys)
   "Call FUNCTION for all keys in hash table KEYMAP.
@@ -96,8 +139,12 @@ them to be masked when mapping over the keymap."
                          (if (ergoemacs-map-properties--all-sparse-p keymap)
                              (make-sparse-keymap)
                            (make-keymap))))
+        composed-list
+        parent
+        calc-parent-p
+        prefix-map
         tmp)
-    (when keymap
+    (when (ergoemacs-keymapp keymap)
       (map-keymap
        (lambda(event item)
          (let ((key (or (and (consp event)
@@ -119,30 +166,28 @@ them to be masked when mapping over the keymap."
             ((ergoemacs-keymapp item)
              (when function
                (funcall function key 'ergoemacs-prefix))
-             (setq tmp (or (and (listp item) item)
-                           (and (symbolp item) (boundp item) (setq tmp (symbol-value item))
-                                (ergoemacs-keymapp tmp) tmp)
-                           (and (symbolp item) (fboundp item)
-                                (setq tmp (symbol-function item))
-                                (or (and (ergoemacs-keymapp tmp) tmp)
-                                    (and (eq 'autoload (car tmp))
-                                         ;; load required keymap.
-                                         (load (nth 1 tmp))
-                                         (or (and (boundp item) (setq tmp (symbol-value item))
-                                                  (ergoemacs-keymapp tmp) tmp)
-                                             (and (fboundp item) (setq tmp (symbol-function item))
-                                                  (ergoemacs-keymapp tmp) tmp)))))))
-             (when tmp
-               (ergoemacs-map-keymap function
-                                     (cond
-                                      ((eq original :setcdr)
-                                       (ergoemacs-setcdr (cdr tmp)
-                                                         (cdr (ergoemacs :original tmp))))
-                                      (original
-                                       (ergoemacs :original tmp))
-                                      (t tmp))
-                                      original
-                                     key flat-keymap nil-keys)))
+             (ergoemacs-map-keymap--map-submap item function original key flat-keymap nil-keys)
+             (unless calc-parent-p
+               (setq composed-list (ergoemacs :composed-list keymap)
+                     parent (keymap-parent keymap)))
+             (if composed-list
+                 (dolist (map composed-list)
+                   (when (and (setq prefix-map (lookup-key map key))
+                              (ergoemacs-keymapp prefix-map))
+                     (ergoemacs-map-keymap--map-submap prefix-map function original key flat-keymap nil-keys)))
+               (unwind-protect
+                   (progn
+                     (when parent
+                       (set-keymap-parent keymap nil))
+                     (when (and (setq prefix-map (lookup-key keymap key))
+                                (ergoemacs-keymapp prefix-map))
+                       (ergoemacs-map-keymap--map-submap prefix-map function original key flat-keymap nil-keys)))
+                 (when parent
+                   (set-keymap-parent keymap parent))))
+             (when parent
+               (when (and (setq prefix-map (lookup-key parent key))
+                          (ergoemacs-keymapp prefix-map))
+                 (ergoemacs-map-keymap--map-submap prefix-map function original key flat-keymap nil-keys))))
             (t
              (when function
                (funcall function key item))
