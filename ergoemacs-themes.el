@@ -1880,16 +1880,6 @@
     :bind ("M-," 'avy-goto-word-or-subword-1)
     :ensure t)
 
-(ergoemacs-autoload ace-window
-    "Ace Window"
-    :bind ("M-s" 'ace-window)
-    :ensure t
-    ;; layout based aw-keys
-    (setq aw-keys (mapcar
-                   (lambda(key)
-                     (ergoemacs-translate--event-layout key ergoemacs-keyboard-layout "us"))
-                   (list ?f ?j ?d ?k ?r ?u ?e ?i ?s ?l ?w ?o))))
-
 (ergoemacs-autoload expand-region
     "Expand Region"
     :bind (("M-8" er/expand-region)
@@ -1967,13 +1957,13 @@
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
                   ("Extra Functionality" (join-line))
-                  ("Packages" (ace-window avy multiple-cursors expand-region))
+                  ("Packages" (avy multiple-cursors expand-region))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 (ergoemacs-theme reduction ()
   "Reduce Ergoemacs keys"
   :based-on 'standard
-  :components '(multiple-cursors avy ace-window expand-region)
+  :components '(multiple-cursors avy expand-region)
   (global-set-key (kbd "M-<") 'zap-to-char)
   (global-set-key (kbd "M-g") 'kill-line)
   (global-set-key (kbd "M-G") 'ergoemacs-top-join-line)
