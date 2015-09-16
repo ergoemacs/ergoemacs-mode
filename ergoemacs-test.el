@@ -1485,6 +1485,26 @@ hash appropriaetly."
   (should (equal 'arg3 (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) :rest)))
   (should (equal '(arg2) (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg1 arg2 &rest arg3) :drop-rest))))
 
+
+(ert-deftest ergoemacs-test-map-keymap ()
+  "Tests mapping multiple keymaps defining a prefix."
+  (let ((parent (make-sparse-keymap))
+        (map (make-sparse-keymap))
+        list)
+    (define-key parent [27 ?a] 'ignore)
+    (define-key map [27 ?b] 'ignore)
+    (set-keymap-parent map parent)
+    (ergoemacs-map-keymap
+     (lambda(key item)
+       (unless (or (eq item 'ergoemacs-prefix)
+                   (consp key)
+                   (equal key [ergoemacs-labeled]))
+         (push key list)))
+     map)
+    (should (member [27 ?a] list))
+    (should (member [27 ?b] list))
+    list))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
