@@ -117,14 +117,30 @@
       t))
    (t nil)))
 
-(defun ergoemacs-key-description--unicode-char (char alt-char)
-  "Uses CHAR if it can be displayed, otherwise use ALT-CHAR.
+(defun ergoemacs-key-description--unicode-char--internal (char alt-char)
+  "Return CHAR if it can be displayed, otherwise use ALT-CHAR.
 This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
 `ergoemacs-display-unicode-characters' is nil display ALT-CHAR"
   (if (and ergoemacs-display-unicode-characters
            (ergoemacs-key-description--display-char-p char))
       char
     alt-char))
+
+(defun ergoemacs-key-description--unicode-char (&rest chars)
+  "Return the first dispalyable character in CHARS.
+This uses `ergoemacs-key-description--unicode-char--internal'"
+  (let* ((char-list chars)
+        (test-char (pop char-list))
+        tmp
+        (next-char test-char))
+    (catch 'found-char
+      (while char-list
+        (setq next-char (pop char-list)
+              tmp (ergoemacs-key-description--unicode-char--internal test-char next-char))
+        (if (string= tmp next-char)
+          (setq test-char next-char)
+        (throw 'found-char tmp)))
+      next-char)))
 
 (defun ergoemacs-key-description--key (key mod)
   "Key description"
