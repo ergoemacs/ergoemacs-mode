@@ -312,6 +312,7 @@ This is different than `event-convert-list' because:
         tmp
         control-p
         new-list
+        first second base
         (gui-p (memq 'ergoemacs-gui list)))
     (when (or gui-p (setq control-p(memq 'ergoemacs-control cur-list)))
       (setq cur-list (reverse cur-list))
@@ -342,6 +343,20 @@ This is different than `event-convert-list' because:
           (setq new-list (append new-list (list elt))))
          (t
           (push elt new-list)))))
+    (setq new-list (reverse new-list)
+          base (pop new-list)
+          tmp nil)
+    (dolist (elt new-list)
+      (cond
+       ((memq elt '(double triple))
+        (setq first (format "%s-" elt)))
+       ((memq elt '(click)))
+       ((memq elt '(drag down))
+        (setq second (format "%s-" elt)))
+       (t (push elt tmp))))
+    (when (or first second)
+      (setq base (intern (format "%s%s%s" (or first "") (or second "") base))))
+    (setq new-list (append tmp (list base)))
     (cond
      (gui-p (aref (read-kbd-macro (concat (substring (key-description (vector (event-convert-list (append new-list (list 'ack))))) 0 -4) (or (and (symbolp gui-p) (symbol-name gui-p)) (make-string 1 gui-p)) ">")) 0))
      (control-p (aref (read-kbd-macro (concat "C-" (key-description (vector (event-convert-list new-list)))) t) 0))
