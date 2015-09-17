@@ -83,7 +83,7 @@
 (require 'package)
 
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
-;; (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
 
 (defvar ergoemacs--system (replace-regexp-in-string "[^0-9A-Za-z]+" "-" (concat emacs-version "-" system-configuration)))
@@ -229,7 +229,7 @@ The TEXT will be what the mode-line is set to be."
 (require 'lookup-word-on-internet nil "NOERROR")
 
 (defconst ergoemacs-font-lock-keywords
-  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\|-package\\|-autoload\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
+  '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\|-timing\\|-package\\|-autoload\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
      (1 font-lock-keyword-face)
      (2 font-lock-constant-face nil t))))
 
@@ -435,9 +435,26 @@ bindings the keymap is:
 (defvar ergoemacs-require nil
   "List of required theme components.")
 
+(defvar ergoemacs-timing-hash nil
+  "Hash table of `ergoemacs-mode' timing.")
+
+(defun ergoemacs-timing-- (key function)
+  "Save timing information for KEY by calling FUNCTION."
+  (let* ((entry-time (current-time))
+         (ret (funcall function))
+         val)
+    (if (not ergoemacs-timing-hash)
+        (setq ergoemacs-timing-hash (make-hash-table))
+      (if (not (setq val (gethash key ergoemacs-timing-hash)))
+          (puthash key (vector 1 (float-time (time-subtract (current-time) entry-time))) ergoemacs-timing-hash)
+        (incf (aref val 0))
+        (incf (aref val 1) (float-time (time-subtract (current-time) entry-time)))
+        (puthash key val ergoemacs-timing-hash)))
+    ret))
+
 (defvar ergoemacs--component-file-mod-time-list nil)
 (defun ergoemacs--emacs-state ()
-  "Returns a MD5 of the current emacs state"
+  "Return MD5 represting current Emacs state."
   (let* ((state (format "%s %s %s %s %s" ergoemacs--system features package-alist load-path ergoemacs--component-file-mod-time-list))
          (md5 (md5 state)))
     ;; (message "%s->%s" md5 state)
@@ -564,7 +581,8 @@ When `store-p' is non-nil, save the tables."
                ;; ergoemacs-themes
                ))
   (unless (featurep pkg)
-    (load (symbol-name pkg))))
+    (ergoemacs-timing (intern (format "load-%s" pkg))
+      (load (symbol-name pkg)))))
 
 (defcustom ergoemacs-command-loop-spinners
   '((standard ("|" "/" "-" "\\"))
@@ -742,7 +760,7 @@ Valid values are:
 
 
 (defun ergoemacs-mode--update-theme-description ()
-  "Updates the theme description based on loaded themes."
+  "Update theme description based on loaded themes."
   (defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
                                  ergoemacs-variant
                                (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
@@ -764,7 +782,7 @@ Valid values are:
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-mode--update-theme-description)
 
 (defcustom ergoemacs-remap-ignore '(undo-tree-visualize)
-  "Functions to ignore in `ergoemacs-mode' remaps"
+  "Functions to ignore in `ergoemacs-mode' remaps."
   :type '(repeat (sexp :tag "Function"))
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
@@ -794,7 +812,7 @@ Valid values are:
 (define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters)
 
 (defcustom ergoemacs-display-ergoemacs-key-descriptions t
-  "Use ergoemacs key descriptions (Alt+) instead of emacs key descriptors (M-)"
+  "Use ergoemacs key descriptions (Alt+)."
   :type 'boolean
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
@@ -814,7 +832,7 @@ Valid values are:
 
 
 (defcustom ergoemacs-display-small-symbols-for-key-modifiers nil
-  "Use small symbols to represent alt+ ctl+ etc. on windows/linux."
+  "Use small symbols to represent alt+ ctl+ on windows/linux."
   :type 'boolean
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
@@ -883,7 +901,7 @@ Valid values are:
   :group 'ergoemacs-menus)
 
 (defcustom ergoemacs-menu-order '(file edit search view languages options buffers help)
-  "Menu order for `ergoemacs-mode' global menus"
+  "Menu order for `ergoemacs-mode' global menus."
   :type '(repeat (sexp :tag "Menu-bar key"))
   :group 'ergoemacs-menus)
 
@@ -966,16 +984,16 @@ Valid values are:
   :group 'ergoemacs-mode)
 (defcustom ergoemacs-modal-ignored-buffers
   '("^ \\*load\\*" "^[*]e?shell[*]" "^[*]R.*[*]$")
-  "Regular expression of bufferst that should come up in
-ErgoEmacs state, regardless of if a modal state is currently
-enabled."
+  "Buffers where modal ergoemacs-mode is ignored."
   :type '(repeat string)
   :group 'ergoemacs-modal)
 
 (defcustom ergoemacs-default-cursor-color nil
-  "The default cursor color.
-This should be reset every time that the modal cursor changes color.  Otherwise this will be nil
-A color string as passed to `set-cursor-color'."
+  "Default cursor color.
+
+This should be reset every time that the modal cursor changes
+color.  Otherwise this will be nil A color string as passed to
+`set-cursor-color'."
   :type '(choice (const :tag "Don't change")
                  (color :tag "Color"))
   :group 'ergoemacs-modal)
@@ -1165,9 +1183,12 @@ modal state is currently enabled."
   "`ergoemacs-mode' keys to ignore the modal translation.
 Typically function keys")
 
-(defcustom ergoemacs-translate-keys t
-  "When translation is enabled, when a command is not defined
-look for the command with or without modifiers."
+(defcustom ergoemacs-translate-keys nil
+  "Try differnt key combinations to lookup unfound command.
+
+When translation is enabled, and a command is not defined with
+the current key sequence, look for the command with or without
+different type of modifiers."
   :type 'boolean
   :group 'ergoemacs-read)
 
@@ -1209,10 +1230,11 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 (defun ergoemacs-mode-after-init-emacs ()
   "Run functions after emacs loads."
   (unless ergoemacs-mode--start-p
-    (setq ergoemacs-mode--start-p t)
-    (ergoemacs-mode ergoemacs-mode)
-    (run-hooks 'ergoemacs-mode-init-hook)
-    (add-hook 'after-load-functions 'ergoemacs-mode-after-startup-run-load-hooks)))
+    (ergoemacs-timing ergoemacs-mode-after-init-emacs
+      (setq ergoemacs-mode--start-p t)
+      (ergoemacs-mode ergoemacs-mode)
+      (run-hooks 'ergoemacs-mode-init-hook)
+      (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks))))
 
 (require 'unicode-fonts nil t)
 (when (featurep 'unicode-fonts)
@@ -1222,14 +1244,17 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
     ))
 
 (when (functionp ergoemacs-map-properties--create-label-function)
-  (funcall ergoemacs-map-properties--create-label-function))
+  (ergoemacs-timing ergoemacs-map-properties--create-label-function
+    (funcall ergoemacs-map-properties--create-label-function)))
 
 (if ergoemacs-mode--fast-p
     (provide 'ergoemacs-themes)
-  (load "ergoemacs-themes"))
+  (ergoemacs-timing ergoemacs-themes
+    (load "ergoemacs-themes")))
 
 (when ergoemacs-use-aliases
-  (ergoemacs-load-aliases))
+  (ergoemacs-timing ergoemacs-load-aliases
+    (ergoemacs-load-aliases)))
 
 (run-with-idle-timer 0.05 nil #'ergoemacs-mode-after-init-emacs)
 (add-hook 'emacs-startup-hook #'ergoemacs-mode-after-init-emacs)

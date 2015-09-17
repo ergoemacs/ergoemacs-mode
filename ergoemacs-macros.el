@@ -975,6 +975,13 @@ When :type is :replace that replaces a function (like `define-key')"
           (or (ergoemacs-map--cache-- --hash-key)
               (ergoemacs-map--cache-- --hash-key (progn ,@body)))))))
 
+(defmacro ergoemacs-timing (key &rest body)
+  "Save the timing using KEY for BODY."
+  (declare (indent 1))
+  (if (listp key)
+      `(ergoemacs-timing-- ,key (lambda() ,@body))
+    `(ergoemacs-timing-- ',key (lambda() ,@body))))
+
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here
