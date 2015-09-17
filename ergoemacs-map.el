@@ -549,7 +549,8 @@ If LOOKUP-KEYMAP
                          (t (push tmp composed-list)))))
 
                     ;; The real `global-map'
-                    (setq tmp (ergoemacs-map-keymap nil (make-composed-keymap menu-bar)))
+                    (setq tmp (make-composed-keymap menu-bar) ;; (ergoemacs-map-keymap nil )
+                          )
 
                     ;; The global `menu-bar'
                     (let ((i 0)
@@ -649,11 +650,12 @@ If LOOKUP-KEYMAP
                 tmp3 (make-composed-keymap hook-overrides))
           (ergoemacs tmp2 :label '(fix-hook-remaps))
           (ergoemacs-map-keymap
-           (lambda(key item) (unless (or (eq item 'ergoemacs-prefix)
-                                    (consp key))
-                          (let ((key (vconcat key)))
-                            (when (member key tmp)
-                              (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup))) nil)))))
+           (lambda(key item)
+             (unless (or (eq item 'ergoemacs-prefix)
+                         (consp key))
+               (let ((key (vconcat key)))
+                 (when (member key tmp)
+                   (define-key ret (vector 'ergoemacs-remap (ergoemacs-gethash key (ergoemacs global-map :lookup))) nil)))))
            tmp3)
           (unless (ergoemacs tmp2 :empty-p)
             (push tmp2 hook-overrides))

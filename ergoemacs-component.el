@@ -733,11 +733,13 @@ Cache using LOOKUP-KEY. "
 
 (defun ergoemacs-component-struct--minor-mode-map-alist (&optional obj)
   "Get the ending maps for `minor-mode-map-alist' using the ergoemacs structures."
-  (let (ret map)
+  (let (ret map parent)
     (maphash
      (lambda(key value)
-       (setq map (ergoemacs-map-keymap nil (make-composed-keymap value)))
+       (setq parent (make-composed-keymap value)
+             map (make-sparse-keymap))
        (ergoemacs map :label (list 'cond-map key (intern ergoemacs-keyboard-layout)))
+       (set-keymap-parent map parent)
        (push (cons key map) ret))
      (ergoemacs-component-struct--minor-mode-map-alist-hash obj))
     ret))
@@ -791,14 +793,16 @@ The `car' of the alist should be the keymap that should be
 modified, the `cdr' of the alsit should be the keymap that should
 be composed over the keymap.  This is done in
 `ergoemacs-component-struct--composed--composed-hook'."
-  (let* (ret tmp label)
+  (let* (ret tmp label parent)
     (maphash
      (lambda(key value)
        (setq tmp (when (ergoemacs-keymapp (ergoemacs-sv key))
                    (ergoemacs-sv key))
              label (list 'hook-maps key (or layout ergoemacs-keyboard-layout) (if tmp t nil))
-             tmp (ergoemacs-map-keymap nil (make-composed-keymap value tmp)))
+             parent (make-composed-keymap value tmp)
+             tmp (make-sparse-keymap))
        (ergoemacs tmp :label label)
+       (set-keymap-parent tmp parent)
        (push (cons key tmp) ret))
      (ergoemacs-component-struct--hook-hash hook layout obj))
     ret))
