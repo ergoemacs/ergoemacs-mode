@@ -693,17 +693,19 @@ Cache using LOOKUP-KEY. "
       ret)
      (t
       (setq ergoemacs-component-struct--get-keymap (make-sparse-keymap))
-      (ergoemacs-map-keymap
-       (lambda (key item)
-         (if (consp key)
-             (warn "Keymap range currently not supported %s,%s" key item)
-           (unless (eq item 'ergoemacs-prefix)
-             (ergoemacs :define-key
-                        ergoemacs-component-struct--get-keymap
-                        (ergoemacs-translate
-                         key just-first-keys variable-modifiers
-                         variable-prefixes cur-layout layout-from) item))))
-       cmap)
+      (ergoemacs-timing translate-keymap
+        (ergoemacs-timing (intern (format "translate-keymap-%s" (ergoemacs-component-struct-name map)))
+          (ergoemacs-map-keymap
+           (lambda (key item)
+             (if (consp key)
+                 (warn "Keymap range currently not supported %s,%s" key item)
+               (unless (eq item 'ergoemacs-prefix)
+                 (ergoemacs :define-key
+                            ergoemacs-component-struct--get-keymap
+                            (ergoemacs-translate
+                             key just-first-keys variable-modifiers
+                             variable-prefixes cur-layout layout-from) item))))
+           cmap)))
       (setq ret (copy-keymap ergoemacs-component-struct--get-keymap))
       (ergoemacs ret :label (list (or lookup-key (ergoemacs (ergoemacs :global-map) :key-hash)) (intern (format "%s%s" (ergoemacs-component-struct-name map) (or (ergoemacs-component-struct-version map) ""))) (intern cur-layout)))
       (puthash (list lookup-key (intern cur-layout)) ret hash)

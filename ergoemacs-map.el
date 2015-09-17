@@ -364,29 +364,30 @@ It takes the following arguments:
           tmp composed-list local-unbind-list)
       (ergoemacs-cache (and lookup-key (intern (format "%s-composed-key" lookup-key)))
         (unless only-modify-p
-          (ergoemacs-map-keymap
-           (lambda(key item)
-             (unless (or (eq item 'ergoemacs-prefix)
-                         (consp key))
-               (let ((key (vconcat key)))
-                 (cond
-                  ((setq tmp (ergoemacs-gethash key ergoemacs-map--lookup-hash))
-                   (dolist (new-key tmp)
-                     (define-key ret new-key item)))
-                  ;; Keys where `ergoemacs-mode' dominates
-                  ((setq tmp (ergoemacs-gethash key ergoemacs-map--))
-                   (if (not use-local-unbind-list-p)
-                       (ergoemacs :define-key ret key tmp)
-                     (push key local-unbind-list)
-                     (when (setq tmp (ergoemacs-translate--escape-to-meta key))
-                       (push tmp local-unbind-list))
-                     (when (setq tmp (ergoemacs-translate--meta-to-escape key))
-                       (push tmp local-unbind-list)))))
-                 ;; Define ergoemacs-mode remapping
-                 ;; lookups.
-                 (when (setq tmp (ergoemacs-gethash key (ergoemacs global-map :lookup)))
-                   (define-key ret (vector 'ergoemacs-remap tmp) item)))))
-           lookup-keymap)
+          (ergoemacs-timing lookup-keymap
+              (ergoemacs-map-keymap
+               (lambda(key item)
+                 (unless (or (eq item 'ergoemacs-prefix)
+                             (consp key))
+                   (let ((key (vconcat key)))
+                     (cond
+                      ((setq tmp (ergoemacs-gethash key ergoemacs-map--lookup-hash))
+                       (dolist (new-key tmp)
+                         (define-key ret new-key item)))
+                      ;; Keys where `ergoemacs-mode' dominates
+                      ((setq tmp (ergoemacs-gethash key ergoemacs-map--))
+                       (if (not use-local-unbind-list-p)
+                           (ergoemacs :define-key ret key tmp)
+                         (push key local-unbind-list)
+                         (when (setq tmp (ergoemacs-translate--escape-to-meta key))
+                           (push tmp local-unbind-list))
+                         (when (setq tmp (ergoemacs-translate--meta-to-escape key))
+                           (push tmp local-unbind-list)))))
+                     ;; Define ergoemacs-mode remapping
+                     ;; lookups.
+                     (when (setq tmp (ergoemacs-gethash key (ergoemacs global-map :lookup)))
+                       (define-key ret (vector 'ergoemacs-remap tmp) item)))))
+               lookup-keymap))
           (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
         (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
         (setq composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp))
@@ -549,8 +550,7 @@ If LOOKUP-KEYMAP
                          (t (push tmp composed-list)))))
 
                     ;; The real `global-map'
-                    (setq tmp (make-composed-keymap menu-bar) ;; (ergoemacs-map-keymap nil )
-                          )
+                    (setq tmp (make-composed-keymap menu-bar))
 
                     ;; The global `menu-bar'
                     (let ((i 0)

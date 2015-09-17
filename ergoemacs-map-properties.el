@@ -323,35 +323,36 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
             (original-global-map (ergoemacs :global-map))
             (before-map (make-sparse-keymap))
             tmp)
-        (ergoemacs-map-keymap
-         (lambda (cur-key item)
-           (unless (or (consp cur-key) (eq item 'ergoemacs-prefix))
-             (setq tmp (ergoemacs-gethash cur-key hash-table cur-key))
-             (cond
-              ;; bach mode doesn't save menu-bar or tool-bar information
-              ((memq (elt cur-key 0) '(menu-bar tool-bar iconify-frame make-frame-visible)))
-              ;; batch mode also doesn't save mouse-events
-              ((memq (event-basic-type (elt cur-key 0)) '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-4)))
-              ;; M-O is bound to facemenu keymap by default, except in
-              ;; terminal/batch mode
-              ((and (>= (length cur-key) 2)
-                    (eq (elt cur-key 0) 27)
-                    (eq (elt cur-key 1) 111)
-                    (eq (lookup-key original-global-map [27 111]) 'facemenu-keymap)))
-              ((eq 'ergoemacs-labeled (elt cur-key (- (length cur-key) 1))))
-              ((and (symbolp item) (string-match-p "clipboard" (symbol-name item))))
-              ((and (equal [27 115 104 102] cur-key) (eq item 'hi-lock-find-patterns)))
-              ((and tmp (not (equal tmp item))
-                    (or (not after)
-                        (not (and ergoemacs-map-properties--before-ergoemacs
-                                  (eq item (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key))))))
-               (ergoemacs :define-key before-map cur-key item))
-              ((and (not tmp)
-                    (or (not after)
-                        (not (and ergoemacs-map-properties--before-ergoemacs
-                                  (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
-               (ergoemacs :define-key before-map cur-key tmp)))))
-         original-global-map t)
+        (ergoemacs-timing before-ergoemacs
+          (ergoemacs-map-keymap
+           (lambda (cur-key item)
+             (unless (or (consp cur-key) (eq item 'ergoemacs-prefix))
+               (setq tmp (ergoemacs-gethash cur-key hash-table cur-key))
+               (cond
+                ;; bach mode doesn't save menu-bar or tool-bar information
+                ((memq (elt cur-key 0) '(menu-bar tool-bar iconify-frame make-frame-visible)))
+                ;; batch mode also doesn't save mouse-events
+                ((memq (event-basic-type (elt cur-key 0)) '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-4)))
+                ;; M-O is bound to facemenu keymap by default, except in
+                ;; terminal/batch mode
+                ((and (>= (length cur-key) 2)
+                      (eq (elt cur-key 0) 27)
+                      (eq (elt cur-key 1) 111)
+                      (eq (lookup-key original-global-map [27 111]) 'facemenu-keymap)))
+                ((eq 'ergoemacs-labeled (elt cur-key (- (length cur-key) 1))))
+                ((and (symbolp item) (string-match-p "clipboard" (symbol-name item))))
+                ((and (equal [27 115 104 102] cur-key) (eq item 'hi-lock-find-patterns)))
+                ((and tmp (not (equal tmp item))
+                      (or (not after)
+                          (not (and ergoemacs-map-properties--before-ergoemacs
+                                    (eq item (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key))))))
+                 (ergoemacs :define-key before-map cur-key item))
+                ((and (not tmp)
+                      (or (not after)
+                          (not (and ergoemacs-map-properties--before-ergoemacs
+                                    (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
+                 (ergoemacs :define-key before-map cur-key tmp)))))
+           original-global-map t))
         (if after
             (progn
               (setq ergoemacs-map-properties--after-ergoemacs before-map)
@@ -789,15 +790,16 @@ The KEYMAP will have the structure
 (defun ergoemacs-map-properties--empty-p (keymap &rest _ignore)
   "Determines if a KEYMAP is empty."
   (catch 'found-key
-    (ergoemacs-map-keymap
-     (lambda (cur-key item)
-       (unless (equal cur-key [ergoemacs-labeled])
-         (if (consp cur-key)
-             (throw 'found-key nil)
-           (unless (eq item 'ergoemacs-prefix) 
-             (when item
-               (throw 'found-key nil))))))
-     keymap) t))
+    (ergoemacs-timing empty-p
+      (ergoemacs-map-keymap
+       (lambda (cur-key item)
+         (unless (equal cur-key [ergoemacs-labeled])
+           (if (consp cur-key)
+               (throw 'found-key nil)
+             (unless (eq item 'ergoemacs-prefix)
+               (when item
+                 (throw 'found-key nil))))))
+       keymap)) t))
 
 ;;ergoemacs-map-properties--label
 
@@ -842,18 +844,19 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((where-is-hash (make-hash-table))
         (lookup-hash (make-hash-table :test 'equal))
         keys tmp)
-    (ergoemacs-map-keymap
-     (lambda (key item)
-       (unless (and (vectorp key) (eq (elt key (- (length key) 1)) 'ergoemacs-labeled))
-         (cond
-          ((and (vectorp key)
-                (commandp item t))
-           (push key keys)
-           (if (setq tmp (ergoemacs-gethash item where-is-hash))
-               (push key tmp)
-             (puthash item (list key) where-is-hash))
-           (puthash key item lookup-hash)))))
-     keymap)
+    (ergoemacs-timing where-is-hash
+      (ergoemacs-map-keymap
+       (lambda (key item)
+         (unless (and (vectorp key) (eq (elt key (- (length key) 1)) 'ergoemacs-labeled))
+           (cond
+            ((and (vectorp key)
+                  (commandp item t))
+             (push key keys)
+             (if (setq tmp (ergoemacs-gethash item where-is-hash))
+                 (push key tmp)
+               (puthash item (list key) where-is-hash))
+             (puthash key item lookup-hash)))))
+       keymap))
     (ergoemacs keymap :extract-keys keys)
     (ergoemacs keymap :extract-where-is where-is-hash)
     (ergoemacs keymap :extract-lookup lookup-hash)))
