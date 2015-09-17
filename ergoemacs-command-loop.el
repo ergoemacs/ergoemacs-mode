@@ -1236,8 +1236,18 @@ The RECORD-FLAG and KEYS arguments are passed to
   "Spinner display.
 
 Display STRING with a spinner pre-pended.  Additional
-arguments (ARGS) will be applied with `format'."
-  (let ((rest (or (and (not string) "")
+arguments (ARGS) will be applied with `format'.
+
+STRING can also be a list of strings.  The string selected for
+use with `format' will be selecting using
+`ergoemacs-key-description--unicode-char'."
+  (let* ((string (or (and (listp string)
+                          (eq (car string) 'quote)
+                          (eval string))
+                     string))
+         (rest (or (and (listp string)
+                       (concat " " (apply #'format (apply #'ergoemacs-key-description--unicode-char string) args)))
+                  (and (not string) "")
                   (concat " " (apply #'format string args)))))
     (when (not ergoemacs-command-loop--spinner-list)
       (setq ergoemacs-command-loop--spinner-list (nth 1 (assoc ergoemacs-command-loop-spinner ergoemacs-command-loop-spinners))

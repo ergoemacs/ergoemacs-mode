@@ -162,7 +162,7 @@ The backup is determined by `find-backup-file-name'"
         (message "Reverted to autosave: %s" (nth ergoemacs-revert-buffer backup-buffer)))
       (goto-char opt))
      (t
-      (user-error "Did not revert buffer.")))))
+      (call-interactively 'revert-buffer)))))
 
 (defun ergoemacs-major-mode-p (value)
   "Return t if VALUE is a major mode function."

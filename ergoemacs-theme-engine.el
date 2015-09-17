@@ -988,7 +988,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                       file-name (expand-file-name (concat ergoemacs-theme "-" lay "-"
                                                           (replace-regexp-in-string "[^A-Za-z0-9-]+" "_" (key-description ergoemacs-theme--svg-prefix))
                                                           "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir))
-                (ergoemacs-command-loop--spinner-display "%s->%s" (ergoemacs-key-description ergoemacs-theme--svg-prefix) file-name)
+                (ergoemacs :spinner '("%s→%s" "%s->%s") (ergoemacs-key-description ergoemacs-theme--svg-prefix) file-name)
                 (with-temp-file file-name
                   (dolist (w ergoemacs-theme--svg)
                     (cond
@@ -1016,7 +1016,7 @@ to png files."
             (ergoemacs-command-loop--message "Done creating png files.")
             ;; FIXME: Update images...
             )
-        (ergoemacs-command-loop--spinner-display "%s" (nth 0 png-info))
+        (ergoemacs :spinner "%s" (nth 0 png-info))
         (setq process (start-process-shell-command "ergoemacs-png-convert"
                                                    "*ergoemacs-theme-png-convert*"
                                                    (nth 1 png-info)))
