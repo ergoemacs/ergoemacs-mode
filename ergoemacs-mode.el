@@ -553,7 +553,7 @@ When `store-p' is non-nil, save the tables."
         (replace-match ""))
       (goto-char (point-min))
       ;; Add utf-8-emacs coding to the top.
-      (insert ";; -*- coding: utf-8-emacs -*-")
+      (insert ";; -*- coding: utf-8-emacs -*-\n")
       (goto-char (point-max))
       ;; Update timestamp.
       (when (re-search-backward ":timestamp +[0-9.]+" nil t)

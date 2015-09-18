@@ -275,6 +275,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
           tmp
           keys)
       (goto-char (point-min))
+      (insert ";; -*- coding: utf-8-emacs -*-\n")
       (insert "(defvar ergoemacs-map-properties--plist-hash)(declare-function ergoemacs-map-properties--label \"ergoemacs-map-properties\")(declare-function ergoemacs-command-loop--spinner-display \"ergoemacs-command-loop\")")
       (ergoemacs-map-keymap
        (lambda (key item)
