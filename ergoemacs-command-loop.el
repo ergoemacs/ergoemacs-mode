@@ -1718,7 +1718,7 @@ For instance in QWERTY M-> is shift translated to M-."
             (cond
              ((<= tmp 0) ;; Unsure what to do here.
               (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command)) tmp))
-             (t (execute-kbd-macro command tmp))))
+             (t (ignore-errors (execute-kbd-macro command tmp)))))
           (setq ergoemacs-command-loop--single-command-keys nil))
          (t
           ;; This should be a regular command.
