@@ -77,6 +77,8 @@
 (defvar ess-language)
 
 
+(declare-function ergoemacs-timing-- "ergoemacs-mode")
+
 (declare-function ergoemacs-menu--filter "ergoemacs-lib")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 

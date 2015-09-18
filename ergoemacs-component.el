@@ -78,6 +78,7 @@
 (declare-function diminish-undo "diminish")
 
 (declare-function ergoemacs--emacs-state "ergoemacs-mode")
+(declare-function ergoemacs-timing-- "ergoemacs-mode")
 (declare-function ergoemacs-mode--setup-hash-tables--setq "ergoemacs-mode")
 (declare-function ergoemacs-mode-clear-cache "ergoemacs-mode")
 
@@ -899,8 +900,7 @@ be composed over the keymap.  This is done in
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
   (let* ((obj (or obj (ergoemacs-theme-components)))
-         package-name ensure defer comp plist tmp
-         entry-time exit-time)
+         package-name ensure defer comp plist tmp)
     (when ergoemacs-component-struct--apply-inits-first-p
       (setq ergoemacs-component-struct--apply-inits-first-p nil
             ergoemacs-component-struct--apply-ensure-p t)

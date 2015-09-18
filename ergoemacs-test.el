@@ -34,6 +34,7 @@
 
 (declare-function ergoemacs-mode-reset "ergoemacs-mode.el")
 
+(defvar ergoemacs-map--)
 (defvar ergoemacs-layout-us)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme)
@@ -43,6 +44,9 @@
 (defvar dired-sort-map)
 (defvar dired-mode-map)
 (defvar cl-struct-ergoemacs-component-struct-tags)
+
+(declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
+(declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 
 (declare-function ergoemacs-mode "ergoemacs-mode")
 

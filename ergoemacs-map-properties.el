@@ -76,6 +76,8 @@
 (defvar ergoemacs-remap-ignore)
 (defvar ergoemacs-saved-global-map)
 
+(declare-function ergoemacs-timing-- "ergoemacs-mode")
+
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
