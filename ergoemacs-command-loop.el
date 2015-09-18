@@ -174,7 +174,7 @@ It needs to be less than `ergoemacs-command-loop-blink-rate'.")
   "Echoed keystrokes, keep echoing active.")
 
 (defvar ergoemacs-command-loop--modal-stack '()
-  "The Modal Stack")
+  "The Modal Stack.")
 
 (defvar ergoemacs-command-loop-swap-translation)
 (defvar ergoemacs-command-loop-time-before-blink)
@@ -638,6 +638,9 @@ It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
         (setq input (ergoemacs-command-loop--decode-event input key-translation-map current-key))))
     input))
 
+(defvar ergoemacs-command-loop--read-key-prompt ""
+  "Extra prompt for `ergoemacs-command-loop--read-key'.")
+
 (defun ergoemacs-command-loop--read-key (&optional current-key type universal)
   "Read a key for the `ergoemacs-mode' command loop.
 
@@ -729,6 +732,7 @@ This uses `ergoemacs-command-loop--read-event'."
               input (ergoemacs-command-loop--read-event
                      (format
                       "%s" (concat
+                            ergoemacs-command-loop--read-key-prompt
                             (ergoemacs-command-loop--read-key-help-text-prefix-argument blink-on universal)
                             text
                             (ergoemacs-key-description current-key)
@@ -759,6 +763,7 @@ This uses `ergoemacs-command-loop--read-event'."
                 input (ergoemacs-command-loop--read-event
                        (format
                         "%s" (concat
+                              ergoemacs-command-loop--read-key-prompt
                               (ergoemacs-command-loop--read-key-help-text-prefix-argument blink-on universal)
                               text
                               (or (and reset-key-p "") (ergoemacs-key-description current-key))
@@ -939,10 +944,15 @@ The true work is done in `ergoemacs-command-loop--internal'."
           ergoemacs-command-loop--current-type (or type ergoemacs-command-loop--current-type)))))
 
 (defvar ergoemacs-command-loop--running-pre-command-hook-p nil
-  "Variable to tell if ergoemacs-command loop is running the pre-command-hook")
+  "Variable to tell if ergoemacs-command loop is running the `pre-command-hook'.")
 
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
+  "Start ergoemacs command loop.
+
+This is done by replacing `this-command' with
+`ergoemacs-command-loop-start' and then running `this-command'
+from within the ergoemacs-mode command loop."
   (when (and (not ergoemacs-command-loop--running-pre-command-hook-p)
              (eq ergoemacs-command-loop-type :full)
              (not executing-kbd-macro)
@@ -957,6 +967,12 @@ The true work is done in `ergoemacs-command-loop--internal'."
 
 (defvar ergoemacs-command-loop--internal-end-command-p nil)
 (defun ergoemacs-command-loop--start-with-post-command-hook ()
+  "Start ergoemacs command loop.
+
+This is done by pushing the key [ergoemacs-ignore] on the
+`unread-command-events' stack.  This then forces `ergoemacs-mode'
+to start with
+`ergoemacs-command-loop--start-with-pre-command-hook'."
   (when (and (not ergoemacs-command-loop--internal-end-command-p)
              (eq ergoemacs-command-loop-type :full)
              (not executing-kbd-macro))
@@ -1041,7 +1057,13 @@ The true work is done in `ergoemacs-command-loop--internal'."
   (ergoemacs-command-loop--sync-point))
 
 (defun ergoemacs-command-loop--mouse-command-drop-first (args &optional fn-arg-p)
-  "Internal function for processing mouse commands."
+  "Internal function for processing mouse commands.
+
+This function drops the first argument of a function, which is
+usually an event for mouse functions.
+
+ARGS are the function's arguments.
+FN-ARG-P can be nil, :drop-rest or :rest"
   (let (ret)
     (cond
      ((eq fn-arg-p :drop-rest)
@@ -1087,7 +1109,7 @@ The true work is done in `ergoemacs-command-loop--internal'."
         (reverse ret))))))
 
 (defun ergoemacs-command-loop--modify-mouse-command (command)
-  "Modify mouse command to work with ergoemacs command loop."
+  "Modify mouse COMMAND to work with ergoemacs command loop."
   (let* ((iform (interactive-form command))
          (form (and iform (consp iform) (= 2 (length iform)) (stringp (nth 1 iform)) (nth 1 iform)))
          (args (help-function-arglist command t))
@@ -1146,7 +1168,8 @@ The RECORD-FLAG and KEYS arguments are passed to
     (ignore-errors (call-interactively (ergoemacs-command-loop--modify-mouse-command command) record-flag keys)))))
 
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
-  "Call the command interactively.  Also handle mouse events (if possible.)"
+  "Call the COMMAND interactively.  Also handle mouse events (if possible.)
+The RECORD-FLAG and KEYS are sent to `call-interactively'."
   (ergoemacs-command-loop--sync-point)
   (cond
    ((and (eventp last-command-event)
@@ -1289,12 +1312,13 @@ Used to replace:
 (defun ergoemacs-command-loop--install-timer ()
   "Install the `ergoemacs-command-loop--timer'."
   (setq ergoemacs-command-loop--timer
-        (run-with-idle-timer 0.1 t #'ergoemacs-command-loop--timer)))
+        (run-with-idle-timer 0.05 nil #'ergoemacs-command-loop--timer)))
 
 (defun ergoemacs-command-loop--remove-timer ()
   "Remove `ergoemacs-command-loop--timer'."
   (when ergoemacs-command-loop--timer
-    (cancel-timer ergoemacs-command-loop--timer)))
+    (cancel-timer ergoemacs-command-loop--timer)
+    (setq ergoemacs-command-loop--timer nil)))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--install-timer)
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--remove-timer)
@@ -1310,6 +1334,20 @@ run, by changing `this-command' to `last-command'"
     (when (boundp s)
       (set s last-command)))
   nil)
+
+(defun ergoemacs-command-loop--read-key-sequence (prompt &rest _ignore)
+  "Read key sequence in ergoemacs-mode with PROMPT.
+Ignore all the other options."
+  (let ((old ergoemacs-command-loop-type)
+        (old-prompt ergoemacs-command-loop--read-key-prompt)
+        ret)
+    (setq ergoemacs-command-loop-type :read-key-sequence
+          ergoemacs-command-loop--read-key-prompt prompt)
+    (unwind-protect
+        (setq ret (ergoemacs-command-loop--internal))
+      (setq ergoemacs-command-loop-type old
+            ergoemacs-command-loop--read-key-prompt old-prompt))
+    ret))
 
 (defun ergoemacs-command-loop--internal (&optional key type initial-key-type universal)
   "Read keyboard input and execute command.
@@ -1328,33 +1366,17 @@ While in the loop, every command resets the keys typed every time
 a command is completed (by `clear-this-command-keys')
 
 Also in the loop, `universal-argument-num-events' is set to
-0. (Allows commands like `isearch' to work correctly).
-
-The command loop can set its keys in
-`overriding-terminal-local-map' to keep it going even when emacs
-has an error. Because of this, the following commands are changed
-when running the command loop:
-
-- `key-binding'
-- `current-active-maps'
-- `describe-bindings'
-- `execute-kbd-macro'
-
-In the full `ergoemacs-mode' command loop, the command ignores
-ergoemacs keys in `overriding-terminal-local-map' using
-`ergoemacs-command-loop--displaced-overriding-terminal-local-map'
-in its place.
-
-FIXME: modify `called-interactively' and `called-interactively-p'
-
-"
+0. (Allows commands like `isearch' to work correctly in older
+Emacs versions)."
   (interactive)
   (ergoemacs-command-loop--execute-rm-keyfreq 'ergoemacs-command-loop)
   ;; Call the startup command
   (when (commandp ergoemacs-command-loop-start)
     (ergoemacs-command-loop--call-interactively ergoemacs-command-loop-start)
     (ergoemacs-command-loop--internal-end-command))
-  (letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys))
+  ;; Replace functions temporarily
+  (letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys)
+         ((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence))
     (let* ((type (or type :normal))
            (from-start-p ergoemacs-command-loop-start)
            (continue-read t)
@@ -1366,7 +1388,6 @@ FIXME: modify `called-interactively' and `called-interactively-p'
            tmp command)
       (unwind-protect
           (progn
-            ;; Replace functions temporarily
             ;; Setup initial unread command events, first type and history
             (setq tmp (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
                   unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events)) tmp)
@@ -1374,7 +1395,8 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                   ergoemacs-command-loop--history nil
                   ergoemacs-command-loop-start nil)
             (while continue-read
-              (setq inhibit-quit t)
+              (unless (eq ergoemacs-command-loop-type :read-key-sequence)
+                (setq inhibit-quit t))
               (while continue-read
                 ;; Read key
                 (setq ergoemacs-command-loop--single-command-keys current-key
@@ -1446,24 +1468,30 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                         ergoemacs-command-loop--exit t)
                   (if (setq continue-read (ergoemacs-keymapp command))
                       (setq universal nil)
-                    (unless (eq ergoemacs-command-loop-type :test)
+                    (unless (memq ergoemacs-command-loop-type '(:test :read-key-sequence))
                       (with-local-quit
                         (ergoemacs-command-loop--execute command)))
                     
                     (when quit-flag
                       (ergoemacs-command-loop--message "Quit!"))
+                    
                     ;; Change any information (if needed)
-
                     (unless (equal type ergoemacs-command-loop--current-type)
                       (setq type ergoemacs-command-loop--current-type
                             translation (ergoemacs-translate--get type)
                             local-keymap (ergoemacs-translate--keymap translation)))
+
+                    (when (eq ergoemacs-command-loop-type :read-key-sequence)
+                      (setq ergoemacs-command-loop-exit t
+                            continue-read nil
+                            command current-key))
                     
                     (setq current-key ergoemacs-command-loop--single-command-keys 
                           universal ergoemacs-command-loop--universal
                           ergoemacs-command-loop--single-command-keys nil
                           continue-read (not ergoemacs-command-loop--exit)
                           current-prefix-arg (if ergoemacs-command-loop--universal current-prefix-arg prefix-arg))
+                    
                     (when (and (not continue-read)
                                (eq ergoemacs-command-loop--exit :ignore-post-command-hook))
                       (setq continue-read t)))
@@ -1495,8 +1523,10 @@ FIXME: modify `called-interactively' and `called-interactively-p'
                     translation (ergoemacs-translate--get type)
                     local-keymap (ergoemacs-translate--keymap translation)
                     ergoemacs-command-loop--first-type first-type
-                    ergoemacs-command-loop--history nil))
-            (setq inhibit-quit nil)))    
+                    ergoemacs-command-loop--history nil)
+              (when (or (not ergoemacs-mode) (eq :read-key-sequence ergoemacs-command-loop-type))
+                (setq continue-read nil)))
+            (setq inhibit-quit nil)))
       command)))
 
 (defcustom ergoemacs-message-in-mode-line t
