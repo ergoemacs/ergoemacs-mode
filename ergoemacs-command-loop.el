@@ -1713,12 +1713,17 @@ For instance in QWERTY M-> is shift translated to M-."
         (cond
          ((or (stringp command) (vectorp command))
           ;; If the command is a keyboard macro (string/vector) then execute
-          ;; it though `execute-kbd-macro'
-          (let ((tmp (prefix-numeric-value current-prefix-arg)))
+          ;; it by adding it to `unread-command-events'
+          (let ((tmp (prefix-numeric-value current-prefix-arg))
+                new)
             (cond
              ((<= tmp 0) ;; Unsure what to do here.
               (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command)) tmp))
-             (t (ignore-errors (execute-kbd-macro command tmp)))))
+             (t
+              (dotimes (i tmp unread-command-events)
+                (setq unread-command-events
+                      (append (listify-key-sequence command)
+                              unread-command-events))))))
           (setq ergoemacs-command-loop--single-command-keys nil))
          (t
           ;; This should be a regular command.
