@@ -300,6 +300,15 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       (prin1 (ergoemacs-map-properties--create-label-function t)
              (current-buffer)))))
 
+(defun ergoemacs-map-properties--label-echo (keymap-symbol map id)
+  "When KEYMAP-SYMBOL is bound, label MAP to ID.
+
+Also let the user know that the labeling was performed."
+  (when (boundp keymap-symbol)
+    (ergoemacs :spinner '("🎫→%s" "Label→%s" "Label->%s") keymap-symbol)
+    (ergoemacs :label map id)))
+
+
 (defun ergoemacs-map-properties--create-label-function (&optional no-lambda)
   "Creates a function to label known keymaps."
   (let ((ret nil)
@@ -313,8 +322,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
                 (append ret
                         `((eval-after-load ,(file-name-sans-extension (file-name-nondirectory tmp))
                             '(when (boundp ',map)
-                               (ergoemacs-command-loop--spinner-display (ergoemacs-key-description--unicode-char "🎫→%s" "Label→%s" "Label->%s") ',map)
-                               (ergoemacs-map-properties--label ,map ,(ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))))))))))
+                               (ergoemacs-map-properties--label-echo ',map ,map (ergoemacs (ergoemacs (ergoemacs-sv map) :original) :map-key))))))))))
     (push 'progn ret)
     (or (and no-lambda ret) `(lambda() ,ret))))
 
