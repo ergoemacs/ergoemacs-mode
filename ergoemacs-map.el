@@ -294,7 +294,7 @@ done in `ergoemacs-map--alist'."
            (or (not ergoemacs-mode)
                (not (minibufferp))
                (and ergoemacs-mode
-                    ;; (warn "Uncached %s:%s" ergoemacs-mode save)
+                    ;; (ergoemacs-warn "Uncached %s:%s" ergoemacs-mode save)
                     (ergoemacs :spinner "Uncached...")))
            save)
       (let* ((key (ergoemacs-map--hashkey what))
@@ -787,11 +787,11 @@ If LOOKUP-KEYMAP
         composed-list)
        (ergoemacs-map-- parent layout map t)))
      (t
-      (warn "Component map isn't a proper argument for `ergoemacs-map'")
-      (warn "\tLookup:%s" lookup-keymap)
-      (warn "\tLayout:%s" layout)
-      (warn "\tMap:%s" map)
-      (warn "\tRecursive:%s" recursive)
+      (ergoemacs-warn "Component map isn't a proper argument for `ergoemacs-map'")
+      (ergoemacs-warn "\tLookup:%s" lookup-keymap)
+      (ergoemacs-warn "\tLayout:%s" layout)
+      (ergoemacs-warn "\tMap:%s" map)
+      (ergoemacs-warn "\tRecursive:%s" recursive)
       lookup-keymap))))
 
 (defun ergoemacs-map--temporary-map-properties (map)

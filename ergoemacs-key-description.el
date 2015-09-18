@@ -418,7 +418,9 @@ This uses `ergoemacs-key-description--unicode-char--internal'"
       (catch 'found-source
         (when composed-list
           (dolist (cur-map composed-list)
-            (when (and (setq tmp (lookup-key cur-map key)) (not (integerp tmp)))
+            (when (and (ergoemacs-keymapp cur-map)
+                       (setq tmp (lookup-key cur-map key))
+                       (not (integerp tmp)))
               (setq ret (ergoemacs cur-map :map-key))
               (throw 'found-source t)))))
       (when (and parent (not composed-list))

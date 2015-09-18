@@ -186,7 +186,7 @@
             (setq ergoemacs-component-struct--ensure-refreshed-p t))
           (unless (progn (ignore-errors (package-install package))
                          (package-installed-p package))
-            (warn "ergoemacs-mode could not install %s." package)))))))
+            (ergoemacs-warn "ergoemacs-mode could not install %s." package)))))))
 
 
 (defun ergoemacs-component-struct--handle-bind (bind &optional keymap)
@@ -505,7 +505,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
             (ergoemacs-map-keymap
              (lambda (cur-key item)
                (if (consp cur-key)
-                   (warn "Keymap range currently not supported %s %s" cur-key item)
+                   (ergoemacs-warn "Keymap range currently not supported %s %s" cur-key item)
                  (unless (eq item 'ergoemacs-prefix)
                    (unless (equal key cur-key)
                      (ergoemacs :define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
@@ -699,7 +699,7 @@ Cache using LOOKUP-KEY. "
           (ergoemacs-map-keymap
            (lambda (key item)
              (if (consp key)
-                 (warn "Keymap range currently not supported %s,%s" key item)
+                 (ergoemacs-warn "Keymap range currently not supported %s,%s" key item)
                (unless (eq item 'ergoemacs-prefix)
                  (ergoemacs :define-key
                             ergoemacs-component-struct--get-keymap
@@ -920,7 +920,7 @@ be composed over the keymap.  This is done in
                  t
                  'ergoemacs--last-start-emacs-state-2 ergoemacs--last-start-emacs-state-2))
             (ergoemacs-mode-clear-cache t)
-            (warn "ergoemacs-mode cache reset AFTER loading; Keys may be slightly inconsistent until emacs restart.")))))
+            (ergoemacs-warn "ergoemacs-mode cache reset AFTER loading; Keys may be slightly inconsistent until emacs restart.")))))
     (when ergoemacs-component-struct--apply-ensure-p
       (setq ergoemacs-component-struct--apply-ensure-p nil)
       ;; Ensure packages
@@ -1014,14 +1014,14 @@ be composed over the keymap.  This is done in
                   (require (nth 1 (nth 1 (nth 0 init))) nil t)
                   (when (not (featurep (nth 1 (nth 1 (nth 0 init)))))
                     ;; Attempt to ensure the feature, if specified.
-                    (warn "Could not load %s; %s" (nth 1 (nth 1 (nth 0 init)))
+                    (ergoemacs-warn "Could not load %s; %s" (nth 1 (nth 1 (nth 0 init)))
                           (nth 3 init))))
                  (t
                   (condition-case err
                       (eval (nth 0 init))
-                    (error (warn "Ergoemacs: error %s while evaluating" err (nth 0 init))))
+                    (error (ergoemacs-warn "Ergoemacs: error %s while evaluating" err (nth 0 init))))
                   (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
-                 ;; (t (warn "Theme did not handle: %s" (nth 0 init)))
+                 ;; (t (ergoemacs-warn "Theme did not handle: %s" (nth 0 init)))
                  ))
             (let ((x (and ergoemacs-component-struct--refresh-variables (boundp (nth 0 init))
                           (assq (nth 0 init) ergoemacs-component-struct--refresh-variables)))

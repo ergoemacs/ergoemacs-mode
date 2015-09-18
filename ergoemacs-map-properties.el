@@ -117,9 +117,10 @@ This does not include submaps, which may also be a full keymap."
        ((ergoemacs-map-properties--composed-p kv)
         (setq ret
               (catch 'found-full
-                (dolist (map (ergoemacs-map-properties--composed-list keymap))
-                  (unless (ergoemacs-map-properties--all-sparse-p map)
-                    (throw 'found-full nil))) t)))
+                (dolist (map (ergoemacs keymap :composed-list))
+                  (when (ergoemacs-keymapp map)
+                    (unless (ergoemacs-map-properties--all-sparse-p map)
+                      (throw 'found-full nil)))) t)))
        (t
         (setq ret (not (ignore-errors (char-table-p (nth 1 kv)))))))
       (when ret
@@ -158,10 +159,11 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
          (catch 'not-bound
            (mapcar
             (lambda(comp)
-              (let ((ret (ergoemacs-map-properties--key-struct comp)))
-                (when (and (not force) (not ret))
-                  (throw 'not-bound nil))
-                ret)) composed-list)))))
+              (when (ergoemacs-keymapp comp)
+                (let ((ret (ergoemacs-map-properties--key-struct comp)))
+                  (when (and (not force) (not ret))
+                    (throw 'not-bound nil))
+                  ret))) composed-list)))))
 
 
 (defun ergoemacs-map-properties--key-struct (keymap &optional force)
@@ -537,7 +539,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
             (load (ergoemacs-map-properties--default-global-file)))
           (ergoemacs-map-properties--protect-global-map))
       (if noninteractive
-          (warn "Could not find global map information")
+          (ergoemacs-warn "Could not find global map information")
         (let* ((emacs-exe (ergoemacs-emacs-exe))
                (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
                (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(ergoemacs-map-properties--default-global-gen) (kill-emacs)\"" emacs-exe default-directory)))
@@ -602,7 +604,7 @@ composing or parent/child relationships)"
          ((not (ergoemacs-keymapp keymap))
           (error "Trying to put keymap property on non-keymap %s." keymap))
          ((eq property :full)
-          (warn "Cannot set the keymap property :full"))
+          (ergoemacs-warn "Cannot set the keymap property :full"))
          (t (let ((ret (ergoemacs-map-properties--map-fixed-plist keymap)) tmp)
               (if (and ret (eq property :map-key))
                   (progn
@@ -697,7 +699,7 @@ KEYMAP can be a keymap or keymap integer key."
      ((ergoemacs sv :installed-p) ;; Already modified.
       (put map :ergoemacs-labeled t))
      ((ergoemacs sv :composed-p) ;; Already modified.
-      (warn "Composed map %s not labeled." map))
+      (ergoemacs-warn "Composed map %s not labeled." map))
      (t ;;Label
       (when sv
         (let (key)

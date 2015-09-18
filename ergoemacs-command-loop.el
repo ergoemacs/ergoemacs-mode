@@ -475,7 +475,7 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
 Currently this ensures:
  `ergoemacs-command-loop--decode-event-delay' is less than `ergoemacs-command-loop-blink-rate'."
   (when (>= ergoemacs-command-loop--decode-event-delay ergoemacs-command-loop-blink-rate)
-    (warn "ergoemacs-command-loop--decode-event-delay >= ergoemacs-command-loop-blink-rate; Reset to ergoemacs-command-loop-blink-rate / 1000")
+    (ergoemacs-warn "ergoemacs-command-loop--decode-event-delay >= ergoemacs-command-loop-blink-rate; Reset to ergoemacs-command-loop-blink-rate / 1000")
     (setq ergoemacs-command-loop--decode-event-delay (/ ergoemacs-command-loop-blink-rate 1000))))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--ensure-sane-variables)
@@ -490,7 +490,7 @@ Currently this ensures:
                (and (symbolp tmp) (setq tmp (symbol-name tmp))))
            (stringp tmp)
            (string-match-p "\\<mouse\\>" tmp))
-      (warn "Dropping events %s" current-key)
+      (ergoemacs-warn "Dropping events %s" current-key)
       (vector next-event))
      (t (vconcat current-key (vector next-event))))))
 

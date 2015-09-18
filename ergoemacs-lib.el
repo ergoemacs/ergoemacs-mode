@@ -127,7 +127,7 @@ If FORCE is true, set it even if it changed."
         (put variable :ergoemacs-set-value (ergoemacs-sv variable))
         (pushnew variable ergoemacs-set-ignore-customize))
        (t
-        (warn "%s changed outside ergoemacs-mode, respecting." variable))))
+        (ergoemacs-warn "%s changed outside ergoemacs-mode, respecting." variable))))
      (t
       ;; (message "%s was not changed by ergoemacs-mode, since it has the same value.\n\tlast-value: %s\n\tnew-value: %s" variable
       ;;          last-value new-value)
@@ -496,6 +496,17 @@ The reset is done with `ergoemacs-mode-reset'."
       (when (executable-find "ahk2exe")
         (shell-command (format "ahk2exe /in %s" file-temp))
         (message "Generated ergoemacs.exe")))))
+
+
+(defvar ergoemacs-warn nil
+  "List of warnings that `ergoemacs-mode' already gave.")
+(defun ergoemacs-warn (&rest args)
+  "Warn user only once.
+When not contaiend in the variable `ergoemacs-mode', apply ARGS
+to the `warn' function."
+  (unless (member args ergoemacs-warn)
+    (apply #'warn args)
+    (push args ergoemacs-warn)))
 
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

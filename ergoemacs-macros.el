@@ -584,7 +584,7 @@ additional parsing routines defined by PARSE-FUNCTION."
                   (error "Value expected after keyword %S in %S"
                          keyword keys-and-body))
                 (when (assoc keyword extracted-key-accu)
-                  (warn "Keyword %S appears more than once in %S" keyword
+                  (ergoemacs-warn "Keyword %S appears more than once in %S" keyword
                         keys-and-body))
                 (push (cons keyword (pop remaining)) extracted-key-accu)))
             (setq extracted-key-accu (nreverse extracted-key-accu))

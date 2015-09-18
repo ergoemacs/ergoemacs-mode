@@ -172,20 +172,23 @@ them to be masked when mapping over the keymap."
                      parent (keymap-parent keymap)))
              (if composed-list
                  (dolist (map composed-list)
-                   (when (and (setq prefix-map (lookup-key map key))
+                   (when (and (ergoemacs-keymapp map)
+                              (setq prefix-map (lookup-key map key))
                               (ergoemacs-keymapp prefix-map))
                      (ergoemacs-map-keymap--map-submap prefix-map function original key flat-keymap nil-keys)))
                (unwind-protect
                    (progn
                      (when parent
                        (set-keymap-parent keymap nil))
-                     (when (and (setq prefix-map (lookup-key keymap key))
+                     (when (and (ergoemacs-keymapp prefix-map)
+                                (setq prefix-map (lookup-key keymap key))
                                 (ergoemacs-keymapp prefix-map))
                        (ergoemacs-map-keymap--map-submap prefix-map function original key flat-keymap nil-keys)))
                  (when parent
                    (set-keymap-parent keymap parent))))
              (when parent
-               (when (and (setq prefix-map (lookup-key parent key))
+               (when (and (ergoemacs-keymapp parent)
+                          (setq prefix-map (lookup-key parent key))
                           (ergoemacs-keymapp prefix-map))
                  (ergoemacs-map-keymap--map-submap prefix-map function original key flat-keymap nil-keys))))
             (t

@@ -1240,7 +1240,7 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 (when (featurep 'unicode-fonts)
   (if (file-readable-p (concat pcache-directory "unicode-fonts"))
       (unicode-fonts-setup)
-    ;; (warn "Enhanced Unicode font support not setup.  See https://github.com/rolandwalker/unicode-fonts")
+    ;; (ergoemacs-warn "Enhanced Unicode font support not setup.  See https://github.com/rolandwalker/unicode-fonts")
     ))
 
 (when (functionp ergoemacs-map-properties--create-label-function)
