@@ -520,10 +520,13 @@ A replacement for `substitute-command-keys'."
             (cond
              ((string-match "\\[\\(.*\\)\\]" cur-item)
               (setq tmp (intern (match-string 1 cur-item))
+                    rep-item tmp
                     cur-item (where-is-internal tmp current-map t))
               (if cur-item
                   (setq rep-item (ergoemacs-key-description cur-item))
-                (setq rep-item (format "M-x %s" cur-item))))
+                (setq rep-item
+                      (format "%s %s" (or (and (setq tmp (where-is-internal 'execute-extended-command nil t)) (ergoemacs-key-description tmp))
+                                          "M-x") rep-item))))
              ((string-match "<\\(.*\\)>" cur-item)
               (setq cur-item (intern (match-string 1 cur-item)))
               (and (boundp cur-item)
