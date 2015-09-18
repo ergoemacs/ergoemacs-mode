@@ -476,7 +476,7 @@ If LOOKUP-KEYMAP
          (lambda(key item)
            (unless (or (eq item 'ergoemacs-prefix)
                        (ignore-errors (eq (aref key 0) 'ergoemacs-labeled)))
-             (when (setq tmp (gethash item (ergoemacs global-map :where-is)))
+             (when (setq tmp (ergoemacs-gethash item (ergoemacs global-map :where-is)))
                (dolist (old-key tmp)
                  (ergoemacs-map--puthash old-key key)
                  (when (setq tmp2 (ergoemacs-translate--meta-to-escape old-key))
