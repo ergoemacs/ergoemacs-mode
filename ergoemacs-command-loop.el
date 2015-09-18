@@ -216,7 +216,7 @@ Returns the mode-line text."
 
 (defun ergoemacs-command-loop--modal-p ()
   "Determine if the command should be modal.
-If so return the translation "
+If so return the translation."
   (if (not ergoemacs-command-loop--modal-stack) nil
     (let* ((translation (nth 0 ergoemacs-command-loop--modal-stack))
            (always)
@@ -263,7 +263,7 @@ If so return the translation "
       (ergoemacs-command-loop--message "Resume regular ergoemacs-mode")))))
 
 (defun ergoemacs-command-loop--redefine-quit-key (&optional key)
-  "Redefines the quit-key in emacs.
+  "Redefines the quit-key in Emacs.
 
 Typically the emacs quit key is Ctrl+g, but it can be redefined
 with this function."
@@ -517,7 +517,6 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
                                        (- (float-time) ergoemacs-command-loop--last-event-time))
                                   (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
              (prompt (cond
-                      ((or (minibufferp) isearch-mode) nil)
                       ((or (string= prompt " ")
                            (string= prompt (concat " " (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-")))) nil)
                       (ergoemacs-command-loop--universal prompt)
@@ -538,7 +537,9 @@ I'm not sure the purpose of `last-event-frame', but this is modified as well"
              ;; Run (with-timeout) so that idle timers will work.
              (event (cond
                      (prompt (with-timeout (seconds nil)
-                               (ignore-errors (read-event prompt))))
+                               (progn
+                                 (ergoemacs-command-loop--message prompt)
+                                 (ignore-errors (read-event)))))
                      ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
                            ergoemacs-command-loop--single-command-keys)
                       (with-timeout (ergoemacs-command-loop-echo-keystrokes nil)
@@ -1498,17 +1499,63 @@ FIXME: modify `called-interactively' and `called-interactively-p'
             (setq inhibit-quit nil)))    
       command)))
 
+(defcustom ergoemacs-message-in-mode-line t
+  "Display ergoemacs information in mode-line."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defconst ergoemacs-command-loop--mode-line-format
+  '(:eval (ergoemacs-command-loop--update-mode-line)))
+
+(defvar ergoemacs-command-loop--update-mode-line nil
+  "Message to display in mode-line.")
+
+(defun ergoemacs-command-loop--update-mode-line ()
+  "Update mode line.
+
+This displays `ergoemacs-command-loop--update-mode-line' in the mode line."
+  (or (and ergoemacs-command-loop--update-mode-line
+           (concat ergoemacs-command-loop--update-mode-line " ")) ""))
+
+(defun ergoemacs-command-loop--mode-line-not-set-p ()
+  "Is the `ergoemacs-mode' mode line present?"
+  (and (listp mode-line-format)
+       (member ergoemacs-command-loop--mode-line-format mode-line-format)))
+
+(defun ergoemacs-command-loop--reset-mode-line ()
+  "Reset the mode line."
+  (when (and ergoemacs-message-in-mode-line (ergoemacs-command-loop--mode-line-not-set-p))
+    (setq mode-line-format (delete ergoemacs-command-loop--mode-line-format mode-line-format))
+    (force-mode-line-update)))
+
+(defun ergoemacs-command-loop--refresh-mode-line ()
+  "Update mode line."
+  (when (and ergoemacs-message-in-mode-line
+             (not (ergoemacs-command-loop--mode-line-not-set-p)))
+    (setq mode-line-format (cons ergoemacs-command-loop--mode-line-format mode-line-format)))
+  (when ergoemacs-message-in-mode-line
+    (force-mode-line-update)))
+
+(defun ergoemacs-command-loop--mode-line-message (&rest args)
+  "Message in mode-line.
+ARGS are applied with `format'."
+  (setq ergoemacs-command-loop--update-mode-line
+        (apply #'format args))
+  (ergoemacs-command-loop--refresh-mode-line)
+  (run-with-timer minibuffer-message-timeout nil
+                  #'ergoemacs-command-loop--reset-mode-line))
+
 (defun ergoemacs-command-loop--message (str &rest args)
   "Message facility for `ergoemacs-mode' command loop"
   (setq ergoemacs-command-loop--last-event-time (float-time))
   (cond
-   ;; FIXME, message somewhere when you are in the minibuffer
-   ;; ((minibufferp))
    ((string= str ""))
-   ((or (minibufferp) isearch-mode))
+   ((or (minibufferp) isearch-mode)
+    (apply #'ergoemacs-command-loop--mode-line-message
+           (append (list str) args)))
    (t
     (let (message-log-max)
-      (apply 'message (append (list str) args))))))
+      (apply #'message (append (list str) args))))))
 
 
 ;; (2) Key sequence translated to command
