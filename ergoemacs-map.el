@@ -360,38 +360,42 @@ It takes the following arguments:
   keys should be locally unbound.  This is useful for
   `isearch-mode-map' keymap in Emacs 24.4+."
   (when (ergoemacs-keymapp lookup-keymap)
-    (let ((ret (make-sparse-keymap))
-          tmp composed-list local-unbind-list)
-      (ergoemacs-cache (and lookup-key (intern (format "%s-composed-key" lookup-key)))
-        (unless only-modify-p
-          (ergoemacs-timing lookup-keymap
+    (unless (ergoemacs lookup-keymap :installed-p)
+      (let ((ret (make-sparse-keymap))
+            tmp composed-list local-unbind-list bound-keys)
+        (ergoemacs-cache (and lookup-key (intern (format "%s-%s-composed-key" lookup-key
+                                                         (ergoemacs lookup-keymap :map-key))))
+          (unless only-modify-p
+            (ergoemacs-timing lookup-keymap
               (ergoemacs-map-keymap
                (lambda(key item)
                  (unless (or (eq item 'ergoemacs-prefix)
                              (consp key))
                    (let ((key (vconcat key)))
-                     (cond
-                      ((setq tmp (ergoemacs-gethash key ergoemacs-map--lookup-hash))
+                     ;; What are the keys that are changed. 
+                     (when (setq tmp (ergoemacs-gethash key ergoemacs-map--lookup-hash))
                        (dolist (new-key tmp)
-                         (define-key ret new-key item)))
-                      ;; Keys where `ergoemacs-mode' dominates
-                      ((setq tmp (ergoemacs-gethash key ergoemacs-map--))
+                         (define-key ret new-key item)
+                         (push new-key bound-keys)))
+                     ;; Keys where `ergoemacs-mode' dominates.
+                     (when (and (setq tmp (ergoemacs-gethash key ergoemacs-map--))
+                                (not (member key bound-keys)))
                        (if (not use-local-unbind-list-p)
                            (ergoemacs :define-key ret key tmp)
                          (push key local-unbind-list)
                          (when (setq tmp (ergoemacs-translate--escape-to-meta key))
                            (push tmp local-unbind-list))
                          (when (setq tmp (ergoemacs-translate--meta-to-escape key))
-                           (push tmp local-unbind-list)))))
+                           (push tmp local-unbind-list))))
                      ;; Define ergoemacs-mode remapping
                      ;; lookups.
                      (when (setq tmp (ergoemacs-gethash key (ergoemacs global-map :lookup)))
                        (define-key ret (vector 'ergoemacs-remap tmp) item)))))
                lookup-keymap))
-          (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
-        (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
-        (setq composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp))
-        (list composed-list local-unbind-list ret)))))
+            (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
+          (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
+          (setq composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp))
+          (list composed-list local-unbind-list ret))))))
 
 (defun ergoemacs-map--puthash (key new &optional table)
   "Associate KEY with a list including NEW in TABLE."
