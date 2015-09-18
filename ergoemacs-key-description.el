@@ -516,7 +516,7 @@ A replacement for `substitute-command-keys'."
             (cur-item "")
             (rep-item "")
             (start 0) tmp)
-        (while (string-match "\\(\\\\\\[.*\\]\\|\\\\[{].*[}]\\|\\\\<.*>\\|\\\\=.\\)" ret start)
+        (while (string-match "\\(\\\\\\[[^]\n]*\\]\\|\\\\[{][^}\n]*[}]\\|\\\\<[^>\n]*>\\|\\\\=.\\)" ret start)
           (setq cur-item (match-string 1 ret))
           (save-match-data
             (cond
@@ -529,14 +529,14 @@ A replacement for `substitute-command-keys'."
                 (setq rep-item
                       (format "%s %s" (or (and (setq tmp (where-is-internal 'execute-extended-command nil t)) (ergoemacs-key-description tmp))
                                           "M-x") rep-item))))
-             ((string-match "<\\(.*\\)>" cur-item)
+             ((string-match "<\\([^>\n]*\\)>" cur-item)
               (setq cur-item (intern (match-string 1 cur-item)))
               (and (boundp cur-item)
                    (setq cur-item (symbol-value cur-item))
                    (ergoemacs-keymapp cur-item)
                    (setq current-map cur-item))
               (setq rep-item ""))
-             ((string-match "[{]\\(.*\\)[}]" cur-item)
+             ((string-match "[{]\\([^}\n]*\\)[}]" cur-item)
               (setq cur-item (intern (match-string 1 cur-item))
                     rep-item "")
               (and
