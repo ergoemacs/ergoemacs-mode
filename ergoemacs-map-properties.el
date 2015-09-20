@@ -76,11 +76,14 @@
 (defvar ergoemacs-remap-ignore)
 (defvar ergoemacs-saved-global-map)
 
+
+(declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 (declare-function ergoemacs-timing-- "ergoemacs-mode")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
+(declare-function ergoemacs-warn "ergoemacs-lib")
 
 (declare-function ergoemacs-translate--define-key "ergoemacs-translate")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")

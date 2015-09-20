@@ -55,6 +55,8 @@
   (require 'ergoemacs-macros))
 
 
+(declare-function ergoemacs-warn "ergoemacs-lib")
+
 (declare-function guide-key/close-guide-buffer "guide-key")
 (declare-function guide-key/popup-function "guide-key")
 
@@ -440,6 +442,8 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
 
 ;; (1) Read Key sequence
 
+(defvar ergoemacs-command-loop--read-key-prompt ""
+  "Extra prompt for `ergoemacs-command-loop--read-key'.")
 (defun ergoemacs-command-loop--read-key-help-text-prefix-argument (&optional blink-on universal)
   "Display prefix argument portion of the `ergoemacs-mode' help text."
   (or (and (not current-prefix-arg)
@@ -647,9 +651,6 @@ It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
       (unless binding
         (setq input (ergoemacs-command-loop--decode-event input key-translation-map current-key))))
     input))
-
-(defvar ergoemacs-command-loop--read-key-prompt ""
-  "Extra prompt for `ergoemacs-command-loop--read-key'.")
 
 (defun ergoemacs-command-loop--read-key (&optional current-key type universal)
   "Read a key for the `ergoemacs-mode' command loop.
@@ -1505,7 +1506,7 @@ Emacs versions)."
                               local-keymap (ergoemacs-translate--keymap translation)))
 
                       (when (eq ergoemacs-command-loop-type :read-key-sequence)
-                        (setq ergoemacs-command-loop-exit t
+                        (setq ergoemacs-command-loop--exit t
                               continue-read nil
                               command current-key))
                       
@@ -1767,13 +1768,12 @@ For instance in QWERTY M-> is shift translated to M-."
          ((or (stringp command) (vectorp command))
           ;; If the command is a keyboard macro (string/vector) then execute
           ;; it by adding it to `unread-command-events'
-          (let ((tmp (prefix-numeric-value current-prefix-arg))
-                new)
+          (let ((tmp (prefix-numeric-value current-prefix-arg)))
             (cond
              ((<= tmp 0) ;; Unsure what to do here.
               (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command)) tmp))
              (t
-              (dotimes (i tmp unread-command-events)
+              (dotimes (_i tmp unread-command-events)
                 (setq unread-command-events
                       (append (listify-key-sequence command)
                               unread-command-events))))))

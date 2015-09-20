@@ -80,6 +80,7 @@
 (declare-function ergoemacs-timing-- "ergoemacs-mode")
 
 (declare-function ergoemacs-menu--filter "ergoemacs-lib")
+(declare-function ergoemacs-warn "ergoemacs-lib")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
 (declare-function ergoemacs-command-loop--modal "ergoemacs-command-loop")
@@ -381,7 +382,8 @@ It takes the following arguments:
                          (push new-key bound-keys)))
                      ;; Keys where `ergoemacs-mode' dominates.
                      (when (and (setq tmp (ergoemacs-gethash key ergoemacs-map--))
-                                (not (member key bound-keys)))
+                                (not (member key bound-keys))
+                                (not (member key ergoemacs-map--unbound-keys)))
                        (if (not use-local-unbind-list-p)
                            (ergoemacs :define-key ret key tmp)
                          (push key local-unbind-list)

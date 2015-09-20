@@ -84,6 +84,7 @@
 
 (declare-function ergoemacs-set "ergoemacs-lib")
 (declare-function ergoemacs-reset "ergoemacs-lib")
+(declare-function ergoemacs-warn "ergoemacs-lib")
 
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme--regexp "ergoemacs-theme-engine")

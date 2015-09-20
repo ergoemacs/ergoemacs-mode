@@ -30,6 +30,8 @@
 
 ;; These should only be called when byte compiled
 
+(declare-function ergoemacs-warn "ergoemacs-lib")
+
 ;;;###autoload
 (defmacro ergoemacs-keymapp (keymap)
   "Error free check of keymap by `keymapp'"
