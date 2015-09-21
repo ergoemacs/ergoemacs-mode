@@ -59,13 +59,14 @@
 (require 'faces)
 (require 'help-mode)
 
+(defvar ergoemacs-use-unicode-symbols)
 (defvar ergoemacs-display-unicode-characters)
 (defvar ergoemacs-display-capitalize-keys)
 (defvar ergoemacs-display-key-use-face-p)
 (defvar ergoemacs-display-small-symbols-for-key-modifiers)
 (defvar ergoemacs-display-use-unicode-brackets-around-keys)
 (defvar ergoemacs-display-without-brackets nil
-  "Display the key without brackets")
+  "Display the key without brackets.")
 
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")

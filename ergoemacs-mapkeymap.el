@@ -71,6 +71,9 @@ If KEYMAP is sparse keymap, make it a full keymap."
   (set-char-table-range
    (nth 1 (ergoemacs-map-force-full-keymap keymap)) range value))
 
+(defvar ergoemacs-map-keymap--load-autoloads-p t
+  "Determines if `ergoemacs-map-keymap' will load autoloads when mapping over a keymap.")
+
 (defun ergoemacs-map-keymap--expose-keymap (keymap)
   "Change KEYMAP into the keymap value.
 
@@ -85,6 +88,7 @@ If `ergoemacs-mode' cant determine the value, return nil."
              (setq tmp (symbol-function keymap))
              (or (and (ergoemacs-keymapp tmp) tmp)
                  (and (eq 'autoload (car tmp))
+                      ergoemacs-map-keymap--load-autoloads-p
                       ;; load required keymap.
                       (load (nth 1 tmp))
                       (or (and (boundp keymap) (setq tmp (symbol-value keymap))

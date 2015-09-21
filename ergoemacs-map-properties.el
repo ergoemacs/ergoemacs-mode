@@ -57,6 +57,7 @@
 
 (require 'package)
 
+(defvar ergoemacs-map-keymap--load-autoloads-p)
 (defvar ergoemacs--original-local-map)
 (defvar ergoemacs--system)
 (defvar ergoemacs-breadcrumb-hash)
@@ -339,7 +340,13 @@ When NO-LAMBDA is non-nil, don't prepend the `lambda' specification."
     (or (and no-lambda ret) `(lambda() ,ret))))
 
 (defun ergoemacs-map-properties--before-ergoemacs (&optional after)
-  "Get a list of keys that changed."
+  "Get a keymap of keys that changed before or after loading ergoemacs.
+
+By default this gives a keymap of keys changed before
+ergoemacs-mode loaded.
+
+When AFTER is non-nil, this is a list of keys that changed after
+`ergoemacs-mode' loaded."
   (or (and (not after) ergoemacs-map-properties--before-ergoemacs)
       (and after ergoemacs-map-properties--after-ergoemacs)
       (let ((hash-table (ergoemacs-gethash :extract-lookup (ergoemacs-gethash (list :map-key most-negative-fixnum) ergoemacs-map-properties--plist-hash)))
@@ -347,35 +354,39 @@ When NO-LAMBDA is non-nil, don't prepend the `lambda' specification."
             (before-map (make-sparse-keymap))
             tmp)
         (ergoemacs-timing before-ergoemacs
-          (ergoemacs-map-keymap
-           (lambda (cur-key item)
-             (unless (or (consp cur-key) (eq item 'ergoemacs-prefix))
-               (setq tmp (ergoemacs-gethash cur-key hash-table cur-key))
-               (cond
-                ;; bach mode doesn't save menu-bar or tool-bar information
-                ((memq (elt cur-key 0) '(menu-bar tool-bar iconify-frame make-frame-visible)))
-                ;; batch mode also doesn't save mouse-events
-                ((memq (event-basic-type (elt cur-key 0)) '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-4)))
-                ;; M-O is bound to facemenu keymap by default, except in
-                ;; terminal/batch mode
-                ((and (>= (length cur-key) 2)
-                      (eq (elt cur-key 0) 27)
-                      (eq (elt cur-key 1) 111)
-                      (eq (lookup-key original-global-map [27 111]) 'facemenu-keymap)))
-                ((eq 'ergoemacs-labeled (elt cur-key (- (length cur-key) 1))))
-                ((and (symbolp item) (string-match-p "clipboard" (symbol-name item))))
-                ((and (equal [27 115 104 102] cur-key) (eq item 'hi-lock-find-patterns)))
-                ((and tmp (not (equal tmp item))
-                      (or (not after)
-                          (not (and ergoemacs-map-properties--before-ergoemacs
-                                    (eq item (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key))))))
-                 (ergoemacs :define-key before-map cur-key item))
-                ((and (not tmp)
-                      (or (not after)
-                          (not (and ergoemacs-map-properties--before-ergoemacs
-                                    (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
-                 (ergoemacs :define-key before-map cur-key tmp)))))
-           original-global-map t))
+          (unwind-protect
+              (progn
+                (setq ergoemacs-map-keymap--load-autoloads-p nil)
+                (ergoemacs-map-keymap
+                 (lambda (cur-key item)
+                   (unless (or (consp cur-key) (eq item 'ergoemacs-prefix))
+                     (setq tmp (ergoemacs-gethash cur-key hash-table cur-key))
+                     (cond
+                      ;; bach mode doesn't save menu-bar or tool-bar information
+                      ((memq (elt cur-key 0) '(menu-bar tool-bar iconify-frame make-frame-visible)))
+                      ;; batch mode also doesn't save mouse-events
+                      ((memq (event-basic-type (elt cur-key 0)) '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-4)))
+                      ;; M-O is bound to facemenu keymap by default, except in
+                      ;; terminal/batch mode
+                      ((and (>= (length cur-key) 2)
+                            (eq (elt cur-key 0) 27)
+                            (eq (elt cur-key 1) 111)
+                            (eq (lookup-key original-global-map [27 111]) 'facemenu-keymap)))
+                      ((eq 'ergoemacs-labeled (elt cur-key (- (length cur-key) 1))))
+                      ((and (symbolp item) (string-match-p "clipboard" (symbol-name item))))
+                      ((and (equal [27 115 104 102] cur-key) (eq item 'hi-lock-find-patterns)))
+                      ((and tmp (not (equal tmp item))
+                            (or (not after)
+                                (not (and ergoemacs-map-properties--before-ergoemacs
+                                          (eq item (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key))))))
+                       (ergoemacs :define-key before-map cur-key item))
+                      ((and (not tmp)
+                            (or (not after)
+                                (not (and ergoemacs-map-properties--before-ergoemacs
+                                          (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
+                       (ergoemacs :define-key before-map cur-key tmp)))))
+                 original-global-map t))
+            (setq ergoemacs-map-keymap--load-autoloads-p t)))
         (if after
             (progn
               (setq ergoemacs-map-properties--after-ergoemacs before-map)
