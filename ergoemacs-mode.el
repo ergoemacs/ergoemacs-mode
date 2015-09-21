@@ -584,6 +584,15 @@ When `store-p' is non-nil, save the tables."
     (ergoemacs-timing (intern (format "load-%s" pkg))
       (load (symbol-name pkg)))))
 
+(require 'unicode-fonts nil t)
+(defcustom ergoemacs-use-unicode-symbols (and (featurep 'unicode-fonts) (file-readable-p (concat pcache-directory "unicode-fonts")))
+  "Use unicode symbols in display."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(when (and ergoemacs-use-unicode-symbols (fboundp 'unicode-fonts-setup))
+  (unicode-fonts-setup))
+
 (defcustom ergoemacs-command-loop-spinners
   '((standard ("|" "/" "-" "\\"))
     (arrows ("←" "↖" "↑" "↗" "→" "↘" "↓" "↙"))
@@ -596,10 +605,10 @@ When `store-p' is non-nil, save the tables."
     (dots ("⣾" "⣽" "⣻" "⢿" "⡿" "⣟" "⣯" "⣷"))
     (dot ("⠁" "⠂" "⠄" "⡀" "⢀" "⠠" "⠐" "⠈"))
     (fish (">))'>" " >))'>" "  >))'>" "   >))'>" "    >))'>" "   <'((<" "  <'((<" " <'((<")))
-  "Spinners for long commands with `ergoemacs-command-loop'"
+  "Spinners for long commands with `ergoemacs-command-loop'."
   :group 'ergoemacs-command-loop)
 
-(defcustom ergoemacs-command-loop-spinner 'dots
+(defcustom ergoemacs-command-loop-spinner (or (and ergoemacs-use-unicode-symbols 'dots) 'standard)
   "What spinner to use for long commands with `ergoemacs-command-loop'"
   :type 'sexp
   :group 'ergoemacs-command-loop)
@@ -1235,13 +1244,6 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
       (ergoemacs-mode ergoemacs-mode)
       (run-hooks 'ergoemacs-mode-init-hook)
       (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks))))
-
-(require 'unicode-fonts nil t)
-(when (featurep 'unicode-fonts)
-  (if (file-readable-p (concat pcache-directory "unicode-fonts"))
-      (unicode-fonts-setup)
-    ;; (ergoemacs-warn "Enhanced Unicode font support not setup.  See https://github.com/rolandwalker/unicode-fonts")
-    ))
 
 (if ergoemacs-mode--fast-p
     (provide 'ergoemacs-themes)

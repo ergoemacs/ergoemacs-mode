@@ -129,18 +129,20 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
 (defun ergoemacs-key-description--unicode-char (&rest chars)
   "Return the first dispalyable character in CHARS.
 This uses `ergoemacs-key-description--unicode-char--internal'"
-  (let* ((char-list chars)
-        (test-char (pop char-list))
-        tmp
-        (next-char test-char))
-    (catch 'found-char
-      (while char-list
-        (setq next-char (pop char-list)
-              tmp (ergoemacs-key-description--unicode-char--internal test-char next-char))
-        (if (string= tmp next-char)
-          (setq test-char next-char)
-        (throw 'found-char tmp)))
-      next-char)))
+  (if ergoemacs-use-unicode-symbols
+      (let* ((char-list chars)
+             (test-char (pop char-list))
+             tmp
+             (next-char test-char))
+        (catch 'found-char
+          (while char-list
+            (setq next-char (pop char-list)
+                  tmp (ergoemacs-key-description--unicode-char--internal test-char next-char))
+            (if (string= tmp next-char)
+                (setq test-char next-char)
+              (throw 'found-char tmp)))
+          next-char))
+    (car (last chars))))
 
 (defun ergoemacs-key-description--key (key mod)
   "Key description"
@@ -157,7 +159,7 @@ This uses `ergoemacs-key-description--unicode-char--internal'"
      ((eq key 32)
       (setq ret "Space"))
      ((eq key 127)
-      (setq ret (format "%sBackspace" (ergoemacs :unicode-or-alt "←" "left"))))
+      (setq ret (format "%sBackspace" (ergoemacs :unicode-or-alt "←" ""))))
      ((eq key 'escape)
       (setq ret "Esc"))
      ((eq key 'tab)
