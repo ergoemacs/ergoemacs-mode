@@ -75,6 +75,7 @@
 (defvar ergoemacs-mode--fast-p)
 (defvar ergoemacs-remap-ignore)
 (defvar ergoemacs-saved-global-map)
+(defvar ergoemacs-map-properties--create-label-function)
 
 
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
@@ -311,11 +312,17 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
 Also let the user know that the labeling was performed."
   (when (boundp keymap-symbol)
     (ergoemacs :spinner '("🎫→%s" "Label→%s" "Label->%s") keymap-symbol)
-    (ergoemacs :label map id)))
+    (if (ergoemacs map :installed-p)
+        (ergoemacs :label (ergoemacs map :original) id)
+      (if (ergoemacs map :composed-p)
+          (ergoemacs-warn "%s was not labeled to %s since it was a composed keymap.")
+        (ergoemacs :label (ergoemacs map :original) id)))))
 
 
 (defun ergoemacs-map-properties--create-label-function (&optional no-lambda)
-  "Creates a function to label known keymaps."
+  "Create a function to label known keymaps.
+
+When NO-LAMBDA is non-nil, don't prepend the `lambda' specification."
   (let ((ret nil)
         tmp)
     (dolist (map ergoemacs-map-properties--label-atoms-maps)
@@ -540,14 +547,18 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
         (progn
           (unless ergoemacs-mode--fast-p
             (load (ergoemacs-map-properties--default-global-file)))
+          (when (functionp ergoemacs-map-properties--create-label-function)
+            (ergoemacs-timing ergoemacs-map-properties--create-label-function
+              (funcall ergoemacs-map-properties--create-label-function)))
           (ergoemacs-map-properties--protect-global-map))
       (if noninteractive
           (ergoemacs-warn "Could not find global map information")
-        (let* ((emacs-exe (ergoemacs-emacs-exe))
-               (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
-               (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(ergoemacs-map-properties--default-global-gen) (kill-emacs)\"" emacs-exe default-directory)))
-          (message "%s" (shell-command-to-string cmd))
-          (ergoemacs-map-properties--get-original-global-map))))))
+        (ergoemacs-timing ergoemacs-create-global
+          (let* ((emacs-exe (ergoemacs-emacs-exe))
+                 (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
+                 (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(ergoemacs-map-properties--default-global-gen) (kill-emacs)\"" emacs-exe default-directory)))
+            (message "%s" (shell-command-to-string cmd))
+            (ergoemacs-map-properties--get-original-global-map)))))))
 
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-map-properties--get-original-global-map)
 

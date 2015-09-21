@@ -1243,10 +1243,6 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
     ;; (ergoemacs-warn "Enhanced Unicode font support not setup.  See https://github.com/rolandwalker/unicode-fonts")
     ))
 
-(when (functionp ergoemacs-map-properties--create-label-function)
-  (ergoemacs-timing ergoemacs-map-properties--create-label-function
-    (funcall ergoemacs-map-properties--create-label-function)))
-
 (if ergoemacs-mode--fast-p
     (provide 'ergoemacs-themes)
   (ergoemacs-timing ergoemacs-themes
