@@ -174,20 +174,22 @@
 (defun ergoemacs-component-struct--ensure (package)
   "Ensure PACKAGE is installed."
   (when package
-    (let ((package (or (and (symbolp package) package)
-                       (and (stringp package) (intern package)))))
-      (unless (featurep package)
-        (require package nil t))
-      (unless (featurep package)
-        (unless package--initialized
-          (package-initialize))
-        (if (package-installed-p package) t
-          (unless ergoemacs-component-struct--ensure-refreshed-p
-            (package-refresh-contents)
-            (setq ergoemacs-component-struct--ensure-refreshed-p t))
-          (unless (progn (ignore-errors (package-install package))
-                         (package-installed-p package))
-            (ergoemacs-warn "ergoemacs-mode could not install %s." package)))))))
+    (ergoemacs-timing ensure
+      (ergoemacs-timing (intern (format "ensure-%s" package))
+        (let ((package (or (and (symbolp package) package)
+                           (and (stringp package) (intern package)))))
+          (unless (featurep package)
+            (require package nil t))
+          (unless (featurep package)
+            (unless package--initialized
+              (package-initialize))
+            (if (package-installed-p package) t
+              (unless ergoemacs-component-struct--ensure-refreshed-p
+                (package-refresh-contents)
+                (setq ergoemacs-component-struct--ensure-refreshed-p t))
+              (unless (progn (ignore-errors (package-install package))
+                             (package-installed-p package))
+                (ergoemacs-warn "ergoemacs-mode could not install %s." package)))))))))
 
 
 (defun ergoemacs-component-struct--handle-bind (bind &optional keymap)
