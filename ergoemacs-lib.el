@@ -508,6 +508,172 @@ to the `warn' function."
     (apply #'warn args)
     (push args ergoemacs-warn)))
 
+(defvar ergoemacs-field-len nil)
+(defvar ergoemacs-cc-len nil)
+(defvar ergoemacs-at-len nil)
+(defvar ergoemacs-et-len nil)
+(defvar ergoemacs-mn-len nil)
+(defvar ergoemacs-mx-len nil)
+
+
+(defvar ergoemacs-timing-results-buffer "*Ergoemacs Profiling Results*"
+  "Buffer name for outputting profiling results.")
+
+(defun ergoemacs-timing-sort-by-call-count (vec1 vec2)
+  "Sort by highest call count.  See `sort'."
+  (>= (aref vec1 0) (aref vec2 0)))
+
+(defun ergoemacs-timing-sort-by-total-time (vec1 vec2)
+  "Sort by highest total time spent in function. See `sort'."
+  (>= (aref vec1 1) (aref vec2 1)))
+
+(defun ergoemacs-timing-sort-by-average-time (vec1 vec2)
+  "Sort by highest average time spent in function. See `sort'."
+  (>= (aref vec1 2) (aref vec2 2)))
+
+
+(defcustom ergoemacs-timing-sort-by-function
+  'ergoemacs-timing-sort-by-total-time
+  "Non-nil specifies ELP results sorting function.
+These functions are currently available:
+
+  `ergoemacs-timing-sort-by-call-count'   -- sort by the highest call count
+  `ergoemacs-timing-sort-by-total-time'   -- sort by the highest total time
+  `ergoemacs-timing-sort-by-average-time' -- sort by the highest average times
+
+You can write your own sort function.  It should adhere to the
+interface specified by the PREDICATE argument for `sort'.  Each
+\"element of LIST\" is really a 4 element vector where element 0
+is the call count, element 1 is the total time spent in the
+function, element 2 is the average time spent in the function,
+and element 3 is the symbol's name string."
+  :type 'function
+  :group 'ergoemacs-mode)
+
+(defsubst ergoemacs-timing-pack-number (number width)
+  "Pack the NUMBER string into WIDTH characters, watching out for
+very small or large numbers"
+  (if (<= (length number) width)
+      number
+    ;; check for very large or small numbers
+    (if (string-match "^\\(.*\\)\\(e[+-].*\\)$" number)
+        (concat (substring
+                 (match-string 1 number)
+                 0
+                 (- width (match-end 2) (- (match-beginning 2)) 3))
+                "..."
+                (match-string 2 number))
+      (substring number 0 width))))
+
+(defun ergoemacs-timing-output-result (resultvec)
+  "Output the RESULTVEC into the results buffer. RESULTVEC is a 4
+or more element vector where aref 0 is the call count, aref 1 is
+the total time spent in the function, aref 2 is the average time
+spent in the function, aref 3 is the minimum time spent on the
+function, aref 4 is the maximum time spend on the function, and
+aref 3 is the symbol's string name. All other elements in the
+vector are ignored."
+  (let* ((cc (aref resultvec 0))
+         (tt (aref resultvec 1))
+         (at (aref resultvec 2))
+         (mn (aref resultvec 3))
+         (mx (aref resultvec 4))
+         (symname (aref resultvec 5))
+         callcnt totaltime avetime mntime)
+    (setq callcnt (number-to-string cc)
+          totaltime (number-to-string tt)
+          avetime (number-to-string at)
+          mntime (number-to-string mn)
+          mxtime (number-to-string mx))
+    ;; possibly prune the results
+    (insert (format "%s" symname))
+    (insert-char 32 (+ ergoemacs-field-len (- (length symname)) 2))
+    ;; print stuff out, formatting it nicely
+    (insert callcnt)
+    (insert-char 32 (+ ergoemacs-cc-len (- (length callcnt)) 2))
+    (let ((ttstr (ergoemacs-timing-pack-number totaltime ergoemacs-et-len))
+          (atstr (ergoemacs-timing-pack-number avetime ergoemacs-at-len))
+          (mnstr (ergoemacs-timing-pack-number mntime ergoemacs-mn-len))
+          (mxstr (ergoemacs-timing-pack-number mxtime ergoemacs-mx-len)))
+      (insert ttstr)
+      (insert-char 32 (+ ergoemacs-et-len (- (length ttstr)) 2))
+      (insert atstr)
+      (insert-char 32 (+ ergoemacs-at-len (- (length atstr)) 2))
+      (insert mnstr)
+      (insert-char 32 (+ ergoemacs-mn-len (- (length mnstr)) 2))
+      (insert mxstr))
+    (insert "\n")))
+
+(defun ergoemacs-timing-results ()
+  "Display current ergoemacs-mode  profiling results.
+Based on `elp-results'."
+  (interactive)
+  (let ((curbuf (current-buffer))
+        (resultsbuf (if elp-recycle-buffers-p
+                        (get-buffer-create elp-results-buffer)
+                      (generate-new-buffer elp-results-buffer))))
+    (set-buffer resultsbuf)
+    (erase-buffer)
+    ;; get the length of the longest function name being profiled
+    (let* ((longest 0)
+           (title "What")
+           (titlelen (length title))
+           (ergoemacs-field-len titlelen)
+           (cc-header "Count")
+           (ergoemacs-cc-len    (length cc-header))
+           (et-header "Elapsed")
+           (ergoemacs-et-len    (length et-header))
+           (at-header "Average")
+           (ergoemacs-at-len    (length at-header))
+           (mn-header "Min")
+           (ergoemacs-mn-len    (length mn-header))
+           (mx-header "Max")
+           (ergoemacs-mx-len    (length mx-header))
+           (resvec '()))
+      (maphash
+       (lambda(key item)
+         (let* ((symname (format "%s" key))
+                (cc (aref item 0))
+                (tt (aref item 1))
+                (mn (aref item 2))
+                (mx (aref item 3)))
+           (setq longest (max longest (length symname)))
+           (push (vector cc tt (if (zerop cc) 0.0
+                                 (/ (float tt) (float cc)))
+                         mn mx symname)
+                 resvec)))
+       ergoemacs-timing-hash)
+      (setq ergoemacs-field-len (max titlelen longest))
+      (let ((column 0))
+        (setq header-line-format
+              (mapconcat
+               (lambda (title)
+                 (prog1
+                     (concat
+                      (propertize " "
+                                  'display (list 'space :align-to column)
+                                  'face 'fixed-pitch)
+                      title)
+                   (setq column (+ column 2
+                                   (if (= column 0)
+                                       ergoemacs-field-len
+                                     (length title))))))
+               (list title cc-header et-header at-header
+                     mn-header mx-header) "")))
+      ;; if sorting is enabled, then sort the results list. in either
+      ;; case, call ergoemacs-timing-output-result to output the result in the
+      ;; buffer
+      (if ergoemacs-timing-sort-by-function
+          (setq resvec (sort resvec ergoemacs-timing-sort-by-function)))
+      (mapc #'ergoemacs-timing-output-result resvec))
+    ;; now pop up results buffer
+    (set-buffer curbuf)
+    (pop-to-buffer resultsbuf)
+    ;; copy results to standard-output?
+    (if (or elp-use-standard-output noninteractive)
+        (princ (buffer-substring (point-min) (point-max)))
+      (goto-char (point-min)))))
+
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-lib.el ends here

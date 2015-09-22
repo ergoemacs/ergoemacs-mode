@@ -970,10 +970,12 @@ keymap."
         t)
       (cond
        ((eq type :flatten)
-        (ergoemacs-map-keymap nil ret t))
+        (ergoemacs-timing flatten-original
+          (ergoemacs-map-keymap nil ret t)))
        ((eq type :submaps)
         (ergoemacs-setcdr (cdr ret)
-                          (cdr (ergoemacs-map-keymap nil ret :setcdr)))
+                          (cdr (ergoemacs-timing flatten-setcdr
+                                 (ergoemacs-map-keymap nil ret :setcdr))))
         ret)
        (t ret)))))
 

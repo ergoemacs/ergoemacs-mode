@@ -503,14 +503,15 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
             ;; Remove the key from the keymap, do not set it to
             ;; nil; Its as if it was never defined
             (setq ergoemacs-component-struct--define-key-temp-map (make-sparse-keymap))
-            (ergoemacs-map-keymap
-             (lambda (cur-key item)
-               (if (consp cur-key)
-                   (ergoemacs-warn "Keymap range currently not supported %s %s" cur-key item)
-                 (unless (eq item 'ergoemacs-prefix)
-                   (unless (equal key cur-key)
-                     (ergoemacs :define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
-             cur-map)
+            (ergoemacs-timing remove-global-map-map-keymap
+              (ergoemacs-map-keymap
+               (lambda (cur-key item)
+                 (if (consp cur-key)
+                     (ergoemacs-warn "Keymap range currently not supported %s %s" cur-key item)
+                   (unless (eq item 'ergoemacs-prefix)
+                     (unless (equal key cur-key)
+                       (ergoemacs :define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
+               cur-map))
             (setf (ergoemacs-component-struct-map obj)
                   (copy-keymap ergoemacs-component-struct--define-key-temp-map))
             (setq ergoemacs-component-struct--define-key-temp-map nil))
@@ -524,14 +525,15 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
             ;; Remove the key from the keymap.  Do not set it to nil.
             ;; Its as if it was never defined.
             (setq ergoemacs-component-struct--define-key-temp-map (make-sparse-keymap))
-            (ergoemacs-map-keymap
-             (lambda (cur-key item)
-               (if (consp cur-key)
-                   (message "Key range not supported %s, %s" cur-key item)
-                 (unless (eq item 'ergoemacs-prefix)
-                   (unless (equal key cur-key)
-                     (ergoemacs :define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
-             cur-map)
+            (ergoemacs-timing remove-local-keymap-map-keymap
+              (ergoemacs-map-keymap
+               (lambda (cur-key item)
+                 (if (consp cur-key)
+                     (message "Key range not supported %s, %s" cur-key item)
+                   (unless (eq item 'ergoemacs-prefix)
+                     (unless (equal key cur-key)
+                       (ergoemacs :define-key ergoemacs-component-struct--define-key-temp-map cur-key item)))))
+               cur-map))
             (puthash keymap (copy-keymap ergoemacs-component-struct--define-key-temp-map) (ergoemacs-component-struct-maps obj))
             (setq ergoemacs-component-struct--define-key-temp-map nil))
            ((and (consp def) (stringp (nth 0 def)) (symbolp (nth 1 def)) (eq (nth 1 def) 'keymap))

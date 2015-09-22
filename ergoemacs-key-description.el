@@ -491,17 +491,18 @@ When HELP is non-nil, insert and add help cross-refences."
   (let ((map (or (and (symbolp map) (symbol-value map))
                  (and (consp map) (eq (car map) 'keymap) map)))
         ret)
-    (ergoemacs-map-keymap
-     (lambda (cur-key item)
-       (unless (eq item 'ergoemacs-prefix)
-         (cond
-          ((consp cur-key))
-          ((memq (elt cur-key 0) ergoemacs-describe-keymap--ignore))
-          ((consp item))
-          ((not item))
-          (t
-           (push (cons cur-key item) ret)))))
-     map)
+    (ergoemacs-timing describe-keymap
+      (ergoemacs-map-keymap
+       (lambda (cur-key item)
+         (unless (eq item 'ergoemacs-prefix)
+           (cond
+            ((consp cur-key))
+            ((memq (elt cur-key 0) ergoemacs-describe-keymap--ignore))
+            ((consp item))
+            ((not item))
+            (t
+             (push (cons cur-key item) ret)))))
+       map))
     (setq ret (append (list nil t) (sort ret (lambda(e1 e2) (ergoemacs :key-lessp (car e1) (car e2))))))
     (if help
         (dolist (x ret)
