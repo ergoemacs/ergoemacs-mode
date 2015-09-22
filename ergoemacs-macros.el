@@ -983,6 +983,15 @@ When :type is :replace that replaces a function (like `define-key')"
           (or (ergoemacs-map--cache-- --hash-key)
               (ergoemacs-map--cache-- --hash-key (progn ,@body)))))))
 
+(defmacro ergoemacs-cache-p (item)
+  "Does ITEM cache exist?"
+  (or (and (symbolp item)
+           (macroexpand-all
+            `(ergoemacs-map-cache--exists-p ',item)))
+      (macroexpand-all
+       `(let ((--hash-key ,item))
+          (ergoemacs-map-cache--exists-p --hash-key)))))
+
 (defmacro ergoemacs-timing (key &rest body)
   "Save the timing using KEY for BODY."
   (declare (indent 1))

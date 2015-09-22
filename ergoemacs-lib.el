@@ -36,6 +36,7 @@
 (defvar ergoemacs-mode-names)
 (defvar ergoemacs-require)
 (defvar ergoemacs-theme-hash)
+(defvar ergoemacs-timing-hash)
 (defvar ergoemacs-component-struct--apply-ensure-p)
 
 (defvar package-archives)
@@ -579,7 +580,7 @@ vector are ignored."
          (mn (aref resultvec 3))
          (mx (aref resultvec 4))
          (symname (aref resultvec 5))
-         callcnt totaltime avetime mntime)
+         callcnt totaltime avetime mntime mxtime)
     (setq callcnt (number-to-string cc)
           totaltime (number-to-string tt)
           avetime (number-to-string at)
@@ -609,9 +610,7 @@ vector are ignored."
 Based on `elp-results'."
   (interactive)
   (let ((curbuf (current-buffer))
-        (resultsbuf (if elp-recycle-buffers-p
-                        (get-buffer-create elp-results-buffer)
-                      (generate-new-buffer elp-results-buffer))))
+        (resultsbuf (get-buffer-create ergoemacs-timing-results-buffer)))
     (set-buffer resultsbuf)
     (erase-buffer)
     ;; get the length of the longest function name being profiled
@@ -669,10 +668,7 @@ Based on `elp-results'."
     ;; now pop up results buffer
     (set-buffer curbuf)
     (pop-to-buffer resultsbuf)
-    ;; copy results to standard-output?
-    (if (or elp-use-standard-output noninteractive)
-        (princ (buffer-substring (point-min) (point-max)))
-      (goto-char (point-min)))))
+    (goto-char (point-min))))
 
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

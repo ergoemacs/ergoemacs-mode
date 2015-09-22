@@ -75,6 +75,7 @@
 (defvar ergoemacs-translation-hash)
 (defvar ergoemacs-user-keymap)
 (defvar ess-language)
+(defvar ergoemacs-mode--fast-p)
 
 
 (declare-function ergoemacs-timing-- "ergoemacs-mode")
@@ -289,6 +290,11 @@ done in `ergoemacs-map--alist'."
 
 (defvar ergoemacs-map--cache--last-breadcrumb "")
 
+(defun ergoemacs-map-cache--exists-p (what)
+  "Does the hashkey WHAT exist?"
+  (let ((key (ergoemacs-map--hashkey what)))
+    (ergoemacs-gethash key ergoemacs-map--hash)))
+
 (defun ergoemacs-map--cache-- (what &optional save)
   "Get WHAT cache.  If SAVE is non-nil, save cache to WHAT."
   (or (and (not what) save
@@ -474,36 +480,37 @@ If LOOKUP-KEYMAP
                    (ergoemacs-component-struct--get map cur-layout nil))
                   (t
                    (error "Cant calculate/lookup keymap.")))))
-        (ergoemacs-timing setup-ergoemacs-hash
-          (ergoemacs-map-keymap
-           (lambda(key item)
-             (unless (or (eq item 'ergoemacs-prefix)
-                         (ignore-errors (eq (aref key 0) 'ergoemacs-labeled)))
-               (when (setq tmp (ergoemacs-gethash item (ergoemacs global-map :where-is)))
-                 (dolist (old-key tmp)
-                   (ergoemacs-map--puthash old-key key)
-                   (when (setq tmp2 (ergoemacs-translate--meta-to-escape old-key))
-                     (ergoemacs-map--puthash tmp2 key))
-                   (when (setq tmp2 (ergoemacs-translate--escape-to-meta old-key))
-                     (ergoemacs-map--puthash tmp2 key))
-                   (when (setq tmp3 (ergoemacs-translate--escape-to-meta key))
-                     (ergoemacs-map--puthash old-key tmp3)
+        (unless (ergoemacs-cache-p ergoemacs-map--)
+          (ergoemacs-timing setup-ergoemacs-hash
+            (ergoemacs-map-keymap
+             (lambda(key item)
+               (unless (or (eq item 'ergoemacs-prefix)
+                           (ignore-errors (eq (aref key 0) 'ergoemacs-labeled)))
+                 (when (setq tmp (ergoemacs-gethash item (ergoemacs global-map :where-is)))
+                   (dolist (old-key tmp)
+                     (ergoemacs-map--puthash old-key key)
                      (when (setq tmp2 (ergoemacs-translate--meta-to-escape old-key))
-                       (ergoemacs-map--puthash tmp2 tmp3))
+                       (ergoemacs-map--puthash tmp2 key))
                      (when (setq tmp2 (ergoemacs-translate--escape-to-meta old-key))
-                       (ergoemacs-map--puthash tmp2 tmp3)))
-                   (when (setq tmp3 (ergoemacs-translate--meta-to-escape key))
-                     (ergoemacs-map--puthash old-key tmp3)
-                     (when (setq tmp2 (ergoemacs-translate--meta-to-escape old-key))
-                       (ergoemacs-map--puthash tmp2 tmp3))
-                     (when (setq tmp2 (ergoemacs-translate--escape-to-meta old-key))
-                       (ergoemacs-map--puthash tmp2 tmp3)))))
-               (puthash key item ergoemacs-map--)
-               (when (setq tmp2 (ergoemacs-translate--meta-to-escape key))
-                 (puthash tmp2 item ergoemacs-map--))
-               (when (setq tmp2 (ergoemacs-translate--escape-to-meta key))
-                 (puthash tmp2 item ergoemacs-map--))))
-           ret))
+                       (ergoemacs-map--puthash tmp2 key))
+                     (when (setq tmp3 (ergoemacs-translate--escape-to-meta key))
+                       (ergoemacs-map--puthash old-key tmp3)
+                       (when (setq tmp2 (ergoemacs-translate--meta-to-escape old-key))
+                         (ergoemacs-map--puthash tmp2 tmp3))
+                       (when (setq tmp2 (ergoemacs-translate--escape-to-meta old-key))
+                         (ergoemacs-map--puthash tmp2 tmp3)))
+                     (when (setq tmp3 (ergoemacs-translate--meta-to-escape key))
+                       (ergoemacs-map--puthash old-key tmp3)
+                       (when (setq tmp2 (ergoemacs-translate--meta-to-escape old-key))
+                         (ergoemacs-map--puthash tmp2 tmp3))
+                       (when (setq tmp2 (ergoemacs-translate--escape-to-meta old-key))
+                         (ergoemacs-map--puthash tmp2 tmp3)))))
+                 (puthash key item ergoemacs-map--)
+                 (when (setq tmp2 (ergoemacs-translate--meta-to-escape key))
+                   (puthash tmp2 item ergoemacs-map--))
+                 (when (setq tmp2 (ergoemacs-translate--escape-to-meta key))
+                   (puthash tmp2 item ergoemacs-map--))))
+             ret)))
         ret))
      ((and (consp map) ;; Don't do anything with blank keymaps.
            lookup-keymap
@@ -525,7 +532,6 @@ If LOOKUP-KEYMAP
         ;; The `undefined-key' layer
         (setq tmp (ergoemacs-cache global-menu
                     (setq tmp (make-sparse-keymap))
-                    
                     (dolist (cur-map map)
                       (dolist (undefined-key
                                (ergoemacs-component-struct-undefined cur-map) ;; (ergoemacs-component-struct--translated-list cur-map )

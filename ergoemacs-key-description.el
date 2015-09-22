@@ -68,6 +68,8 @@
 (defvar ergoemacs-display-without-brackets nil
   "Display the key without brackets.")
 
+(declare-function ergoemacs-timing-- "ergoemacs-mode")
+
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-basic-type "ergoemacs-translate")
