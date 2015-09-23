@@ -171,15 +171,20 @@
 (defvar ergoemacs-component-struct--define-key-current nil)
 
 (defvar ergoemacs-component-struct--ensure-refreshed-p nil)
-(defun ergoemacs-component-struct--ensure (package)
-  "Ensure PACKAGE is installed."
+(defun ergoemacs-component-struct--ensure (package &optional defer)
+  "Ensure PACKAGE is installed.
+When DEFER is non-nil, dont `require' the package, just make sure
+it is installed."
   (when package
     (ergoemacs-timing ensure
       (ergoemacs-timing (intern (format "ensure-%s" package))
         (let ((package (or (and (symbolp package) package)
                            (and (stringp package) (intern package)))))
-          (unless (featurep package)
+          (unless (or defer (featurep package))
             (require package nil t))
+          (when (and package (not (featurep package)) (numberp defer))
+            (run-with-idle-timer
+             defer nil `(lambda() (require ',package) (message ,(format "loaded %s" package))(ergoemacs-component-struct--apply-inits))))
           (unless (featurep package)
             (unless package--initialized
               (package-initialize))
@@ -189,7 +194,9 @@
                 (setq ergoemacs-component-struct--ensure-refreshed-p t))
               (unless (progn (ignore-errors (package-install package))
                              (package-installed-p package))
-                (ergoemacs-warn "ergoemacs-mode could not install %s." package)))))))))
+                (ergoemacs-warn "ergoemacs-mode could not install %s." package))
+              (unless defer
+                (require package nil t)))))))))
 
 
 (defun ergoemacs-component-struct--handle-bind (bind &optional keymap)
@@ -937,24 +944,18 @@ be composed over the keymap.  This is done in
               defer (ergoemacs-component-struct-defer comp))
         (cond
          ((eq ensure t)
-          (ergoemacs-component-struct--ensure package-name))
+          (ergoemacs-component-struct--ensure package-name defer))
          ((and ensure (symbolp ensure))
-          (ergoemacs-component-struct--ensure ensure))
+          (ergoemacs-component-struct--ensure ensure defer))
          ((consp ensure)
           (dolist (elt ensure)
             (cond
              ((and elt (symbolp elt))
-              (ergoemacs-component-struct--ensure elt))
+              (ergoemacs-component-struct--ensure elt defer))
              ((stringp elt)
-              (ergoemacs-component-struct--ensure (intern elt))))))
+              (ergoemacs-component-struct--ensure (intern elt) defer)))))
          ((stringp ensure)
-          (ergoemacs-component-struct--ensure (intern ensure)))))
-      ;; Load non-deferred packages.
-      (when package-name
-        (unless (or defer (plist-get plist :no-require) (plist-get plist :no-load))
-          (load (format "%s" package-name)))
-        (when (numberp defer)
-          (run-with-idle-timer defer nil #'load (format "%s" package-name)))))
+          (ergoemacs-component-struct--ensure (intern ensure) defer)))))
     ;; Turn on plist options (like :diminish)
     (dolist (elt obj)
       (unless (memq elt ergoemacs-component-struct--applied-plists)
@@ -1080,7 +1081,8 @@ be composed over the keymap.  This is done in
                 ;; (Nth 0 Init)iable state change
                 (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
                       ergoemacs-component-struct--applied-inits)
-                (ergoemacs-set (nth 0 init) (funcall (nth 1 init)))))))))))
+                (ergoemacs-set (nth 0 init) (funcall (nth 1 init))
+                               (ergoemacs-component-struct-defer (ergoemacs-component-struct--lookup-hash cur-obj)))))))))))
   ;; Now remove things that were not set
   (when ergoemacs-component-struct--refresh-variables
     (let ((tmp ergoemacs-component-struct--applied-inits))
