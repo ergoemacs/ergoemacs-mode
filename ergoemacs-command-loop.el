@@ -966,7 +966,7 @@ This is done by replacing `this-command' with
 from within the ergoemacs-mode command loop."
   (when (and (not ergoemacs-command-loop--running-pre-command-hook-p)
              (eq ergoemacs-command-loop-type :full)
-             (not executing-kbd-macro)
+             (not (or defining-kbd-macro executing-kbd-macro))
              (not unread-command-events)
              (not (ergoemacs-command-loop-p)))
     (setq ergoemacs-command-loop-start this-command
@@ -986,7 +986,7 @@ to start with
 `ergoemacs-command-loop--start-with-pre-command-hook'."
   (when (and (not ergoemacs-command-loop--internal-end-command-p)
              (eq ergoemacs-command-loop-type :full)
-             (not executing-kbd-macro))
+             (not (or defining-kbd-macro executing-kbd-macro)))
     (push 'ergoemacs-ignore unread-command-events)))
 
 (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
@@ -1001,8 +1001,8 @@ to start with
          (integerp (car-safe (cdr obj))))))
 
 (defun ergoemacs-command-loop--sync-point ()
-  ;; Sometimes the window buffer and selected buffer are out of sync.
-  ;; Fix this issue.
+  "Sometimes the window buffer and selected buffer are out of sync.
+Fix this issue."
   (unless (eq (current-buffer) (window-buffer))
     (ignore-errors (switch-to-buffer (window-buffer) t t))
     (goto-char (window-point))))
@@ -1253,7 +1253,7 @@ The RECORD-FLAG and KEYS are sent to `call-interactively'."
 
 (defun ergoemacs-command-loop-persistent-p ()
   "Is the `ergoemacs-mode' command loop persistent?"
-  (and ergoemacs-mode (not executing-kbd-macro)
+  (and ergoemacs-mode (not (or defining-kbd-macro executing-kbd-macro))
        (eq ergoemacs-command-loop-type :full)))
 
 
