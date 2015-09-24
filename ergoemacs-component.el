@@ -187,9 +187,12 @@ if the package is deferred."
           (unless (or defer (featurep package))
             (require package nil t))
           (when (and package (not (featurep package)) (numberp defer))
-            (run-with-idle-timer
-             defer nil `(lambda() (require ',package) ;; (ergoemacs-component-struct--apply-inits)
-                          )))
+            (run-with-idle-timer defer nil #'require package  ;; `(lambda()
+                           ;; (message ,(format "Defer: %s %s" package defer))
+                           ;; (require ,package)
+                                 ;; (ergoemacs-component-struct--apply-inits))
+				 )
+            )
           (when (and defer autoloads)
             (dolist (c autoloads)
               (unless (fboundp (car c))
@@ -974,8 +977,11 @@ be composed over the keymap.  This is done in
 (defvar ergoemacs-component-struct--apply-ensure-p nil)
 (defvar ergoemacs-component-struct--applied-plists nil)
 
-(defun ergoemacs-component-struct--apply-inits (&optional _file obj)
+(defvar ergoemacs-component-echo-loaded-file-p nil)
+(defun ergoemacs-component-struct--apply-inits (&optional file obj)
   "Apply the initializations from the OBJ."
+  (when (and ergoemacs-component-echo-loaded-file-p file)
+    (message "`ergoemacs-mode' Loaded %s" file))
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
   (let* ((obj (or obj (ergoemacs-theme-components)))
@@ -1148,10 +1154,11 @@ be composed over the keymap.  This is done in
                 )
                (t
                 ;; (Nth 0 Init)iable state change
-                (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
-                      ergoemacs-component-struct--applied-inits)
-                (ergoemacs-set (nth 0 init) (funcall (nth 1 init))
-                               (ergoemacs-component-struct-defer (ergoemacs-component-struct--lookup-hash cur-obj)))))))))))
+                (when (ergoemacs-set (nth 0 init) (funcall (nth 1 init))
+                                     (ergoemacs-component-struct-defer (ergoemacs-component-struct--lookup-hash cur-obj)))
+                  (push (list (nth 0 init) (ergoemacs-sv (nth 0 init)))
+                        ergoemacs-component-struct--applied-inits)
+                  )))))))))
   ;; Now remove things that were not set
   (when ergoemacs-component-struct--refresh-variables
     (let ((tmp ergoemacs-component-struct--applied-inits))
@@ -1600,7 +1607,6 @@ modifications with `diminish-undo'"
                                (plist-get plist :name)
                                plist))
           (dim (or dim (plist-get plist :diminish))))
-      (message "diminish: %s %s" diminish-symbol dim)
       (when (and diminish-symbol (stringp diminish-symbol))
         (setq diminish-symbol (intern diminish-symbol)))
 
