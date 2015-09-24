@@ -232,6 +232,13 @@ bindings into this keymap (the original keymap is untouched)"
     (when ergoemacs-mode-reset
       (ergoemacs-mode-reset))))
 
+(ergoemacs-advice undo-tree-overridden-undo-bindings-p ()
+  "Use `ergoemacs-mode' remaps to determine if `undo' has been changed."
+  :type :around
+  (if ergoemacs-mode
+      (key-binding [ergoemacs-remap undo])
+    ad-do-it))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
