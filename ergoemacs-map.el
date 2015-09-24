@@ -379,7 +379,8 @@ It takes the following arguments:
               (ergoemacs-map-keymap
                (lambda(key item)
                  (unless (or (eq item 'ergoemacs-prefix)
-                             (consp key))
+                             (consp key)
+                             (memq item ergoemacs-remap-ignore))
                    (let ((key (vconcat key)))
                      ;; What are the keys that are changed. 
                      (when (setq tmp (ergoemacs-gethash key ergoemacs-map--lookup-hash))
