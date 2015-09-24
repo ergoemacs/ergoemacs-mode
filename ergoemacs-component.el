@@ -184,7 +184,8 @@ it is installed."
             (require package nil t))
           (when (and package (not (featurep package)) (numberp defer))
             (run-with-idle-timer
-             defer nil `(lambda() (require ',package) (message ,(format "loaded %s" package))(ergoemacs-component-struct--apply-inits))))
+             defer nil `(lambda() (require ',package) ;; (ergoemacs-component-struct--apply-inits)
+                          )))
           (unless (featurep package)
             (unless package--initialized
               (package-initialize))
@@ -198,27 +199,52 @@ it is installed."
               (unless defer
                 (require package nil t)))))))))
 
+(defun ergoemacs-component-struct--parse-list (list function &rest args)
+  "Handle :bind and :mode LIST and call FUNCTION.
+
+The FUNCTION calls the with the first argument as the string
+piece and the second argument the symbol piece of the definition.
+It also passes ARGS if any are specified."
+  (let (arg1 arg2)
+    (cond
+     ;; :list ("a" b "c" d)
+     ((ignore-errors (and (consp list) (> (length list) 2)
+                          (stringp (car list))
+                          (setq arg1 (pop list))
+                          (setq arg2 (pop list))))
+      (while (and arg1 arg2)
+        (apply function arg1 arg2 args)
+        (setq arg1 (pop list)
+              arg2 (pop list))))
+     ((and (consp list) (stringp (car list)))
+      ;; :list ("C-." . ace-jump-mode)
+      ;; :list ("C-." ace-jump-mode)
+      (apply function (car list)
+             (or (and (consp (cdr list)) (nth 1 list))
+                 (cdr list))
+             args))
+     ((and (consp list) (consp (car list)))
+      (dolist (elt list)
+        (when (and (consp elt) (stringp (car elt)))
+          (apply function (car elt)
+                 (or (and (consp (cdr elt)) (nth 1 elt))
+                     (cdr elt))
+                 args)))))))
+
+(defun ergoemacs-component-struct--handle-bind-1 (kbd-str def keymap)
+  "Tell `ergoemacs-mode' to bind KBD-STR to DEF in KEYMAP"
+  (ergoemacs-component-struct--define-key keymap (read-kbd-macro kbd-strdddd) def))
 
 (defun ergoemacs-component-struct--handle-bind (bind &optional keymap)
-  "Handle :bind and related keywords."
-  (let ((keymap (or keymap 'global-map))
-        key def)
-    (cond
-     ((ignore-errors (and (consp bind) (> (length bind) 2)
-                          (setq key (pop bind))
-                          (setq def (pop bind))))
-      (while (and key def)
-        (when (stringp key)
-          (ergoemacs-component-struct--define-key keymap (read-kbd-macro key) def))
-        (setq key (pop bind)
-              def (pop bind))))
-     ((and (consp bind) (stringp (car bind)))
-      ;; :bind ("C-." . ace-jump-mode)
-      (ergoemacs-component-struct--define-key keymap (read-kbd-macro (car bind)) (cdr bind)))
-     ((and (consp bind) (consp (car bind)))
-      (dolist (elt bind)
-        (when (and (consp elt) (stringp (car elt)))
-          (ergoemacs-component-struct--define-key keymap (read-kbd-macro (car elt)) (cdr elt))))))))
+  "Handle :bind and related properties.
+
+BIND is the property list from the component definition.
+
+KEYMAP is the symbol of a bound keymap.  If unspecified, the
+binding assumes KEYMAP is `global-map'."
+  (let ((keymap (or keymap 'global-map)))
+    (ergoemacs-component-struct--parse-list
+     bind #'ergoemacs-component-struct--handle-bind-1 keymap)))
 
 (defun ergoemacs-component-struct--create-component (plist body file)
   "Create ergoemacs component.
