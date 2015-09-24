@@ -53,7 +53,8 @@
     :ensure t)
 
 (ergoemacs-package undo-tree
-    :ensure t)
+    :ensure t
+    (global-undo-tree-mode 1))
 
 (ergoemacs-component standard-vars ()
   "Enabled/changed variables/modes"
