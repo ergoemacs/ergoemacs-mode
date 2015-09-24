@@ -226,6 +226,8 @@ macro."
     :bind*
     :bind-keymap*
     :commands
+    :mode
+    :interpreter
     :defer
     :demand
     :diminish
@@ -321,6 +323,25 @@ This accepts the following keywords:
     For more information, see `ergoemacs-component--diminish-on'.
 
     By default this is nil.
+
+:mode -- Modes to be added to `auto-mode-alist'. This can be a string such as:
+
+(ergoemacs-package ruby-mode
+  :mode \"\\\\.rb\\\\'\")
+
+or a list 
+
+(ergoemacs-package ruby-mode
+  :mode (\"\\\\.rb\\\\'\" . ruby-mode))
+
+or a list of modes:
+
+(ergoemacs-package ess-site
+    :ensure ess
+    :mode ((\"\\\\.R\\\\'\" . R.mode)
+           (\"\\\\.[Ss][Aa][Ss]\\\\'\" . SAS-mode)))
+
+Borrowed from `use-package'.
 
 :ensure -- If the package should be installed by `package' if not present.
 

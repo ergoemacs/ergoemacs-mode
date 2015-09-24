@@ -90,8 +90,7 @@ If FORCE is true, set it even if it changed."
     (when (and minor-mode-p (not last-value))
       (setq last-value -1))
     (cond
-     ((and minor-mode-p (not (boundp variable))
-           (functionp variable) (setq tmp (symbol-function variable)))
+     ((and minor-mode-p (functionp variable) (setq tmp (symbol-function variable)))
       (unless (and defer (ignore-errors (eq 'autoload (car tmp))))
         (unless (get variable :ergoemacs-save-value)
           (put variable :ergoemacs-save-value (if new-value nil 1)))
