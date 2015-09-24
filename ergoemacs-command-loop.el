@@ -1179,12 +1179,12 @@ The RECORD-FLAG and KEYS arguments are passed to
     (ignore-errors (call-interactively (ergoemacs-command-loop--modify-mouse-command command) record-flag keys)))))
 
 
-(defvar ergoemacs-command-loop-describe-key-functions '(describe-key)
+(defvar ergoemacs-command-loop-describe-key-functions '(describe-key describe-function)
   "Functions like `describe-key'.
 These functions will:
 - Replace `key-description' with `ergoemacs-key-description'.
-- Replace `read-key-sequence' with `ergoemacs-command-loop--read-key-sequence'."
-  )
+- Replace `read-key-sequence' with `ergoemacs-command-loop--read-key-sequence'.")
+
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
   "Call the COMMAND interactively.  Also handle mouse events (if possible.)
 The RECORD-FLAG and KEYS are sent to `call-interactively'."
