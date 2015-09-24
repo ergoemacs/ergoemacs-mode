@@ -355,7 +355,10 @@ bindings the keymap is:
 
 (defun ergoemacs-mode--pcache-repository ()
   (format "ergoemacs-mode-%s" ergoemacs--system))
-(defvar ergoemacs-mode--fast-p nil)
+
+(defvar ergoemacs-mode--fast-p nil
+  "Is `ergoemacs-mode' running from the cache?")
+
 (defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
   (let (sym val found-p)
     (dolist (a args)
@@ -367,17 +370,9 @@ bindings the keymap is:
           (when val
             (setq found-p t)
             (set sym val)
-            ;; Setup autoloads
-            (when (eq sym 'ergoemacs-component-struct--hash)
-              (setq ergoemacs-mode--fast-p t)
-              (maphash
-               (lambda (_key value)
-                 (when (ergoemacs-component-struct-p value)
-                   (dolist (a (ergoemacs-component-struct-autoloads value))
-                     (autoload (car a) (format (cdr a)) nil t))))
-               val))
-            ;; (message "Found %s->%s" sym val)
-            )))
+            (when (and (eq sym 'ergoemacs-component-hash)
+                       (hash-table-p val))
+              (setq ergoemacs-mode--fast-p t)))))
        ((symbolp a) ;; Store
         (setq sym a)
         (when (featurep 'persistent-soft)
@@ -392,9 +387,6 @@ bindings the keymap is:
 
 (defvar ergoemacs-component-hash nil
   "Hash of ergoemacs-components")
-
-(defvar ergoemacs-component-struct--hash nil
-  "Hash table of `ergoemacs-mode' component structures.")
 
 (defvar ergoemacs-map--hash nil
   "Hash of calculated maps")
@@ -527,7 +519,6 @@ When `store-p' is non-nil, save the tables."
    store-p
    'ergoemacs-require nil
    'ergoemacs-component-hash (make-hash-table :test 'equal)
-   'ergoemacs-component-struct--hash (make-hash-table)
    'ergoemacs-map--hash (make-hash-table :test 'equal)
    'ergoemacs-map-properties--indirect-keymaps (make-hash-table)
    'ergoemacs-map-properties--key-struct (make-hash-table)

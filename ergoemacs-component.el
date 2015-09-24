@@ -171,10 +171,14 @@
 (defvar ergoemacs-component-struct--define-key-current nil)
 
 (defvar ergoemacs-component-struct--ensure-refreshed-p nil)
-(defun ergoemacs-component-struct--ensure (package &optional defer)
+(defun ergoemacs-component-struct--ensure (package &optional defer autoloads)
   "Ensure PACKAGE is installed.
+
 When DEFER is non-nil, dont `require' the package, just make sure
-it is installed."
+it is installed.
+
+The AUTOLOADS is a list of functions that need to be autoloaded
+if the package is deferred."
   (when package
     (ergoemacs-timing ensure
       (ergoemacs-timing (intern (format "ensure-%s" package))
@@ -186,6 +190,10 @@ it is installed."
             (run-with-idle-timer
              defer nil `(lambda() (require ',package) ;; (ergoemacs-component-struct--apply-inits)
                           )))
+          (when (and defer autoloads)
+            (dolist (c autoloads)
+              (unless (fboundp (car c))
+                (autoload (car c) (format "%s" (cdr c)) nil t))))
           (unless (featurep package)
             (unless package--initialized
               (package-initialize))
@@ -233,7 +241,7 @@ It also passes ARGS if any are specified."
 
 (defun ergoemacs-component-struct--handle-bind-1 (kbd-str def keymap)
   "Tell `ergoemacs-mode' to bind KBD-STR to DEF in KEYMAP"
-  (ergoemacs-component-struct--define-key keymap (read-kbd-macro kbd-strdddd) def))
+  (ergoemacs-component-struct--define-key keymap (read-kbd-macro kbd-str) def))
 
 (defun ergoemacs-component-struct--handle-bind (bind &optional keymap)
   "Handle :bind and related properties.
@@ -252,12 +260,14 @@ Also autoload MODE.
 
 Requires `ergoemacs-component-struct--define-key-current' to be
 an `ergoemacs-component-struct' object."
+  (message "Handle Mode #2: %s %s" regexpr mode)
   (when (ergoemacs-component-struct-p ergoemacs-component-struct--define-key-current)
-    (let ((c (cons regexpr mode))
-          (obj ergoemacs-component-struct--define-key-current)
-          (package-name (ergoemacs-component-struct-package-name obj)))
-      (unless (member c auto-mode-alist)
-        (push c auto-mode-alist))
+    (let* ((c (cons regexpr mode))
+           (obj ergoemacs-component-struct--define-key-current)
+           (package-name (ergoemacs-component-struct-package-name obj)))
+      (ergoemacs-component-struct--deferred
+       `(unless (member ',c auto-mode-alist)
+          (push ',c auto-mode-alist)))
       (when (and package-name mode (not (fboundp mode)))
         ;; Create autoload.
         (autoload mode (format "%s, a major mode defined in %s" mode package-name) nil t)
@@ -267,7 +277,8 @@ an `ergoemacs-component-struct' object."
 
 (defun ergoemacs-component-struct--handle-mode (mode)
   "Handle MODE list from :mode keyword."
-  (ergoemacs-component-struct--parse-list mode #'ergoemacs-component-struct--handle-mode-1))
+  (when mode
+    (ergoemacs-component-struct--parse-list mode #'ergoemacs-component-struct--handle-mode-1)))
 
 (defun ergoemacs-component-struct--create-component (plist body file)
   "Create ergoemacs component.
@@ -968,7 +979,7 @@ be composed over the keymap.  This is done in
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
   (let* ((obj (or obj (ergoemacs-theme-components)))
-         package-name ensure defer comp plist tmp)
+         package-name ensure defer comp plist tmp autoloads)
     (when ergoemacs-component-struct--apply-inits-first-p
       (setq ergoemacs-component-struct--apply-inits-first-p nil
             ergoemacs-component-struct--apply-ensure-p t)
@@ -997,21 +1008,23 @@ be composed over the keymap.  This is done in
               package-name (ergoemacs-component-struct-package-name comp)
               ensure (ergoemacs-component-struct-ensure comp)
               plist (ergoemacs-component-struct-plist comp)
+              autoloads (ergoemacs-component-struct-autoloads comp)
               defer (ergoemacs-component-struct-defer comp))
         (cond
          ((eq ensure t)
-          (ergoemacs-component-struct--ensure package-name defer))
+          (ergoemacs-component-struct--ensure package-name defer autoloads))
          ((and ensure (symbolp ensure))
-          (ergoemacs-component-struct--ensure ensure defer))
+          (ergoemacs-component-struct--ensure ensure defer autoloads))
          ((consp ensure)
           (dolist (elt ensure)
             (cond
              ((and elt (symbolp elt))
-              (ergoemacs-component-struct--ensure elt defer))
+              (ergoemacs-component-struct--ensure elt defer autoloads))
              ((stringp elt)
-              (ergoemacs-component-struct--ensure (intern elt) defer)))))
+              (ergoemacs-component-struct--ensure (intern elt) defer autoloads)))
+            (setq autoloads nil)))
          ((stringp ensure)
-          (ergoemacs-component-struct--ensure (intern ensure) defer)))))
+          (ergoemacs-component-struct--ensure (intern ensure) defer autoloads)))))
     ;; Turn on plist options (like :diminish)
     (dolist (elt obj)
       (unless (memq elt ergoemacs-component-struct--applied-plists)
