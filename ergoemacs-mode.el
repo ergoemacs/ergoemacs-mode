@@ -61,6 +61,8 @@
 
 ;;; Code:
 
+(defvar ergoemacs--load-time (current-time)
+  "Amount of time it took for `ergoemacs-mode' to load.")
 
 ;; Include extra files
 (defvar ergoemacs-dir
@@ -409,7 +411,7 @@ bindings the keymap is:
   "")
 
 (defvar ergoemacs-translation-hash nil
-  "Hash table of translations")
+  "Hash table of translations.")
 
 (defvar ergoemacs-map-properties--create-label-function nil)
 
@@ -1237,7 +1239,12 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
       (setq ergoemacs-mode--start-p t)
       (ergoemacs-mode ergoemacs-mode)
       (run-hooks 'ergoemacs-mode-init-hook)
-      (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks))))
+      (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks))
+    (let* ((time1 ergoemacs--load-time)
+           (time2 (aref (gethash 'ergoemacs-mode-after-init-emacs ergoemacs-timing-hash) 1))
+           (time3 (+ time1 time2)))
+      (message "Started `ergoemacs-mode'. Total startup time %f (Load: %f, Initialize:%f%s)"
+               time3 time1 time2 (or (and ergoemacs-mode--fast-p ", cached") "")))))
 
 (if ergoemacs-mode--fast-p
     (provide 'ergoemacs-themes)
@@ -1252,7 +1259,9 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 (add-hook 'emacs-startup-hook #'ergoemacs-mode-after-init-emacs)
 
 (run-hooks 'ergoemacs-mode-intialize-hook)
-
+(setq ergoemacs--load-time (float-time (time-subtract (current-time) ergoemacs--load-time)))
+(puthash 'ergoemacs-load-time (vector 1 ergoemacs--load-time ergoemacs--load-time ergoemacs--load-time (or load-file-name buffer-file-name))
+         ergoemacs-timing-hash)
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-mode.el ends here
