@@ -746,7 +746,7 @@ If TYPE is unspecified, assume :normal translation"
   "Reset `ergoemacs-translate--keymap-hash'"
   (setq ergoemacs-translate--keymap-hash (make-hash-table)))
 
-(add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--keymap-reset)
+;; (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--keymap-reset)
 
 (defun ergoemacs-translate--keymap (&optional translation)
   "Get the keymap for TRANSLATION.

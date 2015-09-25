@@ -246,7 +246,7 @@ The backup is determined by `find-backup-file-name'"
     (when (or (equal current-prefix-arg '(4))
               (equal current-prefix-arg '(16)))
       (insert "Delete Byte Compiled Files:\n")
-      (dolist (file (directory-files default-directory t "\\(ergoemacs-test-global-.*elc?$\\|ergoemacs-global-.*elc?$\\|[.]elc$\\\)"))
+      (dolist (file (directory-files default-directory t "\\(ergoemacs-test-global-.*elc?\\(\\.gz\\)?$\\|ergoemacs-global-.*elc?\\(\\.gz\\)?$\\|[.]elc\\(\\.gz\\)?$\\\)"))
         (insert "\tDelete " file)
         (delete-file file)
         (insert "\n"))

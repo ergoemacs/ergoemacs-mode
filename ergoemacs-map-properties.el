@@ -57,6 +57,7 @@
 
 (require 'package)
 
+(defvar ergoemacs--gzip)
 (defvar ergoemacs-map-keymap--load-autoloads-p)
 (defvar ergoemacs--original-local-map)
 (defvar ergoemacs--system)
@@ -248,10 +249,10 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
 
 (defun ergoemacs-map-properties--default-global-file (&optional other)
   "What is the global key hash file."
-  (let* ((file (expand-file-name (format "ergoemacs-%s-%s.el" (or other "global") ergoemacs--system)
+  (let* ((file (expand-file-name (format "ergoemacs-%s-%s.el%s" (or other "global") ergoemacs--system (or (and ergoemacs--gzip ".gz") ""))
                                  ergoemacs-dir))
          (extras (expand-file-name "ergoemacs-extras" user-emacs-directory))
-         (file2 (expand-file-name (format "ergoemacs-%s-%s.el" (or other "global") ergoemacs--system)
+         (file2 (expand-file-name (format "ergoemacs-%s-%s.el%s" (or other "global") ergoemacs--system (or (and ergoemacs--gzip ".gz") ""))
                                   extras)))
     (or
      (and (file-readable-p file2) file2)
@@ -549,27 +550,27 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
       (ergoemacs :user-before)
       (setq global-map (make-composed-keymap user-map global-map)))))
 
-(defvar ergoemacs-map-properties--get-original-global-map nil)
 (defun ergoemacs-map-properties--get-original-global-map ()
   "Loads/Creates the default global map information."
-  (unless ergoemacs-map-properties--get-original-global-map
-    (ergoemacs-map-properties--label-atoms)
-    (if (file-readable-p (ergoemacs-map-properties--default-global-file))
-        (progn
-          (unless ergoemacs-mode--fast-p
-            (load (ergoemacs-map-properties--default-global-file)))
-          (when (functionp ergoemacs-map-properties--create-label-function)
-            (ergoemacs-timing ergoemacs-map-properties--create-label-function
-              (funcall ergoemacs-map-properties--create-label-function)))
-          (ergoemacs-map-properties--protect-global-map))
-      (if noninteractive
-          (ergoemacs-warn "Could not find global map information")
-        (ergoemacs-timing ergoemacs-create-global
-          (let* ((emacs-exe (ergoemacs-emacs-exe))
-                 (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
-                 (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(ergoemacs-map-properties--default-global-gen) (kill-emacs)\"" emacs-exe default-directory)))
-            (message "%s" (shell-command-to-string cmd))
-            (ergoemacs-map-properties--get-original-global-map)))))))
+  (unless ergoemacs-mode--fast-p
+    (ergoemacs-timing get-original-global-map
+      (ergoemacs-map-properties--label-atoms)
+      (if (file-readable-p (ergoemacs-map-properties--default-global-file))
+          (progn
+            (unless ergoemacs-mode--fast-p
+              (load (ergoemacs-map-properties--default-global-file)))
+            (when (functionp ergoemacs-map-properties--create-label-function)
+              (ergoemacs-timing ergoemacs-map-properties--create-label-function
+                (funcall ergoemacs-map-properties--create-label-function)))
+            (ergoemacs-map-properties--protect-global-map))
+        (if noninteractive
+            (ergoemacs-warn "Could not find global map information")
+          (ergoemacs-timing ergoemacs-create-global
+            (let* ((emacs-exe (ergoemacs-emacs-exe))
+                   (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
+                   (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(ergoemacs-map-properties--default-global-gen) (kill-emacs)\"" emacs-exe default-directory)))
+              (message "%s" (shell-command-to-string cmd))
+              (ergoemacs-map-properties--get-original-global-map))))))))
 
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-map-properties--get-original-global-map)
 
@@ -877,8 +878,6 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
 
 (defun ergoemacs-map-properties--calculate-keys-and-where-is-hash (keymap &rest _ignore)
   "Calculates :where-is and :keys properties for KEYMAP."
-  (when (and (eq keymap global-map) (not ergoemacs-map-properties--get-original-global-map))
-    (ergoemacs-map-properties--get-original-global-map))
   (let ((where-is-hash (make-hash-table))
         (lookup-hash (make-hash-table :test 'equal))
         keys tmp)
