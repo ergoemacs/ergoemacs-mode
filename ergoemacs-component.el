@@ -985,7 +985,7 @@ be composed over the keymap.  This is done in
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
   (let* ((obj (or obj (ergoemacs-theme-components)))
-         package-name ensure defer comp plist tmp autoloads)
+         package-name ensure defer comp tmp autoloads)
     (when ergoemacs-component-struct--apply-inits-first-p
       (setq ergoemacs-component-struct--apply-inits-first-p nil
             ergoemacs-component-struct--apply-ensure-p t)
@@ -1013,7 +1013,6 @@ be composed over the keymap.  This is done in
         (setq comp (ergoemacs-component-struct--lookup-hash elt)
               package-name (ergoemacs-component-struct-package-name comp)
               ensure (ergoemacs-component-struct-ensure comp)
-              plist (ergoemacs-component-struct-plist comp)
               autoloads (ergoemacs-component-struct-autoloads comp)
               defer (ergoemacs-component-struct-defer comp))
         (cond

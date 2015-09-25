@@ -76,6 +76,7 @@
 (defvar ergoemacs-user-keymap)
 (defvar ess-language)
 (defvar ergoemacs-mode--fast-p)
+(defvar ergoemacs-remap-ignore)
 
 
 (declare-function ergoemacs-timing-- "ergoemacs-mode")

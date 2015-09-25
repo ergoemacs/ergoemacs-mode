@@ -89,7 +89,7 @@ Whe changed return t, otherwise return nil."
                         (and (integerp value) (< 0 value) value)
                         (and (not (integerp value)) value))) ; Otherwise negative integers are the same as nil
          (last-value (ignore-errors (ergoemacs-sv variable)))
-         tmp ret)
+         ret)
     (when (and minor-mode-p (not last-value))
       (setq last-value -1))
     (cond
