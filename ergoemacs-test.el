@@ -126,6 +126,13 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (ert '(and "ergoemacs-" (tag :calc)))
   (call-interactively 'elp-results))
 
+(defun ergoemacs-test-no-calc ()
+  "Test for calc."
+  (interactive)
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (not (tag :calc))))
+  (call-interactively 'elp-results))
+
 (defun ergoemacs-test-shift-select ()
   "Shift-selection test for ergoemacs-mode."
   (interactive)
