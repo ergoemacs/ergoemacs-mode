@@ -263,7 +263,7 @@ Also autoload MODE.
 
 Requires `ergoemacs-component-struct--define-key-current' to be
 an `ergoemacs-component-struct' object."
-  (message "Handle Mode #2: %s %s" regexpr mode)
+  ;; (message "Handle Mode #2: %s %s" regexpr mode)
   (when (ergoemacs-component-struct-p ergoemacs-component-struct--define-key-current)
     (let* ((c (cons regexpr mode))
            (obj ergoemacs-component-struct--define-key-current)
