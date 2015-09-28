@@ -751,8 +751,8 @@ KEYMAP can be a keymap or keymap integer key."
     (setq ergoemacs-map-properties--unlabeled new)))
 
 ;; Startup and load functions
-(add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
-(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
+;;(add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
+;;(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
 
 (defun ergoemacs-map-properties--get-or-generate-map-key (keymap &rest _ignore)
   "Gets the key for the KEYMAP."

@@ -265,7 +265,7 @@ lambda is a special undefined function"
 
 (defcustom ergoemacs-theme-options
   '()
-  "List of theme options"
+  "List of theme options."
   :type '(repeat
           (list
            (sexp :tag "Theme Component")

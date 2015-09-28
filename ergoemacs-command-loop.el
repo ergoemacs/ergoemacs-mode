@@ -265,20 +265,36 @@ If so return the translation."
       (ergoemacs-command-loop--message "Resume regular ergoemacs-mode")))))
 
 (defun ergoemacs-command-loop--redefine-quit-key (&optional key)
-  "Redefines the quit-key in Emacs.
+  "Redefines the quit-key in Emacs to KEY or Ctrl+g.
 
-Typically the emacs quit key is Ctrl+g, but it can be redefined
+Typically the Emacs quit key is Ctrl+g, but it can be redefined
 with this function."
   (let ((cur-input (current-input-mode))
         (new-key (listify-key-sequence (or key [7]))))
     (when (> 1 (length new-key))
       (error "Will not set a key sequence to the emacs key sequence"))
     (setf (nth 3 cur-input) new-key)
-    (ignore-errors (and (apply 'set-input-mode cur-input) t))))
+    (and (ignore-errors (apply 'set-input-mode cur-input))
+         (message "Redefined Emacs quit key to %s"
+                  (ergoemacs-key-description (or key [7])))
+         t)))
 
 (defun ergoemacs-command-loop--setup-quit-key ()
   "Setup the `ergoemacs-mode' quit key."
-  (ergoemacs-command-loop--redefine-quit-key (nth 0 (where-is-internal 'keyboard-quit))))
+  (let (quit-keys vect-key)
+    (dolist (key (reverse (append (where-is-internal 'keyboard-quit)
+                                  (where-is-internal 'ergoemacs-keyboard-quit))))
+      (setq vect-key (vconcat key))
+      (unless (or (symbolp (aref key 0))
+                  (not (= 1 (length key)))
+                  (member key quit-keys))
+        (push key quit-keys)))
+    (when quit-keys
+      (catch 'found-quit
+        (dolist (key quit-keys)
+          (when (ergoemacs-command-loop--redefine-quit-key (nth 0 quit-keys))
+            (throw 'found-quit t)))
+        nil))))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--setup-quit-key)
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--redefine-quit-key)
@@ -510,8 +526,9 @@ CURRENT-KEY is the current key being read.  This is used
 inconjunction with `input-method-function' to translate keys if
 `set-input-method' is using a different keyboard layout.
 
-Also add to `last-command-event' to allow `self-insert-character' to work appropriately.
-I'm not sure the purpose of `last-event-frame', but this is modified as well"
+Also add to `last-command-event' to allow `self-insert-character'
+to work appropriately.  I'm not sure the purpose of
+`last-event-frame', but this is modified as well."
   (or (let ((event (pop unread-command-events))
             translate)
         (setq ergoemacs-comand-loop--untranslated-event event)
@@ -609,11 +626,11 @@ Used to help with translation keymaps like `input-decode-map'"
       ;; Not a new event, restore anything that was popped off the
       ;; unread command events.
       (when old-ergoemacs-input
-        (setq unread-command-events old-ergoemacs-input)))
-    ;; Add anything read to the
-    ;; unread-command-events
-    (when new-ergoemacs-input
-      (setq unread-command-events (append new-ergoemacs-input unread-command-events)))
+        (setq unread-command-events old-ergoemacs-input))
+      ;; Add anything read to the
+      ;; unread-command-events
+      (when new-ergoemacs-input
+        (setq unread-command-events (append new-ergoemacs-input unread-command-events))))
     new-event))
 
 (defun ergoemacs-command-loop--read-event (prompt &optional current-key)

@@ -868,6 +868,34 @@ Should test issue #142"
      (setq input-decode-map (copy-keymap old-map)))
     (should ret)))
 
+(ert-deftest ergoemacs-test-terminal-M-O-fight-2 ()
+  "Tests Issue #371"
+  (let ((old-map (copy-keymap input-decode-map))
+        (ret nil))
+    (ergoemacs-test-layout
+     (setq input-decode-map (make-sparse-keymap))
+     ;; Setup input decode map just like `xterm' for some common keys.
+     (define-key input-decode-map "\eOA" [up])
+     (define-key input-decode-map "\eOB" [down])
+     (define-key input-decode-map "\eOC" [right])
+     (define-key input-decode-map "\eOD" [left])
+     (define-key input-decode-map "\eOF" [end])
+     (define-key input-decode-map "\eOH" [home])
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-max))
+       (beginning-of-line)
+       (with-timeout (0.2 nil)
+         (ergoemacs-command-loop--internal "\e O A")) ; by looking at `ergoemacs-read-key' this seems to be translating correctly, but... it doesn't run in this context.
+       (message "Decode: %s" (lookup-key input-decode-map (kbd "\e O A")))
+       (message "Buffer: %s" (buffer-string))
+       (setq ret (looking-at "nulla pariatur. Excepteur sint occaecat cupidatat non proident,"))
+       (kill-buffer (current-buffer)))
+     (setq input-decode-map (copy-keymap old-map)))
+    (should ret)))
+
 ;;; Key inheritance 
 
 (ert-deftest ergoemacs-key-inheitance-alt-up-and-down ()
