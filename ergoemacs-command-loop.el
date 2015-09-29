@@ -1296,15 +1296,8 @@ The RECORD-FLAG and KEYS are sent to `call-interactively'."
 (defvar ergoemacs-command-loop--spinner nil)
 (defvar ergoemacs-command-loop--spinner-i nil)
 (defvar ergoemacs-command-loop--spinner-list nil)
-(defvar ergoemacs-command-loop-spinner-rate)
 (defvar ergoemacs-command-loop-spinner)
 (defvar ergoemacs-command-loop-spinners)
-(defun ergoemacs-command-loop--spinner ()
-  (interactive)
-  (when ergoemacs-command-loop-spinner-rate
-    (setq ergoemacs-command-loop--spinner-list (nth 1 (assoc ergoemacs-command-loop-spinner ergoemacs-command-loop-spinners))
-          ergoemacs-command-loop--spinner (run-at-time (format "%s sec" ergoemacs-command-loop-spinner-rate) ergoemacs-command-loop-spinner-rate 'ergoemacs-command-loop--spinner-display)
-          ergoemacs-command-loop--spinner-i 0)))
 
 (defun ergoemacs-command-loop--spinner-display (&optional string &rest args)
   "Spinner display.
