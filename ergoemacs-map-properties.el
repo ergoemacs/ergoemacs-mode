@@ -552,7 +552,8 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 
 (defun ergoemacs-map-properties--get-original-global-map ()
   "Loads/Creates the default global map information."
-  (unless ergoemacs-mode--fast-p
+  (if ergoemacs-mode--fast-p
+      (ergoemacs-map-properties--label-atoms)
     (ergoemacs-timing get-original-global-map
       (ergoemacs-map-properties--label-atoms)
       (if (file-readable-p (ergoemacs-map-properties--default-global-file))
