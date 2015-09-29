@@ -285,14 +285,14 @@ with this function."
     (dolist (key (reverse (append (where-is-internal 'keyboard-quit)
                                   (where-is-internal 'ergoemacs-keyboard-quit))))
       (setq vect-key (vconcat key))
-      (unless (or (symbolp (aref key 0))
-                  (not (= 1 (length key)))
+      (unless (or (symbolp (aref vect-key 0))
+                  (not (= 1 (length vect-key)))
                   (member key quit-keys))
-        (push key quit-keys)))
+        (push vect-key quit-keys)))
     (when quit-keys
       (catch 'found-quit
         (dolist (key quit-keys)
-          (when (ergoemacs-command-loop--redefine-quit-key (nth 0 quit-keys))
+          (when (ergoemacs-command-loop--redefine-quit-key key)
             (throw 'found-quit t)))
         nil))))
 
@@ -374,9 +374,8 @@ This is called through `ergoemacs-command-loop'"
             (puthash ',(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) :force) ergoemacs-command-loop--next-key-hash)
             (puthash ',(intern (concat "ergoemacs-read-key-force-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) :force) ergoemacs-command-loop--next-key-hash)))))
 
-
 (defvar ergoemacs-last-command-event nil
-  "ergoemacs-mode command loop last read command")
+  "`ergoemacs-mode' command loop last read command.")
 
 (defun ergoemacs-command-loop--undo-last ()
   "Function to undo the last key-press.
@@ -601,7 +600,12 @@ to work appropriately.  I'm not sure the purpose of
 
 (defun ergoemacs-command-loop--decode-event (event keymap &optional current-key)
   "Change EVENT based on KEYMAP.
-Used to help with translation keymaps like `input-decode-map'"
+
+Used to help with translation keymaps like `input-decode-map'.
+
+CURRENT-KEY is the current key being read.  This is used
+inconjunction with `input-method-function' to translate keys if
+`set-input-method' is using a different keyboard layout."
   (let* ((new-event event)
          (old-ergoemacs-input unread-command-events)
          new-ergoemacs-input
@@ -618,11 +622,14 @@ Used to help with translation keymaps like `input-decode-map'"
           (setq current-test-key (ergoemacs :combine current-test-key next-key)
                 test-ret (lookup-key keymap current-test-key))
         (setq current-test-key nil)))
+    ;; Change strings to emacs keys.
     (when (stringp test-ret) 
       (setq test-ret (read-kbd-macro test-ret t)))
     (if (and (vectorp test-ret)
-             (= (length test-ret) 1))
-        (setq new-event (elt test-ret 0))
+             (
+              = (length test-ret) 1))
+        (progn
+          (setq new-event (elt test-ret 0)))
       ;; Not a new event, restore anything that was popped off the
       ;; unread command events.
       (when old-ergoemacs-input
@@ -635,6 +642,9 @@ Used to help with translation keymaps like `input-decode-map'"
 
 (defun ergoemacs-command-loop--read-event (prompt &optional current-key)
   "Reads a single event.
+
+PROMPT is 
+
 This respects `input-decode-map', `local-function-key-map' and `key-translation-map'.
 
 It also inputs real read events into the history with `ergoemacs-command-loop--history'
@@ -1008,9 +1018,10 @@ to start with
 
 (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
 
-(unless (fboundp 'posnp)
+(if (fboundp 'posnp)
+    (defalias 'ergoemacs-posnp #'posnp)
   ;; For emacs 24.1
-  (defun posnp (obj)
+  (defun ergoemacs-posnp (obj)
     "Return non-nil if OBJ appears to be a valid `posn' object."
     (and (windowp (car-safe obj))
          (atom (car-safe (setq obj (cdr obj))))                ;AREA-OR-POS.
@@ -1210,10 +1221,10 @@ The RECORD-FLAG and KEYS are sent to `call-interactively'."
    ((and (eventp last-command-event)
          (consp last-command-event))
     (let* ((posn (ignore-errors (car (cdr last-command-event))))
-           (area (and posn (posnp posn) (posn-area posn)))
+           (area (and posn (ergoemacs-posnp posn) (posn-area posn)))
            (original-command command)
            (command command)
-           (obj (and posn (posnp posn) (posn-object posn)))
+           (obj (and posn (ergoemacs-posnp posn) (posn-object posn)))
            tmp)
       ;; From `read-key-sequence':
       ;; /* Clicks in non-text areas get prefixed by the symbol
