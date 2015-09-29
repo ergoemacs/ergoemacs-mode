@@ -184,7 +184,7 @@ If OFF is non-nil, turn off the options instead."
 
 ;;;###autoload
 (defun ergoemacs-theme-toggle-option (option)
-  "Toggles theme OPTION."
+  "Toggle theme OPTION."
   (if (ergoemacs-theme-option-enabled-p option)
       (ergoemacs-theme-option-off option)
     (ergoemacs-theme-option-on option)))
@@ -205,7 +205,11 @@ When SILENT is true, also include silent themes"
     ret))
 
 (defun ergoemacs-theme--custom-documentation (&optional themes ini)
-  "Gets the list of all known layouts and the documentation associated with the layouts."
+  "Get list of all known layouts and their documentation.
+
+THEMES is the list of themes for the customize documentation.
+
+INI is provided for initilazation, to shorten the descriptions."
   (let ((themes (or themes (sort (ergoemacs-theme--list) 'string<))))
     (mapconcat
      (lambda(theme)
@@ -224,7 +228,8 @@ When SILENT is true, also include silent themes"
        (sort (ergoemacs-theme--list t) 'string<))))
 
 (defun ergoemacs-theme--regexp (&optional at-end)
-  "Returns a regexp of `ergoemacs-mode' themes."
+  "Return a regexp of `ergoemacs-mode' themes.
+When AT-END is non-nil, append a $ to the regular expression."
   (let (ret)
     (setq ret (regexp-opt (ergoemacs-theme--list t) 'symbols))
     (when at-end
@@ -308,14 +313,14 @@ When SILENT is true, also include silent themes"
             (sort options-list 'string<)))))))
 
 (defun ergoemacs-theme--get-version ()
-  "Gets the current version for the current theme"
+  "Get the current version for the current theme."
   (let ((theme-ver (assoc (ergoemacs :current-theme) ergoemacs-theme-version)))
     (if (not theme-ver) nil
       (car (cdr theme-ver)))))
 
 
 (defun ergoemacs-theme--version-menu (theme)
-  "Gets version menu for THEME"
+  "Get version menu for THEME."
   (let ((theme-versions (ergoemacs-component-struct--versions (ergoemacs-theme-components theme))))
     (if (not theme-versions) nil
       `(ergoemacs-versions
@@ -340,7 +345,7 @@ When SILENT is true, also include silent themes"
             theme-versions))))))
 
 (defun ergoemacs-theme--menu (theme)
-  "Defines menus for current THEME."
+  "Define menus for current THEME."
   `(keymap
     ,(ergoemacs-layouts--menu)
     (ergoemacs-theme-sep "--")
@@ -444,12 +449,16 @@ When SILENT is true, also include silent themes"
 
 (defun ergoemacs-theme-at-point ()
   "Get the `ergoemacs-theme' defined at or before point.
-Return 0 if there is no such symbol. Uses `ergoemacs-component-at-point'."
+Return 0 if there is no such symbol.  Uses
+`ergoemacs-component-at-point'."
   (ergoemacs-component-at-point t))
 
 (defcustom ergoemacs-theme-find-regexp
   (concat"^\\s-*(ergoemacs-theme" find-function-space-re "%s\\(\\s-\\|$\\)")
-  "The regexp used by `ergoemacs-find-theme' to search for a component definition.
+  "The regexp to search for a component definition.
+
+This is used by `ergoemacs-find-theme'.
+
 Note it must contain a `%s' at the place where `format'
 should insert the face name."
   :type 'regexp
@@ -1017,8 +1026,8 @@ to png files."
             ;; FIXME: Update images...
             )
         (ergoemacs :spinner "%s" (nth 0 png-info))
-        (setq process (start-process-shell-command "ergoemacs-png-convert"
-                                                   "*ergoemacs-theme-png-convert*"
+        (setq process (start-process-shell-command
+                       "ergoemacs-png-convert" "*ergoemacs-theme-png-convert*"
                                                    (nth 1 png-info)))
         (set-process-sentinel process 'ergoemacs-theme--png--process)))))
 

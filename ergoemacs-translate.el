@@ -181,16 +181,50 @@ KEY-SEQ must be a vector or string.  If there is no need to change the sequence,
           (push event seq))))
       (and found (vconcat seq)))))
 
+(defun ergoemacs-translate--swap-apps (key &optional what with)
+  "In KEY, swap apps key with menu key.
+Optionally specify WHAT you want to replace WITH."
+  (let ((seq (reverse (append key ())))
+        (what (or what 'apps))
+        (with (or with 'menu))
+        found-p
+        ret)
+    (dolist (e seq)
+      (cond
+       ((eq e what)
+        (push with ret)
+        (setq found-p t))
+       (t (push e ret))))
+    (if found-p
+        (vconcat ret)
+      nil)))
+
+(defun ergoemacs-translate--swap-menu (key)
+  "In KEY swap menu key with apps key."
+  (ergoemacs-translate--swap-apps key 'menu 'apps))
+
 (defun ergoemacs-translate--define-key (keymap key def)
-  "Similar to `define-key', but defines meta keys as both meta and escape sequences."
+  "Similar to `define-key', with the following differences:
+- Both the Meta and escape sequences are bound.
+- Both <apps> and <menu> key sequences are bound.
+
+KEYMAP is the keymap that will be used for the definition.
+KEY is the key that is Emacs key that will be defined.
+DEF is the definition of what will be run."
   (let ((key key)
         (esc-key (ergoemacs-translate--escape-to-meta key))
-        (meta-key (ergoemacs-translate--meta-to-escape key)))
+        (meta-key (ergoemacs-translate--meta-to-escape key))
+        (apps-key (ergoemacs-translate--swap-apps key))
+        (menu-key (ergoemacs-translate--swap-menu key)))
     (define-key keymap key def)
     (when esc-key
       (define-key keymap esc-key def))
     (when meta-key
-      (define-key keymap meta-key def))))
+      (define-key keymap meta-key def))
+    (when apps-key
+      (define-key keymap apps-key def))
+    (when menu-key
+      (define-key keymap menu-key def))))
 
 (defun ergoemacs-translate--event-modifier-hash (&optional layout)
   "Gets the event modifier hash for LAYOUT."

@@ -829,7 +829,9 @@ If it is a tranisent map, assign the :dont-modify-p property to t."
 (defvar ergoemacs-map--saved-global-map nil)
 (defvar ergoemacs-map--last-global-map nil)
 (defun ergoemacs-map--modify-active (&optional ini)
-  "Modifies Active maps."
+  "Modifies Active maps.
+
+When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
   (let ((char-map (get-char-property-and-overlay (point) 'keymap))
         (local-map (get-text-property (point) 'local-map))
         (current-local-map (current-local-map))
@@ -904,7 +906,7 @@ If it is a tranisent map, assign the :dont-modify-p property to t."
   "Keymap of quit keys for local keymap.")
 
 (defun ergoemacs-map--install ()
-  "Installs `ergoemacs-mode' into the appropriate keymaps."
+  "Install `ergoemacs-mode' into the appropriate keymaps."
   (interactive)
   (ergoemacs-map--hashkey)
   (ergoemacs-mode-line)

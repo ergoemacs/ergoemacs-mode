@@ -1368,6 +1368,7 @@ Used to replace:
 
 (defun ergoemacs-command-loop--ignore (&rest _ignore)
   "Do nothing and return nil.
+
 This function accepts any number of arguments, but ignores them.
 
 Unlike `ignore', this command pretends `ergoemacs-command-loop--ignore' command was never
@@ -1376,6 +1377,7 @@ run, by changing `this-command' to `last-command'"
   (dolist (s ergoemacs-command-loop--execute-modify-command-list)
     (when (boundp s)
       (set s last-command)))
+  ;; FIXME: Somehow change the output of `this-single-command-raw-keys'
   nil)
 
 (defun ergoemacs-command-loop--read-key-sequence (prompt &rest _ignore)
