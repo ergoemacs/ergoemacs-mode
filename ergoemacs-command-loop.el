@@ -91,6 +91,18 @@
 
 (declare-function ergoemacs-key-description--modifier "ergoemacs-key-description")
 
+(declare-function ergoemacs-posnp "ergoemacs-command-loop")
+
+(if (fboundp 'posnp)
+    (defalias 'ergoemacs-posnp #'posnp)
+  ;; For emacs 24.1
+  (defun ergoemacs-posnp (obj)
+    "Return non-nil if OBJ appears to be a valid `posn' object."
+    (and (windowp (car-safe obj))
+         (atom (car-safe (setq obj (cdr obj))))                ;AREA-OR-POS.
+         (integerp (car-safe (car-safe (setq obj (cdr obj))))) ;XOFFSET.
+         (integerp (car-safe (cdr obj))))))
+
 (defvar ergoemacs-command-loop-echo-keystrokes)
 (defvar ergoemacs-default-cursor-color)
 (defvar ergoemacs-echo-function)
@@ -246,7 +258,9 @@ If so return the translation."
     (ergoemacs-command-loop--modal (ergoemacs-translation-struct-key (nth 0 ergoemacs-command-loop--modal-stack)))))
 
 (defun ergoemacs-command-loop--modal (type)
-  "Toggle ergoemacs command modes."
+  "Toggle ergoemacs command modes.
+
+The TYPE is the type of command translation/modal keymaps that are installed."
   (cond
    ((or (not ergoemacs-command-loop--modal-stack) ;; First time to turn on
         (not (eq (ergoemacs-translation-struct-key (nth 0 ergoemacs-command-loop--modal-stack)) type)) ;; New modal 
@@ -329,7 +343,11 @@ This is called through `ergoemacs-command-loop'"
 
 (defun ergoemacs-command-loop--digit-argument (&optional type)
   "Ergoemacs digit argument.
- This is called through `ergoemacs-command-loop'"
+
+This is called through `ergoemacs-command-loop'.
+
+TYPE is the keyboard translation type, defined by `ergoemacs-translate'.
+Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
   (interactive)
   (let* ((char (if (integerp last-command-event)
                    last-command-event
@@ -342,7 +360,11 @@ This is called through `ergoemacs-command-loop'"
 
 (defun ergoemacs-command-loop--negative-argument (&optional type)
   "Ergoemacs negative argument.
-This is called through `ergoemacs-command-loop'"
+
+This is called through `ergoemacs-command-loop'.
+
+TYPE is the keyboard translation type, defined by `ergoemacs-translate'
+Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
   (setq current-prefix-arg '-)
   (ergoemacs-command-loop nil type nil t))
 
@@ -379,6 +401,7 @@ This is called through `ergoemacs-command-loop'"
 
 (defun ergoemacs-command-loop--undo-last ()
   "Function to undo the last key-press.
+
 Uses the `ergoemacs-command-loop--history' variable/function."
   (interactive)
   (if ergoemacs-command-loop--history
@@ -397,6 +420,7 @@ Uses the `ergoemacs-command-loop--history' variable/function."
 
 (defun ergoemacs-command-loop--force-undo-last ()
   "Function to undo the last key-press.
+
 Unlike `ergoemacs-command-loop--undo-last', this ignores any bindings like \\[backward-kill-sentence]
 This is actually a dummy function.  The actual work is done in `ergoemacs-command-loop'"
   (interactive)
@@ -408,6 +432,7 @@ This is actually a dummy function.  The actual work is done in `ergoemacs-comman
 
 (defun ergoemacs-command-loop--swap-translation ()
   "Function to swap translations.
+
 Uses the `ergoemacs-command-loop-swap-translation' variable."
   (interactive)
   (let ((next-swap (assoc (list ergoemacs-command-loop--first-type ergoemacs-command-loop--current-type) ergoemacs-command-loop-swap-translation)))
@@ -460,7 +485,11 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
 (defvar ergoemacs-command-loop--read-key-prompt ""
   "Extra prompt for `ergoemacs-command-loop--read-key'.")
 (defun ergoemacs-command-loop--read-key-help-text-prefix-argument (&optional blink-on universal)
-  "Display prefix argument portion of the `ergoemacs-mode' help text."
+  "Display prefix argument portion of the `ergoemacs-mode' help text.
+
+BLINK-ON
+
+UNIVERSAL"
   (or (and (not current-prefix-arg)
            (concat (or
                     (and (not universal) "")
@@ -489,10 +518,11 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
        (ergoemacs :unicode-or-alt "▸" ">"))))
 
 (defun ergoemacs-command-loop--ensure-sane-variables ()
-  "Makes sure that certain variables won't lock up emacs.
+  "Make sure that certain variables won't lock up Emacs.
 
 Currently this ensures:
- `ergoemacs-command-loop--decode-event-delay' is less than `ergoemacs-command-loop-blink-rate'."
+
+`ergoemacs-command-loop--decode-event-delay' is less than `ergoemacs-command-loop-blink-rate'."
   (when (>= ergoemacs-command-loop--decode-event-delay ergoemacs-command-loop-blink-rate)
     (ergoemacs-warn "ergoemacs-command-loop--decode-event-delay >= ergoemacs-command-loop-blink-rate; Reset to ergoemacs-command-loop-blink-rate / 1000")
     (setq ergoemacs-command-loop--decode-event-delay (/ ergoemacs-command-loop-blink-rate 1000))))
@@ -1017,16 +1047,6 @@ to start with
     (push 'ergoemacs-ignore unread-command-events)))
 
 (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
-
-(if (fboundp 'posnp)
-    (defalias 'ergoemacs-posnp #'posnp)
-  ;; For emacs 24.1
-  (defun ergoemacs-posnp (obj)
-    "Return non-nil if OBJ appears to be a valid `posn' object."
-    (and (windowp (car-safe obj))
-         (atom (car-safe (setq obj (cdr obj))))                ;AREA-OR-POS.
-         (integerp (car-safe (car-safe (setq obj (cdr obj))))) ;XOFFSET.
-         (integerp (car-safe (cdr obj))))))
 
 (defun ergoemacs-command-loop--sync-point ()
   "Sometimes the window buffer and selected buffer are out of sync.
