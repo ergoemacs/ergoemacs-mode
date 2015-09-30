@@ -183,7 +183,9 @@ KEY-SEQ must be a vector or string.  If there is no need to change the sequence,
 
 (defun ergoemacs-translate--swap-apps (key &optional what with)
   "In KEY, swap apps key with menu key.
-Optionally specify WHAT you want to replace WITH."
+Optionally specify WHAT you want to replace WITH.
+
+If no changes have been done, return nil."
   (let ((seq (reverse (append key ())))
         (what (or what 'apps))
         (with (or with 'menu))
@@ -203,24 +205,51 @@ Optionally specify WHAT you want to replace WITH."
   "In KEY swap menu key with apps key."
   (ergoemacs-translate--swap-apps key 'menu 'apps))
 
+(defun ergoemacs-translate--to-vector (key)
+  "Translates KEY to vector format.
+
+If no changes are performed, return nil."
+  (when (stringp key)
+    (let ((new-key (vconcat key))
+          ret)
+      (unless (equal key new-key)
+        (setq ret new-key))
+      ret)))
+
+(defun ergoemacs-translate--to-string (key)
+  "Translates KEY to string format.
+
+If no chanegs are performed, return nil."
+  (catch 'not-ascii
+    (mapconcat
+     (lambda(key)
+       (if (and (integerp key) (< key 256))
+           (make-string 1 key)
+         (throw 'not-ascii nil)))
+     (append key) "")))
+
+(defvar ergoemacs-translate--apply-funs
+  '(ergoemacs-translate--escape-to-meta
+    ergoemacs-translate--meta-to-escape
+    ergoemacs-translate--swap-apps
+    ergoemacs-translate--swap-menu
+    ergoemacs-translate--to-string
+    ergoemacs-translate--to-vector)
+  "Functions to apply to key.
+
+These functions take a key as an argument and translate it in
+some way.  If there is no appropriate translation, the function
+should return nil.")
+
 (defun ergoemacs-translate--apply-key (key function &rest args)
   "Apply KEY to FUNCTION with ARGS.
-In addition to the normal KEY, meta, escape, apps and menu
-variants are also applied."
-  (let ((key key)
-        (esc-key (ergoemacs-translate--escape-to-meta key))
-        (meta-key (ergoemacs-translate--meta-to-escape key))
-        (apps-key (ergoemacs-translate--swap-apps key))
-        (menu-key (ergoemacs-translate--swap-menu key)))
+In addition to the normal KEY variants are also applied.  These
+variants are created using `ergoemacs-translate--apply-funs'."
+  (let ((key key) test-key)
     (apply function key args)
-    (when esc-key
-      (apply function esc-key args))
-    (when meta-key
-      (apply function meta-key args))
-    (when apps-key
-      (apply function apps-key args))
-    (when menu-key
-      (apply function menu-key args))))
+    (dolist (fn ergoemacs-translate--apply-funs)
+      (when (setq test-key (funcall fn key))
+        (apply function test-key args)))))
 
 (defun ergoemacs-translate--define-key (keymap key def)
   "Similar to `define-key', with the following differences:
