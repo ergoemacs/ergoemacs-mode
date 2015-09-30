@@ -215,25 +215,25 @@
   (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
   
   (global-set-key (kbd "C-x C-f") nil) ;; Remove Emacs Method
-  (global-set-key (kbd "C-o") 'find-file)
+  (global-set-key (kbd "C-o") ("C-o" :emacs))
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-desktop)
 
   (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
 
   (global-set-key (kbd "C-s") nil) ;; Search Forward
-  (global-set-key (kbd "C-f") 'isearch-forward)
+  (global-set-key (kbd "C-f") ("C-s" :emacs))
 
   (global-set-key (kbd "C-x C-s") nil) ;; Save File
-  (global-set-key (kbd "C-s") 'save-buffer)
+  (global-set-key (kbd "C-s") ("C-x C-s" :emacs))
   
   (global-set-key (kbd "C-x C-w") nil) ;; Write File
-  (global-set-key (kbd "C-S-s") 'write-file)
+  (global-set-key (kbd "C-S-s") ("C-x C-w" :emacs))
 
   (global-set-key (kbd "C-p") 'ergoemacs-print-buffer-confirm)
 
   (global-set-key (kbd "C-x h") nil) ;; Mark whole buffer
-  (global-set-key (kbd "C-a") 'mark-whole-buffer)
+  (global-set-key (kbd "C-a") ("C-x h" :emacs))
   
   (global-set-key (kbd "C-z") 'undo)
 
