@@ -385,23 +385,24 @@ It takes the following arguments:
                              (memq item ergoemacs-remap-ignore))
                    (let ((key (vconcat key)))
                      ;; What are the keys that are changed. 
-                     (if (setq tmp (ergoemacs-gethash key ergoemacs-map--lookup-hash))
-                         (dolist (new-key tmp)
-                           ;; (if (and (boundp 'isearch-mode-map) (eq lookup-keymap isearch-mode-map))
-                           ;;     (message "Define %s->%s" (key-description new-key) item))
-                           (ergoemacs :define-key ret new-key item)
-                           (push new-key bound-keys))
-                       ;; Keys where `ergoemacs-mode' dominates.
-                       (when (and (setq tmp (ergoemacs-gethash key ergoemacs-map--))
-                                  (not (member key bound-keys))
-                                  (not (member key ergoemacs-map--unbound-keys)))
-                         (if (not use-local-unbind-list-p)
-                             (ergoemacs :define-key ret key tmp)
-                           (push key local-unbind-list)
-                           (when (setq tmp (ergoemacs-translate--escape-to-meta key))
-                             (push tmp local-unbind-list))
-                           (when (setq tmp (ergoemacs-translate--meta-to-escape key))
-                             (push tmp local-unbind-list)))))
+                     (when (setq tmp (ergoemacs-gethash key ergoemacs-map--lookup-hash))
+                       (dolist (new-key tmp)
+                         ;; (if (and (boundp 'isearch-mode-map) (eq lookup-keymap isearch-mode-map))
+                         ;;     (message "Define %s->%s" (key-description new-key) item))
+                         ;; Don't use (ergoemacs :define-key), since list contains all variants.
+                         (define-key ret new-key item)
+                         (push new-key bound-keys)))
+                     ;; Keys where `ergoemacs-mode' dominates.
+                     (when (and (setq tmp (ergoemacs-gethash key ergoemacs-map--))
+                                (not (member key bound-keys))
+                                (not (member key ergoemacs-map--unbound-keys)))
+                       (if (not use-local-unbind-list-p)
+                           (ergoemacs :define-key ret key tmp)
+                         (push key local-unbind-list)
+                         (when (setq tmp (ergoemacs-translate--escape-to-meta key))
+                           (push tmp local-unbind-list))
+                         (when (setq tmp (ergoemacs-translate--meta-to-escape key))
+                           (push tmp local-unbind-list))))
                      ;; Define ergoemacs-mode remapping
                      ;; lookups.
                      (when (setq tmp (ergoemacs-gethash key (ergoemacs global-map :lookup)))
@@ -559,20 +560,20 @@ If LOOKUP-KEYMAP
                         (ergoemacs-map-keymap
                          (lambda(key item)
                            (unless (or (eq item 'ergoemacs-prefix)
-                                       (ignore-errors (eq (aref key 0) 'ergoemacs-labeled)))
-                             (if (setq tmp (ergoemacs-gethash item (ergoemacs global-map :where-is)))
-                                 (dolist (old-key tmp)
-                                   (ergoemacs :apply-key old-key
-                                              (lambda(trans-old-key)
-                                                (unless (or (gethash key ergoemacs-map--)
-                                                            (member key unbind-list))
-                                                  (ergoemacs :apply-key key
-                                                             (lambda(trans-new-key)
-                                                               (unless (or (gethash trans-new-key ergoemacs-map--)
-                                                                           (member trans-new-key unbind-list))
-                                                                 (puthash trans-new-key item ergoemacs-map--)
-                                                                 (ergoemacs-map--puthash trans-old-key trans-new-key))))))))
-                               (ergoemacs :apply-key key #'puthash item ergoemacs-map--))))
+                                       (ignore-errors (eq (aref key 0) 'ergoemacs-labeled))
+                                       (gethash key ergoemacs-map--)
+                                       (member key unbind-list))
+                             (when (setq tmp (ergoemacs-gethash item (ergoemacs global-map :where-is)))
+                               (dolist (old-key tmp)
+                                 (ergoemacs :apply-key old-key
+                                            (lambda(trans-old-key)
+                                              (ergoemacs :apply-key key
+                                                         (lambda(trans-new-key)
+                                                           (unless (or (gethash trans-new-key ergoemacs-map--)
+                                                                       (member trans-new-key unbind-list))
+                                                             (puthash trans-new-key item ergoemacs-map--)
+                                                             (ergoemacs-map--puthash trans-old-key trans-new-key))))))))
+                             (ergoemacs :apply-key key #'puthash item ergoemacs-map--)))
                          ret)))
                     
                     ;; The real `global-map'
