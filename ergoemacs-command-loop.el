@@ -1733,7 +1733,8 @@ pressed the translated key by changing
             (when (and orig-key
                        (setq ret bind
                              ret (if (and (eq ret 'ergoemacs-map-undefined)
-                                          (equal orig-key (nth 0 trials))) nil ret)))
+                                          (equal orig-key (nth 0 trials))
+                                          (nth 1 trials)) nil ret)))
               (cond
                ((equal orig-key (nth 0 trials))
                 (setq ergoemacs-command-loop--single-command-keys new-key)
@@ -1764,6 +1765,7 @@ pressed the translated key by changing
                ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
                 (setq this-command-keys-shift-translated t
                       ergoemacs-command-loop--single-command-keys (nth 0 trials))
+                
                 ;; Shift+Control+c
                 (when (and (ergoemacs-keymapp ret)
                            (setq tmp (lookup-key ret [ergoemacs-timeout]))
