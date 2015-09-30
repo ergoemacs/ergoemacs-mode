@@ -269,9 +269,21 @@ Tests issue #347"
       (isearch-mode -1))
     (kill-buffer (current-buffer)))))
 
+(ert-deftest ergoemacs-test-isearch-isearch-backward-repeats-backward ()
+  "Tests backward isearch remapping is correct."
+  :tags '(:search)
+  (ergoemacs-test-layout
+   :macro "C-j ars M-j"
+   :layout "colemak"
+   (save-excursion
+     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+     (delete-region (point-min) (point-max))
+     (insert "aars1\nars2\nars3\nars4")
+     (goto-char (point-max))
+     (execute-kbd-macro macro)
+     (should (looking-at "3")))))
 
 ;;; Shift Selection
-
 (ert-deftest ergoemacs-test-shift-select-move-no-mark ()
   "Tests another shifted selection"
   :tags '(:shift-select)
