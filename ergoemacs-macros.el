@@ -826,6 +826,8 @@ When arg1 can be a property.  The following properties are supported:
         (arg3 (nth 2 args))
         (arg4 (nth 3 args)))
     (cond
+     ((and arg1 (symbolp arg1) (eq arg1 :apply-key) arg2 arg3)
+      `(ergoemacs-translate--apply-key ,@(cdr args)))
      ((and arg1 (symbolp arg1) (eq arg1 :spinner) arg2)
       `(ergoemacs-command-loop--spinner-display ,@(cdr args)))
      ((and arg1 (symbolp arg1) (eq arg1 :define-key) arg2 arg3)

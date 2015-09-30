@@ -203,6 +203,25 @@ Optionally specify WHAT you want to replace WITH."
   "In KEY swap menu key with apps key."
   (ergoemacs-translate--swap-apps key 'menu 'apps))
 
+(defun ergoemacs-translate--apply-key (key function &rest args)
+  "Apply KEY to FUNCTION with ARGS.
+In addition to the normal KEY, meta, escape, apps and menu
+variants are also applied."
+  (let ((key key)
+        (esc-key (ergoemacs-translate--escape-to-meta key))
+        (meta-key (ergoemacs-translate--meta-to-escape key))
+        (apps-key (ergoemacs-translate--swap-apps key))
+        (menu-key (ergoemacs-translate--swap-menu key)))
+    (apply function key args)
+    (when esc-key
+      (apply function esc-key args))
+    (when meta-key
+      (apply function meta-key args))
+    (when apps-key
+      (apply function apps-key args))
+    (when menu-key
+      (apply function menu-key args))))
+
 (defun ergoemacs-translate--define-key (keymap key def)
   "Similar to `define-key', with the following differences:
 - Both the Meta and escape sequences are bound.
@@ -210,21 +229,10 @@ Optionally specify WHAT you want to replace WITH."
 
 KEYMAP is the keymap that will be used for the definition.
 KEY is the key that is Emacs key that will be defined.
-DEF is the definition of what will be run."
-  (let ((key key)
-        (esc-key (ergoemacs-translate--escape-to-meta key))
-        (meta-key (ergoemacs-translate--meta-to-escape key))
-        (apps-key (ergoemacs-translate--swap-apps key))
-        (menu-key (ergoemacs-translate--swap-menu key)))
-    (define-key keymap key def)
-    (when esc-key
-      (define-key keymap esc-key def))
-    (when meta-key
-      (define-key keymap meta-key def))
-    (when apps-key
-      (define-key keymap apps-key def))
-    (when menu-key
-      (define-key keymap menu-key def))))
+DEF is the definition of what will be run.
+
+This uses `ergoemacs-translate--apply-key'"
+  (ergoemacs-translate--apply-key key (lambda(new-key) (define-key keymap new-key def))))
 
 (defun ergoemacs-translate--event-modifier-hash (&optional layout)
   "Gets the event modifier hash for LAYOUT."
