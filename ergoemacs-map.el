@@ -553,23 +553,27 @@ If LOOKUP-KEYMAP
                           (unless (ergoemacs tmp2 :empty-p)
                             (push tmp2 composed-list)))
                          (t (push tmp composed-list)))))
+                    
                     (ergoemacs-timing setup-ergoemacs-hash
                       (dolist (ret composed-list)
                         (ergoemacs-map-keymap
                          (lambda(key item)
                            (unless (or (eq item 'ergoemacs-prefix)
                                        (ignore-errors (eq (aref key 0) 'ergoemacs-labeled)))
-                             (when (setq tmp (ergoemacs-gethash item (ergoemacs global-map :where-is)))
-                               (dolist (old-key tmp)
-                                 (ergoemacs :apply-key old-key
-                                            (lambda(trans-old-key)
-                                              (ergoemacs :apply-key key
-                                                         (lambda(trans-new-key)
-                                                           (unless (gethash trans-new-key ergoemacs-map--)
-                                                             (puthash trans-new-key item ergoemacs-map--)
-                                                             (ergoemacs-map--puthash trans-old-key trans-new-key))))))))))
+                             (if (setq tmp (ergoemacs-gethash item (ergoemacs global-map :where-is)))
+                                 (dolist (old-key tmp)
+                                   (ergoemacs :apply-key old-key
+                                              (lambda(trans-old-key)
+                                                (unless (or (gethash key ergoemacs-map--)
+                                                            (member key unbind-list))
+                                                  (ergoemacs :apply-key key
+                                                             (lambda(trans-new-key)
+                                                               (unless (or (gethash trans-new-key ergoemacs-map--)
+                                                                           (member trans-new-key unbind-list))
+                                                                 (puthash trans-new-key item ergoemacs-map--)
+                                                                 (ergoemacs-map--puthash trans-old-key trans-new-key))))))))
+                               (ergoemacs :apply-key key #'puthash item ergoemacs-map--))))
                          ret)))
-                    
                     
                     ;; The real `global-map'
                     (setq tmp (make-composed-keymap menu-bar))
@@ -595,16 +599,7 @@ If LOOKUP-KEYMAP
                     ;; The keys that will be unbound
                     (setq ret (make-sparse-keymap))
                     (dolist (key unbind-list)
-                      (define-key ret key nil)
-                      (when (setq tmp2 (ergoemacs-gethash key ergoemacs-map--))
-                        (ergoemacs :apply-key key #'remhash ergoemacs-map--)
-                        (when (setq tmp2 (ergoemacs-gethash tmp2 (ergoemacs global-map :where-is)))
-                          (dolist (old-key tmp2)
-                            (ergoemacs :apply-key old-key
-                                       (lambda(trans-old-key)
-                                         (ergoemacs :apply-key key
-                                                    (lambda(trans-new-key)
-                                                      (ergoemacs-map--remhash trans-old-key trans-new-key)))))))))
+                      (define-key ret key nil))
                     (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
                     tmp))
         (setq parent (copy-keymap (ergoemacs :global-map))

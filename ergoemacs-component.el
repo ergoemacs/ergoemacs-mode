@@ -918,12 +918,14 @@ be composed over the keymap.  This is done in
   (let ((cur-layout (or layout ergoemacs-keyboard-layout))
         new-list)
     (dolist (key list)
-      (push (ergoemacs-translate
-             key (ergoemacs-component-struct-just-first-keys obj)
-             (ergoemacs-component-struct-variable-modifiers obj)
-             (ergoemacs-component-struct-variable-prefixes obj) cur-layout
-             (ergoemacs-component-struct-layout obj))
-            new-list))
+      (ergoemacs :apply-key key
+                 (lambda(trans-key)
+                   (push (ergoemacs-translate
+                          trans-key (ergoemacs-component-struct-just-first-keys obj)
+                          (ergoemacs-component-struct-variable-modifiers obj)
+                          (ergoemacs-component-struct-variable-prefixes obj) cur-layout
+                          (ergoemacs-component-struct-layout obj))
+                         new-list))))
     new-list))
 
 (defvar ergoemacs-component-struct--refresh-variables nil
