@@ -394,7 +394,7 @@
 
 (ergoemacs-component fixed-newline ()
   "Newline and indent"
-  (global-set-key (kbd "M-RET") 'newline-and-indent)
+  (global-set-key (kbd "M-RET") ("C-j" :emacs))
   (define-key helm-map (kbd "M-RET") 'helm-execute-persistent-action)
   (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
   (define-key helm-map (kbd "M-S-RET") "C-u M-RET")
@@ -533,30 +533,30 @@
 (ergoemacs-component move-char ()
   "Movement by Characters & Set Mark"
   (global-set-key (kbd "C-b") nil) 
-  (global-set-key (kbd "M-j") 'backward-char)
+  (global-set-key (kbd "M-j") ("C-b" :emacs))
   
   (global-set-key (kbd "C-f") nil) 
-  (define-key global-map (kbd "M-l") 'forward-char)
+  (define-key global-map (kbd "M-l") ("C-f" :emacs))
   
   (global-set-key (kbd "C-p") nil)
-  (define-key (current-global-map) (kbd "M-i") 'previous-line)
+  (define-key (current-global-map) (kbd "M-i") ("C-p" :emacs))
   
   (global-set-key (kbd "C-n") nil)
-  (define-key ergoemacs-keymap (kbd "M-k") 'next-line)
+  (define-key ergoemacs-keymap (kbd "M-k") ("C-n" :emacs))
 
 
   ;; These are here so that C-M-i will translate to C-<up> for modes
   ;; like inferior R mode.  That allows the command to be the last
   ;; command.
   ;; Not sure it belongs here or not...
-  (global-set-key (kbd "M-C-j") 'left-word)
-  (global-set-key (kbd "M-C-l") 'right-word)
-  (global-set-key (kbd "M-C-i") 'backward-paragraph)
-  (global-set-key (kbd "M-C-k") 'forward-paragraph)
+  (global-set-key (kbd "M-C-j") ("<C-left>" :emacs))
+  (global-set-key (kbd "M-C-l") ("<C-right>" :emacs))
+  (global-set-key (kbd "M-C-i") ("<C-up>" :emacs))
+  (global-set-key (kbd "M-C-k") ("<C-down>" :emacs))
 
 
   (global-set-key (kbd "C-SPC") nil) ;; Set Mark
-  (global-set-key (kbd "M-SPC") 'set-mark-command)
+  (global-set-key (kbd "M-SPC") ("C-SPC" :emacs))
   
   ;; Mode specific changes
   (define-key browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-previous)
@@ -601,15 +601,15 @@
   "Move by Paragraph"
   (global-unset-key (kbd "M-{"))
   (global-unset-key (kbd "M-}"))
-  (global-set-key (kbd "M-U") 'ergoemacs-backward-block)
-  (global-set-key (kbd "M-O") 'ergoemacs-forward-block))
+  (global-set-key (kbd "M-U") ("M-{" :emacs))
+  (global-set-key (kbd "M-O") ("M-}" :emacs)))
 
 (ergoemacs-component move-line ()
   "Move by Line"
   (global-unset-key (kbd "C-a"))
   (global-unset-key (kbd "C-e"))
-  (global-set-key (kbd "M-h") 'ergoemacs-beginning-of-line-or-what)
-  (global-set-key (kbd "M-H") 'ergoemacs-end-of-line-or-what)
+  (global-set-key (kbd "M-h") ("C-a" :emacs))
+  (global-set-key (kbd "M-H") ("C-e" :emacs))
   ;; Mode specific movement
   (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol)
   (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol))
@@ -630,10 +630,10 @@
   (global-unset-key (kbd "C-M-v"))
   ;; Not sure I like the scroll other window placment... C+M+ argh.
   (global-set-key (kbd "C-M-I") 'scroll-other-window-down)
-  (global-set-key (kbd "C-M-K") 'scroll-other-window)
+  (global-set-key (kbd "C-M-K") ("C-M-v" :emacs))
   ;; These are OK
-  (global-set-key (kbd "M-I") '(scroll-down-command scroll-down))
-  (global-set-key (kbd "M-K") '(scroll-up-command scroll-up)))
+  (global-set-key (kbd "M-I") ("M-v" :emacs))
+  (global-set-key (kbd "M-K") ("C-v" :emacs)))
 
 (ergoemacs-component move-buffer ()
   "Move Beginning/End of buffer"
@@ -670,13 +670,13 @@
   
   (global-set-key (kbd "M-C") 'ergoemacs-copy-all)
   (global-set-key (kbd "M-X") 'ergoemacs-cut-all)
-  (global-set-key (kbd "M-Z") '(redo undo-tree-redo ergoemacs-redo))
+  (global-set-key (kbd "M-Z") '("C-_" :emacs))
 
   ;; Undo
   (global-set-key (kbd "C-_") nil)
   (global-set-key (kbd "C-/") nil)
   (global-set-key (kbd "C-x u") nil)
-  (global-set-key (kbd "M-z") 'undo)
+  (global-set-key (kbd "M-z") '("C-_" :emacs))
   
   ;; Fixed Component; Note that <timeout> is the actual function.
   (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
@@ -703,16 +703,16 @@
 (ergoemacs-component search ()
   "Search and Replace"
   (global-set-key (kbd "C-s") nil)
-  (global-set-key (kbd "M-y") 'isearch-forward)
+  (global-set-key (kbd "M-y") '("C-s" :emacs))
   
   (global-set-key (kbd "C-r") nil)
-  (global-set-key (kbd "M-Y") 'isearch-backward)
+  (global-set-key (kbd "M-Y") '("C-r" :emacs))
   
   (global-set-key (kbd "M-%") nil)
-  (global-set-key (kbd "M-5") 'query-replace)
+  (global-set-key (kbd "M-5") '("M-%" :emacs))
   
   (global-set-key (kbd "C-M-%") nil)
-  (global-set-key (kbd "M-%") '(vr/query-replace query-replace-regexp))
+  (global-set-key (kbd "M-%") '("C-M-%" :emacs))
 
   ;; Mode specific changes
   (define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
@@ -730,10 +730,10 @@
   (global-set-key [remap isearch-backward] 'isearch-backward-regexp)
 
   (global-set-key (kbd "M-%") nil)
-  (global-set-key (kbd "M-5") '(vr/query-replace query-replace-regexp))
+  (global-set-key (kbd "M-5") '("C-M-%" :emacs))
   
   (global-set-key (kbd "C-M-%") nil)
-  (global-set-key (kbd "M-%") '(vr/query-replace query-replace-regexp)))
+  (global-set-key (kbd "M-%") '("M-%" :emacs)))
 
 (ergoemacs-component switch ()
   "Window/Frame/Tab Switching"
@@ -744,42 +744,42 @@
   (global-set-key (kbd "M-`") 'ergoemacs-switch-to-next-frame)
 
   (global-unset-key (kbd "C-x 1"))
-  (global-set-key (kbd "M-3") 'delete-other-windows)
+  (global-set-key (kbd "M-3") '("C-x 1" :emacs))
   
   (global-unset-key (kbd "C-x 0"))
-  (global-set-key (kbd "M-2") 'delete-window)
+  (global-set-key (kbd "M-2") '("C-x 0" :emacs))
   
   (global-unset-key (kbd "C-x 3"))
-  (global-set-key (kbd "M-4") '(split-window-below split-window-horizontally))
+  (global-set-key (kbd "M-4") '("C-x 3" :emacs))
   
   (global-unset-key (kbd "C-x 2"))
-  (global-set-key (kbd "M-$") '(split-window-right split-window-vertically))
+  (global-set-key (kbd "M-$") '("C-x 2" :emacs))
   :version 5.7.5
-  (global-set-key (kbd "M-0") 'delete-window))
+  (global-set-key (kbd "M-0") '("C-x 0" :emacs)))
 
 (ergoemacs-component execute ()
   "Execute Commands"
   (global-unset-key (kbd "M-x"))
-  (global-set-key (kbd "M-a") 'execute-extended-command)
+  (global-set-key (kbd "M-a") '("M-x" :emacs))
   (global-unset-key (kbd "M-!"))
-  (global-set-key (kbd "M-A") 'shell-command))
+  (global-set-key (kbd "M-A") '("M-!" :emacs)))
 
 (ergoemacs-component  misc ()
   "Misc Commands"
   (global-unset-key (kbd "C-l"))
-  (global-set-key (kbd "M-p") 'recenter-top-bottom)
+  (global-set-key (kbd "M-p") '("C-l" :emacs))
   (global-set-key (kbd "M-b") 'avy-goto-word-or-subword-1))
 
 (ergoemacs-component kill-line ()
   "Kill Line"
   (global-unset-key (kbd "C-k"))
-  (global-set-key (kbd "M-g") 'kill-line)
+  (global-set-key (kbd "M-g") '("C-k" :emacs))
   (global-set-key (kbd "M-G") 'ergoemacs-kill-line-backward))
 
 (ergoemacs-component text-transform ()
   "Text Transformation"
   (global-unset-key (kbd "M-;"))
-  (global-set-key (kbd "M-'") 'comment-dwim)
+  (global-set-key (kbd "M-'") '("M-;" :emacs))
   
   (global-set-key (kbd "M-w") 'ergoemacs-shrink-whitespaces)
 

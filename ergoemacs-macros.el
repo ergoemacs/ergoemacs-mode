@@ -82,6 +82,15 @@ Uses `ergoemacs-theme-component--parse-keys-and-body' and
             (list 'read-kbd-macro (ergoemacs-theme-component--parse-key-str (nth 1 item)) (nth 2 item)))
            (t item))))
 
+(fset 'ergoemacs-theme-component--parse-is-quoted-fun
+      #'(lambda (what)
+          "Determine if WHAT should be quoted."
+          (or (ergoemacs-keymapp (ergoemacs-sv what))
+              (ignore-errors
+                (and (consp what)
+                     (stringp (nth 0 what))
+                     (symbolp (nth 1 what)))))))
+
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
   "Parse the REMAINING list, and convert:
@@ -168,30 +177,30 @@ distinguish from the ASCII equivalents:
               ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
                `(ergoemacs-component-struct--set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
-               (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt)))
+               (if (ergoemacs-theme-component--parse-is-quoted-fun (nth 2 elt))
                    `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 1 elt)) (quote ,(nth 2 elt)))
                  `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 1 elt)) ,(nth 2 elt))))
               
               ;; (bind-key "C-c x" 'my-ctrl-c-x-command)
               ((ignore-errors (and (eq (nth 0 elt) 'bind-key)
                                    (= (length elt) 3)))
-               (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
+               (if (ergoemacs-theme-component--parse-is-quoted-fun (nth 2 elt)) 
                    `(ergoemacs-component-struct--define-key 'global-map (kbd ,(ergoemacs-theme-component--parse-key-str (nth 1 elt))) (quote ,(nth 2 elt)))
                  `(ergoemacs-component-struct--define-key 'global-map (kbd ,(ergoemacs-theme-component--parse-key-str (nth 1 elt))) ,(nth 2 elt))))
 
               ;; (bind-key "C-c x" 'my-ctrl-c-x-command some-other-map)
               ((ignore-errors (and (eq (nth 0 elt) 'bind-key)
                                    (= (length elt) 4)))
-               (if (ergoemacs-keymapp (ergoemacs-sv (nth 2 elt))) 
+               (if (ergoemacs-theme-component--parse-is-quoted-fun (nth 2 elt)) 
                    `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(ergoemacs-theme-component--parse-key-str (nth 1 elt))) (quote ,(nth 2 elt)))
                  `(ergoemacs-component-struct--define-key (quote ,(nth 3 elt)) (kbd ,(ergoemacs-theme-component--parse-key-str (nth 1 elt))) ,(nth 2 elt))))
               
               ((ignore-errors (eq (nth 0 elt) 'define-key))
                (if (equal (nth 1 elt) '(current-global-map))
-                   (if (ergoemacs-keymapp (ergoemacs-sv (nth 3 elt))) 
+                   (if (ergoemacs-theme-component--parse-is-quoted-fun (nth 3 elt)) 
                        `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 2 elt)) (quote ,(nth 3 elt)))
                      `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 2 elt)) ,(nth 3 elt)))
-                 (if (ergoemacs-keymapp (ergoemacs-sv (nth 3 elt))) 
+                 (if (ergoemacs-theme-component--parse-is-quoted-fun (nth 3 elt)) 
                      `(ergoemacs-component-struct--define-key (quote ,(nth 1 elt)) ,(ergoemacs-theme-component--parse-key (nth 2 elt)) (quote ,(nth 3 elt)))
                    `(ergoemacs-component-struct--define-key (quote ,(nth 1 elt)) ,(ergoemacs-theme-component--parse-key (nth 2 elt)) ,(nth 3 elt)) )))
               ((or (ignore-errors (eq (nth 0 elt) 'with-hook))
@@ -327,12 +336,12 @@ This accepts the following keywords:
 :mode -- Modes to be added to `auto-mode-alist'. This can be a string such as:
 
 (ergoemacs-package ruby-mode
-  :mode \"\\\\.rb\\\\'\")
+    :mode \"\\\\.rb\\\\'\")
 
 or a list 
 
 (ergoemacs-package ruby-mode
-  :mode (\"\\\\.rb\\\\'\" . ruby-mode))
+    :mode (\"\\\\.rb\\\\'\" . ruby-mode))
 
 or a list of modes:
 
@@ -345,50 +354,50 @@ Borrowed from `use-package'.
 
 :ensure -- If the package should be installed by `package' if not present.
 
-   This can be t to install the :package-name symbol.  Otherwise
-   it can be a list of symbols or single symbol.
+This can be t to install the :package-name symbol.  Otherwise
+it can be a list of symbols or single symbol.
 
 :package-name -- Name of package to load.  When non-nil any key
-    defition to a single command will create an autoload for that
-    command.
+defition to a single command will create an autoload for that
+command.
 
-    Default: nil
+Default: nil
 
 :no-load / :no-require -- Don't load/require the package-name.
 
 :ergoemacs-require -- when non-nil, this ergoemacs-component is
-   required with `ergoemacs-require'. By default this is disabled
+required with `ergoemacs-require'. By default this is disabled
 
 :just-first-keys -- Keys where a fixed amount of the key is based
-    on variable keyboard placement, then the rest of the key is
-    based on letter.  For example with the apps component, the
-    just first keys are defined to be [apps ?h], which means the
-    [apps h] will be defined based on finger placement, but the
-    keys afterward would be based on letter.
+on variable keyboard placement, then the rest of the key is
+based on letter.  For example with the apps component, the
+just first keys are defined to be [apps ?h], which means the
+[apps h] will be defined based on finger placement, but the
+keys afterward would be based on letter.
 
-    By default this is defined as nil, meaning no special keys
-    like this occur.
+By default this is defined as nil, meaning no special keys
+like this occur.
 
 :just-first-keys (list [apps ?h] [menu ?h])
-    Defaults to nil
+Defaults to nil
 
 :variable-modifiers -- Modifiers that are considierd variable.
-    These modifiers have keys change among various keyboard
-    layouts.  That is keys are bound based on finger placement
-    among various keyboard layouts.
+These modifiers have keys change among various keyboard
+layouts.  That is keys are bound based on finger placement
+among various keyboard layouts.
 
-    Defaults to '(meta)
+Defaults to '(meta)
 
 :variable-prefixes -- Keyboard prefixes that are considiered
-    variable.  After these keys are pressed, the keyboard layout
-    dictates the keys.  That is, keys are bound based on finger
-    placement among various keyboard layouts.
+variable.  After these keys are pressed, the keyboard layout
+dictates the keys.  That is, keys are bound based on finger
+placement among various keyboard layouts.
 
-    Defaults to '([apps] [menu] [27])
+Defaults to '([apps] [menu] [27])
 
 :layout -- Layout that the key bindings are based on.
 
-    Defaults to us (QWERTY)
+Defaults to us (QWERTY)
 
 Please do not use the following tags, since they are parsed based
 on the definition:
@@ -554,21 +563,21 @@ with :ergoemacs-require set to t."
   "Modified plist.")
 
 (fset 'ergoemacs-theme-component--add-ensure
-      #'(lambda  (plist pkg)
-         "Add PKG to the :ensure keyword."
-         (let ((cur-ensure (plist-get plist :ensure))
-               (cur-pkg (intern (format "%s" (plist-get plist :package-name)))))
-           (cond
-            ((eq cur-ensure t)
-             (setq ergoemacs-theme-components--modified-plist
-                   (plist-put plist :ensure (list pkg cur-pkg))))
-            ((not cur-ensure)
-             (setq ergoemacs-theme-components--modified-plist
-                   (plist-put plist :ensure pkg)))
-            ((not (memq pkg cur-ensure))
-             (push pkg cur-ensure)
-             (setq ergoemacs-theme-components--modified-plist
-                   (plist-put plist :ensure cur-ensure)))))))
+      #'(lambda (plist pkg)
+          "Add PKG to the :ensure keyword."
+          (let ((cur-ensure (plist-get plist :ensure))
+                (cur-pkg (intern (format "%s" (plist-get plist :package-name)))))
+            (cond
+             ((eq cur-ensure t)
+              (setq ergoemacs-theme-components--modified-plist
+                    (plist-put plist :ensure (list pkg cur-pkg))))
+             ((not cur-ensure)
+              (setq ergoemacs-theme-components--modified-plist
+                    (plist-put plist :ensure pkg)))
+             ((not (memq pkg cur-ensure))
+              (push pkg cur-ensure)
+              (setq ergoemacs-theme-components--modified-plist
+                    (plist-put plist :ensure cur-ensure)))))))
 
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
@@ -608,7 +617,7 @@ additional parsing routines defined by PARSE-FUNCTION."
                          keyword keys-and-body))
                 (when (assoc keyword extracted-key-accu)
                   (ergoemacs-warn "Keyword %S appears more than once in %S" keyword
-                        keys-and-body))
+                                  keys-and-body))
                 (push (cons keyword (pop remaining)) extracted-key-accu)))
             (setq extracted-key-accu (nreverse extracted-key-accu))
             (setq plist (loop for (key . value) in extracted-key-accu
