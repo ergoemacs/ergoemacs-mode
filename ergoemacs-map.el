@@ -373,7 +373,7 @@ It takes the following arguments:
   (when (ergoemacs-keymapp lookup-keymap)
     (unless (ergoemacs lookup-keymap :installed-p)
       (let ((ret (make-sparse-keymap))
-            tmp composed-list local-unbind-list bound-keys)
+            tmp composed-list local-unbind-list bound-keys i key2)
         (ergoemacs-cache (and lookup-key (intern (format "%s-%s-composed-key" lookup-key
                                                          (ergoemacs lookup-keymap :map-key))))
           (unless only-modify-p
@@ -392,24 +392,27 @@ It takes the following arguments:
                          ;; Don't use (ergoemacs :define-key), since list contains all variants.
                          (define-key ret new-key item)
                          (push new-key bound-keys)))
+                     ;; Keys where `ergoemacs-mode' dominates
+                     (setq i (length key))
+                     (when (and (catch 'found-key
+                                  (while (> i 0)
+                                    (when (setq tmp (ergoemacs-gethash (setq key2 (substring key 0 i)) ergoemacs-map--))
+                                      (throw 'found-key t))
+                                    (setq i (- i 1))) nil)
+                                (not (member key2 bound-keys))
+                                (not (member key2 ergoemacs-map--unbound-keys)))
+                       (if (not use-local-unbind-list-p)
+                           (ergoemacs :define-key ret key2 tmp)
+                         (ergoemacs :apply-key key2
+                                    (lambda (trans-key)
+                                      (unless (member trans-key local-unbind-list)
+                                        (push trans-key local-unbind-list))))))
                      ;; Define ergoemacs-mode remapping
                      ;; lookups.
                      (when (setq tmp (ergoemacs-gethash key (ergoemacs global-map :lookup)))
                        (define-key ret (vector 'ergoemacs-remap tmp) item)))))
                lookup-keymap)
-              ;; Keys where `ergoemacs-mode' dominates.
-              (maphash
-               (lambda(key item)
-                 (when (and (not (member key bound-keys))
-                            (not (member key ergoemacs-map--unbound-keys))
-                            (lookup-key lookup-keymap key))
-                   (if (not use-local-unbind-list-p)
-                       (ergoemacs :define-key ret key item)
-                     (ergoemacs :apply-key key
-                                (lambda (trans-key)
-                                  (unless (member trans-key local-unbind-list)
-                                    (push trans-key local-unbind-list)))))))
-               ergoemacs-map--))
+              )
             (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
           (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
           (setq composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp))
