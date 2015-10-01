@@ -750,7 +750,7 @@
   (global-set-key (kbd "M-2") '("C-x 0" :emacs))
   
   (global-unset-key (kbd "C-x 3"))
-  (global-set-key (kbd "M-4") '("C-x 3" :emacs))
+  (global-set-key (kbd "M-4") '(split-window-below split-window-horizontally))
   
   (global-unset-key (kbd "C-x 2"))
   (global-set-key (kbd "M-$") '("C-x 2" :emacs))
