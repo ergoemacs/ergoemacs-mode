@@ -1236,6 +1236,8 @@ Should test issue #142"
 
 (define-key ergoemacs-test-major-mode-map (kbd "C-s") 'search-forward)
 (define-key ergoemacs-test-major-mode-map (kbd "<f6>") 'search-forward)
+(define-key ergoemacs-test-major-mode-map (kbd "M-s a") 'isearch-forward)
+(define-key ergoemacs-test-major-mode-map (kbd "M-s b") 'isearch-backward)
 
 (let ((ergoemacs-is-user-defined-map-change-p t))
   (add-hook 'ergoemacs-test-major-mode-hook
@@ -1303,6 +1305,23 @@ Part of addressing Issue #147."
        (ergoemacs-map--modify-active)
        (should (eq (key-binding (kbd "C-s")) 'save-buffer))
        (should (eq (key-binding [ergoemacs-remap isearch-forward]) 'search-forward))))))
+
+
+(ert-deftest ergoemacs-test-keep-alt-s ()
+  "Keep mode-defined M-s in major-mode `ergoemacs-test-major-mode'.
+Tests Issue #372."
+  :tags '(:interactive)
+  (ergoemacs-test-layout
+   :layout "us"
+   :theme "reduction"
+   (let (ret
+         (ergoemacs-use-function-remapping t))
+     (with-temp-buffer
+       (ergoemacs-test-major-mode)
+       (when (not (current-local-map))
+         (use-local-map ergoemacs-test-major-mode-map))
+       (ergoemacs-map--modify-active)
+       (should (eq (key-binding (kbd "M-s")) 'ergoemacs-move-cursor-next-pane))))))
 
 (ert-deftest ergoemacs-test-dired-sort-files ()
   "Test Issue #340"
