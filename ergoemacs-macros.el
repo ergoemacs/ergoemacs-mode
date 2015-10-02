@@ -1047,6 +1047,19 @@ When :type is :replace that replaces a function (like `define-key')"
       `(ergoemacs-timing-- ,key (lambda() ,@body))
     `(ergoemacs-timing-- ',key (lambda() ,@body))))
 
+
+(defmacro ergoemacs-no-specials (&rest body)
+  "Revert some `ergoemacs-mode' functions to their C defintions in BODY."
+  `(letf (((symbol-function 'read-key-sequence) #'ergoemacs--real-read-key-sequence)
+          ((symbol-function 'describe-key) #'ergoemacs--real-describe-key))
+     ,@body))
+
+(defmacro ergoemacs-specials (&rest body)
+  "Use `ergoemacs-mode' special functions in BODY."
+  `(letf (((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
+          ((symbol-function 'key-description) #'ergoemacs-key-description))
+     ,@body))
+
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here

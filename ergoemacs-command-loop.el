@@ -544,6 +544,19 @@ Currently this ensures:
      (t (vconcat current-key (vector next-event))))))
 
 (defvar ergoemacs-comand-loop--untranslated-event nil)
+
+(declare-function ergoemacs--real-read-key-sequence "ergoemacs-command-loop")
+(fset 'ergoemacs--real-read-key-sequence (symbol-function #'read-key-sequence))
+(declare-function ergoemacs--real-describe-key "ergoemacs-command-loop")
+
+(fset 'ergoemacs--real-describe-key (symbol-function #'describe-key))
+
+(defun ergoemacs-command-loop--input-method (event)
+  "Call `input-method-function' on EVENT.
+Ensure that `read-key-sequence' is the original function (not `ergoemacs-command-loop--read-key-sequence')."
+  (ergoemacs-no-specials
+   (ignore-errors (funcall input-method-function event))))
+
 (defun ergoemacs-command-loop--history (&optional prompt seconds current-key)
   "Read event and add to event history.
 
@@ -563,7 +576,7 @@ to work appropriately.  I'm not sure the purpose of
         (setq ergoemacs-comand-loop--untranslated-event event)
         (when (and current-input-method (not current-key)
                    (not overriding-local-map) (not overriding-terminal-local-map)
-                   (setq translate (ignore-errors (funcall input-method-function event))))
+                   (setq translate (ergoemacs-command-loop--input-method event)))
           (setq event (pop translate))
           (when translate
             (setq unread-command-events (append translate unread-command-events))))
@@ -611,7 +624,7 @@ to work appropriately.  I'm not sure the purpose of
           (unless (consp event) ;; Don't record mouse events
             (when (and current-input-method (not current-key)
                        (not overriding-local-map) (not overriding-terminal-local-map)
-                       (setq translate (ignore-errors (funcall input-method-function event))))
+                       (setq translate (ergoemacs-command-loop--input-method event)))
               (setq event (pop translate))
               (when translate
                 (setq unread-command-events (append translate unread-command-events))))
@@ -1294,17 +1307,10 @@ The RECORD-FLAG and KEYS are sent to `call-interactively'."
    ((and (symbolp command) (not (commandp command)))
     (ergoemacs-command-loop--message "Command `%s' cannot be called from a key" command))
    ((memq command ergoemacs-command-loop-describe-key-functions)
-    (letf (((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
-           ((symbol-function 'key-description) #'ergoemacs-key-description))
-      (call-interactively command record-flag keys)))
+    (ergoemacs-specials
+     (call-interactively command record-flag keys)))
    (t
     (call-interactively command record-flag keys))))
-
-(defun ergoemacs-command-loop-persistent-p ()
-  "Is the `ergoemacs-mode' command loop persistent?"
-  (and ergoemacs-mode (not (or defining-kbd-macro executing-kbd-macro))
-       (eq ergoemacs-command-loop-type :full)))
-
 
 (defun ergoemacs-command-loop-start ()
   "Start `ergoemacs-command-loop'."
