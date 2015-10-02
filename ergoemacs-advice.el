@@ -239,6 +239,27 @@ bindings into this keymap (the original keymap is untouched)"
       (key-binding [ergoemacs-remap undo])
     ad-do-it))
 
+(ergoemacs-advice read-from-minibuffer (prompt &optional initial-contents keymap read hist default-value inherit-input-method)
+  "Modify keymap to confirm to `ergoemacs-mode'."
+  :type :before
+  (if keymap
+      (setq ergoemacs-map--breadcrumb (format "read-from-minibuffer:%s" this-command)
+            ergoemacs-read-from-minibuffer-map keymap)
+    (setq ergoemacs-map--breadcrumb "minibuffer-local-map"
+          ergoemacs-read-from-minibuffer-map minibuffer-local-map)))
+
+(ergoemacs-advice read-string (prompt &optional initial history default inherit-input-method)
+  "Modify keymap to confirm to `ergoemacs-mode'."
+  :type :before
+  (setq ergoemacs-map--breadcrumb "minibuffer-local-map"
+        ergoemacs-read-from-minibuffer-map minibuffer-local-map))
+
+(ergoemacs-advice read-no-blanks-input (prompt &optional initial inherit-input-method)
+  "Modify keymap to confirm to `ergoemacs-mode'."
+  :type :before
+  (setq ergoemacs-map--breadcrumb "minibuffer-local-ns-map"
+        ergoemacs-read-from-minibuffer-map minibuffer-local-ns-map))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here

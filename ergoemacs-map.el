@@ -886,13 +886,17 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
                 (not (ergoemacs tmp :installed-p)))
        (use-global-map (ergoemacs tmp))
        (setq ergoemacs-map--last-global-map (current-global-map)))
-     (when (and current-local-map (not (ergoemacs current-local-map :installed-p)))
-       (unless (minibufferp)
-         (setq ergoemacs-map--breadcrumb (format "%s" major-mode))
-         (when (eq major-mode 'ess-mode)
-           (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language))))
+     (when (and current-local-map (not (ergoemacs current-local-map :installed-p))
+                (not (minibufferp)))
+       (setq ergoemacs-map--breadcrumb (format "%s" major-mode))
+       (when (eq major-mode 'ess-mode)
+         (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language)))
        (use-local-map (ergoemacs current-local-map))
-       (setq ergoemacs-map--breadcrumb "")))
+       (setq ergoemacs-map--breadcrumb ""))
+     (when (and (minibufferp) ergoemacs-read-from-minibuffer-map)
+       (use-local-map (ergoemacs ergoemacs-read-from-minibuffer-map))
+       (setq ergoemacs-read-from-minibuffer-map nil
+             ergoemacs-map--breadcrumb "")))
     (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map
           ergoemacs-map--modify-active-last-overriding-local-map overriding-local-map
           ergoemacs-map--modify-active-last-char-map char-map
