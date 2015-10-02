@@ -90,6 +90,7 @@
 (declare-function ergoemacs-theme--regexp "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-translate "ergoemacs-translate")
+(declare-function ergoemacs-translate--apply-key "ergoemacs-translate")
 (declare-function ergoemacs-translate--define-key "ergoemacs-translate")
 
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")

@@ -828,6 +828,8 @@ If it is a tranisent map, assign the :dont-modify-p property to t."
 (defvar ergoemacs-map--modify-active-last-local-map nil)
 (defvar ergoemacs-map--saved-global-map nil)
 (defvar ergoemacs-map--last-global-map nil)
+(defvar ergoemacs-read-from-minibuffer-map nil
+  "If non-nil, keymap that is being read by the minibuffer.")
 (defun ergoemacs-map--modify-active (&optional ini)
   "Modifies Active maps.
 
@@ -836,7 +838,6 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
         (local-map (get-text-property (point) 'local-map))
         (current-local-map (current-local-map))
         tmp)
-    ;; Restore `overriding-terminal-local-map' if needed
     (when (and overriding-terminal-local-map
                (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
                (not (ergoemacs overriding-terminal-local-map :installed-p)))
