@@ -1869,6 +1869,19 @@
   (global-set-key (kbd "M-]") 'delete-indentation)
   (global-set-key (kbd "M-[") 'ergoemacs-top-join-line))
 
+(ergoemacs-component isearch-arrows ()
+  "Set arrow keys in isearch."
+  ;;left/right is backward/forward, up/down is history. press Return
+  ;;to exit
+  ;; Xah Lee
+  ;; See http://ergoemacs.org/emacs/emacs_isearch_by_arrow_keys.html
+  (define-key isearch-mode-map (kbd "<up>") 'isearch-ring-retreat)
+  (define-key isearch-mode-map (kbd "<down>") 'isearch-ring-advance)
+  ;; single key, useful
+  (define-key isearch-mode-map (kbd "<left>") 'isearch-repeat-backward)
+  ;; single key, useful
+  (define-key isearch-mode-map (kbd "<right>") 'isearch-repeat-forward))
+
 
 (ergoemacs-autoload multiple-cursors
     "Multiple Cursors"
@@ -1948,7 +1961,8 @@
                   helm-switch-sources
                   helm-files-up
                   ido-prev-next-instead-of-left-right
-                  join-line)
+                  join-line
+                  isearch-arrows)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
                   ("Helm Options" (helm-switch-sources helm-files-up))
@@ -1957,7 +1971,7 @@
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
                   ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
-                  ("Extra Functionality" (join-line))
+                  ("Extra Functionality" (join-line isearch-arrows))
                   ("Packages" (avy multiple-cursors expand-region))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
