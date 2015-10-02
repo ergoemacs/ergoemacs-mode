@@ -1643,6 +1643,9 @@ ARGS are applied with `format'."
   (run-with-timer minibuffer-message-timeout nil
                   #'ergoemacs-command-loop--reset-mode-line))
 
+(defvar ergoemacs-command-loop-message-sit-for 3
+  "Command loop message sit for.")
+
 (defun ergoemacs-command-loop--message (str &rest args)
   "Message facility for `ergoemacs-mode' command loop"
   (setq ergoemacs-command-loop--last-event-time (float-time))
@@ -1655,6 +1658,18 @@ ARGS are applied with `format'."
     (let (message-log-max)
       (apply #'message (append (list str) args))))))
 
+(defun ergoemacs-command-loop--temp-message (str &rest args)
+  "Message facility for `ergoemacs-mode' command loop"
+  (setq ergoemacs-command-loop--last-event-time (float-time))
+  (cond
+   ((string= str ""))
+   ((or (minibufferp) isearch-mode)
+    (apply #'ergoemacs-command-loop--mode-line-message
+           (append (list str) args)))
+   (t
+    (let (message-log-max)
+      (with-temp-message (apply #'format (append (list str) args))
+        (sit-for (or (and (numberp ergoemacs-command-loop-message-sit-for) ergoemacs-command-loop-message-sit-for) 2)))))))
 
 ;; (2) Key sequence translated to command
 (defun ergoemacs-command-loop--message-binding (key &optional lookup translated-key)
@@ -1674,7 +1689,7 @@ LOOKUP is what will be run"
          (or (eq ergoemacs-echo-function t)
              (and translated-key (eq ergoemacs-echo-function :on-translation))
              (eq ergoemacs-echo-function :multi-key)))
-    (ergoemacs-command-loop--message "%s%s%s%s"
+    (ergoemacs-command-loop--temp-message "%s%s%s%s"
                                      (ergoemacs-key-description key)
                                      (ergoemacs :unicode-or-alt "→" "->")
                                      lookup
@@ -1682,7 +1697,7 @@ LOOKUP is what will be run"
                                               (format " (from %s)" (ergoemacs-key-description translated-key)))
                                          "")))
    ((not lookup)
-    (ergoemacs-command-loop--message "%s is undefined!"
+    (ergoemacs-command-loop--temp-message "%s is undefined!"
                                      (ergoemacs-key-description key)))
    ((not (or (= (length key) 1) ;; Clear command completing message
              (and (eq 27 (elt key 0)) (= (length key) 2))))
