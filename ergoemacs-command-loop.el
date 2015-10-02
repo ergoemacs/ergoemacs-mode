@@ -1027,6 +1027,25 @@ The true work is done in `ergoemacs-command-loop--internal'."
 (defvar ergoemacs-command-loop--running-pre-command-hook-p nil
   "Variable to tell if ergoemacs-command loop is running the `pre-command-hook'.")
 
+(defvar ergoemacs-command-loop--excluded-variables
+  '(defining-kbd-macro executing-kbd-macro)
+  "List of variables that when non-nil, `ergoemacs-command-loop'
+should not be run.")
+
+(defvar ergoemacs-command-loop--excluded-major-modes
+  '(calc-mode calc-trail-mode calc-edit-mode)
+  "List of major modes where the command loop is incompatible.")
+
+(defun ergoemacs-command-loop-full-p ()
+  "Determines if the full command loop should be run."
+  (and
+   (eq ergoemacs-command-loop-type :full)
+   (catch 'excluded-variables
+     (dolist (var ergoemacs-command-loop--excluded-variables)
+       (when (ergoemacs-sv var)
+         (throw 'excluded-variables nil)))
+     nil)
+   (not (memq major-mode ergoemacs-command-loop--excluded-major-modes))))
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   "Start ergoemacs command loop.
@@ -1035,8 +1054,7 @@ This is done by replacing `this-command' with
 `ergoemacs-command-loop-start' and then running `this-command'
 from within the ergoemacs-mode command loop."
   (when (and (not ergoemacs-command-loop--running-pre-command-hook-p)
-             (eq ergoemacs-command-loop-type :full)
-             (not (or defining-kbd-macro executing-kbd-macro))
+             (ergoemacs-command-loop-full-p)
              (not unread-command-events)
              (not (ergoemacs-command-loop-p)))
     (setq ergoemacs-command-loop-start this-command
@@ -1055,8 +1073,7 @@ This is done by pushing the key [ergoemacs-ignore] on the
 to start with
 `ergoemacs-command-loop--start-with-pre-command-hook'."
   (when (and (not ergoemacs-command-loop--internal-end-command-p)
-             (eq ergoemacs-command-loop-type :full)
-             (not (or defining-kbd-macro executing-kbd-macro)))
+             (ergoemacs-command-loop-full-p))
     (push 'ergoemacs-ignore unread-command-events)))
 
 (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
@@ -1375,7 +1392,7 @@ Used to replace:
   "Timer to startup `ergoemacs-mode' command loop.")
 (defun ergoemacs-command-loop--timer ()
   "Start `ergoemacs-command-loop--internal' if not currently running."
-  (unless (and (ergoemacs-command-loop-persistent-p)
+  (unless (and (ergoemacs-command-loop-full-p)
                (ergoemacs-command-loop-p))
     (ergoemacs-command-loop--internal)))
 
@@ -1590,7 +1607,7 @@ Emacs versions)."
                   (ergoemacs-command-loop--internal-end-command))
                 (setq quit-flag nil
                       type :normal
-                      continue-read (or unread-command-events (and from-start-p (ergoemacs-command-loop-persistent-p)))
+                      continue-read (or unread-command-events (and from-start-p (ergoemacs-command-loop-full-p)))
                       first-type :normal
                       raw-key nil
                       current-key nil
