@@ -1256,9 +1256,8 @@ The RECORD-FLAG and KEYS arguments are passed to
    (t
     (ignore-errors (call-interactively (ergoemacs-command-loop--modify-mouse-command command) record-flag keys)))))
 
-
 (defvar ergoemacs-command-loop-describe-key-functions
-  '(describe-key describe-function execute-extended-command smex smex-major-mode-commands)
+  '(describe-key describe-function)
   "Functions like `describe-key'.
 These functions will:
 - Replace `key-description' with `ergoemacs-key-description'.
