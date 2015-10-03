@@ -570,7 +570,9 @@ inconjunction with `input-method-function' to translate keys if
 
 Also add to `last-command-event' to allow `self-insert-character'
 to work appropriately.  I'm not sure the purpose of
-`last-event-frame', but this is modified as well."
+`last-event-frame', but this is modified as well.
+
+This is not done when the event is [ergoemacs-ignore]"
   (or (let ((event (pop unread-command-events))
             translate)
         (setq ergoemacs-comand-loop--untranslated-event event)
@@ -580,10 +582,11 @@ to work appropriately.  I'm not sure the purpose of
           (setq event (pop translate))
           (when translate
             (setq unread-command-events (append translate unread-command-events))))
-        (setq last-command-event event
-              last-input-event last-command-event
-              ergoemacs-last-command-event last-command-event
-              last-event-frame (selected-frame))
+        (unless (eq event 'ergoemacs-ignore)
+          (setq last-command-event event
+                last-input-event last-command-event
+                ergoemacs-last-command-event last-command-event
+                last-event-frame (selected-frame)))
         event)
       (let* ((last-event-time (or (and ergoemacs-command-loop--last-event-time
                                        (- (float-time) ergoemacs-command-loop--last-event-time))
@@ -634,11 +637,12 @@ to work appropriately.  I'm not sure the purpose of
                         current-prefix-arg
                         last-command-event)
                   ergoemacs-command-loop--history))
-          (setq ergoemacs-command-loop--last-event-time (float-time)
-                last-command-event event
-                last-input-event last-command-event
-                ergoemacs-last-command-event last-command-event
-                last-event-frame (selected-frame)))
+          (unless (eq event 'ergoemacs-ignore)
+            (setq ergoemacs-command-loop--last-event-time (float-time)
+                  last-command-event event
+                  last-input-event last-command-event
+                  ergoemacs-last-command-event last-command-event
+                  last-event-frame (selected-frame))))
         event)))
 
 (defun ergoemacs-command-loop--decode-event (event keymap &optional current-key)
@@ -1044,7 +1048,7 @@ should not be run.")
      (dolist (var ergoemacs-command-loop--excluded-variables)
        (when (ergoemacs-sv var)
          (throw 'excluded-variables nil)))
-     nil)
+     t)
    (not (memq major-mode ergoemacs-command-loop--excluded-major-modes))))
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
@@ -1420,6 +1424,7 @@ run, by changing `this-command' to `last-command'"
   (dolist (s ergoemacs-command-loop--execute-modify-command-list)
     (when (boundp s)
       (set s last-command)))
+  
   ;; FIXME: Somehow change the output of `this-single-command-raw-keys'
   nil)
 
