@@ -128,7 +128,7 @@ Whe changed return t, otherwise return nil."
           (put variable :ergoemacs-set-value (ergoemacs-sv variable))
           (pushnew variable ergoemacs-set-ignore-customize)
           (setq ret t)))
-       ((and (custom-variable-p variable)
+       ((and (ergoemacs :custom-p variable)
              (not minor-mode-p)
              (or force (not (get variable 'save-value))))
         ;; (message "%s->%s #1" variable new-value)
@@ -163,7 +163,7 @@ Whe changed return t, otherwise return nil."
 ;;;###autoload
 (defun ergoemacs-save (variable value)
   "Set VARIABLE to VALUE and tell customize it needs to be saved."
-  (if (not (custom-variable-p variable))
+  (if (not (ergoemacs :custom-p variable))
       (set variable value)
     (customize-set-variable variable value)
     (customize-mark-as-set variable)))
@@ -182,7 +182,7 @@ If FORCE is true, set it even if it changed."
     (put variable :ergoemacs-save-value nil)
     (if (and minor-mode-p (not (boundp variable)))
         (funcall variable new-value)
-      (if (custom-variable-p variable)
+      (if (ergoemacs :custom-p variable)
           (progn
             (customize-set-variable variable new-value)
             ;; (customize-mark-to-save variable)
