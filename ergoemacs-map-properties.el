@@ -92,7 +92,7 @@
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 
-(defun ergoemacs-map-properties--keymap-value (keymap &rest _ignore)
+(defun ergoemacs-map-properties--keymap-value (keymap)
   "Return the keymap value of KEYMAP.
 KEYMAP can be a symbol, keymap or ergoemacs-mode keymap"
   (let (tmp)
