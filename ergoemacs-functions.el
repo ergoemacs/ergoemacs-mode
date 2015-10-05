@@ -210,7 +210,14 @@ The backup is determined by `find-backup-file-name'"
   "Call `customize-save-customized' on exit Emacs."
   (let (set save val)
     (dolist (elt ergoemacs-set-ignore-customize)
-      (when (custom-variable-p elt)
+      ;; Changed -- (Adatped from cus-edit+)
+      (when (and (or (custom-variable-p elt)  (user-variable-p elt))
+                 ;; (default-boundp elt)
+                                        ; Has a value that is neither saved nor standard.
+                 ;; (not (member (list (custom-quote (default-value elt)))
+                 ;;              (list (get elt 'saved-value)
+                 ;;                    (get elt 'standard-value))))
+                 )
         (setq set (get elt :ergoemacs-set-value)
               save (get elt :ergoemacs-save-value)
               val (ergoemacs-sv elt))
@@ -221,11 +228,13 @@ The backup is determined by `find-backup-file-name'"
                        set
                        val)
               (customize-mark-to-save elt))
-          (set elt save)
-          (set-default elt save)
-          (customize-mark-to-save elt)
-          (put elt 'saved-value nil))))
-    (ignore-errors (unless noninteractive (customize-save-customized)))))
+          ;; Consider this value unchanged (even though it was...)
+          (put elt 'saved-value nil)
+          (put elt 'customized-value nil)
+          (when (get elt 'customized-variable-comment) ; Do same with a custom comment.
+            (put elt 'saved-variable-comment (get elt 'customized-variable-comment)))
+          (put elt 'customized-variable-comment nil)))))
+  (ignore-errors (unless noninteractive (customize-save-customized))))
 
 (defvar ergoemacs-terminal
   "Local variable to determine if `ergoemacs-clean' is running a terminal `ergoemacs-mode'")
