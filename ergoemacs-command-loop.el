@@ -1044,6 +1044,7 @@ should not be run.")
   "Determines if the full command loop should be run."
   (and
    (eq ergoemacs-command-loop-type :full)
+   (not (minibufferp))
    (catch 'excluded-variables
      (dolist (var ergoemacs-command-loop--excluded-variables)
        (when (ergoemacs-sv var)
