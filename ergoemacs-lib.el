@@ -55,6 +55,9 @@
 (declare-function ergoemacs-translate--ahk-ini "ergoemacs-translate")
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 
+(declare-function ergoemacs-component-find-definition "ergoemacs-component")
+(declare-function ergoemacs-component-find-1 "ergoemacs-component")
+
 (declare-function tabbar-install-faces "tabbar-ruler")
 (declare-function tabbar-mode "tabbar")
 
@@ -134,7 +137,7 @@ Whe changed return t, otherwise return nil."
         ;; (message "%s->%s #1" variable new-value)
         (unless (get variable :ergoemacs-save-value)
           (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
-        (customize-set-variable variable new-value)
+        (set variable new-value)
         ;; Don't save ergoemacs-mode intilization
         (put variable :ergoemacs-set-value (ergoemacs-sv variable))
         (pushnew variable ergoemacs-set-ignore-customize)
@@ -169,8 +172,7 @@ Whe changed return t, otherwise return nil."
     (customize-mark-as-set variable)))
 
 (defun ergoemacs-reset (variable)
-  "Sets VARIABLE to VALUE without disturbing customize or setq.
-If FORCE is true, set it even if it changed."
+  "Sets VARIABLE to VALUE without disturbing customize or setq."
   (let* ((minor-mode-p (and (string= "mode" (substring (symbol-name variable) -4))
                             (commandp variable t)))
          (value (get variable :ergoemacs-save-value))
@@ -184,10 +186,11 @@ If FORCE is true, set it even if it changed."
         (funcall variable new-value)
       (if (ergoemacs :custom-p variable)
           (progn
-            (customize-set-variable variable new-value)
             ;; (customize-mark-to-save variable)
-            (when (and minor-mode-p (not new-value))
-              (funcall variable -1)))
+            (if (and minor-mode-p (not new-value))
+                (funcall variable -1)
+              (set variable new-value)
+              (set-default variable new-value)))
         (set variable new-value)
         (set-default variable new-value)
         (put variable :ergoemacs-set-value (ergoemacs-sv variable))
@@ -592,6 +595,88 @@ very small or large numbers"
                 (match-string 2 number))
       (substring number 0 width))))
 
+(defun ergoemacs-timing-results-jump-to-component (&optional event)
+  "Jump to component linked to the current button.
+EVENT is used when this is calledf rom a mouse event."
+  (interactive (list last-nonmenu-event))
+  (if event (posn-set-point (event-end event)))
+  (ergoemacs-component-find-definition
+   (get-text-property (point) 'ergoemacs-component)))
+
+(defvar ergoemacs-timing-component-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mouse-2] 'ergoemacs-timing-results-jump-to-component)
+    (define-key map [follow-link] 'mouse-face)
+    (define-key map "\C-m" 'ergoemacs-timing-results-jump-to-component)
+    map)
+  "Keymap used on the component maps.")
+
+(defcustom ergoemacs-timing-find-regexp
+  (concat"^\\s-*(ergoemacs-timing" find-function-space-re "%s\\(\\s-\\|$\\)")
+  "The regexp used by `ergoemacs-timing-find-no-select' to search for a timing definition.
+Note it must contain a `%s' at the place where `format' should
+insert the face name."
+  :type 'regexp
+  :group 'find-function
+  :version "22.1")
+
+(unless (assoc 'ergoemacs-timing find-function-regexp-alist)
+  (push (cons 'ergoemacs-timing 'ergoemacs-timing-find-regexp) find-function-regexp-alist))
+
+(defun ergoemacs-timing-find-no-select (timing-definition file)
+  "Find TIMING-DEFINITION in FILE.
+This uses `find-function-search-for-symbol'."
+  (let* ((el-file (and file (concat (file-name-sans-extension file) ".el")))
+         (sym (intern (format "%s" timing-definition))))
+    (find-function-search-for-symbol sym 'ergoemacs-timing el-file)))
+
+(defun ergoemacs-timing-results-jump (&optional event)
+  "Jump to timing item linked to the current button.
+EVENT is used when this is called from a mouse event."
+  (interactive (list last-nonmenu-event))
+  (if event (posn-set-point (event-end event)))
+  (let ((file (get-text-property (point) 'ergoemacs-timing-file))
+        (symbol (get-text-property (point) 'ergoemacs-timing-symbol)))
+    (message "%s->%s" file symbol)
+    (ergoemacs-component-find-1
+     symbol 'ergoemacs-timing 'switch-to-buffer
+     (save-excursion
+       (ergoemacs-timing-find-no-select symbol file)))))
+
+(defvar ergoemacs-timing-jump-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mouse-2] 'ergoemacs-timing-results-jump)
+    (define-key map [follow-link] 'mouse-face)
+    (define-key map "\C-m" 'ergoemacs-timing-results-jump)
+    map)
+  "Jump to a timing definition.")
+
+(defun ergoemacs-timing-output-result--sym (symname file)
+  "Insert SYMNAME with appropriate links."
+  (let ((sym (format "%s" symname)))
+    (unless (catch 'found
+              (dolist (lst '(("initialize-\\(.*\\)\\'" "Initialize ")
+                             ("ensure-\\(.*\\)\\'" "Ensure ")
+                             ("create-component-\\(.*\\)\\'" "Create Component ")
+                             ("translate-keymap-\\(.*\\)\\'" "Translate Keymap ")))
+                (when (string-match (nth 0 lst) sym)
+                  (insert (nth 1 lst)
+                          (propertize (match-string 1 sym)
+                                      'ergoemacs-component (intern (match-string 1 sym))
+                                      'keymap ergoemacs-timing-component-map
+                                      'mouse-face 'highlight
+                                      'face 'link
+                                      'help-echo "mouse-2 or RET jumps to definition"))
+                  (throw 'found t)))
+              nil)
+      (insert (propertize sym
+                          'ergoemacs-timing-symbol (intern sym)
+                          'ergoemacs-timing-file file
+                          'keymap ergoemacs-timing-jump-map
+                          'mouse-face 'highlight
+                          'face 'link
+                          'help-echo "mouse-2 or RET jumps to definition")))))
+
 (defun ergoemacs-timing-output-result (resultvec)
   "Output the RESULTVEC into the results buffer. RESULTVEC is a 4
 or more element vector where aref 0 is the call count, aref 1 is
@@ -606,6 +691,7 @@ vector are ignored."
          (mn (aref resultvec 3))
          (mx (aref resultvec 4))
          (symname (aref resultvec 5))
+         (file (aref resultvec 6))
          callcnt totaltime avetime mntime mxtime)
     (setq callcnt (number-to-string cc)
           totaltime (number-to-string tt)
@@ -613,7 +699,7 @@ vector are ignored."
           mntime (number-to-string mn)
           mxtime (number-to-string mx))
     ;; possibly prune the results
-    (insert (format "%s" symname))
+    (ergoemacs-timing-output-result--sym symname file)
     (insert-char 32 (+ ergoemacs-field-len (- (length symname)) 2))
     ;; print stuff out, formatting it nicely
     (insert callcnt)
@@ -661,11 +747,12 @@ Based on `elp-results'."
                 (cc (aref item 0))
                 (tt (aref item 1))
                 (mn (aref item 2))
-                (mx (aref item 3)))
+                (mx (aref item 3))
+                (file (aref item 4)))
            (setq longest (max longest (length symname)))
            (push (vector cc tt (if (zerop cc) 0.0
                                  (/ (float tt) (float cc)))
-                         mn mx symname)
+                         mn mx symname file)
                  resvec)))
        ergoemacs-timing-hash)
       (setq ergoemacs-field-len (max titlelen longest))

@@ -208,7 +208,7 @@ The backup is determined by `find-backup-file-name'"
 
 (defun ergoemacs-exit-customize-save-customized ()
   "Call `customize-save-customized' on exit Emacs."
-  (let (set save val)
+  (let (set save val revert)
     (dolist (elt ergoemacs-set-ignore-customize)
       ;; Changed -- (Adatped from cus-edit+)
       (when (ergoemacs :custom-p elt)
@@ -219,16 +219,17 @@ The backup is determined by `find-backup-file-name'"
             (progn
               (message "%s was changed outside of ergoemacs-mode\n\tPrior: %s\n\tErgoemacs: %s\n\tFinal: %s" elt
                        save
-                       set
+                       set 
                        val)
               (customize-mark-to-save elt))
           ;; Consider this value unchanged (even though it was...)
-          (put elt 'saved-value nil)
-          (put elt 'customized-value nil)
-          (when (get elt 'customized-variable-comment) ; Do same with a custom comment.
-            (put elt 'saved-variable-comment (get elt 'customized-variable-comment)))
-          (put elt 'customized-variable-comment nil)))))
-  (ignore-errors (unless noninteractive (customize-save-customized))))
+          (set-default elt save)
+          (set elt save)
+          (push elt revert))))
+    (ignore-errors (unless noninteractive (customize-save-customized)))
+    (dolist (elt revert)
+      (set-default elt (get elt :ergoemacs-set-value))
+      (set elt (get elt :ergoemacs-set-value)))))
 
 (defvar ergoemacs-terminal
   "Local variable to determine if `ergoemacs-clean' is running a terminal `ergoemacs-mode'")
