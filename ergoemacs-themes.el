@@ -735,6 +735,7 @@
   (global-set-key (kbd "C-M-%") nil)
   (global-set-key (kbd "M-%") '("M-%" :emacs)))
 
+
 (ergoemacs-component switch ()
   "Window/Frame/Tab Switching"
   (global-set-key (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
@@ -744,18 +745,18 @@
   (global-set-key (kbd "M-`") 'ergoemacs-switch-to-next-frame)
 
   (global-unset-key (kbd "C-x 1"))
-  (global-set-key (kbd "M-3") '("C-x 1" :emacs))
+  (global-set-key (kbd "M-3") 'delete-other-windows)
   
   (global-unset-key (kbd "C-x 0"))
-  (global-set-key (kbd "M-2") '("C-x 0" :emacs))
+  (global-set-key (kbd "M-2") 'delete-window)
   
   (global-unset-key (kbd "C-x 3"))
   (global-set-key (kbd "M-4") '(split-window-below split-window-horizontally))
   
   (global-unset-key (kbd "C-x 2"))
-  (global-set-key (kbd "M-$") '("C-x 2" :emacs))
+  (global-set-key (kbd "M-$") '(split-window-right split-window-vertically))
   :version 5.7.5
-  (global-set-key (kbd "M-0") '("C-x 0" :emacs)))
+  (global-set-key (kbd "M-0") 'delete-window))
 
 (ergoemacs-component execute ()
   "Execute Commands"
