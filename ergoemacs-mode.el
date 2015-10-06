@@ -106,8 +106,7 @@
 (require 'package)
 
 (declare-function ergoemacs-require "ergoemacs-lib")
-(declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layout-engine")
-(declare-function ergoemacs-layouts--customization-type "ergoemacs-layout-engine")
+(declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-map-properties--create-label-function "ergoemacs-map-properties")
@@ -118,6 +117,8 @@
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
+
+(declare-function ergoemacs-layouts--customization-type "ergoemacs-layouts")
 
 (declare-function persistent-soft-fetch "persistent-soft")
 (declare-function persistent-soft-flush "persistent-soft")
@@ -437,16 +438,38 @@ bindings the keymap is:
 (defvar ergoemacs-timing-hash nil
   "Hash table of `ergoemacs-mode' timing.")
 
+(defvar ergoemacs-timing--locations
+  '((ensure . "ergoemacs-component.el")
+    (remove-global-map-map-keymap . "ergoemacs-component.el")
+    (remove-local-keymap-map-keymap . "ergoemacs-component.el")
+    (translate-keymap . "ergoemacs-component.el")
+    (describe-keymap . "ergoemacs-key-description.el")
+    (before-ergoemacs . "ergoemacs-map-properties.el")
+    (get-original-global-map . "ergoemacs-map-properties.el")
+    (ergoemacs-map-properties--create-label-function . "ergoemacs-map-properties.el")
+    (ergoemacs-create-global . "ergoemacs-map-properties.el")
+    (empty-p . "ergoemacs-map-properties.el")
+    (where-is-hash . "ergoemacs-map-properties.el")
+    (flatten-original . "ergoemacs-map-properties.el")
+    (lookup-keymap . "ergoemacs-map.el")
+    (calculate-ergoemacs-remap . "ergoemacs-map.el")
+    (calc-remaps . "ergoemacs-map.el")
+    (calc-passthrough . "ergoemacs-map.el")
+    (ergoemacs-mode-after-init-emacs . "ergoemacs-mode.el")
+    (setup-ergoemacs-hash . "ergoemacs-mode.el"))
+  "Alist of known timing functions.")
+
 (defun ergoemacs-timing-- (key function)
   "Save timing information for KEY by calling FUNCTION."
   (let* ((entry-time (current-time))
          (ret (funcall function))
-         val time)
+         val time file)
     (if (not ergoemacs-timing-hash)
         (setq ergoemacs-timing-hash (make-hash-table))
       (if (not (setq val (gethash key ergoemacs-timing-hash)))
           (puthash key (vector 1 (setq val (float-time (time-subtract (current-time) entry-time)))
-                               val val (or load-file-name buffer-file-name)) ergoemacs-timing-hash)
+                               val val (or (and (setq file (assoc key ergoemacs-timing--locations)) (expand-file-name (cdr file) ergoemacs-dir))
+					   load-file-name buffer-file-name)) ergoemacs-timing-hash)
         (incf (aref val 0))
         (incf (aref val 1) (setq time (float-time (time-subtract (current-time) entry-time))))
         (setf (aref val 2) (min time (aref val 2)))
@@ -747,9 +770,6 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   "Loads aliases defined in `ergoemacs-aliases'."
   (dolist (x ergoemacs-aliases)
     (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))))))
-
-
-
 
 (autoload 'ergoemacs-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme-component "ergoemacs-macros")

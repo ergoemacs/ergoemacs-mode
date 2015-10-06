@@ -96,6 +96,7 @@
 (declare-function ergoemacs-component-struct--rm-hooks "ergoemacs-component")
 (declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
 
+(declare-function ergoemacs-theme--get-version "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme--menu "ergoemacs-theme-engine")
 
@@ -125,10 +126,7 @@
 (declare-function ergoemacs-map-properties--set-map-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--use-local-unbind-list-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--user "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--user-original "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--where-is "ergoemacs-map")
-
-(declare-function ergoemacs-theme--get-version "ergoemacs-theme")
+(declare-function ergoemacs-map-properties--where-is "ergoemacs-map-properties")
 
 (declare-function ergoemacs-mode--setup-hash-tables "ergoemacs-mode")
 

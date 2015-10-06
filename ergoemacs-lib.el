@@ -605,7 +605,7 @@ EVENT is used when this is calledf rom a mouse event."
 
 (defvar ergoemacs-timing-component-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [mouse-2] 'ergoemacs-timing-results-jump-to-component)
+    (define-key map [mouse-1] 'ergoemacs-timing-results-jump-to-component)
     (define-key map [follow-link] 'mouse-face)
     (define-key map "\C-m" 'ergoemacs-timing-results-jump-to-component)
     map)
@@ -637,21 +637,21 @@ EVENT is used when this is called from a mouse event."
   (if event (posn-set-point (event-end event)))
   (let ((file (get-text-property (point) 'ergoemacs-timing-file))
         (symbol (get-text-property (point) 'ergoemacs-timing-symbol)))
-    (message "%s->%s" file symbol)
-    (ergoemacs-component-find-1
-     symbol 'ergoemacs-timing 'switch-to-buffer
-     (save-excursion
-       (ergoemacs-timing-find-no-select symbol file)))))
+    (when file
+      (ergoemacs-component-find-1
+       symbol 'ergoemacs-timing 'switch-to-buffer
+       (save-excursion
+         (ergoemacs-timing-find-no-select symbol file))))))
 
 (defvar ergoemacs-timing-jump-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [mouse-2] 'ergoemacs-timing-results-jump)
+    (define-key map [mouse-1] 'ergoemacs-timing-results-jump)
     (define-key map [follow-link] 'mouse-face)
     (define-key map "\C-m" 'ergoemacs-timing-results-jump)
     map)
   "Jump to a timing definition.")
 
-(defun ergoemacs-timing-output-result--sym (symname file)
+(defun ergoemacs-timing-output-result--sym (symname &optional file)
   "Insert SYMNAME with appropriate links."
   (let ((sym (format "%s" symname)))
     (unless (catch 'found
@@ -666,16 +666,18 @@ EVENT is used when this is called from a mouse event."
                                       'keymap ergoemacs-timing-component-map
                                       'mouse-face 'highlight
                                       'face 'link
-                                      'help-echo "mouse-2 or RET jumps to definition"))
+                                      'help-echo "mouse-1 or RET jumps to definition"))
                   (throw 'found t)))
               nil)
-      (insert (propertize sym
-                          'ergoemacs-timing-symbol (intern sym)
-                          'ergoemacs-timing-file file
-                          'keymap ergoemacs-timing-jump-map
-                          'mouse-face 'highlight
-                          'face 'link
-                          'help-echo "mouse-2 or RET jumps to definition")))))
+      (if file
+	  (insert (propertize sym
+			      'ergoemacs-timing-symbol (intern sym)
+			      'ergoemacs-timing-file file
+			      'keymap ergoemacs-timing-jump-map
+			      'mouse-face 'highlight
+			      'face 'link
+			      'help-echo "mouse-1 or RET jumps to definition"))
+	(insert sym)))))
 
 (defun ergoemacs-timing-output-result (resultvec)
   "Output the RESULTVEC into the results buffer. RESULTVEC is a 4

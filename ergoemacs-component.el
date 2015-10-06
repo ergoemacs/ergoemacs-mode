@@ -117,7 +117,6 @@
 (declare-function package-installed-p "package")
 
 (declare-function ergoemacs-layout--regexp "ergoemacs-layouts")
-(declare-function ergoemacs-layouts-list "ergoemacs-layouts")
 (declare-function ergoemacs-layouts--list "ergoemacs-layouts")
 
 
@@ -1061,7 +1060,7 @@ be composed over the keymap.  This is done in
               (funcall fn plist))))))
     (setq ergoemacs-component-struct--applied-plists tmp)
     (dolist (cur-obj obj)
-      (ergoemacs-timing (intern (format "init-%s" cur-obj))
+      (ergoemacs-timing (intern (format "initialize-%s" cur-obj))
         (dolist (init (ergoemacs-component-struct--variables cur-obj))
           (if (and (consp (nth 0 init)) (not (nth 1 init)) (not (nth 2 init)))
               (unless (member (nth 0 init) ergoemacs-component-struct--deferred-functions)
@@ -1340,8 +1339,8 @@ insert the face name."
                    sym (or type 'ergoemacs-component) el-file)))
       loc)))
 
-(defun ergoemacs-component-find-1 (symbol type switch-fn)
-  "Find `ergoemacs-mode' component or theme
+(defun ergoemacs-component-find-1 (symbol type switch-fn &optional buffer-point)
+  "Find `ergoemacs-mode' component or theme.
 TYPE is nil to search for a component definition,
 
 The variable `find-function-recenter-line' controls how
@@ -1354,8 +1353,9 @@ Modified from `find-definition-noselect'.
 Set mark before moving, if the buffer already existed."
   (let* ((orig-point (point))
          (orig-buffers (buffer-list))
-         (buffer-point (save-excursion
-                         (ergoemacs-component-find-no-select symbol type)))
+         (buffer-point (or buffer-point
+                           (save-excursion
+                             (ergoemacs-component-find-no-select symbol type))))
          (new-buf (car buffer-point))
          (new-point (cdr buffer-point)))
     (when buffer-point
