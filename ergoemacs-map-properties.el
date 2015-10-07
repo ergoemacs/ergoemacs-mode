@@ -743,8 +743,11 @@ The KEYMAP will have the structure
          (map-key
           (error "Will not label a composed map's members to %s" map-key))
          (t
-          (dolist (map (ergoemacs-map-properties--composed-list keymap))
-            (ergoemacs-map-properties--label map map-key))))
+          (let ((parent (keymap-parent keymap)))
+	    (dolist (map (ergoemacs-map-properties--composed-list keymap))
+	      (ergoemacs :label map))
+	    (when parent
+	      (ergoemacs :label parent)))))
       (let* ((map keymap)
              (map-key (or map-key (ergoemacs-map-properties--get-or-generate-map-key map)))
              char-table
@@ -788,7 +791,9 @@ The KEYMAP will have the structure
                 (when char-table
                   (push char-table map))
                 (push 'keymap map)))
-          (ignore-errors (set-keymap-parent map parent)))
+          (when parent
+	    (ergoemacs :label parent)
+	    (set-keymap-parent map parent)))
         (if indirect-p
             (puthash keymap old-plist ergoemacs-map-properties--indirect-keymaps)
           (unless (ignore-errors (ergoemacs-setcdr keymap (cdr map)))
