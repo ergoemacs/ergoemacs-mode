@@ -64,7 +64,7 @@
 (defvar ergoemacs-display-key-use-face-p)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
-(defvar ergoemacs-map-properties--unlabeled)
+(defvar ergoemacs-map-properties--known-maps)
 (defvar ergoemacs-mode--fast-p)
 (defvar ergoemacs-mode-version)
 (defvar ergoemacs-saved-global-map)
@@ -562,7 +562,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                tmp)
           (cond
            ((and (not cur-map) (not when-condition))
-            (pushnew keymap ergoemacs-map-properties--unlabeled)
+            (pushnew keymap ergoemacs-map-properties--known-maps)
             (setq cur-map (make-sparse-keymap))
             (puthash keymap cur-map (ergoemacs-component-struct-maps obj)))
            ((and (not cur-map) when-condition global-map-p)
@@ -571,7 +571,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
            ((and (not cur-map) when-condition hook)
             (unless (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj))
               (puthash hook (make-hash-table) (ergoemacs-component-struct-hook-maps obj)))
-            (pushnew keymap ergoemacs-map-properties--unlabeled)
+            (pushnew keymap ergoemacs-map-properties--known-maps)
             (setq cur-map (make-sparse-keymap))
             (puthash keymap cur-map (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj)))))
           (cond

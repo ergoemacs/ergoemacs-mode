@@ -740,16 +740,8 @@ KEYMAP can be a keymap or keymap integer key."
   "Label all the bound keymaps."
   (mapatoms #'ergoemacs-map-properties--label-map))
 
-(defvar ergoemacs-map-properties--unlabeled nil
-  "A list of unlabeled keymaps.")
-
-(defun ergoemacs-map-properties--label-unlabeled (&rest _ignore)
-  "Label known but unlabeled keymaps."
-  (let (new)
-    (dolist (map ergoemacs-map-properties--unlabeled)
-      (unless (ergoemacs-map-properties--label-map map)
-        (push map new)))
-    (setq ergoemacs-map-properties--unlabeled new)))
+(defvar ergoemacs-map-properties--known-maps nil
+  "A list of known maps with unassigned ids")
 
 ;; Startup and load functions
 ;;(add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
