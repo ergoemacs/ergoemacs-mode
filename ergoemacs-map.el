@@ -122,6 +122,7 @@
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--override-maps "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--get "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--revert-original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--set-map-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--use-local-unbind-list-p "ergoemacs-map-properties")
@@ -641,11 +642,12 @@ If LOOKUP-KEYMAP
        
        ;; Now create the keymap for a specified `lookup-keymap'
        (lookup-keymap
-        (unless (string= "" ergoemacs-map--breadcrumb)
-          (when (not (ergoemacs lookup-keymap :map-key))
-            (ergoemacs lookup-keymap :label)
-            (puthash (intern ergoemacs-map--breadcrumb) (ergoemacs lookup-keymap :map-key) ergoemacs-breadcrumb-hash)
-            (puthash (ergoemacs lookup-keymap :map-key) (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash)))
+        ;; (unless (string= "" ergoemacs-map--breadcrumb)
+        ;;   (when (not (ergoemacs lookup-keymap :map-key))
+        ;;     (ergoemacs lookup-keymap :label)
+        ;;     (puthash (intern ergoemacs-map--breadcrumb) (ergoemacs lookup-keymap :map-key) ergoemacs-breadcrumb-hash)
+        ;;     (puthash (ergoemacs lookup-keymap :map-key) (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash)))
+	(ergoemacs lookup-keymap :label)
         (setq lookup-keymap (ergoemacs lookup-keymap :original)
               hook-overrides (ergoemacs lookup-keymap :override-maps)
               use-local-unbind-list-p (ergoemacs lookup-keymap :use-local-unbind-list-p))

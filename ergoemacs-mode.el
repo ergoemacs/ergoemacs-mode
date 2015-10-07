@@ -408,10 +408,10 @@ bindings the keymap is:
 (defvar ergoemacs-map-properties--plist-hash nil)
 
 (defvar ergoemacs-theme-hash nil
-  "Hash of `ergoemacs-mode' themes")
+  "Hash of `ergoemacs-mode' themes.")
 
 (defvar ergoemacs-translate--event-hash nil
-  "Event modifiers not covered by standard emacs")
+  "Event modifiers not covered by standard Emacs.")
 
 (defvar ergoemacs-translate--hash nil
   "")
@@ -434,6 +434,12 @@ bindings the keymap is:
 
 (defvar ergoemacs-require nil
   "List of required theme components.")
+
+(defvar ergoemacs-map-properties--label-atoms-maps nil
+  "Known bound keymaps.")
+
+(defvar ergoemacs-map-properties--known-maps nil
+  "A list of known maps with unassigned ids.")
 
 (defvar ergoemacs-timing-hash nil
   "Hash table of `ergoemacs-mode' timing.")
@@ -561,6 +567,8 @@ When `store-p' is non-nil, save the tables."
      'ergoemacs-map-properties--create-label-function nil
      'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
      'ergoemacs-map-properties--before-ergoemacs nil
+     'ergoemacs-map-properties--label-atoms-maps nil
+     'ergoemacs-map-properties--known-maps nil
      ;;'ergoemacs-map-- (make-hash-table :test 'equal))
      ;;'ergoemacs-map--alist (make-hash-table)
      ;;'ergoemacs-map--alists (make-hash-table)

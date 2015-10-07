@@ -886,7 +886,7 @@ When arg1 can be a property.  The following properties are supported:
            "standard"))
      ((and arg1 (symbolp arg1)
            (memq arg1 ergoemacs--map-properties-list))
-      `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg1) 1))) ,arg2 ,arg3))
+      `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg1) 1))) ,@(cdr args)))
 
      ((and arg1 arg2 (eq arg2 :new-command) arg3)
       ;; (ergoemacs arg1 :new-command 'next-line)
