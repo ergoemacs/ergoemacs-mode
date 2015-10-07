@@ -208,7 +208,7 @@ The backup is determined by `find-backup-file-name'"
 
 (defun ergoemacs-exit-customize-save-customized ()
   "Call `customize-save-customized' on exit Emacs."
-  (let (set save val revert)
+  (let (set save val revert save-p)
     (dolist (elt ergoemacs-set-ignore-customize)
       ;; Changed -- (Adatped from cus-edit+)
       (when (ergoemacs :custom-p elt)
@@ -216,7 +216,9 @@ The backup is determined by `find-backup-file-name'"
               save (get elt :ergoemacs-save-value)
               val (ergoemacs-sv elt))
         (if (not (equal set val))
-            (progn
+            (unless (or (eq elt 'echo-keystrokes)
+			(string-match-p "-\\(hook\\|mode\\)$" (symbol-name elt)))
+	      (setq save-p t)
               (message "%s was changed outside of ergoemacs-mode\n\tPrior: %s\n\tErgoemacs: %s\n\tFinal: %s" elt
                        save
                        set 
@@ -226,7 +228,8 @@ The backup is determined by `find-backup-file-name'"
           (set-default elt save)
           (set elt save)
           (push elt revert))))
-    (ignore-errors (unless noninteractive (customize-save-customized)))
+    (when save-p
+      (ignore-errors (unless noninteractive (customize-save-customized))))
     (dolist (elt revert)
       (set-default elt (get elt :ergoemacs-set-value))
       (set elt (get elt :ergoemacs-set-value)))))
