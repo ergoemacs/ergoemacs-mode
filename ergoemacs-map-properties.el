@@ -621,6 +621,17 @@ composing or parent/child relationships)"
                 (throw 'found-map t))))
           ret)))))
 
+(defun ergoemacs-map-properties--get (keymap property)
+  "Get ergoemacs-mode KEYMAP PROPERTY."
+  (let ((ret (ergoemacs-map-properties--map-fixed-plist keymap)) tmp)
+    (unless (and ergoemacs-map-properties--plist-hash (hash-table-p ergoemacs-map-properties--plist-hash))
+      (setq ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)))
+    (setq tmp (ergoemacs-gethash (ergoemacs-map-properties--key-struct keymap) ergoemacs-map-properties--plist-hash))
+    (if (not (and tmp (hash-table-p tmp)))
+	(setq ret nil)
+      (setq ret (ergoemacs-gethash property tmp)))
+    ret))
+
 (defun ergoemacs-map-properties--put (keymap property value)
   "Set ergoemacs-mode KEYMAP PROPERTY to VALUE."
   (prog1 value
@@ -653,65 +664,16 @@ composing or parent/child relationships)"
 
 (defun ergoemacs-map-properties--map-list (keymap &optional no-hash)
   "Get the list of maps bound to KEYMAP.
-KEYMAP can be a keymap or keymap integer key."
-  (if (or (ergoemacs-keymapp keymap) (integerp keymap))
-      (let* (ret tmp
-                 (keymap (or (and (ergoemacs-keymapp keymap) (ergoemacs keymap :original))
-                             keymap))
-                 (map-p (ergoemacs keymap :key-hash)))
-        (cond
-         ((and map-p (not no-hash)
-               (setq ret (ergoemacs keymap :map-list-hash)))
-          (ergoemacs-map-properties--get-or-generate-map-key keymap)
-          (setq map-p ret)
-          (message "Found %s" map-p)
-          (when keymap
-            (setq ret nil)
-            (dolist (map map-p)
-              (when (eq keymap (ergoemacs (ergoemacs-sv map) :original))
-                (push map ret))))
-          (when (not ret);; Check again...
-            (setq ret (ergoemacs-map-properties--map-list keymap t)))
-          ret)
-         ((and map-p (eq no-hash :local)
-               (eq (current-local-map) keymap)
-               (or
-                (and (setq tmp (intern (format "%s-map" major-mode)))
-                     (boundp tmp)
-                     (ergoemacs-keymapp (default-value tmp)))
-                (and (setq tmp (intern (format "%s-keymap" major-mode)))
-                     (boundp tmp)
-                     (ergoemacs-keymapp (default-value tmp))))
-               (eq (default-value tmp)
-                   ergoemacs--original-local-map))
-          (push tmp ret)
-          (ergoemacs-map-properties--get-or-generate-map-key (default-value tmp))
-          (when ret
-            (ergoemacs-map-properties--put
-             (default-value tmp) :map-list-hash ret))
-          ret)
-         ((and map-p (not (eq no-hash :local)) (ergoemacs-keymapp keymap))
-          (dolist (map ergoemacs-map-properties--label-atoms-maps)
-            (when (eq keymap (ergoemacs (ergoemacs-sv map) :original))
-              (push map ret)))
-          (unless ret
-            (setq ret (ergoemacs-map-properties--map-list keymap :local)))
-          (when ret
-            (ergoemacs-map-properties--put keymap :map-list-hash ret))
-          ret)
-         ((and map-p (not (eq no-hash :local)) (integerp keymap))
-          (dolist (map ergoemacs-map-properties--label-atoms-maps)
-            (when (eq keymap (ergoemacs (ergoemacs (ergoemacs-sv map) :original) :key))
-              (push map ret)))
-          (unless ret
-            (setq ret (ergoemacs-map-properties--map-list keymap :local)))
-          (when ret
-            (ergoemacs-map-properties--put (ergoemacs-sv (nth 0 ret)) :map-list-hash ret))
-          ret)))))
+KEYMAP can be a keymap."
+  (cond
+   ((ergoemacs-keymapp keymap)
+    (ergoemacs (ergoemacs keymap :original) :map-list-hash))
+   (t
+    (error "Need a proper keymap."))))
 
 (defun ergoemacs-map-properties--label-map (map)
   "Label MAP"
-  (let* (sv)
+  (let* (sv map-list-hash)
     (cond 
      ((get map :ergoemacs-labeled)
       t) ;; Already labeled
@@ -724,15 +686,21 @@ KEYMAP can be a keymap or keymap integer key."
           (equal sv (make-keymap)))
       nil)
      ((ergoemacs sv :installed-p) ;; Already modified.
-      (put map :ergoemacs-labeled t))
-     ((ergoemacs sv :composed-p) ;; Already modified.
-      (ergoemacs-warn "Composed map %s not labeled." map))
+      (put map :ergoemacs-labeled t)
+      (setq map-list-hash (ergoemacs sv :map-list-hash))
+      (push map map-list-hash)
+      (ergoemacs sv :map-list-hash map-list-hash))
+     ;; ((ergoemacs sv :composed-p) ;; Already modified.
+     ;;  (ergoemacs-warn "Composed map %s not labeled." map))
      (t ;;Label
       (when sv
         (let (key)
           (setq key (ergoemacs-map-properties--get-or-generate-map-key sv))
           (ergoemacs :label sv key)))
       (pushnew map ergoemacs-map-properties--label-atoms-maps)
+      (setq map-list-hash (ergoemacs sv :map-list-hash))
+      (push map map-list-hash)
+      (ergoemacs sv :map-list-hash map-list-hash)
       (put map :ergoemacs-labeled t)
       t))))
 

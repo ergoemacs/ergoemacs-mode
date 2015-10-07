@@ -920,7 +920,7 @@ When arg1 can be a property.  The following properties are supported:
        ((memq arg2 ergoemacs--map-properties-list)
         `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg2) 1))) ,arg1))
        (t
-        `(ignore-errors (ergoemacs-gethash ,arg2 (ergoemacs-gethash (ergoemacs-map-properties--key-hash (ergoemacs-map-properties--keymap-value ,arg1)) ergoemacs-map-properties--plist-hash))))))
+        `(ergoemacs-map-properties--get ,arg1 ,arg2))))
      ((and arg1 arg2 arg3
            (symbolp arg2)
            (string= ":" (substring (symbol-name arg2) 0 1)))
