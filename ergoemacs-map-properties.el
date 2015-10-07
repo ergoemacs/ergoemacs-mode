@@ -715,13 +715,21 @@ KEYMAP can be a keymap."
 ;;(add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
 ;;(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
 
-(defun ergoemacs-map-properties--get-or-generate-map-key (keymap &rest _ignore)
-  "Gets the key for the KEYMAP."
+(defvar ergoemacs-map-properties--unlabeled-p t
+  "Is the map unlabeled?")
+
+(defun ergoemacs-map-properties--get-or-generate-map-key (keymap)
+  "Gets the key for the KEYMAP.
+If unlabeled, set `ergoemacs-map-properties--unlabeled-p' to nil,
+otherwise it is set to t."
+  (setq ergoemacs-map-properties--unlabeled-p t)
   (let ((ret (ergoemacs-map-properties--map-fixed-plist (ergoemacs-map-properties--keymap-value keymap))))
-    (or (and ret (plist-get ret :map-key))
-        (and ergoemacs-map--breadcrumb (ergoemacs-gethash (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash))
-        (setq ergoemacs-map-properties--get-or-generate-map-key
-              (+ 1 ergoemacs-map-properties--get-or-generate-map-key)))))
+    (unless (and ret (setq ret (plist-get ret :map-key)))
+      (setq ergoemacs-map-properties--unlabeled-p nil
+	    ret (or (and ergoemacs-map--breadcrumb (ergoemacs-gethash (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash))
+                    (setq ergoemacs-map-properties--get-or-generate-map-key
+                          (+ 1 ergoemacs-map-properties--get-or-generate-map-key)))))
+    ret))
 
 (defun ergoemacs-map-properties--label (keymap &optional map-key)
   "Label an `ergoemacs-mode' touched keymap.
