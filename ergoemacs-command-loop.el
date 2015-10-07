@@ -594,7 +594,7 @@ This is not done when the event is [ergoemacs-ignore]"
              (prompt (cond
                       ((not (string= "" ergoemacs-command-loop--read-key-prompt)) prompt)
                       ((or (string= prompt " ")
-                           (string= prompt (concat " " (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-")))) nil)
+                           (string-match-p prompt (concat " *" (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-") " *"))) nil)
                       (ergoemacs-command-loop--universal prompt)
                       (ergoemacs-command-loop--echo-keystrokes-complete prompt)
                       ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
