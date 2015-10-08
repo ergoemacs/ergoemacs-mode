@@ -96,6 +96,8 @@
 (declare-function ergoemacs-component-struct--rm-hooks "ergoemacs-component")
 (declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
 
+(declare-function ergoemacs-command-loop--minibuffer-supported-p "ergoemacs-command-loop")
+
 (declare-function ergoemacs-theme--get-version "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme--menu "ergoemacs-theme-engine")
@@ -895,6 +897,7 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
        (use-local-map (ergoemacs current-local-map))
        (setq ergoemacs-map--breadcrumb ""))
      (when (and (minibufferp) ergoemacs-read-from-minibuffer-map)
+       (ergoemacs-command-loop--minibuffer-supported-p ergoemacs-map--breadcrumb)
        (use-local-map (ergoemacs ergoemacs-read-from-minibuffer-map))
        (setq ergoemacs-read-from-minibuffer-map nil
              ergoemacs-map--breadcrumb "")))

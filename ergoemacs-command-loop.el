@@ -1041,11 +1041,26 @@ should not be run.")
   '(calc-mode calc-trail-mode calc-edit-mode)
   "List of major modes where the command loop is incompatible.")
 
+
+(defvar ergoemacs-command-loop--minibuffer-unsupported-p nil)
+(defun ergoemacs-command-loop--minibuffer-supported-p (&optional command)
+  "Determine if the current minibuffer supports the full command loop.
+When COMMAND is non-nil, set
+`ergoemacs-command-loop--minibuffer-unsupported-p' to the
+appropriate value based on the COMMAND."
+  (if (not command)
+      (or (not (minibufferp))
+	  (not ergoemacs-command-loop--minibuffer-unsupported-p))
+    (when (or (and (symbolp command) (string-match-p "^\\(calc\\|math\\)" (symbol-name command)))
+	      (and (stringp command) (string-match-p "^[^:]*:\\(calc\\|math\\)" command))) 
+      (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t))
+    (ergoemacs-command-loop--minibuffer-supported-p)))
+
 (defun ergoemacs-command-loop-full-p ()
   "Determines if the full command loop should be run."
   (and
    (eq ergoemacs-command-loop-type :full)
-   (not (minibufferp))
+   (ergoemacs-command-loop--minibuffer-supported-p)
    (catch 'excluded-variables
      (dolist (var ergoemacs-command-loop--excluded-variables)
        (when (ergoemacs-sv var)
