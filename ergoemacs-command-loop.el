@@ -592,6 +592,7 @@ This is not done when the event is [ergoemacs-ignore]"
                                        (- (float-time) ergoemacs-command-loop--last-event-time))
                                   (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
              (prompt (cond
+		      ((not prompt) nil)
                       ((not (string= "" ergoemacs-command-loop--read-key-prompt)) prompt)
                       ((or (string= prompt " ")
                            (string-match-p prompt (concat " *" (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-") " *"))) nil)
