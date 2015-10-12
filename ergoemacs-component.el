@@ -563,6 +563,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
           (cond
            ((and (not cur-map) (not when-condition))
             (pushnew keymap ergoemacs-map-properties--known-maps)
+	    (pushnew keymap ergoemacs-map-properties--label-atoms-maps)
             (setq cur-map (make-sparse-keymap))
             (puthash keymap cur-map (ergoemacs-component-struct-maps obj)))
            ((and (not cur-map) when-condition global-map-p)
@@ -572,6 +573,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
             (unless (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj))
               (puthash hook (make-hash-table) (ergoemacs-component-struct-hook-maps obj)))
             (pushnew keymap ergoemacs-map-properties--known-maps)
+	    (pushnew keymap ergoemacs-map-properties--label-atoms-maps)
             (setq cur-map (make-sparse-keymap))
             (puthash keymap cur-map (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj)))))
           (cond
@@ -980,6 +982,7 @@ be composed over the keymap.  This is done in
 (defvar ergoemacs-component-echo-loaded-file-p nil)
 (defun ergoemacs-component-struct--apply-inits (&optional file obj)
   "Apply the initializations from the OBJ."
+  (ergoemacs-map-properties--label-known)
   (when (and ergoemacs-component-echo-loaded-file-p file)
     (message "`ergoemacs-mode' Loaded %s" file))
   (when (eq ergoemacs-component-struct--refresh-variables t)

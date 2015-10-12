@@ -843,13 +843,13 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
     (when (and overriding-terminal-local-map
                (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
                (not (ergoemacs overriding-terminal-local-map :installed-p)))
-      (ergoemacs-map--temporary-map-properties overriding-terminal-local-map)
+      ;; (ergoemacs-map--temporary-map-properties overriding-terminal-local-map)
       (setq overriding-terminal-local-map (ergoemacs overriding-terminal-local-map)))
     
     (when (and overriding-local-map
                (not (eq overriding-local-map ergoemacs-map--modify-active-last-overriding-local-map))
                (not (ergoemacs overriding-local-map :installed-p)))
-      (ergoemacs-map--temporary-map-properties overriding-local-map)
+      ;; (ergoemacs-map--temporary-map-properties overriding-local-map)
       (setq overriding-local-map (ergoemacs overriding-local-map)))
 
     (ergoemacs-save-buffer-state

@@ -109,7 +109,7 @@
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
-(declare-function ergoemacs-map-properties--create-label-function "ergoemacs-map-properties")
+;; (declare-function ergoemacs-map-properties--create-label-function "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
 (declare-function ergoemacs-theme--custom-documentation "ergoemacs-theme-engine")
@@ -419,7 +419,7 @@ bindings the keymap is:
 (defvar ergoemacs-translation-hash nil
   "Hash table of translations.")
 
-(defvar ergoemacs-map-properties--create-label-function nil)
+;; (defvar ergoemacs-map-properties--create-label-function nil)
 
 (defvar ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum)
 
@@ -438,9 +438,6 @@ bindings the keymap is:
 (defvar ergoemacs-map-properties--label-atoms-maps nil
   "Known bound keymaps.")
 
-(defvar ergoemacs-map-properties--known-maps nil
-  "A list of known maps with unassigned ids.")
-
 (defvar ergoemacs-timing-hash nil
   "Hash table of `ergoemacs-mode' timing.")
 
@@ -452,7 +449,7 @@ bindings the keymap is:
     (describe-keymap . "ergoemacs-key-description.el")
     (before-ergoemacs . "ergoemacs-map-properties.el")
     (get-original-global-map . "ergoemacs-map-properties.el")
-    (ergoemacs-map-properties--create-label-function . "ergoemacs-map-properties.el")
+    ;; (ergoemacs-map-properties--create-label-function . "ergoemacs-map-properties.el")
     (ergoemacs-create-global . "ergoemacs-map-properties.el")
     (empty-p . "ergoemacs-map-properties.el")
     (where-is-hash . "ergoemacs-map-properties.el")
@@ -535,8 +532,8 @@ bindings the keymap is:
   "Load hash-tables using `persistent-soft' when available.
 When `store-p' is non-nil, save the tables."
   (ergoemacs-timing setup-hash-tables
-    (when store-p
-      (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
+    ;; (when store-p
+    ;;   (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
     (unless store-p
       (ergoemacs-mode--setup-hash-tables--setq
        nil
@@ -564,11 +561,10 @@ When `store-p' is non-nil, save the tables."
      'ergoemacs-translate--hash (make-hash-table)
      'ergoemacs-translation-hash (make-hash-table)
      'ergoemacs-breadcrumb-hash (make-hash-table)
-     'ergoemacs-map-properties--create-label-function nil
+     ;; 'ergoemacs-map-properties--create-label-function nil
      'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
      'ergoemacs-map-properties--before-ergoemacs nil
      'ergoemacs-map-properties--label-atoms-maps nil
-     'ergoemacs-map-properties--known-maps nil
      ;;'ergoemacs-map-- (make-hash-table :test 'equal))
      ;;'ergoemacs-map--alist (make-hash-table)
      ;;'ergoemacs-map--alists (make-hash-table)
