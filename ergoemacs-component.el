@@ -100,10 +100,6 @@
 (declare-function ergoemacs-map-properties--map-regexp "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
 
-(declare-function ergoemacs-debug "ergoemacs-debug")
-(declare-function ergoemacs-debug-heading "ergoemacs-debug")
-(declare-function ergoemacs-debug-keymap "ergoemacs-debug")
-
 (declare-function ergoemacs-theme--get-version "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
