@@ -767,13 +767,13 @@ When DROP is non-nil, drop any found maps from `ergoemacs-map-properties--known-
       (cond
        ((and last-map (setq ret (ergoemacs-gethash last-map ergoemacs-breadcrumb-hash)))
 	;; Found id from bound map.
-	;; (message "Restore Map %s->%s" last-map ret)
+	(ergoemacs :spinner '("🎫→%s (Restore)" "Label→%s (Restore)" "Label->%s (Restore)") last-map)
 	ret)
        (last-map
 	;; Generate and save.
 	(setq ergoemacs-map-properties--get-or-generate-map-key
               (+ 1 ergoemacs-map-properties--get-or-generate-map-key))
-	;; (message "Save Map %s->%s" last-map ergoemacs-map-properties--get-or-generate-map-key)
+	(ergoemacs :spinner '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") last-map)
         (dolist (map map-list)
 	  (ergoemacs :map-list ergoemacs-map-properties--get-or-generate-map-key map))
 	ergoemacs-map-properties--get-or-generate-map-key)
@@ -786,14 +786,14 @@ When DROP is non-nil, drop any found maps from `ergoemacs-map-properties--known-
               (+ 1 ergoemacs-map-properties--get-or-generate-map-key))
 	(puthash (intern ergoemacs-map--breadcrumb) ergoemacs-map-properties--get-or-generate-map-key ergoemacs-breadcrumb-hash)
 	(puthash ergoemacs-map-properties--get-or-generate-map-key (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash)
-	;; (message "Save Breadcrumb %s->%s" ergoemacs-map--breadcrumb ergoemacs-map-properties--get-or-generate-map-key)
+	(ergoemacs :spinner '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") ergoemacs-map--breadcrumb)
 	(setq ergoemacs-map--breadcrumb "")
 	ergoemacs-map-properties--get-or-generate-map-key)
        (ret
 	;; Found in breadcrumb hash.
-	;; (message "Restore Breadcrumb %s->%s" ergoemacs-map--breadcrumb ret)
+	(ergoemacs :spinner '("🎫→%s (Restore)" "Label→%s (Restore)" "Label->%s (Restore)") ergoemacs-map--breadcrumb)
 	(setq ergoemacs-map--breadcrumb "")
-	ret) 
+	ret)
        (t
 	;; (ergoemacs-warn "Labeling untraceable map...%s" keymap)
 	(setq ergoemacs-map-properties--get-or-generate-map-key
