@@ -1051,7 +1051,7 @@ appropriate value based on the COMMAND."
   (if (not command)
       (or (not (minibufferp))
 	  (not ergoemacs-command-loop--minibuffer-unsupported-p))
-    (when (or (and (symbolp command) (string-match-p "^\\(calc\\|math\\)" (symbol-name command)))
+    (when (or (and command (symbolp command) (string-match-p "^\\(calc\\|math\\)" (symbol-name command)))
 	      (and (stringp command) (string-match-p "^[^:]*:\\(calc\\|math\\)" command))) 
       (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t))
     (ergoemacs-command-loop--minibuffer-supported-p)))
