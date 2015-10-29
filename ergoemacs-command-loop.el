@@ -1063,7 +1063,7 @@ appropriate value based on the COMMAND."
    (ergoemacs-command-loop--minibuffer-supported-p)
    (catch 'excluded-variables
      (dolist (var ergoemacs-command-loop--excluded-variables)
-       (when (ergoemacs-sv var)
+       (when (and var (ergoemacs-sv var))
          (throw 'excluded-variables nil)))
      t)
    (not (memq major-mode ergoemacs-command-loop--excluded-major-modes))))
