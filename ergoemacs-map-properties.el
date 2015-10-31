@@ -674,7 +674,7 @@ KEYMAP can be a keymap or integer indicating the keympap id."
     ;; (error "Need a proper keymap.")
     nil)))
 
-(defun ergoemacs-map-properties--label-map (map)
+(defun ergoemacs-map-properties--label-map (map &optional label-empty-p)
   "Label MAP"
   (let* (sv map-list-hash)
     (cond 
@@ -685,8 +685,9 @@ KEYMAP can be a keymap or integer indicating the keympap id."
      ((not (ergoemacs-keymapp sv)) ;; Not a keymap
       (put map :ergoemacs-labeled t)
       t)
-     ((or (equal sv (make-sparse-keymap)) ;; Empty
-          (equal sv (make-keymap)))
+     ((and (not label-empty-p)
+	   (or (equal sv (make-sparse-keymap)) ;; Empty
+	       (equal sv (make-keymap))))
       nil)
      ((ergoemacs sv :installed-p) ;; Already modified.
       (put map :ergoemacs-labeled t)

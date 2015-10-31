@@ -1333,12 +1333,6 @@ The RECORD-FLAG and KEYS are sent to `call-interactively'."
         (setq command original-command))
       ;; (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
       (ergoemacs-command-loop--call-mouse-command command record-flag keys)))
-   ((and (symbolp command) (not (commandp command))
-         ;; Install translation and call function
-         (string-match-p "^\\(ergoemacs-\\|ergoemacs-translate--\\)\\(.*\\)\\(-modal\\|-universal-argument\\|-negative-argument\\|-digit-argument\\|-modal\\)$" (symbol-name command))
-         (ergoemacs-translate--get (intern (replace-regexp-in-string "^\\(ergoemacs-\\|ergoemacs-translate--\\)\\(.*\\)\\(-modal\\|-universal-argument\\|-negative-argument\\|-digit-argument\\|-modal\\)$" ":\\2" (symbol-name command))))
-         (commandp command))
-    (call-interactively command record-flag keys))
    ((and (symbolp command) (not (fboundp command)))
     (ergoemacs-command-loop--message "Command `%s' is not found" command))
    ((and (symbolp command) (not (commandp command)))
@@ -1524,8 +1518,8 @@ Emacs versions)."
                         current-key (nth 1 raw-key)
                         raw-key (nth 0 raw-key)
                         continue-read nil)
-                  (when (setq modal-p (ergoemacs :modal-p))
-                    (setq local-keymap (ergoemacs-translate--keymap translation)))
+		  (when (setq modal-p (ergoemacs :modal-p))
+		    (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
                   (cond
                    ;; Handle quit commands
                    ((and last-current-key
@@ -1557,7 +1551,11 @@ Emacs versions)."
                           ergoemacs-command-loop--exit nil)
                     
                     (unless (eq ergoemacs-command-loop-type :test)
-                      (ergoemacs-command-loop--call-interactively command))
+                      (setq tmp this-command
+                            this-command command)
+                      (ergoemacs-command-loop--call-interactively this-command)
+                      (setq command this-command
+                            this-command tmp))
                     
                     ;; If the command changed anything, fix it here.
                     (unless (equal type ergoemacs-command-loop--current-type)
