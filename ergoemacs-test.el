@@ -1556,6 +1556,11 @@ hash appropriaetly."
     (should (member [27 ?b] list))
     list))
 
+(ert-deftest ergoemacs-test-issue-379 ()
+  "Test infinite recursive event-modifiers."
+  :tags '(:translate)
+  (should (equal (ignore-errors (ergoemacs-specials (ergoemacs-translate--event-modifiers 134217755))) '(control meta))))
+
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-test.el ends here
