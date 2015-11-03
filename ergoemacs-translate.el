@@ -86,6 +86,8 @@
 
 (declare-function ergoemacs-command-loop--modal-p "ergoemacs-command-loop")
 
+(fset #'ergoemacs-translate--key-description (symbol-function #'key-description))
+
 (defun ergoemacs-translate--get-hash (&optional layout-to layout-from)
   "Gets the translation hash."
   (let* ((to (ergoemacs :layout  (or layout-to ergoemacs-keyboard-layout)))
@@ -294,7 +296,7 @@ This uses `ergoemacs-translate--apply-key'"
 This is different than `event-modifiers' in two ways:
 - Symbol keys like # will return 'ergoemacs-shift for a QWERTY keyboard.
 - Special keys like C-RET will return 'ergoemacs-control
-"
+LAYOUT is the keyboard layout."
   (let ((modifiers (event-modifiers event))
         basic)
     (unless (memq 'shift modifiers)
@@ -310,10 +312,10 @@ This is different than `event-modifiers' in two ways:
         (setq basic (event-basic-type event)))
       (cond
        ((and (memq basic '(?m ?\[))
-                 (string-match-p "C-" (key-description (vector event))))
+	     (string-match-p "C-" (ergoemacs-translate--key-description (vector event))))
         (push 'ergoemacs-control modifiers))
        ((and (eq basic ?i)
-             (string-match-p "C-.*TAB" (key-description (vector event))))
+             (string-match-p "C-.*TAB" (ergoemacs-translate--key-description (vector event))))
         (push 'ergoemacs-control modifiers))))
     modifiers))
 
@@ -432,8 +434,8 @@ This is different than `event-convert-list' because:
       (setq base (intern (format "%s%s%s" (or first "") (or second "") base))))
     (setq new-list (append tmp (list base)))
     (cond
-     (gui-p (aref (read-kbd-macro (concat (substring (key-description (vector (event-convert-list (append new-list (list 'ack))))) 0 -4) (or (and (symbolp gui-p) (symbol-name gui-p)) (make-string 1 gui-p)) ">")) 0))
-     (control-p (aref (read-kbd-macro (concat "C-" (key-description (vector (event-convert-list new-list)))) t) 0))
+     (gui-p (aref (read-kbd-macro (concat (substring (ergoemacs-translate--key-description (vector (event-convert-list (append new-list (list 'ack))))) 0 -4) (or (and (symbolp gui-p) (symbol-name gui-p)) (make-string 1 gui-p)) ">")) 0))
+     (control-p (aref (read-kbd-macro (concat "C-" (ergoemacs-translate--key-description (vector (event-convert-list new-list)))) t) 0))
      (t (event-convert-list new-list)))))
 
 
