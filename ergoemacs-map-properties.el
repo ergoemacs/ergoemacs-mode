@@ -539,6 +539,9 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
       (ergoemacs :user-before)
       (setq global-map (make-composed-keymap user-map global-map)))))
 
+(defvar ergoemacs-map-properties--known-maps nil
+  "A list of known, but unlabeled maps.")
+
 (defun ergoemacs-map-properties--get-original-global-map ()
   "Load/Create the default global map information."
   (if ergoemacs-mode--fast-p
@@ -687,6 +690,8 @@ The optional ADD-MAP argument adds maps to the map-list.  It can be a symbol or 
       ;; (error "Need a proper keymap.")
       nil))))
 
+(defvar ergoemacs-map-properties--get-or-generate-map-name nil)
+
 (defun ergoemacs-map-properties--label-map (map &optional label-empty-p)
   "Label MAP"
   (let* (sv)
@@ -721,8 +726,6 @@ The optional ADD-MAP argument adds maps to the map-list.  It can be a symbol or 
 ;; Startup and load functions
 ;;(add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
 ;;(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
-(defvar ergoemacs-map-properties--known-maps nil
-  "A list of known, but unlabeled maps.")
 
 (defun ergoemacs-map-properties--label-known ()
   "Label known maps."
@@ -746,8 +749,6 @@ When DROP is non-nil, drop any found maps from `ergoemacs-map-properties--known-
       (when drop
         (setq ergoemacs-map-properties--known-maps known)))
     map-list))
-
-(defvar ergoemacs-map-properties--get-or-generate-map-name nil)
 (defvar ergoemacs-map-properties--breadcrumb nil)
 (defun ergoemacs-map-properties--get-or-generate-map-key (keymap)
   "Gets the key for the KEYMAP."

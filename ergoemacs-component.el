@@ -58,6 +58,7 @@
 (require 'help-mode)
 (require 'find-func)
 
+(defvar ergoemacs-map-properties--label-atoms-maps)
 (defvar ergoemacs--last-start-emacs-state-2)
 (defvar ergoemacs--start-emacs-state-2)
 (defvar ergoemacs-component-hash)
@@ -93,6 +94,7 @@
 (declare-function ergoemacs-translate--apply-key "ergoemacs-translate")
 (declare-function ergoemacs-translate--define-key "ergoemacs-translate")
 
+(declare-function ergoemacs-map-properties--label-known "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
