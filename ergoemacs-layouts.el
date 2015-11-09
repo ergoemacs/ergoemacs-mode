@@ -1,4 +1,4 @@
-y;;; ergoemacs-layouts.el --- keyboard layouts for ErgoEmacs -* lexical-binding: t -*-
+;;; ergoemacs-layouts.el --- keyboard layouts for ErgoEmacs -* lexical-binding: t -*-
 
 ;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
