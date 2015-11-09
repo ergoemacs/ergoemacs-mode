@@ -45,6 +45,9 @@
 (defvar dired-mode-map)
 (defvar cl-struct-ergoemacs-component-struct-tags)
 
+(declare-function ergoemacs-key-description "ergoemacs-key-description")
+
+
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 
@@ -53,6 +56,7 @@
 (declare-function ergoemacs-command-loop "ergoemacs-command-loop")
 (declare-function ergoemacs-command-loop--internal "ergoemacs-command-loop")
 (declare-function ergoemacs-command-loop--mouse-command-drop-first "ergoemacs-command-loop")
+(declare-function ergoemacs-command-loop--read-key-sequence "ergoemacs-command-loop")
 
 (declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-compononent")
 
@@ -75,6 +79,7 @@
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
 (declare-function ergoemacs-translate--get "ergoemacs-translate")
 (declare-function ergoemacs-unchorded-alt-modal "ergoemacs-translate")
+(declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")
 
 (require 'ert)
 (require 'elp)
