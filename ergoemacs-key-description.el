@@ -300,7 +300,9 @@ This uses `ergoemacs-key-description--unicode-char--internal'"
 
 
 (defun ergoemacs-key-description (kbd &optional layout)
-  "Creates Pretty keyboard binding from kbd from M- to Alt+"
+  "Create Pretty keyboard binding from kbd from M- to Alt+.
+
+KBD is the keyboard code.  LAYOUT is the layout that is used."
   (if (not kbd) ""
     (let ((kbd (or (ergoemacs-translate--escape-to-meta kbd)
                    (and (stringp kbd) (vconcat kbd)) kbd)))

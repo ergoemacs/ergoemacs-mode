@@ -687,7 +687,7 @@ The optional ADD-MAP argument adds maps to the map-list.  It can be a symbol or 
       ;; (error "Need a proper keymap.")
       nil))))
 
-(defun ergoemacs-map-properties--label-map (map)
+(defun ergoemacs-map-properties--label-map (map &optional label-empty-p)
   "Label MAP"
   (let* (sv)
     (cond 
@@ -698,8 +698,9 @@ The optional ADD-MAP argument adds maps to the map-list.  It can be a symbol or 
      ((not (ergoemacs-keymapp sv)) ;; Not a keymap
       (put map :ergoemacs-labeled t)
       t)
-     ((or (equal sv (make-sparse-keymap)) ;; Empty
-          (equal sv (make-keymap)))
+     ((and (not label-empty-p)
+	   (or (equal sv (make-sparse-keymap)) ;; Empty
+	       (equal sv (make-keymap))))
       nil)
      ((ergoemacs sv :installed-p) ;; Already modified.
       (put map :ergoemacs-labeled t)
