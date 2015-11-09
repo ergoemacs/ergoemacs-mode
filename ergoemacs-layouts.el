@@ -1,4 +1,4 @@
-;;; ergoemacs-layouts.el --- keyboard layouts for ErgoEmacs -* lexical-binding: t -*-
+y;;; ergoemacs-layouts.el --- keyboard layouts for ErgoEmacs -* lexical-binding: t -*-
 
 ;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
@@ -53,6 +53,20 @@
     "" ""  "A" "U" "I" "E" ";" "C" "T" "S" "R" "N" "M" "Ç" ""
     "" "Ê" "À" "Y" "X" ":" "K" "?" "Q" "G" "H" "F" "" "" "")
   "French BÉPO layout.  URL `http://bepo.fr/'.")
+
+
+;; From tnielens
+(defvar ergoemacs-layout-be
+  '("" "²" "&" "é" "\"" "'" "(" "§" "è" "!" "ç" "à" ")" "-" ""
+    "" ""  "a" "z" "e" "r" "t" "y" "u" "i" "o" "p" "^" "$" ""
+    "" ""  "q" "s" "d" "f" "g" "h" "j" "k" "l" "m" "ù" "µ" ""
+    "" "<"  "w" "x" "c" "v" "b" "n" "," ";" ":" "=" "" "" ""
+    ;; Shifted
+    "" "³" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "°" "_" ""
+    "" ""  "A" "Z" "E" "R" "T" "Y" "U" "I" "O" "P" "¨" "*" ""
+    "" ""  "Q" "S" "D" "F" "G" "H" "J" "K" "L" "M" "%" "£" ""
+    "" ">"  "W" "X" "C" "V" "B" "N" "?" "." "/" "+" "" "" "")
+  "Belgian AZERTY.")
 
 (defvaralias 'ergoemacs-layout-bépo 'ergoemacs-layout-bepo)
 
