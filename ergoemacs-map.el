@@ -487,6 +487,8 @@ If LOOKUP-KEYMAP
          hook-overrides
          hook-deferred)
     (cond
+     ((memq 'add-keymap-witness lookup-keymap) ;; Don't translate complete tranisent maps.
+      lookup-keymap)
      ((and lookup-keymap (symbolp lookup-keymap) (ergoemacs-gethash lookup-keymap ergoemacs-translation-hash))
       (ergoemacs-command-loop--modal lookup-keymap))
      ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
