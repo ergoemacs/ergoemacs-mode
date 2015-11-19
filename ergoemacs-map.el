@@ -483,7 +483,9 @@ If LOOKUP-KEYMAP
          ret
          menu-bar
          only-modify-p
-         (lookup-keymap lookup-keymap)
+         (lookup-keymap (or (and lookup-keymap (symbolp lookup-keymap)
+				 (ergoemacs-sv lookup-keymap))
+			    lookup-keymap))
          hook-overrides
          hook-deferred)
     (cond
@@ -855,7 +857,10 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
       (setq overriding-local-map (ergoemacs overriding-local-map)))
 
     (ergoemacs-save-buffer-state
-     (when (and (car char-map)
+     (when (and char-map (symbolp char-map))
+       (setq char-map (ergoemacs-sv char-map)))
+     (when (and (listp char-map)
+		(car char-map)
                 (not (eq (car char-map) ergoemacs-map--modify-active-last-char-map))
                 (not (ergoemacs (car char-map) :installed-p)))
        (cond
@@ -867,6 +872,8 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
                             (next-single-char-property-change (point) 'keymap)
                             'keymap
                             (ergoemacs (car char-map))))))
+     (when (and local-map (symbolp local-map))
+       (setq local-map (ergoemacs-sv local-map)))
      (when (and local-map
                 (not (eq local-map ergoemacs-map--modify-active-last-local-map))
                 (not (ergoemacs local-map :installed-p)))
