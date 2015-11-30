@@ -1357,6 +1357,12 @@ The RECORD-FLAG and KEYS are sent to `call-interactively'."
 (defvar ergoemacs-command-loop-spinner)
 (defvar ergoemacs-command-loop-spinners)
 
+(defvar ergoemacs-command-loop--spinner-display-message t
+  "Use spinner messages with history.")
+
+(defvar ergoemacs-command-loop--message-log-max nil
+  "Determine `message-log-max' for `ergoemacs-command-loop--message'.")
+
 (defun ergoemacs-command-loop--spinner-display (&optional string &rest args)
   "Spinner display.
 
@@ -1373,7 +1379,8 @@ use with `format' will be selecting using
          (rest (or (and (listp string)
                        (concat " " (apply #'format (apply #'ergoemacs-key-description--unicode-char string) args)))
                   (and (not string) "")
-                  (concat " " (apply #'format string args)))))
+                  (concat " " (apply #'format string args))))
+	 (ergoemacs-command-loop--message-log-max (and ergoemacs-command-loop--spinner-display-message message-log-max)))
     (when (not ergoemacs-command-loop--spinner-list)
       (setq ergoemacs-command-loop--spinner-list (nth 1 (assoc ergoemacs-command-loop-spinner ergoemacs-command-loop-spinners))
             ergoemacs-command-loop--spinner-i 0))
@@ -1697,7 +1704,7 @@ ARGS are applied with `format'."
     (apply #'ergoemacs-command-loop--mode-line-message
            (append (list str) args)))
    (t
-    (let (message-log-max)
+    (let ((message-log-max ergoemacs-command-loop--message-log-max))
       (apply #'message (append (list str) args))))))
 
 (defun ergoemacs-command-loop--temp-message (str &rest args)
