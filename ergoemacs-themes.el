@@ -321,7 +321,8 @@
   (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (global-set-key (kbd "C-o") 'find-file)
   (global-set-key (kbd "C-p") 'ergoemacs-print-buffer-confirm)
-  
+
+  (global-set-key (kbd "C-x k") nil)
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
   (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-x C-b") 'ibuffer)

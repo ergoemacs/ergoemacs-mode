@@ -982,6 +982,10 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
       (ergoemacs :spinner '("rm ⌨→%s" "rm ergoemacs→%s" "rm ergoemacs->%s") map)
       (set map (ergoemacs (ergoemacs-sv map) :revert-original)))))
 
+(defvar ergoemacs-map-undefined-remaps
+  '((kill-buffer . ergoemacs-close-current-buffer))
+  "Assoc list of ergoemacs-mode equivalent functions.")
+
 (defun ergoemacs-map-undefined ()
   "This key is undefined in `ergoemacs-mode'.
 
@@ -989,8 +993,11 @@ If `ergoemacs-mode' knows what the new key or key sequence that
 runs the same command, tell the user."
   (interactive)
   (let ((key (ergoemacs-key-description (this-single-command-keys)))
-        (old-key (lookup-key (ergoemacs :global-map) (this-single-command-keys))))
+        (old-key (lookup-key (ergoemacs :global-map) (this-single-command-keys)))
+	tmp)
     (cond
+     ((and old-key (setq tmp (assoc old-key ergoemacs-map-undefined-remaps)))
+      (message "%s is disabled! Use %s in place of %s." key (ergoemacs-key-description (where-is-internal (cdr tmp) ergoemacs-keymap t)) old-key))
      ((and old-key (not (integerp old-key)))
       (message "%s is disabled! Use %s for %s instead." key (ergoemacs-key-description (where-is-internal old-key ergoemacs-keymap t)) old-key))
      (t
