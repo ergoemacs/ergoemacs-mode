@@ -821,11 +821,13 @@ This occurs when the keymap is not known to `ergoemacs-mode' and
 it is not a composed keymap.
 
 If it is a tranisent map, assign the :dont-modify-p property to t."
-  (unless ergoemacs-modify-transient-maps
-    (let ((map-key (ergoemacs map :map-key)))
-      (unless (or map-key (ergoemacs map :composed-p))
-        (ergoemacs map :label '(temporary-map))
-        (ergoemacs map :dont-modify-p t)))))
+  (setq ergoemacs-map--breadcrumb "transient-maps")
+  (ergoemacs map :label)
+  ;;ergoemacs-modify-transient-maps
+  (if (eq (ergoemacs-gethash 'transient-maps ergoemacs-breadcrumb-hash)
+	  (ergoemacs (ergoemacs :original map) :key))
+      (ergoemacs map :dont-modify-p t)
+    (ergoemacs-setcdr (cdr map) (cdr (ergoemacs (ergoemacs :original map))))))
 
 
 (defvar ergoemacs-map--modify-active-last-overriding-terminal-local-map nil)
@@ -846,7 +848,8 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
         tmp)
     (when (and overriding-terminal-local-map
                (not (eq overriding-terminal-local-map ergoemacs-map--modify-active-last-overriding-terminal-local-map))
-               (not (ergoemacs overriding-terminal-local-map :installed-p)))
+               (not (ergoemacs overriding-terminal-local-map :installed-p))
+	       (not (memq 'add-keymap-witness overriding-terminal-local-map)))
       ;; (ergoemacs-map--temporary-map-properties overriding-terminal-local-map)
       (setq overriding-terminal-local-map (ergoemacs overriding-terminal-local-map)))
     
