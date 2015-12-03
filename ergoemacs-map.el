@@ -528,8 +528,7 @@ If LOOKUP-KEYMAP
       ret)
      ((and (consp map) ;; Don't do anything with blank keymaps.
            lookup-keymap
-           (or (equal lookup-keymap (make-sparse-keymap))
-               (equal lookup-keymap (make-keymap))))
+	   (ergoemacs lookup-keymap :empty-p))
       lookup-keymap)
      ((and (consp map)
            (progn
