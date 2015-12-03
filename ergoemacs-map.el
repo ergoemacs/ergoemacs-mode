@@ -445,31 +445,71 @@ TABLE."
           (puthash key lst hash)
         (remhash key hash)))))
 
-(defun ergoemacs-map--get-struct-map (struct-map &optional lookup-keymap)
+(defun ergoemacs-map--get-struct-map (struct-map cur-layout &optional lookup-keymap)
   "For component STRUCT-MAP, get the ergoemacs keymap.
 
 When STRUCT-MAP is not a `ergoemacs-component-struct' object,
 return nil.  Otherwise, return the keymap based on the STRUCT-MAP
 component.
 
+The keyboard layout that is being calculated is CUR-LAYOUT.
+
 When LOOKUP-KEYMAP is nil, the returned map is relative to the
 global keymap.  Otherwise, it is relative to LOOKUP-KEYMAP."
   (if (not (ergoemacs-component-struct-p struct-map)) nil
-    (let ((ret (cond
-		((and (not lookup-keymap)
-		      (string= cur-layout (ergoemacs-component-struct-layout struct-map)))
-		 (ergoemacs-component-struct-map struct-map))
-		((and (not lookup-keymap)
-		      (setq ret (ergoemacs-gethash
-				 (list nil (intern cur-layout))
-				 (ergoemacs-component-struct-calculated-layouts struct-map))))
-		 ret)
-		((not lookup-keymap)
-		 ;; Overall layout hasn't been calculated.
-		 (ergoemacs-component-struct--get struct-map cur-layout nil))
-		(t
-		 (error "Cant calculate/lookup keymap.")))))
+    (let (ret)
+      (cond
+       ((and (not lookup-keymap)
+             (string= cur-layout (ergoemacs-component-struct-layout struct-map)))
+        (setq ret (ergoemacs-component-struct-map struct-map)))
+       ((and (not lookup-keymap)
+             (setq ret (ergoemacs-gethash
+                        (list nil (intern cur-layout))
+                        (ergoemacs-component-struct-calculated-layouts struct-map))))
+        ret)
+       ((not lookup-keymap)
+        ;; Overall layout hasn't been calculated.
+        (setq ret (ergoemacs-component-struct--get struct-map cur-layout nil)))
+       (t
+        (error "Cant calculate/lookup keymap.")))
       ret)))
+
+(defun ergoemacs-map--get-unbind-list (component-list)
+  "Get the list of unbound keys based on COMPONENT-LIST.
+
+COMPONENT-LIST is a list of `ergoemacs-component-struct' items
+that will be applied.
+
+This is cached based on the current theme & theme options by
+`ergoemacs-cache'."
+  (if (not (consp component-list)) nil
+    (let (unbind-list)
+      (ergoemacs-cache unbind-list
+	(dolist (cur-map component-list)
+	  (setq unbind-list
+		(append unbind-list
+			(ergoemacs-component-struct--translated-list
+			 cur-map (ergoemacs-component-struct-unbind cur-map)))))
+	unbind-list))))
+
+(defun ergoemacs-map--get-undefined-map (component-list)
+  "Get a keymap of the ergoemacs-mode unbound keys based on COMPONENT-LIST.
+
+COMPONENT-LIST is a list of `ergoemacs-component-struct' items
+that will be applied.
+
+This updates the variable `ergoemacs-map--undefined-keys', and
+then defines each key in the `ergoemacs-map--undefined-keys'
+vector on the new keymap to be `ergoemacs-map-undefind'."
+  (let ((ret (make-sparse-keymap)))
+    (dolist (cur-map component-list)
+      (dolist (undefined-key (ergoemacs-component-struct-undefined cur-map))
+        (unless (member undefined-key ergoemacs-map--undefined-keys)
+          (push undefined-key ergoemacs-map--undefined-keys))))
+    (dolist (i ergoemacs-map--undefined-keys)
+      (define-key ret i #'ergoemacs-map-undefined))
+    (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-undefined (intern ergoemacs-keyboard-layout)))
+    ret))
 
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
@@ -524,7 +564,7 @@ If LOOKUP-KEYMAP
      ((and lookup-keymap (ergoemacs lookup-keymap :dont-modify-p))
       lookup-keymap)
      ;; Component keymap
-     ((setq ret (ergoemacs-map--get-struct-map map lookup-keymap)) 
+     ((setq ret (ergoemacs-map--get-struct-map map cur-layout lookup-keymap)) 
       ret)
      ((and (consp map) ;; Don't do anything with blank keymaps.
            lookup-keymap
@@ -532,31 +572,12 @@ If LOOKUP-KEYMAP
       lookup-keymap)
      ((and (consp map)
            (progn
-             (setq unbind-list
-                   (ergoemacs-cache unbind-list
-                     (dolist (cur-map map)
-                       (setq unbind-list
-                             (append unbind-list
-                                     (ergoemacs-component-struct--translated-list
-                                      cur-map (ergoemacs-component-struct-unbind cur-map)))))
-                     unbind-list)) t))
+             (setq unbind-list (ergoemacs-map--get-unbind-list map)) t))
       (cond
        ((not lookup-keymap)
         ;; The `undefined-key' layer
         (setq tmp (ergoemacs-cache global-menu
-                    (setq tmp (make-sparse-keymap))
-                    (dolist (cur-map map)
-                      (dolist (undefined-key
-                               (ergoemacs-component-struct-undefined cur-map) ;; (ergoemacs-component-struct--translated-list cur-map )
-                               )
-                        (unless (member undefined-key ergoemacs-map--undefined-keys)
-                          (push undefined-key ergoemacs-map--undefined-keys))))
-                    (dolist (i ergoemacs-map--undefined-keys)
-                      (define-key tmp i #'ergoemacs-map-undefined))
-                    
-                    (ergoemacs tmp :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-undefined (intern ergoemacs-keyboard-layout)))
-                    
-                    (push tmp composed-list)
+                    (push (ergoemacs-map--get-undefined-map map) composed-list)
                     
                     (push (lookup-key (ergoemacs :global-map) [menu-bar]) menu-bar)
                     
