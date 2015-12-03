@@ -445,6 +445,32 @@ TABLE."
           (puthash key lst hash)
         (remhash key hash)))))
 
+(defun ergoemacs-map--get-struct-map (struct-map &optional lookup-keymap)
+  "For component STRUCT-MAP, get the ergoemacs keymap.
+
+When STRUCT-MAP is not a `ergoemacs-component-struct' object,
+return nil.  Otherwise, return the keymap based on the STRUCT-MAP
+component.
+
+When LOOKUP-KEYMAP is nil, the returned map is relative to the
+global keymap.  Otherwise, it is relative to LOOKUP-KEYMAP."
+  (if (not (ergoemacs-component-struct-p struct-map)) nil
+    (let ((ret (cond
+		((and (not lookup-keymap)
+		      (string= cur-layout (ergoemacs-component-struct-layout struct-map)))
+		 (ergoemacs-component-struct-map struct-map))
+		((and (not lookup-keymap)
+		      (setq ret (ergoemacs-gethash
+				 (list nil (intern cur-layout))
+				 (ergoemacs-component-struct-calculated-layouts struct-map))))
+		 ret)
+		((not lookup-keymap)
+		 ;; Overall layout hasn't been calculated.
+		 (ergoemacs-component-struct--get struct-map cur-layout nil))
+		(t
+		 (error "Cant calculate/lookup keymap.")))))
+      ret)))
+
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
@@ -497,22 +523,9 @@ If LOOKUP-KEYMAP
       lookup-keymap)
      ((and lookup-keymap (ergoemacs lookup-keymap :dont-modify-p))
       lookup-keymap)
-     ((ergoemacs-component-struct-p map)
-      (let ((ret (cond
-                  ((and (not lookup-keymap)
-                        (string= cur-layout (ergoemacs-component-struct-layout map)))
-                   (ergoemacs-component-struct-map map))
-                  ((and (not lookup-keymap)
-                        (setq ret (ergoemacs-gethash
-                                   (list nil (intern cur-layout))
-                                   (ergoemacs-component-struct-calculated-layouts map))))
-                   ret)
-                  ((not lookup-keymap)
-                   ;; Overall layout hasn't been calculated.
-                   (ergoemacs-component-struct--get map cur-layout nil))
-                  (t
-                   (error "Cant calculate/lookup keymap.")))))
-        ret))
+     ;; Component keymap
+     ((setq ret (ergoemacs-map--get-struct-map map lookup-keymap)) 
+      ret)
      ((and (consp map) ;; Don't do anything with blank keymaps.
            lookup-keymap
            (or (equal lookup-keymap (make-sparse-keymap))
