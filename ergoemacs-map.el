@@ -563,6 +563,34 @@ The LAYOUT represents the keybaord layout that will be translated."
 	     (ergoemacs :apply-key key #'puthash item ergoemacs-map--)))
 	 ret)))))
 
+(defun ergoemacs-map--get-global-menu-map (menu-bar-list)
+  "Get the global menu-bar from MENU-BAR-LIST."
+  (let ((tmp (make-composed-keymap menu-bar-list))
+	(i 0)
+	alst)
+    (dolist (menu ergoemacs-menu-order)
+      (push (list menu i) alst)
+      (setq i (+ i 1)))
+    (setq tmp (sort tmp (lambda(elt1 elt2)
+                          (let ((i1 (or (and (eq elt1 'keymap) -1) (assq (car elt1) alst)))
+                                (i2 (or (and (eq elt2 'keymap) -1) (assq (car elt2) alst))))
+                            (if i1
+                                (setq i1 (or (and (integerp i1) i1) (nth 1 i1)))
+                              (setq i1 (length ergoemacs-menu-order)))
+                            (if i2
+                                (setq i2 (or (and (integerp i2) i2) (nth 1 i2)) )
+                              (setq i2 (length ergoemacs-menu-order)))
+                            (< i1 i2)))))
+    tmp))
+
+(defun ergoemacs-map--get-global-unbound-keymap (unbind-list)
+  "Create a keymap for UNBIND-LIST to unbind keys."
+  (let ((ret (make-sparse-keymap)))
+    (dolist (key unbind-list)
+      (define-key ret key nil))
+    (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
+    ret))
+
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
@@ -631,34 +659,11 @@ If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that ke
 			  menu-bar (elt tmp 0)
 			  composed-list (elt tmp 1))
                     (ergoemacs-map--setup-global-ergoemacs-hash composed-list unbind-list)
-                    
-                    
                     ;; The real `global-map'
-                    (setq tmp (make-composed-keymap menu-bar))
-
-                    ;; The global `menu-bar'
-                    (let ((i 0)
-                          alst)
-                      (dolist (menu ergoemacs-menu-order)
-                        (push (list menu i) alst)
-                        (setq i (+ i 1)))
-                      (setq tmp (sort tmp (lambda(elt1 elt2)
-                                            (let ((i1 (or (and (eq elt1 'keymap) -1) (assq (car elt1) alst)))
-                                                  (i2 (or (and (eq elt2 'keymap) -1) (assq (car elt2) alst))))
-                                              (if i1
-                                                  (setq i1 (or (and (integerp i1) i1) (nth 1 i1)))
-                                                (setq i1 (length ergoemacs-menu-order)))
-                                              (if i2
-                                                  (setq i2 (or (and (integerp i2) i2) (nth 1 i2)) )
-                                                (setq i2 (length ergoemacs-menu-order)))
-                                              (< i1 i2))))))
+                    (setq tmp (ergoemacs-map--get-global-menu-map menu-bar)
+			  ;; The keys that will be unbound
+                          ret (ergoemacs-map--get-global-unbound-keymap unbind-list))
                     
-                    
-                    ;; The keys that will be unbound
-                    (setq ret (make-sparse-keymap))
-                    (dolist (key unbind-list)
-                      (define-key ret key nil))
-                    (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
                     tmp))
         (setq parent (copy-keymap (ergoemacs :global-map))
               composed-list (ergoemacs-cache global-composed-list composed-list)
@@ -667,10 +672,6 @@ If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that ke
               ergoemacs-map--lookup-hash (ergoemacs-cache ergoemacs-map--lookup-hash ergoemacs-map--lookup-hash)
               ergoemacs-map--undefined-keys (ergoemacs-cache undefined-keys ergoemacs-map--undefined-keys))
         (define-key parent [menu-bar] tmp)
-        ;; (map-keymap
-        ;;  (lambda (event item)
-        ;;    (define-key parent (vector menu-bar event) item))
-        ;;  tmp)
         (set-keymap-parent ret (make-composed-keymap composed-list parent))
         ;; Save hash
         (puthash lookup-key ret ergoemacs-map--hash)
