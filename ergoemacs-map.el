@@ -457,7 +457,8 @@ The keyboard layout that is being calculated is CUR-LAYOUT.
 When LOOKUP-KEYMAP is nil, the returned map is relative to the
 global keymap.  Otherwise, it is relative to LOOKUP-KEYMAP."
   (if (not (ergoemacs-component-struct-p struct-map)) nil
-    (let (ret)
+    (let (ret
+	  (cur-layout (or cur-layout ergoemacs-keyboard-layout)))
       (cond
        ((and (not lookup-keymap)
              (string= cur-layout (ergoemacs-component-struct-layout struct-map)))
@@ -521,20 +522,21 @@ The LAYOUT represents the keybaord layout that will be translated."
   (let (tmp tmp2)
     (push (lookup-key (ergoemacs :global-map) [menu-bar]) menu-bar-list)
     (dolist (cur-map (reverse component-list))
-      (setq tmp (ergoemacs-map-- nil layout cur-map t))
-      (unless (ergoemacs tmp :empty-p)
-        (cond
-         ((setq tmp2 (lookup-key tmp [menu-bar-list]))
-          (push (copy-keymap tmp2) menu-bar-list)
-          (setq tmp2 (make-sparse-keymap))
-          (map-keymap
-           (lambda (event item)
-             (unless (eq event 'menu-bar-list)
-               (define-key tmp2 (vector event) item)))
-           tmp)
-          (unless (ergoemacs tmp2 :empty-p)
-            (push tmp2 composed-keymap-list)))
-         (t (push tmp composed-keymap-list)))))
+      (when cur-map
+	(setq tmp (ergoemacs-map--get-struct-map cur-map layout))
+	(unless (ergoemacs tmp :empty-p)
+          (cond
+           ((setq tmp2 (lookup-key tmp [menu-bar-list]))
+            (push (copy-keymap tmp2) menu-bar-list)
+            (setq tmp2 (make-sparse-keymap))
+            (map-keymap
+             (lambda (event item)
+               (unless (eq event 'menu-bar-list)
+                 (define-key tmp2 (vector event) item)))
+             tmp)
+            (unless (ergoemacs tmp2 :empty-p)
+              (push tmp2 composed-keymap-list)))
+           (t (push tmp composed-keymap-list))))))
     (vector menu-bar-list composed-keymap-list)))
 
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
