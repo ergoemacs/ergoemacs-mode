@@ -539,6 +539,30 @@ The LAYOUT represents the keybaord layout that will be translated."
            (t (push tmp composed-keymap-list))))))
     (vector menu-bar-list composed-keymap-list)))
 
+(defun ergoemacs-map--setup-global-ergoemacs-hash (keymap-list unbind-list)
+  "Setup `ergoemacs-map--' cache based on KEYMAP-LIST, repsecting UNBIND-LIST."
+  (let (tmp)
+    (ergoemacs-timing setup-ergoemacs-hash
+      (dolist (ret keymap-list)
+	(ergoemacs-map-keymap
+	 (lambda(key item)
+	   (unless (or (eq item 'ergoemacs-prefix)
+		       (ignore-errors (eq (aref key 0) 'ergoemacs-labeled))
+		       (gethash key ergoemacs-map--)
+		       (member key unbind-list))
+	     (when (setq tmp (ergoemacs-gethash item (ergoemacs global-map :where-is)))
+	       (dolist (old-key tmp)
+		 (ergoemacs :apply-key old-key
+			    (lambda(trans-old-key)
+			      (ergoemacs :apply-key key
+					 (lambda(trans-new-key)
+					   (unless (or (gethash trans-new-key ergoemacs-map--)
+						       (member trans-new-key unbind-list))
+					     (puthash trans-new-key item ergoemacs-map--)
+					     (ergoemacs-map--puthash trans-old-key trans-new-key))))))))
+	     (ergoemacs :apply-key key #'puthash item ergoemacs-map--)))
+	 ret)))))
+
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
@@ -606,27 +630,8 @@ If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that ke
 		    (setq tmp (ergoemacs-map--global-component-keys-lists map menu-bar composed-list layout)
 			  menu-bar (elt tmp 0)
 			  composed-list (elt tmp 1))
+                    (ergoemacs-map--setup-global-ergoemacs-hash composed-list unbind-list)
                     
-                    (ergoemacs-timing setup-ergoemacs-hash
-                      (dolist (ret composed-list)
-                        (ergoemacs-map-keymap
-                         (lambda(key item)
-                           (unless (or (eq item 'ergoemacs-prefix)
-                                       (ignore-errors (eq (aref key 0) 'ergoemacs-labeled))
-                                       (gethash key ergoemacs-map--)
-                                       (member key unbind-list))
-                             (when (setq tmp (ergoemacs-gethash item (ergoemacs global-map :where-is)))
-                               (dolist (old-key tmp)
-                                 (ergoemacs :apply-key old-key
-                                            (lambda(trans-old-key)
-                                              (ergoemacs :apply-key key
-                                                         (lambda(trans-new-key)
-                                                           (unless (or (gethash trans-new-key ergoemacs-map--)
-                                                                       (member trans-new-key unbind-list))
-                                                             (puthash trans-new-key item ergoemacs-map--)
-                                                             (ergoemacs-map--puthash trans-old-key trans-new-key))))))))
-                             (ergoemacs :apply-key key #'puthash item ergoemacs-map--)))
-                         ret)))
                     
                     ;; The real `global-map'
                     (setq tmp (make-composed-keymap menu-bar))
