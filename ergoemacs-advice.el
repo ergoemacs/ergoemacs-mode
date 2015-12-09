@@ -156,35 +156,61 @@ bindings into this keymap (the original keymap is untouched)"
                (boundp 'ergoemacs-mode))
       (ergoemacs-map-properties--reset-run-mode-hooks hooks))))
 
+(defvar ergoemacs-define-key-after-p nil
+  "Flag to tell `ergoemacs-mode' to suppress `define-key' advice.")
+
 (defun ergoemacs-define-key-after (keymap key def)
-  "Get hook information for KEYMAP, and adjust ergoemacs keys based on global modifications."
-  (when (eq keymap (current-global-map))
-    (let ((map-key (ergoemacs (ergoemacs keymap :original) :map-key)))
-      (cond
-       ((not (integerp map-key)))
-       ((not (= map-key most-negative-fixnum)))
-       ((ergoemacs :ignore-global-changes-p))
-       ((not def)
-        (unless (member key ergoemacs-map--unbound-keys)
-          (push key ergoemacs-map--unbound-keys))
-        (when (ergoemacs-keymapp ergoemacs-saved-global-map)
-          (ergoemacs :define-key ergoemacs-saved-global-map key nil)))
-       ((ergoemacs-keymapp ergoemacs-saved-global-map)
-        (ergoemacs :define-key ergoemacs-saved-global-map key def)
-        (let (new-lst)
-          (dolist (cur-key ergoemacs-map--unbound-keys)
-            (unless (equal key cur-key)
-              (push cur-key new-lst)))
-          (setq ergoemacs-map--unbound-keys new-lst)))
-       (t
-        (let (new-lst)
-          (dolist (cur-key ergoemacs-map--unbound-keys)
-            (unless (equal key cur-key)
-              (push cur-key new-lst)))
-          (setq ergoemacs-map--unbound-keys new-lst))))))
-  (when (and (boundp 'ergoemacs-map-properties--protect-local)
-             ergoemacs-map-properties--protect-local)
-    (ergoemacs-map-properties--hook-define-key keymap key def)))
+  "Ergoemacs-mode modification to `define-key' called after `define-key'.
+
+KEYMAP is the keymap being modified
+KEY is the key that is being defined
+DEF is the key definition
+
+These should be the same as what is used in `define-key'.
+
+To protect from infinite recurion, the flag
+`ergoemacs-define-key-after-p' is set while applying
+`ergoemacs-mode' adjustments.
+
+`ergoemacs-mode' adjusts any globally defined keys so they will
+appear in the `ergoemacs-mode' keymaps.
+
+This advice also appempts to protcet local keymaps when
+`ergoemacs-map-properties--protect-local' is non-nil.  This is
+part of how `ergoemacs-mode' determines that a hook changed a key
+definition."
+  (unless ergoemacs-define-key-after-p
+    (setq ergoemacs-define-key-after-p t)
+    (unwind-protect
+        (progn
+          (when (eq keymap (current-global-map))
+            (let ((map-key (ergoemacs (ergoemacs keymap :original) :map-key)))
+              (cond
+               ((not (integerp map-key)))
+               ((not (= map-key most-negative-fixnum)))
+               ((ergoemacs :ignore-global-changes-p))
+               ((not def)
+                (unless (member key ergoemacs-map--unbound-keys)
+                  (push key ergoemacs-map--unbound-keys))
+                (when (ergoemacs-keymapp ergoemacs-saved-global-map)
+                  (ergoemacs :define-key ergoemacs-saved-global-map key nil)))
+               ((ergoemacs-keymapp ergoemacs-saved-global-map)
+                (ergoemacs :define-key ergoemacs-saved-global-map key def)
+                (let (new-lst)
+                  (dolist (cur-key ergoemacs-map--unbound-keys)
+                    (unless (equal key cur-key)
+                      (push cur-key new-lst)))
+                  (setq ergoemacs-map--unbound-keys new-lst)))
+               (t
+                (let (new-lst)
+                  (dolist (cur-key ergoemacs-map--unbound-keys)
+                    (unless (equal key cur-key)
+                      (push cur-key new-lst)))
+                  (setq ergoemacs-map--unbound-keys new-lst))))))
+          (when (and (boundp 'ergoemacs-map-properties--protect-local)
+                     ergoemacs-map-properties--protect-local)
+            (ergoemacs-map-properties--hook-define-key keymap key def)))
+      (setq ergoemacs-define-key-after-p nil))))
 
 (ergoemacs-advice define-key (keymap key def)
   "Protect keymaps when changing keys from a hook."
