@@ -511,6 +511,32 @@ vector on the new keymap to be `ergoemacs-map-undefind'."
     (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-undefined (intern ergoemacs-keyboard-layout)))
     ret))
 
+(defun ergoemacs-map--global-component-keys-lists (component-list menu-bar-list composed-keymap-list &optional layout)
+  "Get ergoemacs keys from COMPONENT-LIST.
+
+This puts menu bar components in MENU-BAR-LIST, and other keymaps
+in COMPOSED-KEYMAP-LIST.
+
+The LAYOUT represents the keybaord layout that will be translated."
+  (let (tmp tmp2)
+    (push (lookup-key (ergoemacs :global-map) [menu-bar]) menu-bar-list)
+    (dolist (cur-map (reverse component-list))
+      (setq tmp (ergoemacs-map-- nil layout cur-map t))
+      (unless (ergoemacs tmp :empty-p)
+        (cond
+         ((setq tmp2 (lookup-key tmp [menu-bar-list]))
+          (push (copy-keymap tmp2) menu-bar-list)
+          (setq tmp2 (make-sparse-keymap))
+          (map-keymap
+           (lambda (event item)
+             (unless (eq event 'menu-bar-list)
+               (define-key tmp2 (vector event) item)))
+           tmp)
+          (unless (ergoemacs tmp2 :empty-p)
+            (push tmp2 composed-keymap-list)))
+         (t (push tmp composed-keymap-list)))))
+    (vector menu-bar-list composed-keymap-list)))
+
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
@@ -530,10 +556,7 @@ loops do not occur.
 
 LOOKUP-KEYMAP represents what should be calculated/looked up.
 
-If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that keymap.
-
-If LOOKUP-KEYMAP 
-"
+If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that keymap."
   (let* ((cur-layout (or layout ergoemacs-keyboard-layout))
          lookup-key
          (map (ergoemacs-component-struct--lookup-hash (or map (ergoemacs-theme-components))))
@@ -578,25 +601,9 @@ If LOOKUP-KEYMAP
         ;; The `undefined-key' layer
         (setq tmp (ergoemacs-cache global-menu
                     (push (ergoemacs-map--get-undefined-map map) composed-list)
-                    
-                    (push (lookup-key (ergoemacs :global-map) [menu-bar]) menu-bar)
-                    
-                    ;; Each ergoemacs theme component
-                    (dolist (cur-map (reverse map))
-                      (setq tmp (ergoemacs-map-- lookup-keymap layout cur-map t))
-                      (unless (ergoemacs tmp :empty-p)
-                        (cond
-                         ((setq tmp2 (lookup-key tmp [menu-bar]))
-                          (push (copy-keymap tmp2) menu-bar)
-                          (setq tmp2 (make-sparse-keymap))
-                          (map-keymap
-                           (lambda (event item)
-                             (unless (eq event 'menu-bar)
-                               (define-key tmp2 (vector event) item)))
-                           tmp)
-                          (unless (ergoemacs tmp2 :empty-p)
-                            (push tmp2 composed-list)))
-                         (t (push tmp composed-list)))))
+		    (setq tmp (ergoemacs-map--global-component-keys-lists map menu-bar composed-list layout)
+			  menu-bar (elt tmp 0)
+			  composed-list (elt tmp 1))
                     
                     (ergoemacs-timing setup-ergoemacs-hash
                       (dolist (ret composed-list)
