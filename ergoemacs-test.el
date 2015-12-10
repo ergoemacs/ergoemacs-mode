@@ -1568,19 +1568,21 @@ hash appropriaetly."
 
 (ert-deftest ergoemacs-test-temp-map-issue ()
   "Test temporary map issue."
-  (ergoemacs-test-layout
-   :layout "colemak"
-   :theme "reduction"
-   :macro "M-8 M-SPC M-SPC M-i"
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (delete-region (point-min) (point-max))
-     (insert ergoemacs-test-lorem-ipsum)
-     (goto-char (point-max))
-     (beginning-of-line)
-     (execute-kbd-macro macro)
-     (should (eq (key-binding (kbd "8")) 'self-insert-command))
-     (kill-buffer (current-buffer)))))
+  (if (fboundp 'set-transient-map)
+      (should t)
+    (ergoemacs-test-layout
+     :layout "colemak"
+     :theme "reduction"
+     :macro "M-8 M-SPC M-SPC M-i"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-max))
+       (beginning-of-line)
+       (execute-kbd-macro macro)
+       (should (eq (key-binding (kbd "8")) 'self-insert-command))
+       (kill-buffer (current-buffer))))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
