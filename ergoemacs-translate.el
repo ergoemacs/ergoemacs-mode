@@ -54,6 +54,8 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
+
+(defvar ergoemacs-define-key-after-p)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-translation-hash)
 (defvar ergoemacs-translate--hash)
