@@ -262,13 +262,17 @@ variants are created using `ergoemacs-translate--apply-funs'."
   "Similar to `define-key', with the following differences:
 - Both the Meta and escape sequences are bound.
 - Both <apps> and <menu> key sequences are bound.
+- `ergoemacs-mode' advice to `define-key' is supressed.
 
 KEYMAP is the keymap that will be used for the definition.
 KEY is the key that is Emacs key that will be defined.
 DEF is the definition of what will be run.
 
 This uses `ergoemacs-translate--apply-key'"
-  (ergoemacs-translate--apply-key key (lambda(new-key) (define-key keymap new-key def))))
+  (setq ergoemacs-define-key-after-p t)
+  (unwind-protect
+      (ergoemacs-translate--apply-key key (lambda(new-key) (define-key keymap new-key def)))
+    (setq ergoemacs-define-key-after-p nil)))
 
 (defun ergoemacs-translate--event-modifier-hash (&optional layout)
   "Gets the event modifier hash for LAYOUT."

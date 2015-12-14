@@ -391,7 +391,7 @@ It takes the following arguments:
                          ;; (if (and (boundp 'isearch-mode-map) (eq lookup-keymap isearch-mode-map))
                          ;;     (message "Define %s->%s" (key-description new-key) item))
                          ;; Don't use (ergoemacs :define-key), since list contains all variants.
-                         (define-key ret new-key item)
+                         (ergoemacs :define-key ret new-key item)
                          (push new-key bound-keys)))
                      ;; Keys where `ergoemacs-mode' dominates
                      (setq i (length key))
@@ -411,9 +411,8 @@ It takes the following arguments:
                      ;; Define ergoemacs-mode remapping
                      ;; lookups.
                      (when (setq tmp (ergoemacs-gethash key (ergoemacs global-map :lookup)))
-                       (define-key ret (vector 'ergoemacs-remap tmp) item)))))
-               lookup-keymap)
-              )
+                       (ergoemacs :define-key ret (vector 'ergoemacs-remap tmp) item)))))
+               lookup-keymap))
             (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
           (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
           (setq composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp))
