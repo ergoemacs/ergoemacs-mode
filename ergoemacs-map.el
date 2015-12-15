@@ -414,8 +414,7 @@ It takes the following arguments:
                        (ergoemacs :define-key ret (vector 'ergoemacs-remap tmp) item)))))
                lookup-keymap))
             (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
-          (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap))
-          (setq composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp))
+          (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap) composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp))
           (list composed-list local-unbind-list ret))))))
 
 (defun ergoemacs-map--puthash (key new &optional table)
@@ -590,6 +589,67 @@ The LAYOUT represents the keybaord layout that will be translated."
     (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
     ret))
 
+
+(defun ergoemacs-map--get-global-map (component-list unbind-list layout lookup-key)
+  "Get the global map.
+
+- COMPONENT-LIST is the list of ergoemacs components to apply.
+
+- UNBIND-LIST is the keys that `ergoemacs-mode' has unbound.
+
+- LAYOUT represents the keyboard layout to be calculated
+
+- LOOKUP-KEY represents the symbol to cache the calculated
+  results."
+  ;; The `undefined-key' layer
+  (let (tmp
+	ret
+	menu-bar
+	parent
+	composed-list
+	tmp2)
+    (setq tmp (ergoemacs-cache global-menu
+                (push (ergoemacs-map--get-undefined-map component-list) composed-list)
+                (setq tmp (ergoemacs-map--global-component-keys-lists component-list menu-bar composed-list layout)
+                      menu-bar (elt tmp 0)
+                      composed-list (elt tmp 1))
+                (ergoemacs-map--setup-global-ergoemacs-hash composed-list unbind-list)
+                ;; The real `global-map'
+                (setq tmp (ergoemacs-map--get-global-menu-map menu-bar)
+                      ;; The keys that will be unbound
+                      ret (ergoemacs-map--get-global-unbound-keymap unbind-list))
+                
+                tmp))
+    (setq parent (copy-keymap (ergoemacs :global-map))
+	  composed-list (ergoemacs-cache global-composed-list composed-list)
+	  ret (ergoemacs-cache global-ret ret)
+	  ergoemacs-map-- (ergoemacs-cache ergoemacs-map-- ergoemacs-map--)
+	  ergoemacs-map--lookup-hash (ergoemacs-cache ergoemacs-map--lookup-hash ergoemacs-map--lookup-hash)
+	  ergoemacs-map--undefined-keys (ergoemacs-cache undefined-keys ergoemacs-map--undefined-keys))
+    (define-key parent [menu-bar] tmp)
+    (set-keymap-parent ret (make-composed-keymap composed-list parent))
+    ;; Save hash
+    (puthash lookup-key ret ergoemacs-map--hash)
+    (puthash (ergoemacs-map--hashkey 'ergoemacs-map--lookup-hash) ergoemacs-map--lookup-hash ergoemacs-map--hash)
+    (puthash (ergoemacs-map--hashkey 'ergoemacs-map--undefined-keys) ergoemacs-map--undefined-keys ergoemacs-map--hash)
+    
+    ;; Get the protecting user keys
+    (setq tmp2 (list))
+    (unless ergoemacs-ignore-prev-global
+      (setq tmp (ergoemacs :user-before))
+      (unless (ergoemacs tmp :empty-p)
+	(push tmp tmp2)))
+    (setq tmp (ergoemacs :user-after))
+    (unless (ergoemacs tmp :empty-p)
+      (push tmp tmp2))
+    (setq tmp (ergoemacs parent :user))
+    (when tmp
+      (push tmp tmp2))
+    (push ergoemacs-user-keymap tmp2)
+    (define-key ret [ergoemacs-ignore] 'ergoemacs-command-loop--ignore)
+    (setq ret (make-composed-keymap tmp2 ret))
+    ret))
+
 (defun ergoemacs-map-- (&optional lookup-keymap layout map recursive)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
@@ -623,7 +683,6 @@ If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that ke
          tmp3
          unbound-passthrough
          ret
-         menu-bar
          only-modify-p
          (lookup-keymap (or (and lookup-keymap (symbolp lookup-keymap)
 				 (ergoemacs-sv lookup-keymap))
@@ -651,47 +710,7 @@ If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that ke
              (setq unbind-list (ergoemacs-map--get-unbind-list map)) t))
       (cond
        ((not lookup-keymap)
-        ;; The `undefined-key' layer
-        (setq tmp (ergoemacs-cache global-menu
-                    (push (ergoemacs-map--get-undefined-map map) composed-list)
-		    (setq tmp (ergoemacs-map--global-component-keys-lists map menu-bar composed-list layout)
-			  menu-bar (elt tmp 0)
-			  composed-list (elt tmp 1))
-                    (ergoemacs-map--setup-global-ergoemacs-hash composed-list unbind-list)
-                    ;; The real `global-map'
-                    (setq tmp (ergoemacs-map--get-global-menu-map menu-bar)
-			  ;; The keys that will be unbound
-                          ret (ergoemacs-map--get-global-unbound-keymap unbind-list))
-                    
-                    tmp))
-        (setq parent (copy-keymap (ergoemacs :global-map))
-              composed-list (ergoemacs-cache global-composed-list composed-list)
-              ret (ergoemacs-cache global-ret ret)
-              ergoemacs-map-- (ergoemacs-cache ergoemacs-map-- ergoemacs-map--)
-              ergoemacs-map--lookup-hash (ergoemacs-cache ergoemacs-map--lookup-hash ergoemacs-map--lookup-hash)
-              ergoemacs-map--undefined-keys (ergoemacs-cache undefined-keys ergoemacs-map--undefined-keys))
-        (define-key parent [menu-bar] tmp)
-        (set-keymap-parent ret (make-composed-keymap composed-list parent))
-        ;; Save hash
-        (puthash lookup-key ret ergoemacs-map--hash)
-        (puthash (ergoemacs-map--hashkey 'ergoemacs-map--lookup-hash) ergoemacs-map--lookup-hash ergoemacs-map--hash)
-        (puthash (ergoemacs-map--hashkey 'ergoemacs-map--undefined-keys) ergoemacs-map--undefined-keys ergoemacs-map--hash)
-        
-        ;; Get the protecting user keys
-        (setq tmp2 (list))
-        (unless ergoemacs-ignore-prev-global
-          (setq tmp (ergoemacs :user-before))
-          (unless (ergoemacs tmp :empty-p)
-            (push tmp tmp2)))
-        (setq tmp (ergoemacs :user-after))
-        (unless (ergoemacs tmp :empty-p)
-          (push tmp tmp2))
-        (setq tmp (ergoemacs parent :user))
-        (when tmp
-          (push tmp tmp2))
-        (push ergoemacs-user-keymap tmp2)
-        (define-key ret [ergoemacs-ignore] 'ergoemacs-command-loop--ignore)
-        (setq ret (make-composed-keymap tmp2 ret)))
+        (setq ret (ergoemacs-map--get-global-map map unbind-list cur-layout lookup-key)))
        
        ;; Now create the keymap for a specified `lookup-keymap'
        (lookup-keymap
@@ -703,10 +722,10 @@ If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that ke
 	(ergoemacs lookup-keymap :label)
         (setq lookup-keymap (ergoemacs lookup-keymap :original)
               hook-overrides (ergoemacs lookup-keymap :override-maps)
-              use-local-unbind-list-p (ergoemacs lookup-keymap :use-local-unbind-list-p))
-        (setq only-modify-p (ergoemacs lookup-keymap :only-local-modifications-p)
+              use-local-unbind-list-p (ergoemacs lookup-keymap :use-local-unbind-list-p)
+	      only-modify-p (ergoemacs lookup-keymap :only-local-modifications-p)
               lookup-key (ergoemacs-map--lookup-keymap-key lookup-keymap)
-              composed-list  (ergoemacs-map--composed-list lookup-keymap lookup-key only-modify-p use-local-unbind-list-p)
+              composed-list (ergoemacs-map--composed-list lookup-keymap lookup-key only-modify-p use-local-unbind-list-p)
               ret (nth 2 composed-list)
               local-unbind-list (nth 1 composed-list)
               composed-list (nth 0 composed-list)
@@ -764,8 +783,8 @@ If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that ke
         (cond
          ((and only-modify-p composed-list)
           ;; Get the protecting user keys
-          (setq ret (make-composed-keymap composed-list parent))
-          (setq tmp (ergoemacs parent :user))
+          (setq ret (make-composed-keymap composed-list parent)
+		tmp (ergoemacs parent :user))
           (when tmp
             (setq ret (make-composed-keymap tmp ret)))
           ret)
