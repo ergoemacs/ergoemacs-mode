@@ -652,7 +652,13 @@ The LAYOUT represents the keybaord layout that will be translated."
 
 (defun ergoemacs-map--adjust-remaps-for-overrides (hook-overrides composed-list keymap &optional deferred-p)
   "Use HOOK-OVERRIDES to adjust COMPOSED-LIST and KEYMAP.
-This will calculate any [ergoemacs-remap] keys."
+
+A new list of keymaps will be returned with any [ergoemacs-remap]
+keys calculated.
+
+When DEFERRED-P is non-nil, the returned keymap list will have
+new overriding keymaps are appended, otherwise the overriding
+keymaps are prepended"
   (if (not hook-overrides) composed-list
     ;; Need to fix 'ergoemacs-remaps as well.
     ;; This is done here because hooks can change, and the
@@ -838,26 +844,28 @@ UNBIND-LIST is the list of keys that `ergoemacs-mode'."
           (push map ergoemacs-map--modified-maps)))))
     ret))
 
-(defun ergoemacs-map-- (&optional lookup-keymap layout map)
+(defun ergoemacs-map-- (&optional lookup-keymap layout struct-map)
   "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
 
-MAP can be a `ergoemacs-component-struct', or a string/symbol
-of a calculated or uncalcuated component in
+STRUCT-MAP can be a `ergoemacs-component-struct', or a string/symbol of
+a calculated or uncalcuated component in
 `ergoemacs-component-hash'
 
-MAP can also be a list of `ergoemacs-component-struct' values
+STRUCT-MAP can also be a list of `ergoemacs-component-struct' values
 or string/symbols that are in `ergoemacs-component-hash'
 
-If missing, MAP represents the current theme compenents, from `ergoemacs-theme-components'
+If missing, STRUCT-MAP represents the current theme compenents, from
+`ergoemacs-theme-components'
 
 LAYOUT represents the layout that is used.
 
 LOOKUP-KEYMAP represents what should be calculated/looked up.
 
-If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that keymap."
+If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode
+modifications to that keymap."
   (let* ((cur-layout (or layout ergoemacs-keyboard-layout))
          lookup-key
-         (map (ergoemacs-component-struct--lookup-hash (or map (ergoemacs-theme-components))))
+         (struct-map (ergoemacs-component-struct--lookup-hash (or struct-map (ergoemacs-theme-components))))
          unbind-list
          ret
          (lookup-keymap (or (and lookup-keymap (symbolp lookup-keymap)
@@ -872,27 +880,29 @@ If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode modifications to that ke
       lookup-keymap)
      ((and lookup-keymap (ergoemacs lookup-keymap :dont-modify-p))
       lookup-keymap)
-     ;; Component keymap
-     ((setq ret (ergoemacs-map--get-struct-map map cur-layout lookup-keymap)) 
-      ret)
-     ((and (consp map) ;; Don't do anything with blank keymaps.
+     ((and (consp struct-map) ;; Don't do anything with blank keymaps.
            lookup-keymap
-	   (ergoemacs lookup-keymap :empty-p))
+	   ;; Blank keymaps are also unlabeled by `ergoemacs-mode', so
+	   ;; make sure to use :empty-p t
+	   (ergoemacs lookup-keymap :empty-p t))
       lookup-keymap)
-     ((and (consp map)
+     ((and (consp struct-map)
            (progn
-             (setq unbind-list (ergoemacs-map--get-unbind-list map)) t))
+             (setq unbind-list (ergoemacs-map--get-unbind-list struct-map)) t))
       (cond
        ((not lookup-keymap)
-	(ergoemacs-map--get-global-map map unbind-list cur-layout lookup-key))
+	(ergoemacs-map--get-global-map struct-map unbind-list cur-layout lookup-key))
        ;; Now create the keymap for a specified `lookup-keymap'
        (lookup-keymap
 	(ergoemacs-map--lookup-map lookup-keymap unbind-list))))
+     ;; Component keymap
+     ((setq ret (ergoemacs-map--get-struct-map struct-map cur-layout lookup-keymap)) 
+      ret)
      (t
-      (ergoemacs-warn "Component map isn't a proper argument for `ergoemacs-map'")
+      (ergoemacs-warn "Component struct-map isn't a proper argument for `ergoemacs-map'")
       (ergoemacs-warn "\tLookup:%s" lookup-keymap)
       (ergoemacs-warn "\tLayout:%s" layout)
-      (ergoemacs-warn "\tMap:%s" map)
+      (ergoemacs-warn "\tMap:%s" struct-map)
       lookup-keymap))))
 
 (defun ergoemacs-map--temporary-map-properties (map)

@@ -909,13 +909,18 @@ STRUCT is the keymap structure for the current map."
 	    (pushnew (cons old-plist (cdr keymap)) ergoemacs-map-properties--const-keymaps)))
 	map)))))
 
-(defun ergoemacs-map-properties--empty-p (keymap &rest _ignore)
-  "Determines if a KEYMAP is empty."
+(defun ergoemacs-map-properties--empty-p (keymap &optional labeled-is-keymap-p &rest _ignore)
+  "Determines if a KEYMAP is empty.
+
+When LABELED-IS-KEYMAP-P is non-nil, ergoemacs-mode labeled
+keymaps without any additional keys are not considered empty.
+Otherwise, erogemacs-mode labeled keymaps without any additional
+keys are considered empty."
   (catch 'found-key
     (ergoemacs-timing empty-p
       (ergoemacs-map-keymap
        (lambda (cur-key item)
-         (unless (equal cur-key [ergoemacs-labeled])
+         (unless (and (not labeled-is-keymap-p) (equal cur-key [ergoemacs-labeled]))
            (if (consp cur-key)
                (throw 'found-key nil)
              (unless (eq item 'ergoemacs-prefix)

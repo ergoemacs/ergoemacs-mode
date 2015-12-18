@@ -923,6 +923,11 @@ When arg1 can be a property.  The following properties are supported:
         `(ergoemacs-map-properties--get ,arg1 ,arg2))))
      ((and arg1 arg2 arg3
            (symbolp arg2)
+	   (memq arg2 ergoemacs--map-properties-list))
+      ;; Assign a property.
+      `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg2) 1))) ,arg1 ,@(cdr (cdr args))))
+     ((and arg1 arg2 arg3
+           (symbolp arg2)
            (string= ":" (substring (symbol-name arg2) 0 1)))
       ;; Assign a property.
       `(ergoemacs-map-properties--put ,arg1 ,arg2 ,arg3))

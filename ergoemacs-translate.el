@@ -757,7 +757,7 @@ When NAME is a symbol, setup the translation function for the symbol."
     struct))
 
 (defun ergoemacs-translate--get (type)
-  "Get translation object TYPE"
+  "Get translation object TYPE."
   (let ((ret (ergoemacs-gethash type ergoemacs-translation-hash)))
     (cond
      ((and ret (ergoemacs-translation-struct-p ret))
