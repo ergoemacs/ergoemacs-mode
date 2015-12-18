@@ -32,7 +32,8 @@
   (require 'cl)
   (require 'ergoemacs-macros))
 
-(declare-function ergoemacs-mode-reset "ergoemacs-mode.el")
+(declare-function ergoemacs-translate--keymap "ergoemacs-translate")
+(declare-function ergoemacs-mode-reset "ergoemacs-mode")
 
 (defvar ergoemacs-map--)
 (defvar ergoemacs-layout-us)
@@ -1583,6 +1584,11 @@ hash appropriaetly."
        (execute-kbd-macro macro)
        (should (eq (key-binding (kbd "8")) 'self-insert-command))
        (kill-buffer (current-buffer))))))
+
+(ert-deftest ergoemacs-test--swap-translation-386 ()
+  "Test thes swapping of the translations."
+  :tags '(:translate)
+  (should (eq (lookup-key (ergoemacs ergoemacs-translate--parent-map) [apps]) 'ergoemacs-command-loop--swap-translation)))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
