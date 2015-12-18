@@ -35,6 +35,7 @@
 (declare-function ergoemacs-translate--keymap "ergoemacs-translate")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
 
+(defvar ergoemacs-translate--parent-map)
 (defvar ergoemacs-map--)
 (defvar ergoemacs-layout-us)
 (defvar ergoemacs-keyboard-layout)

@@ -101,6 +101,7 @@
 (declare-function ergoemacs-map-properties--key-hash "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-regexp "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 
 (declare-function ergoemacs-theme--get-version "ergoemacs-theme-engine")
 
@@ -519,7 +520,12 @@ Allows the component not to be calculated."
         (fset (ergoemacs-component-struct-dynamic-keys obj) new-dynamic)))))
 
 (defun ergoemacs-component-struct--ini-map (obj)
-  "Returns the map, if it hasn't been initialized, initialize with the label, and then return."
+  "Initilize keymap in OBJ.
+
+OBJ is an `egoemacs-component-struct' object.
+
+Returns the map, if it hasn't been initialized, initialize
+with the label, and then return."
   (or (ergoemacs-component-struct-map obj)
       (let ((map (make-sparse-keymap)))
         (ergoemacs map :label
@@ -757,8 +763,14 @@ to figure out what variables LOOKUP-KEYMAP is bound to."
     ret))
 
 (defun ergoemacs-component-struct--get (map cur-layout &optional lookup-key translate-map)
-  "Get component MAP and return KEYMAP updating MAP cache.
-Cache using LOOKUP-KEY. "
+  "Get component MAP and return keymap updating MAP cache.
+
+CUR-LAYOUT is the current keymboard layout used.
+
+This keymap is cached using LOOKUP-KEY.
+
+The keymap to translate is TRANSLATE-MAP, otherwise it is the
+`ergoemacs-component-struct-map' for MAP."
   (let* (ret
          (cmap (or translate-map (ergoemacs-component-struct-map map)))
          (just-first-keys (ergoemacs-component-struct-just-first-keys map))
@@ -815,7 +827,7 @@ Cache using LOOKUP-KEY. "
       hash))))
 
 (defun ergoemacs-component-struct--minor-mode-map-alist (&optional obj)
-  "Get the ending maps for `minor-mode-map-alist' using the ergoemacs structures."
+  "Get the ending maps for `minor-mode-map-alist' using the ergoemacs structures OBJ."
   (let (ret map parent)
     (maphash
      (lambda(key value)
@@ -828,7 +840,9 @@ Cache using LOOKUP-KEY. "
     ret))
 
 (defun ergoemacs-component-struct--hooks (&optional obj ret)
-  "Gets a list of hooks that need to be defined eor OBJ."
+  "Gets a list of hooks that need to be defined eor OBJ.
+
+You can prespecify RET so that new hooks are pushed to the list."
   (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
         tmp
         (ret ret))
