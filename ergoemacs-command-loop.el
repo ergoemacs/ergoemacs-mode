@@ -1357,7 +1357,7 @@ The RECORD-FLAG and KEYS are sent to `call-interactively'."
 (defvar ergoemacs-command-loop-spinner)
 (defvar ergoemacs-command-loop-spinners)
 
-(defvar ergoemacs-command-loop--spinner-display-message t
+(defvar ergoemacs-command-loop--spinner-display-message nil
   "Use spinner messages with history.")
 
 (defvar ergoemacs-command-loop--message-log-max nil
