@@ -1589,7 +1589,7 @@ hash appropriaetly."
 (ert-deftest ergoemacs-test--swap-translation-386 ()
   "Test thes swapping of the translations."
   :tags '(:translate)
-  (should (eq (lookup-key (ergoemacs ergoemacs-translate--parent-map) [apps]) 'ergoemacs-command-loop--swap-translation)))
+  (should (eq (lookup-key (ergoemacs ergoemacs-translate--parent-map) (or (and (eq system-type 'windows-nt) [apps]) [menu])) 'ergoemacs-command-loop--swap-translation)))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
