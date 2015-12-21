@@ -1570,6 +1570,9 @@ hash appropriaetly."
 
 (ert-deftest ergoemacs-test-temp-map-issue ()
   "Test temporary map issue."
+  :expected-result (if (version-list-< (version-to-list "24.3") (version-to-list emacs-version))
+		       :passed
+		     :failed)
   (if (fboundp 'set-transient-map)
       (should t)
     (ergoemacs-test-layout
