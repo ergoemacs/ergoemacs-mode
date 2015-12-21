@@ -159,7 +159,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
                                (if (getenv "ERGOEMACS_THEME")
                                    (getenv "ERGOEMACS_THEME")
                                  nil)))
-  "Ergoemacs Keyboard Layout Themes"
+  "Ergoemacs Keyboard Layout Themes."
   :type '(choice
           (const :tag "Standard" :value nil)
           (choice (symbol :tag "Other (symbol)")

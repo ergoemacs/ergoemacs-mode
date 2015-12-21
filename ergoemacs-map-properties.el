@@ -57,6 +57,8 @@
 
 (require 'package)
 
+(defvar ergoemacs-translate--parent-map)
+(defvar ergoemacs-translate--modal-parent-map)
 (defvar ergoemacs--gzip)
 (defvar ergoemacs-map-keymap--load-autoloads-p)
 (defvar ergoemacs--original-local-map)
@@ -751,62 +753,70 @@ When DROP is non-nil, drop any found maps from `ergoemacs-map-properties--known-
       (when drop
         (setq ergoemacs-map-properties--known-maps known)))
     map-list))
+
 (defvar ergoemacs-map-properties--breadcrumb nil)
+
 (defun ergoemacs-map-properties--get-or-generate-map-key (keymap)
   "Gets the key for the KEYMAP."
-  (if (eq keymap global-map) most-negative-fixnum
-    (let ((ret (ergoemacs-map-properties--map-fixed-plist (ergoemacs-map-properties--keymap-value keymap)))
-	  map-list last-map tmp)
-      (if (and ret (setq ret (plist-get ret :map-key))) ret
-	(setq map-list (ergoemacs-map-properties--linked-map keymap t)
-	      last-map (or ergoemacs-map-properties--get-or-generate-map-name (car map-list)))
-	(when ergoemacs-map-properties--get-or-generate-map-name
-	  (dolist (map ergoemacs-map-properties--known-maps)
-	    (unless (eq map ergoemacs-map-properties--get-or-generate-map-name)
-	      (push map tmp)))
-	  (setq ergoemacs-map-properties--known-maps tmp
-		ergoemacs-map-properties--get-or-generate-map-name nil))
-	(when (and ergoemacs-map-properties--breadcrumb (not (string= "" ergoemacs-map-properties--breadcrumb))
-		   (or (not ergoemacs-map--breadcrumb) (string= "" ergoemacs-map--breadcrumb)))
-	  (setq ergoemacs-map--breadcrumb ergoemacs-map-properties--breadcrumb))
-	(cond
-	 ((and last-map (setq ret (ergoemacs-gethash last-map ergoemacs-breadcrumb-hash)))
-	  ;; Found id from bound map.
-	  (ergoemacs :spinner '("🎫→%s (Restore)" "Label→%s (Restore)" "Label->%s (Restore)") last-map)
-	  ret)
-	 (last-map
-	  ;; Generate and save.
-	  (setq ergoemacs-map-properties--get-or-generate-map-key
-		(+ 1 ergoemacs-map-properties--get-or-generate-map-key))
-	  (ergoemacs :spinner '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") last-map)
-	  (dolist (map map-list)
-	    (ergoemacs :map-list ergoemacs-map-properties--get-or-generate-map-key map))
-	  ergoemacs-map-properties--get-or-generate-map-key)
-	 ((and ergoemacs-map--breadcrumb
-	       (not (string= "" ergoemacs-map--breadcrumb))
-	       (not (setq ret (ergoemacs-gethash (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash))))
-	  ;; Not found in breadcrumb hash, but breadcrumb is specified.
-	  ;; Generate and save.
-	  (setq ergoemacs-map-properties--get-or-generate-map-key
-		(+ 1 ergoemacs-map-properties--get-or-generate-map-key))
-	  (puthash (intern ergoemacs-map--breadcrumb) ergoemacs-map-properties--get-or-generate-map-key ergoemacs-breadcrumb-hash)
-	  (puthash ergoemacs-map-properties--get-or-generate-map-key (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash)
-	  (ergoemacs :spinner '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") ergoemacs-map--breadcrumb)
-	  (setq ergoemacs-map--breadcrumb "")
-	  ergoemacs-map-properties--get-or-generate-map-key)
-	 (ret
-	  ;; Found in breadcrumb hash.
-	  (ergoemacs :spinner '("🎫→%s (Restore)" "Label→%s (Restore)" "Label->%s (Restore)") ergoemacs-map--breadcrumb)
-	  (setq ergoemacs-map--breadcrumb "")
-	  ret)
-	 (t
-	  ;; (ergoemacs-warn "Labeling untraceable map...%s" keymap)
-	  (setq ergoemacs-map-properties--get-or-generate-map-key
-		(+ 1 ergoemacs-map-properties--get-or-generate-map-key))
-	  ;; (setq map-list (format "New Map %s->%s" ergoemacs-map-properties--get-or-generate-map-key keymap)
-	  ;;       map-list (substring map-list 0 (min (length map-list) 80)))
-	  ;; (message "%s" map-list)
-	  ergoemacs-map-properties--get-or-generate-map-key))))))
+  (let ((ret (ergoemacs-map-properties--map-fixed-plist (ergoemacs-map-properties--keymap-value keymap)))
+	map-list last-map tmp)
+    (cond
+     ((and ret (setq ret (plist-get ret :map-key))) ret)
+     ;; Special Keymaps
+     ((eq keymap global-map) most-negative-fixnum)
+     ((eq keymap ergoemacs-translate--parent-map) (- most-positive-fixnum 1))
+     ((eq keymap ergoemacs-translate--modal-parent-map) (- most-positive-fixnum 2))
+     ;; Other keymaps
+     (t
+      (setq map-list (ergoemacs-map-properties--linked-map keymap t)
+	    last-map (or ergoemacs-map-properties--get-or-generate-map-name (car map-list)))
+      (when ergoemacs-map-properties--get-or-generate-map-name
+	(dolist (map ergoemacs-map-properties--known-maps)
+	  (unless (eq map ergoemacs-map-properties--get-or-generate-map-name)
+	    (push map tmp)))
+	(setq ergoemacs-map-properties--known-maps tmp
+	      ergoemacs-map-properties--get-or-generate-map-name nil))
+      (when (and ergoemacs-map-properties--breadcrumb (not (string= "" ergoemacs-map-properties--breadcrumb))
+		 (or (not ergoemacs-map--breadcrumb) (string= "" ergoemacs-map--breadcrumb)))
+	(setq ergoemacs-map--breadcrumb ergoemacs-map-properties--breadcrumb))
+      (cond
+       ((and last-map (setq ret (ergoemacs-gethash last-map ergoemacs-breadcrumb-hash)))
+	;; Found id from bound map.
+	(ergoemacs :spinner '("🎫→%s (Restore)" "Label→%s (Restore)" "Label->%s (Restore)") last-map)
+	ret)
+       (last-map
+	;; Generate and save.
+	(setq ergoemacs-map-properties--get-or-generate-map-key
+	      (+ 1 ergoemacs-map-properties--get-or-generate-map-key))
+	(ergoemacs :spinner '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") last-map)
+	(dolist (map map-list)
+	  (ergoemacs :map-list ergoemacs-map-properties--get-or-generate-map-key map))
+	ergoemacs-map-properties--get-or-generate-map-key)
+       ((and ergoemacs-map--breadcrumb
+	     (not (string= "" ergoemacs-map--breadcrumb))
+	     (not (setq ret (ergoemacs-gethash (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash))))
+	;; Not found in breadcrumb hash, but breadcrumb is specified.
+	;; Generate and save.
+	(setq ergoemacs-map-properties--get-or-generate-map-key
+	      (+ 1 ergoemacs-map-properties--get-or-generate-map-key))
+	(puthash (intern ergoemacs-map--breadcrumb) ergoemacs-map-properties--get-or-generate-map-key ergoemacs-breadcrumb-hash)
+	(puthash ergoemacs-map-properties--get-or-generate-map-key (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash)
+	(ergoemacs :spinner '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") ergoemacs-map--breadcrumb)
+	(setq ergoemacs-map--breadcrumb "")
+	ergoemacs-map-properties--get-or-generate-map-key)
+       (ret
+	;; Found in breadcrumb hash.
+	(ergoemacs :spinner '("🎫→%s (Restore)" "Label→%s (Restore)" "Label->%s (Restore)") ergoemacs-map--breadcrumb)
+	(setq ergoemacs-map--breadcrumb "")
+	ret)
+       (t
+	;; (ergoemacs-warn "Labeling untraceable map...%s" keymap)
+	(setq ergoemacs-map-properties--get-or-generate-map-key
+	      (+ 1 ergoemacs-map-properties--get-or-generate-map-key))
+	;; (setq map-list (format "New Map %s->%s" ergoemacs-map-properties--get-or-generate-map-key keymap)
+	;;       map-list (substring map-list 0 (min (length map-list) 80)))
+	;; (message "%s" map-list)
+	ergoemacs-map-properties--get-or-generate-map-key))))))
 
 (defun ergoemacs-map-properties--label (keymap &optional map-key struct)
   "Label an `ergoemacs-mode' touched KEYMAP.

@@ -818,10 +818,10 @@ If TYPE is unspecified, assume :normal translation"
 (defun ergoemacs-translate--parent-map ()
   (or ergoemacs-translate--parent-map
       (let ((map (make-sparse-keymap)))
-        (ergoemacs map :label (- most-positive-fixnum 1))
+	(setq ergoemacs-translate--parent-map map)
+        (ergoemacs map :label)
         (ergoemacs map :only-local-modifications-p t)
         (ergoemacs map :map-list-hash '(ergoemacs-translate--parent-map))
-        (setq ergoemacs-translate--parent-map map)
         map)))
 
 (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--parent-map)
@@ -833,10 +833,10 @@ If TYPE is unspecified, assume :normal translation"
 (defun ergoemacs-translate--modal-parent-map ()
   (or ergoemacs-translate--modal-parent-map
       (let ((map (make-sparse-keymap)))
-        (ergoemacs map :label (- most-positive-fixnum 2))
+	(setq ergoemacs-translate--modal-parent-map map)
+        (ergoemacs map :label)
         (ergoemacs map :only-local-modifications-p t)
         (ergoemacs map :map-list-hash '(ergoemacs-translate--modal-parent-map))
-        (setq ergoemacs-translate--modal-parent-map map)
         map)))
 (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--modal-parent-map)
 
