@@ -1014,22 +1014,31 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         ret))))
 
 (defvar ergoemacs-theme--png nil)
+(defvar ergoemacs-theme--png-last nil)
 (defun ergoemacs-theme--png--process (&rest _ignore)
   "Process the `ergoemacs-theme--png' list to convert svg files
 to png files."
-  (save-excursion
-    (let* ((png-info (pop ergoemacs-theme--png))
-           process)
-      (if (not png-info)
-          (progn
-            (ergoemacs-command-loop--message "Done creating png files.")
-            ;; FIXME: Update images...
-            )
-        (ergoemacs :spinner "%s" (nth 0 png-info))
-        (setq process (start-process-shell-command
-                       "ergoemacs-png-convert" "*ergoemacs-theme-png-convert*"
-                                                   (nth 1 png-info)))
-        (set-process-sentinel process 'ergoemacs-theme--png--process)))))
+  (when (or (not ergoemacs-theme--png-last)
+	    (file-exists-p ergoemacs-theme--png-last)
+	    ;; Reset variables
+	    (and (message "PNG generation failed. Abort creating png files.")
+		 (setq ergoemacs-theme--png nil
+		       ergoemacs-theme--png-last nil)))
+    (save-excursion
+      (let* ((png-info (pop ergoemacs-theme--png))
+	     process)
+	(if (not png-info)
+	    (progn
+	      (ergoemacs-command-loop--message "Done creating png files.")
+	      ;; FIXME: Update images...
+	      )
+	  
+	  (ergoemacs :spinner "%s" (nth 0 png-info))
+	  (setq process (start-process-shell-command
+			 "ergoemacs-png-convert" "*ergoemacs-theme-png-convert*"
+			 (nth 1 png-info))
+		ergoemacs-theme--png-last (nth 2 png-info))
+	  (set-process-sentinel process 'ergoemacs-theme--png--process))))))
 
 (defun ergoemacs-theme--png (&optional theme layout full-p reread)
   "Get png file for layout, or create one.
@@ -1042,7 +1051,8 @@ Requires `ergoemacs-inkscape' to be specified."
         (if (and ergoemacs-inkscape (file-readable-p ergoemacs-inkscape))
             (progn
               (push (list (format "%s->%s" (file-name-nondirectory svg-file) (file-name-nondirectory png-file))
-                          (format "%s -z -f \"%s\" -e \"%s\"" ergoemacs-inkscape svg-file png-file)) ergoemacs-theme--png)
+                          (format "%s -z -f \"%s\" -e \"%s\"" ergoemacs-inkscape svg-file png-file)
+			  png-file) ergoemacs-theme--png)
               (push png-file ret))
           (message "Need inkscape and to specify inkscape location with `ergoemacs-inkscape'.")
           nil)))
