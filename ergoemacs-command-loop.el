@@ -1270,12 +1270,13 @@ care of `window-live-p' errors that occur when running the
 Emacs detects keys when outside of Emacs.
 
 The RECORD-FLAG and KEYS arguments are passed to
-`call-interactively' for the mouse command."
+`ergoemacs-command-loop--grow-interactive' for the mouse command."
   (cond
    ((ergoemacs-keymapp command)
     (popup-menu command nil current-prefix-arg))
    (t
-    (ignore-errors (call-interactively (ergoemacs-command-loop--modify-mouse-command command) record-flag keys)))))
+    (ignore-errors
+      (ergoemacs-command-loop--grow-interactive (ergoemacs-command-loop--modify-mouse-command command) record-flag keys)))))
 
 (defvar ergoemacs-command-loop-describe-key-functions
   '(describe-key describe-function)
@@ -1284,9 +1285,67 @@ These functions will:
 - Replace `key-description' with `ergoemacs-key-description'.
 - Replace `read-key-sequence' with `ergoemacs-command-loop--read-key-sequence'.")
 
+(defcustom ergoemacs-comand-loop-grow-max-sizes-p t
+  "Grow the max sizes if needed.
+This grows `max-specpdl-size' and `max-lisp-eval-depth' if
+`ergoemacs-command-loop--call-interactively' throws an error
+about `max-specpdl-size' or `max-lisp-eval-depth'.
+
+The overall maximum that these are set to are controlled by
+`ergoemacs-max-specpdl-size' and
+`ergoemacs-max-lisp-eval-depth.'"
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+
+(defcustom ergoemacs-max-specpdl-size (* 8 max-specpdl-size)
+  "Maximum `max-specpdl-size' that `ergoemacs-mode' increases to..."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-max-lisp-eval-depth (* 8 max-lisp-eval-depth)
+  "Maximum `max-lisp-eval-depth' that `ergoemacs-mode' increases to..."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-command-loop--grow-interactive (command &optional record-flag keys)
+  "Call the COMMAND interactively.
+The RECORD-FLAG and KEYS are sent to `ergoemacs--real-call-interactively'.
+
+This will grow `max-lisp-eval-depth' and `max-specpdl-size' if
+needed (and resotre them to the original values)."
+  (let ((grow-max-lisp-p t)
+	(orig-max-specpdl-size max-specpdl-size)
+	(orig-max-lisp-eval-depth max-lisp-eval-depth))
+    (while grow-max-lisp-p
+      (condition-case err
+          (progn
+            (call-interactively command record-flag keys)
+            (setq grow-max-lisp-p nil))
+        (error
+         (if (and (eq (car err) 'error)
+                  (stringp (nth 1 err))
+                  (string-match "max-specpdl-size\\|max-lisp-eval-depth"
+                                (nth 1 err))
+                  ergoemacs-comand-loop-grow-max-sizes-p
+                  (<= max-specpdl-size ergoemacs-max-specpdl-size)
+                  (<= max-lisp-eval-depth ergoemacs-max-lisp-eval-depth))
+	     (progn
+	       (setq max-specpdl-size (* 2 max-specpdl-size)
+		     max-lisp-eval-depth (* 2 max-lisp-eval-depth))
+	       (warn "Increased max-specpdl-size to %s and max-lisp-eval-depth to %s for %s"
+		     max-specpdl-size max-lisp-eval-depth command))
+           (setq grow-max-lisp-p nil
+		 max-specpdl-size orig-max-specpdl-size
+                 max-lisp-eval-depth orig-max-lisp-eval-depth)
+	   (signal (car err) (cdr err))))))
+    (setq max-specpdl-size orig-max-specpdl-size
+	  max-lisp-eval-depth orig-max-lisp-eval-depth)))
+
+
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
   "Call the COMMAND interactively.  Also handle mouse events (if possible.)
-The RECORD-FLAG and KEYS are sent to `call-interactively'."
+The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'."
   (ergoemacs-command-loop--sync-point)
   (cond
    ((and (eventp last-command-event)
@@ -1339,9 +1398,36 @@ The RECORD-FLAG and KEYS are sent to `call-interactively'."
     (ergoemacs-command-loop--message "Command `%s' cannot be called from a key" command))
    ((memq command ergoemacs-command-loop-describe-key-functions)
     (ergoemacs-specials
-     (call-interactively command record-flag keys)))
+     (ergoemacs-command-loop--grow-interactive command record-flag keys)))
    (t
-    (call-interactively command record-flag keys))))
+    (ergoemacs-command-loop--grow-interactive command record-flag keys))))
+
+;; (condition-case err
+;;     (save-excursion
+;;       (if calc-embedded-info
+;;           (calc-embedded-select-buffer)
+;;         (calc-select-buffer))
+;;       (and (eq calc-algebraic-mode 'total)
+;;            (require 'calc-ext)
+;;            (use-local-map calc-alg-map))
+;;       (when (and do-slow calc-display-working-message)
+;;         (message "Working...")
+;;         (calc-set-command-flag 'clear-message))
+;;       (funcall do-body)
+;;       (setq calc-aborted-prefix nil)
+;;       (when (memq 'renum-stack calc-command-flags)
+;;         (calc-renumber-stack))
+;;       (when (memq 'clear-message calc-command-flags)
+;;         (message "")))
+;;   (error
+;;    (if (and (eq (car err) 'error)
+;;             (stringp (nth 1 err))
+;;             (string-match "max-specpdl-size\\|max-lisp-eval-depth"
+;;                           (nth 1 err)))
+;;        (error "Computation got stuck or ran too long.  Type `M' to increase the limit")
+;;      (setq calc-aborted-prefix nil)
+;;      (signal (car err) (cdr err)))))
+
 
 (defun ergoemacs-command-loop-start ()
   "Start `ergoemacs-command-loop'."
