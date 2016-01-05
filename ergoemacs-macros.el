@@ -698,7 +698,7 @@ The rest of the body is an `ergoemacs-theme-component' named
              (silent (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
              (included (append opt-on opt-off comp))
              (file (or load-file-name (buffer-file-name)))
-             (mod (list file (nth 5 (file-attributes file)))))
+             (mod (list file (and (stringp file) (nth 5 (file-attributes file))))))
         (when (not (boundp 'ergoemacs--component-file-mod-time-list))
           (setq ergoemacs--component-file-mod-time-list nil))
         (push ,(plist-get (nth 0 kb) :name) themes)

@@ -1461,13 +1461,14 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
          (comp (ergoemacs-component-struct--lookup-hash (or component "")))
          (plist (ergoemacs-component-struct-plist comp))
          (file (plist-get plist :file))
-         (el-file (concat (file-name-sans-extension file) ".el"))
-         (elc-file (concat (file-name-sans-extension file) ".elc")))
-    (catch 'loaded
-      (dolist (load load-history)
-        (when (or (string= elc-file (car load))
-                  (string= el-file (car load)))
-          (throw 'loaded nil))) t)))
+         (el-file (and file (concat (file-name-sans-extension file) ".el")))
+         (elc-file (and file (concat (file-name-sans-extension file) ".elc"))))
+    (when file
+      (catch 'loaded
+	(dolist (load load-history)
+	  (when (or (string= elc-file (car load))
+		    (string= el-file (car load)))
+	    (throw 'loaded nil))) t))))
 
 (defun ergoemacs-component-describe (component)
   "Display the full documentation of COMPONENT (a symbol or string)."
@@ -1478,7 +1479,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
          (comp (ergoemacs-component-struct--lookup-hash (or component "")))
          (plist (ergoemacs-component-struct-plist comp))
          (file (plist-get plist :file))
-         (el-file (concat (file-name-sans-extension file) ".el"))
+         (el-file (and file (concat (file-name-sans-extension file) ".el")))
          tmp vers
          lst)
     (if (not comp)
@@ -1491,7 +1492,7 @@ Return 0 if there is no such symbol. Based on `variable-at-point'"
           ;; Use " is " instead of a colon so that
           ;; it is easier to get out the function name using forward-sexp.
           (insert " is an `ergoemacs-mode' component")
-          (when (file-readable-p el-file)
+          (when (and el-file (file-readable-p el-file))
             (insert " defined in `")
             (insert (file-name-nondirectory el-file))
             (when (looking-back "`\\(.*\\)")

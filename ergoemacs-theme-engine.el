@@ -501,7 +501,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                          (and (symbolp theme) (symbol-name theme)))))
          (plist (ergoemacs-gethash (or theme "") ergoemacs-theme-hash))
          (file (plist-get plist :file))
-         (el-file (concat (file-name-sans-extension file) ".el"))
+         (el-file (and (stringp file) (concat (file-name-sans-extension file) ".el")))
          (old-theme ergoemacs-theme)
          required-p
          svg png tmp)
@@ -517,7 +517,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
           ;; Use " is " instead of a colon so that
           ;; it is easier to get out the function name using forward-sexp.
           (insert " is an `ergoemacs-mode' theme")
-          (when (file-readable-p el-file)
+          (when (and el-file (file-readable-p el-file))
             (insert " defined in `")
             (insert (file-name-nondirectory el-file))
             (insert "'.")
