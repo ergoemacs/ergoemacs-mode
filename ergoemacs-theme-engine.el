@@ -478,6 +478,8 @@ should insert the face name."
   'help-function #'ergoemacs-theme-find-definition
   'help-echo (purecopy "mouse-2, RET: find this ergoemacs theme's definition"))
 
+(defvar ergoemacs-theme--svg-list nil)
+
 (defun ergoemacs-theme-find-definition (theme)
   "Find the definition of THEME.  THEME defaults to the name near point.
 
@@ -905,8 +907,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
          (when (<= 10 (length key))
            (setq key (concat (substring key 0 10) "…")))
          key)))))
-
-(defvar ergoemacs-theme--svg-list nil)
 
 (defun ergoemacs-theme--svg (&optional theme layout full-p reread)
   "Creates SVG based THEME and  LAYOUT"
