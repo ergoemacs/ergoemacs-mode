@@ -1337,7 +1337,7 @@ needed (and resotre them to the original values)."
 		     max-specpdl-size max-lisp-eval-depth command))
            (setq grow-max-lisp-p nil
 		 max-specpdl-size orig-max-specpdl-size
-                 max-lisp-eval-depth orig-max-lisp-eval-depth)
+                 max-lisp-eval-depth orig-max-lip-eval-depth)
 	   (signal (car err) (cdr err))))))
     (setq max-specpdl-size orig-max-specpdl-size
 	  max-lisp-eval-depth orig-max-lisp-eval-depth)))
