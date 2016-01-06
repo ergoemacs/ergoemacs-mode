@@ -657,7 +657,11 @@ inconjunction with `input-method-function' to translate keys if
   (let* ((new-event event)
          (old-ergoemacs-input unread-command-events)
          new-ergoemacs-input
-         (current-test-key (vector event))
+         (current-test-key (or (and (listp event)
+				    (vector (ergoemacs-translate--event-convert-list
+					     (append (ergoemacs-translate--event-modifiers event)
+						     (list (ergoemacs-translate--event-basic-type event))))))
+			       (vector event)))
          (test-ret (lookup-key keymap current-test-key))
          next-key)
     (while (and current-test-key
@@ -671,11 +675,16 @@ inconjunction with `input-method-function' to translate keys if
                 test-ret (lookup-key keymap current-test-key))
         (setq current-test-key nil)))
     ;; Change strings to emacs keys.
-    (when (stringp test-ret) 
-      (setq test-ret (read-kbd-macro test-ret t)))
+    (when (stringp test-ret)
+      ;; Should it be read-kbd-macro?
+      (setq test-ret (vconcat test-ret)))
+    (when (functionp test-ret)
+      (setq last-input-event event
+	    test-ret (funcall test-ret))
+      (when (not (equal unread-command-events old-ergoemacs-input))
+      	(push (pop unread-command-events) new-ergoemacs-input)))
     (if (and (vectorp test-ret)
-             (
-              = (length test-ret) 1))
+             (= (length test-ret) 1))
         (progn
           (setq new-event (elt test-ret 0)))
       ;; Not a new event, restore anything that was popped off the
@@ -691,7 +700,9 @@ inconjunction with `input-method-function' to translate keys if
 (defun ergoemacs-command-loop--read-event (prompt &optional current-key)
   "Reads a single event.
 
-PROMPT is 
+PROMPT is the prompt used when reading an event.
+
+CURRENT-KEY is the current key sequence that has alerady been read.
 
 This respects `input-decode-map', `local-function-key-map' and `key-translation-map'.
 
@@ -716,15 +727,16 @@ It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
           (setq input gui)
         (setq input (ergoemacs-command-loop--decode-event input input-decode-map current-key)
               binding (key-binding (ergoemacs :combine current-key input) t)))
-      
       ;; These should only be replaced if they are not bound.
       (unless binding
         (setq last-input input
               input (ergoemacs-command-loop--decode-event input local-function-key-map current-key))
         (unless (eq last-input input)
           (setq binding (key-binding (ergoemacs :combine current-key input) t))))
-      (unless binding
-        (setq input (ergoemacs-command-loop--decode-event input key-translation-map current-key))))
+      (setq last-input input
+	    input (ergoemacs-command-loop--decode-event input key-translation-map current-key))
+      (unless (eq last-input input)
+          (setq binding (key-binding (ergoemacs :combine current-key input) t))))
     input))
 
 (defun ergoemacs-command-loop--read-key (&optional current-key type universal)

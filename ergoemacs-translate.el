@@ -386,11 +386,12 @@ This also translates <C-i> to ?i, <C-m> to ?m <C-[> to ?[
              (aref (match-string 1 basic) 0)))))
 
 (defun ergoemacs-translate--event-convert-list (list &optional layout)
-   "Convert the event description list EVENT-DESC to an event type.
+   "Convert the event description LIST to an event type.
 This is different than `event-convert-list' because:
  -  '(shift ?3) or '(ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT.
  -  '(ergoemacs-control control ?m) produces C-RET
- -  '(ergoemacs-gui control ?m) produces <C-m>. this applies for ?i and ?[ as well"
+ -  '(ergoemacs-gui control ?m) produces <C-m>. this applies for ?i and ?[ as well.
+ - Mouse events allow click modifiers"
   (let ((cur-list list)
         elt
         tmp
@@ -398,7 +399,7 @@ This is different than `event-convert-list' because:
         new-list
         first second base
         (gui-p (memq 'ergoemacs-gui list)))
-    (when (or gui-p (setq control-p(memq 'ergoemacs-control cur-list)))
+    (when (or gui-p (setq control-p (memq 'ergoemacs-control cur-list)))
       (setq cur-list (reverse cur-list))
       (if (and gui-p (memq (car cur-list) (list '\[ 'm 'i ?\[ ?m ?i))
                (memq 'control cur-list))
