@@ -286,6 +286,19 @@ definition."
   (setq ergoemacs-map--breadcrumb "minibuffer-local-ns-map"
         ergoemacs-read-from-minibuffer-map minibuffer-local-ns-map))
 
+(ergoemacs-advice command-execute (cmd &optional record-flag keys special)
+  "Modify ergoemacs command-loop to execute the actual command.
+
+When increasing `max-specpdl-size' and `max-lisp-eval-depth',
+this allows `smex' and `execute-extended-command' to run the
+command seleceted, instead of rerunning `smex' and
+`execute-extended-command'."
+  :type :before
+  (setq ergoemacs-command-loop--grow-command cmd
+	ergoemacs-command-loop--grow-record record-flag
+	ergoemacs-command-loop--grow-keys keys
+	ergoemacs-command-loop--grow-special special))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here

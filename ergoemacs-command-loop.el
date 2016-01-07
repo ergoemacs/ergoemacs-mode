@@ -1309,6 +1309,11 @@ The overall maximum that these are set to are controlled by
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defvar ergoemacs-command-loop--grow-command nil)
+(defvar ergoemacs-command-loop--grow-record nil)
+(defvar ergoemacs-command-loop--grow-keys nil)
+(defvar ergoemacs-command-loop--grow-special nil)
+
 
 (defcustom ergoemacs-max-specpdl-size (* 8 max-specpdl-size)
   "Maximum `max-specpdl-size' that `ergoemacs-mode' increases to..."
@@ -1326,14 +1331,25 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs--real-call-interactively'.
 
 This will grow `max-lisp-eval-depth' and `max-specpdl-size' if
 needed (and resotre them to the original values)."
+  (setq ergoemacs-command-loop--grow-command nil
+	  ergoemacs-command-loop--grow-record nil
+	  ergoemacs-command-loop--grow-keys nil
+	  ergoemacs-command-loop--grow-special nil)
   (let ((grow-max-lisp-p t)
 	(orig-max-specpdl-size max-specpdl-size)
 	(orig-max-lisp-eval-depth max-lisp-eval-depth))
     (while grow-max-lisp-p
       (condition-case err
-          (progn
+          (cond
+	   (ergoemacs-command-loop--grow-command
+	    (command-execute ergoemacs-command-loop--grow-command
+			     ergoemacs-command-loop--grow-record
+			     ergoemacs-command-loop--grow-keys
+			     ergoemacs-command-loop--grow-special)
+	    (setq grow-max-lisp-p nil))
+	   (t
             (call-interactively command record-flag keys)
-            (setq grow-max-lisp-p nil))
+            (setq grow-max-lisp-p nil)))
         (error
          (if (and (eq (car err) 'error)
                   (stringp (nth 1 err))
@@ -1345,7 +1361,7 @@ needed (and resotre them to the original values)."
 	     (progn
 	       (setq max-specpdl-size (* 2 max-specpdl-size)
 		     max-lisp-eval-depth (* 2 max-lisp-eval-depth))
-	       (warn "Increased max-specpdl-size to %s and max-lisp-eval-depth to %s for %s"
+	       (ergoemacs-warn "Increased max-specpdl-size to %s and max-lisp-eval-depth to %s for %s"
 		     max-specpdl-size max-lisp-eval-depth command))
            (setq grow-max-lisp-p nil
 		 max-specpdl-size orig-max-specpdl-size
