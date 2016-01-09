@@ -71,9 +71,11 @@
 (declare-function ergoemacs-map-properties--movement-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
-(declare-function ergoemacs-translate--event-convert-list "ergoemacs-translate")
 (declare-function ergoemacs-translate--define-key "ergoemacs-translate")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
+(declare-function ergoemacs-translate--event-basic-type "ergoemacs-translate")
+(declare-function ergoemacs-translate--event-convert-list "ergoemacs-translate")
+(declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-mods "ergoemacs-translate")
 (declare-function ergoemacs-translate--get "ergoemacs-translate")
 (declare-function ergoemacs-translate--keymap "ergoemacs-translate")
@@ -1411,7 +1413,8 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'.
       ;; emacsclient).  */
       (when area
         (setq command (key-binding (vconcat (list area last-command-event)) t))
-        (when (and obj (consp obj) (setq tmp (get-text-property (cdr obj)  'local-map (car obj)))
+        (when (and obj (consp obj)
+		   (setq tmp (ignore-errors (get-text-property (cdr obj)  'local-map (car obj))))
                    (setq tmp (or (and (symbolp tmp) (ergoemacs-sv tmp)) tmp))
                    (ergoemacs-keymapp tmp)
                    (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
