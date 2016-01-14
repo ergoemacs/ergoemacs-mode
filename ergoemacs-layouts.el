@@ -479,10 +479,14 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
 
 (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail)
 
-(eval-after-load 'quail
-  '(progn
-     (ergoemacs-layout--quail-alist)
-     (ergoemacs-layout--update-quail)))
+(if (not (featurep 'quail))
+    (eval-after-load 'quail
+      '(progn
+	 (ergoemacs-layout--quail-alist)
+	 (ergoemacs-layout--update-quail)))
+  (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--quail-alist)
+  (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail))
+
 
 (defalias 'ergoemacs-layout 'ergoemacs-set-layout)
 
