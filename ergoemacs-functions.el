@@ -2631,7 +2631,7 @@ With a prefix argument like \\[universial-argument] in an
         (error (call-interactively 'org-babel-tangle))))
      (org-p
       (call-interactively 'org-edit-src-exit))
-     ((buffer-narrowed-p)
+     ((ergoemacs-buffer-narrowed-p)
       (call-interactively 'widen))
      ((region-active-p)
       (call-interactively 'narrow-to-region))

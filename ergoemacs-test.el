@@ -1496,23 +1496,23 @@ hash appropriaetly."
   (should (string= "ergoemacs-themes" (file-name-sans-extension (file-name-nondirectory (plist-get (ergoemacs-component-struct-plist (ergoemacs-component-struct--lookup-hash "standard-fixed")) :file))))))
 
 ;; multiple cursors
-(ert-deftest ergoemacs-test-mc-mark-next ()
-  "Test Issue #342."
-  :tags '(:mc)
-  :expected-result :failed
-  (ergoemacs-test-layout
-   :layout "colemak"
-   :theme "reduction"
-   :macro "M-SPC M-y M-* n o t SPC f o o <return>"
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (delete-region (point-min) (point-max))
-     (emacs-lisp-mode)
-     (insert "foo bar bar bar foo bar")
-     (goto-char (point-min))
-     (execute-kbd-macro macro)
-     (should (string= (buffer-string) "not foo bar bar bar not foo bar"))
-     (kill-buffer (current-buffer)))))
+;; (ert-deftest ergoemacs-test-mc-mark-next ()
+;;   "Test Issue #342."
+;;   :tags '(:mc)
+;;   :expected-result :failed
+;;   (ergoemacs-test-layout
+;;    :layout "colemak"
+;;    :theme "reduction"
+;;    :macro "M-SPC M-y M-* n o t SPC f o o <return>"
+;;    (save-excursion
+;;      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+;;      (delete-region (point-min) (point-max))
+;;      (emacs-lisp-mode)
+;;      (insert "foo bar bar bar foo bar")
+;;      (goto-char (point-min))
+;;      (execute-kbd-macro macro)
+;;      (should (string= (buffer-string) "not foo bar bar bar not foo bar"))
+;;      (kill-buffer (current-buffer)))))
 
 (ert-deftest ergoemacs-test-mouse-command-list-changes ()
   "Part of test for Sub issue described in #351"
@@ -1570,24 +1570,21 @@ hash appropriaetly."
 
 (ert-deftest ergoemacs-test-temp-map-issue ()
   "Test temporary map issue."
-  :expected-result (if (version-list-< (version-to-list "24.4") (version-to-list emacs-version))
-		       :passed
-		     :failed)
-  (if (fboundp 'set-transient-map)
-      (should t)
-    (ergoemacs-test-layout
-     :layout "colemak"
-     :theme "reduction"
-     :macro "M-8 M-SPC M-SPC M-i"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-max))
-       (beginning-of-line)
-       (execute-kbd-macro macro)
-       (should (eq (key-binding (kbd "8")) 'self-insert-command))
-       (kill-buffer (current-buffer))))))
+  (if (version-list-< (version-to-list "24.4") (version-to-list emacs-version))
+      (ergoemacs-test-layout
+       :layout "colemak"
+       :theme "reduction"
+       :macro "M-8 M-SPC M-SPC M-i"
+       (save-excursion
+	 (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+	 (delete-region (point-min) (point-max))
+	 (insert ergoemacs-test-lorem-ipsum)
+	 (goto-char (point-max))
+	 (beginning-of-line)
+	 (execute-kbd-macro macro)
+	 (should (eq (key-binding (kbd "8")) 'self-insert-command))
+	 (kill-buffer (current-buffer)))))
+  (should t))
 
 (ert-deftest ergoemacs-test--swap-translation-386 ()
   "Test thes swapping of the translations."

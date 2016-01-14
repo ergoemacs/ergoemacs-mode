@@ -1069,6 +1069,18 @@ When :type is :replace that replaces a function (like `define-key')"
           ((symbol-function 'key-description) #'ergoemacs-key-description))
      ,@body))
 
+(defmacro ergoemacs-autoloadp (object)
+  "Non-nil if OBJECT is an autoload."
+  (cond
+   ((fboundp #'autoloadp) `(autoloadp ,object))
+   (t `(eq 'autoload (car-safe ,object)))))
+
+(defmacro ergoemacs-buffer-narrowed-p ()
+  "Return non-nil if the current buffer is narrowed."
+  (cond
+   ((fboundp #'buffer-narrowed-p) `(buffer-narrowed-p))
+   (t `(/= (- (point-max) (point-min)) (buffer-size)))))
+
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-macros.el ends here

@@ -45,6 +45,8 @@
 (defvar ergoemacs-handle-ctl-c-or-ctl-x)
 (defvar ergoemacs-dir)
 
+
+(declare-function ergoemacs-autoloadp "ergoemacs-macros")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
 (declare-function ergoemacs-theme--list "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-option-on "ergoemacs-theme-engine")
@@ -97,7 +99,7 @@ Whe changed return t, otherwise return nil."
       (setq last-value -1))
     (cond
      ((and minor-mode-p (functionp variable))
-      (unless (and defer (autoloadp variable))
+      (unless (and defer (ergoemacs-autoloadp variable))
         (unless (get variable :ergoemacs-save-value)
           (put variable :ergoemacs-save-value (if new-value nil 1)))
         (ergoemacs :spinner "Call (%s %s)" variable new-value)
@@ -110,7 +112,7 @@ Whe changed return t, otherwise return nil."
      ((not (equal last-value value))
       (cond
        ((and minor-mode-p (not new-value) (functionp variable))
-        (unless (and defer (autoloadp variable))
+        (unless (and defer (ergoemacs-autoloadp variable))
           ;; (message "(%s -1) #2" variable)
           (ergoemacs :spinner "Call (%s -1)" variable)
           (funcall variable -1)
@@ -121,7 +123,7 @@ Whe changed return t, otherwise return nil."
           (pushnew variable ergoemacs-set-ignore-customize)
           (setq ret t)))
        ((and minor-mode-p new-value (functionp variable))
-        (unless (and defer (autoloadp variable))
+        (unless (and defer (ergoemacs-autoloadp variable))
           ;; (message "(%s %s) #3" variable new-value)
           (ergoemacs :spinner "Call (%s %s)" variable new-value)
           (funcall variable new-value)

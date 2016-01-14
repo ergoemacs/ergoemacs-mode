@@ -459,7 +459,7 @@ Allows the component not to be calculated."
            (= 2 (length def))
            (stringp (nth 0 def))
            (eq (nth 1 def) :emacs)
-           (setq tmp (lookup-key global-map (kbd (nth 0 def))))
+           (setq tmp (lookup-key global-map (read-kbd-macro (nth 0 def))))
            (commandp tmp))
       tmp)
      ((and (consp def)
@@ -1632,7 +1632,7 @@ modifications with `diminish-undo'"
        ((eq t dim)
         (cond
          (type (diminish-undo diminish-symbol))
-         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (ergoemacs-autoloadp diminish-symbol))
                               (diminish diminish-symbol)))
           )
          (t (eval-after-load diminish-symbol
@@ -1641,7 +1641,7 @@ modifications with `diminish-undo'"
        ((symbolp dim)
         (cond
          (type (diminish-undo dim))
-         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (ergoemacs-autoloadp diminish-symbol))
                               (diminish dim))))
          (t (eval-after-load diminish-symbol
               `(diminish ',dim)))))
@@ -1650,7 +1650,7 @@ modifications with `diminish-undo'"
        ((stringp dim)
         (cond
          (type (diminish-undo diminish-symbol))
-         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (ergoemacs-autoloadp diminish-symbol))
                               (diminish diminish-symbol dim))))
          (t (eval-after-load diminish-symbol
               `(diminish ',diminish-symbol ,dim)))))
@@ -1659,7 +1659,7 @@ modifications with `diminish-undo'"
              (symbolp (nth 0 dim)))
         (cond
          (type (diminish-undo (nth 0 dim)))
-         ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
+         ((ignore-errors (and (commandp (nth 0 dim) t) (not (ergoemacs-autoloadp (nth 0 dim)))
                               (diminish (nth 0 dim) dim))))
          (t (eval-after-load diminish-symbol
               `(diminish ',(nth 0 dim))))))
@@ -1671,7 +1671,7 @@ modifications with `diminish-undo'"
              (stringp (nth 1 dim)))
         (cond
          (type (diminish-undo diminish-symbol))
-         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (ergoemacs-autoloadp diminish-symbol))
                               (diminish diminish-symbol (ergoemacs :unicode (nth 0 dim) (nth 1 dim))))))
          (t (eval-after-load diminish-symbol
               `(ignore-errors
@@ -1685,7 +1685,7 @@ modifications with `diminish-undo'"
              (stringp (nth 3 dim)))
         (cond
          (type (diminish-undo diminish-symbol))
-         ((ignore-errors (and (commandp diminish-symbol t) (not (autoloadp diminish-symbol))
+         ((ignore-errors (and (commandp diminish-symbol t) (not (ergoemacs-autoloadp diminish-symbol))
                               (diminish diminish-symbol (ergoemacs :unicode (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim)))))))
          (t (eval-after-load diminish-symbol
               `(ignore-errors
@@ -1699,7 +1699,7 @@ modifications with `diminish-undo'"
              (stringp (nth 2 dim)))
         (cond
          (type (diminish-undo (nth 0 dim)))
-         ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
+         ((ignore-errors (and (commandp (nth 0 dim) t) (not (ergoemacs-autoloadp (nth 0 dim)))
                               (diminish (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (nth 2 dim))))))
          (t (eval-after-load diminish-symbol
               `(ignore-errors
@@ -1714,7 +1714,7 @@ modifications with `diminish-undo'"
              (stringp (nth 3 dim)))
         (cond
          (type (diminish-undo (nth 0 dim)))
-         ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
+         ((ignore-errors (and (commandp (nth 0 dim) t) (not (ergoemacs-autoloadp (nth 0 dim)))
                               (diminish (nth 0 dim) (ergoemacs :unicode (nth 1 dim) (ergoemacs :unicode (nth 2 dim) (nth 3 dim)))))))
          (t (eval-after-load diminish-symbol
               `(ignore-errors
@@ -1727,7 +1727,7 @@ modifications with `diminish-undo'"
              (stringp (nth 1 dim)))
         (cond
          (type (diminish-undo (nth 0 dim)))
-         ((ignore-errors (and (commandp (nth 0 dim) t) (not (autoloadp (nth 0 dim)))
+         ((ignore-errors (and (commandp (nth 0 dim) t) (not (ergoemacs-autoloadp (nth 0 dim)))
                               (diminish (nth 0 dim) (nth 1 dim)))))
          (t (eval-after-load diminish-symbol
               `(diminish ',(nth 0 dim) ,(nth 1 dim))))))
