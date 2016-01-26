@@ -130,18 +130,25 @@ bindings into this keymap (the original keymap is untouched)"
       (ergoemacs-key-description--substitute-command-keys string)
     (ergoemacs-advice--real-substitute-command-keys string)))
 
+
+(defvar ergoemacs-run-mode-hooks nil)
 (ergoemacs-advice run-mode-hooks (&rest hooks)
   "Setup properties for `ergoemacs-map-properties--protect-local' before each function is run."
   :type :around
   (unwind-protect
       (progn
-        (when (and (fboundp 'ergoemacs-map-properties--modify-run-mode-hooks)
+        (when (and (not ergoemacs-run-mode-hooks)
+		   (fboundp 'ergoemacs-map-properties--modify-run-mode-hooks)
                    (boundp 'ergoemacs-mode))
+	  (setq ergoemacs-run-mode-hooks t)
           (ergoemacs-map-properties--modify-run-mode-hooks hooks))
-        ad-do-it)
+        ad-do-it
+	(setq ergoemacs-run-mode-hooks nil))
     (when (and (fboundp 'ergoemacs-map-properties--reset-run-mode-hooks)
                (boundp 'ergoemacs-mode))
-      (ergoemacs-map-properties--reset-run-mode-hooks hooks))))
+      (setq ergoemacs-run-mode-hooks t)
+      (ergoemacs-map-properties--reset-run-mode-hooks hooks)
+      (setq ergoemacs-run-mode-hooks nil))))
 
 (ergoemacs-advice run-hooks (&rest hooks)
   "Setup properties for `ergoemacs-map-properties--protect-local' before each function is run."
@@ -249,14 +256,15 @@ definition."
       (setq ergoemacs-modify-transient-maps old))))
 
 
-(ergoemacs-advice eval-buffer (&optional buffer printflag filename unibyte do-allow-print)
-  "Apply `ergoemacs-component-struct--apply-inits' after evaluating buffer."
-  :type :after
-  (when (called-interactively-p 'any)
-    (setq ergoemacs-component-struct--apply-ensure-p t)
-    (ergoemacs-component-struct--apply-inits)
-    (when ergoemacs-mode-reset
-      (ergoemacs-mode-reset))))
+;; (ergoemacs-advice eval-buffer (&optional buffer printflag filename unibyte do-allow-print)
+;;   "Apply `ergoemacs-component-struct--apply-inits' after evaluating buffer."
+;;   :type :after
+;;   ;; (when (called-interactively-p 'any)
+;;   ;;   (setq ergoemacs-component-struct--apply-ensure-p t)
+;;   ;;   (ergoemacs-component-struct--apply-inits)
+;;   ;;   (when ergoemacs-mode-reset
+;;   ;;     (ergoemacs-mode-reset)))
+;;   )
 
 (ergoemacs-advice undo-tree-overridden-undo-bindings-p ()
   "Use `ergoemacs-mode' remaps to determine if `undo' has been changed."
