@@ -395,6 +395,11 @@ If `narrow-to-region' is in effect, then cut that region only."
   (kill-new (buffer-string))
   (delete-region (point-min) (point-max)))
 
+(defcustom ergoemacs-keep-region-after-copy nil
+  "Keep region after copy."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-copy-line-or-region (&optional arg)
   "Copy current line, or current text selection.
 Pass prefix ARG to the respective copy functions."
@@ -425,7 +430,8 @@ Pass prefix ARG to the respective copy functions."
            (call-interactively 'move-end-of-line)))
        (re-search-forward "\\=\n" nil t) ;; Include newline
        (point)))))
-  (deactivate-mark))
+  (unless ergoemacs-keep-region-after-copy
+    (deactivate-mark)))
 
 (defun ergoemacs-cut-line-or-region (&optional arg)
   "Cut the current line, or current text selection.
