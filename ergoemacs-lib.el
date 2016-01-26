@@ -537,7 +537,7 @@ The reset is done with `ergoemacs-mode-reset'."
 When not contaiend in the variable `ergoemacs-mode', apply ARGS
 to the `warn' function."
   (unless (member args ergoemacs-warn)
-    (apply #'warn args)
+    (display-warning 'ergoemacs (apply #'format args) :warning)
     (push args ergoemacs-warn)))
 
 (defvar ergoemacs-field-len nil)
