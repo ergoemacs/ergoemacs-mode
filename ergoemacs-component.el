@@ -1114,7 +1114,7 @@ be composed over the keymap.  This is done in
                  (t
                   (condition-case err
                       (eval (nth 0 init))
-                    (error (ergoemacs-warn "Ergoemacs: error %s while evaluating" err (nth 0 init))))
+                    (error (ergoemacs-warn "%s while evaluating %s" err (nth 0 init))))
                   (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
                  ;; (t (ergoemacs-warn "Theme did not handle: %s" (nth 0 init)))
                  ))
