@@ -992,8 +992,21 @@ be composed over the keymap.  This is done in
 (defvar ergoemacs-component-struct--applied-plists nil)
 
 (defvar ergoemacs-component-echo-loaded-file-p nil)
+
+(defvar ergoemacs-component-struct--apply-inits nil)
 (defun ergoemacs-component-struct--apply-inits (&optional file obj)
-  "Apply the initializations from the OBJ."
+  "Apply the initializations after loading FILE from the object OBJ.
+
+This is a wrapper for `ergoemacs-component-struct--apply-inits--'
+to prevent infinite recursion."
+  (unless ergoemacs-component-struct--apply-inits
+    (setq ergoemacs-component-struct--apply-inits t)
+    (unwind-protect
+	(ergoemacs-component-struct--apply-inits-- file obj))
+    (setq ergoemacs-component-struct--apply-inits nil)))
+
+(defun ergoemacs-component-struct--apply-inits-- (&optional file obj)
+  "Apply the initializations after loading FILE from the object OBJ."
   (ergoemacs-map-properties--label-known)
   (when (and ergoemacs-component-echo-loaded-file-p file)
     (message "`ergoemacs-mode' Loaded %s" file))
@@ -1114,7 +1127,9 @@ be composed over the keymap.  This is done in
                  (t
                   (condition-case err
                       (eval (nth 0 init))
-                    (error (ergoemacs-warn "%s while evaluating %s" err (nth 0 init))))
+                    (error (progn
+			     (ergoemacs-warn "%s while evaluating %s" err (nth 0 init))
+			     (debug err))))
                   (push (nth 0 init) ergoemacs-component-struct--deferred-functions))
                  ;; (t (ergoemacs-warn "Theme did not handle: %s" (nth 0 init)))
                  ))
