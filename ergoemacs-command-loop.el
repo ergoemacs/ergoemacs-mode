@@ -108,13 +108,14 @@
 (defvar ergoemacs-command-loop-echo-keystrokes)
 (defvar ergoemacs-default-cursor-color)
 (defvar ergoemacs-echo-function)
+(defvar ergoemacs-map--quit-map)
 (defvar ergoemacs-modal-emacs-state-modes)
 (defvar ergoemacs-modal-ignored-buffers)
 (defvar ergoemacs-modal-ignored-keymap)
+(defvar ergoemacs-mode-started-p)
+(defvar guide-key/guide-key-sequence)
 (defvar keyfreq-mode)
 (defvar keyfreq-table)
-(defvar ergoemacs-map--quit-map)
-(defvar guide-key/guide-key-sequence)
 
 
 (defvar universal-argument-num-events) ;; Not in Emacs 24.5
@@ -1492,6 +1493,18 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'.
 (defvar ergoemacs-command-loop--message-log-max nil
   "Determine `message-log-max' for `ergoemacs-command-loop--message'.")
 
+(defcustom ergoemacs-message-level :start
+  "Message Level for `ergoemacs-mode'."
+  :type '(choice
+	  (const :tag "No ergoemacs-mode messages" nil)
+	  (const :tag "New ergoemacs-mode messages" :new)
+	  (const :tag "Mesages on startup" :start)
+	  (const :tag "Maximum debugging messages" :max))
+  :group 'ergoemacs-mode)
+
+(defvar ergoemacs-command-loop--spinner-display :max
+  "Variable to control level of spinner display.")
+
 (defun ergoemacs-command-loop--spinner-display (&optional string &rest args)
   "Spinner display.
 
@@ -1500,22 +1513,46 @@ arguments (ARGS) will be applied with `format'.
 
 STRING can also be a list of strings.  The string selected for
 use with `format' will be selecting using
-`ergoemacs-key-description--unicode-char'."
-  (let* ((string (or (and (listp string)
-                          (eq (car string) 'quote)
-                          (eval string))
-                     string))
-         (rest (or (and (listp string)
-                       (concat " " (apply #'format (apply #'ergoemacs-key-description--unicode-char string) args)))
-                  (and (not string) "")
-                  (concat " " (apply #'format string args))))
-	 (ergoemacs-command-loop--message-log-max (and ergoemacs-command-loop--spinner-display-message message-log-max)))
-    (when (not ergoemacs-command-loop--spinner-list)
-      (setq ergoemacs-command-loop--spinner-list (nth 1 (assoc ergoemacs-command-loop-spinner ergoemacs-command-loop-spinners))
-            ergoemacs-command-loop--spinner-i 0))
-    (ergoemacs-command-loop--message "%s%s" (nth (mod (setq ergoemacs-command-loop--spinner-i (+ 1 ergoemacs-command-loop--spinner-i))
-                                                      (length ergoemacs-command-loop--spinner-list)) ergoemacs-command-loop--spinner-list)
-                                     rest)))
+`ergoemacs-key-description--unicode-char'.
+
+STRING can also be a symbol representing the level of message to
+be displayed. This is used in conjunction with
+`ergoemacs-message-level' to only display messages that should be
+displayed.  When the message should be displayed addional ARGS are then passed to
+`ergoemacs-command-loop--spinner-display' instead of `format'
+"
+  (if (symbolp string)
+      (cond
+       ((eq ergoemacs-message-level :max)
+	(apply #'ergoemacs-command-loop--spinner-display args))
+       ((and (eq string :start) ergoemacs-mode-started-p))
+       ((and (eq string :start) (not ergoemacs-mode-started-p))
+	(setq ergoemacs-message-level :max)
+	(unwind-protect
+	    (apply #'ergoemacs-command-loop--spinner-display args))
+	(setq ergoemacs-message-level :start))
+       ((and (eq string :new)
+	     (memq ergoemacs-message-level '(:new)))
+	(setq ergoemacs-command-loop--spinner-display :new)
+	(unwind-protect
+	    (apply #'ergoemacs-command-loop--spinner-display args))
+	(setq ergoemacs-command-loop--spinner-display :max)))
+    (when (eq ergoemacs-message-level ergoemacs-command-loop--spinner-display)      
+      (let* ((string (or (and (listp string)
+			      (eq (car string) 'quote)
+			      (eval string))
+			 string))
+	     (rest (or (and (listp string)
+			    (concat " " (apply #'format (apply #'ergoemacs-key-description--unicode-char string) args)))
+		       (and (not string) "")
+		       (concat " " (apply #'format string args))))
+	     (ergoemacs-command-loop--message-log-max (and ergoemacs-command-loop--spinner-display-message message-log-max)))
+	(when (not ergoemacs-command-loop--spinner-list)
+	  (setq ergoemacs-command-loop--spinner-list (nth 1 (assoc ergoemacs-command-loop-spinner ergoemacs-command-loop-spinners))
+		ergoemacs-command-loop--spinner-i 0))
+	(ergoemacs-command-loop--message "%s%s" (nth (mod (setq ergoemacs-command-loop--spinner-i (+ 1 ergoemacs-command-loop--spinner-i))
+							  (length ergoemacs-command-loop--spinner-list)) ergoemacs-command-loop--spinner-list)
+					 rest)))))
 
 (defun ergoemacs-command-loop--spinner-end ()
   "Cancel the `ergoemacs-command-loop--spinner' timer."

@@ -102,10 +102,10 @@ Whe changed return t, otherwise return nil."
       (unless (and defer (ergoemacs-autoloadp variable))
         (unless (get variable :ergoemacs-save-value)
           (put variable :ergoemacs-save-value (if new-value nil 1)))
-        (ergoemacs :spinner "Call (%s %s)" variable new-value)
+        (ergoemacs :spinner :new "Call (%s %s)" variable new-value)
         ;; (message "(%s %s) #1" variable new-value)
         (funcall variable new-value)
-        (ergoemacs :spinner "Done (%s %s)" variable new-value)
+        (ergoemacs :spinner :new "Done (%s %s)" variable new-value)
         (put variable :ergoemacs-set-value (ergoemacs-sv variable))
         (pushnew variable ergoemacs-set-ignore-customize)
         (setq ret t)))
@@ -114,9 +114,9 @@ Whe changed return t, otherwise return nil."
        ((and minor-mode-p (not new-value) (functionp variable))
         (unless (and defer (ergoemacs-autoloadp variable))
           ;; (message "(%s -1) #2" variable)
-          (ergoemacs :spinner "Call (%s -1)" variable)
+          (ergoemacs :spinner :new "Call (%s -1)" variable)
           (funcall variable -1)
-          (ergoemacs :spinner "Done (%s -1)" variable)
+          (ergoemacs :spinner :new "Done (%s -1)" variable)
           (unless (get variable :ergoemacs-save-value)
             (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
           (put variable :ergoemacs-set-value (ergoemacs-sv variable))
@@ -125,9 +125,9 @@ Whe changed return t, otherwise return nil."
        ((and minor-mode-p new-value (functionp variable))
         (unless (and defer (ergoemacs-autoloadp variable))
           ;; (message "(%s %s) #3" variable new-value)
-          (ergoemacs :spinner "Call (%s %s)" variable new-value)
+          (ergoemacs :spinner :new "Call (%s %s)" variable new-value)
           (funcall variable new-value)
-          (ergoemacs :spinner "Done (%s %s)" variable new-value)
+          (ergoemacs :spinner :new "Done (%s %s)" variable new-value)
           (unless (get variable :ergoemacs-save-value)
             (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
           (put variable :ergoemacs-set-value (ergoemacs-sv variable))
@@ -532,6 +532,7 @@ The reset is done with `ergoemacs-mode-reset'."
 
 (defvar ergoemacs-warn nil
   "List of warnings that `ergoemacs-mode' already gave.")
+
 (defun ergoemacs-warn (&rest args)
   "Warn user only once.
 When not contaiend in the variable `ergoemacs-mode', apply ARGS

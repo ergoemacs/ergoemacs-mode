@@ -695,7 +695,8 @@ The optional ADD-MAP argument adds maps to the map-list.  It can be a symbol or 
 (defvar ergoemacs-map-properties--get-or-generate-map-name nil)
 
 (defun ergoemacs-map-properties--label-map (map &optional label-empty-p)
-  "Label MAP"
+  "Label MAP.  
+When LABEL-EMPTY-P is non-nil, also label empty maps."
   (let* (sv)
     (cond 
      ((get map :ergoemacs-labeled)
@@ -788,7 +789,7 @@ When DROP is non-nil, drop any found maps from `ergoemacs-map-properties--known-
 	;; Generate and save.
 	(setq ergoemacs-map-properties--get-or-generate-map-key
 	      (+ 1 ergoemacs-map-properties--get-or-generate-map-key))
-	(ergoemacs :spinner '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") last-map)
+	(ergoemacs :spinner :new '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") last-map)
 	(dolist (map map-list)
 	  (ergoemacs :map-list ergoemacs-map-properties--get-or-generate-map-key map))
 	ergoemacs-map-properties--get-or-generate-map-key)
@@ -801,7 +802,7 @@ When DROP is non-nil, drop any found maps from `ergoemacs-map-properties--known-
 	      (+ 1 ergoemacs-map-properties--get-or-generate-map-key))
 	(puthash (intern ergoemacs-map--breadcrumb) ergoemacs-map-properties--get-or-generate-map-key ergoemacs-breadcrumb-hash)
 	(puthash ergoemacs-map-properties--get-or-generate-map-key (intern ergoemacs-map--breadcrumb) ergoemacs-breadcrumb-hash)
-	(ergoemacs :spinner '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") ergoemacs-map--breadcrumb)
+	(ergoemacs :spinner :new '("🎫→%s (Save)" "Label→%s (Save)" "Label->%s (Save)") ergoemacs-map--breadcrumb)
 	(setq ergoemacs-map--breadcrumb "")
 	ergoemacs-map-properties--get-or-generate-map-key)
        (ret

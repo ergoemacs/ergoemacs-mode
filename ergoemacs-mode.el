@@ -1261,6 +1261,7 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
   "Run functions for anything that is loaded after emacs starts up."
   (run-hooks 'ergoemacs-mode-after-load-hook))
 
+(defvar ergoemacs-mode-started-p nil)
 (defun ergoemacs-mode-after-init-emacs ()
   "Run functions after emacs loads."
   (unless ergoemacs-mode--start-p
@@ -1273,7 +1274,8 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
            (time2 (aref (gethash 'ergoemacs-mode-after-init-emacs ergoemacs-timing-hash) 1))
            (time3 (+ time1 time2)))
       (message "Started `ergoemacs-mode'. Total startup time %f (Load: %f, Initialize:%f%s)"
-               time3 time1 time2 (or (and ergoemacs-mode--fast-p ", cached") "")))))
+               time3 time1 time2 (or (and ergoemacs-mode--fast-p ", cached") ""))))
+  (setq ergoemacs-mode-started-p t))
 
 (if ergoemacs-mode--fast-p
     (provide 'ergoemacs-themes)
