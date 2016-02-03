@@ -149,7 +149,8 @@ The backup is determined by `find-backup-file-name'"
            (or (and (not (eq last-command 'ergoemacs-revert-buffer))
                     (setq ergoemacs-revert-buffer 0)
                     (file-readable-p (nth ergoemacs-revert-buffer backup-buffer))
-                    (yes-or-no-p (format "Revert buffer to backup saved on disk (%s)?" (nth 0 backup-buffer))))
+                    (if (and (= (point-min) (point-max)) (not (eq last-command 'ergoemacs-revert-buffer))) nil
+		      (yes-or-no-p (format "Revert buffer to backup saved on disk (%s)?" (nth 0 backup-buffer)))))
                (and (eq last-command 'ergoemacs-revert-buffer)
                     (setq ergoemacs-revert-buffer (+ ergoemacs-revert-buffer 1)))))
       (if (= ergoemacs-revert-buffer (length backup-buffer))
