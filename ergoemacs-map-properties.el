@@ -398,14 +398,28 @@ When AFTER is non-nil, this is a list of keys that changed after
       (setq ergoemacs-map-properties--protect-local (list hook fn)))))
 
 
+(defvar ergoemacs-map-properties--modify-run-mode-hooks-excluded
+  '(font-lock-mode-hook)
+  "List of hooks where keymaps should not be modified.")
+
+(defun ergoemacs-map-properties--modify-run-mode-hooks-p (hook)
+  "Should the HOOK be modified?
+This tests if HOOK is:
+- bound with `boundp'
+- matches mode-hook
+- Is not in `ergoemacs-map-properties--modify-run-mode-hooks-excluded'"
+  (and (boundp hook)
+       (string-match-p "mode-hook\\'" (symbol-name hook))
+       (not (memq hook ergoemacs-map-properties--modify-run-mode-hooks-excluded))))
+
 (defun ergoemacs-map-properties--modify-run-mode-hooks (&rest hooks)
   "Modify HOOKS to run `ergoemacs-map-properties--protect-local' before hook."
   (let (tmp hook-value)
     (dolist (hook (or (and (consp hooks) hooks) (list hooks)))
       (if (consp hook)
           (dolist (lhook hook)
-            (ergoemacs-map-properties--modify-run-mode-hooks lhook))
-        (when (and hook (boundp hook) (and (string-match-p "mode-hook" (symbol-name hook))))
+	    (ergoemacs-map-properties--modify-run-mode-hooks lhook))
+        (when (and hook (ergoemacs-map-properties--modify-run-mode-hooks-p hook))
           (set hook
                (cond
                 ((and (setq hook-value (symbol-value hook))
@@ -431,7 +445,10 @@ When AFTER is non-nil, this is a list of keys that changed after
       (if (consp hook)
           (dolist (lhook hook)
             (ergoemacs-map-properties--reset-run-mode-hooks lhook))
-        (when (and hook (boundp hook) (and (string-match-p "mode-hook" (symbol-name hook))))
+        (when (and hook
+		   (boundp hook)
+		   (string-match-p "mode-hook" (symbol-name hook))
+		   (ergoemacs-map-properties--modify-run-mode-hooks-p hook))
           (set hook
                (cond
                 ((and (setq hook-value (symbol-value hook))
