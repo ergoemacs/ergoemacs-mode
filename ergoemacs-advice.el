@@ -190,7 +190,7 @@ definition."
     (setq ergoemacs-define-key-after-p t)
     (unwind-protect
         (progn
-          (when (eq keymap (current-global-map))
+          (when (eq keymap global-map) ;; (current-global-map)
             (let ((map-key (ergoemacs (ergoemacs keymap :original) :map-key)))
               (cond
                ((not (integerp map-key)))
