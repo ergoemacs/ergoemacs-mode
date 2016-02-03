@@ -177,6 +177,7 @@ Volitale map symbols are defined in `ergoemacs-map--volatile-symbols'."
 	(throw 'found t)))
     nil))
 
+(defvar ergoemacs-map--alist-atom-symbol-reset-when-volatile nil)
 (defun ergoemacs-map--alist-atom (symbol keymap breadcrumb-base &optional original-user)
   "Basic function for addressing Emacs keymap alists.
 
@@ -194,6 +195,8 @@ ORIGINAL-USER is non-nil."
        ((ergoemacs-map--volatile-p symbol)
 	(setq ergoemacs-map--breadcrumb ""
 	      tmp (ergoemacs-gethash (cdr keymap) hash-table))
+	(when ergoemacs-map--alist-atom-symbol-reset-when-volatile
+	  (puthash ergoemacs-map--alist-atom-symbol-reset-when-volatile -1 ergoemacs-map--alist))
 	(unless tmp
 	  (setq tmp (or (and original-user (ergoemacs keymap :original-user)) (ergoemacs keymap)))
 	  (puthash (cdr keymap) tmp hash-table)))
@@ -211,37 +214,40 @@ ORIGINAL-USER is non-nil."
       (when symbol
         (puthash symbol (length alist) ergoemacs-map--alist)
         (setq breadcrumb-base (format "%s:%s" old-breadcrumb symbol)))
-      (prog1 (mapcar
-              (lambda(elt)
-                (cond
-                 ;; ((not (ergoemacs-sv (car elt)))
-                 ;;  ;; not enabled, ignore any changes to this map...?
-                 ;;  elt)
-                 ((eq (car elt) 'ergoemacs-mode) elt)
-                 
-                 ((and (not (setq type (ergoemacs (cdr elt) :installed-p))) ergoemacs-mode)
-                  ;; Install `ergoemacs-mode' into the keymap
-                  (ergoemacs-map--alist-atom (car elt) (cdr elt) breadcrumb-base))
-                 ((not type)
-                  ;; Install `ergoemacs-mode' user protection into the
-                  ;; keymap.
-                  (ergoemacs-map--alist-atom (car elt) (cdr elt) breadcrumb-base t))
-                 ((eq :cond-map type)
-                  ;; Don't change conditional maps.  Change in alists...?
-                  elt)
-                 ((and ergoemacs-mode (eq :protected-p type))
-                  ;; Change protection into full ergoemacs-mode installation
-                  (ergoemacs-map--alist-atom (car elt) (ergoemacs (cdr elt) :original) breadcrumb-base))
-                 ((eq :protected-p type)
-                  ;; Already protected.
-                  elt)
-                 ((and ergoemacs-mode type)
-                  ;; Already installed
-                  elt)
-                 ((and (not ergoemacs-mode) type)
-                  (ergoemacs-map--alist-atom (car elt) (ergoemacs (cdr elt) :original-user) breadcrumb-base))))
-              alist)
-        (setq ergoemacs-map--breadcrumb old-breadcrumb)))))
+      (setq ergoemacs-map--alist-atom-symbol-reset-when-volatile symbol)
+      (prog1
+	  (unwind-protect
+	      (prog1 (mapcar
+		      (lambda(elt)
+			(cond
+			 ;; ((not (ergoemacs-sv (car elt)))
+			 ;;  ;; not enabled, ignore any changes to this map...?
+			 ;;  elt)
+			 ((eq (car elt) 'ergoemacs-mode) elt)
+			 ((and (not (setq type (ergoemacs (cdr elt) :installed-p))) ergoemacs-mode)
+			  ;; Install `ergoemacs-mode' into the keymap
+			  (ergoemacs-map--alist-atom (car elt) (cdr elt) breadcrumb-base))
+			 ((not type)
+			  ;; Install `ergoemacs-mode' user protection into the
+			  ;; keymap.
+			  (ergoemacs-map--alist-atom (car elt) (cdr elt) breadcrumb-base t))
+			 ((eq :cond-map type)
+			  ;; Don't change conditional maps.  Change in alists...?
+			  elt)
+			 ((and ergoemacs-mode (eq :protected-p type))
+			  ;; Change protection into full ergoemacs-mode installation
+			  (ergoemacs-map--alist-atom (car elt) (ergoemacs (cdr elt) :original) breadcrumb-base))
+			 ((eq :protected-p type)
+			  ;; Already protected.
+			  elt)
+			 ((and ergoemacs-mode type)
+			  ;; Already installed
+			  elt)
+			 ((and (not ergoemacs-mode) type)
+			  (ergoemacs-map--alist-atom (car elt) (ergoemacs (cdr elt) :original-user) breadcrumb-base))))
+		      alist)
+		(setq ergoemacs-map--breadcrumb old-breadcrumb)))
+	(setq ergoemacs-map--alist-atom-symbol-reset-when-volatile nil)))))
 
 (defvar ergoemacs-map--alists (make-hash-table))
 (defun ergoemacs-map--alists (alists &optional symbol)
