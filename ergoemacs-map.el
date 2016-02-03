@@ -177,21 +177,30 @@ Volitale map symbols are defined in `ergoemacs-map--volatile-symbols'."
 	(throw 'found t)))
     nil))
 
-(defun ergoemacs-map--alist-atom (a b breadcrumb-base &optional original-user)
-  (let ((tmp)
-        (hash-table (or (and original-user ergoemacs-map--alist-t-o) ergoemacs-map--alist-t))
-        (breadcrumb-add (or (and original-user (format "%s:o" a)) (format "%s" a))))
-    (cond
-     ((ergoemacs-map--volatile-p a)
-      (setq ergoemacs-map--breadcrumb ""
-            tmp (ergoemacs-gethash (cdr b) hash-table))
-      (unless tmp
-        (setq tmp (or (and original-user (ergoemacs b :original-user)) (ergoemacs b)))
-        (puthash (cdr b) tmp hash-table)))
-     (t
-      (setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base breadcrumb-add)
-            tmp (or (and original-user (ergoemacs b :original-user)) (ergoemacs b)))))
-    (cons a tmp)))
+(defun ergoemacs-map--alist-atom (symbol keymap breadcrumb-base &optional original-user)
+  "Basic function for addressing Emacs keymap alists.
+
+These alists are typically of the form (SYMBOL . KEYMAP).  This
+function assumes these two arguments are sent to this function,
+along with the BREADCRUMB-BASE to determine the keymap with
+`erogemacs-mode' modifications installed, or removed when
+ORIGINAL-USER is non-nil."
+  (if (not (and (symbolp symbol) (ergoemacs-keymapp keymap)))
+      (cons symbol keymap)
+    (let ((tmp)
+	  (hash-table (or (and original-user ergoemacs-map--alist-t-o) ergoemacs-map--alist-t))
+	  (breadcrumb-add (or (and original-user (format "%s:o" symbol)) (format "%s" symbol))))
+      (cond
+       ((ergoemacs-map--volatile-p symbol)
+	(setq ergoemacs-map--breadcrumb ""
+	      tmp (ergoemacs-gethash (cdr keymap) hash-table))
+	(unless tmp
+	  (setq tmp (or (and original-user (ergoemacs keymap :original-user)) (ergoemacs keymap)))
+	  (puthash (cdr keymap) tmp hash-table)))
+       (t
+	(setq ergoemacs-map--breadcrumb (format "%s:%s" breadcrumb-base breadcrumb-add)
+	      tmp (or (and original-user (ergoemacs keymap :original-user)) (ergoemacs keymap)))))
+      (cons symbol tmp))))
 
 (defun ergoemacs-map--alist (alist &optional symbol)
   "Apply maps for ALIST."
