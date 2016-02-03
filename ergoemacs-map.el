@@ -161,12 +161,28 @@ When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
 (defvar ergoemacs-map--alist-t (make-hash-table))
 (defvar ergoemacs-map--alist-t-o (make-hash-table))
 
+(defvar ergoemacs-map--volatile-symbols '(t helm--minor-mode)
+  "List of volatile symbols where breadcrumb is not effective.")
+
+(defun ergoemacs-map--volatile-p (symbol)
+  "Is SYMBOL a volatile keymap prefix?
+
+This tests volitile prefixes in any of the Emacs keymap alists
+such as `minor-mode-map-alist'.
+
+Volitale map symbols are defined in `ergoemacs-map--volatile-symbols'."
+  (catch 'found
+    (dolist (v ergoemacs-map--volatile-symbols)
+      (when (eq v symbol)
+	(throw 'found t)))
+    nil))
+
 (defun ergoemacs-map--alist-atom (a b breadcrumb-base &optional original-user)
   (let ((tmp)
         (hash-table (or (and original-user ergoemacs-map--alist-t-o) ergoemacs-map--alist-t))
         (breadcrumb-add (or (and original-user (format "%s:o" a)) (format "%s" a))))
     (cond
-     ((eq a t)
+     ((ergoemacs-map--volatile-p a)
       (setq ergoemacs-map--breadcrumb ""
             tmp (ergoemacs-gethash (cdr b) hash-table))
       (unless tmp
