@@ -184,6 +184,12 @@ It needs to be less than `ergoemacs-command-loop-blink-rate'.")
     mc--this-command)
   "Commands that will be set to what `ergoemacs-command-loop' executes.")
 
+(defun ergoemacs-command-loop--execute-modify-command-list (command)
+  "Set variables in `ergoemacs-command-loop--execute-modify-command-list' to COMMAND."
+  (ergoemacs-save-buffer-state
+   (dolist (var ergoemacs-command-loop--execute-modify-command-list)
+     (set var command))))
+
 (defvar ergoemacs-command-loop--single-command-keys nil
   "If defined, a vector of the command keys pressed in the `ergoemacs-command-loop'.")
 
@@ -1273,7 +1279,8 @@ FN-ARG-P can be nil, :drop-rest or :rest"
             '(select-window (posn-window (event-start last-command-event))))
          (if ,rest-p
              (apply ',command last-command-event ,@strip-args)
-           (,command last-command-event ,@drop-rest))))
+           (,command last-command-event ,@drop-rest))
+	 (ergoemacs-command-loop--execute-modify-command-list ',command)))
      
      ((not rest-p)
       `(lambda ,fn-args
@@ -1282,7 +1289,8 @@ FN-ARG-P can be nil, :drop-rest or :rest"
             `(interactive))
          ,(when select-window-p
             '(select-window (posn-window (event-start last-command-event))))
-         (,command last-command-event ,@strip-args))))))
+         (,command last-command-event ,@strip-args)
+	 (ergoemacs-command-loop--execute-modify-command-list ',command))))))
 
 (defun ergoemacs-command-loop--call-mouse-command (command &optional record-flag keys)
   "Call a possible mouse COMMAND.
@@ -1606,10 +1614,7 @@ This function accepts any number of arguments, but ignores them.
 Unlike `ignore', this command pretends `ergoemacs-command-loop--ignore' command was never
 run, by changing `this-command' to `last-command'"
   (interactive)
-  (dolist (s ergoemacs-command-loop--execute-modify-command-list)
-    (when (boundp s)
-      (set s last-command)))
-  
+  (ergoemacs-command-loop--execute-modify-command-list last-command)
   ;; FIXME: Somehow change the output of `this-single-command-raw-keys'
   nil)
 
@@ -2074,10 +2079,8 @@ For instance in QWERTY M-> is shift translated to M-."
           ;; should be modified as well.
           
           ;; These are stored in `ergoemacs-command-loop--execute-modify-command-list'
-          
-          (ergoemacs-save-buffer-state
-           (dolist (var ergoemacs-command-loop--execute-modify-command-list)
-             (set var command)))
+
+	  (ergoemacs-command-loop--execute-modify-command-list command)
           
           ;; Handle Shift Selection
           (ergoemacs-command-loop--execute-handle-shift-selection this-command)
