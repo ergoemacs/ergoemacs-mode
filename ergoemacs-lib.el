@@ -504,6 +504,8 @@ The reset is done with `ergoemacs-mode-reset'."
   (interactive)
   (if (called-interactively-p 'any)
       (progn
+	(setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout)
+	(setenv "ERGOEMACS_THEME" ergoemacs-theme)
         (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode --eval \"(ergoemacs-gen-ahk %s)\" &"
                                (ergoemacs-emacs-exe)
                                ergoemacs-dir (if current-prefix-arg "t" "nil"))))
