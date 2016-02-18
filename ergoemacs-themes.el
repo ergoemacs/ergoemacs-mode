@@ -1944,7 +1944,7 @@
                  multiple-cursors-remaps
                  quit
                  apps-swap
-                 save-options-on-exit
+                 ;;save-options-on-exit
                  ;; Reverse menu-bar order
                  menu-bar-help
                  menu-bar-languages
@@ -1964,6 +1964,7 @@
                   helm-files-up
                   ido-prev-next-instead-of-left-right
                   join-line
+		  save-options-on-exit
                   isearch-arrows)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
