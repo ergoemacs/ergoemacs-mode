@@ -790,6 +790,26 @@ Based on `elp-results'."
     (pop-to-buffer resultsbuf)
     (goto-char (point-min))))
 
+(fset 'ergoemacs--real-mouse-menu-major-mode-map (symbol-function #'mouse-menu-major-mode-map))
+
+(defcustom ergoemacs-swap-major-modes-when-clicking-major-mode-name nil
+  "Allow Swapping of major-modes when clicking the mode-name."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-major-mode-menu-map ()
+  "Popup major modes and information about current mode."
+  (interactive)
+  (let ((map (and ergoemacs-swap-major-modes-when-clicking-major-mode-name
+		  (key-binding [menu-bar languages])))
+	mmap)
+    (if (not map)
+	(ergoemacs--real-mouse-menu-major-mode-map)
+      (setq mmap (ergoemacs--real-mouse-menu-major-mode-map))
+      (define-key map [major-mode-sep-b] '(menu-item  "---"))
+      (define-key map [major-mode] (cons (nth 1 mmap) mmap))
+      map)))
+
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-lib.el ends here

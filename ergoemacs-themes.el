@@ -1884,6 +1884,10 @@
   ;; single key, useful
   (define-key isearch-mode-map (kbd "<right>") 'isearch-repeat-forward))
 
+(ergoemacs-component mode-line-major-mode-switch ()
+  "Switch major modes by clicking mode-name."
+  (setq ergoemacs-swap-major-modes-when-clicking-major-mode-name t))
+
 
 (ergoemacs-autoload multiple-cursors
     "Multiple Cursors"
@@ -1952,6 +1956,7 @@
                  menu-bar-search
                  menu-bar-edit
                  menu-bar-file
+		 mode-line-major-mode-switch
                  )
   :optional-off '(guru
                   alt-backspace-is-undo
@@ -1976,6 +1981,7 @@
                   ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
                   ("Extra Functionality" (join-line isearch-arrows))
                   ("Packages" (avy multiple-cursors expand-region))
+		  ("Mode Line" (mode-line-major-mode-switch))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
 
 (ergoemacs-theme reduction ()

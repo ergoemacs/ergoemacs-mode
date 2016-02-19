@@ -307,6 +307,11 @@ command seleceted, instead of rerunning `smex' and
 	ergoemacs-command-loop--grow-keys keys
 	ergoemacs-command-loop--grow-special special))
 
+(ergoemacs-advice mouse-menu-major-mode-map ()
+  "Modify to list major modes for `ergoemacs-mode'."
+  :type :replace
+  (ergoemacs-major-mode-menu-map))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here

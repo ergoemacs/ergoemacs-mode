@@ -175,10 +175,7 @@ The backup is determined by `find-backup-file-name'"
     ;; Fix-me: Maybe test for minor modes? How was that done?
     (when (and (fboundp value)
                (commandp value)
-               (not (memq value '(flyspell-mode
-                                  isearch-mode
-                                  savehist-mode
-                                  )))
+               (not (memq value '(flyspell-mode isearch-mode savehist-mode)))
                (< 5 (length sym-name))
                (string= "-mode" (substring sym-name (- (length sym-name) 5)))
                (if (and (listp (symbol-function value))
