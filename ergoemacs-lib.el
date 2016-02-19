@@ -296,6 +296,9 @@ Tries to get the value from `ergoemacs-mode-names'.  If not guess the language n
                       (substring ret 1)))
     ret))
 
+(defvar ergoemacs-menu--get-major-modes nil
+  "List of major-modes known to `ergoemacs-mode'.")
+
 (defun ergoemacs-menu--get-major-modes ()
   "Gets a list of language modes known to `ergoemacs-mode'.
 This gets all major modes known from the variables:
@@ -333,7 +336,8 @@ All other modes are assumed to be minor modes or unimportant.
             (push (downcase (symbol-name (cdr elt))) added-modes)
             (push (cdr elt) modes)))))
     (setq modes (sort ret (lambda(x1 x2) (string< (downcase (nth 2 x2))
-                                                  (downcase (nth 2 x1))))))
+                                                  (downcase (nth 2 x1)))))
+	  ergoemacs-menu--get-major-modes (mapcar (lambda(x) (intern x)) added-modes))
     (setq ret '())
     (dolist (elt modes)
       (let ((this-letter (upcase (substring (nth 2 elt) 0 1))))
@@ -797,18 +801,22 @@ Based on `elp-results'."
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defvar ergoemacs-major-mode-menu-map nil)
 (defun ergoemacs-major-mode-menu-map ()
   "Popup major modes and information about current mode."
   (interactive)
-  (let ((map (and ergoemacs-swap-major-modes-when-clicking-major-mode-name
-		  (key-binding [menu-bar languages])))
-	mmap)
-    (if (not map)
-	(ergoemacs--real-mouse-menu-major-mode-map)
-      (setq mmap (ergoemacs--real-mouse-menu-major-mode-map))
-      (define-key map [major-mode-sep-b] '(menu-item  "---"))
-      (define-key map [major-mode] (cons (nth 1 mmap) mmap))
-      map)))
+  (or ergoemacs-major-mode-menu-map
+      (set (make-local-variable 'ergoemacs-major-mode-menu-map)
+	   (let ((map (and ergoemacs-swap-major-modes-when-clicking-major-mode-name
+			   (memq major-mode ergoemacs-menu--get-major-modes) ;; Mode in menu
+			   (key-binding [menu-bar languages])))
+		 mmap)
+	     (if (not map)
+		 (ergoemacs--real-mouse-menu-major-mode-map)
+	       (setq mmap (ergoemacs--real-mouse-menu-major-mode-map))
+	       (define-key map [major-mode-sep-b] '(menu-item  "---"))
+	       (define-key map [major-mode] (cons (nth 1 mmap) mmap))
+	       map)))))
 
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
