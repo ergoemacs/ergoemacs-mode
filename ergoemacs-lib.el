@@ -801,6 +801,12 @@ Based on `elp-results'."
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-major-mode-menu-map-extra-modes
+  '(fundamental-mode lisp-interaction-mode)
+  "List of extra modes that should bring up the major-mode menu."
+  :type '(repeat (function :tag "Major Mode"))
+  :group 'ergoemacs-mode)
+
 (defvar ergoemacs-major-mode-menu-map nil)
 (defun ergoemacs-major-mode-menu-map ()
   "Popup major modes and information about current mode."
@@ -808,7 +814,8 @@ Based on `elp-results'."
   (or ergoemacs-major-mode-menu-map
       (set (make-local-variable 'ergoemacs-major-mode-menu-map)
 	   (let ((map (and ergoemacs-swap-major-modes-when-clicking-major-mode-name
-			   (memq major-mode ergoemacs-menu--get-major-modes) ;; Mode in menu
+			   (memq major-mode (append ergoemacs-major-mode-menu-map-extra-modes
+						    ergoemacs-menu--get-major-modes)) ;; Mode in menu
 			   (key-binding [menu-bar languages])))
 		 mmap)
 	     (if (not map)
