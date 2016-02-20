@@ -296,16 +296,26 @@ Tries to get the value from `ergoemacs-mode-names'.  If not guess the language n
                       (substring ret 1)))
     ret))
 
+(defcustom ergoemacs-major-mode-menu-map-extra-modes
+  '(fundamental-mode lisp-interaction-mode)
+  "List of extra modes that should bring up the major-mode menu."
+  :type '(repeat (function :tag "Major Mode"))
+  :group 'ergoemacs-mode)
+
 (defvar ergoemacs-menu--get-major-modes nil
   "List of major-modes known to `ergoemacs-mode'.")
 
+(defun ergoemacs-menu--get-major-modes--try (cur-mode modes added-modes all dups ret)
+  )
+
 (defun ergoemacs-menu--get-major-modes ()
-  "Gets a list of language modes known to `ergoemacs-mode'.
+  "Gets a list of language modes known to `eurgoemacs-mode'.
 This gets all major modes known from the variables:
 -  `interpreter-mode-alist';
 -  `magic-mode-alist'
 -  `magic-fallback-mode-alist'
 -  `auto-mode-alist'
+- `ergoemacs-major-mode-menu-map-extra-modes'
 
 All other modes are assumed to be minor modes or unimportant.
 "
@@ -314,6 +324,23 @@ All other modes are assumed to be minor modes or unimportant.
         all dups cur-lst current-letter
         added-modes
         (modes '()))
+    (dolist (elt ergoemacs-major-mode-menu-map-extra-modes)
+      (unless (memq elt modes)
+        (when (and (functionp elt)
+                   (ignore-errors (string-match "-mode$" (symbol-name elt))))
+          (unless (or (memq elt ergoemacs-excluded-major-modes)
+                      (member (downcase (symbol-name elt)) added-modes))
+            (let* ((name (ergoemacs-menu--get-major-mode-name elt))
+                   (first (upcase (substring name 0 1))))
+              (if (member first all)
+                  (unless (member first dups)
+                    (push first dups))
+                (push first all))
+              (push (list elt 'menu-item
+                          name
+                          elt) ret))
+            (push (downcase (symbol-name elt)) added-modes)
+            (push elt modes)))))
     (dolist (elt (append
                   interpreter-mode-alist
                   magic-mode-alist
@@ -801,12 +828,6 @@ Based on `elp-results'."
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-major-mode-menu-map-extra-modes
-  '(fundamental-mode lisp-interaction-mode)
-  "List of extra modes that should bring up the major-mode menu."
-  :type '(repeat (function :tag "Major Mode"))
-  :group 'ergoemacs-mode)
-
 (defvar ergoemacs-major-mode-menu-map nil)
 (defun ergoemacs-major-mode-menu-map ()
   "Popup major modes and information about current mode."
@@ -814,8 +835,8 @@ Based on `elp-results'."
   (or ergoemacs-major-mode-menu-map
       (set (make-local-variable 'ergoemacs-major-mode-menu-map)
 	   (let ((map (and ergoemacs-swap-major-modes-when-clicking-major-mode-name
-			   (memq major-mode (append ergoemacs-major-mode-menu-map-extra-modes
-						    ergoemacs-menu--get-major-modes)) ;; Mode in menu
+			   ;; Mode in menu
+			   (memq major-mode ergoemacs-menu--get-major-modes) 
 			   (key-binding [menu-bar languages])))
 		 mmap)
 	     (if (not map)
