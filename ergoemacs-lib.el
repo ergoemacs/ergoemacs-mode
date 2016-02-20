@@ -846,6 +846,19 @@ Based on `elp-results'."
 	       (define-key map [major-mode] (cons (nth 1 mmap) mmap))
 	       map)))))
 
+(defun ergoemacs-mode-line-next-buffer (event)
+  "Next ergoemacs buffer"
+  (interactive "e")
+  (with-selected-window (posn-window (event-start event))
+    ;; (next-buffer)
+    (ergoemacs-change-buffer 1)))
+
+(defun ergoemacs-mode-line-previous-buffer (event)
+  "Prevous ergoemacs buffer"
+  (interactive "e")
+  (with-selected-window (posn-window (event-start event))
+    (ergoemacs-change-buffer -1)))
+
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-lib.el ends here

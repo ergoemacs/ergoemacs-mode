@@ -312,6 +312,21 @@ command seleceted, instead of rerunning `smex' and
   :type :replace
   (ergoemacs-major-mode-menu-map))
 
+(ergoemacs-advice mode-line-next-buffer (event)
+  "Modify mode-line-next-buffer for `ergoemacs-mode'"
+  :type :around
+  (if ergoemacs-mode
+      (ergoemacs-mode-line-next-buffer event)
+    ad-do-it))
+
+
+(ergoemacs-advice mode-line-previous-buffer (event)
+  "Modify mode-line-next-buffer for `ergoemacs-mode'"
+  :type :around
+  (if ergoemacs-mode
+      (ergoemacs-mode-line-previous-buffer event)
+    ad-do-it))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
