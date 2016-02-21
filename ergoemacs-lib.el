@@ -305,9 +305,6 @@ Tries to get the value from `ergoemacs-mode-names'.  If not guess the language n
 (defvar ergoemacs-menu--get-major-modes nil
   "List of major-modes known to `ergoemacs-mode'.")
 
-(defun ergoemacs-menu--get-major-modes--try (cur-mode modes added-modes all dups ret)
-  )
-
 (defun ergoemacs-menu--get-major-modes ()
   "Gets a list of language modes known to `eurgoemacs-mode'.
 This gets all major modes known from the variables:
@@ -846,18 +843,104 @@ Based on `elp-results'."
 	       (define-key map [major-mode] (cons (nth 1 mmap) mmap))
 	       map)))))
 
+(defcustom ergoemacs-mode-line-change-buffer 'ergoemacs-mode-line-group-function 
+  "Method of changing buffer."
+  :type '(choice
+	  (function :tag "Function to group buffers.")
+	  (const :tag "Switch to next/previous user/emacs buffer." 'ergoemacs)
+	  (const :tag "Use emacs default method." nil)))
+
+(defun ergoemacs-mode-line-buffer-list ()
+  "List of buffers shown in popup menu."
+  (delq nil
+        (mapcar #'(lambda (b)
+                    (cond
+                     ;; Always include the current buffer.
+                     ((eq (current-buffer) b) b)
+                     ((buffer-file-name b) b)
+                     ((char-equal ?\  (aref (buffer-name b) 0)) nil)
+                     ((buffer-live-p b) b)))
+                (buffer-list))))
+
+(defun ergoemacs-mode-line-group-function (&optional buffer)
+  "What group does the current buffer belong to?"
+  (if (char-equal ?\* (aref (buffer-name buffer) 0))
+      "Emacs Buffer"
+    "User Buffer"))
+
+(defun ergoemacs-mode-line-menu (&optional buffer)
+  (let* ((cb (or buffer (current-buffer)))
+	 (group (if (functionp ergoemacs-mode-line-change-buffer)
+		    (funcall ergoemacs-mode-line-change-buffer)
+		  '("Common")))
+	 (groups '())
+	 (buf-list (sort
+		    (mapcar
+		     ;; for each buffer, create list: buffer, buffer name, groups-list
+		     ;; sort on buffer name; store to bl (buffer list)
+		     (lambda (b)
+		       (let (tmp0 tmp1 tmp2)
+			 (with-current-buffer b
+			   (setq tmp0 (current-buffer)
+				 tmp1 (buffer-name)
+				 tmp2 (if (functionp ergoemacs-mode-line-change-buffer)
+					  (funcall ergoemacs-mode-line-change-buffer)
+					"Common"))
+			   (unless (or (string= group tmp2) (assoc tmp2 groups))
+			     (push (cons tmp2 (intern tmp2)) groups))
+			   (list tmp0 tmp1 tmp2 (intern tmp1)))))
+		     (ergoemacs-mode-line-buffer-list))
+		    (lambda (e1 e2)
+		      (or (and (string= (nth 2 e2) (nth 2 e2))
+			       (not (string-lessp (nth 1 e1) (nth 1 e2))))
+			  (not (string-lessp (nth 2 e1) (nth 2 e2)))))))
+	 menu menu2 tmp)
+    (dolist (item buf-list)
+      (if (string= (nth 2 item) group)
+	  (unless (eq (current-buffer) (nth 0 item))
+	    (push `(,(nth 3 item) menu-item ,(nth 1 item) (lambda() (interactive) (funcall menu-bar-select-buffer-function ,(nth 0 item)))) menu))
+	(if (setq tmp (assoc (nth 2 item) menu2))
+	    (push `(,(nth 3 item) menu-item ,(nth 1 item) (lambda() (interactive) (funcall menu-bar-select-buffer-function ,(nth 0 item))))
+		  (cdr tmp))
+	  (push (list (nth 2 item) `(,(nth 3 item) menu-item ,(nth 1 item) (lambda() (interactive) (funcall menu-bar-select-buffer-function ,(nth 0 item))))) menu2))))
+    (setq menu `(keymap ,group
+			,@(mapcar
+			   (lambda(elt)
+			     `(,(intern (car elt)) menu-item ,(car elt) (keymap ,@(cdr elt))))
+			   menu2)
+			(sepb menu-item "--")
+			,@menu))
+    menu))
+
 (defun ergoemacs-mode-line-next-buffer (event)
   "Next ergoemacs buffer"
   (interactive "e")
   (with-selected-window (posn-window (event-start event))
-    ;; (next-buffer)
-    (ergoemacs-change-buffer 1)))
+    (let ((emacs-buffer-p (string-match-p "^[*]" (buffer-name))))
+      (cond
+       ((functionp ergoemacs-mode-line-change-buffer)
+	(popup-menu (ergoemacs-mode-line-menu)))
+       ((not ergoemacs-mode-line-change-buffer)
+	(next-buffer))
+       (emacs-buffer-p
+	(erugoemacs-next-emacs-buffer))
+       (t
+	(ergoemacs-next-user-buffer))))))
 
 (defun ergoemacs-mode-line-previous-buffer (event)
   "Prevous ergoemacs buffer"
   (interactive "e")
   (with-selected-window (posn-window (event-start event))
-    (ergoemacs-change-buffer -1)))
+    (let ((emacs-buffer-p (string-match-p "^[*]" (buffer-name))))
+      (cond
+       ((functionp ergoemacs-mode-line-change-buffer)
+	(popup-menu (ergoemacs-mode-line-menu)))
+       ((not ergoemacs-mode-line-change-buffer)
+	(previous-buffer))
+       (emacs-buffer-p
+	(ergoemacs-previous-emacs-buffer))
+       (t
+	(ergoemacs-previous-user-buffer))))))
 
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
