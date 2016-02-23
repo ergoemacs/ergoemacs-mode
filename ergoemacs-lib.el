@@ -903,12 +903,17 @@ Based on `elp-results'."
 	    (push `(,(nth 3 item) menu-item ,(nth 1 item) (lambda() (interactive) (funcall menu-bar-select-buffer-function ,(nth 0 item))))
 		  (cdr tmp))
 	  (push (list (nth 2 item) `(,(nth 3 item) menu-item ,(nth 1 item) (lambda() (interactive) (funcall menu-bar-select-buffer-function ,(nth 0 item))))) menu2))))
-    (setq menu `(keymap ,group
-			,@(mapcar
-			   (lambda(elt)
-			     `(,(intern (car elt)) menu-item ,(car elt) (keymap ,@(cdr elt))))
-			   menu2)
-			(sepb menu-item "--")
+    (setq menu `(keymap ,(if (or menu (> (length menu2) 1))
+			     group
+			   (car (car menu2)))
+			,@(if (or menu (> (length menu2) 1))
+			      (mapcar
+			       (lambda(elt)
+				 `(,(intern (car elt)) menu-item ,(car elt) (keymap ,@(cdr elt))))
+			       menu2)
+			    (cdr (car menu2)))
+			,(when (and menu (>= (length menu2) 1))
+			   '(sepb menu-item "--"))
 			,@menu))
     menu))
 
@@ -923,7 +928,7 @@ Based on `elp-results'."
        ((not ergoemacs-mode-line-change-buffer)
 	(next-buffer))
        (emacs-buffer-p
-	(erugoemacs-next-emacs-buffer))
+	(ergoemacs-next-emacs-buffer))
        (t
 	(ergoemacs-next-user-buffer))))))
 
@@ -941,6 +946,318 @@ Based on `elp-results'."
 	(ergoemacs-previous-emacs-buffer))
        (t
 	(ergoemacs-previous-user-buffer))))))
+
+(defcustom ergoemacs-mode-line-read-only-status t
+  "Include minor-modes in `mode-line-format'."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-mode-line-minor-modes t
+  "Include minor-modes in `mode-line-format'."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-mode-line-coding t
+  "Include coding system information in `mode-line-format'"
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-mode-line-use-vc t
+  "Include vc in mode-line."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-mode-line--property-substrings (str prop)
+  "Return a list of substrings of STR when PROP change."
+  ;; Taken from powerline by Donald Ephraim Curtis, Jason Milkins and
+  ;; Nicolas Rougier
+  (let ((beg 0) (end 0)
+        (len (length str))
+        (out))
+    (while (< end (length str))
+      (setq end (or (next-single-property-change beg prop str) len))
+      (setq out (append out (list (substring str beg (setq beg end))))))
+    out))
+
+(defun ergoemacs-mode-line--ensure-list (item)
+  (or (and (listp item) item) (list item)))
+
+(defun ergoemacs-mode-line--add-text-property (str prop val)
+  ;; Taken from powerline by Donald Ephraim Curtis, Jason Milkins and
+  ;; Nicolas Rougier
+  ;; Changed so that prop is not just 'face
+  (mapconcat
+   (lambda (mm)
+     (let ((cur (ergoemacs-mode-line--ensure-list (get-text-property 0 prop mm))))
+       (propertize mm prop (append cur (list val)))))
+   (ergoemacs-mode-line--property-substrings str prop)
+   ""))
+
+(defun ergoemacs-mode-line--if--1 (lst-or-string)
+  (cond
+   ((consp lst-or-string)
+    (catch 'found-it
+      (dolist (elt lst-or-string)
+	(cond
+	 ((functionp elt)
+	  (let ((tmp (funcall elt)))
+	    ;; Return string or list, then `format-mode-line'
+	    (if (or (stringp tmp) (listp tmp))
+		(throw 'found-it (format-mode-line tmp))
+	      ;; Otherwise, assume its a boolean.
+	      ;; If didn't
+	      (when (and (booleanp tmp)
+			 (not tmp))
+		(throw 'found-it "")))))
+	 ((and (symbolp elt) (boundp elt) (not (symbol-value elt)))
+	  (throw 'found-it ""))
+	 ((stringp elt)
+	  (throw 'found-it (format-mode-line elt)))))
+      ""))
+   ((stringp lst-or-string)
+    (format-mode-line lst-or-string))
+   (t "")))
+
+(defun ergoemacs-mode-line--if (str &optional face pad)
+  "Render STR as mode-line data using FACE and optionally PAD import on left (l) or right (r)."
+  (let* ((rendered-str (ergoemacs-mode-line--if--1 str))
+	 (padded-str (concat
+		      (when (and (> (length rendered-str) 0) (eq pad 'l)) " ")
+		      rendered-str 
+		      (when (and (> (length rendered-str) 0) (eq pad 'r)) " "))))
+    (if face
+	(ergoemacs-mode-line--add-text-property padded-str 'face face)
+      padded-str)))
+
+(defvar ergoemacs-old-mode-line-format nil)
+
+(defun ergoemacs-mode-line--set-buffer-file-coding-system (event)
+  (interactive "e")
+  (with-selected-window (posn-window (event-start event))
+    (call-interactively #'set-buffer-file-coding-system)))
+
+(defun ergoemacs-mode-line--encoding ()
+  (ergoemacs-save-buffer-state
+   (propertize (replace-regexp-in-string "\\(-unix\\|-mac\\|-dos\\|-undecided\\|-emacs\\)" "" (format "%s" buffer-file-coding-system))
+	      'mouse-face 'mode-line-highlight
+	      'help-echo "mouse-1: Change buffer coding system"
+	      'local-map '(keymap
+			   (mode-line keymap
+				      (mouse-1 . ergoemacs-mode-line--set-buffer-file-coding-system))))))
+
+
+(defun ergoemacs-mode-line--sep (dir &rest args)
+  "Separator"
+  (let ((separator (and (fboundp #'powerline-current-separator)
+			(intern (format "powerline-%s-%s"
+					(powerline-current-separator)
+					(or (and (eq dir 'left)
+						 (car powerline-default-separator-dir))
+					    (cdr powerline-default-separator-dir)))))))
+    (when (fboundp separator)
+      (apply separator args))))
+
+(defun ergoemacs-mode-line--eval-lhs (mode-line face1 face2 &optional reduce)
+  (let* ((first (list
+		 (unless (and reduce (integerp reduce) (<= 3 reduce))
+		   (ergoemacs :mode-if '(ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*")  nil 'l))
+		 ;; (powerline-buffer-size nil 'l)
+		 ))
+	 (second (list
+		  (ergoemacs :mode-if '(sml/generate-buffer-identification powerline-buffer-id) nil 'l)
+		  (unless (or (and reduce (integerp reduce) (<= 3 reduce))
+			      (not (buffer-file-name (current-buffer))))
+		    (ergoemacs :mode-if '(mode-icons--modified-status) nil 'l))
+		  (ergoemacs :mode-if " ")))
+	 (third (list (ergoemacs :separator-left mode-line face1)
+		      (ergoemacs :mode-if " %3l:%2c " face1)))
+	 (vc (ergoemacs :mode-if '(ergoemacs-mode-line-use-vc powerline-vc) mode-line 'r))
+	 (fourth (when (and (stringp vc) (not (string= vc "")))
+		   (list
+		    (ergoemacs :separator-left face1 mode-line)
+		    vc
+		    (ergoemacs :separator-left mode-line face1)))))
+    (append first second third fourth)))
+
+(defun ergoemacs-mode-line--eval-rhs (mode-line face1 face2 &optional reduce)
+  (let ((first (list (ergoemacs :mode-if global-mode-string face1 'r)
+		     (ergoemacs :separator-right face1 mode-line)))
+	(second (cond
+		 ((not reduce)
+		  (list (ergoemacs :mode-if " ")
+			(ergoemacs :mode-if '(ergoemacs-mode-line-coding ergoemacs-mode-line--encoding) 'l)
+			(ergoemacs :mode-if " ")))
+		 ((and reduce (integerp reduce) (= reduce 1))
+		  (list (ergoemacs :mode-if '(ergoemacs-mode-line-coding "%z") nil 'l)))))
+	(third (when (and ergoemacs-mode-line-coding
+		   (or (not reduce)
+		       (and (integerp reduce) (<= reduce 1))))
+		 (list
+		  (ergoemacs :separator-right  mode-line face1)
+		  (ergoemacs :mode-if '(ergoemacs-mode-line-coding mode-icons--mode-line-eol-desc mode-line-eol-desc) face1 'l)
+		  (ergoemacs :separator-right  face1 mode-line))))
+	(fourth (list (ergoemacs :mode-if '(mode-icons--generate-major-mode-item powerline-major-mode))
+		      (powerline-process nil)
+		      (ergoemacs :mode-if " "))))
+    (append first second third fourth)))
+	
+
+(defun ergoemacs-mode-line--eval-center (mode-line face1 face2 &optional reduce)
+  (unless (and reduce (integerp reduce) (<= 4 reduce))
+    (list (ergoemacs :mode-if " " face1)
+	  (ergoemacs :separator-left face1 face2)
+	  (ergoemacs :mode-if 'erc-modified-channels-object face2 'l)		       
+	  ;; (powerline-raw " :" face2)
+	  (powerline-minor-modes face2 'l)
+	  (ergoemacs :mode-if '(mode-icons--generate-narrow powerline-narrow) face2)
+	  (ergoemacs :mode-if " " face2)
+	  (ergoemacs :separator-right face2 face1))))
+
+(defun ergoemacs-mode-line--width (what)
+  "Return width of WHAT."
+  (string-width (format-mode-line what)))
+
+(defvar ergoemacs-mode-line-max-reduction 4)
+(defun ergoemacs-mode-line--eval ()
+  ;; This will dynamically grow/fill areas
+  (setq mode-icons-read-only-space nil
+	mode-icons-show-mode-name t
+	mode-icons-eol-text t
+	mode-name (mode-icons-get-mode-icon (or mode-icons-cached-mode-name mode-name)))
+  (let* ((active (powerline-selected-window-active))
+	 (mode-line (if active 'mode-line 'mode-line-inactive))
+	 (face1 (if active 'powerline-active1 'powerline-inactive1))
+	 (face2 (if active 'powerline-active2 'powerline-inactive2))
+	 (separator-left (intern (format "powerline-%s-%s"
+					 (powerline-current-separator)
+					 (car powerline-default-separator-dir))))
+	 (separator-right (intern (format "powerline-%s-%s"
+					  (powerline-current-separator)
+					  (cdr powerline-default-separator-dir))))
+	 (mode-icons-read-only-space nil)
+	 (mode-icons-show-mode-name t)
+	 (lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)) 
+	 (rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2))
+	 (center (ergoemacs-mode-line--eval-center mode-line face1 face2))
+	 (wlhs (powerline-width lhs))
+	 (wrhs (powerline-width rhs))
+	 (wcenter (powerline-width center))
+	 (reduce-level 1))
+    (when (> (+ wlhs wrhs wcenter) (window-total-width))
+      (setq mode-icons-read-only-space nil
+	    mode-icons-show-mode-name nil
+	    mode-icons-eol-text nil
+	    mode-name (mode-icons-get-mode-icon (or mode-icons-cached-mode-name mode-name))
+	    lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)
+	    rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2)
+	    center (ergoemacs-mode-line--eval-center mode-line face1 face2)
+	    wlhs (powerline-width lhs)
+	    wrhs (powerline-width rhs)
+	    wcenter (powerline-width center))
+      (while (and (<= reduce-level ergoemacs-mode-line-max-reduction)
+		  (> (+ wlhs wrhs wcenter) (window-total-width)))
+	(setq mode-icons-read-only-space nil
+	      mode-icons-show-mode-name nil
+	      mode-icons-eol-text nil
+	      lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2 reduce-level)
+	      rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2 reduce-level)
+	      center (ergoemacs-mode-line--eval-center mode-line face1 face2 reduce-level)
+	      wlhs (powerline-width lhs)
+	      wrhs (powerline-width rhs)
+	      wcenter (powerline-width center)
+	      reduce-level (+ reduce-level 1))))
+    (concat (powerline-render lhs)
+	    (powerline-fill-center face1 (/ (powerline-width center) 2.0))
+	    (powerline-render center)
+	    (powerline-fill face1 (powerline-width rhs))
+	    (powerline-render rhs))))
+
+(defun ergoemacs-mode-line-format (&optional restore)
+  (if restore
+      (set-default 'mode-line-format
+		   ergoemacs-old-mode-line-format)
+    (unless ergoemacs-old-mode-line-format
+      (setq ergoemacs-old-mode-line-format mode-line-format))
+   
+    (setq-default mode-line-format
+		  `("%e"
+		    (:eval (ergoemacs-mode-line--eval))))
+    (force-mode-line-update)))
+
+(ergoemacs-mode-line-format)
+
+;; (defun ergoemacs-mode-line-format (&optional restore)
+;;   "Format mode-line based on more modern conventions."
+;;   (if restore
+;;       (set-default 'mode-line-format
+;; 		   ergoemacs-old-mode-line-format)
+;;     (unless ergoemacs-old-mode-line-format
+;;       (setq ergoemacs-old-mode-line-format mode-line-format))
+;;     (let* ((space "     ")
+;; 	   (mf `("%e"
+;; 		     " "
+;; 		     ,(if (fboundp 'sml/generate-buffer-identification)
+;; 			  '(sml/buffer-identification sml/buffer-identification
+;; 						      (:eval
+;; 						       (sml/generate-buffer-identification)))
+;; 			(propertize "%12b" 'local-map
+;; 				    '(keymap
+;; 				      (header-line keymap
+;; 						   (mouse-3 . ergoemacs-mode-line-next-buffer)
+;; 						   (down-mouse-3 . ignore)
+;; 						   (mouse-1 . ergoemacs-mode-line-previous-buffer)
+;; 						   (down-mouse-1 . ignore))
+;; 				      (mode-line keymap
+;; 						 (mouse-3 . ergoemacs-mode-line-next-buffer)
+;; 						 (mouse-1 . ergoemacs-mode-line-previous-buffer)))
+;; 				    'mouse-face 'mode-line-highlight
+;; 				    'help-echo "Buffer name\nmouse-1: Previous buffer\nmouse-3: Next buffer"
+;; 				    'face 'mode-line-buffer-id))
+;; 		     ,space
+;; 		     ,(if (fboundp 'mode-icons--generate-major-mode-item)
+;; 			  mode-icons--major-construct
+;; 			`(:propertize ("" mode-name)
+;; 				      help-echo "Major mode\nmouse-1: Display major mode menu\nmouse-2: Show help for major mode\nmouse-3: Toggle minor modes"
+;; 				      mouse-face mode-line-highlight
+;; 				      local-map ,mode-line-major-mode-keymap))
+;; 		     ,space
+;; 		     ,(if (fboundp 'sml/compile-position-construct)
+;; 			  '(sml/position-construct sml/position-construct
+;; 						   (:eval
+;; 						    (sml/compile-position-construct)))
+;; 			(assoc 'line-number-mode mode-line-position))
+;; 		     ,space
+;; 		     ,(if (fboundp 'mode-icons--modified-status)
+;; 			  '(:eval (mode-icons--modified-status))
+;; 			'(:eval (if (string= "*" (format-mode-line "%1+")) "Unsaved" "")))
+;; 		     ,(when ergoemacs-mode-line-use-vc
+;; 		       space)
+;; 		     ,(when ergoemacs-mode-line-use-vc
+;; 		       '(vc-mode vc-mode))
+;; 		     ;; Minor modes
+;; 		     ,(when ergoemacs-mode-line-minor-modes
+;; 			space)
+;; 		     ,(when ergoemacs-mode-line-minor-modes
+;; 			(if (fboundp 'sml/generate-minor-modes)
+;; 			    '(:eval (sml/generate-minor-modes))
+;; 			  (if (fboundp 'mode-icons--generate-minor-mode-list)
+;; 			      '(:eval (mode-icons--generate-minor-mode-list))
+;; 			    (or (member 'minor-mode-alist mode-line-modes)
+;; 				(cl-member-if
+;; 				 (lambda (x) (and (listp x)
+;; 						  (equal (car x) :propertize)
+;; 						  (equal (cadr x) '("" minor-mode-alist))))
+;; 				 mode-line-modes)))))
+;; 		     ,(when ergoemacs-mode-line-coding space)
+;; 		     ,(when ergoemacs-mode-line-coding
+;; 			(if (fboundp 'mode-icons--mode-line-eol-desc)
+;; 			    '(:eval (mode-icons--mode-line-eol-desc))
+;; 			  '(:eval (mode-line-eol-desc))))
+;; 		     )))
+;;       (set-default 'mode-line-format mf)
+;;       (setq mode-icons-eol-text t
+;; 	    mode-icons-show-mode-name t
+;; 	    mode-line-format mf))))
 
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
