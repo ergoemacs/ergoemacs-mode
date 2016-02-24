@@ -1254,7 +1254,7 @@ When WHAT is nil, return the width of the window"
     (force-mode-line-update)))
 
 ;;(ergoemacs-mode-line--variable-pitch)
-(ergoemacs-mode-line-format)
+;; (ergoemacs-mode-line-format)
 
 ;; (defun ergoemacs-mode-line-format (&optional restore)
 ;;   "Format mode-line based on more modern conventions."
