@@ -3,25 +3,25 @@
 ;; Copyright © 2013-2015  Free Software Foundation, Inc.
 
 ;; Author: Matthew L. Fidler, Xah Lee
-;; Maintainer: 
-;; 
+;; Maintainer:
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
+;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
 ;; published by the Free Software Foundation; either version 3, or
 ;; (at your option) any later version.
-;; 
+;;
 ;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;; General Public License for more details.
-;; 
+;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-;; 
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
+;;
 ;;; Code:
 ;; (require 'guide-key nil t)
 
@@ -424,7 +424,7 @@ All other modes are assumed to be minor modes or unimportant.
          (eq cmd 'ergoemacs-copy-line-or-region)) (ergoemacs-key-description--menu (kbd "C-c")))
    (t
     ;;; FIXME: faster startup by creating component alists
-    ;; SLOW: 2-seconds 
+    ;; SLOW: 2-seconds
     (let ((key (where-is-internal cmd (or keymap ergoemacs-keymap) 'meta nil t)))
       (when (memq (elt key 0) '(menu-bar remap again redo cut copy paste help open find ergoemacs-remap execute))
         (setq key nil))
@@ -833,7 +833,7 @@ Based on `elp-results'."
       (set (make-local-variable 'ergoemacs-major-mode-menu-map)
 	   (let ((map (and ergoemacs-swap-major-modes-when-clicking-major-mode-name
 			   ;; Mode in menu
-			   (memq major-mode ergoemacs-menu--get-major-modes) 
+			   (memq major-mode ergoemacs-menu--get-major-modes)
 			   (key-binding [menu-bar languages])))
 		 mmap)
 	     (if (not map)
@@ -843,7 +843,7 @@ Based on `elp-results'."
 	       (define-key map [major-mode] (cons (nth 1 mmap) mmap))
 	       map)))))
 
-(defcustom ergoemacs-mode-line-change-buffer 'ergoemacs-mode-line-group-function 
+(defcustom ergoemacs-mode-line-change-buffer 'ergoemacs-mode-line-group-function
   "Method of changing buffer."
   :type '(choice
 	  (function :tag "Function to group buffers.")
@@ -986,10 +986,13 @@ Based on `elp-results'."
   ;; Taken from powerline by Donald Ephraim Curtis, Jason Milkins and
   ;; Nicolas Rougier
   ;; Changed so that prop is not just 'face
+  ;; Also changed to not force list
   (mapconcat
    (lambda (mm)
-     (let ((cur (ergoemacs-mode-line--ensure-list (get-text-property 0 prop mm))))
-       (propertize mm prop (append cur (list val)))))
+     (let ((cur (get-text-property 0 prop mm)))
+       (if (not cur)
+	   (propertize mm prop val)
+	 (propertize mm prop (append (ergoemacs-mode-line--ensure-list cur) (list val))))))
    (ergoemacs-mode-line--property-substrings str prop)
    ""))
 
@@ -1019,12 +1022,12 @@ Based on `elp-results'."
    (t "")))
 
 (defun ergoemacs-mode-line--if (str &optional face pad)
-  "Render STR as mode-line data using FACE and optionally PAD import on left (l) or right (r)."
+  "Render STR as mode-line data using FACE and optionally PAD import on left (l), right (r) or both (b)."
   (let* ((rendered-str (ergoemacs-mode-line--if--1 str))
 	 (padded-str (concat
-		      (when (and (> (length rendered-str) 0) (eq pad 'l)) " ")
-		      rendered-str 
-		      (when (and (> (length rendered-str) 0) (eq pad 'r)) " "))))
+		      (when (and (> (length rendered-str) 0) (memq pad '(l left b both))) " ")
+		      rendered-str
+		      (when (and (> (length rendered-str) 0) (memq pad '(r right b both))) " "))))
     (if face
 	(ergoemacs-mode-line--add-text-property padded-str 'face face)
       padded-str)))
@@ -1059,62 +1062,103 @@ Based on `elp-results'."
       (let ((img (apply separator args)))
 	(when (and (listp img) (eq 'image (car img)))
 	  (propertize " " 'display img
-                'face (plist-get (cdr img) :face)))))))
+		      'face (plist-get (cdr img) :face)))))))
 
-(defun ergoemacs-mode-line--eval-lhs (mode-line face1 face2 &optional reduce)
-  (let* ((first (unless (and reduce (integerp reduce) (<= 3 reduce))
-		  (list
-		   (ergoemacs :mode-if '(ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*")  mode-line 'l))))
-	 (second (list
-		  (ergoemacs :mode-if '(sml/generate-buffer-identification powerline-buffer-id) mode-line 'l)
-		  (ergoemacs :mode-if '(mode-icons--modified-status) mode-line 'l)
-		  (ergoemacs :mode-if " ")))
-	 (third (list (ergoemacs :separator-left mode-line face1)
-		      (when (and (not (and reduce (integerp reduce) (<= 2 reduce))))
-			(ergoemacs :mode-if " %3l:%2c " face1))))
-	 (vc (ergoemacs :mode-if '(ergoemacs-mode-line-use-vc powerline-vc) mode-line 'r))
-	 (fourth (when (and (not (and reduce (integerp reduce) (<= 1 reduce)))
-			    (stringp vc) (not (string= vc "")))
-		   (list
-		    (ergoemacs :separator-left face1 mode-line)
-		    vc
-		    (ergoemacs :separator-left mode-line face1)))))
-    (append first second third fourth)))
 
-(defun ergoemacs-mode-line--eval-rhs (mode-line face1 face2 &optional reduce)
-  (let ((first (list (ergoemacs :mode-if global-mode-string face1 'r)
-		     (ergoemacs :separator-right face1 mode-line)))
-	(second (cond
-		 ((not reduce)
-		  (list (ergoemacs :mode-if " " mode-line)
-			(ergoemacs :mode-if '(ergoemacs-mode-line-coding ergoemacs-mode-line--encoding) mode-line 'l)
-			(ergoemacs :mode-if " " mode-line)))
-		 ((and reduce (integerp reduce) (= reduce 1))
-		  (list (ergoemacs :mode-if '(ergoemacs-mode-line-coding "%z") mode-line 'l)))))
-	(third (when (and ergoemacs-mode-line-coding
-		   (or (not reduce)
-		       (and (integerp reduce) (<= reduce 1))))
-		 (list
-		  (ergoemacs :separator-right  mode-line face1)
-		  (ergoemacs :mode-if '(ergoemacs-mode-line-coding mode-icons--mode-line-eol-desc mode-line-eol-desc) face1 'l)
-		  (ergoemacs :separator-right  face1 mode-line))))
-	(fourth (list (ergoemacs :mode-if '(mode-icons--generate-major-mode-item powerline-major-mode) mode-line)
-		      ;; (powerline-process mode-line)
-		      ;; (ergoemacs :mode-if " " mode-line)
-		      )))
-    (append first second third fourth)))
-	
+(setq ergoemacs-mode-line--lhs
+  '(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
+    ((sml/generate-buffer-identification powerline-buffer-id) :last-p t :pad b)
+    ((mode-icons--modified-status) :last-p t)
+    (" %3l:%2c " :reduce 2)
+    ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r)))
+
+(setq ergoemacs-mode-line--center
+      '(((mode-icons--generate-minor-mode-list)  :reduce 4)
+	((mode-icons--generate-narrow powerline-narrow) :reduce 4)
+	(" " :reduce 4)))
 
 (defun ergoemacs-mode-line--eval-center (mode-line face1 face2 &optional reduce)
-  (if (and reduce (integerp reduce) (<= 4 reduce)) ""
-    (list (ergoemacs :mode-if " " face1)
-	  (ergoemacs :separator-left face1 face2)
-	  (ergoemacs :mode-if 'erc-modified-channels-object face2 'l)		       
-	  ;; (powerline-raw " :" face2)
-	  (powerline-minor-modes face2 'l)
-	  (ergoemacs :mode-if '(mode-icons--generate-narrow powerline-narrow) face2)
-	  (ergoemacs :mode-if " " face2)
-	  (ergoemacs :separator-right face2 face1))))
+  (ergoemacs-mode-line--stack ergoemacs-mode-line--center (list mode-line face1) 'center reduce))
+
+(defun ergoemacs-mode-line--eval-lhs (mode-line face1 face2 &optional reduce)
+  (ergoemacs-mode-line--stack ergoemacs-mode-line--lhs (list mode-line face1) 'left reduce))
+
+
+(setq ergoemacs-mode-line--rhs
+ '((global-mode-string :pad r)
+   ((ergoemacs-mode-line-coding ergoemacs-mode-line--encoding) :pad b :reduce 2)
+   ((ergoemacs-mode-line-coding (lambda() (not (string= ":" (mode-line-eol-desc))))mode-icons--mode-line-eol-desc mode-line-eol-desc) :pad l :reduce 2)
+   ((mode-icons--generate-major-mode-item powerline-major-mode))))
+
+(defun ergoemacs-mode-line--eval-rhs (mode-line face1 face2 &optional reduce)
+  (ergoemacs-mode-line--stack ergoemacs-mode-line--rhs (list mode-line face1) 'right reduce))
+
+(defun ergoemacs-mode-line--stack (mode-line-list face-list dir &optional reduction-level)
+  "Stacks mode-line elements"
+  (let ((face-i (if (eq dir 'center) 0 -1))
+	(len (length face-list))
+	(last-face (nth 0 face-list))
+	cur-face next-face
+	(mode-line-list mode-line-list)
+	last-reduced-p
+	tmp)
+    (when (eq dir 'right)
+      (setq mode-line-list (reverse mode-line-list)))
+    (setq final (apply 'append
+		       (mapcar
+			(lambda(elt)
+			  (unless (eq dir 'center)
+			    (setq face-i (1+ face-i)))
+			  (let* ((ifs (car elt))
+				 (plist (cdr elt))
+				 (reduce (plist-get plist :reduce))
+				 tmp
+				 ret)
+			    (if (and reduce (integerp reduce)
+				     reduction-level (integerp reduction-level)
+				     (<= reduce reduction-level))
+				(progn
+				  (unless (eq dir 'center)
+				    (setq face-i (- face-i 1)))
+				  (setq last-reduced-p t)
+				  nil)
+			      (when (and (not (eq dir 'center)) (plist-get plist :last-p))
+				(unless last-reduced-p
+				  (setq face-i (- face-i 1)
+					last-reduced-p nil)))
+			      (setq cur-face (nth (mod face-i len) face-list))
+			      (setq tmp (ergoemacs :mode-if ifs cur-face (plist-get plist :pad)))
+			      (if (string= (format-mode-line tmp) "")
+				  (if (or (eq dir 'center) (plist-get plist :last-p) last-reduced-p) nil
+				    (setq face-i (- face-i 1))
+				    nil)
+				(setq last-reduced-p nil) 
+				(push tmp ret)
+				(unless (eq cur-face last-face)
+				  (cond
+				   ((eq dir 'left)
+				    (push (ergoemacs :sep dir last-face cur-face) ret))
+				   ((eq dir 'right)
+				    (push (ergoemacs :sep dir cur-face last-face) ret))))
+				(setq last-face cur-face))
+			      ret)))
+			mode-line-list))
+	  cur-face (car (last face-list)))
+    (unless (eq last-face cur-face)
+      (setq final (append final
+			  (list (cond
+				 ((eq dir 'left)
+				  (ergoemacs :sep dir last-face cur-face))
+				 ((eq dir 'right)
+				  (ergoemacs :sep dir cur-face last-face)))))))
+    (setq final (remove-if (lambda(x) (eq x nil)) final))
+    (when (and final (eq dir 'center))
+      (setq final (append (list (ergoemacs :sep-left (car (last face-list)) (nth 0 face-list)))
+			  final
+			  (list (ergoemacs :sep-right (nth 0 face-list) (car (last face-list)))))))
+    (when (eq dir 'right)
+      (setq final (reverse final)))
+    (or final "")))
 
 (defcustom ergoemacs-mode-extra-width 0
   "Extra width to add."
@@ -1187,7 +1231,7 @@ When WHAT is nil, return the width of the window"
 					  (cdr powerline-default-separator-dir))))
 	 (mode-icons-read-only-space nil)
 	 (mode-icons-show-mode-name t)
-	 (lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)) 
+	 (lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2))
 	 (rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2))
 	 (center (ergoemacs-mode-line--eval-center mode-line face1 face2))
 	 (wlhs (ergoemacs :width lhs))
@@ -1225,7 +1269,7 @@ When WHAT is nil, return the width of the window"
     (concat (format-mode-line lhs)
     	    (propertize " " 'display `((space :width ,available))
     			'face face1)
-		
+
     	    (format-mode-line center)
     	    (propertize " " 'display `((space :width ,available))
     			'face face1)
@@ -1247,14 +1291,16 @@ When WHAT is nil, return the width of the window"
 		   ergoemacs-old-mode-line-format)
     (unless ergoemacs-old-mode-line-format
       (setq ergoemacs-old-mode-line-format mode-line-format))
-   
+
     (setq-default mode-line-format
 		  `("%e"
 		    (:eval (ergoemacs-mode-line--eval))))
+    (setq mode-line-format `("%e"
+			     (:eval (ergoemacs-mode-line--eval))))
     (force-mode-line-update)))
 
 ;;(ergoemacs-mode-line--variable-pitch)
-;; (ergoemacs-mode-line-format)
+(ergoemacs-mode-line-format)
 
 ;; (defun ergoemacs-mode-line-format (&optional restore)
 ;;   "Format mode-line based on more modern conventions."
