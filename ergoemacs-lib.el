@@ -1037,6 +1037,7 @@ Based on `elp-results'."
     (call-interactively #'set-buffer-file-coding-system)))
 
 (defun ergoemacs-mode-line--encoding ()
+  "Encoding mode-line."
   (ergoemacs-save-buffer-state
    (propertize (replace-regexp-in-string "\\(-unix\\|-mac\\|-dos\\|-undecided\\|-emacs\\)" "" (format "%s" buffer-file-coding-system))
 	      'mouse-face 'mode-line-highlight
@@ -1055,24 +1056,25 @@ Based on `elp-results'."
 						 (car powerline-default-separator-dir))
 					    (cdr powerline-default-separator-dir)))))))
     (when (fboundp separator)
-      (apply separator args))))
+      (let ((img (apply separator args)))
+	(when (and (listp img) (eq 'image (car img)))
+	  (propertize " " 'display img
+                'face (plist-get (cdr img) :face)))))))
 
 (defun ergoemacs-mode-line--eval-lhs (mode-line face1 face2 &optional reduce)
-  (let* ((first (list
-		 (unless (and reduce (integerp reduce) (<= 3 reduce))
-		   (ergoemacs :mode-if '(ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*")  nil 'l))
-		 ;; (powerline-buffer-size nil 'l)
-		 ))
+  (let* ((first (unless (and reduce (integerp reduce) (<= 3 reduce))
+		  (list
+		   (ergoemacs :mode-if '(ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*")  mode-line 'l))))
 	 (second (list
-		  (ergoemacs :mode-if '(sml/generate-buffer-identification powerline-buffer-id) nil 'l)
-		  (unless (or (and reduce (integerp reduce) (<= 3 reduce))
-			      (not (buffer-file-name (current-buffer))))
-		    (ergoemacs :mode-if '(mode-icons--modified-status) nil 'l))
+		  (ergoemacs :mode-if '(sml/generate-buffer-identification powerline-buffer-id) mode-line 'l)
+		  (ergoemacs :mode-if '(mode-icons--modified-status) mode-line 'l)
 		  (ergoemacs :mode-if " ")))
 	 (third (list (ergoemacs :separator-left mode-line face1)
-		      (ergoemacs :mode-if " %3l:%2c " face1)))
+		      (when (and (not (and reduce (integerp reduce) (<= 2 reduce))))
+			(ergoemacs :mode-if " %3l:%2c " face1))))
 	 (vc (ergoemacs :mode-if '(ergoemacs-mode-line-use-vc powerline-vc) mode-line 'r))
-	 (fourth (when (and (stringp vc) (not (string= vc "")))
+	 (fourth (when (and (not (and reduce (integerp reduce) (<= 1 reduce)))
+			    (stringp vc) (not (string= vc "")))
 		   (list
 		    (ergoemacs :separator-left face1 mode-line)
 		    vc
@@ -1084,11 +1086,11 @@ Based on `elp-results'."
 		     (ergoemacs :separator-right face1 mode-line)))
 	(second (cond
 		 ((not reduce)
-		  (list (ergoemacs :mode-if " ")
-			(ergoemacs :mode-if '(ergoemacs-mode-line-coding ergoemacs-mode-line--encoding) 'l)
-			(ergoemacs :mode-if " ")))
+		  (list (ergoemacs :mode-if " " mode-line)
+			(ergoemacs :mode-if '(ergoemacs-mode-line-coding ergoemacs-mode-line--encoding) mode-line 'l)
+			(ergoemacs :mode-if " " mode-line)))
 		 ((and reduce (integerp reduce) (= reduce 1))
-		  (list (ergoemacs :mode-if '(ergoemacs-mode-line-coding "%z") nil 'l)))))
+		  (list (ergoemacs :mode-if '(ergoemacs-mode-line-coding "%z") mode-line 'l)))))
 	(third (when (and ergoemacs-mode-line-coding
 		   (or (not reduce)
 		       (and (integerp reduce) (<= reduce 1))))
@@ -1096,14 +1098,15 @@ Based on `elp-results'."
 		  (ergoemacs :separator-right  mode-line face1)
 		  (ergoemacs :mode-if '(ergoemacs-mode-line-coding mode-icons--mode-line-eol-desc mode-line-eol-desc) face1 'l)
 		  (ergoemacs :separator-right  face1 mode-line))))
-	(fourth (list (ergoemacs :mode-if '(mode-icons--generate-major-mode-item powerline-major-mode))
-		      (powerline-process nil)
-		      (ergoemacs :mode-if " "))))
+	(fourth (list (ergoemacs :mode-if '(mode-icons--generate-major-mode-item powerline-major-mode) mode-line)
+		      ;; (powerline-process mode-line)
+		      ;; (ergoemacs :mode-if " " mode-line)
+		      )))
     (append first second third fourth)))
 	
 
 (defun ergoemacs-mode-line--eval-center (mode-line face1 face2 &optional reduce)
-  (unless (and reduce (integerp reduce) (<= 4 reduce))
+  (if (and reduce (integerp reduce) (<= 4 reduce)) ""
     (list (ergoemacs :mode-if " " face1)
 	  (ergoemacs :separator-left face1 face2)
 	  (ergoemacs :mode-if 'erc-modified-channels-object face2 'l)		       
@@ -1113,9 +1116,57 @@ Based on `elp-results'."
 	  (ergoemacs :mode-if " " face2)
 	  (ergoemacs :separator-right face2 face1))))
 
-(defun ergoemacs-mode-line--width (what)
-  "Return width of WHAT."
-  (string-width (format-mode-line what)))
+(defcustom ergoemacs-mode-extra-width 0
+  "Extra width to add."
+  :type 'integer
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-mode-width-multiplier 1.0
+  "Multiplier for width."
+  :type 'number
+  :group 'ergoemacs-mode)
+
+(defvar ergoemacs-mode--pixel-width-p nil
+  "Determines if the mode line tries to calculate width")
+
+(defun ergoemacs-mode--eval-width (&optional what)
+  (if ergoemacs-mode--pixel-width-p
+      (ergoemacs-mode--eval-width-pixels what)
+    (ergoemacs-mode--eval-width-col what)))
+
+(defun ergoemacs-mode--eval-string-width-pixels (str)
+  "Get string width in pixels."
+  (with-current-buffer (get-buffer-create " *ergoemacs-eval-width*")
+	(delete-region (point-min) (point-max))
+	(insert str)
+	(car (window-text-pixel-size nil (point-min) (point-max)))))
+
+(defun ergoemacs-mode--eval-width-pixels (&optional what)
+  "Get the width of the display in pixels."
+  (ergoemacs-mode--eval-width-col what t))
+
+(defun ergoemacs-mode--eval-width-col (&optional what pixels-p)
+  "Eval width of WHAT, which is formated with `format-mode-line'.
+When WHAT is nil, return the width of the window"
+  (or (and what (apply
+		 '+
+		 (mapcar (lambda(x)
+			   (let ((display (get-text-property 0 'display x)))
+			     (if display
+				 (car (image-size display pixels-p))
+			       (if pixels-p
+				   (ergoemacs-mode--eval-string-width-pixels x)
+				 (string-width x)))))
+			 (ergoemacs-mode-line--property-substrings (format-mode-line what) 'display))))
+      (if pixels-p
+	  (let ((width (window-pixel-width)))
+	    width)
+	(let ((width (window-width))
+	      (cw (frame-char-width))
+	      tmp)
+	  (when (setq tmp (window-margins))
+	    (setq width (apply '+ width (list (or (car tmp) 0) (or (cdr tmp) 0)))))
+	  (* ergoemacs-mode-width-multiplier (+ width ergoemacs-mode-extra-width))))))
 
 (defvar ergoemacs-mode-line-max-reduction 4)
 (defun ergoemacs-mode-line--eval ()
@@ -1139,11 +1190,12 @@ Based on `elp-results'."
 	 (lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)) 
 	 (rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2))
 	 (center (ergoemacs-mode-line--eval-center mode-line face1 face2))
-	 (wlhs (powerline-width lhs))
-	 (wrhs (powerline-width rhs))
-	 (wcenter (powerline-width center))
+	 (wlhs (ergoemacs :width lhs))
+	 (wrhs (ergoemacs :width rhs))
+	 (wcenter (ergoemacs :width center))
+	 available
 	 (reduce-level 1))
-    (when (> (+ wlhs wrhs wcenter) (window-total-width))
+    (when (> (+ wlhs wrhs wcenter) (ergoemacs :width))
       (setq mode-icons-read-only-space nil
 	    mode-icons-show-mode-name nil
 	    mode-icons-eol-text nil
@@ -1151,26 +1203,43 @@ Based on `elp-results'."
 	    lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)
 	    rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2)
 	    center (ergoemacs-mode-line--eval-center mode-line face1 face2)
-	    wlhs (powerline-width lhs)
-	    wrhs (powerline-width rhs)
-	    wcenter (powerline-width center))
+	    wlhs (ergoemacs :width lhs)
+	    wrhs (ergoemacs :width rhs)
+	    wcenter (ergoemacs :width center))
       (while (and (<= reduce-level ergoemacs-mode-line-max-reduction)
-		  (> (+ wlhs wrhs wcenter) (window-total-width)))
+		  (> (+ wlhs wrhs wcenter) (ergoemacs :width)))
 	(setq mode-icons-read-only-space nil
 	      mode-icons-show-mode-name nil
 	      mode-icons-eol-text nil
 	      lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2 reduce-level)
 	      rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2 reduce-level)
 	      center (ergoemacs-mode-line--eval-center mode-line face1 face2 reduce-level)
-	      wlhs (powerline-width lhs)
-	      wrhs (powerline-width rhs)
-	      wcenter (powerline-width center)
+	      wlhs (ergoemacs :width lhs)
+	      wrhs (ergoemacs :width rhs)
+	      wcenter (ergoemacs :width center)
 	      reduce-level (+ reduce-level 1))))
-    (concat (powerline-render lhs)
-	    (powerline-fill-center face1 (/ (powerline-width center) 2.0))
-	    (powerline-render center)
-	    (powerline-fill face1 (powerline-width rhs))
-	    (powerline-render rhs))))
+    (setq available (/ (- (ergoemacs :width) (+ wlhs wrhs wcenter)) 2))
+    (if ergoemacs-mode--pixel-width-p
+	(setq available (list available)))
+    ;; (message "a: %3.1f (%3.1f %3.1f %3.1f; %3.1f)" available wlhs wrhs wcenter (ergoemacs :width))
+    (concat (format-mode-line lhs)
+    	    (propertize " " 'display `((space :width ,available))
+    			'face face1)
+		
+    	    (format-mode-line center)
+    	    (propertize " " 'display `((space :width ,available))
+    			'face face1)
+    	    (format-mode-line rhs))))
+
+(defun ergoemacs-mode-line--variable-pitch (&optional frame)
+  (dolist (face '(mode-line mode-line-inactive
+			    powerline-active1
+			    powerline-inactive1
+			    powerline-active2 powerline-inactive2))
+    (set-face-attribute face frame
+			  :family (face-attribute 'variable-pitch :family)
+			  :foundry (face-attribute 'variable-pitch :foundry)
+			  :height 125)))
 
 (defun ergoemacs-mode-line-format (&optional restore)
   (if restore
@@ -1184,6 +1253,7 @@ Based on `elp-results'."
 		    (:eval (ergoemacs-mode-line--eval))))
     (force-mode-line-update)))
 
+;;(ergoemacs-mode-line--variable-pitch)
 (ergoemacs-mode-line-format)
 
 ;; (defun ergoemacs-mode-line-format (&optional restore)
