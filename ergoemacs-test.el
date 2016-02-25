@@ -1100,6 +1100,12 @@ Should test issue #142"
   :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before 'after "C-c b") t)))
 
+
+(ert-deftest ergoemacs-test-global-key-set-after-397 ()
+  "Test global C-SPC"
+  :tags '(:slow)
+  (should (equal (ergoemacs-test-global-key-set-before 'after "C-SPC") t)))
+
 (ert-deftest ergoemacs-test-global-key-set-apps-220-before ()
   "Test global C-c b"
   :tags '(:slow :interactive)
