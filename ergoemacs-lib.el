@@ -1068,31 +1068,65 @@ Based on `elp-results'."
 	  (propertize " " 'display img
 		      'face (plist-get (cdr img) :face)))))))
 
-(setq ergoemacs-mode-line--lhs
-  '(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
-    ((mode-line-buffer-identification) :last-p t :pad b)
-    (((lambda() (and (buffer-file-name) t)) mode-icons--modified-status "%1+") :last-p t)
-    (" %3l:%2c " :reduce 2)
-    ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r)
-    ))
+(defvar ergoemacs-mode-line--lhs nil)
+(defvar ergoemacs-mode-line--center nil)
+(defvar ergoemacs-mode-line--rhs nil)
 
-(setq ergoemacs-mode-line--center
-      '(((mode-icons--generate-minor-mode-list)  :reduce 4)
-	((mode-icons--generate-narrow powerline-narrow) :reduce 4)
-	(" " :reduce 4)))
+(defun ergoemacs-mode-line--atom ()
+  (setq ergoemacs-mode-line--lhs
+	'(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
+	  ((mode-line-buffer-identification) :last-p t :pad b)
+	  (((lambda() (and (buffer-file-name) t)) mode-icons--modified-status "%1") :last-p t)
+	  ((sml/compile-position-construct mode-line-position) :reduce 2 :pad b)
+	  ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r))
+	ergoemacs-mode-line--center
+	'(((mode-icons--generate-minor-mode-list)  :reduce 4)
+	  ((mode-icons--generate-narrow powerline-narrow "%n") :reduce 4)
+	  (" " :reduce 4))
+	ergoemacs-mode-line--rhs
+	'((global-mode-string :pad r)
+	  ((ergoemacs-mode-line-coding (lambda() (not (string= "undecided" (ergoemacs-mode-line--encoding)))) ergoemacs-mode-line--encoding) :pad b :reduce 2)
+	  ((ergoemacs-mode-line-coding (lambda() (not (string= ":" (mode-line-eol-desc))))mode-icons--mode-line-eol-desc mode-line-eol-desc) :pad l :reduce 2)
+	  ((mode-icons--generate-major-mode-item powerline-major-mode) :pad l)))
+  (force-mode-line-update))
+
+(defun ergoemacs-mode-line--center ()
+  (setq ergoemacs-mode-line--lhs
+	'(((mode-icons--generate-major-mode-item powerline-major-mode) :pad l)
+	  ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r)
+	  ((sml/compile-position-construct mode-line-position) :reduce 2 :pad b))
+	ergoemacs-mode-line--center
+	'(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
+	  ((mode-line-buffer-identification) :last-p t :pad b)
+	  (((lambda() (and (buffer-file-name) t)) mode-icons--modified-status "%1") :last-p r)
+	  )
+	ergoemacs-mode-line--rhs
+	'((global-mode-string :pad r)
+	  ((ergoemacs-mode-line-coding (lambda() (not (string= "undecided" (ergoemacs-mode-line--encoding)))) ergoemacs-mode-line--encoding) :pad b :reduce 2)
+	  ((ergoemacs-mode-line-coding (lambda() (not (string= ":" (mode-line-eol-desc))))mode-icons--mode-line-eol-desc mode-line-eol-desc) :pad l :reduce 2)
+	  ((mode-icons--generate-minor-mode-list)  :reduce 4)
+	  ((mode-icons--generate-narrow powerline-narrow "%n") :reduce 4 :last-p t)))
+  (force-mode-line-update))
+
+(defun ergoemacs-mode-line--xah ()
+  (setq ergoemacs-mode-line--lhs
+	'(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
+	  ((mode-line-buffer-identification) :last-p t :pad b)
+	  (((lambda() (and (buffer-file-name) t)) mode-icons--modified-status "%1") :last-p t)
+	  ((sml/compile-position-construct mode-line-position) :reduce 2 :pad b)
+	  ;; ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r)
+	  ((mode-icons--generate-major-mode-item powerline-major-mode) :pad b))
+	ergoemacs-mode-line--center nil
+	ergoemacs-mode-line--rhs nil)
+  (force-mode-line-update))
+
+(ergoemacs-mode-line--center)
 
 (defun ergoemacs-mode-line--eval-center (mode-line face1 face2 &optional reduce)
   (ergoemacs-mode-line--stack ergoemacs-mode-line--center (list mode-line face1) 'center reduce))
 
 (defun ergoemacs-mode-line--eval-lhs (mode-line face1 face2 &optional reduce)
   (ergoemacs-mode-line--stack ergoemacs-mode-line--lhs (list mode-line face1) 'left reduce))
-
-
-(setq ergoemacs-mode-line--rhs
- '((global-mode-string :pad r)
-   ((ergoemacs-mode-line-coding (lambda() (not (string= "undecided" (ergoemacs-mode-line--encoding)))) ergoemacs-mode-line--encoding) :pad b :reduce 2)
-   ((ergoemacs-mode-line-coding (lambda() (not (string= ":" (mode-line-eol-desc))))mode-icons--mode-line-eol-desc mode-line-eol-desc) :pad l :reduce 2)
-   ((mode-icons--generate-major-mode-item powerline-major-mode) :pad l)))
 
 (defun ergoemacs-mode-line--eval-rhs (mode-line face1 face2 &optional reduce)
   (ergoemacs-mode-line--stack ergoemacs-mode-line--rhs (list mode-line face1) 'right reduce))
@@ -1222,17 +1256,13 @@ When WHAT is nil, return the width of the window"
   (setq mode-icons-read-only-space nil
 	mode-icons-show-mode-name t
 	mode-icons-eol-text t
-	mode-name (mode-icons-get-mode-icon (or mode-icons-cached-mode-name mode-name)))
-  (let* ((active (powerline-selected-window-active))
+	mode-name (or (and (fboundp #'mode-icons-get-mode-icon)
+			   (mode-icons-get-mode-icon (or mode-icons-cached-mode-name mode-name)))
+		      mode-name))
+  (let* ((active (or (and (fboundp #'powerline-selected-window-active) (powerline-selected-window-active)) t))
 	 (mode-line (if active 'mode-line 'mode-line-inactive))
 	 (face1 (if active 'powerline-active1 'powerline-inactive1))
 	 (face2 (if active 'powerline-active2 'powerline-inactive2))
-	 (separator-left (intern (format "powerline-%s-%s"
-					 (powerline-current-separator)
-					 (car powerline-default-separator-dir))))
-	 (separator-right (intern (format "powerline-%s-%s"
-					  (powerline-current-separator)
-					  (cdr powerline-default-separator-dir))))
 	 (mode-icons-read-only-space nil)
 	 (mode-icons-show-mode-name t)
 	 (lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2))
@@ -1247,7 +1277,9 @@ When WHAT is nil, return the width of the window"
       (setq mode-icons-read-only-space nil
 	    mode-icons-show-mode-name nil
 	    mode-icons-eol-text nil
-	    mode-name (mode-icons-get-mode-icon (or mode-icons-cached-mode-name mode-name))
+	    mode-name (or (and (fboundp #'mode-icons-get-mode-icon)
+			   (mode-icons-get-mode-icon (or mode-icons-cached-mode-name mode-name)))
+		      mode-name)
 	    lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)
 	    rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2)
 	    center (ergoemacs-mode-line--eval-center mode-line face1 face2)
@@ -1288,6 +1320,40 @@ When WHAT is nil, return the width of the window"
 			  :family (face-attribute 'variable-pitch :family)
 			  :foundry (face-attribute 'variable-pitch :foundry)
 			  :height 125)))
+
+
+(defvar ergoemacs-mode-line-front-space nil
+  "Save `mode-line-front-space' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-mule-info nil
+  "Save `mode-line-mule-info' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-client nil
+  "Save `mode-line-client' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-modified nil
+  "Save `mode-line-modified' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-remote nil
+  "Save `mode-line-remote' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-frame-identification nil
+  "Save `mode-line-frame-identification' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-buffer-identification nil
+  "Save `mode-line-buffer-identification' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-position nil
+  "Save `mode-line-position' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-modes nil
+  "Save `mode-line-modes' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-misc-info nil
+  "Save `mode-line-misc-info' for `ergoemacs-mode' restore.")
+
+(defvar ergoemacs-mode-line-end-spaces nil
+  "Save `mode-line-end-spaces' for `ergoemacs-mode' restore.")
 
 (defun ergoemacs-mode-line-format (&optional restore)
   (if restore

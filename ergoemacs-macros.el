@@ -856,6 +856,8 @@ When arg1 can be a property.  The following properties are supported:
       `(ergoemacs-mode--eval-width ,arg2))
      ((and arg1 (symbolp arg1) (eq arg1 :mode-if) arg2)
       `(ergoemacs-mode-line--if ,arg2 ,arg3 ,arg4))
+     ((and arg1 (symbolp arg1) (memq arg1 '(:sep :separator)))
+      `(ergoemacs-mode-line--sep ,@(cdr args)))
      ((and arg1 (symbolp arg1) (memq arg1 '(:sep-right :separator-right)))
       `(ergoemacs-mode-line--sep 'right ,@(cdr args)))
      ((and arg1 (symbolp arg1) (memq arg1 '(:sep-left :separator-left)))
