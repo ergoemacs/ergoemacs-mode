@@ -245,10 +245,10 @@ ergoemacs THEME."
             (let (ergoemacs-mode)
               (ergoemacs-require new-option theme type)))
         (let ((option-sym
-               (or (and (stringp option) (intern option)) option)))
+               (or (and option (stringp option) (intern option)) option)))
           (dolist (theme (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
                              (ergoemacs-theme--list)))
-            (let ((theme-plist (ergoemacs-gethash (if (stringp theme) theme
+            (let ((theme-plist (ergoemacs-gethash (if (and theme (stringp theme)) theme
                                                     (symbol-name theme))
                                                   ergoemacs-theme-hash))
                   comp on off)
@@ -269,7 +269,7 @@ ergoemacs THEME."
               (setq theme-plist (plist-put theme-plist :components comp))
               (setq theme-plist (plist-put theme-plist :optional-on on))
               (setq theme-plist (plist-put theme-plist :optional-off off))
-              (puthash (if (stringp theme) theme (symbol-name theme)) theme-plist
+              (puthash (if (and theme (stringp theme)) theme (symbol-name theme)) theme-plist
                        ergoemacs-theme-hash)))))
     (unless (eq ergoemacs-require--ini-p :ini)
       (ergoemacs-theme-option-on option t))))
@@ -443,7 +443,7 @@ All other modes are assumed to be minor modes or unimportant.
   (if (and (>= (safe-length item) 4)
            (symbolp (car item))
            (eq (cadr item) 'menu-item)
-           (stringp (caddr item))
+           (and (caddr item) (stringp (caddr item)))
            (symbolp (cadddr item))
            (not (ergoemacs-keymapp (cadddr item))))
       ;; Look if this item already has a :keys property
@@ -986,7 +986,7 @@ Based on `elp-results'."
   ;; Taken from powerline by Donald Ephraim Curtis, Jason Milkins and
   ;; Nicolas Rougier
   ;; Changed so that prop is not just 'face
-  ;; Also changed to not force list
+  ;; Also changed to not force list, or add a nil to the list
   (mapconcat
    (lambda (mm)
      (let ((cur (get-text-property 0 prop mm)))
@@ -1005,7 +1005,7 @@ Based on `elp-results'."
 	 ((functionp elt)
 	  (let ((tmp (funcall elt)))
 	    ;; Return string or list, then `format-mode-line'
-	    (if (or (stringp tmp) (listp tmp))
+	    (if (or (and tmp (stringp tmp)) (listp tmp))
 		(throw 'found-it (format-mode-line tmp))
 	      ;; Otherwise, assume its a boolean.
 	      ;; If didn't
@@ -1014,10 +1014,14 @@ Based on `elp-results'."
 		(throw 'found-it "")))))
 	 ((and (symbolp elt) (boundp elt) (not (symbol-value elt)))
 	  (throw 'found-it ""))
-	 ((stringp elt)
-	  (throw 'found-it (format-mode-line elt)))))
+	 ((and elt (stringp elt))
+	  (throw 'found-it (format-mode-line elt)))
+	 ((and elt (consp elt))
+	  (throw 'found-it (format-mode-line elt)))
+	 ((and (symbolp elt) (boundp elt) (or (consp (symbol-value elt)) (stringp (symbol-value elt))))
+	  (throw 'found-it (format-mode-line (symbol-value elt))))))
       ""))
-   ((stringp lst-or-string)
+   ((and lst-or-string (stringp lst-or-string))
     (format-mode-line lst-or-string))
    (t "")))
 
@@ -1042,7 +1046,7 @@ Based on `elp-results'."
 (defun ergoemacs-mode-line--encoding ()
   "Encoding mode-line."
   (ergoemacs-save-buffer-state
-   (propertize (replace-regexp-in-string "\\(-unix\\|-mac\\|-dos\\|-undecided\\|-emacs\\)" "" (format "%s" buffer-file-coding-system))
+   (propertize (replace-regexp-in-string "\\(-unix\\|-mac\\|-dos\\|-undecided\\|-emacs\\|prefer-\\)" "" (format "%s" buffer-file-coding-system))
 	      'mouse-face 'mode-line-highlight
 	      'help-echo "mouse-1: Change buffer coding system"
 	      'local-map '(keymap
@@ -1064,13 +1068,13 @@ Based on `elp-results'."
 	  (propertize " " 'display img
 		      'face (plist-get (cdr img) :face)))))))
 
-
 (setq ergoemacs-mode-line--lhs
   '(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
-    ((sml/generate-buffer-identification powerline-buffer-id) :last-p t :pad b)
-    ((mode-icons--modified-status) :last-p t)
+    ((mode-line-buffer-identification) :last-p t :pad b)
+    (((lambda() (and (buffer-file-name) t)) mode-icons--modified-status "%1+") :last-p t)
     (" %3l:%2c " :reduce 2)
-    ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r)))
+    ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r)
+    ))
 
 (setq ergoemacs-mode-line--center
       '(((mode-icons--generate-minor-mode-list)  :reduce 4)
@@ -1086,9 +1090,9 @@ Based on `elp-results'."
 
 (setq ergoemacs-mode-line--rhs
  '((global-mode-string :pad r)
-   ((ergoemacs-mode-line-coding ergoemacs-mode-line--encoding) :pad b :reduce 2)
+   ((ergoemacs-mode-line-coding (lambda() (not (string= "undecided" (ergoemacs-mode-line--encoding)))) ergoemacs-mode-line--encoding) :pad b :reduce 2)
    ((ergoemacs-mode-line-coding (lambda() (not (string= ":" (mode-line-eol-desc))))mode-icons--mode-line-eol-desc mode-line-eol-desc) :pad l :reduce 2)
-   ((mode-icons--generate-major-mode-item powerline-major-mode))))
+   ((mode-icons--generate-major-mode-item powerline-major-mode) :pad l)))
 
 (defun ergoemacs-mode-line--eval-rhs (mode-line face1 face2 &optional reduce)
   (ergoemacs-mode-line--stack ergoemacs-mode-line--rhs (list mode-line face1) 'right reduce))
@@ -1107,7 +1111,7 @@ Based on `elp-results'."
     (setq final (apply 'append
 		       (mapcar
 			(lambda(elt)
-			  (unless (eq dir 'center)
+			   (unless (eq dir 'center)
 			    (setq face-i (1+ face-i)))
 			  (let* ((ifs (car elt))
 				 (plist (cdr elt))
@@ -1128,7 +1132,7 @@ Based on `elp-results'."
 					last-reduced-p nil)))
 			      (setq cur-face (nth (mod face-i len) face-list))
 			      (setq tmp (ergoemacs :mode-if ifs cur-face (plist-get plist :pad)))
-			      (if (string= (format-mode-line tmp) "")
+			      (if (and tmp (stringp tmp) (string= (format-mode-line tmp) ""))
 				  (if (or (eq dir 'center) (plist-get plist :last-p) last-reduced-p) nil
 				    (setq face-i (- face-i 1))
 				    nil)
