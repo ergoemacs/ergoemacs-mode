@@ -186,34 +186,31 @@ This advice also appempts to protcet local keymaps when
 `ergoemacs-map-properties--protect-local' is non-nil.  This is
 part of how `ergoemacs-mode' determines that a hook changed a key
 definition."
+  (when (eq keymap global-map) ;; (current-global-map)
+    (message "define %s %s" (ergoemacs-key-description key) def)
+    (ergoemacs :define-key ergoemacs-user-keymap key def)
+    (when (ergoemacs-keymapp ergoemacs-saved-global-map)
+      (ergoemacs :define-key ergoemacs-saved-global-map key def))
+    (cond
+     ((not def)
+      (ergoemacs :apply-key key
+		 (lambda(trans-new-key)
+		   (push trans-kew-key ergoemacs-map--unbound-keys))))
+     (def
+      (let (trans-keys
+	    new-lst)
+	(ergoemacs :apply-key key
+		 (lambda(trans-new-key)
+		   (push trans-new-key trans-keys)))
+	(push key trans-keys)
+	(dolist (cur-key ergoemacs-map--unbound-keys)
+	  (unless (member cur-key trans-key)
+	    (push ucr-key new-lst)))
+	(setq ergoemacs-map--unbound-keys new-lst)))))
   (unless ergoemacs-define-key-after-p
     (setq ergoemacs-define-key-after-p t)
     (unwind-protect
         (progn
-          (when (eq keymap global-map) ;; (current-global-map)
-            (let ((map-key (ergoemacs (ergoemacs keymap :original) :map-key)))
-              (cond
-               ((not (integerp map-key)))
-               ((not (= map-key most-negative-fixnum)))
-               ((ergoemacs :ignore-global-changes-p))
-               ((not def)
-                (unless (member key ergoemacs-map--unbound-keys)
-                  (push key ergoemacs-map--unbound-keys))
-                (when (ergoemacs-keymapp ergoemacs-saved-global-map)
-                  (ergoemacs :define-key ergoemacs-saved-global-map key nil)))
-               ((ergoemacs-keymapp ergoemacs-saved-global-map)
-                (ergoemacs :define-key ergoemacs-saved-global-map key def)
-                (let (new-lst)
-                  (dolist (cur-key ergoemacs-map--unbound-keys)
-                    (unless (equal key cur-key)
-                      (push cur-key new-lst)))
-                  (setq ergoemacs-map--unbound-keys new-lst)))
-               (t
-                (let (new-lst)
-                  (dolist (cur-key ergoemacs-map--unbound-keys)
-                    (unless (equal key cur-key)
-                      (push cur-key new-lst)))
-                  (setq ergoemacs-map--unbound-keys new-lst))))))
           (when (and (boundp 'ergoemacs-map-properties--protect-local)
                      ergoemacs-map-properties--protect-local)
             (ergoemacs-map-properties--hook-define-key keymap key def)))

@@ -271,7 +271,6 @@ KEY is the key that is Emacs key that will be defined.
 DEF is the definition of what will be run.
 
 This uses `ergoemacs-translate--apply-key'"
-  (setq ergoemacs-define-key-after-p t)
   (unwind-protect
       (ergoemacs-translate--apply-key key (lambda(new-key) (define-key keymap new-key def)))
     (setq ergoemacs-define-key-after-p nil)))

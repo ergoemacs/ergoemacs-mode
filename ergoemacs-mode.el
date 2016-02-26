@@ -83,6 +83,7 @@
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
 (require 'package)
+(require 'kmacro)
 
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
