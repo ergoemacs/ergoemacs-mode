@@ -187,7 +187,6 @@ This advice also appempts to protcet local keymaps when
 part of how `ergoemacs-mode' determines that a hook changed a key
 definition."
   (when (eq keymap global-map) ;; (current-global-map)
-    (message "define %s %s" (ergoemacs-key-description key) def)
     (ergoemacs :define-key ergoemacs-user-keymap key def)
     (when (ergoemacs-keymapp ergoemacs-saved-global-map)
       (ergoemacs :define-key ergoemacs-saved-global-map key def))
@@ -204,8 +203,8 @@ definition."
 		   (push trans-new-key trans-keys)))
 	(push key trans-keys)
 	(dolist (cur-key ergoemacs-map--unbound-keys)
-	  (unless (member cur-key trans-key)
-	    (push ucr-key new-lst)))
+	  (unless (member cur-key trans-keys)
+	    (push cur-key new-lst)))
 	(setq ergoemacs-map--unbound-keys new-lst)))))
   (unless ergoemacs-define-key-after-p
     (setq ergoemacs-define-key-after-p t)
