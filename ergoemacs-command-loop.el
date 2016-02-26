@@ -1448,7 +1448,8 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'.
     (ergoemacs-command-loop--message "Command `%s' is not found" command))
    ((and (symbolp command) (not (commandp command)))
     (ergoemacs-command-loop--message "Command `%s' cannot be called from a key" command))
-   ((memq command ergoemacs-command-loop-describe-key-functions)
+   ((and (consp ergoemacs-command-loop-describe-key-functions)
+	 (memq command ergoemacs-command-loop-describe-key-functions))
     (ergoemacs-specials
      (ergoemacs-command-loop--grow-interactive command record-flag keys)))
    (t
