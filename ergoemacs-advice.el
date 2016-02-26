@@ -195,7 +195,7 @@ definition."
      ((not def)
       (ergoemacs :apply-key key
 		 (lambda(trans-new-key)
-		   (push trans-kew-key ergoemacs-map--unbound-keys))))
+		   (push trans-new-key ergoemacs-map--unbound-keys))))
      (def
       (let (trans-keys
 	    new-lst)
