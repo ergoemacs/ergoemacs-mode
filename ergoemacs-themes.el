@@ -576,7 +576,11 @@
   
   (when iswitchb-define-mode-map-hook 
     (define-key iswitchb-mode-map [remap backward-char] 'iswitchb-prev-match)
-    (define-key iswitchb-mode-map [remap forward-char] 'iswitchb-next-match)))
+    (define-key iswitchb-mode-map [remap forward-char] 'iswitchb-next-match))
+  :version 5.7.5
+  (global-set-key (kbd "C-SPC") 'set-mark-command) ;; Set Mark
+  )
+  
 
 (ergoemacs-component move-word ()
   "Moving around and deleting words"

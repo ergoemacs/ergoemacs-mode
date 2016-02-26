@@ -734,7 +734,8 @@ closest `ergoemacs-theme-version' calculated from
           (when (and ret (functionp ret))
             (funcall ret)
             (setq ret (ergoemacs-gethash map ergoemacs-component-hash))))
-        (ergoemacs-component-struct--lookup-closest ret version)))))
+        (if (string-match-p "::" map) ret
+	  (ergoemacs-component-struct--lookup-closest ret version))))))
 
 (defvar ergoemacs-component-struct--get-keymap nil)
 (defvar ergoemacs-component-struct--get-keymap-extra nil)
