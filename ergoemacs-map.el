@@ -1030,8 +1030,8 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
          (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language)))
        (use-local-map (ergoemacs current-local-map))
        (setq ergoemacs-map--breadcrumb ""))
-     (when (and (minibufferp) ergoemacs-read-from-minibuffer-map)
-       (ergoemacs-command-loop--minibuffer-supported-p ergoemacs-map--breadcrumb)
+     (when (and (minibufferp) ergoemacs-read-from-minibuffer-map
+		(ergoemacs-command-loop--minibuffer-supported-p ergoemacs-map--breadcrumb))
        (use-local-map (ergoemacs ergoemacs-read-from-minibuffer-map))
        (setq ergoemacs-read-from-minibuffer-map nil
              ergoemacs-map--breadcrumb "")))
