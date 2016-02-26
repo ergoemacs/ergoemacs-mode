@@ -626,7 +626,9 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                       (dolist (cur-def def)
                         (if (not (commandp cur-def t))
                             (push cur-def fn-lst)
-                          (ergoemacs :define-key cur-map key cur-def)
+                          (if (ergoemacs-keymapp cur-def)
+			      (ergoemacs :define-key cur-map key (copy-keymap cur-def))
+			    (ergoemacs :define-key cur-map key cur-def))
                           (throw 'found-fn t)))
                       nil)
               ;; Not found
@@ -635,7 +637,9 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
               (push (list keymap key fn-lst)
                     (ergoemacs-component-struct-dynamic-keys obj))))
            (t
-            (ergoemacs :define-key cur-map key def)
+            (if (ergoemacs-keymapp def)
+		(ergoemacs :define-key cur-map key (copy-keymap def))
+	      (ergoemacs :define-key cur-map key def))
             (when (and package-name def (not (fboundp def)))
               ;; Create autoload.
               (autoload def (format "%s" package-name) nil t)
