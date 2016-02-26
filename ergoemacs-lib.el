@@ -1083,8 +1083,9 @@ Based on `elp-results'."
     (when (fboundp separator)
       (let ((img (apply separator args)))
 	(when (and (listp img) (eq 'image (car img)))
-	  (propertize " " 'display img
-		      'face (plist-get (cdr img) :face)))))))
+	  (ergoemacs-save-buffer-state
+	   (propertize " " 'display img
+		       'face (plist-get (cdr img) :face))))))))
 
 (defvar ergoemacs-mode-line--lhs nil)
 (defvar ergoemacs-mode-line--center nil)
@@ -1322,14 +1323,15 @@ When WHAT is nil, return the width of the window"
     (if ergoemacs-mode--pixel-width-p
 	(setq available (list available)))
     ;; (message "a: %3.1f (%3.1f %3.1f %3.1f; %3.1f)" available wlhs wrhs wcenter (ergoemacs :width))
-    (concat (format-mode-line lhs)
-    	    (propertize " " 'display `((space :width ,available))
-    			'face face1)
+    (ergoemacs-save-buffer-state
+     (concat (format-mode-line lhs)
+	     (propertize " " 'display `((space :width ,available))
+			 'face face1)
 
-    	    (format-mode-line center)
-    	    (propertize " " 'display `((space :width ,available))
-    			'face face1)
-    	    (format-mode-line rhs))))
+	     (format-mode-line center)
+	     (propertize " " 'display `((space :width ,available))
+			 'face face1)
+	     (format-mode-line rhs)))))
 
 (defun ergoemacs-mode-line--variable-pitch (&optional frame)
   (dolist (face '(mode-line mode-line-inactive
