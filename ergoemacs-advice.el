@@ -54,6 +54,8 @@
   (require 'ergoemacs-macros)
   (require 'cl))
 
+(require 'mouse)
+
 (defvar ergoemacs-mode)
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-map--unbound-keys)
