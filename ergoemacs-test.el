@@ -1116,6 +1116,8 @@ Should test issue #142"
       (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
               (or (and (boundp 'wait-for-me)
                        "(setq debug-on-error t debug-on-quit t)") "")
+	      "(setq ergoemacs-theme nil)"
+	      "(setq ergoemacs-keyboard-layout \"us\")"
               "(ergoemacs-mode 1)\n"
 	      "(global-set-key (kbd \"C-SPC\") 'set-mark-command)\n"
               "(when (and (eq (key-binding (kbd \"C-SPC\")) 'set-mark-command)\n"
