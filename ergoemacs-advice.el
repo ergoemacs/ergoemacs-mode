@@ -60,6 +60,7 @@
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-map--unbound-keys)
 (defvar ergoemacs-saved-global-map)
+(defvar ergoemacs-user-keymap)
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
@@ -74,6 +75,8 @@
 (declare-function ergoemacs-key-description--substitute-command-keys "ergoemacs-key-description")
 
 (declare-function ergoemacs-translate--define-key "ergoemacs-translate")
+(declare-function ergoemacs-translate--apply-key "ergoemacs-translate")
+(declare-function ergoemacs-major-mode-menu-map "ergoemacs-lib")
 
 
 (defvar ergoemacs-advice--temp-replace-functions nil

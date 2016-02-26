@@ -29,6 +29,12 @@
   (require 'ergoemacs-macros)
   (require 'cl))
 
+(defvar powerline-default-separator-dir)
+(defvar mode-icons-show-mode-name)
+(defvar mode-icons-read-only-space)
+(defvar mode-icons-cached-mode-name)
+(defvar mode-icons-eol-text)
+(defvar ergoemacs-theme)
 (defvar ergoemacs-excluded-major-modes)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
@@ -45,6 +51,16 @@
 (defvar ergoemacs-handle-ctl-c-or-ctl-x)
 (defvar ergoemacs-dir)
 
+
+(declare-function ergoemacs-next-emacs-buffer "ergoemacs-functions")
+(declare-function ergoemacs-next-user-buffer "ergoemacs-functions")
+(declare-function ergoemacs-previous-emacs-buffer "ergoemacs-functions")
+(declare-function ergoemacs-previous-user-buffer "ergoemacs-functions")
+
+(declare-function powerline-current-separator "powerline")
+(declare-function powerline-selected-window-active "powerline")
+
+(declare-function mode-icons-get-mode-icon "mode-icons")
 
 (declare-function ergoemacs-autoloadp "ergoemacs-macros")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
@@ -818,6 +834,7 @@ Based on `elp-results'."
     (pop-to-buffer resultsbuf)
     (goto-char (point-min))))
 
+(declare-function ergoemacs--real-mouse-menu-major-mode-map "ergoemacs-lib")
 (fset 'ergoemacs--real-mouse-menu-major-mode-map (symbol-function #'mouse-menu-major-mode-map))
 
 (defcustom ergoemacs-swap-major-modes-when-clicking-major-mode-name nil
@@ -848,7 +865,8 @@ Based on `elp-results'."
   :type '(choice
 	  (function :tag "Function to group buffers.")
 	  (const :tag "Switch to next/previous user/emacs buffer." 'ergoemacs)
-	  (const :tag "Use emacs default method." nil)))
+	  (const :tag "Use emacs default method." nil))
+  :group 'ergoemacs-mode)
 
 (defun ergoemacs-mode-line-buffer-list ()
   "List of buffers shown in popup menu."
@@ -881,8 +899,8 @@ Based on `elp-results'."
 		     (lambda (b)
 		       (let (tmp0 tmp1 tmp2)
 			 (with-current-buffer b
-			   (setq tmp0 (current-buffer)
-				 tmp1 (buffer-name)
+			   (setq tmp0 cb
+				 tmp1 (buffer-name cb)
 				 tmp2 (if (functionp ergoemacs-mode-line-change-buffer)
 					  (funcall ergoemacs-mode-line-change-buffer)
 					"Common"))
@@ -897,7 +915,7 @@ Based on `elp-results'."
 	 menu menu2 tmp)
     (dolist (item buf-list)
       (if (string= (nth 2 item) group)
-	  (unless (eq (current-buffer) (nth 0 item))
+	  (unless (eq cb (nth 0 item))
 	    (push `(,(nth 3 item) menu-item ,(nth 1 item) (lambda() (interactive) (funcall menu-bar-select-buffer-function ,(nth 0 item)))) menu))
 	(if (setq tmp (assoc (nth 2 item) menu2))
 	    (push `(,(nth 3 item) menu-item ,(nth 1 item) (lambda() (interactive) (funcall menu-bar-select-buffer-function ,(nth 0 item))))
@@ -1122,13 +1140,13 @@ Based on `elp-results'."
 
 (ergoemacs-mode-line--center)
 
-(defun ergoemacs-mode-line--eval-center (mode-line face1 face2 &optional reduce)
+(defun ergoemacs-mode-line--eval-center (mode-line face1 _face2 &optional reduce)
   (ergoemacs-mode-line--stack ergoemacs-mode-line--center (list mode-line face1) 'center reduce))
 
-(defun ergoemacs-mode-line--eval-lhs (mode-line face1 face2 &optional reduce)
+(defun ergoemacs-mode-line--eval-lhs (mode-line face1 _face2 &optional reduce)
   (ergoemacs-mode-line--stack ergoemacs-mode-line--lhs (list mode-line face1) 'left reduce))
 
-(defun ergoemacs-mode-line--eval-rhs (mode-line face1 face2 &optional reduce)
+(defun ergoemacs-mode-line--eval-rhs (mode-line face1 _face2 &optional reduce)
   (ergoemacs-mode-line--stack ergoemacs-mode-line--rhs (list mode-line face1) 'right reduce))
 
 (defun ergoemacs-mode-line--stack (mode-line-list face-list dir &optional reduction-level)
@@ -1136,10 +1154,9 @@ Based on `elp-results'."
   (let ((face-i (if (eq dir 'center) 0 -1))
 	(len (length face-list))
 	(last-face (nth 0 face-list))
-	cur-face next-face
+	cur-face final tmp
 	(mode-line-list mode-line-list)
-	last-reduced-p
-	tmp)
+	last-reduced-p)
     (when (eq dir 'right)
       (setq mode-line-list (reverse mode-line-list)))
     (setq final (apply 'append
@@ -1189,7 +1206,10 @@ Based on `elp-results'."
 				  (ergoemacs :sep dir last-face cur-face))
 				 ((eq dir 'right)
 				  (ergoemacs :sep dir cur-face last-face)))))))
-    (setq final (remove-if (lambda(x) (eq x nil)) final))
+    (dolist (elt (reverse final))
+      (when elt
+	(push elt tmp)))
+    (setq final tmp)    
     (when (and final (eq dir 'center))
       (setq final (append (list (ergoemacs :sep-left (car (last face-list)) (nth 0 face-list)))
 			  final
@@ -1244,7 +1264,7 @@ When WHAT is nil, return the width of the window"
 	  (let ((width (window-pixel-width)))
 	    width)
 	(let ((width (window-width))
-	      (cw (frame-char-width))
+	      ;; (cw (frame-char-width))
 	      tmp)
 	  (when (setq tmp (window-margins))
 	    (setq width (apply '+ width (list (or (car tmp) 0) (or (cdr tmp) 0)))))
