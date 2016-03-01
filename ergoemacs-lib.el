@@ -888,9 +888,10 @@ Based on `elp-results'."
 
 (defun ergoemacs-mode-line-menu (&optional buffer)
   (let* ((cb (or buffer (current-buffer)))
-	 (group (if (functionp ergoemacs-mode-line-change-buffer)
-		    (funcall ergoemacs-mode-line-change-buffer)
-		  '("Common")))
+	 (group (with-current-buffer cb
+		  (if (functionp ergoemacs-mode-line-change-buffer)
+		      (funcall ergoemacs-mode-line-change-buffer)
+		    '("Common"))))
 	 (groups '())
 	 (buf-list (sort
 		    (mapcar
@@ -899,8 +900,8 @@ Based on `elp-results'."
 		     (lambda (b)
 		       (let (tmp0 tmp1 tmp2)
 			 (with-current-buffer b
-			   (setq tmp0 cb
-				 tmp1 (buffer-name cb)
+			   (setq tmp0 b
+				 tmp1 (buffer-name b)
 				 tmp2 (if (functionp ergoemacs-mode-line-change-buffer)
 					  (funcall ergoemacs-mode-line-change-buffer)
 					"Common"))
@@ -1105,13 +1106,13 @@ Based on `elp-results'."
 	ergoemacs-mode-line--rhs
 	'((global-mode-string :pad r)
 	  ((ergoemacs-mode-line-coding (lambda() (not (string= "undecided" (ergoemacs-mode-line--encoding)))) ergoemacs-mode-line--encoding) :pad b :reduce 2)
-	  ((ergoemacs-mode-line-coding (lambda() (not (string= ":" (mode-line-eol-desc))))mode-icons--mode-line-eol-desc mode-line-eol-desc) :pad l :reduce 2)
+	  ((ergoemacs-mode-line-coding (lambda() (not (string= ":" (mode-line-eol-desc)))) mode-icons--mode-line-eol-desc mode-line-eol-desc) :pad l :reduce 2)
 	  ((mode-icons--generate-major-mode-item powerline-major-mode) :pad l)))
   (force-mode-line-update))
 
 (defun ergoemacs-mode-line--center ()
   (setq ergoemacs-mode-line--lhs
-	'(((mode-icons--generate-major-mode-item powerline-major-mode) :pad l)
+	'(((mode-icons--generate-major-mode-item powerline-major-mode) :pad b)
 	  ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r)
 	  ((sml/compile-position-construct mode-line-position) :reduce 2 :pad b))
 	ergoemacs-mode-line--center
@@ -1128,6 +1129,7 @@ Based on `elp-results'."
   (force-mode-line-update))
 
 (defun ergoemacs-mode-line--xah ()
+
   (setq ergoemacs-mode-line--lhs
 	'(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
 	  ((mode-line-buffer-identification) :last-p t :pad b)
