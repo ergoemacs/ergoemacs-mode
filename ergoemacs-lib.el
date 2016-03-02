@@ -1105,24 +1105,28 @@ items `Turn Off', `Hide' and `Help'."
          (mm-fun (or (get minor-mode :minor-mode-function) minor-mode)))
     (unless minor-mode (error "Cannot find minor mode for `%s'" indicator))
     (let* ((map (cdr-safe (assq minor-mode minor-mode-map-alist)))
-           (menu (and (keymapp map) (lookup-key map [menu-bar]))))
+           (menu (and (keymapp map) (lookup-key map [menu-bar])))
+	   (hidden (memq minor-mode ergoemacs-mode--space-hidden-minor-modes)))
       (setq menu
             (if menu
-                `(,@(mouse-menu-non-singleton menu)
-		  (sep-minor-mode-ind menu-item "--")
-		  (hide menu-item ,(if dont-popup
-				       "Show this minor-mode"
-				     "Hide this minor-mode")
-		      (lambda () (interactive)
-			(ergoemacs-minor-mode-hide ',mm-fun ,dont-popup))))
+                (if hidden
+		    (mouse-menu-non-singleton menu)
+		  `(,@(mouse-menu-non-singleton menu)
+		    (sep-minor-mode-ind menu-item "--")
+		    (hide menu-item ,(if dont-popup
+					 "Show this minor-mode"
+				       "Hide this minor-mode")
+			  (lambda () (interactive)
+			    (ergoemacs-minor-mode-hide ',mm-fun ,dont-popup)))))
 	      `(keymap
                 ,indicator
                 (turn-off menu-item "Turn Off minor mode" ,mm-fun)
-		(hide menu-item ,(if dont-popup
+		,(if hidden nil
+		   `(hide menu-item ,(if dont-popup
 				     "Show this minor-mode"
 				   "Hide this minor-mode")
 		      (lambda () (interactive)
-			(ergoemacs-minor-mode-hide ',mm-fun ,dont-popup)))
+			(ergoemacs-minor-mode-hide ',mm-fun ,dont-popup))))
                 (help menu-item "Help for minor mode"
                       (lambda () (interactive)
                         (describe-function ',mm-fun))))))
