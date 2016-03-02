@@ -1023,9 +1023,8 @@ Based on `elp-results'."
 	(cond
 	 ((functionp elt)
 	  (let ((tmp (funcall elt)))
-	    ;; Return string or list, then `format-mode-line'
 	    (if (or (and tmp (stringp tmp)) (listp tmp))
-		(throw 'found-it (format-mode-line tmp))
+		(throw 'found-it tmp)
 	      ;; Otherwise, assume its a boolean.
 	      ;; If didn't
 	      (when (and (booleanp tmp)
@@ -1034,19 +1033,19 @@ Based on `elp-results'."
 	 ((and (symbolp elt) (boundp elt) (not (symbol-value elt)))
 	  (throw 'found-it ""))
 	 ((and elt (stringp elt))
-	  (throw 'found-it (format-mode-line elt)))
+	  (throw 'found-it elt))
 	 ((and elt (consp elt))
-	  (throw 'found-it (format-mode-line elt)))
+	  (throw 'found-it elt))
 	 ((and (symbolp elt) (boundp elt) (or (consp (symbol-value elt)) (stringp (symbol-value elt))))
-	  (throw 'found-it (format-mode-line (symbol-value elt))))))
+	  (throw 'found-it (symbol-value elt)))))
       ""))
    ((and lst-or-string (stringp lst-or-string))
-    (format-mode-line lst-or-string))
+    lst-or-string)
    (t "")))
 
 (defun ergoemacs-mode-line--if (str &optional face pad)
   "Render STR as mode-line data using FACE and optionally PAD import on left (l), right (r) or both (b)."
-  (let* ((rendered-str (ergoemacs-mode-line--if--1 str))
+  (let* ((rendered-str (format-mode-line (ergoemacs-mode-line--if--1 str)))
 	 (padded-str (concat
 		      (when (and (> (length rendered-str) 0) (memq pad '(l left b both))) " ")
 		      rendered-str
@@ -1092,6 +1091,138 @@ Based on `elp-results'."
 (defvar ergoemacs-mode-line--center nil)
 (defvar ergoemacs-mode-line--rhs nil)
 
+(defun ergoemacs-minor-mode-menu-from-indicator (indicator &optional dont-popup)
+  "Show menu for minor mode specified by INDICATOR.
+Interactively, INDICATOR is read using completion.
+If there is no menu defined for the minor mode, then create one with
+items `Turn Off', `Hide' and `Help'."
+  (interactive
+   (list (completing-read
+	  "Minor mode indicator: "
+	  (describe-minor-mode-completion-table-for-indicator))))
+  (let* ((minor-mode (or (and (stringp indicator) (lookup-minor-mode-from-indicator indicator))
+			 (and (symbolp indicator) indicator)))
+         (mm-fun (or (get minor-mode :minor-mode-function) minor-mode)))
+    (unless minor-mode (error "Cannot find minor mode for `%s'" indicator))
+    (let* ((map (cdr-safe (assq minor-mode minor-mode-map-alist)))
+           (menu (and (keymapp map) (lookup-key map [menu-bar]))))
+      (setq menu
+            (if menu
+                `(,@(mouse-menu-non-singleton menu)
+		  (sep-minor-mode-ind menu-item "--")
+		  (hide menu-item ,(if dont-popup
+				       "Show this minor-mode"
+				     "Hide this minor-mode")
+		      (lambda () (interactive)
+			(ergoemacs-minor-mode-hide ',mm-fun ,dont-popup))))
+	      `(keymap
+                ,indicator
+                (turn-off menu-item "Turn Off minor mode" ,mm-fun)
+		(hide menu-item ,(if dont-popup
+				     "Show this minor-mode"
+				   "Hide this minor-mode")
+		      (lambda () (interactive)
+			(ergoemacs-minor-mode-hide ',mm-fun ,dont-popup)))
+                (help menu-item "Help for minor mode"
+                      (lambda () (interactive)
+                        (describe-function ',mm-fun))))))
+      (if dont-popup menu
+	(popup-menu menu)))))
+
+(defun ergoemacs-mode--minor-mode-mouse (click-group click-type string)
+  "Return mouse handler for CLICK-GROUP given CLICK-TYPE and STRING."
+  ;; Taken from Powerline
+  (cond ((eq click-group 'minor)
+         (cond ((eq click-type 'menu)
+                `(lambda (event)
+                   (interactive "@e")
+                   (ergoemacs-minor-mode-menu-from-indicator ,string)))
+               ((eq click-type 'help)
+                `(lambda (event)
+                   (interactive "@e")
+                   (describe-minor-mode-from-indicator ,string)))
+               (t
+                `(lambda (event)
+                   (interactive "@e")
+                   nil))))
+        (t
+         `(lambda (event)
+            (interactive "@e")
+            nil))))
+
+;; Adapted from powerline.
+(defvar ergoemacs-mode--hidden-minor-modes '(isearch-mode)
+  "List of hidden modes and their indicators.")
+
+(defun ergoemacs-minor-mode-hide (minor-mode &optional show)
+  "Hide a minor-mode based on mode indicator MINOR-MODE."
+  (if show
+      (setq ergoemacs-mode--hidden-minor-modes (delq minor-mode ergoemacs-mode--hidden-minor-modes))
+    (unless (memq minor-mode ergoemacs-mode--hidden-minor-modes)
+      (push minor-mode ergoemacs-mode--hidden-minor-modes)))
+  (force-mode-line-update))
+
+(defun ergoemacs-minor-mode-hidden-menu (&optional _event)
+  "Display a list of the hidden minor modes."
+  (interactive "@e")
+  (popup-menu
+   `(keymap
+     ,@(mapcar
+       (lambda(m)
+	 `(,m menu-item ,(format "%s" m) ,(ergoemacs-minor-mode-menu-from-indicator m t)))
+       (let (ret)
+	 (dolist (elt ergoemacs-mode--hidden-minor-modes)
+	   (when (and (boundp elt) (symbol-value elt))
+	     (push elt ret)))
+	 ret)))))
+
+(defun ergoemacs-minor-mode-alist ()
+  "Get a list of the minor-modes"
+  (let (ret)
+    (dolist (a (reverse minor-mode-alist))
+      (unless (memq (car a) ergoemacs-mode--hidden-minor-modes)
+	(push a ret)))
+    ret))
+
+(defun ergoemacs-mode--minor-modes ()
+  (let ((ret (concat
+	      (mapconcat (lambda (mm)
+			   (propertize mm
+				       'mouse-face 'mode-line-highlight
+				       'help-echo "Minor mode\n mouse-1: Display minor mode menu\n mouse-2: Show help for minor mode\n mouse-3: Toggle minor modes"
+				       'local-map (let ((map (make-sparse-keymap)))
+						    (define-key map
+						      [mode-line down-mouse-1]
+						      (ergoemacs-mode--minor-mode-mouse 'minor 'menu mm))
+						    (define-key map
+						      [mode-line mouse-2]
+						      (ergoemacs-mode--minor-mode-mouse 'minor 'help mm))
+						    (define-key map
+						      [mode-line down-mouse-3]
+						      (ergoemacs-mode--minor-mode-mouse 'minor 'menu mm))
+						    (define-key map
+						      [header-line down-mouse-3]
+						      (ergoemacs-mode--minor-mode-mouse 'minor 'menu mm))
+						    map)))
+			 (split-string (format-mode-line (ergoemacs-minor-mode-alist)))
+			 " "))))
+    (when (catch 'found
+	    (dolist (elt ergoemacs-mode--hidden-minor-modes)
+	      (when (and (boundp elt) (symbol-value elt))
+		(throw 'found t)))
+	    nil)
+      (setq ret (concat ret " "
+			(propertize (if (and (fboundp #'mode-icons-propertize-mode))
+					(mode-icons-propertize-mode "+" (list "+" #xf151 'FontAwesome))
+				      "+")
+				    'mouse-face 'mode-line-highlight
+				    'help-echo "Hidden Minor Modes\nmouse-1: Display hidden minor modes"
+				    'local-map (let ((map (make-sparse-keymap)))
+						 (define-key map [mode-line down-mouse-1] 'ergoemacs-minor-mode-hidden-menu)
+						 (define-key map [mode-line down-mouse-3] 'ergoemacs-minor-mode-hidden-menu)
+						 map)))))
+    ret))
+
 (defun ergoemacs-mode-line--atom ()
   (setq ergoemacs-mode-line--lhs
 	'(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
@@ -1100,7 +1231,7 @@ Based on `elp-results'."
 	  ((sml/compile-position-construct mode-line-position) :reduce 2 :pad b)
 	  ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r))
 	ergoemacs-mode-line--center
-	'(((mode-icons--generate-minor-mode-list)  :reduce 4)
+	'(((ergoemacs-mode--minor-modes)  :reduce 4)
 	  ((mode-icons--generate-narrow powerline-narrow "%n") :reduce 4)
 	  (" " :reduce 4))
 	ergoemacs-mode-line--rhs
@@ -1123,8 +1254,8 @@ Based on `elp-results'."
 	ergoemacs-mode-line--rhs
 	'((global-mode-string :pad r)
 	  ((ergoemacs-mode-line-coding (lambda() (not (string= "undecided" (ergoemacs-mode-line--encoding)))) ergoemacs-mode-line--encoding) :pad b :reduce 2)
-	  ((ergoemacs-mode-line-coding (lambda() (not (string= ":" (mode-line-eol-desc))))mode-icons--mode-line-eol-desc mode-line-eol-desc) :pad l :reduce 2)
-	  ((mode-icons--generate-minor-mode-list)  :reduce 4)
+	  ((ergoemacs-mode-line-coding (lambda() (not (string= ":" (mode-line-eol-desc)))) mode-icons--mode-line-eol-desc mode-line-eol-desc) :pad l :reduce 2)
+	  ((ergoemacs-mode--minor-modes)  :reduce 4)
 	  ((mode-icons--generate-narrow powerline-narrow "%n") :reduce 4 :last-p t)))
   (force-mode-line-update))
 
@@ -1264,8 +1395,9 @@ When WHAT is nil, return the width of the window"
 				 (string-width x)))))
 			 (ergoemacs-mode-line--property-substrings (format-mode-line what) 'display))))
       (if pixels-p
-	  (let ((width (window-pixel-width)))
-	    width)
+	  (let ((width (ergoemacs-mode--eval-width-col))
+		(cw (frame-char-width)))
+	    (* cw width))
 	(let ((width (window-width))
 	      ;; (cw (frame-char-width))
 	      tmp)
@@ -1324,16 +1456,14 @@ When WHAT is nil, return the width of the window"
     (setq available (/ (- (ergoemacs :width) (+ wlhs wrhs wcenter)) 2))
     (if ergoemacs-mode--pixel-width-p
 	(setq available (list available)))
-    ;; (message "a: %3.1f (%3.1f %3.1f %3.1f; %3.1f)" available wlhs wrhs wcenter (ergoemacs :width))
-    (ergoemacs-save-buffer-state
-     (concat (format-mode-line lhs)
-	     (propertize " " 'display `((space :width ,available))
-			 'face face1)
-
-	     (format-mode-line center)
-	     (propertize " " 'display `((space :width ,available))
-			 'face face1)
-	     (format-mode-line rhs)))))
+    ;; (message "a: %s (%3.1f %3.1f %3.1f; %3.1f)" available wlhs wrhs wcenter (ergoemacs :width))
+    (list lhs
+	   (propertize " " 'display `((space :width ,available))
+		       'face face1)
+	   center
+	   (propertize " " 'display `((space :width ,available))
+		       'face face1)
+	   rhs)))
 
 (defun ergoemacs-mode-line--variable-pitch (&optional frame)
   (dolist (face '(mode-line mode-line-inactive
@@ -1392,82 +1522,6 @@ When WHAT is nil, return the width of the window"
     (setq mode-line-format `("%e"
 			     (:eval (ergoemacs-mode-line--eval))))
     (force-mode-line-update)))
-
-;;(ergoemacs-mode-line--variable-pitch)
-;; (ergoemacs-mode-line-format)
-
-;; (defun ergoemacs-mode-line-format (&optional restore)
-;;   "Format mode-line based on more modern conventions."
-;;   (if restore
-;;       (set-default 'mode-line-format
-;; 		   ergoemacs-old-mode-line-format)
-;;     (unless ergoemacs-old-mode-line-format
-;;       (setq ergoemacs-old-mode-line-format mode-line-format))
-;;     (let* ((space "     ")
-;; 	   (mf `("%e"
-;; 		     " "
-;; 		     ,(if (fboundp 'sml/generate-buffer-identification)
-;; 			  '(sml/buffer-identification sml/buffer-identification
-;; 						      (:eval
-;; 						       (sml/generate-buffer-identification)))
-;; 			(propertize "%12b" 'local-map
-;; 				    '(keymap
-;; 				      (header-line keymap
-;; 						   (mouse-3 . ergoemacs-mode-line-next-buffer)
-;; 						   (down-mouse-3 . ignore)
-;; 						   (mouse-1 . ergoemacs-mode-line-previous-buffer)
-;; 						   (down-mouse-1 . ignore))
-;; 				      (mode-line keymap
-;; 						 (mouse-3 . ergoemacs-mode-line-next-buffer)
-;; 						 (mouse-1 . ergoemacs-mode-line-previous-buffer)))
-;; 				    'mouse-face 'mode-line-highlight
-;; 				    'help-echo "Buffer name\nmouse-1: Previous buffer\nmouse-3: Next buffer"
-;; 				    'face 'mode-line-buffer-id))
-;; 		     ,space
-;; 		     ,(if (fboundp 'mode-icons--generate-major-mode-item)
-;; 			  mode-icons--major-construct
-;; 			`(:propertize ("" mode-name)
-;; 				      help-echo "Major mode\nmouse-1: Display major mode menu\nmouse-2: Show help for major mode\nmouse-3: Toggle minor modes"
-;; 				      mouse-face mode-line-highlight
-;; 				      local-map ,mode-line-major-mode-keymap))
-;; 		     ,space
-;; 		     ,(if (fboundp 'sml/compile-position-construct)
-;; 			  '(sml/position-construct sml/position-construct
-;; 						   (:eval
-;; 						    (sml/compile-position-construct)))
-;; 			(assoc 'line-number-mode mode-line-position))
-;; 		     ,space
-;; 		     ,(if (fboundp 'mode-icons--modified-status)
-;; 			  '(:eval (mode-icons--modified-status))
-;; 			'(:eval (if (string= "*" (format-mode-line "%1+")) "Unsaved" "")))
-;; 		     ,(when ergoemacs-mode-line-use-vc
-;; 		       space)
-;; 		     ,(when ergoemacs-mode-line-use-vc
-;; 		       '(vc-mode vc-mode))
-;; 		     ;; Minor modes
-;; 		     ,(when ergoemacs-mode-line-minor-modes
-;; 			space)
-;; 		     ,(when ergoemacs-mode-line-minor-modes
-;; 			(if (fboundp 'sml/generate-minor-modes)
-;; 			    '(:eval (sml/generate-minor-modes))
-;; 			  (if (fboundp 'mode-icons--generate-minor-mode-list)
-;; 			      '(:eval (mode-icons--generate-minor-mode-list))
-;; 			    (or (member 'minor-mode-alist mode-line-modes)
-;; 				(cl-member-if
-;; 				 (lambda (x) (and (listp x)
-;; 						  (equal (car x) :propertize)
-;; 						  (equal (cadr x) '("" minor-mode-alist))))
-;; 				 mode-line-modes)))))
-;; 		     ,(when ergoemacs-mode-line-coding space)
-;; 		     ,(when ergoemacs-mode-line-coding
-;; 			(if (fboundp 'mode-icons--mode-line-eol-desc)
-;; 			    '(:eval (mode-icons--mode-line-eol-desc))
-;; 			  '(:eval (mode-line-eol-desc))))
-;; 		     )))
-;;       (set-default 'mode-line-format mf)
-;;       (setq mode-icons-eol-text t
-;; 	    mode-icons-show-mode-name t
-;; 	    mode-line-format mf))))
 
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
