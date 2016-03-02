@@ -1150,6 +1150,9 @@ items `Turn Off', `Hide' and `Help'."
             (interactive "@e")
             nil))))
 
+(defvar ergoemacs-mode--space-hidden-minor-modes nil
+  "List of minor modes hidden due to space limitations.")
+
 ;; Adapted from powerline.
 (defvar ergoemacs-mode--hidden-minor-modes '(isearch-mode)
   "List of hidden modes and their indicators.")
@@ -1171,7 +1174,8 @@ items `Turn Off', `Hide' and `Help'."
        (lambda(m)
 	 `(,m menu-item ,(format "%s" m) ,(ergoemacs-minor-mode-menu-from-indicator m t)))
        (let (ret)
-	 (dolist (elt ergoemacs-mode--hidden-minor-modes)
+	 (dolist (elt (append ergoemacs-mode--hidden-minor-modes
+			      ergoemacs-mode--space-hidden-minor-modes))
 	   (when (and (boundp elt) (symbol-value elt))
 	     (push elt ret)))
 	 ret)))))
@@ -1184,44 +1188,77 @@ items `Turn Off', `Hide' and `Help'."
 	(push a ret)))
     ret))
 
+(defvar ergoemacs-mode--minor-modes-p t
+  "Determine if `ergoemacs-mode--minor-modes' generates space")
+
+(defvar ergoemacs-mode--minor-modes-available nil)
+(defun ergoemacs-mode--minor-modes-available (mode-line face1 face2 &optional reduce)
+  (let (lhs rhs center)
+    (setq ergoemacs-mode--minor-modes-p nil)
+    (unwind-protect
+	(setq lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2 reduce)
+	      rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2 reduce)
+	      center (ergoemacs-mode-line--eval-center mode-line face1 face2))
+      (setq ergoemacs-mode--minor-modes-p t
+	    ergoemacs-mode--minor-modes-available (- (ergoemacs :width)
+						     (+ (ergoemacs :width lhs)
+							(ergoemacs :width rhs)
+							(ergoemacs :width center)))))))
 (defun ergoemacs-mode--minor-modes ()
-  (let ((ret (concat
-	      (mapconcat (lambda (mm)
-			   (propertize mm
-				       'mouse-face 'mode-line-highlight
-				       'help-echo "Minor mode\n mouse-1: Display minor mode menu\n mouse-2: Show help for minor mode\n mouse-3: Toggle minor modes"
-				       'local-map (let ((map (make-sparse-keymap)))
-						    (define-key map
-						      [mode-line down-mouse-1]
-						      (ergoemacs-mode--minor-mode-mouse 'minor 'menu mm))
-						    (define-key map
-						      [mode-line mouse-2]
-						      (ergoemacs-mode--minor-mode-mouse 'minor 'help mm))
-						    (define-key map
-						      [mode-line down-mouse-3]
-						      (ergoemacs-mode--minor-mode-mouse 'minor 'menu mm))
-						    (define-key map
-						      [header-line down-mouse-3]
-						      (ergoemacs-mode--minor-mode-mouse 'minor 'menu mm))
-						    map)))
-			 (split-string (format-mode-line (ergoemacs-minor-mode-alist)))
-			 " "))))
-    (when (catch 'found
-	    (dolist (elt ergoemacs-mode--hidden-minor-modes)
-	      (when (and (boundp elt) (symbol-value elt))
-		(throw 'found t)))
-	    nil)
-      (setq ret (concat ret " "
-			(propertize (if (and (fboundp #'mode-icons-propertize-mode))
-					(mode-icons-propertize-mode "+" (list "+" #xf151 'FontAwesome))
-				      "+")
-				    'mouse-face 'mode-line-highlight
-				    'help-echo "Hidden Minor Modes\nmouse-1: Display hidden minor modes"
-				    'local-map (let ((map (make-sparse-keymap)))
-						 (define-key map [mode-line down-mouse-1] 'ergoemacs-minor-mode-hidden-menu)
-						 (define-key map [mode-line down-mouse-3] 'ergoemacs-minor-mode-hidden-menu)
-						 map)))))
-    ret))
+  "Get minor modes"
+  (if (not ergoemacs-mode--minor-modes-p) "     "
+    (setq ergoemacs-mode--space-hidden-minor-modes nil)
+    (let* ((width 0)
+	   (ret (replace-regexp-in-string
+		 " +$" ""
+		 (concat
+		  (mapconcat (lambda (mm)
+			       (if (or (not (numberp ergoemacs-mode--minor-modes-available))
+				       (< width ergoemacs-mode--minor-modes-available))
+				   (let ((cur (propertize mm
+							  'mouse-face 'mode-line-highlight
+							  'help-echo "Minor mode\n mouse-1: Display minor mode menu\n mouse-2: Show help for minor mode\n mouse-3: Toggle minor modes"
+							  'local-map (let ((map (make-sparse-keymap)))
+								       (define-key map
+									 [mode-line down-mouse-1]
+									 (ergoemacs-mode--minor-mode-mouse 'minor 'menu mm))
+								       (define-key map
+									 [mode-line mouse-2]
+									 (ergoemacs-mode--minor-mode-mouse 'minor 'help mm))
+								       (define-key map
+									 [mode-line down-mouse-3]
+									 (ergoemacs-mode--minor-mode-mouse 'minor 'menu mm))
+								       (define-key map
+									 [header-line down-mouse-3]
+									 (ergoemacs-mode--minor-mode-mouse 'minor 'menu mm))
+								       map))))
+				     (setq width (+ width (ergoemacs :width cur) 1))
+				     (if (or (not (numberp ergoemacs-mode--minor-modes-available))
+				       (< width ergoemacs-mode--minor-modes-available))
+					 cur
+				       (push (lookup-minor-mode-from-indicator mm) ergoemacs-mode--space-hidden-minor-modes)
+				       ""))
+				 (push (lookup-minor-mode-from-indicator mm) ergoemacs-mode--space-hidden-minor-modes)
+				 ""))
+			     (split-string (format-mode-line (ergoemacs-minor-mode-alist)))
+			     " ")))))
+      (when (or ergoemacs-mode--space-hidden-minor-modes
+		(catch 'found
+		  (dolist (elt ergoemacs-mode--hidden-minor-modes)
+		    (when (and (boundp elt) (symbol-value elt))
+		      (throw 'found t)))
+		  nil))
+	(setq ret (concat ret " "
+			  (propertize (if (and (fboundp #'mode-icons-propertize-mode))
+					  (mode-icons-propertize-mode "+" (list "+" #xf151 'FontAwesome))
+					"+")
+				      'mouse-face 'mode-line-highlight
+				      'help-echo "Hidden Minor Modes\nmouse-1: Display hidden minor modes"
+				      'local-map (let ((map (make-sparse-keymap)))
+						   (define-key map [mode-line down-mouse-1] 'ergoemacs-minor-mode-hidden-menu)
+						   (define-key map [mode-line down-mouse-3] 'ergoemacs-minor-mode-hidden-menu)
+						   map)))))
+      ret)))
 
 (defun ergoemacs-mode-line--atom ()
   (setq ergoemacs-mode-line--lhs
@@ -1420,21 +1457,25 @@ When WHAT is nil, return the width of the window"
 	 (face2 (if active 'powerline-active2 'powerline-inactive2))
 	 (mode-icons-read-only-space nil)
 	 (mode-icons-show-mode-name t)
-	 (lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2))
-	 (rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2))
-	 (center (ergoemacs-mode-line--eval-center mode-line face1 face2))
-	 (wlhs (ergoemacs :width lhs))
-	 (wrhs (ergoemacs :width rhs))
-	 (wcenter (ergoemacs :width center))
+	 lhs rhs center
+	 wlhs wrhs wcenter
 	 available
 	 (reduce-level 1))
+    (ergoemacs-mode--minor-modes-available mode-line face1 face2)
+    (setq lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)
+	  rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2)
+	  center (ergoemacs-mode-line--eval-center mode-line face1 face2)
+	  wlhs (ergoemacs :width lhs)
+	  wrhs (ergoemacs :width rhs)
+	  wcenter (ergoemacs :width center))
     (when (> (+ wlhs wrhs wcenter) (ergoemacs :width))
       (setq mode-icons-read-only-space nil
 	    mode-icons-show-mode-name nil
 	    mode-icons-eol-text nil
 	    mode-name (or (and (fboundp #'mode-icons-get-mode-icon)
 			   (mode-icons-get-mode-icon (or mode-icons-cached-mode-name mode-name)))
-		      mode-name)
+			  mode-name)
+	    lhs (ergoemacs-mode--minor-modes-available mode-line face1 face2)
 	    lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)
 	    rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2)
 	    center (ergoemacs-mode-line--eval-center mode-line face1 face2)
@@ -1446,6 +1487,7 @@ When WHAT is nil, return the width of the window"
 	(setq mode-icons-read-only-space nil
 	      mode-icons-show-mode-name nil
 	      mode-icons-eol-text nil
+	      lhs (ergoemacs-mode--minor-modes-available mode-line face1 face2)
 	      lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2 reduce-level)
 	      rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2 reduce-level)
 	      center (ergoemacs-mode-line--eval-center mode-line face1 face2 reduce-level)
