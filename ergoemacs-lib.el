@@ -1030,8 +1030,7 @@ Based on `elp-results'."
 	      (when (and (booleanp tmp)
 			 (not tmp))
 		(throw 'found-it "")))))
-	 ((and (symbolp elt) (boundp elt) (not (symbol-value elt)))
-	  (throw 'found-it ""))
+	 
 	 ((and elt (stringp elt))
 	  (throw 'found-it elt))
 	 ((and elt (consp elt))
@@ -1064,13 +1063,13 @@ Based on `elp-results'."
 (defun ergoemacs-mode-line--encoding ()
   "Encoding mode-line."
   (ergoemacs-save-buffer-state
-   (propertize (replace-regexp-in-string "\\(-unix\\|-mac\\|-dos\\|-undecided\\|-emacs\\|prefer-\\)" "" (format "%s" buffer-file-coding-system))
+   (propertize (format "%s" (coding-system-type buffer-file-coding-system))
 	      'mouse-face 'mode-line-highlight
-	      'help-echo "mouse-1: Change buffer coding system"
+	      'help-echo (format "mouse-1: Change buffer coding system\n%s"
+				 (coding-system-doc-string buffer-file-coding-system))
 	      'local-map '(keymap
 			   (mode-line keymap
 				      (mouse-1 . ergoemacs-mode-line--set-buffer-file-coding-system))))))
-
 
 (defun ergoemacs-mode-line--sep (dir &rest args)
   "Separator"
@@ -1210,10 +1209,11 @@ items `Turn Off', `Hide' and `Help'."
 							(ergoemacs :width center)))))))
 (defun ergoemacs-mode--minor-modes ()
   "Get minor modes"
-  (if (not ergoemacs-mode--minor-modes-p) "     "
-    (setq ergoemacs-mode--space-hidden-minor-modes nil)
-    (let* ((width 0)
-	   (ret (replace-regexp-in-string
+  (let* ((width 0)
+	 (ret ""))
+    (when ergoemacs-mode--minor-modes-p
+      (setq ergoemacs-mode--space-hidden-minor-modes nil
+	    ret (replace-regexp-in-string
 		 " +$" ""
 		 (concat
 		  (mapconcat (lambda (mm)
@@ -1238,7 +1238,7 @@ items `Turn Off', `Hide' and `Help'."
 								       map))))
 				     (setq width (+ width (ergoemacs :width cur) 1))
 				     (if (or (not (numberp ergoemacs-mode--minor-modes-available))
-				       (< width ergoemacs-mode--minor-modes-available))
+					     (< width ergoemacs-mode--minor-modes-available))
 					 cur
 				       (push (lookup-minor-mode-from-indicator mm) ergoemacs-mode--space-hidden-minor-modes)
 				       ""))
@@ -1246,30 +1246,62 @@ items `Turn Off', `Hide' and `Help'."
 				 ""))
 			     (split-string (format-mode-line (ergoemacs-minor-mode-alist)))
 			     " ")))))
-      (when (or ergoemacs-mode--space-hidden-minor-modes
-		(catch 'found
-		  (dolist (elt ergoemacs-mode--hidden-minor-modes)
-		    (when (and (boundp elt) (symbol-value elt))
-		      (throw 'found t)))
-		  nil))
-	(setq ret (concat ret " "
-			  (propertize (if (and (fboundp #'mode-icons-propertize-mode))
-					  (mode-icons-propertize-mode "+" (list "+" #xf151 'FontAwesome))
-					"+")
-				      'mouse-face 'mode-line-highlight
-				      'help-echo "Hidden Minor Modes\nmouse-1: Display hidden minor modes"
-				      'local-map (let ((map (make-sparse-keymap)))
-						   (define-key map [mode-line down-mouse-1] 'ergoemacs-minor-mode-hidden-menu)
-						   (define-key map [mode-line down-mouse-3] 'ergoemacs-minor-mode-hidden-menu)
-						   map)))))
-      ret)))
+    (when (or (not ergoemacs-mode--minor-modes-p)
+	      ergoemacs-mode--space-hidden-minor-modes
+	      (catch 'found
+		(dolist (elt ergoemacs-mode--hidden-minor-modes)
+		  (when (and (boundp elt) (symbol-value elt))
+		    (throw 'found t)))
+		nil))
+      (setq ret (concat ret " "
+			(propertize (if (and (fboundp #'mode-icons-propertize-mode))
+					(mode-icons-propertize-mode "+" (list "+" #xf151 'FontAwesome))
+				      "+")
+				    'mouse-face 'mode-line-highlight
+				    'help-echo "Hidden Minor Modes\nmouse-1: Display hidden minor modes"
+				    'local-map (let ((map (make-sparse-keymap)))
+						 (define-key map [mode-line down-mouse-1] 'ergoemacs-minor-mode-hidden-menu)
+						 (define-key map [mode-line down-mouse-3] 'ergoemacs-minor-mode-hidden-menu)
+						 map)))))
+    ret))
+
+(defface tabbar-selected-modified
+  '((t
+     :inherit tabbar-selected
+     :weight bold))
+   "Face used for selected tabs."
+  :group 'tabbar)
+
+(defun ergoemacs-mode-line-position ()
+  "Ergoemacs-mode mode line position."
+  (let ((col (propertize
+	      (or (and line-number-mode "%3c") "")
+	      'mouse-face 'mode-line-highlight
+	      'local-map mode-line-column-line-number-mode-map)))
+    (when  (>= (current-column) 80)
+      (setq col (propertize col 'face 'error)))
+    (concat (propertize
+	     (or (and column-number-mode "%4l") "")
+	     'face 'bold
+	     'mouse-face 'mode-line-highlight
+	     'local-map mode-line-column-line-number-mode-map)
+	    (or (and column-number-mode line-number-mode ":") "")
+	    col)))
+
+(defun ergoemacs-mode-line-size-indication-mode ()
+  (when size-indication-mode
+    (propertize
+	      "%I"
+	      'mouse-face 'mode-line-highlight
+	      'local-map mode-line-column-line-number-mode-map)))
 
 (defun ergoemacs-mode-line--atom ()
   (setq ergoemacs-mode-line--lhs
 	'(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
 	  ((mode-line-buffer-identification) :last-p t :pad b)
 	  (((lambda() (and (buffer-file-name) t)) mode-icons--modified-status "%1") :last-p t)
-	  ((sml/compile-position-construct mode-line-position) :reduce 2 :pad b)
+	  ((ergoemacs-mode-line-size-indication-mode) :reduce 2 :pad b)
+	  ((ergoemacs-mode-line-position) :reduce 2 :pad b)
 	  ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r))
 	ergoemacs-mode-line--center
 	'(((ergoemacs-mode--minor-modes)  :reduce 4)
@@ -1286,7 +1318,8 @@ items `Turn Off', `Hide' and `Help'."
   (setq ergoemacs-mode-line--lhs
 	'(((mode-icons--generate-major-mode-item powerline-major-mode) :pad b)
 	  ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r)
-	  ((sml/compile-position-construct mode-line-position) :reduce 2 :pad b))
+	  ((ergoemacs-mode-line-size-indication-mode) :reduce 2 :pad b)
+	  ((ergoemacs-mode-line-position) :reduce 2 :pad b))
 	ergoemacs-mode-line--center
 	'(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
 	  ((mode-line-buffer-identification) :last-p t :pad b)
@@ -1306,7 +1339,8 @@ items `Turn Off', `Hide' and `Help'."
 	'(((ergoemacs-mode-line-read-only-status mode-icons--read-only-status "%*") :reduce 3 :pad l)
 	  ((mode-line-buffer-identification) :last-p t :pad b)
 	  (((lambda() (and (buffer-file-name) t)) mode-icons--modified-status "%1") :last-p t)
-	  ((sml/compile-position-construct mode-line-position) :reduce 2 :pad b)
+	  ((ergoemacs-mode-line-size-indication-mode) :reduce 2 :pad b)
+	  ((ergoemacs-mode-line-position) :reduce 2 :pad b)
 	  ;; ((ergoemacs-mode-line-use-vc powerline-vc) :reduce 1 :pad r)
 	  ((mode-icons--generate-major-mode-item powerline-major-mode) :pad b))
 	ergoemacs-mode-line--center nil
@@ -1465,8 +1499,8 @@ When WHAT is nil, return the width of the window"
 	 wlhs wrhs wcenter
 	 available
 	 (reduce-level 1))
-    (ergoemacs-mode--minor-modes-available mode-line face1 face2)
-    (setq lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)
+    (setq ergoemacs-mode--minor-modes-available nil
+	  lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)
 	  rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2)
 	  center (ergoemacs-mode-line--eval-center mode-line face1 face2)
 	  wlhs (ergoemacs :width lhs)
@@ -1479,7 +1513,6 @@ When WHAT is nil, return the width of the window"
 	    mode-name (or (and (fboundp #'mode-icons-get-mode-icon)
 			   (mode-icons-get-mode-icon (or mode-icons-cached-mode-name mode-name)))
 			  mode-name)
-	    lhs (ergoemacs-mode--minor-modes-available mode-line face1 face2)
 	    lhs (ergoemacs-mode-line--eval-lhs mode-line face1 face2)
 	    rhs (ergoemacs-mode-line--eval-rhs mode-line face1 face2)
 	    center (ergoemacs-mode-line--eval-center mode-line face1 face2)
@@ -1542,9 +1575,6 @@ When WHAT is nil, return the width of the window"
 
 (defvar ergoemacs-mode-line-buffer-identification nil
   "Save `mode-line-buffer-identification' for `ergoemacs-mode' restore.")
-
-(defvar ergoemacs-mode-line-position nil
-  "Save `mode-line-position' for `ergoemacs-mode' restore.")
 
 (defvar ergoemacs-mode-line-modes nil
   "Save `mode-line-modes' for `ergoemacs-mode' restore.")
