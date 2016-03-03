@@ -542,14 +542,16 @@ Currently this ensures:
   "Combine CURRENT-KEY and NEXT-EVENT into a vector."
   (let (tmp)
     (cond
-     ((and (setq tmp (elt current-key 0))
-           tmp
-           (or (and (consp tmp) (symbolp (setq tmp (car tmp))) (setq tmp (symbol-name tmp)))
-               (and (symbolp tmp) (setq tmp (symbol-name tmp))))
-           (stringp tmp)
-           (string-match-p "\\<mouse\\>" tmp))
-      (ergoemacs-warn "Dropping events %s" current-key)
-      (vector next-event))
+     ((and (vectorp current-key)
+	   (eventp (setq tmp (aref current-key 0)))
+	   (consp tmp)
+	   (memq (event-basic-type (car tmp))
+		 '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9)))
+      ;; (ergoemacs-warn "Dropping events %s in favor of %s" current-key
+      ;; 		      next-event)
+      ;; (vector next-event)
+      (push next-event unread-command-events)
+      )
      (t (vconcat current-key (vector next-event))))))
 
 (defvar ergoemacs-comand-loop--untranslated-event nil)
@@ -811,6 +813,10 @@ This uses `ergoemacs-command-loop--read-event'."
                                  (or (and double
                                           (mapconcat
                                            (lambda(elt)
+      ;; (and (setq tmp (elt current-key 0))
+      ;;      (or (and (consp tmp) (symbolp (setq tmp (car tmp)))))
+      ;;      (stringp tmp)
+      ;;      (string-match-p "\\<mouse\\>" tmp))
                                              (format "%s%s%s"
                                                      (ergoemacs :modifier-desc (nth 0 elt))
                                                      (ergoemacs :unicode-or-alt "↔" "<->")
@@ -1400,50 +1406,10 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'.
   (ergoemacs-command-loop--sync-point)
   (cond
    ((and (eventp last-command-event)
-         (consp last-command-event))
-    (let* ((posn (ignore-errors (car (cdr last-command-event))))
-           (area (and posn (ergoemacs-posnp posn) (posn-area posn)))
-           (original-command command)
-           (command command)
-           (obj (and posn (ergoemacs-posnp posn) (posn-object posn)))
-           tmp)
-      ;; From `read-key-sequence':
-      ;; /* Clicks in non-text areas get prefixed by the symbol
-      ;; in their CHAR-ADDRESS field.  For example, a click on
-      ;; the mode line is prefixed by the symbol `mode-line'.
-      ;; Furthermore, key sequences beginning with mouse clicks
-      ;; are read using the keymaps of the buffer clicked on, not
-      ;; the current buffer.  So we may have to switch the buffer
-      ;; here.
-      ;; When we turn one event into two events, we must make sure
-      ;; that neither of the two looks like the original--so that,
-      ;; if we replay the events, they won't be expanded again.
-      ;; If not for this, such reexpansion could happen either here
-      ;; or when user programs play with this-command-keys.  */
-
-      ;;
-      ;; /* Arrange to go back to the original buffer once we're
-      ;; done reading the key sequence.  Note that we can't
-      ;; use save_excursion_{save,ore} here, because they
-      ;; save point as well as the current buffer; we don't
-      ;; want to save point, because redisplay may change it,
-      ;; to accommodate a Fset_window_start or something.  We
-      ;; don't want to do this at the top of the function,
-      ;; because we may get input from a subprocess which
-      ;; wants to change the selected window and stuff (say,
-      ;; emacsclient).  */
-      (when area
-        (setq command (key-binding (vconcat (list area last-command-event)) t))
-        (when (and obj (consp obj)
-		   (setq tmp (ignore-errors (get-text-property (cdr obj)  'local-map (car obj))))
-                   (setq tmp (or (and (symbolp tmp) (ergoemacs-sv tmp)) tmp))
-                   (ergoemacs-keymapp tmp)
-                   (setq tmp (lookup-key tmp (vconcat (list area last-command-event)))))
-          (setq command tmp)))
-      (unless command
-        (setq command original-command))
-      ;; (message "Area: %s; Command: %s; Event: %s" area command last-command-event)
-      (ergoemacs-command-loop--call-mouse-command command record-flag keys)))
+         (consp last-command-event)
+	 (memq (event-basic-type (car last-command-event))
+		   '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9)))
+    (ergoemacs-command-loop--call-mouse-command command record-flag keys))
    ((and (symbolp command) (not (fboundp command)))
     (ergoemacs-command-loop--message "Command `%s' is not found" command))
    ((and (symbolp command) (not (commandp command)))
@@ -1454,32 +1420,6 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'.
      (ergoemacs-command-loop--grow-interactive command record-flag keys)))
    (t
     (ergoemacs-command-loop--grow-interactive command record-flag keys))))
-
-;; (condition-case err
-;;     (save-excursion
-;;       (if calc-embedded-info
-;;           (calc-embedded-select-buffer)
-;;         (calc-select-buffer))
-;;       (and (eq calc-algebraic-mode 'total)
-;;            (require 'calc-ext)
-;;            (use-local-map calc-alg-map))
-;;       (when (and do-slow calc-display-working-message)
-;;         (message "Working...")
-;;         (calc-set-command-flag 'clear-message))
-;;       (funcall do-body)
-;;       (setq calc-aborted-prefix nil)
-;;       (when (memq 'renum-stack calc-command-flags)
-;;         (calc-renumber-stack))
-;;       (when (memq 'clear-message calc-command-flags)
-;;         (message "")))
-;;   (error
-;;    (if (and (eq (car err) 'error)
-;;             (stringp (nth 1 err))
-;;             (string-match "max-specpdl-size\\|max-lisp-eval-depth"
-;;                           (nth 1 err)))
-;;        (error "Computation got stuck or ran too long.  Type `M' to increase the limit")
-;;      (setq calc-aborted-prefix nil)
-;;      (signal (car err) (cdr err)))))
 
 
 (defun ergoemacs-command-loop-start ()
@@ -1756,7 +1696,8 @@ Emacs versions)."
                           ergoemacs-command-loop--current-type type
                           ergoemacs-command-loop--universal nil
                           ergoemacs-command-loop--exit t)
-                    (if (setq continue-read (ergoemacs-keymapp command))
+                    (if (setq continue-read (and (not (consp (aref current-key 0)))
+						 (ergoemacs-keymapp command)))
                         (setq universal nil)
                       (unless (memq ergoemacs-command-loop-type '(:test :read-key-sequence))
                         (with-local-quit
@@ -1800,6 +1741,7 @@ Emacs versions)."
                           local-keymap (ergoemacs-translate--keymap translation)
                           ergoemacs-command-loop--first-type first-type
                           ergoemacs-command-loop--history nil))
+		   ((consp (aref current-key 0))) ;; don't complain about mouse keys
                    (t ;; Command not found exit.
                     (ergoemacs-command-loop--message "Key %s doesn't do anything." (ergoemacs-key-description current-key)))))
                 (unless quit-flag
@@ -1931,9 +1873,57 @@ LOOKUP is what will be run"
 If `ergoemacs-mode' has translated this, make emacs think you
 pressed the translated key by changing
 `ergoemacs-command-loop--single-command-keys'."
-  ;; Make sure to lookup the keys in the selected buffer
-  (ergoemacs-command-loop--sync-point) 
-  (let ((trials (ergoemacs-translate--trials key))
+  (if (and (vectorp key)
+	   (consp (aref key 0))
+	   (memq (event-basic-type (car (aref key 0)))
+		 '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9)))
+      (let* ((event (aref key 0))
+	     (posn (car (cdr last-command-event)))
+	     (area (and posn (ergoemacs-posnp posn) (posn-area posn)))
+	     (obj (and posn (ergoemacs-posnp posn) (posn-object posn)))
+	     (original-command (key-binding key t))
+	     command tmp)
+	;; From `read-key-sequence':
+	;; /* Clicks in non-text areas get prefixed by the symbol
+	;; in their CHAR-ADDRESS field.  For example, a click on
+	;; the mode line is prefixed by the symbol `mode-line'.
+	;; Furthermore, key sequences beginning with mouse clicks
+	;; are read using the keymaps of the buffer clicked on, not
+	;; the current buffer.  So we may have to switch the buffer
+	;; here.
+	;; When we turn one event into two events, we must make sure
+	;; that neither of the two looks like the original--so that,
+	;; if we replay the events, they won't be expanded again.
+	;; If not for this, such reexpansion could happen either here
+	;; or when user programs play with this-command-keys.  */
+
+	;;
+	;; /* Arrange to go back to the original buffer once we're
+	;; done reading the key sequence.  Note that we can't
+	;; use save_excursion_{save,ore} here, because they
+	;; save point as well as the current buffer; we don't
+	;; want to save point, because redisplay may change it,
+	;; to accommodate a Fset_window_start or something.  We
+	;; don't want to do this at the top of the function,
+	;; because we may get input from a subprocess which
+	;; wants to change the selected window and stuff (say,
+	;; emacsclient).  */
+	(when area
+	  (setq command (key-binding (vconcat (list area event)) t))
+	  (when (and obj (consp obj)
+		     (setq tmp (ignore-errors (get-text-property (cdr obj)  'local-map (car obj))))
+		     (setq tmp (or (and (symbolp tmp) (ergoemacs-sv tmp)) tmp))
+		     (ergoemacs-keymapp tmp)
+		     (setq tmp (lookup-key tmp (vconcat (list area event)))))
+	    (setq command tmp)))
+	(unless command
+	  (setq command original-command))
+	;; (ergoemacs-command-loop--call-mouse-command command record-flag keys)
+	
+	command)
+    ;; Make sure to lookup the keys in the selected buffer
+    (ergoemacs-command-loop--sync-point)
+    (let ((trials (ergoemacs-translate--trials key))
         tmp tmp2 ret)
     (setq this-command-keys-shift-translated nil)
     (catch 'found-command
@@ -2017,7 +2007,7 @@ pressed the translated key by changing
                 (ergoemacs-command-loop--message-binding new-key ret key)
                 (setq ergoemacs-command-loop--single-command-keys new-key)))
               (throw 'found-command ret))))))
-    ret))
+    ret)))
 
 (defun ergoemacs-command-loop--execute-handle-shift-selection (function)
   "Allow `ergoemacs-mode' command loop to handle shift selection.

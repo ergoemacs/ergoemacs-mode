@@ -438,6 +438,7 @@ This is different than `event-convert-list' because:
        ((memq elt '(drag down))
         (setq second (format "%s-" elt)))
        (t (push elt tmp))))
+    
     (when (or first second)
       (setq base (intern (format "%s%s%s" (or first "") (or second "") base))))
     (setq new-list (append tmp (list base)))
