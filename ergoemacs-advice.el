@@ -308,26 +308,6 @@ command seleceted, instead of rerunning `smex' and
 	ergoemacs-command-loop--grow-keys keys
 	ergoemacs-command-loop--grow-special special))
 
-(ergoemacs-advice mouse-menu-major-mode-map ()
-  "Modify to list major modes for `ergoemacs-mode'."
-  :type :replace
-  (ergoemacs-major-mode-menu-map))
-
-(ergoemacs-advice mode-line-next-buffer (event)
-  "Modify mode-line-next-buffer for `ergoemacs-mode'"
-  :type :around
-  (if ergoemacs-mode
-      (ergoemacs-mode-line-next-buffer event)
-    ad-do-it))
-
-
-(ergoemacs-advice mode-line-previous-buffer (event)
-  "Modify mode-line-next-buffer for `ergoemacs-mode'"
-  :type :around
-  (if ergoemacs-mode
-      (ergoemacs-mode-line-previous-buffer event)
-    ad-do-it))
-
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here

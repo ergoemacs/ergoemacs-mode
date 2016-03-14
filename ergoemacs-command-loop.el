@@ -547,11 +547,7 @@ Currently this ensures:
 	   (consp tmp)
 	   (memq (event-basic-type (car tmp))
 		 '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9)))
-      ;; (ergoemacs-warn "Dropping events %s in favor of %s" current-key
-      ;; 		      next-event)
-      ;; (vector next-event)
-      (push next-event unread-command-events)
-      )
+      (push next-event unread-command-events))
      (t (vconcat current-key (vector next-event))))))
 
 (defvar ergoemacs-comand-loop--untranslated-event nil)
