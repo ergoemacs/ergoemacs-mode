@@ -331,6 +331,31 @@ Also let the user know that the labeling was performed."
           (ergoemacs-warn "%s was not labeled to %s since it was a composed keymap.")
         (ergoemacs :label (ergoemacs map :original) id)))))
 
+
+(defvar ergoemacs-map-properties--global-submap-p nil
+  "Submap that was found.
+The submap is found by the `ergoemacs-map-properties--global-submap-p' function.")
+
+(defun ergoemacs-map-properties--global-submap-p (key)
+  "Determine if KEY is defining a global submap.
+If so, return the a vector with the key relative to the submap.
+The submap value is stored in the variable `ergoemacs-map-properties--global-submap-p'."
+  (let* ((key (or (ergoemacs-translate--escape-to-meta key) key))
+	 (len (length key))
+	 cur-map
+	 (i 1))
+    (catch 'found-submap
+      (while (<= i len)
+	(setq cur-map (lookup-key (ergoemacs :global-map) (substring key 0 i))
+	      cur-map (or (and (symbolp cur-map) (boundp cur-map) (symbol-value cur-map))
+			  (and (symbolp cur-map) (fboundp cur-map) (symbol-function cur-map))
+			  cur-map))
+	(when (and (ergoemacs-keymapp cur-map)
+		   (integerp (ergoemacs cur-map :map-key)))
+	  (setq ergoemacs-map-properties--global-submap-p cur-map)
+	  (throw 'found-submap (substring key i)))
+	(setq i (1+ i))) nil)))
+
 (defun ergoemacs-map-properties--before-ergoemacs (&optional after)
   "Get a keymap of keys that changed before or after loading ergoemacs.
 
@@ -367,16 +392,19 @@ When AFTER is non-nil, this is a list of keys that changed after
                       ((eq 'ergoemacs-labeled (elt cur-key (- (length cur-key) 1))))
                       ((and (symbolp item) (string-match-p "clipboard" (symbol-name item))))
                       ((and (equal [27 115 104 102] cur-key) (eq item 'hi-lock-find-patterns)))
+		      ;; If this is bound to another keymap, assume it doesn't affect user maps.
+		      ;; For example the M-s keymap, or M-g keymaps. 
+		      ((ergoemacs-map-properties--global-submap-p cur-key))
                       ((and tmp (not (equal tmp item))
                             (or (not after)
                                 (not (and ergoemacs-map-properties--before-ergoemacs
                                           (eq item (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key))))))
-                       (ergoemacs :define-key before-map cur-key item))
+		       (ergoemacs :define-key before-map cur-key item))
                       ((and (not tmp)
                             (or (not after)
                                 (not (and ergoemacs-map-properties--before-ergoemacs
                                           (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
-                       (ergoemacs :define-key before-map cur-key tmp)))))
+		       (ergoemacs :define-key before-map cur-key tmp)))))
                  original-global-map t))
             (setq ergoemacs-map-keymap--load-autoloads-p t)))
         (if after

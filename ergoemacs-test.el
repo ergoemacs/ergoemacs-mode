@@ -1697,7 +1697,7 @@ hash appropriaetly."
        :layout "colemak"
        :theme "reduction"
        :macro "M-8 M-SPC M-SPC M-i"
-       (save-excursionu
+       (save-excursion
 	 (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
 	 (delete-region (point-min) (point-max))
 	 (insert ergoemacs-test-lorem-ipsum)
