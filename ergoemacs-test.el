@@ -1142,6 +1142,49 @@ Should test issue #142"
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
+
+(ergoemacs-package icicles
+    :ensure t)
+
+(ert-deftest ergoemacs-test-397-test-4 ()
+  "Test M-s is switch pane."
+  :tags '(:slow :icicles)
+  (let* ((emacs-exe (ergoemacs-emacs-exe))
+         (w-file (expand-file-name "global-test" ergoemacs-dir))
+         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+    (with-temp-file temp-file
+      (insert "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) "\")"
+	      "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "icicles"))) "\")"
+       "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+              (or (and (boundp 'wait-for-me)
+                       "(setq debug-on-error t debug-on-quit t)") "")
+	      "(setq ergoemacs-theme nil)"
+	      "(setq ergoemacs-keyboard-layout \"us\")"
+	      "(require 'icicles)\n"
+	      "(require 'ergoemacs-mode)\n"
+              "(ergoemacs-mode 1)\n"
+	      "(setq icicle-search-key-prefix (kbd \"C-f\"))\n"
+	      "(icy-mode 1)\n"
+              "(when (eq (key-binding (kbd \"M-s\")) 'ergoemacs-move-cursor-next-pane)\n"
+              "(with-temp-file \"" w-file "\")\n"
+              "   (message \"Passed\")"
+              "  (insert \"Found\"))\n"
+              (or (and (boundp 'wait-for-me) "")
+                  "(kill-emacs)")))
+    (byte-compile-file temp-file)
+    (message "%s"
+             (shell-command-to-string
+              (format "%s %s -Q -l %s"
+                      emacs-exe (if (boundp 'wait-for-me) "-debug-init" "--batch")                      
+                      temp-file)))
+    (should (file-exists-p w-file))
+    (when  (file-exists-p temp-file)
+      (delete-file temp-file))
+    (when  (file-exists-p (concat temp-file "c"))
+      (delete-file (concat temp-file "c")))
+    (when (file-exists-p w-file)
+      (delete-file w-file))))
+
 (ert-deftest ergoemacs-test-397-test-2 ()
   "Test that defining C-SPC after ergoemacs-mode loads will give `set-mark-command'."
   :tags '(:slow)
@@ -1654,7 +1697,7 @@ hash appropriaetly."
        :layout "colemak"
        :theme "reduction"
        :macro "M-8 M-SPC M-SPC M-i"
-       (save-excursion
+       (save-excursionu
 	 (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
 	 (delete-region (point-min) (point-max))
 	 (insert ergoemacs-test-lorem-ipsum)
