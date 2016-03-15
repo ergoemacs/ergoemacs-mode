@@ -1034,7 +1034,15 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
 		(ergoemacs-command-loop--minibuffer-supported-p ergoemacs-map--breadcrumb))
        (use-local-map (ergoemacs ergoemacs-read-from-minibuffer-map))
        (setq ergoemacs-read-from-minibuffer-map nil
-             ergoemacs-map--breadcrumb "")))
+             ergoemacs-map--breadcrumb ""))
+     ;; Run deferred "hooks"
+     (when (and (minibufferp) ergoemacs-component-struct--composed-hook-minibuffer)
+       (dolist (elt (reverse ergoemacs-component-struct--composed-hook-minibuffer))
+	 (when (equal (ergoemacs (symbol-value elt) :map-key)
+		      (ergoemacs ergoemacs-read-from-minibuffer-map :map-key))
+	   (use-local-map (make-composed-keymap (cdr elt) (current-local-map))))
+	 (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt)))))
+       (setq ergoemacs-component-struct--composed-hook-minibuffer nil)))
     (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map
           ergoemacs-map--modify-active-last-overriding-local-map overriding-local-map
           ergoemacs-map--modify-active-last-char-map char-map

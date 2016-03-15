@@ -285,10 +285,26 @@ definition."
     (setq ergoemacs-map--breadcrumb "minibuffer-local-map"
           ergoemacs-read-from-minibuffer-map minibuffer-local-map)))
 
+(ergoemacs-advice icicle-read-from-minibuffer (prompt &optional initial-contents keymap read hist-m default-value inherit-input-method)
+  "Use `ergoemacs-mode' for `icicle-read-from-minibuffer'"
+  :type :before
+  (if keymap
+      (setq ergoemacs-map--breadcrumb (format "icy-read-from-minibuffer:%s" this-command)
+            ergoemacs-read-from-minibuffer-map keymap)
+    (setq ergoemacs-map--breadcrumb "icy-minibuffer-local-map"
+          ergoemacs-read-from-minibuffer-map minibuffer-local-map)))
+
+
 (ergoemacs-advice read-string (prompt &optional initial history default inherit-input-method)
   "Modify keymap to confirm to `ergoemacs-mode'."
   :type :before
   (setq ergoemacs-map--breadcrumb "minibuffer-local-map"
+        ergoemacs-read-from-minibuffer-map minibuffer-local-map))
+
+(ergoemacs-advice icicle-read-string (prompt &optional initial history default inherit-input-method)
+  "Modify keymap to confirm to `ergoemacs-mode'."
+  :type :before
+  (setq ergoemacs-map--breadcrumb "icy-minibuffer-local-map"
         ergoemacs-read-from-minibuffer-map minibuffer-local-map))
 
 (ergoemacs-advice read-no-blanks-input (prompt &optional initial inherit-input-method)

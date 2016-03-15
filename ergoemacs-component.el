@@ -909,10 +909,15 @@ be composed over the keymap.  This is done in
      (ergoemacs-component-struct--hook-hash hook layout obj))
     ret))
 
+(defvar ergoemacs-component-struct--composed-hook-minibuffer nil
+  "`ergoemacs-mode' hooks deferred until after `ergoemacs-mode' modifies the current minibuffer map.")
+
 (defun ergoemacs-component-struct--composed-hook (hook &optional layout obj)
   "Apply keymaps defined in HOOK. "
   (dolist (elt (ergoemacs-component-struct--hook hook layout obj))
-    (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt))))))
+    (if (minibufferp)
+	(push elt ergoemacs-component-struct--composed-hook-minibuffer)
+      (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt)))))))
 
 (defvar ergoemacs-component-struct--create-hooks nil)
 (defun ergoemacs-component-struct--create-hooks (&optional obj)
