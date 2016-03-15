@@ -912,7 +912,7 @@ be composed over the keymap.  This is done in
 (defun ergoemacs-component-struct--composed-hook (hook &optional layout obj)
   "Apply keymaps defined in HOOK. "
   (dolist (elt (ergoemacs-component-struct--hook hook layout obj))
-    (set (car elt) (make-composed-keymap (cdr elt) (symbol-value (car elt))))))
+    (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt))))))
 
 (defvar ergoemacs-component-struct--create-hooks nil)
 (defun ergoemacs-component-struct--create-hooks (&optional obj)
