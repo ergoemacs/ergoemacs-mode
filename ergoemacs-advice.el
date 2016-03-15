@@ -192,30 +192,26 @@ This advice also appempts to protcet local keymaps when
 part of how `ergoemacs-mode' determines that a hook changed a key
 definition."
   (when (eq keymap global-map) ;; (current-global-map)
-    
     (let ((submap (ergoemacs-map-properties--global-submap-p key)))
-      (if (and submap (not (string= "" submap))
-	       (ergoemacs-keymapp ergoemacs-map-properties--global-submap-p))
-	  (ergoemacs :define-key ergoemacs-map-properties--global-submap-p submap def)
-	(ergoemacs :define-key ergoemacs-user-keymap key def)
-	(when (ergoemacs-keymapp ergoemacs-saved-global-map)
-	  (ergoemacs :define-key ergoemacs-saved-global-map key def))
-	(cond
-	 ((not def)
+      (ergoemacs :define-key ergoemacs-user-keymap key def)
+      (when (ergoemacs-keymapp ergoemacs-saved-global-map)
+	(ergoemacs :define-key ergoemacs-saved-global-map key def))
+      (cond
+       ((not def)
+	(ergoemacs :apply-key key
+		   (lambda(trans-new-key)
+		     (push trans-new-key ergoemacs-map--unbound-keys))))
+       (def
+	(let (trans-keys
+	      new-lst)
 	  (ergoemacs :apply-key key
 		     (lambda(trans-new-key)
-		       (push trans-new-key ergoemacs-map--unbound-keys))))
-	 (def
-	  (let (trans-keys
-		new-lst)
-	    (ergoemacs :apply-key key
-		       (lambda(trans-new-key)
-			 (push trans-new-key trans-keys)))
-	    (push key trans-keys)
-	    (dolist (cur-key ergoemacs-map--unbound-keys)
-	      (unless (member cur-key trans-keys)
-		(push cur-key new-lst)))
-	    (setq ergoemacs-map--unbound-keys new-lst)))))))
+		       (push trans-new-key trans-keys)))
+	  (push key trans-keys)
+	  (dolist (cur-key ergoemacs-map--unbound-keys)
+	    (unless (member cur-key trans-keys)
+	      (push cur-key new-lst)))
+	  (setq ergoemacs-map--unbound-keys new-lst))))))
     
   (unless ergoemacs-define-key-after-p
     (setq ergoemacs-define-key-after-p t)
