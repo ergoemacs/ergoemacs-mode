@@ -523,16 +523,39 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
             (ergoemacs :define-key map kbd def))
         (setq ergoemacs-map-properties--protect-local nil)))))
 
-(defun ergoemacs-map-properties--override-maps (keymap &rest _ignore)
-  "Returns a list of overriding maps based on hooks run."
+(defun ergoemacs-map-properties--override-maps (keymap)
+  "Return a list of overriding maps based on hooks run for KEYMAP."
+  (ergoemacs keymap :label)
   (let* ((key (ergoemacs keymap :map-key))
          lst
-         ret)
+	 new-map
+	 standard
+         ret key command condition)
     (when (integerp key)
       (setq lst (ergoemacs-gethash key ergoemacs-map-properties--hook-map-hash))
       (dolist (map-key lst)
-        (when (ergoemacs map-key :override-map-p)
-          (push (ergoemacs-gethash map-key ergoemacs-map-properties--hook-map-hash) ret))))
+	(when (ergoemacs map-key :override-map-p)
+          (push (ergoemacs-gethash map-key ergoemacs-map-properties--hook-map-hash) ret)))
+      (when (and (boundp 'icicle-mode-map)
+		 (eq icicle-mode-map keymap))
+	(setq new-map (make-sparse-keymap))
+	(unless (equal icicle-search-key-prefix "\M-s\M-s")
+	  (ergoemacs :define-key new-map icicle-search-key-prefix icicle-search-map))
+	(when (and (boundp 'icicle-top-level-key-bindings) (custom-variable-p 'icicle-top-level-key-bindings))
+	  (setq standard (eval (car (get 'icicle-top-level-key-bindings 'standard-value))))
+	  ;; After determine if anything has changed...
+	  ;; Lifted partially from icicles
+	  (dolist (key-def  defs)
+	    (unless (member key-def standard)
+	      (setq key        (car key-def)
+		    command    (cadr key-def)
+		    condition  (car (cddr key-def)))
+	      (when (eval condition)
+		(if (symbolp key)
+		    (icicle-remap key command new-map (current-global-map))
+		  (ergoemacs :define-key new-map key command))))))
+	(unless (ergoemacs new-map :empty-p)
+	  (push new-map ret))))
     ret))
 
 (defun ergoemacs-map-properties--deferred-maps (keymap &rest _ignore)
