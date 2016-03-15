@@ -1818,6 +1818,26 @@ ARGS are applied with `format'."
     (let ((message-log-max ergoemacs-command-loop--message-log-max))
       (apply #'message (append (list str) args))))))
 
+(defvar ergoemacs-command-loop--temp-message-timer-secs 0.5
+  "Timer to ensure minibuffer isn't active.")
+
+(defvar ergoemacs-command-loop--temp-message-timer nil
+  "Timer to ensure minibuffer isn't active.")
+
+(defvar ergoemacs-command-loop--temp-message-timer-str nil
+  "Message string.")
+
+(defun ergoemacs-command-loop--temp-message-timer-echo ()
+  "Echos `ergoemacs-command-loop--temp-message-timer-str' if minibuffer isn't active."
+  (if (or (minibufferp) isearch-mode)
+      (setq ergoemacs-command-loop--temp-message-timer
+	    (run-with-idle-timer ergoemacs-command-loop--temp-message-timer-secs
+				 nil #'ergoemacs-command-loop--temp-message-timer-echo))
+    (cancel-timer ergoemacs-command-loop--temp-message-timer)
+    (let (message-log-max)
+      (with-temp-message ergoemacs-command-loop--temp-message-timer-str
+	(sit-for (or (and (numberp ergoemacs-command-loop-message-sit-for) ergoemacs-command-loop-message-sit-for) 2))))))
+
 (defun ergoemacs-command-loop--temp-message (str &rest args)
   "Message facility for `ergoemacs-mode' command loop"
   (setq ergoemacs-command-loop--last-event-time (float-time))
@@ -1827,9 +1847,10 @@ ARGS are applied with `format'."
     (apply #'ergoemacs-command-loop--mode-line-message
            (append (list str) args)))
    (t
-    (let (message-log-max)
-      (with-temp-message (apply #'format (append (list str) args))
-        (sit-for (or (and (numberp ergoemacs-command-loop-message-sit-for) ergoemacs-command-loop-message-sit-for) 2)))))))
+    (setq ergoemacs-command-loop--temp-message-timer-str (apply #'format (append (list str) args))
+	  ergoemacs-command-loop--temp-message-timer
+	  (run-with-idle-timer ergoemacs-command-loop--temp-message-timer-secs
+			       nil #'ergoemacs-command-loop--temp-message-timer-echo)))))
 
 ;; (2) Key sequence translated to command
 (defun ergoemacs-command-loop--message-binding (key &optional lookup translated-key)
