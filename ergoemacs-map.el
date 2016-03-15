@@ -826,7 +826,7 @@ UNBIND-LIST is the list of keys that `ergoemacs-mode'."
 	 (composed-list (nth 0 composed-list))
 	 (parent lookup-keymap)
 	 (hook-overrides (ergoemacs lookup-keymap :override-maps))
-	 (hook-deferred (ergoemacs lookup-keymap :override-maps))
+	 (hook-deferred (ergoemacs lookup-keymap :deferred-maps))
 	 unbound-passthrough tmp)
     (setq composed-list (ergoemacs-map--adjust-remaps-for-overrides hook-overrides composed-list ret)
 	  composed-list (ergoemacs-map--adjust-remaps-for-overrides hook-deferred composed-list ret t)
