@@ -545,7 +545,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 	  (setq standard (eval (car (get 'icicle-top-level-key-bindings 'standard-value))))
 	  ;; After determine if anything has changed...
 	  ;; Lifted partially from icicles
-	  (dolist (key-def  defs)
+	  (dolist (key-def  icicle-top-level-key-bindings)
 	    (unless (member key-def standard)
 	      (setq key        (car key-def)
 		    command    (cadr key-def)
