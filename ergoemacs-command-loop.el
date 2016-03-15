@@ -1692,7 +1692,9 @@ Emacs versions)."
                           ergoemacs-command-loop--current-type type
                           ergoemacs-command-loop--universal nil
                           ergoemacs-command-loop--exit t)
-                    (if (setq continue-read (and (not (consp (aref current-key 0)))
+                    (if (setq continue-read (and (not (and (consp (aref current-key 0))
+							   (memq (event-basic-type (car (aref current-key 0)))
+							    '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9))))
 						 (ergoemacs-keymapp command)))
                         (setq universal nil)
                       (unless (memq ergoemacs-command-loop-type '(:test :read-key-sequence))
