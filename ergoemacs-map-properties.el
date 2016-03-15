@@ -530,7 +530,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
          lst
 	 new-map
 	 standard
-         ret key command condition)
+         ret command condition)
     (when (integerp key)
       (setq lst (ergoemacs-gethash key ergoemacs-map-properties--hook-map-hash))
       (dolist (map-key lst)
@@ -558,8 +558,8 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 	  (push new-map ret))))
     ret))
 
-(defun ergoemacs-map-properties--deferred-maps (keymap &rest _ignore)
-  "Returns a list of overriding maps based on hooks run."
+(defun ergoemacs-map-properties--deferred-maps (keymap)
+  "Return a list of overriding maps based on hooks run based on KEYMAP."
   (let* ((key (ergoemacs keymap :map-key))
          lst
          ret)
