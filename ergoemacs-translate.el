@@ -783,7 +783,7 @@ When NAME is a symbol, setup the translation function for the symbol."
 If TYPE is unspecified, assume :normal translation"
   (let* ((type (or type :normal))
          (translation (and (symbolp type) (ergoemacs-translate--get type)))
-         (basic (gergoemacs-translate--event-basic-type event))
+         (basic (ergoemacs-translate--event-basic-type event))
          (e-mod (ergoemacs-translate--event-modifiers event))
          (modifiers (sort (mapcar
                            (lambda(e)
