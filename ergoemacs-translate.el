@@ -305,12 +305,20 @@ This is different than `event-modifiers' in two ways:
 - Special keys like C-RET will return 'ergoemacs-control
 LAYOUT is the keyboard layout."
   (let ((modifiers (event-modifiers event))
+	tmp 
         basic)
     (unless (memq 'shift modifiers)
       ;; Add 'shift for # type events.
       (setq basic (event-basic-type event))
       (when (ergoemacs-gethash basic (ergoemacs-translate--event-modifier-hash layout))
         (push 'ergoemacs-shift modifiers)))
+    ;; Add 'ergoemacs-gui to the modifiers
+    (when (and (symbolp event)
+	       (setq tmp (symbol-name event))
+	       (char-equal (aref (substring tmp -2 -1) 0) ?-)
+	       (memq (aref (substring tmp -1) 0)
+		     (list ?\[ ?i ?m)))
+      (push 'ergoemacs-gui modifiers))
     ;; Also add 'ergoemacs-control to C-RET which translates to C-m
     (when (and (integerp event)
                (> event 1000)
@@ -610,16 +618,18 @@ For keys, the list consists of:
             (push key ret))
            (t
             ;; Do not put any trials in just use the mouse event.
-            (push key ret)
-            ))
+            (push key ret)))
           ret)
       (dolist (new (ergoemacs-translate--event-trials event (= 1 (length key))))
         (push (vconcat base (vector new)) ret))
+      (when (memq 'ergoemacs-gui (ergoemacs-translate--event-modifiers event))
+	(push (ergoemacs-translate--no-gui key) ret))
       (if (= 1 (length key))
           (push (or (ergoemacs-translate--emacs-shift key 'shift)
                     (ergoemacs-translate--emacs-shift key 'ergoemacs-shift)) ret)
         (push nil ret) ;; No shift translation
         )
+      
       (push key ret))
     ret))
 
@@ -773,7 +783,7 @@ When NAME is a symbol, setup the translation function for the symbol."
 If TYPE is unspecified, assume :normal translation"
   (let* ((type (or type :normal))
          (translation (and (symbolp type) (ergoemacs-translate--get type)))
-         (basic (ergoemacs-translate--event-basic-type event))
+         (basic (gergoemacs-translate--event-basic-type event))
          (e-mod (ergoemacs-translate--event-modifiers event))
          (modifiers (sort (mapcar
                            (lambda(e)
@@ -812,6 +822,23 @@ If TYPE is unspecified, assume :normal translation"
           (setq ret (ergoemacs-translate--event-convert-list `(control ,@modifiers ,basic)))
         (setq ret (ergoemacs-translate--event-convert-list `(,@modifiers ,basic)))))
     ret))
+
+(defun ergoemacs-translate--no-gui (event)
+  "Remove any gui elements to the EVENT.
+If there are no gui elements, retun nil."
+  (if (vectorp event)
+      (eval `(vector ,@(mapcar (lambda(x) (or (ergoemacs-translate--no-gui x) x)) event)))
+    (let* ((last-event event)
+	   (last-mod (ergoemacs-translate--event-modifiers last-event))
+	   (last-basic-event (ergoemacs-translate--event-basic-type last-event))
+	   new-mod
+	   new-event)
+      (when (memq 'ergoemacs-gui last-mod)
+	(dolist (elt last-mod)
+	  (unless (eq elt 'ergoemacs-gui)
+	    (push elt new-mod)))
+	(setq new-event (ergoemacs-translate--event-convert-list `(,@new-mod ,last-basic-event))))
+      new-event)))
 
 (defvar ergoemacs-translate--parent-map nil
   "Parent map for keymaps when completing a key sequence.")

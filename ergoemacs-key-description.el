@@ -331,6 +331,12 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
               (setq mod tmp
                     ev (ergoemacs-gethash (intern (format "s%s" ev))
                                           (ergoemacs-translate--event-modifier-hash layout)))))
+	    (when (memq 'ergoemacs-gui mod)
+	      (setq tmp '())
+              (dolist (m mod)
+                (unless (eq m 'ergoemacs-gui)
+                  (push m tmp)))
+	      (setq mod tmp))
             (setq tmp (format "%s%s%s%s"
                               (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) "")
                                   (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs :unicode-or-alt "【" "["))
