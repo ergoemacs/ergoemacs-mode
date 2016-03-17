@@ -98,6 +98,13 @@ reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
+(defun ergoemacs-test-require-input ()
+  "Run tests that require input."
+  (interactive)
+  (elp-instrument-package "ergoemacs-")
+  (ert '(and "ergoemacs-" (tag :require-input)))
+  (call-interactively 'elp-results))
+
 (defun ergoemacs-test-fast ()
   "Fast test of ergoemacs-mode (doesn't include keyboard startup issues)."
   (interactive)
@@ -168,7 +175,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (let ((ret t)
         (test))
     (elp-instrument-package "ergoemacs-")
-    (ert "^ergoemacs-test-")
+    (ert (and "^ergoemacs-test-" (not :require-input)))
     (call-interactively 'elp-results)))
 
 ;; Test isearch
@@ -1712,6 +1719,45 @@ hash appropriaetly."
   "Test thes swapping of the translations."
   :tags '(:translate :interactive)
   (should (eq (lookup-key (ergoemacs ergoemacs-translate--parent-map) (or (and (eq system-type 'windows-nt) [apps]) [menu])) 'ergoemacs-command-loop--swap-translation)))
+
+
+(ert-deftest ergoemacs-test-407 ()
+  "Test M-s is switch pane."
+  :tags '(:require-input)
+  (let* ((emacs-exe (ergoemacs-emacs-exe))
+         (w-file (expand-file-name "global-test" ergoemacs-dir))
+         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+    (with-temp-file temp-file
+      (insert "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) "\")"
+	      "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "icicles"))) "\")"
+       "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+              (or (and (boundp 'wait-for-me)
+                       "(setq debug-on-error t debug-on-quit t)") "")
+	      "(setq ergoemacs-theme nil)"
+	      "(setq ergoemacs-keyboard-layout \"us\")"
+	      "(require 'ergoemacs-mode)\n"
+              "(ergoemacs-mode 1)\n"
+	      "(require 'icicles)\n"
+	      "(icy-mode 1)\n"
+	      "(defun test-freeze ()\n"
+	      "(interactive)\n"
+	      "(yes-or-no-p \"Are you sure you want to remove this file? \"))"
+	      "(global-set-key (kbd \"C-1\") 'test-freeze)"
+	      "(insert \"Try C-1 to see if emacs freezes.\")"
+              ;; (or (and (boundp 'wait-for-me) "")
+              ;;     "(kill-emacs)")
+	      ))
+    (byte-compile-file temp-file)
+    (message "%s"
+             (shell-command-to-string
+              (format "%s %s -Q -l %s"
+                      emacs-exe "-debug-init"                      
+                      temp-file)))
+    
+    (when  (file-exists-p temp-file)
+      (delete-file temp-file))
+    (when  (file-exists-p (concat temp-file "c"))
+      (delete-file (concat temp-file "c")))))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
