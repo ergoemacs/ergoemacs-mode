@@ -1038,8 +1038,8 @@
 
 (ergoemacs-component helm-files-up ()
   "Use Ctrl+L to go up one level in helm."
-  (define-key helm-find-files-map (kbd "C-l") 'helm-find-files-up-one-level))
-
+  (define-key helm-find-files-map (kbd "C-l") 'helm-find-files-up-one-level)
+  (define-key helm-find-files-map (kbd "M-p") 'helm-ff-run-switch-to-history))
 
 (ergoemacs-component icy-reclaim ()
   "Reclaim some icicle key bindings."
@@ -1952,6 +1952,8 @@
                  multiple-cursors-remaps
                  quit
                  apps-swap
+		 helm-switch-sources
+		 helm-files-up
                  ;;save-options-on-exit
                  ;; Reverse menu-bar order
                  menu-bar-help
@@ -1969,8 +1971,6 @@
                   ergoemacs-banish-shift
                   move-and-transpose-lines
                   move-sexp
-                  helm-switch-sources
-                  helm-files-up
                   ido-prev-next-instead-of-left-right
                   join-line
 		  save-options-on-exit
