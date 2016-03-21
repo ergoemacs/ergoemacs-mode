@@ -1036,10 +1036,10 @@
   "Ctrl+o switches multiple sources."
   (define-key helm-map (kbd "C-o") 'helm-next-source))
 
-(ergoemacs-component helm-files-up ()
-  "Use Ctrl+L to go up one level in helm."
+(ergoemacs-component helm-find-files ()
+  "Helm find-files keymap."
   (define-key helm-find-files-map (kbd "C-l") 'helm-find-files-up-one-level)
-  (define-key helm-find-files-map (kbd "M-p") 'helm-ff-run-switch-to-history))
+  (define-key helm-find-files-map (kbd "C-c p") 'helm-ff-run-switch-to-history))
 
 (ergoemacs-component icy-reclaim ()
   "Reclaim some icicle key bindings."
@@ -1949,11 +1949,10 @@
                  standard-fixed
                  ido-remaps
                  helm-remaps
+		 helm-find-files
                  multiple-cursors-remaps
                  quit
                  apps-swap
-		 helm-switch-sources
-		 helm-files-up
                  ;;save-options-on-exit
                  ;; Reverse menu-bar order
                  menu-bar-help
@@ -1968,6 +1967,7 @@
                   alt-backspace-is-undo
                   search-reg
                   no-backspace
+		  helm-switch-sources
                   ergoemacs-banish-shift
                   move-and-transpose-lines
                   move-sexp
@@ -1977,7 +1977,7 @@
                   isearch-arrows)
   :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
                   ("Function Keys" (fn-keys f2-edit))
-                  ("Helm Options" (helm-switch-sources helm-files-up))
+                  ("Helm Options" (helm-switch-sources helm-find-files))
                   ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps icy-reclaim))
                   ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
