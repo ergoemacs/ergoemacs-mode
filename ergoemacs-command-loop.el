@@ -1461,11 +1461,11 @@ use with `format' will be selecting using
 `ergoemacs-key-description--unicode-char'.
 
 STRING can also be a symbol representing the level of message to
-be displayed. This is used in conjunction with
+be displayed.  This is used in conjunction with
 `ergoemacs-message-level' to only display messages that should be
-displayed.  When the message should be displayed addional ARGS are then passed to
-`ergoemacs-command-loop--spinner-display' instead of `format'
-"
+displayed.  When the message should be displayed addional ARGS
+are then passed to `ergoemacs-command-loop--spinner-display'
+instead of `format'."
   (prog1 t
     (if (symbolp string)
 	(cond
@@ -1809,7 +1809,10 @@ ARGS are applied with `format'."
   "Command loop message sit for.")
 
 (defun ergoemacs-command-loop--message (str &rest args)
-  "Message facility for `ergoemacs-mode' command loop"
+  "Message facility for `ergoemacs-mode' command loop.
+
+STR is the formatting string and ARGS are the arguments applied
+to the `format' like: (format str args)."
   (setq ergoemacs-command-loop--last-event-time (float-time))
   (cond
    ((string= str ""))
@@ -1841,7 +1844,11 @@ ARGS are applied with `format'."
 	(sit-for (or (and (numberp ergoemacs-command-loop-message-sit-for) ergoemacs-command-loop-message-sit-for) 2))))))
 
 (defun ergoemacs-command-loop--temp-message (str &rest args)
-  "Message facility for `ergoemacs-mode' command loop"
+  "Message facility for `ergoemacs-mode' command loop.
+
+STR is the format string
+ARGS is the format arguments
+These are passed to `format' as (format str args)."
   (setq ergoemacs-command-loop--last-event-time (float-time))
   (cond
    ((string= str ""))

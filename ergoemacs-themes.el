@@ -481,6 +481,7 @@
   (define-key isearch-mode-map (kbd "S-<f12>") 'isearch-ring-retreat)
 
   (when icicle-minibuffer-setup-hook
+    :command-loop-unsupported-p t
     (define-key minibuffer-local-map (kbd "<f11>") 'previous-history-element)
     (define-key minibuffer-local-map (kbd "M-<f11>") 'icicle-insert-history-element)
     (define-key minibuffer-local-map (kbd "<f12>") 'next-history-element)

@@ -148,6 +148,7 @@
   (maps (make-hash-table))
   (cond-maps (make-hash-table))
   (hook-maps (make-hash-table))
+  (hook-plists (make-hash-table))
   (when-condition nil)
   (hook nil)
   (dynamic-keys '())
@@ -369,7 +370,7 @@ FILE is the file name where the component was created."
                ergoemacs-component-struct--define-key-current ergoemacs-component-hash)
       (setq ergoemacs-component-struct--define-key-current nil))))
 
-(defun ergoemacs-component-struct--with-hook (when-condition _plist body &optional object)
+(defun ergoemacs-component-struct--with-hook (when-condition plist body &optional object)
   "How the (when...) conditions in an ergoemacs-mode theme are handled."
   (cond
    ((and (not ergoemacs-component-struct--define-key-current) (not object)) ;; Old
@@ -392,6 +393,7 @@ FILE is the file name where the component was created."
                         (symbol-name when-condition))))))))
       (if (not (ergoemacs-component-struct-p obj))
           (error "OBJECT is not an ergoemacs-component-structure.")
+	(puthash hook plist (ergoemacs-component-struct-hook-plists obj))
         (setf (ergoemacs-component-struct-when-condition obj) when-condition)
         (setf (ergoemacs-component-struct-hook obj) hook)
         (funcall body)
@@ -916,7 +918,15 @@ be composed over the keymap.  This is done in
   "Apply keymaps defined in HOOK. "
   (dolist (elt (ergoemacs-component-struct--hook hook layout obj))
     (if (minibufferp)
-	(push elt ergoemacs-component-struct--composed-hook-minibuffer)
+	(progn
+	  (unless ergoemacs-command-loop--minibuffer-unsupported-p
+	    (catch 'unsupported-p
+	      (dolist (elt (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
+		(let ((plist (gethash hook (ergoemacs-component-struct-hook-plists elt))))
+		  (when (and plist (plist-get plist :command-loop-unsupported-p))
+		    (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t)
+		    (throw 'unsupported-p t))))))
+	  (push elt ergoemacs-component-struct--composed-hook-minibuffer))
       (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt)))))))
 
 (defvar ergoemacs-component-struct--create-hooks nil)
