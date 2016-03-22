@@ -136,10 +136,10 @@ file:ergoemacs-extras/ergo-layouts/ergoemacs-layout-us.png
   :SNIPPET:  t
   :END:
 
-Documentation Copyright © 2007-2013 Matthew Fidler, Xah Lee and David
+Documentation Copyright © 2007-2016 Matthew Fidler, Xah Lee and David
 Capello. Published under the therm of the [[http://creativecommons.org/licenses/by-nc-sa/2.0/fr/][Creative Commons
 Attribution-Noncommercial-Share Alike 2.0 France License]].  Code
-published under [[http://www.gnu.org/licenses/gpl-2.0.html][GPL v2]].
+published under [[http://www.gnu.org/licenses/gpl-3.0.html][GPL v3]].
 
 ** About
   :PROPERTIES:

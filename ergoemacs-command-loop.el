@@ -131,14 +131,15 @@
 
 (define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions)
 
-(defvar ergoemacs-command-loop--next-key-hash (let ((hash (make-hash-table)))
-                                                (puthash 'event-apply-shift-modifier (list '(shift) :force) hash)
-                                                (puthash 'event-apply-alt-modifier (list '(alt) :force) hash)
-                                                (puthash 'event-apply-control-modifier (list '(control) :force) hash)
-                                                (puthash 'event-apply-hyper-modifier (list '(hyper) :force) hash)
-                                                (puthash 'event-apply-meta-modifier (list '(meta) :force) hash)
-                                                (puthash 'event-apply-super-modifier (list '(super) :force) hash)
-                                                hash)
+(defvar ergoemacs-command-loop--next-key-hash
+  (let ((hash (make-hash-table)))
+    (puthash 'event-apply-shift-modifier (list '(shift) :force) hash)
+    (puthash 'event-apply-alt-modifier (list '(alt) :force) hash)
+    (puthash 'event-apply-control-modifier (list '(control) :force) hash)
+    (puthash 'event-apply-hyper-modifier (list '(hyper) :force) hash)
+    (puthash 'event-apply-meta-modifier (list '(meta) :force) hash)
+    (puthash 'event-apply-super-modifier (list '(super) :force) hash)
+    hash)
   "Hash table of how functions force the unchorded next key translation to behave.")
 
 (defvar ergoemacs-command-loop--undo-functions
@@ -321,8 +322,6 @@ with this function."
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--setup-quit-key)
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--redefine-quit-key)
-
-
 
 (defun ergoemacs-command-loop--universal-argument (&rest _ignore)
   "Ergoemacs universal argument.
@@ -1133,6 +1132,32 @@ to start with
 
 (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
 
+(defvar ergoemacs-command-loop--point-motion-last-point nil
+  "Record the last point.")
+
+(defun ergoemacs-command-loop--point-motion-hooks ()
+  "Emlulate Emacs' command-loop portion of the point-motion hooks.
+The properties `point-entered' and `point-left' are handled by C internals."
+  (unless inhibit-point-motion-hooks
+    ;; Only the adjustment of the point in fishy areas is done in the
+    ;; command loop.
+    (let* ((props '(intangible composition display invisible))
+	   (last-point (or ergoemacs-command-loop--point-motion-last-point (point)))
+	   (cur-point (point))
+	   (found-prop (catch 'found-prop
+			 (dolist (p props)
+			   (when (get-char-property (point) p)
+			     (throw 'found-prop p)))
+			 nil)))
+      ;; Adjust the point in fishy areas.
+      (when found-prop
+	(goto-char (or (and (>= cur-point last-point)
+			    (next-single-char-property-change cur-point found-prop))
+		       (previous-single-char-property-change cur-point found-prop)))
+	(setq last-point cur-point
+	      cur-point (point)))))
+  (set (make-local-variable 'ergoemacs-command-loop--point-motion-last-point) (point)))
+
 (defun ergoemacs-command-loop--sync-point ()
   "Sometimes the window buffer and selected buffer are out of sync.
 Fix this issue."
@@ -1199,7 +1224,8 @@ Fix this issue."
   ;; But it doesn't fix it for keyboard macros.
   (clear-this-command-keys t)
   (setq ergoemacs-command-loop--decode-event-timeout-p nil)
-  (ergoemacs-command-loop--sync-point))
+  (ergoemacs-command-loop--sync-point)
+  (ergoemacs-command-loop--point-motion-hooks))
 
 (defun ergoemacs-command-loop--mouse-command-drop-first (args &optional fn-arg-p)
   "Internal function for processing mouse commands.
