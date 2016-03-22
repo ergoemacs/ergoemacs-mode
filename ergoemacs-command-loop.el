@@ -1138,7 +1138,7 @@ to start with
 (defun ergoemacs-command-loop--point-motion-hooks ()
   "Emlulate Emacs' command-loop portion of the point-motion hooks.
 The properties `point-entered' and `point-left' are handled by C internals."
-  (unless inhibit-point-motion-hooks
+  (unless (or disable-point-adjustment global-disable-point-adjustment inhibit-point-motion-hooks)
     ;; Only the adjustment of the point in fishy areas is done in the
     ;; command loop.
     (let* ((props '(intangible composition display invisible))
@@ -1156,6 +1156,7 @@ The properties `point-entered' and `point-left' are handled by C internals."
 		       (previous-single-char-property-change cur-point found-prop)))
 	(setq last-point cur-point
 	      cur-point (point)))))
+  (setq disable-point-adjustment nil)
   (set (make-local-variable 'ergoemacs-command-loop--point-motion-last-point) (point)))
 
 (defun ergoemacs-command-loop--sync-point ()
