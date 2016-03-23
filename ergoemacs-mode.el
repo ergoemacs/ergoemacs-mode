@@ -35,7 +35,7 @@
 
 ;; Todo:
 
-;; 
+;;
 
 ;;; Acknowledgment:
 ;; Thanks to Shahin Azad for persian layout (fa) ishahinism at g
@@ -507,7 +507,7 @@ bindings the keymap is:
     (dolist (file (file-expand-wildcards (expand-file-name (concat "*." ext) (expand-file-name "bindings" (expand-file-name "ergoemacs-extras" user-emacs-directory)))))
       (delete-file file)
       (message "Remove %s, since keys may have changed." file)))
-  
+
   (unless no-message
     (message "Clear cache for next startup.")))
 
@@ -600,7 +600,7 @@ When `store-p' is non-nil, save the tables."
                ergoemacs-layouts
                ergoemacs-lib
                ergoemacs-map
-               ergoemacs-map-properties 
+               ergoemacs-map-properties
                ergoemacs-mapkeymap
                ergoemacs-theme-engine
                ergoemacs-translate
@@ -857,7 +857,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys) 
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys)
 
 
 (defcustom ergoemacs-display-small-symbols-for-key-modifiers nil
@@ -941,7 +941,7 @@ Valid values are:
 
 (define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character)
 
-'(defcustom ergoemacs-command-loop-blink-character (ergoemacs :unicode-or-alt "•" "·" "-")
+(defcustom ergoemacs-command-loop-blink-character (ergoemacs :unicode-or-alt "•" "·" "-")
   "Blink character."
   :type '(choice
           (string :tag "Cursor")
@@ -1166,22 +1166,22 @@ modal state is currently enabled."
         (mods '(control meta shift hyper super alt))
         tmp
         key)
-    (dolist (char '("<f1>" 
-                    "<f2>" 
-                    "<f3>" 
-                    "<f4>" 
-                    "<f5>" 
-                    "<f6>" 
-                    "<f7>" 
-                    "<f8>" 
-                    "<f9>" 
+    (dolist (char '("<f1>"
+                    "<f2>"
+                    "<f3>"
+                    "<f4>"
+                    "<f5>"
+                    "<f6>"
+                    "<f7>"
+                    "<f8>"
+                    "<f9>"
                     "<f10>"
                     "<f11>"
                     "<f12>"
                     "<apps>" "<menu>"
                     "RET" "ESC" "DEL" "TAB"
-                    "<home>" 
-                    "<next>" 
+                    "<home>"
+                    "<next>"
                     "<prior>"
                     "<end>"
                     "<insert>"
