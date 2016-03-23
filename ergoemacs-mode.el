@@ -129,8 +129,6 @@
 (declare-function pcache-clear "pcache")
 (declare-function pcache-repository "pcache")
 
-(declare-function unicode-fonts-setup "unicode-fonts")
-
 
 ;; Fundamental ergoemacs functions
 
@@ -613,14 +611,10 @@ When `store-p' is non-nil, save the tables."
     (ergoemacs-timing (intern (format "load-%s" pkg))
       (load (symbol-name pkg)))))
 
-(require 'unicode-fonts nil t)
-(defcustom ergoemacs-use-unicode-symbols (and (featurep 'unicode-fonts) (file-readable-p (concat pcache-directory "unicode-fonts")))
+(defcustom ergoemacs-use-unicode-symbols t
   "Use unicode symbols in display."
   :type 'boolean
   :group 'ergoemacs-mode)
-
-(when (and ergoemacs-use-unicode-symbols (fboundp 'unicode-fonts-setup))
-  (unicode-fonts-setup))
 
 (defcustom ergoemacs-command-loop-spinners
   '((standard ("|" "/" "-" "\\"))
@@ -947,7 +941,7 @@ Valid values are:
 
 (define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character)
 
-(defcustom ergoemacs-command-loop-blink-character (if (featurep 'unicode-fonts) "·" "•")
+'(defcustom ergoemacs-command-loop-blink-character (ergoemacs :unicode-or-alt "•" "·" "-")
   "Blink character."
   :type '(choice
           (string :tag "Cursor")

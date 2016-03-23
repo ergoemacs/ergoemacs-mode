@@ -49,9 +49,6 @@
 
 (require 'advice)
 
-(ergoemacs-package unicode-fonts
-    :ensure t)
-
 (ergoemacs-package undo-tree
     :ensure t
     (global-undo-tree-mode 1))
