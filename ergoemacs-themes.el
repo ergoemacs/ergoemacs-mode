@@ -46,12 +46,14 @@
 
 (autoload 'dired-jump "dired-x" nil t)
 
-
 (require 'advice)
 
 (ergoemacs-package undo-tree
     :ensure t
     (global-undo-tree-mode 1))
+
+(ergoemacs-package persistent-soft
+    :ensure t)
 
 (ergoemacs-component standard-vars ()
   "Enabled/changed variables/modes"
