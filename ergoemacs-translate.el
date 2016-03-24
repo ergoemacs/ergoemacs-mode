@@ -827,7 +827,10 @@ If TYPE is unspecified, assume :normal translation"
   "Remove any gui elements to the EVENT.
 If there are no gui elements, retun nil."
   (if (vectorp event)
-      (eval `(vector ,@(mapcar (lambda(x) (or (ergoemacs-translate--no-gui x) x)) event)))
+      (eval `(vector ,@(mapcar (lambda(x) (let ((ret (or (ergoemacs-translate--no-gui x) x)))
+					    (if (symbolp ret)
+						`(quote ,ret)
+					      ret))) event)))
     (let* ((last-event event)
 	   (last-mod (ergoemacs-translate--event-modifiers last-event))
 	   (last-basic-event (ergoemacs-translate--event-basic-type last-event))
