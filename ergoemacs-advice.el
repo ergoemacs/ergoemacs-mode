@@ -326,12 +326,14 @@ command seleceted, instead of rerunning `smex' and
 	ergoemacs-command-loop--grow-keys keys
 	ergoemacs-command-loop--grow-special special))
 
+(ergoemacs-advice ispell-region (reg-start reg-end &optional recheckp shift)
+  "Clear `unread-command-events' before starting spelling."
+  :type :before
+  (setq unread-command-events nil))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
 ;; Local Variables:
 ;; coding: utf-8-emacs
 ;; End:
-
-
-
