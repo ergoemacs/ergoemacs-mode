@@ -1119,6 +1119,10 @@ from within the ergoemacs-mode command loop."
 
 
 (defvar ergoemacs-command-loop--internal-end-command-p nil)
+
+(defvar ergoemacs-last-command-was-ergoemacs-ignore-p nil
+  "Last command was `ergoemacs-ignore'.")
+
 (defun ergoemacs-command-loop--start-with-post-command-hook ()
   "Start ergoemacs command loop.
 
@@ -1128,7 +1132,12 @@ to start with
 `ergoemacs-command-loop--start-with-pre-command-hook'."
   (when (and (not ergoemacs-command-loop--internal-end-command-p)
              (ergoemacs-command-loop-full-p))
-    (push 'ergoemacs-ignore unread-command-events)))
+    (if ergoemacs-last-command-was-ergoemacs-ignore-p
+	(unless (eq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
+	  (run-with-idle-timer 0.05 nil (lambda()
+					  (setq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
+					  (ergoemacs-command-loop-start))))
+      (push 'ergoemacs-ignore unread-command-events))))
 
 (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
 
@@ -1427,6 +1436,7 @@ needed (and resotre them to the original values)."
   "Call the COMMAND interactively.  Also handle mouse events (if possible.)
 The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'."
   (ergoemacs-command-loop--sync-point)
+  (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
   (cond
    ((and (eventp last-command-event)
          (consp last-command-event)
@@ -1578,6 +1588,7 @@ This function accepts any number of arguments, but ignores them.
 Unlike `ignore', this command pretends `ergoemacs-command-loop--ignore' command was never
 run, by changing `this-command' to `last-command'"
   (interactive)
+  (setq ergoemacs-last-command-was-ergoemacs-ignore-p t)
   (ergoemacs-command-loop--execute-modify-command-list last-command)
   ;; FIXME: Somehow change the output of `this-single-command-raw-keys'
   nil)
