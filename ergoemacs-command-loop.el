@@ -1655,9 +1655,11 @@ Emacs versions)."
                     ergoemacs-command-loop--history nil
                     ergoemacs-command-loop-start nil)
               (while continue-read
+		(setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
                 (unless (eq ergoemacs-command-loop-type :read-key-sequence)
                   (setq inhibit-quit t))
                 (while continue-read
+		  (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
                   ;; Read key
                   (setq ergoemacs-command-loop--single-command-keys current-key
                         ergoemacs-command-loop--current-type type
