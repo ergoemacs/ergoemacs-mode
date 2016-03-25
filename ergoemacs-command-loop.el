@@ -1181,7 +1181,8 @@ Fix this issue."
 
 (defun ergoemacs-command-loop--update-primary-selection ()
   "Update primary clipboard in X based systems."
-  (when (and (eventp last-command-event)
+  (when (and mouse-drag-copy-region
+	     (eventp last-command-event)
 	     (consp last-command-event)
 	     (memq (event-basic-type (car last-command-event))
 			'(mouse-1))
