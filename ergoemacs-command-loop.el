@@ -1175,6 +1175,19 @@ Fix this issue."
     (ignore-errors (switch-to-buffer (window-buffer) t t))
     (goto-char (window-point))))
 
+(defvar ergoemacs-command-loop--update-primary-selection-fns
+  '(mouse-drag-region)
+  "Functions that upade the PRIMARY clipboard.")
+
+(defun ergoemacs-command-loop--update-primary-selection ()
+  "Update primary clipboard in X based systems."
+  (when (and (eventp last-command-event)
+	     (consp last-command-event)
+	     (memq (event-basic-type (car last-command-event))
+			'(mouse-1))
+	     (region-active-p))
+    (x-set-selection 'PRIMARY (buffer-substring-no-properties (region-beginning) (region-end)))))
+
 (defun ergoemacs-command-loop--internal-end-command ()
   "Simulates the end of a command."
   ;; Simulate the end of an emacs command, since we are not
@@ -1235,7 +1248,8 @@ Fix this issue."
   (clear-this-command-keys t)
   (setq ergoemacs-command-loop--decode-event-timeout-p nil)
   (ergoemacs-command-loop--sync-point)
-  (ergoemacs-command-loop--point-motion-hooks))
+  (ergoemacs-command-loop--point-motion-hooks)
+  (ergoemacs-command-loop--update-primary-selection))
 
 (defun ergoemacs-command-loop--mouse-command-drop-first (args &optional fn-arg-p)
   "Internal function for processing mouse commands.
