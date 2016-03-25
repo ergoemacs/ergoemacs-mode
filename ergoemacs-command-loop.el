@@ -1175,10 +1175,6 @@ Fix this issue."
     (ignore-errors (switch-to-buffer (window-buffer) t t))
     (goto-char (window-point))))
 
-(defvar ergoemacs-command-loop--update-primary-selection-fns
-  '(mouse-drag-region)
-  "Functions that upade the PRIMARY clipboard.")
-
 (defun ergoemacs-command-loop--update-primary-selection ()
   "Update primary clipboard in X based systems."
   (when (and mouse-drag-copy-region
