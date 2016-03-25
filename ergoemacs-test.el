@@ -1743,7 +1743,7 @@ hash appropriaetly."
 	      "(interactive)\n"
 	      "(yes-or-no-p \"Are you sure you want to remove this file? \"))"
 	      "(global-set-key (kbd \"C-1\") 'test-freeze)"
-	      "(insert \"Try C-1 to see if emacs freezes.\\nThen try M-a test-freeze.\")"
+	      "(insert \"Try C-1 to see if emacs freezes.\\nThen try M-a test-freeze.\\nM-a -- Make sure <f11> and <f12> work, they should advance the history\\nM-a calc, do something and then exit with q it should exit\")"
               ;; (or (and (boundp 'wait-for-me) "")
               ;;     "(kill-emacs)")
 	      ))
