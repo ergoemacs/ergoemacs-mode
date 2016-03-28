@@ -827,7 +827,7 @@ UNBIND-LIST is the list of keys that `ergoemacs-mode'."
 	 (parent lookup-keymap)
 	 (hook-overrides (ergoemacs lookup-keymap :override-maps))
 	 (hook-deferred (ergoemacs lookup-keymap :deferred-maps))
-	 unbound-passthrough tmp)
+	 unbound-passthrough tmp elt)
     (setq composed-list (ergoemacs-map--adjust-remaps-for-overrides hook-overrides composed-list ret)
 	  composed-list (ergoemacs-map--adjust-remaps-for-overrides hook-deferred composed-list ret t)
  	  unbound-passthrough (ergoemacs-map--unbound-passthrough hook-overrides hook-deferred unbind-list local-unbind-list))
@@ -1030,18 +1030,17 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
          (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language)))
        (use-local-map (ergoemacs current-local-map))
        (setq ergoemacs-map--breadcrumb ""))
-     (when (and (minibufferp) ergoemacs-read-from-minibuffer-map
-		(ergoemacs-command-loop--minibuffer-supported-p ergoemacs-map--breadcrumb))
+     (when (and (minibufferp) ergoemacs-read-from-minibuffer-map)
        (use-local-map (ergoemacs ergoemacs-read-from-minibuffer-map))
        (setq ergoemacs-read-from-minibuffer-map nil
              ergoemacs-map--breadcrumb ""))
      ;; Run deferred "hooks"
      (when (and (minibufferp) ergoemacs-component-struct--composed-hook-minibuffer)
        (dolist (elt (reverse ergoemacs-component-struct--composed-hook-minibuffer))
-	 (when (equal (ergoemacs (symbol-value elt) :map-key)
-		      (ergoemacs ergoemacs-read-from-minibuffer-map :map-key))
-	   (use-local-map (make-composed-keymap (cdr elt) (current-local-map))))
-	 (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt)))))
+     	 (when (equal (ergoemacs (symbol-value elt) :map-key)
+     		      (ergoemacs ergoemacs-read-from-minibuffer-map :map-key))
+     	   (use-local-map (make-composed-keymap (cdr elt) (current-local-map))))
+     	 (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt)))))
        (setq ergoemacs-component-struct--composed-hook-minibuffer nil)))
     (setq ergoemacs-map--modify-active-last-overriding-terminal-local-map overriding-terminal-local-map
           ergoemacs-map--modify-active-last-overriding-local-map overriding-local-map

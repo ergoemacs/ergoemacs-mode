@@ -926,7 +926,10 @@ be composed over the keymap.  This is done in
 		  (when (and plist (plist-get plist :command-loop-unsupported-p))
 		    (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t)
 		    (throw 'unsupported-p t))))))
-	  (push elt ergoemacs-component-struct--composed-hook-minibuffer))
+	  (if ergoemacs-component-struct--composed-hook-minibuffer
+	      (push elt ergoemacs-component-struct--composed-hook-minibuffer)
+	    (set (make-local-variable 'ergoemacs-component-struct--composed-hook-minibuffer)
+		 (list elt))))
       (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt)))))))
 
 (defvar ergoemacs-component-struct--create-hooks nil)
