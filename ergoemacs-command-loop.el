@@ -1,6 +1,6 @@
 ;;; ergoemacs-command-loop.el --- Keyboard translation functions -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2015  Free Software Foundation, Inc.
+;; Copyright © 2013-2016  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-command-loop.el
 ;; Description: 
@@ -697,7 +697,11 @@ inconjunction with `input-method-function' to translate keys if
       (setq test-ret (vconcat test-ret)))
     (when (functionp test-ret)
       (setq last-input-event event
-	    test-ret (funcall test-ret))
+	    test-ret (if (or (eq keymap input-decode-map)
+			     (eq keymap key-translation-map)
+			     (eq keymap local-function-key-map))
+			 (funcall test-ret nil) ;; Pretend emacs called this from command loop.
+		       (funcall test-ret)))
       (when (not (equal unread-command-events old-ergoemacs-input))
       	(push (pop unread-command-events) new-ergoemacs-input)))
     (if (and (vectorp test-ret)
