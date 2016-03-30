@@ -696,6 +696,8 @@ inconjunction with `input-method-function' to translate keys if
       ;; Should it be read-kbd-macro?
       (setq test-ret (vconcat test-ret)))
     (when (functionp test-ret)
+      (when (memq test-ret '(xterm-mouse-translate xterm-mouse-translate-extended))
+	(message "xterm-mouse-translate: %s->%s" current-test-key (funcall test-ret nil)))
       (setq last-input-event event
 	    test-ret (if (or (eq keymap input-decode-map)
 			     (eq keymap key-translation-map)
