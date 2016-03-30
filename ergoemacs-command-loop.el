@@ -2050,12 +2050,14 @@ pressed the translated key by changing
               (cond
                ((equal orig-key (nth 0 trials))
                 (setq ergoemacs-command-loop--single-command-keys new-key)
-                (when (and (ergoemacs-keymapp ret)
-                           (setq tmp (lookup-key ret [ergoemacs-timeout]))
-                           (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)))
+		;; (message "History %s" (length ergoemacs-command-loop--history))
+                (when (and (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
+			   (ergoemacs-keymapp ret)
+                           (setq tmp (lookup-key ret [ergoemacs-timeout])))
                   (cond
                    ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
                     (setq ret tmp))
+		   ((< 1  (length ergoemacs-command-loop--history)))
                    ((not (region-active-p))) ;; its a key sequence.
                    
                    ((and this-command-keys-shift-translated
