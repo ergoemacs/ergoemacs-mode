@@ -1723,7 +1723,7 @@ hash appropriaetly."
 
 (ert-deftest ergoemacs-test-407 ()
   "Test M-s is switch pane."
-  :tags '(:require-input :interactive)
+  :tags '(:require-input)
   (let* ((emacs-exe (ergoemacs-emacs-exe))
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
@@ -1743,7 +1743,7 @@ hash appropriaetly."
 	      "(interactive)\n"
 	      "(yes-or-no-p \"Are you sure you want to remove this file? \"))"
 	      "(global-set-key (kbd \"C-1\") 'test-freeze)"
-	      "(insert \"Try C-1 to see if emacs freezes.\\nThen try M-a test-freeze.\\nM-a -- Make sure <f11> and <f12> work, they should advance the history\\nM-a calc, do something and then exit with q it should exit\")"
+	      "(insert \"Try C-1 to see if emacs freezes.\\nThen try M-a test-freeze.\\nM-a -- Make sure <f11> and <f12> work, they should advance the history\\nM-a calc, do something and then exit with q it should exit\nMake sure M-o goes forward word in icy ergoemacs-mode.\n\")"
               ;; (or (and (boundp 'wait-for-me) "")
               ;;     "(kill-emacs)")
 	      ))
