@@ -27,6 +27,8 @@
 ;; 
 
 ;;; Code:
+(eval-when-compile
+  (require 'ergoemacs-macros))
 
 (defvar ergoemacs-layout-asset
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
@@ -117,7 +119,7 @@
     "'" "?" "B" "U" ":" ";" "Ü" "P" "C" "L" "M" "F" "X" "*" ""
     "" "" "H" "I" "E" "A" "O" "D" "T" "R" "N" "S" "" "" ""
     "" "" "K" "Y" "Ö" "Ä" "Q" "J" "G" "W" "V" "Z" "" "" "")
-  "German BU-TECK Layout. URL `http://www.adnw.de'. ")
+  "German BU-TECK Layout.  URL `http://www.adnw.de'.")
 
 (defvar ergoemacs-layout-dv
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "[" "]" ""
@@ -252,7 +254,7 @@
     "" ""  "X" "V" "L" "C" "W" "K" "H" "G" "F" "Q" "ß" "~" "\\"
     "" ""  "U" "I" "A" "E" "O" "S" "N" "R" "T" "D" "Y" "" ""
     "" ""  "Ü" "Ö" "Ä" "P" "Z" "B" "M" "-" "·" "J" "" "" "")
-  "Neo Layout")
+  "Neo Layout.")
 
 (defvar ergoemacs-layout-no
   '("" "|" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "+" "\\" ""
@@ -383,7 +385,12 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
         (sort (ergoemacs-layouts--list) 'string<)))))
 
 (defun ergoemacs-layouts--custom-documentation (&optional lays ini)
-  "Gets the list of all known layouts and the documentation associated with the layouts."
+  "Get a documentation list of all known layouts.
+
+LAYS is the layouts being processed.
+
+If INI is non-nil, create information about the autohotkey ini
+file."
   (let ((lays (or lays (sort (ergoemacs-layouts--list t) 'string<))))
     (mapconcat
      (lambda(lay)
@@ -412,7 +419,11 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
   (setq ergoemacs-layouts--aliases nil))
 
 (defun ergoemacs-layouts--list (&optional aliases ob)
-  "Get the list of all known layouts."
+  "Get the list of all known layouts.
+
+When ALIASES is non-nil, list aliases and actuval variables.
+
+OB is the object array."
   (if (and ergoemacs-layouts--no-aliases
            (not aliases))
       ergoemacs-layouts--no-aliases
@@ -442,6 +453,12 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
 
 (defvar ergoemacs-layout--quail-alist nil)
 (defun ergoemacs-layout--quail-alist (&optional restore)
+  "Modify the QUAIL `quail-keyboard-layout' variable.
+
+This is based on the number of layouts defined by
+`ergoemacs-mode'.
+
+When RESTORE is non-nil, restore the `quail-keyboard-layout'"
   (cond
    ((and ergoemacs-layout--quail-alist (eq restore :refresh))
     (setq quail-keyboard-layout-alist
@@ -496,6 +513,10 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
   'help-echo (purecopy "mouse-2, RET: find this ergoemacs layout's definition"))
 
 (defun ergoemacs-layout--regexp (&optional base)
+  "Get a regular expression of recognized `ergoemacs-mode' layouts.
+
+when BASE is non-nil, the regular expression shows the regular
+expression matching the base layout."
   (let ((reg (regexp-opt (ergoemacs-layouts--list t) t))
         (f1 "[\"`']\\(%s\\)[\"`']")
         (f2 "Base Layout: \\(%s\\)"))
@@ -504,7 +525,9 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
              (t f1)) (regexp-opt (ergoemacs-layouts--list) t))))
 
 (defun ergoemacs-layout-describe (&optional layout)
-  "Display the full documentation an `ergoemacs-mode' layout (a symbol or string)."
+  "Display the full documentation of an `ergoemacs-mode' LAYOUT.
+
+LAYOUT can be either a symbol or string."
   (interactive (ergoemacs-component--prompt :layout))
   (let* ((layout (or (and layout
                           (or (and (stringp layout) layout)

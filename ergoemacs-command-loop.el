@@ -5,32 +5,11 @@
 ;; Filename: ergoemacs-command-loop.el
 ;; Description: 
 ;; Author: Matthew L. Fidler
-;; Maintainer:
+;; Maintainer: Matthew L. Fidler
 ;; Created: Sat Sep 28 20:08:09 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By:
-;;     Update #: 0
-;; URL:
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
-;; 
-;; Features that might be required by this library:
 ;;
-;;   None
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Commentary: 
-;; 
-;; 
-;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Change Log:
-;; 
-;; 
+;;; Commentary:
+;;  This is the functions for the `ergoemacs-mode' command loop.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;; This program is free software; you can redistribute it and/or
@@ -50,8 +29,9 @@
 ;; 
 ;;; Code:
 
-(eval-when-compile 
-  (require 'cl)
+(require 'cl-lib)
+
+(eval-when-compile
   (require 'ergoemacs-macros))
 
 
@@ -145,7 +125,7 @@
 (defvar ergoemacs-command-loop--undo-functions
   '(ergoemacs-read-key-undo-last
     ergoemacs-command-loop--undo-last ergoemacs-read-key-force-undo-last ergoemacs-command-loop--force-undo-last)
-  "Undo functions recognized by `ergoemacs-mode'")
+  "Undo functions recognized by `ergoemacs-mode'.")
 
 (defvar ergoemacs-command-loop--help-last-key nil)
 
@@ -175,8 +155,8 @@ It needs to be less than `ergoemacs-command-loop-blink-rate'.")
 (defvar ergoemacs-command-loop--exit nil
   "External variable controlling if the `ergoemacs-command-loop' will exit.
 
-:ignore-post-command-hook means that the command will exit, and ignore the post-command hooks.
-")
+:ignore-post-command-hook means that the command will exit, and
+ignore the post-command hooks.")
 
 (defvar ergoemacs-command-loop--execute-modify-command-list
   '(last-repeatable-command
@@ -213,7 +193,7 @@ It needs to be less than `ergoemacs-command-loop-blink-rate'.")
 
 
 (defun ergoemacs-command-loop--modal-show ()
-  "Shows modal translation.
+  "Show modal translation.
 Returns the mode-line text."
   (let (tmp color text)
     (ergoemacs-save-buffer-state
@@ -324,7 +304,7 @@ with this function."
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--redefine-quit-key)
 
 (defun ergoemacs-command-loop--universal-argument (&rest _ignore)
-  "Ergoemacs universal argument.
+  "`ergoemacs-mode' universal argument.
 This is called through `ergoemacs-command-loop'"
   (interactive)
   (cond
@@ -559,7 +539,8 @@ Currently this ensures:
 
 (defun ergoemacs-command-loop--input-method (event)
   "Call `input-method-function' on EVENT.
-Ensure that `read-key-sequence' is the original function (not `ergoemacs-command-loop--read-key-sequence')."
+Ensure that `read-key-sequence' is the original function (not
+`ergoemacs-command-loop--read-key-sequence')."
   (ergoemacs-no-specials
    (ignore-errors (funcall input-method-function event))))
 
@@ -721,17 +702,21 @@ inconjunction with `input-method-function' to translate keys if
     new-event))
 
 (defun ergoemacs-command-loop--read-event (prompt &optional current-key)
-  "Reads a single event.
+  "Read a single event.
 
 PROMPT is the prompt used when reading an event.
 
-CURRENT-KEY is the current key sequence that has alerady been read.
+CURRENT-KEY is the current key sequence that has alerady been
+read.
 
-This respects `input-decode-map', `local-function-key-map' and `key-translation-map'.
+This respects `input-decode-map', `local-function-key-map' and
+`key-translation-map'.
 
-It also inputs real read events into the history with `ergoemacs-command-loop--history'
+It also inputs real read events into the history with
+`ergoemacs-command-loop--history'
 
-It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
+It will timeout after `ergoemacs-command-loop-blink-rate' and
+return nil."
   (let ((input (ergoemacs-command-loop--history prompt ergoemacs-command-loop-blink-rate current-key))
         last-input
         basic mods
@@ -765,7 +750,16 @@ It will timeout after `ergoemacs-command-loop-blink-rate' and return nil."
 (defun ergoemacs-command-loop--read-key (&optional current-key type universal)
   "Read a key for the `ergoemacs-mode' command loop.
 
-This uses `ergoemacs-command-loop--read-event'."
+This uses `ergoemacs-command-loop--read-event'.
+
+CURRENT-KEY is the current key that is being read, the next key
+read will be appended to this key.
+
+TYPE is the type of translation being applied.  By default,
+the :normal traslation is used.
+
+UNIVERSAL flag telss if this is a univeral argument that is being
+read."
   (let* ((universal universal)
          (type (or type :normal))
          (translation (ergoemacs-translate--get type))
@@ -1021,7 +1015,7 @@ This uses `ergoemacs-command-loop--read-event'."
     (list (vector raw-input) (ergoemacs :combine (if reset-key-p nil current-key) input))))
 
 (defun ergoemacs-command-loop--listify-key-sequence (key &optional type)
-  "Returns a key sequence from KEY.
+  "Return a key sequence from KEY.
 
 TYPE is the keyboard translation type, defined by `ergoemacs-translate'.
 
@@ -1051,6 +1045,17 @@ sure that `ergoemacs-command-loop--internal' hasn't been called."
 (defvar ergoemacs-command-loop-start nil)
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
   "Process `ergoemacs-command-loop'.
+
+KEY is the key being read, or sequence being read.
+
+TYPE is the translation being used.
+
+INITIAL-KEY-TYPE ist he key type that is used fot the initial
+translation.
+
+UNIVERSAL is if the function will be calling a universal
+argument.
+
 The true work is done in `ergoemacs-command-loop--internal'."
   (interactive)
   (cond
@@ -1073,8 +1078,10 @@ The true work is done in `ergoemacs-command-loop--internal'."
 
 (defvar ergoemacs-command-loop--excluded-variables
   '(defining-kbd-macro executing-kbd-macro)
-  "List of variables that when non-nil, `ergoemacs-command-loop'
-should not be run.")
+  "List of variables stopping the command loop.
+
+While these variables are non-nil, the `ergoemacs-command-loop'
+will stop and not be started agin.")
 
 (defvar ergoemacs-command-loop--excluded-major-modes
   '(calc-mode calc-trail-mode calc-edit-mode)
@@ -1612,6 +1619,7 @@ run, by changing `this-command' to `last-command'"
 
 (defun ergoemacs-command-loop--read-key-sequence (prompt &rest _ignore)
   "Read key sequence in ergoemacs-mode with PROMPT.
+
 Ignore all the other options."
   (let ((old ergoemacs-command-loop-type)
         (old-prompt ergoemacs-command-loop--read-key-prompt)
@@ -1651,9 +1659,9 @@ Emacs versions)."
       (ergoemacs-command-loop--call-interactively ergoemacs-command-loop-start)
       (ergoemacs-command-loop--internal-end-command))
     ;; Replace functions temporarily
-    (letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys)
-           ;; ((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
-           )
+    (cl-letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys)
+	      ;; ((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
+	      )
       (let* ((type (or type :normal))
              (from-start-p ergoemacs-command-loop-start)
              (continue-read t)
@@ -1751,7 +1759,7 @@ Emacs versions)."
                           ergoemacs-command-loop--exit t)
                     (if (setq continue-read (and (not (and (consp (aref current-key 0))
 							   (memq (event-basic-type (car (aref current-key 0)))
-							    '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9))))
+								 '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9))))
 						 (ergoemacs-keymapp command)))
                         (setq universal nil)
                       (unless (memq ergoemacs-command-loop-type '(:test :read-key-sequence))
@@ -1921,9 +1929,12 @@ These are passed to `format' as (format str args)."
 ;; (2) Key sequence translated to command
 (defun ergoemacs-command-loop--message-binding (key &optional lookup translated-key)
   "Optionally messages information about the translation.
-TRANSLATED-KEY is what the assumed key is actually bound.
-KEY is the original key,
-LOOKUP is what will be run"
+
+KEY is the original key.
+
+LOOKUP is what will be run.
+
+TRANSLATED-KEY is what the assumed key is actually bound."
   (cond
    ((and lookup (ergoemacs-keymapp lookup)))
    ((consp (elt key 0))) ;; Don't message mouse translations
@@ -1954,7 +1965,7 @@ LOOKUP is what will be run"
 (defun ergoemacs-command-loop--key-lookup (key)
   "Find the KEY's function based on current bindings.
 
-If `ergoemacs-mode' has translated this, make emacs think you
+If `ergoemacs-mode' has translated this, make Emacs think you
 pressed the translated key by changing
 `ergoemacs-command-loop--single-command-keys'."
   (if (and (vectorp key)
@@ -2097,6 +2108,10 @@ pressed the translated key by changing
 
 (defun ergoemacs-command-loop--execute-handle-shift-selection (function)
   "Allow `ergoemacs-mode' command loop to handle shift selection.
+
+This will apply `handle-shift-selection' when FUNCTION is
+considered a shift-selection compatible function.
+
 This allows shift-selection of non-letter keys.
 For instance in QWERTY M-> is shift translated to M-."
   (when (ergoemacs :movement-p function)

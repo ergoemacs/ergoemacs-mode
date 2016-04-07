@@ -9,7 +9,7 @@
 ;; Created: August 01 2007
 ;; Keywords: convenience
 ;; Version: 5.14.7.3
-;; Package-Requires: ((emacs "24.1") (undo-tree "0.6.5"))
+;; Package-Requires: ((emacs "24.1") (undo-tree "0.6.5") (cl-lib "0.5))
 ;; URL: https://github.com/ergoemacs/ergoemacs-mode
 
 ;; ErgoEmacs is free software: you can redistribute it and/or modify
@@ -73,12 +73,10 @@
   "Ergoemacs directory.")
 (push ergoemacs-dir load-path)
 
+(require 'cl-lib)
 (eval-when-compile
-  (require 'cl)
   (require 'ergoemacs-macros))
 
-;; FIXME: Use cl-lib when available.
-;;(require 'cl)
 (require 'easymenu)
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
@@ -108,6 +106,8 @@
 (defvar ergoemacs-component-struct--apply-ensure-p)
 
 (require 'package)
+
+(declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 
 (declare-function ergoemacs-require "ergoemacs-lib")
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
@@ -249,8 +249,10 @@ The TEXT will be what the mode-line is set to be."
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-functions-that-always-override-ergoemacs-mode '(lambda)
-  "List of functions run from a hook that when defining keys override `ergoemacs-mode' keys.
-lambda is a special undefined function"
+  "List of overriding functions run from a hook.
+
+When defining keys these functions override
+`ergoemacs-mode'.  `lambda' is a special undefined function"
   :type '(repeat
           (symbol :tag "Function"))
   :group 'ergoemacs-mode)
@@ -370,6 +372,9 @@ bindings the keymap is:
   "Is `ergoemacs-mode' running from the cache?")
 
 (defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
+  "Setup hash tables.
+STORE-P tells if the hash table should be stored.
+ARGS ar the set arguments."
   (let (sym val found-p)
     (dolist (a args)
       (cond
@@ -396,10 +401,10 @@ bindings the keymap is:
         (setq found-p nil))))))
 
 (defvar ergoemacs-component-hash nil
-  "Hash of ergoemacs-components")
+  "Hash of ergoemacs-components.")
 
 (defvar ergoemacs-map--hash nil
-  "Hash of calculated maps")
+  "Hash of calculated maps.")
 
 (defvar ergoemacs-map-properties--indirect-keymaps nil
   "Variable listing indirect keymaps.")
@@ -416,10 +421,12 @@ bindings the keymap is:
   "Event modifiers not covered by standard Emacs.")
 
 (defvar ergoemacs-translate--hash nil
-  "")
+  "Hash table of keyboard translations.
+This is structured by valid keyboard layouts for
+`ergoemacs-keyboard-layout'.")
 
 (defvar ergoemacs-translation-hash nil
-  "Hash table of translations.")
+  "Hash table of translations, structured by translatin type.")
 
 ;; (defvar ergoemacs-map-properties--create-label-function nil)
 
@@ -475,8 +482,8 @@ bindings the keymap is:
           (puthash key (vector 1 (setq val (float-time (time-subtract (current-time) entry-time)))
                                val val (or (and (setq file (assoc key ergoemacs-timing--locations)) (expand-file-name (cdr file) ergoemacs-dir))
 					   load-file-name buffer-file-name)) ergoemacs-timing-hash)
-        (incf (aref val 0))
-        (incf (aref val 1) (setq time (float-time (time-subtract (current-time) entry-time))))
+        (cl-incf (aref val 0))
+        (cl-incf (aref val 1) (setq time (float-time (time-subtract (current-time) entry-time))))
         (setf (aref val 2) (min time (aref val 2)))
         (setf (aref val 3) (max time (aref val 3)))
         (puthash key val ergoemacs-timing-hash)))
@@ -502,7 +509,8 @@ bindings the keymap is:
 (defvar ergoemacs-map--cache-save nil)
 
 (defun ergoemacs-mode-clear-cache (&optional no-message)
-  "Clear the cache for next ergoemacs-mode load."
+  "Clear the cache for next ergoemacs-mode load.
+NO-MESSAGE doesn't tell anything about clearing the cache."
   (interactive)
   (setq ergoemacs-map--cache-save :remove)
   (ergoemacs-map--cache-save)
@@ -515,7 +523,8 @@ bindings the keymap is:
     (message "Clear cache for next startup.")))
 
 (defun ergoemacs-map--cache-save (&optional remove)
-  "Save ergoemacs cache for startup."
+  "Save ergoemacs cache for startup.
+REMOVE removes the cache insead of saving it."
   (cond
    ((and (featurep 'persistent-soft)
          (featurep 'pcache)
@@ -532,7 +541,7 @@ bindings the keymap is:
 
 (defun ergoemacs-mode--setup-hash-tables (&optional store-p)
   "Load hash-tables using `persistent-soft' when available.
-When `store-p' is non-nil, save the tables."
+When STORE-P is non-nil, save the tables."
   (ergoemacs-timing setup-hash-tables
     ;; (when store-p
     ;;   (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
@@ -635,12 +644,12 @@ When `store-p' is non-nil, save the tables."
   :group 'ergoemacs-command-loop)
 
 (defcustom ergoemacs-command-loop-spinner (or (and ergoemacs-use-unicode-symbols 'dots) 'standard)
-  "What spinner to use for long commands with `ergoemacs-command-loop'"
+  "What spinner to use for long commands with `ergoemacs-command-loop'."
   :type 'sexp
   :group 'ergoemacs-command-loop)
 
 (defcustom ergoemacs-command-loop-spinner-rate 0.4
-  "Spinner rate for long commands"
+  "Spinner rate for long commands."
   :type 'number
   :group 'ergoemacs-command-loop)
 
@@ -653,19 +662,19 @@ When `store-p' is non-nil, save the tables."
 (require 'cus-edit)
 
 (defvar ergoemacs-mode-startup-hook nil
-  "Hook for starting `ergoemacs-mode'")
+  "Hook for starting `ergoemacs-mode'.")
 
 (defvar ergoemacs-mode-shutdown-hook nil
-  "Hook for shutting down `ergoemacs-mode'")
+  "Hook for shutting down `ergoemacs-mode'.")
 
 (defvar ergoemacs-mode-intialize-hook nil
-  "Hook for initializing `ergoemacs-mode'")
+  "Hook for initializing `ergoemacs-mode'.")
 
 (defvar ergoemacs-mode-init-hook nil
-  "Hook for running after emacs loads")
+  "Hook for running after Emacs loads.")
 
 (defvar ergoemacs-mode-after-load-hook nil
-  "Hook for running after a library loads")
+  "Hook for running after a library loads.")
 
 (defvar ergoemacs-pre-command-hook nil)
 (defun ergoemacs-pre-command-hook ()
@@ -681,7 +690,10 @@ When `store-p' is non-nil, save the tables."
 
 (defvar ergoemacs-after-load-functions nil)
 (defun ergoemacs-after-load-functions (absoulte-file-name)
-  "Run `ergoemacs-mode' after load functions."
+  "Run `ergoemacs-mode' after load functions.
+
+ABSOULTE-FILE-NAME is the file name that will be passed to the
+variable `ergoemacs-after-load-functions'."
   (run-hook-with-args 'ergoemacs-after-load-functions absoulte-file-name))
 
 (defvar ergoemacs-mode-reset nil
@@ -698,8 +710,11 @@ When `store-p' is non-nil, save the tables."
 
 ;;;###autoload
 (defun ergoemacs-set-default (symbol new-value)
-  "Ergoemacs equivalent to set-default.
-Will reload `ergoemacs-mode' after setting the values."
+  "`ergoemacs-mode' equivalent to `set-default'.
+
+Will reload `ergoemacs-mode' after setting the values.
+
+SYMBOL is the symbol to set, NEW-VALUE is it's value."
   (set-default symbol new-value)
   (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
                  (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
@@ -713,10 +728,12 @@ Will reload `ergoemacs-mode' after setting the values."
   "ErgoEmacs override keymaps.")
 
 (defun ergoemacs-setup-override-keymap ()
+  "Setup `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
   (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-override-keymap)))
   (add-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
 
 (defun ergoemacs-remove-override-keymap ()
+  "Remove `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
 
 (add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-setup-override-keymap)
@@ -727,9 +744,14 @@ Will reload `ergoemacs-mode' after setting the values."
 ;;; Frequently used commands as aliases
 
 (defcustom ergoemacs-use-aliases t
-  "Use aliases defined by `ergoemacs-aliases' to abbreviate commonly used commands.
-Depending on how you use the completion engines, this may or may not be useful.
-However instead of using M-a `eval-buffer', you could use M-a `eb'"
+  "Use aliases defined by `ergoemacs-aliases'.
+
+This abbreviates commonly used commands.
+
+Depending on how you use the completion engines, this may or may
+not be useful.  However instead of using
+\\[execute-extended-command] `eval-buffer', you could use
+\\[execute-extended-command] `eb'"
   :type 'boolean
   :group 'ergoemacs-mode)
 
@@ -769,7 +791,7 @@ However instead of using M-a `eval-buffer', you could use M-a `eb'"
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-load-aliases ()
-  "Loads aliases defined in `ergoemacs-aliases'."
+  "Load aliases defined in `ergoemacs-aliases'."
   (dolist (x ergoemacs-aliases)
     (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))))))
 
@@ -1012,7 +1034,7 @@ Valid values are:
 
 
 (defgroup ergoemacs-modal nil
-  "Modal ergoemacs"
+  "Modal `ergoemacs-mode'."
   :group 'ergoemacs-mode)
 (defcustom ergoemacs-modal-ignored-buffers
   '("^ \\*load\\*" "^[*]e?shell[*]" "^[*]R.*[*]$")
@@ -1157,8 +1179,7 @@ color.  Otherwise this will be nil A color string as passed to
     xhg-mq-mode
     xhg-mq-sub-mode
     xhg-status-extra-mode)
-  "Modes that should come up in ErgoEmacs state, regardless of if a
-modal state is currently enabled."
+  "Modes that should come up in `ergoemacs-mode' state."
   :type  '(repeat symbol)
   :group 'ergoemacs-modal)
 
@@ -1228,7 +1249,8 @@ different type of modifiers."
   "When key is undefined, translate to an emacish key.
 For example in `org-mode' C-c C-n performs
 `outline-next-visible-heading'.  A QWERTY `ergoemacs-mode' key
-equivalent is <apps> f M-k.  When enabled, pressing this should also perform `outline-next-visible-heading'"
+equivalent is <apps> f M-k.  When enabled, pressing this should
+also perform `outline-next-visible-heading'"
   :type 'boolean
   :group 'ergoemacs-read)
 
@@ -1256,12 +1278,12 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 ;;   :group 'ergoemacs-mode)
 
 (defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
-  "Run functions for anything that is loaded after emacs starts up."
+  "Run `ergoemacs-mode-after-load-hook' after loading Emacs."
   (run-hooks 'ergoemacs-mode-after-load-hook))
 
 (defvar ergoemacs-mode-started-p nil)
 (defun ergoemacs-mode-after-init-emacs ()
-  "Run functions after emacs loads."
+  "Start `ergoemacs-mode' after loading Emacs."
   (unless ergoemacs-mode--start-p
     (ergoemacs-timing ergoemacs-mode-after-init-emacs
       (setq ergoemacs-mode--start-p t)
@@ -1293,7 +1315,6 @@ equivalent is <apps> f M-k.  When enabled, pressing this should also perform `ou
 
 (run-with-idle-timer 0.05 nil #'ergoemacs-mode-after-init-emacs)
 (add-hook 'emacs-startup-hook #'ergoemacs-mode-after-init-emacs)
-
 
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

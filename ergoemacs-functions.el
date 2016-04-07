@@ -29,11 +29,10 @@
 ;; 
 
 ;;; Code:
-(eval-when-compile 
-  (require 'cl)
-  (require 'ergoemacs-macros))
+(require 'cl-lib)
 
-(require 'redo "redo.elc" t) ; for redo shortcut
+(eval-when-compile
+  (require 'ergoemacs-macros))
 
 (defvar ergoemacs-set-ignore-customize)
 (defvar apropos-do-all)
@@ -102,13 +101,14 @@
   "Defines deletion functions that ergoemacs is aware of.")
 
 (defcustom ergoemacs-ctl-c-or-ctl-x-delay 0.2
-  "Delay before sending Cut or Copy when using C-c and C-x."
+  "Delay before sending Cut or Copy.
+This is applied when using Ctrl+c and Ctrl+x."
   :type '(choice (number :tag "Inhibit delay")
                  (const :tag "No delay" nil))
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-handle-ctl-c-or-ctl-x 'both
-  "Type of C-c and C-x handling for `ergoemacs-mode'."
+  "Type of Copy and Paste handling for `ergoemacs-mode'."
   :type '(choice
           (const :tag "C-c/C-x only copy/cut" only-copy-cut)
           (const :tag "C-c/C-x only Emacs C-c and C-x" only-C-c-and-C-x)
@@ -238,7 +238,8 @@ The backup is determined by `find-backup-file-name'"
   "Ergoemacs batch file to run `ergoemacs-mode' in a terminal")
 
 (defun ergoemacs-clean-recompile-then-run (&optional terminal)
-  "Recompile `ergoemacs-mode' for a bootstrap environment."
+  "Recompile `ergoemacs-mode' for a bootstrap environment.
+When TERMINAL is non-nil, run in a terminal instead of GUI."
   (interactive)
   (let ((buf (get-buffer "*ergoemacs-clean*")))
     (when buf
@@ -433,21 +434,24 @@ Pass prefix ARG to the respective copy functions."
 
 (defun ergoemacs-cut-line-or-region (&optional arg)
   "Cut the current line, or current text selection.
-Use `cua-cut-rectangle' or `cua-cut-region' when `cua-mode' is
-turned on.
+
+Use `cua-cut-rectangle' or `cua-cut-region' when the variable
+`cua-mode' is non-nil.
 
 Otherwise, when a region is active, use
 `ergoemacs-shortcut-remap' to remap any mode that changes
-emacs' default cut key, C-w (`kill-region').
+Emacs' default cut key, Ctrl+w (`kill-region').
 
 When region is not active, move to the beginning of the line and
 use `kill-line'.  If looking at the end of the line, run
-`kill-line' again. The prefix arguments will be preserved for the
-first `kill-line', but not the second.
+`kill-line' again.  The prefix arguments will be preserved for
+the first `kill-line', but not the second.
 
 Note that `ergoemacs-shortcut-remap' will remap mode-specific
 changes to `kill-line' to allow it to work as expected in
-major-modes like `org-mode'. "
+major-modes like `org-mode'. 
+
+The ARG is passed to the respective function for any prefixes."
   (interactive "P")
   (cond
    ((and (boundp 'cua--rectangle) cua--rectangle)
@@ -472,11 +476,13 @@ major-modes like `org-mode'. "
 
 ;;; CURSOR MOVEMENT
 (defun ergoemacs-forward-open-bracket (&optional number)
-  "Move cursor to the next occurrence of left bracket or quotation mark.
+  "Move cursor to the next occurrence of left bracket/ quotation mark.
 
-With prefix NUMBER, move forward to the next NUMBER left bracket or quotation mark.
+With prefix NUMBER, move forward to the next NUMBER left bracket
+or quotation mark.
 
-With a negative prefix NUMBER, move backward to the previous NUMBER left bracket or quotation mark."
+With a negative prefix NUMBER, move backward to the previous
+NUMBER left bracket or quotation mark."
   (interactive "p")
   (if (and number
            (> 0 number))
@@ -531,8 +537,12 @@ With a negative prefix argument NUMBER, move forward NUMBER closed brackets."
 
 (defun ergoemacs-forward-block (&optional number)
   "Move cursor forward to the beginning of next text block.
-A text block is separated by 2 empty lines (or line with just whitespace).
-In most major modes, this is similar to `forward-paragraph', but this command's behavior is the same regardless of syntax table.
+
+A text block is separated by 2 empty lines (or line with just
+whitespace).
+
+In most major modes, this is similar to `forward-paragraph', but
+this command's behavior is the same regardless of syntax table.
 
 With a prefix argument NUMBER, move forward NUMBER blocks.
 With a negative prefix argument NUMBER, move backward NUMBER blocks."
@@ -546,6 +556,10 @@ With a negative prefix argument NUMBER, move backward NUMBER blocks."
 
 (defun ergoemacs-backward-block (&optional number)
   "Move cursor backward to previous text block.
+
+With a prefix argument NUMBER, move backward NUMBER blocks.
+With a negative prefix argument NUMBER, move forward NUMBER blocks.
+
 See: `ergoemacs-forward-block'"
   (interactive "p")
   (if (and number
@@ -565,13 +579,14 @@ See: `ergoemacs-forward-block'"
 (defcustom ergoemacs-end-of-comment-line t
   "When non-nil, treat comments different for beginning/end of line.
 
- When non-nil `ergoemacs-end-of-line-or-what', the end of the line is the end of the code line first, then the end of the code + comment.
+ When non-nil `ergoemacs-end-of-line-or-what', the end of the
+ line is the end of the code line first, then the end of the code
+ + comment.
 
 When non-nil `ergoemacs-beginning-of-line-or-what' to move the
 cursor to the beginning of the comment, then end of code,
 followed by the beginning of indentation (if
-`ergoemacs-back-to-indentation' is true) and beginning of line.
-"
+`ergoemacs-back-to-indentation' is true) and beginning of line."
   :type 'boolean
   :group 'ergoemacs-mode)
 
@@ -589,8 +604,7 @@ followed by the beginning of indentation (if
 When 'buffer use `beginning-of-buffer' or `end-of-buffer'
 When 'page use `scroll-down-command' or `scroll-up-command'
 When 'block use `ergoemacs-backward-block' or `ergoemacs-forward-block'
-When 'nil don't use a repeatable command
-"
+When 'nil don't use a repeatable command."
   :type '(choice
           (const buffer :tag "Goto beginning/end of buffer")
           (const page :tag "Page Up")
@@ -605,21 +619,25 @@ With a single prefix argument (called with \\[universal-argument]),
 
 `ergoemacs-end-of-line-or-what' and
 `ergoemacs-beginning-of-line-or-what' do a page up/down in the
-other window.
-"
+other window."
   :type 'boolean
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-repeatable-beginning-or-end-of-buffer t
   "Makes the beginning and end of buffer command repeatable.
-  Calling it more than once changes the point from the beginning
-  to the end of the buffer."
+
+Calling it more than once changes the point from the beginning to
+the end of the buffer."
   :type 'boolean
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-beginning-or-end-of-buffer ()
-  "Goto end or beginning of buffer. See `ergoemacs-end-or-beginning-of-buffer'.
-This behavior can be turned off with `ergoemacs-repeatable-beginning-or-end-of-buffer'."
+  "Goto end or beginning of buffer. 
+
+See `ergoemacs-end-or-beginning-of-buffer'.
+
+This behavior can be turned off with
+`ergoemacs-repeatable-beginning-or-end-of-buffer'."
   (interactive)
   (let ((ma (region-active-p)))
     (if current-prefix-arg
@@ -646,11 +664,14 @@ This behavior can be turned off with `ergoemacs-repeatable-beginning-or-end-of-b
   "Go to beginning or end of buffer.
 
 This calls `end-of-buffer', unless there is no prefix and the
-point is already at the beginning of the buffer.  Then it will
-call `beginning-of-buffer'. This function tries to be smart and
-if the major mode redefines the keys, use those keys instead.
-This is done by `ergoemacs-shortcut-remap'.  The repatable
-behavior can be turned off
+point is already at the beginning of the buffer.  
+
+On repeating, this function will call `beginning-of-buffer'. 
+
+This function tries to be smart and if the major mode redefines
+the keys, use those keys instead.  
+
+The repatable behavior can be turned off
 with`ergoemacs-repeatable-beginning-or-end-of-buffer'
 
 This will not honor `shift-select-mode'."
@@ -683,7 +704,12 @@ This will not honor `shift-select-mode'."
 
 (defvar ergoemacs-beginning-of-line-or-what-last-command nil)
 (defun ergoemacs-beginning-of-line-or-what (&optional N)
-  "Move cursor to beginning of indentation, line, or text block, or beginning of buffer.
+  "Move cursor to beginning of line or something else.
+
+This could be the indentation, line, or text block, or beginning
+of buffer, depending on context, options, and the number of times
+this is repeated.
+
  (a text block is separated by empty lines).
 
 This command moves the cursor as follows:
@@ -738,7 +764,8 @@ To:
 |   (ergoemacs-mode 1)) ; Turn on ergoemacs-mode
 
 
-5. After #4, move to (based on `ergoemacs-beginning-or-end-of-line-and-what'):
+5. After #4, move to (based on
+  `ergoemacs-beginning-or-end-of-line-and-what'):
    a. Beginning of text-block when selected ('block),
    b. Beginning of buffer ('buffer), or
    c. A PgUp ('page)
@@ -765,8 +792,7 @@ the buffer, stop there.
 
 When calling the repeatable command of #3, this command honors
 the prefix arguments of `beginning-of-buffer',
-`ergoemacs-backward-block' and `scroll-down-command'
-"
+`ergoemacs-backward-block' and `scroll-down-command'."
   (interactive "^p")
   (if (and ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window
            (or (memq last-command '(scroll-other-window scroll-other-window-down))
@@ -863,7 +889,11 @@ the prefix arguments of `beginning-of-buffer',
 
 ;; ergoemacs shortcut changes this-command
 (defun ergoemacs-end-of-line-or-what (&optional N )
-  "Move cursor to end of line, or end of current or next text block or even end of buffer.
+  "Move cursor to end of line, or something.
+
+This could be end of current or next text block or even end of
+buffer depending on context and options.
+
  (a text block is separated by empty lines).
 
 1. Move cursor to the end of a line, ignoring comments
@@ -903,7 +933,7 @@ and a single universal argument called with
 window `scroll-other-window'.  Repeated pressing will repeat
 `scroll-other-window'.
 
-With argument ARG not nil or 1, move forward ARG - 1 lines first.
+With argument N not nil or 1, move forward N - 1 lines first.
 If point reaches the beginning or end of buffer, it stops there.
 
 Attempt to honor each modes modification of beginning and end of
@@ -911,9 +941,7 @@ line functions by using `ergoemacs-remap'.
 
 When calling the repeatable command of #3, this command honors
 the prefix arguments of `end-of-buffer',
-`ergoemacs-forward-block' and `scroll-up-command'.
-
-"
+`ergoemacs-forward-block' and `scroll-up-command'."
   (interactive "^p")
   (if (and ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window
            (or (memq last-command '(scroll-other-window scroll-other-window-down))
@@ -1009,7 +1037,7 @@ the prefix arguments of `end-of-buffer',
 ;;; TEXT SELECTION RELATED
 
 (defun ergoemacs-select-current-line ()
-  "Select the current line"
+  "Select the current line."
   (interactive)
   (end-of-line) ; move to end of line
   (set-mark (line-beginning-position)))
@@ -1040,6 +1068,7 @@ Delimiters are paired characters:
 
 ;; by Nikolaj Schumacher, 2008-10-20. Released under GPL.
 (defun ergoemacs-semnav-up (arg)
+  "Navigate semantically by ARG."
   (interactive "p")
   (when (nth 3 (syntax-ppss))
     (if (> arg 0)
@@ -1055,6 +1084,7 @@ Delimiters are paired characters:
 ;; by Nikolaj Schumacher, 2008-10-20. Released under GPL.
 (defun ergoemacs-extend-selection (arg &optional incremental)
   "Select the current word.
+
 Subsequent calls expands the selection to larger semantic unit."
   (interactive (list (prefix-numeric-value current-prefix-arg)
                      (or (and transient-mark-mode mark-active)

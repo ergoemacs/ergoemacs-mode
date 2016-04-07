@@ -5,31 +5,13 @@
 ;; Filename: ergoemacs-map.el
 ;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer:
+;; Maintainer: Matthew L. Fidler
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
-;; Version:
-;; Last-Updated:
-;;           By: 
-;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
-;; 
-;; Features that might be required by this library:
-;;
-;;   None
-;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
-;;; Commentary: 
-;; 
+;;; Commentary:
 ;;
-;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Change Log:
-;; 
+;; Functions for modifying active maps on the fly.
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
@@ -50,9 +32,9 @@
 ;; 
 ;;; Code:
 
+(require 'cl-lib)
 (eval-when-compile
-  (require 'ergoemacs-macros)
-  (require 'cl))
+  (require 'ergoemacs-macros))
 
 (defvar cl-struct-ergoemacs-component-struct-tags)
 (defvar ergoemacs-breadcrumb-hash)
@@ -206,7 +188,10 @@ ORIGINAL-USER is non-nil."
       (cons symbol tmp))))
 
 (defun ergoemacs-map--alist (alist &optional symbol)
-  "Apply maps for ALIST."
+  "Apply maps for ALIST.
+
+SYMBOL is the symbol where this alist is located and is used to
+save the infromationin the `ergoemacs-map--alist' hash."
   (let ((old-breadcrumb ergoemacs-map--breadcrumb)
         breadcrumb-base type old-len)
     (if (and symbol (setq old-len (ergoemacs-gethash symbol ergoemacs-map--alist))
@@ -251,7 +236,10 @@ ORIGINAL-USER is non-nil."
 
 (defvar ergoemacs-map--alists (make-hash-table))
 (defun ergoemacs-map--alists (alists &optional symbol)
-  "Apply maps for ALISTS"
+  "Apply maps for ALISTS.
+
+SYMBOL is the symbol where this alist is located and is used to
+save the infromationin the `ergoemacs-map--alist' hash."
   (let (old-len)
     ;; Only modify if the list has changed length.
     (if (and symbol
@@ -416,7 +404,7 @@ It takes the following arguments:
                              (consp key)
                              (memq item ergoemacs-remap-ignore))
                    (let ((key (vconcat key)))
-                     ;; What are the keys that are changed. 
+                     ;; What are the keys that are changed.
                      (when (setq tmp (ergoemacs-gethash key ergoemacs-map--lookup-hash))
                        (dolist (new-key tmp)
                          ;; (if (and (boundp 'isearch-mode-map) (eq lookup-keymap isearch-mode-map))
@@ -501,7 +489,7 @@ global keymap.  Otherwise, it is relative to LOOKUP-KEYMAP."
         ;; Overall layout hasn't been calculated.
         (setq ret (ergoemacs-component-struct--get struct-map cur-layout nil)))
        (t
-        (error "Cant calculate/lookup keymap.")))
+        (error "Cant calculate/lookup keymap")))
       ret)))
 
 (defun ergoemacs-map--get-unbind-list (component-list)
@@ -876,7 +864,7 @@ UNBIND-LIST is the list of keys that `ergoemacs-mode'."
     ret))
 
 (defun ergoemacs-map-- (&optional lookup-keymap layout struct-map)
-  "Get map looking up changed keys in LOOKUP-MAP based on LAYOUT.
+  "Get map looking up changed keys in LOOKUP-KEYMAP based on LAYOUT.
 
 STRUCT-MAP can be a `ergoemacs-component-struct', or a string/symbol of
 a calculated or uncalcuated component in
@@ -927,7 +915,7 @@ modifications to that keymap."
        (lookup-keymap
 	(ergoemacs-map--lookup-map lookup-keymap unbind-list))))
      ;; Component keymap
-     ((setq ret (ergoemacs-map--get-struct-map struct-map cur-layout lookup-keymap)) 
+     ((setq ret (ergoemacs-map--get-struct-map struct-map cur-layout lookup-keymap))
       ret)
      (t
       (ergoemacs-warn "Component struct-map isn't a proper argument for `ergoemacs-map'")
@@ -1065,7 +1053,7 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
   (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
     (while x
       (setq minor-mode-map-alist (delq x minor-mode-map-alist))
-      ;; Multiple menus sometimes happen because of multiple 
+      ;; Multiple menus sometimes happen because of multiple
       ;; ergoemacs-mode variables in minor-mode-map-alist
       (setq x (assq 'ergoemacs-mode minor-mode-map-alist)))
     (push (cons 'ergoemacs-mode ergoemacs-menu-keymap) minor-mode-map-alist))

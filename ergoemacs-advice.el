@@ -5,32 +5,11 @@
 ;; Filename: ergoemacs-advice.el
 ;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer: Matthew L. Fidler
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By: 
-;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
-;; 
-;; Features that might be required by this library:
 ;;
-;;   None
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Commentary: 
-;; 
-;;
-;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Change Log:
-;; 
-;; 
+;;; Commentary:
+;;  Advices for `ergoemacs-mode'.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;; This program is free software; you can redistribute it and/or
@@ -49,10 +28,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Code:
+(require 'cl-lib)
 
 (eval-when-compile
-  (require 'ergoemacs-macros)
-  (require 'cl))
+  (require 'ergoemacs-macros))
 
 (require 'mouse)
 
@@ -71,6 +50,7 @@
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--global-submap-p "ergoemacs-map-properties")
 
 (declare-function ergoemacs-key-description--substitute-command-keys "ergoemacs-key-description")
 
@@ -80,15 +60,19 @@
 
 
 (defvar ergoemacs-advice--temp-replace-functions nil
-  "List of `ergoemacs-mode' replacement functions that are turned
-on when `ergoemacs-mode' is turned on.")
+  "List of `ergoemacs-mode' temporary replacement functions.
+
+These replacement functions are are turned on when
+`ergoemacs-mode' is turned on.")
 
 (defvar ergoemacs-advice--permanent-replace-functions nil
-  "List of `ergoemacs-mode' replacement functions that are turned 
-on after `ergoemacs-mode' is loaded, and not turned off.")
+  "List of `ergoemacs-mode' permanent replacement functions.
+ 
+These replacement functinos are turned on after `ergoemacs-mode'
+is loaded, but not turned off.")
 
 (defun ergoemacs-advice--enable-replacement (ad &optional disable)
-  "Enable ergoemacs-c advice AD (or optionally DISABLE)"
+  "Enable ergoemacs-c advice AD (or optionally DISABLE)."
   (cond
    (disable
     (when (fboundp (intern (concat "ergoemacs-advice--real-" (symbol-name ad))))
@@ -100,7 +84,11 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
         (documentation (intern (concat "ergoemacs-advice--" (symbol-name ad)))))))))
 
 (defun ergoemacs-advice--enable-replacements (&optional disable permanent)
-  "Enable the function replacements "
+  "Enable the function replacements.
+
+When DISABLE is non-nil, disable the replacements.
+
+When PERMANENT is non-nil, these replacements are permanent, not temporary."
   (dolist (ad (or (and permanent ergoemacs-advice--permanent-replace-functions)
                   ergoemacs-advice--temp-replace-functions))
     (ergoemacs-advice--enable-replacement ad disable)))
@@ -108,13 +96,13 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
 (add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-advice--enable-replacements)
 
 (defun ergoemacs-advice--disable-replacements ()
-  "Disable the function replacements"
+  "Disable the function replacements."
   (ergoemacs-advice--enable-replacements t))
 
 (add-hook 'ergoemacs-mode-shutdown-hook 'ergoemacs-advice--disable-replacements)
 
 (defun ergoemacs-advice--enable-permanent-replacements ()
-  "Enable permanent replacements"
+  "Enable permanent replacements."
   (ergoemacs-advice--enable-replacements nil t))
 
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-advice--enable-permanent-replacements)
@@ -123,8 +111,9 @@ on after `ergoemacs-mode' is loaded, and not turned off.")
   "Original keymap used with `use-local-map'.")
 
 (ergoemacs-advice use-local-map (keymap)
-  "When `ergoemacs-mode' is 
-bindings into this keymap (the original keymap is untouched)"
+  "Load `ergoemacs-mode' is the local keymap.
+
+The original keymap is untouched."
   :type :before
   (set (make-local-variable 'ergoemacs--original-local-map) keymap))
 
@@ -172,7 +161,7 @@ bindings into this keymap (the original keymap is untouched)"
   "Flag to tell `ergoemacs-mode' to suppress `define-key' advice.")
 
 (defun ergoemacs-define-key-after (keymap key def)
-  "Ergoemacs-mode modification to `define-key' called after `define-key'.
+  "`ergoemacs-mode' modification to `define-key' called after `define-key'.
 
 KEYMAP is the keymap being modified
 KEY is the key that is being defined
@@ -192,26 +181,25 @@ This advice also appempts to protcet local keymaps when
 part of how `ergoemacs-mode' determines that a hook changed a key
 definition."
   (when (eq keymap global-map) ;; (current-global-map)
-    (let ((submap (ergoemacs-map-properties--global-submap-p key)))
-      (ergoemacs :define-key ergoemacs-user-keymap key def)
-      (when (ergoemacs-keymapp ergoemacs-saved-global-map)
-	(ergoemacs :define-key ergoemacs-saved-global-map key def))
-      (cond
-       ((not def)
+    (ergoemacs :define-key ergoemacs-user-keymap key def)
+    (when (ergoemacs-keymapp ergoemacs-saved-global-map)
+      (ergoemacs :define-key ergoemacs-saved-global-map key def))
+    (cond
+     ((not def)
+      (ergoemacs :apply-key key
+		 (lambda(trans-new-key)
+		   (push trans-new-key ergoemacs-map--unbound-keys))))
+     (def
+      (let (trans-keys
+	    new-lst)
 	(ergoemacs :apply-key key
 		   (lambda(trans-new-key)
-		     (push trans-new-key ergoemacs-map--unbound-keys))))
-       (def
-	(let (trans-keys
-	      new-lst)
-	  (ergoemacs :apply-key key
-		     (lambda(trans-new-key)
-		       (push trans-new-key trans-keys)))
-	  (push key trans-keys)
-	  (dolist (cur-key ergoemacs-map--unbound-keys)
-	    (unless (member cur-key trans-keys)
-	      (push cur-key new-lst)))
-	  (setq ergoemacs-map--unbound-keys new-lst))))))
+		     (push trans-new-key trans-keys)))
+	(push key trans-keys)
+	(dolist (cur-key ergoemacs-map--unbound-keys)
+	  (unless (member cur-key trans-keys)
+	    (push cur-key new-lst)))
+	(setq ergoemacs-map--unbound-keys new-lst)))))
     
   (unless ergoemacs-define-key-after-p
     (setq ergoemacs-define-key-after-p t)
@@ -257,17 +245,6 @@ definition."
           (setq ergoemacs-modify-transient-maps t)
           ad-do-it)
       (setq ergoemacs-modify-transient-maps old))))
-
-
-;; (ergoemacs-advice eval-buffer (&optional buffer printflag filename unibyte do-allow-print)
-;;   "Apply `ergoemacs-component-struct--apply-inits' after evaluating buffer."
-;;   :type :after
-;;   ;; (when (called-interactively-p 'any)
-;;   ;;   (setq ergoemacs-component-struct--apply-ensure-p t)
-;;   ;;   (ergoemacs-component-struct--apply-inits)
-;;   ;;   (when ergoemacs-mode-reset
-;;   ;;     (ergoemacs-mode-reset)))
-;;   )
 
 (ergoemacs-advice undo-tree-overridden-undo-bindings-p ()
   "Use `ergoemacs-mode' remaps to determine if `undo' has been changed."
@@ -318,7 +295,7 @@ definition."
 
 When increasing `max-specpdl-size' and `max-lisp-eval-depth',
 this allows `smex' and `execute-extended-command' to run the
-command seleceted, instead of rerunning `smex' and
+command selected, instead of rerunning `smex' and
 `execute-extended-command'."
   :type :before
   (setq ergoemacs-command-loop--grow-command cmd

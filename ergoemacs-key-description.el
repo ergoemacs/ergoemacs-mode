@@ -5,27 +5,15 @@
 ;; Filename: ergoemacs-key-description.el
 ;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer: Matthew L. Fidler
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By: 
-;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
-;; 
-;; Features that might be required by this library:
-;;
-;;   None
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
-;;; Commentary: 
-;; 
+;;; Commentary:
 ;;
-;; 
+;; Ergoemacs-mode key description library.
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Change Log:
@@ -51,9 +39,10 @@
 ;;; Code:
 ;; (require 'guide-key nil t)
 
+(require 'cl-lib)
+
 (eval-when-compile
-  (require 'ergoemacs-macros)
-  (require 'cl))
+  (require 'ergoemacs-macros))
 
 (require 'descr-text)
 (require 'faces)
@@ -151,7 +140,9 @@ This uses `ergoemacs-key-description--unicode-char--internal'"
     (car (last chars))))
 
 (defun ergoemacs-key-description--key (key mod)
-  "Key description"
+  "Key description.
+KEY is the fundamental event of a key.
+MOD ar the modifiers applied to the key."
   (let ((ret ""))
     (cond
      ((eq key 'deletechar)
@@ -209,7 +200,7 @@ This uses `ergoemacs-key-description--unicode-char--internal'"
     ret))
 
 (defun ergoemacs-key-description--modifier (mod)
-  "Modifier description"
+  "Modifier MOD description."
   (let (ret)
     (cond
      ;; OSX specific key descriptions
@@ -221,7 +212,7 @@ This uses `ergoemacs-key-description--unicode-char--internal'"
                     (eq ns-command-modifier 'meta))))
       (setq ret (format "%s"
                         (ergoemacs :unicode-or-alt "⌘" "+"))))
-     ((and (eq mod 'meta) 
+     ((and (eq mod 'meta)
            (eq system-type 'darwin)
            (or (and (boundp 'mac-command-modifier)
                     (eq mac-command-modifier 'meta))
@@ -229,7 +220,7 @@ This uses `ergoemacs-key-description--unicode-char--internal'"
                     (eq ns-command-modifier 'meta))))
       (setq ret (format "%sCmd+"
                         (ergoemacs :unicode-or-alt "⌘" "+"))))
-     ((and (eq mod 'meta) 
+     ((and (eq mod 'meta)
            (eq system-type 'darwin)
            (or (and (boundp 'mac-alternate-modifier)
                     (eq mac-alternate-modifier 'meta))
@@ -280,7 +271,7 @@ This uses `ergoemacs-key-description--unicode-char--internal'"
     ret))
 
 (defun ergoemacs-key-description--add-emacs-modifiers-for-ergoemacs-modifiers (mod)
-  "Put in the correct modifiers for special keys"
+  "Change `ergoemacs-mode' special modifiers in MOD to the Emacs modifiers."
   (let ((tmp '()))
     (dolist (m mod)
       (cond
@@ -292,7 +283,8 @@ This uses `ergoemacs-key-description--unicode-char--internal'"
     tmp))
 
 (defun ergoemacs-key-description--menu (kbd &optional layout)
-  "Creates Pretty keyboard bindings for menus."
+  "Create pretty keyboard bindings for menus.
+KBD is the keyboard code, LAYOUT is the keyboard layout."
   (let ((ergoemacs-display-without-brackets t)
         (ergoemacs-display-key-use-face-p nil)
         (ergoemacs-display-small-symbols-for-key-modifiers nil))
@@ -359,7 +351,7 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
                              1)))))))
 
 (defun ergoemacs-key-description-kbd (code)
-  "Creates `ergoemacs-mode' style description of kbd macro CODE"
+  "Create `ergoemacs-mode' style description of kbd macro CODE."
   (if (not code) ""
     (save-match-data
       (ergoemacs-key-description (read-kbd-macro code t)))))
@@ -401,12 +393,13 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
             XF86Back
             XF86Forward)
           (if (eq system-type 'windows-nt) '(menu) '(apps)))
-  "Ignored prefixes of keymaps")
+  "Ignored prefixes of keymaps.")
 
 (defvar ergoemacs-describe-keymap--column-widths '(18 . 40)
-  "Ignored prefixes of keymaps")
+  "Column widths for key description tables.")
 
 (defun ergoemacs-key-description--keymap-item-2 (item)
+  "Get the description of ITEM for the table."
   (cond
    ((or (vectorp item) (stringp item))
     (ergoemacs-key-description item))
@@ -423,7 +416,7 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
    (t (cons nil (format"#<byte compiled %s>" (ergoemacs :unicode-or-alt "λ" "lambda"))))))
 
 (defun ergoemacs-key-description--keymap-blame (key map)
-  "Find the source of KEY in MAP"
+  "Find the source of KEY in MAP."
   (let (composed-list parent ret tmp)
     (cond
      ((not map) (setq ret ""))
@@ -461,12 +454,17 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
     ret))
 
 (defun ergoemacs-key-description--setup-xrefs ()
+  "Setup cross refecnes in help buffer."
   (ergoemacs-component--help-link))
 
 (add-hook 'temp-buffer-show-hook 'ergoemacs-key-description--setup-xrefs)
 
 (defun ergoemacs-key-description--keymap-item (&optional elt keymap help)
-  "Get keymap description for ELT based on KEYMAP."
+  "Get keymap description for ELT based on KEYMAP.
+
+When HELP is non-nil, assume this is a help buffer and insert the keymap item.
+
+Otherwise return the value."
   (let* ((column-widths ergoemacs-describe-keymap--column-widths)
          (last-column (- 80 (+ (car column-widths) (cdr column-widths) 3)))
          (kd (or (and (consp elt) (ergoemacs-key-description (car elt)))

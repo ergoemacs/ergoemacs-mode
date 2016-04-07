@@ -5,32 +5,13 @@
 ;; Filename: ergoemacs-map-properties.el
 ;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer:  Matthew L. Fidler
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By: 
-;;     Update #: 0
-;; URL: 
-;; Doc URL:
-;; Keywords: 
-;; Compatibility: 
-;; 
-;; Features that might be required by this library:
-;;
-;;   None
-;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
-;;; Commentary: 
-;; 
+;;; Commentary:
 ;;
-;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Change Log:
-;; 
-;; 
+;;  These are functions that determine various properties of keymaps.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;; This program is free software; you can redistribute it and/or
@@ -50,9 +31,8 @@
 ;; 
 ;;; Code:
 
-
-(eval-when-compile 
-  (require 'cl)
+(require 'cl-lib)
+(eval-when-compile
   (require 'ergoemacs-macros))
 
 (require 'package)
@@ -107,14 +87,14 @@ KEYMAP can be a symbol, keymap or ergoemacs-mode keymap"
         ;; (ignore-errors (and (setq tmp (plist-get keymap :map-list)) (symbol-value (nth 0 tmp))))
         )))
 
-(defun ergoemacs-map-properties--composed-p (keymap &rest _ignore)
+(defun ergoemacs-map-properties--composed-p (keymap)
   "Determine if the KEYMAP is a composed keymap."
   (and (ergoemacs-keymapp keymap)
        (ignore-errors (eq 'keymap (car keymap)))
        (ignore-errors (eq 'keymap (caadr keymap)))))
 
 ;; FIXME: Write test or function
-(defun ergoemacs-map-properties--all-sparse-p (keymap &rest _ignore)
+(defun ergoemacs-map-properties--all-sparse-p (keymap)
   "Determines if all components of a KEYMAP are sparse keymaps.
 This does not include submaps, which may also be a full keymap."
   (if (not (ergoemacs-keymapp keymap)) t
@@ -137,7 +117,11 @@ This does not include submaps, which may also be a full keymap."
 (defun ergoemacs-map-properties--composed-list (keymap &optional melt label)
   "Return the list of maps in a composed KEYMAP.
 If there are no maps, return nil.
-When MELT is true, combine all the keymaps (with the exception of the parent-map)"
+
+When MELT is true, combine all the keymaps (with the exception of
+the parent-map).
+
+When LABEL is non-nil, label the keymap."
   (if (not (ergoemacs-map-properties--composed-p keymap)) nil
     (let ((parent (keymap-parent keymap))
           ret)
@@ -160,7 +144,9 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
       ret)))
 
 (defun ergoemacs-map-properties--composed (keymap &optional force)
-  "Returns a list of `ergoemacs-mode' map-key for the composed keymap list"
+  "Return a list of `ergoemacs-mode' map-keys for the composed KEYMAP list.
+
+When FORCE is non-nil, force the abiity to get map-keys by assigning them."
   (let ((composed-list (ergoemacs-map-properties--composed-list keymap nil force)))
     (and composed-list
          (catch 'not-bound
@@ -174,14 +160,21 @@ When MELT is true, combine all the keymaps (with the exception of the parent-map
 
 
 (defun ergoemacs-map-properties--key-struct (keymap &optional force)
-  "Returns the maps linked to the current map, if it is an `ergoemacs-mode' map.
+  "Return the maps linked to the current KEYMAP.
+
+This only works if the KEYMAP is  an `ergoemacs-mode' map.
 
 :map-key is the key of the current map.
-:composed is a list of the `ergoemacs-map-properties--key-struct' of each of the composed maps.
-:parent is the `ergoemacs-map-properties--key-struct' of the current map.
 
-This will return the keymap structure prior to `ergoemacs-mode' modifications
-"
+:composed is a list of the `ergoemacs-map-properties--key-struct'
+  of each of the composed maps.
+
+:parent is the `ergoemacs-map-properties--key-struct' of the
+  current map.
+
+This will return the keymap structure prior to `ergoemacs-mode' modifications.
+
+When FORCE is non-nil, make sure the keymaps have `ergoemacs-mode' labels."
   ;;|-----------+------------+--------------+--------------|
   ;;| Condition | Call Count | Elapsed Time | Average Time |
   ;;|-----------+------------+--------------+--------------|
@@ -210,23 +203,30 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
         (setq parent (ergoemacs-map-properties--parent keymap t))
         (when parent
           (setq ret (plist-put ret :parent parent))))
-      (puthash hash-key ret ergoemacs-map-properties--key-struct))    
+      (puthash hash-key ret ergoemacs-map-properties--key-struct))
     ret))
 
 
 (defun ergoemacs-map-properties--key-hash (keymap &optional force)
-  "Returns the maps linked to the current map, if it is an `ergoemacs-mode' map.
+  "Return the maps linked to the current KEYMAP.
+
+This only works if the KEYMAP is an `ergoemacs-mode' map.
+
+When FORCE is non-nil, make sure every map has an
+`ergoemacs-mode' keymap identifier installed in it.
 
 :map-key is the key of the current map.
-:composed is a list of the `ergoemacs-map-properties--key-struct' of each of the composed maps.
+
+:composed is a list of the `ergoemacs-map-properties--key-struct'
+          of each of the composed maps.
+
 :parent is the `ergoemacs-map-properties--key-struct' of the current map.
 
-This will return the keymap structure prior to `ergoemacs-mode' modifications
-"
+This will return the keymap structure prior to `ergoemacs-mode' modifications."
   ;;|-----------+------------+--------------+--------------|
   ;;| Condition | Call Count | Elapsed Time | Average Time |
   ;;|-----------+------------+--------------+--------------|
-  ;;| Pre Hash  |     237982 | 100.52800000 | 0.0004224185 |
+.  ;;| Pre Hash  |     237982 | 100.52800000 | 0.0004224185 |
   ;;| Post Hash |     150045 | 40.600999999 | 0.0002705921 |
   ;;| Hash Key  |      76379 | 15.183000000 | 0.0001987850 |
   ;;|-----------+------------+--------------+--------------|
@@ -249,7 +249,10 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications
       ret))))
 
 (defun ergoemacs-map-properties--default-global-file (&optional other)
-  "What is the global key hash file."
+  "What is the global key hash file.
+
+When OTHER is non-nil, get the OTHER file instead of the global
+file."
   (let* ((file (expand-file-name (format "ergoemacs-%s-%s.el%s" (or other "global") ergoemacs--system (or (and ergoemacs--gzip ".gz") ""))
                                  ergoemacs-dir))
          (extras (expand-file-name "ergoemacs-extras" user-emacs-directory))
@@ -276,7 +279,7 @@ with this string.  Otherwise, it is assumed to be \"$\".r"
   (ergoemacs global-map :label most-negative-fixnum) ;; Should be `most-negative-fixnum'
   (push 'global-map ergoemacs-map-properties--label-atoms-maps)
   (ergoemacs-map-properties--label-atoms)
-  (with-temp-file (ergoemacs-map-properties--default-global-file) 
+  (with-temp-file (ergoemacs-map-properties--default-global-file)
     (let ((print-level nil)
           (print-length nil)
           (where-is-hash (make-hash-table))
@@ -393,7 +396,7 @@ When AFTER is non-nil, this is a list of keys that changed after
                       ((and (symbolp item) (string-match-p "clipboard" (symbol-name item))))
                       ((and (equal [27 115 104 102] cur-key) (eq item 'hi-lock-find-patterns)))
 		      ;; If this is bound to another keymap, assume it doesn't affect user maps.
-		      ;; For example the M-s keymap, or M-g keymaps. 
+		      ;; For example the M-s keymap, or M-g keymaps.
 		      ((ergoemacs-map-properties--global-submap-p cur-key))
                       ((and tmp (not (equal tmp item))
                             (or (not after)
@@ -419,7 +422,9 @@ When AFTER is non-nil, this is a list of keys that changed after
 
 (defvar ergoemacs-map-properties--protect-local nil)
 (defun ergoemacs-map-properties--protect-local (hook fn)
-  "Protect a local map's modification with information about what hook is running."
+  "Protect a local map's modification.
+
+Save information about what HOOK is running function FN."
   (let ((fn (or (and (symbolp fn) fn) 'lambda)))
     (if (not hook)
         (setq ergoemacs-map-properties--protect-local nil)
@@ -495,10 +500,17 @@ This tests if HOOK is:
 
 
 (defvar ergoemacs-map-properties--hook-map-hash (make-hash-table :test 'equal)
-  "Hash table of user hook maps that `ergoemacs-mode' saves")
+  "Hash table of user hook maps that `ergoemacs-mode' saves.")
 
 (defun ergoemacs-map-properties--hook-define-key (keymap key def)
   "Save hook-defined keys on separate keymaps.
+
+The KEYMAP is the keymap where keys are going to be defined.
+
+The KEY is the key that is being defined.
+
+The DEF is the key definition.
+
 These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
   (ergoemacs keymap :label)
   (let* ((kbd key)
@@ -572,14 +584,14 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 
 
 (defvar ergoemacs-map-properties--override-map-hash (make-hash-table)
-  "Hash Table of defined/undefined keys")
+  "Hash Table of defined/undefined keys.")
 
 (defvar ergoemacs-map-properties--deferred-hooks-directory-regexp
   (concat "\\`" (regexp-opt (append package-directory-list
                                     (list package-user-dir)
                                     (list (file-name-directory (locate-library "abbrev")))
                                     ergoemacs-directories-where-keys-from-hook-are-deferred) t))
-  "Regular experssion of libraries where maps are deferred")
+  "Regular experssion of libraries where maps are deferred.")
 
 (defun ergoemacs-map-properties--override-map-p (keymap)
   "Determine if KEYMAP should override `ergoemacs-mode' keys."
@@ -639,7 +651,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 
 (add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-map-properties--get-original-global-map)
 
-(defun ergoemacs-map-properties--map-fixed-plist (keymap &rest _ignore)
+(defun ergoemacs-map-properties--map-fixed-plist (keymap)
   "Determines if this is an `ergoemacs-mode' KEYMAP.
 Returns a plist of fixed keymap properties (not changed by
 composing or parent/child relationships)"
@@ -653,11 +665,11 @@ composing or parent/child relationships)"
                          (eq (car (car (cdr (cdr (cdr keymap))))) 'ergoemacs-labeled)
                          (funcall (cdr (car (cdr (cdr (cdr keymap))))))))
                   (ignore-errors ;; (keymap #char-table (ergoemacs-map-marker) (ergoemacs-map-list))
-                    (and (char-table-p (car (cdr keymap))) 
+                    (and (char-table-p (car (cdr keymap)))
                          (eq (car (car (cdr (cdr keymap)))) 'ergoemacs-labeled)
                          (funcall (cdr (car (cdr (cdr keymap)))))))
                   (ignore-errors ;; (keymap "label" (ergoemacs-map-marker) (ergoemacs-map-list))
-                    (and (stringp (car (cdr keymap))) 
+                    (and (stringp (car (cdr keymap)))
                          (eq (car (car (cdr (cdr keymap)))) 'ergoemacs-labeled)
                          (funcall (cdr (car (cdr (cdr keymap)))))))
                   (ignore-errors ;;(keymap  (ergoemacs-map-marker) (ergoemacs-map-list))
@@ -704,7 +716,7 @@ composing or parent/child relationships)"
       (let ((keymap (ergoemacs-map-properties--keymap-value keymap)))
         (cond
          ((not (ergoemacs-keymapp keymap))
-          (error "Trying to put keymap property on non-keymap %s." keymap))
+          (error "Trying to put keymap property on non-keymap %s" keymap))
          ((eq property :full)
           (ergoemacs-warn "Cannot set the keymap property :full"))
          (t (let ((ret (ergoemacs-map-properties--map-fixed-plist keymap)) tmp)
@@ -721,7 +733,9 @@ composing or parent/child relationships)"
                 (puthash (ergoemacs-map-properties--key-struct keymap) tmp ergoemacs-map-properties--plist-hash)))))))))
 
 (defun ergoemacs-map-properties--parent (keymap &optional force)
-  "Returns a `ergoemacs-mode' map-key for the parent of KEYMAP."
+  "Return a `ergoemacs-mode' map-key for the parent of KEYMAP.
+
+When FORCE is non-nil make sure it has a map key."
   (if (not (ergoemacs-keymapp keymap)) nil
     (let ((parent (keymap-parent keymap)))
       (and parent (ergoemacs-map-properties--key-struct parent force)))))
@@ -756,17 +770,15 @@ The optional ADD-MAP argument adds maps to the map-list.  It can be a symbol or 
           ))
       (puthash keymap tmp ergoemacs-map-properties--plist-hash)
       (ergoemacs-map-properties--map-list keymap))
-     (t
-      ;; (error "Need a proper keymap.")
-      nil))))
+     (t nil))))
 
 (defvar ergoemacs-map-properties--get-or-generate-map-name nil)
 
 (defun ergoemacs-map-properties--label-map (map &optional label-empty-p)
-  "Label MAP.  
+  "Label MAP.
 When LABEL-EMPTY-P is non-nil, also label empty maps."
   (let* (sv)
-    (cond 
+    (cond
      ((get map :ergoemacs-labeled)
       t) ;; Already labeled
      ((not (setq sv (ergoemacs-sv map t)))
@@ -792,7 +804,7 @@ When LABEL-EMPTY-P is non-nil, also label empty maps."
       (put map :ergoemacs-labeled t)
       t))))
 
-(defun ergoemacs-map-properties--label-atoms (&rest _ignore)
+(defun ergoemacs-map-properties--label-atoms ()
   "Label all the bound keymaps."
   (mapatoms #'ergoemacs-map-properties--label-map))
 
@@ -991,7 +1003,7 @@ STRUCT is the keymap structure for the current map."
 	    (pushnew (cons old-plist (cdr keymap)) ergoemacs-map-properties--const-keymaps)))
 	map)))))
 
-(defun ergoemacs-map-properties--empty-p (keymap &optional labeled-is-keymap-p &rest _ignore)
+(defun ergoemacs-map-properties--empty-p (keymap &optional labeled-is-keymap-p)
   "Determines if a KEYMAP is empty.
 
 When LABELED-IS-KEYMAP-P is non-nil, ergoemacs-mode labeled
@@ -1016,7 +1028,7 @@ keys are considered empty."
 (defvar ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
   "Hash table of the user maps that `ergoemacs-mode' saves.")
 
-(defun ergoemacs-map-properties--user (keymap &rest _ignore)
+(defun ergoemacs-map-properties--user (keymap)
   "Gets the user KEYMAP with `ergoemacs-mode' identifiers installed.
 KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((key (ergoemacs keymap :map-key))
@@ -1046,7 +1058,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
         (ergoemacs map :label (list (ergoemacs keymap :key-hash) 'user)))))
     map))
 
-(defun ergoemacs-map-properties--calculate-keys-and-where-is-hash (keymap &rest _ignore)
+(defun ergoemacs-map-properties--calculate-keys-and-where-is-hash (keymap)
   "Calculates :where-is and :keys properties for KEYMAP."
   (let ((where-is-hash (make-hash-table))
         (lookup-hash (make-hash-table :test 'equal))
@@ -1068,7 +1080,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
     (ergoemacs keymap :extract-where-is where-is-hash)
     (ergoemacs keymap :extract-lookup lookup-hash)))
 
-(defun ergoemacs-map-properties--keys (keymap &rest _ignore)
+(defun ergoemacs-map-properties--keys (keymap)
   "Extract :keys property for KEYMAP."
   (let ((ret (ergoemacs keymap :extract-keys)))
     (unless ret
@@ -1076,7 +1088,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
       (setq ret (ergoemacs keymap :extract-keys)))
     ret))
 
-(defun ergoemacs-map-properties--where-is (keymap &rest _ignore)
+(defun ergoemacs-map-properties--where-is (keymap)
   "Extract :where-is property for KEYMAP."
   (let ((ret (ergoemacs keymap :extract-where-is)))
     (unless ret
@@ -1084,7 +1096,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
       (setq ret (ergoemacs keymap :extract-where-is)))
     ret))
 
-(defun ergoemacs-map-properties--lookup (keymap &rest _ignore)
+(defun ergoemacs-map-properties--lookup (keymap)
   "Extract :lookup property for KEYMAP."
   (let ((ret (ergoemacs keymap :extract-lookup)))
     (unless ret
@@ -1093,7 +1105,7 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
     ret))
 
 (defun ergoemacs-map-properties--new-command (keymap command &optional relative-map)
-  "Get the COMMAND equivalent binding in KEYMAP based on RELATIVE-MAP."
+  "In KEYMAP, get the COMMAND equivalent binding relative to the RELATIVE-MAP."
   (and command keymap
        (let* (ret
               (hash-table (ergoemacs (or relative-map ergoemacs-saved-global-map global-map) :where-is))
@@ -1148,22 +1160,21 @@ keymap."
         ret)
        (t ret)))))
 
-(defun ergoemacs-map-properties--original-user (keymap &rest _ignore)
-  "Gets the original keymap with the user protecting layer."
+(defun ergoemacs-map-properties--original-user (keymap)
+  "Gets the original KEYMAP with the user protecting layer."
   (make-composed-keymap (ergoemacs keymap :user) (ergoemacs keymap :original)))
 
-(defun ergoemacs-map-properties--installed-p (keymap &rest _ignore)
+(defun ergoemacs-map-properties--installed-p (keymap)
   "Is `ergoemacs-mode' installed in KEYMAP?
 Values returned are:
   :protected-p -- An ergoemacs user keymap is installed on top
   :cond-p -- This is a conditional map (usually found in `minor-mode-map-alist')
-  t -- `ergoemacs-mode' has been installed
-  nil -- `ergoemacs-mode' has not modified this map.
-"
+  t -- `ergoemacs-mode' has been installed.
+  nil -- `ergoemacs-mode' has not modified this map."
   (when (and keymap (ergoemacs-keymapp keymap))
     (let* ((parent (keymap-parent keymap))
            (key (and parent (ergoemacs keymap :map-key)))
-           (ret (and (consp key) 
+           (ret (and (consp key)
                      (or (and (eq (nth 1 key) 'user) :protected-p)
                          (and (eq (nth 1 key) 'cond-map) :cond-p)))))
       (cond
@@ -1175,8 +1186,8 @@ Values returned are:
        (t ret)))))
 
 
-(defun ergoemacs-map-properties--sequence (key &rest _ignore)
-  "Returns a key sequence from KEY.
+(defun ergoemacs-map-properties--sequence (key)
+  "Return key sequence list from KEY.
 This sequence is compatible with `listify-key-sequence'."
   (let (input)
     (cond
@@ -1189,7 +1200,7 @@ This sequence is compatible with `listify-key-sequence'."
       (setq input (listify-key-sequence (read-kbd-macro key t)))))
     input))
 
-(defun ergoemacs-map-properties--movement-p (command &rest _ignore)
+(defun ergoemacs-map-properties--movement-p (command)
   "Determines if COMMAND is a movement command.
 This is done by checking if this is a command that supports shift
 selection or cua-mode's movement."
@@ -1199,7 +1210,7 @@ selection or cua-mode's movement."
                     (setq tmp (let ((intf (ignore-errors (car (cdr (interactive-form command))))))
                                 (and intf (stringp intf) (string-match "^[@*]*\\^" intf))))))
       ;; Put 'CUA movement command if it wasn't there.
-      (when (and tmp (symbolp command)) 
+      (when (and tmp (symbolp command))
         (put command 'CUA 'move)))))
 
 (defun ergoemacs-map-properties--key-lessp (key1 key2)
@@ -1211,13 +1222,13 @@ Used for sorting keys in displays."
    ((and key2 (not key1)) t)
    (t
     (let* ((seq1 (or (and (or (stringp key1) (vectorp key1))
-                          (listify-key-sequence 
+                          (listify-key-sequence
                            (or (ergoemacs-translate--escape-to-meta
                                 (vconcat key1))
                                (vconcat key1))))
                      key1))
            (seq2 (or (and (or (stringp key2) (vectorp key2))
-                          (listify-key-sequence 
+                          (listify-key-sequence
                            (or (ergoemacs-translate--escape-to-meta
                                 (vconcat key2))
                                (vconcat key2))))
@@ -1278,11 +1289,12 @@ Used for sorting keys in displays."
 (defvar ergoemacs-map-properties--use-local-unbind-list '(isearch-mode-map)
   "List of maps that will unbind ergoemacs-mode keys instead of using them directly.")
 
-(defun ergoemacs-map-properties--use-local-unbind-list-p (keymap &rest _ignore)
-  "Determines if ergoemacs-mode keys should be unbound in KEYMAP.
-Looks in `ergoemacs-use-local-unbind-list' to determine what maps will unbind ergoemacs keys.
+(defun ergoemacs-map-properties--use-local-unbind-list-p (keymap)
+  "Determine if ergoemacs-mode keys should be unbound in KEYMAP.
+Looks in `ergoemacs-use-local-unbind-list' to determine what maps
+will unbind ergoemacs keys.
 
- This is useful in supporting isearch in emacs 24.4+."
+ This is useful in supporting isearch in Emacs 24.4+."
   (when (ergoemacs-keymapp keymap)
     
     (let ((local-unbind-list-p (ergoemacs keymap :use-local-unbind-list-key)))
@@ -1302,14 +1314,18 @@ Looks in `ergoemacs-use-local-unbind-list' to determine what maps will unbind er
        (t nil)))))
 
 (defvar ergoemacs-map-properties--set-map-list '(isearch-mode-map)
-  "List of maps that assign the map values to ergoemacs-mode's
-modification, instead of modifying them in the current active
-maps.")
+  "`ergoemacs-mode' modified maps.
 
-(defun ergoemacs-map-properties--set-map-p (keymap &rest _ignore)
-  "Determines if ergoemacs-mode should make sure to set the original keymap to the caluclated value.
+This is a list of maps that  `ergoemacs-mode' modifies directly.")
 
- This is useful in supporting isearch in emacs 24.4+."
+(defun ergoemacs-map-properties--set-map-p (keymap)
+  "Determines if `ergoemacs-mode' should assign the original KEYMAP.
+
+Tyically `ergoemacs-mode' dosen't modify maps, but if this
+function returns non-nil, `ergoemacs-mode' does modify the
+keymaps and sets them to the original symbol in the object array.
+
+ This is useful in supporting isearch in Emacs 24.4+."
   (when (ergoemacs-keymapp keymap)
 
     (let ((set-map-p (ergoemacs keymap :use-set-map-key)))
@@ -1333,10 +1349,10 @@ maps.")
   "List of major modes that modify the global map.")
 
 (defvar ergoemacs-map-properties--ignore-global-changes-p nil
-  "When set, `ergoemacs-mode' may ignore changes in the `global-map'")
+  "When set, `ergoemacs-mode' may ignore changes in the `global-map'.")
 
 (defun ergoemacs-map-properties--ignore-global-changes-p ()
-  "Determines if `ergoemacs-mode' ignores the changes in the `global-map'."
+  "Determines if `ergoemacs-mode' can ignore any change in the `global-map'."
   (or ergoemacs-map-properties--ignore-global-changes-p
       (memq major-mode ergoemacs-map-properties--major-modes-that-modify-global-keymap)))
 

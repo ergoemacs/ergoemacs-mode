@@ -5,32 +5,13 @@
 ;; Filename: ergoemacs-debug.el
 ;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer: Matthew L. Fidler
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By: 
-;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords: 
-;; Compatibility: 
-;; 
-;; Features that might be required by this library:
 ;;
-;;   None
+;;; Commentary:
 ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Commentary: 
-;; 
+;; Debugging messages for ergoemacs-mode
 ;;
-;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Change Log:
-;; 
-;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;; This program is free software; you can redistribute it and/or
@@ -50,9 +31,10 @@
 ;; 
 ;;; Code:
 ;; (require 'guide-key nil t)
+(require 'cl-lib)
+
 (eval-when-compile
-  (require 'ergoemacs-macros)
-  (require 'cl))
+  (require 'ergoemacs-macros))
 
 (defvar ergoemacs-debug ""
   "Debugging for `ergoemacs-mode'.")

@@ -617,17 +617,17 @@ additional parsing routines defined by PARSE-FUNCTION."
                 (remaining keys-and-body))
             ;; Allow
             ;; (component name)
-            (unless (or (keywordp (first remaining)) skip-first)
+            (unless (or (keywordp (cl-first remaining)) skip-first)
               (if (condition-case nil
-                      (stringp (first remaining))
+                      (stringp (cl-first remaining))
                     (error nil))
                   (push (cons ':name (pop remaining)) extracted-key-accu)
                 (push (cons ':name  (symbol-name (pop remaining))) extracted-key-accu))
-              (when (memq (type-of (first remaining)) '(symbol cons))
+              (when (memq (type-of (cl-first remaining)) '(symbol cons))
                 (setq remaining (cdr remaining)))
-              (when (stringp (first remaining))
+              (when (stringp (cl-first remaining))
                 (push (cons ':description (pop remaining)) extracted-key-accu)))
-            (while (and (consp remaining) (keywordp (first remaining)))
+            (while (and (consp remaining) (keywordp (cl-first remaining)))
               (let ((keyword (pop remaining)))
                 (unless (consp remaining)
                   (error "Value expected after keyword %S in %S"
@@ -637,7 +637,7 @@ additional parsing routines defined by PARSE-FUNCTION."
                                   keys-and-body))
                 (push (cons keyword (pop remaining)) extracted-key-accu)))
             (setq extracted-key-accu (nreverse extracted-key-accu))
-            (setq plist (loop for (key . value) in extracted-key-accu
+            (setq plist (cl-loop for (key . value) in extracted-key-accu
                               collect key
                               collect value))
             (when parse-function
@@ -1068,14 +1068,14 @@ When :type is :replace that replaces a function (like `define-key')"
 
 (defmacro ergoemacs-no-specials (&rest body)
   "Revert some `ergoemacs-mode' functions to their C defintions in BODY."
-  `(letf (((symbol-function 'read-key-sequence) #'ergoemacs--real-read-key-sequence)
-          ((symbol-function 'describe-key) #'ergoemacs--real-describe-key))
+  `(cl-letf (((symbol-function 'read-key-sequence) #'ergoemacs--real-read-key-sequence)
+	     ((symbol-function 'describe-key) #'ergoemacs--real-describe-key))
      ,@body))
 
 (defmacro ergoemacs-specials (&rest body)
   "Use `ergoemacs-mode' special functions in BODY."
-  `(letf (((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
-          ((symbol-function 'key-description) #'ergoemacs-key-description))
+  `(cl-letf (((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
+	     ((symbol-function 'key-description) #'ergoemacs-key-description))
      ,@body))
 
 (defmacro ergoemacs-autoloadp (object)

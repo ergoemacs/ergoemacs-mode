@@ -5,32 +5,13 @@
 ;; Filename: ergoemacs-component.el
 ;; Description:
 ;; Author: Matthew L. Fidler
-;; Maintainer: 
+;; Maintainer: Matthew L. Fidler
 ;; Created: Sat Sep 28 20:10:56 2013 (-0500)
-;; Version: 
-;; Last-Updated: 
-;;           By: 
-;;     Update #: 0
-;; URL: 
-;; Doc URL: 
-;; Keywords:
-;; Compatibility: 
-;; 
-;; Features that might be required by this library:
 ;;
-;;   None
+;;; Commentary:
 ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Commentary: 
-;; 
+;; Code for ergoemacs components.
 ;;
-;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Change Log:
-;; 
-;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;; This program is free software; you can redistribute it and/or
@@ -50,14 +31,15 @@
 ;; 
 ;;; Code:
 ;; (require 'guide-key nil t)
+(require 'cl-lib)
 
-(eval-when-compile 
-  (require 'cl)
+(eval-when-compile
   (require 'ergoemacs-macros))
 
 (require 'help-mode)
 (require 'find-func)
 
+(defvar ergoemacs-command-loop--minibuffer-unsupported-p)
 (defvar ergoemacs-map-properties--label-atoms-maps)
 (defvar ergoemacs--last-start-emacs-state-2)
 (defvar ergoemacs--start-emacs-state-2)
@@ -126,7 +108,7 @@
   :type 'boolean
   :group 'ergoemacs-mode)
 
-;; for compatability 
+;; for compatability
 ;;;###autoload
 (defun ergoemacs-ignore-prev-global ()
   "Ignore previously defined global keys."
@@ -140,7 +122,7 @@
 
 ;;; Translation between layouts
 
-(defstruct ergoemacs-component-struct
+(cl-defstruct ergoemacs-component-struct
   "A basic ergoemacs component map structure."
   (name "default-name")
   (plist '())
@@ -243,7 +225,7 @@ It also passes ARGS if any are specified."
                  args)))))))
 
 (defun ergoemacs-component-struct--handle-bind-1 (kbd-str def keymap)
-  "Tell `ergoemacs-mode' to bind KBD-STR to DEF in KEYMAP"
+  "Tell `ergoemacs-mode' to bind KBD-STR to DEF in KEYMAP."
   (ergoemacs-component-struct--define-key keymap (read-kbd-macro kbd-str) def))
 
 (defun ergoemacs-component-struct--handle-bind (bind &optional keymap)
@@ -371,10 +353,18 @@ FILE is the file name where the component was created."
       (setq ergoemacs-component-struct--define-key-current nil))))
 
 (defun ergoemacs-component-struct--with-hook (when-condition plist body &optional object)
-  "How the (when...) conditions in an ergoemacs-mode theme are handled."
+  "How the (when...) conditions in an ergoemacs-mode theme are handled.
+WHEN-CONDITION is the when condition that is defined in a theme.
+
+PLIST is the theme's property
+
+BODY is the (when ...) body.
+
+OBJECT is the ergoemacs component object, and defaults to
+`ergoemacs-component-struct--define-key-current'."
   (cond
    ((and (not ergoemacs-component-struct--define-key-current) (not object)) ;; Old
-    (error "`ergoemacs-component-struct--with-hook' is confused."))
+    (error "`ergoemacs-component-struct--with-hook' is confused"))
    (t
     (let ((obj (or object ergoemacs-component-struct--define-key-current))
           (hook
@@ -392,7 +382,7 @@ FILE is the file name where the component was created."
                         "(key)?map.*" "hook"
                         (symbol-name when-condition))))))))
       (if (not (ergoemacs-component-struct-p obj))
-          (error "OBJECT is not an ergoemacs-component-structure.")
+          (error "OBJECT is not an ergoemacs-component-structure")
 	(puthash hook plist (ergoemacs-component-struct-hook-plists obj))
         (setf (ergoemacs-component-struct-when-condition obj) when-condition)
         (setf (ergoemacs-component-struct-hook obj) hook)
@@ -422,7 +412,7 @@ Allows the component not to be calculated."
     (let ((obj (or object ergoemacs-component-struct--define-key-current))
           new-obj tmp)
       (if (not (ergoemacs-component-struct-p obj))
-          (error "OBJECT is not an ergoemacs-component-structure.")
+          (error "OBJECT is not an ergoemacs-component-structure")
         (puthash (concat (ergoemacs-component-struct-name obj)
                          (and (ergoemacs-component-struct-version obj)
                               (concat "::" (ergoemacs-component-struct-version obj))))
@@ -538,7 +528,7 @@ with the label, and then return."
         map)))
 
 (defun ergoemacs-component-struct--define-key (keymap key def &optional object)
-  "Defines KEY to be DEF in KEYMAP for OBJECT.
+  "In KEYMAP, define KEY to be DEF for OBJECT.
 If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
   (cond
    ((and (not ergoemacs-component-struct--define-key-current) (not object)) ;; Old
@@ -550,7 +540,7 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                    key))
           (def (ergoemacs-component-struct--define-key-get-def def)))
       (if (not (ergoemacs-component-struct-p obj))
-          (error "OBJECT not a ergoemacs-component-structure.")
+          (error "OBJECT not a ergoemacs-component-structure")
         (setq key (vconcat key))
         (let* ((global-map-p (or (eq keymap 'global-map) (eq keymap 'ergoemacs-mode-map)
                                  (eq keymap 'ergoemacs-keymap)))
@@ -568,8 +558,8 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
                tmp)
           (cond
            ((and (not cur-map) (not when-condition))
-            (pushnew keymap ergoemacs-map-properties--known-maps)
-	    (pushnew keymap ergoemacs-map-properties--label-atoms-maps)
+            (cl-pushnew keymap ergoemacs-map-properties--known-maps)
+	    (cl-pushnew keymap ergoemacs-map-properties--label-atoms-maps)
             (setq cur-map (make-sparse-keymap))
             (puthash keymap cur-map (ergoemacs-component-struct-maps obj)))
            ((and (not cur-map) when-condition global-map-p)
@@ -578,8 +568,8 @@ If not specified, OBJECT is `ergoemacs-component-struct--define-key-current'."
            ((and (not cur-map) when-condition hook)
             (unless (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj))
               (puthash hook (make-hash-table) (ergoemacs-component-struct-hook-maps obj)))
-            (pushnew keymap ergoemacs-map-properties--known-maps)
-	    (pushnew keymap ergoemacs-map-properties--label-atoms-maps)
+            (cl-pushnew keymap ergoemacs-map-properties--known-maps)
+	    (cl-pushnew keymap ergoemacs-map-properties--label-atoms-maps)
             (setq cur-map (make-sparse-keymap))
             (puthash keymap cur-map (ergoemacs-gethash hook (ergoemacs-component-struct-hook-maps obj)))))
           (cond
@@ -691,7 +681,7 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
                    (version-list-<= test-version-list use-version))
               (setq best-version v
                     best-version-list test-version-list))
-             ((and (version-list-<= best-version-list test-version-list) ;; Better than best 
+             ((and (version-list-<= best-version-list test-version-list) ;; Better than best
                    (version-list-<= test-version-list use-version))
               (setq best-version v
                     best-version-list test-version-list))))
@@ -704,7 +694,10 @@ Formatted for use with `ergoemacs-theme-component-hash' it will return ::version
       "")))
 
 (defun ergoemacs-component-struct--lookup-closest (comp &optional current-version)
-  "Looks up closest component version from `ergoemacs-component-hash'.
+  "Look up closest component version from `ergoemacs-component-hash'.
+
+COMP is the component where the version information should be stored.
+
 Optionally assume that CURRENT-VERSION is active"
   (if (not (ergoemacs-component-struct-p comp)) nil
     (let (versions)
@@ -720,9 +713,13 @@ Optionally assume that CURRENT-VERSION is active"
 (defun ergoemacs-component-struct--lookup-hash (map-or-map-list &optional version)
   "Lookup `ergoemacs-component-hash' from MAP-OR-MAP-LIST if necessary.
 
+VERSION is the version of the `ergoemacs-mode' keys that you wish
+to lookup.
+
 This takes into consideration any versions defined, and the
 closest `ergoemacs-theme-version' calculated from
-`ergoemacs-component-struct--closest-version' by using `ergoemacs-component-struct--lookup-closest'"
+`ergoemacs-component-struct--closest-version' by using
+`ergoemacs-component-struct--lookup-closest'"
   (if (consp map-or-map-list)
       (mapcar #'ergoemacs-component-struct--lookup-hash map-or-map-list)
     (if (ergoemacs-component-struct-p map-or-map-list)
@@ -813,7 +810,13 @@ The keymap to translate is TRANSLATE-MAP, otherwise it is the
       ret))))
 
 (defun ergoemacs-component-struct--minor-mode-map-alist-hash (&optional obj layout)
-  "Get `minor-mode-map-alist' additions in hash-table form."
+  "Get `minor-mode-map-alist' additions in hash-table form.
+
+OBJ is the ergoemacs theme components.  Defaults to the value
+returned from the function `ergoemacs-theme-components'.
+
+LAYOUT is the current keyboard layout.  Defaults to
+`ergoemacs-keyboard-layout'"
   (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
         (cur-layout (or layout ergoemacs-keyboard-layout))
         (hash (make-hash-table)))
@@ -863,12 +866,16 @@ You can prespecify RET so that new hooks are pushed to the list."
                  (hash-table-p tmp))
         (maphash
          (lambda(hook _value)
-           (pushnew hook ret))
+           (cl-pushnew hook ret))
          tmp))
       ret))))
 
 (defun ergoemacs-component-struct--hook-hash (hook &optional layout obj)
-  "Get hook hash"
+  "Get HOOK hash.
+
+LAYOUT is the keyboard layout, defaulting to `ergoemacs-keyboard-layout'.
+
+OBJ is the theme components, defaulting to `ergoemacs-theme-components'."
   (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
         (cur-layout (or layout ergoemacs-keyboard-layout))
         tmp
@@ -892,11 +899,23 @@ You can prespecify RET so that new hooks are pushed to the list."
       hash))))
 
 (defun ergoemacs-component-struct--hook (hook &optional layout obj)
-  "Get keymaps that should be applied in an alist similiar to `minor-mode-map-alist'.
+  "Get keymaps applied in an alist similiar to `minor-mode-map-alist'.
+
 The `car' of the alist should be the keymap that should be
 modified, the `cdr' of the alsit should be the keymap that should
 be composed over the keymap.  This is done in
-`ergoemacs-component-struct--composed--composed-hook'."
+`ergoemacs-component-struct--composed--composed-hook'.
+
+HOOK is the hook that is being run.  In the
+`ergoemacs-theme-component', these are defined as:
+
+\(when icicle-minibuffer-setup-hook
+  ...)
+
+LAYOUT is the current keyboard layout, or the layout of the
+current keyboard theme.
+
+OBJ is the curent ergoemacs-mode object being modified."
   (let* (ret tmp label parent)
     (maphash
      (lambda(key value)
@@ -915,7 +934,12 @@ be composed over the keymap.  This is done in
   "`ergoemacs-mode' hooks deferred until after `ergoemacs-mode' modifies the current minibuffer map.")
 
 (defun ergoemacs-component-struct--composed-hook (hook &optional layout obj)
-  "Apply keymaps defined in HOOK. "
+  "Apply keymaps defined in HOOK.
+
+LAYOUT is the current keyboard layout.
+
+OBJ is the current object being modified, passed to
+`ergoemacs-component-struct--hook'."
   (dolist (elt (ergoemacs-component-struct--hook hook layout obj))
     (if (minibufferp)
 	(progn
@@ -945,13 +969,16 @@ be composed over the keymap.  This is done in
              (add-hook ',hook #',(intern (concat "ergoemacs--" (symbol-name hook))))))))
 
 (defun ergoemacs-component-struct--rm-hooks ()
-  "Remove hooks that were created with `ergoemacs-component-struct--create-hooks'"
+  "Remove hooks.
+
+These hooks are those created with
+`ergoemacs-component-struct--create-hooks'."
   (dolist (hook ergoemacs-component-struct--create-hooks)
     (remove-hook hook (intern (concat "ergoemacs--" (symbol-name hook)))))
   (setq ergoemacs-component-struct--create-hooks nil))
 
 (defun ergoemacs-component-struct--translated-list (obj list &optional layout)
-  "Translate LIST based on OBJ translation and LAYOUT."
+  "Base on OBJ translation, Translate LIST using LAYOUT."
   (let ((cur-layout (or layout ergoemacs-keyboard-layout))
         new-list)
     (dolist (key list)
@@ -970,25 +997,38 @@ be composed over the keymap.  This is done in
 
 ;;; Change variable values.
 (defun ergoemacs-component-struct--set (symbol newval &optional hook object)
-  "Set variables up for components."
+  "Set variables up for components.
+
+SYMBOL is the symbol being set.
+
+NEWVAL is the new value that will be used.
+
+HOOK tells if this was called in the (with ..-hook ...) syntax.
+
+OBJECT is the object being modified, defaulting to
+`ergoemacs-component-struct--define-key-current'."
   (cond
    ((and (not ergoemacs-component-struct--define-key-current) (not object)) ;; Old
-    (error "`ergoemacs-component-struct--set' is confused."))
+    (error "`ergoemacs-component-struct--set' is confused"))
    (t
     (let ((obj (or object ergoemacs-component-struct--define-key-current)))
       (if (not (ergoemacs-component-struct-p obj))
-          (error "OBJECT is not an ergoemacs-component-structure.")
+          (error "OBJECT is not an ergoemacs-component-structure")
         (push (list symbol newval hook) (ergoemacs-component-struct-variables obj)))))))
 
 (defun ergoemacs-component-struct--deferred (what &optional object)
-  "Setup deferred initilizations."
+  "Setup deferred initilizations.
+
+WHAT is the defered initilization list.
+
+OBJECT is the `ergoemacs-component-struct' object being changed."
   (cond
    ((and (not ergoemacs-component-struct--define-key-current) (not object)) ;; Old
-    (error "`ergoemacs-component-struct--deferred' is confused."))
+    (error "`ergoemacs-component-struct--deferred' is confused"))
    (t
     (let ((obj (or object ergoemacs-component-struct--define-key-current)))
       (if (not (ergoemacs-component-struct-p obj))
-          (error "OBJECT is not an ergoemacs-component-structure.")
+          (error "OBJECT is not an ergoemacs-component-structure")
         (push (list what nil nil) (ergoemacs-component-struct-variables obj)))))))
 
 (defun ergoemacs-component-struct--variables (&optional obj)
@@ -1129,7 +1169,7 @@ to prevent infinite recursion."
                       (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
                         (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
                         (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))))
-                 ((memq (car (nth 0 init)) '(push pushnew))
+                 ((memq (car (nth 0 init)) '(push pushnew cl-pushnew))
                   (when (ignore-errors (boundp (nth 2 (nth 0 init))))
                     (if (ignore-errors (eq 'quote (nth 1 (nth 1 (nth 0 init)))))
                         (ignore-errors
@@ -1251,7 +1291,7 @@ This assumes the variables are stored in `ergoemacs-component-struct--applied-in
 If Object isn't specified assume it is for the current ergoemacs theme."
   (let ((obj (or obj (ergoemacs-theme-components obj))))
     (if (not obj)
-        (error "`ergoemacs-theme-components' could not be detected...")
+        (error "`ergoemacs-theme-components' could not be detected")
       (sort (cond
              ((consp obj)
               (let (ret)
@@ -1264,7 +1304,9 @@ If Object isn't specified assume it is for the current ergoemacs theme."
             'string<))))
 
 (defun ergoemacs-component--regexp (&optional at-end)
-  "Returns a regexp of `ergoemacs-mode' components."
+  "Return a regexp of `ergoemacs-mode' components.
+
+AT-END will append a \"$\" to the end of the regular expression."
   (let (ret)
     (maphash
      (lambda(key _item) (push key ret))
@@ -1276,6 +1318,7 @@ If Object isn't specified assume it is for the current ergoemacs theme."
 
 
 (defun ergoemacs-component--help-link-1 ()
+  "Setup crosreferences for help."
   (let (tmp)
     ;; Link commands
     (goto-char (match-beginning 0))
@@ -1293,7 +1336,7 @@ If Object isn't specified assume it is for the current ergoemacs theme."
     (end-of-line)))
 
 (defun ergoemacs-component--help-link ()
-  "Links `ergoemacs-mode' components in help-mode buffer."
+  "Links `ergoemacs-mode' components in `help-mode' buffer."
   (when (eq major-mode 'help-mode)
     (save-excursion
       (goto-char (point-min))
@@ -1360,9 +1403,11 @@ If Object isn't specified assume it is for the current ergoemacs theme."
 
 (defcustom ergoemacs-component-find-regexp
   (concat"^\\s-*(ergoemacs-\\(?:theme-?\\)?\\(?:component\\|package\\|autoload\\)?" find-function-space-re "%s\\(\\s-\\|$\\)")
-  "The regexp used by `ergoemacs-find-component' to search for a component definition.
-Note it must contain a `%s' at the place where `format' should
-insert the face name."
+  "The regexp used to search for a component definition.
+
+This is used by `ergoemacs-find-component' and it must contain a
+`%s' at the place where `format' should insert the compenent
+name."
   :type 'regexp
   :group 'find-function
   :version "22.1")
@@ -1371,7 +1416,9 @@ insert the face name."
   (push (cons 'ergoemacs-component 'ergoemacs-component-find-regexp) find-function-regexp-alist))
 
 (defun ergoemacs-component-find-no-select (component &optional type)
-  "Find COMPONENT"
+  "Find COMPONENT of TYPE.
+
+TYPE can be 'ergoemacs-theme, if not it defaults to a single component."
   (let* ((comp (or (and (eq type 'ergoemacs-theme)
                         (ergoemacs-gethash (format "%s" (or component "standard")) ergoemacs-theme-hash))
                    (ergoemacs-component-struct--lookup-hash (or component ""))))
@@ -1394,12 +1441,19 @@ insert the face name."
 
 (defun ergoemacs-component-find-1 (symbol type switch-fn &optional buffer-point)
   "Find `ergoemacs-mode' component or theme.
-TYPE is nil to search for a component definition,
+
+SYMBOL is the symbol representing the component or theme.
+
+TYPE is nil to search for a component definition, or
+'ergoemacs-theme, to find the theme.
 
 The variable `find-function-recenter-line' controls how
 to recenter the display.  SWITCH-FN is the function to call
 to display and select the buffer.
 See also `find-function-after-hook'.
+
+BUFFER-POINT is the point to move to.  If it isn't specified,
+find it with `ergoemacs-component-find-no-select'.
 
 Modified from `find-definition-noselect'.
 
@@ -1438,7 +1492,12 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
 
 (defun ergoemacs-component-at-point (&optional theme-instead)
   "Get the `ergoemacs-component' defined at or before point.
-Return 0 if there is no such symbol. Based on `variable-at-point'"
+
+When THEME-INSTEAD is non-nil, return the theme defined at that
+point instead.
+
+Return 0 if there is no such symbol.  Based on
+`variable-at-point'."
   (let ((hash-table (or (and theme-instead ergoemacs-theme-hash)
                         ergoemacs-component-hash)))
     (with-syntax-table emacs-lisp-mode-syntax-table
@@ -1633,7 +1692,7 @@ The :dimininish tag can be of the form:
   displays.  The display is determined by
   `ergoemacs-key-description--unicode-char'.
 
-- (minor-mode-symbol) -- Suppress minor mode symbol 
+- (minor-mode-symbol) -- Suppress minor mode symbol
 
 - (minor-mode-symbol string) -- Replace minor mode symbol
   modeline indicator with string
@@ -1645,7 +1704,7 @@ The :dimininish tag can be of the form:
 
 - List of minor mode symbols, or list specifications that include
   the minor- mode symbol, so that multiple minor modes may be
-   processed by a single :diminish specifciation. 
+   processed by a single :diminish specifciation.
 
 DIM is the replacement for the PLIST :diminish, this is used in
 recursive calls to `ergoemacs-component--diminish-on' to process

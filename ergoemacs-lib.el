@@ -25,9 +25,10 @@
 ;;; Code:
 ;; (require 'guide-key nil t)
 
+(require 'cl-lib)
+
 (eval-when-compile
-  (require 'ergoemacs-macros)
-  (require 'cl))
+  (require 'ergoemacs-macros))
 
 (defvar powerline-default-separator-dir)
 (defvar mode-icons-show-mode-name)
