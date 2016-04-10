@@ -1949,7 +1949,7 @@
                  standard-fixed
                  ido-remaps
                  helm-remaps
-		 helm-find-files
+                 helm-find-files
                  multiple-cursors-remaps
                  quit
                  apps-swap
@@ -1967,7 +1967,7 @@
                   alt-backspace-is-undo
                   search-reg
                   no-backspace
-		  helm-switch-sources
+                  helm-switch-sources
                   ergoemacs-banish-shift
                   move-and-transpose-lines
                   move-sexp
