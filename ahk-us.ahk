@@ -427,7 +427,7 @@ DelayKeyOutput:
       }
     }
   }
-  if (IsLabel(transKey) & !WinActive("ahk_class Emacs") & !WinActive("ahk_class cygwin/x X rl")){
+  if (IsLabel(transKey) & !WinActive("ahk_class Emacs") & !IsExternalProgram()){
     Goto %transKey%
   } Else {
     SendInput % modifiers pressedKey
@@ -470,7 +470,7 @@ DelayKeyOutput:
   if (GetSpaceBarHoldTime() <= g_TimeOut)
   {
     modifiers := GetModifiers()
-    if (WinActive("ahk_class Emacs") | (WinActive("ahk_class cygwin/x X rl"))) {
+    if (WinActive("ahk_class Emacs") | IsExternalProgram()) {
        SendInput % modifiers "{Space}"
     } else {
        If (modifiers == "!"){
@@ -715,7 +715,7 @@ redo:
 
 execute-extended-command:
   ;; Send to org-outlook if using outlook
-  If (!WinActive("ahk_class Emacs") & !(WinActive("ahk_class cygwin/x X rl"))){
+  If (!WinActive("ahk_class Emacs") & !IsExternalProgram()){
        If WinActive("ahk_class rctrl_renwnd32"){
           If !FileExist(OutlookSave){
              FileSelectFolder, OutlookSave, ,3, Select Folder to Save Outlook Emails
@@ -828,6 +828,8 @@ IsExternalProgram(){
   if (WinActive("ahk_class TscShellContainerClass")){
      External = 1
   } else if (WinActive("ahk_class cygwin/x X rl")){
+     External = 1
+  } else if (WinActive("ahk_class cygwin/xfree86 rl")){
      External = 1
   }
   Return External
