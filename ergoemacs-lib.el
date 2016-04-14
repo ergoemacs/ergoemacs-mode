@@ -124,7 +124,7 @@ Whe changed return t, otherwise return nil."
         (funcall variable new-value)
         (ergoemacs :spinner :new "Done (%s %s)" variable new-value)
         (put variable :ergoemacs-set-value (ergoemacs-sv variable))
-        (pushnew variable ergoemacs-set-ignore-customize)
+        (cl-pushnew variable ergoemacs-set-ignore-customize)
         (setq ret t)))
      ((not (equal last-value value))
       (cond
@@ -137,7 +137,7 @@ Whe changed return t, otherwise return nil."
           (unless (get variable :ergoemacs-save-value)
             (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
           (put variable :ergoemacs-set-value (ergoemacs-sv variable))
-          (pushnew variable ergoemacs-set-ignore-customize)
+          (cl-pushnew variable ergoemacs-set-ignore-customize)
           (setq ret t)))
        ((and minor-mode-p new-value (functionp variable))
         (unless (and defer (ergoemacs-autoloadp variable))
@@ -148,7 +148,7 @@ Whe changed return t, otherwise return nil."
           (unless (get variable :ergoemacs-save-value)
             (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
           (put variable :ergoemacs-set-value (ergoemacs-sv variable))
-          (pushnew variable ergoemacs-set-ignore-customize)
+          (cl-pushnew variable ergoemacs-set-ignore-customize)
           (setq ret t)))
        ((and (ergoemacs :custom-p variable)
              (not minor-mode-p)
@@ -159,7 +159,7 @@ Whe changed return t, otherwise return nil."
         (set variable new-value)
         ;; Don't save ergoemacs-mode intilization
         (put variable :ergoemacs-set-value (ergoemacs-sv variable))
-        (pushnew variable ergoemacs-set-ignore-customize)
+        (cl-pushnew variable ergoemacs-set-ignore-customize)
         (setq ret t))
        ((or force (not minor-mode-p)
             (equal (ergoemacs-sv variable) (default-value variable)))
@@ -171,7 +171,7 @@ Whe changed return t, otherwise return nil."
         (unless (get variable :ergoemacs-save-value)
           (put variable :ergoemacs-save-value (ergoemacs-sv variable)))
         (put variable :ergoemacs-set-value (ergoemacs-sv variable))
-        (pushnew variable ergoemacs-set-ignore-customize)
+        (cl-pushnew variable ergoemacs-set-ignore-customize)
         (setq ret t))
        (t
         ;; (ergoemacs-warn "%s changed outside ergoemacs-mode, respecting." variable)
@@ -213,7 +213,7 @@ Whe changed return t, otherwise return nil."
         (set variable new-value)
         (set-default variable new-value)
         (put variable :ergoemacs-set-value (ergoemacs-sv variable))
-        (pushnew variable ergoemacs-set-ignore-customize)
+        (cl-pushnew variable ergoemacs-set-ignore-customize)
         (when minor-mode-p ;; Change minor mode
           (if new-value
               (funcall variable new-value)
@@ -460,15 +460,15 @@ All other modes are assumed to be minor modes or unimportant.
   (if (and (>= (safe-length item) 4)
            (symbolp (car item))
            (eq (cadr item) 'menu-item)
-           (and (caddr item) (stringp (caddr item)))
-           (symbolp (cadddr item))
-           (not (ergoemacs-keymapp (cadddr item))))
+           (and (cl-caddr item) (stringp (cl-caddr item)))
+           (symbolp (cl-cadddr item))
+           (not (ergoemacs-keymapp (cl-cadddr item))))
       ;; Look if this item already has a :keys property
       (if (catch 'found-keys
             (dolist (i item)
               (when (eq i :keys)
                 (throw 'found-keys t))) nil) nil
-        (ergoemacs-menu--filter-key-shortcut (cadddr item) keymap))
+        (ergoemacs-menu--filter-key-shortcut (cl-cadddr item) keymap))
     nil))
 
 ;;;###autoload

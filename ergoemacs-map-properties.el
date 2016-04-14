@@ -91,7 +91,7 @@ KEYMAP can be a symbol, keymap or ergoemacs-mode keymap"
   "Determine if the KEYMAP is a composed keymap."
   (and (ergoemacs-keymapp keymap)
        (ignore-errors (eq 'keymap (car keymap)))
-       (ignore-errors (eq 'keymap (caadr keymap)))))
+       (ignore-errors (eq 'keymap (cl-caadr keymap)))))
 
 ;; FIXME: Write test or function
 (defun ergoemacs-map-properties--all-sparse-p (keymap)
@@ -226,7 +226,7 @@ This will return the keymap structure prior to `ergoemacs-mode' modifications."
   ;;|-----------+------------+--------------+--------------|
   ;;| Condition | Call Count | Elapsed Time | Average Time |
   ;;|-----------+------------+--------------+--------------|
-.  ;;| Pre Hash  |     237982 | 100.52800000 | 0.0004224185 |
+  ;;| Pre Hash  |     237982 | 100.52800000 | 0.0004224185 |
   ;;| Post Hash |     150045 | 40.600999999 | 0.0002705921 |
   ;;| Hash Key  |      76379 | 15.183000000 | 0.0001987850 |
   ;;|-----------+------------+--------------+--------------|
@@ -753,8 +753,8 @@ The optional ADD-MAP argument adds maps to the map-list.  It can be a symbol or 
       (ergoemacs-gethash keymap ergoemacs-map-properties--plist-hash))
      ((and (integerp keymap) (symbolp add-map))
       (setq tmp (ergoemacs-gethash keymap ergoemacs-map-properties--plist-hash))
-      (pushnew add-map tmp)
-      (pushnew add-map ergoemacs-map-properties--label-atoms-maps)
+      (cl-pushnew add-map tmp)
+      (cl-pushnew add-map ergoemacs-map-properties--label-atoms-maps)
       (puthash add-map keymap ergoemacs-breadcrumb-hash)
       (puthash keymap add-map ergoemacs-breadcrumb-hash)
       (puthash keymap tmp ergoemacs-map-properties--plist-hash)
@@ -763,8 +763,8 @@ The optional ADD-MAP argument adds maps to the map-list.  It can be a symbol or 
       (setq tmp (ergoemacs-gethash keymap ergoemacs-map-properties--plist-hash))
       (dolist (map add-map)
 	(when (symbolp map)
-	  (pushnew map ergoemacs-map-properties--label-atoms-maps)
-	  (pushnew map tmp)
+	  (cl-pushnew map ergoemacs-map-properties--label-atoms-maps)
+	  (cl-pushnew map tmp)
 	  (puthash map keymap ergoemacs-breadcrumb-hash)
           (puthash keymap map ergoemacs-breadcrumb-hash)
           ))
@@ -1000,7 +1000,7 @@ STRUCT is the keymap structure for the current map."
 	(if indirect-p
 	    (puthash keymap old-plist ergoemacs-map-properties--indirect-keymaps)
 	  (unless (ignore-errors (ergoemacs-setcdr keymap (cdr map)))
-	    (pushnew (cons old-plist (cdr keymap)) ergoemacs-map-properties--const-keymaps)))
+	    (cl-pushnew (cons old-plist (cdr keymap)) ergoemacs-map-properties--const-keymaps)))
 	map)))))
 
 (defun ergoemacs-map-properties--empty-p (keymap &optional labeled-is-keymap-p)
