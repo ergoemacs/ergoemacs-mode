@@ -1619,21 +1619,6 @@ Installs `undo-tree' if not present."
       (undo-tree-mode 1)
       (call-interactively 'undo-tree-redo)))))
 
-
-(defvar ergoemacs-started-emacsclient nil
-  "Tells if the emacsclient was called.")
-
-(defun ergoemacs-server-switch-hook ()
-  "Turns on `ergoemacs-started-emacsclient' for use with `ergoemacs-close-current-buffer'"
-  (set (make-local-variable 'ergoemacs-started-emacsclient) t))
-
-(defun ergoemacs-server-visit-hook ()
-  "Turns on `ergoemacs-started-emacsclient' for use with `ergoemacs-close-current-buffer'"
-  (unless ergoemacs-started-emacsclient
-    (set (make-local-variable 'ergoemacs-started-emacsclient) t)))
-
-(add-hook 'server-switch-hook 'ergoemacs-server-switch-hook)
-
 (defun ergoemacs-keyboard-quit ()
   "Quit the current command/process.
 Similar to `keyboard-quit', with the following changes:
@@ -1679,25 +1664,38 @@ Similar to `keyboard-quit', with the following changes:
 
 Similar to (kill-buffer (current-buffer)) with the following addition:
 
-• Prompt user to save if the buffer has been modified even if the buffer is not associated with a file.
-• Make sure the buffer shown after closing is a user buffer.
-• If the buffer is editing a source file in an org-mode file, prompt the user to save before closing.
-• If the buffer is editing a CAPTUREd task in an org-mode file, prompt the user to save before closing.
-• If the buffer is editing a magit commit, prompt the user to save the commit before closing.
-• If it is the minibuffer, exit the minibuffer.
-• If the buffer was created by `server-execute', call `server-edit' instead of `kill-buffer'
+• Prompt user to save if the buffer has been modified even if the
+  buffer is not associated with a file.
 
-A emacs buffer is one who's name starts with *.
+• Make sure the buffer shown after closing is a user buffer.
+
+• If the buffer is editing a source file in an `org-mode' file,
+  prompt the user to save before closing.
+
+• If the buffer is editing a catpured task in an `vvorg-mode' file,
+  prompt the user to save before closing.
+
+• If the buffer is editing a magit commit, prompt the user to
+  save the commit before closing.
+
+• If it is the minibuffer, exit the minibuffer.
+
+• If the buffer was created by `server-execute', call
+  `server-edit'.  When `server-existing-buffer' is also non-nil,
+  call `kill-buffer'
+
+An Emacs buffer is one who's name starts with *.
 Else it is a user buffer."
   (interactive)
   (let (emacs-buff-p
         is-emacs-buffer-after-p
         (org-p (string-match "^[*]Org Src" (buffer-name)))
         (org-capture-p (string-match "CAPTURE-.*\\.org" (buffer-name)))
-        (git-commit-p (eq major-mode 'git-commit-mode)))
+        (git-commit-p (eq major-mode 'git-commit-mode))
+	existing-buffer-p)
     (setq emacs-buff-p (if (string-match "^*" (buffer-name)) t nil))
     (cond
-     (ergoemacs-started-emacsclient
+     (server-buffer-clients
       (when (and (buffer-modified-p)
                  (if (equal (buffer-file-name) nil)
                      (if (string-equal "" (save-restriction (widen) (buffer-string))) nil t)
@@ -1705,7 +1703,10 @@ Else it is a user buffer."
         (if (y-or-n-p (format "Buffer %s modified; Do you want to save? " (buffer-name)))
             (save-buffer)
           (set-buffer-modified-p nil)))
-      (server-edit))
+      (setq existing-buffer-p server-existing-buffer)
+      (server-edit)
+      (when existing-buffer-p
+	(kill-buffer (current-buffer))))
      ((minibufferp)
       (minibuffer-keyboard-quit))
      (org-capture-p
