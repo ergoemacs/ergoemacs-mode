@@ -1111,6 +1111,9 @@ to prevent infinite recursion."
           (ergoemacs-component-struct--ensure package-name defer autoloads))
          ((and ensure (symbolp ensure))
           (ergoemacs-component-struct--ensure ensure defer autoloads))
+	 ((and (consp ensure) (memq (car ensure) '(memq member and or if when = string= not string< eq equal)))
+	  (when (ignore-errors (eval ensure))
+	    (ergoemacs-component-struct--ensure package-name defer autoloads)))
          ((consp ensure)
           (dolist (elt ensure)
             (cond
