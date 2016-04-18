@@ -1703,7 +1703,8 @@ Else it is a user buffer."
         (if (y-or-n-p (format "Buffer %s modified; Do you want to save? " (buffer-name)))
             (save-buffer)
           (set-buffer-modified-p nil)))
-      (setq existing-buffer-p server-existing-buffer)
+      (setq existing-buffer-p (or (not server-kill-new-buffers)
+				  server-existing-buffer))
       (server-edit)
       (when existing-buffer-p
 	(kill-buffer (current-buffer))))
