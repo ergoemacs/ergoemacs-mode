@@ -1720,7 +1720,6 @@ hash appropriaetly."
   :tags '(:translate :interactive)
   (should (eq (lookup-key (ergoemacs ergoemacs-translate--parent-map) (or (and (eq system-type 'windows-nt) [apps]) [menu])) 'ergoemacs-command-loop--swap-translation)))
 
-
 (ert-deftest ergoemacs-test-407 ()
   "Test M-s is switch pane."
   :tags '(:require-input)
@@ -1743,7 +1742,7 @@ hash appropriaetly."
 	      "(interactive)\n"
 	      "(yes-or-no-p \"Are you sure you want to remove this file? \"))"
 	      "(global-set-key (kbd \"C-1\") 'test-freeze)"
-	      "(insert \"Try C-1 to see if emacs freezes.\\nThen try M-a test-freeze.\\nM-a -- Make sure <f11> and <f12> work, they should advance the history\\nM-a calc, do something and then exit with q it should exit\nMake sure M-o goes forward word in icy ergoemacs-mode.\")"
+	      "(insert \"Try C-1 to see if emacs freezes.\\nThen try M-a test-freeze.\\nM-a calc, do something and then exit with q it should exit\nMake sure M-o goes forward word in icy ergoemacs-mode.\")"
               ;; (or (and (boundp 'wait-for-me) "")
               ;;     "(kill-emacs)")
 	      ))
@@ -1758,6 +1757,33 @@ hash appropriaetly."
       (delete-file temp-file))
     (when  (file-exists-p (concat temp-file "c"))
       (delete-file (concat temp-file "c")))))
+
+;;; minibuffer tests...
+;;; Related to: http://emacs.stackexchange.com/questions/10393/how-can-i-answer-a-minibuffer-prompt-from-elisp
+
+(defmacro ergoemacs-minibuffer-key-bindings (minibuffer-call &rest keys)
+  "Setup minibuffer with MINIBUFFER-CALL, and lookep KEYS."
+  `(catch 'found-key
+       (minibuffer-with-setup-hook
+	   (lambda ()
+	     (run-with-timer
+	      0.05 nil
+	      (lambda()
+		(throw 'found-key (mapcar (lambda(key) (key-binding key)) ',keys)))))
+	 ,minibuffer-call) nil))
+
+(ert-deftest ergoemacs-test-icy-407-next-and-prev ()
+  "Next and Previous for f11 and f12"
+  :tags '(:icy-mode)
+  (icy-mode 1)
+  (ergoemacs-test-layout
+   :layout "us"
+   :theme "standard"
+   (should (equal (ergoemacs-minibuffer-key-bindings
+		   (call-interactively 'icicle-execute-extended-command)
+		   [f11] [f12])
+		  '(previous-history-element next-history-element))))
+  (icy-mode -1))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
