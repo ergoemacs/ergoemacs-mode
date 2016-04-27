@@ -1695,7 +1695,7 @@ Else it is a user buffer."
 	existing-buffer-p)
     (setq emacs-buff-p (if (string-match "^*" (buffer-name)) t nil))
     (cond
-     (server-buffer-clients
+     ((bound-and-true-p server-buffer-clients)
       (when (and (buffer-modified-p)
                  (if (equal (buffer-file-name) nil)
                      (if (string-equal "" (save-restriction (widen) (buffer-string))) nil t)
