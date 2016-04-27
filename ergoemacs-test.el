@@ -1738,6 +1738,14 @@ hash appropriaetly."
               "(ergoemacs-mode 1)\n"
 	      "(require 'icicles)\n"
 	      "(icy-mode 1)\n"
+              "(ergoemacs-theme-component reclaim-C-f ()\n"
+              "  \"We need to give at least one sequence to reclaim C-f from isearch and get the new icicle-search-key-prefix picked up.\"\n"
+	      "(global-set-key (kbd \"C-f .\") 'isearch-forward-symbol-at-point))"
+              "(ergoemacs-require 'reclaim-C-f)"
+              "(setq icicle-search-key-prefix (kbd \"C-f\"))"
+	      "(ergoemacs-package smart-mode-line :ensure t (sml/setup))"
+              "(ergoemacs-package srefactor :ensure t)"
+              "(ergoemacs-package virtualenvwrapper :ensure t)"
 	      "(defun test-freeze ()\n"
 	      "(interactive)\n"
 	      "(yes-or-no-p \"Are you sure you want to remove this file? \"))"
@@ -1769,21 +1777,28 @@ hash appropriaetly."
 	     (run-with-timer
 	      0.05 nil
 	      (lambda()
-		(throw 'found-key (mapcar (lambda(key) (key-binding key)) ',keys)))))
+		(throw 'found-key (mapcar (lambda(key) (if (consp key)
+                                                           (key-binding (eval key))
+                                                         (key-binding key))) ',keys)))))
 	 ,minibuffer-call) nil))
 
-(ert-deftest ergoemacs-test-icy-407-next-and-prev ()
-  "Next and Previous for f11 and f12"
+(ert-deftest ergoemacs-test-icy-407-minibuffer ()
+  "Test minibuffer keybindings for `icy-mode'.
+[f11] = `previous-history-element'
+[f12] = `next-history-element'
+M-s   = `ergoemacs-move-cursor-next-pane'
+M-r   = `kill-word'"
   :tags '(:icy-mode)
   (icy-mode 1)
-  (ergoemacs-test-layout
-   :layout "us"
-   :theme "standard"
-   (should (equal (ergoemacs-minibuffer-key-bindings
-		   (call-interactively 'icicle-execute-extended-command)
-		   [f11] [f12])
-		  '(previous-history-element next-history-element))))
-  (icy-mode -1))
+  k(let ((keys))
+(ergoemacs-test-layout
+ :layout "us"
+ :theme "standard"
+ (should (equal (ergoemacs-minibuffer-key-bindings
+		 (call-interactively 'icicle-execute-extended-command)
+		 [f11] [f12] (read-kbd-macro "M-o") (read-kbd-macro "M-s") (read-kbd-macro "M-r"))
+		'(previous-history-element next-history-element forward-word ergoemacs-move-cursor-next-pane kill-word)))))
+(icy-mode -1))
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
