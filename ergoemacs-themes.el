@@ -211,6 +211,7 @@
 (ergoemacs-component standard-fixed ()
   "Standard Fixed Shortcuts"
   :variable-reg nil ;; No variable keys
+  (global-set-key [tool-bar kill-buffer] 'ergoemacs-close-current-buffer)
   (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
   
   (global-set-key (kbd "C-x C-f") nil) ;; Remove Emacs Method
@@ -2062,7 +2063,6 @@
             (define-key map (if (eq system-type 'windows-nt) [M-apps] [M-menu]) 'ergoemacs-read-key-force-next-key-is-quoted)
             (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-force-next-key-is-ctl)
             (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-force-next-key-is-alt)
-            
             ;; (define-key map "G" 'ergoemacs-read-key-next-key-is-quoted)
             ;; (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
             map))
