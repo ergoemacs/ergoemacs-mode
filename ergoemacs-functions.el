@@ -1451,6 +1451,25 @@ the last misspelled word with
 
 ;;; BUFFER RELATED
 
+(defvar ergoemacs-user-buffer-functions nil
+  "A user buffer is one whose name does not start with *, or for which
+any of the functions in `ergoemacs-user-buffer-functions' returns
+true; otherwise it is an emacs buffer. Each function takes a buffer as
+argument.")
+
+(defun ergoemacs-user-buffer-p (buffer)
+  "Is BUFFER a user buffer?
+
+A user buffer is one whose name does not start with *, or for which
+any of the functions in `ergoemacs-user-buffer-functions' returns
+true; otherwise it is an emacs buffer."
+  (or
+   (not (string= "*" (substring (buffer-name buffer) 0 1)))
+   (cl-some
+    (lambda (func)
+      (funcall func buffer))
+    ergoemacs-user-buffer-functions)))
+
 (defun ergoemacs-change-buffer (&optional number previous-buffer-p emacs-buffer-p)
   "Switch to the next/previous emacs/user buffer.
 
@@ -1460,9 +1479,10 @@ This function switches forward/backward NUMBER emacs/user buffers.
 This can be specified by a prefix argument.
 
 When PREVIOUS-BUFFER-P is non-nil, switch to a previous buffer.
-When EMACS-BUFFER-P is non-nil switch to an emacs buffer.
-User buffers are those whose name does not start with *.
-Emacs buffers are those whose name starts with *."
+When EMACS-BUFFER-P is non-nil switch to an emacs buffer.  A user
+buffer is one whose name does not start with *, or for which any of
+the functions in `ergoemacs-user-buffer-functions' returns true;
+otherwise it is an emacs buffer."
   (interactive)
   (let ((curr-buffer (current-buffer))
         (number (or (and number (abs number)) 1))
@@ -1472,9 +1492,9 @@ Emacs buffers are those whose name starts with *."
           (previous-buffer)
         (next-buffer))
       (while (and (or (and (not emacs-buffer-p)
-                           (string= "*" (substring (buffer-name) 0 1)))
-                      (and emacs-buffer-p 
-                           (not (string= "*" (substring (buffer-name) 0 1)))))
+                           (not (ergoemacs-user-buffer-p (current-buffer))))
+                      (and emacs-buffer-p
+                           (ergoemacs-user-buffer-p (current-buffer))))
                   (not (eq curr-buffer (current-buffer))))
         (if previous-buffer-p
             (previous-buffer)
@@ -1482,9 +1502,9 @@ Emacs buffers are those whose name starts with *."
       (when (and (eq curr-buffer (current-buffer)) (= i 0))
         (if emacs-buffer-p
             (message "Could not find any %semacs buffers."
-                     (or (and (string-match-p "^[*]" (buffer-name)) "other ") ""))
+                     (or (and (not (ergoemacs-user-buffer-p (current-buffer))) "other ") ""))
           (message "Could not find any %suser buffers."
-                   (or (and (string-match-p "^[^*]" (buffer-name)) "other ") "")))
+                   (or (and (ergoemacs-user-buffer-p (current-buffer)) "other ") "")))
         (setq i (+ number 1)))
       (setq i (+ 1 i)))))
 
@@ -1684,8 +1704,9 @@ Similar to (kill-buffer (current-buffer)) with the following addition:
   `server-edit'.  When `server-existing-buffer' is also non-nil,
   call `kill-buffer'
 
-An Emacs buffer is one who's name starts with *.
-Else it is a user buffer."
+A user buffer is one whose name does not start with *, or for which
+any of the functions in `ergoemacs-user-buffer-functions' returns
+true; otherwise it is an emacs buffer."
   (interactive)
   (let (emacs-buff-p
         is-emacs-buffer-after-p
@@ -1693,7 +1714,7 @@ Else it is a user buffer."
         (org-capture-p (string-match "CAPTURE-.*\\.org" (buffer-name)))
         (git-commit-p (eq major-mode 'git-commit-mode))
 	existing-buffer-p)
-    (setq emacs-buff-p (if (string-match "^*" (buffer-name)) t nil))
+    (setq emacs-buff-p (if (not (ergoemacs-user-buffer-p (current-buffer))) t nil))
     (cond
      ((bound-and-true-p server-buffer-clients)
       (when (and (buffer-modified-p)
@@ -1739,7 +1760,7 @@ Else it is a user buffer."
             (org-edit-src-save)
           (set-buffer-modified-p nil)))
       ;; if emacs buffer, switch to a user buffer
-      (if (string-match "^*" (buffer-name))
+      (if (not (ergoemacs-user-buffer-p (current-buffer)))
           (setq is-emacs-buffer-after-p t)
         (setq is-emacs-buffer-after-p nil))
       (when is-emacs-buffer-after-p
