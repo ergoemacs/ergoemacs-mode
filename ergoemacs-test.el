@@ -1790,7 +1790,7 @@ M-s   = `ergoemacs-move-cursor-next-pane'
 M-r   = `kill-word'"
   :tags '(:icy-mode)
   (icy-mode 1)
-  k(let ((keys))
+  (let ((keys))
 (ergoemacs-test-layout
  :layout "us"
  :theme "standard"
