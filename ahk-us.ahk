@@ -831,6 +831,8 @@ IsExternalProgram(){
      External = 1
   } else if (WinActive("ahk_class cygwin/xfree86 rl")){
      External = 1
+  } else if (WinActive("ahk_class Transparent Windows Client")){
+     External = 1
   }
   Return External
 }
