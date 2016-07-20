@@ -1410,6 +1410,12 @@ The overall maximum that these are set to are controlled by
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-command-loop-dont-grow-commands
+  '(org-agenda)
+  "List of commands where the command loop will not adjust sizes."
+  :type '(repeat (sexp :tag "Command"))
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-command-loop--grow-interactive (command &optional record-flag keys)
   "Call the COMMAND interactively.
 The RECORD-FLAG and KEYS are sent to `ergoemacs--real-call-interactively'.
@@ -1420,40 +1426,45 @@ needed (and resotre them to the original values)."
 	  ergoemacs-command-loop--grow-record nil
 	  ergoemacs-command-loop--grow-keys nil
 	  ergoemacs-command-loop--grow-special nil)
-  (let ((grow-max-lisp-p t)
-	(orig-max-specpdl-size max-specpdl-size)
-	(orig-max-lisp-eval-depth max-lisp-eval-depth))
-    (while grow-max-lisp-p
-      (condition-case err
-          (cond
-	   (ergoemacs-command-loop--grow-command
-	    (command-execute ergoemacs-command-loop--grow-command
-			     ergoemacs-command-loop--grow-record
-			     ergoemacs-command-loop--grow-keys
-			     ergoemacs-command-loop--grow-special)
-	    (setq grow-max-lisp-p nil))
-	   (t
-            (call-interactively command record-flag keys)
-            (setq grow-max-lisp-p nil)))
-        (error
-         (if (and (eq (car err) 'error)
-                  (stringp (nth 1 err))
-                  (string-match "max-specpdl-size\\|max-lisp-eval-depth"
-                                (nth 1 err))
-                  ergoemacs-comand-loop-grow-max-sizes-p
-                  (<= max-specpdl-size ergoemacs-max-specpdl-size)
-                  (<= max-lisp-eval-depth ergoemacs-max-lisp-eval-depth))
-	     (progn
-	       (setq max-specpdl-size (* 2 max-specpdl-size)
-		     max-lisp-eval-depth (* 2 max-lisp-eval-depth))
-	       (ergoemacs-warn "Increased max-specpdl-size to %s and max-lisp-eval-depth to %s for %s"
-		     max-specpdl-size max-lisp-eval-depth command))
-           (setq grow-max-lisp-p nil
-		 max-specpdl-size orig-max-specpdl-size
-                 max-lisp-eval-depth orig-max-lisp-eval-depth)
-	   (signal (car err) (cdr err))))))
-    (setq max-specpdl-size orig-max-specpdl-size
-	  max-lisp-eval-depth orig-max-lisp-eval-depth)))
+  (if (memq command ergoemacs-command-loop-dont-grow-commands)
+      (call-interactively command record-flag keys)
+    (let ((grow-max-lisp-p t)
+	  (orig-max-specpdl-size max-specpdl-size)
+	  (orig-max-lisp-eval-depth max-lisp-eval-depth))
+      (while grow-max-lisp-p
+	(condition-case err
+	    (cond
+	     (ergoemacs-command-loop--grow-command
+	      (command-execute ergoemacs-command-loop--grow-command
+			       ergoemacs-command-loop--grow-record
+			       ergoemacs-command-loop--grow-keys
+			       ergoemacs-command-loop--grow-special)
+	      (setq grow-max-lisp-p nil))
+	     (t
+	      (call-interactively command record-flag keys)
+	      (setq grow-max-lisp-p nil)))
+	  (error
+	   (if (and (consp err)
+		    (eq (car err) 'error)
+		    (stringp (nth 1 err))
+		    (string-match "max-specpdl-size\\|max-lisp-eval-depth"
+				  (nth 1 err))
+		    ergoemacs-comand-loop-grow-max-sizes-p
+		    (<= max-specpdl-size ergoemacs-max-specpdl-size)
+		    (<= max-lisp-eval-depth ergoemacs-max-lisp-eval-depth))
+	       (progn
+		 (setq max-specpdl-size (* 2 max-specpdl-size)
+		       max-lisp-eval-depth (* 2 max-lisp-eval-depth))
+		 (ergoemacs-warn "Increased max-specpdl-size to %s and max-lisp-eval-depth to %s for %s"
+				 max-specpdl-size max-lisp-eval-depth command))
+	     (setq grow-max-lisp-p nil
+		   max-specpdl-size orig-max-specpdl-size
+		   max-lisp-eval-depth orig-max-lisp-eval-depth)
+	     (if (consp err)
+		 (signal (car err) (cdr err))
+	       (signal err ""))))))
+      (setq max-specpdl-size orig-max-specpdl-size
+	    max-lisp-eval-depth orig-max-lisp-eval-depth))))
 
 
 (defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
