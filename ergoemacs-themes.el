@@ -723,6 +723,10 @@
   ;; Mode specific changes
   (define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
   (define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp)
+  
+  ;; Reclaim dired+ overrides.
+  (define-key dired-mode-map (kbd "M-u") 'backward-word)
+  (define-key dired-mode-map (kbd "C-b") 'diredp-do-bookmark)
 
   (define-key browse-kill-ring-mode-map [remap isearch-forward] 'browse-kill-ring-search-forward)
   (define-key browse-kill-ring-mode-map [remap isearch-backward] 'browse-kill-ring-search-backward)
