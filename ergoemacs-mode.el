@@ -195,6 +195,12 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-keyboard-mirror nil
+  "Specifies which keyboard layout to mirror."
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
+
 
 (defvar ergoemacs-theme)
 (defcustom ergoemacs-mode-line t

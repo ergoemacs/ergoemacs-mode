@@ -518,9 +518,11 @@ make the translation."
             ret (vconcat ret (list translated-event))))
     ret))
 
-(defun ergoemacs-translate--event-trials (event &optional exclude-basic extra-modifiers )
+(defun ergoemacs-translate--event-trials (event &optional exclude-basic extra-modifiers mirror-p)
   "Gets a list of `ergoemacs-mode' event trials.
-When EXCLUDE-BASIC is non-nil, don't include the keys that are likely to produce a character when typing"
+When EXCLUDE-BASIC is non-nil, don't include the keys that are likely to produce a character when typing.
+
+When MIRROR-P is non-nil, this is another call to the event trials for a keyboard mirror."
   (if (not (eventp event))
       (error "Need an event for event trials (%s)" event))
   (let* ((key event)
@@ -573,6 +575,14 @@ When EXCLUDE-BASIC is non-nil, don't include the keys that are likely to produce
       (setq extra-modifiers (cdr extra-modifiers)
             event (ergoemacs-translate--event-convert-list (append extra-modifiers (list basic))))
       (setq ret (append (ergoemacs-translate--event-trials event exclude-basic nil) ret)))
+    (when (and (not mirror-p) ergoemacs-keyboard-mirror)
+      (setq ret (append ret
+			(ergoemacs-translate--event-trials
+			 (ergoemacs-translate--event-layout event (format "%s" ergoemacs-keyboard-layout) (format "%s" ergoemacs-keyboard-mirror))
+			 exclude-basic extra-modifiers t)
+			(ergoemacs-translate--event-trials
+                         (ergoemacs-translate--event-layout event (format "%s" ergoemacs-keyboard-mirror) (format "%s" ergoemacs-keyboard-layout))
+			 exclude-basic extra-modifiers t))))
     ret))
 
 (defun ergoemacs-translate--trials (key)
