@@ -2463,6 +2463,18 @@ Sends shell prompt string to process, then turns on
     (set-buffer (get-buffer-create name))
     (funcall shell name)))
 
+(defvar ergoemacs-msys (when (file-exists-p "c:/msysgit/bin/bash.exe")
+			 "c:/msysgit/bin/bash.exe")
+  "msys bash executable.")
+
+(defun ergoemacs-msys-here ()
+  "Runs/switches to msys shell process in current directory."
+  (interactive)
+  (if (and ergoemacs-msys (file-exists-p ergoemacs-msys))
+      (let ((explicit-shell-file-name ergoemacs-msys))
+	(ergoemacs-shell-here nil "MSYS"))
+    (error "Need to specify `ergoemacs-msys'.")))
+
 ;; (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
 
 (defun ergoemacs-eshell-here ()
