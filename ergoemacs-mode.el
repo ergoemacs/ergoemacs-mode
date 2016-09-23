@@ -316,11 +316,6 @@ If optional argument is 0, turn it off.
 Home page URL `http://ergoemacs.github.io/'
 
 The `execute-extended-command' is now \\[execute-extended-command].
-
-The layout and theme changes the bindings.  For the current
-bindings the keymap is:
-
-\\{ergoemacs-keymap}
 "
   nil
   :lighter " ErgoEmacs"

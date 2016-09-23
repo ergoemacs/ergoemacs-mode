@@ -117,12 +117,14 @@ The original keymap is untouched."
   :type :before
   (set (make-local-variable 'ergoemacs--original-local-map) keymap))
 
-(ergoemacs-advice substitute-command-keys (string)
-  "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
-  :type :replace
-  (if ergoemacs-mode
-      (ergoemacs-key-description--substitute-command-keys string)
-    (ergoemacs-advice--real-substitute-command-keys string)))
+;; FIXME for emacs 25
+(when (> 25 emacs-major-version)
+  (ergoemacs-advice substitute-command-keys (string)
+    "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
+    :type :replace
+    (if ergoemacs-mode
+	(ergoemacs-key-description--substitute-command-keys string)
+      (ergoemacs-advice--real-substitute-command-keys string))))
 
 
 (defvar ergoemacs-run-mode-hooks nil)
