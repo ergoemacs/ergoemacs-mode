@@ -488,11 +488,11 @@ Otherwise return the value."
     (if (not help)
         (format "%s%s%s" key-item  (make-string (max 1 (- (+ (car column-widths) (cdr column-widths)) (length key-item))) ? ) src)
       (insert key-item)
-      (when (and item-type (looking-back (regexp-quote item)))
+      (when (and item-type (looking-back (regexp-quote item) nil))
         (help-xref-button 0 item-type (intern (match-string 0))))
       (insert (make-string (max 1 (- (+ (car column-widths) (cdr column-widths)) (length key-item))) ? ))
       (insert src)
-      (when (and type (looking-back (regexp-quote src)))
+      (when (and type (looking-back (regexp-quote src) nil))
         (help-xref-button 0 type (intern (match-string 0)))))))
 
 (defun ergoemacs-key-description--keymap (map &optional help)

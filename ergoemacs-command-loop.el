@@ -1460,9 +1460,9 @@ needed (and resotre them to the original values)."
 	     (setq grow-max-lisp-p nil
 		   max-specpdl-size orig-max-specpdl-size
 		   max-lisp-eval-depth orig-max-lisp-eval-depth)
-	     (if (consp err)
+	     (if (and err (consp err))
 		 (signal (car err) (cdr err))
-	       (signal err ""))))))
+	       (signal err "Unknown error"))))))
       (setq max-specpdl-size orig-max-specpdl-size
 	    max-lisp-eval-depth orig-max-lisp-eval-depth))))
 

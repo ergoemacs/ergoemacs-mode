@@ -1595,7 +1595,7 @@ Return 0 if there is no such symbol.  Based on
           (when (and el-file (file-readable-p el-file))
             (insert " defined in `")
             (insert (file-name-nondirectory el-file))
-            (when (looking-back "`\\(.*\\)")
+            (when (looking-back "`\\(.*\\)" nil)
               (help-xref-button 1 'ergoemacs-component-def component))
             (insert "'."))
           (insert "\n\n")
@@ -1612,10 +1612,10 @@ Return 0 if there is no such symbol.  Based on
           (insert (format "Plist: %s\n" plist))
           
           (insert (format "Base Layout: %s\n" (ergoemacs-component-struct-layout comp)))
-          (when (looking-back ": \\(.*\\)\n")
+          (when (looking-back ": \\(.*\\)\n" nil)
             (help-xref-button 1 'ergoemacs-layout-help (match-string 1)))
           (insert (format "Relative To: %s\n" (ergoemacs-component-struct-relative-to comp)))
-          (when (looking-back ": \\(.*\\)\n")
+          (when (looking-back ": \\(.*\\)\n" nil)
             (help-xref-button 1 'ergoemacs-layout-help (match-string 1)))
           (insert (format "Variable Modifiers: %s\n" (ergoemacs-component-struct-variable-modifiers comp)))
           (insert (format "Variable Prefixes: %s\n"

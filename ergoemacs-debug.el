@@ -96,7 +96,7 @@
   (save-excursion
     (with-current-buffer (get-buffer-create ergoemacs-debug-buffer) 
       (goto-char (point-max))
-      (unless (looking-back "\n")
+      (unless (looking-back "\n" nil)
         (insert "\n"))
       (insert ergoemacs-debug)
       (delete-region (save-excursion (skip-chars-backward "\n\t ") (point)) (point))))

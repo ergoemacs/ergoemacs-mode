@@ -1109,7 +1109,7 @@ Subsequent calls expands the selection to larger semantic unit."
 If there's no text, delete the previous line ending.
 Use `ergoemacs-remap' in case kill line was remapped."
   (interactive "p")
-  (if (and (= number 1) (looking-back "\n"))
+  (if (and (= number 1) (looking-back "\n" nil))
       (delete-char -1)
     (setq current-prefix-arg (- 1 number))
     (ergoemacs :remap 'kill-line)))
@@ -1207,7 +1207,7 @@ Calling this command 3 times will always result in no whitespaces around cursor.
       ;; todo: might consider whitespace as defined by syntax table, and also consider whitespace chars in unicode if syntax table doesn't already considered it.
       (setq cursor-point (point))
       
-      (setq space-tab-neighbor-p (if (or (looking-at " \\|\t") (looking-back " \\|\t")) t nil) )
+      (setq space-tab-neighbor-p (if (or (looking-at " \\|\t") (looking-back " \\|\t" nil)) t nil) )
       (move-beginning-of-line 1) (setq line-begin-pos (point) )
       (move-end-of-line 1) (setq line-end-pos (point) )
       ;;       (re-search-backward "\n$") (setq line-begin-pos (point) )
@@ -1801,10 +1801,10 @@ If sitting at the end of a file directory, backspace goes up one
 level, like in `ido-find-file'. "
   (interactive)
   (let (backspace)
-    (looking-back "^.*")
+    (looking-back "^.*" nil)
     (cond
      ((and ergoemacs-helm-ff-ido-style-backspace
-           (looking-back "[/\\]"))
+           (looking-back "[/\\]" nil))
       (call-interactively
        (key-binding (kbd "<left>"))))
      (t
