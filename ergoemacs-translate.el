@@ -57,6 +57,7 @@
 
 (defvar ergoemacs-define-key-after-p)
 (defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-keyboard-mirror)
 (defvar ergoemacs-translation-hash)
 (defvar ergoemacs-translate--hash)
 (defvar ergoemacs-translate--event-hash)
