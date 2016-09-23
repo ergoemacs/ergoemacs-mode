@@ -1196,7 +1196,7 @@ Fix this issue."
 	     (memq (event-basic-type (car last-command-event))
 			'(mouse-1))
 	     (region-active-p))
-    (x-set-selection 'PRIMARY (buffer-substring-no-properties (region-beginning) (region-end)))))
+    (ergoemacs :set-selection 'PRIMARY (buffer-substring-no-properties (region-beginning) (region-end)))))
 
 (defun ergoemacs-command-loop--internal-end-command ()
   "Simulates the end of a command."

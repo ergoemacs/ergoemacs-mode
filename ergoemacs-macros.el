@@ -852,6 +852,10 @@ When arg1 can be a property.  The following properties are supported:
         (arg3 (nth 2 args))
         (arg4 (nth 3 args)))
     (cond
+     ((and arg1 (symbolp arg1) (eq arg1 :set-selection))
+      (if (>= 25 emacs-major-version)
+	  `(gui-set-selection ,@(cdr args))
+	`(x-set-selection ,@(cdr args))))
      ((and arg1 (symbolp arg1) (eq arg1 :width))
       `(ergoemacs-mode--eval-width ,arg2))
      ((and arg1 (symbolp arg1) (eq arg1 :mode-if) arg2)
