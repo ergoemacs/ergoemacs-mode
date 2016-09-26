@@ -75,6 +75,7 @@
 (declare-function ergoemacs-component--help-link "ergoemacs-component")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
+(declare-function ergoemacs-advice--real-substitute-command-keys "C")
 
 (defvar ergoemacs-key-description--display-char-cache nil
   "List of characters and fonts and if they display or not.")
@@ -532,43 +533,127 @@ When HELP is non-nil, insert and add help cross-refences."
   "Substitute key descriptions for command names in STRING.
 A replacement for `substitute-command-keys'."
   (if (not (stringp string)) nil
-    (save-match-data
-      (let ((ret string)
-            (current-map nil)
-            (cur-item "")
-            (rep-item "")
-            (start 0) tmp)
-        (while (string-match "\\(\\\\\\[[^]\n]*\\]\\|\\\\[{][^}\n]*[}]\\|\\\\<[^>\n]*>\\|\\\\=.\\)" ret start)
-          (setq cur-item (match-string 1 ret))
-          (save-match-data
-            (cond
-             ((string-match "\\[\\(.*\\)\\]" cur-item)
-              (setq tmp (intern (match-string 1 cur-item))
-                    rep-item tmp
-                    cur-item (where-is-internal tmp current-map t))
-              (if cur-item
-                  (setq rep-item (ergoemacs-key-description cur-item))
-                (setq rep-item
-                      (format "%s %s" (or (and (setq tmp (where-is-internal 'execute-extended-command nil t)) (ergoemacs-key-description tmp))
-                                          "M-x") rep-item))))
-             ((string-match "<\\([^>\n]*\\)>" cur-item)
-              (setq cur-item (intern (match-string 1 cur-item)))
-              (and (boundp cur-item)
-                   (setq cur-item (symbol-value cur-item))
-                   (ergoemacs-keymapp cur-item)
-                   (setq current-map cur-item))
-              (setq rep-item ""))
-             ((string-match "[{]\\([^}\n]*\\)[}]" cur-item)
-              (setq cur-item (intern (match-string 1 cur-item))
-                    rep-item "")
-              (and
-               (boundp cur-item)
-               (setq rep-item (ergoemacs-key-description--keymap cur-item))))
-             ((string-match "\\\\=\\(.\\)" cur-item)
-              (setq rep-item (match-string 1 cur-item)))))
-          (setq start (+ (match-beginning 0) (length rep-item)))
-          (setq ret (replace-match rep-item t t ret)))
-        ret))))
+    (let (quote-p
+	  slash-p
+          command-p
+          command
+          mapvar-p
+          mapvar
+          map-p
+          current-map
+          tmp
+          rep-item
+          cur-item
+          ret)
+      (dolist (elt (append (vconcat string) nil))
+        (cond
+	 ((and (boundp 'text-quoting-style) (memq elt '(8216 96))) ;; Left quote
+          (cond
+	   (quote-p
+	    (setq ret (concat ret (make-string 1 elt))
+		  quote-p nil))
+	   ((or (eq text-quoting-style 'curve)
+		(eq text-quoting-style nil))
+	    (setq ret (concat ret (make-string 1 8216))))
+	   ((eq text-quoting-style 'straight)
+	    (setq ret (concat ret "'")))
+	   ((eq text-quoting-style 'grave)
+            (setq ret (concat ret "`")))))
+         ((and (boundp 'text-quoting-style) (memq elt '(8217 39))) ;; Right quote
+	  (cond
+           (quote-p
+            (setq ret (concat ret (make-string 1 elt))
+                  quote-p nil))
+           ((or (eq text-quoting-style 'curve)
+                (eq text-quoting-style nil))
+            (setq ret (concat ret (make-string 1 8217))))
+           ((eq text-quoting-style 'straight)
+            (setq ret (concat ret "'")))
+           ((eq text-quoting-style 'grave)
+            (setq ret (concat ret "'")))))
+	 ;;\
+         ((= ?\\ elt)
+          (setq slash-p t
+                mapvar nil
+                command nil))
+         ;;\[
+         ((and slash-p (= 91 elt))
+          (if quote-p
+	      (setq ret (concat ret "\\[")
+		    slash-p nil
+		    quote-p nil)
+	    (setq command-p t
+		  slash-p   nil)))
+         ;;\{
+         ((and slash-p (= 123 elt))
+          (if quote-p
+	      (setq ret (concat ret "\\{")
+		    slash-p nil
+                    quote-p nil)
+	    (setq slash-p  nil
+		  mapvar-p t)))
+         ;;\<
+         ((and slash-p (= ?< elt))
+          (if quote-p
+	      (setq ret (concat ret "\\<")
+		    slash-p nil
+                    quote-p nil)
+	    (setq slash-p  nil
+		  map-p t)))
+	 ;;\=
+	 ((and slash-p (= ?= elt))
+	  (if quote-p
+	      (setq ret (concat ret "\\=")
+		    slash-p nil
+                    quote-p nil)
+	    (setq quote-p t
+		  slash-p nil)))
+         ;;\<...>
+         ((and map-p (= ?> elt))
+          (setq map-p nil
+                current-map (intern mapvar)))
+         (map-p
+          (setq mapvar (or (and mapvar (concat mapvar (make-string 1 elt)))
+                           (make-string 1 elt))))
+         ;;\{...}
+         ((and mapvar-p (= 125 elt))
+          (setq mapvar-p nil
+                mapvar (intern mapvar)
+                rep-item "")
+          (and
+           (boundp mapvar)
+           (setq rep-item (ergoemacs-key-description--keymap mapvar)))
+          (setq ret (concat ret rep-item)))
+         (mapvar-p
+          (setq mapvar (or (and mapvar (concat mapvar (make-string 1 elt)))
+                            (make-string 1 elt))))
+         ;;\[...]
+         ((and command-p (= 93 elt))
+          ;; Completed, look for command.
+          (setq command-p nil
+                command (intern command)
+                rep-item command
+                cur-item (where-is-internal command (symbol-value current-map) t))
+          (if cur-item
+              (setq rep-item (ergoemacs-key-description cur-item))
+            (setq rep-item
+                  (format "%s %s" (or (and (setq tmp (where-is-internal 'execute-extended-command nil t)) (ergoemacs-key-description tmp)) "M-x")
+                          rep-item)))
+          (setq ret (concat ret rep-item)))
+         (command-p
+          (setq command (or (and command (concat command (make-string 1 elt)))
+                            (make-string 1 elt))))
+	 (t
+	  (when slash-p
+	    (setq slash-p nil
+		  ret (concat ret "\\")))
+	  (setq quote-p nil
+		command-p nil
+		mapvar-p nil
+		map-p nil
+		ret (concat ret (make-string 1 elt))))))
+      ret)
+    ))
 
 (defalias 'ergoemacs-substitute-command-keys 'ergoemacs-key-description--substitute-command-keys)
 
