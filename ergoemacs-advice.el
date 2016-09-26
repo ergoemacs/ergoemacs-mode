@@ -316,16 +316,6 @@ command selected, instead of rerunning `smex' and
   :type :before
   (setq ergoemacs-command-loop--single-command-keys nil))
 
-(ergoemacs-advice read-key-sequence (prompt &optional continue-echo dont-downcase-last switch-frame-ok command-loop)
-  "Drop single command keys for `read-key-sequence'." ; For compataiblity with emacs 25.5
-  :type :before
-  (setq ergoemacs-command-loop--single-command-keys nil))
-
-(ergoemacs-advice read-key-sequence-vector (prompt &optional continue-echo dont-downcase-last switch-frame-ok command-loop)
-  "Drop single command keys for `read-key-sequence-vector'." ; For compataiblity with emacs 25.5
-  :type :before
-  (setq ergoemacs-command-loop--single-command-keys nil))
-
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
