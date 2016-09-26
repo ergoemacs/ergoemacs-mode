@@ -48,6 +48,9 @@
 (defvar helm-ff-default-directory)
 (defvar helm-ff-last-expanded)
 (defvar org-table-any-line-regexp)
+(defvar server-kill-new-buffers)
+(defvar server-existing-buffer)
+(defvar explicit-shell-file-name)
 
 
 (declare-function browse-url-default-windows-browser "browse-url")
@@ -1918,7 +1921,9 @@ This requires `ergoemacs-mode' to be enabled with
 
 (defun ergoemacs-smart-punctuation-insert-pair (pair)
   "Inserts a matched pair like ().
-If a smart-punctuation mode is active, use it by placing the initial pair in the unread command events."
+
+If a smart-punctuation mode is active, use it by placing the
+initial pair in the unread command events."
   (if (ergoemacs-smart-punctuation-mode-p)
       (let ((tmp (read-kbd-macro (substring pair 0 1) t)))
         (setq ergoemacs-single-command-keys tmp)
@@ -1926,7 +1931,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
         (setq prefix-arg current-prefix-arg)
         (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
         ;;(ergoemacs-defer-post-command-hook)
-        (reset-this-command-lengths))
+        (ergoemacs :reset-prefix))
     (if (region-active-p)
         (let ((p1 (region-beginning))
               (p2 (region-end)))

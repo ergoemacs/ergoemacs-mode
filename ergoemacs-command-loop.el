@@ -1588,7 +1588,10 @@ Used to replace:
 - `this-command-keys-vector'
 - `this-command-keys'
 - `this-single-command-keys'
-- `this-single-command-raw-keys'"
+- `this-single-command-raw-keys'
+
+Currently these are all vectors and all ingore prefix arguments.
+They don't exactly behave like their Emacs equivalents."
   (or (and ergoemacs-mode ergoemacs-command-loop--single-command-keys)
       (funcall ergoemacs-command-loop--this-command-keys)))
 
@@ -1671,7 +1674,9 @@ Emacs versions)."
     ;; Replace functions temporarily
     (cl-letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys)
 	      ((symbol-function 'this-single-command-keys) #'ergoemacs-command-loop--this-command-keys)
-	      ;; ((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
+	      ((symbol-function 'this-command-keys-vector) #'ergoemacs-command-loop--this-command-keys)
+	      ((symbol-function 'this-single-command-raw-keys) #'ergoemacs-command-loop--this-command-keys)
+              ;; ((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
 	      )
       (let* ((type (or type :normal))
              (from-start-p ergoemacs-command-loop-start)

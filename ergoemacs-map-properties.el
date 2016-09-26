@@ -60,6 +60,8 @@
 (defvar ergoemacs-remap-ignore)
 (defvar ergoemacs-saved-global-map)
 (defvar ergoemacs-map-properties--label-atoms-maps)
+(defvar icicle-search-key-prefix)
+(defvar icicle-search-map)
 
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 (declare-function ergoemacs-timing-- "ergoemacs-mode")
@@ -72,6 +74,8 @@
 (declare-function ergoemacs-translate--define-key "ergoemacs-translate")
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
+
+(declare-function icicle-remap "icicles-opt")
 
 (defun ergoemacs-map-properties--keymap-value (keymap)
   "Return the keymap value of KEYMAP.
