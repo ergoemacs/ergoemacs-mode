@@ -1585,7 +1585,6 @@ instead of `format'."
   "Return `ergoemacs-command-loop--single-command-keys'.
 Used to replace:
 
-
 - `this-command-keys-vector'
 - `this-command-keys'
 - `this-single-command-keys'
@@ -1671,6 +1670,7 @@ Emacs versions)."
       (ergoemacs-command-loop--internal-end-command))
     ;; Replace functions temporarily
     (cl-letf (((symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys)
+	      ((symbol-function 'this-single-command-keys) #'ergoemacs-command-loop--this-command-keys)
 	      ;; ((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
 	      )
       (let* ((type (or type :normal))
@@ -2045,6 +2045,10 @@ pressed the translated key by changing
                               (list (lookup-key ergoemacs-keymap orig-key t)
                                     (lookup-key ergoemacs-keymap new-key t)))))
             ;; Prefer non-global keys.
+	    (when (eq bind 'undefined)
+	      (setq bind nil))
+	    (when (eq new-binding 'undefined)
+	      (setq new-binding nil))
             (cond
              ((not new-key)
               (setq new-key orig-key))
@@ -2063,7 +2067,6 @@ pressed the translated key by changing
                ((or (ergoemacs-keymapp (setq tmp (lookup-key key-translation-map orig-key)))
                     (and (not (integerp tmp)) (commandp tmp)))
                 (setq bind tmp))))
-            
             (when (and orig-key
                        (setq ret bind
                              ret (if (and (eq ret 'ergoemacs-map-undefined)
