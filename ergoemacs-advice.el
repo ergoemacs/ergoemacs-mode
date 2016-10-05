@@ -253,9 +253,11 @@ definition."
       (key-binding [ergoemacs-remap undo])
     ad-do-it))
 
+
 (ergoemacs-advice read-from-minibuffer (prompt &optional initial-contents keymap read hist default-value inherit-input-method)
   "Modify keymap to confirm to `ergoemacs-mode'."
   :type :before
+  (defvar ergoemacs-read-from-minibuffer-map)
   (if keymap
       (setq ergoemacs-map--breadcrumb (format "read-from-minibuffer:%s" this-command)
             ergoemacs-read-from-minibuffer-map keymap)
@@ -265,6 +267,7 @@ definition."
 (ergoemacs-advice icicle-read-from-minibuffer (prompt &optional initial-contents keymap read hist-m default-value inherit-input-method)
   "Use `ergoemacs-mode' for `icicle-read-from-minibuffer'"
   :type :before
+  (defvar ergoemacs-read-from-minibuffer-map)
   (if keymap
       (setq ergoemacs-map--breadcrumb (format "icy-read-from-minibuffer:%s" this-command)
             ergoemacs-read-from-minibuffer-map keymap)
@@ -275,18 +278,21 @@ definition."
 (ergoemacs-advice read-string (prompt &optional initial history default inherit-input-method)
   "Modify keymap to confirm to `ergoemacs-mode'."
   :type :before
+  (defvar ergoemacs-read-from-minibuffer-map)
   (setq ergoemacs-map--breadcrumb "minibuffer-local-map"
         ergoemacs-read-from-minibuffer-map minibuffer-local-map))
 
 (ergoemacs-advice icicle-read-string (prompt &optional initial history default inherit-input-method)
   "Modify keymap to confirm to `ergoemacs-mode'."
   :type :before
+  (defvar ergoemacs-read-from-minibuffer-map)
   (setq ergoemacs-map--breadcrumb "icy-minibuffer-local-map"
         ergoemacs-read-from-minibuffer-map minibuffer-local-map))
 
 (ergoemacs-advice read-no-blanks-input (prompt &optional initial inherit-input-method)
   "Modify keymap to confirm to `ergoemacs-mode'."
   :type :before
+  (defvar ergoemacs-read-from-minibuffer-map)
   (setq ergoemacs-map--breadcrumb "minibuffer-local-ns-map"
         ergoemacs-read-from-minibuffer-map minibuffer-local-ns-map))
 
