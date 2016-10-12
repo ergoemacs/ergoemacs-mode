@@ -1689,6 +1689,16 @@ Emacs versions)."
              tmp command)
         (unwind-protect
             (progn
+	      ;; Set these to nil when entering the command loop;
+	      ;;
+	      ;; For some reason `inhibit-point-motion-hooks' on emacs
+	      ;; 25.1 is t when the command loop is entered.
+	      ;;
+	      ;; To allow the point motion hooks to work as
+	      ;; advertised, set these on starting the command loop.
+	      (setq inhibit-point-motion-hooks      nil
+		    disable-point-adjustment        nil
+		    global-disable-point-adjustment nil)
               ;; Setup initial unread command events, first type and history
               (setq tmp (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
                     unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events)) tmp)
