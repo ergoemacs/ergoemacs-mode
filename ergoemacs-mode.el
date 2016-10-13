@@ -9,7 +9,7 @@
 ;; Created: August 01 2007
 ;; Keywords: convenience
 ;; Version: 5.14.7.3
-;; Package-Requires: ((emacs "24.1") (undo-tree "0.6.5") (cl-lib "0.5))
+;; Package-Requires: ((emacs "24.1") (undo-tree "0.6.5") (cl-lib "0.5"))
 ;; URL: https://github.com/ergoemacs/ergoemacs-mode
 
 ;; ErgoEmacs is free software: you can redistribute it and/or modify
