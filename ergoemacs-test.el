@@ -1155,7 +1155,7 @@ Should test issue #142"
 
 (ert-deftest ergoemacs-test-397-test-4 ()
   "Test M-s is switch pane."
-  :tags '(:slow :icicles)
+  :tags '(:slow :icicles :interactive)
   (let* ((emacs-exe (ergoemacs-emacs-exe))
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
@@ -1788,7 +1788,7 @@ hash appropriaetly."
 [f12] = `next-history-element'
 M-s   = `ergoemacs-move-cursor-next-pane'
 M-r   = `kill-word'"
-  :tags '(:icy-mode)
+  :tags '(:icy-mode :interactive)
   (icy-mode 1)
   (let ((keys))
 (ergoemacs-test-layout
