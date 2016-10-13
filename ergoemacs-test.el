@@ -1722,7 +1722,7 @@ hash appropriaetly."
 
 (ert-deftest ergoemacs-test-407 ()
   "Test M-s is switch pane."
-  :tags '(:require-input)
+  :tags '(:require-input :interactive)
   (let* ((emacs-exe (ergoemacs-emacs-exe))
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
