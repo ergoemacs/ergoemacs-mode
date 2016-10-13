@@ -763,11 +763,29 @@ execute-extended-command:
           While WinActive("Save As"){
                 Sleep 100
           }
-          SendKey("{Del}")
+	  SendKey("{Del}")
+	  ocalName = %OutlookSave%\ocal.ics
+          If !FileExist(ocalName){
+	    Clipboard =
+            Clipboard := ocalName 
+            ClipWait
+	    Send, {CTRLDOWN}2{CTRLUP}
+	    Send, {ALTDOWN}{ALTUP}fc
+            While !WinActive("Save As"){
+             Sleep 100
+            }
+	    Send, {CTRLDOWN}v{CTRLUP}{TAB  2}{SPACE}{DOWN  3}{TAB}{DOWN  2}{TAB}{SPACE}{DOWN}{SPACE}{TAB  2}{SPACE}{TAB  3}{ENTER}
+            While WinActive("Save As"){
+             Sleep 100
+            }
+	    Send, {CTRLDOWN}1{CTRLUP}
+	  }
+
           fileName := uri_encode(fileName)
           fileName = "%EmacsClient%" org-protocol:/capture:/%OutlookTemplate%/%fileName%/%Title%/%EmailBody%
-          Run, %fileName%
-          }
+	  Run, %fileName%
+	  
+       }
   }
   return
 
