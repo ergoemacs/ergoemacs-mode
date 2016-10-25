@@ -1827,9 +1827,10 @@ level, like in `ido-find-file'. "
   "Allows return to expand a directory like in `ido-find-file'.
 This requires `ergoemacs-mode' to be non-nil and
 `ergoemacs-helm-ido-style-return' to be non-nil."
-  (let* ((follow (buffer-local-value
-                  'helm-follow-mode
-                  (get-buffer-create helm-buffer)))
+  (let* ((follow (and (boundp 'helm-follow-mode)
+		      (buffer-local-value
+		       'helm-follow-mode
+		       (get-buffer-create helm-buffer))))
          (insert-in-minibuffer
           #'(lambda (fname)
               (with-selected-window (minibuffer-window)
