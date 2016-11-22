@@ -308,10 +308,11 @@ with this function."
 This is called through `ergoemacs-command-loop'"
   (interactive)
   (cond
-   ;; ((not (ergoemacs :command-loop-p))
-   ;;  ;; Command loop hasn't started.
-   ;;  (setq current-prefix-arg '(4))
-   ;;  (ergoemacs-command-loop nil type nil t))
+   ((not (ergoemacs-command-loop-p)) 
+    ;; Command loop hasn't started.
+    (setq current-prefix-arg '(4))
+    (setq ergoemacs-command-loop-start t)
+    (ergoemacs-command-loop nil (ergoemacs-command-loop--modal-p) nil t))
    ((not current-prefix-arg)
     (setq current-prefix-arg '(4)
           ergoemacs-command-loop--universal t
@@ -1040,7 +1041,7 @@ This sequence is compatible with `listify-key-sequence'."
   "Determine if `ergoemacs-mode' is running its command loop.
 This is done by looking at the current `backtrace' and making
 sure that `ergoemacs-command-loop--internal' hasn't been called."
-  (eq ergoemacs-last-command-event last-command-event))
+  (eq (symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys))
 
 (defvar ergoemacs-command-loop-start nil)
 (defun ergoemacs-command-loop (&optional key type initial-key-type universal)
@@ -1059,7 +1060,7 @@ argument.
 The true work is done in `ergoemacs-command-loop--internal'."
   (interactive)
   (cond
-   ((and ergoemacs-command-loop-start (not (ergoemacs-command-loop-p)))
+   ((and (or ergoemacs-command-loop-start key) (not (ergoemacs-command-loop-p)))
     ;; (ergoemacs-command-loop--message "Start ergoemacs-mode command loop." )
     (ergoemacs-command-loop--internal key type initial-key-type universal))
    (t
@@ -1102,10 +1103,13 @@ appropriate value based on the COMMAND."
       (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t))
     (ergoemacs-command-loop--minibuffer-supported-p)))
 
-(defun ergoemacs-command-loop-full-p ()
-  "Determines if the full command loop should be run."
+(defun ergoemacs-command-loop-full-p (&optional type )
+  "Determines if the full command loop should be run.
+
+TYPE is the type of command loop to check for.  By default this
+is the :full command loop."
   (and
-   (eq ergoemacs-command-loop-type :full)
+   (or (eq ergoemacs-command-loop-type (or type :full)) (ergoemacs :modal-p))
    (ergoemacs-command-loop--minibuffer-supported-p)
    (catch 'excluded-variables
      (dolist (var ergoemacs-command-loop--excluded-variables)
@@ -1113,6 +1117,40 @@ appropriate value based on the COMMAND."
          (throw 'excluded-variables nil)))
      t)
    (not (memq major-mode ergoemacs-command-loop--excluded-major-modes))))
+
+(defun ergoemacs-command-loop-prefix-timer-p ()
+  "Determines if the command loop is run for a prefix timer."
+  (ergoemacs-command-loop-full-p :prefix-timer))
+
+(defvar ergoemacs-command-loop--prefix-timer-polling-time 0.1
+  "Timer for polling of prefix keys.")
+
+(defvar ergoemacs-command-loop--prefix-timer nil)
+
+(defun ergoemacs-command-loop--prefix-timer ()
+  "Start prefix timer for ergoemacs-mode command loop."
+  (when (and (null ergoemacs-command-loop--prefix-timer)
+	     (eq ergoemacs-command-loop-type :prefix-timer))
+    (setq ergoemacs-command-loop--prefix-timer
+	  (run-at-time t ergoemacs-command-loop--prefix-timer-polling-time #'ergoemacs-command-loop--start-for-prefix))))
+
+(defun ergoemacs-command-loop--stop-prefix-timer ()
+  "Stop prefix timer for ergoemacs-mode command loop."
+  (when ergoemacs-command-loop--prefix-timer
+    (cancel-timer ergoemacs-command-loop--prefix-timer)
+    (setq ergoemacs-command-loop--prefix-timer nil)))
+
+(defun ergoemacs-command-loop--start-for-prefix ()
+  "Start the ergoemacs command loop for the currently running prefix key."
+  (when (and (not (ergoemacs :modal-p))
+	     (ergoemacs-command-loop-prefix-timer-p)
+	     (ergoemacs-keymapp (key-binding (this-single-command-keys)))
+             (not (ergoemacs-command-loop-p)))
+    (setq ergoemacs-command-loop-start t
+	  ergoemacs-command-loop--single-command-keys (this-single-command-keys))
+    (ergoemacs-command-loop ergoemacs-command-loop--single-command-keys)))
+
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--start-for-prefix)
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   "Start ergoemacs command loop.
