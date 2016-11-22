@@ -1165,7 +1165,6 @@ is the :full command loop."
                        unread-command-events ergoemacs-command-loop--eat-unread
                        ergoemacs-command-loop--eat-unread nil)
                  (ergoemacs-command-loop--prefix-timer))))
-      (define-key map ergoemacs-command-loop--eat fn)
       (define-key map [eroemacs-eat] fn)
       (define-key map (vconcat ergoemacs-command-loop--eat [eroemacs-eat]) fn)
       (setq overriding-terminal-local-map map
