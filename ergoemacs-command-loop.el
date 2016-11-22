@@ -1174,7 +1174,7 @@ is the :full command loop."
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--prefix-timer)
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--stop-prefix-timer)
-
+(add-hook 'post-command-hook #'ergoemacs-command-loop--eat)
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   "Start ergoemacs command loop.
@@ -1828,7 +1828,6 @@ Emacs versions)."
 		    (when (and ergoemacs-command-loop--eat unread-command-events)
                       (setq ergoemacs-command-loop--eat-unread unread-command-events
                             unread-command-events nil))
-		    (ergoemacs-command-loop--eat)
                     ;; If the command changed anything, fix it here.
                     (unless (equal type ergoemacs-command-loop--current-type)
                       (setq type ergoemacs-command-loop--current-type
