@@ -1155,7 +1155,6 @@ is the :full command loop."
 (defun ergoemacs-command-loop--eat ()
   "Eat the key sequence calling the prefix start."
   (when ergoemacs-command-loop--eat
-    (message "Eat %s" ergoemacs-command-loop--eat)
     (let ((map (make-keymap)))
       (define-key map ergoemacs-command-loop--eat '(lambda () (interactive) (setq overriding-terminal-local-map nil)))
       (setq overriding-terminal-local-map map
