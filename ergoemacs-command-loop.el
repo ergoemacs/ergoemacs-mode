@@ -1140,6 +1140,7 @@ is the :full command loop."
     (cancel-timer ergoemacs-command-loop--prefix-timer)
     (setq ergoemacs-command-loop--prefix-timer nil)))
 
+(defvar ergoemacs-command-loop--eat nil)
 (defun ergoemacs-command-loop--start-for-prefix ()
   "Start the ergoemacs command loop for the currently running prefix key."
   (when (and (not (ergoemacs :modal-p))
@@ -1147,11 +1148,22 @@ is the :full command loop."
 	     (ergoemacs-keymapp (key-binding (this-single-command-keys)))
              (not (ergoemacs-command-loop-p)))
     (setq ergoemacs-command-loop-start t
-	  ergoemacs-command-loop--single-command-keys (this-single-command-keys))
+	  ergoemacs-command-loop--single-command-keys (this-single-command-keys)
+	  ergoemacs-command-loop--eat ergoemacs-command-loop--single-command-keys)
     (ergoemacs-command-loop ergoemacs-command-loop--single-command-keys)))
+
+(defun ergoemacs-command-loop--eat ()
+  "Eat the key sequence calling the prefix start."
+  (when ergoemacs-command-loop--eat
+    (message "Eat %s" ergoemacs-command-loop--eat)
+    (let ((map (make-keymap)))
+      (define-key map ergoemacs-command-loop--eat '(lambda () (interactive) (setq overriding-terminal-local-map nil)))
+      (setq overriding-terminal-local-map map
+	    ergoemacs-command-loop--eat nil))))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--prefix-timer)
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--stop-prefix-timer)
+(add-hook 'post-command-hook #'ergoemacs-command-loop--eat)
 
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
