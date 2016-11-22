@@ -320,6 +320,25 @@ command selected, instead of rerunning `smex' and
   :type :before
   (setq ergoemacs-command-loop--single-command-keys nil))
 
+(ergoemacs-advice undefined ()
+  "Allow `ergoemacs-mode' to display keys, and intercept ending <apps> keys."
+  :type :around
+  (if (not ergoemacs-mode)
+      ad-do-it
+    (let ((keys (this-single-command-keys)))
+      (if (member (substring keys -1) '([apps] [menu]))
+	  (ergoemacs-command-loop keys)
+	(ding)
+        (ergoemacs-command-loop--temp-message "%s is undefined!"
+                                              (ergoemacs-key-description (this-single-command-keys)))
+        (setq defining-kbd-macro nil)
+        (force-mode-line-update)
+        ;; If this is a down-mouse event, don't reset prefix-arg;
+        ;; pass it to the command run by the up event.
+	(setq prefix-arg
+              (when (memq 'down (event-modifiers last-command-event))
+                current-prefix-arg))))))
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
