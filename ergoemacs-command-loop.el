@@ -1150,7 +1150,9 @@ is the :full command loop."
 	  ergoemacs-command-loop--single-command-keys (this-single-command-keys))
     (ergoemacs-command-loop ergoemacs-command-loop--single-command-keys)))
 
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--start-for-prefix)
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--prefix-timer)
+(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--stop-prefix-timer)
+
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
   "Start ergoemacs command loop.
