@@ -1028,7 +1028,7 @@
 (ergoemacs-component helm-remaps ()
   "Remaps for helm-mode"
   (when helm-mode
-    (global-set-key [remap grep] 'helm-do-grep)
+    ;; (global-set-key [remap grep] 'helm-do-grep)  ;; Removed grep https://github.com/emacs-helm/helm/issues/1377
     (global-set-key [remap execute-extended-command] 'helm-M-x)
     (global-set-key [remap switch-to-buffer] 'helm-mini)
     (global-set-key [remap find-file] 'helm-find-files)
