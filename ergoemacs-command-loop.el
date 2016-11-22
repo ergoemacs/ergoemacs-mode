@@ -1141,6 +1141,7 @@ is the :full command loop."
     (setq ergoemacs-command-loop--prefix-timer nil)))
 
 (defvar ergoemacs-command-loop--eat nil)
+(defvar ergoemacs-command-loop--eat-unread nil)
 (defun ergoemacs-command-loop--start-for-prefix ()
   "Start the ergoemacs command loop for the currently running prefix key."
   (when (and (not (ergoemacs :modal-p))
@@ -1149,20 +1150,30 @@ is the :full command loop."
              (not (ergoemacs-command-loop-p)))
     (setq ergoemacs-command-loop-start t
 	  ergoemacs-command-loop--single-command-keys (this-single-command-keys)
-	  ergoemacs-command-loop--eat ergoemacs-command-loop--single-command-keys)
+	  ergoemacs-command-loop--eat ergoemacs-command-loop--single-command-keys
+	  ergoemacs-command-loop--eat-unread nil)
+    (ergoemacs-command-loop--stop-prefix-timer)
     (ergoemacs-command-loop ergoemacs-command-loop--single-command-keys)))
 
 (defun ergoemacs-command-loop--eat ()
   "Eat the key sequence calling the prefix start."
   (when ergoemacs-command-loop--eat
-    (let ((map (make-keymap)))
-      (define-key map ergoemacs-command-loop--eat '(lambda () (interactive) (setq overriding-terminal-local-map nil)))
+    (let ((map (make-keymap))
+	  (fn '(lambda ()
+                 (interactive)
+                 (setq overriding-terminal-local-map nil
+                       unread-command-events ergoemacs-command-loop--eat-unread
+                       ergoemacs-command-loop--eat-unread nil)
+                 (ergoemacs-command-loop--prefix-timer))))
+      (define-key map ergoemacs-command-loop--eat fn)
+      (define-key map [eroemacs-eat] fn)
+      (define-key map (vconcat ergoemacs-command-loop--eat [eroemacs-eat]) fn)
       (setq overriding-terminal-local-map map
-	    ergoemacs-command-loop--eat nil))))
+	    ergoemacs-command-loop--eat nil
+	    unread-command-events (list 'ergoemacs-eat)))))
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--prefix-timer)
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--stop-prefix-timer)
-(add-hook 'post-command-hook #'ergoemacs-command-loop--eat)
 
 
 (defun ergoemacs-command-loop--start-with-pre-command-hook ()
@@ -1474,9 +1485,9 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs--real-call-interactively'.
 This will grow `max-lisp-eval-depth' and `max-specpdl-size' if
 needed (and resotre them to the original values)."
   (setq ergoemacs-command-loop--grow-command nil
-	  ergoemacs-command-loop--grow-record nil
-	  ergoemacs-command-loop--grow-keys nil
-	  ergoemacs-command-loop--grow-special nil)
+	ergoemacs-command-loop--grow-record nil
+	ergoemacs-command-loop--grow-keys nil
+	ergoemacs-command-loop--grow-special nil)
   (if (memq command ergoemacs-command-loop-dont-grow-commands)
       (call-interactively command record-flag keys)
     (let ((grow-max-lisp-p t)
@@ -1643,7 +1654,7 @@ Used to replace:
 
 Currently these are all vectors and all ingore prefix arguments.
 They don't exactly behave like their Emacs equivalents."
-  (or (and ergoemacs-mode ergoemacs-command-loop--single-command-keys)
+  (or (and ergoemacs-mode `ergoemacs-command-loop--single-command-keys)
       (funcall ergoemacs-command-loop--this-command-keys)))
 
 (defvar ergoemacs-command-loop--timer nil
@@ -1814,7 +1825,10 @@ Emacs versions)."
                       (ergoemacs-command-loop--call-interactively this-command)
                       (setq command this-command
                             this-command tmp))
-                    
+		    (when (and ergoemacs-command-loop--eat unread-command-events)
+                      (setq ergoemacs-command-loop--eat-unread unread-command-events
+                            unread-command-events nil))
+		    (ergoemacs-command-loop--eat)
                     ;; If the command changed anything, fix it here.
                     (unless (equal type ergoemacs-command-loop--current-type)
                       (setq type ergoemacs-command-loop--current-type
@@ -1825,7 +1839,6 @@ Emacs versions)."
                           universal ergoemacs-command-loop--universal
                           ergoemacs-command-loop--single-command-keys nil
                           continue-read (not ergoemacs-command-loop--exit)))
-                   
                    ;; Handle any keys that are bound in some translatable way.
                    ((setq command (ergoemacs-command-loop--key-lookup current-key))
                     ;; Setup external indicators of how the loop currently behaves.
