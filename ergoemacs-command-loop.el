@@ -1132,7 +1132,7 @@ is the :full command loop."
   (when (and (null ergoemacs-command-loop--prefix-timer)
 	     (eq ergoemacs-command-loop-type :prefix-timer))
     (setq ergoemacs-command-loop--prefix-timer
-	  (run-at-time t ergoemacs-command-loop--prefix-timer-polling-time #'ergoemacs-command-loop--start-for-prefix))))
+	  (run-with-idle-timer ergoemacs-command-loop--prefix-timer-polling-time t #'ergoemacs-command-loop--start-for-prefix))))
 
 (defun ergoemacs-command-loop--stop-prefix-timer ()
   "Stop prefix timer for ergoemacs-mode command loop."
