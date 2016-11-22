@@ -84,6 +84,8 @@ If `ergoemacs-mode' cant determine the value, return nil."
                           (and (fboundp keymap) (setq tmp (symbol-function keymap))
                                (ergoemacs-keymapp tmp) tmp))))))))
 
+(defvar ergoemacs-map-keymap--submap-stack nil)
+
 (defun ergoemacs-map-keymap--map-submap (sub-keymap function &optional original prefix flat-keymap nil-keys)
   "Expose SUB-KEYMAP, then apply `ergoemacs-map-keymap'.
 
@@ -95,15 +97,18 @@ FLAT-KEYMAP and NIL-KEYS arguments.  It is missing the keymap
 argument, since it is calculated from the exposed sub-keymap."
   (let ((tmp (ergoemacs-map-keymap--expose-keymap sub-keymap)))
     (when tmp
-      (ergoemacs-map-keymap function
-                            (cond
-                             ((eq original :setcdr)
-                              (ergoemacs-setcdr (cdr tmp)
-                                                (cdr (ergoemacs :original tmp))))
-                             (original
-                              (ergoemacs :original tmp))
-                             (t tmp))
-                            original prefix flat-keymap nil-keys))))
+      (unless (memq tmp ergoemacs-map-keymap--submap-stack)
+	(push tmp ergoemacs-map-keymap--submap-stack)
+	(ergoemacs-map-keymap function
+                              (cond
+                               ((eq original :setcdr)
+                                (ergoemacs-setcdr (cdr tmp)
+                                                  (cdr (ergoemacs :original tmp))))
+                               (original
+                                (ergoemacs :original tmp))
+                               (t tmp))
+                              original prefix flat-keymap nil-keys)
+	(pop ergoemacs-map-keymap--submap-stack)))))
 
 (defun ergoemacs-map-keymap (function keymap &optional original prefix flat-keymap nil-keys)
   "Call FUNCTION for all keys in hash table KEYMAP.
