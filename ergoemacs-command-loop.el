@@ -1339,10 +1339,10 @@ FN-ARG-P can be nil, :drop-rest or :rest"
             `(interactive))
          ,(when select-window-p
             '(select-window (posn-window (event-start last-command-event))))
+	 (ergoemacs-command-loop--execute-modify-command-list ',command)
          (if ,rest-p
              (apply ',command last-command-event ,@strip-args)
-           (,command last-command-event ,@drop-rest))
-	 (ergoemacs-command-loop--execute-modify-command-list ',command)))
+           (,command last-command-event ,@drop-rest))))
      
      ((not rest-p)
       `(lambda ,fn-args
@@ -1351,8 +1351,8 @@ FN-ARG-P can be nil, :drop-rest or :rest"
             `(interactive))
          ,(when select-window-p
             '(select-window (posn-window (event-start last-command-event))))
-         (,command last-command-event ,@strip-args)
-	 (ergoemacs-command-loop--execute-modify-command-list ',command))))))
+	 (ergoemacs-command-loop--execute-modify-command-list ',command)
+         (,command last-command-event ,@strip-args))))))
 
 (defun ergoemacs-command-loop--call-mouse-command (command &optional record-flag keys)
   "Call a possible mouse COMMAND.
@@ -1373,7 +1373,7 @@ The RECORD-FLAG and KEYS arguments are passed to
     (popup-menu command nil current-prefix-arg))
    (t
     (ignore-errors
-      (ergoemacs-command-loop--grow-interactive (ergoemacs-command-loop--modify-mouse-command command) record-flag keys)))))
+      (call-interactively (ergoemacs-command-loop--modify-mouse-command command) record-flag keys)))))
 
 (defvar ergoemacs-command-loop-describe-key-functions
   '(describe-key describe-function)
