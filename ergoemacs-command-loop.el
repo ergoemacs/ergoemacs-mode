@@ -790,12 +790,13 @@ KEYS is the keys information"
   (let ((keys (this-single-command-keys)))
     (unless (or (equal [] keys)
 		(ergoemacs-command-loop-p))
-      (ergoemacs-command-loop--message
-       "%s" (ergoemacs-command-loop--key-msg
-	     (setq ergoemacs-command--blink-on (not ergoemacs-command--blink-on))
-	     nil nil
-	     (this-single-command-keys)
-	     nil nil nil)))))
+      (when (ergoemacs-keymapp (key-binding keys))
+	(ergoemacs-command-loop--message
+	 "%s" (ergoemacs-command-loop--key-msg
+	       (setq ergoemacs-command--blink-on (not ergoemacs-command--blink-on))
+	       nil nil
+	       (this-single-command-keys)
+	       nil nil nil))))))
 
 (defun ergoemacs-command--echo-timer ()
   "Echo the keystrokes in the `ergoemacs-mode' way."
