@@ -596,7 +596,7 @@ When STORE-P is non-nil, save the tables."
     (ergoemacs-timing (intern (format "load-%s" pkg))
       (load (symbol-name pkg)))))
 
-(defcustom ergoemacs-use-unicode-symbols t
+(defcustom ergoemacs-use-unicode-symbols nil
   "Use unicode symbols in display."
   :type 'boolean
   :group 'ergoemacs-mode)
@@ -972,11 +972,10 @@ Valid values are:
 
 (define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation)
 
-(defcustom ergoemacs-command-loop-type :prefix-timer
+(defcustom ergoemacs-command-loop-type nil
   "Type of `ergoemacs-mode' command loop."
   :type '(choice
           (const :tag "Replace emacs command loop (full)" :full)
-	  (const :tag "Use command loop on prefix keys by timer" :prefix-timer)
           ;; (const :tag "Test mode; Don't actually run command " :test)
           (const :tag "No command loop support" nil))
   :group 'ergoemacs-comamnd-loop)

@@ -320,15 +320,30 @@ command selected, instead of rerunning `smex' and
   :type :before
   (setq ergoemacs-command-loop--single-command-keys nil))
 
-(defun ergoemacs-mode--undefined-advice ()
-  "Advice for undefined."
-  (let ((keys (this-single-command-keys)))
-    (if (member (substring keys -1) '([apps] [menu]))
-        (progn
-	  (setq ergoemacs-command-loop--eat nil)
-	  (ergoemacs-command-loop keys))
+(defun ergoemacs-mode--undefined-advice (&optional type)
+  "Advice for undefined.
+
+TYPE is the type of translation installed."
+  (let* ((keys (this-single-command-keys))
+	 (type (or type :normal))
+	 (translation (ergoemacs-translate--get type))
+	 (local-keymap (ergoemacs-translate--keymap translation))
+	 (local-key (substring keys -1))
+	 modal-p
+	 found)
+    (when (setq modal-p (ergoemacs :modal-p))
+      (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
+    (if (setq found (lookup-key local-keymap local-key))
+	(let ((i 1)) ;; Setup history
+	  (setq ergoemacs-command-loop--history nil)
+	  (while (<= i (- (length keys) 1))
+	    (push (list (substring keys 0 i) :normal nil
+			current-prefix-arg (aref (substring keys (- i 1) i) 0))
+		  ergoemacs-command-loop--history)
+	    (setq i (+ 1 i)))
+	  (ergoemacs-command-loop keys nil nil nil ergoemacs-command-loop--history))
       (ding)
-      (ergoemacs-command-loop--temp-message "%s is undefined!"
+      (ergoemacs-command-loop--temp-message "%s does not do anything!"
                                             (ergoemacs-key-description (this-single-command-keys)))
       (setq defining-kbd-macro nil)
       (force-mode-line-update)
