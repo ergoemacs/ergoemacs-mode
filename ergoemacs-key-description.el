@@ -505,7 +505,7 @@ When HELP is non-nil, insert and add help cross-refences."
         ret)
     (ergoemacs-timing describe-keymap
       (setq ret
-            (ergoemacs-cache (intern (format "describe-keymap-ret%s" (mapconcat (lambda(x) (number-to-string x)) (ergoemacs  map :key-hash) "_")))
+            (ergoemacs-cache (intern (format "describe-keymap-ret%s" (mapconcat (lambda(x) (md5 (format "%s" x))) (ergoemacs  map :key-hash) "_")))
               (ergoemacs-map-keymap
                (lambda (cur-key item)
                  (unless (eq item 'ergoemacs-prefix)
@@ -520,13 +520,13 @@ When HELP is non-nil, insert and add help cross-refences."
               ret)))
     (setq ret (append (list nil t) (sort ret (lambda(e1 e2) (ergoemacs :key-lessp (car e1) (car e2))))))
     (if help
-        (insert (ergoemacs-cache (intern (format "describe-keymap-help%s" (mapconcat (lambda(x) (number-to-string x)) (ergoemacs  map :key-hash) "_")))
+        (insert (ergoemacs-cache (intern (format "describe-keymap-help%s" (mapconcat (lambda(x) (md5 (format "%s" x))) (ergoemacs  map :key-hash) "_")))
                   (with-temp-buffer
                     (dolist (x ret)
                       (ergoemacs-key-description--keymap-item x map t)
                       (insert "\n"))
                     (buffer-string))))
-      (ergoemacs-cache (intern (format "describe-keymap%s" (mapconcat (lambda(x) (number-to-string x)) (ergoemacs  map :key-hash) "_")))
+      (ergoemacs-cache (intern (format "describe-keymap%s" (mapconcat (lambda(x) (md5 (format "%s" x))) (ergoemacs  map :key-hash) "_")))
         (concat "\n" (mapconcat (lambda(x) (ergoemacs-key-description--keymap-item x map)) ret "\n"))))))
 
 (defun ergoemacs-key-description--substitute-command-keys (string)
