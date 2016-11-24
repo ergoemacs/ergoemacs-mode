@@ -1142,7 +1142,8 @@ appropriate value based on the COMMAND."
 	  (not ergoemacs-command-loop--minibuffer-unsupported-p))
     (when (or (and command (symbolp command) (string-match-p "^\\(calc\\|math\\)" (symbol-name command)))
 	      (and (stringp command) (string-match-p "^[^:]*:\\(calc\\|math\\)" command))) 
-      (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t))
+      (ergoemacs-save-buffer-state
+       (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t)))
     (ergoemacs-command-loop--minibuffer-supported-p)))
 
 (defun ergoemacs-command-loop-full-p (&optional type)
@@ -1225,7 +1226,8 @@ The properties `point-entered' and `point-left' are handled by C internals."
 	(setq last-point cur-point
 	      cur-point (point)))))
   (setq disable-point-adjustment nil)
-  (set (make-local-variable 'ergoemacs-command-loop--point-motion-last-point) (point)))
+  (ergoemacs-save-buffer-state
+   (set (make-local-variable 'ergoemacs-command-loop--point-motion-last-point) (point))))
 
 (defun ergoemacs-command-loop--sync-point ()
   "Sometimes the window buffer and selected buffer are out of sync.

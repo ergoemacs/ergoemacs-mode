@@ -249,7 +249,8 @@ When TERMINAL is non-nil, run in a terminal instead of GUI."
       (kill-buffer buf)))
   (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-clean*"))
   (let ((inhibit-read-only t))
-    (set (make-local-variable 'ergoemacs-terminal) terminal)
+    (ergoemacs-save-buffer-state
+     (set (make-local-variable 'ergoemacs-terminal) terminal))
     (setq default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
     (delete-region (point-min) (point-max))
     (when (or (equal current-prefix-arg '(4))
@@ -296,8 +297,9 @@ The PROCESS is the process where the clean environment is run."
                         emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
                         ergoemacs-load))
-      (set (make-local-variable 'ergoemacs-batch-file)
-           (make-temp-file "ergoemacs-clean" nil ".bat"))
+      (ergoemacs-save-buffer-state
+       (set (make-local-variable 'ergoemacs-batch-file)
+	    (make-temp-file "ergoemacs-clean" nil ".bat")))
       (with-temp-file ergoemacs-batch-file
         (insert cmd))
       (setq default-directory (file-name-directory ergoemacs-batch-file)))
@@ -2444,15 +2446,18 @@ Sends shell prompt string to process, then turns on
       (require 'dirtrack)
       (cond
        ((string-match "cmd\\(proxy\\)?.exe" shell)
-        (set (make-local-variable 'dirtrack-list) (list "^\\([a-zA-Z]:.*\\)>" 1))
+        (ergoemacs-save-buffer-state
+	 (set (make-local-variable 'dirtrack-list) (list "^\\([a-zA-Z]:.*\\)>" 1)))
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))
        ((string-match "powershell.exe" shell)
-        (set (make-local-variable 'dirtrack-list) (list "^PS \\([a-zA-Z]:.*\\)>" 1))
+        (ergoemacs-save-buffer-state
+	 (set (make-local-variable 'dirtrack-list) (list "^PS \\([a-zA-Z]:.*\\)>" 1)))
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))
        (t ;; Assume basic abc@host:dir structure
-        (set (make-local-variable 'dirtrack-list) (list "^\\(?:.*?@\\)?\\(?:.*?:\\)?\\(?:[^ ]* \\)? *\\(.*\\) *\\([$#]\\|\\]\\)" 1))
+        (ergoemacs-save-buffer-state
+	 (set (make-local-variable 'dirtrack-list) (list "^\\(?:.*?@\\)?\\(?:.*?:\\)?\\(?:[^ ]* \\)? *\\(.*\\) *\\([$#]\\|\\]\\)" 1)))
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))))))
 

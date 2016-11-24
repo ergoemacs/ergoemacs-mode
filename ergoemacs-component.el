@@ -948,13 +948,16 @@ OBJ is the current object being modified, passed to
 	      (dolist (elt (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
 		(let ((plist (gethash hook (ergoemacs-component-struct-hook-plists elt))))
 		  (when (and plist (plist-get plist :command-loop-unsupported-p))
-		    (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t)
+		    (ergoemacs-save-buffer-state
+		     (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t))
 		    (throw 'unsupported-p t))))))
 	  (if ergoemacs-component-struct--composed-hook-minibuffer
 	      (push elt ergoemacs-component-struct--composed-hook-minibuffer)
-	    (set (make-local-variable 'ergoemacs-component-struct--composed-hook-minibuffer)
-		 (list elt))))
-      (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt)))))))
+	    (ergoemacs-save-buffer-state
+	     (set (make-local-variable 'ergoemacs-component-struct--composed-hook-minibuffer)
+		  (list elt)))))
+      (ergoemacs-save-buffer-state
+       (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt))))))))
 
 (defvar ergoemacs-component-struct--create-hooks nil)
 (defun ergoemacs-component-struct--create-hooks (&optional obj)
