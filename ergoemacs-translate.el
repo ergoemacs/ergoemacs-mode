@@ -316,6 +316,7 @@ LAYOUT is the keyboard layout."
     ;; Add 'ergoemacs-gui to the modifiers
     (when (and (symbolp event)
 	       (setq tmp (symbol-name event))
+	       (>= (length tmp) 2)
 	       (char-equal (aref (substring tmp -2 -1) 0) ?-)
 	       (memq (aref (substring tmp -1) 0)
 		     (list ?\[ ?i ?m)))
