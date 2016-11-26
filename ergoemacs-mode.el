@@ -706,6 +706,8 @@ SYMBOL is the symbol to set, NEW-VALUE is it's value."
 (defvar ergoemacs-override-keymap (make-sparse-keymap)
   "ErgoEmacs override keymap.")
 
+(ergoemacs :label ergoemacs-override-keymap)
+
 (defvar ergoemacs-override-alist nil
   "ErgoEmacs override keymaps.")
 
