@@ -1,6 +1,6 @@
 ;;; ergoemacs-test.el --- tests for ErgoEmacs issues
 
-;; Copyright © 2013-2015 Free Software Foundation, Inc.
+;; Copyright © 2013-2016 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -895,8 +895,8 @@ Should test issue #142"
        (kill-buffer (current-buffer)))
      (setq input-decode-map (copy-keymap old-map)))
     (should ret)))
-;;; Key inheritance 
 
+;;; Key inheritance 
 (ert-deftest ergoemacs-key-inheitance-alt-up-and-down ()
   "Test M-up and M-down keys make sure they are moving lines"
   (ergoemacs-require 'move-and-transpose-lines)
@@ -1365,6 +1365,48 @@ Should test issue #142"
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
+(ert-deftest ergoemacs-test-issue-437 ()
+  "Test windmove bindings should be set everywhere."
+  :tags '(:slow)
+  (let* ((emacs-exe (ergoemacs-emacs-exe))
+         (w-file (expand-file-name "global-test" ergoemacs-dir))
+         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+    (with-temp-file temp-file
+      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+              (or (and (boundp 'wait-for-me)
+                       "(setq debug-on-error t debug-on-quit t)") "")
+              "(ergoemacs-package foo \n"
+	      ":bind* ((\"<M-left>\" . windmove-left)"
+	      "(\"<M-right>\" . windmove-right)"
+	      "(\"<M-up>\" . windmove-up)"
+	      "(\"<M-down>\" . windmove-down)))"
+	      "(setq ergoemacs-mode--start-p t)"
+              "(ergoemacs-mode 1)\n"
+              "(when (and (eq (key-binding (kbd \"<M-left>\")) 'windmove-left)\n"
+	      "           (eq (key-binding (kbd \"<M-right>\")) 'windmove-right)\n"
+              "           (eq (key-binding (kbd \"<M-up>\")) 'windmove-up)\n"
+              "           (eq (key-binding (kbd \"<M-down>\")) 'windmove-down))\n"
+              "(with-temp-file \"" w-file "\")\n"
+              "   (message \"Passed\")"
+              "  (insert \"Found\"))\n"
+              (or (and (boundp 'wait-for-me) "")
+                  "(kill-emacs)")))
+    (byte-compile-file temp-file)
+    (message "%s"
+             (shell-command-to-string
+              (format "%s %s -Q -L %s -l %s -l %s"
+                      emacs-exe (if (boundp 'wait-for-me) "-debug-init" "--batch")
+                      (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
+                      (expand-file-name (file-name-sans-extension (locate-library "ergoemacs-mode")))
+                      temp-file)))
+    (should (file-exists-p w-file))
+    (when  (file-exists-p temp-file)
+      (delete-file temp-file))
+    (when  (file-exists-p (concat temp-file "c"))
+      (delete-file (concat temp-file "c")))
+    (when (file-exists-p w-file)
+      (delete-file w-file))))
+
 ;;; Not sure why this doesn't actually use `ergoemacs-test-major-mode-map'.
 (define-derived-mode ergoemacs-test-major-mode fundamental-mode "ET"
   "Major mode for testing some issues with `ergoemacs-mode'.
@@ -1779,8 +1821,10 @@ hash appropriaetly."
 	      (lambda()
 		(throw 'found-key (mapcar (lambda(key) (if (consp key)
                                                            (key-binding (eval key))
-                                                         (key-binding key))) ',keys)))))
-	 ,minibuffer-call) nil))
+                                                         (key-binding key)))
+					  ',keys)))))
+	 ,minibuffer-call)
+       nil))
 
 (ert-deftest ergoemacs-test-icy-407-minibuffer ()
   "Test minibuffer keybindings for `icy-mode'.
@@ -1799,6 +1843,7 @@ M-r   = `kill-word'"
 		 [f11] [f12] (read-kbd-macro "M-o") (read-kbd-macro "M-s") (read-kbd-macro "M-r"))
 		'(previous-history-element next-history-element forward-word ergoemacs-move-cursor-next-pane kill-word)))))
 (icy-mode -1))
+
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
