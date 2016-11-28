@@ -317,6 +317,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
                         (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
                         (setq ergoemacs-require--ini-p t
                               ergoemacs-component-struct--apply-ensure-p t)
+			(ergoemacs-setup-override-keymap)                       
                         (if refresh-p
                             (message "Ergoemacs-mode keys refreshed (%s:%s)"
                                      ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))
@@ -720,8 +721,8 @@ SYMBOL is the symbol to set, NEW-VALUE is it's value."
   "Remove `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
 
-(add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-setup-override-keymap)
-(add-hook 'ergoemacs-mode-shudown-hook 'ergoemacs-setup-override-keymap)
+;; (add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-setup-override-keymap)
+;; (add-hook 'ergoemacs-mode-shudown-hook 'ergoemacs-setup-override-keymap)
 
 
 ;;; Frequently used commands as aliases
