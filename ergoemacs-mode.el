@@ -724,9 +724,7 @@ SYMBOL is the symbol to set, NEW-VALUE is it's value."
 (add-hook 'ergoemacs-mode-shudown-hook 'ergoemacs-setup-override-keymap)
 
 
-
 ;;; Frequently used commands as aliases
-
 (defcustom ergoemacs-use-aliases t
   "Use aliases defined by `ergoemacs-aliases'.
 
