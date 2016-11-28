@@ -1317,7 +1317,7 @@ will unbind ergoemacs keys.
             (ergoemacs keymap :use-local-unbind-list-key local-unbind-list-p))))
        (t nil)))))
 
-(defvar ergoemacs-map-properties--set-map-list '(isearch-mode-map ergoemacs-override-keymap)
+(defvar ergoemacs-map-properties--set-map-list '(isearch-mode-map)
   "`ergoemacs-mode' modified maps.
 
 This is a list of maps that  `ergoemacs-mode' modifies directly.")
