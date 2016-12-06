@@ -785,18 +785,53 @@ KEYS is the keys information"
 (defvar ergoemacs-command--blink-on nil)
 (defvar ergoemacs-orig-echo-keystrokes nil)
 
+(defvar ergoemacs-command--timeout-timer nil)
+(defvar ergoemacs-command--timeout-keys nil)
+
+(defun ergoemacs-command--timer-timeout ()
+  "Send the [ergoemacs-timeout] event (after timeout)."
+  (let ((keys (this-single-command-keys)))
+    (when ergoemacs-command--timeout-timer
+      (cancel-timer ergoemacs-command--timeout-timer)
+      (setq ergoemacs-command--timeout-timer nil)
+      (when (equal keys ergoemacs-command--timeout-keys)
+	(push 'ergoemacs-timeout unread-command-events))
+      (setq ergoemacs-command--timeout-keys nil))))
+
 (defun ergoemacs-command--echo-prefix ()
   "Echos prefix keys in the ergoemacs-mode way."
-  (let ((keys (this-single-command-keys)))
+  (let ((keys (this-single-command-keys))
+	ret timeout)
+    (when (and ergoemacs-command--timeout-timer
+	       (not (equal keys ergoemacs-command--timeout-keys)))
+      (cancel-timer ergoemacs-command--timeout-timer)
+      (setq ergoemacs-command--timeout-keys nil
+	    ergoemacs-command--timeout-timer nil))
     (unless (or (equal [] keys)
 		(ergoemacs-command-loop-p))
-      (when (ergoemacs-keymapp (key-binding keys))
-	(ergoemacs-command-loop--message
-	 "%s" (ergoemacs-command-loop--key-msg
-	       (setq ergoemacs-command--blink-on (not ergoemacs-command--blink-on))
-	       nil nil
-	       (this-single-command-keys)
-	       nil nil nil))))))
+      (when (ergoemacs-keymapp (setq ret (key-binding keys)))
+	(when (setq timeout (key-binding (vconcat keys [ergoemacs-timeout])))
+	  (cond
+	   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut) 
+	    (push 'ergoemacs-timeout unread-command-events))
+	   ((not (region-active-p))) ;; active
+	   ((and this-command-keys-shift-translated
+                 (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
+	   ((and (not ergoemacs-ctl-c-or-ctl-x-delay) ;; Immediate
+                 (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
+	    (push 'ergoemacs-timeout unread-command-events))
+           (t
+            (setq ergoemacs-command--timeout-keys keys
+		  ergoemacs-command--timeout-timer
+                  (run-at-time t ergoemacs-ctl-c-or-ctl-x-delay #'ergoemacs-command--timer-timeout)))
+           ))
+        (unless unread-command-events
+	  (ergoemacs-command-loop--message
+	   "%s" (ergoemacs-command-loop--key-msg
+		 (setq ergoemacs-command--blink-on (not ergoemacs-command--blink-on))
+		 nil nil
+		 (this-single-command-keys)
+		 nil nil nil)))))))
 
 (defun ergoemacs-command--echo-timer ()
   "Echo the keystrokes in the `ergoemacs-mode' way."
