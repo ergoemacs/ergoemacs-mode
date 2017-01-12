@@ -1556,7 +1556,8 @@ needed (and resotre them to the original values)."
   "Call the COMMAND interactively.  Also handle mouse events (if possible.)
 The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'."
   (ergoemacs-command-loop--sync-point)
-  (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
+  (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil
+	this-command-keys-shift-translated (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated))
   (cond
    ((and (eventp last-command-event)
          (consp last-command-event)
@@ -2319,6 +2320,16 @@ For instance in QWERTY M-> is shift translated to M-."
 	(setq unread-command-events (append (ergoemacs-translate--emacs-shift shift-trans) '(ergoemacs-timeout)))
       (setq ergoemacs-this-command-keys-shift-translated t)
       (ergoemacs-command-loop--internal shift-trans))))
+
+(defun ergoemacs-command-loop--shift-translate ()
+  "Shift translation."
+  (interactive)
+  (let ((shift-trans (ergoemacs-translate--emacs-shift (this-single-command-keys) 'ergoemacs-shift)))
+    (message "%s->%s" (key-description (this-single-command-keys))
+	     (key-description shift-trans))
+    (setq ergoemacs-this-command-keys-shift-translated t
+	  this-command-keys-shift-translated t)
+    (ergoemacs-command-loop--call-interactively (key-binding shift-trans))))
 (provide 'ergoemacs-command-loop)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-command-loop.el ends here
