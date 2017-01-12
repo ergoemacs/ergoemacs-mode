@@ -341,7 +341,7 @@ TYPE is the type of translation installed."
 			current-prefix-arg (aref (substring keys (- i 1) i) 0))
 		  ergoemacs-command-loop--history)
 	    (setq i (+ 1 i)))
-	  (ergoemacs-command-loop keys nil nil nil ergoemacs-command-loop--history))
+	  (ergoemacs-command-loop--internal keys nil nil nil ergoemacs-command-loop--history))
       (ding)
       (ergoemacs-command-loop--temp-message "%s does not do anything!"
                                             (ergoemacs-key-description (this-single-command-keys)))

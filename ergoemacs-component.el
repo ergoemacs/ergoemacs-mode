@@ -461,6 +461,7 @@ Allows the component not to be calculated."
                (ergoemacs-gethash (nth 1 def) ergoemacs-translation-hash)))
       `(lambda(&optional arg)
          (interactive "P")
+	 (setq ergoemacs-this-command-keys-shift-translated t)
          (ergoemacs-command-loop ,(nth 0 def) ',(nth 1 def))))
      ((ergoemacs-keymapp (ergoemacs-sv def))
       (ergoemacs-sv def))

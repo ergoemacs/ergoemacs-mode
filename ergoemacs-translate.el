@@ -156,6 +156,12 @@ modifier occurred, such as in `ergoemacs-translate--meta-to-escape'.
           (setq found t)))
       (if found (vconcat seq) nil))))
 
+(defvar ergoemacs-translate--define-key-if-defined-p t
+  "Define a key if even if it is already defined in the keymap.")
+(defvar ergoemacs-translate--define-key-replacement-function nil
+  "When non-nil, use the replacement function for defining a key.")
+
+
 (defun ergoemacs-translate--meta-to-escape (key-seq)
   "Escapes a KEY-SEQ M-q becomes ESC q.
 KEY-SEQ must be a vector.  If there is no need to escape the key sequence return nil."
@@ -226,6 +232,25 @@ If no changes are performed, return nil."
         (setq ret new-key))
       ret)))
 
+(defun ergoemacs-translate--ergoemacs-timeout (key)
+  "Translates KEY to allow Shift translation to default to key sequence.
+
+This is done for key sequences like Ctrl+Shift+c which should
+allow the Ctrl+c key sequence to be called when text is
+seleceted (instead of copying the text)."
+  (let (modifiers basic)
+    (when (and (vectorp key)
+	       ;; only makes sense for single key combinations.
+	       (= (length key) 2)
+	       (eq 'ergoemacs-timeout (aref key 1))
+	       ;; Doesn't make sense if shifted...
+	       (not (or (memq 'shift (setq modifiers (ergoemacs-translate--event-modifiers (aref key 0))))
+			(memq 'ergoemacs-shift modifiers))))
+      (setq basic (ergoemacs-translate--event-basic-type (aref key 0))
+	    ergoemacs-translate--define-key-if-defined-p nil
+            ergoemacs-translate--define-key-replacement-function 'ergoemacs-command-loop--shift-timeout)
+      (vector (ergoemacs-translate--event-convert-list (append modifiers (list 'shift basic)))))))
+
 (defun ergoemacs-translate--to-string (key)
   "Translates KEY to string format.
 
@@ -244,7 +269,8 @@ If no chanegs are performed, return nil."
     ergoemacs-translate--swap-apps
     ergoemacs-translate--swap-menu
     ergoemacs-translate--to-string
-    ergoemacs-translate--to-vector)
+    ergoemacs-translate--to-vector
+    ergoemacs-translate--ergoemacs-timeout)
   "Functions to apply to key.
 
 These functions take a key as an argument and translate it in
@@ -259,7 +285,11 @@ variants are created using `ergoemacs-translate--apply-funs'."
     (apply function key args)
     (dolist (fn ergoemacs-translate--apply-funs)
       (when (setq test-key (funcall fn key))
-        (apply function test-key args)))))
+        (apply function test-key args)
+	(setq ergoemacs-translate--define-key-if-defined-p t
+	      ergoemacs-translate--define-key-replacement-function nil)))))
+
+
 
 (defun ergoemacs-translate--define-key (keymap key def)
   "Similar to `define-key', with the following differences:
@@ -273,7 +303,11 @@ DEF is the definition of what will be run.
 
 This uses `ergoemacs-translate--apply-key'"
   (unwind-protect
-      (ergoemacs-translate--apply-key key (lambda(new-key) (define-key keymap new-key def)))
+      (ergoemacs-translate--apply-key
+       key (lambda(new-key)
+	     (when (or ergoemacs-translate--define-key-if-defined-p
+		       (not (lookup-key keymap new-key)))
+	       (define-key keymap new-key (or ergoemacs-translate--define-key-replacement-function def)))))
     (setq ergoemacs-define-key-after-p nil)))
 
 (defun ergoemacs-translate--event-modifier-hash (&optional layout)

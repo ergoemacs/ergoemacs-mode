@@ -798,6 +798,9 @@ KEYS is the keys information"
 	(push 'ergoemacs-timeout unread-command-events))
       (setq ergoemacs-command--timeout-keys nil))))
 
+(defvar ergoemacs-this-command-keys-shift-translated nil
+  "ergoemacs override of shift translation in command loop.")
+
 (defun ergoemacs-command--echo-prefix ()
   "Echos prefix keys in the ergoemacs-mode way."
   (let ((keys (this-single-command-keys))
@@ -815,7 +818,7 @@ KEYS is the keys information"
 	   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut) 
 	    (push 'ergoemacs-timeout unread-command-events))
 	   ((not (region-active-p))) ;; active
-	   ((and this-command-keys-shift-translated
+	   ((and (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated)
                  (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
 	   ((and (not ergoemacs-ctl-c-or-ctl-x-delay) ;; Immediate
                  (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
@@ -823,8 +826,7 @@ KEYS is the keys information"
            (t
             (setq ergoemacs-command--timeout-keys keys
 		  ergoemacs-command--timeout-timer
-                  (run-at-time t ergoemacs-ctl-c-or-ctl-x-delay #'ergoemacs-command--timer-timeout)))
-           ))
+                  (run-at-time t ergoemacs-ctl-c-or-ctl-x-delay #'ergoemacs-command--timer-timeout)))))
         (unless unread-command-events
 	  (ergoemacs-command-loop--message
 	   "%s" (ergoemacs-command-loop--key-msg
@@ -1570,7 +1572,8 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'.
     (ergoemacs-specials
      (ergoemacs-command-loop--grow-interactive command record-flag keys)))
    (t
-    (ergoemacs-command-loop--grow-interactive command record-flag keys))))
+    (ergoemacs-command-loop--grow-interactive command record-flag keys)))
+  (setq ergoemacs-this-command-keys-shift-translated nil))
 
 
 (defun ergoemacs-command-loop-start ()
@@ -1823,7 +1826,8 @@ Emacs versions)."
                      "Key sequence %s aborted by %s"
                      (ergoemacs-key-description last-current-key)
                      (ergoemacs-key-description raw-key))
-                    (setq quit-flag t))
+                    (setq quit-flag t
+			  ergoemacs-this-command-keys-shift-translated nil))
                    ;; Handle local commands.
                    ((and (or modal-p
                              (not (equal current-key raw-key)))
@@ -2130,7 +2134,7 @@ pressed the translated key by changing
     (ergoemacs-command-loop--sync-point)
     (let ((trials (ergoemacs-translate--trials key))
         tmp tmp2 ret)
-    (setq this-command-keys-shift-translated nil)
+      (setq this-command-keys-shift-translated nil)
     (catch 'found-command
       (dolist (cur-key trials)
         (when cur-key
@@ -2184,7 +2188,7 @@ pressed the translated key by changing
 		   ((< 1  (length ergoemacs-command-loop--history)))
                    ((not (region-active-p))) ;; its a key sequence.
                    
-                   ((and this-command-keys-shift-translated
+                   ((and (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated)
                          (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
 
                    ;; Immediate
@@ -2307,7 +2311,14 @@ For instance in QWERTY M-> is shift translated to M-."
             (setq ergoemacs-command-loop--single-command-keys nil)))))
     ;; (ergoemacs-command-loop--spinner-end)
     ))
-
+(defun ergoemacs-command-loop--shift-timeout ()
+  "This is the shift-timeout function for a key."
+  (interactive)
+  (let ((shift-trans (ergoemacs-translate--emacs-shift (this-single-command-keys))))
+    (if (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+	(setq unread-command-events (append (ergoemacs-translate--emacs-shift shift-trans) '(ergoemacs-timeout)))
+      (setq ergoemacs-this-command-keys-shift-translated t)
+      (ergoemacs-command-loop--internal shift-trans))))
 (provide 'ergoemacs-command-loop)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-command-loop.el ends here
