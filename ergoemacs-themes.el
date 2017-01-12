@@ -244,7 +244,6 @@
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "C-S-c") ("C-c" :normal))
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
   
@@ -326,7 +325,6 @@
   (global-set-key (kbd "C-x k") nil)
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
   (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
-  (global-set-key (kbd "C-S-x") ("C-x" :normal))
   (global-set-key (kbd "C-x C-b") 'ibuffer)
   (global-set-key (kbd "C-y") '(redo undo-tree-redo ergoemacs-redo) "↷ redo")
   
@@ -688,7 +686,6 @@
   
   ;; Fixed Component; Note that <timeout> is the actual function.
   (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "C-S-c") ("C-c" :normal))
   (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-S-x") ("C-x" :normal))
   (global-set-key (kbd "C-z") 'undo)
@@ -1112,7 +1109,7 @@
     (global-set-key [remap ergoemacs-print-buffer-confirm]
                     'pr-interface)))
 
-(ergoemacs-component ergoemacs-swiper ()
+(ergoemacs-component swiper ()
   "Swiper component"
   (when ivy-mode
     (setq ivy-use-virtual-buffers t)
@@ -1879,9 +1876,7 @@
 (ergoemacs-theme lvl0 ()
   "CUA-mode style"
   (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "C-S-c") ("C-c" :normal))
   (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
-  (global-set-key (kbd "C-S-x") ("C-x" :normal))
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
   
