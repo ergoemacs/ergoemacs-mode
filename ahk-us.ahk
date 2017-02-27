@@ -851,6 +851,8 @@ IsExternalProgram(){
      External = 1
   } else if (WinActive("ahk_class Transparent Windows Client")){
      External = 1
+  } else if (WinActive("ahk_class QWidget")){
+     External = 1
   }
   Return External
 }
