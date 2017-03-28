@@ -48,12 +48,12 @@
 
 (require 'advice)
 
-(ergoemacs-package undo-tree
-    :ensure t
-    (global-undo-tree-mode 1))
+;; (ergoemacs-package undo-tree
+;;     :ensure t
+;;     (global-undo-tree-mode 1))
 
-(ergoemacs-package persistent-soft
-    :ensure t)
+;; (ergoemacs-package persistent-soft
+;;     :ensure t)
 
 (ergoemacs-component standard-vars ()
   "Enabled/changed variables/modes"
@@ -242,6 +242,7 @@
   (define-key undo-tree-map (kbd "M-_") nil)
   
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
+  (global-set-key (kbd "M-S-z") '(redo undo-tree-redo ergoemacs-redo))
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
@@ -1129,6 +1130,10 @@
     (global-set-key [remap locate] 'counsel-locate)
     ;; (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
     ;; (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+    (define-key ivy-minibuffer-map (kbd "M-RET") 'ivy-alt-done)
+    ;; (define-key ivy-minibuffer-map (kbd "C-RET") 'ivy-dispatching-done)
+    ;; (define-key ivy-minibuffer-map (kbd "M-S-RET") 'ivy-immediate-done)
+    ;; (define-key ivy-minibuffer-map [remap avy-goto-word-or-subword-1] 'ivy-avy)
     ))
 
 (ergoemacs-component ergoemacs-banish-shift ()
