@@ -2730,6 +2730,27 @@ With a prefix argument like \\[universial-argument] in an
 (unless (fboundp 'ergoemacs-test)
   (autoload 'ergoemacs-test (expand-file-name "ergoemacs-test.el" ergoemacs-dir) nil t))
 
+(defun ergoemacs-where-is-old-binding ()
+  "Find where the old binding of a key is now located."
+  (interactive)
+  (let (ergoemacs-mode
+        key-seq
+	cmd
+        key-seq2)
+    (unwind-protect
+        (progn
+          (setq overriding-terminal-local-map (ergoemacs :original  global-map))
+          (setq key-seq (read-key-sequence "Old Emacs Command: ")
+                cmd (key-binding key-seq)
+                overriding-terminal-local-map nil
+                key-seq2 (where-is-internal cmd nil t)))
+      (setq overriding-terminal-local-map nil))
+    (message "%s; %s" key-seq key-seq2)
+    (if key-seq2
+        (message "Old Emacs Key: %s-> Ergoemacs Key: %s" (ergoemacs-key-description  key-seq)
+                 (ergoemacs-key-description key-seq2))
+      (message "Could not find old emacs %s" (ergoemacs-key-description key-seq)))))
+
 (provide 'ergoemacs-functions)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-functions.el ends here
