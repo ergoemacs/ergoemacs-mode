@@ -126,17 +126,17 @@ installing the original keymap above the ergoemacs-mode installed keymap.
          (ergoemacs-emulations)))))
 
 ;; This shouldn't be called at run-time; This fixes the byte-compile warning.
-(fset 'ergoemacs-theme-component--parse
-      #'(lambda(keys-and-body &optional skip-first)
-          "Parse KEYS-AND-BODY, optionally skipping the name and
+(defun ergoemacs-theme-component--parse
+    (keys-and-body &optional skip-first)
+  "Parse KEYS-AND-BODY, optionally skipping the name and
 documentation with SKIP-FIRST.
 
 Uses `ergoemacs-theme-component--parse-keys-and-body' and
   `ergoemacs-theme-component--parse-remaining'."
-          (ergoemacs-theme-component--parse-keys-and-body
-           keys-and-body
-           'ergoemacs-theme-component--parse-remaining
-           skip-first)))
+  (ergoemacs-theme-component--parse-keys-and-body
+   keys-and-body
+   'ergoemacs-theme-component--parse-remaining
+   skip-first))
 
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
