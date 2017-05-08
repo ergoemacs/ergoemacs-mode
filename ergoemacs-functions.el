@@ -1,6 +1,6 @@
 ;;; ergoemacs-functions.el --- miscellaneous functions for ErgoEmacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
+;; Copyright (C) 2013, 2014, 2017 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Authors: Xah Lee, Matthew Fidler, Drew Adams, Ting-Yu Lin, David
@@ -2115,7 +2115,7 @@ With a prefix, force regeneration. "
     ;; Tilde (ñãõÑÃÕ)
     (?\361 . ?n)(?\343 . ?a)(?\365 . ?o)(?\321 . ?N)(?\303 . ?A)(?\325 . ?O)
     (?\337 . "ss")                      ; S-zed (Beta) (ß)
-    (?\253 . ?")(?\273 . ?")            ; Guillemets -> double quotes («»)
+    (?\253 . ?\")(?\273 . ?\")          ; Guillemets -> double quotes («»)
     (?\346 . "ae")(?\306 . "AE")        ; ae, AE (æÆ)
     (?\370 . ?o)(?\330 . ?O)            ; Slashed O (øØ)
     (?\260 . ?@)(?\345 . ?a)(?\305 . ?A) ; Angstrom (degree) (°åÅ)
