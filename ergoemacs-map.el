@@ -240,12 +240,13 @@ save the infromationin the `ergoemacs-map--alist' hash."
   "Apply maps for ALISTS.
 
 SYMBOL is the symbol where this alist is located and is used to
-save the infromationin the `ergoemacs-map--alist' hash."
+save the information in the `ergoemacs-map--alist' hash."
   (let (old-len)
     ;; Only modify if the list has changed length.
     (if (and symbol
              (setq old-len (ergoemacs-gethash symbol ergoemacs-map--alist))
-             (= (length alists) old-len)) alists
+             (= (length alists) old-len))
+	alists
       (when symbol
         (puthash symbol (length alists) ergoemacs-map--alist)
         (setq ergoemacs-map--breadcrumb (format "%s:%s" ergoemacs-map--breadcrumb symbol)))
@@ -254,6 +255,7 @@ save the infromationin the `ergoemacs-map--alist' hash."
          (cond
           ((consp elt)
            (ergoemacs-map--alist (list elt)))
+	  ((not (boundp elt)))
           (t
            (set elt (ergoemacs-map--alist (symbol-value elt) elt))
            elt)))
