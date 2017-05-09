@@ -914,7 +914,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
     (let* ((lay (or layout ergoemacs-keyboard-layout))
            (theme (or theme ergoemacs-theme))
            (layout (symbol-value (ergoemacs :layout  lay)))
-           (file-dir (expand-file-name "bindings" (expand-file-name "eurgoemacs-extras" user-emacs-directory)))
+           (file-dir (expand-file-name "bindings" (expand-file-name "ergoemacs-extras" user-emacs-directory)))
            (file-name (expand-file-name (concat theme "-" lay "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir))
            (reread reread)
            (old-theme ergoemacs-theme)

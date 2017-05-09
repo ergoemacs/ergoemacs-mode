@@ -323,7 +323,7 @@ Tries to get the value from `ergoemacs-mode-names'.  If not guess the language n
   "List of major-modes known to `ergoemacs-mode'.")
 
 (defun ergoemacs-menu--get-major-modes ()
-  "Gets a list of language modes known to `eurgoemacs-mode'.
+  "Gets a list of language modes known to `ergoemacs-mode'.
 This gets all major modes known from the variables:
 -  `interpreter-mode-alist';
 -  `magic-mode-alist'
