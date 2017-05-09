@@ -837,6 +837,9 @@ LAYOUT is the current keyboard layout.  Defaults to
        (ergoemacs-component-struct-cond-maps obj))
       hash))))
 
+
+(defvar ergoemacs-component-struct--unbound-maps nil)
+
 (defun ergoemacs-component-struct--minor-mode-map-alist (&optional obj)
   "Get the ending maps for `minor-mode-map-alist' using the ergoemacs structures OBJ."
   (let (ret map parent)
@@ -846,9 +849,22 @@ LAYOUT is the current keyboard layout.  Defaults to
              map (make-sparse-keymap))
        (ergoemacs map :label (list 'cond-map key (intern ergoemacs-keyboard-layout)))
        (set-keymap-parent map parent)
-       (push (cons key map) ret))
+       (if (boundp key)
+           (push (cons key map) ret)
+         (push (cons key map) ergoemacs-component-struct--unbound-maps)))
      (ergoemacs-component-struct--minor-mode-map-alist-hash obj))
     ret))
+
+(defun ergoemacs-component-struct--add-unbound (&rest _ignore)
+  "Add recently bound variables to `minor-mode-map-alist'."
+  (let (new)
+    (dolist (elt ergoemacs-component-struct--unbound-maps)
+      (if (boundp (car elt))
+          (push elt minor-mode-map-alist)
+        (push elt new)))
+    (setq ergoemacs-component-struct--unbound-maps new)))
+
+(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-component-struct--add-unbound)
 
 (defun ergoemacs-component-struct--hooks (&optional obj ret)
   "Gets a list of hooks that need to be defined eor OBJ.
