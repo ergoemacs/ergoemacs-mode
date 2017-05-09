@@ -1244,10 +1244,13 @@ If :type is :quail use the 180 length string that
   "Create SVG for LAYOUT. Optionally REREAD kbd.svg before creating svg."
   (let* ((lay (or layout ergoemacs-keyboard-layout))
          (layout (symbol-value (ergoemacs :layout  lay)))
-         (file-dir (expand-file-name "layouts" (expand-file-name "ergoemacs-extras" user-emacs-directory)))
+	 (extras (expand-file-name "ergoemacs-extras" user-emacs-directory))
+         (file-dir (expand-file-name "layouts" extras))
          (file-name (expand-file-name (concat lay ".svg") file-dir))
          (reread reread)
          pt)
+    (if (not (file-exists-p extras))
+        (make-directory extras t))
     (if (and (file-exists-p file-name) (not reread)) file-name
       (when (eq reread :svg)
         (setq reread nil))

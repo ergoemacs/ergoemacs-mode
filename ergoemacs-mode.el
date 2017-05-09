@@ -488,10 +488,14 @@ NO-MESSAGE doesn't tell anything about clearing the cache."
   (interactive)
   (setq ergoemacs-map--cache-save :remove)
   (ergoemacs-map--cache-save)
-  (dolist (ext '("svg" "png"))
-    (dolist (file (file-expand-wildcards (expand-file-name (concat "*." ext) (expand-file-name "bindings" (expand-file-name "ergoemacs-extras" user-emacs-directory)))))
-      (delete-file file)
-      (message "Remove %s, since keys may have changed." file)))
+  
+  (let ((extras (expand-file-name "ergoemacs-extras" user-emacs-directory)))
+    (if (not (file-exists-p extras))
+        (make-directory extras t))
+    (dolist (ext '("svg" "png"))
+      (dolist (file (file-expand-wildcards (expand-file-name (concat "*." ext) (expand-file-name "bindings" extras))))
+	(delete-file file)
+	(message "Remove %s, since keys may have changed." file))))
 
   (unless no-message
     (message "Clear cache for next startup.")))

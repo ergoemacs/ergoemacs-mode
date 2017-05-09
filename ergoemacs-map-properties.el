@@ -262,6 +262,8 @@ file."
          (extras (expand-file-name "ergoemacs-extras" user-emacs-directory))
          (file2 (expand-file-name (format "ergoemacs-%s-%s.el%s" (or other "global") ergoemacs--system (or (and ergoemacs--gzip ".gz") ""))
                                   extras)))
+    (if (not (file-exists-p extras))
+        (make-directory extras t))
     (or
      (and (file-readable-p file2) file2)
      (and (file-readable-p file) file)
