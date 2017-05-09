@@ -152,7 +152,7 @@
 
 (defvar ergoemacs-component-struct--define-key-current nil)
 
-(defvar ergoemacs-component-struct--ensure-refreshed-p nil)
+(defvar ergoemacs-component-struct--ensure-refreshed-p t)
 (defun ergoemacs-component-struct--ensure (package &optional defer autoloads)
   "Ensure PACKAGE is installed.
 
