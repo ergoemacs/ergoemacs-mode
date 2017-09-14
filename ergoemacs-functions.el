@@ -2367,7 +2367,7 @@ exists and opens it in emacs, if possible."
     ;; Tilde (ñãõÑÃÕ)
     (?\361 . ?n)(?\343 . ?a)(?\365 . ?o)(?\321 . ?N)(?\303 . ?A)(?\325 . ?O)
     (?\337 . "ss")                      ; S-zed (Beta) (ß)
-    (?\253 . ?")(?\273 . ?")            ; Guillemets -> double quotes («»)
+    (?\253 . ?\")(?\273 . ?\")          ; Guillemets -> double quotes («»)
     (?\346 . "ae")(?\306 . "AE")        ; ae, AE (æÆ)
     (?\370 . ?o)(?\330 . ?O)            ; Slashed O (øØ)
     (?\260 . ?@)(?\345 . ?a)(?\305 . ?A) ; Angstrom (degree) (°åÅ)
