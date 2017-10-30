@@ -651,7 +651,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
           (ergoemacs-timing ergoemacs-create-global
             (let* ((emacs-exe (ergoemacs-emacs-exe))
                    (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
-                   (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(ergoemacs-map-properties--default-global-gen) (kill-emacs)\"" emacs-exe default-directory)))
+                   (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(progn (ergoemacs-map-properties--default-global-gen) (kill-emacs))\"" emacs-exe default-directory)))
               (message "%s" (shell-command-to-string cmd))
               (ergoemacs-map-properties--get-original-global-map))))))))
 
