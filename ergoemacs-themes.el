@@ -338,6 +338,7 @@
   (define-key org-mode-map (kbd "<M-up>") 'ergoemacs-org-metaup)
   (define-key org-mode-map (kbd "<M-left>") 'ergoemacs-org-metaleft)
   (define-key org-mode-map (kbd "<M-right>") 'ergoemacs-org-metaright)
+  (define-key org-mode-map (kbd "<M-RET>") 'org-insert-item)
   (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-yank)
   (define-key org-mode-map (kbd "C-v") 'ergoemacs-org-yank)
 
