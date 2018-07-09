@@ -438,7 +438,7 @@ Save information about what HOOK is running function FN."
 
 
 (defvar ergoemacs-map-properties--modify-run-mode-hooks-excluded
-  '(font-lock-mode-hook)
+  '(font-lock-mode-hook emojify-emojify-mode-line mu4e-update-mail-and-index)
   "List of hooks where keymaps should not be modified.")
 
 (defun ergoemacs-map-properties--modify-run-mode-hooks-p (hook)
