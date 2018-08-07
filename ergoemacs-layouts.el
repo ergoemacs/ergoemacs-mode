@@ -27,6 +27,8 @@
 ;; 
 
 ;;; Code:
+(eval-when-compile
+  (require 'ergoemacs-macros))
 
 (defvar ergoemacs-layout-asset
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
@@ -54,6 +56,20 @@
     "" "Ê" "À" "Y" "X" ":" "K" "?" "Q" "G" "H" "F" "" "" "")
   "French BÉPO layout.  URL `http://bepo.fr/'.")
 
+
+;; From tnielens
+(defvar ergoemacs-layout-be
+  '("" "²" "&" "é" "\"" "'" "(" "§" "è" "!" "ç" "à" ")" "-" ""
+    "" ""  "a" "z" "e" "r" "t" "y" "u" "i" "o" "p" "^" "$" ""
+    "" ""  "q" "s" "d" "f" "g" "h" "j" "k" "l" "m" "ù" "µ" ""
+    "" "<"  "w" "x" "c" "v" "b" "n" "," ";" ":" "=" "" "" ""
+    ;; Shifted
+    "" "³" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "°" "_" ""
+    "" ""  "A" "Z" "E" "R" "T" "Y" "U" "I" "O" "P" "¨" "*" ""
+    "" ""  "Q" "S" "D" "F" "G" "H" "J" "K" "L" "M" "%" "£" ""
+    "" ">"  "W" "X" "C" "V" "B" "N" "?" "." "/" "+" "" "" "")
+  "Belgian AZERTY.")
+
 (defvaralias 'ergoemacs-layout-bépo 'ergoemacs-layout-bepo)
 
 (defvar ergoemacs-layout-colemak
@@ -70,12 +86,12 @@
 
 (defvar ergoemacs-layout-da
   '("" "½" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "+" "’" ""
-    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "á" "\"" ""
+    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "å" "\"" ""
     "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" "æ" "ø" "'" ""
     "" "<"  "z" "x" "c" "v" "b" "n" "m" "," "." "-" "" "" ""
     ;; Shifted
     "" "§" "!" "@" "#" "¤" "%" "&" "/" "(" ")" "=" "?" "`" ""
-    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "Á" "^" ""
+    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "Å" "^" ""
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "Æ" "Ø" "*" ""
     "" ">"  "Z" "X" "C" "V" "B" "N" "M" ";" ":" "_" "" "" "")
   "Danish layout.")
@@ -103,7 +119,7 @@
     "'" "?" "B" "U" ":" ";" "Ü" "P" "C" "L" "M" "F" "X" "*" ""
     "" "" "H" "I" "E" "A" "O" "D" "T" "R" "N" "S" "" "" ""
     "" "" "K" "Y" "Ö" "Ä" "Q" "J" "G" "W" "V" "Z" "" "" "")
-  "German BU-TECK Layout. URL `http://www.adnw.de'. ")
+  "German BU-TECK Layout.  URL `http://www.adnw.de'.")
 
 (defvar ergoemacs-layout-dv
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "[" "]" ""
@@ -126,7 +142,7 @@
     "" "~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+"  ""
     "" ""  "Ŝ" "Ĝ" "E" "R" "T" "Ŭ" "U" "I" "O" "P" "Ĵ" "Ĥ" "|"
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "" "" ""
-    ""  "Z" "Ĉ" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
+    "" ""  "Z" "Ĉ" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
   "Esperanto layout.")
 
 (defvar ergoemacs-layout-eo-displaced
@@ -238,7 +254,7 @@
     "" ""  "X" "V" "L" "C" "W" "K" "H" "G" "F" "Q" "ß" "~" "\\"
     "" ""  "U" "I" "A" "E" "O" "S" "N" "R" "T" "D" "Y" "" ""
     "" ""  "Ü" "Ö" "Ä" "P" "Z" "B" "M" "-" "·" "J" "" "" "")
-  "Neo Layout")
+  "Neo Layout.")
 
 (defvar ergoemacs-layout-no
   '("" "|" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "+" "\\" ""
@@ -316,22 +332,59 @@
     "" ""  "Z" "X" "M" "C" "V" "K" "L" "<" ">" "?" "" "" "")
   "US Workman layout.  URL `http://www.workmanlayout.com/blog/'.")
 
+(defvar ergoemacs-layout-workman
+  '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
+    "" ""  "й" "d" "r" "w" "b" "j" "f" "u" "p" ";" "[" "]" "\\"
+    "" ""  "a" "s" "h" "t" "g" "y" "n" "e" "o" "i" "'" "" ""
+    "" ""  "z" "x" "m" "c" "v" "k" "l" "," "." "/" "" "" ""
+    ;; Shifted
+    "" "~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" ""
+    "" ""  "Q" "D" "R" "W" "B" "J" "F" "U" "P" ":" "{" "}" "|"
+    "" ""  "A" "S" "H" "T" "G" "Y" "N" "E" "O" "I" "\"" "" ""
+    "" ""  "Z" "X" "M" "C" "V" "K" "L" "<" ">" "?" "" "" "")
+  "US Workman layout.  URL `http://www.workmanlayout.com/blog/'.")
 
+(defvar ergoemacs-layout-ru
+  '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "\\"
+    "" ""  "й" "ц" "у" "к" "е" "н" "г" "ш" "щ" "з" "х" "ъ" "" 
+    "" ""  "ф" "ы" "в" "а" "п" "р" "о" "л" "д" "ж" "э"  "" ""
+    "" ""  "я" "ч" "с" "м" "и" "т" "ь" "б" "ю" "." "" "" ""
+    ;; Shifted
+    "" "Ë" "!" "\"" "№" ";" "%" ":" "?" "*" "(" ")" "_" "+" "/"
+    "" ""  "Й" "Ц" "У" "К" "Е" "Н" "Г" "Ш" "Щ" "З" "Х" "Ъ" "" 
+    "" ""  "Ф" "Ы" "В" "А" "П" "Р" "О" "Л" "Д" "Ж" "Э" "" ""
+    "" "" "Я" "Ч" "С" "М" "И" "Т" "Ь" "Б" "Ю" "," "" "" "")
+  "Russian/Cryllic jcuken layout.")
+
+(defvaralias 'ergoemacs-layout-jcuken 'ergoemacs-layout-ru)
 
+(require 'help-mode)
+(defvar quail-keyboard-layout-alist)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-dir)
+(defvar ergoemacs-inkscape)
+(declare-function ergoemacs-save "ergoemacs-lib")
+(declare-function ergoemacs-translate-layout "ergoemacs-translate")
+(declare-function ergoemacs-translate--svg-layout "ergoemacs-translate")
+(declare-function ergoemacs-translate--png-layout "ergoemacs-translate")
+(declare-function ergoemacs-component--prompt "ergoemacs-component")
+(declare-function quail-insert-kbd-layout "quail")
+
+(defun ergoemacs-layouts--current (&optional layout)
+  "Gets the LAYOUT symbol.
+If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
+  (intern (format "ergoemacs-layout-%s" (or layout ergoemacs-keyboard-layout))))
+
 ;;; Layout Functions
-(defun ergoemacs-get-layouts-type ()
+(defun ergoemacs-layouts--customization-type ()
   "Gets the customization types for `ergoemacs-keyboard-layout'."
-  `(choice ,@(mapcar
+  `(choice
+    ,@(mapcar
               (lambda(elt)
                 `(const :tag ,elt :value ,elt))
-              (sort (ergoemacs-get-layouts t) 'string<))))
+              (sort (ergoemacs-layouts--list t) 'string<))))
 
-(declare-function ergoemacs-set-default "ergoemacs-mode.el")
-(defun ergoemacs-set-layout (layout)
-  "Set the ergoemacs layout to LAYOUT."
-  (ergoemacs-set-default 'ergoemacs-keyboard-layout layout))
-
-(defun ergoemacs-get-layouts-menu ()
+(defun ergoemacs-layouts--menu ()
   "Gets the keymap entry for ergoemacs-layouts."
   `(ergoemacs-keyboard-layout
     menu-item "Keyboard Layouts"
@@ -353,11 +406,16 @@
               (lambda() (interactive)
                 (ergoemacs-set-layout ,lay))
               :button (:radio . (string= ergoemacs-keyboard-layout ,lay)))))
-        (sort (ergoemacs-get-layouts) 'string<)))))
+        (sort (ergoemacs-layouts--list) 'string<)))))
 
-(defun ergoemacs-get-layouts-doc ()
-  "Gets the list of all known layouts and the documentation associated with the layouts."
-  (let ((lays (sort (ergoemacs-get-layouts t) 'string<)))
+(defun ergoemacs-layouts--custom-documentation (&optional lays ini)
+  "Get a documentation list of all known layouts.
+
+LAYS is the layouts being processed.
+
+If INI is non-nil, create information about the autohotkey ini
+file."
+  (let ((lays (or lays (sort (ergoemacs-layouts--list t) 'string<))))
     (mapconcat
      (lambda(lay)
        (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
@@ -370,41 +428,214 @@
                        (progn
                          (setq is-alias t)
                          (documentation-property alias 'variable-documentation))))
-         (concat "\"" lay "\" (" doc ")" (if is-alias ", alias" ""))))
+         (if ini
+             (concat lay "=" doc)
+           (concat "\"" lay "\" (" doc ")" (if is-alias ", alias" "")))))
      lays "\n")))
 
-(defvar ergoemacs-get-layouts-no-aliases nil)
-(defvar ergoemacs-get-layouts-aliases nil)
+(defvar ergoemacs-layouts--no-aliases nil)
+(defvar ergoemacs-layouts--aliases nil)
 
-(defun ergoemacs-reset-layouts ()
+(defun ergoemacs-layouts--reset ()
   "Reset Layout information."
   (interactive)
-  (setq ergoemacs-get-layouts-no-aliases nil)
-  (setq ergoemacs-get-layouts-aliases nil))
+  (setq ergoemacs-layouts--no-aliases nil)
+  (setq ergoemacs-layouts--aliases nil))
 
-(defun ergoemacs-get-layouts (&optional aliases ob)
-  "Get the list of all known layouts."
-  (if (and ergoemacs-get-layouts-no-aliases
+(defun ergoemacs-layouts--list (&optional aliases ob)
+  "Get the list of all known layouts.
+
+When ALIASES is non-nil, list aliases and actuval variables.
+
+OB is the object array."
+  (if (and ergoemacs-layouts--no-aliases
            (not aliases))
-      ergoemacs-get-layouts-no-aliases
-    (if (and ergoemacs-get-layouts-aliases
+      ergoemacs-layouts--no-aliases
+    (if (and ergoemacs-layouts--aliases
              aliases)
-        ergoemacs-get-layouts-aliases
+        ergoemacs-layouts--aliases
       (let (ret)
         (mapatoms
          (lambda(s)
            (let ((sn (symbol-name s)))
              (and (string-match "^ergoemacs-layout-" sn)
-                  (if (or aliases
-                          (and (not aliases)
-                               (documentation-property
-                                (intern sn) 'variable-documentation)))
+                  (if (and (not (functionp s))
+                           (or aliases
+                               (and (not aliases)
+                                    (documentation-property
+                                     (intern sn) 'variable-documentation))))
                       (setq ret (cons (replace-regexp-in-string "ergoemacs-layout-" "" sn) ret))))))
          ob)
         (if aliases
-            (setq ergoemacs-get-layouts-aliases nil)
-          (setq ergoemacs-get-layouts-no-aliases nil))
+            (setq ergoemacs-layouts--aliases nil)
+          (setq ergoemacs-layouts--no-aliases nil))
         ret))))
+
+(defun ergoemacs-layout (layout)
+  "Set the ergoemacs layout to LAYOUT."
+  (ergoemacs-save 'ergoemacs-keyboard-layout layout))
+
+(defvar ergoemacs-layout--quail-alist nil)
+(defun ergoemacs-layout--quail-alist (&optional restore)
+  "Modify the QUAIL `quail-keyboard-layout' variable.
+
+This is based on the number of layouts defined by
+`ergoemacs-mode'.
+
+When RESTORE is non-nil, restore the `quail-keyboard-layout'"
+  (cond
+   ((and ergoemacs-layout--quail-alist (eq restore :refresh))
+    (setq quail-keyboard-layout-alist
+          (append ergoemacs-layout--quail-alist
+                  (mapcar
+                   (lambda(lay)
+                     (cons lay (ergoemacs-translate-layout lay :quail)))
+                   (ergoemacs-layouts--list)))))
+   ((and ergoemacs-layout--quail-alist restore)
+    (setq quail-keyboard-layout-alist ergoemacs-layout--quail-alist
+          ergoemacs-layout--quail-alist nil))
+   ;; Do nothing
+   (ergoemacs-layout--quail-alist)
+   (t
+    ;; Add ergoemacs-mode layouts to `quail-keyboard-layout-alist'.
+    (setq ergoemacs-layout--quail-alist quail-keyboard-layout-alist
+          quail-keyboard-layout-alist
+          (append quail-keyboard-layout-alist
+                  (mapcar
+                   (lambda(lay)
+                     (cons lay (ergoemacs-translate-layout lay :quail)))
+                   (ergoemacs-layouts--list)))))))
+
+(defcustom ergoemacs-layouts-use-us-for-input-methods nil
+  "Use the \"us\" layout for input methods.
+Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defun ergoemacs-layout--update-quail ()
+  "Tell quail of your currently used `ergoemacs-mode' layout."
+  (when (featurep 'quail)
+    (when ergoemacs-layouts-use-us-for-input-methods
+      (quail-set-keyboard-layout (replace-regexp-in-string "ergoemacs-layout-" "" (symbol-name (ergoemacs :layout)))))))
+
+(add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail)
+
+(if (not (featurep 'quail))
+    (eval-after-load 'quail
+      '(progn
+	 (ergoemacs-layout--quail-alist)
+	 (ergoemacs-layout--update-quail)))
+  (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--quail-alist)
+  (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail))
+
+
+(defalias 'ergoemacs-layout 'ergoemacs-set-layout)
+
+(define-button-type 'ergoemacs-layout-help
+  :supertype 'help-xref
+  'help-function #'ergoemacs-layout-describe
+  'help-echo (purecopy "mouse-2, RET: find this ergoemacs layout's definition"))
+
+(defun ergoemacs-layout--regexp (&optional base)
+  "Get a regular expression of recognized `ergoemacs-mode' layouts.
+
+when BASE is non-nil, the regular expression shows the regular
+expression matching the base layout."
+  (let ((reg (regexp-opt (ergoemacs-layouts--list t) t))
+        (f1 "[\"`']\\(%s\\)[\"`']")
+        (f2 "Base Layout: \\(%s\\)"))
+    (format (cond
+             (base f2)
+             (t f1)) (regexp-opt (ergoemacs-layouts--list) t))))
+
+(defun ergoemacs-layout-describe (&optional layout)
+  "Display the full documentation of an `ergoemacs-mode' LAYOUT.
+
+LAYOUT can be either a symbol or string."
+  (interactive (ergoemacs-component--prompt :layout))
+  (let* ((layout (or (and layout
+                          (or (and (stringp layout) layout)
+                              (and (symbolp layout) (symbol-name layout))))
+                     "us"))
+         (s (intern (concat "ergoemacs-layout-" layout)))
+         (sv (and (boundp s) (symbol-value s)))
+         (el-file (find-lisp-object-file-name s 'defvar))
+         (alias (condition-case nil
+                    (indirect-variable s)
+                  (error s)))
+         (doc (or (documentation-property
+                   s 'variable-documentation)
+                  (documentation-property
+                   s 'variable-documentation)))
+         pt
+         png svg)
+    (unless (featurep 'quail)
+      (require 'quail))
+    (if (not sv)
+        (message "You did not specify a valid ergoemacs layout %s" layout)
+      (help-setup-xref (list #'ergoemacs-layout-describe (or layout "us"))
+                       (called-interactively-p 'interactive))
+      (with-help-window (help-buffer)
+        (princ "`")
+        (princ s)
+        ;; Use " is " instead of a colon so that
+        ;; it is easier to get out the function name using forward-sexp.
+        (princ "' is an `ergoemacs-mode' layout")
+        (with-current-buffer standard-output
+          (save-excursion
+            (re-search-backward "`\\(ergoemacs-mode\\)'" nil t)
+            (help-xref-button 1 'help-function-def 'ergoemacs-mode
+                              (concat ergoemacs-dir "ergoemacs-mode.el"))))
+        (when (file-readable-p el-file)
+          (princ " defined in `")
+          (princ (file-name-nondirectory el-file))
+          (princ "'.")
+          (with-current-buffer standard-output
+            (save-excursion
+              (re-search-backward "`\\([^`']+\\)'" nil t)
+              (help-xref-button 1 'help-variable-def
+                                s el-file)
+              (re-search-backward "^`\\([^`']+\\)'" nil t)
+              (help-xref-button 1 'help-variable-def
+                                s el-file))))
+        (princ "\n\n")
+        (princ "Documentation:\n")
+        (with-current-buffer standard-output
+          (insert (or doc "Not documented as a layout.")))
+        (princ "\n\n")
+        (princ "Layout:\n")
+        (cond
+         ((and (setq svg (ergoemacs-translate--svg-layout (format "%s" layout)))
+               (setq png (ergoemacs-translate--png-layout (format "%s" layout)))
+               (image-type-available-p 'png))
+          (with-current-buffer standard-output
+            (insert-image (create-image png))
+            (insert "\n")))
+         ((and svg (image-type-available-p 'svg))
+          (with-current-buffer standard-output
+            (insert-image (create-image svg))
+            (princ "\n"))))
+        (with-current-buffer standard-output
+          (if png
+              (insert "[svg] [png]")
+            (insert "[svg]"))
+          (beginning-of-line)
+          (if (looking-at "\\(\\[svg\\]\\) \\(\\[png\\]\\)")
+              (progn
+                (help-xref-button 1 'help-url svg)
+                (help-xref-button 2 'help-url png))
+            (if (looking-at "\\(\\[svg\\]\\)")
+                (help-xref-button 1 'help-url svg)))
+          (goto-char (point-max)))
+        (princ "\n\n")
+        (princ "ASCII Layout (Quail):\n")
+        (with-current-buffer standard-output
+          (quail-insert-kbd-layout (ergoemacs-translate-layout sv :quail)))
+        (with-current-buffer standard-output
+          ;; Return the text we displayed.
+          (buffer-string))))))
+
+(defalias 'describe-ergoemacs-layout 'ergoemacs-layout-describe)
 
 (provide 'ergoemacs-layouts)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

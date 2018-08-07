@@ -1,4 +1,5 @@
 *~
+~*
 out/*
 ChangeLog
 *-autoloads.el
@@ -9,4 +10,9 @@ ChangeLog
 /out/
 *-autoloads.el
 *-pkg.el
+flycheck_*
+ergoemacs-global*.el
+ergoemacs-global*.el.gz
+ergoemacs-global*.elc.gz
+ergoemacs-global*.elc
 /.cask/

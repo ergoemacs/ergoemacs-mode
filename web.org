@@ -136,10 +136,10 @@ file:ergoemacs-extras/ergo-layouts/ergoemacs-layout-us.png
   :SNIPPET:  t
   :END:
 
-Documentation Copyright © 2007-2013 Matthew Fidler, Xah Lee and David
+Documentation Copyright © 2007-2016 Matthew Fidler, Xah Lee and David
 Capello. Published under the therm of the [[http://creativecommons.org/licenses/by-nc-sa/2.0/fr/][Creative Commons
 Attribution-Noncommercial-Share Alike 2.0 France License]].  Code
-published under [[http://www.gnu.org/licenses/gpl-2.0.html][GPL v2]].
+published under [[http://www.gnu.org/licenses/gpl-3.0.html][GPL v3]].
 
 ** About
   :PROPERTIES:
@@ -1174,6 +1174,77 @@ ergoemacs-mode pastes.  For information see
 [[file:smart-commands.html][smart commands]].
 *** Highlight Symbol and searching
 
+** Icicles with ergoemacs-mode
+:PROPERTIES:
+  :PAGE:     icy-mode.html
+  :TEMPLATE: blog_static_no_title.html
+  :END:
+
+*Authors:* Nikolay Kudryavtsev and Matthew L Fidler
+
+Icicles is a complicated library with many different
+keybindings. Ergoemacs also has quite few keybindings of it's
+own. Since both packages were originally developed separately it is
+understandable that there can be a conflict between them. This
+documentation lists the known cases of conflict.
+
+*** Things that work differently with ergoemacs
+
+**** Icicle history element cycling is moved to F11 and F12
+Icicles uses M-p and M-n for `icicle-previous-history-element` and
+`icicle-next-history-element`. Since those are perfect examples of
+non-ergonomic keys, ergoemacs changes them to F11 and F12. This is
+consistent with changes to other packages.
+**** Icicles insert history element with M-F11 or M-F12
+
+In icicles you can [[http://www.emacswiki.org/emacs/Icicles_-_History_Enhancements#toc4][insert an element from your minibuffer history]],
+thus limiting your candidates only to the ones in your minibuffer
+history.  In `ergoemacs-mode` This can be done by M-F11 or M-F12.
+
+**** Icicles candiate cycling is moved to QWERTY M-i and M-k
+In the vanila icicles `icicle-previous-candidate-per-mode` and
+`icicles-next-candidate-per-mode` are cycled using C-p and C-n. This
+is not ergonomic, so in ergoemacs it was moved to M-i and M-k. 
+
+Whenever icicles binds a standard key like C-p or C-n, or C-s,
+ergoemacs-mode looks up the change and runs the mode-based changed
+key.  
+**** Key Completion
+In icicles you can [[http://www.emacswiki.org/emacs/Icicles_-_Key_Completion][easily see all available keys using key
+completion]]. The default key for this is S-TAB for buffers and M-S-TAB
+for the minibuffer. Due to M-TAB being used by default by some window
+managers including Windows, ESC-S-TAB is also available by
+default. Since ESC works like C-g in ergoemacs, ESC-S-TAB binding
+would not work with it. 
+
+When icicles and ergoemacs-mode is enabled, pressing f1 in the key
+sequence will start the key completion.
+
+*** Things that do not work with ergoemacs out of box
+Things here conflict with some ergoemacs keybindings, but can be
+easily fixed by the user.
+**** How to redifine keys from icicles
+The most basic ergoemacs theme component for icicles looks like
+this. Since most of the icicles keybindings are connected to
+minibufer, you should put your keybindings within "when
+`icicle-minibuffer-setup-hook`" form.
+#+BEGIN_SRC emacs-lisp
+  (ergoemacs-component ergoemacs-icicles-user ()
+    "Ergoemacs-mode theme component for icicles"
+    (when icicle-minibuffer-setup-hook
+      (define-key minibuffer-local-map (kbd "M-p") 'icicle-insert-history-element)))
+  (ergoemacs-require 'ergoemacs-icicles-user)
+#+END_SRC
+
+**** C-M-j - icicle-insert-list-join-string
+Icicles [[http://www.emacswiki.org/emacs/Icicles_-_Multi-Completions#toc2][allows you to match only those candidates that have particular
+text within them]]. A rather complex example is available [[http://www.emacswiki.org/emacs/Icicles_-_Nutshell_View#toc6][here]].
+***** How to fix
+C-M-h is a good candidate, since it's close enough to the original
+key, but does not conflict with ergoemacs:
+#+BEGIN_SRC emacs-lisp
+(define-key minibuffer-local-map (kbd "C-M-h") 'icicle-insert-list-join-string)
+#+END_SRC
 ** Bug report
   :PROPERTIES:
   :PAGE:     bug-report.html

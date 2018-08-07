@@ -1,6 +1,6 @@
 ;;; ergoemacs-functions.el --- miscellaneous functions for ErgoEmacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013, 2014, 2017 Free Software Foundation, Inc.
+;; Copyright © 2013-2018 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Authors: Xah Lee, Matthew Fidler, Drew Adams, Ting-Yu Lin, David
@@ -29,32 +29,74 @@
 ;; 
 
 ;;; Code:
-(eval-when-compile 
-  (require 'cl)
+(require 'cl-lib)
+
+(eval-when-compile
   (require 'ergoemacs-macros))
 
-(require 'redo "redo.elc" t) ; for redo shortcut
+(defvar ergoemacs-set-ignore-customize)
+(defvar apropos-do-all)
+(defvar cua--last-killed-rectangle)
+(defvar dirtrack-list)
+(defvar ergoemacs-command-loop--modal-stack)
+(defvar ergoemacs-dir)
+(defvar ergoemacs-keyboard-layout)
+(defvar ergoemacs-mode)
+(defvar ergoemacs-single-command-keys)
+(defvar ergoemacs-theme)
+(defvar helm-buffer)
+(defvar helm-ff-default-directory)
+(defvar helm-ff-last-expanded)
+(defvar org-table-any-line-regexp)
+(defvar server-kill-new-buffers)
+(defvar server-existing-buffer)
+(defvar explicit-shell-file-name)
+
+
+(declare-function browse-url-default-windows-browser "browse-url")
+
+(declare-function cua-copy-rectangle "cua-base")
+(declare-function cua-copy-region "cua-base")
+(declare-function cua-cut-rectangle-as-text "cua-rect")
+(declare-function cua-cut-region "cua-base")
+(declare-function cua-paste "cua-base")
+(declare-function cua-set-rectangle-mark "cua-rect")
+(declare-function describe-ergoemacs-theme "ergoemacs-theme-engine")
+(declare-function dired-get-marked-files "dired")
+
+(declare-function ergoemacs-map-- "ergoemacs-map")
+(declare-function ergoemacs-mode "ergoemacs-mode")
+
+(declare-function ergoemacs-command-loop--modal-pop "ergoemacs-command-loop")
+(declare-function ergoemacs-theme-describe "ergoemacs-theme-engine")
+
+(declare-function helm-attrset "helm")
+(declare-function helm-basename "helm-utils")
+(declare-function helm-execute-persistent-action "helm")
+(declare-function helm-exit-minibuffer "helm")
+
+(declare-function minibuffer-keyboard-quit "delsel")
+
+(declare-function org-at-heading-p "org")
+(declare-function org-at-item-p "org-list")
+(declare-function org-at-table-p "org")
+(declare-function org-edit-src-save "org-src")
+(declare-function org-emphasize "org")
+(declare-function org-insert-heading-respect-content "org")
+(declare-function org-region-active-p "org-compat")
+(declare-function org-with-limited-levels "org-macs")
+(declare-function org-yank "org")
+
+(declare-function server-edit "server")
+
+(declare-function shell-dirtrack-mode "shell")
+
+(declare-function undo-tree-mode "undo-tree")
 
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
   "Backward char will edit isearch."
   :type 'boolean
   :group 'ergoemacs-mode)
-
-(defun ergoemacs-recentf-mode (&optional arg)
-  "Toggle \"Open Recent\" menu (Recentf mode).
-With a prefix argument ARG, enable Recentf mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-Recentf mode if ARG is omitted or nil.
-
-When Recentf mode is enabled, a \"Open Recent\" submenu is
-displayed in the \"File\" menu, containing a list of files that
-were operated on recently.
-
-This wrapper only calls `recentf-mode' when `ergoemacs-mode' is
-running interactively.
-"
-  (unless noninteractive
-    (recentf-mode arg)))
 
 
 (defvar ergoemacs-delete-functions
@@ -62,18 +104,69 @@ running interactively.
   "Defines deletion functions that ergoemacs is aware of.")
 
 (defcustom ergoemacs-ctl-c-or-ctl-x-delay 0.2
-  "Delay before sending Cut or Copy when using C-c and C-x."
+  "Delay before sending Cut or Copy.
+This is applied when using Ctrl+c and Ctrl+x."
   :type '(choice (number :tag "Inhibit delay")
                  (const :tag "No delay" nil))
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-handle-ctl-c-or-ctl-x 'both
-  "Type of C-c and C-x handling for `ergoemacs-mode'"
+  "Type of Copy and Paste handling for `ergoemacs-mode'."
   :type '(choice
           (const :tag "C-c/C-x only copy/cut" only-copy-cut)
           (const :tag "C-c/C-x only Emacs C-c and C-x" only-C-c-and-C-x)
           (const :tag "C-c/C-x copy/paste when region active, Emacs C-c/C-x otherwise." both))
   :group 'ergoemacs-mode)
+
+(defvar ergoemacs-revert-buffer 0)
+(defun ergoemacs-revert-buffer ()
+  "Ergoemacs replacement of `revert-buffer'.
+Does one of the following:
+
+ - When buffer is modified, call `revert-buffer' (or major/minor
+   mode replacement)
+
+ - When \"g\" is bound to a non-self-insert function, call that
+   function.
+
+ - When buffer is unmodified, revert to the last backup.
+
+The backup is determined by `find-backup-file-name'"
+  (interactive)
+  (let ((backup-buffer (and (or (eq last-command 'ergoemacs-revert-buffer)
+                                (not (buffer-modified-p (current-buffer))))
+                            (buffer-file-name)
+                            (find-backup-file-name (buffer-file-name))))
+        (opt (point))
+        bind)
+    (cond
+     ((and (setq bind (key-binding [?g]))
+           (not (string-match-p "self-insert" (symbol-name bind)))
+           (not (memq bind '(ergoemacs-revert-buffer revert-buffer))))
+      (call-interactively bind))
+     ((and (not (eq last-command 'ergoemacs-revert-buffer))
+           (buffer-modified-p (current-buffer)))
+      (ergoemacs :remap 'revert-buffer)
+      (goto-char opt))
+     ((and backup-buffer
+           (or (and (not (eq last-command 'ergoemacs-revert-buffer))
+                    (setq ergoemacs-revert-buffer 0)
+                    (file-readable-p (nth ergoemacs-revert-buffer backup-buffer))
+                    (if (and (= (point-min) (point-max)) (not (eq last-command 'ergoemacs-revert-buffer))) nil
+		      (yes-or-no-p (format "Revert buffer to backup saved on disk (%s)?" (nth 0 backup-buffer)))))
+               (and (eq last-command 'ergoemacs-revert-buffer)
+                    (setq ergoemacs-revert-buffer (+ ergoemacs-revert-buffer 1)))))
+      (if (= ergoemacs-revert-buffer (length backup-buffer))
+          (progn
+            (revert-buffer t t)
+            (setq ergoemacs-revert-buffer -1)
+            (message "Reverted to saved version"))
+        (delete-region (point-min) (point-max))
+        (insert-file-contents (nth ergoemacs-revert-buffer backup-buffer))
+        (message "Reverted to autosave: %s" (nth ergoemacs-revert-buffer backup-buffer)))
+      (goto-char opt))
+     (t
+      (call-interactively 'revert-buffer)))))
 
 (defun ergoemacs-major-mode-p (value)
   "Return t if VALUE is a major mode function."
@@ -85,10 +178,7 @@ running interactively.
     ;; Fix-me: Maybe test for minor modes? How was that done?
     (when (and (fboundp value)
                (commandp value)
-               (not (memq value '(flyspell-mode
-                                  isearch-mode
-                                  savehist-mode
-                                  )))
+               (not (memq value '(flyspell-mode isearch-mode savehist-mode)))
                (< 5 (length sym-name))
                (string= "-mode" (substring sym-name (- (length sym-name) 5)))
                (if (and (listp (symbol-function value))
@@ -116,102 +206,34 @@ running interactively.
                           nil)))
       t)))
 
-(defvar ergoemacs-mode)
-(defvar ergoemacs-smart-paste)
-(defvar ergoemacs-use-menus)
-(defvar ergoemacs-theme)
-(defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-theme-options)
-(defun ergoemacs-save-options-to-customized (&optional no-save)
-  (unless noninteractive
-    (let (ergoemacs-mode)
-      (customize-set-variable 'ergoemacs-smart-paste ergoemacs-smart-paste)
-      (customize-set-variable 'ergoemacs-use-menus ergoemacs-use-menus)
-      (customize-set-variable 'ergoemacs-theme (or ergoemacs-theme "standard"))
-      (customize-set-variable 'ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-      (customize-set-variable 'ergoemacs-ctl-c-or-ctl-x-delay ergoemacs-ctl-c-or-ctl-x-delay)
-      (customize-set-variable 'ergoemacs-handle-ctl-c-or-ctl-x ergoemacs-handle-ctl-c-or-ctl-x)
-      (customize-set-variable 'ergoemacs-use-menus ergoemacs-use-menus)
-      (customize-set-variable 'ergoemacs-theme-options ergoemacs-theme-options)
-      (unless no-save
-        (customize-save-customized)))))
 
-(declare-function ergoemacs-mode "ergoemacs-mode.el")
-(declare-function ergoemacs-ini-mode "ergoemacs-mode.el")
 (defun ergoemacs-exit-customize-save-customized ()
-  "Call `customize-save-customized' on exit emacs.
-
-Also:
-
-- Deactivates `ergoemacs-mode'
-- Activates `ergoemacs-ini-mode', to try to run `ergoemacs-mode'
-  when called for or at the last second.
-- Saves `ergoemacs-mode' options by calling
-  `ergoemacs-save-options-to-customized'
-
-If an error occurs, display the error, and sit for 2 seconds before exiting"
-  (ergoemacs-mode -1)
-  (ergoemacs-ini-mode 1)
-  (customize-save-variable 'ergoemacs-mode nil)
-  (customize-save-variable 'ergoemacs-ini-mode t)
-  (ergoemacs-save-options-to-customized 'no-save)
-  (cond
-   (noninteractive)
-   ((not (or custom-file user-init-file))
-    (message "Not saving; \"emacs -q\" would overwrite customizations")
-    (sit-for 1))
-   ((and (null custom-file) init-file-had-error)
-    (message "Cannot save customizations; init file was not fully loaded")
-    (sit-for 1))
-   (t
-    (ignore-errors (customize-save-customized)))))
-
-(defun ergoemacs-ctl-c (&optional arg)
-  "Ergoemacs C-c key."
-  (interactive "P")
-  (ergoemacs-ctl-c-or-ctl-x "C-c" arg))
-
-(defun ergoemacs-ctl-x (&optional arg)
-  "Ergoemacs C-x key."
-  (interactive "P")
-  (ergoemacs-ctl-c-or-ctl-x "C-x" arg))
-
-(defvar cua--rectangle)
-
-(declare-function ergoemacs-read-key "ergoemacs-shortcuts.el")
-(defun ergoemacs-ctl-c-or-ctl-x (key &optional arg)
-  "Ergoemacs C-c or C-x defined by KEY."
-  (let (fn-cp)
-    ;; Create the needed functions
-    (if (string= "C-c" key)
-        (progn
-          (setq fn-cp 'ergoemacs-copy-line-or-region))
-      (progn
-        (setq fn-cp 'ergoemacs-cut-line-or-region)))
-    (cond
-     ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-      (funcall fn-cp arg))
-     ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
-      (ergoemacs-read-key key 'normal))
-     (this-command-keys-shift-translated
-      ;; Shift translated keys are C-c and C-x only.
-      (ergoemacs-read-key key 'normal))
-     ((and ergoemacs-ctl-c-or-ctl-x-delay
-           (or (region-active-p)
-               (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode)))
-      ;; Wait for next key...
-      (let ((next-key
-             (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
-               (eval (macroexpand `(key-description [,(read-key)]))))))
-        (if next-key
-            (progn
-              (ergoemacs-read-key (concat key " " next-key) 'normal))
-          (funcall fn-cp arg))))
-     ((or (region-active-p)
-          (and (boundp 'cua--rectangle) cua--rectangle (boundp 'cua-mode) cua-mode))
-      (funcall fn-cp arg))
-     (t
-      (ergoemacs-read-key key 'normal)))))
+  "Call `customize-save-customized' on exit Emacs."
+  (let (set save val revert save-p)
+    (dolist (elt ergoemacs-set-ignore-customize)
+      ;; Changed -- (Adatped from cus-edit+)
+      (when (ergoemacs :custom-p elt)
+        (setq set (get elt :ergoemacs-set-value)
+              save (get elt :ergoemacs-save-value)
+              val (ergoemacs-sv elt))
+        (if (not (equal set val))
+            (unless (or (eq elt 'echo-keystrokes)
+			(string-match-p "-\\(hook\\|mode\\)$" (symbol-name elt)))
+	      (setq save-p t)
+              (message "%s was changed outside of ergoemacs-mode\n\tPrior: %s\n\tErgoemacs: %s\n\tFinal: %s" elt
+                       save
+                       set 
+                       val)
+              (customize-mark-to-save elt))
+          ;; Consider this value unchanged (even though it was...)
+          (set-default elt save)
+          (set elt save)
+          (push elt revert))))
+    (when save-p
+      (ignore-errors (unless noninteractive (customize-save-customized))))
+    (dolist (elt revert)
+      (set-default elt (get elt :ergoemacs-set-value))
+      (set elt (get elt :ergoemacs-set-value)))))
 
 (defvar ergoemacs-terminal
   "Local variable to determine if `ergoemacs-clean' is running a terminal `ergoemacs-mode'")
@@ -219,34 +241,44 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
   "Ergoemacs batch file to run `ergoemacs-mode' in a terminal")
 
 (defun ergoemacs-clean-recompile-then-run (&optional terminal)
-  "Recompile `ergoemacs-mode' for a bootstrap environment."
+  "Recompile `ergoemacs-mode' for a bootstrap environment.
+When TERMINAL is non-nil, run in a terminal instead of GUI."
   (interactive)
+  (let ((buf (get-buffer "*ergoemacs-clean*")))
+    (when buf
+      (kill-buffer buf)))
   (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-clean*"))
-  (set (make-local-variable 'ergoemacs-terminal) terminal)
-  (delete-region (point-min) (point-max))
-  (when (or (equal current-prefix-arg '(4))
-            (equal current-prefix-arg '(16)))
-    (insert "Delete Byte Compiled Files:\n")
-    (dolist (file (directory-files (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) t "[.]elc$"))
-      (insert "\tDelete " file)
-      (delete-file file)
+  (let ((inhibit-read-only t))
+    (set (make-local-variable 'ergoemacs-terminal) terminal)
+    (setq default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
+    (delete-region (point-min) (point-max))
+    (when (or (equal current-prefix-arg '(4))
+              (equal current-prefix-arg '(16)))
+      (insert "Delete Byte Compiled Files:\n")
+      (dolist (file (directory-files default-directory t "\\(ergoemacs-test-global-.*elc?\\(\\.gz\\)?$\\|ergoemacs-global-.*elc?\\(\\.gz\\)?$\\|[.]elc\\(\\.gz\\)?$\\\)"))
+        (insert "\tDelete " file)
+        (delete-file file)
+        (insert "\n"))
       (insert "\n"))
-    (insert "\n"))
-  (if (equal  current-prefix-arg '(16))
-      (let* ((emacs-exe (ergoemacs-emacs-exe))
-             (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
-             (process (start-process-shell-command "ergoemacs-byte-compile"
-                                                   "*ergoemacs-clean*"
-                                                   (format "%s -L %s -Q --batch -f batch-byte-compile *.el" emacs-exe default-directory))))
-        (set-process-sentinel process 'ergoemacs-run-clean))
-    (ergoemacs-run-clean nil nil)))
+    (if (equal  current-prefix-arg '(16))
+        (let* ((emacs-exe (ergoemacs-emacs-exe))
+               (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
+               (process (start-process-shell-command "ergoemacs-byte-compile"
+                                                     "*ergoemacs-clean*"
+                                                     (format "%s -L %s -Q --batch -f batch-byte-compile ergoemacs-*.el" emacs-exe default-directory))))
+          (set-process-sentinel process 'ergoemacs-run-clean))
+      (ergoemacs-run-clean nil nil))))
 
-(defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-theme)
-(defun ergoemacs-run-clean (process change)
-  "Run the clean environment"
-  (message "Run ergoemacs-clean (%s;%s)" process change)
+(defvar ergoemacs-run-clean nil
+  "Library to load and run instead of `ergoemacs-mode'.")
+(defun ergoemacs-run-clean (process _change)
+  "Run the clean environment.
+The PROCESS is the process where the clean environment is run."
+  (message "Run ergoemacs-clean (%s)" process)
   (let ((emacs-exe (ergoemacs-emacs-exe))
+        (inhibit-read-only t)
+        (ergoemacs-load (or ergoemacs-run-clean
+                            " --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (require 'elp) (setq debug-on-error t) (elp-instrument-package (symbol-name 'ergoemacs-)) (ergoemacs-mode 1) (run-with-idle-timer 0.1 nil 'elp-results))\""))
         cmd process rm-batch)
     (when ergoemacs-keyboard-layout
       (setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout))
@@ -255,23 +287,31 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
     (cond
      ((with-current-buffer (get-buffer-create "*ergoemacs-clean*")
         (not ergoemacs-terminal))
-      (setq cmd (format "%s --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\"" emacs-exe
-                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))))
+      (setq cmd (format "%s --debug-init -Q -L \"%s\" %s" emacs-exe
+                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
+                        ergoemacs-load)))
      ((and (eq system-type 'windows-nt) (executable-find "cmd"))
                                         ; Needs some work....
-      (setq cmd (format "%s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\" --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\""
+      (setq cmd (format "%s -nw --debug-init -Q -L \"%s\" %s"
                         emacs-exe
-                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))
+                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
+                        ergoemacs-load))
       (set (make-local-variable 'ergoemacs-batch-file)
            (make-temp-file "ergoemacs-clean" nil ".bat"))
       (with-temp-file ergoemacs-batch-file
         (insert cmd))
       (setq default-directory (file-name-directory ergoemacs-batch-file)))
-     ((executable-find "xterm")
-      (setq cmd (format "%s -e %s -nw --debug-init -Q -L \"%s\" --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\" --eval \"(progn (setq debug-on-error t) (ergoemacs-mode 1))\""
+     ((executable-find "xterm") 
+      (setq cmd (format "%s -e %s -nw --debug-init -Q -L \"%s\" %s"
                         (executable-find "xterm") emacs-exe
-                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))))))
-    (insert "Command\n" cmd "\n\n")
+                        (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
+                        ergoemacs-load))))
+    (with-current-buffer (get-buffer-create "*ergoemacs-clean*")
+      (goto-char (point-max))
+      (insert "Command\n" cmd "\n\n"))
+    (with-current-buffer (get-buffer-create "*ergoemacs-clean*")
+      (unless (eq major-mode 'compilation-mode)
+        (compilation-mode)))
     (if (not rm-batch)
         (setq process (start-process-shell-command "ergoemacs-run-clean"
                                                    "*ergoemacs-clean*"
@@ -287,30 +327,43 @@ If an error occurs, display the error, and sit for 2 seconds before exiting"
   (when ergoemacs-batch-file
     (delete-file ergoemacs-batch-file)))
 
+(defun ergoemacs-clean-library (library &optional terminal)
+  "Run a clean LIBRARY with an `ergoemacs-mode' autoload.
+If TERMINAL is non-nil, run the terminal version"
+  (interactive "aLibrary: \n")
+  (let* ((lib-file (expand-file-name (find-lisp-object-file-name library (symbol-function library))))
+         (lib-dir (file-name-directory lib-file))
+         (req-file (file-name-sans-extension
+                    (file-name-nondirectory lib-file)))
+         (ergoemacs-run-clean (format " -L \"%s\" --load \"%s\" --eval \"(progn (setq debug-on-error t) (%s) (autoload 'ergoemacs-mode (symbol-name 'ergoemacs-mode) nil t))\"" lib-dir req-file library)))
+    (if terminal
+        (ergoemacs-clean-nw)
+      (ergoemacs-clean))))
+
 (defun ergoemacs-clean ()
   "Run ergoemacs in a bootstrap environment.
-C-u deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
-C-u C=u deletes old byte compilde `ergoemacs-mode' files."
+\\[universal-argument] deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
+\\[universal-argument] \\[universal-argument] deletes old byte compilde `ergoemacs-mode' files."
   (interactive)
   (ergoemacs-clean-recompile-then-run))
 
 (defun ergoemacs-clean-nw ()
   "Run ergoemacs in bootstrap environment in terminal.
-C-u deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
-C-u C=u deletes old byte compilde `ergoemacs-mode' files."
+\\[universal-argument] deletes old byte compiled `ergoemacs-mode' files, and the recompiles.
+\\[universal-argument] \\[universal-argument] deletes old byte compilde `ergoemacs-mode' files."
   (interactive)
   (ergoemacs-clean-recompile-then-run t))
 
 (defun ergoemacs-emacs-exe ()
   "Get the Emacs executable for testing purposes."
   (let* ((emacs-exe (invocation-name))
-        (emacs-dir (invocation-directory))
-        (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
-                          "\"")))
+         (emacs-dir (invocation-directory))
+         (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
+                           "\"")))
     full-exe))
 
 (defun ergoemacs-open-line ()
-  "Inserts an indented newline after the current line and moves the point to it."
+  "Insert and move to an indented newline after the current line."
   (interactive "P")
   (end-of-line)
   (newline-and-indent))
@@ -324,18 +377,11 @@ If `pr-interface' is available, use that function instead."
     (when (y-or-n-p "Print current buffer? ")
       (print-buffer))))
 
-(defvar ergoemacs-mode)
-(declare-function ergoemacs-emulations "ergoemacs-mode.el")
-(declare-function ergoemacs-remove-shortcuts "ergoemacs-shortcuts.el")
-(declare-function ergoemacs-real-key-binding "ergoemacs-advices.el" (key &optional accept-default no-remap position) t)
-
-(defvar ergoemacs-unbind-keys)
 (defun ergoemacs-call-keyword-completion ()
   "Call the command that has keyboard shortcut M-TAB."
   (interactive)
   (call-interactively
-   (ergoemacs-with-global
-    (ergoemacs-real-key-binding (kbd "M-TAB")))))
+   (key-binding (kbd "M-TAB"))))
 
 (defun ergoemacs-copy-all ()
   "Put the whole buffer content into the `kill-ring'.
@@ -351,13 +397,14 @@ If `narrow-to-region' is in effect, then cut that region only."
   (kill-new (buffer-string))
   (delete-region (point-min) (point-max)))
 
-(defvar cua-mode)
-(declare-function cua-copy-rectangle "cua-rect.el")
-(declare-function cua-copy-region "cua-base.el")
-(declare-function ergoemacs-shortcut-remap "ergoemacs-shortcuts.el")
-(defvar cua--rectangle)
+(defcustom ergoemacs-keep-region-after-copy nil
+  "Keep region after copy."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-copy-line-or-region (&optional arg)
-  "Copy current line, or current text selection."
+  "Copy current line, or current text selection.
+Pass prefix ARG to the respective copy functions."
   (interactive "P")
   (cond
    ;;; cua-copy-rectangle
@@ -371,57 +418,74 @@ If `narrow-to-region' is in effect, then cut that region only."
     ;; Hack away to support `org-mode' folded reg
     (kill-ring-save
      (save-excursion
-       (ergoemacs-shortcut-remap 'move-beginning-of-line)
+       (let ((pt (point)))
+         (ergoemacs :remap 'move-beginning-of-line)
+         (when (= pt (point))
+           (call-interactively 'move-beginning-of-line)))
        (when (not (bolp))
          (beginning-of-line))
        (point))
      (save-excursion
-       (ergoemacs-shortcut-remap 'move-end-of-line)
+       (let ((pt (point)))
+         (ergoemacs :remap 'move-end-of-line)
+         (when (= pt (point))
+           (call-interactively 'move-end-of-line)))
        (re-search-forward "\\=\n" nil t) ;; Include newline
        (point)))))
-  (deactivate-mark))
+  (unless ergoemacs-keep-region-after-copy
+    (deactivate-mark)))
 
-(declare-function cua-cut-region "cua-base.el")
 (defun ergoemacs-cut-line-or-region (&optional arg)
   "Cut the current line, or current text selection.
-Use `cua-cut-rectangle' or `cua-cut-region' when `cua-mode' is
-turned on.
+
+Use `cua-cut-rectangle' or `cua-cut-region' when the variable
+`cua-mode' is non-nil.
 
 Otherwise, when a region is active, use
 `ergoemacs-shortcut-remap' to remap any mode that changes
-emacs' default cut key, C-w (`kill-region').
+Emacs' default cut key, Ctrl+w (`kill-region').
 
 When region is not active, move to the beginning of the line and
 use `kill-line'.  If looking at the end of the line, run
-`kill-line' again. The prefix arguments will be preserved for the
-first `kill-line', but not the second.
+`kill-line' again.  The prefix arguments will be preserved for
+the first `kill-line', but not the second.
 
 Note that `ergoemacs-shortcut-remap' will remap mode-specific
 changes to `kill-line' to allow it to work as expected in
-major-modes like `org-mode'. "
+major-modes like `org-mode'. 
+
+The ARG is passed to the respective function for any prefixes."
   (interactive "P")
-  (cond   
+  (cond
+   ((and (boundp 'cua--rectangle) cua--rectangle)
+    (cua-cut-rectangle-as-text arg))
    ((and (region-active-p) (boundp 'cua-mode) cua-mode)
     (cua-cut-region arg)
     (deactivate-mark))
    ((region-active-p) ;; In case something else is bound to C-w.
-    (ergoemacs-shortcut-remap 'kill-region)
+    (ergoemacs :remap 'kill-region)
     (deactivate-mark))
    (t
-    (ergoemacs-shortcut-remap 'move-beginning-of-line)
+    (ignore-errors
+      (let ((pt (point)))
+        (ergoemacs :remap 'move-beginning-of-line)
+        (when (= pt (point))
+          (call-interactively 'move-beginning-of-line))))
     (when (not (bolp))
       (beginning-of-line))
     ;; Keep prefix args.
     (let ((kill-whole-line t))
-      (ergoemacs-shortcut-remap 'kill-line)))))
+      (ergoemacs :remap 'kill-line)))))
 
 ;;; CURSOR MOVEMENT
 (defun ergoemacs-forward-open-bracket (&optional number)
-  "Move cursor to the next occurrence of left bracket or quotation mark.
+  "Move cursor to the next occurrence of left bracket/ quotation mark.
 
-With prefix NUMBER, move forward to the next NUMBER left bracket or quotation mark.
+With prefix NUMBER, move forward to the next NUMBER left bracket
+or quotation mark.
 
-With a negative prefix NUMBER, move backward to the previous NUMBER left bracket or quotation mark."
+With a negative prefix NUMBER, move backward to the previous
+NUMBER left bracket or quotation mark."
   (interactive "p")
   (if (and number
            (> 0 number))
@@ -443,10 +507,10 @@ With a negative prefix NUMBER, move forward NUMBER open brackets."
            (> 0 number))
       (ergoemacs-forward-open-bracket (- 0 number))
     (search-backward-regexp
-   (eval-when-compile
-     (regexp-opt
-      '("\"" "(" "{" "[" "<" "〔" "【" "〖" "〈" "《" "「"
-        "『" "“" "‘" "‹" "«"))) nil t number)))
+     (eval-when-compile
+       (regexp-opt
+        '("\"" "(" "{" "[" "<" "〔" "【" "〖" "〈" "《" "「"
+          "『" "“" "‘" "‹" "«"))) nil t number)))
 
 (defun ergoemacs-forward-close-bracket (&optional number)
   "Move cursor to the next occurrence of right bracket or quotation mark.
@@ -476,8 +540,12 @@ With a negative prefix argument NUMBER, move forward NUMBER closed brackets."
 
 (defun ergoemacs-forward-block (&optional number)
   "Move cursor forward to the beginning of next text block.
-A text block is separated by 2 empty lines (or line with just whitespace).
-In most major modes, this is similar to `forward-paragraph', but this command's behavior is the same regardless of syntax table.
+
+A text block is separated by 2 empty lines (or line with just
+whitespace).
+
+In most major modes, this is similar to `forward-paragraph', but
+this command's behavior is the same regardless of syntax table.
 
 With a prefix argument NUMBER, move forward NUMBER blocks.
 With a negative prefix argument NUMBER, move backward NUMBER blocks."
@@ -485,12 +553,16 @@ With a negative prefix argument NUMBER, move backward NUMBER blocks."
   (if (and number
            (> 0 number))
       (ergoemacs-backward-block (- 0 number))
-  (if (search-forward-regexp "\n[[:blank:]\n]*\n+" nil "NOERROR" number)
-      (progn (backward-char))
-    (progn (goto-char (point-max))))))
+    (if (search-forward-regexp "\n[[:blank:]\n]*\n+" nil "NOERROR" number)
+        (progn (backward-char))
+      (progn (goto-char (point-max))))))
 
 (defun ergoemacs-backward-block (&optional number)
   "Move cursor backward to previous text block.
+
+With a prefix argument NUMBER, move backward NUMBER blocks.
+With a negative prefix argument NUMBER, move forward NUMBER blocks.
+
 See: `ergoemacs-forward-block'"
   (interactive "p")
   (if (and number
@@ -510,13 +582,14 @@ See: `ergoemacs-forward-block'"
 (defcustom ergoemacs-end-of-comment-line t
   "When non-nil, treat comments different for beginning/end of line.
 
- When non-nil `ergoemacs-end-of-line-or-what', the end of the line is the end of the code line first, then the end of the code + comment.
+ When non-nil `ergoemacs-end-of-line-or-what', the end of the
+ line is the end of the code line first, then the end of the code
+ + comment.
 
 When non-nil `ergoemacs-beginning-of-line-or-what' to move the
 cursor to the beginning of the comment, then end of code,
 followed by the beginning of indentation (if
-`ergoemacs-back-to-indentation' is true) and beginning of line.
-"
+`ergoemacs-back-to-indentation' is true) and beginning of line."
   :type 'boolean
   :group 'ergoemacs-mode)
 
@@ -534,8 +607,7 @@ followed by the beginning of indentation (if
 When 'buffer use `beginning-of-buffer' or `end-of-buffer'
 When 'page use `scroll-down-command' or `scroll-up-command'
 When 'block use `ergoemacs-backward-block' or `ergoemacs-forward-block'
-When 'nil don't use a repeatable command
-"
+When 'nil don't use a repeatable command."
   :type '(choice
           (const buffer :tag "Goto beginning/end of buffer")
           (const page :tag "Page Up")
@@ -550,31 +622,44 @@ With a single prefix argument (called with \\[universal-argument]),
 
 `ergoemacs-end-of-line-or-what' and
 `ergoemacs-beginning-of-line-or-what' do a page up/down in the
-other window.
-"
+other window."
   :type 'boolean
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-repeatable-beginning-or-end-of-buffer t
   "Makes the beginning and end of buffer command repeatable.
-  Calling it more than once changes the point from the beginning
-  to the end of the buffer."
+
+Calling it more than once changes the point from the beginning to
+the end of the buffer."
   :type 'boolean
   :group 'ergoemacs-mode)
 
 (defun ergoemacs-beginning-or-end-of-buffer ()
-  "Goto end or beginning of buffer. See `ergoemacs-end-or-beginning-of-buffer'.
-This behavior can be turned off with `ergoemacs-repeatable-beginning-or-end-of-buffer'."
+  "Goto end or beginning of buffer. 
+
+See `ergoemacs-end-or-beginning-of-buffer'.
+
+This behavior can be turned off with
+`ergoemacs-repeatable-beginning-or-end-of-buffer'."
   (interactive)
   (let ((ma (region-active-p)))
     (if current-prefix-arg
-        (progn
+        (let ((pt (point)))
           ;; (setq prefix-arg current-prefix-arg)
-          (ergoemacs-shortcut-remap 'end-of-buffer))
+          (ergoemacs :remap 'end-of-buffer)
+          (when (= pt (point))
+            (call-interactively 'end-of-buffer)))
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (bobp))
-        (ergoemacs-shortcut-remap 'end-of-buffer))
-       (t (ergoemacs-shortcut-remap 'beginning-of-buffer))))
+        (let ((pt (point)))
+          (ergoemacs :remap 'end-of-buffer)
+          (when (= pt (point))
+            (call-interactively 'end-of-buffer))))
+       (t
+        (let ((pt (point)))
+          (ergoemacs :remap 'beginning-of-buffer)
+          (when (= pt (point))
+            (call-interactively 'beginning-of-buffer))))))
     (when (and (not ma) (region-active-p))
       (deactivate-mark))))
 
@@ -582,37 +667,52 @@ This behavior can be turned off with `ergoemacs-repeatable-beginning-or-end-of-b
   "Go to beginning or end of buffer.
 
 This calls `end-of-buffer', unless there is no prefix and the
-point is already at the beginning of the buffer.  Then it will
-call `beginning-of-buffer'. This function tries to be smart and
-if the major mode redefines the keys, use those keys instead.
-This is done by `ergoemacs-shortcut-remap'.  The repatable
-behavior can be turned off
+point is already at the beginning of the buffer.  
+
+On repeating, this function will call `beginning-of-buffer'. 
+
+This function tries to be smart and if the major mode redefines
+the keys, use those keys instead.  
+
+The repatable behavior can be turned off
 with`ergoemacs-repeatable-beginning-or-end-of-buffer'
 
 This will not honor `shift-select-mode'."
   (interactive)
   (let ((ma (region-active-p)))
     (if current-prefix-arg
-        (progn
+        (let ((pt (point)))
           ;; (setq prefix-arg current-prefix-arg)
-          (ergoemacs-shortcut-remap 'end-of-buffer))
+          (ergoemacs :remap 'end-of-buffer)
+          (when (= pt (point))
+            (call-interactively 'end-of-buffer)))
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (eobp))
-        (ergoemacs-shortcut-remap 'beginning-of-buffer))
-       (t (ergoemacs-shortcut-remap 'end-of-buffer))))
+        (let ((pt (point)))
+          (ergoemacs :remap
+                     'beginning-of-buffer)
+          (when (= pt (point))
+            (call-interactively 'beginning-of-buffer))))
+       (t
+        (let ((pt (point)))
+          (ergoemacs :remap
+                     'end-of-buffer)
+          (when (= pt (point))
+            (call-interactively 'end-of-buffer))))))
     (when (and (not ma) (region-active-p))
       (deactivate-mark))))
 
 ;; Extends behavior of
 ;; http://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/
 
-(defvar font-lock)
 (defvar ergoemacs-beginning-of-line-or-what-last-command nil)
-(declare-function comment-search-backward "newcomment.el")
-(declare-function comment-search-forward "newcomment.el")
-(defvar comment-start-skip)
 (defun ergoemacs-beginning-of-line-or-what (&optional N)
-  "Move cursor to beginning of indentation, line, or text block, or beginning of buffer.
+  "Move cursor to beginning of line or something else.
+
+This could be the indentation, line, or text block, or beginning
+of buffer, depending on context, options, and the number of times
+this is repeated.
+
  (a text block is separated by empty lines).
 
 This command moves the cursor as follows:
@@ -667,7 +767,8 @@ To:
 |   (ergoemacs-mode 1)) ; Turn on ergoemacs-mode
 
 
-5. After #4, move to (based on `ergoemacs-beginning-or-end-of-line-and-what'):
+5. After #4, move to (based on
+  `ergoemacs-beginning-or-end-of-line-and-what'):
    a. Beginning of text-block when selected ('block),
    b. Beginning of buffer ('buffer), or
    c. A PgUp ('page)
@@ -677,7 +778,7 @@ call this command twice to move with #3.  This behavior can be
 changed by `ergoemacs-use-beginning-or-end-of-line-only'.
 
 Also this function tries to use whatever the specific mode wants
-for these functions by using `ergoemacs-shortcut-remap'.
+for these functions by using `ergoemacs-remap'.
 
 
 With
@@ -694,15 +795,14 @@ the buffer, stop there.
 
 When calling the repeatable command of #3, this command honors
 the prefix arguments of `beginning-of-buffer',
-`ergoemacs-backward-block' and `scroll-down-command'
-"
+`ergoemacs-backward-block' and `scroll-down-command'."
   (interactive "^p")
   (if (and ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window
            (or (memq last-command '(scroll-other-window scroll-other-window-down))
                (equal current-prefix-arg '(4)))
            (ignore-errors
              (setq this-command 'scroll-other-window-down)
-             (ergoemacs-shortcut-remap 'scroll-other-window-down)
+             (ergoemacs :remap 'scroll-other-window-down)
              t)) nil
     (if (and ergoemacs-beginning-or-end-of-line-and-what
              (or (not ergoemacs-use-beginning-or-end-of-line-only)
@@ -712,13 +812,21 @@ the prefix arguments of `beginning-of-buffer',
         (progn
           (cond
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
-            (ergoemacs-shortcut-remap 'beginning-of-buffer)
+            (let ((pt (point)))
+              (ergoemacs :remap
+                         'beginning-of-buffer)
+              (when (= pt (point))
+                (call-interactively 'beginning-of-buffer)))
             (setq this-command 'beginning-of-buffer))
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
-            (ergoemacs-shortcut-remap 'ergoemacs-backward-block)
+            (call-interactively 'ergoemacs-backward-block)
             (setq this-command 'ergoemacs-backward-block))
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
-            (ergoemacs-shortcut-remap 'scroll-down-command)
+            (let ((pt (point)))
+              (ergoemacs :remap
+                         'scroll-down-command)
+              (when (= pt (point))
+                (call-interactively 'scroll-down-command)))
             (setq this-command 'scroll-down-command)))
           (beginning-of-line))
       (setq N (or N 1))
@@ -730,11 +838,19 @@ the prefix arguments of `beginning-of-buffer',
         (save-excursion
           ;; (setq prefix-arg nil)
           (setq current-prefix-arg nil)
-          (ergoemacs-shortcut-remap 'move-beginning-of-line)
+          (let ((pt (point)))
+            (ergoemacs :remap
+                       'move-beginning-of-line)
+            (when (= pt (point))
+              (call-interactively 'move-beginning-of-line)))
           (push (point) pts)
           (when (and (not (bolp)) (not (bobp)))
             (backward-char 1)
-            (ergoemacs-shortcut-remap 'move-beginning-of-line)
+            (let ((pt (point)))
+              (ergoemacs :remap
+                         'move-beginning-of-line)
+              (when (= pt (point))
+                (call-interactively 'move-beginning-of-line)))
             (push (point) pts)))
         (when ergoemacs-back-to-indentation
           (save-excursion
@@ -745,15 +861,21 @@ the prefix arguments of `beginning-of-buffer',
             (when (not (eolp))
               (forward-char 1))
             (save-excursion
-              (when (ignore-errors (comment-search-backward (point-at-bol) t))
-                (push (point) pts)
-                (when (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
-                  (while (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
-                    (skip-syntax-backward " " (point-at-bol)))
-                  (push (point) pts))))))
+              (while (re-search-backward (format "%s" comment-start-skip) (point-at-bol) t))
+              (while (re-search-forward (format "\\=%s" comment-start-skip) (point-at-eol) t))
+              (push (point) pts)
+              (when (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
+                (while (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
+                  (skip-chars-backward " \t" (point-at-bol)))
+                (skip-chars-backward " \t" (point-at-bol))
+                (push (point) pts)))))
         (cond
          ((not pts)
-          (ergoemacs-shortcut-remap 'move-beginning-of-line))
+          (let ((pt (point)))
+            (ergoemacs :remap
+                       'move-beginning-of-line)
+            (when (= pt (point))
+              (call-interactively 'move-beginning-of-line))))
          (t
           (setq pts (sort pts '<))
           (dolist (x pts)
@@ -766,10 +888,15 @@ the prefix arguments of `beginning-of-buffer',
           (when pts
             (goto-char (nth 0 pts))))))))
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
+(put 'ergoemacs-beginning-of-line-or-what 'CUA 'move)
 
 ;; ergoemacs shortcut changes this-command
 (defun ergoemacs-end-of-line-or-what (&optional N )
-  "Move cursor to end of line, or end of current or next text block or even end of buffer.
+  "Move cursor to end of line, or something.
+
+This could be end of current or next text block or even end of
+buffer depending on context and options.
+
  (a text block is separated by empty lines).
 
 1. Move cursor to the end of a line, ignoring comments
@@ -809,44 +936,52 @@ and a single universal argument called with
 window `scroll-other-window'.  Repeated pressing will repeat
 `scroll-other-window'.
 
-With argument ARG not nil or 1, move forward ARG - 1 lines first.
+With argument N not nil or 1, move forward N - 1 lines first.
 If point reaches the beginning or end of buffer, it stops there.
 
 Attempt to honor each modes modification of beginning and end of
-line functions by using `ergoemacs-shortcut-remap'.
+line functions by using `ergoemacs-remap'.
 
 When calling the repeatable command of #3, this command honors
 the prefix arguments of `end-of-buffer',
-`ergoemacs-forward-block' and `scroll-up-command'.
-
-"
+`ergoemacs-forward-block' and `scroll-up-command'."
   (interactive "^p")
   (if (and ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window
            (or (memq last-command '(scroll-other-window scroll-other-window-down))
                (equal current-prefix-arg '(4)))
            (ignore-errors
              (setq this-command 'scroll-other-window)
-             (ergoemacs-shortcut-remap 'scroll-other-window)
+             (ergoemacs :remap 'scroll-other-window)
              t)) nil
     (if (and ergoemacs-beginning-or-end-of-line-and-what
              (or (not ergoemacs-use-beginning-or-end-of-line-only)
                  (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
                       (eq last-command ergoemacs-beginning-of-line-or-what-last-command)))
-             (or (eolp)
+             (or (= (point) (save-excursion
+                              (call-interactively 'move-end-of-line)
+                              (point)))
                  (and
                   (or
                    (memq last-command '(ergoemacs-forward-block scroll-up-command)))
                   (bolp))))
-        (progn 
+        (progn
           (cond
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
-            (ergoemacs-shortcut-remap 'end-of-buffer)
+            (let ((pt (point)))
+              (ergoemacs :remap
+                         'end-of-buffer)
+              (when (= pt (point))
+                (call-interactively 'end-of-buffer)))
             (setq this-command 'end-of-buffer))
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'block)
-            (ergoemacs-shortcut-remap 'ergoemacs-forward-block)
+            (call-interactively 'ergoemacs-forward-block)
             (setq this-command 'ergoemacs-forward-block))
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
-            (ergoemacs-shortcut-remap 'scroll-up-command)
+            (let ((pt (point)))
+              (ergoemacs :remap
+                         'scroll-up-command)
+              (when (= pt (point))
+                (call-interactively 'scroll-up-command)))
             (setq this-command 'scroll-up-command)
             (beginning-of-line))))
       (setq N (or N 1))
@@ -856,22 +991,33 @@ the prefix arguments of `end-of-buffer',
       (let (pts tmp)
         (setq current-prefix-arg nil)
         (save-excursion
-          (ergoemacs-shortcut-remap 'move-end-of-line)
+          (call-interactively 'move-end-of-line)
+          (push (point) pts))
+        (save-excursion
+          (let ((pt (point)))
+            (ergoemacs :remap
+                       'move-end-of-line)
+            (when (= pt (point))
+              (call-interactively 'move-end-of-line)))
           (push (point) pts)
           ;; Support visual lines mode and allow going to the next
           ;; end of the visual line...
           (when (and (not (eolp)) (not (eobp)))
             (forward-char 1)
-            (ergoemacs-shortcut-remap 'move-end-of-line)
+            (let ((pt (point)))
+              (ergoemacs :remap
+                         'move-end-of-line)
+              (when (= pt (point))
+                (call-interactively 'move-end-of-line)))
             (push (point) pts)))
         (when ergoemacs-end-of-comment-line
           (save-excursion
             ;; See http://www.emacswiki.org/emacs/EndOfLineNoComments
-            (let ((cs (ignore-errors (comment-search-forward (point-at-eol) t))))
-              (when cs
-                (goto-char cs)
-                (skip-syntax-backward " " (point-at-bol))
-                (push (point) pts)))))
+            (goto-char (point-at-bol))
+            (when (re-search-forward (format "%s" comment-start-skip) (point-at-eol) t)
+              (goto-char (match-beginning 0)))
+            (skip-syntax-backward " " (point-at-bol))
+            (push (point) pts)))
         (when pts
           (setq pts (sort pts '<))
           (dolist (x pts)
@@ -880,16 +1026,21 @@ the prefix arguments of `end-of-buffer',
           (setq pts (reverse tmp)))
         (cond
          ((not pts)
-          (ergoemacs-shortcut-remap 'move-end-of-line)
+          (let ((pt (point)))
+            (ergoemacs :remap
+                       'move-end-of-line)
+            (when (= pt (point))
+              (call-interactively 'move-end-of-line)))
           (setq this-command 'move-end-of-line))
          (t
           (goto-char (nth 0 pts)))))))
   (setq ergoemacs-beginning-of-line-or-what-last-command this-command))
+(put 'ergoemacs-end-of-line-or-what 'CUA 'move)
 
 ;;; TEXT SELECTION RELATED
 
 (defun ergoemacs-select-current-line ()
-  "Select the current line"
+  "Select the current line."
   (interactive)
   (end-of-line) ; move to end of line
   (set-mark (line-beginning-position)))
@@ -911,15 +1062,16 @@ the prefix arguments of `end-of-buffer',
 Delimiters are paired characters:
  () [] {} «» ‹› “” 〖〗 【】 「」 『』 （） 〈〉 《》 〔〕 ⦗⦘ 〘〙 ⦅⦆ 〚〛 ⦃⦄ ⟨⟩
  For practical purposes, also: \"\", but not single quotes."
- (interactive)
- (let (p1)
-   (skip-chars-backward "^<>([{“「『‹«（〈《〔【〖⦗〘⦅〚⦃⟨\"")
-   (setq p1 (point))
-   (skip-chars-forward "^<>)]}”」』›»）〉》〕】〗⦘〙⦆〛⦄⟩\"")
-   (set-mark p1)))
+  (interactive)
+  (let (p1)
+    (skip-chars-backward "^<>([{“「『‹«（〈《〔【〖⦗〘⦅〚⦃⟨\"")
+    (setq p1 (point))
+    (skip-chars-forward "^<>)]}”」』›»）〉》〕】〗⦘〙⦆〛⦄⟩\"")
+    (set-mark p1)))
 
 ;; by Nikolaj Schumacher, 2008-10-20. Released under GPL.
 (defun ergoemacs-semnav-up (arg)
+  "Navigate semantically by ARG."
   (interactive "p")
   (when (nth 3 (syntax-ppss))
     (if (> arg 0)
@@ -935,6 +1087,7 @@ Delimiters are paired characters:
 ;; by Nikolaj Schumacher, 2008-10-20. Released under GPL.
 (defun ergoemacs-extend-selection (arg &optional incremental)
   "Select the current word.
+
 Subsequent calls expands the selection to larger semantic unit."
   (interactive (list (prefix-numeric-value current-prefix-arg)
                      (or (and transient-mark-mode mark-active)
@@ -957,25 +1110,25 @@ Subsequent calls expands the selection to larger semantic unit."
 (defun ergoemacs-kill-line-backward (&optional number)
   "Kill text between the beginning of the line to the cursor position.
 If there's no text, delete the previous line ending.
-Use `ergoemacs-shortcut-remap' in case kill line was remapped."
+Use `ergoemacs-remap' in case kill line was remapped."
   (interactive "p")
-  (if (and (= number 1) (looking-back "\n"))
+  (if (and (= number 1) (looking-back "\n" nil))
       (delete-char -1)
     (setq current-prefix-arg (- 1 number))
-    (ergoemacs-shortcut-remap 'kill-line)))
+    (ergoemacs :remap 'kill-line)))
 
 (defun ergoemacs-move-cursor-next-pane ()
   "Move cursor to the next pane.
-Use `ergoemacs-shortcut-remap' for maximum mode compatibility."
+Use `ergoemacs-remap' for maximum mode compatibility."
   (interactive)
-  (ergoemacs-shortcut-remap 'other-window))
+  (ergoemacs :remap 'other-window))
 
 (defun ergoemacs-move-cursor-previous-pane (&optional number)
   "Move cursor to the previous pane.
 Use `ergoemacs-shortcut-interal' for maximum mode compatibility."
   (interactive "p")
   (setq current-prefix-arg (if number (- 0 number) -1))
-  (ergoemacs-shortcut-remap 'other-window))
+  (ergoemacs :remap 'other-window))
 
 (defun ergoemacs-unfill-paragraph ()
   "Replace newline char in current paragraph by space.
@@ -984,7 +1137,7 @@ See also: `ergoemacs-compact-uncompact-block'"
   (interactive)
   (let ((fill-column 90002000))
     (setq current-prefix-arg nil);; Fill paragraph is bound it M-q.
-    (ergoemacs-shortcut-remap 'fill-paragraph)))
+    (ergoemacs :remap 'fill-paragraph)))
 
 (defun ergoemacs-unfill-region (start end)
   "Replace newline char in region by space.
@@ -1015,10 +1168,30 @@ When there is a text selection, act on the region."
             (let ((fill-column big-fill-column-val))
               (fill-region (region-beginning) (region-end))) )
         (if current-state-is-compact
-            (ergoemacs-shortcut-remap 'fill-paragraph)
+            (ergoemacs :remap 'fill-paragraph)
           (let ((fill-column big-fill-column-val))
-            (ergoemacs-shortcut-remap 'fill-paragraph))))
+            (ergoemacs :remap 'fill-paragraph))))
       (put this-command 'stateIsCompact-p (if current-state-is-compact nil t)))))
+
+(defun ergoemacs-top-join-line ()
+  "Join the current line with the line beneath it."
+  (interactive)
+  (delete-indentation 1))
+
+(defun ergoemacs-open-line-below ()
+  "Open line below.
+If a major/minor mode rebinds the default M-RET command, use that instead."
+  (interactive)
+  (end-of-line)
+  (newline-and-indent))
+
+(defun ergoemacs-open-line-above ()
+  "Open line above"
+  (interactive)
+  (beginning-of-line)
+  (newline-and-indent)
+  (forward-line -1)
+  (indent-for-tab-command))
 
 (defun ergoemacs-shrink-whitespaces ()
   "Remove white spaces around cursor to just one or none.
@@ -1037,7 +1210,7 @@ Calling this command 3 times will always result in no whitespaces around cursor.
       ;; todo: might consider whitespace as defined by syntax table, and also consider whitespace chars in unicode if syntax table doesn't already considered it.
       (setq cursor-point (point))
       
-      (setq space-tab-neighbor-p (if (or (looking-at " \\|\t") (looking-back " \\|\t")) t nil) )
+      (setq space-tab-neighbor-p (if (or (looking-at " \\|\t") (looking-back " \\|\t" nil)) t nil) )
       (move-beginning-of-line 1) (setq line-begin-pos (point) )
       (move-end-of-line 1) (setq line-end-pos (point) )
       ;;       (re-search-backward "\n$") (setq line-begin-pos (point) )
@@ -1210,7 +1383,7 @@ the last misspelled word with
         (setq p1 (car bds) p2 (cdr bds)))))
     (if (not (and p1 p2))
         (when ergoemacs-toggle-letter-case-and-spell
-          (ergoemacs-shortcut-remap 'flyspell-auto-correct-previous-word))
+          (ergoemacs :remap 'flyspell-auto-correct-previous-word))
       (when (not (eq last-command this-command))
         (save-excursion
           (goto-char p1)
@@ -1281,44 +1454,87 @@ the last misspelled word with
 
 ;;; BUFFER RELATED
 
-(defun ergoemacs-next-user-buffer ()
+(defvar ergoemacs-user-buffer-functions nil
+  "A user buffer is one whose name does not start with *, or for which
+any of the functions in `ergoemacs-user-buffer-functions' returns
+true; otherwise it is an emacs buffer. Each function takes a buffer as
+argument.")
+
+(defun ergoemacs-user-buffer-p (buffer)
+  "Is BUFFER a user buffer?
+
+A user buffer is one whose name does not start with *, or for which
+any of the functions in `ergoemacs-user-buffer-functions' returns
+true; otherwise it is an emacs buffer."
+  (or
+   (not (string= "*" (substring (buffer-name buffer) 0 1)))
+   (cl-some
+    (lambda (func)
+      (funcall func buffer))
+    ergoemacs-user-buffer-functions)))
+
+(defun ergoemacs-change-buffer (&optional number previous-buffer-p emacs-buffer-p)
+  "Switch to the next/previous emacs/user buffer.
+
+By default this switches to the next user buffer.
+
+This function switches forward/backward NUMBER emacs/user buffers.
+This can be specified by a prefix argument.
+
+When PREVIOUS-BUFFER-P is non-nil, switch to a previous buffer.
+When EMACS-BUFFER-P is non-nil switch to an emacs buffer.  A user
+buffer is one whose name does not start with *, or for which any of
+the functions in `ergoemacs-user-buffer-functions' returns true;
+otherwise it is an emacs buffer."
+  (interactive)
+  (let ((curr-buffer (current-buffer))
+        (number (or (and number (abs number)) 1))
+        (i 0))
+    (while (< i number)
+      (if previous-buffer-p
+          (previous-buffer)
+        (next-buffer))
+      (while (and (or (and (not emacs-buffer-p)
+                           (not (ergoemacs-user-buffer-p (current-buffer))))
+                      (and emacs-buffer-p
+                           (ergoemacs-user-buffer-p (current-buffer))))
+                  (not (eq curr-buffer (current-buffer))))
+        (if previous-buffer-p
+            (previous-buffer)
+          (next-buffer)))
+      (when (and (eq curr-buffer (current-buffer)) (= i 0))
+        (if emacs-buffer-p
+            (message "Could not find any %semacs buffers."
+                     (or (and (not (ergoemacs-user-buffer-p (current-buffer))) "other ") ""))
+          (message "Could not find any %suser buffers."
+                   (or (and (ergoemacs-user-buffer-p (current-buffer)) "other ") "")))
+        (setq i (+ number 1)))
+      (setq i (+ 1 i)))))
+
+(defun ergoemacs-next-user-buffer (&optional number)
   "Switch to the next user buffer.
 User buffers are those whose name does not start with *."
-  (interactive)
-  (next-buffer)
-  (let ((i 0))
-    (while (and (string-equal "*" (substring (buffer-name) 0 1)) (< i 20))
-      (setq i (1+ i)) (next-buffer))))
+  (interactive "p")
+  (ergoemacs-change-buffer number))
 
-(defun ergoemacs-previous-user-buffer ()
+(defun ergoemacs-previous-user-buffer (&optional number)
   "Switch to the previous user buffer.
 User buffers are those whose name does not start with *."
-  (interactive)
-  (previous-buffer)
-  (let ((i 0))
-    (while (and (string-equal "*" (substring (buffer-name) 0 1)) (< i 20))
-      (setq i (1+ i)) (previous-buffer) )))
+  (interactive "p")
+  (ergoemacs-change-buffer number t))
 
-(defun ergoemacs-next-emacs-buffer ()
+(defun ergoemacs-next-emacs-buffer (&optional number)
   "Switch to the next emacs buffer.
 Emacs buffers are those whose name starts with *."
-  (interactive)
-  (next-buffer)
-  (let ((i 0))
-    (while (and (not (string-equal "*" (substring (buffer-name) 0 1))) (< i 20))
-      (setq i (1+ i)) (next-buffer) )))
+  (interactive "p")
+  (ergoemacs-change-buffer number nil t))
 
-(defun ergoemacs-previous-emacs-buffer ()
+(defun ergoemacs-previous-emacs-buffer (&optional number)
   "Switch to the previous emacs buffer.
 Emacs buffers are those whose name starts with *."
-  (interactive)
-  (previous-buffer)
-  (let ((i 0))
-    (while (and (not (string-equal "*" (substring (buffer-name) 0 1))) (< i 20))
-      (setq i (1+ i)) (previous-buffer) )))
+  (interactive "p")
+  (ergoemacs-change-buffer number t t))
 
-(defvar initial-major-mode)
-(defvar buffer-offer-save)
 (defun ergoemacs-new-empty-buffer ()
   "Opens a new empty buffer."
   (interactive)
@@ -1330,7 +1546,7 @@ Emacs buffers are those whose name starts with *."
 (defun ergoemacs-delete-frame ()
   "Deletes frame or closes emacs (with prompt)."
   (interactive)
-  (unless (ignore-errors (ergoemacs-shortcut-remap 'delete-frame))
+  (unless (ignore-errors (ergoemacs :remap 'delete-frame))
     (when (yes-or-no-p "Do you wish to Close Emacs? ")
       ;; Bound to C-x C-c
       (save-buffers-kill-terminal))))
@@ -1340,8 +1556,6 @@ Emacs buffers are those whose name starts with *."
 If less than or equal to zero, there is no limit."
   :type 'integerp
   :group 'ergoemacs-mode)
-(declare-function dired-get-marked-files "dired.el")
-(declare-function w32-shell-execute "w32fns.c")
 (defun ergoemacs-open-in-external-app (&optional file)
   "Open the current file or dired marked files in external app.
 FILE can be a list of files, or a single file.
@@ -1356,11 +1570,12 @@ by `ergoemacs-maximum-number-of-files-to-open'.
   (interactive)
   (let* ((my-file-list
           (cond
-           ((listp file) file)
+           ((consp file) file)
            (file (list file))
            ((eq major-mode 'dired-mode) (dired-get-marked-files))
            ((eq major-mode 'locate-mode) (dired-get-marked-files))
-           ((not file) (list (buffer-file-name)))))
+           ((not file) (list (or (buffer-file-name)
+                                 (error "This buffer is not visiting a file"))))))
          (do-it (or (<= (length my-file-list) ergoemacs-maximum-number-of-file-to-open)
                     (>= 0 ergoemacs-maximum-number-of-file-to-open)
                     (y-or-n-p (format "Open more than %s files? " ergoemacs-maximum-number-of-file-to-open)))))
@@ -1399,7 +1614,6 @@ by `ergoemacs-maximum-number-of-files-to-open'.
 ;; that wraps around kill-buffer, and check on the buffer modification
 ;; status to offer save
 ;; This custome kill buffer is close-current-buffer.
-(defvar ergoemacs-single-command-keys)
 (defun ergoemacs-save-buffer-to-recently-closed ()
   "If the buffer is a file, add the path to the list `ergoemacs-recently-closed-buffers'"
   (when (not (equal buffer-file-name nil))
@@ -1408,7 +1622,6 @@ by `ergoemacs-maximum-number-of-files-to-open'.
     (when (> (length ergoemacs-recently-closed-buffers) ergoemacs-recently-closed-buffers-max)
       (setq ergoemacs-recently-closed-buffers (butlast ergoemacs-recently-closed-buffers 1)))))
 
-(declare-function undo-tree-mode "undo-tree.el")
 (defun ergoemacs-redo ()
   "Redo using either `redo' or `undo-tree-redo'.
 Installs `undo-tree' if not present."
@@ -1429,37 +1642,98 @@ Installs `undo-tree' if not present."
       (undo-tree-mode 1)
       (call-interactively 'undo-tree-redo)))))
 
-(declare-function ergoemacs-get-override-function "ergoemacs-shortcuts.el")
-(declare-function minibuffer-keyboard-quit "delsel.el")
-(declare-function org-edit-src-save "org-src.el")
+(defun ergoemacs-keyboard-quit ()
+  "Quit the current command/process.
+Similar to `keyboard-quit', with the following changes:
+
+• In the minibuffer, use `minibuffer-keyboard-quit'
+
+• When a region is active, (see `region-active-p') deactivate the
+  region with the function `deactivate-mark'.
+
+• When `ergoemacs-mode' is in a modal command mode, exit that
+  command mode.
+
+• When \"C-g\" is bound to something other than ergoemacs /
+  standard quit commands, run that command.
+
+• When \"q\" is bound to something other than self-insert
+  commands, run that command.
+
+• Otherwise run `keyboard-quit'"
+  (interactive)
+  (let (bind)
+    (cond
+     ((minibufferp)
+      (minibuffer-keyboard-quit))
+     ((region-active-p)
+      (setq saved-region-selection nil)
+      (let (select-active-regions)
+        (deactivate-mark)))
+     (ergoemacs-command-loop--modal-stack
+      (ergoemacs-command-loop--modal-pop))
+     ((and (setq bind (key-binding [7])) ;; C-g
+           (not (memq bind '(ergoemacs-keyboard-quit minibuffer-keyboard-quit keyboard-quit))))
+      (call-interactively bind))
+     ((and (setq bind (key-binding [?q]))
+           (not (string-match-p "self-insert" (symbol-name bind)))
+           (not (eq bind 'ergoemacs-keyboard-quit)))
+      (call-interactively bind))
+     (t
+      (keyboard-quit)))))
+
 (defun ergoemacs-close-current-buffer ()
   "Close the current buffer.
 
 Similar to (kill-buffer (current-buffer)) with the following addition:
 
-• Prompt user to save if the buffer has been modified even if the buffer is not associated with a file.
-• Make sure the buffer shown after closing is a user buffer.
-• If the buffer is editing a source file in an org-mode file, prompt the user to save before closing.
-• If the buffer is editing a CAPTUREd task in an org-mode file, prompt the user to save before closing.
-• If the buffer is editing a magit commit, prompt the user to save the commit before closing.
-• If it is the minibuffer, exit the minibuffer
+• Prompt user to save if the buffer has been modified even if the
+  buffer is not associated with a file.
 
-A emacs buffer is one who's name starts with *.
-Else it is a user buffer."
+• Make sure the buffer shown after closing is a user buffer.
+
+• If the buffer is editing a source file in an `org-mode' file,
+  prompt the user to save before closing.
+
+• If the buffer is editing a catpured task in an `vvorg-mode' file,
+  prompt the user to save before closing.
+
+• If the buffer is editing a magit commit, prompt the user to
+  save the commit before closing.
+
+• If it is the minibuffer, exit the minibuffer.
+
+• If the buffer was created by `server-execute', call
+  `server-edit'.  When `server-existing-buffer' is also non-nil,
+  call `kill-buffer'
+
+A user buffer is one whose name does not start with *, or for which
+any of the functions in `ergoemacs-user-buffer-functions' returns
+true; otherwise it is an emacs buffer."
   (interactive)
-  (let ((override-fn (ergoemacs-get-override-function (or ergoemacs-single-command-keys (this-single-command-keys))))
-        emacs-buff-p
+  (let (emacs-buff-p
         is-emacs-buffer-after-p
         (org-p (string-match "^[*]Org Src" (buffer-name)))
         (org-capture-p (string-match "CAPTURE-.*\\.org" (buffer-name)))
-        (git-commit-p (eq major-mode 'git-commit-mode)))
-    (setq emacs-buff-p (if (string-match "^*" (buffer-name)) t nil))
+        (git-commit-p (eq major-mode 'git-commit-mode))
+	existing-buffer-p)
+    (setq emacs-buff-p (if (not (ergoemacs-user-buffer-p (current-buffer))) t nil))
     (cond
-     ((string= major-mode "minibuffer-inactive-mode")
-      (if override-fn
-          (progn
-            (call-interactively override-fn))
-        (minibuffer-keyboard-quit)))
+     ((bound-and-true-p server-buffer-clients)
+      (when (and (buffer-modified-p)
+                 (if (equal (buffer-file-name) nil)
+                     (if (string-equal "" (save-restriction (widen) (buffer-string))) nil t)
+                   t))
+        (if (y-or-n-p (format "Buffer %s modified; Do you want to save? " (buffer-name)))
+            (save-buffer)
+          (set-buffer-modified-p nil)))
+      (setq existing-buffer-p (or (not server-kill-new-buffers)
+				  server-existing-buffer))
+      (server-edit)
+      (when existing-buffer-p
+	(kill-buffer (current-buffer))))
+     ((minibufferp)
+      (minibuffer-keyboard-quit))
      (org-capture-p
       (if (y-or-n-p "Capture not saved, do you want to save?")
           (call-interactively 'org-capture-finalize)
@@ -1481,17 +1755,15 @@ Else it is a user buffer."
       ;; offer to save buffers that are non-empty and modified, even
       ;; for non-file visiting buffer. (because kill-buffer does not
       ;; offer to save buffers that are not associated with files)
-      
+      (kill-buffer (current-buffer))
       ;; 
       (when (and (buffer-modified-p)
                  org-p)
         (if (y-or-n-p (format "Buffer %s modified; Do you want to save? " (buffer-name)))
             (org-edit-src-save)
           (set-buffer-modified-p nil)))
-      ;; save to a list of closed buffer
-      (kill-buffer (current-buffer))
       ;; if emacs buffer, switch to a user buffer
-      (if (string-match "^*" (buffer-name))
+      (if (not (ergoemacs-user-buffer-p (current-buffer)))
           (setq is-emacs-buffer-after-p t)
         (setq is-emacs-buffer-after-p nil))
       (when is-emacs-buffer-after-p
@@ -1515,20 +1787,42 @@ Else it is a user buffer."
 
 ;;; helm-mode functions
 
+;;; This comes from https://github.com/emacs-helm/helm/pull/327, but
+;;; was reverted so it is added back here.
+(defcustom ergoemacs-helm-ff-ido-style-backspace t
+  "Use backspace to navigate with `helm-find-files'.
+You will have to restart Emacs or reeval `helm-find-files-map'
+and `helm-read-file-map' for this to take effect."
+  :group 'ergoemacs-mode
+  :type '(choice
+          (const :tag "Do not use ido-style backspace")
+          (const :tag "Use ido-style backspace" t)))
+
+(defun ergoemacs-helm-ff-backspace ()
+  "Call backsapce or `helm-find-files-down-one-level'.
+If sitting at the end of a file directory, backspace goes up one
+level, like in `ido-find-file'. "
+  (interactive)
+  (let (backspace)
+    (looking-back "^.*" nil)
+    (cond
+     ((and ergoemacs-helm-ff-ido-style-backspace
+           (looking-back "[/\\]" nil))
+      (call-interactively
+       (key-binding (kbd "<left>"))))
+     (t
+      (setq backspace (lookup-key
+                       (current-global-map)
+                       (read-kbd-macro "DEL")))
+      (call-interactively backspace)))))
+
+
 ;;; This comes from https://github.com/emacs-helm/helm/issues/340
 (defcustom ergoemacs-helm-ido-style-return t
   "Allows ido-style return in `helm-mode'"
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defvar helm-buffer)
-(defvar helm-ff-default-directory)
-(defvar helm-ff-last-expanded)
-(defvar ergoemacs-mode)
-(declare-function helm-basename "helm-utils.el")
-(declare-function helm-exit-minibuffer "helm.el")
-(declare-function helm-attrset "helm.el")
-(declare-function helm-execute-persistent-action "helm.el")
 (defun ergoemacs-helm-ff-expand-dir (candidate)
   "Allows return to expand a directory like in `ido-find-file'.
 This requires `ergoemacs-mode' to be non-nil and
@@ -1592,7 +1886,6 @@ This requires `ergoemacs-mode' to be enabled with
 
 ;;; org-mode functions.
 
-(declare-function org-emphasize "org.el")
 (defun ergoemacs-org-bold ()
   "Call `org-emphasize' with *"
   (interactive)
@@ -1626,18 +1919,19 @@ This requires `ergoemacs-mode' to be enabled with
       (and (boundp 'paredit-mode)
            paredit-mode)))
 
-(declare-function ergoemacs-defer-post-command-hook "ergoemacs-shortcuts.el")
 (defun ergoemacs-smart-punctuation-insert-pair (pair)
   "Inserts a matched pair like ().
-If a smart-punctuation mode is active, use it by placing the initial pair in the unread command events."
+
+If a smart-punctuation mode is active, use it by placing the
+initial pair in the unread command events."
   (if (ergoemacs-smart-punctuation-mode-p)
       (let ((tmp (read-kbd-macro (substring pair 0 1) t)))
         (setq ergoemacs-single-command-keys tmp)
         (setq last-input-event tmp)
         (setq prefix-arg current-prefix-arg)
         (setq unread-command-events (append (listify-key-sequence tmp) unread-command-events))
-        (ergoemacs-defer-post-command-hook)
-        (reset-this-command-lengths))
+        ;;(ergoemacs-defer-post-command-hook)
+        (ergoemacs :reset-prefix))
     (if (region-active-p)
         (let ((p1 (region-beginning))
               (p2 (region-end)))
@@ -1687,7 +1981,7 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
   :type 'boolean
   :group 'ergoemacs-mode)
 
-;; (declare-function ergoemacs-pretty-key "ergoemacs-translate.el")
+;; (declare-function ergoemacs-key-description-kbd "ergoemacs-translate.el")
 ;; (defun ergoemacs-smart-punctuation ()
 ;;   "Smart Punctuation Function for `ergoemacs-mode'."
 ;;   (interactive) 
@@ -1721,11 +2015,9 @@ If a smart-punctuation mode is active, use it by placing the initial pair in the
 ;;         (define-key temp-map (read-kbd-macro repeat-key) this-command)
 ;;         (set-temporary-overlay-map temp-map)
 ;;         (when (eq (ergoemacs-real-key-binding (read-kbd-macro repeat-key) t) this-command)
-;;           (message "Cycle with %s" (ergoemacs-pretty-key repeat-key)))))))
+;;           (message "Cycle with %s" (ergoemacs-key-description-kbd repeat-key)))))))
 
-(defvar org-table-any-line-regexp)
-(declare-function cua-set-rectangle-mark "cua-rect.el")
-(declare-function org-insert-heading-respect-content "org.el")
+
 (defun ergoemacs-org-insert-heading-respect-content (&optional reopen-or-invisible-ok)
   "When in an `org-mode' table, use `cua-set-rectangle-mark', otherwise use `org-insert-heading-respect-content'"
   (interactive "P")
@@ -1757,17 +2049,24 @@ paste, this will start `browse-kill-ring'.
 When in `browse-kill-ring-mode', cycle backward through the key ring.
 "
   (interactive)
-  (if (eq major-mode 'browse-kill-ring-mode)
-      (if (save-excursion (re-search-backward "^----" nil t))
-          (call-interactively 'browse-kill-ring-previous)
-        (goto-char (point-max))
-        (call-interactively 'browse-kill-ring-previous))
-    (if (and (fboundp 'browse-kill-ring)
-             (not (eq last-command 'yank)))
-        (browse-kill-ring)
-      (if ergoemacs-smart-paste
-          (ergoemacs-shortcut-remap 'yank)
-        (ergoemacs-shortcut-remap 'yank-pop)))))
+  (cond
+   ((and isearch-mode ergoemacs-smart-paste)
+    (isearch-yank-kill)
+    (setq this-command 'isearch-yank-kill))
+   (isearch-mode
+    (isearch-yank-pop)
+    (setq this-command 'isearch-yank-pop))
+   ((eq major-mode 'browse-kill-ring-mode)
+    (if (save-excursion (re-search-backward "^----" nil t))
+        (call-interactively 'browse-kill-ring-previous)
+      (goto-char (point-max))
+      (call-interactively 'browse-kill-ring-previous)))
+   ((and (fboundp 'browse-kill-ring)
+         (not (eq last-command 'yank)))
+    (browse-kill-ring))
+   (ergoemacs-smart-paste
+    (ergoemacs :remap 'yank))
+   (t (ergoemacs :remap 'yank-pop))))
 
 (put 'ergoemacs-paste 'delete-selection 'yank)
 ;;;###autoload
@@ -1778,9 +2077,17 @@ This is `yank-pop' if `ergoemacs-smart-paste' is t and last command is a yank.
 This is `browse-kill-ring' if `ergoemacs-smart-paste' equals 'browse-kill-ring and last command is a yank.
 
 When in `browse-kill-ring-mode', cycle forward through the key ring.
+
+This does the same thing in `iseach-mode' using `isearch-yank-pop' and  `isearch-yank-kill'
 "
   (interactive)
   (cond
+   ((and isearch-mode ergoemacs-smart-paste (eq last-command 'isearch-yank-kill))
+    (isearch-yank-pop)
+    (setq this-command 'isearch-yank-pop))
+   (isearch-mode
+    (isearch-yank-kill)
+    (setq this-command 'isearch-yank-kill))
    ((and (eq major-mode 'browse-kill-ring-mode) (save-excursion (re-search-forward "^----" nil t)))
     (call-interactively 'browse-kill-ring-forward))
    ((eq major-mode 'browse-kill-ring-mode)
@@ -1792,22 +2099,20 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
     ;; Add unread command events another "paste"
     (setq unread-command-events (append (listify-key-sequence (this-single-command-keys)) unread-command-events)))
    ((and ergoemacs-smart-paste (eq last-command 'yank))
-    (ergoemacs-shortcut-remap 'yank-pop))
+    (ergoemacs :remap 'yank-pop))
    (t
-    (ergoemacs-shortcut-remap 'yank))))
+    (ergoemacs :remap 'yank))))
 
-(defvar cua--register)
-(defvar cua--last-killed-rectangle)
 (put 'ergoemacs-org-yank 'delete-selection 'yank)
-(declare-function cua-paste "cua-base.el")
-(declare-function org-yank "org.el")
+
 (defun ergoemacs-org-yank (&optional arg)
   "Ergoemacs org-mode paste."
+  (interactive)
   (cond
    ((and mark-active (boundp 'cua--rectangle) cua--rectangle)
     ;; call cua-paste
     (cua-paste arg))
-   ((and cua--last-killed-rectangle
+   ((and (boundp 'cua--last-killed-rectangle) cua--last-killed-rectangle
          (eq (and kill-ring (car kill-ring)) (car cua--last-killed-rectangle)))
     ;; Call cua-paste
     (cua-paste arg))
@@ -1821,11 +2126,6 @@ When in `browse-kill-ring-mode', cycle forward through the key ring.
   (let ((fun (lookup-key ergoemacs-keymap (read-kbd-macro key))))
     (call-interactively fun)))
 
-(declare-function org-at-heading-p "org.el")
-(declare-function org-at-item-p "org.el")
-(declare-function org-at-table-p "org.el")
-(declare-function org-region-active-p "org-compat.el")
-(declare-function org-with-limited-levels "org-macs.el")
 (defmacro ergoemacs-define-org-meta (direction &optional disable)
   "Defines org-mode meta-direction keys.
 DIRECTION defines the `org-mode' and `ergoemacs-mode' direction.
@@ -2034,62 +2334,11 @@ If arg is a negative prefix, copy file path only"
   :type 'string
   :group 'ergoemacs-mode)
 
-(defvar ergoemacs-dir)
-(defvar ergoemacs-theme--object)
-(declare-function ergoemacs-gen-svg "ergoemacs-extras.el")
-(declare-function ergoemacs-theme-component-map-list-md5 "ergoemacs-theme-engine.el")
-(defvar ergoemacs-theme-options)
-(defun ergoemacs-display-current-svg ()
-  "Generates the current ergoemacs layout, unless it already exists and opens it in a browser.
-With a prefix, force regeneration. "
+(defun ergoemacs-display-current-theme ()
+  "Generates the current ergoemacs layout, unless it already
+exists and opens it in emacs, if possible."
   (interactive)
-  (let* ((var (or ergoemacs-theme "standard"))
-         (layout ergoemacs-keyboard-layout)
-         (extra (concat var "/ergo-layouts"))
-         (md5 (if ergoemacs-theme--object
-                  (concat
-                   "-" (ergoemacs-theme-component-map-list-md5 ergoemacs-theme--object))
-                ""))
-         (dir (expand-file-name extra
-                                (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-         (png (expand-file-name (concat "ergoemacs-layout-" layout md5 ".png") dir))
-         (file (expand-file-name (concat "ergoemacs-layout-" layout md5 ".svg") dir)))
-    
-    (unless (and (not current-prefix-arg) (file-exists-p file))
-      (if (called-interactively-p 'any)
-          (let ((temp-file (make-temp-file "ergoemacs-gen" nil ".el")))
-            (with-temp-file temp-file
-              (insert (format "(setq ergoemacs-theme %s)\n(setq ergoemacs-keyboard-layout \"%s\")\n(setq ergoemacs-theme-options '"
-                              (if var
-                                  (concat "\"" var "\"")
-                                "nil")
-                              layout))
-              (let ((print-level nil)
-                    (print-length nil))
-                (prin1 ergoemacs-theme-options (current-buffer)))
-              (insert ")\n(ergoemacs-mode 1)\n(ergoemacs-display-current-svg 1)"))
-            
-            (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode -l %s &"
-                                   (ergoemacs-emacs-exe)
-                                   ergoemacs-dir temp-file)))
-        (message "Generating SVG file...")
-        (unless (featurep 'ergoemacs-extras)
-          (require 'ergoemacs-extras))
-        (ergoemacs-gen-svg layout "kbd-ergo.svg" extra)
-        (message "Generated!")))
-    
-    (when (file-exists-p png)
-      (setq file png))
-    
-    (if (not(file-exists-p file))
-        (message "Need to generate/download layout.")
-      (when (called-interactively-p 'interactive)
-        (condition-case err
-            (browse-url-of-file file)
-          (error
-           (message "Error opening with browser (%s), try opening in an external app." err)
-           (ergoemacs-open-in-external-app file)))))
-    file))
+  (describe-ergoemacs-theme ergoemacs-theme))
 
 ;;; Unaccent region taken and modified from Drew Adam's unaccent.el
 
@@ -2170,21 +2419,20 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
 
 ;; Shell handling
 
-(declare-function w32-long-file-name "w32proc.c")
 (defun ergoemacs-shell-here-directory-change-hook ()
   "Renames buffer to reflect directory name."
-  (rename-buffer
-   (generate-new-buffer-name
-    (concat (replace-regexp-in-string "\\`\\([*].*[@]\\).*\\'" "\\1" (buffer-name) t)
-            (if (eq system-type 'windows-nt)
-                (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
-              (abbreviate-file-name default-directory)) "*"))))
+  (let ((nbn (concat (cond
+                      ((eq major-mode 'eshell-mode) "*eshell@")
+                      (t (replace-regexp-in-string "\\([*][^@]*[@]\\).*" "\\1" (buffer-name) t)))
+                     (if (eq system-type 'windows-nt)
+                         (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
+                       (abbreviate-file-name default-directory)) "*")))
+    (unless (string= nbn (buffer-name))
+      (setq nbn (generate-new-buffer-name nbn))
+      (rename-buffer nbn))))
 
 ;; (add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
 
-(defvar dirtrack-list)
-(declare-function shell-dirtrack-mode "shell.el")
-(declare-function dirtrack-mode "dirtrack.el")
 (defun ergoemacs-shell-here-hook ()
   "Hook for `ergoemacs-shell-here'.
 Sends shell prompt string to process, then turns on
@@ -2220,9 +2468,20 @@ Sends shell prompt string to process, then turns on
     (set-buffer (get-buffer-create name))
     (funcall shell name)))
 
+(defvar ergoemacs-msys (when (file-exists-p "c:/msysgit/bin/bash.exe")
+			 "c:/msysgit/bin/bash.exe")
+  "msys bash executable.")
+
+(defun ergoemacs-msys-here ()
+  "Runs/switches to msys shell process in current directory."
+  (interactive)
+  (if (and ergoemacs-msys (file-exists-p ergoemacs-msys))
+      (let ((explicit-shell-file-name ergoemacs-msys))
+	(ergoemacs-shell-here nil "MSYS"))
+    (error "Need to specify `ergoemacs-msys'.")))
+
 ;; (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
 
-(defvar eshell-buffer-name)
 (defun ergoemacs-eshell-here ()
   "Run/switch to an `eshell' process in the current directory"
   (interactive)
@@ -2231,8 +2490,9 @@ Sends shell prompt string to process, then turns on
                                  (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
                                (abbreviate-file-name default-directory)) "*"))
          (eshell-exists-p (get-buffer eshell-buffer-name)))
-    (call-interactively 'eshell)
-    (unless eshell-exists-p
+    (if eshell-exists-p
+        (switch-to-buffer eshell-exists-p)
+      (call-interactively 'eshell)
       (ergoemacs-shell-here-directory-change-hook))))
 
 (defun ergoemacs-powershell-here ()
@@ -2248,15 +2508,13 @@ Sends shell prompt string to process, then turns on
 (defvar ergoemacs-all-dictionaries nil
   "A vector of dictionaries. Used by `lookup-ergoemacs-all-dictionaries'. http://wordyenglish.com/words/dictionary_tools.html ")
 (setq ergoemacs-all-dictionaries [
-                        "http://www.dict.org/bin/Dict?Form=Dict2&Database=*&Query=�" ; 1913 Webster, WordNet
-                        "http://www.thefreedictionary.com/�"                         ; AHD
-                        "http://www.answers.com/main/ntquery?s=�"                    ; AHD
-                        "http://en.wiktionary.org/wiki/�"
-                        "http://www.google.com/search?q=define:+�" ; google
-                        "http://www.etymonline.com/index.php?search=�" ; etymology
-                        ] )
-
-(declare-function browse-url-default-windows-browser "browse-url.el")
+                                  "http://www.dict.org/bin/Dict?Form=Dict2&Database=*&Query=�" ; 1913 Webster, WordNet
+                                  "http://www.thefreedictionary.com/�"                         ; AHD
+                                  "http://www.answers.com/main/ntquery?s=�"                    ; AHD
+                                  "http://en.wiktionary.org/wiki/�"
+                                  "http://www.google.com/search?q=define:+�" ; google
+                                  "http://www.etymonline.com/index.php?search=�" ; etymology
+                                  ] )
 
 (defun ergoemacs-lookup-word-on-internet (&optional input-word site-to-use)
   "Look up current word or text selection in a online reference site.
@@ -2353,12 +2611,19 @@ See also `ergoemacs-lookup-word-on-internet'."
   (dolist (dict-url ergoemacs-all-dictionaries)
     (ergoemacs-lookup-word-on-internet input-word dict-url)))
 
-(defvar apropos-do-all)
 (defun ergoemacs-apropos-user-options (regexp)
   "Show user variables that match REGEXP."
   (interactive (list (read-string "Apropos user options (regexp): ")))
   (let ((apropos-do-all nil))
     (apropos-variable regexp)))
+
+(defun ergoemacs-current-line (&optional pos)
+  "Return current line for POS or `point'"
+  ;; Stole from org-current-line
+  (save-excursion
+    (and pos (goto-char pos))
+    ;; works also in narrowed buffer, because we start at 1, not point-min
+    (+ (if (bolp) 1 0) (count-lines 1 (point)))))
 
 (defun ergoemacs-move-text-internal (arg)
   "Move region (transient-mark-mode active) or current line."
@@ -2385,76 +2650,75 @@ See also `ergoemacs-lookup-word-on-internet'."
              (exchange-point-and-mark)
              (setq deactivate-mark nil)))
           (t
-           (let ((column (current-column)))
+           (let ((column (current-column))
+                 (line (ergoemacs-current-line)))
              (beginning-of-line)
              (when (or (> arg 0) (not (bobp)))
                (forward-line 1)
                (when (or (< arg 0) (not (eobp)))
                  (transpose-lines arg))
-               (forward-line -1))
+               (forward-line -1)
+               (when (and (< arg 0) ;; Bug fix for 24.4
+                          (= line (ergoemacs-current-line)))
+                 (forward-line -1)))
              (move-to-column column t))))))
 
 (defun ergoemacs-move-text-up (arg)
   "Move region (transient-mark-mode active) or current line ARG lines up."
   (interactive "*p")
-  (ergoemacs-move-text-internal (- arg)))
+  (cond
+   ((eq major-mode 'org-mode)
+    (call-interactively 'org-metaup))
+   (t (ergoemacs-move-text-internal (- arg)))))
 
 (defun ergoemacs-move-text-down (arg)
   "Move region (transient-mar-mode active) or current line (ARG lines) down."
   (interactive "*p")
-  (ergoemacs-move-text-internal arg))
+  (cond
+   ((eq major-mode 'org-mode)
+    (call-interactively 'org-metadown))
+   (t (ergoemacs-move-text-internal arg))))
 
+(defun ergoemacs-org-edit-src ()
+  "Deal with org source blocks and other narrowed regions.
 
-(defvar ergoemacs-shortcut-keys)
-(defvar ergoemacs-no-shortcut-keys)
-(defvar ergoemacs-read-input-keys)
-(defvar ergoemacs-read-emulation-mode-map-alist)
-(defvar ergoemacs-modal-emulation-mode-map-alist)
-(defvar ergoemacs-repeat-emulation-mode-map-alist)
-(defvar ergoemacs-emulation-mode-map-alist)
-(defvar ergoemacs-debug-keymap--temp-map)
-(defun ergoemacs-state ()
-  "Debugging the state of `ergoemacs-mode'"
+In `org-mode' run `org-edit-special'.  If `user-error' is raised
+run `org-babel-tangle'.
+
+In org source buffers run `org-edit-src-exit'
+
+In other source buffer that `ergoemacs-mode' recoginzes as a
+org-mode buffer, run `org-babel-detangle'.
+
+With a prefix argument like \\[universial-argument] in an
+`org-mode' buffer, run `org-babel-tangle'."
   (interactive)
-  (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-state*"))
-  ;; (delete-region (point-min) (point-max))
-  (goto-char (point-max))
-  (org-mode)
-  (insert "** Variables\n")
-  (insert (format "ergoemacs-shortcut-keys: %s\n" ergoemacs-shortcut-keys))
-  (insert (format "ergoemacs-read-input-keys: %s\n"
-                   ergoemacs-read-input-keys))
-  (insert (format "ergoemacs-unbind-keys: %s\n" ergoemacs-unbind-keys))
-  (insert (format "ergoemacs-mode %s\n" ergoemacs-mode))
-  (insert (format "emulation-mode-map-alists: %s\n" emulation-mode-map-alists))
-  (insert (format "ergoemacs-read-emulation-mode-map-alist: %s\n"
-                  (mapcar
-                   (lambda(x) (nth 0 x))
-                   ergoemacs-read-emulation-mode-map-alist)))
-  (insert (format "ergoemacs-modal-emulation-mode-map-alist: %s\n"
-                  (mapcar
-                   (lambda(x) (nth 0 x))
-                   ergoemacs-modal-emulation-mode-map-alist)))
-  (insert (format "ergoemacs-repeat-emulation-mode-map-alist: %s\n"
-                  (mapcar
-                   (lambda(x) (nth 0 x))
-                   ergoemacs-repeat-emulation-mode-map-alist)))
-  (insert (format "ergoemacs-emulation-mode-map-alist: %s\n"
-                   (mapcar
-                    (lambda(x) (nth 0 x))
-                    ergoemacs-emulation-mode-map-alist)))
-  
-  (insert (format "minor-mode-map-alist: %s\n"
-                   (mapcar
-                    (lambda(x) (nth 0 x))
-                    minor-mode-map-alist)))
-  (insert "** Maps\n")
-  (dolist (x ergoemacs-emulation-mode-map-alist)
-    (setq ergoemacs-debug-keymap--temp-map (cdr x))
-    (insert (format "*** %s: %s\n%s\n"
-                    (nth 0 x) (symbol-value (nth 0 x))
-                    (substitute-command-keys "\\{ergoemacs-debug-keymap--temp-map}")))))
+  (let ((org-p (string-match "^[*]Org Src" (buffer-name))))
+    (cond
+     ((and (eq major-mode 'org-mode)
+           current-prefix-arg)
+      (setq current-prefix-arg nil)
+      (call-interactively 'org-babel-tangle))
+     ((eq major-mode 'org-mode)
+      (condition-case _err
+          (call-interactively 'org-edit-special)
+        (error (call-interactively 'org-babel-tangle))))
+     (org-p
+      (call-interactively 'org-edit-src-exit))
+     ((ergoemacs-buffer-narrowed-p)
+      (call-interactively 'widen))
+     ((region-active-p)
+      (call-interactively 'narrow-to-region))
+     ((setq org-p
+            (save-excursion
+              (goto-char (point-min))
+              (re-search-forward (concat comment-start-skip ".*:1 ends here") nil t)))
+      (call-interactively 'org-babel-detangle)))))
 
+(defun ergoemacs-describe-current-theme ()
+  "Describe the current theme."
+  (interactive)
+  (ergoemacs-theme-describe (or ergoemacs-theme "standard")))
 
 ;; Ergoemacs Test suite
 (unless (fboundp 'ergoemacs-test)

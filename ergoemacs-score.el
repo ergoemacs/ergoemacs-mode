@@ -1,33 +1,38 @@
-;;; ergoemacs-track.el --- minor mode to track layout-based typed -*- lexical-binding: t -*-
+;;; ergoemacs-score.el --- Ergoemacs ergonomic score -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
+;; Copyright © 2013-2015  Free Software Foundation, Inc.
 
-;; Maintainer: Matthew L. Fidler
-;; Keywords: convenience
-
-;; ErgoEmacs is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published
-;; by the Free Software Foundation, either version 3 of the License,
-;; or (at your option) any later version.
-
-;; ErgoEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; Filename: ergoemacs-score.el
+;; Author: Matthew L. Fidler
+;; Maintainer: 
+;; 
+;;; Commentary: 
+;; 
+;;
+;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 
+;;; Change Log:
+;; 
+;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or
+;; (at your option) any later version.
+;; 
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;; General Public License for more details.
-
+;; 
 ;; You should have received a copy of the GNU General Public License
-;; along with ErgoEmacs.  If not, see <http://www.gnu.org/licenses/>.
-
-;;; Commentary:
-
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;; 
-
-;; Todo:
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
-
 ;;; Code:
-
 (defvar ergoemacs-track-hand
   '(0 0 0 0 0 0 0 1 1 1 1 1 1 1 1
       0 0 0 0 0 0 0 1 1 1 1 1 1 1 1
@@ -52,20 +57,19 @@
   "Based on ergoemacs-layouts, what row is being used?
 1 = 1st row/number row
 2 = 2nd row
-
 3 = 3rd row/home row
 4 = 4th row")
 
 (defvar ergoemacs-track-finger
   ' (0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
-     0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
-     0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
-     0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
-     0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
-     0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
-     0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
-     0 0 0 1 2 3 3 4 4 5 6 7 7 7 7)
-  "Track the finger based on the ergoemacs-layout.
+       0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
+       0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
+       0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
+       0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
+       0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
+       0 0 0 1 2 3 3 4 4 5 6 7 7 7 7
+       0 0 0 1 2 3 3 4 4 5 6 7 7 7 7)
+    "Track the finger based on the ergoemacs-layout.
 0 = left pinky,
 1 = left ring
 2 = left middle
@@ -158,7 +162,7 @@
     (when lay
       (if curr-i
           (setq wi curr-i)
-        (dolist (x (symbol-value lay))
+        (dolist (x (ergoemacs-sv lay))
           (when (string= key x)
             (setq wi i))
           (setq i (+ i 1))))
@@ -177,43 +181,43 @@
       (setq dy (- yc yh))
       
       (setq ret
-           `(:x ,xc
-                :y ,yc
-                :x-home ,xh
-                :y-home ,yh
-                :d-home ,(sqrt (+ (* dx dx) (* dy dy)))
-                
-                :hand ,(if (= 0 (nth i ergoemacs-track-hand))
-                           'left
-                         'right)
+            `(:x ,xc
+                 :y ,yc
+                 :x-home ,xh
+                 :y-home ,yh
+                 :d-home ,(sqrt (+ (* dx dx) (* dy dy)))
+                 
+                 :hand ,(if (= 0 (nth i ergoemacs-track-hand))
+                            'left
+                          'right)
 
-                :finger ,(cond
-                          ((or (= 0 (nth i ergoemacs-track-finger))
-                               (= 7 (nth i ergoemacs-track-finger)))
-                           'pinky)
-                          ((or (= 1 (nth i ergoemacs-track-finger))
-                               (= 6 (nth i ergoemacs-track-finger)))
-                           'ring)
-                          ((or (= 2 (nth i ergoemacs-track-finger))
-                               (= 5 (nth i ergoemacs-track-finger)))
-                           'middle)
-                          (t
-                           'pointer))
+                 :finger ,(cond
+                           ((or (= 0 (nth i ergoemacs-track-finger))
+                                (= 7 (nth i ergoemacs-track-finger)))
+                            'pinky)
+                           ((or (= 1 (nth i ergoemacs-track-finger))
+                                (= 6 (nth i ergoemacs-track-finger)))
+                            'ring)
+                           ((or (= 2 (nth i ergoemacs-track-finger))
+                                (= 5 (nth i ergoemacs-track-finger)))
+                            'middle)
+                           (t
+                            'pointer))
 
-                :finger-n ,(nth i ergoemacs-track-finger)
+                 :finger-n ,(nth i ergoemacs-track-finger)
 
-                :row-n ,(nth i ergoemacs-track-row)
+                 :row-n ,(nth i ergoemacs-track-row)
 
-                :row ,(cond
-                       ((= 1 (nth i ergoemacs-track-row))
-                        'number)
-                       ((= 2 (nth i ergoemacs-track-row))
-                        'top)
-                       ((= 3 (nth i  ergoemacs-track-row))
-                        'home)
-                       ((= 4 (nth i ergoemacs-track-row))
-                        'bottom))))
-     ret)))
+                 :row ,(cond
+                        ((= 1 (nth i ergoemacs-track-row))
+                         'number)
+                        ((= 2 (nth i ergoemacs-track-row))
+                         'top)
+                        ((= 3 (nth i  ergoemacs-track-row))
+                         'home)
+                        ((= 4 (nth i ergoemacs-track-row))
+                         'bottom))))
+      ret)))
 
 (defvar ergoemacs-key-hash nil
   "Key hash")
@@ -229,7 +233,7 @@
 (dolist (layout (ergoemacs-get-layouts t))
   (let ((lay (intern-soft (format "ergoemacs-layout-%s" layout))))
     (when lay
-      (dolist (key (symbol-value lay))
+      (dolist (key (ergoemacs-sv lay))
         (unless (string= key "")
           (puthash (cons layout key)
                    (ergoemacs-key-properties key layout)
@@ -242,13 +246,13 @@ KEY2 is the second key pressed.
 LAYOUT is the ergoemacs-layout used.
 LAST-PLIST is the last property list returned by this function or nil if nothing was returned previously."
   (if layout
-      (let ((ret (gethash (cons (cons key1 key2) (cons last-plist layout)) ergoemacs-key-hash)))
+      (let ((ret (ergoemacs-gethash (cons (cons key1 key2) (cons last-plist layout)) ergoemacs-key-hash)))
         (if ret
             ret
-          (let ((kp1 (gethash (cons layout key1) ergoemacs-key-hash))
-                (kp2 (gethash (cons layout key2) ergoemacs-key-hash))
+          (let ((kp1 (ergoemacs-gethash (cons layout key1) ergoemacs-key-hash))
+                (kp2 (ergoemacs-gethash (cons layout key2) ergoemacs-key-hash))
                 kpl kpl1
-                (kp12 (gethash (cons layout (cons key1 key2)) ergoemacs-key-hash))
+                (kp12 (ergoemacs-gethash (cons layout (cons key1 key2)) ergoemacs-key-hash))
                 dx dy)
             
             (when (and (not kp12) kp1 kp2
@@ -292,8 +296,8 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
                    (eq (plist-get last-plist :finger-n) (plist-get kp1 :finger-n)))
               
               ;; Last keypress was on the same finger as kp1.  kp2 is a reset.
-              (setq kpl (gethash (cons layout (plist-get last-plist :key)) ergoemacs-key-hash))
-              (setq kpl1 (gethash (cons layout (cons (plist-get last-plist :key) key1))
+              (setq kpl (ergoemacs-gethash (cons layout (plist-get last-plist :key)) ergoemacs-key-hash))
+              (setq kpl1 (ergoemacs-gethash (cons layout (cons (plist-get last-plist :key) key1))
                                   ergoemacs-key-hash))
 
               (when (not kpl1)
@@ -344,8 +348,8 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
               ;; Distance is D(Last-Key,Key1)+D(Key1,Key2)
               ;; Residual Distance is D(Key2,Home)
               
-              (setq kpl (gethash (cons layout (plist-get last-plist :key)) ergoemacs-key-hash))
-              (setq kpl1 (gethash (cons layout (cons (plist-get last-plist :key) key1))
+              (setq kpl (ergoemacs-gethash (cons layout (plist-get last-plist :key)) ergoemacs-key-hash))
+              (setq kpl1 (ergoemacs-gethash (cons layout (cons (plist-get last-plist :key) key1))
                                   ergoemacs-key-hash))
 
               (when (not kpl1)
@@ -366,8 +370,8 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
               ;;
               ;; Distance is D(Last,kp1)+D(kp1,home)+D(kp2,home)
               ;; Residual is D(kp2,home)
-              (setq kpl (gethash (cons layout (plist-get last-plist :key)) ergoemacs-key-hash))
-              (setq kpl1 (gethash (cons layout (cons (plist-get last-plist :key) key1))
+              (setq kpl (ergoemacs-gethash (cons layout (plist-get last-plist :key)) ergoemacs-key-hash))
+              (setq kpl1 (ergoemacs-gethash (cons layout (cons (plist-get last-plist :key) key1))
                                   ergoemacs-key-hash))
 
               (when (not kpl1)
@@ -412,7 +416,7 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
             (mapcar
              (lambda(lay)
                (let (last-p
-                     (dist (gethash lay ergoemacs-distance-hash 0))
+                     (dist (ergoemacs-gethash lay ergoemacs-distance-hash 0))
                      ret)
                  (when last-plist
                    (setq last-p (assoc lay last-plist))
@@ -428,21 +432,8 @@ LAST-PLIST is the last property list returned by this function or nil if nothing
   "Last distance plist")
 
 (defvar ergoemacs-last-key-press nil)
-
-;; (defun ergoemacs-track-post-command-hook ()
-;;   "Tracks the key presses."
-;;   (let ((keys (key-description (this-command-keys)))
-;;         dist-p)
-;;     ;; Note that sending something like QWERTY <apps> j
-;;     ;; Adds a key binding of C-c or C-c * key binding.
-;;     (when ergoemacs-last-key-press
-;;       (setq dist-p (ergoemacs-key-distance ergoemacs-last-key-press keys)))
-;;     (setq ergoemacs-last-key-press keys)))
-
-;; (add-hook 'post-command-hook 'ergoemacs-track-post-command-hook)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; ergoemacs-track.el ends here
+;;; ergoemacs-score.el ends here
 ;; Local Variables:
 ;; coding: utf-8-emacs
 ;; End:

@@ -1,6 +1,10 @@
-#  Ergoemacs Keybindings [![Build Status](https://secure.travis-ci.org/ergoemacs/ergoemacs-mode.png)](http://travis-ci.org/ergoemacs/ergoemacs-mode)
- Xah Lee, David Capello, and Matthew Fidler
+[![MELPA Stable](http://stable.melpa.org/packages/ergoemacs-mode-badge.svg)](http://stable.melpa.org/#/ergoemacs-mode)
+[![MELPA](http://melpa.org/packages/ergoemacs-mode-badge.svg)](http://melpa.org/#/ergoemacs-mode)
+[![Build Status](https://secure.travis-ci.org/ergoemacs/ergoemacs-mode.png)](http://travis-ci.org/ergoemacs/ergoemacs-mode)
 
+#  Ergoemacs Keybindings 
+
+ Xah Lee, David Capello, and Matthew Fidler
 
 ## Library Information
 
