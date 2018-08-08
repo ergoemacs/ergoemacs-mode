@@ -1,6 +1,6 @@
 ;;; ergoemacs-map.el --- Ergoemacs map interface -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2015  Free Software Foundation, Inc.
+;; Copyright © 2013-2018  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-map.el
 ;; Description:
@@ -35,6 +35,7 @@
 (require 'cl-lib)
 (eval-when-compile
   (require 'ergoemacs-macros))
+(require 'ergoemacs-component)
 
 (defvar cl-struct-ergoemacs-component-struct-tags)
 (defvar ergoemacs-breadcrumb-hash)
@@ -59,7 +60,6 @@
 (defvar ess-language)
 (defvar ergoemacs-mode--fast-p)
 (defvar ergoemacs-remap-ignore)
-(defvar ergoemacs-component-struct--composed-hook-minibuffer)
 
 
 (declare-function ergoemacs-timing-- "ergoemacs-mode")
@@ -70,14 +70,6 @@
 
 (declare-function ergoemacs-command-loop--modal "ergoemacs-command-loop")
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
-
-(declare-function ergoemacs-component-struct--create-hooks "ergoemacs-component")
-(declare-function ergoemacs-component-struct--get "ergoemacs-component")
-(declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-component")
-(declare-function ergoemacs-component-struct--lookup-list "ergoemacs-component")
-(declare-function ergoemacs-component-struct--minor-mode-map-alist "ergoemacs-component")
-(declare-function ergoemacs-component-struct--rm-hooks "ergoemacs-component")
-(declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
 
 (declare-function ergoemacs-command-loop--minibuffer-supported-p "ergoemacs-command-loop")
 

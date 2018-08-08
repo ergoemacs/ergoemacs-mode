@@ -52,7 +52,8 @@
 
 (eval-when-compile
   (require 'ergoemacs-macros)
-  (require 'cl))
+  (require 'cl-lib))
+(require 'find-func)
 
 (defvar ergoemacs-mode)
 (defvar ergoemacs-require)

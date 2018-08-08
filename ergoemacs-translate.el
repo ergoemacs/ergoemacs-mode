@@ -51,7 +51,7 @@
 ;;; Code:
 
 (eval-when-compile 
-  (require 'cl)
+  (require 'cl-lib)
   (require 'ergoemacs-macros))
 
 
@@ -644,7 +644,7 @@ For keys, the list consists of:
       (push key ret))
     ret))
 
-(defstruct ergoemacs-translation-struct
+(cl-defstruct ergoemacs-translation-struct
   "A basic ergoemacs translation structure."
   (name "default-name")
   (translation '())
@@ -691,14 +691,16 @@ When NAME is a symbol, setup the translation function for the symbol."
        ergoemacs-translation-hash)
     (let ((name-str (and (symbolp name) (substring (symbol-name name) 1))))
       (eval
-       (macroexpand
+       (macroexpand                     ;FIXME: Why?
 	`(progn
 	   (defvar ,(intern (concat "ergoemacs-translate--" name-str "-map")) (make-sparse-keymap)
 	     ,(concat "Ergoemacs local map for translation :"
 		      name-str
 		      " while completing a key sequence."))
 	   (define-obsolete-variable-alias ',(intern (concat "ergoemacs-" name-str "-translation-local-map"))
-             ',(intern (concat "ergoemacs-translate--" name-str "-map"))))))
+             ',(intern (concat "ergoemacs-translate--" name-str "-map"))
+             "Ergoemacs-v5.16")))
+       t)
       (ergoemacs-map-properties--label-map (intern (concat "ergoemacs-translate--" name-str "-map")) t)
       (ergoemacs (symbol-value (intern (concat "ergoemacs-translate--" name-str "-map"))) :only-local-modifications-p t)
       ;; 
@@ -709,8 +711,8 @@ When NAME is a symbol, setup the translation function for the symbol."
 	(fset (intern (concat "ergoemacs-" name-str type))
 	      'ergoemacs-translate--setup-command-loop)
 	(when (string= type "-universal-argument")
-	  (pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
-	  (pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
+	  (cl-pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
+	  (cl-pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
 
 (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--setup-translation)
 

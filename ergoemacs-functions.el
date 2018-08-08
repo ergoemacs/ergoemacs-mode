@@ -356,8 +356,12 @@ If TERMINAL is non-nil, run the terminal version"
 
 (defun ergoemacs-emacs-exe ()
   "Get the Emacs executable for testing purposes."
-  (let* ((emacs-exe (invocation-name))
-         (emacs-dir (invocation-directory))
+  (let* ((emacs-exe (if (fboundp 'invocation-name) (invocation-name)
+                      (if (boundp 'invocation-name) invocation-name)))
+         (emacs-dir (if (fboundp 'invocation-directory) (invocation-directory)
+                      (if (boundp 'invocation-directory) invocation-directory)))
+         ;; FIXME: The quotes can't be quite right; better use something like
+         ;; `shell-quote-argument'.
          (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
                            "\"")))
     full-exe))
@@ -1310,8 +1314,8 @@ Based on the value of `major-mode' and
 (defun ergoemacs-camelize-method (s &optional char)
   "Convert under_score string S to CamelCase string."
   (mapconcat 'identity (ergoemacs-mapcar-head
-                        '(lambda (word) (downcase word))
-                        '(lambda (word) (capitalize (downcase word)))
+                        #'downcase
+                        (lambda (word) (capitalize (downcase word)))
                         (split-string s (or char "_"))) ""))
 
 (defun ergoemacs-camel-bounds (camel-case-chars)
@@ -1581,7 +1585,7 @@ by `ergoemacs-maximum-number-of-files-to-open'.
                     (y-or-n-p (format "Open more than %s files? " ergoemacs-maximum-number-of-file-to-open)))))
     (when do-it
       (cond
-       ((eq system-type 'windows-nt)
+       ((fboundp 'w32-shell-execute)
         (dolist (f-path my-file-list)
           (w32-shell-execute
            "open" (replace-regexp-in-string "/" "\\" f-path t t))))
@@ -1597,13 +1601,14 @@ by `ergoemacs-maximum-number-of-files-to-open'.
   "Show current file in desktop (OS's file manager)."
   (interactive)
   (cond
-   ((eq system-type 'windows-nt)
+   ((fboundp 'w32-shell-execute)
     (w32-shell-execute "explore" (replace-regexp-in-string "/" "\\" default-directory t t)))
    ((eq system-type 'darwin) (shell-command "open ."))
    ((eq system-type 'gnu/linux)
     (let ((process-connection-type nil))
       (start-process "" nil "xdg-open" ".")))))
 
+;; FIXME: Why default to (cons nil nil) instead of just nil?
 (defvar ergoemacs-recently-closed-buffers (cons nil nil) "A list of recently closed buffers. The max number to track is controlled by the variable `ergoemacs-recently-closed-buffers-max'.")
 (defvar ergoemacs-recently-closed-buffers-max 30 "The maximum length for `ergoemacs-recently-closed-buffers'.")
 
@@ -1787,8 +1792,8 @@ true; otherwise it is an emacs buffer."
 
 ;;; helm-mode functions
 
-;;; This comes from https://github.com/emacs-helm/helm/pull/327, but
-;;; was reverted so it is added back here.
+;; This comes from https://github.com/emacs-helm/helm/pull/327, but
+;; was reverted so it is added back here.
 (defcustom ergoemacs-helm-ff-ido-style-backspace t
   "Use backspace to navigate with `helm-find-files'.
 You will have to restart Emacs or reeval `helm-find-files-map'
@@ -2419,14 +2424,18 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
 
 ;; Shell handling
 
+(defun ergoemacs--default-dir-name ()
+  (let ((afn (abbreviate-file-name default-directory)))
+    (if (fboundp 'w32-long-file-name)
+        (w32-long-file-name afn) ;; Fix case issues
+      afn)))
+
 (defun ergoemacs-shell-here-directory-change-hook ()
   "Renames buffer to reflect directory name."
   (let ((nbn (concat (cond
-                      ((eq major-mode 'eshell-mode) "*eshell@")
+                      ((derived-mode-p 'eshell-mode) "*eshell@")
                       (t (replace-regexp-in-string "\\([*][^@]*[@]\\).*" "\\1" (buffer-name) t)))
-                     (if (eq system-type 'windows-nt)
-                         (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
-                       (abbreviate-file-name default-directory)) "*")))
+                     (ergoemacs--default-dir-name) "*")))
     (unless (string= nbn (buffer-name))
       (setq nbn (generate-new-buffer-name nbn))
       (rename-buffer nbn))))
@@ -2462,9 +2471,7 @@ Sends shell prompt string to process, then turns on
   (interactive)
   (let* ((shell (or shell-program 'shell))
          (buf-prefix (or buffer-prefix (symbol-name shell)))
-         (name (concat "*" buf-prefix "@" (if (eq system-type 'windows-nt)
-                                              (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
-                                            (abbreviate-file-name default-directory)) "*")))
+         (name (concat "*" buf-prefix "@" (ergoemacs--default-dir-name) "*")))
     (set-buffer (get-buffer-create name))
     (funcall shell name)))
 
@@ -2486,9 +2493,7 @@ Sends shell prompt string to process, then turns on
   "Run/switch to an `eshell' process in the current directory"
   (interactive)
   (let* ((eshell-buffer-name
-          (concat "*eshell@" (if (eq system-type 'windows-nt)
-                                 (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
-                               (abbreviate-file-name default-directory)) "*"))
+          (concat "*eshell@" (ergoemacs--default-dir-name) "*"))
          (eshell-exists-p (get-buffer eshell-buffer-name)))
     (if eshell-exists-p
         (switch-to-buffer eshell-exists-p)

@@ -1,6 +1,6 @@
 ;;; ergoemacs-component.el --- Ergoemacs map interface -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2015  Free Software Foundation, Inc.
+;; Copyright © 2013-2018  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-component.el
 ;; Description:
@@ -169,9 +169,9 @@ if the package is deferred."
           (unless (or defer (featurep package))
             (require package nil t))
           (when (and package (not (featurep package)) (numberp defer))
-            (run-with-idle-timer defer nil #'require package  ;; `(lambda()
-                           ;; (message ,(format "Defer: %s %s" package defer))
-                           ;; (require ,package)
+            (run-with-idle-timer defer nil #'require package  ;; (lambda()
+                           ;; (message (format "Defer: %s %s" package defer))
+                           ;; (require package)
                                  ;; (ergoemacs-component-struct--apply-inits))
 				 )
             )
@@ -432,7 +432,7 @@ Allows the component not to be calculated."
 (defvar ergoemacs-component-struct--define-key-temp-map nil)
 
 (defun ergoemacs-component-struct--define-key-get-def (def)
-  "Gets the `ergoemacs-mode' function definition for DEF."
+  "Get the `ergoemacs-mode' function definition for DEF."
   (let (tmp)
     (cond
      ((and (consp def) (memq (nth 0 def) '(kbd read-kbd-macro))
@@ -958,15 +958,19 @@ OBJ is the current object being modified, passed to
 
 (defvar ergoemacs-component-struct--create-hooks nil)
 (defun ergoemacs-component-struct--create-hooks (&optional obj)
-  "Gets a list of hooks that need to be defined eor OBJ."
+  "Get a list of hooks that need to be defined for OBJ."
   (dolist (hook (ergoemacs-component-struct--hooks obj))
-    (eval `(progn
-             (defun ,(intern (concat "ergoemacs--" (symbol-name hook))) ()
+    (let ((fun-name (intern (concat "ergoemacs--" (symbol-name hook)))))
+      ;; FIXME: Since Emacs-25 we could use a closure with a computed docstring,
+      ;; using (:documentation <exp>).
+      (eval `(defun ,fun-name ()
+               ;; FIXME: This describes a *function* (placed on a hook) and
+               ;; not a hook, AFAICT.
                ,(format "`ergoemacs-mode' hook for `%s'" (symbol-name hook))
                (ergoemacs-component-struct--composed-hook ',hook))
-             ;; (push )
-             (push ',hook ergoemacs-component-struct--create-hooks)
-             (add-hook ',hook #',(intern (concat "ergoemacs--" (symbol-name hook))))))))
+          t)
+      (push hook ergoemacs-component-struct--create-hooks)
+      (add-hook hook fun-name))))
 
 (defun ergoemacs-component-struct--rm-hooks ()
   "Remove hooks.
@@ -1112,7 +1116,10 @@ to prevent infinite recursion."
          ((and ensure (symbolp ensure))
           (ergoemacs-component-struct--ensure ensure defer autoloads))
 	 ((and (consp ensure) (memq (car ensure) '(memq member and or if when = string= not string< eq equal)))
-	  (when (ignore-errors (eval ensure))
+          ;; FIXME: avoid `eval', e.g. by making
+          ;; ergoemacs-component-struct-ensure hold a function rather than
+          ;; an expression.
+	  (when (ignore-errors (eval ensure t))
 	    (ergoemacs-component-struct--ensure package-name defer autoloads)))
          ((consp ensure)
           (dolist (elt ensure)
@@ -1192,7 +1199,7 @@ to prevent infinite recursion."
                           (nth 3 init))))
                  (t
                   (condition-case err
-                      (eval (nth 0 init))
+                      (eval (nth 0 init) t)
                     (error (progn
 			     (ergoemacs-warn "%s while evaluating %s" err (nth 0 init))
 			     (debug err))))

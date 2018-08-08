@@ -29,8 +29,9 @@
 
 ;;; Code:
 (eval-when-compile
-  (require 'cl)
+  (require 'cl-lib)
   (require 'ergoemacs-macros))
+(require 'ergoemacs-component)
 
 (declare-function ergoemacs-theme-component--create-component "ergoemacs-theme")
 (declare-function ergoemacs-component-struct--create-component "ergoemacs-component")

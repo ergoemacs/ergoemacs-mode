@@ -1,6 +1,6 @@
 ;;; ergoemacs-map-properties.el --- Ergoemacs map interface -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2015  Free Software Foundation, Inc.
+;; Copyright © 2013-2018  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-map-properties.el
 ;; Description:
@@ -467,9 +467,9 @@ This tests if HOOK is:
                                            (stringp tmp)
                                            (string-match-p  "^Ergoemacs protect local" tmp)))
                         fn
-                      `(lambda() "Ergoemacs protect local"
-                         (ergoemacs-map-properties--protect-local ',hook ',fn)
-                         (funcall ',fn))))
+                      (lambda() "Ergoemacs protect local"
+                        (ergoemacs-map-properties--protect-local hook fn)
+                        (funcall fn))))
                   hook-value))
                 (t ;; For now do nothing
                  hook-value))))))))
@@ -558,7 +558,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 	(unless (equal icicle-search-key-prefix "\M-s\M-s")
 	  (ergoemacs :define-key new-map icicle-search-key-prefix icicle-search-map))
 	(when (and (boundp 'icicle-top-level-key-bindings) (custom-variable-p 'icicle-top-level-key-bindings))
-	  (setq standard (eval (car (get 'icicle-top-level-key-bindings 'standard-value))))
+	  (setq standard (eval (car (get 'icicle-top-level-key-bindings 'standard-value)) t))
 	  ;; After determine if anything has changed...
 	  ;; Lifted partially from icicles
 	  (dolist (key-def  icicle-top-level-key-bindings)
@@ -566,7 +566,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 	      (setq key        (car key-def)
 		    command    (cadr key-def)
 		    condition  (car (cddr key-def)))
-	      (when (eval condition)
+	      (when (eval condition t)
 		(if (symbolp key)
 		    (icicle-remap key command new-map (current-global-map))
 		  (ergoemacs :define-key new-map key command))))))
@@ -914,9 +914,11 @@ STRUCT is the keymap structure for the current map."
        (map-key
 	(error "Will not label a composed map's members to %s" map-key))
        (t
-	(let ((parent (keymap-parent keymap))
+	(let (;; (parent (keymap-parent keymap))
 	      (breadcrumb-base ergoemacs-map--breadcrumb)
 	      (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
+              ;; FIXME: This `struct' refers to the arg rather than to the var
+              ;; we just defined on the previous line!!
 	      (comp (plist-get struct :composed))
 	      (comp-list (ergoemacs-map-properties--composed-list keymap))
 	      from-prop-p
@@ -953,7 +955,6 @@ STRUCT is the keymap structure for the current map."
 	     old-plist
 	     (breadcrumb-base ergoemacs-map--breadcrumb)
 	     (parent (keymap-parent map))
-	     (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
 	     label tmp1 tmp2)
 	(unwind-protect
 	    (progn
@@ -984,7 +985,10 @@ STRUCT is the keymap structure for the current map."
 	      (setq old-plist (list :map-key map-key))
 	      (unless indirect-p
 		(push (cons 'ergoemacs-labeled
-			    `(lambda() (interactive) ',old-plist)) map))
+                            ;; FIXME: These functions have no effect at all, so
+                            ;; I strongly doubt they need to be interactive!
+			    (lambda() (interactive) old-plist))
+                      map))
 	      (unless indirect-p
 		(when label
 		  (push label map))
@@ -1004,7 +1008,8 @@ STRUCT is the keymap structure for the current map."
 	(if indirect-p
 	    (puthash keymap old-plist ergoemacs-map-properties--indirect-keymaps)
 	  (unless (ignore-errors (ergoemacs-setcdr keymap (cdr map)))
-	    (cl-pushnew (cons old-plist (cdr keymap)) ergoemacs-map-properties--const-keymaps)))
+	    (cl-pushnew (cons old-plist (cdr keymap))
+                        ergoemacs-map-properties--const-keymaps)))
 	map)))))
 
 (defun ergoemacs-map-properties--empty-p (keymap &optional labeled-is-keymap-p)
