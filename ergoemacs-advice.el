@@ -320,6 +320,8 @@ command selected, instead of rerunning `smex' and
   :type :before
   (setq ergoemacs-command-loop--single-command-keys nil))
 
+(defvar ergoemacs-command-loop--history)
+
 (defun ergoemacs-mode--undefined-advice (&optional type)
   "Advice for undefined.
 
@@ -329,11 +331,10 @@ TYPE is the type of translation installed."
 	 (translation (ergoemacs-translate--get type))
 	 (local-keymap (ergoemacs-translate--keymap translation))
 	 (local-key (substring keys -1))
-	 modal-p
-	 found)
+	 modal-p)
     (when (setq modal-p (ergoemacs :modal-p))
       (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
-    (if (setq found (lookup-key local-keymap local-key))
+    (if (lookup-key local-keymap local-key)
 	(let ((i 1)) ;; Setup history
 	  (setq ergoemacs-command-loop--history nil)
 	  (while (<= i (- (length keys) 1))

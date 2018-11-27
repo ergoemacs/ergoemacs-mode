@@ -829,9 +829,7 @@
   (define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
 
   (when org-read-date-minibuffer-setup-hook
-    (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit))
-  :version 5.3.7
-  (global-set-key (kbd "M-n") 'keyboard-quit))
+    (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit)))
 
 (ergoemacs-component apps ()
   "General Apps Key Sequence"

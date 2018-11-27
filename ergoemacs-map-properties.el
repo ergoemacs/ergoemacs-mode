@@ -613,7 +613,9 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
                (if tmp
                    (if (eq tmp :override-p) t nil)
                  (if (not (functionp (nth 2 key))) nil
-                   (if (string-match-p ergoemacs-map-properties--deferred-hooks-directory-regexp (find-lisp-object-file-name (nth 2 key) (symbol-function (nth 2 key))))
+                   (if (and (setq tmp (find-lisp-object-file-name (nth 2 key) (symbol-function (nth 2 key))))
+			    (stringp tmp)
+			    (string-match-p ergoemacs-map-properties--deferred-hooks-directory-regexp tmp))
                        (progn
                          (puthash (nth 2 key) :deferred-p ergoemacs-map-properties--override-map-hash)
                          nil)

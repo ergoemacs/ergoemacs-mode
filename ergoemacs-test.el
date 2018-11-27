@@ -1149,7 +1149,7 @@ Should test issue #142"
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
-
+(defvar ergoemacs-component-hash)
 (ergoemacs-package icicles
     :ensure t)
 

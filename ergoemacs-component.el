@@ -368,8 +368,8 @@ OBJECT is the ergoemacs component object, and defaults to
    (t
     (let ((obj (or object ergoemacs-component-struct--define-key-current))
           (hook
-           (or (and (string-match-p "\\(-hook\\|-mode\\|\\`mark-active\\)\\'" (symbol-name when-condition)) when-condition)
-               (and (string-match-p "mode-.*" (symbol-name when-condition))
+           (or (and (symbol-name when-condition) (string-match-p "\\(-hook\\|-mode\\|\\`mark-active\\)\\'" (symbol-name when-condition)) when-condition)
+               (and (symbol-name when-condition) (string-match-p "mode-.*" (symbol-name when-condition))
                     (save-match-data
                       (intern-soft
                        (replace-regexp-in-string
@@ -734,7 +734,7 @@ closest `ergoemacs-theme-version' calculated from
           (when (and ret (functionp ret))
             (funcall ret)
             (setq ret (ergoemacs-gethash map ergoemacs-component-hash))))
-        (if (string-match-p "::" map) ret
+        (if (and map (string-match-p "::" map)) ret
 	  (ergoemacs-component-struct--lookup-closest ret version))))))
 
 (defvar ergoemacs-component-struct--get-keymap nil)

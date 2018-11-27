@@ -224,6 +224,7 @@ If so return the translation."
   (if (not ergoemacs-command-loop--modal-stack) nil
     (let* ((translation (nth 0 ergoemacs-command-loop--modal-stack))
            (always)
+	   tmp
            ret)
       (when (ergoemacs-translation-struct-p translation)
         (setq always (ergoemacs-translation-struct-modal-always translation))
@@ -235,8 +236,8 @@ If so return the translation."
          ((and (not always)
                (catch 'match-modal
                  (dolist (reg ergoemacs-modal-ignored-buffers)
-                   (when (string-match reg (buffer-name))
-                     (throw 'match-modal t)))
+                   ((when (and (setq tmp (buffer-name)) (stringp tmp) (string-match reg tmp))
+                     (throw 'match-modal t))))
                  nil)))
          (t
           (setq ret translation))))
@@ -581,9 +582,11 @@ This is not done when the event is [ergoemacs-ignore]"
 				  (and (setq ergoemacs-command-loop--last-event-time (float-time)) 0)))
 	     (prompt (cond
 		      ((not prompt) nil)
+		      ((not (stringp prompt)))
 		      ((not (string= "" ergoemacs-command-loop--read-key-prompt)) prompt)
 		      ((or (string= prompt " ")
-			   (string-match-p prompt (concat " *" (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-") " *"))) nil)
+			   (string-match-p prompt (concat " *" (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-") " *")))
+		       nil)
 		      (ergoemacs-command-loop--universal prompt)
 		      (ergoemacs-command-loop--echo-keystrokes-complete prompt)
 		      ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
@@ -1186,6 +1189,7 @@ appropriate value based on the COMMAND."
 (defun ergoemacs-command-loop-full-p (&optional type)
   "Determines if the full command loop should be run.
 
+
 TYPE is the type of command loop to check for.  By default this
 is the :full command loop."
   (and
@@ -1407,8 +1411,8 @@ FN-ARG-P can be nil, :drop-rest or :rest"
          (strip-args (ergoemacs-command-loop--mouse-command-drop-first args))
          (rest-p (ergoemacs-command-loop--mouse-command-drop-first args :rest))
          (drop-rest (ergoemacs-command-loop--mouse-command-drop-first args :drop-rest))
-         (select-window-p (and form (string-match-p "^[*^]*[@]" form)))
-         (event-p (and form (string-match-p "^[*@^]*e" form)))
+         (select-window-p (and (stringp form) (string-match-p "^[*^]*[@]" form)))
+         (event-p (and (stringp form) (string-match-p "^[*@^]*e" form)))
          (new-form (and form
                         (or (and (not event-p) form)
                             (and event-p (replace-regexp-in-string "^\\([*@^]*\\)e\n*\\(.*\\)" "\\1\\2" form))))))
