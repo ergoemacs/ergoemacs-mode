@@ -404,7 +404,7 @@ If `narrow-to-region' is in effect, then cut that region only."
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defun ergoemacs--keep-active ()
+(defun ergoemacs--keep-mark-active ()
   (when (mark t)
     (setq mark-active t
           deactivate-mark nil)))
@@ -439,10 +439,8 @@ Pass prefix ARG to the respective copy functions."
            (call-interactively 'move-end-of-line)))
        (re-search-forward "\\=\n" nil t) ;; Include newline
        (point)))))
-  ;; (unless ergoemacs-keep-region-after-copy
-  ;;  (deactivate-mark)))
   (if ergoemacs-keep-region-after-copy
-      (ergoemacs--keep-active)
+      (ergoemacs--keep-mark-active)
     (deactivate-mark)))
 
 (defun ergoemacs-cut-line-or-region (&optional arg)
