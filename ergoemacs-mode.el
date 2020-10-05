@@ -839,7 +839,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
-(defgroup ergoemacs-dispaly nil
+(defgroup ergoemacs-display nil
   "Display Options for `ergoemacs-mode'."
   :group 'ergoemacs-mode)
 

@@ -123,7 +123,7 @@ This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
     alt-char))
 
 (defun ergoemacs-key-description--unicode-char (&rest chars)
-  "Return the first dispalyable character in CHARS.
+  "Return the first displayable character in CHARS.
 This uses `ergoemacs-key-description--unicode-char--internal'"
   (if ergoemacs-use-unicode-symbols
       (let* ((char-list chars)
