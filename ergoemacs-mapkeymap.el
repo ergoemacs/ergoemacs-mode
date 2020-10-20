@@ -194,7 +194,9 @@ them to be masked when mapping over the keymap."
              (cond
               ((consp event)
                (ergoemacs-map-set-char-table-range
-                (or (and prefix (lookup-key flat-keymap prefix))
+                (or (and prefix
+                         (let ((prefix-lookup (lookup-key flat-keymap prefix)))
+                           (if (listp prefix-lookup) prefix-lookup)))
                     flat-keymap) event item))
               (t
                (define-key flat-keymap key item)
