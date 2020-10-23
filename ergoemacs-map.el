@@ -1023,7 +1023,12 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
 	 (use-local-map (ergoemacs current-local-map))
 	 (setq ergoemacs-map--breadcrumb ""))
        (when (and (minibufferp) ergoemacs-read-from-minibuffer-map)
-	 (use-local-map (ergoemacs ergoemacs-read-from-minibuffer-map))
+         ;; Preserve bindings for space, such as when completing a filename
+         (if (and (equal (key-binding " ") 'self-insert-command))
+             (use-local-map (list 'keymap
+                                  '(32 . self-insert-command) ;; space==32
+                                  (ergoemacs ergoemacs-read-from-minibuffer-map)))
+           (use-local-map (ergoemacs ergoemacs-read-from-minibuffer-map)))
 	 (setq ergoemacs-read-from-minibuffer-map nil
 	       ergoemacs-map--breadcrumb ""))
        ;; Run deferred "hooks"
