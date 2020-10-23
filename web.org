@@ -1853,14 +1853,26 @@ You have some options to get to copy and paste:
 #+END_SRC
 
 
-*** I want to modify my modifiers to work differently on a mac
-Ergoemacs-mode uses the option as an alt key because you can press it
-with a thumb.  If you want a different option, set:
+*** I want to use the Command key as Meta on a mac
+The default for Emacs on the mac maps the Alt key to Meta and
+Command to Super.  Because Ergoemacs-mode uses the Meta key so
+extensively, you may want to swap this mapping.  To swap them, set:
 
 #+BEGIN_SRC emacs-lisp
-(setq ergoemacs-use-mac-command-as-meta nil)
+(setq ns-command-modifier 'meta)
+(setq ns-alternate-modifier 'super)
 #+END_SRC
 
+Note that this can interfere with some global shortcuts.  For example,
+Ergoemacs-mode uses Meta-SPC to set the mark.  However, typing Command-SPC
+ordinarily brings up Spotlight.  To disable this and allow Ergoemacs
+to use this binding, go into
+
+```
+System Preferences -> Keyboard -> Shortcuts -> Spotlight
+```
+
+and disable that binding.
 * Tips
 ** Gradual Adoption
   :PROPERTIES:
