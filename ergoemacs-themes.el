@@ -707,6 +707,7 @@
   (define-key browse-kill-ring-mode-map [remap undo] 'browse-kill-ring-undo-other-window)
   (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
   (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
+  (define-key calc-mode-map [remap ergoemacs-paste] 'calc-yank)
   (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo))
 
 (ergoemacs-component search ()
