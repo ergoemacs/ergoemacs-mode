@@ -1020,7 +1020,16 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
 	 (setq ergoemacs-map--breadcrumb (format "%s" major-mode))
 	 (when (eq major-mode 'ess-mode)
 	   (setq ergoemacs-map--breadcrumb (format "ess-mode-%s" ess-language)))
-	 (use-local-map (ergoemacs current-local-map))
+         ;; term-mode has a term-raw-map that it checks against
+         ;; current-local-map to see if it is in line-mode or
+         ;; char-mode.  So we have to modify both term-raw-map and
+         ;; current-local-map to be able to switch.
+         (if (not (eq major-mode 'term-mode))
+	     (use-local-map (ergoemacs current-local-map))
+           (progn
+             (setq term-raw-map (ergoemacs term-raw-map))
+             (use-local-map term-raw-map))
+           )
 	 (setq ergoemacs-map--breadcrumb ""))
        (when (and (minibufferp) ergoemacs-read-from-minibuffer-map)
          ;; Preserve bindings for space, such as when completing a filename
