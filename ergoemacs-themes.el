@@ -356,7 +356,6 @@
   (define-key term-raw-map (kbd "C-S-s") ("C-x C-w" :emacs))
   (define-key term-raw-map (kbd "C-p") 'ergoemacs-print-buffer-confirm)
   (define-key term-raw-map (kbd "C-a") ("C-x h" :emacs))
-  (define-key term-raw-map (kbd "C-v") 'term-paste)
   (define-key term-raw-map (kbd "C-S-n") 'make-frame-command)
   (define-key term-raw-map (kbd "C-+") 'text-scale-increase)
   (define-key term-raw-map (kbd "C--") 'text-scale-decrease)
@@ -377,8 +376,6 @@
   (define-key term-raw-map (kbd "C-o") 'find-file)
   (define-key term-raw-map (kbd "C-p") 'ergoemacs-print-buffer-confirm)
   (define-key term-raw-map (kbd "C-w") 'ergoemacs-close-current-buffer)
-  ;; Maybe not bind anything with a C-x prefix?
-  (define-key term-raw-map (kbd "C-x C-b") 'ibuffer)
   
   (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
   (define-key org-mode-map (kbd "<M-down>") 'ergoemacs-org-metadown)
@@ -387,7 +384,6 @@
   (define-key org-mode-map (kbd "<M-right>") 'ergoemacs-org-metaright)
   (define-key org-mode-map (kbd "<M-RET>") 'org-insert-item)
   (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-yank)
-  (define-key org-mode-map (kbd "C-v") 'ergoemacs-org-yank)
 
   (define-key browse-kill-ring-mode-map (kbd "C-f") 'browse-kill-ring-search-forward)
   (define-key browse-kill-ring-mode-map (kbd "<deletechar>") 'browse-kill-ring-delete)
@@ -815,10 +811,6 @@
   (define-key term-raw-map (kbd "M-C") 'ergoemacs-copy-all)
   (define-key term-raw-map (kbd "M-X") nil)
   (define-key term-raw-map (kbd "M-Z") nil)
-  (define-key term-raw-map (kbd "C-S-x") ("C-x" :normal))
-  (define-key term-raw-map (kbd "C-z") nil)
-  (define-key term-raw-map (kbd "C-S-z") nil)
-  (define-key term-raw-map (kbd "C-y") nil)
 
   (define-key calc-mode-map [remap ergoemacs-paste] 'calc-yank)
   (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo))
@@ -840,7 +832,7 @@
   ;; Mode specific changes
   (define-key term-raw-map (kbd "M-y") '("C-s" :emacs))
   (define-key term-raw-map (kbd "M-Y") '("C-r" :emacs))
-  ;; FIXME: Duplicated from search-reg
+
   (define-key term-raw-map (kbd "M-5") '("M-%" :emacs))
   (define-key term-raw-map (kbd "M-%") '("C-M-%" :emacs))
 
