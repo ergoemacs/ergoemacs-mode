@@ -1864,17 +1864,6 @@
                                        (man-dir menu-item "Unix Man Pages..."
                                                 woman
                                                 :help "Unix Manual entries (with WoMan)")))
-                          (separator-2 menu-item "--")
-
-                          (eroemacs-current-keybindings menu-item
-                                                        "Current Ergoemacs Keybindings"
-                                                        ergoemacs-describe-current-theme)
-                          
-                          (ergoemacs-mode-web-page menu-item
-                                                   "Ergoemacs-mode web-page"
-                                                   (lambda() (interactive)
-                                                     (browse-url ergoemacs-mode-web-page-url))
-                                                   :help "Online help about ergoemacs.")
                           
                           (separator-3 menu-item "--")
                           (send-bug-report menu-item "Send Emacs Bug Report"

@@ -422,9 +422,7 @@ When AT-END is non-nil, append a $ to the regular expression."
     (ergoemacs-sep-menu "--")
     (ergoemacs-cheat
      menu-item "Generate/Open Key binding Cheat Sheet"
-     (lambda()
-       (interactive)
-       (call-interactively 'ergoemacs-display-current-theme)))
+     ergoemacs-describe-current-theme)
 
     (ergoemacs-save
      menu-item "Save Settings for Future Sessions"
@@ -443,6 +441,10 @@ When AT-END is non-nil, append a $ to the regular expression."
      (lambda ()
        (interactive)
        (customize-group 'ergoemacs-mode)))
+    (ergoemacs-mode-web-page
+     menu-item "Ergoemacs-mode web-page"
+     (lambda() (interactive)
+       (browse-url ergoemacs-mode-web-page-url)))
     (ergoemacs-mode-exit
      menu-item "Exit ergoemacs-mode"
      (lambda() (interactive) (ergoemacs-mode -1)))))
@@ -629,8 +631,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
               (setq ergoemacs-theme old-theme)
               (ergoemacs-mode-reset)))
           (buffer-string))))))
-
-(defalias 'describe-ergoemacs-theme 'ergoemacs-theme-describe)
 
 (defvar ergoemacs-theme-create-bash-functions
   '((backward-char)

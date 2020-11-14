@@ -61,7 +61,6 @@
 (declare-function cua-cut-region "cua-base")
 (declare-function cua-paste "cua-base")
 (declare-function cua-set-rectangle-mark "cua-rect")
-(declare-function describe-ergoemacs-theme "ergoemacs-theme-engine")
 (declare-function dired-get-marked-files "dired")
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
@@ -2342,12 +2341,6 @@ If arg is a negative prefix, copy file path only"
   "Location of Imagemagick's convert facility (used to concatenate png files)."
   :type 'string
   :group 'ergoemacs-mode)
-
-(defun ergoemacs-display-current-theme ()
-  "Generates the current ergoemacs layout, unless it already
-exists and opens it in emacs, if possible."
-  (interactive)
-  (describe-ergoemacs-theme ergoemacs-theme))
 
 ;;; Unaccent region taken and modified from Drew Adam's unaccent.el
 
