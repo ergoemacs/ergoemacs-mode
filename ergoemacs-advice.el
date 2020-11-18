@@ -361,12 +361,6 @@ TYPE is the type of translation installed."
       ad-do-it
     (ergoemacs-mode--undefined-advice)))
 
-(ergoemacs-advice handle-shift-selection ()
-  "Allow `ergoemacs-mode' to do shift selection on keys like Alt+# to Alt+3."
-  :type :before
-  (when (eq 'ergoemacs-command-loop--shift-translate (key-binding (this-single-command-keys)))
-    (setq this-command-keys-shift-translated t)))
-
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
