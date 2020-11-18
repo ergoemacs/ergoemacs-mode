@@ -994,11 +994,6 @@ Valid values are:
           (const :tag "No command loop support" nil))
   :group 'ergoemacs-comamnd-loop)
 
-(defcustom ergoemacs-command-loop-hide-shift-translations t
-  "Hide shift translations in the command loop help."
-  :type 'boolean
-  :group 'ergoemacs-command-loop)
-
 
 (defcustom ergoemacs-command-loop-echo-keystrokes 1
   "The amount of time before `ergoemacs-mode' displays keystrokes."
