@@ -1192,7 +1192,7 @@ to prevent infinite recursion."
                       (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
                         (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
                         (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))))
-                 ((memq (car (nth 0 init)) '(push pushnew cl-pushnew))
+                 ((memq (car (nth 0 init)) '(push cl-pushnew))
                   (when (ignore-errors (boundp (nth 2 (nth 0 init))))
                     (if (ignore-errors (eq 'quote (nth 1 (nth 1 (nth 0 init)))))
                         (ignore-errors

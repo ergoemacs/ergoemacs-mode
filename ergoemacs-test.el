@@ -29,7 +29,7 @@
 ;;; Code:
 
 (eval-when-compile 
-  (require 'cl)
+  (require 'cl-lib)
   (require 'ergoemacs-macros))
 
 (declare-function ergoemacs-translate--keymap "ergoemacs-translate")
@@ -1120,7 +1120,7 @@ Should test issue #142"
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (with-temp-file temp-file
-      (insert "(eval-when-compile (load (expand-file-name \"ergoemacs-macros\")) (require 'cl))"
+      (insert "(eval-when-compile (load (expand-file-name \"ergoemacs-macros\")) (require 'cl-lib))"
               (or (and (boundp 'wait-for-me)
                        "(setq debug-on-error t debug-on-quit t)") "")
 	      "(setq ergoemacs-theme nil)"
@@ -1162,7 +1162,7 @@ Should test issue #142"
     (with-temp-file temp-file
       (insert "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) "\")"
 	      "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "icicles"))) "\")"
-       "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+       "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
               (or (and (boundp 'wait-for-me)
                        "(setq debug-on-error t debug-on-quit t)") "")
 	      "(setq ergoemacs-theme nil)"
@@ -1199,7 +1199,7 @@ Should test issue #142"
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (with-temp-file temp-file
-      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
               (or (and (boundp 'wait-for-me)
                        "(setq debug-on-error t debug-on-quit t)") "")
 	      "(setq ergoemacs-theme nil)"
@@ -1289,7 +1289,7 @@ Should test issue #142"
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (with-temp-file temp-file
-      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
               (or (and (boundp 'wait-for-me)
                        "(setq debug-on-error t debug-on-quit t)") "")
               "(ergoemacs-theme-component my-theme01 ()\n"
@@ -1336,7 +1336,7 @@ Should test issue #142"
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (with-temp-file temp-file
-      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
               "(setq ergoemacs-keyboard-layout \"sw\")\n"
               "(require 'ergoemacs-mode)\n"
               "(message \"Binding 1: %s\" (key-binding (kbd \"M-J\")))\n"
@@ -1372,7 +1372,7 @@ Should test issue #142"
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (with-temp-file temp-file
-      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
               (or (and (boundp 'wait-for-me)
                        "(setq debug-on-error t debug-on-quit t)") "")
               "(ergoemacs-package foo \n"
@@ -1594,7 +1594,7 @@ Tests Issue #372."
   
   (should (string= (key-description (kbd "M-TAB")) (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-TAB" t) 0) :ctl-to-alt)))))
 
-  (letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) t)))
+  (cl-letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) t)))
     ;; Test M-i -> ^i -> TAB
     (should (string= "<C-i>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
     
@@ -1604,7 +1604,7 @@ Tests Issue #372."
     ;; Test M-m -> ^m -> RET
     (should (string= "<C-m>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-m" t) 0) :ctl-to-alt))))))
 
-  (letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) nil)))
+  (cl-letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) nil)))
     ;; Test M-i -> ^i -> TAB
     (should (string= "TAB" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
     
@@ -1771,7 +1771,7 @@ hash appropriaetly."
     (with-temp-file temp-file
       (insert "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) "\")"
 	      "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "icicles"))) "\")"
-       "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+       "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
               (or (and (boundp 'wait-for-me)
                        "(setq debug-on-error t debug-on-quit t)") "")
 	      "(setq ergoemacs-theme nil)"

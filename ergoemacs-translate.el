@@ -51,7 +51,7 @@
 ;;; Code:
 
 (eval-when-compile 
-  (require 'cl)
+  (require 'cl-lib)
   (require 'ergoemacs-macros))
 
 
@@ -698,7 +698,7 @@ For keys, the list consists of:
       (push key ret))
     ret))
 
-(defstruct ergoemacs-translation-struct
+(cl-defstruct ergoemacs-translation-struct
   "A basic ergoemacs translation structure."
   (name "default-name")
   (translation '())
@@ -763,8 +763,8 @@ When NAME is a symbol, setup the translation function for the symbol."
 	(fset (intern (concat "ergoemacs-" name-str type))
 	      'ergoemacs-translate--setup-command-loop)
 	(when (string= type "-universal-argument")
-	  (pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
-	  (pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
+	  (cl-pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
+	  (cl-pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
 
 (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--setup-translation)
 
