@@ -299,18 +299,14 @@
   (global-set-key (kbd "<S-down-mouse-1>") 'mouse-save-then-kill)
   (global-set-key (kbd "<S-mouse-1>") 'ignore)
   (global-set-key (kbd "C-+") 'text-scale-increase)
-  (global-set-key (kbd "C-=") 'text-scale-increase)
   (global-set-key (kbd "C--") 'text-scale-decrease)
-  (global-set-key (kbd "C-_") 'text-scale-decrease)
   (global-set-key (kbd "C-.") 'keyboard-quit)
-  (global-set-key (kbd "C->") 'keyboard-quit)
-  (global-set-key (kbd "C-") 'keyboard-quit)
   (global-set-key (kbd "C-/") 'info)
   (global-set-key (kbd "C-0") 'ergoemacs-text-scale-normal-size)
-  (global-set-key (kbd "C-)") 'ergoemacs-text-scale-normal-size)
   (global-set-key (kbd "C-<next>") 'ergoemacs-next-user-buffer)
   (global-set-key (kbd "C-<pause>") 'kill-compilation) ; stop compilation/find/grep
   (global-set-key (kbd "C-<prior>") 'ergoemacs-previous-user-buffer)
+  (global-set-key (kbd "C-=") 'text-scale-increase)
   (global-set-key (kbd "C-?") 'info)
   (global-set-key (kbd "C-S-<next>") 'ergoemacs-next-emacs-buffer)
   (global-set-key (kbd "C-S-<prior>") 'ergoemacs-previous-emacs-buffer)
@@ -323,7 +319,6 @@
   (global-set-key (kbd "C-S-w") 'delete-frame)
   
   (global-set-key (kbd "C-`") 'other-frame)
-  (global-set-key (kbd "C-~") 'other-frame)
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   (global-set-key (kbd "C-f") 'isearch-forward)
   (global-set-key (kbd "C-l") 'goto-line)
@@ -881,11 +876,9 @@
 
   (global-unset-key (kbd "C-x 1"))
   (global-set-key (kbd "M-3") 'delete-other-windows)
-  (global-set-key (kbd "M-#") 'delete-other-windows)
   
   (global-unset-key (kbd "C-x 0"))
   (global-set-key (kbd "M-2") 'delete-window)
-  (global-set-key (kbd "M-@") 'delete-window)
   
   (global-unset-key (kbd "C-x 3"))
   (global-set-key (kbd "M-4") '(split-window-below split-window-horizontally))
@@ -943,7 +936,6 @@
   "Text Transformation"
   (global-unset-key (kbd "M-;"))
   (global-set-key (kbd "M-'") '("M-;" :emacs))
-  (global-set-key (kbd "M-\"") '("M-;" :emacs))
   
   (global-set-key (kbd "M-w") 'ergoemacs-shrink-whitespaces)
 
