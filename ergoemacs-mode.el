@@ -49,7 +49,6 @@
 (eval-when-compile
   (require 'ergoemacs-macros))
 
-(require 'easymenu)
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
 (require 'package)
