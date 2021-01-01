@@ -28,9 +28,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Code:
-;; (require 'guide-key nil t)
+
 (require 'cl-lib)
 
 (eval-when-compile

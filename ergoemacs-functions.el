@@ -2342,12 +2342,6 @@ If arg is a negative prefix, copy file path only"
   :type 'string
   :group 'ergoemacs-mode)
 
-;;; Unaccent region taken and modified from Drew Adam's unaccent.el
-
-(require 'strings nil t) ;; (no error if not found): region-description
-
-;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defvar ergoemacs-reverse-iso-chars-alist
   '(;; Trema/umlaut (äëïöü) (ÄËÏÖÜ)
