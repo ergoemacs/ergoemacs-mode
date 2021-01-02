@@ -352,20 +352,16 @@ This accepts the following keywords:
 
 :mode -- Modes to be added to `auto-mode-alist'. This can be a string such as:
 
-(ergoemacs-package ruby-mode
-    :mode \"\\\\.rb\\\\'\")
+    :mode \"\\\\.rb\\\\'\"
 
 or a list 
 
-(ergoemacs-package ruby-mode
-    :mode (\"\\\\.rb\\\\'\" . ruby-mode))
+    :mode (\"\\\\.rb\\\\'\" . ruby-mode)
 
 or a list of modes:
 
-(ergoemacs-package ess-site
-    :ensure ess
     :mode ((\"\\\\.R\\\\'\" . R.mode)
-           (\"\\\\.[Ss][Aa][Ss]\\\\'\" . SAS-mode)))
+           (\"\\\\.[Ss][Aa][Ss]\\\\'\" . SAS-mode))
 
 Borrowed from `use-package'.
 
@@ -519,62 +515,6 @@ with :ergoemacs-require set to t."
         ,doc
         ,@plist
         ,@body))))
-
-;;;###autoload
-(defmacro ergoemacs-test-layout (&rest keys-and-body)
-  (let ((kb (make-symbol "body-and-plist"))
-        (plist (make-symbol "plist"))
-        (body (make-symbol "body")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
-          plist (nth 0 kb)
-          body (nth 1 kb))
-    (macroexpand-all
-     `(let ((old-ergoemacs-theme (ergoemacs :current-theme))
-            (old-type ergoemacs-command-loop-type)
-            (old-paste interprogram-paste-function)
-            (old-cut interprogram-cut-function)
-            ;; (old-kill kill-ring)
-            ;; (old-pointer kill-ring-yank-pointer)
-            (old-version (ergoemacs :current-version))
-            (macro
-             ,(if (plist-get plist :macro)
-                  `(edmacro-parse-keys ,(plist-get plist :macro) t)))
-            (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-            (reset-ergoemacs nil))
-        (setq ergoemacs-theme ,(plist-get plist ':current-theme)
-              ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us")
-              ergoemacs-command-loop-type nil
-              interprogram-paste-function nil
-              interprogram-cut-function nil
-              ;; kill-ring nil
-              ;; kill-ring-yank-pointer nil
-              
-              ;; Make sure the copy functions don't think the last
-              ;; command was a copy.
-              last-command 'ergoemacs-test)
-        (ergoemacs-theme-set-version ,(or (plist-get plist ':version) nil))
-        (unless (and (equal old-ergoemacs-theme ergoemacs-theme)
-                     (equal old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-                     (equal old-version (ergoemacs :current-vresion)))
-          (setq reset-ergoemacs t)
-          (ergoemacs-mode-reset))
-        
-        ,(if (plist-get plist :cua)
-             `(cua-mode 1))
-        (unwind-protect
-            (progn
-              ,@body)
-          (setq ergoemacs-command-loop-type old-type
-                ergoemacs-theme old-ergoemacs-theme
-                ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout
-                interprogram-paste-function old-paste
-                interprogram-cut-function old-cut
-                ;; kill-ring old-kill
-                ;; kill-ring-yank-pointer old-pointer
-                )
-          (ergoemacs-theme-set-version old-version)
-          (when reset-ergoemacs
-            (ergoemacs-mode-reset)))))))
 
 (defvar ergoemacs-theme-components--modified-plist nil
   "Modified plist.")
