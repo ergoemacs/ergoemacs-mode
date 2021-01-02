@@ -449,7 +449,6 @@ not using cua or cutting line. I think kill-region is what is meant."
   :tags '(:copy :interactive)
   (ergoemacs-test-layout
    (let ((ret t)
-         (ergoemacs-ctl-c-or-ctl-x-delay 0.1)
          (ergoemacs-handle-ctl-c-or-ctl-x 'both))
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
@@ -467,8 +466,7 @@ not using cua or cutting line. I think kill-region is what is meant."
   "Attempts to test Issue #130 -- Copy"
   :tags '(:copy :interactive)
   (ergoemacs-test-layout
-   (let ((ergoemacs-ctl-c-or-ctl-x-delay 0.1)
-         (ergoemacs-handle-ctl-c-or-ctl-x 'both)
+   (let ((ergoemacs-handle-ctl-c-or-ctl-x 'both)
          (txt "Text\n123"))
      (with-temp-buffer
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))

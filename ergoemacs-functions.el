@@ -102,13 +102,6 @@
   '(delete-backward-char delete-char kill-word backward-kill-word)
   "Defines deletion functions that ergoemacs is aware of.")
 
-(defcustom ergoemacs-ctl-c-or-ctl-x-delay 0.2
-  "Delay before sending Cut or Copy.
-This is applied when using Ctrl+c and Ctrl+x."
-  :type '(choice (number :tag "Inhibit delay")
-                 (const :tag "No delay" nil))
-  :group 'ergoemacs-mode)
-
 (defcustom ergoemacs-handle-ctl-c-or-ctl-x 'both
   "Type of Copy and Paste handling for `ergoemacs-mode'."
   :type '(choice

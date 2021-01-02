@@ -189,7 +189,6 @@ ignore the post-command hooks.")
 (defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-handle-ctl-c-or-ctl-x)
-(defvar ergoemacs-ctl-c-or-ctl-x-delay)
 
 
 (defun ergoemacs-command-loop--modal-show ()
@@ -663,11 +662,9 @@ inconjunction with `input-method-function' to translate keys if
                 (ergoemacs-keymapp test-ret))
       ;; The translation needs more keys...
       (if timeout-key
-	  (setq next-key (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay
-					(progn
-					  (setq ergoemacs-command-loop--decode-event-timeout-p t)
+	  (setq next-key (progn
+			   (setq ergoemacs-command-loop--decode-event-timeout-p t)
 					  nil))
-			   (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key)))
 	(setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key)))
       (when next-key ;; Since a key was read, save it to be read later.
         (push last-command-event new-ergoemacs-input))
@@ -823,13 +820,13 @@ KEYS is the keys information"
 	   ((not (region-active-p))) ;; active
 	   ((and (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated)
                  (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
-	   ((and (not ergoemacs-ctl-c-or-ctl-x-delay) ;; Immediate
-                 (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
+	   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'both)
 	    (push 'ergoemacs-timeout unread-command-events))
            (t
             (setq ergoemacs-command--timeout-keys keys
-		  ergoemacs-command--timeout-timer
-                  (run-at-time t ergoemacs-ctl-c-or-ctl-x-delay #'ergoemacs-command--timer-timeout)))))
+		  ergoemacs-command--timeout-timer ergoemacs-command--timer-timeout
+                  )
+            )))
         (unless unread-command-events
 	  (ergoemacs-command-loop--message
 	   "%s" (ergoemacs-command-loop--key-msg
@@ -2195,22 +2192,10 @@ pressed the translated key by changing
                    
                    ((and (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated)
                          (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
-
                    ;; Immediate
-                   ((and (not ergoemacs-ctl-c-or-ctl-x-delay)
-			 (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
-                    (setq ret tmp))
-                   
-                   (t ;; with delay
-		    (if ergoemacs-command-loop--decode-event-timeout-p
-			(setq tmp2 nil
-			      ergoemacs-command-loop--decode-event-timeout-p nil))
-                    (setq tmp2 (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
-                                 (ergoemacs-command-loop--read-event nil key)))
-                    (if (not tmp2)
-                        (setq ret tmp) ;; timeout, use copy/cut
-                      ;; Actual key
-                      (setq ret (ergoemacs-command-loop--key-lookup (vconcat key (vector tmp2))))))))
+                   (setq ret tmp)
+                   )
+                  )
                 (ergoemacs-command-loop--message-binding new-key ret))
                ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
                 (setq this-command-keys-shift-translated t
