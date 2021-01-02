@@ -377,7 +377,16 @@ When AT-END is non-nil, append a $ to the regular expression."
          (interactive)
          (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut))
        :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)))
-      ))
+      (c-c-c-x-both
+       menu-item "Ctrl+C and Ctrl+X are both Emacs Commands & Copy/Cut"
+       (lambda()
+         (interactive)
+         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'both))
+       :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
+      (c-c-c-x-timeout
+       menu-item "Customize Ctrl+C and Ctrl+X Cut/Copy Timeout"
+       (lambda() (interactive)
+         (ergoemacs-save 'ergoemacs-ctl-c-or-ctl-x-delay)))))
     (c-v
      menu-item "Paste behavior"
      (keymap

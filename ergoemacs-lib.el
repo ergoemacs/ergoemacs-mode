@@ -409,9 +409,9 @@ All other modes are assumed to be minor modes or unimportant.
   "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
   (cond
    ((not cmd))
-   ((and (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
          (eq cmd 'ergoemacs-cut-line-or-region)) (ergoemacs-key-description--menu (kbd "C-x")) )
-   ((and (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
+   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
          (eq cmd 'ergoemacs-copy-line-or-region)) (ergoemacs-key-description--menu (kbd "C-c")))
    (t
     ;;; FIXME: faster startup by creating component alists
