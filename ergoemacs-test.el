@@ -1417,47 +1417,15 @@ Should test issue #142"
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
-(ert-deftest ergoemacs-test-issue-437 ()
-  "Test windmove bindings should be set everywhere."
-  :tags '(:slow)
-  (let* ((emacs-exe (ergoemacs-emacs-exe))
-         (w-file (expand-file-name "global-test" ergoemacs-dir))
-         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
-    (with-temp-file temp-file
-      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
-              (or (and (boundp 'wait-for-me)
-                       "(setq debug-on-error t debug-on-quit t)") "")
-              "(ergoemacs-package foo \n"
-	      ":bind* ((\"<M-left>\" . windmove-left)"
-	      "(\"<M-right>\" . windmove-right)"
-	      "(\"<M-up>\" . windmove-up)"
-	      "(\"<M-down>\" . windmove-down)))"
-	      "(setq ergoemacs-mode--start-p t)"
-              "(ergoemacs-mode 1)\n"
-              "(when (and (eq (key-binding (kbd \"<M-left>\")) 'windmove-left)\n"
-	      "           (eq (key-binding (kbd \"<M-right>\")) 'windmove-right)\n"
-              "           (eq (key-binding (kbd \"<M-up>\")) 'windmove-up)\n"
-              "           (eq (key-binding (kbd \"<M-down>\")) 'windmove-down))\n"
-              "(with-temp-file \"" w-file "\")\n"
-              "   (message \"Passed\")"
-              "  (insert \"Found\"))\n"
-              (or (and (boundp 'wait-for-me) "")
-                  "(kill-emacs)")))
-    (byte-compile-file temp-file)
-    (message "%s"
-             (shell-command-to-string
-              (format "%s %s -Q -L %s -l %s -l %s"
-                      emacs-exe (if (boundp 'wait-for-me) "-debug-init" "--batch")
-                      (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
-                      (expand-file-name (file-name-sans-extension (locate-library "ergoemacs-mode")))
-                      temp-file)))
-    (should (file-exists-p w-file))
-    (when  (file-exists-p temp-file)
-      (delete-file temp-file))
-    (when  (file-exists-p (concat temp-file "c"))
-      (delete-file (concat temp-file "c")))
-    (when (file-exists-p w-file)
-      (delete-file w-file))))
+;; Issue 437
+;;
+;; Can override an ergoemacs binding when loading the new mode.  For
+;; example, this code changes M-left to M-right.
+;;
+;; (add-hook 'org-mode-hook
+;;   (lambda ()
+;;     (define-key org-mode-map (kbd "<M-left>") 'org-metaright)
+;;     ))
 
 ;;; Not sure why this doesn't actually use `ergoemacs-test-major-mode-map'.
 (define-derived-mode ergoemacs-test-major-mode fundamental-mode "ET"
@@ -1837,9 +1805,6 @@ hash appropriaetly."
 	      "(global-set-key (kbd \"C-f .\") 'isearch-forward-symbol-at-point))"
               "(ergoemacs-require 'reclaim-C-f)"
               "(setq icicle-search-key-prefix (kbd \"C-f\"))"
-	      "(ergoemacs-package smart-mode-line :ensure t (sml/setup))"
-              "(ergoemacs-package srefactor :ensure t)"
-              "(ergoemacs-package virtualenvwrapper :ensure t)"
 	      "(defun test-freeze ()\n"
 	      "(interactive)\n"
 	      "(yes-or-no-p \"Are you sure you want to remove this file? \"))"
