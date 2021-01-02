@@ -1496,11 +1496,6 @@
                           (blink-cursor menu-item "Cursor Blink" blink-cursor-mode
                                         :button (:toggle . blink-cursor-mode))
 
-                          (tabbar-mode menu-item "Tabbar" ergoemacs-menu-tabbar-toggle
-                                       :button (:toggle . (and (boundp 'tabbar-mode)
-                                                               tabbar-mode)))
-                          
-                          
                           (separator-speedbar menu-item "--")
 
                           (showhide-speedbar menu-item "Speedbar" speedbar-frame-mode :help "Display a Speedbar quick-navigation frame" :button
