@@ -1736,26 +1736,6 @@
   "Switch major modes by clicking mode-name."
   (setq ergoemacs-swap-major-modes-when-clicking-major-mode-name t))
 
-
-(ergoemacs-autoload multiple-cursors
-    "Multiple Cursors"
-    :bind (("M-*" mc/mark-next-like-this)
-           ("M-&" mc/edit-lines))
-    :ensure t)
-
-(ergoemacs-autoload avy
-    "Avy"
-    :bind ("M-," 'avy-goto-word-or-subword-1)
-    :ensure t)
-
-(ergoemacs-autoload expand-region
-    "Expand Region"
-    :bind (("M-8" er/expand-region)
-           ("M-9" er/contract-region)
-           ("M-*". er/mark-inside-quotes))
-    :ensure t)
-
-
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
   :components '(copy
