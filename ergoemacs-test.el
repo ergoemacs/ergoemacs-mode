@@ -1204,8 +1204,6 @@ Should test issue #142"
       (delete-file w-file))))
 
 (defvar ergoemacs-component-hash)
-(ergoemacs-package icicles
-    :ensure t)
 
 (ert-deftest ergoemacs-test-397-test-4 ()
   "Test M-s is switch pane."
