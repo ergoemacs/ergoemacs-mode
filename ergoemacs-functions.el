@@ -1621,26 +1621,6 @@ by `ergoemacs-maximum-number-of-files-to-open'.
     (when (> (length ergoemacs-recently-closed-buffers) ergoemacs-recently-closed-buffers-max)
       (setq ergoemacs-recently-closed-buffers (butlast ergoemacs-recently-closed-buffers 1)))))
 
-(defun ergoemacs-redo ()
-  "Redo using either `redo' or `undo-tree-redo'.
-Installs `undo-tree' if not present."
-  (interactive "*")
-  (require 'undo-tree nil t)
-  (cond
-   ((fboundp 'redo)
-    (call-interactively 'redo))
-   ((fboundp 'undo-tree-redo)
-    (call-interactively 'undo-tree-redo))
-   (t
-    (if (not (yes-or-no-p "Redo command not found, install undo-tree for redo?"))
-        (error "Redo not found, need undo-tree or redo commands present.")
-      (package-refresh-contents) ;;available in gnu elpa.
-      (package-initialize)
-      (package-install 'undo-tree)
-      (require 'undo-tree)
-      (undo-tree-mode 1)
-      (call-interactively 'undo-tree-redo)))))
-
 (defun ergoemacs-keyboard-quit ()
   "Quit the current command/process.
 Similar to `keyboard-quit', with the following changes:

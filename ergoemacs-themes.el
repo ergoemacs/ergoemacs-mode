@@ -200,8 +200,8 @@
   (define-key undo-tree-map (kbd "C-?") nil)
   (define-key undo-tree-map (kbd "M-_") nil)
   
-  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
-  (global-set-key (kbd "M-S-z") '(redo undo-tree-redo ergoemacs-redo))
+  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
+  (global-set-key (kbd "M-S-z") '(redo undo-tree-redo))
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
   (if (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
       (global-set-key (kbd "C-c <ergoemacs-timeout>")
@@ -295,7 +295,7 @@
       (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
     )
   (global-set-key (kbd "C-x C-b") 'ibuffer)
-  (global-set-key (kbd "C-y") '(redo undo-tree-redo ergoemacs-redo) "↷ redo")
+  (global-set-key (kbd "C-y") '(redo undo-tree-redo) "↷ redo")
   
   (global-set-key (kbd "M-S-<next>") 'forward-page)
   (global-set-key (kbd "M-S-<prior>") 'backward-page)
@@ -400,12 +400,12 @@
   (global-set-key (kbd "<C-f2>") 'ergoemacs-cut-all)
   (global-set-key (kbd "<C-f3>") 'ergoemacs-copy-all)
   (global-set-key (kbd "<C-f4>") 'ergoemacs-paste-cycle)
-  (global-set-key (kbd "<C-f5>") '(redo undo-tree-redo ergoemacs-redo))
+  (global-set-key (kbd "<C-f5>") '(redo undo-tree-redo))
   (global-set-key (kbd "<C-f8>") 'highlight-symbol-prev)
   (global-set-key (kbd "<C-f9>") 'highlight-symbol-next)
   (global-set-key (kbd "<M-f2>") 'ergoemacs-cut-all)
   (global-set-key (kbd "<M-f3>") 'ergoemacs-copy-all)
-  (global-set-key (kbd "<M-f5>") '(redo undo-tree-redo ergoemacs-redo))
+  (global-set-key (kbd "<M-f5>") '(redo undo-tree-redo))
   (global-set-key (kbd "<S-f3>") 'ergoemacs-toggle-letter-case)
   (global-set-key (kbd "<f11>") 'previous-line)
   (global-set-key (kbd "<f12>") 'next-line)
@@ -665,8 +665,8 @@
     )
   (global-set-key (kbd "C-S-x") ("C-x" :normal))
   (global-set-key (kbd "C-z") 'undo)
-  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo ergoemacs-redo))
-  (global-set-key (kbd "C-y") '(redo undo-tree-redo ergoemacs-redo))
+  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
+  (global-set-key (kbd "C-y") '(redo undo-tree-redo))
 
   ;; Mode specific changes
   (if (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
@@ -857,7 +857,7 @@
          "<apps> x"         ergoemacs-cut-line-or-region
          "<apps> c"         ergoemacs-copy-line-or-region
          "<apps> v"         ergoemacs-paste
-         "<apps> b"         (redo undo-tree-redo ergoemacs-redo)
+         "<apps> b"         (redo undo-tree-redo)
          "<apps> t"         switch-to-buffer
          "<apps> z"         undo
          "<apps> r"         goto-map))
@@ -1075,7 +1075,7 @@
 (ergoemacs-component ergoemacs-remaps ()
   "Remaps for ergoemacs-mode"
   (when undo-tree-mode
-    (global-set-key [remap ergoemacs-redo] 'undo-tree-redo)
+    (global-set-key [remap redo] 'undo-tree-redo)
     (global-set-key [remap undo] 'undo-tree-undo))
   (when mark-active
     (global-set-key (kbd "TAB") 'indent-region))
@@ -1220,7 +1220,7 @@
                                              (listp pending-undo-list)
                                            (consp buffer-undo-list)))
                                 :help "Undo last operation")
-                          (redo menu-item "Redo" ergoemacs-redo
+                          (redo menu-item "Redo" redo
                                 :enable (and
                                          (not buffer-read-only)
                                          (not (eq t buffer-undo-list))
