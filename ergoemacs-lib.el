@@ -396,9 +396,7 @@ All other modes are assumed to be minor modes or unimportant.
       (push `(,(intern current-letter) menu-item ,current-letter
               (keymap ,@cur-lst)) ret))
     ;; Now create nested menu.
-    `(keymap ,@ret
-             (separator1 menu-item "--")
-             (package menu-item  "Manage Packages" list-packages))))
+    `(keymap ,@ret)))
 
 (defun ergoemacs-menu--filter-key-shortcut (cmd &optional keymap)
   "Figures out ergoemacs-mode menu's preferred key-binding for CMD."

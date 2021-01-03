@@ -35,8 +35,6 @@
 (eval-when-compile
   (require 'ergoemacs-macros))
 
-(require 'package)
-
 (defvar ergoemacs-translate--parent-map)
 (defvar ergoemacs-translate--modal-parent-map)
 (defvar ergoemacs--gzip)
@@ -594,9 +592,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
   "Hash Table of defined/undefined keys.")
 
 (defvar ergoemacs-map-properties--deferred-hooks-directory-regexp
-  (concat "\\`" (regexp-opt (append package-directory-list
-                                    (list package-user-dir)
-                                    (list (file-name-directory (locate-library "abbrev")))
+  (concat "\\`" (regexp-opt (append (list (file-name-directory (locate-library "abbrev")))
                                     ergoemacs-directories-where-keys-from-hook-are-deferred) t))
   "Regular experssion of libraries where maps are deferred.")
 

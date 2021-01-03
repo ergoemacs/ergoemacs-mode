@@ -92,8 +92,6 @@
 (declare-function ergoemacs-key-description--keymap "ergoemacs-key-description")
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 
-(declare-function package-installed-p "package")
-
 (declare-function ergoemacs-layout--regexp "ergoemacs-layouts")
 (declare-function ergoemacs-layouts--list "ergoemacs-layouts")
 
