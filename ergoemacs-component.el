@@ -53,7 +53,6 @@
 (defvar ergoemacs-theme-version)
 (defvar ergoemacs-translate--translation-hash)
 (defvar ergoemacs-translation-hash)
-(defvar package--initialized)
 
 (declare-function diminish "diminish")
 (declare-function diminish-undo "diminish")

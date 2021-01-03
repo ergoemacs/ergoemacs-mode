@@ -51,21 +51,12 @@
 
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
-(require 'package)
 (require 'kmacro)
 
 (require 'printing)
 (pr-update-menus)
 
-(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
-(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
-
 (defvar ergoemacs--system (replace-regexp-in-string "[^0-9A-Za-z]+" "-" (concat emacs-version "-" system-configuration)))
-
-(when (and (string= package-user-dir (locate-user-emacs-file "elpa"))
-           (not (file-exists-p (locate-user-emacs-file "elpa"))))
-  (setq package-user-dir (locate-user-emacs-file (format "elpa-%s" ergoemacs--system))))
 
 (defvar cl-struct-ergoemacs-component-struct-tags)
 (defvar ergoemacs-component-struct--refresh-variables)
@@ -74,8 +65,6 @@
 (defvar ergoemacs-require--ini-p)
 (defvar ergoemacs-require)
 (defvar pcache-directory)
-
-(require 'package)
 
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 
@@ -461,7 +450,7 @@ This is structured by valid keyboard layouts for
 (defvar ergoemacs--component-file-mod-time-list nil)
 (defun ergoemacs--emacs-state ()
   "Return MD5 represting current Emacs state."
-  (let* ((state (format "%s %s %s %s %s" ergoemacs--system features package-alist load-path ergoemacs--component-file-mod-time-list))
+  (let* ((state (format "%s %s %s %s" ergoemacs--system features load-path ergoemacs--component-file-mod-time-list))
          (md5 (md5 state)))
     ;; (message "%s->%s" md5 state)
     md5))

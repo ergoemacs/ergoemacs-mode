@@ -45,8 +45,6 @@
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-timing-hash)
 
-(defvar package-archives)
-
 (defvar ergoemacs-dir)
 
 
