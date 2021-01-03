@@ -590,12 +590,6 @@ This is not done when the event is [ergoemacs-ignore]"
 		      ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
 		      ((= 0 ergoemacs-command-loop-echo-keystrokes) prompt)
 		      ((< last-event-time ergoemacs-command-loop-echo-keystrokes) nil)
-		      ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
-		      ;;       (numberp ergoemacs-command-loop-echo-keystrokes)
-		      ;;       (or (= 0 ergoemacs-command-loop-echo-keystrokes)
-		      ;;           (< last-event-time ergoemacs-command-loop-echo-keystrokes))) nil)
-		      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
-		      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
 		      (t
 		       (setq ergoemacs-command-loop--echo-keystrokes-complete t)
 		       prompt)))
