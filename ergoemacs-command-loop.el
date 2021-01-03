@@ -188,7 +188,6 @@ ignore the post-command hooks.")
 (defvar ergoemacs-mode)
 (defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-keymap)
-(defvar ergoemacs-handle-ctl-c-or-ctl-x)
 
 
 (defun ergoemacs-command-loop--modal-show ()
@@ -815,13 +814,7 @@ KEYS is the keys information"
       (when (ergoemacs-keymapp (setq ret (key-binding keys)))
 	(when (setq timeout (key-binding (vconcat keys [ergoemacs-timeout])))
 	  (cond
-	   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut) 
-	    (push 'ergoemacs-timeout unread-command-events))
 	   ((not (region-active-p))) ;; active
-	   ((and (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated)
-                 (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
-	   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'both)
-	    (push 'ergoemacs-timeout unread-command-events))
            (t
             (setq ergoemacs-command--timeout-keys keys
 		  ergoemacs-command--timeout-timer ergoemacs-command--timer-timeout
@@ -2180,32 +2173,11 @@ pressed the translated key by changing
               (cond
                ((equal orig-key (nth 0 trials))
                 (setq ergoemacs-command-loop--single-command-keys new-key)
-		;; (message "History %s" (length ergoemacs-command-loop--history))
-                (when (and (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-			   (ergoemacs-keymapp ret)
-                           (setq tmp (lookup-key ret [ergoemacs-timeout])))
-                  (cond
-                   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-                    (setq ret tmp))
-		   ((< 1  (length ergoemacs-command-loop--history)))
-                   ((not (region-active-p))) ;; its a key sequence.
-                   
-                   ((and (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated)
-                         (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
-                   ;; Immediate
-                   (setq ret tmp)
-                   )
-                  )
                 (ergoemacs-command-loop--message-binding new-key ret))
                ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
                 (setq this-command-keys-shift-translated t
                       ergoemacs-command-loop--single-command-keys (nth 0 trials))
                 
-                ;; Shift+Control+c
-                (when (and (ergoemacs-keymapp ret)
-                           (setq tmp (lookup-key ret [ergoemacs-timeout]))
-                           (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
-                  (setq ret tmp))
                 (ergoemacs-command-loop--message-binding new-key ret key))
                (t
                 (ergoemacs-command-loop--message-binding new-key ret key)
@@ -2305,10 +2277,8 @@ For instance in QWERTY M-> is shift translated to M-."
   "This is the shift-timeout function for a key."
   (interactive)
   (let ((shift-trans (ergoemacs-translate--emacs-shift (this-single-command-keys))))
-    (if (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-	(setq unread-command-events (append (ergoemacs-translate--emacs-shift shift-trans) '(ergoemacs-timeout)))
-      (setq ergoemacs-this-command-keys-shift-translated t)
-      (ergoemacs-command-loop--internal shift-trans))))
+    (setq ergoemacs-this-command-keys-shift-translated t)
+    (ergoemacs-command-loop--internal shift-trans)))
 
 (defun ergoemacs-command-loop--shift-translate ()
   "Shift translation."

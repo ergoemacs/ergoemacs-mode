@@ -48,7 +48,6 @@
 
 (defvar package-archives)
 
-(defvar ergoemacs-handle-ctl-c-or-ctl-x)
 (defvar ergoemacs-dir)
 
 
@@ -409,10 +408,6 @@ All other modes are assumed to be minor modes or unimportant.
   "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
   (cond
    ((not cmd))
-   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
-         (eq cmd 'ergoemacs-cut-line-or-region)) (ergoemacs-key-description--menu (kbd "C-x")) )
-   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
-         (eq cmd 'ergoemacs-copy-line-or-region)) (ergoemacs-key-description--menu (kbd "C-c")))
    (t
     ;;; FIXME: faster startup by creating component alists
     ;; SLOW: 2-seconds

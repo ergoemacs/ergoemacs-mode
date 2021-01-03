@@ -102,14 +102,6 @@
   '(delete-backward-char delete-char kill-word backward-kill-word)
   "Defines deletion functions that ergoemacs is aware of.")
 
-(defcustom ergoemacs-handle-ctl-c-or-ctl-x 'both
-  "Type of Copy and Paste handling for `ergoemacs-mode'."
-  :type '(choice
-          (const :tag "C-c/C-x only copy/cut" only-copy-cut)
-          (const :tag "C-c/C-x only Emacs C-c and C-x" only-C-c-and-C-x)
-          (const :tag "C-c/C-x copy/paste when region active, Emacs C-c/C-x otherwise." both))
-  :group 'ergoemacs-mode)
-
 (defvar ergoemacs-revert-buffer 0)
 (defun ergoemacs-revert-buffer ()
   "Ergoemacs replacement of `revert-buffer'.

@@ -203,10 +203,6 @@
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
   (global-set-key (kbd "M-S-z") '(redo undo-tree-redo))
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
-  (if (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-      (global-set-key (kbd "C-c <ergoemacs-timeout>")
-                      'ergoemacs-copy-line-or-region)
-    )
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
   
@@ -291,9 +287,6 @@
 
   (global-set-key (kbd "C-x k") nil)
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
-  (if (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-      (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
-    )
   (global-set-key (kbd "C-x C-b") 'ibuffer)
   (global-set-key (kbd "C-y") '(redo undo-tree-redo) "↷ redo")
   
@@ -335,9 +328,6 @@
   (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
   (define-key isearch-mode-map (kbd "<S-insert>") 'ergoemacs-paste)
   (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
-  (if (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-      (define-key isearch-mode-map (kbd "C-c") 'isearch-yank-word-or-char)
-    )
   (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
   (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
   (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste))
@@ -656,22 +646,12 @@
   (global-set-key (kbd "C-x u") nil)
   (global-set-key (kbd "M-z") '("C-_" :emacs))
   
-  ;; Fixed Component; Note that <timeout> is the actual function.
-  (if (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-      (progn
-        (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
-        (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
-        )
-    )
   (global-set-key (kbd "C-S-x") ("C-x" :normal))
   (global-set-key (kbd "C-z") 'undo)
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
   (global-set-key (kbd "C-y") '(redo undo-tree-redo))
 
   ;; Mode specific changes
-  (if (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-      (define-key isearch-mode-map (kbd "C-c") 'isearch-yank-word-or-char)
-    )
   (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
   (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
   (define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
@@ -1231,12 +1211,10 @@
                           (redo-sep menu-item "--")
                           (cut menu-item "Cut" ergoemacs-cut-line-or-region
                                :help "Delete text in Line/region and copy it to the clipboard"
-                               :enable (or (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-                                           (region-active-p)))
+                               :enable (region-active-p))
                           (copy menu-item "Copy" ergoemacs-copy-line-or-region
                                 :help "Copy text in line/region to the clipboard"
-                                :enable (or (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-                                            (region-active-p)))
+                                :enable (region-active-p))
                           (paste menu-item "Paste" ergoemacs-paste
                                  :help "Paste text from clipboard")
                           (paste-from-menu menu-item "Paste from Kill Menu" yank-menu
@@ -1688,12 +1666,6 @@
 
 (ergoemacs-theme lvl0 ()
   "CUA-mode style"
-  (if (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-      (progn
-        (global-set-key (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
-        (global-set-key (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
-        )
-    )
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
   

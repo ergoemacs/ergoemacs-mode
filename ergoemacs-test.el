@@ -430,55 +430,6 @@ Tests issue #347"
 
 ;;; Copy/Paste
 
-
-(ert-deftest ergoemacs-test-copy-paste-issue-184 ()
-  "Issue #184; Not replace the \"selected all\" by paste."
-  :tags '(:copy :interactive)
-  (let ((ret t)
-        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-    (ergoemacs-test-layout
-     :macro "C-v"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       (push-mark)
-       (end-of-line)
-       (ergoemacs-copy-line-or-region)
-       (push-mark (point))
-       (push-mark (point-max) nil t)
-       (goto-char (point-min))
-       ;; Make sure the `pre-command-hook' and `post-command-hook' is
-       ;; run by calling the macro.
-       (execute-kbd-macro macro) 
-       ;; (ergoemacs-paste)
-       (should (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed\n"
-                        (buffer-string)))
-       (kill-buffer (current-buffer))))))
-
-(ert-deftest ergoemacs-test-copy-paste-issue-184-paste-should-clear-mark ()
-  "Issue #186.
-Selected mark would not be cleared after paste."
-  :tags '(:copy)
-  (ergoemacs-test-layout
-   (let ((ergoemacs-handle-ctl-c-or-ctl-x 'both))
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       (push-mark)
-       (end-of-line)
-       (ergoemacs-copy-line-or-region)
-       (push-mark (point))
-       (push-mark (point-max) nil t)
-       (goto-char (point-min))
-       (ergoemacs-paste)
-       (should (or deactivate-mark (not mark-active)))
-       (kill-buffer (current-buffer))))))
-
-
 (ert-deftest ergoemacs-test-copy-paste-cut-line-or-region ()
   "Issue #68.
 kill-ring function name is used and such doesn't exist. It errs when
@@ -499,47 +450,6 @@ not using cua or cutting line. I think kill-region is what is meant."
        (cua-mode 1))
      (should ret))))
 
-
-(ert-deftest ergoemacs-test-copy-paste-issue-130-cut ()
-  "Attempts to test Issue #130 -- Cut"
-  :tags '(:copy :interactive)
-  (ergoemacs-test-layout
-   (let ((ret t)
-         (ergoemacs-handle-ctl-c-or-ctl-x 'both))
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (push-mark (point))
-       (push-mark (point-max) nil t)
-       (goto-char (point-min))
-       (ergoemacs-command-loop--internal "C-x <ergoemacs-timeout>")
-       (setq ret (string= "" (buffer-string)))
-       (kill-buffer (current-buffer)))
-     (should ret))))
-
-(ert-deftest ergoemacs-test-copy-paste-issue-130-copy ()
-  "Attempts to test Issue #130 -- Copy"
-  :tags '(:copy :interactive)
-  (ergoemacs-test-layout
-   (let ((ergoemacs-handle-ctl-c-or-ctl-x 'both)
-         (txt "Text\n123"))
-     (with-temp-buffer
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert txt)
-       (push-mark (point))
-       (push-mark (point-max) nil t)
-       ;; (message "Region Active: %s" transient-mark-mode)
-       (setq last-command nil
-             this-command nil)
-       (goto-char (point-min))
-       (ergoemacs-command-loop--internal "C-c <ergoemacs-timeout>")
-       (goto-char (point-max))
-       (ergoemacs-paste)
-       (should (string= (concat txt txt)
-                        (buffer-string)))
-       (kill-buffer (current-buffer))))))
 
 (ert-deftest ergoemacs-test-copy-paste-apps-cut ()
   "Tests <apps> x on QWERTY cutting a region, not just a line."
@@ -1760,25 +1670,6 @@ hash appropriaetly."
 					  ',keys)))))
 	 ,minibuffer-call)
        nil))
-
-(ert-deftest ergoemacs-test-icy-407-minibuffer ()
-  "Test minibuffer keybindings for `icy-mode'.
-[f11] = `previous-history-element'
-[f12] = `next-history-element'
-M-s   = `ergoemacs-move-cursor-next-pane'
-M-r   = `kill-word'"
-  :tags '(:icy-mode :interactive)
-  (icy-mode 1)
-  (let ((keys))
-(ergoemacs-test-layout
- :layout "us"
- :theme "standard"
- (should (equal (ergoemacs-minibuffer-key-bindings
-		 (call-interactively 'icicle-execute-extended-command)
-		 [f11] [f12] (read-kbd-macro "M-o") (read-kbd-macro "M-s") (read-kbd-macro "M-r"))
-		'(previous-history-element next-history-element forward-word ergoemacs-move-cursor-next-pane kill-word)))))
-(icy-mode -1))
-
 
 (provide 'ergoemacs-test)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

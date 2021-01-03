@@ -362,28 +362,6 @@ When AT-END is non-nil, append a $ to the regular expression."
     ,(ergoemacs-theme--menu-options theme)
     ,(ergoemacs-theme--version-menu theme)
     (ergoemacs-c-x-sep "--")
-    (ergoemacs-c-x-c-c
-     menu-item "Ctrl+C and Ctrl+X behavior"
-     (keymap
-      (c-c-c-x-emacs
-       menu-item "Ctrl+C and Ctrl+X are for Emacs Commands"
-       (lambda()
-         (interactive)
-         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-       :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)))
-      (c-c-c-x-cua
-       menu-item "Ctrl+C and Ctrl+X are only Copy/Cut"
-       (lambda()
-         (interactive)
-         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut))
-       :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)))
-      (c-c-c-x-both
-       menu-item "Ctrl+C and Ctrl+X are both Emacs Commands & Copy/Cut"
-       (lambda()
-         (interactive)
-         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'both))
-       :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
-      ))
     (c-v
      menu-item "Paste behavior"
      (keymap
@@ -729,8 +707,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-copy-all "copy all")
         (ergoemacs-copy-all "copy all")
         (ergoemacs-copy-line-or-region "copy")
-        (ergoemacs-ctl-c "Copy/Ctl+c")
-        (ergoemacs-ctl-x "Cut/Ctl+x")
         (ergoemacs-cut-all "✂ all")
         (ergoemacs-cut-all "✂ all")
         (ergoemacs-cut-line-or-region "✂ region")
