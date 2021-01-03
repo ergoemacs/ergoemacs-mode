@@ -415,12 +415,6 @@ All other modes are assumed to be minor modes or unimportant.
       (when (memq (elt key 0) '(menu-bar remap again redo cut copy paste help open find ergoemacs-remap execute))
         (setq key nil))
       (and key (ergoemacs-key-description--menu key)))
-    ;; (let ((key (ergoemacs-gethash cmd (ergoemacs (ergoemacs :global-map) :where-is))))
-    ;;   (when key
-    ;;     (setq key (nth 0 key)))
-    ;;   (when (memq (elt key 0) '(menu-bar remap again redo cut copy paste help open find ergoemacs-remap execute))
-    ;;     (setq key nil))
-    ;;   (or (and key (ergoemacs-key-description--menu key)) ""))
     )))
 
 
