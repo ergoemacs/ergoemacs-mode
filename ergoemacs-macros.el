@@ -252,7 +252,6 @@ macro."
     :bind*
     :bind-keymap*
     :commands
-    :mode
     :interpreter
     :defer
     :demand
@@ -333,7 +332,7 @@ This accepts the following keywords:
 
 :defer -- Should this package's loading be deferred?
     When using :commands :bind :bind* :bind-keymap :bind-keymap*
-   :mode or :interperter, defer is implied.  When :package-name
+   or :interperter, defer is implied.  When :package-name
    is nil, this dosen't do anything.
 
 :demand -- Prevent deferred loading in all cases
@@ -348,19 +347,6 @@ This accepts the following keywords:
     For more information, see `ergoemacs-component--diminish-on'.
 
     By default this is nil.
-
-:mode -- Modes to be added to `auto-mode-alist'. This can be a string such as:
-
-    :mode \"\\\\.rb\\\\'\"
-
-or a list 
-
-    :mode (\"\\\\.rb\\\\'\" . ruby-mode)
-
-or a list of modes:
-
-    :mode ((\"\\\\.R\\\\'\" . R.mode)
-           (\"\\\\.[Ss][Aa][Ss]\\\\'\" . SAS-mode))
 
 Borrowed from `use-package'.
 
@@ -704,16 +690,6 @@ When arg1 can be a property.  The following properties are supported:
       (if (>= 25 emacs-major-version)
 	  `(gui-set-selection ,@(cdr args))
 	`(x-set-selection ,@(cdr args))))
-     ((and arg1 (symbolp arg1) (eq arg1 :width))
-      `(ergoemacs-mode--eval-width ,arg2))
-     ((and arg1 (symbolp arg1) (eq arg1 :mode-if) arg2)
-      `(ergoemacs-mode-line--if ,arg2 ,arg3 ,arg4))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:sep :separator)))
-      `(ergoemacs-mode-line--sep ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:sep-right :separator-right)))
-      `(ergoemacs-mode-line--sep 'right ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:sep-left :separator-left)))
-      `(ergoemacs-mode-line--sep 'left ,@(cdr args)))
      ((and arg1 (symbolp arg1) (eq arg1 :custom-p) (symbolp arg2))
       (if (fboundp 'custom-variable-p)
           `(custom-variable-p ,arg2)
@@ -749,9 +725,6 @@ When arg1 can be a property.  The following properties are supported:
            (memq arg1 ergoemacs--map-properties-list))
       `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg1) 1))) ,@(cdr args)))
 
-     ((and arg1 arg2 (eq arg2 :new-command) arg3)
-      ;; (ergoemacs arg1 :new-command 'next-line)
-      `(ergoemacs-map-properties--new-command ,arg1 ,arg3))
      ((and arg1 (symbolp arg1)
            (eq arg1 :global-map))
       `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map)))

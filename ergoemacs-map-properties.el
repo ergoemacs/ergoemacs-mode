@@ -1109,21 +1109,6 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
       (setq ret (ergoemacs keymap :extract-lookup)))
     ret))
 
-(defun ergoemacs-map-properties--new-command (keymap command &optional relative-map)
-  "In KEYMAP, get the COMMAND equivalent binding relative to the RELATIVE-MAP."
-  (and command keymap
-       (let* (ret
-              (hash-table (ergoemacs (or relative-map ergoemacs-saved-global-map global-map) :where-is))
-              (cmd-list (ergoemacs-gethash command hash-table)))
-         (if (not cmd-list) nil
-           (catch 'found-new
-             (dolist (key cmd-list)
-               (when (and (setq ret (lookup-key keymap key t))
-                          (or (and (commandp ret t) (not (memq ret ergoemacs-remap-ignore)))
-                              (and (integerp ret) (setq ret nil))))
-                 (throw 'found-new t))
-               (setq ret nil)) t) ret))))
-
 (defun ergoemacs-map-properties--revert-original (keymap &rest type)
   "Revert KEYMAP.
 

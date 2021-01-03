@@ -147,7 +147,7 @@
 (defvar ergoemacs-component-struct--define-key-current nil)
 
 (defun ergoemacs-component-struct--parse-list (list function &rest args)
-  "Handle :bind and :mode LIST and call FUNCTION.
+  "Handle :bind LIST and call FUNCTION.
 
 The FUNCTION calls the with the first argument as the string
 piece and the second argument the symbol piece of the definition.
@@ -190,32 +190,6 @@ binding assumes KEYMAP is `global-map'."
   (let ((keymap (or keymap 'global-map)))
     (ergoemacs-component-struct--parse-list
      bind #'ergoemacs-component-struct--handle-bind-1 keymap)))
-
-(defun ergoemacs-component-struct--handle-mode-1 (regexpr mode)
-  "Add (cons REGEXPR MODE) to `auto-mode-alist'.
-Also autoload MODE.
-
-Requires `ergoemacs-component-struct--define-key-current' to be
-an `ergoemacs-component-struct' object."
-  ;; (message "Handle Mode #2: %s %s" regexpr mode)
-  (when (ergoemacs-component-struct-p ergoemacs-component-struct--define-key-current)
-    (let* ((c (cons regexpr mode))
-           (obj ergoemacs-component-struct--define-key-current)
-           (package-name (ergoemacs-component-struct-package-name obj)))
-      (ergoemacs-component-struct--deferred
-       `(unless (member ',c auto-mode-alist)
-          (push ',c auto-mode-alist)))
-      (when (and package-name mode (not (fboundp mode)))
-        ;; Create autoload.
-        (autoload mode (format "%s, a major mode defined in %s" mode package-name) nil t)
-        (setq c (cons mode package-name))
-        (unless (member c (ergoemacs-component-struct-autoloads obj))
-          (push (cons mode package-name) (ergoemacs-component-struct-autoloads obj)))))))
-
-(defun ergoemacs-component-struct--handle-mode (mode)
-  "Handle MODE list from :mode keyword."
-  (when mode
-    (ergoemacs-component-struct--parse-list mode #'ergoemacs-component-struct--handle-mode-1)))
 
 (defun ergoemacs-component-struct--create-component (plist body file)
   "Create ergoemacs component.
@@ -271,13 +245,6 @@ FILE is the file name where the component was created."
               (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
             (ergoemacs-component-struct--handle-bind tmp 'ergoemacs-override-keymap)
 
-            ;; Handle :mode
-            (setq tmp (plist-get plist :mode))
-            (when (and tmp (not defer-present-p) (not defer))
-              (setq defer-present-p t defer t)
-              (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
-            (ergoemacs-component-struct--handle-mode tmp)
-            
             ;; Handle :commands
             (setq tmp (plist-get plist :commands))
             (when (and tmp (not defer-present-p) (not defer))
