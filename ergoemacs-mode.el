@@ -196,8 +196,6 @@ The TEXT will be what the mode-line is set to be."
                                              "[" ergoemacs-keyboard-layout "]")))))
                     minor-mode-alist)))))
 
-(require 'lookup-word-on-internet nil "NOERROR")
-
 (defconst ergoemacs-font-lock-keywords
   '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\|-timing\\|-package\\|-autoload\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
      (1 font-lock-keyword-face)
