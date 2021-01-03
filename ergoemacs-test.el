@@ -180,6 +180,8 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 ;; Test isearch
 
+;; This does not seem to work for interactive tests when I set the
+;; layout to "us"
 (defmacro ergoemacs-test-layout (&rest keys-and-body)
   (let ((kb (make-symbol "body-and-plist"))
         (plist (make-symbol "plist"))
