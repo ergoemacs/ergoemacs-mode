@@ -164,8 +164,6 @@ It also passes ARGS if any are specified."
         (setq arg1 (pop list)
               arg2 (pop list))))
      ((and (consp list) (stringp (car list)))
-      ;; :list ("C-." . ace-jump-mode)
-      ;; :list ("C-." ace-jump-mode)
       (apply function (car list)
              (or (and (consp (cdr list)) (nth 1 list))
                  (cdr list))
