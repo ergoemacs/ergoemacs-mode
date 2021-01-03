@@ -1345,7 +1345,7 @@ Part of addressing Issue #147."
       (should (not (eq (key-binding [ergoemacs-remap kill-region]) 'ergoemacs-close-current-buffer))))))
 
 (ert-deftest ergoemacs-test-keep-ctl-s ()
-  "Keep mode-defined C-s in major-mode `ergoemacs-test-major-mode'.
+  "Keep ergoemacs defined C-s in major-mode `ergoemacs-test-major-mode'.
 Part of addressing Issue #147."
   :tags '(:interactive)
   (ergoemacs-test-layout
@@ -1357,11 +1357,13 @@ Part of addressing Issue #147."
          (use-local-map ergoemacs-test-major-mode-map))
        (ergoemacs-map--modify-active)
        (should (eq (key-binding (kbd "C-s")) 'save-buffer))
-       (should (eq (key-binding [ergoemacs-remap isearch-forward]) 'search-forward))))))
-
+       )
+     )
+   )
+  )
 
 (ert-deftest ergoemacs-test-keep-alt-s ()
-  "Keep mode-defined M-s in major-mode `ergoemacs-test-major-mode'.
+  "Keep ergoemacs defined M-s in major-mode `ergoemacs-test-major-mode'.
 Tests Issue #372."
   :tags '(:interactive)
   (ergoemacs-test-layout
