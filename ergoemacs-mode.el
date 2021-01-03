@@ -74,7 +74,6 @@
 (defvar ergoemacs-require--ini-p)
 (defvar ergoemacs-require)
 (defvar pcache-directory)
-(defvar ergoemacs-component-struct--apply-ensure-p)
 
 (require 'package)
 
@@ -314,8 +313,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
                         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                         (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
                         (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
-                        (setq ergoemacs-require--ini-p t
-                              ergoemacs-component-struct--apply-ensure-p t)
+                        (setq ergoemacs-require--ini-p t)
 			(ergoemacs-setup-override-keymap)                       
                         (if refresh-p
                             (message "Ergoemacs-mode keys refreshed (%s:%s)"
@@ -324,8 +322,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
                     (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
                     (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)
                       (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
-                    (setq ergoemacs-mode--default-frame-alist nil
-                          ergoemacs-component-struct--apply-ensure-p t)
+                    (setq ergoemacs-mode--default-frame-alist nil)
                     (run-hooks 'ergoemacs-mode-shutdown-hook)
                     (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
                     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
@@ -424,8 +421,7 @@ This is structured by valid keyboard layouts for
   "Hash table of `ergoemacs-mode' timing.")
 
 (defvar ergoemacs-timing--locations
-  '((ensure . "ergoemacs-component.el")
-    (remove-global-map-map-keymap . "ergoemacs-component.el")
+  '((remove-global-map-map-keymap . "ergoemacs-component.el")
     (remove-local-keymap-map-keymap . "ergoemacs-component.el")
     (translate-keymap . "ergoemacs-component.el")
     (describe-keymap . "ergoemacs-key-description.el")

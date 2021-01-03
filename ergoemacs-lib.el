@@ -44,7 +44,6 @@
 (defvar ergoemacs-require)
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-timing-hash)
-(defvar ergoemacs-component-struct--apply-ensure-p)
 
 (defvar package-archives)
 
@@ -247,7 +246,6 @@ When TYPE is nil, assume the type is 'required-hidden
 
 REMOVE represents when you would remove the OPTION from the
 ergoemacs THEME."
-  (setq ergoemacs-component-struct--apply-ensure-p t)
   (unless (member (list option theme type remove) ergoemacs-require)
     (push (list option theme type remove) ergoemacs-require))
   (if ergoemacs-require--ini-p
@@ -669,7 +667,6 @@ EVENT is used when this is called from a mouse event."
   (let ((sym (format "%s" symname)))
     (unless (catch 'found
               (dolist (lst '(("initialize-\\(.*\\)\\'" "Initialize ")
-                             ("ensure-\\(.*\\)\\'" "Ensure ")
                              ("create-component-\\(.*\\)\\'" "Create Component ")
                              ("translate-keymap-\\(.*\\)\\'" "Translate Keymap ")))
                 (when (string-match (nth 0 lst) sym)

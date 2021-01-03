@@ -257,7 +257,6 @@ macro."
     :defer
     :demand
     :diminish
-    :ensure
     :package-name
     :ergoemacs-require
     :no-load
@@ -365,11 +364,6 @@ or a list of modes:
 
 Borrowed from `use-package'.
 
-:ensure -- If the package should be installed by `package' if not present.
-
-This can be t to install the :package-name symbol.  Otherwise
-it can be a list of symbols or single symbol.
-
 :package-name -- Name of package to load.  When non-nil any key
 defition to a single command will create an autoload for that
 command.
@@ -441,23 +435,6 @@ on the definition:
 
 (defvar ergoemacs-theme-components--modified-plist nil
   "Modified plist.")
-
-(fset 'ergoemacs-theme-component--add-ensure
-      #'(lambda (plist pkg)
-          "Add PKG to the :ensure keyword."
-          (let ((cur-ensure (plist-get plist :ensure))
-                (cur-pkg (intern (format "%s" (plist-get plist :package-name)))))
-            (cond
-             ((eq cur-ensure t)
-              (setq ergoemacs-theme-components--modified-plist
-                    (plist-put plist :ensure (list pkg cur-pkg))))
-             ((not cur-ensure)
-              (setq ergoemacs-theme-components--modified-plist
-                    (plist-put plist :ensure pkg)))
-             ((not (memq pkg cur-ensure))
-              (push pkg cur-ensure)
-              (setq ergoemacs-theme-components--modified-plist
-                    (plist-put plist :ensure cur-ensure)))))))
 
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
