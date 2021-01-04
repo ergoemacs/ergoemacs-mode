@@ -722,7 +722,7 @@ KEYS is the keys information"
 	   ((not (region-active-p))) ;; active
            (t
             (setq ergoemacs-command--timeout-keys keys
-		  ergoemacs-command--timeout-timer ergoemacs-command--timer-timeout
+		  ergoemacs-command--timeout-timer (ergoemacs-command--timer-timeout)
                   )
             )))
         (unless unread-command-events
