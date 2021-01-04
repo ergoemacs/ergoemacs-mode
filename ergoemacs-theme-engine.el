@@ -645,17 +645,18 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
       (dolist (cmds ergoemacs-theme-create-bash-functions)
         (dolist (cmd cmds)
           (dolist (key-cmd (where-is-internal cmd nil))
-            (setq key-string (key-description key-cmd))
-            ;; Only set up the Meta bindings, not the regular arrow or
-            ;; Control bindings.  That would require more complicated
-            ;; logic to get right.
-            (if (string-prefix-p "M-" key-string)
-                (setq ret (concat ret "\n\"\\"
-                                  (replace-regexp-in-string "M-" "e" key-string t)
-                                  "\": "
-                                  (symbol-name (nth 0 cmds))
-                                  )
-                      )
+            (let ((key-string (key-description key-cmd)))
+              ;; Only set up the Meta bindings, not the regular arrow or
+              ;; Control bindings.  That would require more complicated
+              ;; logic to get right.
+              (if (string-prefix-p "M-" key-string)
+                  (setq ret (concat ret "\n\"\\"
+                                    (replace-regexp-in-string "M-" "e" key-string t)
+                                    "\": "
+                                    (symbol-name (nth 0 cmds))
+                                    )
+                        )
+                )
               )
             )
           )
