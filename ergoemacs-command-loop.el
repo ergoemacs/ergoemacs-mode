@@ -184,38 +184,6 @@ ignore the post-command hooks.")
 (defvar ergoemacs-keymap)
 
 
-(defun ergoemacs-command-loop--modal-show ()
-  "Show modal translation.
-Returns the mode-line text."
-  (let (tmp color text)
-    (ergoemacs-save-buffer-state
-     (cond
-      ((setq tmp nil)
-       (setq color (ergoemacs-translation-struct-modal-color tmp))
-       (if color
-           (set-cursor-color color)
-         (when ergoemacs-default-cursor-color
-           (set-cursor-color ergoemacs-default-cursor-color)))
-       (setq text (ergoemacs-translation-struct-text tmp))
-       (when (functionp text)
-         (setq text (funcall text)))
-       (if text
-           (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-            text)
-         (ergoemacs-mode-line))
-       (or text "Unnamed"))
-      (t
-       (when ergoemacs-default-cursor-color
-         (set-cursor-color ergoemacs-default-cursor-color))
-       (ergoemacs-mode-line)
-       nil)))))
-
-(defun ergoemacs-command-loop--modal (type)
-  "Toggle ergoemacs command modes.
-
-The TYPE is the type of command translation/modal keymaps that are installed."
-  nil)
-
 (defun ergoemacs-command-loop--redefine-quit-key (&optional key)
   "Redefines the quit-key in Emacs to KEY or Ctrl+g.
 
