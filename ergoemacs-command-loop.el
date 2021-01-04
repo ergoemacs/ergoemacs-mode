@@ -177,9 +177,6 @@ ignore the post-command hooks.")
 (defvar ergoemacs-command-loop--echo-keystrokes-complete nil
   "Echoed keystrokes, keep echoing active.")
 
-(defvar ergoemacs-command-loop--modal-stack '()
-  "The Modal Stack.")
-
 (defvar ergoemacs-command-loop-swap-translation)
 (defvar ergoemacs-command-loop-time-before-blink)
 (defvar ergoemacs-command-loop-blink-character)
@@ -219,48 +216,13 @@ Returns the mode-line text."
 (defun ergoemacs-command-loop--modal-p ()
   "Determine if the command should be modal.
 If so return the translation."
-  (if (not ergoemacs-command-loop--modal-stack) nil
-    (let* ((translation (nth 0 ergoemacs-command-loop--modal-stack))
-           (always)
-	   tmp
-           ret)
-      (when (ergoemacs-translation-struct-p translation)
-        (setq always (ergoemacs-translation-struct-modal-always translation))
-        (cond
-         ((and (minibufferp)
-               (not always)))
-         ((and (not always)
-               (memq major-mode ergoemacs-modal-emacs-state-modes)))
-         ((and (not always)
-               (catch 'match-modal
-                 (dolist (reg ergoemacs-modal-ignored-buffers)
-                   ((when (and (setq tmp (buffer-name)) (stringp tmp) (string-match reg tmp))
-                     (throw 'match-modal t))))
-                 nil)))
-         (t
-          (setq ret translation))))
-      ret)))
+  nil)
 
 (defun ergoemacs-command-loop--modal (type)
   "Toggle ergoemacs command modes.
 
 The TYPE is the type of command translation/modal keymaps that are installed."
-  (cond
-   ((or (not ergoemacs-command-loop--modal-stack) ;; First time to turn on
-        (not (eq (ergoemacs-translation-struct-key (nth 0 ergoemacs-command-loop--modal-stack)) type)) ;; New modal 
-        )
-    (push (ergoemacs-translate--get type) ergoemacs-command-loop--modal-stack)
-    (unless ergoemacs-default-cursor-color
-      (setq ergoemacs-default-cursor-color
-            (or (frame-parameter nil 'cursor-color) "black")))
-    (ergoemacs-command-loop--message "%s command mode installed" (ergoemacs-command-loop--modal-show)))
-   
-   (t ;; Turn off.
-    (setq ergoemacs-command-loop--modal-stack (cdr ergoemacs-command-loop--modal-stack))
-    (if (ergoemacs :modal-p)
-        (ergoemacs-command-loop--message "%s command mode resumed." (ergoemacs-command-loop--modal-show))
-      (ergoemacs-command-loop--modal-show)
-      (ergoemacs-command-loop--message "Resume regular ergoemacs-mode")))))
+  nil)
 
 (defun ergoemacs-command-loop--redefine-quit-key (&optional key)
   "Redefines the quit-key in Emacs to KEY or Ctrl+g.

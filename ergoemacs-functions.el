@@ -38,7 +38,6 @@
 (defvar apropos-do-all)
 (defvar cua--last-killed-rectangle)
 (defvar dirtrack-list)
-(defvar ergoemacs-command-loop--modal-stack)
 (defvar ergoemacs-dir)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-mode)
