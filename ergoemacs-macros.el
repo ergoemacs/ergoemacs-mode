@@ -780,8 +780,7 @@ When arg1 can be a property.  The following properties are supported:
 :keymap -- Local Keymap for translation
 :keymap-modal -- Modal keymap for overrides.
 :modal-always -- If the modal state is always on, regardless of
-                 the values of  `ergoemacs-modal-ignored-buffers',
-                `ergoemacs-modal-emacs-state-modes' `minibufferp'
+                 the values of `minibufferp'
 The following arguments allow the keyboard presses to be translated:
  - :meta
  - :control
