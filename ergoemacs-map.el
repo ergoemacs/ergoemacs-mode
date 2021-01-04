@@ -102,6 +102,7 @@
 (declare-function ergoemacs-map-properties--lookup "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-list "ergoemacs-map-properties")
+(declare-function ergoemacs-map-properties--new-command "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--override-maps "ergoemacs-map-properties")
