@@ -703,7 +703,6 @@ For keys, the list consists of:
   (universal-argument nil)
   (negative-argument nil)
   (digit-argument nil)
-  (modal nil)
   (text "")
   (keymap (make-sparse-keymap))
   (keymap-modal (make-sparse-keymap))
@@ -942,25 +941,16 @@ If there are no gui elements, retun nil."
 ;; (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--keymap-reset)
 
 (defun ergoemacs-translate--keymap (&optional translation)
-  "Get the keymap for TRANSLATION.
-This takes into consideration the modal state of `ergoemacs-mode'."
-  (let* ((modal nil)
-         (translation (or (and (ergoemacs-translation-struct-p translation)
-                               (or (not modal) ;; prefer modal when :normal 
-                                   (not (eq :normal (ergoemacs-translation-struct-key translation))))
+  "Get the keymap for TRANSLATION."
+  (let* ((translation (or (and (ergoemacs-translation-struct-p translation)
                                translation)
-                          modal
                           (ergoemacs-translate--get (or translation :normal))))
-         (key (or (and modal (intern (concat ":" (ergoemacs-translation-struct-name translation) "-modal")))
-                  (ergoemacs-translation-struct-key translation)))
+         (key (ergoemacs-translation-struct-key translation))
          (ret (ergoemacs-gethash key ergoemacs-translate--keymap-hash))
          keymap)
     (unless ret
-      (if modal
-          (setq keymap (ergoemacs-translation-struct-keymap-modal translation)
-                ret keymap)
-        (setq keymap (ergoemacs-translation-struct-keymap translation)
-              ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map))))
+      (setq keymap (ergoemacs-translation-struct-keymap translation)
+            ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map)))
       (puthash key ret ergoemacs-translate--keymap-hash))
     ret))
 

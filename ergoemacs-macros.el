@@ -706,8 +706,6 @@ When arg1 can be a property.  The following properties are supported:
       `(ergoemacs-map-properties--before-ergoemacs))
      ((and arg1 (symbolp arg1) (eq arg1 :user-after) (not arg2) (not arg3))
       `(ergoemacs-map-properties--before-ergoemacs t))
-     ((and arg1 (symbolp arg1) (eq arg1 :modal-p))
-      nil)
      ((and arg1 (symbolp arg1) (eq arg1 :combine) arg2 arg3)
       `(ergoemacs-command-loop--combine ,arg2 ,arg3))
      ((and arg1 (symbolp arg1) (memq arg1 '(:unicode-or-alt :unicode)))
