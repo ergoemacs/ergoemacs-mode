@@ -51,7 +51,7 @@
 ;;; Code:
 
 (eval-when-compile 
-  (require 'cl)
+  (require 'cl-lib)
   (require 'ergoemacs-macros))
 
 
@@ -86,8 +86,6 @@
 
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
-
-(declare-function ergoemacs-command-loop--modal-p "ergoemacs-command-loop")
 
 (declare-function ergoemacs-translate--key-description "ergoemacs-translate")
 
@@ -698,14 +696,13 @@ For keys, the list consists of:
       (push key ret))
     ret))
 
-(defstruct ergoemacs-translation-struct
+(cl-defstruct ergoemacs-translation-struct
   "A basic ergoemacs translation structure."
   (name "default-name")
   (translation '())
   (universal-argument nil)
   (negative-argument nil)
   (digit-argument nil)
-  (modal nil)
   (text "")
   (keymap (make-sparse-keymap))
   (keymap-modal (make-sparse-keymap))
@@ -763,8 +760,8 @@ When NAME is a symbol, setup the translation function for the symbol."
 	(fset (intern (concat "ergoemacs-" name-str type))
 	      'ergoemacs-translate--setup-command-loop)
 	(when (string= type "-universal-argument")
-	  (pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
-	  (pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
+	  (cl-pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
+	  (cl-pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
 
 (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--setup-translation)
 
@@ -775,7 +772,6 @@ When NAME is a symbol, setup the translation function for the symbol."
         -universal-argument
         -negative-argument
         -digit-argument
-        -modal
         translation
         (local-keymap (or (plist-get plist :keymap) (make-sparse-keymap)))
 	(trans-keymap (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map"))))
@@ -821,7 +817,6 @@ When NAME is a symbol, setup the translation function for the symbol."
            :universal-argument -universal-argument
            :negative-argument -negative-argument
            :digit-argument -digit-argument
-           :modal -modal
            :text (plist-get plist :text)
            :keymap local-keymap
            :keymap-modal (or (plist-get plist :keymap-modal) (make-sparse-keymap))
@@ -946,25 +941,16 @@ If there are no gui elements, retun nil."
 ;; (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--keymap-reset)
 
 (defun ergoemacs-translate--keymap (&optional translation)
-  "Get the keymap for TRANSLATION.
-This takes into consideration the modal state of `ergoemacs-mode'."
-  (let* ((modal (ergoemacs :modal-p))
-         (translation (or (and (ergoemacs-translation-struct-p translation)
-                               (or (not modal) ;; prefer modal when :normal 
-                                   (not (eq :normal (ergoemacs-translation-struct-key translation))))
+  "Get the keymap for TRANSLATION."
+  (let* ((translation (or (and (ergoemacs-translation-struct-p translation)
                                translation)
-                          modal
                           (ergoemacs-translate--get (or translation :normal))))
-         (key (or (and modal (intern (concat ":" (ergoemacs-translation-struct-name translation) "-modal")))
-                  (ergoemacs-translation-struct-key translation)))
+         (key (ergoemacs-translation-struct-key translation))
          (ret (ergoemacs-gethash key ergoemacs-translate--keymap-hash))
          keymap)
     (unless ret
-      (if modal
-          (setq keymap (ergoemacs-translation-struct-keymap-modal translation)
-                ret keymap)
-        (setq keymap (ergoemacs-translation-struct-keymap translation)
-              ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map))))
+      (setq keymap (ergoemacs-translation-struct-keymap translation)
+            ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map)))
       (puthash key ret ergoemacs-translate--keymap-hash))
     ret))
 

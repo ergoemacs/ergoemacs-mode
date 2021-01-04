@@ -44,12 +44,7 @@
 (defvar ergoemacs-require)
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-timing-hash)
-(defvar ergoemacs-component-struct--apply-ensure-p)
 
-(defvar package-archives)
-
-(defvar tabbar-mode)
-(defvar ergoemacs-handle-ctl-c-or-ctl-x)
 (defvar ergoemacs-dir)
 
 
@@ -76,10 +71,6 @@
 
 (declare-function ergoemacs-component-find-definition "ergoemacs-component")
 (declare-function ergoemacs-component-find-1 "ergoemacs-component")
-
-(declare-function tabbar-install-faces "tabbar-ruler")
-(declare-function tabbar-mode "tabbar")
-
 
 (defun ergoemacs-setcdr (var val &optional default)
   "Use `setcdr' on VAL to VAL.
@@ -253,7 +244,6 @@ When TYPE is nil, assume the type is 'required-hidden
 
 REMOVE represents when you would remove the OPTION from the
 ergoemacs THEME."
-  (setq ergoemacs-component-struct--apply-ensure-p t)
   (unless (member (list option theme type remove) ergoemacs-require)
     (push (list option theme type remove) ergoemacs-require))
   (if ergoemacs-require--ini-p
@@ -406,39 +396,12 @@ All other modes are assumed to be minor modes or unimportant.
       (push `(,(intern current-letter) menu-item ,current-letter
               (keymap ,@cur-lst)) ret))
     ;; Now create nested menu.
-    `(keymap ,@ret
-             (separator1 menu-item "--")
-             (package menu-item  "Manage Packages" list-packages))))
-
-(defun ergoemacs-menu-tabbar-toggle ()
-  "Enables/Disables (and installs if not present) a tab-bar for emacs."
-  (interactive)
-  (require 'package nil t)
-  (if (not (fboundp 'tabbar-mode))
-      (let ((package-archives '(("melpa" . "http://melpa.org/packages/"))))
-        (require 'tabbar-ruler nil t)
-        (if (fboundp 'tabbar-install-faces)
-            (tabbar-install-faces)
-          (when (fboundp 'package-install)
-            (package-refresh-contents)
-            (package-initialize)
-            (package-install 'tabbar-ruler)
-            (require 'tabbar-ruler nil t)
-            (tabbar-install-faces))))
-    (if (not (featurep 'tabbar-ruler))
-        (require 'tabbar-ruler nil t)
-      (if tabbar-mode
-          (tabbar-mode -1)
-        (tabbar-mode 1)))))
+    `(keymap ,@ret)))
 
 (defun ergoemacs-menu--filter-key-shortcut (cmd &optional keymap)
   "Figures out ergoemacs-mode menu's preferred key-binding for CMD."
   (cond
    ((not cmd))
-   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
-         (eq cmd 'ergoemacs-cut-line-or-region)) (ergoemacs-key-description--menu (kbd "C-x")) )
-   ((and (memq ergoemacs-handle-ctl-c-or-ctl-x '(only-copy-cut both))
-         (eq cmd 'ergoemacs-copy-line-or-region)) (ergoemacs-key-description--menu (kbd "C-c")))
    (t
     ;;; FIXME: faster startup by creating component alists
     ;; SLOW: 2-seconds
@@ -446,12 +409,6 @@ All other modes are assumed to be minor modes or unimportant.
       (when (memq (elt key 0) '(menu-bar remap again redo cut copy paste help open find ergoemacs-remap execute))
         (setq key nil))
       (and key (ergoemacs-key-description--menu key)))
-    ;; (let ((key (ergoemacs-gethash cmd (ergoemacs (ergoemacs :global-map) :where-is))))
-    ;;   (when key
-    ;;     (setq key (nth 0 key)))
-    ;;   (when (memq (elt key 0) '(menu-bar remap again redo cut copy paste help open find ergoemacs-remap execute))
-    ;;     (setq key nil))
-    ;;   (or (and key (ergoemacs-key-description--menu key)) ""))
     )))
 
 
@@ -706,7 +663,6 @@ EVENT is used when this is called from a mouse event."
   (let ((sym (format "%s" symname)))
     (unless (catch 'found
               (dolist (lst '(("initialize-\\(.*\\)\\'" "Initialize ")
-                             ("ensure-\\(.*\\)\\'" "Ensure ")
                              ("create-component-\\(.*\\)\\'" "Create Component ")
                              ("translate-keymap-\\(.*\\)\\'" "Translate Keymap ")))
                 (when (string-match (nth 0 lst) sym)

@@ -105,12 +105,12 @@ start0:
 	$(EMACS) -Q -L . -L .. -l ergoemacs-mode -l ergoemacs-test --eval "(ergoemacs-mode)"
 
 ert :
-	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
+	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl-lib -l ergoemacs-mode -l ergoemacs-test --eval \
 	    "(progn (setq ergoemacs-command-loop-type nil)                                          \
 	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" $(SELECT) (not (tag :interactive)))))" || exit 1; \
 
 erti :
-	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
+	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl-lib -l ergoemacs-mode -l ergoemacs-test --eval \
 	    "(progn (setq ergoemacs-command-loop-type nil)                                         \
 	      (fset 'ert--print-backtrace 'ignore)  \
 	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" $(SELECT) (not (tag :interactive)))))" || exit 1; \

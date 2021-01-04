@@ -35,8 +35,6 @@
 (eval-when-compile
   (require 'ergoemacs-macros))
 
-(require 'package)
-
 (defvar ergoemacs-translate--parent-map)
 (defvar ergoemacs-translate--modal-parent-map)
 (defvar ergoemacs--gzip)
@@ -594,9 +592,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
   "Hash Table of defined/undefined keys.")
 
 (defvar ergoemacs-map-properties--deferred-hooks-directory-regexp
-  (concat "\\`" (regexp-opt (append package-directory-list
-                                    (list package-user-dir)
-                                    (list (file-name-directory (locate-library "abbrev")))
+  (concat "\\`" (regexp-opt (append (list (file-name-directory (locate-library "abbrev")))
                                     ergoemacs-directories-where-keys-from-hook-are-deferred) t))
   "Regular experssion of libraries where maps are deferred.")
 
@@ -818,8 +814,6 @@ When LABEL-EMPTY-P is non-nil, also label empty maps."
   (mapatoms #'ergoemacs-map-properties--label-map))
 
 ;; Startup and load functions
-;;(add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
-;;(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
 
 (defun ergoemacs-map-properties--label-known ()
   "Label known maps."
@@ -919,9 +913,7 @@ STRUCT is the keymap structure for the current map."
        (map-key
 	(error "Will not label a composed map's members to %s" map-key))
        (t
-	(let ((parent (keymap-parent keymap))
-	      (breadcrumb-base ergoemacs-map--breadcrumb)
-	      (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
+	(let ((breadcrumb-base ergoemacs-map--breadcrumb)
 	      (comp (plist-get struct :composed))
 	      (comp-list (ergoemacs-map-properties--composed-list keymap))
 	      from-prop-p
@@ -941,10 +933,6 @@ STRUCT is the keymap structure for the current map."
 	    (if comp
 		(ergoemacs :label map nil (pop comp))
 	      (ergoemacs :label map)))
-	  ;; (when parent
-	  ;;   (when (and breadcrumb-base (not (string= breadcrumb-base "")))
-	  ;;     (setq ergoemacs-map--breadcrumb (concat breadcrumb-base "-parent")))
-	  ;;   (ergoemacs :label parent nil (plist-get struct :parent)))
 	  (if from-prop-p
 	      (setq ergoemacs-map-properties--breadcrumb breadcrumb-base)
 	    (setq ergoemacs-map--breadcrumb breadcrumb-base))))))
@@ -958,7 +946,6 @@ STRUCT is the keymap structure for the current map."
 	     old-plist
 	     (breadcrumb-base ergoemacs-map--breadcrumb)
 	     (parent (keymap-parent map))
-	     (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
 	     label tmp1 tmp2)
 	(unwind-protect
 	    (progn
@@ -997,13 +984,6 @@ STRUCT is the keymap structure for the current map."
 		  (push char-table map))
 		(push 'keymap map)))
           (when parent
-	    ;; (if (and breadcrumb-base (not (string= breadcrumb-base "")))
-	    ;; 	(setq ergoemacs-map--breadcrumb (concat breadcrumb-base "-parent"))
-	    ;;   (when (setq ergoemacs-map-properties--breadcrumb (gethash map-key ergoemacs-breadcrumb-hash))
-	    ;; 	(setq ergoemacs-map-properties--breadcrumb (format "%s-parent" ergoemacs-map-properties--breadcrumb))
-	    ;; 	;; (message "Set %s!" ergoemacs-map-properties--breadcrumb)
-	    ;; 	))
-	    ;; (ergoemacs :label parent nil (plist-get struct :parent))
 	    (set-keymap-parent map parent)
 	    (setq ergoemacs-map--breadcrumb breadcrumb-base)))
 	(if indirect-p
@@ -1112,21 +1092,6 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
       (ergoemacs-map-properties--calculate-keys-and-where-is-hash keymap)
       (setq ret (ergoemacs keymap :extract-lookup)))
     ret))
-
-(defun ergoemacs-map-properties--new-command (keymap command &optional relative-map)
-  "In KEYMAP, get the COMMAND equivalent binding relative to the RELATIVE-MAP."
-  (and command keymap
-       (let* (ret
-              (hash-table (ergoemacs (or relative-map ergoemacs-saved-global-map global-map) :where-is))
-              (cmd-list (ergoemacs-gethash command hash-table)))
-         (if (not cmd-list) nil
-           (catch 'found-new
-             (dolist (key cmd-list)
-               (when (and (setq ret (lookup-key keymap key t))
-                          (or (and (commandp ret t) (not (memq ret ergoemacs-remap-ignore)))
-                              (and (integerp ret) (setq ret nil))))
-                 (throw 'found-new t))
-               (setq ret nil)) t) ret))))
 
 (defun ergoemacs-map-properties--revert-original (keymap &rest type)
   "Revert KEYMAP.

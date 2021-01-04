@@ -52,7 +52,7 @@
 
 (eval-when-compile
   (require 'ergoemacs-macros)
-  (require 'cl))
+  (require 'cl-lib))
 
 (defvar ergoemacs-mode)
 (defvar ergoemacs-require)
@@ -362,31 +362,6 @@ When AT-END is non-nil, append a $ to the regular expression."
     ,(ergoemacs-theme--menu-options theme)
     ,(ergoemacs-theme--version-menu theme)
     (ergoemacs-c-x-sep "--")
-    (ergoemacs-c-x-c-c
-     menu-item "Ctrl+C and Ctrl+X behavior"
-     (keymap
-      (c-c-c-x-emacs
-       menu-item "Ctrl+C and Ctrl+X are for Emacs Commands"
-       (lambda()
-         (interactive)
-         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-       :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)))
-      (c-c-c-x-cua
-       menu-item "Ctrl+C and Ctrl+X are only Copy/Cut"
-       (lambda()
-         (interactive)
-         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut))
-       :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)))
-      (c-c-c-x-both
-       menu-item "Ctrl+C and Ctrl+X are both Emacs Commands & Copy/Cut"
-       (lambda()
-         (interactive)
-         (ergoemacs-save 'ergoemacs-handle-ctl-c-or-ctl-x 'both))
-       :button (:radio . (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
-      (c-c-c-x-timeout
-       menu-item "Customize Ctrl+C and Ctrl+X Cut/Copy Timeout"
-       (lambda() (interactive)
-         (ergoemacs-save 'ergoemacs-ctl-c-or-ctl-x-delay)))))
     (c-v
      menu-item "Paste behavior"
      (keymap
@@ -665,22 +640,23 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
 # should be like ErgoEmacs.
 # If none of the keys work, try replacing all instances of \\e with \\M-.
 # That's means changing Esc to Meta key.
-\nset editing-mode emacs") tmp)
+\nset editing-mode emacs"))
     (with-temp-buffer
       (dolist (cmds ergoemacs-theme-create-bash-functions)
         (dolist (cmd cmds)
           (dolist (key-cmd (where-is-internal cmd nil))
-            (setq key-string (key-description key-cmd))
-            ;; Only set up the Meta bindings, not the regular arrow or
-            ;; Control bindings.  That would require more complicated
-            ;; logic to get right.
-            (if (string-prefix-p "M-" key-string)
-                (setq ret (concat ret "\n\"\\"
-                                  (replace-regexp-in-string "M-" "e" key-string t)
-                                  "\": "
-                                  (symbol-name (nth 0 cmds))
-                                  )
-                      )
+            (let ((key-string (key-description key-cmd)))
+              ;; Only set up the Meta bindings, not the regular arrow or
+              ;; Control bindings.  That would require more complicated
+              ;; logic to get right.
+              (if (string-prefix-p "M-" key-string)
+                  (setq ret (concat ret "\n\"\\"
+                                    (replace-regexp-in-string "M-" "e" key-string t)
+                                    "\": "
+                                    (symbol-name (nth 0 cmds))
+                                    )
+                        )
+                )
               )
             )
           )
@@ -732,8 +708,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-copy-all "copy all")
         (ergoemacs-copy-all "copy all")
         (ergoemacs-copy-line-or-region "copy")
-        (ergoemacs-ctl-c "Copy/Ctl+c")
-        (ergoemacs-ctl-x "Cut/Ctl+x")
         (ergoemacs-cut-all "✂ all")
         (ergoemacs-cut-all "✂ all")
         (ergoemacs-cut-line-or-region "✂ region")
@@ -764,7 +738,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-text-scale-normal-size "Reset Zoom")
         (ergoemacs-toggle-camel-case "tog. camel")
         (ergoemacs-toggle-letter-case "tog. case")
-        (ergoemacs-unchorded-alt-modal "Alt+ Mode")
         (ergoemacs-universal-argument "Argument")
         (execute-extended-command "M-x")
         (find-file "Open")

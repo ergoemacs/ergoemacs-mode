@@ -69,7 +69,6 @@
 (declare-function ergoemacs-translation-struct-p "ergoemacs-translate")
 (declare-function ergoemacs-translation-struct-text "ergoemacs-translate")
 (declare-function ergoemacs-translation-struct-translation "ergoemacs-translate")
-(declare-function ergoemacs-translation-struct-unchorded "ergoemacs-translate")
 
 (declare-function ergoemacs-key-description--modifier "ergoemacs-key-description")
 
@@ -89,9 +88,6 @@
 (defvar ergoemacs-default-cursor-color)
 (defvar ergoemacs-echo-function)
 (defvar ergoemacs-map--quit-map)
-(defvar ergoemacs-modal-emacs-state-modes)
-(defvar ergoemacs-modal-ignored-buffers)
-(defvar ergoemacs-modal-ignored-keymap)
 (defvar ergoemacs-mode-started-p)
 (defvar guide-key/guide-key-sequence)
 (defvar keyfreq-mode)
@@ -108,8 +104,6 @@
 
 (defvar ergoemacs-command-loop--universal-functions '(universal-argument ergoemacs-universal-argument ergoemacs-command-loop--universal-argument)
   "List of `ergoemacs-mode' recognized functions.")
-
-(define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions)
 
 (defvar ergoemacs-command-loop--next-key-hash
   (let ((hash (make-hash-table)))
@@ -134,8 +128,6 @@
 This is to distinguish events in a terminal, like xterm.
 
 It needs to be less than `ergoemacs-command-loop-blink-rate'.")
-
-(define-obsolete-variable-alias 'ergoemacs-read-key-delay 'ergoemacs-command-loop--decode-event-delay)
 
 (defvar ergoemacs-command-loop--history nil
   "History of command loop locations.")
@@ -177,9 +169,6 @@ ignore the post-command hooks.")
 (defvar ergoemacs-command-loop--echo-keystrokes-complete nil
   "Echoed keystrokes, keep echoing active.")
 
-(defvar ergoemacs-command-loop--modal-stack '()
-  "The Modal Stack.")
-
 (defvar ergoemacs-command-loop-swap-translation)
 (defvar ergoemacs-command-loop-time-before-blink)
 (defvar ergoemacs-command-loop-blink-character)
@@ -188,86 +177,7 @@ ignore the post-command hooks.")
 (defvar ergoemacs-mode)
 (defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-keymap)
-(defvar ergoemacs-handle-ctl-c-or-ctl-x)
-(defvar ergoemacs-ctl-c-or-ctl-x-delay)
 
-
-(defun ergoemacs-command-loop--modal-show ()
-  "Show modal translation.
-Returns the mode-line text."
-  (let (tmp color text)
-    (ergoemacs-save-buffer-state
-     (cond
-      ((setq tmp (ergoemacs :modal-p))
-       (setq color (ergoemacs-translation-struct-modal-color tmp))
-       (if color
-           (set-cursor-color color)
-         (when ergoemacs-default-cursor-color
-           (set-cursor-color ergoemacs-default-cursor-color)))
-       (setq text (ergoemacs-translation-struct-text tmp))
-       (when (functionp text)
-         (setq text (funcall text)))
-       (if text
-           (ergoemacs-mode-line ;; Indicate Alt+ in mode-line
-            text)
-         (ergoemacs-mode-line))
-       (or text "Unnamed"))
-      (t
-       (when ergoemacs-default-cursor-color
-         (set-cursor-color ergoemacs-default-cursor-color))
-       (ergoemacs-mode-line)
-       nil)))))
-
-(defun ergoemacs-command-loop--modal-p ()
-  "Determine if the command should be modal.
-If so return the translation."
-  (if (not ergoemacs-command-loop--modal-stack) nil
-    (let* ((translation (nth 0 ergoemacs-command-loop--modal-stack))
-           (always)
-	   tmp
-           ret)
-      (when (ergoemacs-translation-struct-p translation)
-        (setq always (ergoemacs-translation-struct-modal-always translation))
-        (cond
-         ((and (minibufferp)
-               (not always)))
-         ((and (not always)
-               (memq major-mode ergoemacs-modal-emacs-state-modes)))
-         ((and (not always)
-               (catch 'match-modal
-                 (dolist (reg ergoemacs-modal-ignored-buffers)
-                   ((when (and (setq tmp (buffer-name)) (stringp tmp) (string-match reg tmp))
-                     (throw 'match-modal t))))
-                 nil)))
-         (t
-          (setq ret translation))))
-      ret)))
-
-(defun ergoemacs-command-loop--modal-pop ()
-  "Turn off the last ergoemacs modal in the modal-stack."
-  (when ergoemacs-command-loop--modal-stack
-    (ergoemacs-command-loop--modal (ergoemacs-translation-struct-key (nth 0 ergoemacs-command-loop--modal-stack)))))
-
-(defun ergoemacs-command-loop--modal (type)
-  "Toggle ergoemacs command modes.
-
-The TYPE is the type of command translation/modal keymaps that are installed."
-  (cond
-   ((or (not ergoemacs-command-loop--modal-stack) ;; First time to turn on
-        (not (eq (ergoemacs-translation-struct-key (nth 0 ergoemacs-command-loop--modal-stack)) type)) ;; New modal 
-        )
-    (push (ergoemacs-translate--get type) ergoemacs-command-loop--modal-stack)
-    (unless ergoemacs-default-cursor-color
-      (setq ergoemacs-default-cursor-color
-            (or (frame-parameter nil 'cursor-color) "black")))
-    (ergoemacs-command-loop--message "%s command mode installed" (ergoemacs-command-loop--modal-show)))
-   
-   (t ;; Turn off.
-    (setq ergoemacs-command-loop--modal-stack (cdr ergoemacs-command-loop--modal-stack))
-    (if (ergoemacs :modal-p)
-        (ergoemacs-command-loop--message "%s command mode resumed." (ergoemacs-command-loop--modal-show))
-      (ergoemacs-command-loop--modal-show)
-      (ergoemacs-command-loop--message "Resume regular ergoemacs-mode")))))
 
 (defun ergoemacs-command-loop--redefine-quit-key (&optional key)
   "Redefines the quit-key in Emacs to KEY or Ctrl+g.
@@ -313,7 +223,7 @@ This is called through `ergoemacs-command-loop'"
     ;; Command loop hasn't started.
     (setq current-prefix-arg '(4))
     (setq ergoemacs-command-loop-start t)
-    (ergoemacs-command-loop nil (ergoemacs-command-loop--modal-p) nil t))
+    (ergoemacs-command-loop nil nil nil t))
    ((not current-prefix-arg)
     (setq current-prefix-arg '(4)
           ergoemacs-command-loop--universal t
@@ -592,12 +502,6 @@ This is not done when the event is [ergoemacs-ignore]"
 		      ((not (numberp ergoemacs-command-loop-echo-keystrokes)) prompt)
 		      ((= 0 ergoemacs-command-loop-echo-keystrokes) prompt)
 		      ((< last-event-time ergoemacs-command-loop-echo-keystrokes) nil)
-		      ;; ((and (not ergoemacs-command-loop--echo-keystrokes-complete)
-		      ;;       (numberp ergoemacs-command-loop-echo-keystrokes)
-		      ;;       (or (= 0 ergoemacs-command-loop-echo-keystrokes)
-		      ;;           (< last-event-time ergoemacs-command-loop-echo-keystrokes))) nil)
-		      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) (string= prompt "")) nil)
-		      ;; ((and (< last-event-time ergoemacs-command-loop-time-before-blink) ) nil)
 		      (t
 		       (setq ergoemacs-command-loop--echo-keystrokes-complete t)
 		       prompt)))
@@ -663,11 +567,9 @@ inconjunction with `input-method-function' to translate keys if
                 (ergoemacs-keymapp test-ret))
       ;; The translation needs more keys...
       (if timeout-key
-	  (setq next-key (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay
-					(progn
-					  (setq ergoemacs-command-loop--decode-event-timeout-p t)
+	  (setq next-key (progn
+			   (setq ergoemacs-command-loop--decode-event-timeout-p t)
 					  nil))
-			   (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key)))
 	(setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key)))
       (when next-key ;; Since a key was read, save it to be read later.
         (push last-command-event new-ergoemacs-input))
@@ -806,8 +708,7 @@ KEYS is the keys information"
 
 (defun ergoemacs-command--echo-prefix ()
   "Echos prefix keys in the ergoemacs-mode way."
-  (let ((keys (this-single-command-keys))
-	ret timeout)
+  (let ((keys (this-single-command-keys)))
     (when (and ergoemacs-command--timeout-timer
 	       (not (equal keys ergoemacs-command--timeout-keys)))
       (cancel-timer ergoemacs-command--timeout-timer)
@@ -815,21 +716,15 @@ KEYS is the keys information"
 	    ergoemacs-command--timeout-timer nil))
     (unless (or (equal [] keys)
 		(ergoemacs-command-loop-p))
-      (when (ergoemacs-keymapp (setq ret (key-binding keys)))
-	(when (setq timeout (key-binding (vconcat keys [ergoemacs-timeout])))
+      (when (ergoemacs-keymapp (key-binding keys))
+	(when (key-binding (vconcat keys [ergoemacs-timeout]))
 	  (cond
-	   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut) 
-	    (push 'ergoemacs-timeout unread-command-events))
 	   ((not (region-active-p))) ;; active
-	   ((and (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated)
-                 (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
-	   ((and (not ergoemacs-ctl-c-or-ctl-x-delay) ;; Immediate
-                 (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
-	    (push 'ergoemacs-timeout unread-command-events))
            (t
             (setq ergoemacs-command--timeout-keys keys
-		  ergoemacs-command--timeout-timer
-                  (run-at-time t ergoemacs-ctl-c-or-ctl-x-delay #'ergoemacs-command--timer-timeout)))))
+		  ergoemacs-command--timeout-timer (ergoemacs-command--timer-timeout)
+                  )
+            )))
         (unless unread-command-events
 	  (ergoemacs-command-loop--message
 	   "%s" (ergoemacs-command-loop--key-msg
@@ -877,7 +772,6 @@ read."
          (text (ergoemacs-translation-struct-text translation))
          (unchorded (ergoemacs-translation-struct-unchorded translation))
          (trans (ergoemacs-translation-struct-translation translation))
-         (modal (ergoemacs :modal-p))
          (keys nil)
          (blink-on nil)
          input
@@ -885,19 +779,7 @@ read."
          mod-keys tmp
          reset-key-p
          double)
-    ;; Setup modal translation
-    (when (and (eq type :normal) modal)
-      (setq type (ergoemacs-translation-struct-key modal)
-            local-keymap (ergoemacs-translation-struct-keymap-modal modal)
-            text (ergoemacs-translation-struct-text modal)
-            unchorded (ergoemacs-translation-struct-unchorded modal)
-            trans (ergoemacs-translation-struct-translation modal)
-            tmp translation
-            translation modal
-            modal tmp
-            tmp nil))
     
-    ;; (ergoemacs-command-loop--read-key (read-kbd-macro "C-x" t) :unchorded-ctl)
     (when (functionp text)
       (setq text (funcall text)))
 
@@ -984,17 +866,6 @@ read."
               ergoemacs-last-command-event last-command-event))
        (t
         ;; Translate the key appropriately.
-        (when (and modal (lookup-key ergoemacs-modal-ignored-keymap (vector input)))
-          ;; Swap back, or ignore the modal translation.
-          (setq type (ergoemacs-translation-struct-key modal)
-                local-keymap (ergoemacs-translation-struct-keymap-modal modal)
-                text (ergoemacs-translation-struct-text modal)
-                unchorded (ergoemacs-translation-struct-unchorded modal)
-                trans (ergoemacs-translation-struct-translation modal)
-                tmp translation
-                translation modal
-                modal tmp
-                tmp nil))
         (setq raw-input input
               input (ergoemacs-translate--event-mods input type)
               last-command-event input
@@ -1130,7 +1001,7 @@ KEY is the key being read, or sequence being read.
 
 TYPE is the translation being used.
 
-INITIAL-KEY-TYPE ist he key type that is used fot the initial
+INITIAL-KEY-TYPE is the key type that is used fot the initial
 translation.
 
 UNIVERSAL is if the function will be calling a universal
@@ -1193,7 +1064,7 @@ appropriate value based on the COMMAND."
 TYPE is the type of command loop to check for.  By default this
 is the :full command loop."
   (and
-   (or (eq ergoemacs-command-loop-type (or type :full)) (ergoemacs :modal-p))
+   (eq ergoemacs-command-loop-type (or type :full))
    (ergoemacs-command-loop--minibuffer-supported-p)
    (catch 'excluded-variables
      (dolist (var ergoemacs-command-loop--excluded-variables)
@@ -1235,9 +1106,9 @@ to start with
              (ergoemacs-command-loop-full-p))
     (if ergoemacs-last-command-was-ergoemacs-ignore-p
 	(unless (eq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
-	  (run-with-idle-timer 0.05 nil (lambda()
-					  (setq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
-					  (ergoemacs-command-loop-start))))
+	  (run-with-timer 0.0 nil (lambda()
+				    (setq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
+				    (ergoemacs-command-loop-start))))
       (push 'ergoemacs-ignore unread-command-events))))
 
 (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
@@ -1698,7 +1569,7 @@ They don't exactly behave like their Emacs equivalents."
 (defun ergoemacs-command-loop--install-timer ()
   "Install the `ergoemacs-command-loop--timer'."
   (setq ergoemacs-command-loop--timer
-        (run-with-idle-timer 0.05 nil #'ergoemacs-command-loop--timer)))
+        (run-with-timer 0.0 nil #'ergoemacs-command-loop--timer)))
 
 (defun ergoemacs-command-loop--remove-timer ()
   "Remove `ergoemacs-command-loop--timer'."
@@ -1779,7 +1650,6 @@ Emacs versions)."
              raw-key current-key last-current-key
              (translation (ergoemacs-translate--get type))
              (local-keymap (ergoemacs-translate--keymap translation))
-             modal-p
              tmp command)
         (unwind-protect
             (progn
@@ -1819,8 +1689,6 @@ Emacs versions)."
                         current-key (nth 1 raw-key)
                         raw-key (nth 0 raw-key)
                         continue-read nil)
-		  (when (setq modal-p (ergoemacs :modal-p))
-		    (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
                   (cond
                    ;; Handle quit commands
                    ((and last-current-key
@@ -1834,16 +1702,14 @@ Emacs versions)."
                     (setq quit-flag t
 			  ergoemacs-this-command-keys-shift-translated nil))
                    ;; Handle local commands.
-                   ((and (or modal-p
-                             (not (equal current-key raw-key)))
+                   ((and (not (equal current-key raw-key))
                          (setq command (lookup-key local-keymap raw-key))
                          (not (ergoemacs-keymapp command)) ;; Ignore locally
                          ;; Already handled by `ergoemacs-command-loop--read-key'
                          (not (ergoemacs-gethash command ergoemacs-command-loop--next-key-hash))
                          ;; If a command has :ergoemacs-local property of :force, don't
                          ;; worry about looking up a key, just run the function.
-                         (or modal-p
-                             (and (symbolp command) (eq (get command :ergoemacs-local) :force))
+                         (or (and (symbolp command) (eq (get command :ergoemacs-local) :force))
                              (not (key-binding current-key t))))
                     (pop ergoemacs-command-loop--history) ;; Don't recored local events
                     (setq ergoemacs-command-loop--single-command-keys last-current-key
@@ -2138,7 +2004,7 @@ pressed the translated key by changing
     ;; Make sure to lookup the keys in the selected buffer
     (ergoemacs-command-loop--sync-point)
     (let ((trials (ergoemacs-translate--trials key))
-        tmp tmp2 ret)
+        tmp ret)
       (setq this-command-keys-shift-translated nil)
     (catch 'found-command
       (dolist (cur-key trials)
@@ -2183,44 +2049,11 @@ pressed the translated key by changing
               (cond
                ((equal orig-key (nth 0 trials))
                 (setq ergoemacs-command-loop--single-command-keys new-key)
-		;; (message "History %s" (length ergoemacs-command-loop--history))
-                (when (and (not (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x))
-			   (ergoemacs-keymapp ret)
-                           (setq tmp (lookup-key ret [ergoemacs-timeout])))
-                  (cond
-                   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-                    (setq ret tmp))
-		   ((< 1  (length ergoemacs-command-loop--history)))
-                   ((not (region-active-p))) ;; its a key sequence.
-                   
-                   ((and (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated)
-                         (eq ergoemacs-handle-ctl-c-or-ctl-x 'both)))
-
-                   ;; Immediate
-                   ((and (not ergoemacs-ctl-c-or-ctl-x-delay)
-			 (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
-                    (setq ret tmp))
-                   
-                   (t ;; with delay
-		    (if ergoemacs-command-loop--decode-event-timeout-p
-			(setq tmp2 nil
-			      ergoemacs-command-loop--decode-event-timeout-p nil))
-                    (setq tmp2 (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay nil)
-                                 (ergoemacs-command-loop--read-event nil key)))
-                    (if (not tmp2)
-                        (setq ret tmp) ;; timeout, use copy/cut
-                      ;; Actual key
-                      (setq ret (ergoemacs-command-loop--key-lookup (vconcat key (vector tmp2))))))))
                 (ergoemacs-command-loop--message-binding new-key ret))
                ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
                 (setq this-command-keys-shift-translated t
                       ergoemacs-command-loop--single-command-keys (nth 0 trials))
                 
-                ;; Shift+Control+c
-                (when (and (ergoemacs-keymapp ret)
-                           (setq tmp (lookup-key ret [ergoemacs-timeout]))
-                           (eq ergoemacs-handle-ctl-c-or-ctl-x 'both))
-                  (setq ret tmp))
                 (ergoemacs-command-loop--message-binding new-key ret key))
                (t
                 (ergoemacs-command-loop--message-binding new-key ret key)
@@ -2320,10 +2153,8 @@ For instance in QWERTY M-> is shift translated to M-."
   "This is the shift-timeout function for a key."
   (interactive)
   (let ((shift-trans (ergoemacs-translate--emacs-shift (this-single-command-keys))))
-    (if (eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut)
-	(setq unread-command-events (append (ergoemacs-translate--emacs-shift shift-trans) '(ergoemacs-timeout)))
-      (setq ergoemacs-this-command-keys-shift-translated t)
-      (ergoemacs-command-loop--internal shift-trans))))
+    (setq ergoemacs-this-command-keys-shift-translated t)
+    (ergoemacs-command-loop--internal shift-trans)))
 
 (defun ergoemacs-command-loop--shift-translate ()
   "Shift translation."

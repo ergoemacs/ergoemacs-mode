@@ -38,7 +38,6 @@
 (defvar apropos-do-all)
 (defvar cua--last-killed-rectangle)
 (defvar dirtrack-list)
-(defvar ergoemacs-command-loop--modal-stack)
 (defvar ergoemacs-dir)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-mode)
@@ -66,7 +65,6 @@
 (declare-function ergoemacs-map-- "ergoemacs-map")
 (declare-function ergoemacs-mode "ergoemacs-mode")
 
-(declare-function ergoemacs-command-loop--modal-pop "ergoemacs-command-loop")
 (declare-function ergoemacs-theme-describe "ergoemacs-theme-engine")
 
 (declare-function helm-attrset "helm")
@@ -101,21 +99,6 @@
 (defvar ergoemacs-delete-functions
   '(delete-backward-char delete-char kill-word backward-kill-word)
   "Defines deletion functions that ergoemacs is aware of.")
-
-(defcustom ergoemacs-ctl-c-or-ctl-x-delay 0.2
-  "Delay before sending Cut or Copy.
-This is applied when using Ctrl+c and Ctrl+x."
-  :type '(choice (number :tag "Inhibit delay")
-                 (const :tag "No delay" nil))
-  :group 'ergoemacs-mode)
-
-(defcustom ergoemacs-handle-ctl-c-or-ctl-x 'both
-  "Type of Copy and Paste handling for `ergoemacs-mode'."
-  :type '(choice
-          (const :tag "C-c/C-x only copy/cut" only-copy-cut)
-          (const :tag "C-c/C-x only Emacs C-c and C-x" only-C-c-and-C-x)
-          (const :tag "C-c/C-x copy/paste when region active, Emacs C-c/C-x otherwise." both))
-  :group 'ergoemacs-mode)
 
 (defvar ergoemacs-revert-buffer 0)
 (defun ergoemacs-revert-buffer ()
@@ -357,8 +340,8 @@ If TERMINAL is non-nil, run the terminal version"
 
 (defun ergoemacs-emacs-exe ()
   "Get the Emacs executable for testing purposes."
-  (let* ((emacs-exe (invocation-name))
-         (emacs-dir (invocation-directory))
+  (let* ((emacs-exe invocation-name)
+         (emacs-dir invocation-directory)
          (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
                            "\"")))
     full-exe))
@@ -1629,26 +1612,6 @@ by `ergoemacs-maximum-number-of-files-to-open'.
     (when (> (length ergoemacs-recently-closed-buffers) ergoemacs-recently-closed-buffers-max)
       (setq ergoemacs-recently-closed-buffers (butlast ergoemacs-recently-closed-buffers 1)))))
 
-(defun ergoemacs-redo ()
-  "Redo using either `redo' or `undo-tree-redo'.
-Installs `undo-tree' if not present."
-  (interactive "*")
-  (require 'undo-tree nil t)
-  (cond
-   ((fboundp 'redo)
-    (call-interactively 'redo))
-   ((fboundp 'undo-tree-redo)
-    (call-interactively 'undo-tree-redo))
-   (t
-    (if (not (yes-or-no-p "Redo command not found, install undo-tree for redo?"))
-        (error "Redo not found, need undo-tree or redo commands present.")
-      (package-refresh-contents) ;;available in gnu elpa.
-      (package-initialize)
-      (package-install 'undo-tree)
-      (require 'undo-tree)
-      (undo-tree-mode 1)
-      (call-interactively 'undo-tree-redo)))))
-
 (defun ergoemacs-keyboard-quit ()
   "Quit the current command/process.
 Similar to `keyboard-quit', with the following changes:
@@ -1657,9 +1620,6 @@ Similar to `keyboard-quit', with the following changes:
 
 • When a region is active, (see `region-active-p') deactivate the
   region with the function `deactivate-mark'.
-
-• When `ergoemacs-mode' is in a modal command mode, exit that
-  command mode.
 
 • When \"C-g\" is bound to something other than ergoemacs /
   standard quit commands, run that command.
@@ -1677,8 +1637,6 @@ Similar to `keyboard-quit', with the following changes:
       (setq saved-region-selection nil)
       (let (select-active-regions)
         (deactivate-mark)))
-     (ergoemacs-command-loop--modal-stack
-      (ergoemacs-command-loop--modal-pop))
      ((and (setq bind (key-binding [7])) ;; C-g
            (not (memq bind '(ergoemacs-keyboard-quit minibuffer-keyboard-quit keyboard-quit))))
       (call-interactively bind))
@@ -2342,12 +2300,6 @@ If arg is a negative prefix, copy file path only"
   :type 'string
   :group 'ergoemacs-mode)
 
-;;; Unaccent region taken and modified from Drew Adam's unaccent.el
-
-(require 'strings nil t) ;; (no error if not found): region-description
-
-;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defvar ergoemacs-reverse-iso-chars-alist
   '(;; Trema/umlaut (äëïöü) (ÄËÏÖÜ)
@@ -2433,8 +2385,6 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
       (setq nbn (generate-new-buffer-name nbn))
       (rename-buffer nbn))))
 
-;; (add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
-
 (defun ergoemacs-shell-here-hook ()
   "Hook for `ergoemacs-shell-here'.
 Sends shell prompt string to process, then turns on
@@ -2460,8 +2410,6 @@ Sends shell prompt string to process, then turns on
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))))))
 
-;; (add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
-
 (defun ergoemacs-shell-here (&optional shell-program buffer-prefix)
   "Runs/switches to a shell process in the current directory."
   (interactive)
@@ -2484,8 +2432,6 @@ Sends shell prompt string to process, then turns on
       (let ((explicit-shell-file-name ergoemacs-msys))
 	(ergoemacs-shell-here nil "MSYS"))
     (error "Need to specify `ergoemacs-msys'.")))
-
-;; (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
 
 (defun ergoemacs-eshell-here ()
   "Run/switch to an `eshell' process in the current directory"

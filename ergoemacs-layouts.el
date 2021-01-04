@@ -69,6 +69,7 @@
 
 ;; From Baptiste Fouques
 ;; changed to bepo because it breaks how I run things (unfortunately)...
+(defvaralias 'ergoemacs-layout-bépo 'ergoemacs-layout-bepo)
 (defvar ergoemacs-layout-bepo
   '("" "$" "\"" "«" "»" "(" ")" "@" "+" "-" "/" "*" "=" "%" ""
     "" ""  "b" "é" "p" "o" "è" "^" "v" "d" "l" "j" "z" "w" ""
@@ -95,8 +96,6 @@
     "" ">"  "W" "X" "C" "V" "B" "N" "?" "." "/" "+" "" "" "")
   "Belgian AZERTY.")
 
-(defvaralias 'ergoemacs-layout-bépo 'ergoemacs-layout-bepo)
-
 (defvar ergoemacs-layout-colemak
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
     "" ""  "q" "w" "f" "p" "g" "j" "l" "u" "y" ";" "[" "]" "\\"
@@ -122,6 +121,7 @@
   "Danish layout.")
 
 ;; From Thomas Rikl
+(defvaralias 'ergoemacs-layout-ge 'ergoemacs-layout-de)
 (defvar ergoemacs-layout-de
   '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "ß" "" ""
     "" ""  "q" "w" "e" "r" "t" "z" "u" "i" "o" "p" "ü" "+" ""
@@ -146,6 +146,7 @@
     "" "" "K" "Y" "Ö" "Ä" "Q" "J" "G" "W" "V" "Z" "" "" "")
   "German BU-TECK Layout.  URL `http://www.adnw.de'.")
 
+(defvaralias 'ergoemacs-layout-us_dvorak 'ergoemacs-layout-dv)
 (defvar ergoemacs-layout-dv
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "[" "]" ""
     "" ""  "'" "," "." "p" "y" "f" "g" "c" "r" "l" "/" "=" "\\"
@@ -182,6 +183,7 @@
     "" ""  "Z" "Ĉ" "C" "V" "B" "N" "M" ";" ":" "?" "" "" "")
   "Esperanto (displaced semicolon and quote, obsolete) layout.")
 
+(defvaralias 'ergoemacs-layout-sp 'ergoemacs-layout-es)
 (defvar ergoemacs-layout-es
   '("" "°" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "'" "¡" ""
     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "`" "+" ""
@@ -255,8 +257,6 @@
     "" "|"  ":" "Q" "J" "K" "X" "B" "M" "W" "V" "Z" "" "" "")
   "UK Dvorak layout.")
 
-(defvaralias 'ergoemacs-layout-ge 'ergoemacs-layout-de)
-
 (defvar ergoemacs-layout-it
   '("" "\\" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "'" "¡" ""
     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "è" "+" ""
@@ -317,8 +317,6 @@
     "" "»"  "Y" "Ç" "J" "B" "K" "Q" "V" "G" "F" "Z" "" "" "")
   "PT Nativo layout URL `http://xahlee.info/kbd/pt-nativo_keyboard_layout.html'.")
 
-(defvaralias 'ergoemacs-layout-sp 'ergoemacs-layout-es)
-
 (defvar ergoemacs-layout-sw
   '("" "½" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "+" "’" ""
     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "å" "\"" ""
@@ -342,8 +340,6 @@
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "\"" "" ""
     "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
   "US English QWERTY layout.")
-
-(defvaralias 'ergoemacs-layout-us_dvorak 'ergoemacs-layout-dv)
 
 (defvar ergoemacs-layout-workman
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
@@ -369,6 +365,7 @@
     "" ""  "Z" "X" "M" "C" "V" "K" "L" "<" ">" "?" "" "" "")
   "US Workman layout.  URL `http://www.workmanlayout.com/blog/'.")
 
+(defvaralias 'ergoemacs-layout-jcuken 'ergoemacs-layout-ru)
 (defvar ergoemacs-layout-ru
   '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "\\"
     "" ""  "й" "ц" "у" "к" "е" "н" "г" "ш" "щ" "з" "х" "ъ" "" 
@@ -381,7 +378,6 @@
     "" "" "Я" "Ч" "С" "М" "И" "Т" "Ь" "Б" "Ю" "," "" "" "")
   "Russian/Cryllic jcuken layout.")
 
-(defvaralias 'ergoemacs-layout-jcuken 'ergoemacs-layout-ru)
 
 (require 'help-mode)
 (defvar quail-keyboard-layout-alist)

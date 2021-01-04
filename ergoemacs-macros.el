@@ -252,12 +252,10 @@ macro."
     :bind*
     :bind-keymap*
     :commands
-    :mode
     :interpreter
     :defer
     :demand
     :diminish
-    :ensure
     :package-name
     :ergoemacs-require
     :no-load
@@ -334,7 +332,7 @@ This accepts the following keywords:
 
 :defer -- Should this package's loading be deferred?
     When using :commands :bind :bind* :bind-keymap :bind-keymap*
-   :mode or :interperter, defer is implied.  When :package-name
+   or :interperter, defer is implied.  When :package-name
    is nil, this dosen't do anything.
 
 :demand -- Prevent deferred loading in all cases
@@ -350,29 +348,7 @@ This accepts the following keywords:
 
     By default this is nil.
 
-:mode -- Modes to be added to `auto-mode-alist'. This can be a string such as:
-
-(ergoemacs-package ruby-mode
-    :mode \"\\\\.rb\\\\'\")
-
-or a list 
-
-(ergoemacs-package ruby-mode
-    :mode (\"\\\\.rb\\\\'\" . ruby-mode))
-
-or a list of modes:
-
-(ergoemacs-package ess-site
-    :ensure ess
-    :mode ((\"\\\\.R\\\\'\" . R.mode)
-           (\"\\\\.[Ss][Aa][Ss]\\\\'\" . SAS-mode)))
-
 Borrowed from `use-package'.
-
-:ensure -- If the package should be installed by `package' if not present.
-
-This can be t to install the :package-name symbol.  Otherwise
-it can be a list of symbols or single symbol.
 
 :package-name -- Name of package to load.  When non-nil any key
 defition to a single command will create an autoload for that
@@ -443,158 +419,8 @@ on the definition:
        ,(when (plist-get (nth 0 kb) :ergoemacs-require)
           `(ergoemacs-require ',(intern (plist-get (nth 0 kb) :name)))))))
 
-(defmacro ergoemacs-package (name &rest keys-and-body)
-  "Defines a required package named NAME.
-
-KEYS-AND-BODY will be processed by
-`ergoemacs-theme-component--parse-keys-and-body'.
-
-The documentation of the supported keys are in
-`ergoemacs-theme-component'.
-
-The NAME will be assumed to be the :package-name keyword.
-
-By default, this package also set the :ergoemacs-require to t,
-requiring the ergoemacs theme component immediately.  To turn off
-this feature, you can specify :ergoemacs-require nil in the body
-of the `ergoemacs-package' macro.  Another option is to use
-`ergoemacs-autoload', which is the same as `ergoemacs-package'
-with :ergoemacs-require set to nil."
-  (declare (indent 2))
-  (let ((kb (make-symbol "body-and-plist"))
-        (plist (make-symbol "plist"))
-        (body (make-symbol "body"))
-        (doc (make-symbol "doc")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
-          plist (nth 0 kb)
-          body (nth 1 kb))
-    (when (equal (car body) '())
-      (setq body (cdr body)))
-    (setq doc (if (stringp (car body)) (pop body) (symbol-name name)))
-    (unless (memq :ergoemacs-require plist) ;; Its a required theme component.
-      (setq plist (plist-put plist :ergoemacs-require name)))
-    (unless (plist-get plist :package-name)
-      (setq plist (plist-put plist :package-name name)))
-    (macroexpand-all
-     `(ergoemacs-theme-component ,name ()
-        ,doc
-        ,@plist
-        ;; (require ',name)
-        ,@body))))
-
-(defmacro ergoemacs-autoload (name &rest keys-and-body)
-  "Defines a required package named NAME.
-
-KEYS-AND-BODY will be processed by
-`ergoemacs-theme-component--parse-keys-and-body'.
-
-The documentation of the supported keys are in
-`ergoemacs-theme-component'.
-
-The NAME will be assumed to be the :package-name keyword.
-
-By default, this package also set the :ergoemacs-require to nil,
-deferring the ergoemacs theme component until it is required by
-the user by either `ergoemacs-require' or turning it on/off in an
-ergoemacs-mode theme.  To turn off this feature, you can
-specify :ergoemacs-require t in the body of the
-`ergoemacs-autoload' macro.  Another option is to use
-`ergoemacs-package', which is the same as `ergoemacs-autoload'
-with :ergoemacs-require set to t."
-  (declare (indent 2))
-  (let ((kb (make-symbol "body-and-plist"))
-        (plist (make-symbol "plist"))
-        (body (make-symbol "body"))
-        (doc (make-symbol "doc")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
-          plist (nth 0 kb)
-          body (nth 1 kb))
-    (when (equal (car body) '())
-      (setq body (cdr body)))
-    (setq doc (if (stringp (car body)) (pop body) (symbol-name name)))
-    (unless (plist-get plist :package-name)
-      (setq plist (plist-put plist :package-name name)))
-    (macroexpand-all
-     `(ergoemacs-theme-component ,name ()
-        ,doc
-        ,@plist
-        ,@body))))
-
-;;;###autoload
-(defmacro ergoemacs-test-layout (&rest keys-and-body)
-  (let ((kb (make-symbol "body-and-plist"))
-        (plist (make-symbol "plist"))
-        (body (make-symbol "body")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body keys-and-body  nil t)
-          plist (nth 0 kb)
-          body (nth 1 kb))
-    (macroexpand-all
-     `(let ((old-ergoemacs-theme (ergoemacs :current-theme))
-            (old-type ergoemacs-command-loop-type)
-            (old-paste interprogram-paste-function)
-            (old-cut interprogram-cut-function)
-            ;; (old-kill kill-ring)
-            ;; (old-pointer kill-ring-yank-pointer)
-            (old-version (ergoemacs :current-version))
-            (macro
-             ,(if (plist-get plist :macro)
-                  `(edmacro-parse-keys ,(plist-get plist :macro) t)))
-            (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-            (reset-ergoemacs nil))
-        (setq ergoemacs-theme ,(plist-get plist ':current-theme)
-              ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us")
-              ergoemacs-command-loop-type nil
-              interprogram-paste-function nil
-              interprogram-cut-function nil
-              ;; kill-ring nil
-              ;; kill-ring-yank-pointer nil
-              
-              ;; Make sure the copy functions don't think the last
-              ;; command was a copy.
-              last-command 'ergoemacs-test)
-        (ergoemacs-theme-set-version ,(or (plist-get plist ':version) nil))
-        (unless (and (equal old-ergoemacs-theme ergoemacs-theme)
-                     (equal old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-                     (equal old-version (ergoemacs :current-vresion)))
-          (setq reset-ergoemacs t)
-          (ergoemacs-mode-reset))
-        
-        ,(if (plist-get plist :cua)
-             `(cua-mode 1))
-        (unwind-protect
-            (progn
-              ,@body)
-          (setq ergoemacs-command-loop-type old-type
-                ergoemacs-theme old-ergoemacs-theme
-                ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout
-                interprogram-paste-function old-paste
-                interprogram-cut-function old-cut
-                ;; kill-ring old-kill
-                ;; kill-ring-yank-pointer old-pointer
-                )
-          (ergoemacs-theme-set-version old-version)
-          (when reset-ergoemacs
-            (ergoemacs-mode-reset)))))))
-
 (defvar ergoemacs-theme-components--modified-plist nil
   "Modified plist.")
-
-(fset 'ergoemacs-theme-component--add-ensure
-      #'(lambda (plist pkg)
-          "Add PKG to the :ensure keyword."
-          (let ((cur-ensure (plist-get plist :ensure))
-                (cur-pkg (intern (format "%s" (plist-get plist :package-name)))))
-            (cond
-             ((eq cur-ensure t)
-              (setq ergoemacs-theme-components--modified-plist
-                    (plist-put plist :ensure (list pkg cur-pkg))))
-             ((not cur-ensure)
-              (setq ergoemacs-theme-components--modified-plist
-                    (plist-put plist :ensure pkg)))
-             ((not (memq pkg cur-ensure))
-              (push pkg cur-ensure)
-              (setq ergoemacs-theme-components--modified-plist
-                    (plist-put plist :ensure cur-ensure)))))))
 
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
@@ -864,16 +690,6 @@ When arg1 can be a property.  The following properties are supported:
       (if (>= 25 emacs-major-version)
 	  `(gui-set-selection ,@(cdr args))
 	`(x-set-selection ,@(cdr args))))
-     ((and arg1 (symbolp arg1) (eq arg1 :width))
-      `(ergoemacs-mode--eval-width ,arg2))
-     ((and arg1 (symbolp arg1) (eq arg1 :mode-if) arg2)
-      `(ergoemacs-mode-line--if ,arg2 ,arg3 ,arg4))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:sep :separator)))
-      `(ergoemacs-mode-line--sep ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:sep-right :separator-right)))
-      `(ergoemacs-mode-line--sep 'right ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:sep-left :separator-left)))
-      `(ergoemacs-mode-line--sep 'left ,@(cdr args)))
      ((and arg1 (symbolp arg1) (eq arg1 :custom-p) (symbolp arg2))
       (if (fboundp 'custom-variable-p)
           `(custom-variable-p ,arg2)
@@ -890,8 +706,6 @@ When arg1 can be a property.  The following properties are supported:
       `(ergoemacs-map-properties--before-ergoemacs))
      ((and arg1 (symbolp arg1) (eq arg1 :user-after) (not arg2) (not arg3))
       `(ergoemacs-map-properties--before-ergoemacs t))
-     ((and arg1 (symbolp arg1) (eq arg1 :modal-p))
-      `(ergoemacs-command-loop--modal-p))
      ((and arg1 (symbolp arg1) (eq arg1 :combine) arg2 arg3)
       `(ergoemacs-command-loop--combine ,arg2 ,arg3))
      ((and arg1 (symbolp arg1) (memq arg1 '(:unicode-or-alt :unicode)))
@@ -909,9 +723,6 @@ When arg1 can be a property.  The following properties are supported:
            (memq arg1 ergoemacs--map-properties-list))
       `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg1) 1))) ,@(cdr args)))
 
-     ((and arg1 arg2 (eq arg2 :new-command) arg3)
-      ;; (ergoemacs arg1 :new-command 'next-line)
-      `(ergoemacs-map-properties--new-command ,arg1 ,arg3))
      ((and arg1 (symbolp arg1)
            (eq arg1 :global-map))
       `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map)))
@@ -969,8 +780,7 @@ When arg1 can be a property.  The following properties are supported:
 :keymap -- Local Keymap for translation
 :keymap-modal -- Modal keymap for overrides.
 :modal-always -- If the modal state is always on, regardless of
-                 the values of  `ergoemacs-modal-ignored-buffers',
-                `ergoemacs-modal-emacs-state-modes' `minibufferp'
+                 the values of `minibufferp'
 The following arguments allow the keyboard presses to be translated:
  - :meta
  - :control

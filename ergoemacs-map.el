@@ -68,7 +68,6 @@
 (declare-function ergoemacs-warn "ergoemacs-lib")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 
-(declare-function ergoemacs-command-loop--modal "ergoemacs-command-loop")
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 
 (declare-function ergoemacs-component-struct--create-hooks "ergoemacs-component")
@@ -897,7 +896,7 @@ modifications to that keymap."
      ((memq 'add-keymap-witness lookup-keymap) ;; Don't translate complete tranisent maps.
       lookup-keymap)
      ((and lookup-keymap (symbolp lookup-keymap) (ergoemacs-gethash lookup-keymap ergoemacs-translation-hash))
-      (ergoemacs-command-loop--modal lookup-keymap))
+      nil)
      ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
       lookup-keymap)
      ((and lookup-keymap (ergoemacs lookup-keymap :dont-modify-p))

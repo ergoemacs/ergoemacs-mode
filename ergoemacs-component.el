@@ -28,9 +28,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Code:
-;; (require 'guide-key nil t)
+
 (require 'cl-lib)
 
 (eval-when-compile
@@ -55,7 +53,6 @@
 (defvar ergoemacs-theme-version)
 (defvar ergoemacs-translate--translation-hash)
 (defvar ergoemacs-translation-hash)
-(defvar package--initialized)
 
 (declare-function diminish "diminish")
 (declare-function diminish-undo "diminish")
@@ -94,8 +91,6 @@
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 (declare-function ergoemacs-key-description--keymap "ergoemacs-key-description")
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
-
-(declare-function package-installed-p "package")
 
 (declare-function ergoemacs-layout--regexp "ergoemacs-layouts")
 (declare-function ergoemacs-layouts--list "ergoemacs-layouts")
@@ -144,7 +139,6 @@
   (variable-prefixes '([apps] [menu] [27]) :read-only t)
   (package-name nil)
   (autoloads nil)
-  (ensure nil)
   (layout "us" :read-only t)
   (calculated-layouts (make-hash-table :test 'equal))
   (relative-to 'global-map)
@@ -152,48 +146,8 @@
 
 (defvar ergoemacs-component-struct--define-key-current nil)
 
-(defvar ergoemacs-component-struct--ensure-refreshed-p t)
-(defun ergoemacs-component-struct--ensure (package &optional defer autoloads)
-  "Ensure PACKAGE is installed.
-
-When DEFER is non-nil, dont `require' the package, just make sure
-it is installed.
-
-The AUTOLOADS is a list of functions that need to be autoloaded
-if the package is deferred."
-  (when package
-    (ergoemacs-timing ensure
-      (ergoemacs-timing (intern (format "ensure-%s" package))
-        (let ((package (or (and (symbolp package) package)
-                           (and (stringp package) (intern package)))))
-          (unless (or defer (featurep package))
-            (require package nil t))
-          (when (and package (not (featurep package)) (numberp defer))
-            (run-with-idle-timer defer nil #'require package  ;; `(lambda()
-                           ;; (message ,(format "Defer: %s %s" package defer))
-                           ;; (require ,package)
-                                 ;; (ergoemacs-component-struct--apply-inits))
-				 )
-            )
-          (when (and defer autoloads)
-            (dolist (c autoloads)
-              (unless (fboundp (car c))
-                (autoload (car c) (format "%s" (cdr c)) nil t))))
-          (unless (featurep package)
-            (unless package--initialized
-              (package-initialize))
-            (if (package-installed-p package) t
-              (unless ergoemacs-component-struct--ensure-refreshed-p
-                (package-refresh-contents)
-                (setq ergoemacs-component-struct--ensure-refreshed-p t))
-              (unless (progn (ignore-errors (package-install package))
-                             (package-installed-p package))
-                (ergoemacs-warn "ergoemacs-mode could not install %s." package))
-              (unless defer
-                (require package nil t)))))))))
-
 (defun ergoemacs-component-struct--parse-list (list function &rest args)
-  "Handle :bind and :mode LIST and call FUNCTION.
+  "Handle :bind LIST and call FUNCTION.
 
 The FUNCTION calls the with the first argument as the string
 piece and the second argument the symbol piece of the definition.
@@ -210,8 +164,6 @@ It also passes ARGS if any are specified."
         (setq arg1 (pop list)
               arg2 (pop list))))
      ((and (consp list) (stringp (car list)))
-      ;; :list ("C-." . ace-jump-mode)
-      ;; :list ("C-." ace-jump-mode)
       (apply function (car list)
              (or (and (consp (cdr list)) (nth 1 list))
                  (cdr list))
@@ -239,32 +191,6 @@ binding assumes KEYMAP is `global-map'."
     (ergoemacs-component-struct--parse-list
      bind #'ergoemacs-component-struct--handle-bind-1 keymap)))
 
-(defun ergoemacs-component-struct--handle-mode-1 (regexpr mode)
-  "Add (cons REGEXPR MODE) to `auto-mode-alist'.
-Also autoload MODE.
-
-Requires `ergoemacs-component-struct--define-key-current' to be
-an `ergoemacs-component-struct' object."
-  ;; (message "Handle Mode #2: %s %s" regexpr mode)
-  (when (ergoemacs-component-struct-p ergoemacs-component-struct--define-key-current)
-    (let* ((c (cons regexpr mode))
-           (obj ergoemacs-component-struct--define-key-current)
-           (package-name (ergoemacs-component-struct-package-name obj)))
-      (ergoemacs-component-struct--deferred
-       `(unless (member ',c auto-mode-alist)
-          (push ',c auto-mode-alist)))
-      (when (and package-name mode (not (fboundp mode)))
-        ;; Create autoload.
-        (autoload mode (format "%s, a major mode defined in %s" mode package-name) nil t)
-        (setq c (cons mode package-name))
-        (unless (member c (ergoemacs-component-struct-autoloads obj))
-          (push (cons mode package-name) (ergoemacs-component-struct-autoloads obj)))))))
-
-(defun ergoemacs-component-struct--handle-mode (mode)
-  "Handle MODE list from :mode keyword."
-  (when mode
-    (ergoemacs-component-struct--parse-list mode #'ergoemacs-component-struct--handle-mode-1)))
-
 (defun ergoemacs-component-struct--create-component (plist body file)
   "Create ergoemacs component.
 
@@ -284,7 +210,6 @@ FILE is the file name where the component was created."
                  :variable-modifiers (or (plist-get plist :variable-modifiers) '(meta))
                  :variable-prefixes (or (plist-get plist :variable-prefixes) '([apps] [menu] [27]))
                  :package-name (plist-get plist :package-name)
-                 :ensure (plist-get plist :ensure)
                  :layout (or (plist-get plist :layout) "us")
                  :defer (plist-get plist :defer)))
           (let* ((tmp (plist-get plist :bind-keymap))
@@ -320,13 +245,6 @@ FILE is the file name where the component was created."
               (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
             (ergoemacs-component-struct--handle-bind tmp 'ergoemacs-override-keymap)
 
-            ;; Handle :mode
-            (setq tmp (plist-get plist :mode))
-            (when (and tmp (not defer-present-p) (not defer))
-              (setq defer-present-p t defer t)
-              (setf (ergoemacs-component-struct-defer ergoemacs-component-struct--define-key-current) t))
-            (ergoemacs-component-struct--handle-mode tmp)
-            
             ;; Handle :commands
             (setq tmp (plist-get plist :commands))
             (when (and tmp (not defer-present-p) (not defer))
@@ -1071,7 +989,6 @@ OBJECT is the `ergoemacs-component-struct' object being changed."
 (defvar ergoemacs-component-struct--deferred-functions '())
 
 (defvar ergoemacs-component-struct--apply-inits-first-p t)
-(defvar ergoemacs-component-struct--apply-ensure-p nil)
 (defvar ergoemacs-component-struct--applied-plists nil)
 
 (defvar ergoemacs-component-echo-loaded-file-p nil)
@@ -1096,10 +1013,9 @@ to prevent infinite recursion."
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
   (let* ((obj (or obj (ergoemacs-theme-components)))
-         package-name ensure defer comp tmp autoloads)
+         tmp)
     (when ergoemacs-component-struct--apply-inits-first-p
-      (setq ergoemacs-component-struct--apply-inits-first-p nil
-            ergoemacs-component-struct--apply-ensure-p t)
+      (setq ergoemacs-component-struct--apply-inits-first-p nil)
       (if (not ergoemacs-mode--fast-p)
           (setq ergoemacs--start-emacs-state-2 (ergoemacs--emacs-state))
         ;; Check to see if emacs state has changed.
@@ -1117,33 +1033,6 @@ to prevent infinite recursion."
                  'ergoemacs--last-start-emacs-state-2 ergoemacs--last-start-emacs-state-2))
             (ergoemacs-mode-clear-cache t)
             (ergoemacs-warn "ergoemacs-mode cache reset AFTER loading; Keys may be slightly inconsistent until emacs restart.")))))
-    (when ergoemacs-component-struct--apply-ensure-p
-      (setq ergoemacs-component-struct--apply-ensure-p nil)
-      ;; Ensure packages
-      (dolist (elt obj)
-        (setq comp (ergoemacs-component-struct--lookup-hash elt)
-              package-name (ergoemacs-component-struct-package-name comp)
-              ensure (ergoemacs-component-struct-ensure comp)
-              autoloads (ergoemacs-component-struct-autoloads comp)
-              defer (ergoemacs-component-struct-defer comp))
-        (cond
-         ((eq ensure t)
-          (ergoemacs-component-struct--ensure package-name defer autoloads))
-         ((and ensure (symbolp ensure))
-          (ergoemacs-component-struct--ensure ensure defer autoloads))
-	 ((and (consp ensure) (memq (car ensure) '(memq member and or if when = string= not string< eq equal)))
-	  (when (ignore-errors (eval ensure))
-	    (ergoemacs-component-struct--ensure package-name defer autoloads)))
-         ((consp ensure)
-          (dolist (elt ensure)
-            (cond
-             ((and elt (symbolp elt))
-              (ergoemacs-component-struct--ensure elt defer autoloads))
-             ((stringp elt)
-              (ergoemacs-component-struct--ensure (intern elt) defer autoloads)))
-            (setq autoloads nil)))
-         ((stringp ensure)
-          (ergoemacs-component-struct--ensure (intern ensure) defer autoloads)))))
     ;; Turn on plist options (like :diminish)
     (dolist (elt obj)
       (unless (memq elt ergoemacs-component-struct--applied-plists)
@@ -1192,7 +1081,7 @@ to prevent infinite recursion."
                       (when (ignore-errors (boundp (nth 1 (nth 1 (nth 0 init)))))
                         (apply 'add-to-list (nth 1 (nth 1 (nth 0 init))) (cdr (cdr (nth 0 init))))
                         (push (nth 0 init) ergoemacs-component-struct--deferred-functions)))))
-                 ((memq (car (nth 0 init)) '(push pushnew cl-pushnew))
+                 ((memq (car (nth 0 init)) '(push cl-pushnew))
                   (when (ignore-errors (boundp (nth 2 (nth 0 init))))
                     (if (ignore-errors (eq 'quote (nth 1 (nth 1 (nth 0 init)))))
                         (ignore-errors
@@ -1735,7 +1624,6 @@ lists.  It can also be the symbol name of the package.
 uu
 When TYPE is non-nil, the function turns off the diminish
 modifications with `diminish-undo'"
-  (ignore-errors (ergoemacs-component-struct--ensure 'diminish))
   (require 'diminish nil t)
   (if (not (featurep 'diminish))
       (message "Error installing diminish package.")

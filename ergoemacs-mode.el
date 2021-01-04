@@ -49,24 +49,14 @@
 (eval-when-compile
   (require 'ergoemacs-macros))
 
-(require 'easymenu)
 (require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
-(require 'package)
 (require 'kmacro)
 
 (require 'printing)
 (pr-update-menus)
 
-(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
-(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
-
 (defvar ergoemacs--system (replace-regexp-in-string "[^0-9A-Za-z]+" "-" (concat emacs-version "-" system-configuration)))
-
-(when (and (string= package-user-dir (locate-user-emacs-file "elpa"))
-           (not (file-exists-p (locate-user-emacs-file "elpa"))))
-  (setq package-user-dir (locate-user-emacs-file (format "elpa-%s" ergoemacs--system))))
 
 (defvar cl-struct-ergoemacs-component-struct-tags)
 (defvar ergoemacs-component-struct--refresh-variables)
@@ -75,9 +65,6 @@
 (defvar ergoemacs-require--ini-p)
 (defvar ergoemacs-require)
 (defvar pcache-directory)
-(defvar ergoemacs-component-struct--apply-ensure-p)
-
-(require 'package)
 
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
 
@@ -169,6 +156,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 
 (defcustom ergoemacs-keyboard-mirror nil
   "Specifies which keyboard layout to mirror."
+  :type 'sexp
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
@@ -208,8 +196,6 @@ The TEXT will be what the mode-line is set to be."
                                                        (substring (ergoemacs :current-theme) 1)))
                                              "[" ergoemacs-keyboard-layout "]")))))
                     minor-mode-alist)))))
-
-(require 'lookup-word-on-internet nil "NOERROR")
 
 (defconst ergoemacs-font-lock-keywords
   '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\|-timing\\|-package\\|-autoload\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
@@ -315,8 +301,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
                         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                         (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
                         (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
-                        (setq ergoemacs-require--ini-p t
-                              ergoemacs-component-struct--apply-ensure-p t)
+                        (setq ergoemacs-require--ini-p t)
 			(ergoemacs-setup-override-keymap)                       
                         (if refresh-p
                             (message "Ergoemacs-mode keys refreshed (%s:%s)"
@@ -325,8 +310,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
                     (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
                     (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)
                       (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
-                    (setq ergoemacs-mode--default-frame-alist nil
-                          ergoemacs-component-struct--apply-ensure-p t)
+                    (setq ergoemacs-mode--default-frame-alist nil)
                     (run-hooks 'ergoemacs-mode-shutdown-hook)
                     (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
                     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
@@ -425,8 +409,7 @@ This is structured by valid keyboard layouts for
   "Hash table of `ergoemacs-mode' timing.")
 
 (defvar ergoemacs-timing--locations
-  '((ensure . "ergoemacs-component.el")
-    (remove-global-map-map-keymap . "ergoemacs-component.el")
+  '((remove-global-map-map-keymap . "ergoemacs-component.el")
     (remove-local-keymap-map-keymap . "ergoemacs-component.el")
     (translate-keymap . "ergoemacs-component.el")
     (describe-keymap . "ergoemacs-key-description.el")
@@ -466,7 +449,7 @@ This is structured by valid keyboard layouts for
 (defvar ergoemacs--component-file-mod-time-list nil)
 (defun ergoemacs--emacs-state ()
   "Return MD5 represting current Emacs state."
-  (let* ((state (format "%s %s %s %s %s" ergoemacs--system features package-alist load-path ergoemacs--component-file-mod-time-list))
+  (let* ((state (format "%s %s %s %s" ergoemacs--system features load-path ergoemacs--component-file-mod-time-list))
          (md5 (md5 state)))
     ;; (message "%s->%s" md5 state)
     md5))
@@ -595,22 +578,13 @@ When STORE-P is non-nil, save the tables."
                ergoemacs-theme-engine
                ergoemacs-translate
                ergoemacs-macros
-               ;; ergoemacs-themes
                ))
   (unless (featurep pkg)
     (ergoemacs-timing (intern (format "load-%s" pkg))
       (load (symbol-name pkg)))))
 
 (require 'unicode-fonts nil t)
-;; (when (featurep 'unicode-fonts)
-;;   (require 'persistent-soft nil t)
-;;   (when (featurep 'persistent-soft)
-;;     (unicode-fonts-setup)))
-
-
 (defcustom ergoemacs-use-unicode-symbols nil
-  ;; (and (featurep 'persistent-soft)
-  ;;      (featurep 'unicode-fonts))
   "Use unicode symbols in display."
   :type 'boolean
   :group 'ergoemacs-mode)
@@ -843,6 +817,7 @@ Valid values are:
   "Display Options for `ergoemacs-mode'."
   :group 'ergoemacs-mode)
 
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters)
 (defcustom ergoemacs-display-unicode-characters t
   "Use unicode characters when available."
   :type 'boolean
@@ -850,8 +825,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters)
-
+(define-obsolete-variable-alias 'ergoemacs-use-ergoemacs-key-descriptions 'ergoemacs-display-ergoemacs-key-descriptions)
 (defcustom ergoemacs-display-ergoemacs-key-descriptions t
   "Use ergoemacs key descriptions (Alt+)."
   :type 'boolean
@@ -859,9 +833,8 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-ergoemacs-key-descriptions 'ergoemacs-display-ergoemacs-key-descriptions)
 
-
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys)
 (defcustom ergoemacs-display-use-unicode-brackets-around-keys t
   "Use unicode brackets."
   :type 'boolean
@@ -869,9 +842,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys)
-
-
+(define-obsolete-variable-alias 'ergoemacs-use-small-symbols 'ergoemacs-display-small-symbols-for-key-modifiers)
 (defcustom ergoemacs-display-small-symbols-for-key-modifiers nil
   "Use small symbols to represent alt+ ctl+ on windows/linux."
   :type 'boolean
@@ -879,8 +850,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-small-symbols 'ergoemacs-display-small-symbols-for-key-modifiers)
-
+(define-obsolete-variable-alias 'ergoemacs-capitalize-keys 'ergoemacs-display-capitalize-keys)
 (defcustom ergoemacs-display-capitalize-keys 'with-modifiers
   "Capitalize keys like Ctrl+C.
 `ergoemacs-mode' should show Ctrl+Shift+C if you are pressing these keys."
@@ -892,17 +862,13 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-capitalize-keys 'ergoemacs-display-capitalize-keys)
-
+(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p)
 (defcustom ergoemacs-display-key-use-face-p t
   "Use a button face for keys."
   :type 'boolean
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
-
-(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p)
-
 
 (defface ergoemacs-display-key-face
   '((t :inverse-video t :box (:line-width 1 :style released-button) :weight bold))
@@ -960,13 +926,13 @@ Valid values are:
           (const :tag "No cursor" nil))
   :group 'ergoemacs-command-loop)
 
+(define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
 (defcustom ergoemacs-command-loop-blink-rate 0.4
   "Rate that the ergoemacs-command loop cursor blinks."
   :type 'number
   :group 'ergoemacs-command-loop)
 
-(define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
-
+(define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation)
 (defcustom ergoemacs-command-loop-swap-translation
   '(((:normal :normal) :unchorded-ctl)
     ((:normal :unchorded-ctl) :ctl-to-alt)
@@ -983,8 +949,6 @@ Valid values are:
             (sexp :tag "Current Type"))
            (sexp :tag "Translated Type")))
   :group 'ergoemacs-command-loop)
-
-(define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation)
 
 (defcustom ergoemacs-command-loop-type nil
   "Type of `ergoemacs-mode' command loop."
@@ -1020,15 +984,7 @@ Valid values are:
   :group 'ergoemacs-command-loop)
 
 
-(defgroup ergoemacs-modal nil
-  "Modal `ergoemacs-mode'."
-  :group 'ergoemacs-mode)
-(defcustom ergoemacs-modal-ignored-buffers
-  '("^ \\*load\\*" "^[*]e?shell[*]" "^[*]R.*[*]$")
-  "Buffers where modal ergoemacs-mode is ignored."
-  :type '(repeat string)
-  :group 'ergoemacs-modal)
-
+(define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color)
 (defcustom ergoemacs-default-cursor-color nil
   "Default cursor color.
 
@@ -1039,189 +995,7 @@ color.  Otherwise this will be nil A color string as passed to
                  (color :tag "Color"))
   :group 'ergoemacs-modal)
 
-(define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color)
-
-(defcustom ergoemacs-modal-emacs-state-modes
-  '(archive-mode
-    bbdb-mode
-    bookmark-bmenu-mode
-    bookmark-edit-annotation-mode
-    browse-kill-ring-mode
-    bzr-annotate-mode
-    calc-mode
-    cfw:calendar-mode
-    completion-list-mode
-    Custom-mode
-    debugger-mode
-    delicious-search-mode
-    desktop-menu-blist-mode
-    desktop-menu-mode
-    doc-view-mode
-    dvc-bookmarks-mode
-    dvc-diff-mode
-    dvc-info-buffer-mode
-    dvc-log-buffer-mode
-    dvc-revlist-mode
-    dvc-revlog-mode
-    dvc-status-mode
-    dvc-tips-mode
-    ediff-mode
-    ediff-meta-mode
-    efs-mode
-    Electric-buffer-menu-mode
-    emms-browser-mode
-    emms-mark-mode
-    emms-metaplaylist-mode
-    emms-playlist-mode
-    etags-select-mode
-    fj-mode
-    gc-issues-mode
-    gdb-breakpoints-mode
-    gdb-disassembly-mode
-    gdb-frames-mode
-    gdb-locals-mode
-    gdb-memory-mode
-    gdb-registers-mode
-    gdb-threads-mode
-    gist-list-mode
-    gnus-article-mode
-    gnus-browse-mode
-    gnus-group-mode
-    gnus-server-mode
-    gnus-summary-mode
-    google-maps-static-mode
-    ibuffer-mode
-    jde-javadoc-checker-report-mode
-    magit-commit-mode
-    magit-diff-mode
-    magit-key-mode
-    magit-log-mode
-    magit-mode
-    magit-reflog-mode
-    magit-show-branches-mode
-    magit-branch-manager-mode ;; New name for magit-show-branches-mode
-    magit-stash-mode
-    magit-status-mode
-    magit-wazzup-mode
-    mh-folder-mode
-    monky-mode
-    notmuch-hello-mode
-    notmuch-search-mode
-    notmuch-show-mode
-    occur-mode
-    org-agenda-mode
-    package-menu-mode
-    proced-mode
-    rcirc-mode
-    rebase-mode
-    recentf-dialog-mode
-    reftex-select-bib-mode
-    reftex-select-label-mode
-    reftex-toc-mode
-    sldb-mode
-    slime-inspector-mode
-    slime-thread-control-mode
-    slime-xref-mode
-    shell-mode
-    sr-buttons-mode
-    sr-mode
-    sr-tree-mode
-    sr-virtual-mode
-    tar-mode
-    tetris-mode
-    tla-annotate-mode
-    tla-archive-list-mode
-    tla-bconfig-mode
-    tla-bookmarks-mode
-    tla-branch-list-mode
-    tla-browse-mode
-    tla-category-list-mode
-    tla-changelog-mode
-    tla-follow-symlinks-mode
-    tla-inventory-file-mode
-    tla-inventory-mode
-    tla-lint-mode
-    tla-logs-mode
-    tla-revision-list-mode
-    tla-revlog-mode
-    tla-tree-lint-mode
-    tla-version-list-mode
-    twittering-mode
-    urlview-mode
-    vc-annotate-mode
-    vc-dir-mode
-    vc-git-log-view-mode
-    vc-svn-log-view-mode
-    vm-mode
-    vm-summary-mode
-    w3m-mode
-    wab-compilation-mode
-    xgit-annotate-mode
-    xgit-changelog-mode
-    xgit-diff-mode
-    xgit-revlog-mode
-    xhg-annotate-mode
-    xhg-log-mode
-    xhg-mode
-    xhg-mq-mode
-    xhg-mq-sub-mode
-    xhg-status-extra-mode)
-  "Modes that should come up in `ergoemacs-mode' state."
-  :type  '(repeat symbol)
-  :group 'ergoemacs-modal)
-
-(defvar ergoemacs-modal-list '())
 (defvar ergoemacs-translate--translation-hash)
-(defvar ergoemacs-modal-ignored-keymap
-  (let ((ret (make-sparse-keymap))
-        (mods '(control meta shift hyper super alt))
-        tmp
-        key)
-    (dolist (char '("<f1>"
-                    "<f2>"
-                    "<f3>"
-                    "<f4>"
-                    "<f5>"
-                    "<f6>"
-                    "<f7>"
-                    "<f8>"
-                    "<f9>"
-                    "<f10>"
-                    "<f11>"
-                    "<f12>"
-                    "<apps>" "<menu>"
-                    "RET" "ESC" "DEL" "TAB"
-                    "<home>"
-                    "<next>"
-                    "<prior>"
-                    "<end>"
-                    "<insert>"
-                    "<deletechar>"))
-      (define-key ret (setq key (read-kbd-macro char t)) 'ergoemacs-ignore-modal)
-      (setq key (elt key 0))
-      (dolist (mod1 mods)
-        (setq tmp (vector (event-convert-list (list mod1 key))))
-        (ignore-errors (define-key ret tmp 'ignore))
-        (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
-          (ignore-errors (define-key ret tmp 'ignore)))
-        (dolist (mod2 mods)
-          (setq tmp (vector (event-convert-list (list mod1 mod2 key))))
-          (ignore-errors (define-key ret tmp 'ignore))
-          (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
-            (ignore-errors (define-key ret tmp 'ignore)))
-          (dolist (mod3 mods)
-            (setq tmp (vector (event-convert-list (list mod1 mod2 mod3 key))))
-            (ignore-errors (define-key ret tmp 'ignore))
-            (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
-              (ignore-errors (define-key ret tmp 'ignore)))
-            (dolist (mod4 mods)
-              (setq tmp (vector (event-convert-list (list mod1 mod2 mod3 mod4 key))))
-              (ignore-errors (define-key ret tmp 'ignore))
-              (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
-                (ignore-errors (define-key ret tmp 'ignore))))))))
-    ret)
-  "`ergoemacs-mode' keys to ignore the modal translation.
-Typically function keys")
 
 (defcustom ergoemacs-translate-keys nil
   "Try differnt key combinations to lookup unfound command.
@@ -1300,7 +1074,7 @@ also perform `outline-next-visible-heading'"
 (puthash 'ergoemacs-load-time (vector 1 ergoemacs--load-time ergoemacs--load-time ergoemacs--load-time (or load-file-name buffer-file-name))
          ergoemacs-timing-hash)
 
-(run-with-idle-timer 0.05 nil #'ergoemacs-mode-after-init-emacs)
+(run-with-timer 0.0 nil #'ergoemacs-mode-after-init-emacs)
 (add-hook 'emacs-startup-hook #'ergoemacs-mode-after-init-emacs)
 
 (provide 'ergoemacs-mode)
