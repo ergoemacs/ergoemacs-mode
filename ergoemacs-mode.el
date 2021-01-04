@@ -1014,7 +1014,6 @@ color.  Otherwise this will be nil A color string as passed to
 
 (define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color)
 
-(defvar ergoemacs-modal-list '())
 (defvar ergoemacs-translate--translation-hash)
 
 (defcustom ergoemacs-translate-keys nil
