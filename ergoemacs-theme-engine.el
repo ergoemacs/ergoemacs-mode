@@ -640,7 +640,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
 # should be like ErgoEmacs.
 # If none of the keys work, try replacing all instances of \\e with \\M-.
 # That's means changing Esc to Meta key.
-\nset editing-mode emacs") tmp)
+\nset editing-mode emacs"))
     (with-temp-buffer
       (dolist (cmds ergoemacs-theme-create-bash-functions)
         (dolist (cmd cmds)
