@@ -69,7 +69,6 @@
 (declare-function ergoemacs-translation-struct-p "ergoemacs-translate")
 (declare-function ergoemacs-translation-struct-text "ergoemacs-translate")
 (declare-function ergoemacs-translation-struct-translation "ergoemacs-translate")
-(declare-function ergoemacs-translation-struct-unchorded "ergoemacs-translate")
 
 (declare-function ergoemacs-key-description--modifier "ergoemacs-key-description")
 

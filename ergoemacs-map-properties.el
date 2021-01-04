@@ -814,8 +814,6 @@ When LABEL-EMPTY-P is non-nil, also label empty maps."
   (mapatoms #'ergoemacs-map-properties--label-map))
 
 ;; Startup and load functions
-;;(add-hook 'ergoemacs-mode-after-init-emacs 'ergoemacs-map-properties--label-unlabeled)
-;;(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-map-properties--label-unlabeled)
 
 (defun ergoemacs-map-properties--label-known ()
   "Label known maps."

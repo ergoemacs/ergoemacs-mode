@@ -577,22 +577,13 @@ When STORE-P is non-nil, save the tables."
                ergoemacs-theme-engine
                ergoemacs-translate
                ergoemacs-macros
-               ;; ergoemacs-themes
                ))
   (unless (featurep pkg)
     (ergoemacs-timing (intern (format "load-%s" pkg))
       (load (symbol-name pkg)))))
 
 (require 'unicode-fonts nil t)
-;; (when (featurep 'unicode-fonts)
-;;   (require 'persistent-soft nil t)
-;;   (when (featurep 'persistent-soft)
-;;     (unicode-fonts-setup)))
-
-
 (defcustom ergoemacs-use-unicode-symbols nil
-  ;; (and (featurep 'persistent-soft)
-  ;;      (featurep 'unicode-fonts))
   "Use unicode symbols in display."
   :type 'boolean
   :group 'ergoemacs-mode)

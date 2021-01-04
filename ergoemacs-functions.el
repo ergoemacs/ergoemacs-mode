@@ -2385,8 +2385,6 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
       (setq nbn (generate-new-buffer-name nbn))
       (rename-buffer nbn))))
 
-;; (add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
-
 (defun ergoemacs-shell-here-hook ()
   "Hook for `ergoemacs-shell-here'.
 Sends shell prompt string to process, then turns on
@@ -2412,8 +2410,6 @@ Sends shell prompt string to process, then turns on
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))))))
 
-;; (add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
-
 (defun ergoemacs-shell-here (&optional shell-program buffer-prefix)
   "Runs/switches to a shell process in the current directory."
   (interactive)
@@ -2436,8 +2432,6 @@ Sends shell prompt string to process, then turns on
       (let ((explicit-shell-file-name ergoemacs-msys))
 	(ergoemacs-shell-here nil "MSYS"))
     (error "Need to specify `ergoemacs-msys'.")))
-
-;; (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
 
 (defun ergoemacs-eshell-here ()
   "Run/switch to an `eshell' process in the current directory"
