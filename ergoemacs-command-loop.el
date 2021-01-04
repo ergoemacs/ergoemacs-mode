@@ -105,8 +105,6 @@
 (defvar ergoemacs-command-loop--universal-functions '(universal-argument ergoemacs-universal-argument ergoemacs-command-loop--universal-argument)
   "List of `ergoemacs-mode' recognized functions.")
 
-(define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions)
-
 (defvar ergoemacs-command-loop--next-key-hash
   (let ((hash (make-hash-table)))
     (puthash 'event-apply-shift-modifier (list '(shift) :force) hash)
@@ -130,8 +128,6 @@
 This is to distinguish events in a terminal, like xterm.
 
 It needs to be less than `ergoemacs-command-loop-blink-rate'.")
-
-(define-obsolete-variable-alias 'ergoemacs-read-key-delay 'ergoemacs-command-loop--decode-event-delay)
 
 (defvar ergoemacs-command-loop--history nil
   "History of command loop locations.")
@@ -712,8 +708,7 @@ KEYS is the keys information"
 
 (defun ergoemacs-command--echo-prefix ()
   "Echos prefix keys in the ergoemacs-mode way."
-  (let ((keys (this-single-command-keys))
-	ret timeout)
+  (let ((keys (this-single-command-keys)))
     (when (and ergoemacs-command--timeout-timer
 	       (not (equal keys ergoemacs-command--timeout-keys)))
       (cancel-timer ergoemacs-command--timeout-timer)
@@ -721,8 +716,8 @@ KEYS is the keys information"
 	    ergoemacs-command--timeout-timer nil))
     (unless (or (equal [] keys)
 		(ergoemacs-command-loop-p))
-      (when (ergoemacs-keymapp (setq ret (key-binding keys)))
-	(when (setq timeout (key-binding (vconcat keys [ergoemacs-timeout])))
+      (when (ergoemacs-keymapp (key-binding keys))
+	(when (key-binding (vconcat keys [ergoemacs-timeout]))
 	  (cond
 	   ((not (region-active-p))) ;; active
            (t
@@ -1006,7 +1001,7 @@ KEY is the key being read, or sequence being read.
 
 TYPE is the translation being used.
 
-INITIAL-KEY-TYPE ist he key type that is used fot the initial
+INITIAL-KEY-TYPE is the key type that is used fot the initial
 translation.
 
 UNIVERSAL is if the function will be calling a universal
@@ -2009,7 +2004,7 @@ pressed the translated key by changing
     ;; Make sure to lookup the keys in the selected buffer
     (ergoemacs-command-loop--sync-point)
     (let ((trials (ergoemacs-translate--trials key))
-        tmp tmp2 ret)
+        tmp ret)
       (setq this-command-keys-shift-translated nil)
     (catch 'found-command
       (dolist (cur-key trials)
