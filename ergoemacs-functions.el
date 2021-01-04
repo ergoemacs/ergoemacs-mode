@@ -340,8 +340,8 @@ If TERMINAL is non-nil, run the terminal version"
 
 (defun ergoemacs-emacs-exe ()
   "Get the Emacs executable for testing purposes."
-  (let* ((emacs-exe (invocation-name))
-         (emacs-dir (invocation-directory))
+  (let* ((emacs-exe invocation-name)
+         (emacs-dir invocation-directory)
          (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
                            "\"")))
     full-exe))

@@ -1013,7 +1013,7 @@ to prevent infinite recursion."
   (when (eq ergoemacs-component-struct--refresh-variables t)
     (setq ergoemacs-component-struct--refresh-variables ergoemacs-component-struct--applied-inits))
   (let* ((obj (or obj (ergoemacs-theme-components)))
-         package-name defer comp tmp autoloads)
+         tmp)
     (when ergoemacs-component-struct--apply-inits-first-p
       (setq ergoemacs-component-struct--apply-inits-first-p nil)
       (if (not ergoemacs-mode--fast-p)
