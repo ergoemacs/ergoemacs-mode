@@ -914,7 +914,6 @@ STRUCT is the keymap structure for the current map."
 	(error "Will not label a composed map's members to %s" map-key))
        (t
 	(let ((breadcrumb-base ergoemacs-map--breadcrumb)
-	      (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
 	      (comp (plist-get struct :composed))
 	      (comp-list (ergoemacs-map-properties--composed-list keymap))
 	      from-prop-p
@@ -947,7 +946,6 @@ STRUCT is the keymap structure for the current map."
 	     old-plist
 	     (breadcrumb-base ergoemacs-map--breadcrumb)
 	     (parent (keymap-parent map))
-	     (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
 	     label tmp1 tmp2)
 	(unwind-protect
 	    (progn
