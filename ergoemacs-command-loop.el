@@ -213,11 +213,6 @@ Returns the mode-line text."
        (ergoemacs-mode-line)
        nil)))))
 
-(defun ergoemacs-command-loop--modal-p ()
-  "Determine if the command should be modal.
-If so return the translation."
-  nil)
-
 (defun ergoemacs-command-loop--modal (type)
   "Toggle ergoemacs command modes.
 
@@ -268,7 +263,7 @@ This is called through `ergoemacs-command-loop'"
     ;; Command loop hasn't started.
     (setq current-prefix-arg '(4))
     (setq ergoemacs-command-loop-start t)
-    (ergoemacs-command-loop nil (ergoemacs-command-loop--modal-p) nil t))
+    (ergoemacs-command-loop nil nil nil t))
    ((not current-prefix-arg)
     (setq current-prefix-arg '(4)
           ergoemacs-command-loop--universal t

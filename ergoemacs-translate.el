@@ -87,8 +87,6 @@
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
-(declare-function ergoemacs-command-loop--modal-p "ergoemacs-command-loop")
-
 (declare-function ergoemacs-translate--key-description "ergoemacs-translate")
 
 (fset #'ergoemacs-translate--key-description (symbol-function #'key-description))
