@@ -89,7 +89,6 @@
 (defvar ergoemacs-default-cursor-color)
 (defvar ergoemacs-echo-function)
 (defvar ergoemacs-map--quit-map)
-(defvar ergoemacs-modal-ignored-keymap)
 (defvar ergoemacs-mode-started-p)
 (defvar guide-key/guide-key-sequence)
 (defvar keyfreq-mode)

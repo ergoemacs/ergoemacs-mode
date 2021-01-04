@@ -1016,56 +1016,6 @@ color.  Otherwise this will be nil A color string as passed to
 
 (defvar ergoemacs-modal-list '())
 (defvar ergoemacs-translate--translation-hash)
-(defvar ergoemacs-modal-ignored-keymap
-  (let ((ret (make-sparse-keymap))
-        (mods '(control meta shift hyper super alt))
-        tmp
-        key)
-    (dolist (char '("<f1>"
-                    "<f2>"
-                    "<f3>"
-                    "<f4>"
-                    "<f5>"
-                    "<f6>"
-                    "<f7>"
-                    "<f8>"
-                    "<f9>"
-                    "<f10>"
-                    "<f11>"
-                    "<f12>"
-                    "<apps>" "<menu>"
-                    "RET" "ESC" "DEL" "TAB"
-                    "<home>"
-                    "<next>"
-                    "<prior>"
-                    "<end>"
-                    "<insert>"
-                    "<deletechar>"))
-      (define-key ret (setq key (read-kbd-macro char t)) 'ergoemacs-ignore-modal)
-      (setq key (elt key 0))
-      (dolist (mod1 mods)
-        (setq tmp (vector (event-convert-list (list mod1 key))))
-        (ignore-errors (define-key ret tmp 'ignore))
-        (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
-          (ignore-errors (define-key ret tmp 'ignore)))
-        (dolist (mod2 mods)
-          (setq tmp (vector (event-convert-list (list mod1 mod2 key))))
-          (ignore-errors (define-key ret tmp 'ignore))
-          (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
-            (ignore-errors (define-key ret tmp 'ignore)))
-          (dolist (mod3 mods)
-            (setq tmp (vector (event-convert-list (list mod1 mod2 mod3 key))))
-            (ignore-errors (define-key ret tmp 'ignore))
-            (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
-              (ignore-errors (define-key ret tmp 'ignore)))
-            (dolist (mod4 mods)
-              (setq tmp (vector (event-convert-list (list mod1 mod2 mod3 mod4 key))))
-              (ignore-errors (define-key ret tmp 'ignore))
-              (when (setq tmp (ergoemacs-translate--meta-to-escape tmp))
-                (ignore-errors (define-key ret tmp 'ignore))))))))
-    ret)
-  "`ergoemacs-mode' keys to ignore the modal translation.
-Typically function keys")
 
 (defcustom ergoemacs-translate-keys nil
   "Try differnt key combinations to lookup unfound command.
