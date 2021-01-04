@@ -1621,9 +1621,6 @@ Similar to `keyboard-quit', with the following changes:
 • When a region is active, (see `region-active-p') deactivate the
   region with the function `deactivate-mark'.
 
-• When `ergoemacs-mode' is in a modal command mode, exit that
-  command mode.
-
 • When \"C-g\" is bound to something other than ergoemacs /
   standard quit commands, run that command.
 
