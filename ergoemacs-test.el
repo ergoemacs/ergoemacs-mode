@@ -80,7 +80,6 @@
 (declare-function ergoemacs-translate--quail-to-ergoemacs "ergoemacs-translate")
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
 (declare-function ergoemacs-translate--get "ergoemacs-translate")
-(declare-function ergoemacs-unchorded-alt-modal "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")
 
 (require 'ert)
@@ -648,43 +647,6 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
      (execute-kbd-macro "1 1 +")
      (call-interactively 'calc-quit)
      (should (eq (key-binding (kbd "M-u")) 'previous-line)))))
-
-;;; Modal
-
-(ert-deftest ergoemacs-test-modal-preserve-mark ()
-  "Issue #101.
-Test next and prior translation."
-  (with-temp-buffer
-    (insert ergoemacs-test-lorem-ipsum)
-    (goto-char (point-min))
-    (ergoemacs-translate--get :unchorded-alt) ;; Load translation
-    (ergoemacs-unchorded-alt-modal)
-    (set-mark (point))
-    (forward-char 3)
-    (ergoemacs-unchorded-alt-modal)
-    (should mark-active)))
-
-(ert-deftest ergoemacs-test-modal-alt-mode-horizontal-position ()
-  "Tests Issue #213"
-  (let (ret)
-    (ergoemacs-test-layout
-     :layout "colemak"
-     :macro "i u u"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-max))
-       (beginning-of-line)
-       (ergoemacs-translate--get :unchorded-alt)
-       (ergoemacs-unchorded-alt-modal)
-       (execute-kbd-macro macro)
-       (looking-at ".*? ")
-       (ignore-errors (should (string= (match-string 0) "eprehenderit ")))
-       (ergoemacs-unchorded-alt-modal)
-       (kill-buffer (current-buffer))))))
-
-
 
 ;;; Command Loop
 
@@ -1441,8 +1403,6 @@ Tests Issue #372."
   "Test ergoemacs-mode translations"
   :tags '(:translate)
   (should (string= "A" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0))))))
-  (should (string= "M-A" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0) :unchorded-alt)))))
-  (should (string= "C-S-a" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "A" t) 0) :unchorded-ctl)))))
   (should (string= "M-A" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-S-a" t) 0) :ctl-to-alt)))))
 
   ;; DEL = ^?, doesn't seem to have the issues that RET, ESC, and TAB has.

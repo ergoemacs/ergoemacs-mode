@@ -400,7 +400,6 @@
   (global-set-key (kbd "<f11>") 'previous-line)
   (global-set-key (kbd "<f12>") 'next-line)
   (global-set-key (kbd "<f3>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "<f6>") 'ergoemacs-unchorded-alt-modal)
   (global-set-key (kbd "<f8>") 'search-map)
   (global-set-key (kbd "<f8> <f8>") 'highlight-symbol-at-point)
   (global-set-key (kbd "<f8> <f9>") 'highlight-symbol-query-replace)
@@ -812,7 +811,6 @@
          "<apps> SPC"       set-mark-command
          "<apps> a"         mark-whole-buffer
          "<apps> d"         ("C-x" :ctl-to-alt)
-         "<apps> f"         ("C-c" :unchorded-ctl)
          "<apps> h"         help-map
          "<apps> h '"       ergoemacs-describe-current-theme
          "<apps> h 1"       describe-function
@@ -1855,33 +1853,5 @@
             (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-force-next-key-is-ctl)
             (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-force-next-key-is-alt)
             map))
-
-(ergoemacs-translation unchorded-ctl ()
-  "Make the Ctl key sticky."
-  :text "<Ctl+>"
-  :unchorded '(control)
-  :shift '(control shift)
-  :meta '()
-  :control '(meta)
-  :keymap (let ((map (make-sparse-keymap)))
-            (define-key map [f1] 'ergoemacs-read-key-help)
-            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-force-next-key-is-quoted)
-            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-force-next-key-is-alt-ctl)
-            (define-key map "g" 'ergoemacs-read-key-force-next-key-is-alt)
-            (define-key map "G" 'ergoemacs-read-key-force-next-key-is-alt-ctl)
-            map))
-
-(ergoemacs-translation unchorded-alt ()
-  "Make the Alt key sticky."
-  :text "<Alt+>"
-  :unchorded '(meta) 
-  :shift '(meta shift)
-  :meta '(meta shift) 
-  :modal-color "red"
-  :keymap-modal (let ((map (make-sparse-keymap)))
-                  (define-key map (read-kbd-macro "<return>") 'ergoemacs-unchorded-alt-modal)
-                  (define-key map (read-kbd-macro "RET") 'ergoemacs-unchorded-alt-modal)
-                  map))
-
 
 (provide 'ergoemacs-themes)

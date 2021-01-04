@@ -786,7 +786,6 @@ read."
          reset-key-p
          double)
     
-    ;; (ergoemacs-command-loop--read-key (read-kbd-macro "C-x" t) :unchorded-ctl)
     (when (functionp text)
       (setq text (funcall text)))
 

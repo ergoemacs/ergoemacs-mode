@@ -737,7 +737,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-text-scale-normal-size "Reset Zoom")
         (ergoemacs-toggle-camel-case "tog. camel")
         (ergoemacs-toggle-letter-case "tog. case")
-        (ergoemacs-unchorded-alt-modal "Alt+ Mode")
         (ergoemacs-universal-argument "Argument")
         (execute-extended-command "M-x")
         (find-file "Open")
