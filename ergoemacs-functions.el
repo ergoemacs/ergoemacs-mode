@@ -66,7 +66,6 @@
 (declare-function ergoemacs-map-- "ergoemacs-map")
 (declare-function ergoemacs-mode "ergoemacs-mode")
 
-(declare-function ergoemacs-command-loop--modal-pop "ergoemacs-command-loop")
 (declare-function ergoemacs-theme-describe "ergoemacs-theme-engine")
 
 (declare-function helm-attrset "helm")
@@ -1642,8 +1641,6 @@ Similar to `keyboard-quit', with the following changes:
       (setq saved-region-selection nil)
       (let (select-active-regions)
         (deactivate-mark)))
-     (ergoemacs-command-loop--modal-stack
-      (ergoemacs-command-loop--modal-pop))
      ((and (setq bind (key-binding [7])) ;; C-g
            (not (memq bind '(ergoemacs-keyboard-quit minibuffer-keyboard-quit keyboard-quit))))
       (call-interactively bind))
