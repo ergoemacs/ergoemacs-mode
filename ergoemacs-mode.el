@@ -699,9 +699,6 @@ SYMBOL is the symbol to set, NEW-VALUE is it's value."
   "Remove `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
 
-;; (add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-setup-override-keymap)
-;; (add-hook 'ergoemacs-mode-shudown-hook 'ergoemacs-setup-override-keymap)
-
 
 ;;; Frequently used commands as aliases
 (defcustom ergoemacs-use-aliases t
@@ -1024,19 +1021,6 @@ also perform `outline-next-visible-heading'"
   "Modify Transient maps that are not bound to anything."
   :type 'boolean
   :group 'ergoemacs-mode)
-
-
-;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "")
-
-;;; Options not supported now
-
-;; (defcustom ergoemacs-change-fixed-layout-to-variable-layout nil
-;;   "Change the fixed layout to variable layout keys.
-;; For example, on dvorak, change C-j to C-c (copy/command)."
-;;   :type 'boolean
-;;   :set 'ergoemacs-set-default
-;;   :initialize #'custom-initialize-default
-;;   :group 'ergoemacs-mode)
 
 (defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
   "Run `ergoemacs-mode-after-load-hook' after loading Emacs."
