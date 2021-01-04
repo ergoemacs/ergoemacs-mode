@@ -330,10 +330,7 @@ TYPE is the type of translation installed."
 	 (type (or type :normal))
 	 (translation (ergoemacs-translate--get type))
 	 (local-keymap (ergoemacs-translate--keymap translation))
-	 (local-key (substring keys -1))
-	 modal-p)
-    (when (setq modal-p (ergoemacs :modal-p))
-      (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
+	 (local-key (substring keys -1)))
     (if (lookup-key local-keymap local-key)
 	(let ((i 1)) ;; Setup history
 	  (setq ergoemacs-command-loop--history nil)
