@@ -1074,7 +1074,7 @@ also perform `outline-next-visible-heading'"
 (puthash 'ergoemacs-load-time (vector 1 ergoemacs--load-time ergoemacs--load-time ergoemacs--load-time (or load-file-name buffer-file-name))
          ergoemacs-timing-hash)
 
-(run-with-idle-timer 0.05 nil #'ergoemacs-mode-after-init-emacs)
+(run-with-timer 0.0 nil #'ergoemacs-mode-after-init-emacs)
 (add-hook 'emacs-startup-hook #'ergoemacs-mode-after-init-emacs)
 
 (provide 'ergoemacs-mode)

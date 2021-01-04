@@ -1106,9 +1106,9 @@ to start with
              (ergoemacs-command-loop-full-p))
     (if ergoemacs-last-command-was-ergoemacs-ignore-p
 	(unless (eq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
-	  (run-with-idle-timer 0.05 nil (lambda()
-					  (setq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
-					  (ergoemacs-command-loop-start))))
+	  (run-with-timer 0.0 nil (lambda()
+				    (setq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
+				    (ergoemacs-command-loop-start))))
       (push 'ergoemacs-ignore unread-command-events))))
 
 (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
@@ -1569,7 +1569,7 @@ They don't exactly behave like their Emacs equivalents."
 (defun ergoemacs-command-loop--install-timer ()
   "Install the `ergoemacs-command-loop--timer'."
   (setq ergoemacs-command-loop--timer
-        (run-with-idle-timer 0.05 nil #'ergoemacs-command-loop--timer)))
+        (run-with-timer 0.0 nil #'ergoemacs-command-loop--timer)))
 
 (defun ergoemacs-command-loop--remove-timer ()
   "Remove `ergoemacs-command-loop--timer'."
