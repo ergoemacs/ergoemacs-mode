@@ -193,7 +193,7 @@ Returns the mode-line text."
   (let (tmp color text)
     (ergoemacs-save-buffer-state
      (cond
-      ((setq tmp (ergoemacs :modal-p))
+      ((setq tmp nil)
        (setq color (ergoemacs-translation-struct-modal-color tmp))
        (if color
            (set-cursor-color color)
@@ -813,7 +813,6 @@ read."
          (text (ergoemacs-translation-struct-text translation))
          (unchorded (ergoemacs-translation-struct-unchorded translation))
          (trans (ergoemacs-translation-struct-translation translation))
-         (modal (ergoemacs :modal-p))
          (keys nil)
          (blink-on nil)
          input
@@ -821,17 +820,6 @@ read."
          mod-keys tmp
          reset-key-p
          double)
-    ;; Setup modal translation
-    (when (and (eq type :normal) modal)
-      (setq type (ergoemacs-translation-struct-key modal)
-            local-keymap (ergoemacs-translation-struct-keymap-modal modal)
-            text (ergoemacs-translation-struct-text modal)
-            unchorded (ergoemacs-translation-struct-unchorded modal)
-            trans (ergoemacs-translation-struct-translation modal)
-            tmp translation
-            translation modal
-            modal tmp
-            tmp nil))
     
     ;; (ergoemacs-command-loop--read-key (read-kbd-macro "C-x" t) :unchorded-ctl)
     (when (functionp text)
@@ -920,17 +908,6 @@ read."
               ergoemacs-last-command-event last-command-event))
        (t
         ;; Translate the key appropriately.
-        (when (and modal (lookup-key ergoemacs-modal-ignored-keymap (vector input)))
-          ;; Swap back, or ignore the modal translation.
-          (setq type (ergoemacs-translation-struct-key modal)
-                local-keymap (ergoemacs-translation-struct-keymap-modal modal)
-                text (ergoemacs-translation-struct-text modal)
-                unchorded (ergoemacs-translation-struct-unchorded modal)
-                trans (ergoemacs-translation-struct-translation modal)
-                tmp translation
-                translation modal
-                modal tmp
-                tmp nil))
         (setq raw-input input
               input (ergoemacs-translate--event-mods input type)
               last-command-event input
@@ -1129,7 +1106,7 @@ appropriate value based on the COMMAND."
 TYPE is the type of command loop to check for.  By default this
 is the :full command loop."
   (and
-   (or (eq ergoemacs-command-loop-type (or type :full)) (ergoemacs :modal-p))
+   (eq ergoemacs-command-loop-type (or type :full))
    (ergoemacs-command-loop--minibuffer-supported-p)
    (catch 'excluded-variables
      (dolist (var ergoemacs-command-loop--excluded-variables)
@@ -1755,8 +1732,6 @@ Emacs versions)."
                         current-key (nth 1 raw-key)
                         raw-key (nth 0 raw-key)
                         continue-read nil)
-		  (when (setq modal-p (ergoemacs :modal-p))
-		    (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
                   (cond
                    ;; Handle quit commands
                    ((and last-current-key

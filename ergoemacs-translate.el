@@ -773,7 +773,6 @@ When NAME is a symbol, setup the translation function for the symbol."
         -universal-argument
         -negative-argument
         -digit-argument
-        -modal
         translation
         (local-keymap (or (plist-get plist :keymap) (make-sparse-keymap)))
 	(trans-keymap (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map"))))
@@ -819,7 +818,6 @@ When NAME is a symbol, setup the translation function for the symbol."
            :universal-argument -universal-argument
            :negative-argument -negative-argument
            :digit-argument -digit-argument
-           :modal -modal
            :text (plist-get plist :text)
            :keymap local-keymap
            :keymap-modal (or (plist-get plist :keymap-modal) (make-sparse-keymap))
@@ -946,7 +944,7 @@ If there are no gui elements, retun nil."
 (defun ergoemacs-translate--keymap (&optional translation)
   "Get the keymap for TRANSLATION.
 This takes into consideration the modal state of `ergoemacs-mode'."
-  (let* ((modal (ergoemacs :modal-p))
+  (let* ((modal nil)
          (translation (or (and (ergoemacs-translation-struct-p translation)
                                (or (not modal) ;; prefer modal when :normal 
                                    (not (eq :normal (ergoemacs-translation-struct-key translation))))
