@@ -1657,7 +1657,6 @@ Emacs versions)."
              raw-key current-key last-current-key
              (translation (ergoemacs-translate--get type))
              (local-keymap (ergoemacs-translate--keymap translation))
-             modal-p
              tmp command)
         (unwind-protect
             (progn
@@ -1710,16 +1709,14 @@ Emacs versions)."
                     (setq quit-flag t
 			  ergoemacs-this-command-keys-shift-translated nil))
                    ;; Handle local commands.
-                   ((and (or modal-p
-                             (not (equal current-key raw-key)))
+                   ((and (not (equal current-key raw-key))
                          (setq command (lookup-key local-keymap raw-key))
                          (not (ergoemacs-keymapp command)) ;; Ignore locally
                          ;; Already handled by `ergoemacs-command-loop--read-key'
                          (not (ergoemacs-gethash command ergoemacs-command-loop--next-key-hash))
                          ;; If a command has :ergoemacs-local property of :force, don't
                          ;; worry about looking up a key, just run the function.
-                         (or modal-p
-                             (and (symbolp command) (eq (get command :ergoemacs-local) :force))
+                         (or (and (symbolp command) (eq (get command :ergoemacs-local) :force))
                              (not (key-binding current-key t))))
                     (pop ergoemacs-command-loop--history) ;; Don't recored local events
                     (setq ergoemacs-command-loop--single-command-keys last-current-key
