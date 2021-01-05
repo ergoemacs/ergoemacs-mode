@@ -635,14 +635,11 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
       (progn
 	(setq ergoemacs-map-properties--known-maps ergoemacs-map-properties--label-atoms-maps)
 	(ergoemacs-map-properties--label-known))
-      ;; (ergoemacs-map-properties--label-atoms)
     (ergoemacs-timing get-original-global-map
-      ;; (ergoemacs-map-properties--label-atoms)
       (if (file-readable-p (ergoemacs-map-properties--default-global-file))
           (progn
 	    (load (ergoemacs-map-properties--default-global-file))
 	    (setq ergoemacs-map-properties--known-maps ergoemacs-map-properties--label-atoms-maps)
-	    (message "Breadcrumb %s" (ergoemacs-gethash 'describe-european-environment-map ergoemacs-breadcrumb-hash))
 	    (ergoemacs-map-properties--label-known)
             (ergoemacs-map-properties--protect-global-map))
         (if noninteractive
