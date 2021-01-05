@@ -72,7 +72,6 @@
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
-;; (declare-function ergoemacs-map-properties--create-label-function "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
 (declare-function ergoemacs-theme--custom-documentation "ergoemacs-theme-engine")
@@ -533,15 +532,9 @@ When STORE-P is non-nil, save the tables."
      'ergoemacs-translate--hash (make-hash-table)
      'ergoemacs-translation-hash (make-hash-table)
      'ergoemacs-breadcrumb-hash (make-hash-table)
-     ;; 'ergoemacs-map-properties--create-label-function nil
      'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
      'ergoemacs-map-properties--before-ergoemacs nil
      'ergoemacs-map-properties--label-atoms-maps nil
-     ;;'ergoemacs-map-- (make-hash-table :test 'equal))
-     ;;'ergoemacs-map--alist (make-hash-table)
-     ;;'ergoemacs-map--alists (make-hash-table)
-     ;;'ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
-     ;;'ergoemacs-translate--keymap-hash (make-hash-table)
      )
     (when (and store-p (featurep 'persistent-soft))
       (persistent-soft-flush (ergoemacs-mode--pcache-repository))
