@@ -567,7 +567,6 @@ When STORE-P is non-nil, save the tables."
 (dolist (pkg '(ergoemacs-command-loop
                ergoemacs-advice
                ergoemacs-component
-               ergoemacs-debug
                ergoemacs-functions
                ergoemacs-key-description
                ergoemacs-layouts
