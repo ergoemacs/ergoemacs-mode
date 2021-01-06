@@ -1558,28 +1558,6 @@ They don't exactly behave like their Emacs equivalents."
   (or (and ergoemacs-mode ergoemacs-command-loop--single-command-keys)
       (funcall ergoemacs-command-loop--this-command-keys)))
 
-(defvar ergoemacs-command-loop--timer nil
-  "Timer to startup `ergoemacs-mode' command loop.")
-(defun ergoemacs-command-loop--timer ()
-  "Start `ergoemacs-command-loop--internal' if not currently running."
-  (unless (and (ergoemacs-command-loop-full-p)
-               (ergoemacs-command-loop-p))
-    (ergoemacs-command-loop--internal)))
-
-(defun ergoemacs-command-loop--install-timer ()
-  "Install the `ergoemacs-command-loop--timer'."
-  (setq ergoemacs-command-loop--timer
-        (run-with-timer 0.0 nil #'ergoemacs-command-loop--timer)))
-
-(defun ergoemacs-command-loop--remove-timer ()
-  "Remove `ergoemacs-command-loop--timer'."
-  (when ergoemacs-command-loop--timer
-    (cancel-timer ergoemacs-command-loop--timer)
-    (setq ergoemacs-command-loop--timer nil)))
-
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--install-timer)
-(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--remove-timer)
-
 (defun ergoemacs-command-loop--ignore (&rest _ignore)
   "Do nothing and return nil.
 
