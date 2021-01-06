@@ -279,7 +279,8 @@ The `execute-extended-command' is now \\[execute-extended-command].
   :global t
   :group 'ergoemacs-mode
   :keymap ergoemacs-menu-keymap
-  :after-hook (if (and (not noninteractive)
+  (setq ergoemacs-mode--start-p t)
+  (if (and (not noninteractive)
                        (not ergoemacs-mode--start-p))
                   (if ergoemacs-mode
                       (message "Ergoemacs will be started.")
@@ -300,12 +301,15 @@ The `execute-extended-command' is now \\[execute-extended-command].
                         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                         (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
                         (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
+                        (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks)
+
                         (setq ergoemacs-require--ini-p t)
 			(ergoemacs-setup-override-keymap)                       
                         (if refresh-p
                             (message "Ergoemacs-mode keys refreshed (%s:%s)"
                                      ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))
                           (message "Ergoemacs-mode turned ON (%s:%s)." ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))))
+
                     (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
                     (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)
                       (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
@@ -315,7 +319,13 @@ The `execute-extended-command' is now \\[execute-extended-command].
                     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                     (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
                     (unless refresh-p
-                      (message "Ergoemacs-mode turned OFF."))))))
+                      (message "Ergoemacs-mode turned OFF.")
+                      )
+                    )
+                  )
+                (setq ergoemacs-mode-started-p t)
+                )
+  )
 
 (defvar ergoemacs--gzip (executable-find "gzip")
   "Gzip location.")
@@ -423,7 +433,6 @@ This is structured by valid keyboard layouts for
     (calculate-ergoemacs-remap . "ergoemacs-map.el")
     (calc-remaps . "ergoemacs-map.el")
     (calc-passthrough . "ergoemacs-map.el")
-    (ergoemacs-mode-after-init-emacs . "ergoemacs-mode.el")
     (setup-ergoemacs-hash . "ergoemacs-mode.el"))
   "Alist of known timing functions.")
 
@@ -1008,20 +1017,6 @@ also perform `outline-next-visible-heading'"
   (run-hooks 'ergoemacs-mode-after-load-hook))
 
 (defvar ergoemacs-mode-started-p nil)
-(defun ergoemacs-mode-after-init-emacs ()
-  "Start `ergoemacs-mode' after loading Emacs."
-  (unless ergoemacs-mode--start-p
-    (ergoemacs-timing ergoemacs-mode-after-init-emacs
-      (setq ergoemacs-mode--start-p t)
-      (ergoemacs-mode ergoemacs-mode)
-      (run-hooks 'ergoemacs-mode-init-hook)
-      (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks))
-    (let* ((time1 ergoemacs--load-time)
-           (time2 (aref (gethash 'ergoemacs-mode-after-init-emacs ergoemacs-timing-hash) 1))
-           (time3 (+ time1 time2)))
-      (message "Started `ergoemacs-mode'. Total startup time %f (Load: %f, Initialize:%f%s)"
-               time3 time1 time2 (or (and ergoemacs-mode--fast-p ", cached") ""))))
-  (setq ergoemacs-mode-started-p t))
 
 (if ergoemacs-mode--fast-p
     (provide 'ergoemacs-themes)
@@ -1038,9 +1033,6 @@ also perform `outline-next-visible-heading'"
 (setq ergoemacs--load-time (float-time (time-subtract (current-time) ergoemacs--load-time)))
 (puthash 'ergoemacs-load-time (vector 1 ergoemacs--load-time ergoemacs--load-time ergoemacs--load-time (or load-file-name buffer-file-name))
          ergoemacs-timing-hash)
-
-(run-with-timer 0.0 nil #'ergoemacs-mode-after-init-emacs)
-(add-hook 'emacs-startup-hook #'ergoemacs-mode-after-init-emacs)
 
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
