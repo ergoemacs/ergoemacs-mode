@@ -2039,17 +2039,6 @@ pressed the translated key by changing
               (throw 'found-command ret))))))
     ret)))
 
-(defun ergoemacs-command-loop--execute-handle-shift-selection (function)
-  "Allow `ergoemacs-mode' command loop to handle shift selection.
-
-This will apply `handle-shift-selection' when FUNCTION is
-considered a shift-selection compatible function.
-
-This allows shift-selection of non-letter keys.
-For instance in QWERTY M-> is shift translated to M-."
-  (when (ergoemacs :movement-p function)
-    (handle-shift-selection)))
-
 (defun ergoemacs-command-loop--execute-rm-keyfreq (command)
   "Remove COMMAND from `keyfreq-mode' counts."
   (when (featurep 'keyfreq)
@@ -2107,8 +2096,6 @@ For instance in QWERTY M-> is shift translated to M-."
 
 	  (ergoemacs-command-loop--execute-modify-command-list command)
           
-          ;; Handle Shift Selection
-          (ergoemacs-command-loop--execute-handle-shift-selection this-command)
           (when keys
             (setq ergoemacs-command-loop--single-command-keys keys)
             
