@@ -1609,7 +1609,6 @@ Also in the loop, `universal-argument-num-events' is set to
 Emacs versions)."
   (interactive)
   (when ergoemacs-mode
-    (ergoemacs-command-loop--execute-rm-keyfreq 'ergoemacs-command-loop)
     ;; Call the startup command
     (when (commandp ergoemacs-command-loop-start)
       (ergoemacs-command-loop--call-interactively ergoemacs-command-loop-start)
@@ -2039,24 +2038,6 @@ pressed the translated key by changing
               (throw 'found-command ret))))))
     ret)))
 
-(defun ergoemacs-command-loop--execute-rm-keyfreq (command)
-  "Remove COMMAND from `keyfreq-mode' counts."
-  (when (featurep 'keyfreq)
-    (when keyfreq-mode
-      (let (count)
-        (setq count (ergoemacs-gethash (cons major-mode command) keyfreq-table))
-        (cond
-         ((not count))
-         ((= count 1)
-          (remhash (cons major-mode command) keyfreq-table))
-         (count
-          (puthash (cons major-mode command) (- count 1)
-                   keyfreq-table)))
-        ;; Add local-fn to counter.
-        (setq count (ergoemacs-gethash (cons major-mode command) keyfreq-table))
-        (puthash (cons major-mode command) (if count (+ count 1) 1)
-                 keyfreq-table)))))
-
 ;; (3) execute command
 (defun ergoemacs-command-loop--execute (command &optional keys)
   "Execute COMMAND pretending that KEYS were pressed."
@@ -2079,10 +2060,6 @@ pressed the translated key by changing
           (setq ergoemacs-command-loop--single-command-keys nil))
          (t
           ;; This should be a regular command.
-          
-          ;; Remove counting of `this-command' in `keyfreq-mode'
-          ;; Shouldn't be needed any more...
-          ;; (ergoemacs-command-loop--execute-rm-keyfreq this-command)
           
           ;; This command execute should modify the following variables:
           ;; - `last-repeatable-command'
