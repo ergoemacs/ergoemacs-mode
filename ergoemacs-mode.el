@@ -94,11 +94,6 @@
 ;; Fundamental ergoemacs functions
 
 
-;; (unless (featurep 'ergoemacs-map)
-;;   (load "ergoemacs-map"))
-
-
-
 ;; Ergoemacs-keybindings version
 (defconst ergoemacs-mode-version "5.14.7.3"
   "Ergoemacs-keybindings minor mode version number.")
