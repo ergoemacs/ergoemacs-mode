@@ -72,7 +72,6 @@
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
-;; (declare-function ergoemacs-map-properties--create-label-function "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
 (declare-function ergoemacs-theme--custom-documentation "ergoemacs-theme-engine")
@@ -93,11 +92,6 @@
 
 
 ;; Fundamental ergoemacs functions
-
-
-;; (unless (featurep 'ergoemacs-map)
-;;   (load "ergoemacs-map"))
-
 
 
 ;; Ergoemacs-keybindings version
@@ -280,7 +274,8 @@ The `execute-extended-command' is now \\[execute-extended-command].
   :global t
   :group 'ergoemacs-mode
   :keymap ergoemacs-menu-keymap
-  :after-hook (if (and (not noninteractive)
+  (setq ergoemacs-mode--start-p t)
+  (if (and (not noninteractive)
                        (not ergoemacs-mode--start-p))
                   (if ergoemacs-mode
                       (message "Ergoemacs will be started.")
@@ -301,12 +296,15 @@ The `execute-extended-command' is now \\[execute-extended-command].
                         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                         (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
                         (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
+                        (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks)
+
                         (setq ergoemacs-require--ini-p t)
 			(ergoemacs-setup-override-keymap)                       
                         (if refresh-p
                             (message "Ergoemacs-mode keys refreshed (%s:%s)"
                                      ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))
                           (message "Ergoemacs-mode turned ON (%s:%s)." ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))))
+
                     (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
                     (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)
                       (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
@@ -316,7 +314,13 @@ The `execute-extended-command' is now \\[execute-extended-command].
                     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
                     (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
                     (unless refresh-p
-                      (message "Ergoemacs-mode turned OFF."))))))
+                      (message "Ergoemacs-mode turned OFF.")
+                      )
+                    )
+                  )
+                (setq ergoemacs-mode-started-p t)
+                )
+  )
 
 (defvar ergoemacs--gzip (executable-find "gzip")
   "Gzip location.")
@@ -424,7 +428,6 @@ This is structured by valid keyboard layouts for
     (calculate-ergoemacs-remap . "ergoemacs-map.el")
     (calc-remaps . "ergoemacs-map.el")
     (calc-passthrough . "ergoemacs-map.el")
-    (ergoemacs-mode-after-init-emacs . "ergoemacs-mode.el")
     (setup-ergoemacs-hash . "ergoemacs-mode.el"))
   "Alist of known timing functions.")
 
@@ -533,15 +536,9 @@ When STORE-P is non-nil, save the tables."
      'ergoemacs-translate--hash (make-hash-table)
      'ergoemacs-translation-hash (make-hash-table)
      'ergoemacs-breadcrumb-hash (make-hash-table)
-     ;; 'ergoemacs-map-properties--create-label-function nil
      'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
      'ergoemacs-map-properties--before-ergoemacs nil
      'ergoemacs-map-properties--label-atoms-maps nil
-     ;;'ergoemacs-map-- (make-hash-table :test 'equal))
-     ;;'ergoemacs-map--alist (make-hash-table)
-     ;;'ergoemacs-map--alists (make-hash-table)
-     ;;'ergoemacs-map-properties--user-map-hash (make-hash-table :test 'equal)
-     ;;'ergoemacs-translate--keymap-hash (make-hash-table)
      )
     (when (and store-p (featurep 'persistent-soft))
       (persistent-soft-flush (ergoemacs-mode--pcache-repository))
@@ -567,7 +564,6 @@ When STORE-P is non-nil, save the tables."
 (dolist (pkg '(ergoemacs-command-loop
                ergoemacs-advice
                ergoemacs-component
-               ergoemacs-debug
                ergoemacs-functions
                ergoemacs-key-description
                ergoemacs-layouts
@@ -699,9 +695,6 @@ SYMBOL is the symbol to set, NEW-VALUE is it's value."
   "Remove `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
 
-;; (add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-setup-override-keymap)
-;; (add-hook 'ergoemacs-mode-shudown-hook 'ergoemacs-setup-override-keymap)
-
 
 ;;; Frequently used commands as aliases
 (defcustom ergoemacs-use-aliases t
@@ -817,7 +810,6 @@ Valid values are:
   "Display Options for `ergoemacs-mode'."
   :group 'ergoemacs-mode)
 
-(define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters)
 (defcustom ergoemacs-display-unicode-characters t
   "Use unicode characters when available."
   :type 'boolean
@@ -825,7 +817,6 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-ergoemacs-key-descriptions 'ergoemacs-display-ergoemacs-key-descriptions)
 (defcustom ergoemacs-display-ergoemacs-key-descriptions t
   "Use ergoemacs key descriptions (Alt+)."
   :type 'boolean
@@ -834,7 +825,6 @@ Valid values are:
   :group 'ergoemacs-display)
 
 
-(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys)
 (defcustom ergoemacs-display-use-unicode-brackets-around-keys t
   "Use unicode brackets."
   :type 'boolean
@@ -842,7 +832,6 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-small-symbols 'ergoemacs-display-small-symbols-for-key-modifiers)
 (defcustom ergoemacs-display-small-symbols-for-key-modifiers nil
   "Use small symbols to represent alt+ ctl+ on windows/linux."
   :type 'boolean
@@ -850,7 +839,6 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-capitalize-keys 'ergoemacs-display-capitalize-keys)
 (defcustom ergoemacs-display-capitalize-keys 'with-modifiers
   "Capitalize keys like Ctrl+C.
 `ergoemacs-mode' should show Ctrl+Shift+C if you are pressing these keys."
@@ -862,7 +850,6 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p)
 (defcustom ergoemacs-display-key-use-face-p t
   "Use a button face for keys."
   :type 'boolean
@@ -917,8 +904,6 @@ Valid values are:
   "Options for `ergoemacs-command-loop'."
   :group 'ergoemacs-mode)
 
-(define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character)
-
 (defcustom ergoemacs-command-loop-blink-character (ergoemacs :unicode-or-alt "•" "·" "-")
   "Blink character."
   :type '(choice
@@ -926,13 +911,11 @@ Valid values are:
           (const :tag "No cursor" nil))
   :group 'ergoemacs-command-loop)
 
-(define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
 (defcustom ergoemacs-command-loop-blink-rate 0.4
   "Rate that the ergoemacs-command loop cursor blinks."
   :type 'number
   :group 'ergoemacs-command-loop)
 
-(define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation)
 (defcustom ergoemacs-command-loop-swap-translation
   '(((:normal :normal) :unchorded-ctl)
     ((:normal :unchorded-ctl) :ctl-to-alt)
@@ -984,7 +967,6 @@ Valid values are:
   :group 'ergoemacs-command-loop)
 
 
-(define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color)
 (defcustom ergoemacs-default-cursor-color nil
   "Default cursor color.
 
@@ -1025,38 +1007,11 @@ also perform `outline-next-visible-heading'"
   :type 'boolean
   :group 'ergoemacs-mode)
 
-
-;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "")
-
-;;; Options not supported now
-
-;; (defcustom ergoemacs-change-fixed-layout-to-variable-layout nil
-;;   "Change the fixed layout to variable layout keys.
-;; For example, on dvorak, change C-j to C-c (copy/command)."
-;;   :type 'boolean
-;;   :set 'ergoemacs-set-default
-;;   :initialize #'custom-initialize-default
-;;   :group 'ergoemacs-mode)
-
 (defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
   "Run `ergoemacs-mode-after-load-hook' after loading Emacs."
   (run-hooks 'ergoemacs-mode-after-load-hook))
 
 (defvar ergoemacs-mode-started-p nil)
-(defun ergoemacs-mode-after-init-emacs ()
-  "Start `ergoemacs-mode' after loading Emacs."
-  (unless ergoemacs-mode--start-p
-    (ergoemacs-timing ergoemacs-mode-after-init-emacs
-      (setq ergoemacs-mode--start-p t)
-      (ergoemacs-mode ergoemacs-mode)
-      (run-hooks 'ergoemacs-mode-init-hook)
-      (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks))
-    (let* ((time1 ergoemacs--load-time)
-           (time2 (aref (gethash 'ergoemacs-mode-after-init-emacs ergoemacs-timing-hash) 1))
-           (time3 (+ time1 time2)))
-      (message "Started `ergoemacs-mode'. Total startup time %f (Load: %f, Initialize:%f%s)"
-               time3 time1 time2 (or (and ergoemacs-mode--fast-p ", cached") ""))))
-  (setq ergoemacs-mode-started-p t))
 
 (if ergoemacs-mode--fast-p
     (provide 'ergoemacs-themes)
@@ -1073,9 +1028,6 @@ also perform `outline-next-visible-heading'"
 (setq ergoemacs--load-time (float-time (time-subtract (current-time) ergoemacs--load-time)))
 (puthash 'ergoemacs-load-time (vector 1 ergoemacs--load-time ergoemacs--load-time ergoemacs--load-time (or load-file-name buffer-file-name))
          ergoemacs-timing-hash)
-
-(run-with-timer 0.0 nil #'ergoemacs-mode-after-init-emacs)
-(add-hook 'emacs-startup-hook #'ergoemacs-mode-after-init-emacs)
 
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

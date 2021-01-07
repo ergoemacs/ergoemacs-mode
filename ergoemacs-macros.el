@@ -255,7 +255,6 @@ macro."
     :interpreter
     :defer
     :demand
-    :diminish
     :package-name
     :ergoemacs-require
     :no-load
@@ -336,17 +335,6 @@ This accepts the following keywords:
    is nil, this dosen't do anything.
 
 :demand -- Prevent deferred loading in all cases
-
-:diminish -- Diminish this mode.  It can be of the following forms:
-
-    :diminish t -- Assumes that :package-name is diminshed
-    :diminish package-name -- Diminshes package-name
-    :diminish (package-name \" New Description\")
-    :diminish (package-name \" unicode\" \" str\")
-
-    For more information, see `ergoemacs-component--diminish-on'.
-
-    By default this is nil.
 
 Borrowed from `use-package'.
 

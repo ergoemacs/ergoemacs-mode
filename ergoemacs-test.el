@@ -1153,53 +1153,6 @@ Should test issue #142"
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
-(ert-deftest ergoemacs-test-ergoemacs-theme-component-351 ()
-  "Test `ergoemacs-theme-compenent' before load"
-  :tags '(:slow)
-  (let* ((emacs-exe (ergoemacs-emacs-exe))
-         (w-file (expand-file-name "global-test" ergoemacs-dir))
-         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
-    (with-temp-file temp-file
-      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
-              (or (and (boundp 'wait-for-me)
-                       "(setq debug-on-error t debug-on-quit t)") "")
-              "(ergoemacs-theme-component my-theme01 ()\n"
-              "\"My ergoemacs-mode theme component\"\n"
-              "(global-set-key (kbd \"C-x 1\") 'delete-other-windows)\n"
-              "(global-set-key (kbd \"C-x 2\") 'split-window-vertically)\n"
-              "(global-set-key (kbd \"C-x 3\") 'split-window-horizontally)\n"
-              ";; more code ... \n"
-              "(global-set-key '[f2] 'save-buffer)\n)\n"
-              "(add-hook 'ergoemacs-mode-hook\n"
-              "(lambda ()\n"
-              "  (ergoemacs-require 'my-theme01)))\n"
-              "(setq ergoemacs-mode--start-p t)"
-              "(ergoemacs-mode 1)\n"
-              "(when (and (eq (key-binding (kbd \"C-x 1\")) 'delete-other-windows)\n"
-              "           (eq (key-binding (kbd \"C-x 2\")) 'split-window-vertically)\n"
-              "           (eq (key-binding (kbd \"C-x 3\")) 'split-window-horizontally))\n"
-              "(with-temp-file \"" w-file "\")\n"
-              "   (message \"Passed\")"
-              "  (insert \"Found\"))\n"
-              (or (and (boundp 'wait-for-me) "")
-                  "(kill-emacs)")))
-    (byte-compile-file temp-file)
-    (message "%s"
-             (shell-command-to-string
-              (format "%s %s -Q -L %s -l %s -l %s"
-                      emacs-exe (if (boundp 'wait-for-me) "-debug-init" "--batch")
-                      (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
-                      (expand-file-name (file-name-sans-extension (locate-library "ergoemacs-mode")))
-                      temp-file)))
-    (should (file-exists-p w-file))
-    (when  (file-exists-p temp-file)
-      (delete-file temp-file))
-    (when  (file-exists-p (concat temp-file "c"))
-      (delete-file (concat temp-file "c")))
-    (when (file-exists-p w-file)
-      (delete-file w-file))))
-
-
 (ert-deftest ergoemacs-test-M-J-347 ()
   "Test keys that are not working in #347."
   :tags '(:slow :interactive)

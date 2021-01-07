@@ -1558,28 +1558,6 @@ They don't exactly behave like their Emacs equivalents."
   (or (and ergoemacs-mode ergoemacs-command-loop--single-command-keys)
       (funcall ergoemacs-command-loop--this-command-keys)))
 
-(defvar ergoemacs-command-loop--timer nil
-  "Timer to startup `ergoemacs-mode' command loop.")
-(defun ergoemacs-command-loop--timer ()
-  "Start `ergoemacs-command-loop--internal' if not currently running."
-  (unless (and (ergoemacs-command-loop-full-p)
-               (ergoemacs-command-loop-p))
-    (ergoemacs-command-loop--internal)))
-
-(defun ergoemacs-command-loop--install-timer ()
-  "Install the `ergoemacs-command-loop--timer'."
-  (setq ergoemacs-command-loop--timer
-        (run-with-timer 0.0 nil #'ergoemacs-command-loop--timer)))
-
-(defun ergoemacs-command-loop--remove-timer ()
-  "Remove `ergoemacs-command-loop--timer'."
-  (when ergoemacs-command-loop--timer
-    (cancel-timer ergoemacs-command-loop--timer)
-    (setq ergoemacs-command-loop--timer nil)))
-
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--install-timer)
-(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--remove-timer)
-
 (defun ergoemacs-command-loop--ignore (&rest _ignore)
   "Do nothing and return nil.
 
@@ -1631,7 +1609,6 @@ Also in the loop, `universal-argument-num-events' is set to
 Emacs versions)."
   (interactive)
   (when ergoemacs-mode
-    (ergoemacs-command-loop--execute-rm-keyfreq 'ergoemacs-command-loop)
     ;; Call the startup command
     (when (commandp ergoemacs-command-loop-start)
       (ergoemacs-command-loop--call-interactively ergoemacs-command-loop-start)
@@ -2061,35 +2038,6 @@ pressed the translated key by changing
               (throw 'found-command ret))))))
     ret)))
 
-(defun ergoemacs-command-loop--execute-handle-shift-selection (function)
-  "Allow `ergoemacs-mode' command loop to handle shift selection.
-
-This will apply `handle-shift-selection' when FUNCTION is
-considered a shift-selection compatible function.
-
-This allows shift-selection of non-letter keys.
-For instance in QWERTY M-> is shift translated to M-."
-  (when (ergoemacs :movement-p function)
-    (handle-shift-selection)))
-
-(defun ergoemacs-command-loop--execute-rm-keyfreq (command)
-  "Remove COMMAND from `keyfreq-mode' counts."
-  (when (featurep 'keyfreq)
-    (when keyfreq-mode
-      (let (count)
-        (setq count (ergoemacs-gethash (cons major-mode command) keyfreq-table))
-        (cond
-         ((not count))
-         ((= count 1)
-          (remhash (cons major-mode command) keyfreq-table))
-         (count
-          (puthash (cons major-mode command) (- count 1)
-                   keyfreq-table)))
-        ;; Add local-fn to counter.
-        (setq count (ergoemacs-gethash (cons major-mode command) keyfreq-table))
-        (puthash (cons major-mode command) (if count (+ count 1) 1)
-                 keyfreq-table)))))
-
 ;; (3) execute command
 (defun ergoemacs-command-loop--execute (command &optional keys)
   "Execute COMMAND pretending that KEYS were pressed."
@@ -2113,10 +2061,6 @@ For instance in QWERTY M-> is shift translated to M-."
          (t
           ;; This should be a regular command.
           
-          ;; Remove counting of `this-command' in `keyfreq-mode'
-          ;; Shouldn't be needed any more...
-          ;; (ergoemacs-command-loop--execute-rm-keyfreq this-command)
-          
           ;; This command execute should modify the following variables:
           ;; - `last-repeatable-command'
           ;; - `this-command'
@@ -2129,8 +2073,6 @@ For instance in QWERTY M-> is shift translated to M-."
 
 	  (ergoemacs-command-loop--execute-modify-command-list command)
           
-          ;; Handle Shift Selection
-          (ergoemacs-command-loop--execute-handle-shift-selection this-command)
           (when keys
             (setq ergoemacs-command-loop--single-command-keys keys)
             
