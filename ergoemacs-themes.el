@@ -172,7 +172,6 @@
   "Standard Fixed Shortcuts"
   :variable-reg nil ;; No variable keys
   (global-set-key [tool-bar kill-buffer] 'ergoemacs-close-current-buffer)
-  (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
   
   (global-set-key (kbd "C-x C-f") nil) ;; Remove Emacs Method
   (global-set-key (kbd "C-o") 'find-file)
@@ -303,7 +302,6 @@
   ;;
   ;; Also, do not bind any special keys like <insert> or <prior>.
   ;; They get passed into term.
-  (define-key term-raw-map (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (define-key term-raw-map (kbd "C-o") 'find-file)
   (define-key term-raw-map (kbd "C-S-o") 'ergoemacs-open-in-desktop)
   (define-key term-raw-map (kbd "C-S-t") 'ergoemacs-open-last-closed)
