@@ -1974,8 +1974,7 @@ pressed the translated key by changing
     ;; Make sure to lookup the keys in the selected buffer
     (ergoemacs-command-loop--sync-point)
     (let ((trials (ergoemacs-translate--trials key))
-        tmp ret)
-      (setq this-command-keys-shift-translated nil)
+          tmp ret)
     (catch 'found-command
       (dolist (cur-key trials)
         (when cur-key
@@ -2020,11 +2019,6 @@ pressed the translated key by changing
                ((equal orig-key (nth 0 trials))
                 (setq ergoemacs-command-loop--single-command-keys new-key)
                 (ergoemacs-command-loop--message-binding new-key ret))
-               ((equal orig-key (nth 1 trials)) ;; `ergoemacs-mode' shift translation
-                (setq this-command-keys-shift-translated t
-                      ergoemacs-command-loop--single-command-keys (nth 0 trials))
-                
-                (ergoemacs-command-loop--message-binding new-key ret key))
                (t
                 (ergoemacs-command-loop--message-binding new-key ret key)
                 (setq ergoemacs-command-loop--single-command-keys new-key)))
