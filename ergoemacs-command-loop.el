@@ -173,7 +173,6 @@ ignore the post-command hooks.")
 (defvar ergoemacs-command-loop-time-before-blink)
 (defvar ergoemacs-command-loop-blink-character)
 (defvar ergoemacs-command-loop-blink-rate)
-(defvar ergoemacs-command-loop-hide-shift-translations)
 (defvar ergoemacs-mode)
 (defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-keymap)
@@ -787,8 +786,7 @@ read."
       ;; Don't echo the uncommon hyper/super/alt translations (alt is
       ;; not the alt key...)
       (dolist (tr trans)
-        (unless (or (memq 'hyper (nth 0  tr)) (memq 'super (nth 0 tr)) (memq 'alt (nth 0 tr))
-                    (and ergoemacs-command-loop-hide-shift-translations (memq 'shift (nth 0  tr))))
+        (unless (or (memq 'hyper (nth 0  tr)) (memq 'super (nth 0 tr)) (memq 'alt (nth 0 tr)))
           (if (member (list (nth 1 tr) (nth 0 tr)) trans)
               (when (not (member (list (nth 1 tr) (nth 0 tr)) double))
                 (push tr double))
@@ -2091,22 +2089,7 @@ pressed the translated key by changing
             (setq ergoemacs-command-loop--single-command-keys nil)))))
     ;; (ergoemacs-command-loop--spinner-end)
     ))
-(defun ergoemacs-command-loop--shift-timeout ()
-  "This is the shift-timeout function for a key."
-  (interactive)
-  (let ((shift-trans (ergoemacs-translate--emacs-shift (this-single-command-keys))))
-    (setq ergoemacs-this-command-keys-shift-translated t)
-    (ergoemacs-command-loop--internal shift-trans)))
 
-(defun ergoemacs-command-loop--shift-translate ()
-  "Shift translation."
-  (interactive)
-  (let ((shift-trans (ergoemacs-translate--emacs-shift (this-single-command-keys) 'ergoemacs-shift)))
-    (message "%s->%s" (key-description (this-single-command-keys))
-	     (key-description shift-trans))
-    (setq ergoemacs-this-command-keys-shift-translated t
-	  this-command-keys-shift-translated t)
-    (ergoemacs-command-loop--call-interactively (key-binding shift-trans))))
 (provide 'ergoemacs-command-loop)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-command-loop.el ends here
