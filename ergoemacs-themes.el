@@ -571,10 +571,6 @@
   (define-key term-raw-map (kbd "M-l") 'forward-char)
   (define-key term-raw-map (kbd "M-i") 'previous-line)
   (define-key term-raw-map (kbd "M-k") 'next-line)
-  (define-key term-raw-map (kbd "M-C-j") 'left-word)
-  (define-key term-raw-map (kbd "M-C-l") 'right-word)
-  (define-key term-raw-map (kbd "M-C-i") 'backward-paragraph)
-  (define-key term-raw-map (kbd "M-C-k") 'forward-paragraph)
   (define-key term-raw-map (kbd "M-SPC") 'set-mark-command)
   
   (when iswitchb-define-mode-map-hook 
