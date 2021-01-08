@@ -304,15 +304,13 @@
   ;; Also, do not bind any special keys like <insert> or <prior>.
   ;; They get passed into term.
   (define-key term-raw-map (kbd "C-n") 'ergoemacs-new-empty-buffer)
-  (define-key term-raw-map (kbd "C-o") ("C-o" :emacs))
+  (define-key term-raw-map (kbd "C-o") 'find-file)
   (define-key term-raw-map (kbd "C-S-o") 'ergoemacs-open-in-desktop)
   (define-key term-raw-map (kbd "C-S-t") 'ergoemacs-open-last-closed)
   (define-key term-raw-map (kbd "C-w") 'ergoemacs-close-current-buffer)
-  (define-key term-raw-map (kbd "C-f") ("C-s" :emacs))
-  (define-key term-raw-map (kbd "C-s") ("C-x C-s" :emacs))
-  (define-key term-raw-map (kbd "C-S-s") ("C-x C-w" :emacs))
+  (define-key term-raw-map (kbd "C-f") 'isearch-forward)
   (define-key term-raw-map (kbd "C-p") 'ergoemacs-print-buffer-confirm)
-  (define-key term-raw-map (kbd "C-a") ("C-x h" :emacs))
+  (define-key term-raw-map (kbd "C-a") 'mark-whole-buffer)
   (define-key term-raw-map (kbd "C-S-n") 'make-frame-command)
   (define-key term-raw-map (kbd "C-+") 'text-scale-increase)
   (define-key term-raw-map (kbd "C--") 'text-scale-decrease)
@@ -578,13 +576,11 @@
   (define-key term-raw-map (kbd "M-l") 'forward-char)
   (define-key term-raw-map (kbd "M-i") 'previous-line)
   (define-key term-raw-map (kbd "M-k") 'next-line)
-  (define-key term-raw-map (kbd "M-C-j") ("<C-left>" :emacs))
-  (define-key term-raw-map (kbd "M-C-l") ("<C-right>" :emacs))
-  (define-key term-raw-map (kbd "M-C-i") ("<C-up>" :emacs))
-  (define-key term-raw-map (kbd "M-C-k") ("<C-down>" :emacs))
+  (define-key term-raw-map (kbd "M-C-j") 'left-word)
+  (define-key term-raw-map (kbd "M-C-l") 'right-word)
+  (define-key term-raw-map (kbd "M-C-i") 'backward-paragraph)
+  (define-key term-raw-map (kbd "M-C-k") 'forward-paragraph)
   (define-key term-raw-map (kbd "M-SPC") 'set-mark-command)
-  (define-key term-raw-map (kbd "M-d") nil)
-  (define-key term-raw-map (kbd "M-f") nil)
   
   (when iswitchb-define-mode-map-hook 
     (define-key iswitchb-mode-map [remap backward-char] 'iswitchb-prev-match)
@@ -612,11 +608,7 @@
   ;; Mode specific movement
   (define-key term-raw-map (kbd "M-u") 'backward-word)
   (define-key term-raw-map (kbd "M-o") 'forward-word)
-  (define-key term-raw-map (kbd "M-e") nil)
-  (define-key term-raw-map (kbd "M-r") nil)
   )
-
-
 
 (ergoemacs-component move-sexp ()
   "Instead of moving around by words, use sexps."
@@ -631,8 +623,8 @@
   (global-set-key (kbd "M-O") 'forward-paragraph)
 
   ;; Mode specific movement
-  (define-key term-raw-map (kbd "M-U") ("M-{" :emacs))
-  (define-key term-raw-map (kbd "M-O") ("M-}" :emacs))
+  (define-key term-raw-map (kbd "M-U") 'backward-paragraph)
+  (define-key term-raw-map (kbd "M-O") 'forward-paragraph)
 )
 
 (ergoemacs-component move-line ()
@@ -645,8 +637,8 @@
   (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol)
   (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)
 
-  (define-key term-raw-map (kbd "M-h") ("C-a" :emacs))
-  (define-key term-raw-map (kbd "M-H") ("C-e" :emacs))
+  (define-key term-raw-map (kbd "M-h") 'move-beginning-of-line)
+  (define-key term-raw-map (kbd "M-H") 'move-end-of-line)
   )
 
 (ergoemacs-component move-and-transpose-lines ()
@@ -746,13 +738,9 @@
   (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
   (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
 
-  (define-key term-raw-map (kbd "M-x") nil)
   (define-key term-raw-map (kbd "M-c") 'ergoemacs-copy-line-or-region)
   (define-key term-raw-map (kbd "M-v") 'term-paste)
-  (define-key term-raw-map (kbd "M-V") nil)
   (define-key term-raw-map (kbd "M-C") 'ergoemacs-copy-all)
-  (define-key term-raw-map (kbd "M-X") nil)
-  (define-key term-raw-map (kbd "M-Z") nil)
 
   (define-key calc-mode-map [remap ergoemacs-paste] 'calc-yank)
   (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo))
@@ -772,11 +760,10 @@
   (global-set-key (kbd "M-%") 'query-replace-regexp)
 
   ;; Mode specific changes
-  (define-key term-raw-map (kbd "M-y") '("C-s" :emacs))
-  (define-key term-raw-map (kbd "M-Y") '("C-r" :emacs))
-
-  (define-key term-raw-map (kbd "M-5") '("M-%" :emacs))
-  (define-key term-raw-map (kbd "M-%") '("C-M-%" :emacs))
+  (define-key term-raw-map (kbd "M-y") 'isearch-forward)
+  (define-key term-raw-map (kbd "M-Y") 'isearch-backward)
+  (define-key term-raw-map (kbd "M-;") 'isearch-forward)
+  (define-key term-raw-map (kbd "M-:") 'isearch-backward)
 
   (define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
   (define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp)
@@ -877,14 +864,6 @@
 
   ;; ;; Hard-wrap/un-hard-wrap paragraph
   (global-set-key (kbd "M-q") 'ergoemacs-compact-uncompact-block)
-
-  ;; Mode specific changes
-  (define-key term-raw-map (kbd "M-'") nil)
-  (define-key term-raw-map (kbd "M-w") nil)
-  (define-key term-raw-map (kbd "M-?") nil)
-  (define-key term-raw-map (kbd "M-/") nil)
-  (define-key term-raw-map (kbd "M-t") nil)
-  (define-key term-raw-map (kbd "M-T") nil)
 
   (define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
   (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
