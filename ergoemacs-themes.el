@@ -39,7 +39,6 @@
 
 (require 'advice)
 (require 'ibuffer)
-(require 'ibuf-ext)
 
 (ergoemacs-component standard-vars ()
   "Enabled/changed variables/modes"
