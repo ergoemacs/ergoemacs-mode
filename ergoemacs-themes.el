@@ -739,7 +739,7 @@
   (global-unset-key (kbd "M-!"))
   (global-set-key (kbd "M-A") '("M-!" :emacs)))
 
-(ergoemacs-component  misc ()
+(ergoemacs-component misc ()
   "Misc Commands"
   (global-unset-key (kbd "C-l"))
   (global-set-key (kbd "M-p") '("C-l" :emacs))
