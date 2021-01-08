@@ -303,11 +303,9 @@
   ;; Also, do not bind any special keys like <insert> or <prior>.
   ;; They get passed into term.
   (define-key term-raw-map (kbd "C-o") 'find-file)
-  (define-key term-raw-map (kbd "C-S-o") 'ergoemacs-open-in-desktop)
   (define-key term-raw-map (kbd "C-S-t") 'ergoemacs-open-last-closed)
   (define-key term-raw-map (kbd "C-w") 'ergoemacs-close-current-buffer)
   (define-key term-raw-map (kbd "C-f") 'isearch-forward)
-  (define-key term-raw-map (kbd "C-p") 'ergoemacs-print-buffer-confirm)
   (define-key term-raw-map (kbd "C-a") 'mark-whole-buffer)
   (define-key term-raw-map (kbd "C-S-n") 'make-frame-command)
   (define-key term-raw-map (kbd "C-+") 'text-scale-increase)
@@ -319,7 +317,6 @@
   (define-key term-raw-map (kbd "C-S-f") 'occur)
   (define-key term-raw-map (kbd "C-S-o") 'ergoemacs-open-in-external-app)
   (define-key term-raw-map (kbd "C-S-s") 'write-file)
-  (define-key term-raw-map (kbd "C-S-t") 'ergoemacs-open-last-closed)
   (define-key term-raw-map (kbd "C-S-w") 'delete-frame)
   (define-key term-raw-map (kbd "C-`") 'other-frame)
   (define-key term-raw-map (kbd "C-a") 'mark-whole-buffer)
