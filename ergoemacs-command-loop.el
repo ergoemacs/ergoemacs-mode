@@ -702,9 +702,6 @@ KEYS is the keys information"
 	(push 'ergoemacs-timeout unread-command-events))
       (setq ergoemacs-command--timeout-keys nil))))
 
-(defvar ergoemacs-this-command-keys-shift-translated nil
-  "ergoemacs override of shift translation in command loop.")
-
 (defun ergoemacs-command--echo-prefix ()
   "Echos prefix keys in the ergoemacs-mode way."
   (let ((keys (this-single-command-keys)))
@@ -1429,8 +1426,7 @@ needed (and resotre them to the original values)."
   "Call the COMMAND interactively.  Also handle mouse events (if possible.)
 The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'."
   (ergoemacs-command-loop--sync-point)
-  (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil
-	this-command-keys-shift-translated (or ergoemacs-this-command-keys-shift-translated this-command-keys-shift-translated))
+  (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
   (cond
    ((and (eventp last-command-event)
          (consp last-command-event)
@@ -1447,7 +1443,7 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'.
      (ergoemacs-command-loop--grow-interactive command record-flag keys)))
    (t
     (ergoemacs-command-loop--grow-interactive command record-flag keys)))
-  (setq ergoemacs-this-command-keys-shift-translated nil))
+  )
 
 
 (defun ergoemacs-command-loop-start ()
@@ -1674,8 +1670,7 @@ Emacs versions)."
                      "Key sequence %s aborted by %s"
                      (ergoemacs-key-description last-current-key)
                      (ergoemacs-key-description raw-key))
-                    (setq quit-flag t
-			  ergoemacs-this-command-keys-shift-translated nil))
+                    (setq quit-flag t))
                    ;; Handle local commands.
                    ((and (not (equal current-key raw-key))
                          (setq command (lookup-key local-keymap raw-key))
