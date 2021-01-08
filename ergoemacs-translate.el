@@ -230,43 +230,6 @@ If no changes are performed, return nil."
         (setq ret new-key))
       ret)))
 
-(defun ergoemacs-translate--ergoemacs-shift-select (key)
-  "Translate KEY to allow `ergoemacs-mode' shift translation.
-
-This will shift translate Alt+# to Alt+3."
-  (let (modifiers basic)
-    (when (and (vectorp key)
-               ;; only makes sense for single key combinations.
-               (= (length key) 1)
-               ;; Doesn't make sense if shifted...
-               (not (or (memq 'shift (setq modifiers (ergoemacs-translate--event-modifiers (aref key 0))))
-                        (memq 'ergoemacs-shift modifiers)))
-	       ;; Only define if emacs doesn't handle shift selection.
-	       (not (eq (event-convert-list (list 'shift (setq basic (event-basic-type (aref key 0)))))
-			(ergoemacs-translate--event-convert-list (list 'ergoemacs-shift basic)))))
-      (setq ergoemacs-translate--define-key-if-defined-p nil
-            ergoemacs-translate--define-key-replacement-function 'ergoemacs-command-loop--shift-translate)
-      (vector (ergoemacs-translate--event-convert-list (append modifiers (list 'ergoemacs-shift basic)))))))
-
-(defun ergoemacs-translate--ergoemacs-timeout (key)
-  "Translates KEY to allow Shift translation to default to key sequence.
-
-This is done for key sequences like Ctrl+Shift+c which should
-allow the Ctrl+c key sequence to be called when text is
-seleceted (instead of copying the text)."
-  (let (modifiers basic)
-    (when (and (vectorp key)
-	       ;; only makes sense for single key combinations.
-	       (= (length key) 2)
-	       (eq 'ergoemacs-timeout (aref key 1))
-	       ;; Doesn't make sense if shifted...
-	       (not (or (memq 'shift (setq modifiers (ergoemacs-translate--event-modifiers (aref key 0))))
-			(memq 'ergoemacs-shift modifiers))))
-      (setq basic (ergoemacs-translate--event-basic-type (aref key 0))
-	    ergoemacs-translate--define-key-if-defined-p nil
-            ergoemacs-translate--define-key-replacement-function 'ergoemacs-command-loop--shift-timeout)
-      (vector (ergoemacs-translate--event-convert-list (append modifiers (list 'shift basic)))))))
-
 (defun ergoemacs-translate--to-string (key)
   "Translates KEY to string format.
 
@@ -286,8 +249,7 @@ If no chanegs are performed, return nil."
     ergoemacs-translate--swap-menu
     ergoemacs-translate--to-string
     ergoemacs-translate--to-vector
-    ergoemacs-translate--ergoemacs-timeout
-    ergoemacs-translate--ergoemacs-shift-select)
+    )
   "Functions to apply to key.
 
 These functions take a key as an argument and translate it in
