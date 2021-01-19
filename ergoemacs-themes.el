@@ -135,7 +135,6 @@
   (add-hook 'kill-buffer-hook 'ergoemacs-save-buffer-to-recently-closed)
   (add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
   (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
-  (shift-select-mode t)
   (delete-selection-mode 1)
   (setq recentf-menu-before "Close"
         recentf-menu-items-for-commands
