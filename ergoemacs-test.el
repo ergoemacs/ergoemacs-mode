@@ -1,6 +1,6 @@
-;;; ergoemacs-test.el --- tests for ErgoEmacs issues  -*- lexical-binding:t -*-
+;;; ergoemacs-test.el --- tests for ErgoEmacs issues
 
-;; Copyright © 2013-2018 Free Software Foundation, Inc.
+;; Copyright © 2013-2016 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -28,10 +28,9 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl-lib)
+(eval-when-compile 
+  (require 'cl)
   (require 'ergoemacs-macros))
-(require 'ergoemacs-component)          ;For ergoemacs-component-struct-plist
 
 (declare-function ergoemacs-translate--keymap "ergoemacs-translate")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
@@ -42,13 +41,6 @@
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-theme)
 (defvar ergoemacs-command-loop-type)
-(defvar ergoemacs-ctl-c-or-ctl-x-delay)
-(defvar ergoemacs-handle-ctl-c-or-ctl-x)
-(defvar ergoemacs-end-of-comment-line)
-(defvar ergoemacs-back-to-indentation)
-(defvar ergoemacs-read-input-keys)
-(defvar ergoemacs-is-user-defined-map-change-p)
-(defvar ergoemacs-use-function-remapping)
 (defvar ergoemacs-dir)
 (defvar ergoemacs-mode)
 (defvar dired-sort-map)
@@ -96,7 +88,6 @@
 ;;; Not sure why `cl-gensym' is called, probably from `ert'/`elp'?
 ;; Suppress: "the function `cl-gensym' might not be defined at
 ;; runtime" warning.
-;; FIXME: The warning doesn't seem to appear any more in recent Emacsen anyway.
 (autoload 'cl-gensym "cl-macs.el")
 (defvar ergoemacs-test-lorem-ipsum
   "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
@@ -181,9 +172,11 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (defun ergoemacs-test ()
   "Test ergoemacs issues."
   (interactive)
-  (elp-instrument-package "ergoemacs-")
-  (ert '(and "^ergoemacs-test-" (not (tag :require-input))))
-  (call-interactively 'elp-results))
+  (let ((ret t)
+        (test))
+    (elp-instrument-package "ergoemacs-")
+    (ert '(and "^ergoemacs-test-" (not (tag :require-input))))
+    (call-interactively 'elp-results)))
 
 ;; Test isearch
 
@@ -362,22 +355,22 @@ Tests issue #347"
 (ert-deftest ergoemacs-test-shift-select-subword ()
   "Test for mark working with shift-selection of `subword-forward'."
   :tags '(:shift-select)
-  (ergoemacs-test-layout
-   :macro "M-Y M-x"
-   :theme "reduction"
-   :layout "colemak"
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (delete-region (point-min) (point-max))
-     (insert ergoemacs-test-lorem-ipsum)
-     (subword-mode 1)
-     (goto-char (point-max))
-     (beginning-of-line)
-     (execute-kbd-macro macro)
-     (when (looking-at " in culpa qui")
-       ;; (setq ret t)
-       )
-     (kill-buffer (current-buffer)))))
+  (let (ret)
+    (ergoemacs-test-layout
+     :macro "M-Y M-x"
+     :theme "reduction"
+     :layout "colemak"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (subword-mode 1)
+       (goto-char (point-max))
+       (beginning-of-line)
+       (execute-kbd-macro macro)
+       (when (looking-at " in culpa qui")
+         (setq ret t))
+       (kill-buffer (current-buffer))))))
 
 ;;; Copy/Paste
 
@@ -385,7 +378,8 @@ Tests issue #347"
 (ert-deftest ergoemacs-test-copy-paste-issue-184 ()
   "Issue #184; Not replace the \"selected all\" by paste."
   :tags '(:copy :interactive)
-  (let ((ergoemacs-handle-ctl-c-or-ctl-x 'both))
+  (let ((ret t)
+        (ergoemacs-handle-ctl-c-or-ctl-x 'both))
     (ergoemacs-test-layout
      :macro "C-v"
      (save-excursion
@@ -580,7 +574,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 (ert-deftest ergoemacs-test-function-M-e-only-one-char-issue-306 ()
   "Tests Issue #306."
   :tags '(:calc)
-  (let (;; (ergoemacs-test-fn t)
+  (let ((ergoemacs-test-fn t)
         (ergoemacs-read-input-keys nil))
     (ergoemacs-test-layout
      :layout "us"
@@ -593,7 +587,7 @@ not using cua or cutting line. I think kill-region is what is meant."
        (fundamental-mode)
        (should (or (eq (key-binding (kbd "M-e")) 'backward-kill-word)
                    (eq (key-binding (kbd "M-e")) (command-remapping 'backward-kill-word (point)))))
-       ;; (setq ergoemacs-test-fn nil)
+       (setq ergoemacs-test-fn nil)
        (goto-char (point-max))
        (execute-kbd-macro macro)
        (should (string= "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
@@ -646,22 +640,23 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
   (ergoemacs-test-layout
    :layout "colemak"
    :macro "M-m"
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (delete-region (point-min) (point-max))
-     (insert "abc\n* TODO Fix org C-a issue")
-     (org-mode)
-     (goto-char (point-max))
-     (execute-kbd-macro macro)
-     (ignore-errors
-       (should (string= (buffer-substring (point) (point-at-eol))
-                        "Fix org C-a issue")))
-     (kill-buffer (current-buffer)))))
+   (let (ret)
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert "abc\n* TODO Fix org C-a issue")
+       (org-mode)
+       (goto-char (point-max))
+       (execute-kbd-macro macro)
+       (ignore-errors
+         (should (string= (buffer-substring (point) (point-at-eol))
+                          "Fix org C-a issue")))
+       (kill-buffer (current-buffer))))))
 
 (ert-deftest ergoemacs-test-org-respect-keys-issue-304 ()
   "Tests Issue #304.
 `org-mode' should respect the keys used."
-  (let () ;; (ergoemacs-test-fn t)
+  (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
      :layout "us"
      :theme "standard"
@@ -683,7 +678,7 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
 (ert-deftest ergoemacs-test-calc-300 ()
   "Test Calc undo"
   :tags '(:calc :interactive)
-  (let () ;; (ergoemacs-test-fn t)
+  (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
      :theme "reduction"
      :layout "colemak"
@@ -695,7 +690,7 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
 (ert-deftest ergoemacs-test-calc-fries-ergoemacs-mode ()
   "After calc has entered some numbers, it fries ergoemacs-mode."
   :tags '(:calc :interactive)
-  (let () ;; (ergoemacs-test-fn t)
+  (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
      :theme "reduction"
      :layout "colemak"
@@ -721,22 +716,24 @@ Test next and prior translation."
 
 (ert-deftest ergoemacs-test-modal-alt-mode-horizontal-position ()
   "Tests Issue #213"
-  (ergoemacs-test-layout
-   :layout "colemak"
-   :macro "i u u"
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (delete-region (point-min) (point-max))
-     (insert ergoemacs-test-lorem-ipsum)
-     (goto-char (point-max))
-     (beginning-of-line)
-     (ergoemacs-translate--get :unchorded-alt)
-     (ergoemacs-unchorded-alt-modal)
-     (execute-kbd-macro macro)
-     (looking-at ".*? ")
-     (ignore-errors (should (string= (match-string 0) "eprehenderit ")))
-     (ergoemacs-unchorded-alt-modal)
-     (kill-buffer (current-buffer)))))
+  (let (ret)
+    (ergoemacs-test-layout
+     :layout "colemak"
+     :macro "i u u"
+     (save-excursion
+       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+       (delete-region (point-min) (point-max))
+       (insert ergoemacs-test-lorem-ipsum)
+       (goto-char (point-max))
+       (beginning-of-line)
+       (ergoemacs-translate--get :unchorded-alt)
+       (ergoemacs-unchorded-alt-modal)
+       (execute-kbd-macro macro)
+       (looking-at ".*? ")
+       (ignore-errors (should (string= (match-string 0) "eprehenderit ")))
+       (ergoemacs-unchorded-alt-modal)
+       (kill-buffer (current-buffer))))))
+
 
 
 ;;; Command Loop
@@ -918,7 +915,7 @@ Should test issue #142"
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (setq sk
-          (format "(%s (lambda() (interactive) (with-temp-file \"%s\" (insert \"Ok\"))))"
+          (format "(%s '(lambda() (interactive) (with-temp-file \"%s\" (insert \"Ok\"))))"
                   (cond
                    ((eq ergoemacs 'define-key)
                     (format "define-key global-map (kbd \"%s\") " test-key))
@@ -1422,9 +1419,9 @@ Should test issue #142"
 
 (let ((ergoemacs-is-user-defined-map-change-p t))
   (add-hook 'ergoemacs-test-major-mode-hook
-            (lambda()
-              (interactive)
-              (define-key ergoemacs-test-major-mode-map (kbd "C-w") 'ergoemacs-close-current-buffer))))
+            '(lambda()
+               (interactive)
+               (define-key ergoemacs-test-major-mode-map (kbd "C-w") 'ergoemacs-close-current-buffer))))
 
 (ert-deftest ergoemacs-test-issue-349 ()
   "Unbind <f6>"
@@ -1461,7 +1458,8 @@ Should test issue #142"
 (ert-deftest ergoemacs-test-ignore-ctl-w ()
   "Keep user-defined C-w in major-mode `ergoemacs-test-major-mode'.
 Part of addressing Issue #147."
-  (let ((ergoemacs-use-function-remapping t))
+  (let (ret
+        (ergoemacs-use-function-remapping t))
     (with-temp-buffer
       (ergoemacs-test-major-mode)
       (when (not (current-local-map))
@@ -1476,7 +1474,8 @@ Part of addressing Issue #147."
 Part of addressing Issue #147."
   :tags '(:interactive)
   (ergoemacs-test-layout
-   (let ((ergoemacs-use-function-remapping t))
+   (let (ret
+         (ergoemacs-use-function-remapping t))
      (with-temp-buffer
        (ergoemacs-test-major-mode)
        (when (not (current-local-map))
@@ -1493,7 +1492,8 @@ Tests Issue #372."
   (ergoemacs-test-layout
    :layout "us"
    :theme "reduction"
-   (let ((ergoemacs-use-function-remapping t))
+   (let (ret
+         (ergoemacs-use-function-remapping t))
      (with-temp-buffer
        (ergoemacs-test-major-mode)
        (when (not (current-local-map))
@@ -1503,40 +1503,54 @@ Tests Issue #372."
 
 (ert-deftest ergoemacs-test-dired-sort-files ()
   "Test Issue #340"
-  (let* ((ds-map (make-sparse-keymap))
-         (dh-fun
-          (lambda ()
-            (set (make-local-variable  'dired-sort-map) ds-map)
-            ;; FIXME: This modifies the global dired-mode-map!!
-            (define-key dired-mode-map "s" dired-sort-map)
-            ;; Use "|", not "r".
-            ;; FIXME: This modifies the global dired-mode-map!!
-            (define-key dired-mode-map "|" 'dired-sort-menu-toggle-reverse)))
-         (funs `(("s" .
-                  ,(lambda () "sort by Size"
-                     ;; FIXME: Does the body of those functions matter?
-                     (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso"))))
-                 ("." .
-                  ,(lambda () "sort by eXtension"
-                     (interactive) (dired-sort-other (concat dired-listing-switches "X"))))
-                 ("t" .
-                  ,(lambda () "sort by Time"
-                     (interactive) (dired-sort-other (concat dired-listing-switches "t"))))
-                 ("n" .
-                  ,(lambda () "sort by Name"
-                     (interactive) (dired-sort-other (concat dired-listing-switches "")))))))
-    (dolist (f funs)
-      (define-key ds-map (car f) (cdr f)))
-    (add-hook 'dired-mode-hook dh-fun)
-    (dired ergoemacs-dir)
-    (ergoemacs-map--modify-active)
-    (should (equal (key-binding (kbd "s s")) (cdr (assoc "s" funs))))
-    (should (equal (key-binding (kbd "s .")) (cdr (assoc "." funs))))
-    (should (equal (key-binding (kbd "s t")) (cdr (assoc "t" funs))))
-    (should (equal (key-binding (kbd "s n")) (cdr (assoc "n" funs))))
-    (should (equal (key-binding (kbd "|")) 'dired-sort-menu-toggle-reverse))
-    (kill-buffer (current-buffer))
-    (remove-hook 'dired-mode-hook dh-fun)))
+  (add-hook 'dired-mode-hook (lambda ()
+                               (interactive)
+                               (make-local-variable  'dired-sort-map)
+                               (setq dired-sort-map (make-sparse-keymap))
+                               (define-key dired-mode-map "s" dired-sort-map)
+                               (define-key dired-sort-map "s"
+                                 '(lambda () "sort by Size"
+                                    (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso"))))
+                               (define-key dired-sort-map "."
+                                 '(lambda () "sort by eXtension"
+                                    (interactive) (dired-sort-other (concat dired-listing-switches "X"))))
+                               (define-key dired-sort-map "t"
+                                 '(lambda () "sort by Time"
+                                    (interactive) (dired-sort-other (concat dired-listing-switches "t"))))
+                               (define-key dired-sort-map "n"
+                                 '(lambda () "sort by Name"
+                                    (interactive) (dired-sort-other (concat dired-listing-switches ""))))
+                               ;; Use "|", not "r".
+                               (define-key dired-mode-map "|" 'dired-sort-menu-toggle-reverse)
+                               ))
+  (dired ergoemacs-dir)
+  (ergoemacs-map--modify-active)
+  (should (equal (key-binding (kbd "s s")) '(lambda () "sort by Size" (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso")))))
+  (should (equal (key-binding (kbd "s .")) '(lambda () "sort by eXtension" (interactive) (dired-sort-other (concat dired-listing-switches "X")))))
+  (should (equal (key-binding (kbd "s t")) '(lambda () "sort by Time" (interactive) (dired-sort-other (concat dired-listing-switches "t")))))
+  (should (equal (key-binding (kbd "s n")) '(lambda () "sort by Name" (interactive) (dired-sort-other (concat dired-listing-switches "")))))
+  (should (equal (key-binding (kbd "|")) 'dired-sort-menu-toggle-reverse))
+  (kill-buffer (current-buffer))
+  (remove-hook 'dired-mode-hook (lambda ()
+    (interactive)
+    (make-local-variable  'dired-sort-map)
+    (setq dired-sort-map (make-sparse-keymap))
+    (define-key dired-mode-map "s" dired-sort-map)
+    (define-key dired-sort-map "s"
+      '(lambda () "sort by Size"
+         (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso"))))
+    (define-key dired-sort-map "."
+      '(lambda () "sort by eXtension"
+         (interactive) (dired-sort-other (concat dired-listing-switches "X"))))
+    (define-key dired-sort-map "t"
+      '(lambda () "sort by Time"
+         (interactive) (dired-sort-other (concat dired-listing-switches "t"))))
+    (define-key dired-sort-map "n"
+      '(lambda () "sort by Name"
+         (interactive) (dired-sort-other (concat dired-listing-switches ""))))
+    ;; Use "|", not "r".
+    (define-key dired-mode-map "|" 'dired-sort-menu-toggle-reverse)
+    )))
 
 
 (ert-deftest ergoemacs-test-quail-translations ()
@@ -1580,7 +1594,7 @@ Tests Issue #372."
   
   (should (string= (key-description (kbd "M-TAB")) (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-TAB" t) 0) :ctl-to-alt)))))
 
-  (cl-letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) t)))
+  (letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) t)))
     ;; Test M-i -> ^i -> TAB
     (should (string= "<C-i>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
     
@@ -1590,7 +1604,7 @@ Tests Issue #372."
     ;; Test M-m -> ^m -> RET
     (should (string= "<C-m>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-m" t) 0) :ctl-to-alt))))))
 
-  (cl-letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) nil)))
+  (letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) nil)))
     ;; Test M-i -> ^i -> TAB
     (should (string= "TAB" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
     
@@ -1752,7 +1766,7 @@ hash appropriaetly."
   "Test M-s is switch pane."
   :tags '(:require-input :interactive)
   (let* ((emacs-exe (ergoemacs-emacs-exe))
-         ;; (w-file (expand-file-name "global-test" ergoemacs-dir))
+         (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (with-temp-file temp-file
       (insert "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) "\")"
@@ -1806,9 +1820,9 @@ hash appropriaetly."
 	      0.05 nil
 	      (lambda()
 		(throw 'found-key (mapcar (lambda(key) (if (consp key)
-                                                           (key-binding (eval key t))
-                                                    (key-binding key)))
-                                          ',keys)))))
+                                                           (key-binding (eval key))
+                                                         (key-binding key)))
+					  ',keys)))))
 	 ,minibuffer-call)
        nil))
 
@@ -1820,14 +1834,15 @@ M-s   = `ergoemacs-move-cursor-next-pane'
 M-r   = `kill-word'"
   :tags '(:icy-mode :interactive)
   (icy-mode 1)
-  (ergoemacs-test-layout
-   :layout "us"
-   :theme "standard"
-   (should (equal (ergoemacs-minibuffer-key-bindings
-		   (call-interactively 'icicle-execute-extended-command)
-		   [f11] [f12] (kbd "M-o") (kbd "M-s") (kbd "M-r"))
-		  '(previous-history-element next-history-element forward-word ergoemacs-move-cursor-next-pane kill-word))))
-  (icy-mode -1))
+  (let ((keys))
+(ergoemacs-test-layout
+ :layout "us"
+ :theme "standard"
+ (should (equal (ergoemacs-minibuffer-key-bindings
+		 (call-interactively 'icicle-execute-extended-command)
+		 [f11] [f12] (read-kbd-macro "M-o") (read-kbd-macro "M-s") (read-kbd-macro "M-r"))
+		'(previous-history-element next-history-element forward-word ergoemacs-move-cursor-next-pane kill-word)))))
+(icy-mode -1))
 
 
 (provide 'ergoemacs-test)

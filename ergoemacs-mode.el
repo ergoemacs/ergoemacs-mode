@@ -1,6 +1,6 @@
 ;;; ergoemacs-mode.el --- Emacs mode based on common modern interface and ergonomics. -*- lexical-binding: t -*-
 
-;; Copyright © 2007-2010, 2012-2018  Free Software Foundation, Inc.
+;; Copyright © 2007-2010, 2012-2016  Free Software Foundation, Inc.
 
 ;; Author: Xah Lee <xah@xahlee.org>
 ;;         David Capello <davidcapello@gmail.com>
@@ -780,7 +780,7 @@ not be useful.  However instead of using
 (defun ergoemacs-load-aliases ()
   "Load aliases defined in `ergoemacs-aliases'."
   (dolist (x ergoemacs-aliases)
-    (defalias (nth 0 x) (nth 1 x))))
+    (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))))))
 
 (autoload 'ergoemacs-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme-component "ergoemacs-macros")
@@ -843,8 +843,6 @@ Valid values are:
   "Display Options for `ergoemacs-mode'."
   :group 'ergoemacs-mode)
 
-(define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters "Ergoemacs-v5.16")
-
 (defcustom ergoemacs-display-unicode-characters t
   "Use unicode characters when available."
   :type 'boolean
@@ -852,8 +850,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-ergoemacs-key-descriptions 'ergoemacs-display-ergoemacs-key-descriptions "Ergoemacs-v5.16")
-
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters)
 
 (defcustom ergoemacs-display-ergoemacs-key-descriptions t
   "Use ergoemacs key descriptions (Alt+)."
@@ -862,7 +859,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys "Ergoemacs-v5.16")
+(define-obsolete-variable-alias 'ergoemacs-use-ergoemacs-key-descriptions 'ergoemacs-display-ergoemacs-key-descriptions)
 
 
 (defcustom ergoemacs-display-use-unicode-brackets-around-keys t
@@ -872,7 +869,8 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-small-symbols 'ergoemacs-display-small-symbols-for-key-modifiers "Ergoemacs-v5.16")
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys)
+
 
 (defcustom ergoemacs-display-small-symbols-for-key-modifiers nil
   "Use small symbols to represent alt+ ctl+ on windows/linux."
@@ -881,7 +879,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-capitalize-keys 'ergoemacs-display-capitalize-keys "Ergoemacs-v5.16")
+(define-obsolete-variable-alias 'ergoemacs-use-small-symbols 'ergoemacs-display-small-symbols-for-key-modifiers)
 
 (defcustom ergoemacs-display-capitalize-keys 'with-modifiers
   "Capitalize keys like Ctrl+C.
@@ -894,16 +892,17 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p "Ergoemacs-v5.16")
+(define-obsolete-variable-alias 'ergoemacs-capitalize-keys 'ergoemacs-display-capitalize-keys)
 
-;; FIXME: The suffix "-p" stands for "predicate", i.e. a *function*
-;; returning a boolean value.  Shouldn't be used for variables.
 (defcustom ergoemacs-display-key-use-face-p t
   "Use a button face for keys."
   :type 'boolean
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
+
+(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p)
+
 
 (defface ergoemacs-display-key-face
   '((t :inverse-video t :box (:line-width 1 :style released-button) :weight bold))
@@ -952,7 +951,7 @@ Valid values are:
   "Options for `ergoemacs-command-loop'."
   :group 'ergoemacs-mode)
 
-(define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character "Ergoemacs-v5.16")
+(define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character)
 
 (defcustom ergoemacs-command-loop-blink-character (ergoemacs :unicode-or-alt "•" "·" "-")
   "Blink character."
@@ -961,14 +960,12 @@ Valid values are:
           (const :tag "No cursor" nil))
   :group 'ergoemacs-command-loop)
 
-(define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate "Ergoemacs-v5.16")
-
 (defcustom ergoemacs-command-loop-blink-rate 0.4
   "Rate that the ergoemacs-command loop cursor blinks."
   :type 'number
   :group 'ergoemacs-command-loop)
 
-(define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation "Ergoemacs-v5.16")
+(define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
 
 (defcustom ergoemacs-command-loop-swap-translation
   '(((:normal :normal) :unchorded-ctl)
@@ -987,6 +984,7 @@ Valid values are:
            (sexp :tag "Translated Type")))
   :group 'ergoemacs-command-loop)
 
+(define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation)
 
 (defcustom ergoemacs-command-loop-type nil
   "Type of `ergoemacs-mode' command loop."
@@ -1031,8 +1029,6 @@ Valid values are:
   :type '(repeat string)
   :group 'ergoemacs-modal)
 
-(define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color "Ergoemacs-v5.16")
-
 (defcustom ergoemacs-default-cursor-color nil
   "Default cursor color.
 
@@ -1042,6 +1038,8 @@ color.  Otherwise this will be nil A color string as passed to
   :type '(choice (const :tag "Don't change")
                  (color :tag "Color"))
   :group 'ergoemacs-modal)
+
+(define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color)
 
 (defcustom ergoemacs-modal-emacs-state-modes
   '(archive-mode
@@ -1254,7 +1252,7 @@ also perform `outline-next-visible-heading'"
   :group 'ergoemacs-mode)
 
 
-;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "" "Ergoemacs-v5.16")
+;; (define-obsolete-face-alias 'ergoemacs-key-description-kbd 'ergoemacs-display-key-face "")
 
 ;;; Options not supported now
 

@@ -1,9 +1,6 @@
 *~
 ~*
 out/*
-ChangeLog
-*-autoloads.el
-*-pkg.el
 *.elc
 \#*\#
 .\#*

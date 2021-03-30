@@ -1,6 +1,6 @@
 ;;; ergoemacs-theme-engine.el --- Ergoemacs map interface -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2018  Free Software Foundation, Inc.
+;; Copyright © 2013-2015  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-theme-engine.el
 ;; Description:
@@ -52,8 +52,7 @@
 
 (eval-when-compile
   (require 'ergoemacs-macros)
-  (require 'cl-lib))
-(require 'find-func)
+  (require 'cl))
 
 (defvar ergoemacs-mode)
 (defvar ergoemacs-require)
@@ -136,7 +135,7 @@ This respects `ergoemacs-theme-options'."
 
 ;;;###autoload
 (defun ergoemacs-theme-set-version (version)
-  "Set the current themes default VERSION."
+  "Sets the current themes default VERSION"
   (let (found)
     (setq ergoemacs-theme-version
           (mapcar
@@ -160,7 +159,7 @@ Uses `ergoemacs-theme-option-on'."
   "Turns OPTION on.
 When OPTION is a list turn on all the options in the list
 If OFF is non-nil, turn off the options instead."
-  (if (consp option)
+  (if (eq (type-of option) 'cons)
       (dolist (new-option option)
         (let (ergoemacs-mode)
           (ergoemacs-theme-option-on new-option no-custom off)))
@@ -408,7 +407,8 @@ When AT-END is non-nil, append a $ to the regular expression."
        (lambda()
          (interactive)
          (ergoemacs-save 'ergoemacs-smart-paste 'browse-kill-ring))
-       :enable (commandp 'browse-kill-ring)
+       :enable (condition-case err (interactive-form 'browse-kill-ring)
+                 (error nil))
        :button (:radio . (eq ergoemacs-smart-paste 'browse-kill-ring)))))
     (ergoemacs-sep-bash "--")
     (ergoemacs-bash

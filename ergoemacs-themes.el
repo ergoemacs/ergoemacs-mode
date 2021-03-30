@@ -1,6 +1,6 @@
 ;;; ergoemacs-themes.el --- ErgoEmacs keybindings and themes -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2018 Free Software Foundation, Inc.
+;; Copyright © 2013-2015 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Authors: Matthew L. Fidler, Xah Lee, Drew Adams
@@ -28,10 +28,9 @@
 ;; 
 
 ;;; Code:
-(eval-when-compile
-  (require 'cl-lib)
+(eval-when-compile 
+  (require 'cl)
   (require 'ergoemacs-macros))
-(require 'ergoemacs-component)
 
 (declare-function ergoemacs-theme-component--create-component "ergoemacs-theme")
 (declare-function ergoemacs-component-struct--create-component "ergoemacs-component")

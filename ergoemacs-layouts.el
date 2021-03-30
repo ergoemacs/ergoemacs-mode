@@ -1,6 +1,6 @@
 ;;; ergoemacs-layouts.el --- keyboard layouts for ErgoEmacs -* lexical-binding: t -*-
 
-;; Copyright (C) 2013-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2013, 2014 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -69,8 +69,6 @@
 
 ;; From Baptiste Fouques
 ;; changed to bepo because it breaks how I run things (unfortunately)...
-(defvaralias 'ergoemacs-layout-bépo 'ergoemacs-layout-bepo)
-
 (defvar ergoemacs-layout-bepo
   '("" "$" "\"" "«" "»" "(" ")" "@" "+" "-" "/" "*" "=" "%" ""
     "" ""  "b" "é" "p" "o" "è" "^" "v" "d" "l" "j" "z" "w" ""
@@ -97,6 +95,8 @@
     "" ">"  "W" "X" "C" "V" "B" "N" "?" "." "/" "+" "" "" "")
   "Belgian AZERTY.")
 
+(defvaralias 'ergoemacs-layout-bépo 'ergoemacs-layout-bepo)
+
 (defvar ergoemacs-layout-colemak
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
     "" ""  "q" "w" "f" "p" "g" "j" "l" "u" "y" ";" "[" "]" "\\"
@@ -122,8 +122,6 @@
   "Danish layout.")
 
 ;; From Thomas Rikl
-(defvaralias 'ergoemacs-layout-ge 'ergoemacs-layout-de)
-
 (defvar ergoemacs-layout-de
   '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "ß" "" ""
     "" ""  "q" "w" "e" "r" "t" "z" "u" "i" "o" "p" "ü" "+" ""
@@ -147,8 +145,6 @@
     "" "" "H" "I" "E" "A" "O" "D" "T" "R" "N" "S" "" "" ""
     "" "" "K" "Y" "Ö" "Ä" "Q" "J" "G" "W" "V" "Z" "" "" "")
   "German BU-TECK Layout.  URL `http://www.adnw.de'.")
-
-(defvaralias 'ergoemacs-layout-us_dvorak 'ergoemacs-layout-dv)
 
 (defvar ergoemacs-layout-dv
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "[" "]" ""
@@ -185,8 +181,6 @@
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "Ŭ" "Ĥ" "" ""
     "" ""  "Z" "Ĉ" "C" "V" "B" "N" "M" ";" ":" "?" "" "" "")
   "Esperanto (displaced semicolon and quote, obsolete) layout.")
-
-(defvaralias 'ergoemacs-layout-sp 'ergoemacs-layout-es)
 
 (defvar ergoemacs-layout-es
   '("" "°" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "'" "¡" ""
@@ -261,6 +255,8 @@
     "" "|"  ":" "Q" "J" "K" "X" "B" "M" "W" "V" "Z" "" "" "")
   "UK Dvorak layout.")
 
+(defvaralias 'ergoemacs-layout-ge 'ergoemacs-layout-de)
+
 (defvar ergoemacs-layout-it
   '("" "\\" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "'" "¡" ""
     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "è" "+" ""
@@ -321,6 +317,8 @@
     "" "»"  "Y" "Ç" "J" "B" "K" "Q" "V" "G" "F" "Z" "" "" "")
   "PT Nativo layout URL `http://xahlee.info/kbd/pt-nativo_keyboard_layout.html'.")
 
+(defvaralias 'ergoemacs-layout-sp 'ergoemacs-layout-es)
+
 (defvar ergoemacs-layout-sw
   '("" "½" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "+" "’" ""
     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "å" "\"" ""
@@ -344,6 +342,8 @@
     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" ":" "\"" "" ""
     "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "" "" "")
   "US English QWERTY layout.")
+
+(defvaralias 'ergoemacs-layout-us_dvorak 'ergoemacs-layout-dv)
 
 (defvar ergoemacs-layout-workman
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
@@ -369,8 +369,6 @@
     "" ""  "Z" "X" "M" "C" "V" "K" "L" "<" ">" "?" "" "" "")
   "US Workman layout.  URL `http://www.workmanlayout.com/blog/'.")
 
-(defvaralias 'ergoemacs-layout-jcuken 'ergoemacs-layout-ru)
-
 (defvar ergoemacs-layout-ru
   '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "\\"
     "" ""  "й" "ц" "у" "к" "е" "н" "г" "ш" "щ" "з" "х" "ъ" "" 
@@ -383,6 +381,8 @@
     "" "" "Я" "Ч" "С" "М" "И" "Т" "Ь" "Б" "Ю" "," "" "" "")
   "Russian/Cryllic jcuken layout.")
 
+(defvaralias 'ergoemacs-layout-jcuken 'ergoemacs-layout-ru)
+
 (require 'help-mode)
 (defvar quail-keyboard-layout-alist)
 (defvar ergoemacs-keyboard-layout)
@@ -420,9 +420,11 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
                  (alias (condition-case nil
                             (indirect-variable variable)
                           (error variable)))
+                 (is-alias nil)
                  (doc nil))
             (setq doc (or (documentation-property variable 'variable-documentation)
                           (progn
+                            (setq is-alias t)
                             (documentation-property alias 'variable-documentation))))
             `(,variable
               menu-item ,(concat lay " - " doc)
@@ -564,12 +566,12 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
 
 when BASE is non-nil, the regular expression shows the regular
 expression matching the base layout."
-  (let ((f1 "[\"`']\\(%s\\)[\"`']")
+  (let ((reg (regexp-opt (ergoemacs-layouts--list t) t))
+        (f1 "[\"`']\\(%s\\)[\"`']")
         (f2 "Base Layout: \\(%s\\)"))
     (format (cond
              (base f2)
-             (t f1))
-            (regexp-opt (ergoemacs-layouts--list) t))))
+             (t f1)) (regexp-opt (ergoemacs-layouts--list) t))))
 
 (defun ergoemacs-layout-describe (&optional layout)
   "Display the full documentation of an `ergoemacs-mode' LAYOUT.
@@ -583,10 +585,14 @@ LAYOUT can be either a symbol or string."
          (s (intern (concat "ergoemacs-layout-" layout)))
          (sv (and (boundp s) (symbol-value s)))
          (el-file (find-lisp-object-file-name s 'defvar))
+         (alias (condition-case nil
+                    (indirect-variable s)
+                  (error s)))
          (doc (or (documentation-property
                    s 'variable-documentation)
                   (documentation-property
                    s 'variable-documentation)))
+         pt
          png svg)
     (unless (featurep 'quail)
       (require 'quail))
