@@ -1,6 +1,6 @@
 ;;; ergoemacs-translate.el --- Keyboard translation functions -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2014  Free Software Foundation, Inc.
+;; Copyright © 2013-2018  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-translate.el
 ;; Description: 
@@ -51,7 +51,7 @@
 ;;; Code:
 
 (eval-when-compile 
-  (require 'cl)
+  (require 'cl-lib)
   (require 'ergoemacs-macros))
 
 
@@ -698,7 +698,7 @@ For keys, the list consists of:
       (push key ret))
     ret))
 
-(defstruct ergoemacs-translation-struct
+(cl-defstruct ergoemacs-translation-struct
   "A basic ergoemacs translation structure."
   (name "default-name")
   (translation '())
@@ -745,14 +745,16 @@ When NAME is a symbol, setup the translation function for the symbol."
        ergoemacs-translation-hash)
     (let ((name-str (and (symbolp name) (substring (symbol-name name) 1))))
       (eval
-       (macroexpand
+       (macroexpand                     ;FIXME: Why?
 	`(progn
 	   (defvar ,(intern (concat "ergoemacs-translate--" name-str "-map")) (make-sparse-keymap)
 	     ,(concat "Ergoemacs local map for translation :"
 		      name-str
 		      " while completing a key sequence."))
 	   (define-obsolete-variable-alias ',(intern (concat "ergoemacs-" name-str "-translation-local-map"))
-             ',(intern (concat "ergoemacs-translate--" name-str "-map"))))))
+             ',(intern (concat "ergoemacs-translate--" name-str "-map"))
+             "Ergoemacs-v5.16")))
+       t)
       (ergoemacs-map-properties--label-map (intern (concat "ergoemacs-translate--" name-str "-map")) t)
       (ergoemacs (symbol-value (intern (concat "ergoemacs-translate--" name-str "-map"))) :only-local-modifications-p t)
       ;; 
@@ -763,8 +765,8 @@ When NAME is a symbol, setup the translation function for the symbol."
 	(fset (intern (concat "ergoemacs-" name-str type))
 	      'ergoemacs-translate--setup-command-loop)
 	(when (string= type "-universal-argument")
-	  (pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
-	  (pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
+	  (cl-pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
+	  (cl-pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
 
 (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--setup-translation)
 
@@ -890,23 +892,18 @@ If TYPE is unspecified, assume :normal translation"
 
 (defun ergoemacs-translate--no-gui (event)
   "Remove any gui elements to the EVENT.
-If there are no gui elements, retun nil."
+If there are no gui elements, return nil."
   (if (vectorp event)
-      (eval `(vector ,@(mapcar (lambda(x) (let ((ret (or (ergoemacs-translate--no-gui x) x)))
-					    (if (symbolp ret)
-						`(quote ,ret)
-					      ret))) event)))
+      (apply #'vector (mapcar (lambda (x) (or (ergoemacs-translate--no-gui x) x)) event))
     (let* ((last-event event)
 	   (last-mod (ergoemacs-translate--event-modifiers last-event))
 	   (last-basic-event (ergoemacs-translate--event-basic-type last-event))
-	   new-mod
-	   new-event)
+	   new-mod)
       (when (memq 'ergoemacs-gui last-mod)
 	(dolist (elt last-mod)
 	  (unless (eq elt 'ergoemacs-gui)
 	    (push elt new-mod)))
-	(setq new-event (ergoemacs-translate--event-convert-list `(,@new-mod ,last-basic-event))))
-      new-event)))
+        (ergoemacs-translate--event-convert-list `(,@new-mod ,last-basic-event))))))
 
 (defvar ergoemacs-translate--parent-map nil
   "Parent map for keymaps when completing a key sequence.")
@@ -1220,7 +1217,8 @@ If :type is :quail use the 180 length string that
                                (encode-char
                                 (with-temp-buffer
                                   (insert char)
-                                  (char-before)) 'unicode))
+                                  (char-before))
+                                'unicode))
                   font (ergoemacs-key-description--display-char-p char))
             (when font
               (setq font (or (font-get font :name)

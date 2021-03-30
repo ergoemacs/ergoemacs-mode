@@ -1,6 +1,6 @@
 ;;; ergoemacs-macros.el --- Macros for ergoemacs-mode -*- lexical-binding: t -*-
 
-;; Copyright © 2013, 2014  Free Software Foundation, Inc.
+;; Copyright © 2013, 2014, 2015, 2018  Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -52,66 +52,63 @@ If SYMBOL is void, return nil"
      (ignore-errors (symbol-value ,symbol))))
 
 ;; This shouldn't be called at run-time; This fixes the byte-compile warning.
-(fset 'ergoemacs-theme-component--parse
-      #'(lambda(keys-and-body &optional skip-first)
-          "Parse KEYS-AND-BODY, optionally skipping the name and
+(defun ergoemacs-theme-component--parse
+    (keys-and-body &optional skip-first)
+  "Parse KEYS-AND-BODY, optionally skipping the name and
 documentation with SKIP-FIRST.
 
 Uses `ergoemacs-theme-component--parse-keys-and-body' and
   `ergoemacs-theme-component--parse-remaining'."
-          (ergoemacs-theme-component--parse-keys-and-body
-           keys-and-body
-           'ergoemacs-theme-component--parse-remaining
-           skip-first)))
+  (ergoemacs-theme-component--parse-keys-and-body
+   keys-and-body
+   'ergoemacs-theme-component--parse-remaining
+   skip-first))
 
-(fset 'ergoemacs-theme-component--parse-key-str
-      #'(lambda (str)
-          "Wraps C-i, C-m and C-[ in <>."
-          (cond
-           ((not (stringp str)) str)
-           ((string-match-p "^\\(?:M-\\|S-\\)*C-\\(?:M-\\|S-\\)*[im[]$" str) (concat "<" str ">"))
-           (t str))))
+(defun ergoemacs-theme-component--parse-key-str (str)
+  "Wrap C-i, C-m and C-[ in <>."
+  (cond
+   ((not (stringp str)) str)
+   ((string-match-p "^\\(?:M-\\|S-\\)*C-\\(?:M-\\|S-\\)*[im[]$" str) (concat "<" str ">"))
+   (t str)))
 
-(fset 'ergoemacs-theme-component--parse-key
-      #'(lambda  (item)
-          "Changes `kbd' and `read-kbd-macro' on C-i, C-m, and C-[ to allow calling on GUI."
-          (cond
-           ((not (consp item)) item)
-           ((eq (nth 0 item) 'kbd)
-            (list 'kbd (ergoemacs-theme-component--parse-key-str (nth 1 item))))
-           ((eq (nth 0 item) 'read-kbd-macro)
-            (list 'read-kbd-macro (ergoemacs-theme-component--parse-key-str (nth 1 item)) (nth 2 item)))
-           (t item))))
+(defun ergoemacs-theme-component--parse-key (item)
+  "Change `kbd' and `read-kbd-macro' on C-i, C-m, and C-[ to allow calling on GUI."
+  (cond
+   ((not (consp item)) item)
+   ((eq (nth 0 item) 'kbd)
+    (list 'kbd (ergoemacs-theme-component--parse-key-str (nth 1 item))))
+   ((eq (nth 0 item) 'read-kbd-macro)
+    (list 'read-kbd-macro (ergoemacs-theme-component--parse-key-str (nth 1 item)) (nth 2 item)))
+   (t item)))
 
-(fset 'ergoemacs-theme-component--parse-fun
-      #'(lambda (fun)
-          "Determine how FUN should be used with `ergoemacs-component-struct--define-key'."
-          (let (tmp)
-            (or (and (ergoemacs-keymapp (ergoemacs-sv fun)) `(quote ,fun))
-                (ignore-errors
-                  (and (consp fun)
-                       (stringp (nth 0 fun))
-                       (symbolp (nth 1 fun))
-                       (eq (nth 1 fun) :emacs)
-                       (setq tmp (lookup-key global-map (read-kbd-macro (nth 0 fun))))
-                       (commandp tmp)
-                       `(quote ,tmp)))
-                (ignore-errors
-                  (and (consp fun)
-                       (eq 'quote (nth 0 fun))
-                       (consp (nth 1 fun))
-                       (stringp (nth 0 (nth 1 fun)))
-                       (symbolp (nth 1 (nth 1 fun)))
-                       (eq (nth 1 (nth 1 fun)) :emacs)
-                       (setq tmp (lookup-key global-map (read-kbd-macro (nth 0 (nth 1 fun)))))
-                       (commandp tmp)
-                       `(quote ,tmp)))
-                (ignore-errors
-                  (and (consp fun)
-                       (stringp (nth 0 fun))
-                       (symbolp (nth 1 fun))
-                       `(quote ,fun)))
-                fun))))
+(defun ergoemacs-theme-component--parse-fun (fun)
+  "Determine how FUN should be used with `ergoemacs-component-struct--define-key'."
+  (let (tmp)
+    (or (and (ergoemacs-keymapp (ergoemacs-sv fun)) `(quote ,fun))
+        (ignore-errors
+          (and (consp fun)
+               (stringp (nth 0 fun))
+               (symbolp (nth 1 fun))
+               (eq (nth 1 fun) :emacs)
+               (setq tmp (lookup-key global-map (read-kbd-macro (nth 0 fun))))
+               (commandp tmp)
+               `(quote ,tmp)))
+        (ignore-errors
+          (and (consp fun)
+               (eq 'quote (nth 0 fun))
+               (consp (nth 1 fun))
+               (stringp (nth 0 (nth 1 fun)))
+               (symbolp (nth 1 (nth 1 fun)))
+               (eq (nth 1 (nth 1 fun)) :emacs)
+               (setq tmp (lookup-key global-map (read-kbd-macro (nth 0 (nth 1 fun)))))
+               (commandp tmp)
+               `(quote ,tmp)))
+        (ignore-errors
+          (and (consp fun)
+               (stringp (nth 0 fun))
+               (symbolp (nth 1 fun))
+               `(quote ,fun)))
+        fun)))
 
 ;;;###autoload
 (defun ergoemacs-theme-component--parse-remaining (remaining)
@@ -179,7 +176,7 @@ distinguish from the ASCII equivalents:
                `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 1 elt)) nil))
               ((ignore-errors (eq (nth 0 elt) 'set))
                ;; Currently doesn't support (setq a b c d ), but it should.
-               `(ergoemacs-component-struct--set ,(nth 1 elt) '(lambda() ,(nth 2 elt))))
+               `(ergoemacs-component-struct--set ,(nth 1 elt) (lambda() ,(nth 2 elt))))
               ((ignore-errors (eq (nth 0 elt) 'add-hook))
                `(ergoemacs-component-struct--set ,(nth 1 elt) ,(nth 2 elt)
                                                  (list t ,(nth 3 elt) ,(nth 4 elt))))
@@ -193,11 +190,11 @@ distinguish from the ASCII equivalents:
                      (ret '()))
                  (pop tmp-elt)
                  (while (and (= 0 (mod (length tmp-elt) 2)) (< 0 (length tmp-elt)))
-                   (push `(ergoemacs-component-struct--set (quote ,(pop tmp-elt)) '(lambda() ,(pop tmp-elt))) ret))
+                   (push `(ergoemacs-component-struct--set (quote ,(pop tmp-elt)) (lambda() ,(pop tmp-elt))) ret))
                  (push 'progn ret)
                  ret))
               ((ignore-errors (string-match "-mode$" (symbol-name (nth 0 elt))))
-               `(ergoemacs-component-struct--set (quote ,(nth 0 elt)) '(lambda() ,(nth 1 elt))))
+               `(ergoemacs-component-struct--set (quote ,(nth 0 elt)) (lambda() ,(nth 1 elt))))
               ((ignore-errors (eq (nth 0 elt) 'global-set-key))
                `(ergoemacs-component-struct--define-key 'global-map ,(ergoemacs-theme-component--parse-key (nth 1 elt))
                                                         ,(ergoemacs-theme-component--parse-fun (nth 2 elt))))
@@ -226,7 +223,7 @@ distinguish from the ASCII equivalents:
                (let ((tmp (ergoemacs-theme-component--parse (cdr (cdr elt)) t)))
                  `(ergoemacs-component-struct--with-hook
                    ',(nth 1 elt) ',(nth 0 tmp)
-                   '(lambda () ,@(nth 1 tmp)))))
+                   (lambda () ,@(nth 1 tmp)))))
               ((ignore-errors (memq (nth 0 elt) '(dolist when unless if)))
                `(,(car elt) ,(car (cdr elt)) ,@(macroexpand-all (ergoemacs-theme-component--parse-remaining (cdr (cdr elt))))))
               ((ignore-errors (memq (nth 0 elt) '(ergoemacs-advice defadvice)))
@@ -426,11 +423,15 @@ on the definition:
 :file -- File where the component was defined."
   (declare (doc-string 2)
            (indent 2))
-  (let ((kb (make-symbol "body-and-plist")))
-    (setq kb (ergoemacs-theme-component--parse body-and-plist))
+  (let ((kb (ergoemacs-theme-component--parse body-and-plist)))
     `(let ((plist ',(nth 0 kb))
-           (fun '(lambda () ,@(nth 1 kb))))
+           (fun (lambda () ,@(nth 1 kb))))
+       (defvar ergoemacs-component-hash)
        (unless (boundp 'ergoemacs-component-hash)
+         ;; FIXME: This places the "official one-and-only defvar" arbitrarily
+         ;; at the first file that runs ergoemacs-theme-component.  Better would
+         ;; be to move this defvar outside of the macro, e.g. to
+         ;; ergoemacs-component.el.
          (defvar ergoemacs-component-hash (make-hash-table :test 'equal)
            "Hash of ergoemacs theme components"))
        (defvar ergoemacs-mode-reset)
@@ -475,7 +476,7 @@ with :ergoemacs-require set to nil."
       (setq plist (plist-put plist :ergoemacs-require name)))
     (unless (plist-get plist :package-name)
       (setq plist (plist-put plist :package-name name)))
-    (macroexpand-all
+    (macroexpand-all                    ;FIXME: Why?
      `(ergoemacs-theme-component ,name ()
         ,doc
         ,@plist
@@ -541,6 +542,7 @@ with :ergoemacs-require set to t."
                   `(edmacro-parse-keys ,(plist-get plist :macro) t)))
             (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
             (reset-ergoemacs nil))
+        (ignore macro)
         (setq ergoemacs-theme ,(plist-get plist ':current-theme)
               ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us")
               ergoemacs-command-loop-type nil
@@ -579,26 +581,25 @@ with :ergoemacs-require set to t."
 (defvar ergoemacs-theme-components--modified-plist nil
   "Modified plist.")
 
-(fset 'ergoemacs-theme-component--add-ensure
-      #'(lambda (plist pkg)
-          "Add PKG to the :ensure keyword."
-          (let ((cur-ensure (plist-get plist :ensure))
-                (cur-pkg (intern (format "%s" (plist-get plist :package-name)))))
-            (cond
-             ((eq cur-ensure t)
-              (setq ergoemacs-theme-components--modified-plist
-                    (plist-put plist :ensure (list pkg cur-pkg))))
-             ((not cur-ensure)
-              (setq ergoemacs-theme-components--modified-plist
-                    (plist-put plist :ensure pkg)))
-             ((not (memq pkg cur-ensure))
-              (push pkg cur-ensure)
-              (setq ergoemacs-theme-components--modified-plist
-                    (plist-put plist :ensure cur-ensure)))))))
+(defun ergoemacs-theme-component--add-ensure (plist pkg)
+  "Add PKG to the :ensure keyword."
+  (let ((cur-ensure (plist-get plist :ensure))
+        (cur-pkg (intern (format "%s" (plist-get plist :package-name)))))
+    (cond
+     ((eq cur-ensure t)
+      (setq ergoemacs-theme-components--modified-plist
+            (plist-put plist :ensure (list pkg cur-pkg))))
+     ((not cur-ensure)
+      (setq ergoemacs-theme-components--modified-plist
+            (plist-put plist :ensure pkg)))
+     ((not (memq pkg cur-ensure))
+      (push pkg cur-ensure)
+      (setq ergoemacs-theme-components--modified-plist
+            (plist-put plist :ensure cur-ensure))))))
 
-(fset 'ergoemacs-theme-component--parse-keys-and-body
-      #'(lambda (keys-and-body &optional parse-function  skip-first)
-          "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
+(defun ergoemacs-theme-component--parse-keys-and-body
+    (keys-and-body &optional parse-function  skip-first)
+  "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
 
 KEYS-AND-BODY should have the form of a property list, with the
 exception that only keywords are permitted as keys and that the
@@ -612,38 +613,37 @@ This has been stolen directly from ert by Christian Ohler <ohler@gnu.org>
 
 Afterward it was modified for use with `ergoemacs-mode' to use
 additional parsing routines defined by PARSE-FUNCTION."
-          (let ((extracted-key-accu '())
-                plist
-                (remaining keys-and-body))
-            ;; Allow
-            ;; (component name)
-            (unless (or (keywordp (cl-first remaining)) skip-first)
-              (if (condition-case nil
-                      (stringp (cl-first remaining))
-                    (error nil))
-                  (push (cons ':name (pop remaining)) extracted-key-accu)
-                (push (cons ':name  (symbol-name (pop remaining))) extracted-key-accu))
-              (when (memq (type-of (cl-first remaining)) '(symbol cons))
-                (setq remaining (cdr remaining)))
-              (when (stringp (cl-first remaining))
-                (push (cons ':description (pop remaining)) extracted-key-accu)))
-            (while (and (consp remaining) (keywordp (cl-first remaining)))
-              (let ((keyword (pop remaining)))
-                (unless (consp remaining)
-                  (error "Value expected after keyword %S in %S"
-                         keyword keys-and-body))
-                (when (assoc keyword extracted-key-accu)
-                  (ergoemacs-warn "Keyword %S appears more than once in %S" keyword
-                                  keys-and-body))
-                (push (cons keyword (pop remaining)) extracted-key-accu)))
-            (setq extracted-key-accu (nreverse extracted-key-accu))
-            (setq plist (cl-loop for (key . value) in extracted-key-accu
-                              collect key
-                              collect value))
-            (when parse-function
-              (setq remaining
-                    (funcall parse-function remaining)))
-            (list plist remaining))))
+  (let ((extracted-key-accu '())
+        plist
+        (remaining keys-and-body))
+    ;; Allow
+    ;; (component name)
+    (unless (or (keywordp (cl-first remaining)) skip-first)
+      (push (cons ':name (if (stringp (cl-first remaining))
+                             (pop remaining)
+                           (symbol-name (pop remaining))))
+            extracted-key-accu)
+      (when (memq (type-of (cl-first remaining)) '(symbol cons))
+        (setq remaining (cdr remaining)))
+      (when (stringp (cl-first remaining))
+        (push (cons ':description (pop remaining)) extracted-key-accu)))
+    (while (and (consp remaining) (keywordp (cl-first remaining)))
+      (let ((keyword (pop remaining)))
+        (unless (consp remaining)
+          (error "Value expected after keyword %S in %S"
+                 keyword keys-and-body))
+        (when (assoc keyword extracted-key-accu)
+          (ergoemacs-warn "Keyword %S appears more than once in %S" keyword
+                          keys-and-body))
+        (push (cons keyword (pop remaining)) extracted-key-accu)))
+    (setq extracted-key-accu (nreverse extracted-key-accu))
+    (setq plist (cl-loop for (key . value) in extracted-key-accu
+                         collect key
+                         collect value))
+    (when parse-function
+      (setq remaining
+            (funcall parse-function remaining)))
+    (list plist remaining)))
 
 ;;;###autoload
 (defmacro ergoemacs-theme (&rest body-and-plist)
@@ -675,7 +675,7 @@ The rest of the body is an `ergoemacs-theme-component' named
         (tmp (make-symbol "tmp"))
         (based-on (make-symbol "based-on")))
     (setq kb (ergoemacs-theme-component--parse-keys-and-body body-and-plist))
-    (setq tmp (eval (plist-get (nth 0 kb) :components)))
+    (setq tmp (eval (plist-get (nth 0 kb) :components) t))
     (push (intern (concat (plist-get (nth 0 kb) :name) "-theme")) tmp)
     (setq tmp (plist-put (nth 0 kb) :components tmp))
     (setq based-on (plist-get (nth 0 kb) :based-on))
@@ -687,7 +687,7 @@ The rest of the body is an `ergoemacs-theme-component' named
     ;; (message "Last Based-On: %s" based-on)
     (dolist (comp '(:optional-on :optional-off :options-menu))
       (setq tmp (plist-put (nth 0 kb) comp
-                           (eval (plist-get (nth 0 kb) comp)))))
+                           (eval (plist-get (nth 0 kb) comp) t))))
     (macroexpand-all
      `(let* ((based-on (ergoemacs-gethash ,based-on ergoemacs-theme-hash))
              (curr-plist ',tmp)
@@ -750,6 +750,8 @@ This is compatibility layer.
 - `ergoemacs-fixed-key' = defines/replace fixed key with function
    by (ergoemacs-fixed-key KEY FUNCTION DESCRIPTION)."
   (declare (indent 1))
+  ;; FIXME: Why `macroexpand-all', given that the output will itself go through
+  ;; macroexpand(-all) anyway?
   (macroexpand-all
    `(let (silent pl tmp)
       (setq pl (ergoemacs-gethash (or ,based-on "standard") ergoemacs-theme-hash))
@@ -852,74 +854,69 @@ When arg1 can be a property.  The following properties are supported:
         (arg3 (nth 2 args))
         (arg4 (nth 3 args)))
     (cond
-     ((and arg1 (symbolp arg1) (eq arg1 :reset-prefix))
-      (if (>= 25 emacs-major-version)
+     ((eq arg1 :reset-prefix)
+      (if (fboundp 'prefix-command-preserve-state)
 	  `(prefix-command-preserve-state)
 	`(reset-this-command-lengths)))
-     ((and arg1 (symbolp arg1) (eq arg1 :set-selection))
-      (if (>= 25 emacs-major-version)
-          `(gui-set-selection ,@(cdr args))
-        `(x-set-selection ,@(cdr args))))
-     ((and arg1 (symbolp arg1) (eq arg1 :set-selection))
-      (if (>= 25 emacs-major-version)
+     ((eq arg1 :get-selection)
+      (if (fboundp 'gui-set-selection)
+          `(gui-get-selection ,@(cdr args))
+        `(x-get-selection ,@(cdr args))))
+     ((eq arg1 :set-selection)
+      (if (fboundp 'gui-set-selection)
 	  `(gui-set-selection ,@(cdr args))
 	`(x-set-selection ,@(cdr args))))
-     ((and arg1 (symbolp arg1) (eq arg1 :width))
+     ((eq arg1 :width)
       `(ergoemacs-mode--eval-width ,arg2))
-     ((and arg1 (symbolp arg1) (eq arg1 :mode-if) arg2)
+     ((and (eq arg1 :mode-if) arg2)
       `(ergoemacs-mode-line--if ,arg2 ,arg3 ,arg4))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:sep :separator)))
+     ((memq arg1 '(:sep :separator))
       `(ergoemacs-mode-line--sep ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:sep-right :separator-right)))
+     ((memq arg1 '(:sep-right :separator-right))
       `(ergoemacs-mode-line--sep 'right ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:sep-left :separator-left)))
+     ((memq arg1 '(:sep-left :separator-left))
       `(ergoemacs-mode-line--sep 'left ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (eq arg1 :custom-p) (symbolp arg2))
+     ((and (eq arg1 :custom-p) (symbolp arg2))
       (if (fboundp 'custom-variable-p)
           `(custom-variable-p ,arg2)
         `(user-variable-p ,arg2)))
-     ((and arg1 (symbolp arg1) (eq arg1 :apply-key) arg2 arg3)
+     ((and (eq arg1 :apply-key) arg2 arg3)
       `(ergoemacs-translate--apply-key ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (eq arg1 :spinner) arg2)
+     ((and (eq arg1 :spinner) arg2)
       `(ergoemacs-command-loop--spinner-display ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (eq arg1 :define-key) arg2 arg3)
+     ((and (eq arg1 :define-key) arg2 arg3)
       `(ergoemacs-translate--define-key ,arg2 ,arg3 ,arg4))
-     ((and arg1 (symbolp arg1) (eq arg1 :ignore-global-changes-p) (not arg2) (not arg3))
+     ((and (eq arg1 :ignore-global-changes-p) (not arg2) (not arg3))
       `(ergoemacs-map-properties--ignore-global-changes-p))
-     ((and arg1 (symbolp arg1) (eq arg1 :user-before) (not arg2) (not arg3))
+     ((and (eq arg1 :user-before) (not arg2) (not arg3))
       `(ergoemacs-map-properties--before-ergoemacs))
-     ((and arg1 (symbolp arg1) (eq arg1 :user-after) (not arg2) (not arg3))
+     ((and (eq arg1 :user-after) (not arg2) (not arg3))
       `(ergoemacs-map-properties--before-ergoemacs t))
-     ((and arg1 (symbolp arg1) (eq arg1 :modal-p))
+     ((eq arg1 :modal-p)
       `(ergoemacs-command-loop--modal-p))
-     ((and arg1 (symbolp arg1) (eq arg1 :combine) arg2 arg3)
+     ((and (eq arg1 :combine) arg2 arg3)
       `(ergoemacs-command-loop--combine ,arg2 ,arg3))
-     ((and arg1 (symbolp arg1) (memq arg1 '(:unicode-or-alt :unicode)))
+     ((memq arg1 '(:unicode-or-alt :unicode))
       `(ergoemacs-key-description--unicode-char ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (eq arg1 :modifier-desc)
-           arg2)
+     ((and (eq arg1 :modifier-desc) arg2)
       `(mapconcat #'ergoemacs-key-description--modifier ,arg2 ""))
-     ((and arg1 (symbolp arg1) (eq arg1 :current-version))
+     ((eq arg1 :current-version)
       `(ergoemacs-theme--get-version))
-     ((and arg1 (symbolp arg1) (eq arg1 :current-theme))
+     ((eq arg1 :current-theme)
       `(or (and ergoemacs-theme (stringp ergoemacs-theme) ergoemacs-theme)
            (and ergoemacs-theme (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))
            "standard"))
-     ((and arg1 (symbolp arg1)
-           (memq arg1 ergoemacs--map-properties-list))
+     ((memq arg1 ergoemacs--map-properties-list)
       `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg1) 1))) ,@(cdr args)))
 
-     ((and arg1 arg2 (eq arg2 :new-command) arg3)
+     ((and arg1 (eq arg2 :new-command) arg3)
       ;; (ergoemacs arg1 :new-command 'next-line)
       `(ergoemacs-map-properties--new-command ,arg1 ,arg3))
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :global-map))
+     ((eq arg1 :global-map)
       `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map)))
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :revert-global-map))
+     ((eq arg1 :revert-global-map)
       `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map) :setcdr))
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :remap) arg2)
+     ((and (eq arg1 :remap) arg2)
       `(progn
          (setq this-command (or (key-binding (vector 'ergoemacs-remap ,arg2) t nil (point)) ,arg2))
          (call-interactively (or (key-binding (vector 'ergoemacs-remap ,arg2) t nil (point)) ,arg2))))
