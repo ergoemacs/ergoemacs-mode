@@ -60,6 +60,7 @@
 (defvar ergoemacs-mode--fast-p)
 (defvar ergoemacs-remap-ignore)
 (defvar ergoemacs-component-struct--composed-hook-minibuffer)
+(defvar term-raw-map)
 
 
 (declare-function ergoemacs-timing-- "ergoemacs-mode")
@@ -1027,9 +1028,7 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
          (if (not (eq major-mode 'term-mode))
 	     (use-local-map (ergoemacs current-local-map))
            (progn
-             (setq term-raw-map (ergoemacs term-raw-map))
-             (use-local-map term-raw-map))
-           )
+             (use-local-map (ergoemacs term-raw-map))))
 	 (setq ergoemacs-map--breadcrumb ""))
        (when (and (minibufferp) ergoemacs-read-from-minibuffer-map)
          ;; Preserve bindings for space, such as when completing a filename
