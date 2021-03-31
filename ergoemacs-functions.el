@@ -65,9 +65,11 @@
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 (declare-function ergoemacs-mode "ergoemacs-mode")
+(declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 
 (declare-function ergoemacs-command-loop--modal-pop "ergoemacs-command-loop")
 (declare-function ergoemacs-theme-describe "ergoemacs-theme-engine")
+(declare-function ergoemacs-key-description "ergoemacs-key-description")
 
 (declare-function helm-attrset "helm")
 (declare-function helm-basename "helm-utils")

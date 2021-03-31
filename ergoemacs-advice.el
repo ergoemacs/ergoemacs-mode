@@ -57,7 +57,13 @@
 (declare-function ergoemacs-translate--define-key "ergoemacs-translate")
 (declare-function ergoemacs-translate--apply-key "ergoemacs-translate")
 (declare-function ergoemacs-major-mode-menu-map "ergoemacs-lib")
-
+(declare-function ergoemacs-translate--get "ergoemacs-translate")
+(declare-function ergoemacs-translate--keymap "ergoemacs-translate")
+(declare-function ergoemacs-command-loop--modal-p "ergoemacs-command-loop")
+(declare-function ergoemacs-translation-struct-keymap-modal "ergoemacs-translate")
+(declare-function ergoemacs-command-loop--internal "ergoemacs-command-loop")
+(declare-function ergoemacs-command-loop--temp-message "ergoemacs-command-loop")
+(declare-function ergoemacs-key-description "ergoemacs-key-description")
 
 (defvar ergoemacs-advice--temp-replace-functions nil
   "List of `ergoemacs-mode' temporary replacement functions.

@@ -34,6 +34,7 @@
   (require 'ergoemacs-macros))
 
 
+(declare-function ergoemacs-translate--emacs-shift "ergoemacs-translate")
 (declare-function ergoemacs-warn "ergoemacs-lib")
 
 (declare-function guide-key/close-guide-buffer "guide-key")
@@ -95,6 +96,8 @@
 (defvar guide-key/guide-key-sequence)
 (defvar keyfreq-mode)
 (defvar keyfreq-table)
+(defvar ergoemacs-translate--emacs-shift)
+(defvar ergoemacs-command-loop-start)
 
 
 (defvar universal-argument-num-events) ;; Not in Emacs 24.5

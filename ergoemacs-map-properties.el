@@ -919,13 +919,12 @@ STRUCT is the keymap structure for the current map."
        (map-key
 	(error "Will not label a composed map's members to %s" map-key))
        (t
-	(let ((parent (keymap-parent keymap))
-	      (breadcrumb-base ergoemacs-map--breadcrumb)
-	      (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
-	      (comp (plist-get struct :composed))
-	      (comp-list (ergoemacs-map-properties--composed-list keymap))
-	      from-prop-p
-	      (i 0))
+	(let* ((breadcrumb-base ergoemacs-map--breadcrumb)
+	       (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
+	       (comp (plist-get struct :composed))
+	       (comp-list (ergoemacs-map-properties--composed-list keymap))
+	       from-prop-p
+	       (i 0))
 	  (unless (= (length comp) (length comp-list))
 	    (setq comp nil))
 	  (when (and ergoemacs-map-properties--breadcrumb
@@ -941,10 +940,6 @@ STRUCT is the keymap structure for the current map."
 	    (if comp
 		(ergoemacs :label map nil (pop comp))
 	      (ergoemacs :label map)))
-	  ;; (when parent
-	  ;;   (when (and breadcrumb-base (not (string= breadcrumb-base "")))
-	  ;;     (setq ergoemacs-map--breadcrumb (concat breadcrumb-base "-parent")))
-	  ;;   (ergoemacs :label parent nil (plist-get struct :parent)))
 	  (if from-prop-p
 	      (setq ergoemacs-map-properties--breadcrumb breadcrumb-base)
 	    (setq ergoemacs-map--breadcrumb breadcrumb-base))))))
