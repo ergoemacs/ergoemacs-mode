@@ -105,11 +105,12 @@
 (defvar ergoemacs-command-loop--mark-active nil
   "Determines if mark was active before ergoemacs command loop.")
 
+(define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions)
+
 
 (defvar ergoemacs-command-loop--universal-functions '(universal-argument ergoemacs-universal-argument ergoemacs-command-loop--universal-argument)
   "List of `ergoemacs-mode' recognized functions.")
 
-(define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions)
 
 (defvar ergoemacs-command-loop--next-key-hash
   (let ((hash (make-hash-table)))
@@ -129,13 +130,13 @@
 
 (defvar ergoemacs-command-loop--help-last-key nil)
 
+(define-obsolete-variable-alias 'ergoemacs-read-key-delay 'ergoemacs-command-loop--decode-event-delay)
+
 (defvar ergoemacs-command-loop--decode-event-delay 0.01
   "Timeout for `ergoemacs-command-loop--decode-event'.
 This is to distinguish events in a terminal, like xterm.
 
 It needs to be less than `ergoemacs-command-loop-blink-rate'.")
-
-(define-obsolete-variable-alias 'ergoemacs-read-key-delay 'ergoemacs-command-loop--decode-event-delay)
 
 (defvar ergoemacs-command-loop--history nil
   "History of command loop locations.")
@@ -384,7 +385,8 @@ Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
               (message "Dummy Function for %s" (ergoemacs :modifier-desc ,(nth 1 arg))))
             (defalias ',(intern (concat "ergoemacs-read-key-force-" (symbol-name (nth 0 arg)))) ',(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))))
             (puthash ',(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) :force) ergoemacs-command-loop--next-key-hash)
-            (puthash ',(intern (concat "ergoemacs-read-key-force-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) :force) ergoemacs-command-loop--next-key-hash)))))
+            (puthash ',(intern (concat "ergoemacs-read-key-force-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) :force) ergoemacs-command-loop--next-key-hash)
+	    t))))
 
 (defvar ergoemacs-last-command-event nil
   "`ergoemacs-mode' command loop last read command.")
@@ -1659,10 +1661,12 @@ instead of `format'."
 	  (when (not ergoemacs-command-loop--spinner-list)
 	    (setq ergoemacs-command-loop--spinner-list (nth 1 (assoc ergoemacs-command-loop-spinner ergoemacs-command-loop-spinners))
 		  ergoemacs-command-loop--spinner-i 0))
-	  (ergoemacs-command-loop--message "%s%s" (nth (mod (setq ergoemacs-command-loop--spinner-i (+ 1 ergoemacs-command-loop--spinner-i))
-							    (length ergoemacs-command-loop--spinner-list))
-						       ergoemacs-command-loop--spinner-list)
-					   rest))))))
+	  (ergoemacs-command-loop--message
+	   "%s%s" (nth (mod (setq ergoemacs-command-loop--spinner-i
+				  (+ 1 ergoemacs-command-loop--spinner-i))
+			    (length ergoemacs-command-loop--spinner-list))
+		       ergoemacs-command-loop--spinner-list)
+	   rest))))))
 
 (defun ergoemacs-command-loop--spinner-end ()
   "Cancel the `ergoemacs-command-loop--spinner' timer."

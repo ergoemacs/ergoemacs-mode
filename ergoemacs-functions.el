@@ -357,8 +357,12 @@ If TERMINAL is non-nil, run the terminal version"
 
 (defun ergoemacs-emacs-exe ()
   "Get the Emacs executable for testing purposes."
-  (let* ((emacs-exe (invocation-name))
-         (emacs-dir (invocation-directory))
+  ;; FIXME: The quotes can't be quite right; better use something like
+  ;; `shell-quote-argument'.
+  (let* ((emacs-exe (if (fboundp 'invocation-name) (invocation-name)
+                      (if (boundp 'invocation-name) invocation-name)))
+         (emacs-dir (if (fboundp 'invocation-directory) (invocation-directory)
+                      (if (boundp 'invocation-directory) invocation-directory)))
          (full-exe (concat "\"" (expand-file-name emacs-exe emacs-dir)
                            "\"")))
     full-exe))
@@ -1611,7 +1615,10 @@ by `ergoemacs-maximum-number-of-files-to-open'.
     (let ((process-connection-type nil))
       (start-process "" nil "xdg-open" ".")))))
 
-(defvar ergoemacs-recently-closed-buffers (cons nil nil) "A list of recently closed buffers. The max number to track is controlled by the variable `ergoemacs-recently-closed-buffers-max'.")
+;; FIXME: Why default to (cons nil nil) instead of just nil?
+(defvar ergoemacs-recently-closed-buffers (cons nil nil)
+  "A list of recently closed buffers. The max number to track is controlled by the variable `ergoemacs-recently-closed-buffers-max'.")
+
 (defvar ergoemacs-recently-closed-buffers-max 30 "The maximum length for `ergoemacs-recently-closed-buffers'.")
 
 ;; note: emacs won't offer to save a buffer that's

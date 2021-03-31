@@ -169,11 +169,7 @@ if the package is deferred."
           (unless (or defer (featurep package))
             (require package nil t))
           (when (and package (not (featurep package)) (numberp defer))
-            (run-with-idle-timer defer nil #'require package  ;; `(lambda()
-                           ;; (message ,(format "Defer: %s %s" package defer))
-                           ;; (require ,package)
-                                 ;; (ergoemacs-component-struct--apply-inits))
-				 )
+            (run-with-idle-timer defer nil #'require package)
             )
           (when (and defer autoloads)
             (dolist (c autoloads)
@@ -981,6 +977,8 @@ OBJ is the current object being modified, passed to
   "Gets a list of hooks that need to be defined eor OBJ."
   (dolist (hook (ergoemacs-component-struct--hooks obj))
     (eval `(progn
+	     ;; FIXME: Since Emacs-25 we could use a closure with a computed docstring,
+	     ;; using (:documentation <exp>).
              (defun ,(intern (concat "ergoemacs--" (symbol-name hook))) ()
                ,(format "`ergoemacs-mode' hook for `%s'" (symbol-name hook))
                (ergoemacs-component-struct--composed-hook ',hook))
@@ -1132,7 +1130,10 @@ to prevent infinite recursion."
          ((and ensure (symbolp ensure))
           (ergoemacs-component-struct--ensure ensure defer autoloads))
 	 ((and (consp ensure) (memq (car ensure) '(memq member and or if when = string= not string< eq equal)))
-	  (when (ignore-errors (eval ensure))
+	  ;; FIXME: avoid `eval', e.g. by making
+          ;; ergoemacs-component-struct-ensure hold a function rather than
+	  ;; an expression.
+	  (when (ignore-errors (eval ensure t))
 	    (ergoemacs-component-struct--ensure package-name defer autoloads)))
          ((consp ensure)
           (dolist (elt ensure)
@@ -1212,7 +1213,7 @@ to prevent infinite recursion."
                           (nth 3 init))))
                  (t
                   (condition-case err
-                      (eval (nth 0 init))
+                      (eval (nth 0 init) t)
                     (error (progn
 			     (ergoemacs-warn "%s while evaluating %s" err (nth 0 init))
 			     (debug err))))
