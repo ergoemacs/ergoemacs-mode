@@ -1593,9 +1593,7 @@ by `ergoemacs-maximum-number-of-files-to-open'.
     (when do-it
       (cond
        ((eq system-type 'windows-nt)
-        (dolist (f-path my-file-list)
-          (w32-shell-execute
-           "open" (replace-regexp-in-string "/" "\\" f-path t t))))
+        (ergoemacs :w32-shell-open-files my-file-list))
        ((eq system-type 'darwin)
         (dolist (f-path my-file-list)
           (shell-command (format "open \"%s\"" f-path))))
@@ -1609,7 +1607,7 @@ by `ergoemacs-maximum-number-of-files-to-open'.
   (interactive)
   (cond
    ((eq system-type 'windows-nt)
-    (w32-shell-execute "explore" (replace-regexp-in-string "/" "\\" default-directory t t)))
+    (ergoemacs :w32-shell-execute "explore" (replace-regexp-in-string "/" "\\" default-directory t t)))
    ((eq system-type 'darwin) (shell-command "open ."))
    ((eq system-type 'gnu/linux)
     (let ((process-connection-type nil))
@@ -2434,7 +2432,7 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
                       ((eq major-mode 'eshell-mode) "*eshell@")
                       (t (replace-regexp-in-string "\\([*][^@]*[@]\\).*" "\\1" (buffer-name) t)))
                      (if (eq system-type 'windows-nt)
-                         (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
+                         (ergoemacs :w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
                        (abbreviate-file-name default-directory)) "*")))
     (unless (string= nbn (buffer-name))
       (setq nbn (generate-new-buffer-name nbn))
@@ -2475,7 +2473,7 @@ Sends shell prompt string to process, then turns on
   (let* ((shell (or shell-program 'shell))
          (buf-prefix (or buffer-prefix (symbol-name shell)))
          (name (concat "*" buf-prefix "@" (if (eq system-type 'windows-nt)
-                                              (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
+                                              (ergoemacs :w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
                                             (abbreviate-file-name default-directory)) "*")))
     (set-buffer (get-buffer-create name))
     (funcall shell name)))
@@ -2499,7 +2497,7 @@ Sends shell prompt string to process, then turns on
   (interactive)
   (let* ((eshell-buffer-name
           (concat "*eshell@" (if (eq system-type 'windows-nt)
-                                 (w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
+                                 (ergoemacs :w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues
                                (abbreviate-file-name default-directory)) "*"))
          (eshell-exists-p (get-buffer eshell-buffer-name)))
     (if eshell-exists-p
