@@ -1,5 +1,4 @@
 ;;; ergoemacs-command-loop.el --- Keyboard translation functions -*- lexical-binding: t -*-
-
 ;; Copyright © 2013-2016  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-command-loop.el
@@ -219,13 +218,17 @@ Returns the mode-line text."
        (ergoemacs-mode-line)
        nil)))))
 
+(defun ergoemacs-command-loop--match-buffer-name-p (reg)
+  "Determine if the REG is found in `buffer-name'."
+  (and (stringp (buffer-name))
+       (string-match reg (buffer-name))))
+
 (defun ergoemacs-command-loop--modal-p ()
   "Determine if the command should be modal.
 If so return the translation."
   (if (not ergoemacs-command-loop--modal-stack) nil
     (let* ((translation (nth 0 ergoemacs-command-loop--modal-stack))
            (always)
-	   tmp
            ret)
       (when (ergoemacs-translation-struct-p translation)
         (setq always (ergoemacs-translation-struct-modal-always translation))
@@ -237,8 +240,8 @@ If so return the translation."
          ((and (not always)
                (catch 'match-modal
                  (dolist (reg ergoemacs-modal-ignored-buffers)
-                   ((when (and (setq tmp (buffer-name)) (stringp tmp) (string-match reg tmp))
-                     (throw 'match-modal t))))
+                   (when (ergoemacs-command-loop--match-buffer-name-p reg)
+                     (throw 'match-modal t)))
                  nil)))
          (t
           (setq ret translation))))
@@ -808,8 +811,7 @@ KEYS is the keys information"
 
 (defun ergoemacs-command--echo-prefix ()
   "Echos prefix keys in the ergoemacs-mode way."
-  (let ((keys (this-single-command-keys))
-	ret timeout)
+  (let ((keys (this-single-command-keys)))
     (when (and ergoemacs-command--timeout-timer
 	       (not (equal keys ergoemacs-command--timeout-keys)))
       (cancel-timer ergoemacs-command--timeout-timer)
@@ -817,8 +819,8 @@ KEYS is the keys information"
 	    ergoemacs-command--timeout-timer nil))
     (unless (or (equal [] keys)
 		(ergoemacs-command-loop-p))
-      (when (ergoemacs-keymapp (setq ret (key-binding keys)))
-	(when (setq timeout (key-binding (vconcat keys [ergoemacs-timeout])))
+      (when (ergoemacs-keymapp (key-binding keys))
+	(when (key-binding (vconcat keys [ergoemacs-timeout]))
 	  (cond
 	   ((eq ergoemacs-handle-ctl-c-or-ctl-x 'only-copy-cut) 
 	    (push 'ergoemacs-timeout unread-command-events))
