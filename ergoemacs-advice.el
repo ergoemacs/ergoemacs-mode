@@ -1,6 +1,6 @@
 ;;; ergoemacs-advice.el --- Ergoemacs advices -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2015  Free Software Foundation, Inc.
+;; Copyright © 2013-2021  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-advice.el
 ;; Description:

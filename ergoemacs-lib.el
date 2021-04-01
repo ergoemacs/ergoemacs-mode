@@ -1,6 +1,6 @@
 ;;; ergoemacs-lib.el --- Ergoemacs libraries -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2015  Free Software Foundation, Inc.
+;; Copyright © 2013-2021  Free Software Foundation, Inc.
 
 ;; Author: Matthew L. Fidler, Xah Lee
 ;; Maintainer:

@@ -1,6 +1,6 @@
 ;;; ergoemacs-macros.el --- Macros for ergoemacs-mode -*- lexical-binding: t -*-
 
-;; Copyright © 2013, 2014  Free Software Foundation, Inc.
+;; Copyright © 2013-2021  Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
