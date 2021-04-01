@@ -29,7 +29,7 @@
 
 ;;; Code:
 (eval-when-compile 
-  (require 'cl)
+  (require 'cl-lib)
   (require 'ergoemacs-macros))
 
 (declare-function ergoemacs-theme-component--create-component "ergoemacs-theme")

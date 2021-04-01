@@ -29,11 +29,13 @@
 ;;; Code:
 
 (eval-when-compile 
-  (require 'cl)
+  (require 'cl-lib)
   (require 'ergoemacs-macros))
 
 (declare-function ergoemacs-translate--keymap "ergoemacs-translate")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
+
+(declare-function icy-mode "icy-mode")
 
 (defvar ergoemacs-translate--parent-map)
 (defvar ergoemacs-map--)
@@ -1156,41 +1158,42 @@ Should test issue #142"
 (ert-deftest ergoemacs-test-397-test-4 ()
   "Test M-s is switch pane."
   :tags '(:slow :icicles :interactive)
-  (let* ((emacs-exe (ergoemacs-emacs-exe))
-         (w-file (expand-file-name "global-test" ergoemacs-dir))
-         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
-    (with-temp-file temp-file
-      (insert "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) "\")"
-	      "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "icicles"))) "\")"
-       "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
-              (or (and (boundp 'wait-for-me)
-                       "(setq debug-on-error t debug-on-quit t)") "")
-	      "(setq ergoemacs-theme nil)"
-	      "(setq ergoemacs-keyboard-layout \"us\")"
-	      "(require 'icicles)\n"
-	      "(require 'ergoemacs-mode)\n"
-              "(ergoemacs-mode 1)\n"
-	      "(setq icicle-search-key-prefix (kbd \"C-f\"))\n"
-	      "(icy-mode 1)\n"
-              "(when (eq (key-binding (kbd \"M-s\")) 'ergoemacs-move-cursor-next-pane)\n"
-              "(with-temp-file \"" w-file "\")\n"
-              "   (message \"Passed\")"
-              "  (insert \"Found\"))\n"
-              (or (and (boundp 'wait-for-me) "")
-                  "(kill-emacs)")))
-    (byte-compile-file temp-file)
-    (message "%s"
-             (shell-command-to-string
-              (format "%s %s -Q -l %s"
-                      emacs-exe (if (boundp 'wait-for-me) "-debug-init" "--batch")                      
-                      temp-file)))
-    (should (file-exists-p w-file))
-    (when  (file-exists-p temp-file)
-      (delete-file temp-file))
-    (when  (file-exists-p (concat temp-file "c"))
-      (delete-file (concat temp-file "c")))
-    (when (file-exists-p w-file)
-      (delete-file w-file))))
+  (if (not (locate-library "icicles")) (should t)
+    (let* ((emacs-exe (ergoemacs-emacs-exe))
+           (w-file (expand-file-name "global-test" ergoemacs-dir))
+           (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+      (with-temp-file temp-file
+	(insert "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) "\")"
+		"(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "icicles"))) "\")"
+		"(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+		(or (and (boundp 'wait-for-me)
+			 "(setq debug-on-error t debug-on-quit t)") "")
+		"(setq ergoemacs-theme nil)"
+		"(setq ergoemacs-keyboard-layout \"us\")"
+		"(require 'icicles)\n"
+		"(require 'ergoemacs-mode)\n"
+		"(ergoemacs-mode 1)\n"
+		"(setq icicle-search-key-prefix (kbd \"C-f\"))\n"
+		"(icy-mode 1)\n"
+		"(when (eq (key-binding (kbd \"M-s\")) 'ergoemacs-move-cursor-next-pane)\n"
+		"(with-temp-file \"" w-file "\")\n"
+		"   (message \"Passed\")"
+		"  (insert \"Found\"))\n"
+		(or (and (boundp 'wait-for-me) "")
+                    "(kill-emacs)")))
+      (byte-compile-file temp-file)
+      (message "%s"
+               (shell-command-to-string
+		(format "%s %s -Q -l %s"
+			emacs-exe (if (boundp 'wait-for-me) "-debug-init" "--batch")                      
+			temp-file)))
+      (should (file-exists-p w-file))
+      (when  (file-exists-p temp-file)
+	(delete-file temp-file))
+      (when  (file-exists-p (concat temp-file "c"))
+	(delete-file (concat temp-file "c")))
+      (when (file-exists-p w-file)
+	(delete-file w-file)))))
 
 (ert-deftest ergoemacs-test-397-test-2 ()
   "Test that defining C-SPC after ergoemacs-mode loads will give `set-mark-command'."
@@ -1594,7 +1597,7 @@ Tests Issue #372."
   
   (should (string= (key-description (kbd "M-TAB")) (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-TAB" t) 0) :ctl-to-alt)))))
 
-  (letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) t)))
+  (cl-letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) t)))
     ;; Test M-i -> ^i -> TAB
     (should (string= "<C-i>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
     
@@ -1604,7 +1607,7 @@ Tests Issue #372."
     ;; Test M-m -> ^m -> RET
     (should (string= "<C-m>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-m" t) 0) :ctl-to-alt))))))
 
-  (letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) nil)))
+  (cl-letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) nil)))
     ;; Test M-i -> ^i -> TAB
     (should (string= "TAB" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
     
@@ -1765,48 +1768,49 @@ hash appropriaetly."
 (ert-deftest ergoemacs-test-407 ()
   "Test M-s is switch pane."
   :tags '(:require-input :interactive)
-  (let* ((emacs-exe (ergoemacs-emacs-exe))
-         (w-file (expand-file-name "global-test" ergoemacs-dir))
-         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
-    (with-temp-file temp-file
-      (insert "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) "\")"
-	      "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "icicles"))) "\")"
-       "(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
-              (or (and (boundp 'wait-for-me)
-                       "(setq debug-on-error t debug-on-quit t)") "")
-	      "(setq ergoemacs-theme nil)"
-	      "(setq ergoemacs-keyboard-layout \"us\")"
-	      "(require 'ergoemacs-mode)\n"
-              "(ergoemacs-mode 1)\n"
-	      "(require 'icicles)\n"
-	      "(icy-mode 1)\n"
-              "(ergoemacs-theme-component reclaim-C-f ()\n"
-              "  \"We need to give at least one sequence to reclaim C-f from isearch and get the new icicle-search-key-prefix picked up.\"\n"
-	      "(global-set-key (kbd \"C-f .\") 'isearch-forward-symbol-at-point))"
-              "(ergoemacs-require 'reclaim-C-f)"
-              "(setq icicle-search-key-prefix (kbd \"C-f\"))"
-	      "(ergoemacs-package smart-mode-line :ensure t (sml/setup))"
-              "(ergoemacs-package srefactor :ensure t)"
-              "(ergoemacs-package virtualenvwrapper :ensure t)"
-	      "(defun test-freeze ()\n"
-	      "(interactive)\n"
-	      "(yes-or-no-p \"Are you sure you want to remove this file? \"))"
-	      "(global-set-key (kbd \"C-1\") 'test-freeze)"
-	      "(insert \"Try C-1 to see if emacs freezes.\\nThen try M-a test-freeze.\\nM-a calc, do something and then exit with q it should exit\nMake sure M-o goes forward word in icy ergoemacs-mode.\")"
-              ;; (or (and (boundp 'wait-for-me) "")
-              ;;     "(kill-emacs)")
-	      ))
-    (byte-compile-file temp-file)
-    (message "%s"
-             (shell-command-to-string
-              (format "%s %s -Q -l %s"
-                      emacs-exe "-debug-init"                      
-                      temp-file)))
-    
-    (when  (file-exists-p temp-file)
-      (delete-file temp-file))
-    (when  (file-exists-p (concat temp-file "c"))
-      (delete-file (concat temp-file "c")))))
+  (if (not (locate-library "icicles")) (should t)
+    (let* ((emacs-exe (ergoemacs-emacs-exe))
+           (w-file (expand-file-name "global-test" ergoemacs-dir))
+           (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
+      (with-temp-file temp-file
+	(insert "(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))) "\")"
+		"(add-to-list 'load-path \"" (expand-file-name (file-name-directory (locate-library "icicles"))) "\")"
+		"(eval-when-compile (require 'ergoemacs-macros) (require 'cl))"
+		(or (and (boundp 'wait-for-me)
+			 "(setq debug-on-error t debug-on-quit t)") "")
+		"(setq ergoemacs-theme nil)"
+		"(setq ergoemacs-keyboard-layout \"us\")"
+		"(require 'ergoemacs-mode)\n"
+		"(ergoemacs-mode 1)\n"
+		"(require 'icicles)\n"
+		"(icy-mode 1)\n"
+		"(ergoemacs-theme-component reclaim-C-f ()\n"
+		"  \"We need to give at least one sequence to reclaim C-f from isearch and get the new icicle-search-key-prefix picked up.\"\n"
+		"(global-set-key (kbd \"C-f .\") 'isearch-forward-symbol-at-point))"
+		"(ergoemacs-require 'reclaim-C-f)"
+		"(setq icicle-search-key-prefix (kbd \"C-f\"))"
+		"(ergoemacs-package smart-mode-line :ensure t (sml/setup))"
+		"(ergoemacs-package srefactor :ensure t)"
+		"(ergoemacs-package virtualenvwrapper :ensure t)"
+		"(defun test-freeze ()\n"
+		"(interactive)\n"
+		"(yes-or-no-p \"Are you sure you want to remove this file? \"))"
+		"(global-set-key (kbd \"C-1\") 'test-freeze)"
+		"(insert \"Try C-1 to see if emacs freezes.\\nThen try M-a test-freeze.\\nM-a calc, do something and then exit with q it should exit\nMake sure M-o goes forward word in icy ergoemacs-mode.\")"
+		;; (or (and (boundp 'wait-for-me) "")
+		;;     "(kill-emacs)")
+		))
+      (byte-compile-file temp-file)
+      (message "%s"
+               (shell-command-to-string
+		(format "%s %s -Q -l %s"
+			emacs-exe "-debug-init"                      
+			temp-file)))
+      
+      (when  (file-exists-p temp-file)
+	(delete-file temp-file))
+      (when  (file-exists-p (concat temp-file "c"))
+	(delete-file (concat temp-file "c"))))))
 
 ;;; minibuffer tests...
 ;;; Related to: http://emacs.stackexchange.com/questions/10393/how-can-i-answer-a-minibuffer-prompt-from-elisp

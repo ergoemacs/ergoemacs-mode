@@ -908,7 +908,7 @@ When DROP is non-nil, drop any found maps from `ergoemacs-map-properties--known-
 	;; (message "%s" map-list)
 	ergoemacs-map-properties--get-or-generate-map-key))))))
 
-(defun ergoemacs-map-properties--label (keymap &optional map-key struct)
+(defun ergoemacs-map-properties--label (keymap &optional map-key struct-in)
   "Label an `ergoemacs-mode' touched KEYMAP.
 MAP-KEY is the identifier of the map name.
 STRUCT is the keymap structure for the current map."
@@ -920,8 +920,7 @@ STRUCT is the keymap structure for the current map."
 	(error "Will not label a composed map's members to %s" map-key))
        (t
 	(let* ((breadcrumb-base ergoemacs-map--breadcrumb)
-	       (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
-	       (comp (plist-get struct :composed))
+	       (comp (plist-get (or struct-in (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct))  :composed))
 	       (comp-list (ergoemacs-map-properties--composed-list keymap))
 	       from-prop-p
 	       (i 0))
@@ -946,14 +945,13 @@ STRUCT is the keymap structure for the current map."
      (t
       (let* ((map keymap)
 	     (map-key (or map-key
-			  (plist-get struct :map-key)
+			  (plist-get struct-in :map-key)
 			  (ergoemacs-map-properties--get-or-generate-map-key map)))
 	     char-table
 	     indirect-p
 	     old-plist
 	     (breadcrumb-base ergoemacs-map--breadcrumb)
 	     (parent (keymap-parent map))
-	     (struct (or struct (ergoemacs-gethash map-key ergoemacs-map-properties--key-struct)))
 	     label tmp1 tmp2)
 	(unwind-protect
 	    (progn
@@ -992,13 +990,6 @@ STRUCT is the keymap structure for the current map."
 		  (push char-table map))
 		(push 'keymap map)))
           (when parent
-	    ;; (if (and breadcrumb-base (not (string= breadcrumb-base "")))
-	    ;; 	(setq ergoemacs-map--breadcrumb (concat breadcrumb-base "-parent"))
-	    ;;   (when (setq ergoemacs-map-properties--breadcrumb (gethash map-key ergoemacs-breadcrumb-hash))
-	    ;; 	(setq ergoemacs-map-properties--breadcrumb (format "%s-parent" ergoemacs-map-properties--breadcrumb))
-	    ;; 	;; (message "Set %s!" ergoemacs-map-properties--breadcrumb)
-	    ;; 	))
-	    ;; (ergoemacs :label parent nil (plist-get struct :parent))
 	    (set-keymap-parent map parent)
 	    (setq ergoemacs-map--breadcrumb breadcrumb-base)))
 	(if indirect-p
