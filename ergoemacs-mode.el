@@ -848,7 +848,7 @@ Valid values are:
   "Display Options for `ergoemacs-mode'."
   :group 'ergoemacs-mode)
 
-(define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters)
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-char 'ergoemacs-display-unicode-characters "Ergoemacs-v5.16")
 
 (defcustom ergoemacs-display-unicode-characters t
   "Use unicode characters when available."
@@ -866,7 +866,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys)
+(define-obsolete-variable-alias 'ergoemacs-use-unicode-brackets 'ergoemacs-display-use-unicode-brackets-around-keys "Ergoemacs-v5.16")
 
 (defcustom ergoemacs-display-use-unicode-brackets-around-keys t
   "Use unicode brackets."
@@ -875,7 +875,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-use-small-symbols 'ergoemacs-display-small-symbols-for-key-modifiers)
+(define-obsolete-variable-alias 'ergoemacs-use-small-symbols 'ergoemacs-display-small-symbols-for-key-modifiers "Ergoemacs-v5.16")
 
 (defcustom ergoemacs-display-small-symbols-for-key-modifiers nil
   "Use small symbols to represent alt+ ctl+ on windows/linux."
@@ -884,7 +884,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-capitalize-keys 'ergoemacs-display-capitalize-keys)
+(define-obsolete-variable-alias 'ergoemacs-capitalize-keys 'ergoemacs-display-capitalize-keys "Ergoemacs-v5.16")
 
 (defcustom ergoemacs-display-capitalize-keys 'with-modifiers
   "Capitalize keys like Ctrl+C.
@@ -897,7 +897,7 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p)
+(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p "Ergoemacs-v5.16")
 
 (defcustom ergoemacs-display-key-use-face-p t
   "Use a button face for keys."
@@ -953,7 +953,7 @@ Valid values are:
   "Options for `ergoemacs-command-loop'."
   :group 'ergoemacs-mode)
 
-(define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character)
+(define-obsolete-variable-alias 'ergoemacs-read-blink 'ergoemacs-command-loop-blink-character "Ergoemacs-v5.16")
 
 (defcustom ergoemacs-command-loop-blink-character (ergoemacs :unicode-or-alt "•" "·" "-")
   "Blink character."
@@ -962,14 +962,14 @@ Valid values are:
           (const :tag "No cursor" nil))
   :group 'ergoemacs-command-loop)
 
-(define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate)
+(define-obsolete-variable-alias 'ergoemacs-read-blink-timeout 'ergoemacs-command-loop-blink-rate "Ergoemacs-v5.16")
 
 (defcustom ergoemacs-command-loop-blink-rate 0.4
   "Rate that the ergoemacs-command loop cursor blinks."
   :type 'number
   :group 'ergoemacs-command-loop)
 
-(define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation)
+(define-obsolete-variable-alias 'ergoemacs-read-swaps 'ergoemacs-command-loop-swap-translation "Ergoemacs-v5.16")
 
 (defcustom ergoemacs-command-loop-swap-translation
   '(((:normal :normal) :unchorded-ctl)
@@ -1031,7 +1031,7 @@ Valid values are:
   :type '(repeat string)
   :group 'ergoemacs-modal)
 
-(define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color)
+(define-obsolete-variable-alias 'ergoemacs-default-cursor 'ergoemacs-default-cursor-color "Ergoemacs-v5.16")
 
 (defcustom ergoemacs-default-cursor-color nil
   "Default cursor color.

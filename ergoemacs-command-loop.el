@@ -107,7 +107,7 @@
 (defvar ergoemacs-command-loop--mark-active nil
   "Determines if mark was active before ergoemacs command loop.")
 
-(define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions)
+(define-obsolete-variable-alias 'ergoemacs-universal-fns 'ergoemacs-command-loop--universal-functions "Ergoemacs-v5.16")
 
 
 (defvar ergoemacs-command-loop--universal-functions '(universal-argument ergoemacs-universal-argument ergoemacs-command-loop--universal-argument)
@@ -132,7 +132,7 @@
 
 (defvar ergoemacs-command-loop--help-last-key nil)
 
-(define-obsolete-variable-alias 'ergoemacs-read-key-delay 'ergoemacs-command-loop--decode-event-delay)
+(define-obsolete-variable-alias 'ergoemacs-read-key-delay 'ergoemacs-command-loop--decode-event-delay "Ergoemacs-v5.16")
 
 (defvar ergoemacs-command-loop--decode-event-delay 0.01
   "Timeout for `ergoemacs-command-loop--decode-event'.
