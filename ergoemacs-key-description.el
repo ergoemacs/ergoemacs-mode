@@ -194,14 +194,15 @@ MOD ar the modifiers applied to the key."
       (setq ret (upcase (symbol-name key))))
      (t
       (setq ret (format "%s" key))))
+    (setq ret (concat (copy-sequence ret) " "))
     (when (and ergoemacs-display-key-use-face-p
                (not ergoemacs-display-small-symbols-for-key-modifiers))
-      (add-text-properties 0 (length ret)
+      (add-text-properties 0 (- (length ret) 1)
                            '(face ergoemacs-display-key-face)
                            ;; Need to make a copy of ret because the
                            ;; (length ret) call makes it sometimes
                            ;; immutable
-                           (copy-sequence ret)))
+                           ret))
     ret))
 
 (defun ergoemacs-key-description--modifier (mod)
@@ -350,7 +351,8 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
             (setq ret (format "%s%s%s" ret
                               (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) " ")
                                   (and ergoemacs-display-use-unicode-brackets-around-keys "")
-                                  " ") tmp)))
+                                  " ")
+			      tmp)))
           (substring ret (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) 1)
                              (and ergoemacs-display-use-unicode-brackets-around-keys 0)
                              1)))))))
