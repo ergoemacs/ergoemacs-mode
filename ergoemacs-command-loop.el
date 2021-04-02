@@ -376,7 +376,7 @@ Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
                (next-key-is-control-meta (control meta))
                (next-key-is-meta-control (control meta))
                (next-key-is-quoted nil)))
-  (eval (macroexpand-all
+  (eval (macroexpand-all    ;FIXME: Why macroexpand-all?
          `(progn
             (defun ,(intern (concat "ergoemacs-command-loop--" (symbol-name (nth 0 arg)))) ()
               ,(format "Ergoemacs function to allow %s to be the emacs modifiers" (nth 1 arg))
@@ -1656,7 +1656,7 @@ instead of `format'."
       (when (eq ergoemacs-message-level ergoemacs-command-loop--spinner-display)      
 	(let* ((string (or (and (listp string)
 				(eq (car string) 'quote)
-				(eval string))
+				(cadr string))
 			   string))
 	       (rest (or (and (listp string)
 			      (concat " " (apply #'format (apply #'ergoemacs-key-description--unicode-char string) args)))
