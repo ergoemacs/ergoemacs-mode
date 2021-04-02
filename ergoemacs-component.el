@@ -44,7 +44,7 @@
 (defvar ergoemacs--last-start-emacs-state-2)
 (defvar ergoemacs--start-emacs-state-2)
 (defvar ergoemacs-component-hash)
-(defvar ergoemacs-display-key-use-face-p)
+(defvar ergoemacs-display-key-use-face)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-map-properties--known-maps)
@@ -863,7 +863,7 @@ LAYOUT is the current keyboard layout.  Defaults to
 (add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-component-struct--add-unbound)
 
 (defun ergoemacs-component-struct--hooks (&optional obj ret)
-  "Gets a list of hooks that need to be defined eor OBJ.
+  "Gets a list of hooks that need to be defined for OBJ.
 
 You can prespecify RET so that new hooks are pushed to the list."
   (let ((obj (ergoemacs-component-struct--lookup-hash (or obj (ergoemacs-theme-components))))
@@ -984,7 +984,8 @@ OBJ is the current object being modified, passed to
                (ergoemacs-component-struct--composed-hook ',hook))
              ;; (push )
              (push ',hook ergoemacs-component-struct--create-hooks)
-             (add-hook ',hook #',(intern (concat "ergoemacs--" (symbol-name hook))))))))
+             (add-hook ',hook #',(intern (concat "ergoemacs--" (symbol-name hook))))))
+    t))
 
 (defun ergoemacs-component-struct--rm-hooks ()
   "Remove hooks.
@@ -1352,7 +1353,7 @@ AT-END will append a \"$\" to the end of the regular expression."
                (commandp tmp))
       (help-xref-button 1 'help-function tmp))
     ;; Add button properties back
-    (when (and tmp ergoemacs-display-key-use-face-p)
+    (when (and tmp ergoemacs-display-key-use-face)
       (setq tmp (point))
       (beginning-of-line)
       (while (and (not (looking-at "Relative To:")) (re-search-forward "\\(.*?\\)[ +]" tmp t))

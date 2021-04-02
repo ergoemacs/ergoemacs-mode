@@ -1323,7 +1323,7 @@ Based on the value of `major-mode' and
 (defun ergoemacs-camelize-method (s &optional char)
   "Convert under_score string S to CamelCase string."
   (mapconcat 'identity (ergoemacs-mapcar-head
-                        '(lambda (word) (downcase word))
+                        #'downcase
                         '(lambda (word) (capitalize (downcase word)))
                         (split-string s (or char "_"))) ""))
 
@@ -2431,7 +2431,7 @@ Guillemet -> quote, degree -> @, s-zed -> ss, upside-down ?! -> ?!."
 (defun ergoemacs-shell-here-directory-change-hook ()
   "Renames buffer to reflect directory name."
   (let ((nbn (concat (cond
-                      ((eq major-mode 'eshell-mode) "*eshell@")
+                      ((derived-mode-p 'eshell-mode) "*eshell@")
                       (t (replace-regexp-in-string "\\([*][^@]*[@]\\).*" "\\1" (buffer-name) t)))
                      (if (eq system-type 'windows-nt)
                          (ergoemacs :w32-long-file-name (abbreviate-file-name default-directory)) ;; Fix case issues

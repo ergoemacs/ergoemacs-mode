@@ -745,7 +745,7 @@ When NAME is a symbol, setup the translation function for the symbol."
        ergoemacs-translation-hash)
     (let ((name-str (and (symbolp name) (substring (symbol-name name) 1))))
       (eval
-       (macroexpand
+       (macroexpand ; Fixme why?
 	`(progn
 	   (defvar ,(intern (concat "ergoemacs-translate--" name-str "-map")) (make-sparse-keymap)
 	     ,(concat "Ergoemacs local map for translation :"
@@ -857,7 +857,8 @@ If TYPE is unspecified, assume :normal translation"
                               ((eq 'ergoemacs-shift e) 'shift)
                               ((eq 'ergoemacs-control e) 'control)
                               (t e)))
-                           e-mod) #'string<))
+                           e-mod)
+			  #'string<))
          (special-p (memq basic (list ?m ?i ?\[)))
          (ambiguous-p (and special-p (memq 'control e-mod)))
          tmp
@@ -883,7 +884,8 @@ If TYPE is unspecified, assume :normal translation"
                  ((and special-p (display-graphic-p)
                        (memq 'control modifiers))
                   (push 'ergoemacs-gui modifiers)))
-                (throw 'found-mod t))) nil)
+                (throw 'found-mod t)))
+	    nil)
       (if ambiguous-p
           (setq ret (ergoemacs-translate--event-convert-list `(control ,@modifiers ,basic)))
         (setq ret (ergoemacs-translate--event-convert-list `(,@modifiers ,basic)))))
@@ -891,23 +893,18 @@ If TYPE is unspecified, assume :normal translation"
 
 (defun ergoemacs-translate--no-gui (event)
   "Remove any gui elements to the EVENT.
-If there are no gui elements, retun nil."
+If there are no gui elements, return nil."
   (if (vectorp event)
-      (eval `(vector ,@(mapcar (lambda(x) (let ((ret (or (ergoemacs-translate--no-gui x) x)))
-					    (if (symbolp ret)
-						`(quote ,ret)
-					      ret))) event)))
+      (apply #'vector (mapcar (lambda(x) (or (ergoemacs-translate--no-gui x) x)) event))
     (let* ((last-event event)
 	   (last-mod (ergoemacs-translate--event-modifiers last-event))
 	   (last-basic-event (ergoemacs-translate--event-basic-type last-event))
-	   new-mod
-	   new-event)
+	   new-mod)
       (when (memq 'ergoemacs-gui last-mod)
 	(dolist (elt last-mod)
 	  (unless (eq elt 'ergoemacs-gui)
 	    (push elt new-mod)))
-	(setq new-event (ergoemacs-translate--event-convert-list `(,@new-mod ,last-basic-event))))
-      new-event)))
+	(ergoemacs-translate--event-convert-list `(,@new-mod ,last-basic-event))))))
 
 (defvar ergoemacs-translate--parent-map nil
   "Parent map for keymaps when completing a key sequence.")

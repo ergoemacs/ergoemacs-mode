@@ -26,6 +26,7 @@
 ;; (require 'guide-key nil t)
 
 (require 'cl-lib)
+(require 'find-func)
 
 (eval-when-compile
   (require 'ergoemacs-macros))
@@ -257,13 +258,13 @@ ergoemacs THEME."
   (unless (member (list option theme type remove) ergoemacs-require)
     (push (list option theme type remove) ergoemacs-require))
   (if ergoemacs-require--ini-p
-      (if (eq (type-of option) 'cons)
+      (if (consp option)
           (dolist (new-option option)
             (let (ergoemacs-mode)
               (ergoemacs-require new-option theme type)))
         (let ((option-sym
                (or (and option (stringp option) (intern option)) option)))
-          (dolist (theme (or (and theme (or (and (eq (type-of theme) 'cons) theme) (list theme)))
+          (dolist (theme (or (and theme (or (and (consp theme) theme) (list theme)))
                              (ergoemacs-theme--list)))
             (let ((theme-plist (ergoemacs-gethash (if (and theme (stringp theme)) theme
                                                     (symbol-name theme))
@@ -352,7 +353,8 @@ All other modes are assumed to be minor modes or unimportant.
                 (push first all))
               (push (list elt 'menu-item
                           name
-                          elt) ret))
+                          elt)
+		    ret))
             (push (downcase (symbol-name elt)) added-modes)
             (push elt modes)))))
     (dolist (elt (append
@@ -373,7 +375,8 @@ All other modes are assumed to be minor modes or unimportant.
                 (push first all))
               (push (list (cdr elt) 'menu-item
                           name
-                          (cdr elt)) ret))
+                          (cdr elt))
+		    ret))
             (push (downcase (symbol-name (cdr elt))) added-modes)
             (push (cdr elt) modes)))))
     (setq modes (sort ret (lambda(x1 x2) (string< (downcase (nth 2 x2))

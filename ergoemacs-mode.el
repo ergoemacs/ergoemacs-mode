@@ -897,9 +897,9 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face 'ergoemacs-display-key-use-face-p "Ergoemacs-v5.16")
+(define-obsolete-variable-alias 'ergoemacs-pretty-key-use-face-p 'ergoemacs-display-key-use-face "Ergoemacs-v5.16")
 
-(defcustom ergoemacs-display-key-use-face-p t
+(defcustom ergoemacs-display-key-use-face t
   "Use a button face for keys."
   :type 'boolean
   :set #'ergoemacs-set-default

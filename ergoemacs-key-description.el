@@ -51,7 +51,7 @@
 (defvar ergoemacs-use-unicode-symbols)
 (defvar ergoemacs-display-unicode-characters)
 (defvar ergoemacs-display-capitalize-keys)
-(defvar ergoemacs-display-key-use-face-p)
+(defvar ergoemacs-display-key-use-face)
 (defvar ergoemacs-display-small-symbols-for-key-modifiers)
 (defvar ergoemacs-display-use-unicode-brackets-around-keys)
 (defvar ergoemacs-display-without-brackets nil
@@ -194,10 +194,10 @@ MOD ar the modifiers applied to the key."
       (setq ret (upcase (symbol-name key))))
      (t
       (setq ret (format "%s" key))))
-    (setq ret (concat (copy-sequence ret) " "))
-    (when (and ergoemacs-display-key-use-face-p
+    (setq ret (concat (copy-sequence ret) ""))
+    (when (and ergoemacs-display-key-use-face
                (not ergoemacs-display-small-symbols-for-key-modifiers))
-      (add-text-properties 0 (- (length ret) 1)
+      (add-text-properties 0 (length ret)
                            '(face ergoemacs-display-key-face)
                            ;; Need to make a copy of ret because the
                            ;; (length ret) call makes it sometimes
@@ -267,10 +267,10 @@ MOD ar the modifiers applied to the key."
       (setq ret (format "%sWin+" (ergoemacs :unicode-or-alt "⊞" "#"))))
      (t
       (setq ret (format "%s+" mod))
-      (when ergoemacs-display-key-use-face-p
+      (when ergoemacs-display-key-use-face
         (add-text-properties 0 (- (length ret) 1)
                              '(face ergoemacs-display-key-face) ret))))
-    (when (and ergoemacs-display-key-use-face-p
+    (when (and ergoemacs-display-key-use-face
                (not ergoemacs-display-small-symbols-for-key-modifiers))
       (add-text-properties 0 (- (length ret) 1)
                            '(face ergoemacs-display-key-face) ret))
@@ -292,7 +292,7 @@ MOD ar the modifiers applied to the key."
   "Create pretty keyboard bindings for menus.
 KBD is the keyboard code, LAYOUT is the keyboard layout."
   (let ((ergoemacs-display-without-brackets t)
-        (ergoemacs-display-key-use-face-p nil)
+        (ergoemacs-display-key-use-face nil)
         (ergoemacs-display-small-symbols-for-key-modifiers nil))
     (ergoemacs-key-description kbd layout)))
 
@@ -336,24 +336,24 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
                   (push m tmp)))
 	      (setq mod tmp))
             (setq tmp (format "%s%s%s%s"
-                              (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) "")
+                              (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face) "")
                                   (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs :unicode-or-alt "【" "["))
                                   "[")
                               (mapconcat #'ergoemacs-key-description--modifier
                                          mod "")
                               (ergoemacs-key-description--key ev mod)
-                              (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) "")
+                              (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face) "")
                                   (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs :unicode-or-alt "】" "]"))
                                   "]")))
-            (when (and ergoemacs-display-small-symbols-for-key-modifiers ergoemacs-display-key-use-face-p)
+            (when (and ergoemacs-display-small-symbols-for-key-modifiers ergoemacs-display-key-use-face)
               (add-text-properties 0 (length tmp)
                                    '(face ergoemacs-display-key-face) tmp))
             (setq ret (format "%s%s%s" ret
-                              (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) " ")
+                              (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face) " ")
                                   (and ergoemacs-display-use-unicode-brackets-around-keys "")
                                   " ")
 			      tmp)))
-          (substring ret (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face-p) 1)
+          (substring ret (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face) 1)
                              (and ergoemacs-display-use-unicode-brackets-around-keys 0)
                              1)))))))
 
