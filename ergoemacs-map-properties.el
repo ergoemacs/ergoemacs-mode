@@ -561,7 +561,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 	(unless (equal icicle-search-key-prefix "\M-s\M-s")
 	  (ergoemacs :define-key new-map icicle-search-key-prefix icicle-search-map))
 	(when (and (boundp 'icicle-top-level-key-bindings) (custom-variable-p 'icicle-top-level-key-bindings))
-	  (setq standard (eval (car (get 'icicle-top-level-key-bindings 'standard-value))))
+	  (setq standard (eval (car (get 'icicle-top-level-key-bindings 'standard-value)) t))
 	  ;; After determine if anything has changed...
 	  ;; Lifted partially from icicles
 	  (dolist (key-def  icicle-top-level-key-bindings)
@@ -569,7 +569,7 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 	      (setq key        (car key-def)
 		    command    (cadr key-def)
 		    condition  (car (cddr key-def)))
-	      (when (eval condition)
+	      (when (eval condition t)
 		(if (symbolp key)
 		    (icicle-remap key command new-map (current-global-map))
 		  (ergoemacs :define-key new-map key command))))))

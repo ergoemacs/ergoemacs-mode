@@ -753,7 +753,8 @@ When NAME is a symbol, setup the translation function for the symbol."
 		      " while completing a key sequence."))
 	   (define-obsolete-variable-alias ',(intern (concat "ergoemacs-" name-str "-translation-local-map"))
              ',(intern (concat "ergoemacs-translate--" name-str "-map"))
-	     "Ergoemacs-v5.16"))))
+	     "Ergoemacs-v5.16")))
+       t)
       (ergoemacs-map-properties--label-map (intern (concat "ergoemacs-translate--" name-str "-map")) t)
       (ergoemacs (symbol-value (intern (concat "ergoemacs-translate--" name-str "-map"))) :only-local-modifications-p t)
       ;; 

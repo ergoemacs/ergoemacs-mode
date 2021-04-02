@@ -1825,7 +1825,7 @@ hash appropriaetly."
 	      0.05 nil
 	      (lambda()
 		(throw 'found-key (mapcar (lambda(key) (if (consp key)
-                                                           (key-binding (eval key))
+                                                           (key-binding (eval key t))
                                                          (key-binding key)))
 					  ',keys)))))
 	 ,minibuffer-call)

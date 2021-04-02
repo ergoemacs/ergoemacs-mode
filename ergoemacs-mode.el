@@ -785,7 +785,7 @@ not be useful.  However instead of using
 (defun ergoemacs-load-aliases ()
   "Load aliases defined in `ergoemacs-aliases'."
   (dolist (x ergoemacs-aliases)
-    (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))))))
+    (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))) t)))
 
 (autoload 'ergoemacs-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme-component "ergoemacs-macros")
