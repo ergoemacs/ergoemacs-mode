@@ -24,6 +24,8 @@ TRAVIS_FILE=.travis.yml
          test test-interactive clean edit test-dep-1 test-dep-2 test-dep-3     \
          test-dep-4 test-dep-5 test-dep-6 test-dep-7 test-dep-8 test-dep-9
 
+.DEFAULT_GOAL = compile
+
 24.1 :
 	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.1\bin\emacs.exe")
 
