@@ -71,11 +71,6 @@
 (declare-function ergoemacs-map-- "ergoemacs-map")
 (declare-function ergoemacs-map--modify-active "ergoemacs-map")
 
-(declare-function ergoemacs-require "ergoemacs-lib")
-
-(declare-function ergoemacs-theme--get-version "ergoemacs-theme")
-(declare-function ergoemacs-theme-set-version "ergoemacs-theme")
-
 (declare-function ergoemacs-translate--event-mods "ergoemacs-translate")
 (declare-function ergoemacs-translate--quail-to-ergoemacs "ergoemacs-translate")
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
@@ -212,7 +207,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
               ;; Make sure the copy functions don't think the last
               ;; command was a copy.
               last-command 'ergoemacs-test)
-        (ergoemacs-theme-set-version ,(or (plist-get plist ':version) nil))
         (unless (and (equal old-ergoemacs-theme ergoemacs-theme)
                      (equal old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
                      (equal old-version (ergoemacs :current-vresion)))
@@ -232,7 +226,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                 ;; kill-ring old-kill
                 ;; kill-ring-yank-pointer old-pointer
                 )
-          (ergoemacs-theme-set-version old-version)
           (when reset-ergoemacs
             (ergoemacs-mode-reset)))))))
 

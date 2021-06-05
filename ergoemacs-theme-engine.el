@@ -134,21 +134,6 @@ This respects `ergoemacs-theme-options'."
     components))
 
 ;;;###autoload
-(defun ergoemacs-theme-set-version (version)
-  "Sets the current themes default VERSION"
-  (let (found)
-    (setq ergoemacs-theme-version
-          (mapcar
-           (lambda(elt)
-             (if (not (equal (ergoemacs :current-theme) (nth 0 elt)))
-                 elt
-               (setq found t)
-               (list (ergoemacs :current-theme) version)))
-           ergoemacs-theme-version))
-    (unless found
-      (push (list (ergoemacs :current-theme) version) ergoemacs-theme-version))))
-
-;;;###autoload
 (defun ergoemacs-theme-option-off (option &optional no-custom)
   "Turns OPTION off.
 Uses `ergoemacs-theme-option-on'."
