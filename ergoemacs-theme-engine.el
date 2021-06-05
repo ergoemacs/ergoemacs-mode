@@ -69,7 +69,6 @@
 (declare-function ergoemacs-save "ergoemacs-lib")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
 (declare-function ergoemacs-component-struct--component-description "ergoemacs-component")
-(declare-function ergoemacs-component-struct--versions "ergoemacs-component")
 (declare-function ergoemacs-layouts--menu "ergoemacs-layouts")
 (declare-function ergoemacs-component-at-point "ergoemacs-component")
 (declare-function ergoemacs-component-find-1 "ergoemacs-component")
