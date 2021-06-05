@@ -322,9 +322,7 @@ When AT-END is non-nil, append a $ to the regular expression."
   "Define menus for current THEME."
   `(keymap
     ,(ergoemacs-layouts--menu)
-    (ergoemacs-theme-sep "--")
     ,(ergoemacs-theme--menu-options theme)
-    (ergoemacs-c-x-sep "--")
     (c-v
      menu-item "Paste behavior"
      (keymap
