@@ -396,8 +396,8 @@ It takes the following arguments:
     (unless (ergoemacs lookup-keymap :installed-p)
       (let ((ret (make-sparse-keymap))
             tmp composed-list local-unbind-list bound-keys i key2)
-        (ergoemacs-cache (and lookup-key (intern (format "%s-%s-composed-key" lookup-key
-                                                         (ergoemacs lookup-keymap :map-key))))
+        ;; This used to have caching.  It causes infinite loops in
+        ;; mu4e for reasons that are hard to figure out.
           (unless only-modify-p
             (ergoemacs-timing lookup-keymap
               (ergoemacs-map-keymap
@@ -436,7 +436,7 @@ It takes the following arguments:
                lookup-keymap))
             (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-mode (intern ergoemacs-keyboard-layout))))
           (setq tmp (ergoemacs-component-struct--lookup-list lookup-keymap) composed-list (or (and ret (or (and tmp (append tmp (list ret))) (list ret))) tmp))
-          (list composed-list local-unbind-list ret))))))
+          (list composed-list local-unbind-list ret)))))
 
 (defun ergoemacs-map--puthash (key new &optional table)
   "Associate KEY with a list including NEW in TABLE."
