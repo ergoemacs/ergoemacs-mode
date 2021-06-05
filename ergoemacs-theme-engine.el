@@ -175,27 +175,13 @@ If OFF is non-nil, turn off the options instead."
     (ergoemacs-theme-option-on option)))
 
 
-(defun ergoemacs-theme--list (&optional silent)
-  "Gets the list of themes.
-When SILENT is true, also include silent themes"
-  (let (ret)
-    ;; All this is done to copy lists so that sorts will not
-    ;; destroy the final list.  Please keep this here so that errors
-    ;; will not be introduced (seems silly)
-    (setq ret (mapcar (lambda(x) x)
-           (or (and silent
-                    (append (ergoemacs-gethash "defined-themes" ergoemacs-theme-hash)
-                            (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash)))
-               (ergoemacs-gethash "defined-themes" ergoemacs-theme-hash))))
-    ret))
-
 (defun ergoemacs-theme--custom-documentation (&optional themes ini)
   "Get list of all known layouts and their documentation.
 
 THEMES is the list of themes for the customize documentation.
 
 INI is provided for initilazation, to shorten the descriptions."
-  (let ((themes (or themes (sort (ergoemacs-theme--list) 'string<))))
+  (let ((themes (list "standard")))
     (mapconcat
      (lambda(theme)
        (if ini
@@ -210,13 +196,13 @@ INI is provided for initilazation, to shorten the descriptions."
     ,@(mapcar
        (lambda(elt)
          `(const :tag ,elt :value ,elt))
-       (sort (ergoemacs-theme--list t) 'string<))))
+       (list "standard"))))
 
 (defun ergoemacs-theme--regexp (&optional at-end)
   "Return a regexp of `ergoemacs-mode' themes.
 When AT-END is non-nil, append a $ to the regular expression."
   (let (ret)
-    (setq ret (regexp-opt (ergoemacs-theme--list t) 'symbols))
+    (setq ret (regexp-opt (list "standard") 'symbols))
     (when at-end
       (setq ret (concat ret "$")))
     ret))

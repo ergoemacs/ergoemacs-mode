@@ -67,7 +67,6 @@
 (defvar ergoemacs-command-loop--universal-functions)
 
 (declare-function ergoemacs-layouts--list "ergoemacs-layouts")
-(declare-function ergoemacs-theme--list "ergoemacs-theme-engine")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 (declare-function ergoemacs-theme--custom-documentation "ergoemacs-theme-engine")
@@ -1082,8 +1081,7 @@ If there are no gui elements, retun nil."
   (let ((layouts (or (and all-layouts (sort (ergoemacs-layouts--list) 'string<))
                      (and (eq (ergoemacs :layout) 'ergoemacs-layout-us) (list "us"))
                      (list "us" ergoemacs-keyboard-layout)))
-        (themes (or (and all-themes (sort (ergoemacs-theme--list) 'string<))
-                    (list ergoemacs-theme)))
+        (themes (list "standard"))
         (original-layout ergoemacs-keyboard-layout)
         (original-theme ergoemacs-theme)
         ret)
