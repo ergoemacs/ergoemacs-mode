@@ -296,7 +296,7 @@ When AT-END is non-nil, append a $ to the regular expression."
             (push desc options-list)
             (push (list desc option) options-alist))))
       `(ergoemacs-theme-options
-        menu-item "Theme Options"
+        menu-item "Options"
         (keymap
          ,@menu-pre
          ,@(mapcar
@@ -318,49 +318,12 @@ When AT-END is non-nil, append a $ to the regular expression."
     (if (not theme-ver) nil
       (car (cdr theme-ver)))))
 
-
-(defun ergoemacs-theme--version-menu (theme)
-  "Get version menu for THEME."
-  (let ((theme-versions (ergoemacs-component-struct--versions (ergoemacs-theme-components theme))))
-    (if (not theme-versions) nil
-      `(ergoemacs-versions
-        menu-item "Theme Versions"
-        (keymap
-         (ergoemacs-current-version
-          menu-item "Current Version"
-          (lambda()
-            (interactive)
-            (ergoemacs-theme-set-version nil)
-            (customize-mark-as-set 'ergoemacs-theme-version)
-            (ergoemacs-mode-reset))
-          :button (:radio . (equal (ergoemacs :current-version) nil)))
-         ,@(mapcar
-            (lambda(version)
-              `(,(intern version) menu-item ,version
-                (lambda() (interactive)
-                  (ergoemacs-theme-set-version ,version)
-                  (customize-mark-as-set 'ergoemacs-theme-version)
-                  (ergoemacs-mode-reset))
-                :button (:radio . (equal (ergoemacs :current-version) ,version))))
-            theme-versions))))))
-
 (defun ergoemacs-theme--menu (theme)
   "Define menus for current THEME."
   `(keymap
     ,(ergoemacs-layouts--menu)
     (ergoemacs-theme-sep "--")
-    (ergoemacs-themes
-     menu-item "Themes"
-     (keymap
-      ,@(mapcar
-         (lambda(theme)
-           `(,(intern theme) menu-item ,(concat theme " - " (plist-get (ergoemacs-gethash theme ergoemacs-theme-hash) ':description))
-             (lambda() (interactive)
-               (ergoemacs-save 'ergoemacs-theme ,theme))
-             :button (:radio . (string= (ergoemacs :current-theme) ,theme))))
-         (sort (ergoemacs-theme--list) 'string<))))
     ,(ergoemacs-theme--menu-options theme)
-    ,(ergoemacs-theme--version-menu theme)
     (ergoemacs-c-x-sep "--")
     (c-v
      menu-item "Paste behavior"
