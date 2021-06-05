@@ -329,8 +329,8 @@
 
   (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done)
 
-  (define-key eshell-mode-map (kbd "<home>") 'eshell-bol)
   (define-key comint-mode-map (kbd "<home>") 'comint-bol)
+
 
   ;; Compatibility with Icicle (allows the use of
   ;; `icicle-read-string-completing' directly)
