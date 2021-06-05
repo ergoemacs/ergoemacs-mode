@@ -650,23 +650,6 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
 
 ;;; Command Loop
 
-(ert-deftest ergoemacs-test-command-loop-apps-e-t-_ ()
-  "Test that colemak <apps> e t sends _.
-Should test for Issue #143."
-  (ergoemacs-test-layout
-   :theme "reduction"
-   :layout "colemak"
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (delete-region (point-min) (point-max))
-     (with-timeout (0.5 nil)
-       (ergoemacs-command-loop--internal (format "<%s> e t"
-                                       (if (eq system-type 'windows-nt)
-                                           "apps" "menu"))))
-     (should (string= "_" (buffer-string)))
-     (kill-buffer (current-buffer)))))
-
-
 (ert-deftest ergoemacs-test-command-loop-C-x-8-! ()
   "Test that unicode translations work.
 See Issue #138."
@@ -690,34 +673,6 @@ See Issue #138."
     (ergoemacs-command-loop--internal "C-x 8 \" A")
     (should (string= "Ä" (buffer-string)))
     (kill-buffer (current-buffer))))
-
-(ert-deftest ergoemacs-test-command-loop-overlay-paren ()
-  "Test that overlays will send the appropriate parenthesis"
-  (let (ret
-        tmp (tmp-key (make-sparse-keymap)) overlays)
-    (ergoemacs-test-layout
-     :layout "colemak"
-     :macro (format "M-i <%s> e e"
-                    (if (eq system-type 'windows-nt)
-                        "apps" "menu"))
-     (define-key tmp-key [ergoemacs-test] 'ignore)
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       ;; Put in dummy overlay
-       (while (re-search-forward "[A-Za-z]+" nil t)
-         (setq tmp (make-overlay (match-beginning 0) (match-end 0)))
-         (overlay-put tmp 'keymap tmp-key)
-         (push tmp overlays))
-       (goto-char (point-min))
-       (execute-kbd-macro macro)
-       (when (looking-at ")")
-         (setq ret t))
-       (dolist (x overlays)
-         (delete-overlay x))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
 
 (ert-deftest ergoemacs-test-command-loop-shortcut ()
   "Test that shortcuts don't eat or duplicate key-strokes. (Issue #141)"
@@ -807,14 +762,6 @@ Should test issue #142"
        (kill-buffer (current-buffer)))
      (setq input-decode-map (copy-keymap old-map)))
     (should ret)))
-
-;;; Key inheritance 
-(ert-deftest ergoemacs-key-inheitance-alt-up-and-down ()
-  "Test M-up and M-down keys make sure they are moving lines"
-  (ergoemacs-require 'move-and-transpose-lines)
-  (ergoemacs-mode-reset)
-  (should (eq (key-binding [\M-up]) 'ergoemacs-move-text-up))
-  (should (eq (key-binding [\M-down]) 'ergoemacs-move-text-down)))
 
 ;;; Global map tests.
 (defun ergoemacs-test-global-key-set-before (&optional after key ergoemacs ignore-prev-global delete-def)

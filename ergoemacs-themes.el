@@ -162,10 +162,6 @@
   (recentf-mode (if noninteractive -1 1))
   )
 
-(ergoemacs-component save-options-on-exit ()
-  "Save emacs options on exit"
-  (add-hook 'kill-emacs-hook 'ergoemacs-exit-customize-save-customized))
-
 ;;; Fixed components
 (ergoemacs-component standard-fixed ()
   "Standard Fixed Shortcuts"
@@ -336,11 +332,6 @@
   (define-key eshell-mode-map (kbd "<home>") 'eshell-bol)
   (define-key comint-mode-map (kbd "<home>") 'comint-bol)
 
-  (define-key helm-map [remap mark-whole-buffer] 'helm-mark-all)
-  (define-key helm-map (kbd "C-w") 'helm-keyboard-quit)
-  (define-key helm-map (kbd "C-z") nil)
-  
-
   ;; Compatibility with Icicle (allows the use of
   ;; `icicle-read-string-completing' directly)
   (when icicle-mode
@@ -370,120 +361,9 @@
   (define-key org-mode-map (kbd "<tab>") 'org-cycle)
   (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle))
 
-(ergoemacs-component backspace-is-back ()
-  "Backspace is back, as in browsers..."
-  (define-key Info-mode-map (kbd "<backspace>") 'Info-history-back)
-  (define-key Info-mode-map (kbd "<S-backspace>") 'Info-history-forward)
-  (define-key Info-mode-map (kbd "<M-backspace>") 'Info-history-forward)
-  (define-key help-mode-map (kbd "<backspace>") 'help-go-back)
-  (define-key help-mode-map (kbd "<S-backspace>") 'help-go-forward)
-  (define-key eww-mode-map (kbd "<backspace>") 'eww-back-url)
-  (define-key eww-mode-map (kbd "<S-backspace>") 'eww-forward-url))
-
 (ergoemacs-component fixed-newline ()
   "Newline and indent"
-  (global-set-key (kbd "M-RET") 'electric-newline-and-maybe-indent)
-  (define-key helm-map (kbd "M-RET") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "<M-return>") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "M-S-RET") "C-u M-RET")
-  (define-key helm-map (kbd "<M-S-return>") "C-u M-RET")
-  
-  
-  (define-key helm-read-file-map [remap eshell] 'helm-ff-run-switch-to-eshell)
-  (define-key helm-read-file-map [remap ergoemacs-eshell-here] 'helm-ff-run-switch-to-eshell)
-  (define-key helm-read-file-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-  (define-key helm-read-file-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-  (define-key helm-read-file-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-  (define-key helm-read-file-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
-  (define-key helm-read-file-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
-  
-  (define-key helm-find-files-map [remap eshell] 'helm-ff-run-switch-to-eshell)
-  (define-key helm-find-files-map [remap ergoemacs-eshell-here] 'helm-ff-run-switch-to-eshell)
-  (define-key helm-find-files-map (kbd "DEL") 'ergoemacs-helm-ff-backspace)
-  (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-  (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-  (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-  (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir)
-  (define-key helm-find-files-map (kbd "RET") 'ergoemacs-helm-ff-persistent-expand-dir)
-  (define-key helm-find-files-map (kbd "<return>") 'ergoemacs-helm-ff-persistent-expand-dir)
-  (define-key helm-find-files-map (kbd "M-RET") 'ergoemacs-helm-ff-execute-dired-dir)
-  (define-key helm-find-files-map (kbd "<M-return>") 'ergoemacs-helm-ff-execute-dired-dir))
-
-(ergoemacs-component fn-keys ()
-  "Function Keys"
-  ;; Modernize isearch and add back search-map to ergoemacs-mode
-  (global-set-key (kbd "<C-f2>") 'ergoemacs-cut-all)
-  (global-set-key (kbd "<C-f3>") 'ergoemacs-copy-all)
-  (global-set-key (kbd "<C-f4>") 'ergoemacs-paste-cycle)
-  (global-set-key (kbd "<C-f5>") '(redo undo-tree-redo))
-  (global-set-key (kbd "<C-f8>") 'highlight-symbol-prev)
-  (global-set-key (kbd "<C-f9>") 'highlight-symbol-next)
-  (global-set-key (kbd "<M-f2>") 'ergoemacs-cut-all)
-  (global-set-key (kbd "<M-f3>") 'ergoemacs-copy-all)
-  (global-set-key (kbd "<M-f5>") '(redo undo-tree-redo))
-  (global-set-key (kbd "<S-f3>") 'ergoemacs-toggle-letter-case)
-  (global-set-key (kbd "<f11>") 'previous-line)
-  (global-set-key (kbd "<f12>") 'next-line)
-  (global-set-key (kbd "<f3>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "<f8>") 'search-map)
-  (global-set-key (kbd "<f8> <f8>") 'highlight-symbol-at-point)
-  (global-set-key (kbd "<f8> <f9>") 'highlight-symbol-query-replace)
-  (global-set-key (kbd "<f2>") 'ergoemacs-cut-line-or-region)
-  (global-set-key (kbd "<f4>") 'ergoemacs-paste)
-  ;; Mode Specific Changes
-  (define-key compilation-mode-map (kbd "<f11>") 'previous-error)
-  (define-key compilation-mode-map (kbd "<f12>") 'next-error)
-  (define-key browse-kill-ring-mode-map (kbd "<f11>") 'browse-kill-ring-previous)
-  (define-key browse-kill-ring-mode-map (kbd "<f12>") 'browse-kill-ring-next)
-
-  ;; Comint
-  (define-key comint-mode-map (kbd "<f11>") 'comint-previous-input)
-  (define-key comint-mode-map (kbd "<f12>") 'comint-next-input)
-  (define-key comint-mode-map (kbd "S-<f11>") 'comint-previous-matching-input)
-  (define-key comint-mode-map (kbd "<M-f11>") 'comint-previous-matching-input)
-  (define-key comint-mode-map (kbd "S-<f12>") 'comint-next-matching-input)
-  (define-key comint-mode-map (kbd "<M-f12>") 'comint-next-matching-input)
-  
-  ;; Log Edit
-  (define-key log-edit-mode-map (kbd "<f11>") 'log-edit-previous-comment)
-  (define-key log-edit-mode-map (kbd "<f12>") 'log-edit-next-comment)
-  (define-key log-edit-mode-map (kbd "S-<f11>") 'log-edit-previous-comment)
-  (define-key log-edit-mode-map (kbd "<M-f11>") 'log-edit-previous-comment)
-  (define-key log-edit-mode-map (kbd "S-<f12>") 'log-edit-next-comment)
-  (define-key log-edit-mode-map (kbd "<M-f12>") 'log-edit-next-comment)
-
-  (define-key eshell-mode-map (kbd "<f11>") 'eshell-previous-matching-input-from-input)
-  (define-key eshell-mode-map (kbd "<f12>") 'eshell-next-matching-input-from-input)
-  (define-key eshell-mode-map (kbd "S-<f11>") 'eshell-previous-matching-input-from-input)
-  (define-key eshell-mode-map (kbd "<M-f11>") 'eshell-previous-matching-input-from-input)
-  (define-key eshell-mode-map (kbd "<f11>") 'eshell-previous-matching-input-from-input)
-  (define-key eshell-mode-map (kbd "S-<f12>") 'eshell-next-matching-input-from-input)
-  (define-key eshell-mode-map (kbd "<M-f12>") 'eshell-next-matching-input-from-input)
-
-  (define-key isearch-mode-map (kbd "<S-f3>") 'isearch-toggle-regexp)
-  (define-key isearch-mode-map (kbd "<f11>") 'isearch-ring-retreat)
-  (define-key isearch-mode-map (kbd "<f12>") 'isearch-ring-advance)
-  (define-key isearch-mode-map (kbd "S-<f11>") 'isearch-ring-advance)
-  (define-key isearch-mode-map (kbd "S-<f12>") 'isearch-ring-retreat)
-
-  (when icicle-minibuffer-setup-hook
-    :command-loop-unsupported-p t
-    (define-key minibuffer-local-map (kbd "<f11>") 'previous-history-element)
-    (define-key minibuffer-local-map (kbd "M-<f11>") 'icicle-insert-history-element)
-    (define-key minibuffer-local-map (kbd "<f12>") 'next-history-element)
-    (define-key minibuffer-local-map (kbd "S-<f11>") 'next-history-element)
-    (define-key minibuffer-local-map (kbd "M-<f12>") 'icicle-insert-history-element)
-    (define-key minibuffer-local-map (kbd "S-<f12>") 'previous-history-element))
-  
-  (when iswitchb-define-mode-map-hook
-    :modify-map t
-    :always t
-    (define-key iswitchb-mode-map [remap previous-history-element] 'iswitchb-prev-match)
-    (define-key iswitchb-mode-map [remap next-history-element] 'iswitchb-next-match)))
-
-(ergoemacs-component f2-edit ()
-  "Have <f2> edit"
-  (define-key ergoemacs-translate--parent-map [f2] 'ergoemacs-command-loop--force-universal-argument))
+  (global-set-key (kbd "M-RET") 'electric-newline-and-maybe-indent))
 
 (ergoemacs-component backspace-del-seq ()
   "Backspace deletes last key entered in command sequence"
@@ -594,11 +474,6 @@
   (define-key term-raw-map (kbd "M-o") 'forward-word)
   )
 
-(ergoemacs-component move-sexp ()
-  "Instead of moving around by words, use sexps."
-  (global-set-key [remap forward-word] 'forward-sexp)
-  (global-set-key [remap backward-word] 'backward-sexp))
-
 (ergoemacs-component move-paragraph ()
   "Move by Paragraph"
   (global-unset-key (kbd "M-{"))
@@ -624,15 +499,6 @@
   (define-key term-raw-map (kbd "M-h") 'move-beginning-of-line)
   (define-key term-raw-map (kbd "M-H") 'move-end-of-line)
   )
-
-(ergoemacs-component move-and-transpose-lines ()
-  "Move Current line/selection down or up with Alt+up or Alt+down"
-  (global-set-key [\M-up] 'ergoemacs-move-text-up)
-  (global-set-key [\M-down] 'ergoemacs-move-text-down))
-
-(ergoemacs-component alt-backspace-is-undo ()
-  "Alt+Backspace is Undo"
-  (global-set-key (kbd "<M-backspace>") 'undo))
 
 (ergoemacs-component move-page ()
   "Move by Page"
@@ -762,19 +628,6 @@
   (global-set-key (kbd "M-;") 'isearch-forward)
   (global-set-key (kbd "M-:") 'isearch-backward))
 
-(ergoemacs-component search-reg ()
-  "Regular Expression Search/Replace"
-  (global-set-key [remap isearch-forward] 'isearch-forward-regexp)
-  (global-set-key [remap isearch-backward] 'isearch-backward-regexp)
-
-  (global-set-key (kbd "M-%") nil)
-  (global-set-key (kbd "M-5") 'query-replace-regexp)
-  
-  (global-set-key (kbd "C-M-%") nil)
-  (global-set-key (kbd "M-%") 'query-replace)
-  )
-
-
 (ergoemacs-component switch ()
   "Window/Frame/Tab Switching"
   (global-set-key (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
@@ -875,162 +728,6 @@
   (when org-read-date-minibuffer-setup-hook
     (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit)))
 
-(ergoemacs-component apps ()
-  "General Apps Key Sequence"
-  :just-first-keys (list [apps ?h] [menu ?h])
-  :bind ("<apps> '"         ergoemacs-org-edit-src
-         "<apps> 2"         delete-window
-         "<apps> 3"         delete-other-windows
-         "<apps> 4"         split-window-vertically
-         "<apps> 5"         query-replace
-         "<apps> <f2>"      ergoemacs-cut-all
-         "<apps> <f3>"      ergoemacs-copy-all
-         "<apps> <return>"  execute-extended-command
-         "<apps> RET"       execute-extended-command
-         "<apps> TAB"       indent-region  ;; Already in CUA
-         "<apps> SPC"       set-mark-command
-         "<apps> a"         mark-whole-buffer
-         "<apps> d"         execute-extended-command
-         "<apps> h"         help-map
-         "<apps> h '"       ergoemacs-describe-current-theme
-         "<apps> h 1"       describe-function
-         "<apps> h 2"       describe-variable
-         "<apps> h 3"       describe-key
-         "<apps> h 4"       describe-char
-         "<apps> h 5"       man
-         "<apps> h 7"       ergoemacs-lookup-google
-         "<apps> h 8"       ergoemacs-lookup-wikipedia
-         "<apps> h 9"       ergoemacs-lookup-word-definition
-         "<apps> h `"       elisp-index-search
-         "<apps> h o"       ergoemacs-where-is-old-binding
-         "<apps> h z"       ergoemacs-clean
-         "<apps> h C-z"     ergoemacs-clean-library
-         "<apps> h Z"       ergoemacs-clean-nw
-         "<apps> m"         (kbd "C-c C-c")
-         "<apps> s"         save-buffer
-         "<apps> C-s"       write-file
-         "<apps> o"         find-file
-         "<apps> g"         ergoemacs-read-key--universal-argument
-         "<apps> w"         ergoemacs-close-current-buffer
-         "<apps> x"         ergoemacs-cut-line-or-region
-         "<apps> c"         ergoemacs-copy-line-or-region
-         "<apps> v"         ergoemacs-paste
-         "<apps> b"         (redo undo-tree-redo)
-         "<apps> t"         switch-to-buffer
-         "<apps> z"         undo
-         "<apps> r"         goto-map))
-
-(ergoemacs-component apps-toggle ()
-  "Toggle States and applications"
-  :just-first-keys (list [apps ?i] [menu ?i])
-  (global-set-key (kbd "<apps> i c") 'column-number-mode)
-  (global-set-key (kbd "<apps> i d") 'toggle-debug-on-error)
-  (global-set-key (kbd "<apps> i e") 'toggle-debug-on-error)
-  (global-set-key (kbd "<apps> i f") 'auto-fill-mode)
-  (global-set-key (kbd "<apps> i l") 'toggle-truncate-lines)
-  (global-set-key (kbd "<apps> i q") 'toggle-debug-on-quit)
-  (global-set-key (kbd "<apps> i r") 'read-only-mode)
-  (global-set-key (kbd "<apps> i C-r") 'revert-buffer))
-
-(ergoemacs-component apps-apps ()
-  "Applications"
-  :just-first-keys (list [apps ?n] [menu ?n])
-  (global-set-key (kbd "<apps> n a") 'org-agenda)
-  (global-set-key (kbd "<apps> n A") 'org-capture)
-  (global-set-key (kbd "<apps> n C-a") 'org-capture)
-  (global-set-key (kbd "<apps> n c") 'calc)
-  (global-set-key (kbd "<apps> n d") 'dired-jump)
-  (global-set-key (kbd "<apps> n e") 'eshell)
-  (global-set-key (kbd "<apps> n p") 'powershell)
-  (global-set-key (kbd "<apps> n f") 'ergoemacs-open-in-desktop)
-  (global-set-key (kbd "<apps> n g") 'grep)
-  (global-set-key (kbd "<apps> n m") 'magit-status)
-  (global-set-key (kbd "<apps> n o") 'ergoemacs-open-in-external-app)
-  (global-set-key (kbd "<apps> n r") 'R)
-  (global-set-key (kbd "<apps> n s") 'shell)
-  (global-set-key (kbd "<apps> n t") 'org-capture)
-  (global-set-key (kbd "<apps> n C-t") 'org-agenda)
-  (global-set-key (kbd "<apps> n T") 'org-agenda))
-
-(ergoemacs-component apps-punctuation ()
-  "Punctuation"
-  ;; Smart punctuation
-  ;; `http://xahlee.info/comp/computer_language_char_distribution.html'
-  ;; |------+-----------+---------+-----------------------|
-  ;; | Rank | Character | Percent | Defined               |
-  ;; |------+-----------+---------+-----------------------|
-  ;; |    1 | ,         |   12.1% | No; Already unchorded |
-  ;; |    2 | _         |    8.0% | Yes                   |
-  ;; |    3 | "         |    8.0% | Yes                   |
-  ;; |    4 | (         |    7.7% | Yes                   |
-  ;; |    5 | )         |    7.7% | By pair               |
-  ;; |    6 | .         |    7.4% | No; Already unchorded |
-  ;; |    7 | ;         |    4.8% | No; Already unchorded |
-  ;; |    8 | -         |    4.4% | Yes                   |
-  ;; |    9 | =         |    4.3% | Yes                   |
-  ;; |   10 | '         |    3.9% | Yes (by pair)         |
-  ;; |   11 | /         |    3.8% | No; Already unchorded |
-  ;; |   12 | *         |    3.5% | Yes                   |
-  ;; |   13 | :         |    3.2% | Yes                   |
-  ;; |   14 | {         |    3.2% | By pair               |
-  ;; |   15 | }         |    3.2% | By pair               |
-  ;; |   16 | >         |    2.4% | Yes                   |
-  ;; |   17 | $         |    2.2% | Yes                   |
-  ;; |   18 | #         |    1.7% | Yes                   |
-  ;; |   19 | +         |    1.2% | Yes                   |
-  ;; |   20 | \         |    1.1% | No; Already unchorded |
-  ;; |   21 | [         |    1.0% | Yes (by pair)         |
-  ;; |   22 | ]         |    1.0% | Yes                   |
-  ;; |   23 | <         |    1.0% | Yes                   |
-  ;; |   24 | &         |    0.9% | Yes                   |
-  ;; |   25 | @         |    0.7% | Yes                   |
-  ;; |   26 | |         |    0.5% | Yes                   |
-  ;; |   27 | !         |    0.5% | Yes                   |
-  ;; |   28 | %         |    0.3% | Yes                   |
-  ;; |   29 | ?         |    0.2% | Yes                   |
-  ;; |   30 | `         |    0.1% | Yes                   |
-  ;; |   31 | ^         |    0.1% | Yes                   |
-  ;; |   32 | ~         |    0.1% | Yes                   |
-  ;; |------+-----------+---------+-----------------------|
-
-  ;; No pinkies are used in this setup.
-  (global-set-key (kbd "<apps> k o") "#")
-  (global-set-key (kbd "<apps> k l") "$")
-  (global-set-key (kbd "<apps> k .") ":")
-
-  (global-set-key (kbd "<apps> k w") "^")
-  (global-set-key (kbd "<apps> k s") "*")
-  (global-set-key (kbd "<apps> k x") "~")
-  
-  (global-set-key (kbd "<apps> k i") 'ergoemacs-smart-bracket)
-  (global-set-key (kbd "<apps> k k") 'ergoemacs-smart-paren)
-  (global-set-key (kbd "<apps> k ,") 'ergoemacs-smart-curly)
-  
-  (global-set-key (kbd "<apps> k j") 'ergoemacs-smart-quote)
-  (global-set-key (kbd "<apps> k u") 'ergoemacs-smart-apostrophe)
-  (global-set-key (kbd "<apps> k m") "`")
-
-  (global-set-key (kbd "<apps> k y") "?")
-  (global-set-key (kbd "<apps> k h") "%")
-  (global-set-key (kbd "<apps> k n") "@")
-  
-  (global-set-key (kbd "<apps> k r") ">")
-  (global-set-key (kbd "<apps> k f") "_")
-  (global-set-key (kbd "<apps> k v") "<")
-  
-  (global-set-key (kbd "<apps> k e") "+")
-  (global-set-key (kbd "<apps> k d") "=")
-  (global-set-key (kbd "<apps> k c") "-")
-
-  (global-set-key (kbd "<apps> k t") "&")
-  (global-set-key (kbd "<apps> k g") "|")
-  (global-set-key (kbd "<apps> k b") "!"))
-
-(ergoemacs-component apps-swap ()
-  "Apps/Menu swaps key sequence translations"
-  (define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])
-    'ergoemacs-command-loop--swap-translation))
-
 (ergoemacs-component dired-to-wdired ()
   "C-c C-c enters wdired, <escape> exits."
   (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode))
@@ -1038,77 +735,6 @@
 (ergoemacs-component dired-tab ()
   "TAB expands a directory."
   (define-key dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir))
-
-(ergoemacs-component guru ()
-  "Unbind some commonly used keys such as <left> and <right> to get in the habit of using ergoemacs keybindings."
-  (global-unset-key (kbd "<left>"))
-  (global-unset-key (kbd "<right>"))
-  (global-unset-key (kbd "<up>"))
-  (global-unset-key (kbd "<down>"))
-  (global-unset-key (kbd "<C-left>"))
-  (global-unset-key (kbd "<C-right>"))
-  (global-unset-key (kbd "<C-up>"))
-  (global-unset-key (kbd "<C-down>"))
-  (global-unset-key (kbd "<M-left>"))
-  (global-unset-key (kbd "<M-right>"))
-  (global-unset-key (kbd "<M-up>"))
-  (global-unset-key (kbd "<M-down>"))
-  (global-unset-key (kbd "<delete>"))
-  (global-unset-key (kbd "<C-delete>"))
-  (global-unset-key (kbd "<M-delete>"))
-  (global-unset-key (kbd "<next>"))
-  (global-unset-key (kbd "<C-next>"))
-  (global-unset-key (kbd "<prior>"))
-  (global-unset-key (kbd "<C-prior>"))
-  (global-unset-key (kbd "<home>"))
-  (global-unset-key (kbd "<C-home>"))
-  (global-unset-key (kbd "<end>"))
-  (global-unset-key (kbd "<C-end>")))
-
-(ergoemacs-component no-backspace ()
-  "No Backspace!"
-  (global-unset-key (kbd "<backspace>")))
-
-(ergoemacs-component helm-remaps ()
-  "Remaps for helm-mode"
-  (when helm-mode
-    ;; (global-set-key [remap grep] 'helm-do-grep)  ;; Removed grep https://github.com/emacs-helm/helm/issues/1377
-    (global-set-key [remap execute-extended-command] 'helm-M-x)
-    (global-set-key [remap switch-to-buffer] 'helm-mini)
-    (global-set-key [remap find-file] 'helm-find-files)
-    (global-set-key [remap eshell-pcomplete] 'helm-esh-pcomplete)
-    (global-set-key [remap occur] 'helm-occur)
-    (global-set-key [remap info] 'helm-info-at-point)
-    (global-set-key [remap ac-isearch] 'ac-complete-with-helm)))
-
-(ergoemacs-component helm-switch-sources ()
-  "Ctrl+o switches multiple sources."
-  (define-key helm-map (kbd "C-o") 'helm-next-source))
-
-(ergoemacs-component helm-find-files ()
-  "Helm find-files keymap."
-  (define-key helm-find-files-map (kbd "C-l") 'helm-find-files-up-one-level)
-  (define-key helm-find-files-map (kbd "C-c p") 'helm-ff-run-switch-to-history))
-
-(ergoemacs-component icy-reclaim ()
-  "Reclaim some icicle key bindings."
-  (setq icicle-key-complete-keys-for-minibuffer
-        (list (ergoemacs-translate--event-layout (read-kbd-macro "M-T"))))
-  (when icicle-minibuffer-setup-hook
-    (define-key minibuffer-local-map (kbd "M-*") 'icicle-narrow-candidates)
-    (define-key minibuffer-local-map (kbd "M-?") 'icicle-minibuffer-help)
-    (define-key minibuffer-local-map (kbd "C-M-RET") 'icicle-help-on-candidate)
-    (define-key minibuffer-local-map (kbd "<C-prior>") 'icicle-previous-apropos-candidate-action)
-    (define-key minibuffer-local-map (kbd "<C-next>") 'icicle-next-apropos-candidate-action)
-    (define-key minibuffer-local-map (kbd "<C-M-prior>") 'icicle-help-on-previous-apropos-candidate)
-    (define-key minibuffer-local-map (kbd "<C-M-next>") 'icicle-help-on-next-apropos-candidate)
-    (define-key minibuffer-local-map (kbd "<C-home>") 'icicle-previous-prefix-candidate-action)
-    (define-key minibuffer-local-map (kbd "<C-end>") 'icicle-next-prefix-candidate-action)
-    (define-key minibuffer-local-map (kbd "<C-M-home>") 'icicle-help-on-previous-prefix-candidate)
-    (define-key minibuffer-local-map (kbd "<C-M-end>") 'icicle-help-on-next-prefix-candidate)
-    (define-key minibuffer-local-map (kbd "<C-M-up>") 'icicle-previous-candidate-per-mode-help)
-    (define-key minibuffer-local-map (kbd "<C-M-down>") 'icicle-next-candidate-per-mode-help)
-    (define-key minibuffer-local-map (kbd "<delete>") 'icicle-remove-candidate)))
 
 (ergoemacs-component multiple-cursors-remaps ()
   "Multiple Cursors phi-search remaps"
@@ -1121,12 +747,6 @@
   (when ido-mode
     (global-set-key [remap execute-extended-command] 'smex))
   (setq smex-prompt-string (substitute-command-keys "\\[execute-extended-command] ")))
-
-(ergoemacs-component ido-prev-next-instead-of-left-right ()
-  "In Ido use, Ergoemacs left and right for previous/next match."
-  (when ido-mode
-    (global-set-key [remap ido-magic-forward-char] 'ido-next-match)
-    (global-set-key [remap ido-magic-backward-char] 'ido-prev-match)))
 
 (ergoemacs-component ergoemacs-remaps ()
   "Remaps for ergoemacs-mode"
@@ -1163,59 +783,6 @@
     (global-set-key [remap locate] 'counsel-locate)
     (define-key ivy-minibuffer-map (kbd "M-RET") 'ivy-alt-done)
     ))
-
-(ergoemacs-component ergoemacs-banish-shift ()
-  "Banish Shift Combinations with <apps> SPC"
-  :variable-reg ""
-  (global-set-key (kbd "<menu> SPC SPC") (kbd "_")) ;low line (underscore)
-  (global-set-key (kbd "<menu> SPC RET") (kbd "-"))
-  (global-set-key (kbd "<menu> SPC '") (kbd "\""))
-  (global-set-key (kbd "<menu> SPC ,") (kbd "<"))
-  (global-set-key (kbd "<menu> SPC -") (kbd "_"))
-  (global-set-key (kbd "<menu> SPC .") (kbd ">"))
-  (global-set-key (kbd "<menu> SPC /") (kbd "?"))
-  (global-set-key (kbd "<menu> SPC ;") (kbd ":"))
-  (global-set-key (kbd "<menu> SPC =") (kbd "+"))
-  (global-set-key (kbd "<menu> SPC \\") (kbd "|"))
-  (global-set-key (kbd "<menu> SPC `") (kbd "~"))
-
-  (global-set-key (kbd "<menu> SPC 0") (kbd ")"))
-  (global-set-key (kbd "<menu> SPC 1") (kbd "!"))
-  (global-set-key (kbd "<menu> SPC 2") (kbd "@"))
-  (global-set-key (kbd "<menu> SPC 3") (kbd "#"))
-  (global-set-key (kbd "<menu> SPC 4") (kbd "$"))
-  (global-set-key (kbd "<menu> SPC 5") (kbd "%"))
-  (global-set-key (kbd "<menu> SPC 6") (kbd "^"))
-  (global-set-key (kbd "<menu> SPC 7") (kbd "&"))
-  (global-set-key (kbd "<menu> SPC 8") (kbd "*"))
-  (global-set-key (kbd "<menu> SPC 9") (kbd "("))
-
-  (global-set-key (kbd "<menu> SPC a") (kbd "A"))
-  (global-set-key (kbd "<menu> SPC b") (kbd "B"))
-  (global-set-key (kbd "<menu> SPC c") (kbd "C"))
-  (global-set-key (kbd "<menu> SPC d") (kbd "D"))
-  (global-set-key (kbd "<menu> SPC e") (kbd "E"))
-  (global-set-key (kbd "<menu> SPC f") (kbd "F"))
-  (global-set-key (kbd "<menu> SPC g") (kbd "G"))
-  (global-set-key (kbd "<menu> SPC h") (kbd "H"))
-  (global-set-key (kbd "<menu> SPC i") (kbd "I"))
-  (global-set-key (kbd "<menu> SPC j") (kbd "J"))
-  (global-set-key (kbd "<menu> SPC k") (kbd "K"))
-  (global-set-key (kbd "<menu> SPC l") (kbd "L"))
-  (global-set-key (kbd "<menu> SPC m") (kbd "M"))
-  (global-set-key (kbd "<menu> SPC n") (kbd "N"))
-  (global-set-key (kbd "<menu> SPC o") (kbd "O"))
-  (global-set-key (kbd "<menu> SPC p") (kbd "P"))
-  (global-set-key (kbd "<menu> SPC q") (kbd "Q"))
-  (global-set-key (kbd "<menu> SPC r") (kbd "R"))
-  (global-set-key (kbd "<menu> SPC s") (kbd "S"))
-  (global-set-key (kbd "<menu> SPC t") (kbd "T"))
-  (global-set-key (kbd "<menu> SPC u") (kbd "U"))
-  (global-set-key (kbd "<menu> SPC v") (kbd "V"))
-  (global-set-key (kbd "<menu> SPC w") (kbd "W"))
-  (global-set-key (kbd "<menu> SPC x") (kbd "X"))
-  (global-set-key (kbd "<menu> SPC y") (kbd "Y"))
-  (global-set-key (kbd "<menu> SPC z") (kbd "Z")))
 
 (ergoemacs-component menu-bar-file ()
   "File menu"
@@ -1569,10 +1136,6 @@
                           (global-linum-mode menu-item "Show/Hide line numbers in margin" global-linum-mode :button
                                              (:toggle . global-linum-mode))))))
 
-(ergoemacs-theme-component menu-bar-languages ()
-  "Languages menu"
-  (global-set-key [menu-bar languages] (cons "Languages" (ergoemacs-menu--get-major-modes))))
-
 (ergoemacs-theme-component menu-bar-help ()
   "Help menu"
   (global-set-key [menu-bar help-menu]
@@ -1740,41 +1303,6 @@
                                    describe-copying)
                           ,(if (eq system-type 'darwin) "Help" "?")))))
 
-(ergoemacs-theme lvl0 ()
-  "CUA-mode style"
-  (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
-  
-  (global-set-key (kbd "<S-insert>") 'ergoemacs-paste)
-  (global-set-key (kbd "C-v") 'ergoemacs-paste))
-
-(ergoemacs-theme lvl1 ()
-  "Arrow Key Movements Only"
-  :components '(move-char))
-
-(ergoemacs-theme lvl2 ()
-  "Arrow Key Movements, Moving/Deleting Words"
-  :components '(move-char
-                move-word))
-
-
-(ergoemacs-component join-line ()
-  "Join Line"; Thanks for the suggestion tuhdo
-  ;;I suggest the key bindings for joining lines are Alt + [ to
-  ;;join-top-line and Alt + ] for stock join-line.
-  (global-set-key (kbd "M-]") 'delete-indentation)
-  (global-set-key (kbd "M-[") 'ergoemacs-top-join-line))
-
-(ergoemacs-component isearch-arrows ()
-  "Set arrow keys in isearch."
-  ;;left/right is backward/forward, up/down is history. press Return
-  ;;to exit
-  ;; See http://ergoemacs.org/emacs/emacs_isearch_by_arrow_keys.html
-  (define-key isearch-mode-map (kbd "<up>") 'isearch-ring-retreat)
-  (define-key isearch-mode-map (kbd "<down>") 'isearch-ring-advance)
-  (define-key isearch-mode-map (kbd "<left>") 'isearch-repeat-backward)
-  (define-key isearch-mode-map (kbd "<right>") 'isearch-repeat-forward))
-
 (ergoemacs-component mode-line-major-mode-switch ()
   "Switch major modes by clicking mode-name."
   (setq ergoemacs-swap-major-modes-when-clicking-major-mode-name t))
@@ -1802,89 +1330,27 @@
                 text-transform
                 ergoemacs-remaps
                 standard-vars)
-  :optional-on '(apps-punctuation
-                 tab-indents-region
-                 icy-reclaim
-                 apps-apps
-                 apps-toggle
-                 apps
+  :optional-on '(tab-indents-region
                  backspace-del-seq
-                 backspace-is-back
-                 fn-keys
-                 f2-edit
                  fixed-bold-italic
                  standard-fixed
                  ido-remaps
-                 helm-remaps
-                 helm-find-files
                  multiple-cursors-remaps
                  quit
-                 apps-swap
-                 ;;save-options-on-exit
                  ;; Reverse menu-bar order
                  menu-bar-help
-                 menu-bar-languages
                  menu-bar-view
                  menu-bar-search
                  menu-bar-edit
                  menu-bar-file
 		 mode-line-major-mode-switch
                  )
-  :optional-off '(guru
-                  alt-backspace-is-undo
-                  search-reg
-                  no-backspace
-                  helm-switch-sources
-                  ergoemacs-banish-shift
-                  move-and-transpose-lines
-                  move-sexp
-                  ido-prev-next-instead-of-left-right
-                  join-line
-		  save-options-on-exit
-                  isearch-arrows
-		  ergoemacs-swiper)
-  :options-menu '(("Menu/Apps Key" (apps apps-apps apps-punctuation apps-toggle))
-                  ("Function Keys" (fn-keys f2-edit))
-                  ("Helm Options" (helm-switch-sources helm-find-files))
-                  ("Remaps" (ido-remaps helm-remaps multiple-cursors-remaps icy-reclaim ergoemacs-swiper))
-                  ("Extreme ErgoEmacs" (guru no-backspace ergoemacs-banish-shift))
-                  ("Standard Keys" (standard-fixed fixed-bold-italic quit move-and-transpose-lines alt-backspace-is-undo))
-                  ("Keys during Key Sequence" (f2-edit apps-swap backspace-del-seq))
-                  ("Disputed Keys" (ido-prev-next-instead-of-left-right move-sexp))
-                  ("Extra Functionality" (join-line isearch-arrows))
+  :options-menu '(("Remaps" (ido-remaps multiple-cursors-remaps icy-reclaim))
+                  ("Standard Keys" (standard-fixed fixed-bold-italic quit))
+                  ("Keys during Key Sequence" (backspace-del-seq))
                   ("Packages" (avy multiple-cursors expand-region))
 		  ("Mode Line" (mode-line-major-mode-switch))
-                  ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-languages menu-bar-help))))
-
-(ergoemacs-theme reduction ()
-  "Reduce Ergoemacs keys"
-  :based-on 'standard
-  :components '(multiple-cursors avy expand-region)
-  (global-set-key (kbd "M-<") 'zap-to-char)
-  (global-set-key (kbd "M-g") 'kill-line)
-  (global-set-key (kbd "M-G") 'ergoemacs-top-join-line)
-  (global-set-key (kbd "M-b") 'ergoemacs-kill-line-backward)
-  (global-set-key (kbd "M-B") 'delete-indentation)
-  (global-set-key (kbd "M-.") 'ergoemacs-end-of-line-or-what)
-  (global-set-key (kbd "M-m") 'ergoemacs-beginning-of-line-or-what)
-  (global-set-key (kbd "M-y") 'isearch-backward)
-  (global-set-key (kbd "M-Y") 'isearch-backward-regexp)
-  (global-set-key (kbd "M-h") 'isearch-forward)
-  (global-set-key (kbd "M-H") 'isearch-forward-regexp)
-  (global-set-key (kbd "M-a") 'ergoemacs-move-cursor-previous-pane)
-  (global-set-key (kbd "M-;") 'execute-extended-command)
-  ;;
-  ;; Overwrite previous global definitions in `ergoemacs-mode'
-  ;;
-  (define-key ergoemacs-keymap (kbd "M-T") nil)
-  (define-key ergoemacs-keymap (kbd "M-I") nil)
-  (define-key ergoemacs-keymap (kbd "M-K") nil)
-  (define-key ergoemacs-keymap (kbd "M-U") nil)
-  (define-key ergoemacs-keymap (kbd "M-O") nil)
-  (define-key ergoemacs-keymap (kbd "M-N") nil)
-  (define-key ergoemacs-keymap (kbd "M-A") nil)
-  (define-key ergoemacs-keymap (kbd "M-J") nil)
-  (define-key ergoemacs-keymap (kbd "M-L") nil))
+                  ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-help))))
 
 (ergoemacs-translation normal ()
   "Identify transformation"
