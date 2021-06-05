@@ -1095,8 +1095,6 @@
   (setq icicle-key-complete-keys-for-minibuffer
         (list (ergoemacs-translate--event-layout (read-kbd-macro "M-T"))))
   (when icicle-minibuffer-setup-hook
-    ;; (define-key minibuffer-local-map (kbd "M-p") 'icicle-insert-history-element)
-    ;; (define-key minibuffer-local-map (kbd "C-M-h") 'icicle-insert-list-join-string)
     (define-key minibuffer-local-map (kbd "M-*") 'icicle-narrow-candidates)
     (define-key minibuffer-local-map (kbd "M-?") 'icicle-minibuffer-help)
     (define-key minibuffer-local-map (kbd "C-M-RET") 'icicle-help-on-candidate)
