@@ -23,18 +23,6 @@
   (require 'cl-lib)
   (require 'ergoemacs-macros))
 
-(declare-function ergoemacs-theme-component--create-component "ergoemacs-theme")
-(declare-function ergoemacs-component-struct--create-component "ergoemacs-component")
-(declare-function ergoemacs-translate--create "ergoemacs-translate")
-(declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
-(declare-function ergoemacs-require "ergoemacs-lib")
-
-(defvar ergoemacs-theme-hash)
-(defvar ergoemacs-theme-component-hash)
-(defvar ergoemacs-translation-hash)
-(defvar ergoemacs-component-hash)
-(defvar ergoemacs--component-file-mod-time-list)
-
 (autoload 'dired-jump "dired-x" nil t)
 
 (require 'advice)
