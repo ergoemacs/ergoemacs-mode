@@ -35,7 +35,6 @@
 (defvar mode-icons-read-only-space)
 (defvar mode-icons-cached-mode-name)
 (defvar mode-icons-eol-text)
-(defvar ergoemacs-theme)
 (defvar ergoemacs-excluded-major-modes)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-keymap)
@@ -509,7 +508,6 @@ The reset is done with `ergoemacs-mode-reset'."
   (if (called-interactively-p 'any)
       (progn
 	(setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout)
-	(setenv "ERGOEMACS_THEME" ergoemacs-theme)
         (shell-command (format "%s -Q --batch -l %s/ergoemacs-mode --eval \"(ergoemacs-gen-ahk %s)\" &"
                                (ergoemacs-emacs-exe)
                                ergoemacs-dir (if current-prefix-arg "t" "nil"))))

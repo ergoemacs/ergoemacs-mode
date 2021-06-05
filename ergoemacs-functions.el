@@ -42,7 +42,6 @@
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-mode)
 (defvar ergoemacs-single-command-keys)
-(defvar ergoemacs-theme)
 (defvar helm-buffer)
 (defvar helm-ff-default-directory)
 (defvar helm-ff-last-expanded)
@@ -265,8 +264,6 @@ The PROCESS is the process where the clean environment is run."
         cmd process rm-batch)
     (when ergoemacs-keyboard-layout
       (setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout))
-    (when ergoemacs-theme
-      (setenv "ERGOEMACS_THEME" ergoemacs-theme))
     (cond
      ((with-current-buffer (get-buffer-create "*ergoemacs-clean*")
         (not ergoemacs-terminal))
@@ -2669,7 +2666,7 @@ With a prefix argument like \\[universial-argument] in an
 (defun ergoemacs-describe-current-theme ()
   "Describe the current theme."
   (interactive)
-  (ergoemacs-theme-describe (or ergoemacs-theme "standard")))
+  (ergoemacs-theme-describe "standard"))
 
 ;; Ergoemacs Test suite
 (unless (fboundp 'ergoemacs-test)

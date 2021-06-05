@@ -301,9 +301,8 @@ The `execute-extended-command' is now \\[execute-extended-command].
                         (setq ergoemacs-require--ini-p t)
 			(ergoemacs-setup-override-keymap)                       
                         (if refresh-p
-                            (message "Ergoemacs-mode keys refreshed (%s:%s)"
-                                     ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))
-                          (message "Ergoemacs-mode turned ON (%s:%s)." ergoemacs-keyboard-layout (or ergoemacs-theme "standard"))))
+                            (message "Ergoemacs-mode keys refreshed (%s)" ergoemacs-keyboard-layout)
+                          (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout)))
 
                     (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
                     (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)

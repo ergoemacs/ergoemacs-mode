@@ -531,10 +531,8 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
               (ergoemacs-key-description--keymap ergoemacs-keymap t)
             (unwind-protect
                 (progn
-                  (setq ergoemacs-theme theme)
                   (ergoemacs-mode-reset)
                   (ergoemacs-key-description--keymap ergoemacs-keymap t))
-              (setq ergoemacs-theme old-theme)
               (ergoemacs-mode-reset)))
           (buffer-string))))))
 
@@ -839,8 +837,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
             ret)
         (unless (and (equal theme old-theme)
                      (equal lay old-layout))
-          (setq ergoemacs-theme theme
-                ergoemacs-keyboard-layout lay)
+          (setq ergoemacs-keyboard-layout lay)
           (ergoemacs-mode-reset))
         (unwind-protect
             (progn
@@ -954,8 +951,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                 (push file-name ret)))
           (unless (and (equal theme old-theme)
                        (equal lay old-layout))
-            (setq ergoemacs-theme old-theme
-                  ergoemacs-keyboard-layout old-layout)
+            (setq ergoemacs-keyboard-layout old-layout)
             (ergoemacs-mode-reset)))
         ret))))
 

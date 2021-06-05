@@ -1097,15 +1097,13 @@ If there are no gui elements, retun nil."
                     (dolist (lay layouts)
                       (dolist (theme themes)
                         (message "Getting information from %s-%s" lay theme)
-                        (setq ergoemacs-keyboard-layout lay
-                              ergoemacs-theme theme)
+                        (setq ergoemacs-keyboard-layout lay)
                         (ergoemacs-mode-reset)
                         (insert "[" lay "-" theme "]"
                                 (ergoemacs-translate--ahk-functions-ini)
                                 "\n")))
                     (buffer-string)))
-      (setq ergoemacs-keyboard-layout original-layout
-            ergoemacs-theme original-theme)
+      (setq ergoemacs-keyboard-layout original-layout)
       (ergoemacs-mode-reset))
     ret))
 

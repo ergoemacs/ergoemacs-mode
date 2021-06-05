@@ -53,7 +53,6 @@
 (defvar ergoemacs-mode)
 (defvar ergoemacs-modify-transient-maps)
 (defvar ergoemacs-saved-global-map)
-(defvar ergoemacs-theme)
 (defvar ergoemacs-translation-hash)
 (defvar ergoemacs-user-keymap)
 (defvar ess-language)
