@@ -383,18 +383,7 @@
   (global-set-key (kbd "C-h `") 'elisp-index-search)
   (global-set-key (kbd "C-h o") 'ergoemacs-where-is-old-binding)
   (global-set-key (kbd "C-h z") 'ergoemacs-clean)
-  (global-set-key (kbd "C-h C-z") 'ergoemacs-clean-library)
-  (global-set-key (kbd "<f1> '") 'ergoemacs-describe-current-theme)
-  (global-set-key (kbd "<f1> 1") 'describe-function)
-  (global-set-key (kbd "<f1> 2") 'describe-variable)
-  (global-set-key (kbd "<f1> 3") 'describe-key)
-  (global-set-key (kbd "<f1> 4") 'describe-char)
-  (global-set-key (kbd "<f1> 5") 'man)
-  (global-set-key (kbd "<f1> 7") 'ergoemacs-lookup-google)
-  (global-set-key (kbd "<f1> 8") 'ergoemacs-lookup-wikipedia)
-  (global-set-key (kbd "<f1> 9") 'ergoemacs-lookup-word-definition)
-  (global-set-key (kbd "<f1> `") 'elisp-index-search)
-  (global-set-key (kbd "<f1> o") 'ergoemacs-where-is-old-binding))
+  (global-set-key (kbd "C-h C-z") 'ergoemacs-clean-library))
 
 
 ;;; Variable Components
@@ -767,22 +756,6 @@
                     'ergoemacs-describe-major-mode)
     (global-set-key [remap ergoemacs-print-buffer-confirm]
                     'pr-interface)))
-
-(ergoemacs-component swiper ()
-  "Swiper component"
-  (when ivy-mode
-    (setq ivy-use-virtual-buffers t)
-    (global-set-key [remap isearch-forward] 'swiper)
-    (global-set-key [remap execute-extended-command] 'counsel-M-x)
-    (global-set-key [remap find-file] 'counsel-find-file)
-    (global-set-key [remap describe-function] 'counsel-describe-function)
-    (global-set-key [remap describe-variable] 'counsel-describe-variable)
-    (global-set-key [remap find-library] 'counsel-find-library)
-    (global-set-key [remap info-lookup-symbol] 'counsel-info-lookup-symbol)
-    (global-set-key [remap vc-git-grep] 'counsel-git-grep)
-    (global-set-key [remap locate] 'counsel-locate)
-    (define-key ivy-minibuffer-map (kbd "M-RET") 'ivy-alt-done)
-    ))
 
 (ergoemacs-component menu-bar-file ()
   "File menu"
