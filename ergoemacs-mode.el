@@ -918,12 +918,7 @@ Valid values are:
 
 (defcustom ergoemacs-command-loop-swap-translation
   '(((:normal :normal) :unchorded-ctl)
-    ((:normal :unchorded-ctl) :ctl-to-alt)
-    ((:normal :unchorded-ctl) :normal)
-    ((:ctl-to-alt :ctl-to-alt) :unchorded-ctl)
-    ((:ctl-to-alt :unchorded-ctl) :ctl-to-alt)
-    ((:unchorded-ctl :unchorded-ctl) :ctl-to-alt)
-    ((:unchorded-ctl :ctl-to-alt) :unchorded-ctl))
+    ((:normal :unchorded-ctl) :normal))
   "How the translation will be swapped."
   :type '(repeat
           (list

@@ -246,7 +246,7 @@ This is called through `ergoemacs-command-loop'"
 This is called through `ergoemacs-command-loop'.
 
 TYPE is the keyboard translation type, defined by `ergoemacs-translate'.
-Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
+Ergoemacs-mode sets up: :unchorded :normal."
   (interactive)
   (let* ((char (if (integerp last-command-event)
                    last-command-event
@@ -263,7 +263,7 @@ Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
 This is called through `ergoemacs-command-loop'.
 
 TYPE is the keyboard translation type, defined by `ergoemacs-translate'
-Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
+Ergoemacs-mode sets up: :unchorded :normal."
   (setq current-prefix-arg '-)
   (ergoemacs-command-loop nil type nil t))
 
@@ -1586,7 +1586,7 @@ The KEY is the keyboard input where the reading begins.  If nil,
 read the whole keymap.
 
 TYPE is the keyboard translation type, defined by `ergoemacs-translate'
-Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal.
+Ergoemacs-mode sets up: :unchorded :normal.
 
 INITIAL-KEY-TYPE represents the translation type for the initial KEY.
 
