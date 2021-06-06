@@ -188,8 +188,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
             (old-type ergoemacs-command-loop-type)
             (old-paste interprogram-paste-function)
             (old-cut interprogram-cut-function)
-            ;; (old-kill kill-ring)
-            ;; (old-pointer kill-ring-yank-pointer)
             (old-version (ergoemacs :current-version))
             (macro
              ,(if (plist-get plist :macro)
@@ -201,8 +199,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
               ergoemacs-command-loop-type nil
               interprogram-paste-function nil
               interprogram-cut-function nil
-              ;; kill-ring nil
-              ;; kill-ring-yank-pointer nil
               
               ;; Make sure the copy functions don't think the last
               ;; command was a copy.
@@ -223,8 +219,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                 ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout
                 interprogram-paste-function old-paste
                 interprogram-cut-function old-cut
-                ;; kill-ring old-kill
-                ;; kill-ring-yank-pointer old-pointer
                 )
           (when reset-ergoemacs
             (ergoemacs-mode-reset)))))))
@@ -284,7 +278,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
 (ert-deftest ergoemacs-test-isearch-in-eshell ()
   "Test Issue #322."
-  :tags '(:search :calc)
+  :tags '(:search)
   (ergoemacs-test-layout
    :layout "us"
    (ergoemacs-eshell-here)
@@ -372,7 +366,6 @@ Tests issue #347"
   "Test that shift selection works properly in reduction."
   :tags '(:shift-select :calc :interactive)
   (ergoemacs-test-layout
-   :theme "reduction"
    :layout "colemak"
    :macro "M-E M-E M-x"
    (save-excursion
@@ -391,7 +384,6 @@ Tests issue #347"
   (let (ret)
     (ergoemacs-test-layout
      :macro "M-Y M-x"
-     :theme "reduction"
      :layout "colemak"
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
@@ -472,22 +464,27 @@ not using cua or cutting line. I think kill-region is what is meant."
   "Make sure the unbound keys work"
   (should (eq 'ergoemacs-map-undefined (key-binding (read-kbd-macro "C-x C-s")))))
 
-(ert-deftest ergoemacs-test-function-M-e-only-one-char-issue-306 ()
+(ert-deftest ergoemacs-test-function-M-f-only-one-char-issue-306 ()
   "Tests Issue #306."
   :tags '(:calc)
   (let ((ergoemacs-test-fn t)
         (ergoemacs-read-input-keys nil))
     (ergoemacs-test-layout
-     :layout "us"
-     :theme "lvl2"
-     :macro "M-e"
+     ;; Using 'us' here breaks everything.  All of the other tests use
+     ;; 'colemak' or have identical bindings as colemak, so it is
+     ;; probably an issue when you switch.  That is now unsupported.
+     :layout "colemak"
+     :macro "M-f"
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
        (delete-region (point-min) (point-max))
        (insert ergoemacs-test-lorem-ipsum)
        (fundamental-mode)
-       (should (or (eq (key-binding (kbd "M-e")) 'backward-kill-word)
-                   (eq (key-binding (kbd "M-e")) (command-remapping 'backward-kill-word (point)))))
+       (print "(eq (key-binding (kbd \"M-f\")) 'backward-kill-word)")
+       (print (key-binding (kbd "M-f")))
+       (print (eq (key-binding (kbd "M-f")) 'backward-kill-word))
+       (should (or (eq (key-binding (kbd "M-f")) 'backward-kill-word)
+                   (eq (key-binding (kbd "M-f")) (command-remapping 'backward-kill-word (point)))))
        (setq ergoemacs-test-fn nil)
        (goto-char (point-max))
        (execute-kbd-macro macro)
@@ -560,7 +557,6 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
   (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
      :layout "us"
-     :theme "standard"
      (save-excursion
        (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
        (delete-region (point-min) (point-max))
@@ -581,7 +577,6 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
   :tags '(:calc :interactive)
   (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
-     :theme "reduction"
      :layout "colemak"
      (call-interactively 'calc)
      (unwind-protect
@@ -593,7 +588,6 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
   :tags '(:calc :interactive)
   (let ((ergoemacs-test-fn t))
     (ergoemacs-test-layout
-     :theme "reduction"
      :layout "colemak"
      (call-interactively 'calc)
      (execute-kbd-macro "1 1 +")
@@ -655,17 +649,6 @@ Should test issue #142"
          (delete-overlay x))
        (kill-buffer (current-buffer)))
      (should (equal ret t)))))
-
-(ert-deftest ergoemacs-test-command-loop-reduction-M-o-works ()
-  "Test Ergoemacs M-o works correctly (Issue #171)."
-  ;; (let ((ergoemacs-test-fn t))
-  ;;   (ergoemacs-test-layout
-  ;;    :theme "reduction"
-  ;;    :layout "colemak"
-  ;;    (with-timeout (0.2 nil) (ergoemacs-read-key "M-o"))
-  ;;    (message "Test FN: %s" ergoemacs-test-fn)
-  ;;    (should (eq ergoemacs-test-fn (or (command-remapping 'execute-extended-command (point)) 'execute-extended-command)))))
-  )
 
 (ert-deftest ergoemacs-test-terminal-M-O-fight ()
   "Tests Issue #188"
@@ -1163,7 +1146,6 @@ Tests Issue #372."
   :tags '(:interactive)
   (ergoemacs-test-layout
    :layout "us"
-   :theme "reduction"
    (let (ret
          (ergoemacs-use-function-remapping t))
      (with-temp-buffer
@@ -1236,7 +1218,6 @@ hash appropriaetly."
   :tags '(:translate)
   (ergoemacs-test-layout
    :layout "colemak"
-   :theme "reduction"
    (should (equal (ergoemacs-gethash (read-kbd-macro "M-r" t) ergoemacs-map--)
                   (ergoemacs-gethash (ergoemacs-translate--meta-to-escape (read-kbd-macro "M-r" t)) ergoemacs-map--)))))
 
@@ -1260,25 +1241,6 @@ hash appropriaetly."
 (ert-deftest ergoemacs-test-component-location ()
   "Make sure that the locations are correct."
   (should (string= "ergoemacs-themes" (file-name-sans-extension (file-name-nondirectory (plist-get (ergoemacs-component-struct-plist (ergoemacs-component-struct--lookup-hash "standard-fixed")) :file))))))
-
-;; multiple cursors
-;; (ert-deftest ergoemacs-test-mc-mark-next ()
-;;   "Test Issue #342."
-;;   :tags '(:mc)
-;;   :expected-result :failed
-;;   (ergoemacs-test-layout
-;;    :layout "colemak"
-;;    :theme "reduction"
-;;    :macro "M-SPC M-y M-* n o t SPC f o o <return>"
-;;    (save-excursion
-;;      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-;;      (delete-region (point-min) (point-max))
-;;      (emacs-lisp-mode)
-;;      (insert "foo bar bar bar foo bar")
-;;      (goto-char (point-min))
-;;      (execute-kbd-macro macro)
-;;      (should (string= (buffer-string) "not foo bar bar bar not foo bar"))
-;;      (kill-buffer (current-buffer)))))
 
 (ert-deftest ergoemacs-test-mouse-command-list-changes ()
   "Part of test for Sub issue described in #351"
@@ -1339,7 +1301,6 @@ hash appropriaetly."
   (if (version-list-< (version-to-list "24.4") (version-to-list emacs-version))
       (ergoemacs-test-layout
        :layout "colemak"
-       :theme "reduction"
        :macro "M-8 M-SPC M-SPC M-i"
        (save-excursion
 	 (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
