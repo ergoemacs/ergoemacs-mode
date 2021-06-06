@@ -276,49 +276,49 @@ The `execute-extended-command' is now \\[execute-extended-command].
   :keymap ergoemacs-menu-keymap
   (setq ergoemacs-mode--start-p t)
   (if (and (not noninteractive)
-                       (not ergoemacs-mode--start-p))
-                  (if ergoemacs-mode
-                      (message "Ergoemacs will be started.")
-                    (message "Ergoemacs startup canceled."))
-                (setq ergoemacs-map--hashkey nil)
-                (unless ergoemacs-require--ini-p
-                  (setq ergoemacs-require--ini-p :ini)
-                  (when ergoemacs-require
-                    (dolist (elt ergoemacs-require)
-                      (apply #'ergoemacs-require elt))))
-                (let ((refresh-p ergoemacs-component-struct--refresh-variables))
-                  (if ergoemacs-mode
-                      (progn
-                        (setq ergoemacs-mode--default-frame-alist nil)
-                        (dolist (elt (reverse default-frame-alist))
-                          (push elt ergoemacs-mode--default-frame-alist))
-                        (run-hooks 'ergoemacs-mode-startup-hook)
-                        (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-                        (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
-                        (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
-                        (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks)
+           (not ergoemacs-mode--start-p))
+      (if ergoemacs-mode
+          (message "Ergoemacs will be started.")
+        (message "Ergoemacs startup canceled."))
+    (setq ergoemacs-map--hashkey nil)
+    (unless ergoemacs-require--ini-p
+      (setq ergoemacs-require--ini-p :ini)
+      (when ergoemacs-require
+        (dolist (elt ergoemacs-require)
+          (apply #'ergoemacs-require elt))))
+    (let ((refresh-p ergoemacs-component-struct--refresh-variables))
+      (if ergoemacs-mode
+          (progn
+            (setq ergoemacs-mode--default-frame-alist nil)
+            (dolist (elt (reverse default-frame-alist))
+              (push elt ergoemacs-mode--default-frame-alist))
+            (run-hooks 'ergoemacs-mode-startup-hook)
+            (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+            (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
+            (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
+            (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks)
 
-                        (setq ergoemacs-require--ini-p t)
-			(ergoemacs-setup-override-keymap)                       
-                        (if refresh-p
-                            (message "Ergoemacs-mode keys refreshed (%s)" ergoemacs-keyboard-layout)
-                          (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout)))
+            (setq ergoemacs-require--ini-p t)
+	    (ergoemacs-setup-override-keymap)                       
+            (if refresh-p
+                (message "Ergoemacs-mode keys refreshed (%s)" ergoemacs-keyboard-layout)
+              (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout)))
 
-                    (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
-                    (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)
-                      (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
-                    (setq ergoemacs-mode--default-frame-alist nil)
-                    (run-hooks 'ergoemacs-mode-shutdown-hook)
-                    (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
-                    (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-                    (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
-                    (unless refresh-p
-                      (message "Ergoemacs-mode turned OFF.")
-                      )
-                    )
-                  )
-                (setq ergoemacs-mode-started-p t)
-                )
+        (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
+        (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)
+          (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
+        (setq ergoemacs-mode--default-frame-alist nil)
+        (run-hooks 'ergoemacs-mode-shutdown-hook)
+        (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
+        (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+        (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
+        (unless refresh-p
+          (message "Ergoemacs-mode turned OFF.")
+          )
+        )
+      )
+    (setq ergoemacs-mode-started-p t)
+    )
   )
 
 (defvar ergoemacs--gzip (executable-find "gzip")
