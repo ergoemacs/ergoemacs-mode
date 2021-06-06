@@ -28,129 +28,6 @@
 (require 'advice)
 (require 'ibuffer)
 
-(ergoemacs-component standard-vars ()
-  "Enabled/changed variables/modes"
-  (setq org-CUA-compatible t
-        org-support-shift-select t
-        set-mark-command-repeat-pop t
-        org-special-ctrl-a/e t
-        ido-vertical-define-keys 'C-n-C-p-up-down-left-right
-        scroll-error-top-bottom t
-        initial-scratch-message (substitute-command-keys ";; This buffer is for notes you don't want to save, and for Lisp evaluation.\n;; If you want to create a file, visit that file with \\[find-file],\n;; then enter the text in that file's own buffer.")
-        ;; Remove tutorial and guided tour, since the keys don't apply...
-        fancy-startup-text
-        `((:face (variable-pitch font-lock-comment-face)
-                 "Welcome to "
-                 :link ("GNU Emacs"
-                        ,(lambda (_button) (browse-url "http://www.gnu.org/software/emacs/"))
-                        "Browse http://www.gnu.org/software/emacs/")
-                 ", one component of the "
-                 :link
-                 ,(lambda ()
-                    (if (eq system-type 'gnu/linux)
-                        `("GNU/Linux"
-                          ,(lambda (_button) (browse-url "http://www.gnu.org/gnu/linux-and-gnu.html"))
-                          "Browse http://www.gnu.org/gnu/linux-and-gnu.html")
-                      `("GNU" ,(lambda (_button) (describe-gnu-project))
-                        "Display info on the GNU project")))
-                 " operating system.\n\n"
-                 "\n"
-                 :link ("View Emacs Manual" ,(lambda (_button) (info-emacs-manual)))
-                 "\tView the Emacs manual using Info\n"
-                 :link ("Absence of Warranty" ,(lambda (_button) (describe-no-warranty)))
-                 "\tGNU Emacs comes with "
-                 :face (variable-pitch (:slant oblique))
-                 "ABSOLUTELY NO WARRANTY\n"
-                 :face variable-pitch
-                 :link ("Copying Conditions" ,(lambda (_button) (describe-copying)))
-                 "\tConditions for redistributing and changing Emacs\n"
-                 :link ("Ordering Manuals" ,(lambda (_button) (view-order-manuals)))
-                 "\tPurchasing printed copies of manuals\n"
-                 "\n"))
-        ;;
-        fancy-about-text
-        `((:face (variable-pitch font-lock-comment-face)
-                 "This is "
-                 :link ("GNU Emacs"
-                        ,(lambda (_button) (browse-url "http://www.gnu.org/software/emacs/"))
-                        "Browse http://www.gnu.org/software/emacs/")
-                 ", one component of the "
-                 :link
-                 ,(lambda ()
-                    (if (eq system-type 'gnu/linux)
-                        `("GNU/Linux"
-                          ,(lambda (_button)
-                             (browse-url "http://www.gnu.org/gnu/linux-and-gnu.html"))
-                          "Browse http://www.gnu.org/gnu/linux-and-gnu.html")
-                      `("GNU" ,(lambda (_button) (describe-gnu-project))
-                        "Display info on the GNU project.")))
-                 " operating system.\n"
-                 :face (variable-pitch font-lock-builtin-face)
-                 "\n"
-                 ,(lambda () (emacs-version))
-                 "\n"
-                 :face (variable-pitch (:height 0.8))
-                 ,(lambda () emacs-copyright)
-                 "\n\n"
-                 :face variable-pitch
-                 :link ("Authors"
-                        ,(lambda (_button)
-                           (view-file (expand-file-name "AUTHORS" data-directory))
-                           (goto-char (point-min))))
-                 "\tMany people have contributed code included in GNU Emacs\n"
-                 :link ("Contributing"
-                        ,(lambda (_button)
-                           (view-file (expand-file-name "CONTRIBUTE" data-directory))
-                           (goto-char (point-min))))
-                 "\tHow to contribute improvements to Emacs\n"
-                 "\n"
-                 :link ("GNU and Freedom" ,(lambda (_button) (describe-gnu-project)))
-                 "\tWhy we developed GNU Emacs, and the GNU operating system\n"
-                 :link ("Absence of Warranty" ,(lambda (_button) (describe-no-warranty)))
-                 "\tGNU Emacs comes with "
-                 :face (variable-pitch (:slant oblique))
-                 "ABSOLUTELY NO WARRANTY\n"
-                 :face variable-pitch
-                 :link ("Copying Conditions" ,(lambda (_button) (describe-copying)))
-                 "\tConditions for redistributing and changing Emacs\n"
-                 :link ("Getting New Versions" ,(lambda (_button) (describe-distribution)))
-                 "\tHow to obtain the latest version of Emacs\n"
-                 :link ("Ordering Manuals" ,(lambda (_button) (view-order-manuals)))
-                 "\tBuying printed manuals from the FSF\n"
-                 "\n"
-		 )))
-  (add-hook 'dirtrack-directory-change-hook 'ergoemacs-shell-here-directory-change-hook)
-  (add-hook 'kill-buffer-hook 'ergoemacs-save-buffer-to-recently-closed)
-  (add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
-  (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
-  (delete-selection-mode 1)
-  (setq recentf-menu-before "Close"
-        recentf-menu-items-for-commands
-        (list
-         ["Open Last Closed"
-          ergoemacs-open-last-closed
-          :help "Remove duplicates, and obsoletes files from the recent list"
-          :active t]
-         ["Cleanup list"
-          recentf-cleanup
-          :help "Remove duplicates, and obsoletes files from the recent list"
-          :active t]
-         ["Edit list..."
-          recentf-edit-list
-          :help "Manually remove files from the recent list"
-          :active t]
-         ["Save list now"
-          recentf-save-list
-          :help "Save the list of recently opened files now"
-          :active t]
-         ["Options..."
-          (customize-group "recentf")
-          :help "Customize recently opened files menu and options"
-          :active t]))
-  (recentf-mode (if noninteractive -1 1))
-  )
-
-
 (defun ergoemacs-set-standard-vars ()
   "Enabled/changed variables/modes"
   (setq org-CUA-compatible t
@@ -1415,8 +1292,7 @@
                 select-items
                 switch
                 text-transform
-                ergoemacs-remaps
-                standard-vars)
+                ergoemacs-remaps)
   :optional-on '(tab-indents-region
                  backspace-del-seq
                  fixed-bold-italic
