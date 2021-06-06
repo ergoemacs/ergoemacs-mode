@@ -375,7 +375,7 @@ done in `ergoemacs-map--alist'."
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
 (defvar ergoemacs-map--lookup-hash (make-hash-table :test 'equal))
 
-(defun ergoemacs-map--composed-list (lookup-keymap lookup-key only-modify-p use-local-unbind-list-p)
+(defun ergoemacs-map--composed-list (lookup-keymap only-modify-p use-local-unbind-list-p)
   "Calculate majority of keys for LOOKUP-KEYMAP.
 
 It takes the following arguments:
@@ -809,7 +809,7 @@ UNBIND-LIST is the list of keys that `ergoemacs-mode'."
          (use-local-unbind-list-p (ergoemacs lookup-keymap :use-local-unbind-list-p))
          (only-modify-p (ergoemacs lookup-keymap :only-local-modifications-p))
          (lookup-key (ergoemacs-map--lookup-keymap-key lookup-keymap))
-         (composed-list (ergoemacs-map--composed-list lookup-keymap lookup-key only-modify-p use-local-unbind-list-p))
+         (composed-list (ergoemacs-map--composed-list lookup-keymap only-modify-p use-local-unbind-list-p))
          (ret (nth 2 composed-list))
 	 (local-unbind-list (nth 1 composed-list))
 	 (composed-list (nth 0 composed-list))
