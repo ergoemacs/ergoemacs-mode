@@ -219,9 +219,9 @@ When AT-END is non-nil, append a $ to the regular expression."
              (member (list option 'on) ergoemacs-theme-options)))))
 
 
-(defun ergoemacs-theme--menu-options (theme)
+(defun ergoemacs-theme--menu-options ()
   "Gets the options menu for THEME."
-  (let ((plist (ergoemacs-gethash theme ergoemacs-theme-hash))
+  (let ((plist (ergoemacs-gethash "standard" ergoemacs-theme-hash))
         (menu-list '())
         (menu-pre '())
         (options-on '())
@@ -288,11 +288,11 @@ When AT-END is non-nil, append a $ to the regular expression."
     (if (not theme-ver) nil
       (car (cdr theme-ver)))))
 
-(defun ergoemacs-theme--menu (theme)
+(defun ergoemacs-theme--menu ()
   "Define menus for current THEME."
   `(keymap
     ,(ergoemacs-layouts--menu)
-    ,(ergoemacs-theme--menu-options theme)
+    ,(ergoemacs-theme--menu-options)
     (c-v
      menu-item "Paste behavior"
      (keymap

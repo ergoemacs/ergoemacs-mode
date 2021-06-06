@@ -1065,7 +1065,7 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
   (ergoemacs-map--hashkey)
   (ergoemacs-mode-line)
   (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
-    `("ErgoEmacs" . ,(ergoemacs-theme--menu (ergoemacs :current-theme))))
+    `("ErgoEmacs" . ,(ergoemacs-theme--menu)))
 
   (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
     (while x
