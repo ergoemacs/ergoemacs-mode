@@ -428,46 +428,6 @@ not using cua or cutting line. I think kill-region is what is meant."
      (should ret))))
 
 
-(ert-deftest ergoemacs-test-copy-paste-apps-cut ()
-  "Tests <apps> x on QWERTY cutting a region, not just a line."
-  :tags '(:copy :interactive)
-  (let (ret)
-    (ergoemacs-test-layout
-     :macro (format "<%s> x"
-                    (if (eq system-type 'windows-nt)
-                        "apps" "menu"))
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (push-mark (point))
-       (push-mark (point-max) nil t)
-       (goto-char (point-min))
-       (ergoemacs-command-loop--internal macro)
-       (setq ret (string= "" (buffer-string)))
-       (kill-buffer (current-buffer))))
-    (should ret)))
-
-;; [1 apps 99 22]
-
-(ert-deftest ergoemacs-test-copy-paste-apps-copy ()
-  "Tests <apps> c on QWERTY copying a region, not just a line."
-  :tags '(:copy :interactive)
-  ;; :tags '(:interactive)
-  (ergoemacs-test-layout
-   :macro (format "C-a <%s> c C-v"
-                  (if (eq system-type 'windows-nt)
-                      "apps" "menu"))
-   (let ((test-string "1\n2\n3\n4"))
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert test-string)
-       (execute-kbd-macro macro)
-       (should (string= (concat test-string test-string)
-                        (buffer-string)))
-       (kill-buffer (current-buffer))))))
-
 ;;; Functionality Test
 
 (ert-deftest ergoemacs-test-function-bol-or-what ()
@@ -665,27 +625,6 @@ See Issue #138."
     (ergoemacs-command-loop--internal "C-x 8 \" A")
     (should (string= "Ä" (buffer-string)))
     (kill-buffer (current-buffer))))
-
-(ert-deftest ergoemacs-test-command-loop-shortcut ()
-  "Test that shortcuts don't eat or duplicate key-strokes. (Issue #141)"
-  :tags '(:interactive)
-  (let (ret)
-    (ergoemacs-test-layout
-     :macro (format "<%s> e e M-u"
-                    (if (eq system-type 'windows-nt)
-                        "apps" "menu"))
-     :layout "colemak"
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-max))
-       (beginning-of-line)
-       (execute-kbd-macro macro)
-       (looking-at ".*")
-       (when (looking-at "ulla pariatur.")
-         (setq ret t))
-       (kill-buffer (current-buffer))))
-    (should (equal ret t))))
 
 (ert-deftest ergoemacs-test-command-loop-overlay ()
   "Test for mark working with overlays.
@@ -1412,11 +1351,6 @@ hash appropriaetly."
 	 (should (eq (key-binding (kbd "8")) 'self-insert-command))
 	 (kill-buffer (current-buffer)))))
   (should t))
-
-(ert-deftest ergoemacs-test--swap-translation-386 ()
-  "Test thes swapping of the translations."
-  :tags '(:translate :interactive)
-  (should (eq (lookup-key (ergoemacs ergoemacs-translate--parent-map) (or (and (eq system-type 'windows-nt) [apps]) [menu])) 'ergoemacs-command-loop--swap-translation)))
 
 ;;; minibuffer tests...
 ;;; Related to: http://emacs.stackexchange.com/questions/10393/how-can-i-answer-a-minibuffer-prompt-from-elisp
