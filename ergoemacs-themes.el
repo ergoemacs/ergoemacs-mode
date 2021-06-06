@@ -575,10 +575,8 @@
 (ergoemacs-component search ()
   "Search and Replace"
   (global-set-key (kbd "C-s") nil)
-  (global-set-key (kbd "M-y") 'isearch-forward)
   
   (global-set-key (kbd "C-r") nil)
-  (global-set-key (kbd "M-Y") 'isearch-backward)
   
   (global-set-key (kbd "M-%") nil)
   (global-set-key (kbd "M-5") 'query-replace)
@@ -587,8 +585,6 @@
   (global-set-key (kbd "M-%") 'query-replace-regexp)
 
   ;; Mode specific changes
-  (define-key term-raw-map (kbd "M-y") 'isearch-forward)
-  (define-key term-raw-map (kbd "M-Y") 'isearch-backward)
   (define-key term-raw-map (kbd "M-;") 'isearch-forward)
   (define-key term-raw-map (kbd "M-:") 'isearch-backward)
 
@@ -601,7 +597,6 @@
 
   (define-key browse-kill-ring-mode-map [remap isearch-forward] 'browse-kill-ring-search-forward)
   (define-key browse-kill-ring-mode-map [remap isearch-backward] 'browse-kill-ring-search-backward)
-  :version 5.7.5
   (global-set-key (kbd "M-;") 'isearch-forward)
   (global-set-key (kbd "M-:") 'isearch-backward))
 

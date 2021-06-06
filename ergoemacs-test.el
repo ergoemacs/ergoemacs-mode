@@ -289,7 +289,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
    :layout "us"
    (ergoemacs-eshell-here)
    (should (eq 'isearch-forward (key-binding (kbd "C-f"))))
-   (should (eq 'isearch-forward (key-binding (kbd "M-y"))))
    (kill-buffer (current-buffer))))
 
 (ert-deftest ergoemacs-test-isearch-works-with-region ()
