@@ -150,8 +150,6 @@
   (recentf-mode (if noninteractive -1 1))
   )
 
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-set-standard-vars)
-
 ;;; Fixed components
 (ergoemacs-component standard-fixed ()
   "Standard Fixed Shortcuts"
@@ -1314,6 +1312,12 @@
                   ("Packages" (avy multiple-cursors expand-region))
 		  ("Mode Line" (mode-line-major-mode-switch))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-help))))
+
+(defun ergoemacs-install-standard-theme ()
+  (ergoemacs-set-standard-vars)
+  )
+
+(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
 
 (ergoemacs-translation normal ()
   "Identify transformation"
