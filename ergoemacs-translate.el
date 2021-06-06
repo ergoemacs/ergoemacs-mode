@@ -1076,14 +1076,13 @@ If there are no gui elements, retun nil."
           (setq ret (format "%s\n%s=%s" ret f (ergoemacs-translate--ahk-code key))))))
     ret))
 
-(defun ergoemacs-translate--ahk-ini (&optional all-layouts all-themes)
+(defun ergoemacs-translate--ahk-ini (&optional all-layouts)
   "Creates the ini file used with the autohotkey script."
   (let ((layouts (or (and all-layouts (sort (ergoemacs-layouts--list) 'string<))
                      (and (eq (ergoemacs :layout) 'ergoemacs-layout-us) (list "us"))
                      (list "us" ergoemacs-keyboard-layout)))
         (themes (list "standard"))
         (original-layout ergoemacs-keyboard-layout)
-        (original-theme ergoemacs-theme)
         ret)
     (unwind-protect
         (setq ret (with-temp-buffer

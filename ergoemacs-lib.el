@@ -523,7 +523,7 @@ The reset is done with `ergoemacs-mode-reset'."
       (setq file-temp (expand-file-name "ergoemacs.ini" extra-dir))
       (with-temp-file file-temp
         (set-buffer-file-coding-system 'utf-8)
-        (insert (ergoemacs-translate--ahk-ini all all)))
+        (insert (ergoemacs-translate--ahk-ini all)))
       (setq file-temp (expand-file-name "ergoemacs.ahk" extra-dir))
       (with-temp-file file-temp
         (set-buffer-file-coding-system 'utf-8)
