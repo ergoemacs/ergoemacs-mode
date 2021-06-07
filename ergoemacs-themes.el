@@ -234,8 +234,6 @@
   
    ; Alt+→
   ;; Allow shift selection
-  (global-set-key (kbd "<S-down-mouse-1>") 'mouse-save-then-kill)
-  (global-set-key (kbd "<S-mouse-1>") 'ignore)
   (global-set-key (kbd "C-+") 'text-scale-increase)
   (global-set-key (kbd "C-=") 'text-scale-increase)
   (global-set-key (kbd "C--") 'text-scale-decrease)
@@ -245,12 +243,7 @@
   (global-set-key (kbd "C-/") 'info)
   (global-set-key (kbd "C-0") 'ergoemacs-text-scale-normal-size)
   (global-set-key (kbd "C-)") 'ergoemacs-text-scale-normal-size)
-  (global-set-key (kbd "C-<next>") 'ergoemacs-next-user-buffer)
-  (global-set-key (kbd "C-<pause>") 'kill-compilation) ; stop compilation/find/grep
-  (global-set-key (kbd "C-<prior>") 'ergoemacs-previous-user-buffer)
   (global-set-key (kbd "C-?") 'info)
-  (global-set-key (kbd "C-S-<next>") 'ergoemacs-next-emacs-buffer)
-  (global-set-key (kbd "C-S-<prior>") 'ergoemacs-previous-emacs-buffer)
   (global-set-key (kbd "C-S-f") 'occur)
   
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-external-app)
@@ -262,7 +255,6 @@
   (global-set-key (kbd "C-`") 'other-frame)
   (global-set-key (kbd "C-~") 'other-frame)
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
-  (global-set-key (kbd "C-f") 'isearch-forward)
   (global-set-key (kbd "C-l") 'goto-line)
   (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (global-set-key (kbd "C-o") 'find-file)
@@ -380,7 +372,6 @@
   (global-set-key (kbd "C-b") nil) 
   (global-set-key (kbd "M-j") 'backward-char)
   
-  (global-set-key (kbd "C-f") nil) 
   (define-key global-map (kbd "M-l") 'forward-char)
   
   (global-set-key (kbd "C-p") nil)
