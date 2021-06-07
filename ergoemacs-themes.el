@@ -36,7 +36,7 @@
         org-special-ctrl-a/e t
         ido-vertical-define-keys 'C-n-C-p-up-down-left-right
         scroll-error-top-bottom t
-        initial-scratch-message (substitute-command-keys ";; This buffer is for notes you don't want to save, and for Lisp evaluation.\n;; If you want to create a file, visit that file with \\[find-file],\n;; then enter the text in that file's own buffer.")
+        initial-scratch-message (substitute-command-keys ";; This buffer is for notes you don't want to save, and for Lisp evaluation.\n;; If you want to create a file, visit that file with \\[find-file],\n;; then enter the text in that file's own buffer.\n\n")
         ;; Remove tutorial and guided tour, since the keys don't apply...
         fancy-startup-text
         `((:face (variable-pitch font-lock-comment-face)
