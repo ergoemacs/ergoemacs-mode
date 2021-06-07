@@ -151,9 +151,7 @@
   )
 
 ;;; Fixed components
-(ergoemacs-component standard-fixed ()
-  "Standard Fixed Shortcuts"
-  :variable-reg nil ;; No variable keys
+(defun ergoemacs-set-standard-fixed ()
   (global-set-key [tool-bar kill-buffer] 'ergoemacs-close-current-buffer)
   
   (global-set-key (kbd "C-x C-f") nil) ;; Remove Emacs Method
@@ -163,8 +161,8 @@
   (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
 
-  (global-set-key (kbd "C-s") nil) ;; Search Forward
   (global-set-key (kbd "C-f") 'isearch-forward)
+  (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward)
 
   (global-set-key (kbd "C-x C-s") nil) ;; Save File
   (global-set-key (kbd "C-s") 'save-buffer)
@@ -179,12 +177,6 @@
   
   (global-set-key (kbd "C-z") 'undo)
 
-  ;; Take out undo-tree's redo bindings
-  (define-key undo-tree-map (kbd "C-?") nil)
-  (define-key undo-tree-map (kbd "M-_") nil)
-  
-  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
-  (global-set-key (kbd "M-S-z") '(redo undo-tree-redo))
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
@@ -215,25 +207,9 @@
   (global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
   (global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
 
-  ;; C-H is search and replace.
-
-  ;; C-1 to C-9 should be switch tab...  Same as in Google chrome.
-  ;; C-T should be new tab.
-
-  ;; Refresh should be <f5>; erogemacs uses <f5>.
   ;; C-r also should be refresh
-  (global-set-key (kbd "<f5>") 'revert-buffer)
   (global-set-key (kbd "C-r") 'revert-buffer)
-  
-  ;; Text Formatting
-  ;; Upper/Lower case toggle.
 
-  ;; Ergoemacs fixed keys...
-  
-  (global-set-key (kbd "<M-f4>") 'ergoemacs-delete-frame) ;; Alt+f4 should work.
-  
-   ; Alt+→
-  ;; Allow shift selection
   (global-set-key (kbd "C-+") 'text-scale-increase)
   (global-set-key (kbd "C-=") 'text-scale-increase)
   (global-set-key (kbd "C--") 'text-scale-decrease)
@@ -262,11 +238,18 @@
 
   (global-set-key (kbd "C-x k") nil)
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
-  (global-set-key (kbd "C-y") '(redo undo-tree-redo) "↷ redo")
+  (global-set-key (kbd "M-B") 'ibuffer)
+  )
+
+(ergoemacs-component standard-fixed ()
+  "Standard Fixed Shortcuts"
+  :variable-reg nil ;; No variable keys
+  ;; Take out undo-tree's redo bindings
+  (define-key undo-tree-map (kbd "C-?") nil)
+  (define-key undo-tree-map (kbd "M-_") nil)
   
-  (global-set-key (kbd "M-S-<next>") 'forward-page)
-  (global-set-key (kbd "M-S-<prior>") 'backward-page)
+  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
+  (global-set-key (kbd "M-S-z") '(redo undo-tree-redo))
 
   ;; Mode specific changes
 
@@ -1301,6 +1284,7 @@
 
 (defun ergoemacs-install-standard-theme ()
   (ergoemacs-set-standard-vars)
+  (ergoemacs-set-standard-fixed)
   )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)

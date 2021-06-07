@@ -259,23 +259,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
        (should (string= "3" (match-string 0))))
      (kill-buffer (current-buffer)))))
 
-(ert-deftest ergoemacs-test-isearch-exit-C-s ()
-  "Make sure C-s works outside of `ergoemacs-mode'. Issue #361."
-  :tags '(:search)
-  (ergoemacs-mode -1)
-  (should (eq (lookup-key isearch-mode-map (kbd "C-s")) 'isearch-repeat-forward))
-  (should (eq (lookup-key isearch-mode-map (kbd "C-r")) 'isearch-repeat-backward))
-  (save-excursion
-    (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-    (delete-region (point-min) (point-max))
-    (insert "aars1\nars2\nars3\nars4")
-    (goto-char (point-min))
-    (execute-kbd-macro (read-kbd-macro "C-s ars C-s C-s"))
-    (when (looking-at ".*")
-      (should (string= "3" (match-string 0))))
-    (kill-buffer (current-buffer)))
-  (ergoemacs-mode 1))
-
 (ert-deftest ergoemacs-test-isearch-in-eshell ()
   "Test Issue #322."
   :tags '(:search)
@@ -462,7 +445,7 @@ not using cua or cutting line. I think kill-region is what is meant."
 
 (ert-deftest ergoemacs-test-function-unbind-commands-active ()
   "Make sure the unbound keys work"
-  (should (eq 'ergoemacs-map-undefined (key-binding (read-kbd-macro "C-x C-s")))))
+  (should (eq nil (key-binding (read-kbd-macro "C-x C-s")))))
 
 (ert-deftest ergoemacs-test-function-M-f-only-one-char-issue-306 ()
   "Tests Issue #306."
@@ -1118,24 +1101,6 @@ Part of addressing Issue #147."
       (should (eq (key-binding (kbd "C-w")) 'ergoemacs-close-current-buffer))
       ;; The user-defined C-w should not affect kill-region remaps.
       (should (not (eq (key-binding [ergoemacs-remap kill-region]) 'ergoemacs-close-current-buffer))))))
-
-(ert-deftest ergoemacs-test-keep-ctl-s ()
-  "Keep ergoemacs defined C-s in major-mode `ergoemacs-test-major-mode'.
-Part of addressing Issue #147."
-  :tags '(:interactive)
-  (ergoemacs-test-layout
-   (let (ret
-         (ergoemacs-use-function-remapping t))
-     (with-temp-buffer
-       (ergoemacs-test-major-mode)
-       (when (not (current-local-map))
-         (use-local-map ergoemacs-test-major-mode-map))
-       (ergoemacs-map--modify-active)
-       (should (eq (key-binding (kbd "C-s")) 'save-buffer))
-       )
-     )
-   )
-  )
 
 (ert-deftest ergoemacs-test-keep-alt-s ()
   "Keep ergoemacs defined M-s in major-mode `ergoemacs-test-major-mode'.
