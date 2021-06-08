@@ -323,22 +323,9 @@
   "Backspace deletes last key entered in command sequence"
   (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last))
 
-(ergoemacs-component help ()
+(defun ergoemacs-set-help ()
   "Help changes for ergoemacs-mode"
-  (global-set-key (kbd "C-h '") 'ergoemacs-describe-current-theme)
-  (global-set-key (kbd "C-h 1") 'describe-function)
-  (global-set-key (kbd "C-h 2") 'describe-variable)
-  (global-set-key (kbd "C-h 3") 'describe-key)
-  (global-set-key (kbd "C-h 4") 'describe-char)
-  (global-set-key (kbd "C-h 5") 'man)
-  (global-set-key (kbd "C-h 7") 'ergoemacs-lookup-google)
-  (global-set-key (kbd "C-h 8") 'ergoemacs-lookup-wikipedia)
-  (global-set-key (kbd "C-h 9") 'ergoemacs-lookup-word-definition)
-  (global-set-key (kbd "C-h `") 'elisp-index-search)
-  (global-set-key (kbd "C-h o") 'ergoemacs-where-is-old-binding)
-  (global-set-key (kbd "C-h z") 'ergoemacs-clean)
-  (global-set-key (kbd "C-h C-z") 'ergoemacs-clean-library))
-
+  (global-set-key (kbd "C-h '") 'ergoemacs-describe-current-theme))
 
 ;;; Variable Components
 (ergoemacs-component move-char ()
@@ -1225,7 +1212,6 @@
                 dired-tab
                 dired-to-wdired
                 execute
-                help
                 kill-line
                 misc
                 move-bracket
@@ -1264,6 +1250,7 @@
 (defun ergoemacs-install-standard-theme ()
   (ergoemacs-set-standard-vars)
   (ergoemacs-set-standard-fixed)
+  (ergoemacs-set-help)
   )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
