@@ -319,10 +319,6 @@
   (define-key org-mode-map (kbd "<tab>") 'org-cycle)
   (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle))
 
-(ergoemacs-component fixed-newline ()
-  "Newline and indent"
-  (global-set-key (kbd "M-RET") 'electric-newline-and-maybe-indent))
-
 (ergoemacs-component backspace-del-seq ()
   "Backspace deletes last key entered in command sequence"
   (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last))
@@ -1229,7 +1225,6 @@
                 dired-tab
                 dired-to-wdired
                 execute
-                fixed-newline
                 help
                 kill-line
                 misc
