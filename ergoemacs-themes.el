@@ -311,11 +311,6 @@
   (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
   (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste))
 
-(ergoemacs-component tab-indents-region ()
-  "Tab indents selected region"
-  (when mark-active
-    (global-set-key (kbd "TAB") 'indent-region)))
-
 (ergoemacs-component fixed-bold-italic ()
   "Fixed keys for bold and italic"
   (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
@@ -1250,8 +1245,7 @@
                 switch
                 text-transform
                 ergoemacs-remaps)
-  :optional-on '(tab-indents-region
-                 backspace-del-seq
+  :optional-on '(backspace-del-seq
                  fixed-bold-italic
                  standard-fixed
                  ido-remaps
