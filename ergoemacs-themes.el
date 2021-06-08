@@ -763,7 +763,7 @@
   (global-set-key [menu-bar edit]
                   (cons "Edit"
                         '(keymap
-                          (undo menu-item "Undo" undo
+                          (undo-item menu-item "Undo" undo
                                 :enable (and
                                          (not buffer-read-only)
                                          (not
@@ -773,16 +773,6 @@
                                              (listp pending-undo-list)
                                            (consp buffer-undo-list)))
                                 :help "Undo last operation")
-                          (redo menu-item "Redo" redo
-                                :enable (and
-                                         (not buffer-read-only)
-                                         (not (eq t buffer-undo-list))
-                                         (or
-                                          (not (and (boundp 'undo-tree-mode) undo-tree-mode))
-                                          (and (and (boundp 'undo-tree-mode) undo-tree-mode)
-                                               (null (undo-tree-node-next (undo-tree-current buffer-undo-tree))))))
-                                :help "Redo last operation")
-                          (redo-sep menu-item "--")
                           (cut menu-item "Cut" ergoemacs-cut-line-or-region
                                :help "Delete text in Line/region and copy it to the clipboard"
                                :enable (region-active-p))
