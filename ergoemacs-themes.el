@@ -591,10 +591,10 @@
   (global-set-key (kbd "M-@") 'delete-window)
   
   (global-unset-key (kbd "C-x 3"))
-  (global-set-key (kbd "M-4") '(split-window-below split-window-horizontally))
+  (global-set-key (kbd "M-4") 'split-window-below)
   
   (global-unset-key (kbd "C-x 2"))
-  (global-set-key (kbd "M-$") '(split-window-right split-window-vertically))
+  (global-set-key (kbd "M-$") 'split-window-right)
 
   ;; Mode specific changes
   (define-key term-raw-map (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
