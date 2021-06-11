@@ -28,6 +28,24 @@
 (require 'advice)
 (require 'ibuffer)
 
+(defun ergoemacs-global-set-key (key command)
+  "Translates KEY from a 'us' layout to the current layout and
+set it as a global binding as COMMAND.
+
+For example, if your layout is 'us', the command
+
+  (ergoemaces-global-set-key (kbd \"M-k\") 'next-line)
+
+will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
+'Meta-e' to next-line.
+"
+  (global-set-key (ergoemacs-translate--event-layout
+                   (vconcat (listify-key-sequence key))
+                   )
+                  command
+                  )
+  )
+
 (defun ergoemacs-set-standard-vars ()
   "Enabled/changed variables/modes"
   (setq org-CUA-compatible t
@@ -327,11 +345,17 @@
   "Help changes for ergoemacs-mode"
   (global-set-key (kbd "C-h '") 'ergoemacs-describe-current-theme))
 
+(defun ergoemacs-set-move-char ()
+  "Movement by Characters & Set Mark"
+  (global-set-key (kbd "C-b") nil) 
+  (ergoemacs-global-set-key (kbd "M-j") 'backward-char)
+  )  
+
 ;;; Variable Components
 (ergoemacs-component move-char ()
   "Movement by Characters & Set Mark"
-  (global-set-key (kbd "C-b") nil) 
-  (global-set-key (kbd "M-j") 'backward-char)
+  ;; (global-set-key (kbd "C-b") nil) 
+  ;; (global-set-key (kbd "M-j") 'backward-char)
   
   (define-key global-map (kbd "M-l") 'forward-char)
   
@@ -446,18 +470,16 @@
   (define-key term-raw-map (kbd "M-K") 'scroll-up)
   )
 
-(ergoemacs-component move-buffer ()
-  "Move Beginning/End of buffer"
+(defun ergoemacs-set-move-buffer ()
   (global-unset-key (kbd "M->"))
   (global-unset-key (kbd "M-<"))
-  (global-set-key (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
-  (global-set-key (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
-  :version 5.7.5
-  (global-reset-key (kbd "M->"))
-  (global-reset-key (kbd "M-<"))
-  (global-unset-key (kbd "M-n"))
-  (global-unset-key (kbd "M-N"))
+  (ergoemacs-global-set-key (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
+  (ergoemacs-global-set-key (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
+  (define-key isearch-mode-map (kbd "M-n") nil)
+)  
 
+(ergoemacs-component move-buffer ()
+  "Move Beginning/End of buffer"
   ;; Mode specific movement
   (define-key term-raw-map (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
   (define-key term-raw-map (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
@@ -1251,6 +1273,8 @@
   (ergoemacs-set-standard-vars)
   (ergoemacs-set-standard-fixed)
   (ergoemacs-set-help)
+  (ergoemacs-set-move-char)
+  (ergoemacs-set-move-buffer)
   )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
