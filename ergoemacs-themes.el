@@ -480,8 +480,8 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component copy ()
   "Copy, Cut, Paste, Redo and Undo"
   
-  (define-key calc-mode-map [remap ergoemacs-paste] 'calc-yank)
-  (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo)
+  ;; (define-key calc-mode-map [remap ergoemacs-paste] 'calc-yank)
+  ;; (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo)
   )
 
 (defun ergoemacs-set-search ()
@@ -1290,6 +1290,12 @@ calling any other ergoemacs-set-* function"
 
 (add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
 
+(defun ergoemacs-install-calc-bindings ()
+  (ergoemacs-define-key calc-mode-map (kbd "M-v") 'calc-yank)
+  (ergoemacs-define-key calc-mode-map (kbd "M-z") 'calc-undo)
+  )
+
+(add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
 
 (ergoemacs-translation normal ()
   "Identify transformation"
