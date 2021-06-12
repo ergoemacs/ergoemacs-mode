@@ -379,15 +379,6 @@ calling any other ergoemacs-set-* function"
   )  
 
 ;;; Variable Components
-(ergoemacs-component move-char ()
-  "Movement by Characters & Set Mark"
-
-  ;; Mode specific changes
-  (when iswitchb-define-mode-map-hook 
-    (define-key iswitchb-mode-map [remap backward-char] 'iswitchb-prev-match)
-    (define-key iswitchb-mode-map [remap forward-char] 'iswitchb-next-match))
-  )
-  
 (defun ergoemacs-set-move-word ()
   "Moving around and deleting words"
   (ergoemacs-global-set-key (kbd "M-u") 'backward-word)
@@ -466,13 +457,6 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
   )  
-
-(ergoemacs-component copy ()
-  "Copy, Cut, Paste, Redo and Undo"
-  
-  ;; (define-key calc-mode-map [remap ergoemacs-paste] 'calc-yank)
-  ;; (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo)
-  )
 
 (defun ergoemacs-set-search ()
   "Search and Replace"
@@ -555,12 +539,6 @@ calling any other ergoemacs-set-* function"
   (define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
   (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
   )
-
-(ergoemacs-component text-transform ()
-  "Text Transformation"
-  (when iswitchb-define-mode-map-hook
-    (define-key iswitchb-mode-map [remap ergoemacs-toggle-camel-case] 'iswitchb-toggle-case)
-    (define-key iswitchb-mode-map [remap ergoemacs-toggle-letter-case] 'iswitchb-toggle-regexp)))
 
 (defun ergoemacs-set-select-items ()
   "Select Items"
@@ -1135,13 +1113,10 @@ calling any other ergoemacs-set-* function"
 
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
-  :components '(copy
-                dired-tab
+  :components '(dired-tab
                 dired-to-wdired
-                move-char
                 move-line
                 search
-                text-transform
                 ergoemacs-remaps)
   :optional-on '(backspace-del-seq
                  standard-fixed
@@ -1149,7 +1124,7 @@ calling any other ergoemacs-set-* function"
                  multiple-cursors-remaps
                  quit
                  )
-  :options-menu '(("Remaps" (ido-remaps multiple-cursors-remaps icy-reclaim))
+  :options-menu '(("Remaps" (ido-remaps multiple-cursors-remaps))
                   ("Standard Keys" (standard-fixed quit))
                   ("Keys during Key Sequence" (backspace-del-seq))
                   ("Packages" (avy multiple-cursors expand-region))
