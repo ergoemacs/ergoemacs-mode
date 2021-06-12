@@ -346,32 +346,6 @@ calling any other ergoemacs-set-* function"
 
   ;; Mode specific changes
 
-  ;; For term, do not bind anything that modifies the buffer, like
-  ;; cut, undo, and redo.  The only exception is paste.  Paste-cycle
-  ;; is not bound, because it would require deleting and inserting
-  ;; text.
-  ;;
-  ;; Also, do not bind any special keys like <insert> or <prior>.
-  ;; They get passed into term.
-  (define-key term-raw-map (kbd "C-o") 'find-file)
-  (define-key term-raw-map (kbd "C-S-t") 'ergoemacs-open-last-closed)
-  (define-key term-raw-map (kbd "C-w") 'ergoemacs-close-current-buffer)
-  (define-key term-raw-map (kbd "C-a") 'mark-whole-buffer)
-  (define-key term-raw-map (kbd "C-S-n") 'make-frame-command)
-  (define-key term-raw-map (kbd "C-+") 'text-scale-increase)
-  (define-key term-raw-map (kbd "C--") 'text-scale-decrease)
-  (define-key term-raw-map (kbd "C-.") 'keyboard-quit)
-  (define-key term-raw-map (kbd "C-/") 'info)
-  (define-key term-raw-map (kbd "C-0") 'ergoemacs-text-scale-normal-size)
-  (define-key term-raw-map (kbd "C-=") 'text-scale-increase)
-  (define-key term-raw-map (kbd "C-S-f") 'occur)
-  (define-key term-raw-map (kbd "C-S-o") 'ergoemacs-open-in-external-app)
-  (define-key term-raw-map (kbd "C-S-s") 'write-file)
-  (define-key term-raw-map (kbd "C-S-w") 'delete-frame)
-  (define-key term-raw-map (kbd "C-`") 'other-frame)
-  (define-key term-raw-map (kbd "C-n") 'ergoemacs-new-empty-buffer)
-  (define-key term-raw-map (kbd "C-p") 'ergoemacs-print-buffer-confirm)
-  
   (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
   (define-key org-mode-map (kbd "<M-down>") 'ergoemacs-org-metadown)
   (define-key org-mode-map (kbd "<M-up>") 'ergoemacs-org-metaup)
@@ -452,12 +426,6 @@ calling any other ergoemacs-set-* function"
   (define-key browse-kill-ring-mode-map (kbd "M-k") 'browse-kill-ring-forward)
   (define-key browse-kill-ring-mode-map (kbd "M-f") 'browse-kill-ring-delete)
 
-  (define-key term-raw-map (kbd "M-j") 'backward-char)
-  (define-key term-raw-map (kbd "M-l") 'forward-char)
-  (define-key term-raw-map (kbd "M-i") 'previous-line)
-  (define-key term-raw-map (kbd "M-k") 'next-line)
-  (define-key term-raw-map (kbd "M-SPC") 'set-mark-command)
-  
   (when iswitchb-define-mode-map-hook 
     (define-key iswitchb-mode-map [remap backward-char] 'iswitchb-prev-match)
     (define-key iswitchb-mode-map [remap forward-char] 'iswitchb-next-match))
@@ -479,8 +447,6 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component move-word ()
   "Moving around and deleting words"
   ;; Mode specific movement
-  (define-key term-raw-map (kbd "M-u") 'backward-word)
-  (define-key term-raw-map (kbd "M-o") 'forward-word)
   )
 
 (defun ergoemacs-set-move-paragraph ()
@@ -492,8 +458,6 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component move-paragraph ()
   "Move by Paragraph"
   ;; Mode specific movement
-  (define-key term-raw-map (kbd "M-U") 'backward-paragraph)
-  (define-key term-raw-map (kbd "M-O") 'forward-paragraph)
 )
 
 (defun ergoemacs-set-move-line ()
@@ -507,9 +471,6 @@ calling any other ergoemacs-set-* function"
   ;; Mode specific movement
   (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol)
   (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)
-
-  (define-key term-raw-map (kbd "M-h") 'move-beginning-of-line)
-  (define-key term-raw-map (kbd "M-H") 'move-end-of-line)
   )
 
 (defun ergoemacs-set-move-page ()
@@ -525,8 +486,6 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component move-page ()
   "Move by Page"
   ;; Mode specific movement
-  (define-key term-raw-map (kbd "M-I") 'scroll-down)
-  (define-key term-raw-map (kbd "M-K") 'scroll-up)
   )
 
 (defun ergoemacs-set-move-buffer ()
@@ -537,8 +496,6 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component move-buffer ()
   "Move Beginning/End of buffer"
   ;; Mode specific movement
-  (define-key term-raw-map (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
-  (define-key term-raw-map (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
   )
 
 (defun ergoemacs-set-move-bracket ()
@@ -552,8 +509,6 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component move-bracket ()
   "Move By Bracket"
   ;; Mode specific movement
-  (define-key term-raw-map (kbd "M-J") 'ergoemacs-backward-open-bracket)
-  (define-key term-raw-map (kbd "M-L") 'ergoemacs-forward-close-bracket)
   )
 
 (defun ergoemacs-set-copy ()
@@ -592,10 +547,6 @@ calling any other ergoemacs-set-* function"
   (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
   (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
 
-  (define-key term-raw-map (kbd "M-c") 'ergoemacs-copy-line-or-region)
-  (define-key term-raw-map (kbd "M-v") 'term-paste)
-  (define-key term-raw-map (kbd "M-C") 'ergoemacs-copy-all)
-
   (define-key calc-mode-map [remap ergoemacs-paste] 'calc-yank)
   (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo))
 
@@ -612,9 +563,6 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component search ()
   "Search and Replace"
   ;; Mode specific changes
-  (define-key term-raw-map (kbd "M-;") 'isearch-forward)
-  (define-key term-raw-map (kbd "M-:") 'isearch-backward)
-
   (define-key browse-kill-ring-mode-map [remap isearch-forward] 'browse-kill-ring-search-forward)
   (define-key browse-kill-ring-mode-map [remap isearch-backward] 'browse-kill-ring-search-backward)
 
@@ -652,14 +600,6 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component switch ()
   "Window/Frame/Tab Switching"
   ;; Mode specific changes
-  (define-key term-raw-map (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
-  (define-key term-raw-map (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
-  (define-key term-raw-map (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
-  (define-key term-raw-map (kbd "M-`") 'ergoemacs-switch-to-next-frame)
-  (define-key term-raw-map (kbd "M-3") 'delete-other-windows)
-  (define-key term-raw-map (kbd "M-2") 'delete-window)
-  (define-key term-raw-map (kbd "M-4") '(split-window-below split-window-horizontally))
-  (define-key term-raw-map (kbd "M-$") '(split-window-right split-window-vertically))
   )
 
 (defun ergoemacs-set-execute ()
@@ -1364,6 +1304,76 @@ calling any other ergoemacs-set-* function"
   )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
+
+(defun ergoemacs-install-term-bindings ()
+  ;; For term, do not bind anything that modifies the buffer, like
+  ;; cut, undo, and redo.  The only exception is paste.  Paste-cycle
+  ;; is not bound, because it would require deleting and inserting
+  ;; text.
+  ;;
+  ;; Also, do not bind any special keys like <insert> or <prior>.
+  ;; They get passed into term.
+  (define-key term-raw-map (kbd "C-o") 'find-file)
+  (define-key term-raw-map (kbd "C-S-t") 'ergoemacs-open-last-closed)
+  (define-key term-raw-map (kbd "C-w") 'ergoemacs-close-current-buffer)
+  (define-key term-raw-map (kbd "C-a") 'mark-whole-buffer)
+  (define-key term-raw-map (kbd "C-S-n") 'make-frame-command)
+  (define-key term-raw-map (kbd "C-+") 'text-scale-increase)
+  (define-key term-raw-map (kbd "C--") 'text-scale-decrease)
+  (define-key term-raw-map (kbd "C-.") 'keyboard-quit)
+  (define-key term-raw-map (kbd "C-/") 'info)
+  (define-key term-raw-map (kbd "C-0") 'ergoemacs-text-scale-normal-size)
+  (define-key term-raw-map (kbd "C-=") 'text-scale-increase)
+  (define-key term-raw-map (kbd "C-S-f") 'occur)
+  (define-key term-raw-map (kbd "C-S-o") 'ergoemacs-open-in-external-app)
+  (define-key term-raw-map (kbd "C-S-s") 'write-file)
+  (define-key term-raw-map (kbd "C-S-w") 'delete-frame)
+  (define-key term-raw-map (kbd "C-`") 'other-frame)
+  (define-key term-raw-map (kbd "C-n") 'ergoemacs-new-empty-buffer)
+  (define-key term-raw-map (kbd "C-p") 'ergoemacs-print-buffer-confirm)
+  
+  (define-key term-raw-map (kbd "M-j") 'backward-char)
+  (define-key term-raw-map (kbd "M-l") 'forward-char)
+  (define-key term-raw-map (kbd "M-i") 'previous-line)
+  (define-key term-raw-map (kbd "M-k") 'next-line)
+  (define-key term-raw-map (kbd "M-SPC") 'set-mark-command)
+  
+  (define-key term-raw-map (kbd "M-u") 'backward-word)
+  (define-key term-raw-map (kbd "M-o") 'forward-word)
+
+  (define-key term-raw-map (kbd "M-U") 'backward-paragraph)
+  (define-key term-raw-map (kbd "M-O") 'forward-paragraph)
+
+  (define-key term-raw-map (kbd "M-h") 'move-beginning-of-line)
+  (define-key term-raw-map (kbd "M-H") 'move-end-of-line)
+
+  (define-key term-raw-map (kbd "M-I") 'scroll-down)
+  (define-key term-raw-map (kbd "M-K") 'scroll-up)
+
+  (define-key term-raw-map (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
+  (define-key term-raw-map (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
+
+  (define-key term-raw-map (kbd "M-J") 'ergoemacs-backward-open-bracket)
+  (define-key term-raw-map (kbd "M-L") 'ergoemacs-forward-close-bracket)
+  
+  (define-key term-raw-map (kbd "M-c") 'ergoemacs-copy-line-or-region)
+  (define-key term-raw-map (kbd "M-v") 'term-paste)
+  (define-key term-raw-map (kbd "M-C") 'ergoemacs-copy-all)
+
+  (define-key term-raw-map (kbd "M-;") 'isearch-forward)
+  (define-key term-raw-map (kbd "M-:") 'isearch-backward)
+
+  (define-key term-raw-map (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
+  (define-key term-raw-map (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
+  (define-key term-raw-map (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
+  (define-key term-raw-map (kbd "M-`") 'ergoemacs-switch-to-next-frame)
+  (define-key term-raw-map (kbd "M-3") 'delete-other-windows)
+  (define-key term-raw-map (kbd "M-2") 'delete-window)
+  (define-key term-raw-map (kbd "M-4") '(split-window-below split-window-horizontally))
+  (define-key term-raw-map (kbd "M-$") '(split-window-right split-window-vertically))
+  )
+
+(add-hook 'term-load-hook #'ergoemacs-install-term-bindings)
 
 (ergoemacs-translation normal ()
   "Identify transformation"
