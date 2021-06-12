@@ -349,15 +349,6 @@ If TERMINAL is non-nil, run the terminal version"
   (end-of-line)
   (newline-and-indent))
 
-(defun ergoemacs-print-buffer-confirm ()
-  "Print current buffer, but ask for confirmation first.
-If `pr-interface' is available, use that function instead."
-  (interactive)
-  (if (fboundp 'pr-interface)
-      (call-interactively 'pr-interface)
-    (when (y-or-n-p "Print current buffer? ")
-      (print-buffer))))
-
 (defun ergoemacs-call-keyword-completion ()
   "Call the command that has keyboard shortcut M-TAB."
   (interactive)

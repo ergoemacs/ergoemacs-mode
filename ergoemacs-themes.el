@@ -257,7 +257,7 @@ calling any other ergoemacs-set-* function"
   
   (global-set-key (kbd "C-S-s") 'write-file)
 
-  (global-set-key (kbd "C-p") 'ergoemacs-print-buffer-confirm)
+  (global-set-key (kbd "C-p") 'pr-interface)
 
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   
@@ -294,14 +294,14 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
 
   ;; C-r also should be refresh
-  (global-set-key (kbd "C-r") 'revert-buffer)
+  (global-set-key (kbd "C-r") 'ergoemacs-revert-buffer)
 
   (global-set-key (kbd "C-+") 'text-scale-increase)
   (global-set-key (kbd "C-=") 'text-scale-increase)
   (global-set-key (kbd "C--") 'text-scale-decrease)
   (global-set-key (kbd "C-_") 'text-scale-decrease)
-  (global-set-key (kbd "C-.") 'keyboard-quit)
-  (global-set-key (kbd "C->") 'keyboard-quit)
+  (global-set-key (kbd "C-.") 'ergoemacs-keyboard-quit)
+  (global-set-key (kbd "C->") 'ergoemacs-keyboard-quit)
   (global-set-key (kbd "C-/") 'info)
   (global-set-key (kbd "C-0") 'ergoemacs-text-scale-normal-size)
   (global-set-key (kbd "C-)") 'ergoemacs-text-scale-normal-size)
@@ -320,7 +320,7 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-l") 'goto-line)
   (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (global-set-key (kbd "C-o") 'find-file)
-  (global-set-key (kbd "C-p") 'ergoemacs-print-buffer-confirm)
+  (global-set-key (kbd "C-p") 'pr-interface)
 
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
   (global-set-key (kbd "M-B") 'ibuffer)
@@ -629,7 +629,7 @@ calling any other ergoemacs-set-* function"
 
 (defun ergoemacs-set-quit ()
   "Escape exits"
-  (ergoemacs-global-set-key (kbd "<escape>") 'keyboard-quit)
+  (ergoemacs-global-set-key (kbd "<escape>") 'ergoemacs-keyboard-quit)
   (ergoemacs-define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
   )
 
@@ -666,8 +666,6 @@ calling any other ergoemacs-set-* function"
   (when mark-active
     (global-set-key (kbd "TAB") 'indent-region))
   (when ergoemacs-mode
-    (global-set-key [remap keyboard-quit] 'ergoemacs-keyboard-quit)
-    (global-set-key [remap revert-buffer] 'ergoemacs-revert-buffer)
     (global-set-key [remap eshell] 'ergoemacs-eshell-here)
     (global-set-key [remap powershell] 'ergoemacs-powershell-here)
     (global-set-key [remap shell] 'ergoemacs-shell-here)
@@ -675,8 +673,8 @@ calling any other ergoemacs-set-* function"
                     'ergoemacs-command-loop--universal-argument)
     (global-set-key [remap describe-mode]
                     'ergoemacs-describe-major-mode)
-    (global-set-key [remap ergoemacs-print-buffer-confirm]
-                    'pr-interface)))
+    )
+  )
 
 (defun ergoemacs-set-menu-bar-file ()
   "File menu"
@@ -705,8 +703,8 @@ calling any other ergoemacs-set-* function"
                           (separator1 menu-item "--")
                           (save-buffer menu-item "Save" save-buffer)
                           (write-file menu-item "Save As..." write-file)
-                          (revert-buffer menu-item "Revert to Saved" revert-buffer)
-                          (print-buffer menu-item "Print" ergoemacs-print-buffer-confirm)
+                          (revert-buffer menu-item "Revert to Saved" ergoemacs-revert-buffer)
+                          (print-buffer menu-item "Print" pr-interface)
                           (separator4 menu-item "--")
                           (split-window-below menu-item "Split Window"
                                               split-window-below)
@@ -1274,7 +1272,7 @@ calling any other ergoemacs-set-* function"
   (define-key term-raw-map (kbd "C-S-w") 'delete-frame)
   (define-key term-raw-map (kbd "C-`") 'other-frame)
   (define-key term-raw-map (kbd "C-n") 'ergoemacs-new-empty-buffer)
-  (define-key term-raw-map (kbd "C-p") 'ergoemacs-print-buffer-confirm)
+  (define-key term-raw-map (kbd "C-p") 'pr-interface)
   
   (define-key term-raw-map (kbd "M-j") 'backward-char)
   (define-key term-raw-map (kbd "M-l") 'forward-char)

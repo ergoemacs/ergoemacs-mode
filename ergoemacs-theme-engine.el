@@ -650,7 +650,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-org-edit-src "Edit Source")
         (ergoemacs-paste "paste")
         (ergoemacs-paste-cycle "paste ↑")
-        (ergoemacs-print-buffer-confirm "Print")
+        (pr-interface "Print")
         (ergoemacs-read-key--universal-argument "Argument")
         (ergoemacs-select-current-block "Sel. Block")
         (ergoemacs-select-current-line "Sel. Line")
