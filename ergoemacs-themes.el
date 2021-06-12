@@ -337,17 +337,7 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component standard-fixed ()
   "Standard Fixed Shortcuts"
   :variable-reg nil ;; No variable keys
-  ;; Take out undo-tree's redo bindings
-  (define-key undo-tree-map (kbd "C-?") nil)
-  (define-key undo-tree-map (kbd "M-_") nil)
-  
-  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
-  (global-set-key (kbd "M-S-z") '(redo undo-tree-redo))
-
   ;; Mode specific changes
-
-  (define-key browse-kill-ring-mode-map (kbd "C-f") 'browse-kill-ring-search-forward)
-  (define-key browse-kill-ring-mode-map (kbd "<deletechar>") 'browse-kill-ring-delete)
 
   (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done)
 
@@ -403,13 +393,6 @@ calling any other ergoemacs-set-* function"
   "Movement by Characters & Set Mark"
 
   ;; Mode specific changes
-  (define-key browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-previous)
-  (define-key browse-kill-ring-mode-map (kbd "M-k")  'browse-kill-ring-forward)
-  ;; Duplication?
-  (define-key browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-backward)
-  (define-key browse-kill-ring-mode-map (kbd "M-k") 'browse-kill-ring-forward)
-  (define-key browse-kill-ring-mode-map (kbd "M-f") 'browse-kill-ring-delete)
-
   (when iswitchb-define-mode-map-hook 
     (define-key iswitchb-mode-map [remap backward-char] 'iswitchb-prev-match)
     (define-key iswitchb-mode-map [remap forward-char] 'iswitchb-next-match))
@@ -496,16 +479,10 @@ calling any other ergoemacs-set-* function"
 
 (ergoemacs-component copy ()
   "Copy, Cut, Paste, Redo and Undo"
-  (ergoemacs-global-set-key (kbd "M-Z") 'undo-tree-redo)
-  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
-  (global-set-key (kbd "C-y") '(redo undo-tree-redo))
   
-  (define-key browse-kill-ring-mode-map [remap undo] 'browse-kill-ring-undo-other-window)
-  (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
-  (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
-
   (define-key calc-mode-map [remap ergoemacs-paste] 'calc-yank)
-  (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo))
+  (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo)
+  )
 
 (defun ergoemacs-set-search ()
   "Search and Replace"
@@ -520,9 +497,6 @@ calling any other ergoemacs-set-* function"
 (ergoemacs-component search ()
   "Search and Replace"
   ;; Mode specific changes
-  (define-key browse-kill-ring-mode-map [remap isearch-forward] 'browse-kill-ring-search-forward)
-  (define-key browse-kill-ring-mode-map [remap isearch-backward] 'browse-kill-ring-search-backward)
-
   ;; Dired
   (define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
   (define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp)
@@ -642,9 +616,6 @@ calling any other ergoemacs-set-* function"
 
 (ergoemacs-component ergoemacs-remaps ()
   "Remaps for ergoemacs-mode"
-  (when undo-tree-mode
-    (global-set-key [remap redo] 'undo-tree-redo)
-    (global-set-key [remap undo] 'undo-tree-undo))
   (when mark-active
     (global-set-key (kbd "TAB") 'indent-region))
   (when ergoemacs-mode
