@@ -444,21 +444,11 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "M-r") 'kill-word)
   )
 
-(ergoemacs-component move-word ()
-  "Moving around and deleting words"
-  ;; Mode specific movement
-  )
-
 (defun ergoemacs-set-move-paragraph ()
   "Move by Paragraph"
   (ergoemacs-global-set-key (kbd "M-U") 'backward-paragraph)
   (ergoemacs-global-set-key (kbd "M-O") 'forward-paragraph)
   )
-
-(ergoemacs-component move-paragraph ()
-  "Move by Paragraph"
-  ;; Mode specific movement
-)
 
 (defun ergoemacs-set-move-line ()
   "Move by Line"
@@ -483,20 +473,10 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "M-K") 'scroll-up-command)
 )  
 
-(ergoemacs-component move-page ()
-  "Move by Page"
-  ;; Mode specific movement
-  )
-
 (defun ergoemacs-set-move-buffer ()
   (ergoemacs-global-set-key (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
   (ergoemacs-global-set-key (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
 )  
-
-(ergoemacs-component move-buffer ()
-  "Move Beginning/End of buffer"
-  ;; Mode specific movement
-  )
 
 (defun ergoemacs-set-move-bracket ()
   "Move By Bracket"
@@ -504,11 +484,6 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "M-L") 'ergoemacs-forward-close-bracket)
   (global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
   (global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket)
-  )
-
-(ergoemacs-component move-bracket ()
-  "Move By Bracket"
-  ;; Mode specific movement
   )
 
 (defun ergoemacs-set-copy ()
@@ -597,19 +572,10 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "M-)") 'delete-window)
   )
 
-(ergoemacs-component switch ()
-  "Window/Frame/Tab Switching"
-  ;; Mode specific changes
-  )
-
 (defun ergoemacs-set-execute ()
   "Execute Commands"
   (ergoemacs-global-set-key (kbd "M-a") 'execute-extended-command)
   (ergoemacs-global-set-key (kbd "M-A") 'shell-command)
-  )
-
-(ergoemacs-component execute ()
-  "Execute Commands"
   )
 
 (defun ergoemacs-set-misc ()
@@ -618,18 +584,10 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "M-b") 'switch-to-buffer)
   )
 
-(ergoemacs-component misc ()
-  "Misc Commands"
-  )
-
 (defun ergoemacs-set-kill-line ()
   "Kill Line"
   (ergoemacs-global-set-key (kbd "M-g") 'kill-line)
   (ergoemacs-global-set-key (kbd "M-G") 'ergoemacs-kill-line-backward))
-
-(ergoemacs-component kill-line ()
-  "Kill Line"
-  )
 
 (defun ergoemacs-set-text-transform ()
   "Text Transformation"
@@ -667,10 +625,6 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "M-^") 'ergoemacs-select-current-block)
   (ergoemacs-global-set-key (kbd "M-7") 'ergoemacs-select-current-line)
   (ergoemacs-global-set-key (kbd "M-&") 'ergoemacs-select-current-line)
-  )
-
-(ergoemacs-component select-items ()
-  "Select Items"
   )
 
 (defun ergoemacs-set-quit ()
@@ -1243,19 +1197,9 @@ calling any other ergoemacs-set-* function"
   :components '(copy
                 dired-tab
                 dired-to-wdired
-                execute
-                kill-line
-                misc
-                move-bracket
-                move-buffer
                 move-char
                 move-line
-                move-page
-                move-paragraph
-                move-word
                 search
-                select-items
-                switch
                 text-transform
                 ergoemacs-remaps)
   :optional-on '(backspace-del-seq
