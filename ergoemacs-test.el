@@ -345,22 +345,6 @@ Tests issue #347"
        (kill-buffer (current-buffer))))
     (should (equal ret t))))
 
-(ert-deftest ergoemacs-test-shift-select-reduction ()
-  "Test that shift selection works properly in reduction."
-  :tags '(:shift-select :calc :interactive)
-  (ergoemacs-test-layout
-   :layout "colemak"
-   :macro "M-E M-E M-x"
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (delete-region (point-min) (point-max))
-     (insert ergoemacs-test-lorem-ipsum)
-     (goto-char (point-min))
-     (execute-kbd-macro macro)
-     (should (= (point) (point-min)))
-     (kill-buffer (current-buffer)))))
-
-
 (ert-deftest ergoemacs-test-shift-select-subword ()
   "Test for mark working with shift-selection of `subword-forward'."
   :tags '(:shift-select)
@@ -463,6 +447,10 @@ not using cua or cutting line. I think kill-region is what is meant."
        (delete-region (point-min) (point-max))
        (insert ergoemacs-test-lorem-ipsum)
        (fundamental-mode)
+       (print "issue 306")
+       (print (key-binding (kbd "M-f")))
+       (print (key-binding (kbd "M-e")))
+       
        (should (or (eq (key-binding (kbd "M-f")) 'backward-kill-word)
                    (eq (key-binding (kbd "M-f")) (command-remapping 'backward-kill-word (point)))))
        (setq ergoemacs-test-fn nil)
@@ -712,16 +700,6 @@ Should test issue #142"
       (delete-file w-file))
     ret))
 
-(ert-deftest ergoemacs-test-global-key-set-before-1 ()
-  "Test global set key before ergoemacs-mode loads."
-  :tags '(:slow :interactive)
-  (should (equal (ergoemacs-test-global-key-set-before) t)))
-
-(ert-deftest ergoemacs-test-global-key-set-before-2 ()
-  "Test global set key before ergoemacs-mode loads (define-key)."
-  :tags '(:slow :interactive)
-  (should (equal (ergoemacs-test-global-key-set-before nil nil 'define-key) t)))
-
 (ert-deftest ergoemacs-test-global-key-set-after ()
   "Test global set key after ergoemacs loads."
   :tags '(:slow)
@@ -732,128 +710,10 @@ Should test issue #142"
   :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before 'after nil 'define-key) t)))
 
-(ert-deftest ergoemacs-test-global-key-set-apps-m-c-before ()
-  "Test setting <apps> m c before loading."
-  :tags '(:slow :interactive)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     nil
-     (if (eq system-type 'windows-nt)
-         "<apps> m c"
-       "<menu> m c") nil nil "<menu>") t)))
-
-(ert-deftest ergoemacs-test-global-key-set-apps-m-c-before-2 ()
-  "Test setting <apps> m c before loading (define-key)."
-  :tags '(:slow :interactive)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     nil
-     (if (eq system-type 'windows-nt)
-         "<apps> m c"
-       "<menu> m c") 'define-key nil "<menu>") t)))
-
-(ert-deftest ergoemacs-test-global-key-set-m-semi-before ()
-  "Test setting M-; before loading."
-  :tags '(:slow :interactive)
-  (should (equal (ergoemacs-test-global-key-set-before nil "M-;") t)))
-
 (ert-deftest ergoemacs-test-global-key-set-m-semi-after ()
   "Test setting M-; before loading."
   :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before t "M-;") t)))
-
-(ert-deftest ergoemacs-test-global-key-set-apps-before ()
-  "Test setting <apps> before loading."
-  :tags '(:slow :interactive)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     nil
-     (if (eq system-type 'windows-nt)
-         "<apps>"
-       "<menu>")) t)))
-
-
-(ert-deftest ergoemacs-test-global-key-set-apps-before-2 ()
-  "Test setting <apps> before loading (define-key)."
-  :tags '(:slow :interactive)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     nil
-     (if (eq system-type 'windows-nt)
-         "<apps>"
-       "<menu>") 'define-key) t)))
-
-(ert-deftest ergoemacs-test-global-key-set-apps-m-before ()
-  "Test setting <apps> m before loading."
-  :tags '(:slow :interactive)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     nil
-     (if (eq system-type 'windows-nt)
-         "<apps> m"
-       "<menu> m") nil nil "<menu>") t)))
-
-(ert-deftest ergoemacs-test-global-key-set-apps-m-before-2 ()
-  "Test setting <apps> m before loading (define-key)."
-  :tags '(:slow :interactive)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     nil
-     (if (eq system-type 'windows-nt)
-         "<apps> m"
-       "<menu> m") 'define-key nil "<menu>") t)))
-
-(ert-deftest ergoemacs-test-global-key-set-apps-m-after ()
-  "Test setting <apps> m after loading"
-  :tags '(:slow)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     'after
-     (if (eq system-type 'windows-nt)
-         "<apps> m"
-       "<menu> m") nil nil "<menu>") t)))
-
-
-(ert-deftest ergoemacs-test-global-key-set-apps-m-after-2 ()
-  "Test setting <apps> m after loading (define-key)"
-  :tags '(:slow)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     'after
-     (if (eq system-type 'windows-nt)
-         "<apps> m"
-       "<menu> m") 'define-key nil "<menu>") t)))
-
-(ert-deftest ergoemacs-test-global-key-set-apps-m-c-after ()
-  "Test setting <apps> m c after loading."
-  :tags '(:slow)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     'after
-     (if (eq system-type 'windows-nt)
-         "<apps> m c"
-       "<menu> m c") nil nil "<menu>") t)))
-
-(ert-deftest ergoemacs-test-global-key-set-apps-m-c-after-2 ()
-  "Test setting <apps> m c after loading (define-key)."
-  :tags '(:slow)
-  (should
-   (equal
-    (ergoemacs-test-global-key-set-before
-     'after
-     (if (eq system-type 'windows-nt)
-         "<apps> m c"
-       "<menu> m c") 'define-key nil "<menu>") t)))
-
 
 (ert-deftest ergoemacs-test-global-key-set-after-220 ()
   "Test global C-c b"
@@ -957,11 +817,6 @@ Should test issue #142"
   :tags '(:slow)
   (should (equal (ergoemacs-test-global-key-set-before 'after "C-d") t)))
 
-(ert-deftest ergoemacs-test-global-key-set-C-d-before ()
-  "Test global C-d"
-  :tags '(:slow :interactive)
-  (should (equal (ergoemacs-test-global-key-set-before nil "C-d") t)))
-
 (ert-deftest ergoemacs-test-issue-243 ()
   "Allow globally set keys like C-c C-c M-x to work globally while local commands like C-c C-c will work correctly. "
   :tags '(:slow)
@@ -991,42 +846,6 @@ Should test issue #142"
                       temp-file)))
     (delete-file temp-file)
     (should (file-exists-p w-file))
-    (when (file-exists-p w-file)
-      (delete-file w-file))))
-
-(ert-deftest ergoemacs-test-M-J-347 ()
-  "Test keys that are not working in #347."
-  :tags '(:slow :interactive)
-  (let* ((emacs-exe (ergoemacs-emacs-exe))
-         (w-file (expand-file-name "global-test" ergoemacs-dir))
-         (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
-    (with-temp-file temp-file
-      (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
-              "(setq ergoemacs-keyboard-layout \"sw\")\n"
-              "(require 'ergoemacs-mode)\n"
-              "(message \"Binding 1: %s\" (key-binding (kbd \"M-J\")))\n"
-              "(global-unset-key (kbd \"M-J\"))\n"
-              "(message \"Binding 2: %s\" (key-binding (kbd \"M-J\")))\n"
-              "(global-set-key (kbd \"M-J\") 'beginning-of-buffer)\n"
-              "(message \"Binding 3: %s\" (key-binding (kbd \"M-J\")))\n"
-              "(setq ergoemacs-mode--start-p t)(ergoemacs-mode 1)"
-              "(message \"Binding 4: %s\" (key-binding (kbd \"M-J\")))\n"
-              "(when (eq (key-binding (kbd \"M-J\")) 'beginning-of-buffer)\n"
-              "(with-temp-file \"" w-file "\")\n"
-              "   (message \"Passed\")"
-              "  (insert \"Found\"))\n"
-              (or (and (boundp 'wait-for-me) "")
-                  "(kill-emacs)")))
-    (message "%s"
-             (shell-command-to-string
-              (format "%s %s -Q -L %s -l %s -l %s"
-                      emacs-exe (if (boundp 'wait-for-me) "" "--batch")
-                      (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
-                      (expand-file-name (file-name-sans-extension (locate-library "ergoemacs-mode")))
-                      temp-file)))
-    (should (file-exists-p w-file))
-    (when  (file-exists-p temp-file)
-      (delete-file temp-file))
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
@@ -1107,7 +926,7 @@ Part of addressing Issue #147."
 Tests Issue #372."
   :tags '(:interactive)
   (ergoemacs-test-layout
-   :layout "us"
+   :layout "colemak"
    (let (ret
          (ergoemacs-use-function-remapping t))
      (with-temp-buffer
@@ -1115,7 +934,7 @@ Tests Issue #372."
        (when (not (current-local-map))
          (use-local-map ergoemacs-test-major-mode-map))
        (ergoemacs-map--modify-active)
-       (should (eq (key-binding (kbd "M-s")) 'ergoemacs-move-cursor-next-pane))))))
+       (should (eq (key-binding (kbd "M-r")) 'ergoemacs-move-cursor-next-pane))))))
 
 (ert-deftest ergoemacs-test-dired-sort-files ()
   "Test Issue #340"

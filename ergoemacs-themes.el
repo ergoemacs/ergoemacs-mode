@@ -46,6 +46,25 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
                   )
   )
 
+(defun ergoemacs-define-key (map key command)
+  "Translates KEY from a 'us' layout to the current layout and
+set it as a global binding as COMMAND.
+
+For example, if your layout is 'us', the command
+
+  (ergoemaces-global-set-key (kbd \"M-k\") 'next-line)
+
+will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
+'Meta-e' to next-line.
+"
+  (define-key map
+    (ergoemacs-translate--event-layout
+     (vconcat (listify-key-sequence key))
+     )
+    command
+    )
+  )
+
 (defun ergoemacs-set-standard-vars ()
   "Enabled/changed variables/modes"
   (setq org-CUA-compatible t
@@ -168,11 +187,63 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (recentf-mode (if noninteractive -1 1))
   )
 
+(defun ergoemacs-unset-keys ()
+  "Unset all of the standard keys at once.  Call this before
+calling any other ergoemacs-set-* function"
+  (global-set-key (kbd "C-x C-f") nil)
+  (global-set-key (kbd "C-x C-s") nil)
+  (global-set-key (kbd "C-x C-w") nil)
+  (global-set-key (kbd "C-x h") nil)
+  (global-set-key (kbd "C-x k") nil)
+  (global-set-key (kbd "C-b") nil) 
+  (global-set-key (kbd "C-p") nil)
+  (global-set-key (kbd "C-n") nil)
+  (global-set-key (kbd "C-d") nil)
+  (global-set-key (kbd "M-b") nil)
+  (global-set-key (kbd "M-f") nil)
+  (global-set-key (kbd "M-d") nil)
+  (ergoemacs-define-key isearch-mode-map (kbd "M-n") nil)
+
+  (global-set-key (kbd "C-w") nil)
+  (global-set-key (kbd "M-w") nil)
+  (global-set-key (kbd "C-y") nil) ;; Yank = paste
+  (global-set-key (kbd "M-y") nil) ;; Yank-pop = paste cycle
+  (global-set-key (kbd "C-_") nil)
+  (global-set-key (kbd "C-/") nil)
+  (global-set-key (kbd "C-x u") nil)
+  
+  (global-set-key (kbd "C-s") nil)
+  (global-set-key (kbd "C-r") nil)
+  (global-set-key (kbd "M-%") nil)
+  (global-set-key (kbd "C-M-%") nil)
+  (global-unset-key (kbd "M-{"))
+  (global-unset-key (kbd "M-}"))
+  (global-unset-key (kbd "C-a"))
+  (global-unset-key (kbd "C-e"))
+
+  (global-unset-key (kbd "M-v"))
+  (global-unset-key (kbd "C-v"))
+  (global-unset-key (kbd "C-M-v"))
+
+  (global-unset-key (kbd "M->"))
+  (global-unset-key (kbd "M-<"))
+
+  (global-unset-key (kbd "C-x 1"))
+  (global-unset-key (kbd "C-x 0"))
+  (global-unset-key (kbd "C-x 3"))
+  (global-unset-key (kbd "C-x 2"))
+
+  (global-unset-key (kbd "M-x"))
+  (global-unset-key (kbd "M-!"))
+  (global-unset-key (kbd "C-l"))
+  (global-unset-key (kbd "C-k"))
+  (global-unset-key (kbd "M-;"))
+  )
+
 ;;; Fixed components
 (defun ergoemacs-set-standard-fixed ()
   (global-set-key [tool-bar kill-buffer] 'ergoemacs-close-current-buffer)
   
-  (global-set-key (kbd "C-x C-f") nil) ;; Remove Emacs Method
   (global-set-key (kbd "C-o") 'find-file)
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-desktop)
 
@@ -182,15 +253,12 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (global-set-key (kbd "C-f") 'isearch-forward)
   (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward)
 
-  (global-set-key (kbd "C-x C-s") nil) ;; Save File
   (global-set-key (kbd "C-s") 'save-buffer)
   
-  (global-set-key (kbd "C-x C-w") nil) ;; Write File
   (global-set-key (kbd "C-S-s") 'write-file)
 
   (global-set-key (kbd "C-p") 'ergoemacs-print-buffer-confirm)
 
-  (global-set-key (kbd "C-x h") nil) ;; Mark whole buffer
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   
   (global-set-key (kbd "C-z") 'undo)
@@ -254,9 +322,16 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (global-set-key (kbd "C-o") 'find-file)
   (global-set-key (kbd "C-p") 'ergoemacs-print-buffer-confirm)
 
-  (global-set-key (kbd "C-x k") nil)
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
   (global-set-key (kbd "M-B") 'ibuffer)
+  
+  (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
+  (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
+  (define-key isearch-mode-map (kbd "<S-insert>") 'ergoemacs-paste)
+  (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
+  (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
+  (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
+  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   )
 
 (ergoemacs-component standard-fixed ()
@@ -312,7 +387,6 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
 
   (define-key comint-mode-map (kbd "<home>") 'comint-bol)
 
-
   ;; Compatibility with Icicle (allows the use of
   ;; `icicle-read-string-completing' directly)
   (when icicle-mode
@@ -320,14 +394,7 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   
   (when icicle-ido-like-mode
     (global-set-key [remap ergoemacs-apropos-user-options] 'apropos-user-options))
-
-  (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
-  (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
-  (define-key isearch-mode-map (kbd "<S-insert>") 'ergoemacs-paste)
-  (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
-  (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
-  (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
-  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste))
+  )
 
 (ergoemacs-component fixed-bold-italic ()
   "Fixed keys for bold and italic"
@@ -347,43 +414,35 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
 
 (defun ergoemacs-set-move-char ()
   "Movement by Characters & Set Mark"
-  (global-set-key (kbd "C-b") nil) 
   (ergoemacs-global-set-key (kbd "M-j") 'backward-char)
-  )  
 
-;;; Variable Components
-(ergoemacs-component move-char ()
-  "Movement by Characters & Set Mark"
-  ;; (global-set-key (kbd "C-b") nil) 
-  ;; (global-set-key (kbd "M-j") 'backward-char)
+  (ergoemacs-global-set-key (kbd "M-l") 'forward-char)
   
-  (define-key global-map (kbd "M-l") 'forward-char)
+  (ergoemacs-global-set-key (kbd "M-i") 'previous-line)
   
-  (global-set-key (kbd "C-p") nil)
-  (define-key (current-global-map) (kbd "M-i") 'previous-line)
-  
-  (global-set-key (kbd "C-n") nil)
-  (define-key ergoemacs-keymap (kbd "M-k") 'next-line)
-
+  (ergoemacs-global-set-key (kbd "M-k") 'next-line)
 
   ;; These are here so that C-M-i will translate to C-<up> for modes
   ;; like inferior R mode.  That allows the command to be the last
   ;; command.
   ;; Not sure it belongs here or not...
-  (global-set-key (kbd "M-C-j") 'left-word)
-  (global-set-key (kbd "M-C-l") 'right-word)
-  (global-set-key (kbd "M-C-i") 'backward-paragraph)
-  (global-set-key (kbd "M-C-k") 'forward-paragraph)
+  (ergoemacs-global-set-key (kbd "M-C-j") 'left-word)
+  (ergoemacs-global-set-key (kbd "M-C-l") 'right-word)
+  (ergoemacs-global-set-key (kbd "M-C-i") 'backward-paragraph)
+  (ergoemacs-global-set-key (kbd "M-C-k") 'forward-paragraph)
 
-
-  (global-set-key (kbd "C-SPC") nil) ;; Set Mark
+  (global-set-key (kbd "C-SPC") 'set-mark-command)
   (global-set-key (kbd "M-SPC") 'set-mark-command)
   
   ;; Delete previous/next char.
-  (global-set-key (kbd "M-d") 'delete-backward-char)
+  (ergoemacs-global-set-key (kbd "M-d") 'delete-backward-char)
 
-  (global-set-key (kbd "C-d") nil)
-  (global-set-key (kbd "M-f") 'delete-char)
+  (ergoemacs-global-set-key (kbd "M-f") 'delete-char)
+  )  
+
+;;; Variable Components
+(ergoemacs-component move-char ()
+  "Movement by Characters & Set Mark"
 
   ;; Mode specific changes
   (define-key browse-kill-ring-mode-map (kbd "M-i") 'browse-kill-ring-previous)
@@ -402,49 +461,49 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (when iswitchb-define-mode-map-hook 
     (define-key iswitchb-mode-map [remap backward-char] 'iswitchb-prev-match)
     (define-key iswitchb-mode-map [remap forward-char] 'iswitchb-next-match))
-  :version 5.7.5
-  (global-set-key (kbd "C-SPC") 'set-mark-command) ;; Set Mark
   )
   
-
-(ergoemacs-component move-word ()
+(defun ergoemacs-set-move-word ()
   "Moving around and deleting words"
-  (global-set-key (kbd "M-b") nil)
-  (global-set-key (kbd "M-u") 'backward-word)
+  (ergoemacs-global-set-key (kbd "M-u") 'backward-word)
 
-  (global-set-key (kbd "M-f") nil)
-  (global-set-key (kbd "M-o") 'forward-word)
+  (ergoemacs-global-set-key (kbd "M-o") 'forward-word)
   
   ;; Delete previous/next word.
   ;; C-backspace is standard; don't change
-  (global-set-key (kbd "M-e") 'backward-kill-word)
+  (ergoemacs-global-set-key (kbd "M-e") 'backward-kill-word)
   
-  (global-set-key (kbd "M-d") nil)
-  (global-set-key (kbd "M-r") 'kill-word)
+  (ergoemacs-global-set-key (kbd "M-r") 'kill-word)
+  )
 
+(ergoemacs-component move-word ()
+  "Moving around and deleting words"
   ;; Mode specific movement
   (define-key term-raw-map (kbd "M-u") 'backward-word)
   (define-key term-raw-map (kbd "M-o") 'forward-word)
   )
 
+(defun ergoemacs-set-move-paragraph ()
+  "Move by Paragraph"
+  (ergoemacs-global-set-key (kbd "M-U") 'backward-paragraph)
+  (ergoemacs-global-set-key (kbd "M-O") 'forward-paragraph)
+  )
+
 (ergoemacs-component move-paragraph ()
   "Move by Paragraph"
-  (global-unset-key (kbd "M-{"))
-  (global-unset-key (kbd "M-}"))
-  (global-set-key (kbd "M-U") 'backward-paragraph)
-  (global-set-key (kbd "M-O") 'forward-paragraph)
-
   ;; Mode specific movement
   (define-key term-raw-map (kbd "M-U") 'backward-paragraph)
   (define-key term-raw-map (kbd "M-O") 'forward-paragraph)
 )
 
-(ergoemacs-component move-line ()
+(defun ergoemacs-set-move-line ()
   "Move by Line"
-  (global-unset-key (kbd "C-a"))
-  (global-unset-key (kbd "C-e"))
   (global-set-key (kbd "M-h") 'move-beginning-of-line)
   (global-set-key (kbd "M-H") 'move-end-of-line)
+  )
+
+(ergoemacs-component move-line ()
+  "Move by Line"
   ;; Mode specific movement
   (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol)
   (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)
@@ -453,29 +512,26 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (define-key term-raw-map (kbd "M-H") 'move-end-of-line)
   )
 
+(defun ergoemacs-set-move-page ()
+  "Move by Page"
+  ;; Not sure I like the scroll other window placment... C+M+ argh.
+  (ergoemacs-global-set-key (kbd "C-M-I") 'scroll-other-window-down)
+  (ergoemacs-global-set-key (kbd "C-M-K") 'scroll-other-window)
+  ;; These are OK
+  (ergoemacs-global-set-key (kbd "M-I") 'scroll-down-command)
+  (ergoemacs-global-set-key (kbd "M-K") 'scroll-up-command)
+)  
+
 (ergoemacs-component move-page ()
   "Move by Page"
-  (global-unset-key (kbd "M-v"))
-  (global-unset-key (kbd "C-v"))
-  (global-unset-key (kbd "C-M-v"))
-  ;; Not sure I like the scroll other window placment... C+M+ argh.
-  (global-set-key (kbd "C-M-I") 'scroll-other-window-down)
-  (global-set-key (kbd "C-M-K") 'scroll-other-window)
-  ;; These are OK
-  (global-set-key (kbd "M-I") 'scroll-down-command)
-  (global-set-key (kbd "M-K") 'scroll-up-command)
-
   ;; Mode specific movement
   (define-key term-raw-map (kbd "M-I") 'scroll-down)
   (define-key term-raw-map (kbd "M-K") 'scroll-up)
   )
 
 (defun ergoemacs-set-move-buffer ()
-  (global-unset-key (kbd "M->"))
-  (global-unset-key (kbd "M-<"))
   (ergoemacs-global-set-key (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
   (ergoemacs-global-set-key (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
-  (define-key isearch-mode-map (kbd "M-n") nil)
 )  
 
 (ergoemacs-component move-buffer ()
@@ -485,53 +541,50 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (define-key term-raw-map (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
   )
 
+(defun ergoemacs-set-move-bracket ()
+  "Move By Bracket"
+  (ergoemacs-global-set-key (kbd "M-J") 'ergoemacs-backward-open-bracket)
+  (ergoemacs-global-set-key (kbd "M-L") 'ergoemacs-forward-close-bracket)
+  (global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
+  (global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket)
+  )
+
 (ergoemacs-component move-bracket ()
   "Move By Bracket"
-  (global-set-key (kbd "M-J") 'ergoemacs-backward-open-bracket)
-  (global-set-key (kbd "M-L") 'ergoemacs-forward-close-bracket)
-  (global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket) ; Alt+←
-  (global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket)
-
   ;; Mode specific movement
   (define-key term-raw-map (kbd "M-J") 'ergoemacs-backward-open-bracket)
   (define-key term-raw-map (kbd "M-L") 'ergoemacs-forward-close-bracket)
   )
 
-(ergoemacs-component copy ()
+(defun ergoemacs-set-copy ()
   "Copy, Cut, Paste, Redo and Undo"
-  (global-set-key (kbd "C-w") nil) ;; Kill region = Cut
-  (global-set-key (kbd "M-x") 'ergoemacs-cut-line-or-region)
+  (ergoemacs-global-set-key (kbd "M-x") 'ergoemacs-cut-line-or-region)
+  (ergoemacs-global-set-key (kbd "M-c") 'ergoemacs-copy-line-or-region)
+  (ergoemacs-global-set-key (kbd "M-v") 'ergoemacs-paste)
+  (ergoemacs-global-set-key (kbd "M-V") 'ergoemacs-paste-cycle)
   
-  (global-set-key (kbd "M-w") nil) ;; Kill ring save = Copy
-  (global-set-key (kbd "M-c") 'ergoemacs-copy-line-or-region)
-
-  (global-set-key (kbd "C-y") nil) ;; Yank = paste
-  (global-set-key (kbd "M-v") 'ergoemacs-paste)
-
-  (global-set-key (kbd "M-y") nil) ;; Yank-pop = paste cycle
-  (global-set-key (kbd "M-V") 'ergoemacs-paste-cycle)
-  
-  (global-set-key (kbd "M-C") 'ergoemacs-copy-all)
-  (global-set-key (kbd "M-X") 'ergoemacs-cut-all)
-  (global-set-key (kbd "M-Z") 'undo-tree-redo)
+  (ergoemacs-global-set-key (kbd "M-C") 'ergoemacs-copy-all)
+  (ergoemacs-global-set-key (kbd "M-X") 'ergoemacs-cut-all)
 
   ;; Undo
-  (global-set-key (kbd "C-_") nil)
-  (global-set-key (kbd "C-/") nil)
-  (global-set-key (kbd "C-x u") nil)
-  (global-set-key (kbd "M-z") 'undo)
+  (ergoemacs-global-set-key (kbd "M-z") 'undo)
   
-  (global-set-key (kbd "C-S-x") 'execute-extended-command)
-  (global-set-key (kbd "C-z") 'undo)
-  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
-  (global-set-key (kbd "C-y") '(redo undo-tree-redo))
+  (ergoemacs-global-set-key (kbd "C-S-x") 'execute-extended-command)
+  (ergoemacs-global-set-key (kbd "C-z") 'undo)
 
   ;; Mode specific changes
-  (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
-  (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
-  (define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
-  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
-  (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
+  (ergoemacs-define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
+  (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
+  (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
+  (ergoemacs-define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
+  (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
+  )  
+
+(ergoemacs-component copy ()
+  "Copy, Cut, Paste, Redo and Undo"
+  (ergoemacs-global-set-key (kbd "M-Z") 'undo-tree-redo)
+  (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
+  (global-set-key (kbd "C-y") '(redo undo-tree-redo))
   
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
@@ -546,56 +599,58 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (define-key calc-mode-map [remap ergoemacs-paste] 'calc-yank)
   (define-key calc-mode-map [remap undo-tree-undo] 'calc-undo))
 
+(defun ergoemacs-set-search ()
+  "Search and Replace"
+  (ergoemacs-global-set-key (kbd "M-5") 'query-replace)
+  (ergoemacs-global-set-key (kbd "M-%") 'query-replace-regexp)
+  (ergoemacs-global-set-key (kbd "M-;") 'isearch-forward)
+  (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
+  (ergoemacs-global-set-key (kbd "M-:") 'isearch-backward)
+  (ergoemacs-define-key isearch-mode-map (kbd "M-:") 'isearch-repeat-backward)
+  )
+
 (ergoemacs-component search ()
   "Search and Replace"
-  (global-set-key (kbd "C-s") nil)
-  
-  (global-set-key (kbd "C-r") nil)
-  
-  (global-set-key (kbd "M-%") nil)
-  (global-set-key (kbd "M-5") 'query-replace)
-  
-  (global-set-key (kbd "C-M-%") nil)
-  (global-set-key (kbd "M-%") 'query-replace-regexp)
-
   ;; Mode specific changes
   (define-key term-raw-map (kbd "M-;") 'isearch-forward)
   (define-key term-raw-map (kbd "M-:") 'isearch-backward)
 
+  (define-key browse-kill-ring-mode-map [remap isearch-forward] 'browse-kill-ring-search-forward)
+  (define-key browse-kill-ring-mode-map [remap isearch-backward] 'browse-kill-ring-search-backward)
+
+  ;; Dired
   (define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
   (define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp)
   
   ;; Reclaim dired+ overrides.
   (define-key dired-mode-map (kbd "M-u") 'backward-word)
   (define-key dired-mode-map (kbd "C-b") 'diredp-do-bookmark)
+  )
 
-  (define-key browse-kill-ring-mode-map [remap isearch-forward] 'browse-kill-ring-search-forward)
-  (define-key browse-kill-ring-mode-map [remap isearch-backward] 'browse-kill-ring-search-backward)
-  (global-set-key (kbd "M-;") 'isearch-forward)
-  (global-set-key (kbd "M-:") 'isearch-backward))
+(defun ergoemacs-set-switch ()
+  "Window/Frame/Tab Switching"
+  (ergoemacs-global-set-key (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
+  (ergoemacs-global-set-key (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
+  
+  (ergoemacs-global-set-key (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
+  (ergoemacs-global-set-key (kbd "M-`") 'ergoemacs-switch-to-next-frame)
+
+  (ergoemacs-global-set-key (kbd "M-3") 'delete-other-windows)
+  (ergoemacs-global-set-key (kbd "M-#") 'delete-other-windows)
+  
+  (ergoemacs-global-set-key (kbd "M-2") 'delete-window)
+  (ergoemacs-global-set-key (kbd "M-@") 'delete-window)
+  
+  (ergoemacs-global-set-key (kbd "M-4") 'split-window-below)
+  
+  (ergoemacs-global-set-key (kbd "M-$") 'split-window-right)
+
+  (ergoemacs-global-set-key (kbd "M-0") 'delete-window)
+  (ergoemacs-global-set-key (kbd "M-)") 'delete-window)
+  )
 
 (ergoemacs-component switch ()
   "Window/Frame/Tab Switching"
-  (global-set-key (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
-  (global-set-key (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
-  
-  (global-set-key (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
-  (global-set-key (kbd "M-`") 'ergoemacs-switch-to-next-frame)
-
-  (global-unset-key (kbd "C-x 1"))
-  (global-set-key (kbd "M-3") 'delete-other-windows)
-  (global-set-key (kbd "M-#") 'delete-other-windows)
-  
-  (global-unset-key (kbd "C-x 0"))
-  (global-set-key (kbd "M-2") 'delete-window)
-  (global-set-key (kbd "M-@") 'delete-window)
-  
-  (global-unset-key (kbd "C-x 3"))
-  (global-set-key (kbd "M-4") 'split-window-below)
-  
-  (global-unset-key (kbd "C-x 2"))
-  (global-set-key (kbd "M-$") 'split-window-right)
-
   ;; Mode specific changes
   (define-key term-raw-map (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
   (define-key term-raw-map (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
@@ -605,34 +660,39 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (define-key term-raw-map (kbd "M-2") 'delete-window)
   (define-key term-raw-map (kbd "M-4") '(split-window-below split-window-horizontally))
   (define-key term-raw-map (kbd "M-$") '(split-window-right split-window-vertically))
+  )
 
-  :version 5.7.5
-  (global-set-key (kbd "M-0") 'delete-window)
-  (global-set-key (kbd "M-)") 'delete-window)
+(defun ergoemacs-set-execute ()
+  "Execute Commands"
+  (ergoemacs-global-set-key (kbd "M-a") 'execute-extended-command)
+  (ergoemacs-global-set-key (kbd "M-A") 'shell-command)
   )
 
 (ergoemacs-component execute ()
   "Execute Commands"
-  (global-unset-key (kbd "M-x"))
-  (global-set-key (kbd "M-a") 'execute-extended-command)
-  (global-unset-key (kbd "M-!"))
-  (global-set-key (kbd "M-A") 'shell-command))
+  )
+
+(defun ergoemacs-set-misc ()
+  "Misc Commands"
+  (ergoemacs-global-set-key (kbd "M-p") 'recenter-top-bottom)
+  (ergoemacs-global-set-key (kbd "M-b") 'switch-to-buffer)
+  )
 
 (ergoemacs-component misc ()
   "Misc Commands"
-  (global-unset-key (kbd "C-l"))
-  (global-set-key (kbd "M-p") 'recenter-top-bottom)
-  (global-set-key (kbd "M-b") 'avy-goto-word-or-subword-1))
+  )
+
+(defun ergoemacs-set-kill-line ()
+  "Kill Line"
+  (ergoemacs-global-set-key (kbd "M-g") 'kill-line)
+  (ergoemacs-global-set-key (kbd "M-G") 'ergoemacs-kill-line-backward))
 
 (ergoemacs-component kill-line ()
   "Kill Line"
-  (global-unset-key (kbd "C-k"))
-  (global-set-key (kbd "M-g") 'kill-line)
-  (global-set-key (kbd "M-G") 'ergoemacs-kill-line-backward))
+  )
 
-(ergoemacs-component text-transform ()
+(defun ergoemacs-set-text-transform ()
   "Text Transformation"
-  (global-unset-key (kbd "M-;"))
   (global-set-key (kbd "M-'") 'comment-dwim)
   (global-set-key (kbd "M-\"") 'delete-horizontal-space)
   
@@ -650,27 +710,37 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
 
   (define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
   (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
-  
+  )
+
+(ergoemacs-component text-transform ()
+  "Text Transformation"
   (when iswitchb-define-mode-map-hook
     (define-key iswitchb-mode-map [remap ergoemacs-toggle-camel-case] 'iswitchb-toggle-case)
     (define-key iswitchb-mode-map [remap ergoemacs-toggle-letter-case] 'iswitchb-toggle-regexp)))
 
+(defun ergoemacs-set-select-items ()
+  "Select Items"
+  (ergoemacs-global-set-key (kbd "M-S-SPC") 'mark-paragraph)
+  (ergoemacs-global-set-key (kbd "M-8") 'ergoemacs-extend-selection)
+  (ergoemacs-global-set-key (kbd "M-*") 'ergoemacs-select-text-in-quote)
+  (ergoemacs-global-set-key (kbd "M-6") 'ergoemacs-select-current-block)
+  (ergoemacs-global-set-key (kbd "M-^") 'ergoemacs-select-current-block)
+  (ergoemacs-global-set-key (kbd "M-7") 'ergoemacs-select-current-line)
+  (ergoemacs-global-set-key (kbd "M-&") 'ergoemacs-select-current-line)
+  )
+
 (ergoemacs-component select-items ()
   "Select Items"
-  (global-set-key (kbd "M-S-SPC") 'mark-paragraph)
-  (global-set-key (kbd "M-8") '(er/expand-region ergoemacs-extend-selection))
-  (global-set-key (kbd "M-*") '(er/mark-inside-quotes ergoemacs-select-text-in-quote))
-  (global-set-key (kbd "M-6") 'ergoemacs-select-current-block)
-  (global-set-key (kbd "M-^") 'ergoemacs-select-current-block)
-  (global-set-key (kbd "M-7") 'ergoemacs-select-current-line)
-  (global-set-key (kbd "M-&") 'ergoemacs-select-current-line)
+  )
+
+(defun ergoemacs-set-quit ()
+  "Escape exits"
+  (ergoemacs-global-set-key (kbd "<escape>") 'keyboard-quit)
+  (ergoemacs-define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
   )
 
 (ergoemacs-component quit ()
   "Escape exits"
-  (global-set-key (kbd "<escape>") 'keyboard-quit)
-  (define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
-
   (when org-read-date-minibuffer-setup-hook
     (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit)))
 
@@ -1270,11 +1340,28 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-help))))
 
 (defun ergoemacs-install-standard-theme ()
+  (ergoemacs-unset-keys)
   (ergoemacs-set-standard-vars)
   (ergoemacs-set-standard-fixed)
   (ergoemacs-set-help)
   (ergoemacs-set-move-char)
   (ergoemacs-set-move-buffer)
+  (ergoemacs-set-move-bracket)
+  (ergoemacs-set-move-word)
+  (ergoemacs-set-move-paragraph)
+  (ergoemacs-set-move-line)
+  (ergoemacs-set-move-page)
+  (ergoemacs-set-move-buffer)
+  (ergoemacs-set-move-bracket)
+  (ergoemacs-set-copy)
+  (ergoemacs-set-search)
+  (ergoemacs-set-switch)
+  (ergoemacs-set-execute)
+  (ergoemacs-set-misc)
+  (ergoemacs-set-kill-line)
+  (ergoemacs-set-text-transform)
+  (ergoemacs-set-select-items)
+  (ergoemacs-set-quit)
   )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
