@@ -1268,6 +1268,9 @@ calling any other ergoemacs-set-* function"
 
 (with-eval-after-load 'compile (ergoemacs-unset-keys-in-map compilation-mode-map))
 
+(add-hook 'ibuffer-load-hook #'(ergoemacs-unset-keys-in-map ibuffer-mode-map))
+
+
 (ergoemacs-translation normal ()
   "Identify transformation"
   :keymap (let ((map (make-sparse-keymap)))
