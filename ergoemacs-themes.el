@@ -339,8 +339,6 @@ calling any other ergoemacs-set-* function"
   :variable-reg nil ;; No variable keys
   ;; Mode specific changes
 
-  (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done)
-
   (define-key comint-mode-map (kbd "<home>") 'comint-bol)
 
   ;; Compatibility with Icicle (allows the use of
@@ -1296,6 +1294,18 @@ calling any other ergoemacs-set-* function"
   )
 
 (add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
+
+
+(defun ergoemacs-install-log-edit-bindings ()
+  (ergoemacs-define-key log-edit-mode-map (kbd "C-s") 'log-edit-done)
+  (define-key log-edit-mode-map (kbd "C-a") nil)
+  (define-key log-edit-mode-map (kbd "M-n") nil)
+  (define-key log-edit-mode-map (kbd "M-p") nil)
+  (define-key log-edit-mode-map (kbd "M-r") nil)
+  (define-key log-edit-mode-map (kbd "M-s") nil)
+  )
+
+(with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
 
 (ergoemacs-translation normal ()
   "Identify transformation"
