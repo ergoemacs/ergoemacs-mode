@@ -784,7 +784,7 @@ calling any other ergoemacs-set-* function"
     (global-set-key [remap ergoemacs-print-buffer-confirm]
                     'pr-interface)))
 
-(ergoemacs-component menu-bar-file ()
+(defun ergoemacs-set-menu-bar-file ()
   "File menu"
   (global-set-key [menu-bar file]
                   (cons "File"
@@ -828,7 +828,7 @@ calling any other ergoemacs-set-* function"
                           (exit-emacs-menu menu-item "Quit" save-buffers-kill-emacs)
                           "File"))))
 
-(ergoemacs-component menu-bar-edit ()
+(defun ergoemacs-set-menu-bar-edit ()
   "Edit menu"
   (global-set-key [menu-bar edit]
                   (cons "Edit"
@@ -988,7 +988,7 @@ calling any other ergoemacs-set-* function"
                           (props menu-item "Text Properties" facemenu-menu)
                           "Edit"))))
 
-(ergoemacs-component menu-bar-search ()
+(defun ergoemacs-set-menu-bar-search ()
   "Search menu"
   (global-set-key [menu-bar search]
                   (cons "Search"
@@ -1073,7 +1073,7 @@ calling any other ergoemacs-set-* function"
                           (bookmark menu-item "Bookmarks" menu-bar-bookmark-map)
                           "Search"))))
 
-(ergoemacs-component menu-bar-view ()
+(defun ergoemacs-set-menu-bar-view ()
   "View menu"
   (global-set-key [menu-bar view]
                   (cons "View"
@@ -1127,7 +1127,7 @@ calling any other ergoemacs-set-* function"
                           (global-linum-mode menu-item "Show/Hide line numbers in margin" global-linum-mode :button
                                              (:toggle . global-linum-mode))))))
 
-(ergoemacs-theme-component menu-bar-help ()
+(defun ergoemacs-set-menu-bar-help ()
   "Help menu"
   (global-set-key [menu-bar help-menu]
                   (cons (if (eq system-type 'darwin) "Help" "?")
@@ -1294,7 +1294,7 @@ calling any other ergoemacs-set-* function"
                                    describe-copying)
                           ,(if (eq system-type 'darwin) "Help" "?")))))
 
-(ergoemacs-component mode-line-major-mode-switch ()
+(defun ergoemacs-set-mode-line-major-mode-switch ()
   "Switch major modes by clicking mode-name."
   (setq ergoemacs-swap-major-modes-when-clicking-major-mode-name t))
 
@@ -1324,13 +1324,6 @@ calling any other ergoemacs-set-* function"
                  ido-remaps
                  multiple-cursors-remaps
                  quit
-                 ;; Reverse menu-bar order
-                 menu-bar-help
-                 menu-bar-view
-                 menu-bar-search
-                 menu-bar-edit
-                 menu-bar-file
-		 mode-line-major-mode-switch
                  )
   :options-menu '(("Remaps" (ido-remaps multiple-cursors-remaps icy-reclaim))
                   ("Standard Keys" (standard-fixed fixed-bold-italic quit))
@@ -1362,6 +1355,12 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-set-text-transform)
   (ergoemacs-set-select-items)
   (ergoemacs-set-quit)
+  (ergoemacs-set-menu-bar-help)
+  (ergoemacs-set-menu-bar-view)
+  (ergoemacs-set-menu-bar-search)
+  (ergoemacs-set-menu-bar-edit)
+  (ergoemacs-set-menu-bar-file)
+  (ergoemacs-set-mode-line-major-mode-switch)
   )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
