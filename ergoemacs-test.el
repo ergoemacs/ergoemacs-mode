@@ -1019,10 +1019,6 @@ hash appropriaetly."
     (kill-buffer (current-buffer))))
 
 ;; File variables
-(ert-deftest ergoemacs-test-component-location ()
-  "Make sure that the locations are correct."
-  (should (string= "ergoemacs-themes" (file-name-sans-extension (file-name-nondirectory (plist-get (ergoemacs-component-struct-plist (ergoemacs-component-struct--lookup-hash "standard-fixed")) :file))))))
-
 (ert-deftest ergoemacs-test-mouse-command-list-changes ()
   "Part of test for Sub issue described in #351"
   (should (equal '(&rest arg) (ergoemacs-command-loop--mouse-command-drop-first '(&rest arg) t)))

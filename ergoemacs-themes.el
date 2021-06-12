@@ -274,13 +274,13 @@ calling any other ergoemacs-set-* function"
   ;; the Del key for forward delete. Needed if C-d is set to nil.
   (global-set-key (kbd "<delete>") 'delete-char ) 
 
-  (global-set-key (kbd "<M-delete>") 'kill-word)
+  (ergoemacs-global-set-key (kbd "<M-delete>") 'kill-word)
 
   (global-set-key (kbd "<home>") 'move-beginning-of-line)
   (global-set-key (kbd "<end>") 'move-end-of-line)
   
-  (global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
-  (global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
+  (ergoemacs-global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
+  (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
 
   ;; C-r also should be refresh
   (global-set-key (kbd "C-r") 'ergoemacs-revert-buffer)
@@ -315,21 +315,14 @@ calling any other ergoemacs-set-* function"
   (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   )
 
-(ergoemacs-component standard-fixed ()
-  "Standard Fixed Shortcuts"
-  :variable-reg nil ;; No variable keys
-  ;; Mode specific changes
-
-  (define-key comint-mode-map (kbd "<home>") 'comint-bol)
-  )
-
 (ergoemacs-component backspace-del-seq ()
   "Backspace deletes last key entered in command sequence"
   (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last))
 
 (defun ergoemacs-set-help ()
   "Help changes for ergoemacs-mode"
-  (global-set-key (kbd "C-h '") 'ergoemacs-describe-current-theme))
+  (global-set-key (kbd "C-h '") 'ergoemacs-describe-current-theme)
+  )
 
 (defun ergoemacs-set-move-char ()
   "Movement by Characters & Set Mark"
@@ -348,7 +341,7 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "M-C-k") 'forward-paragraph)
 
   (global-set-key (kbd "C-SPC") 'set-mark-command)
-  (global-set-key (kbd "M-SPC") 'set-mark-command)
+  (ergoemacs-global-set-key (kbd "M-SPC") 'set-mark-command)
   
   ;; Delete previous/next char.
   (ergoemacs-global-set-key (kbd "M-d") 'delete-backward-char)
@@ -375,13 +368,8 @@ calling any other ergoemacs-set-* function"
 
 (defun ergoemacs-set-move-line ()
   "Move by Line"
-  (global-set-key (kbd "M-h") 'move-beginning-of-line)
-  (global-set-key (kbd "M-H") 'move-end-of-line)
-  )
-
-(ergoemacs-component move-line ()
-  "Move by Line"
-  (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)
+  (ergoemacs-global-set-key (kbd "M-h") 'move-beginning-of-line)
+  (ergoemacs-global-set-key (kbd "M-H") 'move-end-of-line)
   )
 
 (defun ergoemacs-set-move-page ()
@@ -403,8 +391,8 @@ calling any other ergoemacs-set-* function"
   "Move By Bracket"
   (ergoemacs-global-set-key (kbd "M-J") 'ergoemacs-backward-open-bracket)
   (ergoemacs-global-set-key (kbd "M-L") 'ergoemacs-forward-close-bracket)
-  (global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
-  (global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket)
+  (ergoemacs-global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
+  (ergoemacs-global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket)
   )
 
 (defun ergoemacs-set-copy ()
@@ -438,18 +426,6 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
   (ergoemacs-global-set-key (kbd "M-:") 'isearch-backward)
   (ergoemacs-define-key isearch-mode-map (kbd "M-:") 'isearch-repeat-backward)
-  )
-
-(ergoemacs-component search ()
-  "Search and Replace"
-  ;; Mode specific changes
-  ;; Dired
-  (define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
-  (define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp)
-  
-  ;; Reclaim dired+ overrides.
-  (define-key dired-mode-map (kbd "M-u") 'backward-word)
-  (define-key dired-mode-map (kbd "C-b") 'diredp-do-bookmark)
   )
 
 (defun ergoemacs-set-switch ()
@@ -494,23 +470,23 @@ calling any other ergoemacs-set-* function"
 
 (defun ergoemacs-set-text-transform ()
   "Text Transformation"
-  (global-set-key (kbd "M-'") 'comment-dwim)
-  (global-set-key (kbd "M-\"") 'delete-horizontal-space)
+  (ergoemacs-global-set-key (kbd "M-'") 'comment-dwim)
+  (ergoemacs-global-set-key (kbd "M-\"") 'delete-horizontal-space)
   
-  (global-set-key (kbd "M-w") 'ergoemacs-shrink-whitespaces)
+  (ergoemacs-global-set-key (kbd "M-w") 'ergoemacs-shrink-whitespaces)
 
-  (global-set-key (kbd "M-?") 'ergoemacs-toggle-camel-case)
-  (global-set-key (kbd "M-/") 'ergoemacs-toggle-letter-case)
+  (ergoemacs-global-set-key (kbd "M-?") 'ergoemacs-toggle-camel-case)
+  (ergoemacs-global-set-key (kbd "M-/") 'ergoemacs-toggle-letter-case)
 
   ;; ;; keyword completion, because Alt+Tab is used by OS
-  (global-set-key (kbd "M-t") 'ergoemacs-call-keyword-completion)
-  (global-set-key (kbd "M-T") 'flyspell-auto-correct-word)
+  (ergoemacs-global-set-key (kbd "M-t") 'ergoemacs-call-keyword-completion)
+  (ergoemacs-global-set-key (kbd "M-T") 'flyspell-auto-correct-word)
 
   ;; ;; Hard-wrap/un-hard-wrap paragraph
-  (global-set-key (kbd "M-q") 'ergoemacs-compact-uncompact-block)
+  (ergoemacs-global-set-key (kbd "M-q") 'ergoemacs-compact-uncompact-block)
 
-  (define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
-  (define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
+  (ergoemacs-define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
+  (ergoemacs-define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
   )
 
 (defun ergoemacs-set-select-items ()
@@ -529,25 +505,6 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "<escape>") 'ergoemacs-keyboard-quit)
   (ergoemacs-define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
   )
-
-(ergoemacs-component quit ()
-  "Escape exits"
-  (when org-read-date-minibuffer-setup-hook
-    (define-key minibuffer-local-map (kbd "<escape>") 'minibuffer-keyboard-quit)))
-
-(ergoemacs-component dired-to-wdired ()
-  "C-c C-c enters wdired, <escape> exits."
-  (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode))
-
-(ergoemacs-component dired-tab ()
-  "TAB expands a directory."
-  (define-key dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir))
-
-(ergoemacs-component ido-remaps ()
-  "Remaps for ido-mode"
-  (when ido-mode
-    (global-set-key [remap execute-extended-command] 'smex))
-  (setq smex-prompt-string (substitute-command-keys "\\[execute-extended-command] ")))
 
 (ergoemacs-component ergoemacs-remaps ()
   "Remaps for ergoemacs-mode"
@@ -1080,22 +1037,10 @@ calling any other ergoemacs-set-* function"
 
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
-  :components '(dired-tab
-                dired-to-wdired
-                move-line
-                search
-                ergoemacs-remaps)
+  :components '(ergoemacs-remaps)
   :optional-on '(backspace-del-seq
-                 standard-fixed
-                 ido-remaps
-                 quit
                  )
-  :options-menu '(("Remaps" (ido-remaps))
-                  ("Standard Keys" (standard-fixed quit))
-                  ("Keys during Key Sequence" (backspace-del-seq))
-                  ("Packages" (expand-region))
-		  ("Mode Line" (mode-line-major-mode-switch))
-                  ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-help))))
+  )
 
 (defun ergoemacs-install-standard-theme ()
   (ergoemacs-unset-keys)
@@ -1281,14 +1226,12 @@ calling any other ergoemacs-set-* function"
   (define-key org-mode-map [remap backward-paragraph] 'org-backward-paragraph)
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   )
-
 (add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
 
 (defun ergoemacs-install-calc-bindings ()
   (ergoemacs-define-key calc-mode-map (kbd "M-v") 'calc-yank)
   (ergoemacs-define-key calc-mode-map (kbd "M-z") 'calc-undo)
   )
-
 (add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
 
 
@@ -1296,7 +1239,6 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-unset-keys-in-map log-edit-mode-map)
   (ergoemacs-define-key log-edit-mode-map (kbd "C-s") 'log-edit-done)
   )
-
 (with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
 
 (defun ergoemacs-install-eshell-bindings ()
@@ -1305,6 +1247,24 @@ calling any other ergoemacs-set-* function"
   )
 (with-eval-after-load 'esh-mode
   (add-hook 'eshell-first-time-mode-hook #'ergoemacs-install-eshell-bindings))
+
+(defun ergoemacs-install-comint-bindings ()
+  (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)
+  )
+(with-eval-after-load 'comint (ergoemacs-install-comint-bindings))
+
+(defun ergoemacs-install-dired-bindings ()
+  (ergoemacs-unset-keys-in-map dired-mode-map)
+  
+  (ergoemacs-define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
+  (ergoemacs-define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp)
+  (ergoemacs-define-key dired-mode-map (kbd "M-u") 'backward-word)
+  (define-key dired-mode-map (kbd "C-b") 'diredp-do-bookmark)
+  (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode)
+  (define-key dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir)
+  )
+
+(add-hook 'dired-load-hook #'ergoemacs-install-dired-bindings)
 
 (ergoemacs-translation normal ()
   "Identify transformation"
