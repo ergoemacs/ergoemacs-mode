@@ -340,14 +340,6 @@ calling any other ergoemacs-set-* function"
   ;; Mode specific changes
 
   (define-key comint-mode-map (kbd "<home>") 'comint-bol)
-
-  ;; Compatibility with Icicle (allows the use of
-  ;; `icicle-read-string-completing' directly)
-  (when icicle-mode
-    (global-set-key [remap ergoemacs-apropos-user-options] 'apropos-user-options))
-  
-  (when icicle-ido-like-mode
-    (global-set-key [remap ergoemacs-apropos-user-options] 'apropos-user-options))
   )
 
 (ergoemacs-component backspace-del-seq ()
