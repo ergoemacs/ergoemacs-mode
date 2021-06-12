@@ -1266,6 +1266,8 @@ calling any other ergoemacs-set-* function"
 
 (add-hook 'dired-load-hook #'ergoemacs-install-dired-bindings)
 
+(with-eval-after-load 'compile (ergoemacs-unset-keys-in-map compilation-mode-map))
+
 (ergoemacs-translation normal ()
   "Identify transformation"
   :keymap (let ((map (make-sparse-keymap)))
