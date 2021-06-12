@@ -346,14 +346,6 @@ calling any other ergoemacs-set-* function"
 
   ;; Mode specific changes
 
-  (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
-  (define-key org-mode-map (kbd "<M-down>") 'ergoemacs-org-metadown)
-  (define-key org-mode-map (kbd "<M-up>") 'ergoemacs-org-metaup)
-  (define-key org-mode-map (kbd "<M-left>") 'ergoemacs-org-metaleft)
-  (define-key org-mode-map (kbd "<M-right>") 'ergoemacs-org-metaright)
-  (define-key org-mode-map (kbd "<M-RET>") 'org-insert-item)
-  (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-yank)
-
   (define-key browse-kill-ring-mode-map (kbd "C-f") 'browse-kill-ring-search-forward)
   (define-key browse-kill-ring-mode-map (kbd "<deletechar>") 'browse-kill-ring-delete)
 
@@ -369,14 +361,6 @@ calling any other ergoemacs-set-* function"
   (when icicle-ido-like-mode
     (global-set-key [remap ergoemacs-apropos-user-options] 'apropos-user-options))
   )
-
-(ergoemacs-component fixed-bold-italic ()
-  "Fixed keys for bold and italic"
-  (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
-  ;; C-i is TAB... This seems to cause issues?
-  ;; (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
-  (define-key org-mode-map (kbd "<tab>") 'org-cycle)
-  (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle))
 
 (ergoemacs-component backspace-del-seq ()
   "Backspace deletes last key entered in command sequence"
@@ -516,8 +500,6 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-S-z") '(redo undo-tree-redo))
   (global-set-key (kbd "C-y") '(redo undo-tree-redo))
   
-  (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
-  (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   (define-key browse-kill-ring-mode-map [remap undo] 'browse-kill-ring-undo-other-window)
   (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
   (define-key browse-kill-ring-mode-map [remap undo-tree-undo] 'browse-kill-ring-undo-other-window)
@@ -1201,14 +1183,13 @@ calling any other ergoemacs-set-* function"
                 text-transform
                 ergoemacs-remaps)
   :optional-on '(backspace-del-seq
-                 fixed-bold-italic
                  standard-fixed
                  ido-remaps
                  multiple-cursors-remaps
                  quit
                  )
   :options-menu '(("Remaps" (ido-remaps multiple-cursors-remaps icy-reclaim))
-                  ("Standard Keys" (standard-fixed fixed-bold-italic quit))
+                  ("Standard Keys" (standard-fixed quit))
                   ("Keys during Key Sequence" (backspace-del-seq))
                   ("Packages" (avy multiple-cursors expand-region))
 		  ("Mode Line" (mode-line-major-mode-switch))
@@ -1274,48 +1255,70 @@ calling any other ergoemacs-set-* function"
   (define-key term-raw-map (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (define-key term-raw-map (kbd "C-p") 'pr-interface)
   
-  (define-key term-raw-map (kbd "M-j") 'backward-char)
-  (define-key term-raw-map (kbd "M-l") 'forward-char)
-  (define-key term-raw-map (kbd "M-i") 'previous-line)
-  (define-key term-raw-map (kbd "M-k") 'next-line)
+  ;; (define-key term-raw-map (kbd "M-j") 'backward-char)
+  ;; (define-key term-raw-map (kbd "M-l") 'forward-char)
+  ;; (define-key term-raw-map (kbd "M-i") 'previous-line)
+  ;; (define-key term-raw-map (kbd "M-k") 'next-line)
   (define-key term-raw-map (kbd "M-SPC") 'set-mark-command)
   
-  (define-key term-raw-map (kbd "M-u") 'backward-word)
-  (define-key term-raw-map (kbd "M-o") 'forward-word)
+  ;; (define-key term-raw-map (kbd "M-u") 'backward-word)
+  ;; (define-key term-raw-map (kbd "M-o") 'forward-word)
 
-  (define-key term-raw-map (kbd "M-U") 'backward-paragraph)
-  (define-key term-raw-map (kbd "M-O") 'forward-paragraph)
+  ;; (define-key term-raw-map (kbd "M-U") 'backward-paragraph)
+  ;; (define-key term-raw-map (kbd "M-O") 'forward-paragraph)
 
-  (define-key term-raw-map (kbd "M-h") 'move-beginning-of-line)
-  (define-key term-raw-map (kbd "M-H") 'move-end-of-line)
+  ;; (define-key term-raw-map (kbd "M-h") 'move-beginning-of-line)
+  ;; (define-key term-raw-map (kbd "M-H") 'move-end-of-line)
 
-  (define-key term-raw-map (kbd "M-I") 'scroll-down)
-  (define-key term-raw-map (kbd "M-K") 'scroll-up)
+  ;; (define-key term-raw-map (kbd "M-I") 'scroll-down)
+  ;; (define-key term-raw-map (kbd "M-K") 'scroll-up)
 
-  (define-key term-raw-map (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
-  (define-key term-raw-map (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
+  ;; (define-key term-raw-map (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
+  ;; (define-key term-raw-map (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
 
-  (define-key term-raw-map (kbd "M-J") 'ergoemacs-backward-open-bracket)
-  (define-key term-raw-map (kbd "M-L") 'ergoemacs-forward-close-bracket)
+  ;; (define-key term-raw-map (kbd "M-J") 'ergoemacs-backward-open-bracket)
+  ;; (define-key term-raw-map (kbd "M-L") 'ergoemacs-forward-close-bracket)
   
-  (define-key term-raw-map (kbd "M-c") 'ergoemacs-copy-line-or-region)
-  (define-key term-raw-map (kbd "M-v") 'term-paste)
-  (define-key term-raw-map (kbd "M-C") 'ergoemacs-copy-all)
+  ;; (define-key term-raw-map (kbd "M-c") 'ergoemacs-copy-line-or-region)
+  ;; (define-key term-raw-map (kbd "M-v") 'term-paste)
+  ;; (define-key term-raw-map (kbd "M-C") 'ergoemacs-copy-all)
 
-  (define-key term-raw-map (kbd "M-;") 'isearch-forward)
-  (define-key term-raw-map (kbd "M-:") 'isearch-backward)
+  ;; (define-key term-raw-map (kbd "M-;") 'isearch-forward)
+  ;; (define-key term-raw-map (kbd "M-:") 'isearch-backward)
 
-  (define-key term-raw-map (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
-  (define-key term-raw-map (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
-  (define-key term-raw-map (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
-  (define-key term-raw-map (kbd "M-`") 'ergoemacs-switch-to-next-frame)
-  (define-key term-raw-map (kbd "M-3") 'delete-other-windows)
-  (define-key term-raw-map (kbd "M-2") 'delete-window)
-  (define-key term-raw-map (kbd "M-4") '(split-window-below split-window-horizontally))
-  (define-key term-raw-map (kbd "M-$") '(split-window-right split-window-vertically))
+  ;; (define-key term-raw-map (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
+  ;; (define-key term-raw-map (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
+  ;; (define-key term-raw-map (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
+  ;; (define-key term-raw-map (kbd "M-`") 'ergoemacs-switch-to-next-frame)
+  ;; (define-key term-raw-map (kbd "M-3") 'delete-other-windows)
+  ;; (define-key term-raw-map (kbd "M-2") 'delete-window)
+  ;; (define-key term-raw-map (kbd "M-4") '(split-window-below split-window-horizontally))
+  ;; (define-key term-raw-map (kbd "M-$") '(split-window-right split-window-vertically))
   )
 
 (add-hook 'term-load-hook #'ergoemacs-install-term-bindings)
+
+(defun ergoemacs-install-org-bindings ()
+  (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
+  (define-key org-mode-map (kbd "<M-down>") 'ergoemacs-org-metadown)
+  (define-key org-mode-map (kbd "<M-up>") 'ergoemacs-org-metaup)
+  (define-key org-mode-map (kbd "<M-left>") 'ergoemacs-org-metaleft)
+  (define-key org-mode-map (kbd "<M-right>") 'ergoemacs-org-metaright)
+  (define-key org-mode-map (kbd "<M-RET>") 'org-insert-item)
+  (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-yank)
+
+  (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
+  ;; C-i is TAB... This seems to cause issues?
+  ;; (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
+  (define-key org-mode-map (kbd "<tab>") 'org-cycle)
+  (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle)
+
+  (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
+  (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
+  )
+
+(add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
+
 
 (ergoemacs-translation normal ()
   "Identify transformation"
