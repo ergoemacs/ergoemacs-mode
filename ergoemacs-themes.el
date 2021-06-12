@@ -570,12 +570,6 @@ calling any other ergoemacs-set-* function"
   "TAB expands a directory."
   (define-key dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir))
 
-(ergoemacs-component multiple-cursors-remaps ()
-  "Multiple Cursors phi-search remaps"
-  (when multiple-cursors-mode
-    (global-set-key [remap isearch-forward] 'phi-search)
-    (global-set-key [remap isearch-backward] 'phi-search-backward)))
-
 (ergoemacs-component ido-remaps ()
   "Remaps for ido-mode"
   (when ido-mode
@@ -1121,13 +1115,12 @@ calling any other ergoemacs-set-* function"
   :optional-on '(backspace-del-seq
                  standard-fixed
                  ido-remaps
-                 multiple-cursors-remaps
                  quit
                  )
-  :options-menu '(("Remaps" (ido-remaps multiple-cursors-remaps))
+  :options-menu '(("Remaps" (ido-remaps))
                   ("Standard Keys" (standard-fixed quit))
                   ("Keys during Key Sequence" (backspace-del-seq))
-                  ("Packages" (avy multiple-cursors expand-region))
+                  ("Packages" (expand-region))
 		  ("Mode Line" (mode-line-major-mode-switch))
                   ("Ergoemacs global menus" (menu-bar-file menu-bar-edit menu-bar-search menu-bar-view menu-bar-help))))
 
