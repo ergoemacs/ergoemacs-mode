@@ -254,13 +254,9 @@ calling any other ergoemacs-set-* function"
   (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward)
 
   (global-set-key (kbd "C-s") 'save-buffer)
-  
   (global-set-key (kbd "C-S-s") 'write-file)
-
   (global-set-key (kbd "C-p") 'pr-interface)
-
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
-  
   (global-set-key (kbd "C-z") 'undo)
 
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
@@ -275,21 +271,14 @@ calling any other ergoemacs-set-* function"
 
   ;; Text editing
   
-  ;; the Del key for forward  delete. Needed if C-d is set to nil.
+  ;; the Del key for forward delete. Needed if C-d is set to nil.
   (global-set-key (kbd "<delete>") 'delete-char ) 
 
   (global-set-key (kbd "<M-delete>") 'kill-word)
-  (global-set-key (kbd "<C-delete>") 'kill-word)
 
   (global-set-key (kbd "<home>") 'move-beginning-of-line)
   (global-set-key (kbd "<end>") 'move-end-of-line)
   
-  (global-set-key (kbd "<C-home>") 'beginning-of-buffer)
-  (global-set-key (kbd "<C-end>") 'end-of-buffer)
-
-  (global-set-key (kbd "<C-left>") 'backward-word)
-  (global-set-key (kbd "<C-right>") 'forward-word)
-
   (global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
   (global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
 
@@ -300,8 +289,6 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-=") 'text-scale-increase)
   (global-set-key (kbd "C--") 'text-scale-decrease)
   (global-set-key (kbd "C-_") 'text-scale-decrease)
-  (global-set-key (kbd "C-.") 'ergoemacs-keyboard-quit)
-  (global-set-key (kbd "C->") 'ergoemacs-keyboard-quit)
   (global-set-key (kbd "C-/") 'info)
   (global-set-key (kbd "C-0") 'ergoemacs-text-scale-normal-size)
   (global-set-key (kbd "C-)") 'ergoemacs-text-scale-normal-size)
@@ -309,13 +296,10 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-S-f") 'occur)
   
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-external-app)
-  (global-set-key (kbd "C-S-s") 'write-file)
   (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
   
   (global-set-key (kbd "C-S-w") 'delete-frame)
   
-  (global-set-key (kbd "C-`") 'other-frame)
-  (global-set-key (kbd "C-~") 'other-frame)
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   (global-set-key (kbd "C-l") 'goto-line)
   (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
@@ -323,14 +307,11 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-p") 'pr-interface)
 
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
-  (global-set-key (kbd "M-B") 'ibuffer)
   
   (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
   (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
   (define-key isearch-mode-map (kbd "<S-insert>") 'ergoemacs-paste)
   (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
-  (define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
-  (define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
   (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   )
 
@@ -353,11 +334,8 @@ calling any other ergoemacs-set-* function"
 (defun ergoemacs-set-move-char ()
   "Movement by Characters & Set Mark"
   (ergoemacs-global-set-key (kbd "M-j") 'backward-char)
-
   (ergoemacs-global-set-key (kbd "M-l") 'forward-char)
-  
   (ergoemacs-global-set-key (kbd "M-i") 'previous-line)
-  
   (ergoemacs-global-set-key (kbd "M-k") 'next-line)
 
   ;; These are here so that C-M-i will translate to C-<up> for modes
@@ -374,7 +352,6 @@ calling any other ergoemacs-set-* function"
   
   ;; Delete previous/next char.
   (ergoemacs-global-set-key (kbd "M-d") 'delete-backward-char)
-
   (ergoemacs-global-set-key (kbd "M-f") 'delete-char)
   )  
 
@@ -382,13 +359,11 @@ calling any other ergoemacs-set-* function"
 (defun ergoemacs-set-move-word ()
   "Moving around and deleting words"
   (ergoemacs-global-set-key (kbd "M-u") 'backward-word)
-
   (ergoemacs-global-set-key (kbd "M-o") 'forward-word)
   
   ;; Delete previous/next word.
   ;; C-backspace is standard; don't change
   (ergoemacs-global-set-key (kbd "M-e") 'backward-kill-word)
-  
   (ergoemacs-global-set-key (kbd "M-r") 'kill-word)
   )
 
@@ -406,8 +381,6 @@ calling any other ergoemacs-set-* function"
 
 (ergoemacs-component move-line ()
   "Move by Line"
-  ;; Mode specific movement
-  (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol)
   (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)
   )
 
@@ -446,7 +419,6 @@ calling any other ergoemacs-set-* function"
 
   ;; Undo
   (ergoemacs-global-set-key (kbd "M-z") 'undo)
-  
   (ergoemacs-global-set-key (kbd "C-S-x") 'execute-extended-command)
   (ergoemacs-global-set-key (kbd "C-z") 'undo)
 
@@ -511,6 +483,7 @@ calling any other ergoemacs-set-* function"
 (defun ergoemacs-set-misc ()
   "Misc Commands"
   (ergoemacs-global-set-key (kbd "M-p") 'recenter-top-bottom)
+  (ergoemacs-global-set-key (kbd "M-B") 'ibuffer)
   (ergoemacs-global-set-key (kbd "M-b") 'switch-to-buffer)
   )
 
@@ -1157,6 +1130,64 @@ calling any other ergoemacs-set-* function"
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
 
+
+(defun ergoemacs-unset-keys-in-map (local-map)
+  "Unset all of the keys in a local map that we usually prefer to use the ergoemacs keys."
+  (ergoemacs-define-key local-map (kbd "M-h") nil)
+  (ergoemacs-define-key local-map (kbd "M-H") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-e") nil)
+  (ergoemacs-define-key local-map (kbd "M-r") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-u") nil)
+  (ergoemacs-define-key local-map (kbd "M-o") nil)
+  (ergoemacs-define-key local-map (kbd "M-U") nil)
+  (ergoemacs-define-key local-map (kbd "M-O") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-s") nil)
+  (ergoemacs-define-key local-map (kbd "M-S") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-d") nil)
+  (ergoemacs-define-key local-map (kbd "M-f") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-n") nil)
+  (ergoemacs-define-key local-map (kbd "M-N") nil)
+  (ergoemacs-define-key local-map (kbd "M-p") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-j") nil)
+  (ergoemacs-define-key local-map (kbd "M-l") nil)
+  (ergoemacs-define-key local-map (kbd "M-i") nil)
+  (ergoemacs-define-key local-map (kbd "M-k") nil)
+  
+  (ergoemacs-define-key local-map (kbd "M-J") nil)
+  (ergoemacs-define-key local-map (kbd "M-L") nil)
+  (ergoemacs-define-key local-map (kbd "M-I") nil)
+  (ergoemacs-define-key local-map (kbd "M-K") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-z") nil)
+  (ergoemacs-define-key local-map (kbd "M-x") nil)
+  (ergoemacs-define-key local-map (kbd "M-c") nil)
+  (ergoemacs-define-key local-map (kbd "M-v") nil)
+  (ergoemacs-define-key local-map (kbd "M-C") nil)
+  (ergoemacs-define-key local-map (kbd "M-V") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-a") nil)
+  (ergoemacs-define-key local-map (kbd "M-A") nil)
+  
+  (define-key local-map (kbd "C-w") nil)
+  (define-key local-map (kbd "C-n") nil)
+  (define-key local-map (kbd "C-S-w") nil)
+  (define-key local-map (kbd "C-S-n") nil)
+
+  (define-key local-map (kbd "C-s") nil)
+  (define-key local-map (kbd "C-S-s") nil)
+  (define-key local-map (kbd "C-o") nil)
+  (define-key local-map (kbd "C-S-o") nil)
+  (define-key local-map (kbd "C-r") nil)
+  (define-key local-map (kbd "C-p") nil)
+  (define-key local-map (kbd "C-l") nil)
+)  
+
 (defun ergoemacs-install-term-bindings ()
   ;; For term, do not bind anything that modifies the buffer, like
   ;; cut, undo, and redo.  The only exception is paste.  Paste-cycle
@@ -1228,21 +1259,26 @@ calling any other ergoemacs-set-* function"
 (add-hook 'term-load-hook #'ergoemacs-install-term-bindings)
 
 (defun ergoemacs-install-org-bindings ()
+  (ergoemacs-unset-keys-in-map org-mode-map)
+
   (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
   (define-key org-mode-map (kbd "<M-down>") 'ergoemacs-org-metadown)
   (define-key org-mode-map (kbd "<M-up>") 'ergoemacs-org-metaup)
   (define-key org-mode-map (kbd "<M-left>") 'ergoemacs-org-metaleft)
   (define-key org-mode-map (kbd "<M-right>") 'ergoemacs-org-metaright)
   (define-key org-mode-map (kbd "<M-RET>") 'org-insert-item)
-  (define-key org-mode-map (kbd "M-v") 'ergoemacs-org-yank)
 
-  (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
+  ;; How to do bold and italic?  I do not like using Control keys
   ;; C-i is TAB... This seems to cause issues?
+  ;; (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
   ;; (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
   (define-key org-mode-map (kbd "<tab>") 'org-cycle)
   (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle)
 
-  (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
+  (define-key org-mode-map [remap beginning-of-line] 'org-beginning-of-line)
+  (define-key org-mode-map [remap end-of-line] 'org-end-of-line)
+  (define-key org-mode-map [remap forward-paragraph] 'org-forward-paragraph)
+  (define-key org-mode-map [remap backward-paragraph] 'org-backward-paragraph)
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   )
 
@@ -1257,15 +1293,18 @@ calling any other ergoemacs-set-* function"
 
 
 (defun ergoemacs-install-log-edit-bindings ()
+  (ergoemacs-unset-keys-in-map log-edit-mode-map)
   (ergoemacs-define-key log-edit-mode-map (kbd "C-s") 'log-edit-done)
-  (define-key log-edit-mode-map (kbd "C-a") nil)
-  (define-key log-edit-mode-map (kbd "M-n") nil)
-  (define-key log-edit-mode-map (kbd "M-p") nil)
-  (define-key log-edit-mode-map (kbd "M-r") nil)
-  (define-key log-edit-mode-map (kbd "M-s") nil)
   )
 
 (with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
+
+(defun ergoemacs-install-eshell-bindings ()
+  (ergoemacs-unset-keys-in-map eshell-mode-map)
+  (ergoemacs-define-key eshell-mode-map (kbd "M-h") 'eshell-bol)
+  )
+(with-eval-after-load 'esh-mode
+  (add-hook 'eshell-first-time-mode-hook #'ergoemacs-install-eshell-bindings))
 
 (ergoemacs-translation normal ()
   "Identify transformation"
