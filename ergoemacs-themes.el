@@ -219,30 +219,6 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
   (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
   (delete-selection-mode 1)
-  (setq recentf-menu-before "Close"
-        recentf-menu-items-for-commands
-        (list
-         ["Open Last Closed"
-          ergoemacs-open-last-closed
-          :help "Remove duplicates, and obsoletes files from the recent list"
-          :active t]
-         ["Cleanup list"
-          recentf-cleanup
-          :help "Remove duplicates, and obsoletes files from the recent list"
-          :active t]
-         ["Edit list..."
-          recentf-edit-list
-          :help "Manually remove files from the recent list"
-          :active t]
-         ["Save list now"
-          recentf-save-list
-          :help "Save the list of recently opened files now"
-          :active t]
-         ["Options..."
-          (customize-group "recentf")
-          :help "Customize recently opened files menu and options"
-          :active t]))
-  (recentf-mode (if noninteractive -1 1))
   )
 
 (defun ergoemacs-unset-keys ()
@@ -561,6 +537,15 @@ calling any other ergoemacs-set-* function"
                           (new-file menu-item "New" ergoemacs-new-empty-buffer)
                           (make-frame menu-item "New Frame" make-frame-command)
                           (open-file menu-item "Open..." find-file)
+                          (open-recent menu-item "Open Recent"
+                                       (keymap
+                                        (open-last menu-item "Open Last Closed" ergoemacs-open-last-closed)
+                                        (cleanup menu-item "Cleanup list" recentf-cleanup)
+                                        (edit-list menu-item "Edit list..." recentf-edit-list)
+                                        (save-list menu-item "Save list now" recentf-save-list)
+                                        (options menu-item "Options..." (customize-group "recentf"))
+                                        )
+                                       )
                           (open-directory menu-item "Open Containing Folder"
                                           (keymap
                                            ;; FIXME add open in cmd/iTerm/xterm, etc
