@@ -1245,8 +1245,7 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-unset-keys-in-map eshell-mode-map)
   (ergoemacs-define-key eshell-mode-map (kbd "M-h") 'eshell-bol)
   )
-(with-eval-after-load 'esh-mode
-  (add-hook 'eshell-first-time-mode-hook #'ergoemacs-install-eshell-bindings))
+(add-hook 'eshell-post-command-hook #'ergoemacs-install-eshell-bindings)
 
 (defun ergoemacs-install-comint-bindings ()
   (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)
