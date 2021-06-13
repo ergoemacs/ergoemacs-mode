@@ -293,10 +293,6 @@ The `execute-extended-command' is now \\[execute-extended-command].
             (push elt ergoemacs-mode--default-frame-alist))
           (ergoemacs-install-standard-theme)
           (run-hooks 'ergoemacs-mode-startup-hook)
-          ;; (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-          ;; (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
-          ;; (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
-          ;; (add-hook 'after-load-functions #'ergoemacs-mode-after-startup-run-load-hooks)
 
           (setq ergoemacs-require--ini-p t)
           (ergoemacs-setup-override-keymap)                       
@@ -311,9 +307,6 @@ The `execute-extended-command' is now \\[execute-extended-command].
         (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
       (setq ergoemacs-mode--default-frame-alist nil)
       (run-hooks 'ergoemacs-mode-shutdown-hook)
-      ;; (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
-      ;; (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-      ;; (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
       (unless refresh-p
         (message "Ergoemacs-mode turned OFF.")
         )
