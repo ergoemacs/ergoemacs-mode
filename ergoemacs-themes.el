@@ -363,10 +363,6 @@ calling any other ergoemacs-set-* function"
   (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   )
 
-(ergoemacs-component backspace-del-seq ()
-  "Backspace deletes last key entered in command sequence"
-  (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last))
-
 (defun ergoemacs-set-help ()
   "Help changes for ergoemacs-mode"
   (global-set-key (kbd "C-h '") 'ergoemacs-describe-current-theme)
@@ -1073,8 +1069,6 @@ calling any other ergoemacs-set-* function"
 
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
-  :optional-on '(backspace-del-seq
-                 )
   )
 
 (defun ergoemacs-install-standard-theme ()
@@ -1137,45 +1131,45 @@ calling any other ergoemacs-set-* function"
   (define-key term-raw-map (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (define-key term-raw-map (kbd "C-p") 'pr-interface)
   
-  ;; (define-key term-raw-map (kbd "M-j") 'backward-char)
-  ;; (define-key term-raw-map (kbd "M-l") 'forward-char)
-  ;; (define-key term-raw-map (kbd "M-i") 'previous-line)
-  ;; (define-key term-raw-map (kbd "M-k") 'next-line)
-  (define-key term-raw-map (kbd "M-SPC") 'set-mark-command)
+  (ergoemacs-define-key term-raw-map (kbd "M-j") 'backward-char)
+  (ergoemacs-define-key term-raw-map (kbd "M-l") 'forward-char)
+  (ergoemacs-define-key term-raw-map (kbd "M-i") 'previous-line)
+  (ergoemacs-define-key term-raw-map (kbd "M-k") 'next-line)
+  (ergoemacs-define-key term-raw-map (kbd "M-SPC") 'set-mark-command)
   
-  ;; (define-key term-raw-map (kbd "M-u") 'backward-word)
-  ;; (define-key term-raw-map (kbd "M-o") 'forward-word)
+  (ergoemacs-define-key term-raw-map (kbd "M-u") 'backward-word)
+  (ergoemacs-define-key term-raw-map (kbd "M-o") 'forward-word)
 
-  ;; (define-key term-raw-map (kbd "M-U") 'backward-paragraph)
-  ;; (define-key term-raw-map (kbd "M-O") 'forward-paragraph)
+  (ergoemacs-define-key term-raw-map (kbd "M-U") 'backward-paragraph)
+  (ergoemacs-define-key term-raw-map (kbd "M-O") 'forward-paragraph)
 
-  ;; (define-key term-raw-map (kbd "M-h") 'move-beginning-of-line)
-  ;; (define-key term-raw-map (kbd "M-H") 'move-end-of-line)
+  (ergoemacs-define-key term-raw-map (kbd "M-h") 'move-beginning-of-line)
+  (ergoemacs-define-key term-raw-map (kbd "M-H") 'move-end-of-line)
 
-  ;; (define-key term-raw-map (kbd "M-I") 'scroll-down)
-  ;; (define-key term-raw-map (kbd "M-K") 'scroll-up)
+  (ergoemacs-define-key term-raw-map (kbd "M-I") 'scroll-down)
+  (ergoemacs-define-key term-raw-map (kbd "M-K") 'scroll-up)
 
-  ;; (define-key term-raw-map (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
-  ;; (define-key term-raw-map (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
+  (ergoemacs-define-key term-raw-map (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
+  (ergoemacs-define-key term-raw-map (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
 
-  ;; (define-key term-raw-map (kbd "M-J") 'ergoemacs-backward-open-bracket)
-  ;; (define-key term-raw-map (kbd "M-L") 'ergoemacs-forward-close-bracket)
+  (ergoemacs-define-key term-raw-map (kbd "M-J") 'ergoemacs-backward-open-bracket)
+  (ergoemacs-define-key term-raw-map (kbd "M-L") 'ergoemacs-forward-close-bracket)
   
-  ;; (define-key term-raw-map (kbd "M-c") 'ergoemacs-copy-line-or-region)
-  ;; (define-key term-raw-map (kbd "M-v") 'term-paste)
-  ;; (define-key term-raw-map (kbd "M-C") 'ergoemacs-copy-all)
+  (ergoemacs-define-key term-raw-map (kbd "M-c") 'ergoemacs-copy-line-or-region)
+  (ergoemacs-define-key term-raw-map (kbd "M-v") 'term-paste)
+  (ergoemacs-define-key term-raw-map (kbd "M-C") 'ergoemacs-copy-all)
 
-  ;; (define-key term-raw-map (kbd "M-;") 'isearch-forward)
-  ;; (define-key term-raw-map (kbd "M-:") 'isearch-backward)
+  (ergoemacs-define-key term-raw-map (kbd "M-;") 'isearch-forward)
+  (ergoemacs-define-key term-raw-map (kbd "M-:") 'isearch-backward)
 
-  ;; (define-key term-raw-map (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
-  ;; (define-key term-raw-map (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
-  ;; (define-key term-raw-map (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
-  ;; (define-key term-raw-map (kbd "M-`") 'ergoemacs-switch-to-next-frame)
-  ;; (define-key term-raw-map (kbd "M-3") 'delete-other-windows)
-  ;; (define-key term-raw-map (kbd "M-2") 'delete-window)
-  ;; (define-key term-raw-map (kbd "M-4") '(split-window-below split-window-horizontally))
-  ;; (define-key term-raw-map (kbd "M-$") '(split-window-right split-window-vertically))
+  (ergoemacs-define-key term-raw-map (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
+  (ergoemacs-define-key term-raw-map (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
+  (ergoemacs-define-key term-raw-map (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
+  (ergoemacs-define-key term-raw-map (kbd "M-`") 'ergoemacs-switch-to-next-frame)
+  (ergoemacs-define-key term-raw-map (kbd "M-3") 'delete-other-windows)
+  (ergoemacs-define-key term-raw-map (kbd "M-2") 'delete-window)
+  (ergoemacs-define-key term-raw-map (kbd "M-4") '(split-window-below split-window-horizontally))
+  (ergoemacs-define-key term-raw-map (kbd "M-$") '(split-window-right split-window-vertically))
   )
 
 (add-hook 'term-load-hook #'ergoemacs-install-term-bindings)
