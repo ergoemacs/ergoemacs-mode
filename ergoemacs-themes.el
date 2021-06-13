@@ -65,6 +65,63 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
     )
   )
 
+(defun ergoemacs-unset-keys-in-map (local-map)
+  "Unset all of the keys in a local map that we usually prefer to use the ergoemacs keys."
+  (ergoemacs-define-key local-map (kbd "M-h") nil)
+  (ergoemacs-define-key local-map (kbd "M-H") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-e") nil)
+  (ergoemacs-define-key local-map (kbd "M-r") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-u") nil)
+  (ergoemacs-define-key local-map (kbd "M-o") nil)
+  (ergoemacs-define-key local-map (kbd "M-U") nil)
+  (ergoemacs-define-key local-map (kbd "M-O") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-s") nil)
+  (ergoemacs-define-key local-map (kbd "M-S") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-d") nil)
+  (ergoemacs-define-key local-map (kbd "M-f") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-n") nil)
+  (ergoemacs-define-key local-map (kbd "M-N") nil)
+  (ergoemacs-define-key local-map (kbd "M-p") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-j") nil)
+  (ergoemacs-define-key local-map (kbd "M-l") nil)
+  (ergoemacs-define-key local-map (kbd "M-i") nil)
+  (ergoemacs-define-key local-map (kbd "M-k") nil)
+  
+  (ergoemacs-define-key local-map (kbd "M-J") nil)
+  (ergoemacs-define-key local-map (kbd "M-L") nil)
+  (ergoemacs-define-key local-map (kbd "M-I") nil)
+  (ergoemacs-define-key local-map (kbd "M-K") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-z") nil)
+  (ergoemacs-define-key local-map (kbd "M-x") nil)
+  (ergoemacs-define-key local-map (kbd "M-c") nil)
+  (ergoemacs-define-key local-map (kbd "M-v") nil)
+  (ergoemacs-define-key local-map (kbd "M-C") nil)
+  (ergoemacs-define-key local-map (kbd "M-V") nil)
+
+  (ergoemacs-define-key local-map (kbd "M-a") nil)
+  (ergoemacs-define-key local-map (kbd "M-A") nil)
+  
+  (define-key local-map (kbd "C-w") nil)
+  (define-key local-map (kbd "C-n") nil)
+  (define-key local-map (kbd "C-S-w") nil)
+  (define-key local-map (kbd "C-S-n") nil)
+
+  (define-key local-map (kbd "C-s") nil)
+  (define-key local-map (kbd "C-S-s") nil)
+  (define-key local-map (kbd "C-o") nil)
+  (define-key local-map (kbd "C-S-o") nil)
+  (define-key local-map (kbd "C-r") nil)
+  (define-key local-map (kbd "C-p") nil)
+  (define-key local-map (kbd "C-l") nil)
+)  
+
 (defun ergoemacs-set-standard-vars ()
   "Enabled/changed variables/modes"
   (setq org-CUA-compatible t
@@ -202,12 +259,11 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "M-b") nil)
   (global-set-key (kbd "M-f") nil)
   (global-set-key (kbd "M-d") nil)
-  (ergoemacs-define-key isearch-mode-map (kbd "M-n") nil)
 
   (global-set-key (kbd "C-w") nil)
   (global-set-key (kbd "M-w") nil)
-  (global-set-key (kbd "C-y") nil) ;; Yank = paste
-  (global-set-key (kbd "M-y") nil) ;; Yank-pop = paste cycle
+  (global-set-key (kbd "C-y") nil)
+  (global-set-key (kbd "M-y") nil)
   (global-set-key (kbd "C-_") nil)
   (global-set-key (kbd "C-/") nil)
   (global-set-key (kbd "C-x u") nil)
@@ -238,6 +294,8 @@ calling any other ergoemacs-set-* function"
   (global-unset-key (kbd "C-l"))
   (global-unset-key (kbd "C-k"))
   (global-unset-key (kbd "M-;"))
+
+  (ergoemacs-unset-keys-in-map isearch-mode-map)
   )
 
 ;;; Fixed components
@@ -506,19 +564,15 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
   )
 
-(ergoemacs-component ergoemacs-remaps ()
+(defun ergoemacs-set-remaps ()
   "Remaps for ergoemacs-mode"
-  (when mark-active
-    (global-set-key (kbd "TAB") 'indent-region))
-  (when ergoemacs-mode
-    (global-set-key [remap eshell] 'ergoemacs-eshell-here)
-    (global-set-key [remap powershell] 'ergoemacs-powershell-here)
-    (global-set-key [remap shell] 'ergoemacs-shell-here)
-    (global-set-key [remap universal-argument]
-                    'ergoemacs-command-loop--universal-argument)
-    (global-set-key [remap describe-mode]
-                    'ergoemacs-describe-major-mode)
-    )
+  (global-set-key [remap eshell] 'ergoemacs-eshell-here)
+  (global-set-key [remap powershell] 'ergoemacs-powershell-here)
+  (global-set-key [remap shell] 'ergoemacs-shell-here)
+  (global-set-key [remap universal-argument]
+                  'ergoemacs-command-loop--universal-argument)
+  (global-set-key [remap describe-mode]
+                  'ergoemacs-describe-major-mode)
   )
 
 (defun ergoemacs-set-menu-bar-file ()
@@ -1037,7 +1091,6 @@ calling any other ergoemacs-set-* function"
 
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
-  :components '(ergoemacs-remaps)
   :optional-on '(backspace-del-seq
                  )
   )
@@ -1064,6 +1117,7 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-set-kill-line)
   (ergoemacs-set-text-transform)
   (ergoemacs-set-select-items)
+  (ergoemacs-set-remaps)
   (ergoemacs-set-quit)
   (ergoemacs-set-menu-bar-help)
   (ergoemacs-set-menu-bar-view)
@@ -1074,64 +1128,6 @@ calling any other ergoemacs-set-* function"
   )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
-
-
-(defun ergoemacs-unset-keys-in-map (local-map)
-  "Unset all of the keys in a local map that we usually prefer to use the ergoemacs keys."
-  (ergoemacs-define-key local-map (kbd "M-h") nil)
-  (ergoemacs-define-key local-map (kbd "M-H") nil)
-
-  (ergoemacs-define-key local-map (kbd "M-e") nil)
-  (ergoemacs-define-key local-map (kbd "M-r") nil)
-
-  (ergoemacs-define-key local-map (kbd "M-u") nil)
-  (ergoemacs-define-key local-map (kbd "M-o") nil)
-  (ergoemacs-define-key local-map (kbd "M-U") nil)
-  (ergoemacs-define-key local-map (kbd "M-O") nil)
-
-  (ergoemacs-define-key local-map (kbd "M-s") nil)
-  (ergoemacs-define-key local-map (kbd "M-S") nil)
-
-  (ergoemacs-define-key local-map (kbd "M-d") nil)
-  (ergoemacs-define-key local-map (kbd "M-f") nil)
-
-  (ergoemacs-define-key local-map (kbd "M-n") nil)
-  (ergoemacs-define-key local-map (kbd "M-N") nil)
-  (ergoemacs-define-key local-map (kbd "M-p") nil)
-
-  (ergoemacs-define-key local-map (kbd "M-j") nil)
-  (ergoemacs-define-key local-map (kbd "M-l") nil)
-  (ergoemacs-define-key local-map (kbd "M-i") nil)
-  (ergoemacs-define-key local-map (kbd "M-k") nil)
-  
-  (ergoemacs-define-key local-map (kbd "M-J") nil)
-  (ergoemacs-define-key local-map (kbd "M-L") nil)
-  (ergoemacs-define-key local-map (kbd "M-I") nil)
-  (ergoemacs-define-key local-map (kbd "M-K") nil)
-
-  (ergoemacs-define-key local-map (kbd "M-z") nil)
-  (ergoemacs-define-key local-map (kbd "M-x") nil)
-  (ergoemacs-define-key local-map (kbd "M-c") nil)
-  (ergoemacs-define-key local-map (kbd "M-v") nil)
-  (ergoemacs-define-key local-map (kbd "M-C") nil)
-  (ergoemacs-define-key local-map (kbd "M-V") nil)
-
-  (ergoemacs-define-key local-map (kbd "M-a") nil)
-  (ergoemacs-define-key local-map (kbd "M-A") nil)
-  
-  (define-key local-map (kbd "C-w") nil)
-  (define-key local-map (kbd "C-n") nil)
-  (define-key local-map (kbd "C-S-w") nil)
-  (define-key local-map (kbd "C-S-n") nil)
-
-  (define-key local-map (kbd "C-s") nil)
-  (define-key local-map (kbd "C-S-s") nil)
-  (define-key local-map (kbd "C-o") nil)
-  (define-key local-map (kbd "C-S-o") nil)
-  (define-key local-map (kbd "C-r") nil)
-  (define-key local-map (kbd "C-p") nil)
-  (define-key local-map (kbd "C-l") nil)
-)  
 
 (defun ergoemacs-install-term-bindings ()
   ;; For term, do not bind anything that modifies the buffer, like
@@ -1262,13 +1258,40 @@ calling any other ergoemacs-set-* function"
   (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode)
   (define-key dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir)
   )
-
 (add-hook 'dired-load-hook #'ergoemacs-install-dired-bindings)
 
 (with-eval-after-load 'compile (ergoemacs-unset-keys-in-map compilation-mode-map))
 
 (add-hook 'ibuffer-load-hook #'(ergoemacs-unset-keys-in-map ibuffer-mode-map))
 
+(with-eval-after-load 'message (ergoemacs-unset-keys-in-map message-mode-map))
+
+(defun ergoemacs-install-magit-bindings ()
+  (ergoemacs-unset-keys-in-map magit-mode-map)
+  (ergoemacs-unset-keys-in-map magit-blame-mode-map)
+  (ergoemacs-unset-keys-in-map magit-blame-read-only-mode-map)
+  (ergoemacs-unset-keys-in-map magit-blob-mode-map)
+  (ergoemacs-unset-keys-in-map magit-cherry-mode-map)
+  (ergoemacs-unset-keys-in-map magit-diff-mode-map)
+  (ergoemacs-unset-keys-in-map magit-file-mode-map)
+  (ergoemacs-unset-keys-in-map magit-log-mode-map)
+  (ergoemacs-unset-keys-in-map magit-log-select-mode-map)
+  (ergoemacs-unset-keys-in-map magit-merge-preview-mode-map)
+  (ergoemacs-unset-keys-in-map magit-popup-help-mode-map)
+  (ergoemacs-unset-keys-in-map magit-popup-mode-map)
+  (ergoemacs-unset-keys-in-map magit-process-mode-map)
+  (ergoemacs-unset-keys-in-map magit-reflog-mode-map)
+  (ergoemacs-unset-keys-in-map magit-refs-mode-map)
+  (ergoemacs-unset-keys-in-map magit-repolist-mode-map)
+  (ergoemacs-unset-keys-in-map magit-revision-mode-map)
+  (ergoemacs-unset-keys-in-map magit-section-mode-map)
+  (ergoemacs-unset-keys-in-map magit-stash-mode-map)
+  (ergoemacs-unset-keys-in-map magit-stashes-mode-map)
+  (ergoemacs-unset-keys-in-map magit-status-mode-map)
+  (ergoemacs-unset-keys-in-map magit-submodule-list-mode-map)
+  )
+
+(add-hook 'magit-mode-hook #'ergoemacs-install-magit-bindings)
 
 (ergoemacs-translation normal ()
   "Identify transformation"
