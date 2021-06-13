@@ -108,6 +108,8 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (ergoemacs-define-key local-map (kbd "M-a") nil)
   (ergoemacs-define-key local-map (kbd "M-A") nil)
   
+  (ergoemacs-define-key local-map (kbd "M-;") nil)
+  
   (define-key local-map (kbd "C-w") nil)
   (define-key local-map (kbd "C-n") nil)
   (define-key local-map (kbd "C-S-w") nil)
@@ -128,7 +130,6 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
         org-support-shift-select t
         set-mark-command-repeat-pop t
         org-special-ctrl-a/e t
-        ido-vertical-define-keys 'C-n-C-p-up-down-left-right
         scroll-error-top-bottom t
         initial-scratch-message (substitute-command-keys ";; This buffer is for notes you don't want to save, and for Lisp evaluation.\n;; If you want to create a file, visit that file with \\[find-file],\n;; then enter the text in that file's own buffer.\n\n")
         ;; Remove tutorial and guided tour, since the keys don't apply...
@@ -271,7 +272,6 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-s") nil)
   (global-set-key (kbd "C-r") nil)
   (global-set-key (kbd "M-%") nil)
-  (global-set-key (kbd "C-M-%") nil)
   (global-unset-key (kbd "M-{"))
   (global-unset-key (kbd "M-}"))
   (global-unset-key (kbd "C-a"))
@@ -279,7 +279,6 @@ calling any other ergoemacs-set-* function"
 
   (global-unset-key (kbd "M-v"))
   (global-unset-key (kbd "C-v"))
-  (global-unset-key (kbd "C-M-v"))
 
   (global-unset-key (kbd "M->"))
   (global-unset-key (kbd "M-<"))
@@ -332,15 +331,11 @@ calling any other ergoemacs-set-* function"
   ;; the Del key for forward delete. Needed if C-d is set to nil.
   (global-set-key (kbd "<delete>") 'delete-char ) 
 
-  (ergoemacs-global-set-key (kbd "<M-delete>") 'kill-word)
-
   (global-set-key (kbd "<home>") 'move-beginning-of-line)
   (global-set-key (kbd "<end>") 'move-end-of-line)
   
-  (ergoemacs-global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
-  (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
-
-  ;; C-r also should be refresh
+  (global-set-key (kbd "C-SPC") 'set-mark-command)
+  
   (global-set-key (kbd "C-r") 'ergoemacs-revert-buffer)
 
   (global-set-key (kbd "C-+") 'text-scale-increase)
@@ -351,7 +346,6 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-0") 'ergoemacs-text-scale-normal-size)
   (global-set-key (kbd "C-)") 'ergoemacs-text-scale-normal-size)
   (global-set-key (kbd "C-?") 'info)
-  (global-set-key (kbd "C-S-f") 'occur)
   
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-external-app)
   (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
@@ -365,11 +359,7 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-p") 'pr-interface)
 
   (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
-  
-  (define-key isearch-mode-map (kbd "C-S-f") 'isearch-occur)
-  (define-key isearch-mode-map (kbd "C-M-f") 'isearch-occur)
-  (define-key isearch-mode-map (kbd "<S-insert>") 'ergoemacs-paste)
-  (define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
+
   (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   )
 
@@ -389,21 +379,20 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "M-i") 'previous-line)
   (ergoemacs-global-set-key (kbd "M-k") 'next-line)
 
-  ;; These are here so that C-M-i will translate to C-<up> for modes
-  ;; like inferior R mode.  That allows the command to be the last
-  ;; command.
-  ;; Not sure it belongs here or not...
-  (ergoemacs-global-set-key (kbd "M-C-j") 'left-word)
-  (ergoemacs-global-set-key (kbd "M-C-l") 'right-word)
-  (ergoemacs-global-set-key (kbd "M-C-i") 'backward-paragraph)
-  (ergoemacs-global-set-key (kbd "M-C-k") 'forward-paragraph)
-
-  (global-set-key (kbd "C-SPC") 'set-mark-command)
+  ;; Fix this binding.  Trying to avoid C-M-* combos.
+  ;; The regular binding is 'M-s o'
+  (ergoemacs-global-set-key (kbd "C-M-:") 'occur)
+  (ergoemacs-global-set-key (kbd "C-M-;") 'isearch-occur)
+  
   (ergoemacs-global-set-key (kbd "M-SPC") 'set-mark-command)
   
   ;; Delete previous/next char.
   (ergoemacs-global-set-key (kbd "M-d") 'delete-backward-char)
   (ergoemacs-global-set-key (kbd "M-f") 'delete-char)
+
+  (ergoemacs-global-set-key (kbd "<M-delete>") 'kill-word)
+  (ergoemacs-global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
+  (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
   )  
 
 ;;; Variable Components
@@ -412,8 +401,6 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "M-u") 'backward-word)
   (ergoemacs-global-set-key (kbd "M-o") 'forward-word)
   
-  ;; Delete previous/next word.
-  ;; C-backspace is standard; don't change
   (ergoemacs-global-set-key (kbd "M-e") 'backward-kill-word)
   (ergoemacs-global-set-key (kbd "M-r") 'kill-word)
   )
@@ -432,10 +419,6 @@ calling any other ergoemacs-set-* function"
 
 (defun ergoemacs-set-move-page ()
   "Move by Page"
-  ;; Not sure I like the scroll other window placment... C+M+ argh.
-  (ergoemacs-global-set-key (kbd "C-M-I") 'scroll-other-window-down)
-  (ergoemacs-global-set-key (kbd "C-M-K") 'scroll-other-window)
-  ;; These are OK
   (ergoemacs-global-set-key (kbd "M-I") 'scroll-down-command)
   (ergoemacs-global-set-key (kbd "M-K") 'scroll-up-command)
 )  
@@ -466,14 +449,13 @@ calling any other ergoemacs-set-* function"
   ;; Undo
   (ergoemacs-global-set-key (kbd "M-z") 'undo)
   (ergoemacs-global-set-key (kbd "C-S-x") 'execute-extended-command)
-  (ergoemacs-global-set-key (kbd "C-z") 'undo)
+  (global-set-key (kbd "C-z") 'undo)
 
   ;; Mode specific changes
   (ergoemacs-define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
   (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
   (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
-  (ergoemacs-define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
-  (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'ergoemacs-paste-cycle)
+  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   )  
 
 (defun ergoemacs-set-search ()
@@ -1148,7 +1130,6 @@ calling any other ergoemacs-set-* function"
   (define-key term-raw-map (kbd "C-/") 'info)
   (define-key term-raw-map (kbd "C-0") 'ergoemacs-text-scale-normal-size)
   (define-key term-raw-map (kbd "C-=") 'text-scale-increase)
-  (define-key term-raw-map (kbd "C-S-f") 'occur)
   (define-key term-raw-map (kbd "C-S-o") 'ergoemacs-open-in-external-app)
   (define-key term-raw-map (kbd "C-S-s") 'write-file)
   (define-key term-raw-map (kbd "C-S-w") 'delete-frame)
@@ -1213,8 +1194,6 @@ calling any other ergoemacs-set-* function"
   ;; C-i is TAB... This seems to cause issues?
   ;; (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
   ;; (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
-  (define-key org-mode-map (kbd "<tab>") 'org-cycle)
-  (define-key org-mode-map (kbd "<kp-tab>") 'org-cycle)
 
   (define-key org-mode-map [remap beginning-of-line] 'org-beginning-of-line)
   (define-key org-mode-map [remap end-of-line] 'org-end-of-line)
@@ -1233,7 +1212,7 @@ calling any other ergoemacs-set-* function"
 
 (defun ergoemacs-install-log-edit-bindings ()
   (ergoemacs-unset-keys-in-map log-edit-mode-map)
-  (ergoemacs-define-key log-edit-mode-map (kbd "C-s") 'log-edit-done)
+  (define-key log-edit-mode-map (kbd "C-s") 'log-edit-done)
   )
 (with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
 
@@ -1253,10 +1232,6 @@ calling any other ergoemacs-set-* function"
   
   (ergoemacs-define-key dired-mode-map (kbd "M-5") 'dired-do-query-replace-regexp)
   (ergoemacs-define-key dired-mode-map (kbd "M-%") 'dired-do-query-replace-regexp)
-  (ergoemacs-define-key dired-mode-map (kbd "M-u") 'backward-word)
-  (define-key dired-mode-map (kbd "C-b") 'diredp-do-bookmark)
-  (define-key dired-mode-map (kbd "C-c C-c") 'wdired-change-to-wdired-mode)
-  (define-key dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir)
   )
 (add-hook 'dired-load-hook #'ergoemacs-install-dired-bindings)
 
