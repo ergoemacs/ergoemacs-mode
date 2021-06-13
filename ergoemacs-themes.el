@@ -1266,6 +1266,8 @@ calling any other ergoemacs-set-* function"
 
 (with-eval-after-load 'message (ergoemacs-unset-keys-in-map message-mode-map))
 
+(with-eval-after-load 'info (ergoemacs-unset-keys-in-map Info-mode-map))
+
 (defun ergoemacs-install-magit-bindings ()
   (ergoemacs-unset-keys-in-map magit-mode-map)
   (ergoemacs-unset-keys-in-map magit-blame-mode-map)
