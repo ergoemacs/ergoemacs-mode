@@ -692,62 +692,6 @@ KEYS is the keys information"
 (defvar ergoemacs-command--timeout-timer nil)
 (defvar ergoemacs-command--timeout-keys nil)
 
-(defun ergoemacs-command--timer-timeout ()
-  "Send the [ergoemacs-timeout] event (after timeout)."
-  (let ((keys (this-single-command-keys)))
-    (when ergoemacs-command--timeout-timer
-      (cancel-timer ergoemacs-command--timeout-timer)
-      (setq ergoemacs-command--timeout-timer nil)
-      (when (equal keys ergoemacs-command--timeout-keys)
-	(push 'ergoemacs-timeout unread-command-events))
-      (setq ergoemacs-command--timeout-keys nil))))
-
-(defun ergoemacs-command--echo-prefix ()
-  "Echos prefix keys in the ergoemacs-mode way."
-  (let ((keys (this-single-command-keys)))
-    (when (and ergoemacs-command--timeout-timer
-	       (not (equal keys ergoemacs-command--timeout-keys)))
-      (cancel-timer ergoemacs-command--timeout-timer)
-      (setq ergoemacs-command--timeout-keys nil
-	    ergoemacs-command--timeout-timer nil))
-    (unless (or (equal [] keys)
-		(ergoemacs-command-loop-p))
-      (when (ergoemacs-keymapp (key-binding keys))
-	(when (key-binding (vconcat keys [ergoemacs-timeout]))
-	  (cond
-	   ((not (region-active-p))) ;; active
-           (t
-            (setq ergoemacs-command--timeout-keys keys
-		  ergoemacs-command--timeout-timer (ergoemacs-command--timer-timeout)
-                  )
-            )))
-        (unless unread-command-events
-	  (ergoemacs-command-loop--message
-	   "%s" (ergoemacs-command-loop--key-msg
-		 (setq ergoemacs-command--blink-on (not ergoemacs-command--blink-on))
-		 nil nil
-		 (this-single-command-keys)
-		 nil nil nil)))))))
-
-(defun ergoemacs-command--echo-timer ()
-  "Echo the keystrokes in the `ergoemacs-mode' way."
-  (when (and (not ergoemacs-command-loop-type)
-	     (not erogemacs-command--echo-timer))
-    (unless ergoemacs-orig-echo-keystrokes
-      (setq ergoemacs-orig-echo-keystrokes echo-keystrokes))
-    (setq echo-keystrokes 0)
-    (setq erogemacs-command--echo-timer
-          (run-at-time t ergoemacs-command-loop-blink-rate #'ergoemacs-command--echo-prefix))))
-
-(defun ergoemacs-command--echo-timer-off ()
-  "Turn off the timer."
-  (setq echo-keystrokes ergoemacs-orig-echo-keystrokes)
-  (when erogemacs-command--echo-timer
-    (cancel-timer erogemacs-command--echo-timer)))
-
-(add-hook 'ergoemacs-post-command-hook #'ergoemacs-command--echo-timer)
-(add-hook 'ergoemacs-shutdown-hook #'ergoemacs-command--echo-timer-off)
-
 (defun ergoemacs-command-loop--read-key (&optional current-key type universal)
   "Read a key for the `ergoemacs-mode' command loop.
 
@@ -1089,24 +1033,6 @@ from within the ergoemacs-mode command loop."
 
 (defvar ergoemacs-last-command-was-ergoemacs-ignore-p nil
   "Last command was `ergoemacs-ignore'.")
-
-(defun ergoemacs-command-loop--start-with-post-command-hook ()
-  "Start ergoemacs command loop.
-
-This is done by pushing the key [ergoemacs-ignore] on the
-`unread-command-events' stack.  This then forces `ergoemacs-mode'
-to start with
-`ergoemacs-command-loop--start-with-pre-command-hook'."
-  (when (and (not ergoemacs-command-loop--internal-end-command-p)
-             (ergoemacs-command-loop-full-p))
-    (if ergoemacs-last-command-was-ergoemacs-ignore-p
-	(unless (eq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
-	  (run-with-timer 0.0 nil (lambda()
-				    (setq ergoemacs-last-command-was-ergoemacs-ignore-p :idle)
-				    (ergoemacs-command-loop-start))))
-      (push 'ergoemacs-ignore unread-command-events))))
-
-(add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
 
 (defvar ergoemacs-command-loop--point-motion-last-point nil
   "Record the last point.")
