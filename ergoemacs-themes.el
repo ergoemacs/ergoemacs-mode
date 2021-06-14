@@ -131,6 +131,7 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
         set-mark-command-repeat-pop t
         org-special-ctrl-a/e t
         scroll-error-top-bottom t
+        ergoemacs-swap-major-modes-when-clicking-major-mode-name t
         initial-scratch-message (substitute-command-keys ";; This buffer is for notes you don't want to save, and for Lisp evaluation.\n;; If you want to create a file, visit that file with \\[find-file],\n;; then enter the text in that file's own buffer.\n\n")
         ;; Remove tutorial and guided tour, since the keys don't apply...
         fancy-startup-text
@@ -274,21 +275,36 @@ calling any other ergoemacs-set-* function"
   )
 
 ;;; Fixed components
-(defun ergoemacs-set-standard-fixed ()
+(defun ergoemacs-set-standard-fixed (keymap)
   (global-set-key [tool-bar kill-buffer] 'ergoemacs-close-current-buffer)
+
+  ;; These keys go into the override map
+  (define-key keymap (kbd "C-o") 'find-file)
+  (define-key keymap (kbd "C-w") 'ergoemacs-close-current-buffer)
+
+  (define-key keymap (kbd "C-s") 'save-buffer)
+  (define-key keymap (kbd "C-S-s") 'write-file)
+  (define-key keymap (kbd "C-p") 'pr-interface)
+
+  (define-key keymap (kbd "C-S-n") 'make-frame-command)
+  (define-key keymap (kbd "C-S-w") 'delete-frame)
   
-  (global-set-key (kbd "C-o") 'find-file)
-  (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-desktop)
+  (define-key keymap (kbd "C-l") 'goto-line)
+  (define-key keymap (kbd "C-n") 'ergoemacs-new-empty-buffer)
+  (define-key keymap (kbd "C-o") 'find-file)
+  (define-key keymap (kbd "C-p") 'pr-interface)
 
-  (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
-  (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
+  (define-key keymap (kbd "C-+") 'text-scale-increase)
+  (define-key keymap (kbd "C-=") 'text-scale-increase)
+  (define-key keymap (kbd "C--") 'text-scale-decrease)
+  (define-key keymap (kbd "C-_") 'text-scale-decrease)
+  (define-key keymap (kbd "C-0") 'ergoemacs-text-scale-normal-size)
+  (define-key keymap (kbd "C-)") 'ergoemacs-text-scale-normal-size)
 
+  ;; These go into the global map, so they can be overridden by a
+  ;; local mode map.
   (global-set-key (kbd "C-f") 'isearch-forward)
   (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward)
-
-  (global-set-key (kbd "C-s") 'save-buffer)
-  (global-set-key (kbd "C-S-s") 'write-file)
-  (global-set-key (kbd "C-p") 'pr-interface)
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   (global-set-key (kbd "C-z") 'undo)
 
@@ -299,128 +315,104 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "<S-insert>") 'ergoemacs-paste)
   (global-set-key (kbd "C-v") 'ergoemacs-paste)
 
-  ;; Navigation
-  (global-set-key (kbd "C-S-n") 'make-frame-command)
-
-  ;; Text editing
-  
-  ;; the Del key for forward delete. Needed if C-d is set to nil.
   (global-set-key (kbd "<delete>") 'delete-char ) 
-
   (global-set-key (kbd "<home>") 'move-beginning-of-line)
   (global-set-key (kbd "<end>") 'move-end-of-line)
-  
   (global-set-key (kbd "C-SPC") 'set-mark-command)
-  
   (global-set-key (kbd "C-r") 'ergoemacs-revert-buffer)
 
-  (global-set-key (kbd "C-+") 'text-scale-increase)
-  (global-set-key (kbd "C-=") 'text-scale-increase)
-  (global-set-key (kbd "C--") 'text-scale-decrease)
-  (global-set-key (kbd "C-_") 'text-scale-decrease)
   (global-set-key (kbd "C-/") 'info)
-  (global-set-key (kbd "C-0") 'ergoemacs-text-scale-normal-size)
-  (global-set-key (kbd "C-)") 'ergoemacs-text-scale-normal-size)
   (global-set-key (kbd "C-?") 'info)
   
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-external-app)
   (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
   
-  (global-set-key (kbd "C-S-w") 'delete-frame)
-  
-  (global-set-key (kbd "C-a") 'mark-whole-buffer)
-  (global-set-key (kbd "C-l") 'goto-line)
-  (global-set-key (kbd "C-n") 'ergoemacs-new-empty-buffer)
-  (global-set-key (kbd "C-o") 'find-file)
-  (global-set-key (kbd "C-p") 'pr-interface)
-
-  (global-set-key (kbd "C-w") 'ergoemacs-close-current-buffer)
-
   (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   )
 
-(defun ergoemacs-set-help ()
+(defun ergoemacs-set-help (keymap)
   "Help changes for ergoemacs-mode"
-  (global-set-key (kbd "C-h '") 'ergoemacs-describe-current-theme)
+  (define-key keymap (kbd "C-h '") 'ergoemacs-describe-current-theme)
   )
 
-(defun ergoemacs-set-move-char ()
+(defun ergoemacs-set-move-char (keymap)
   "Movement by Characters & Set Mark"
-  (ergoemacs-global-set-key (kbd "M-j") 'backward-char)
-  (ergoemacs-global-set-key (kbd "M-l") 'forward-char)
-  (ergoemacs-global-set-key (kbd "M-i") 'previous-line)
-  (ergoemacs-global-set-key (kbd "M-k") 'next-line)
+  (ergoemacs-define-key keymap (kbd "M-j") 'backward-char)
+  (ergoemacs-define-key keymap (kbd "M-l") 'forward-char)
+  (ergoemacs-define-key keymap (kbd "M-i") 'previous-line)
+  (ergoemacs-define-key keymap (kbd "M-k") 'next-line)
 
   ;; Fix this binding.  Trying to avoid C-M-* combos.
   ;; The regular binding is 'M-s o'
-  (ergoemacs-global-set-key (kbd "C-M-:") 'occur)
-  (ergoemacs-global-set-key (kbd "C-M-;") 'isearch-occur)
+  (ergoemacs-define-key keymap (kbd "C-M-:") 'occur)
+  (ergoemacs-define-key keymap (kbd "C-M-;") 'isearch-occur)
   
-  (ergoemacs-global-set-key (kbd "M-SPC") 'set-mark-command)
+  (ergoemacs-define-key keymap (kbd "M-SPC") 'set-mark-command)
   
   ;; Delete previous/next char.
-  (ergoemacs-global-set-key (kbd "M-d") 'delete-backward-char)
-  (ergoemacs-global-set-key (kbd "M-f") 'delete-char)
+  (ergoemacs-define-key keymap (kbd "M-d") 'delete-backward-char)
+  (ergoemacs-define-key keymap (kbd "M-f") 'delete-char)
 
-  (ergoemacs-global-set-key (kbd "<M-delete>") 'kill-word)
-  (ergoemacs-global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
-  (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
+  (ergoemacs-define-key keymap (kbd "<M-delete>") 'kill-word)
+  (ergoemacs-define-key keymap (kbd "<M-up>") 'ergoemacs-backward-block)
+  (ergoemacs-define-key keymap (kbd "<M-down>") 'ergoemacs-forward-block)
   )  
 
 ;;; Variable Components
-(defun ergoemacs-set-move-word ()
+(defun ergoemacs-set-move-word (keymap)
   "Moving around and deleting words"
-  (ergoemacs-global-set-key (kbd "M-u") 'backward-word)
-  (ergoemacs-global-set-key (kbd "M-o") 'forward-word)
+  (ergoemacs-define-key keymap (kbd "M-u") 'backward-word)
+  (ergoemacs-define-key keymap (kbd "M-o") 'forward-word)
   
-  (ergoemacs-global-set-key (kbd "M-e") 'backward-kill-word)
-  (ergoemacs-global-set-key (kbd "M-r") 'kill-word)
+  (ergoemacs-define-key keymap (kbd "M-e") 'backward-kill-word)
+  (ergoemacs-define-key keymap (kbd "M-r") 'kill-word)
   )
 
-(defun ergoemacs-set-move-paragraph ()
+(defun ergoemacs-set-move-paragraph (keymap)
   "Move by Paragraph"
-  (ergoemacs-global-set-key (kbd "M-U") 'backward-paragraph)
-  (ergoemacs-global-set-key (kbd "M-O") 'forward-paragraph)
+  (ergoemacs-define-key keymap (kbd "M-U") 'backward-paragraph)
+  (ergoemacs-define-key keymap (kbd "M-O") 'forward-paragraph)
   )
 
-(defun ergoemacs-set-move-line ()
+(defun ergoemacs-set-move-line (keymap)
   "Move by Line"
-  (ergoemacs-global-set-key (kbd "M-h") 'move-beginning-of-line)
-  (ergoemacs-global-set-key (kbd "M-H") 'move-end-of-line)
+  (ergoemacs-define-key keymap (kbd "M-h") 'move-beginning-of-line)
+  (ergoemacs-define-key keymap (kbd "M-H") 'move-end-of-line)
   )
 
-(defun ergoemacs-set-move-page ()
+(defun ergoemacs-set-move-page (keymap)
   "Move by Page"
-  (ergoemacs-global-set-key (kbd "M-I") 'scroll-down-command)
-  (ergoemacs-global-set-key (kbd "M-K") 'scroll-up-command)
+  (ergoemacs-define-key keymap (kbd "M-I") 'scroll-down-command)
+  (ergoemacs-define-key keymap (kbd "M-K") 'scroll-up-command)
 )  
 
-(defun ergoemacs-set-move-buffer ()
-  (ergoemacs-global-set-key (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
-  (ergoemacs-global-set-key (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
+(defun ergoemacs-set-move-buffer (keymap)
+  (ergoemacs-define-key keymap (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
+  (ergoemacs-define-key keymap (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
 )  
 
-(defun ergoemacs-set-move-bracket ()
+(defun ergoemacs-set-move-bracket (keymap)
   "Move By Bracket"
-  (ergoemacs-global-set-key (kbd "M-J") 'ergoemacs-backward-open-bracket)
-  (ergoemacs-global-set-key (kbd "M-L") 'ergoemacs-forward-close-bracket)
-  (ergoemacs-global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
-  (ergoemacs-global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket)
+  (ergoemacs-define-key keymap (kbd "M-J") 'ergoemacs-backward-open-bracket)
+  (ergoemacs-define-key keymap (kbd "M-L") 'ergoemacs-forward-close-bracket)
+  (ergoemacs-define-key keymap (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
+  (ergoemacs-define-key keymap (kbd "<M-right>") 'ergoemacs-forward-close-bracket)
   )
 
-(defun ergoemacs-set-copy ()
+(defun ergoemacs-set-copy (keymap)
   "Copy, Cut, Paste, Redo and Undo"
-  (ergoemacs-global-set-key (kbd "M-x") 'ergoemacs-cut-line-or-region)
-  (ergoemacs-global-set-key (kbd "M-c") 'ergoemacs-copy-line-or-region)
-  (ergoemacs-global-set-key (kbd "M-v") 'ergoemacs-paste)
-  (ergoemacs-global-set-key (kbd "M-V") 'ergoemacs-paste-cycle)
+  (ergoemacs-define-key keymap (kbd "M-x") 'ergoemacs-cut-line-or-region)
+  (ergoemacs-define-key keymap (kbd "M-c") 'ergoemacs-copy-line-or-region)
+  ;; FIXME: enable term-paste for term-mode
+  (ergoemacs-define-key keymap (kbd "M-v") 'ergoemacs-paste)
+  (ergoemacs-define-key keymap (kbd "M-V") 'ergoemacs-paste-cycle)
   
-  (ergoemacs-global-set-key (kbd "M-C") 'ergoemacs-copy-all)
-  (ergoemacs-global-set-key (kbd "M-X") 'ergoemacs-cut-all)
+  (ergoemacs-define-key keymap (kbd "M-C") 'ergoemacs-copy-all)
+  (ergoemacs-define-key keymap (kbd "M-X") 'ergoemacs-cut-all)
 
   ;; Undo
-  (ergoemacs-global-set-key (kbd "M-z") 'undo)
-  (ergoemacs-global-set-key (kbd "C-S-x") 'execute-extended-command)
+  (ergoemacs-define-key keymap (kbd "M-z") 'undo)
+  (ergoemacs-define-key keymap (kbd "C-S-x") 'execute-extended-command)
   (global-set-key (kbd "C-z") 'undo)
 
   ;; Mode specific changes
@@ -430,86 +422,86 @@ calling any other ergoemacs-set-* function"
   (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   )  
 
-(defun ergoemacs-set-search ()
+(defun ergoemacs-set-search (keymap)
   "Search and Replace"
-  (ergoemacs-global-set-key (kbd "M-5") 'query-replace)
-  (ergoemacs-global-set-key (kbd "M-%") 'query-replace-regexp)
-  (ergoemacs-global-set-key (kbd "M-;") 'isearch-forward)
+  (ergoemacs-define-key keymap (kbd "M-5") 'query-replace)
+  (ergoemacs-define-key keymap (kbd "M-%") 'query-replace-regexp)
+  (ergoemacs-define-key keymap (kbd "M-;") 'isearch-forward)
   (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
-  (ergoemacs-global-set-key (kbd "M-:") 'isearch-backward)
+  (ergoemacs-define-key keymap (kbd "M-:") 'isearch-backward)
   (ergoemacs-define-key isearch-mode-map (kbd "M-:") 'isearch-repeat-backward)
   )
 
-(defun ergoemacs-set-switch ()
+(defun ergoemacs-set-switch (keymap)
   "Window/Frame/Tab Switching"
-  (ergoemacs-global-set-key (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
-  (ergoemacs-global-set-key (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
+  (ergoemacs-define-key keymap (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
+  (ergoemacs-define-key keymap (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
   
-  (ergoemacs-global-set-key (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
-  (ergoemacs-global-set-key (kbd "M-`") 'ergoemacs-switch-to-next-frame)
+  (ergoemacs-define-key keymap (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
+  (ergoemacs-define-key keymap (kbd "M-`") 'ergoemacs-switch-to-next-frame)
 
-  (ergoemacs-global-set-key (kbd "M-3") 'delete-other-windows)
-  (ergoemacs-global-set-key (kbd "M-#") 'delete-other-windows)
+  (ergoemacs-define-key keymap (kbd "M-3") 'delete-other-windows)
+  (ergoemacs-define-key keymap (kbd "M-#") 'delete-other-windows)
   
-  (ergoemacs-global-set-key (kbd "M-2") 'delete-window)
-  (ergoemacs-global-set-key (kbd "M-@") 'delete-window)
+  (ergoemacs-define-key keymap (kbd "M-2") 'delete-window)
+  (ergoemacs-define-key keymap (kbd "M-@") 'delete-window)
   
-  (ergoemacs-global-set-key (kbd "M-4") 'split-window-below)
-  
-  (ergoemacs-global-set-key (kbd "M-$") 'split-window-right)
+  (ergoemacs-define-key keymap (kbd "M-4") 'split-window-below)
+  (ergoemacs-define-key keymap (kbd "M-$") 'split-window-right)
 
-  (ergoemacs-global-set-key (kbd "M-0") 'delete-window)
-  (ergoemacs-global-set-key (kbd "M-)") 'delete-window)
+  (ergoemacs-define-key keymap (kbd "M-0") 'delete-window)
+  (ergoemacs-define-key keymap (kbd "M-)") 'delete-window)
   )
 
-(defun ergoemacs-set-execute ()
+(defun ergoemacs-set-execute (keymap)
   "Execute Commands"
-  (ergoemacs-global-set-key (kbd "M-a") 'execute-extended-command)
-  (ergoemacs-global-set-key (kbd "M-A") 'shell-command)
+  (ergoemacs-define-key keymap (kbd "M-a") 'execute-extended-command)
+  (ergoemacs-define-key keymap (kbd "M-A") 'shell-command)
   )
 
-(defun ergoemacs-set-misc ()
+(defun ergoemacs-set-misc (keymap)
   "Misc Commands"
-  (ergoemacs-global-set-key (kbd "M-p") 'recenter-top-bottom)
-  (ergoemacs-global-set-key (kbd "M-B") 'ibuffer)
-  (ergoemacs-global-set-key (kbd "M-b") 'switch-to-buffer)
+  (ergoemacs-define-key keymap (kbd "M-p") 'recenter-top-bottom)
+  (ergoemacs-define-key keymap (kbd "M-B") 'ibuffer)
+  (ergoemacs-define-key keymap (kbd "M-b") 'switch-to-buffer)
   )
 
-(defun ergoemacs-set-kill-line ()
+(defun ergoemacs-set-kill-line (keymap)
   "Kill Line"
-  (ergoemacs-global-set-key (kbd "M-g") 'kill-line)
-  (ergoemacs-global-set-key (kbd "M-G") 'ergoemacs-kill-line-backward))
+  (ergoemacs-define-key keymap (kbd "M-g") 'kill-line)
+  (ergoemacs-define-key keymap (kbd "M-G") 'ergoemacs-kill-line-backward))
 
-(defun ergoemacs-set-text-transform ()
+(defun ergoemacs-set-text-transform (keymap)
   "Text Transformation"
-  (ergoemacs-global-set-key (kbd "M-'") 'comment-dwim)
-  (ergoemacs-global-set-key (kbd "M-\"") 'delete-horizontal-space)
+  (ergoemacs-define-key keymap (kbd "M-'") 'comment-dwim)
+  (ergoemacs-define-key keymap (kbd "M-\"") 'delete-horizontal-space)
   
-  (ergoemacs-global-set-key (kbd "M-w") 'ergoemacs-shrink-whitespaces)
+  (ergoemacs-define-key keymap (kbd "M-w") 'ergoemacs-shrink-whitespaces)
 
-  (ergoemacs-global-set-key (kbd "M-?") 'ergoemacs-toggle-camel-case)
-  (ergoemacs-global-set-key (kbd "M-/") 'ergoemacs-toggle-letter-case)
+  (ergoemacs-define-key keymap (kbd "M-?") 'ergoemacs-toggle-camel-case)
+  (ergoemacs-define-key keymap (kbd "M-/") 'ergoemacs-toggle-letter-case)
 
-  ;; ;; keyword completion, because Alt+Tab is used by OS
-  (ergoemacs-global-set-key (kbd "M-t") 'ergoemacs-call-keyword-completion)
-  (ergoemacs-global-set-key (kbd "M-T") 'flyspell-auto-correct-word)
+  ;; keyword completion, because Alt+Tab is used by OS
+  (ergoemacs-define-key keymap (kbd "M-t") 'ergoemacs-call-keyword-completion)
+  (ergoemacs-define-key keymap (kbd "M-T") 'flyspell-auto-correct-word)
 
-  ;; ;; Hard-wrap/un-hard-wrap paragraph
-  (ergoemacs-global-set-key (kbd "M-q") 'ergoemacs-compact-uncompact-block)
+  ;; Hard-wrap/un-hard-wrap paragraph
+  (ergoemacs-define-key keymap (kbd "M-q") 'ergoemacs-compact-uncompact-block)
 
+  ;; Why does this work?
   (ergoemacs-define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
   (ergoemacs-define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
   )
 
-(defun ergoemacs-set-select-items ()
+(defun ergoemacs-set-select-items (keymap)
   "Select Items"
-  (ergoemacs-global-set-key (kbd "M-S-SPC") 'mark-paragraph)
-  (ergoemacs-global-set-key (kbd "M-8") 'ergoemacs-extend-selection)
-  (ergoemacs-global-set-key (kbd "M-*") 'ergoemacs-select-text-in-quote)
-  (ergoemacs-global-set-key (kbd "M-6") 'ergoemacs-select-current-block)
-  (ergoemacs-global-set-key (kbd "M-^") 'ergoemacs-select-current-block)
-  (ergoemacs-global-set-key (kbd "M-7") 'ergoemacs-select-current-line)
-  (ergoemacs-global-set-key (kbd "M-&") 'ergoemacs-select-current-line)
+  (ergoemacs-define-key keymap (kbd "M-S-SPC") 'mark-paragraph)
+  (ergoemacs-define-key keymap (kbd "M-8") 'ergoemacs-extend-selection)
+  (ergoemacs-define-key keymap (kbd "M-*") 'ergoemacs-select-text-in-quote)
+  (ergoemacs-define-key keymap (kbd "M-6") 'ergoemacs-select-current-block)
+  (ergoemacs-define-key keymap (kbd "M-^") 'ergoemacs-select-current-block)
+  (ergoemacs-define-key keymap (kbd "M-7") 'ergoemacs-select-current-line)
+  (ergoemacs-define-key keymap (kbd "M-&") 'ergoemacs-select-current-line)
   )
 
 (defun ergoemacs-set-quit ()
@@ -1048,36 +1040,39 @@ calling any other ergoemacs-set-* function"
                                    describe-copying)
                           ,(if (eq system-type 'darwin) "Help" "?")))))
 
-(defun ergoemacs-set-mode-line-major-mode-switch ()
-  "Switch major modes by clicking mode-name."
-  (setq ergoemacs-swap-major-modes-when-clicking-major-mode-name t))
-
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
   )
 
+(defvar ergoemacs-override-alist)
+
 (defun ergoemacs-install-standard-theme ()
   (ergoemacs-unset-keys)
   (ergoemacs-set-standard-vars)
-  (ergoemacs-set-standard-fixed)
-  (ergoemacs-set-help)
-  (ergoemacs-set-move-char)
-  (ergoemacs-set-move-buffer)
-  (ergoemacs-set-move-bracket)
-  (ergoemacs-set-move-word)
-  (ergoemacs-set-move-paragraph)
-  (ergoemacs-set-move-line)
-  (ergoemacs-set-move-page)
-  (ergoemacs-set-move-buffer)
-  (ergoemacs-set-move-bracket)
-  (ergoemacs-set-copy)
-  (ergoemacs-set-search)
-  (ergoemacs-set-switch)
-  (ergoemacs-set-execute)
-  (ergoemacs-set-misc)
-  (ergoemacs-set-kill-line)
-  (ergoemacs-set-text-transform)
-  (ergoemacs-set-select-items)
+
+  (let ((override-keymap (make-sparse-keymap)))
+    (ergoemacs-set-standard-fixed override-keymap)
+    (ergoemacs-set-help override-keymap)
+    (ergoemacs-set-move-char override-keymap)
+    (ergoemacs-set-move-buffer override-keymap)
+    (ergoemacs-set-move-bracket override-keymap)
+    (ergoemacs-set-move-word override-keymap)
+    (ergoemacs-set-move-paragraph override-keymap)
+    (ergoemacs-set-move-line override-keymap)
+    (ergoemacs-set-move-page override-keymap)
+    (ergoemacs-set-move-buffer override-keymap)
+    (ergoemacs-set-move-bracket override-keymap)
+    (ergoemacs-set-copy override-keymap)
+    (ergoemacs-set-search override-keymap)
+    (ergoemacs-set-switch override-keymap)
+    (ergoemacs-set-execute override-keymap)
+    (ergoemacs-set-misc override-keymap)
+    (ergoemacs-set-kill-line override-keymap)
+    (ergoemacs-set-text-transform override-keymap)
+    (ergoemacs-set-select-items override-keymap)
+    (setq ergoemacs-override-alist `((ergoemacs-mode . ,override-keymap)))
+    )
+  
   (ergoemacs-set-remaps)
   (ergoemacs-set-quit)
   (ergoemacs-set-menu-bar-help)
@@ -1085,79 +1080,9 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-set-menu-bar-search)
   (ergoemacs-set-menu-bar-edit)
   (ergoemacs-set-menu-bar-file)
-  (ergoemacs-set-mode-line-major-mode-switch)
   )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
-
-(defun ergoemacs-install-term-bindings ()
-  ;; For term, do not bind anything that modifies the buffer, like
-  ;; cut, undo, and redo.  The only exception is paste.  Paste-cycle
-  ;; is not bound, because it would require deleting and inserting
-  ;; text.
-  ;;
-  ;; Also, do not bind any special keys like <insert> or <prior>.
-  ;; They get passed into term.
-  (define-key term-raw-map (kbd "C-o") 'find-file)
-  (define-key term-raw-map (kbd "C-S-t") 'ergoemacs-open-last-closed)
-  (define-key term-raw-map (kbd "C-w") 'ergoemacs-close-current-buffer)
-  (define-key term-raw-map (kbd "C-a") 'mark-whole-buffer)
-  (define-key term-raw-map (kbd "C-S-n") 'make-frame-command)
-  (define-key term-raw-map (kbd "C-+") 'text-scale-increase)
-  (define-key term-raw-map (kbd "C--") 'text-scale-decrease)
-  (define-key term-raw-map (kbd "C-.") 'keyboard-quit)
-  (define-key term-raw-map (kbd "C-/") 'info)
-  (define-key term-raw-map (kbd "C-0") 'ergoemacs-text-scale-normal-size)
-  (define-key term-raw-map (kbd "C-=") 'text-scale-increase)
-  (define-key term-raw-map (kbd "C-S-o") 'ergoemacs-open-in-external-app)
-  (define-key term-raw-map (kbd "C-S-s") 'write-file)
-  (define-key term-raw-map (kbd "C-S-w") 'delete-frame)
-  (define-key term-raw-map (kbd "C-`") 'other-frame)
-  (define-key term-raw-map (kbd "C-n") 'ergoemacs-new-empty-buffer)
-  (define-key term-raw-map (kbd "C-p") 'pr-interface)
-  
-  (ergoemacs-define-key term-raw-map (kbd "M-j") 'backward-char)
-  (ergoemacs-define-key term-raw-map (kbd "M-l") 'forward-char)
-  (ergoemacs-define-key term-raw-map (kbd "M-i") 'previous-line)
-  (ergoemacs-define-key term-raw-map (kbd "M-k") 'next-line)
-  (ergoemacs-define-key term-raw-map (kbd "M-SPC") 'set-mark-command)
-  
-  (ergoemacs-define-key term-raw-map (kbd "M-u") 'backward-word)
-  (ergoemacs-define-key term-raw-map (kbd "M-o") 'forward-word)
-
-  (ergoemacs-define-key term-raw-map (kbd "M-U") 'backward-paragraph)
-  (ergoemacs-define-key term-raw-map (kbd "M-O") 'forward-paragraph)
-
-  (ergoemacs-define-key term-raw-map (kbd "M-h") 'move-beginning-of-line)
-  (ergoemacs-define-key term-raw-map (kbd "M-H") 'move-end-of-line)
-
-  (ergoemacs-define-key term-raw-map (kbd "M-I") 'scroll-down)
-  (ergoemacs-define-key term-raw-map (kbd "M-K") 'scroll-up)
-
-  (ergoemacs-define-key term-raw-map (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
-  (ergoemacs-define-key term-raw-map (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
-
-  (ergoemacs-define-key term-raw-map (kbd "M-J") 'ergoemacs-backward-open-bracket)
-  (ergoemacs-define-key term-raw-map (kbd "M-L") 'ergoemacs-forward-close-bracket)
-  
-  (ergoemacs-define-key term-raw-map (kbd "M-c") 'ergoemacs-copy-line-or-region)
-  (ergoemacs-define-key term-raw-map (kbd "M-v") 'term-paste)
-  (ergoemacs-define-key term-raw-map (kbd "M-C") 'ergoemacs-copy-all)
-
-  (ergoemacs-define-key term-raw-map (kbd "M-;") 'isearch-forward)
-  (ergoemacs-define-key term-raw-map (kbd "M-:") 'isearch-backward)
-
-  (ergoemacs-define-key term-raw-map (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
-  (ergoemacs-define-key term-raw-map (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
-  (ergoemacs-define-key term-raw-map (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
-  (ergoemacs-define-key term-raw-map (kbd "M-`") 'ergoemacs-switch-to-next-frame)
-  (ergoemacs-define-key term-raw-map (kbd "M-3") 'delete-other-windows)
-  (ergoemacs-define-key term-raw-map (kbd "M-2") 'delete-window)
-  (ergoemacs-define-key term-raw-map (kbd "M-4") '(split-window-below split-window-horizontally))
-  (ergoemacs-define-key term-raw-map (kbd "M-$") '(split-window-right split-window-vertically))
-  )
-
-(add-hook 'term-load-hook #'ergoemacs-install-term-bindings)
 
 (defun ergoemacs-install-org-bindings ()
   (ergoemacs-unset-keys-in-map org-mode-map)
