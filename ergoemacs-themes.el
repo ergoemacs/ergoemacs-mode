@@ -66,7 +66,10 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   )
 
 (defun ergoemacs-unset-keys-in-map (local-map)
-  "Unset all of the keys in a local map that we usually prefer to use the ergoemacs keys."
+  "Unset all of the keys in a local map that we usually prefer to
+use the ergoemacs keys.  This is only used for isearch-mode-map,
+since that is the only map that manages to evade being overridden
+by the emulation map."
   (ergoemacs-define-key local-map (kbd "M-h") nil)
   (ergoemacs-define-key local-map (kbd "M-H") nil)
 
@@ -141,8 +144,6 @@ will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
   (ergoemacs-define-key local-map (kbd "M-t") nil)
   (ergoemacs-define-key local-map (kbd "M-T") nil)
   (ergoemacs-define-key local-map (kbd "M-q") nil)
-
-
   
   (define-key local-map (kbd "C-w") nil)
   (define-key local-map (kbd "C-n") nil)
@@ -338,7 +339,6 @@ calling any other ergoemacs-set-* function"
   ;; These go into the global map, so they can be overridden by a
   ;; local mode map.
   (global-set-key (kbd "C-f") 'isearch-forward)
-  (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward)
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   (global-set-key (kbd "C-z") 'ergoemacs-undo)
 
@@ -360,8 +360,10 @@ calling any other ergoemacs-set-* function"
   
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-external-app)
   (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
-  
-  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
+
+  ;; These go into the isearch-mode-map, which supercedes all other
+  ;; maps when in isearch mode.
+  (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward)
   )
 
 (defun ergoemacs-set-help (keymap)
