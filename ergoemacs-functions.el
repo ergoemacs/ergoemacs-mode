@@ -99,6 +99,16 @@
   '(delete-backward-char delete-char kill-word backward-kill-word)
   "Defines deletion functions that ergoemacs is aware of.")
 
+;;;###autoload
+(defun ergoemacs-undo ()
+  "Run `undo'.  If in calc-mode, run `calc-undo'"
+  (interactive)
+  (if (eq major-mode 'calc-mode)
+      (calc-undo 1)
+    (undo)
+    )
+  )
+
 (defvar ergoemacs-revert-buffer 0)
 (defun ergoemacs-revert-buffer ()
   "Ergoemacs replacement of `revert-buffer'.
@@ -2040,6 +2050,8 @@ If in `term-mode', run `term-paste'.
   (cond
    ((eq major-mode 'term-mode)
     (term-paste))
+   ((eq major-mode 'calc-mode)
+    (calc-yank nil))
    ((and isearch-mode ergoemacs-smart-paste (eq last-command 'isearch-yank-kill))
     (isearch-yank-pop)
     (setq this-command 'isearch-yank-pop))

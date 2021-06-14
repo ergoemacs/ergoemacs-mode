@@ -306,7 +306,7 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-f") 'isearch-forward)
   (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward)
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
-  (global-set-key (kbd "C-z") 'undo)
+  (global-set-key (kbd "C-z") 'ergoemacs-undo)
 
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
@@ -411,7 +411,7 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "M-X") 'ergoemacs-cut-all)
 
   ;; Undo
-  (ergoemacs-define-key keymap (kbd "M-z") 'undo)
+  (ergoemacs-define-key keymap (kbd "M-z") 'ergoemacs-undo)
   (ergoemacs-define-key keymap (kbd "C-S-x") 'execute-extended-command)
   (global-set-key (kbd "C-z") 'undo)
 
@@ -1106,13 +1106,6 @@ calling any other ergoemacs-set-* function"
   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
   )
 (add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
-
-(defun ergoemacs-install-calc-bindings ()
-  (ergoemacs-define-key calc-mode-map (kbd "M-v") 'calc-yank)
-  (ergoemacs-define-key calc-mode-map (kbd "M-z") 'calc-undo)
-  )
-(add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
-
 
 (defun ergoemacs-install-log-edit-bindings ()
   (ergoemacs-unset-keys-in-map log-edit-mode-map)
