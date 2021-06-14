@@ -2032,10 +2032,14 @@ This is `browse-kill-ring' if `ergoemacs-smart-paste' equals 'browse-kill-ring a
 
 When in `browse-kill-ring-mode', cycle forward through the key ring.
 
-This does the same thing in `iseach-mode' using `isearch-yank-pop' and  `isearch-yank-kill'
+This does the same thing in `isearch-mode' using `isearch-yank-pop' and  `isearch-yank-kill'
+
+If in `term-mode', run `term-paste'.
 "
   (interactive)
   (cond
+   ((eq major-mode 'term-mode)
+    (term-paste))
    ((and isearch-mode ergoemacs-smart-paste (eq last-command 'isearch-yank-kill))
     (isearch-yank-pop)
     (setq this-command 'isearch-yank-pop))
