@@ -465,6 +465,28 @@ The ARG is passed to the respective function for any prefixes."
     (let ((kill-whole-line t))
       (ergoemacs :remap 'kill-line)))))
 
+;; When editing a search in isearch, it uses the
+;; minibuffer-local-isearch-map keymap, which get overridden by the
+;; global emulation keymap.  So we make our own version of
+;; isearch-forward and isearch-backward to handle that.
+;;;###autoload
+(defun ergoemacs-isearch-forward ()
+  (interactive)
+  (if (eq (current-local-map) minibuffer-local-isearch-map)
+      (isearch-forward-exit-minibuffer)
+    (isearch-forward)
+    )
+  )
+
+;;;###autoload
+(defun ergoemacs-isearch-backward ()
+  (interactive)
+  (if (eq (current-local-map) minibuffer-local-isearch-map)
+      (isearch-reverse-exit-minibuffer)
+    (isearch-backward)
+    )
+  )
+
 ;;; CURSOR MOVEMENT
 (defun ergoemacs-forward-open-bracket (&optional number)
   "Move cursor to the next occurrence of left bracket/ quotation mark.
