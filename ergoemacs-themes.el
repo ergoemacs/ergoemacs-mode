@@ -321,8 +321,8 @@ calling any other ergoemacs-set-* function"
   (define-key keymap (kbd "C-S-s") 'write-file)
   (define-key keymap (kbd "C-p") 'pr-interface)
 
-  (define-key keymap (kbd "C-S-n") 'make-frame-command)
-  (define-key keymap (kbd "C-S-w") 'delete-frame)
+  (define-key keymap (kbd "C-S-n") 'ergoemacs-make-frame-command)
+  (define-key keymap (kbd "C-S-w") 'ergoemacs-delete-frame)
   
   (define-key keymap (kbd "C-l") 'goto-line)
   (define-key keymap (kbd "C-n") 'ergoemacs-new-empty-buffer)
@@ -578,7 +578,6 @@ calling any other ergoemacs-set-* function"
                   (cons "File"
                         `(keymap
                           (new-file menu-item "New" ergoemacs-new-empty-buffer)
-                          (make-frame menu-item "New Frame" make-frame-command)
                           (open-file menu-item "Open..." find-file)
                           (open-recent menu-item "Open Recent"
                                        (keymap
@@ -611,9 +610,11 @@ calling any other ergoemacs-set-* function"
                           (revert-buffer menu-item "Revert to Saved" ergoemacs-revert-buffer)
                           (print-buffer menu-item "Print" pr-interface)
                           (separator4 menu-item "--")
-                          (split-window-below menu-item "Split Window"
+                          (create-frame-item menu-item "Create New Frame" ergoemacs-make-frame-command)
+                          (delete-frame-item menu-item "Delete Frame" ergoemacs-delete-frame)
+                          (split-window-below menu-item "Split Window Below"
                                               split-window-below)
-                          (split-window-right menu-item "Split Window right"
+                          (split-window-right menu-item "Split Window Right"
                                               split-window-right)
                           (one-window menu-item "Unsplit Window"
                                       delete-other-windows)

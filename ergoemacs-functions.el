@@ -1553,6 +1553,14 @@ Emacs buffers are those whose name starts with *."
     (funcall (and initial-major-mode))
     (setq buffer-offer-save t)))
 
+(defun ergoemacs-make-frame-command ()
+  "Create a new frame.  This is a thin wrapper so that menus will
+show the ergoemacs key binding rather than the traditional
+binding."
+  (interactive)
+  (make-frame-command)
+  )
+
 (defun ergoemacs-delete-frame ()
   "Deletes frame or closes emacs (with prompt)."
   (interactive)

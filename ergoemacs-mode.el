@@ -672,7 +672,14 @@ SYMBOL is the symbol to set, NEW-VALUE is it's value."
     (ergoemacs-mode-reset)))
 
 (defvar ergoemacs-override-keymap (make-sparse-keymap)
-  "ErgoEmacs override keymap.")
+  "ErgoEmacs override keymap.  Modify this keymap to change the
+basic ergoemacs functionality.  For example, if you want M-t to
+transpose words instead of running completion, call
+
+  (ergoemacs-define-key ergoemacs-override-keymap (kbd \"M-t\") 'transpose-words)
+
+after initializing ergoemacs-mode.
+")
 
 (ergoemacs :label ergoemacs-override-keymap)
 
