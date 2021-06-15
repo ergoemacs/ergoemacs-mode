@@ -338,7 +338,7 @@ calling any other ergoemacs-set-* function"
 
   ;; These go into the global map, so they can be overridden by a
   ;; local mode map.
-  (global-set-key (kbd "C-f") 'isearch-forward)
+  (global-set-key (kbd "C-f") 'ergoemacs-isearch-forward)
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   (global-set-key (kbd "C-z") 'ergoemacs-undo)
 
@@ -453,8 +453,12 @@ calling any other ergoemacs-set-* function"
 
   ;; Undo
   (ergoemacs-define-key keymap (kbd "M-z") 'ergoemacs-undo)
+  (put 'ergoemacs-undo
+       :advertised-binding (ergoemacs-translate--event-layout
+                            (vconcat (listify-key-sequence (kbd "M-z")))
+                            )
+       )
   (ergoemacs-define-key keymap (kbd "C-S-x") 'execute-extended-command)
-  (global-set-key (kbd "C-z") 'undo)
 
   ;; Mode specific changes
   (ergoemacs-define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
@@ -468,6 +472,11 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "M-5") 'query-replace)
   (ergoemacs-define-key keymap (kbd "M-%") 'query-replace-regexp)
   (ergoemacs-define-key keymap (kbd "M-;") 'ergoemacs-isearch-forward)
+  (put 'ergoemacs-isearch-forward
+       :advertised-binding (ergoemacs-translate--event-layout
+                            (vconcat (listify-key-sequence (kbd "M-;")))
+                            )
+       )
   (ergoemacs-define-key keymap (kbd "M-:") 'ergoemacs-isearch-backward)
 
   ;; We have to override this in isearch-mode-map because isearch
@@ -476,7 +485,21 @@ calling any other ergoemacs-set-* function"
   ;; but it feels better to have a separate function for a different
   ;; mode.
   (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
+  ;; Changing advertised-binding does not work.  Maybe because it is
+  ;; only defined within isearch-mode-map?
+  
+  ;; (put 'isearch-repeat-forward
+  ;;      :advertised-binding (ergoemacs-translate--event-layout
+  ;;                           (vconcat (listify-key-sequence (kbd "M-;")))
+  ;;                           )
+  ;;      )
   (ergoemacs-define-key isearch-mode-map (kbd "M-:") 'isearch-repeat-backward)
+  ;; (put 'isearch-repeat-backward
+  ;;      :advertised-binding (ergoemacs-translate--event-layout
+  ;;                           (vconcat (listify-key-sequence (kbd "M-:")))
+  ;;                           )
+  ;;      )
+  
   ;; This is an exception to the regular rule that we do not rebind
   ;; control keys.  The regular binding for this in isearch is M-s e.
   ;; Ergoemacs does not have a generic "edit this" function.  So I
@@ -648,7 +671,7 @@ calling any other ergoemacs-set-* function"
   (define-key-after (current-global-map) [menu-bar edit]
     (cons "Edit"
           '(keymap
-            (undo-item menu-item "Undo" undo
+            (undo-item menu-item "Undo" ergoemacs-undo
                        :enable (and
                                 (not buffer-read-only)
                                 (not
@@ -817,23 +840,14 @@ calling any other ergoemacs-set-* function"
   (define-key-after (current-global-map) [menu-bar search]
     (cons "Search"
           '(keymap
-            (isearch-forward menu-item "String Forward..." isearch-forward
+            (isearch-forward menu-item "String Forward..." ergoemacs-isearch-forward
                              :help "Search forward for a string as you type it")
-            (isearch-backward menu-item "    Backward..." isearch-backward
+            (isearch-backward menu-item "    Backward..." ergoemacs-isearch-backward
                               :help "Search backwards for a string as you type it")
             (re-isearch-forward menu-item "Regexp Forward..." isearch-forward-regexp
                                 :help "Search forward for a regular expression as you type it")
             (re-isearch-backward menu-item "    Backward..." isearch-backward-regexp
                                  :help "Search backwards for a regular expression as you type it")
-            (separator-repeat-search menu-item "--" )
-            (repeat-forward menu-item "Repeat Forward" nonincremental-repeat-search-forward
-                            :enable (or (and (memq menu-bar-last-search-type '(string word)) search-ring)
-                                        (and (eq menu-bar-last-search-type 'regexp) regexp-search-ring))
-                            :help "Repeat last search forward")
-            (repeat-backward menu-item "    Repeat Backward" nonincremental-repeat-search-backward
-                             :enable (or (and (memq menu-bar-last-search-type '(string word)) search-ring)
-                                         (and (eq menu-bar-last-search-type 'regexp) regexp-search-ring))
-                             :help "Repeat last search forward")
             (separator-isearch menu-item "--")
             (i-search menu-item "String Search"
                       (keymap
@@ -1159,7 +1173,7 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-set-kill-line ergoemacs-override-keymap)
   (ergoemacs-set-text-transform ergoemacs-override-keymap)
   (ergoemacs-set-select-items ergoemacs-override-keymap)
-  
+
   (ergoemacs-set-remaps)
   (ergoemacs-set-quit)
   (ergoemacs-set-menu-bar-help)
