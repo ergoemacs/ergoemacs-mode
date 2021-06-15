@@ -1227,6 +1227,11 @@ calling any other ergoemacs-set-* function"
   )
 (add-hook 'dired-load-hook #'ergoemacs-install-dired-bindings)
 
+(defun ergoemacs-install-calc-bindings ()
+  (define-key calc-mode-map [remap ergoemacs-undo] 'calc-undo)
+  )
+(add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
+
 (ergoemacs-translation normal ()
   "Identify transformation"
   :keymap (let ((map (make-sparse-keymap)))
