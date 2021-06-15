@@ -681,7 +681,7 @@ SYMBOL is the symbol to set, NEW-VALUE is it's value."
 
 (defun ergoemacs-setup-override-keymap ()
   "Setup `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
-  ;; (setq ergoemacs-override-alist `((ergoemacs-mode . ,(ergoemacs ergoemacs-override-keymap))))
+  (setq ergoemacs-override-alist `((ergoemacs-mode . ,(ergoemacs ergoemacs-override-keymap))))
   (add-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
 
 (defun ergoemacs-remove-override-keymap ()
