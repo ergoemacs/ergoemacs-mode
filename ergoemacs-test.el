@@ -700,21 +700,6 @@ Should test issue #142"
       (delete-file w-file))
     ret))
 
-(ert-deftest ergoemacs-test-global-key-set-after ()
-  "Test global set key after ergoemacs loads."
-  :tags '(:slow)
-  (should (equal (ergoemacs-test-global-key-set-before 'after) t)))
-
-(ert-deftest ergoemacs-test-global-key-set-after-2 ()
-  "Test global set key after ergoemacs loads (define-key)."
-  :tags '(:slow)
-  (should (equal (ergoemacs-test-global-key-set-before 'after nil 'define-key) t)))
-
-(ert-deftest ergoemacs-test-global-key-set-m-semi-after ()
-  "Test setting M-; before loading."
-  :tags '(:slow)
-  (should (equal (ergoemacs-test-global-key-set-before t "M-;") t)))
-
 (ert-deftest ergoemacs-test-global-key-set-after-220 ()
   "Test global C-c b"
   :tags '(:slow)
@@ -805,12 +790,6 @@ Should test issue #142"
   "Test global C-c b"
   :tags '(:slow :interactive)
   (should (equal (ergoemacs-test-global-key-set-before nil "C-c b") t)))
-
-(ert-deftest ergoemacs-test-global-key-set-M-t-after ()
-  "Test global M-t"
-  :tags '(:slow)
-  (should (equal (ergoemacs-test-global-key-set-before 'after "M-t") t)))
-
 
 (ert-deftest ergoemacs-test-global-key-set-C-d-after ()
   "Test global C-d"
