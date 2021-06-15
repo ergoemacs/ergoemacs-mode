@@ -1147,7 +1147,7 @@ See also: `ergoemacs-compact-uncompact-block'"
   (interactive)
   (let ((fill-column 90002000))
     (setq current-prefix-arg nil);; Fill paragraph is bound it M-q.
-    (ergoemacs :remap 'fill-paragraph)))
+    (fill-paragraph)))
 
 (defun ergoemacs-unfill-region (start end)
   "Replace newline char in region by space.
@@ -1163,25 +1163,26 @@ This command is similar to a toggle of `fill-paragraph'.
 When there is a text selection, act on the region."
   (interactive)
   ;; This command symbol has a property “'stateIsCompact-p”.
-  (let (current-state-is-compact (big-fill-column-val 4333999) (deactivate-mark nil))
-    
-    (save-excursion
-      ;; Determine whether the text is currently compact.
-      (setq current-state-is-compact
-            (if (eq last-command this-command)
-                (get this-command 'state-is-compact-p)
-              (if (> (- (line-end-position) (line-beginning-position)) fill-column) t nil) ) )
-      
-      (if (region-active-p)
-          (if current-state-is-compact
-              (fill-region (region-beginning) (region-end))
-            (let ((fill-column big-fill-column-val))
-              (fill-region (region-beginning) (region-end))) )
+  (let (current-state-is-compact
+        (big-fill-column-val 4333999)
+        (deactivate-mark nil))
+    (setq current-state-is-compact
+          (if (> (- (line-end-position) (line-beginning-position)) fill-column)
+              t
+            nil
+            )
+          )
+    (if (region-active-p)
         (if current-state-is-compact
-            (ergoemacs :remap 'fill-paragraph)
+            (fill-region (region-beginning) (region-end))
           (let ((fill-column big-fill-column-val))
-            (ergoemacs :remap 'fill-paragraph))))
-      (put this-command 'stateIsCompact-p (if current-state-is-compact nil t)))))
+            (fill-region (region-beginning) (region-end))) )
+      (if current-state-is-compact
+          (fill-paragraph)
+        (let ((fill-column big-fill-column-val))
+          (fill-paragraph))))
+    )
+  )
 
 (defun ergoemacs-top-join-line ()
   "Join the current line with the line beneath it."
