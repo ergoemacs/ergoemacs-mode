@@ -338,7 +338,7 @@ calling any other ergoemacs-set-* function"
 
   ;; These go into the global map, so they can be overridden by a
   ;; local mode map.
-  (global-set-key (kbd "C-f") 'ergoemacs-isearch-forward)
+  (global-set-key (kbd "C-f") 'isearch-forward)
   (global-set-key (kbd "C-a") 'mark-whole-buffer)
   (global-set-key (kbd "C-z") 'ergoemacs-undo)
 
@@ -471,19 +471,22 @@ calling any other ergoemacs-set-* function"
   "Search and Replace"
   (ergoemacs-define-key keymap (kbd "M-5") 'query-replace)
   (ergoemacs-define-key keymap (kbd "M-%") 'query-replace-regexp)
-  (ergoemacs-define-key keymap (kbd "M-;") 'ergoemacs-isearch-forward)
-  (put 'ergoemacs-isearch-forward
+  (ergoemacs-define-key keymap (kbd "M-;") 'isearch-forward)
+  (put 'isearch-forward
        :advertised-binding (ergoemacs-translate--event-layout
                             (vconcat (listify-key-sequence (kbd "M-;")))
                             )
        )
-  (ergoemacs-define-key keymap (kbd "M-:") 'ergoemacs-isearch-backward)
+  (ergoemacs-define-key keymap (kbd "M-:") 'isearch-backward)
 
   ;; We have to override this in isearch-mode-map because isearch
   ;; makes that keymap override everything else, including emulation
-  ;; keymaps.  We could put this logic in ergoemacs-isearch-forward,
-  ;; but it feels better to have a separate function for a different
-  ;; mode.
+  ;; keymaps.
+  ;;
+  ;; We can not put this logic into a custom isearch-forward, because
+  ;; it ends up breaking commands that exit isearch.  For example,
+  ;; trying to go to the beginning of a line will terminate the
+  ;; search, but not also go to the beginning of the line.
   (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
   ;; Changing advertised-binding does not work.  Maybe because it is
   ;; only defined within isearch-mode-map?
@@ -506,6 +509,13 @@ calling any other ergoemacs-set-* function"
   ;; used C-x C-q, since that is used to make uneditable things
   ;; editable.
   (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
+
+  ;; When editing a search in isearch, it uses the
+  ;; minibuffer-local-isearch-map keymap, which gets overridden by the
+  ;; global emulation keymap.  So we override isearch-forward so that
+  ;; we can exit with the same commands as searching.
+  (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
+  (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer)
   )
 
 (defun ergoemacs-set-switch (keymap)
@@ -840,9 +850,9 @@ calling any other ergoemacs-set-* function"
   (define-key-after (current-global-map) [menu-bar search]
     (cons "Search"
           '(keymap
-            (isearch-forward menu-item "String Forward..." ergoemacs-isearch-forward
+            (isearch-forward menu-item "String Forward..." isearch-forward
                              :help "Search forward for a string as you type it")
-            (isearch-backward menu-item "    Backward..." ergoemacs-isearch-backward
+            (isearch-backward menu-item "    Backward..." isearch-backward
                               :help "Search backwards for a string as you type it")
             (re-isearch-forward menu-item "Regexp Forward..." isearch-forward-regexp
                                 :help "Search forward for a regular expression as you type it")
