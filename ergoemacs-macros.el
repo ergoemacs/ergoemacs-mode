@@ -656,7 +656,6 @@ functions.")
 
 When arg1 can be a property.  The following properties are supported:
 - :layout - returns the current (or specified by PROPERTY) keyboard layout.
-- :md5 -- returns an md5 of the currently enabled `ergoemacs-mode' options.
 - :map-list,  :composed-p, :composed-list, :key-hash :empty-p calls ergoemacs-map-properties-- equivalent functions.
 
 "

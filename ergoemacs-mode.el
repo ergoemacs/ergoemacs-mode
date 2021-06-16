@@ -750,7 +750,6 @@ not be useful.  However instead of using
     (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))))))
 
 (autoload 'ergoemacs-component "ergoemacs-macros")
-(autoload 'ergoemacs-theme-component "ergoemacs-macros")
 (autoload 'ergoemacs-theme "ergoemacs-macros")
 (autoload 'ergoemacs "ergoemacs-macros")
 
