@@ -656,7 +656,6 @@ functions.")
 
 When arg1 can be a property.  The following properties are supported:
 - :layout - returns the current (or specified by PROPERTY) keyboard layout.
-- :remap - Use `ergoemacs-mode' to remap to an appropriate function.
 - :md5 -- returns an md5 of the currently enabled `ergoemacs-mode' options.
 - :map-list,  :composed-p, :composed-list, :key-hash :empty-p calls ergoemacs-map-properties-- equivalent functions.
 
@@ -711,11 +710,6 @@ When arg1 can be a property.  The following properties are supported:
      ((and arg1 (symbolp arg1)
            (eq arg1 :revert-global-map))
       `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map) :setcdr))
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :remap) arg2)
-      `(progn
-         (setq this-command (or (key-binding (vector 'ergoemacs-remap ,arg2) t nil (point)) ,arg2))
-         (call-interactively (or (key-binding (vector 'ergoemacs-remap ,arg2) t nil (point)) ,arg2))))
      ((and arg1 (symbolp arg1)
            (eq arg1 :layout))
       `(ergoemacs-layouts--current ,arg2))
