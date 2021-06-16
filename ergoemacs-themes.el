@@ -520,7 +520,7 @@ calling any other ergoemacs-set-* function"
 
 (defun ergoemacs-set-switch (keymap)
   "Window/Frame/Tab Switching"
-  (ergoemacs-define-key keymap (kbd "M-s") 'ergoemacs-move-cursor-next-pane)
+  (ergoemacs-define-key keymap (kbd "M-s") 'other-window)
   (ergoemacs-define-key keymap (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
   
   (ergoemacs-define-key keymap (kbd "M-~") 'ergoemacs-switch-to-previous-frame)

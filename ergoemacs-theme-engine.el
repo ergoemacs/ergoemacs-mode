@@ -642,7 +642,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ergoemacs-forward-block  "→ ¶")
         (ergoemacs-forward-close-bracket "→ bracket")
         (ergoemacs-kill-line-backward "⌫ line")
-        (ergoemacs-move-cursor-next-pane "next pane")
+        (other-window "next pane")
         (ergoemacs-move-cursor-previous-pane "prev pane")
         (ergoemacs-new-empty-buffer "New")
         (ergoemacs-open-in-external-app "OS Open")

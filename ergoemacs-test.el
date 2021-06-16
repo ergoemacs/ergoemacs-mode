@@ -725,7 +725,7 @@ Should test issue #142"
 	      "(setq ergoemacs-keyboard-layout \"us\")"
               "(ergoemacs-mode 1)\n"
 	      "(global-set-key (kbd \"C-SPC\") 'set-mark-command)\n"
-              "(when (eq (key-binding (kbd \"M-s\")) 'ergoemacs-move-cursor-next-pane)\n"
+              "(when (eq (key-binding (kbd \"M-s\")) 'other-window)\n"
               "(with-temp-file \"" w-file "\")\n"
               "   (message \"Passed\")"
               "  (insert \"Found\"))\n"
@@ -764,7 +764,6 @@ Should test issue #142"
               "(ergoemacs-mode 1)\n"
 	      "(global-set-key (kbd \"C-SPC\") 'set-mark-command)\n"
               "(when (eq (key-binding (kbd \"C-SPC\")) 'set-mark-command)\n"
-              ;; "           (eq (key-binding (kbd \"M-s\")) 'ergoemacs-move-cursor-next-pane))\n"
               "(with-temp-file \"" w-file "\")\n"
               "   (message \"Passed\")"
               "  (insert \"Found\"))\n"
@@ -913,7 +912,7 @@ Tests Issue #372."
        (when (not (current-local-map))
          (use-local-map ergoemacs-test-major-mode-map))
        (ergoemacs-map--modify-active)
-       (should (eq (key-binding (kbd "M-r")) 'ergoemacs-move-cursor-next-pane))))))
+       (should (eq (key-binding (kbd "M-r")) 'other-window))))))
 
 (ert-deftest ergoemacs-test-dired-sort-files ()
   "Test Issue #340"

@@ -1119,26 +1119,18 @@ Subsequent calls expands the selection to larger semantic unit."
 
 (defun ergoemacs-kill-line-backward (&optional number)
   "Kill text between the beginning of the line to the cursor position.
-If there's no text, delete the previous line ending.
-Use `ergoemacs-remap' in case kill line was remapped."
+If there's no text, delete the previous line ending."
   (interactive "p")
   (if (and (= number 1) (looking-back "\n" nil))
       (delete-char -1)
     (setq current-prefix-arg (- 1 number))
-    (ergoemacs :remap 'kill-line)))
-
-(defun ergoemacs-move-cursor-next-pane ()
-  "Move cursor to the next pane.
-Use `ergoemacs-remap' for maximum mode compatibility."
-  (interactive)
-  (ergoemacs :remap 'other-window))
+    (kill-line)))
 
 (defun ergoemacs-move-cursor-previous-pane (&optional number)
-  "Move cursor to the previous pane.
-Use `ergoemacs-shortcut-interal' for maximum mode compatibility."
+  "Move cursor to the previous pane."
   (interactive "p")
   (setq current-prefix-arg (if number (- 0 number) -1))
-  (ergoemacs :remap 'other-window))
+  (other-window))
 
 (defun ergoemacs-unfill-paragraph ()
   "Replace newline char in current paragraph by space.
