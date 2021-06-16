@@ -554,7 +554,6 @@ When STORE-P is non-nil, save the tables."
 (ergoemacs-mode--setup-hash-tables)
 
 (dolist (pkg '(ergoemacs-command-loop
-               ergoemacs-advice
                ergoemacs-component
                ergoemacs-functions
                ergoemacs-key-description

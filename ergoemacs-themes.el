@@ -25,7 +25,6 @@
 
 (autoload 'dired-jump "dired-x" nil t)
 
-(require 'advice)
 (require 'ibuffer)
 
 (defun ergoemacs-global-set-key (key command)

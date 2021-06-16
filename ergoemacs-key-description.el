@@ -75,7 +75,6 @@
 (declare-function ergoemacs-component--help-link "ergoemacs-component")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
-(declare-function ergoemacs-advice--real-substitute-command-keys "C")
 
 (defvar ergoemacs-key-description--display-char-cache nil
   "List of characters and fonts and if they display or not.")
