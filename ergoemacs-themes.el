@@ -1231,8 +1231,8 @@ calling any other ergoemacs-set-* function"
 (with-eval-after-load 'comint (ergoemacs-install-comint-bindings))
 
 (defun ergoemacs-install-dired-bindings ()
-  (define-key comint-mode-map [remap query-replace] 'dired-do-query-replace-regexp)
-  (define-key comint-mode-map [remap query-replace-regexp] 'dired-do-query-replace-regexp)
+  (define-key dired-mode-map [remap query-replace] 'dired-do-query-replace-regexp)
+  (define-key dired-mode-map [remap query-replace-regexp] 'dired-do-query-replace-regexp)
   )
 (add-hook 'dired-load-hook #'ergoemacs-install-dired-bindings)
 
