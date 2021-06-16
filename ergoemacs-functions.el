@@ -406,7 +406,7 @@ Pass prefix ARG to the respective copy functions."
     (kill-ring-save
      (save-excursion
        (let ((pt (point)))
-         (move-beginning-of-line)
+         (call-interactively 'move-beginning-of-line)
          (when (= pt (point))
            (call-interactively 'move-beginning-of-line)))
        (when (not (bolp))
@@ -414,7 +414,7 @@ Pass prefix ARG to the respective copy functions."
        (point))
      (save-excursion
        (let ((pt (point)))
-         (move-end-of-line)
+         (call-interactively 'move-end-of-line)
          (when (= pt (point))
            (call-interactively 'move-end-of-line)))
        (re-search-forward "\\=\n" nil t) ;; Include newline
@@ -456,7 +456,7 @@ The ARG is passed to the respective function for any prefixes."
    (t
     (ignore-errors
       (let ((pt (point)))
-        (move-beginning-of-line)
+        (call-interactively 'move-beginning-of-line)
         (when (= pt (point))
           (call-interactively 'move-beginning-of-line))))
     (when (not (bolp))
@@ -699,14 +699,12 @@ This will not honor `shift-select-mode'."
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (eobp))
         (let ((pt (point)))
-          (ergoemacs :remap
-                     'beginning-of-buffer)
+          (beginning-of-buffer)
           (when (= pt (point))
             (call-interactively 'beginning-of-buffer))))
        (t
         (let ((pt (point)))
-          (ergoemacs :remap
-                     'end-of-buffer)
+          (end-of-buffer)
           (when (= pt (point))
             (call-interactively 'end-of-buffer))))))
     (when (and (not ma) (region-active-p))
@@ -823,8 +821,7 @@ the prefix arguments of `beginning-of-buffer',
           (cond
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
             (let ((pt (point)))
-              (ergoemacs :remap
-                         'beginning-of-buffer)
+              (beginning-of-buffer)
               (when (= pt (point))
                 (call-interactively 'beginning-of-buffer)))
             (setq this-command 'beginning-of-buffer))
@@ -833,8 +830,7 @@ the prefix arguments of `beginning-of-buffer',
             (setq this-command 'ergoemacs-backward-block))
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
             (let ((pt (point)))
-              (ergoemacs :remap
-                         'scroll-down-command)
+              (scroll-down-command)
               (when (= pt (point))
                 (call-interactively 'scroll-down-command)))
             (setq this-command 'scroll-down-command)))
@@ -849,16 +845,14 @@ the prefix arguments of `beginning-of-buffer',
           ;; (setq prefix-arg nil)
           (setq current-prefix-arg nil)
           (let ((pt (point)))
-            (ergoemacs :remap
-                       'move-beginning-of-line)
+            (call-interactively 'move-beginning-of-line)
             (when (= pt (point))
               (call-interactively 'move-beginning-of-line)))
           (push (point) pts)
           (when (and (not (bolp)) (not (bobp)))
             (backward-char 1)
             (let ((pt (point)))
-              (ergoemacs :remap
-                         'move-beginning-of-line)
+              (call-interactively 'move-beginning-of-line)
               (when (= pt (point))
                 (call-interactively 'move-beginning-of-line)))
             (push (point) pts)))
@@ -882,8 +876,7 @@ the prefix arguments of `beginning-of-buffer',
         (cond
          ((not pts)
           (let ((pt (point)))
-            (ergoemacs :remap
-                       'move-beginning-of-line)
+            (call-interactively 'move-beginning-of-line)
             (when (= pt (point))
               (call-interactively 'move-beginning-of-line))))
          (t
@@ -978,8 +971,7 @@ the prefix arguments of `end-of-buffer',
           (cond
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
             (let ((pt (point)))
-              (ergoemacs :remap
-                         'end-of-buffer)
+              (end-of-buffer)
               (when (= pt (point))
                 (call-interactively 'end-of-buffer)))
             (setq this-command 'end-of-buffer))
@@ -988,8 +980,7 @@ the prefix arguments of `end-of-buffer',
             (setq this-command 'ergoemacs-forward-block))
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'page)
             (let ((pt (point)))
-              (ergoemacs :remap
-                         'scroll-up-command)
+              (scroll-up-command)
               (when (= pt (point))
                 (call-interactively 'scroll-up-command)))
             (setq this-command 'scroll-up-command)
@@ -1005,8 +996,7 @@ the prefix arguments of `end-of-buffer',
           (push (point) pts))
         (save-excursion
           (let ((pt (point)))
-            (ergoemacs :remap
-                       'move-end-of-line)
+            (call-interactively 'move-end-of-line)
             (when (= pt (point))
               (call-interactively 'move-end-of-line)))
           (push (point) pts)
@@ -1015,8 +1005,7 @@ the prefix arguments of `end-of-buffer',
           (when (and (not (eolp)) (not (eobp)))
             (forward-char 1)
             (let ((pt (point)))
-              (ergoemacs :remap
-                         'move-end-of-line)
+              (call-interactively 'move-end-of-line)
               (when (= pt (point))
                 (call-interactively 'move-end-of-line)))
             (push (point) pts)))
@@ -1037,8 +1026,7 @@ the prefix arguments of `end-of-buffer',
         (cond
          ((not pts)
           (let ((pt (point)))
-            (ergoemacs :remap
-                       'move-end-of-line)
+            (call-interactively 'move-end-of-line)
             (when (= pt (point))
               (call-interactively 'move-end-of-line)))
           (setq this-command 'move-end-of-line))
