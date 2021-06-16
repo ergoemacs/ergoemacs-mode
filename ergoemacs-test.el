@@ -370,22 +370,22 @@ Tests issue #347"
   "Issue #68.
 kill-ring function name is used and such doesn't exist. It errs when
 not using cua or cutting line. I think kill-region is what is meant."
-  (ergoemacs-test-layout
-   (let ((old-c cua-mode)
-         (ret t))
-     (cua-mode -1)
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (delete-region (point-min) (point-max))
-       (insert ergoemacs-test-lorem-ipsum)
-       (condition-case _err
-           (ergoemacs-cut-line-or-region)
-         (error (setq ret nil)))
-       (kill-buffer (current-buffer)))
-     (when old-c
-       (cua-mode 1))
-     (should ret))))
-
+  (let ((old-c cua-mode)
+        (ret t))
+    (cua-mode -1)
+    (save-excursion
+      (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
+      (delete-region (point-min) (point-max))
+      (insert ergoemacs-test-lorem-ipsum)
+      (condition-case _err
+          (ergoemacs-cut-line-or-region)
+        (error (setq ret nil)))
+      (kill-buffer (current-buffer)))
+    (when old-c
+      (cua-mode 1))
+    (should ret)
+    )
+  )
 
 ;;; Functionality Test
 
@@ -587,36 +587,6 @@ See Issue #138."
     (ergoemacs-command-loop--internal "C-x 8 \" A")
     (should (string= "Ä" (buffer-string)))
     (kill-buffer (current-buffer))))
-
-(ert-deftest ergoemacs-test-command-loop-overlay ()
-  "Test for mark working with overlays.
-Should test issue #142"
-  :tags '(:interactive)
-  (let (ret
-        tmp (tmp-key (make-sparse-keymap))
-        overlays)
-    (ergoemacs-test-layout
-     :macro "M-SPC M-y M-x"
-     :layout "colemak"
-     (define-key tmp-key [ergoemacs-test] 'ignore)
-     (save-excursion
-       (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-       (insert ergoemacs-test-lorem-ipsum)
-       (goto-char (point-min))
-       ;; Put in dummy overlay
-       (while (re-search-forward "[A-Za-z]+" nil t)
-         (setq tmp (make-overlay (match-beginning 0) (match-end 0)))
-         (overlay-put tmp 'keymap tmp-key)
-         (push tmp overlays))
-       (goto-char (point-max))
-       (beginning-of-line)
-       (execute-kbd-macro macro)
-       (when (looking-at " in culpa qui")
-         (setq ret t))
-       (dolist (x overlays)
-         (delete-overlay x))
-       (kill-buffer (current-buffer)))
-     (should (equal ret t)))))
 
 (ert-deftest ergoemacs-test-terminal-M-O-fight ()
   "Tests Issue #188"

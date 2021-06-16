@@ -137,7 +137,7 @@ The backup is determined by `find-backup-file-name'"
       (call-interactively bind))
      ((and (not (eq last-command 'ergoemacs-revert-buffer))
            (buffer-modified-p (current-buffer)))
-      (ergoemacs :remap 'revert-buffer)
+      (revert-buffer)
       (goto-char opt))
      ((and backup-buffer
            (or (and (not (eq last-command 'ergoemacs-revert-buffer))
@@ -406,7 +406,7 @@ Pass prefix ARG to the respective copy functions."
     (kill-ring-save
      (save-excursion
        (let ((pt (point)))
-         (ergoemacs :remap 'move-beginning-of-line)
+         (move-beginning-of-line)
          (when (= pt (point))
            (call-interactively 'move-beginning-of-line)))
        (when (not (bolp))
@@ -414,7 +414,7 @@ Pass prefix ARG to the respective copy functions."
        (point))
      (save-excursion
        (let ((pt (point)))
-         (ergoemacs :remap 'move-end-of-line)
+         (move-end-of-line)
          (when (= pt (point))
            (call-interactively 'move-end-of-line)))
        (re-search-forward "\\=\n" nil t) ;; Include newline
@@ -451,19 +451,19 @@ The ARG is passed to the respective function for any prefixes."
     (cua-cut-region arg)
     (deactivate-mark))
    ((region-active-p) ;; In case something else is bound to C-w.
-    (ergoemacs :remap 'kill-region)
+    (kill-region)
     (deactivate-mark))
    (t
     (ignore-errors
       (let ((pt (point)))
-        (ergoemacs :remap 'move-beginning-of-line)
+        (move-beginning-of-line)
         (when (= pt (point))
           (call-interactively 'move-beginning-of-line))))
     (when (not (bolp))
       (beginning-of-line))
     ;; Keep prefix args.
     (let ((kill-whole-line t))
-      (ergoemacs :remap 'kill-line)))))
+      (kill-line)))))
 
 ;; When editing a search in isearch, it uses the
 ;; minibuffer-local-isearch-map keymap, which get overridden by the
@@ -656,18 +656,18 @@ This behavior can be turned off with
     (if current-prefix-arg
         (let ((pt (point)))
           ;; (setq prefix-arg current-prefix-arg)
-          (ergoemacs :remap 'end-of-buffer)
+          (end-of-buffer)
           (when (= pt (point))
             (call-interactively 'end-of-buffer)))
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (bobp))
         (let ((pt (point)))
-          (ergoemacs :remap 'end-of-buffer)
+          (end-of-buffer)
           (when (= pt (point))
             (call-interactively 'end-of-buffer))))
        (t
         (let ((pt (point)))
-          (ergoemacs :remap 'beginning-of-buffer)
+          (beginning-of-buffer)
           (when (= pt (point))
             (call-interactively 'beginning-of-buffer))))))
     (when (and (not ma) (region-active-p))
@@ -693,7 +693,7 @@ This will not honor `shift-select-mode'."
     (if current-prefix-arg
         (let ((pt (point)))
           ;; (setq prefix-arg current-prefix-arg)
-          (ergoemacs :remap 'end-of-buffer)
+          (end-of-buffer)
           (when (= pt (point))
             (call-interactively 'end-of-buffer)))
       (cond
@@ -812,7 +812,7 @@ the prefix arguments of `beginning-of-buffer',
                (equal current-prefix-arg '(4)))
            (ignore-errors
              (setq this-command 'scroll-other-window-down)
-             (ergoemacs :remap 'scroll-other-window-down)
+             (scroll-other-window-down)
              t)) nil
     (if (and ergoemacs-beginning-or-end-of-line-and-what
              (or (not ergoemacs-use-beginning-or-end-of-line-only)
@@ -961,7 +961,7 @@ the prefix arguments of `end-of-buffer',
                (equal current-prefix-arg '(4)))
            (ignore-errors
              (setq this-command 'scroll-other-window)
-             (ergoemacs :remap 'scroll-other-window)
+             (scroll-other-window)
              t)) nil
     (if (and ergoemacs-beginning-or-end-of-line-and-what
              (or (not ergoemacs-use-beginning-or-end-of-line-only)
@@ -1386,7 +1386,7 @@ the last misspelled word with
         (setq p1 (car bds) p2 (cdr bds)))))
     (if (not (and p1 p2))
         (when ergoemacs-toggle-letter-case-and-spell
-          (ergoemacs :remap 'flyspell-auto-correct-previous-word))
+          (flyspell-auto-correct-previous-word))
       (when (not (eq last-command this-command))
         (save-excursion
           (goto-char p1)
@@ -1557,7 +1557,7 @@ binding."
 (defun ergoemacs-delete-frame ()
   "Deletes frame or closes emacs (with prompt)."
   (interactive)
-  (unless (ignore-errors (ergoemacs :remap 'delete-frame))
+  (unless (ignore-errors (delete-frame))
     (when (yes-or-no-p "Do you wish to Close Emacs? ")
       ;; Bound to C-x C-c
       (save-buffers-kill-terminal))))
@@ -2052,8 +2052,8 @@ When in `browse-kill-ring-mode', cycle backward through the key ring.
          (not (eq last-command 'yank)))
     (browse-kill-ring))
    (ergoemacs-smart-paste
-    (ergoemacs :remap 'yank))
-   (t (ergoemacs :remap 'yank-pop))))
+    (yank))
+   (t (yank-pop))))
 
 (put 'ergoemacs-paste 'delete-selection 'yank)
 ;;;###autoload
@@ -2092,9 +2092,9 @@ If in `term-mode', run `term-paste'.
     ;; Add unread command events another "paste"
     (setq unread-command-events (append (listify-key-sequence (this-single-command-keys)) unread-command-events)))
    ((and ergoemacs-smart-paste (eq last-command 'yank))
-    (ergoemacs :remap 'yank-pop))
+    (yank-pop))
    (t
-    (ergoemacs :remap 'yank))))
+    (yank))))
 
 (put 'ergoemacs-org-yank 'delete-selection 'yank)
 
