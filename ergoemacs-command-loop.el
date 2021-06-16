@@ -933,38 +933,6 @@ sure that `ergoemacs-command-loop--internal' hasn't been called."
   (eq (symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys))
 
 (defvar ergoemacs-command-loop-start nil)
-(defun ergoemacs-command-loop (&optional key type initial-key-type universal initial-history)
-  "Process `ergoemacs-command-loop'.
-
-KEY is the key being read, or sequence being read.
-
-TYPE is the translation being used.
-
-INITIAL-KEY-TYPE is the key type that is used fot the initial
-translation.
-
-UNIVERSAL is if the function will be calling a universal
-argument.
-
-INITIAL-HISTORY is the initial history list.
-
-The true work is done in `ergoemacs-command-loop--internal'."
-  (interactive)
-  (cond
-   ((and (or ergoemacs-command-loop-start key) (not (ergoemacs-command-loop-p)))
-    ;; (ergoemacs-command-loop--message "Start ergoemacs-mode command loop." )
-    (ergoemacs-command-loop--internal key type initial-key-type universal initial-history))
-   (t
-    (setq ergoemacs-command-loop--exit :ignore-post-command-hook
-          prefix-arg current-prefix-arg
-          ergoemacs-command-loop--single-command-keys (or (and key (read-kbd-macro key t))
-                                                          ergoemacs-command-loop--single-command-keys)
-          unread-command-events (or (and key (ergoemacs-command-loop--listify-key-sequence key initial-key-type))
-                                    unread-command-events)
-          ergoemacs-command-loop--universal (if (and ergoemacs-command-loop--universal (not universal)) nil
-                                              universal)
-          ergoemacs-command-loop--current-type (or type ergoemacs-command-loop--current-type)
-	  ergoemacs-command-loop--history (or initial-history ergoemacs-command-loop--history)))))
 
 (defvar ergoemacs-command-loop--running-pre-command-hook-p nil
   "Variable to tell if ergoemacs-command loop is running the `pre-command-hook'.")

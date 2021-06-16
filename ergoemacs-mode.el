@@ -293,7 +293,6 @@ The `execute-extended-command' is now \\[execute-extended-command].
             (push elt ergoemacs-mode--default-frame-alist))
           (ergoemacs-install-standard-theme)
           (run-hooks 'ergoemacs-mode-startup-hook)
-
           (setq ergoemacs-require--ini-p t)
           (ergoemacs-setup-override-keymap)                       
           (if refresh-p
