@@ -1192,8 +1192,6 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-set-menu-bar-file)
   )
 
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-install-standard-theme)
-
 (defun ergoemacs-install-org-bindings ()
   (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
   (define-key org-mode-map (kbd "<M-down>") 'ergoemacs-org-metadown)
