@@ -833,10 +833,9 @@ calling any other ergoemacs-set-* function"
             
             
             (separator-bookmark menu-item "--")
-            (fill menu-item "Fill" fill-region
-                  :enable (and mark-active
-                               (not buffer-read-only))
-                  :help "Fill text in region to fit between left and right margin")
+            (fill menu-item "Fill/Unfill" ergoemacs-compact-uncompact-block
+                  :enable (not buffer-read-only)
+                  :help "Fill text to fit within margins, or unfill to make it one line")
             (props menu-item "Text Properties" facemenu-menu)
             "Edit"
             )
