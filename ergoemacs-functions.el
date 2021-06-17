@@ -451,7 +451,7 @@ The ARG is passed to the respective function for any prefixes."
     (cua-cut-region arg)
     (deactivate-mark))
    ((region-active-p) ;; In case something else is bound to C-w.
-    (kill-region)
+    (call-interactively 'kill-region)
     (deactivate-mark))
    (t
     (ignore-errors
@@ -1118,7 +1118,7 @@ If there's no text, delete the previous line ending."
   "Move cursor to the previous pane."
   (interactive "p")
   (setq current-prefix-arg (if number (- 0 number) -1))
-  (other-window))
+  (call-interactively 'other-window))
 
 (defun ergoemacs-unfill-paragraph ()
   "Replace newline char in current paragraph by space.
