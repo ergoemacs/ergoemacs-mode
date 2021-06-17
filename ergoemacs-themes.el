@@ -382,15 +382,15 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "C-M-:") 'occur)
   (ergoemacs-define-key keymap (kbd "C-M-;") 'isearch-occur)
   
-  (ergoemacs-global-set-key (kbd "M-SPC") 'set-mark-command)
+  (ergoemacs-define-key keymap (kbd "M-SPC") 'set-mark-command)
   
   ;; Delete previous/next char.
   (ergoemacs-define-key keymap (kbd "M-d") 'delete-backward-char)
   (ergoemacs-define-key keymap (kbd "M-f") 'delete-char)
 
-  (ergoemacs-global-set-key (kbd "<M-delete>") 'kill-word)
-  (ergoemacs-global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
-  (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
+  (ergoemacs-define-key keymap (kbd "<M-delete>") 'kill-word)
+  (ergoemacs-define-key keymap (kbd "<M-up>") 'ergoemacs-backward-block)
+  (ergoemacs-define-key keymap (kbd "<M-down>") 'ergoemacs-forward-block)
 
   (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
   )  
@@ -443,7 +443,6 @@ calling any other ergoemacs-set-* function"
   "Copy, Cut, Paste, Redo and Undo"
   (ergoemacs-define-key keymap (kbd "M-x") 'ergoemacs-cut-line-or-region)
   (ergoemacs-define-key keymap (kbd "M-c") 'ergoemacs-copy-line-or-region)
-  ;; FIXME: enable term-paste for term-mode
   (ergoemacs-define-key keymap (kbd "M-v") 'ergoemacs-paste)
   (ergoemacs-define-key keymap (kbd "M-V") 'ergoemacs-paste-cycle)
   
