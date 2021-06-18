@@ -55,9 +55,7 @@
 
 (declare-function ergoemacs-mode "ergoemacs-mode")
 
-(declare-function ergoemacs-command-loop--internal "ergoemacs-command-loop")
 (declare-function ergoemacs-command-loop--mouse-command-drop-first "ergoemacs-command-loop")
-(declare-function ergoemacs-command-loop--read-key-sequence "ergoemacs-command-loop")
 
 (declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-compononent")
 
@@ -567,11 +565,9 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
   "Test that unicode translations work.
 See Issue #138."
   (save-excursion
-    (unless ergoemacs-mode
-      (ergoemacs-mode))
     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
     (delete-region (point-min) (point-max))
-    (ergoemacs-command-loop--internal "C-x 8 !")
+    (execute-kbd-macro (kbd "C-x 8 !"))
     (should (string= "¡" (buffer-string)))
     (kill-buffer (current-buffer))))
 
@@ -580,10 +576,8 @@ See Issue #138."
 See Issue #138."
   (save-excursion
     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-    (unless ergoemacs-mode
-      (ergoemacs-mode))
     (delete-region (point-min) (point-max))
-    (ergoemacs-command-loop--internal "C-x 8 \" A")
+    (execute-kbd-macro (kbd "C-x 8 \" A"))
     (should (string= "Ä" (buffer-string)))
     (kill-buffer (current-buffer))))
 
@@ -929,7 +923,7 @@ hash appropriaetly."
     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
     (delete-region (point-min) (point-max))
     (table-insert 1 2)
-    (ergoemacs-command-loop--internal "abc <tab> abc <tab>")
+    (execute-kbd-macro (kbd "abc <tab> abc <tab>"))
     (should (string= (buffer-string) "+-----+
 |abc  |
 +-----+
@@ -987,11 +981,6 @@ hash appropriaetly."
     (should (member [27 ?a] list))
     (should (member [27 ?b] list))
     list))
-
-(ert-deftest ergoemacs-test-issue-379 ()
-  "Test infinite recursive event-modifiers."
-  :tags '(:translate)
-  (should (equal (ignore-errors (ergoemacs-specials (ergoemacs-translate--event-modifiers 134217755))) '(control meta))))
 
 (ert-deftest ergoemacs-test-temp-map-issue ()
   "Test temporary map issue."

@@ -869,12 +869,6 @@ When :type is :replace that replaces a function (like `define-key')"
 	     ((symbol-function 'describe-key) #'ergoemacs--real-describe-key))
      ,@body))
 
-(defmacro ergoemacs-specials (&rest body)
-  "Use `ergoemacs-mode' special functions in BODY."
-  `(cl-letf (((symbol-function 'read-key-sequence) #'ergoemacs-command-loop--read-key-sequence)
-	     ((symbol-function 'key-description) #'ergoemacs-key-description))
-     ,@body))
-
 (defmacro ergoemacs-autoloadp (object)
   "Non-nil if OBJECT is an autoload."
   (cond
