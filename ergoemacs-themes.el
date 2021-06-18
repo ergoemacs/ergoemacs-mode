@@ -389,8 +389,8 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "M-f") 'delete-char)
 
   (ergoemacs-define-key keymap (kbd "<M-delete>") 'kill-word)
-  (ergoemacs-define-key keymap (kbd "<M-up>") 'ergoemacs-backward-block)
-  (ergoemacs-define-key keymap (kbd "<M-down>") 'ergoemacs-forward-block)
+  (ergoemacs-global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
+  (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
 
   (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
   )  
