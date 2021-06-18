@@ -102,9 +102,6 @@
   "Determines if mark was active before ergoemacs command loop.")
 
 
-(defvar ergoemacs-command-loop--universal-functions '(universal-argument ergoemacs-universal-argument ergoemacs-command-loop--universal-argument)
-  "List of `ergoemacs-mode' recognized functions.")
-
 (defvar ergoemacs-command-loop--next-key-hash
   (let ((hash (make-hash-table)))
     (puthash 'event-apply-shift-modifier (list '(shift) :force) hash)
@@ -206,32 +203,6 @@ with this function."
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--setup-quit-key)
 (add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--redefine-quit-key)
-
-(defun ergoemacs-command-loop--universal-argument (&rest _ignore)
-  "`ergoemacs-mode' universal argument.
-This is called through `ergoemacs-command-loop'"
-  (interactive)
-  (cond
-   ((not (ergoemacs-command-loop-p)) 
-    ;; Command loop hasn't started.
-    (setq current-prefix-arg '(4))
-    (ergoemacs-command-loop nil nil nil t))
-   ((not current-prefix-arg)
-    (setq current-prefix-arg '(4)
-          ergoemacs-command-loop--universal t
-          ergoemacs-command-loop--exit :ignore-post-command-hook))
-   ((listp current-prefix-arg)
-    ;; Change current prefix argument
-    (setq current-prefix-arg (list (* (nth 0 current-prefix-arg) 4))
-          ergoemacs-command-loop--universal t
-          ergoemacs-command-loop--exit :ignore-post-command-hook))
-   (t
-    (setq ergoemacs-command-loop--universal t
-          ergoemacs-command-loop--exit :ignore-post-command-hook))))
-
-(defalias 'ergoemacs-read-key--universal-argument 'ergoemacs-command-loop--universal-argument)
-
-(defalias 'ergoemacs-universal-argument 'ergoemacs-command-loop--universal-argument)
 
 (dolist (arg '((next-key-is-alt (meta))
                (next-key-is-meta (meta))

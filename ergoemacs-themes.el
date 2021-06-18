@@ -597,8 +597,6 @@ calling any other ergoemacs-set-* function"
   (global-set-key [remap eshell] 'ergoemacs-eshell-here)
   (global-set-key [remap powershell] 'ergoemacs-powershell-here)
   (global-set-key [remap shell] 'ergoemacs-shell-here)
-  (global-set-key [remap universal-argument]
-                  'ergoemacs-command-loop--universal-argument)
   (global-set-key [remap describe-mode]
                   'ergoemacs-describe-major-mode)
   )

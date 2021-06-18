@@ -672,60 +672,6 @@ For keys, the list consists of:
   (key nil)
   (unchorded nil))
 
-(defvar ergoemacs-translate--setup-command-loop-regexp
-  "^\\(?:ergoemacs\\(?:-translate-\\)?\\)-\\(.*?\\)-\\(universal-argument\\|negative-argument\\|digit-argument\\|modal\\)$"
-  "Command loop command match/setup regular expression.")
-
-(defun ergoemacs-translate--setup-command-loop ()
-  "Setup command loop.
-To do anything, `this-command' must match
-`ergoemacs-translate--setup-command-loop-regexp'.  The first
-match is the NAME of the translation, the second match is the
-TYPE of command.  This command will then
-call (ergoemacs-command-loop-TYPE :NAME)."
-  (interactive)
-  (let ((command-str (symbol-name this-command))
-	name type)
-    (save-match-data
-      (when (string-match ergoemacs-translate--setup-command-loop-regexp command-str)
-	(setq name (match-string 1 command-str)
-	      type (match-string 2 command-str))
-	(funcall (intern (concat "ergoemacs-command-loop--" type)) (intern (concat ":" name)))))))
-
-(defun ergoemacs-translate--setup-translation (&optional name)
-  "Setup translation functions and keymaps.
-If NAME is nil, setup all translations.
-When NAME is a symbol, setup the translation function for the symbol."
-  (if (not name)
-      (maphash
-       (lambda(name _item)
-	 (ergoemacs-translate--setup-translation name))
-       ergoemacs-translation-hash)
-    (let ((name-str (and (symbolp name) (substring (symbol-name name) 1))))
-      (eval
-       (macroexpand
-	`(progn
-	   (defvar ,(intern (concat "ergoemacs-translate--" name-str "-map")) (make-sparse-keymap)
-	     ,(concat "Ergoemacs local map for translation :"
-		      name-str
-		      " while completing a key sequence."))
-	   (define-obsolete-variable-alias ',(intern (concat "ergoemacs-" name-str "-translation-local-map"))
-             ',(intern (concat "ergoemacs-translate--" name-str "-map"))))))
-      (ergoemacs-map-properties--label-map (intern (concat "ergoemacs-translate--" name-str "-map")) t)
-      (ergoemacs (symbol-value (intern (concat "ergoemacs-translate--" name-str "-map"))) :only-local-modifications-p t)
-      ;; 
-      (dolist (type '("-universal-argument" "-negative-argument"
-                      "-digit-argument" "-modal"))
-	(fset (intern (concat "ergoemacs-translate--" name-str type))
-	      'ergoemacs-translate--setup-command-loop)
-	(fset (intern (concat "ergoemacs-" name-str type))
-	      'ergoemacs-translate--setup-command-loop)
-	(when (string= type "-universal-argument")
-	  (cl-pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
-	  (cl-pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
-
-(add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--setup-translation)
-
 (defun ergoemacs-translate--create (&rest plist)
   "Create a translation from PLIST and return translation object."
   (let ((plist plist)
