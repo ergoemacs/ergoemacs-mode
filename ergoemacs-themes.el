@@ -1279,11 +1279,4 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
   )
 (add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
 
-(ergoemacs-translation normal ()
-  "Identify transformation"
-  :keymap (let ((map (make-sparse-keymap)))
-            (define-key map [f1] 'ergoemacs-read-key-help)
-            (define-key map (read-kbd-macro "C-h") 'ergoemacs-read-key-help)
-            map))
-
 (provide 'ergoemacs-themes)

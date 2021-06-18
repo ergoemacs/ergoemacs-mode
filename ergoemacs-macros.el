@@ -748,40 +748,6 @@ When arg1 can be a property.  The following properties are supported:
       `(ergoemacs-map-- ,arg1)))))
 
 ;;;###autoload
-(defmacro ergoemacs-translation (&rest body-and-plist)
-  "Defines an `ergoemacs-mode' translation.
-
-:text -- Text to display while completing this translation
-:keymap -- Local Keymap for translation
-:keymap-modal -- Modal keymap for overrides.
-:modal-always -- If the modal state is always on, regardless of
-                 the values of `minibufferp'
-The following arguments allow the keyboard presses to be translated:
- - :meta
- - :control
- - :shift
- - :meta-control
- - :meta-shift
- - :control-shift
- - :meta-control-shift
- - :unchorded (no modifiers)
-
-This also creates functions:
-- ergoemacs-translate--NAME-universal-argument
-- ergoemacs-translate--NAME-digit-argument
-- ergoemacs-translate--NAME-negative-argument
-- ergoemacs-translate--NAME-modal"
-  (declare (doc-string 2)
-           (indent 2))
-  (let ((kb (make-symbol "kb")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body body-and-plist))
-    
-    `(progn (puthash ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
-                     (lambda() ,(plist-get (nth 0 kb) ':description)
-                       (ergoemacs-translate--create :key ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
-                                                    ,@(nth 0 kb))) ergoemacs-translation-hash))))
-
-;;;###autoload
 (defmacro ergoemacs-advice (function args &rest body-and-plist)
   "Defines an `ergoemacs-mode' advice.
 
