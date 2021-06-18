@@ -215,7 +215,6 @@ This is called through `ergoemacs-command-loop'"
    ((not (ergoemacs-command-loop-p)) 
     ;; Command loop hasn't started.
     (setq current-prefix-arg '(4))
-    (setq ergoemacs-command-loop-start t)
     (ergoemacs-command-loop nil nil nil t))
    ((not current-prefix-arg)
     (setq current-prefix-arg '(4)
@@ -561,8 +560,6 @@ This is done by looking at the current `backtrace' and making
 sure that `ergoemacs-command-loop--internal' hasn't been called."
   (eq (symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys))
 
-(defvar ergoemacs-command-loop-start nil)
-
 (defvar ergoemacs-command-loop--running-pre-command-hook-p nil
   "Variable to tell if ergoemacs-command loop is running the `pre-command-hook'.")
 
@@ -709,191 +706,12 @@ FN-ARG-P can be nil, :drop-rest or :rest"
             (push a ret)))
         (reverse ret))))))
 
-(defun ergoemacs-command-loop--modify-mouse-command (command)
-  "Modify mouse COMMAND to work with ergoemacs command loop."
-  (let* ((iform (interactive-form command))
-         (form (and iform (consp iform) (= 2 (length iform)) (stringp (nth 1 iform)) (nth 1 iform)))
-         (args (help-function-arglist command t))
-         (fn-args (ergoemacs-command-loop--mouse-command-drop-first args t))
-         (strip-args (ergoemacs-command-loop--mouse-command-drop-first args))
-         (rest-p (ergoemacs-command-loop--mouse-command-drop-first args :rest))
-         (drop-rest (ergoemacs-command-loop--mouse-command-drop-first args :drop-rest))
-         (select-window-p (and (stringp form) (string-match-p "^[*^]*[@]" form)))
-         (event-p (and (stringp form) (string-match-p "^[*@^]*e" form)))
-         (new-form (and form
-                        (or (and (not event-p) form)
-                            (and event-p (replace-regexp-in-string "^\\([*@^]*\\)e\n*\\(.*\\)" "\\1\\2" form))))))
-    (when (and new-form (string= new-form ""))
-      (setq new-form nil))
-    (cond
-     ((not event-p)
-      command)
-     (rest-p
-      `(lambda ,fn-args
-         ,(if new-form
-              `(interactive ,new-form)
-            `(interactive))
-         ,(when select-window-p
-            '(select-window (posn-window (event-start last-command-event))))
-	 (ergoemacs-command-loop--execute-modify-command-list ',command)
-         (if ,rest-p
-             (apply ',command last-command-event ,@strip-args)
-           (,command last-command-event ,@drop-rest))))
-     
-     ((not rest-p)
-      `(lambda ,fn-args
-         ,(if new-form
-              `(interactive ,new-form)
-            `(interactive))
-         ,(when select-window-p
-            '(select-window (posn-window (event-start last-command-event))))
-	 (ergoemacs-command-loop--execute-modify-command-list ',command)
-         (,command last-command-event ,@strip-args))))))
-
-(defun ergoemacs-command-loop--call-mouse-command (command &optional record-flag keys)
-  "Call a possible mouse COMMAND.
-
-The COMMAND is modified to take out any event information and
-replace it with `last-event-command' information.  This
-modifciation isd one by
-`ergoemacs-command-loop--modify-mouse-command'.
-
-Mouse commands are also wrapped in `ignore-errors'.  This takes
-care of `window-live-p' errors that occur when running the
-Emacs detects keys when outside of Emacs.
-
-The RECORD-FLAG and KEYS arguments are passed to
-`ergoemacs-command-loop--grow-interactive' for the mouse command."
-  (cond
-   ((ergoemacs-keymapp command)
-    (popup-menu command nil current-prefix-arg))
-   (t
-    (ignore-errors
-      (call-interactively (ergoemacs-command-loop--modify-mouse-command command) record-flag keys)))))
-
 (defvar ergoemacs-command-loop-describe-key-functions
   '(describe-key describe-function)
   "Functions like `describe-key'.
 These functions will:
 - Replace `key-description' with `ergoemacs-key-description'.
 - Replace `read-key-sequence' with `ergoemacs-command-loop--read-key-sequence'.")
-
-(defcustom ergoemacs-comand-loop-grow-max-sizes-p t
-  "Grow the max sizes if needed.
-This grows `max-specpdl-size' and `max-lisp-eval-depth' if
-`ergoemacs-command-loop--call-interactively' throws an error
-about `max-specpdl-size' or `max-lisp-eval-depth'.
-
-The overall maximum that these are set to are controlled by
-`ergoemacs-max-specpdl-size' and
-`ergoemacs-max-lisp-eval-depth.'"
-  :type 'boolean
-  :group 'ergoemacs-mode)
-
-(defvar ergoemacs-command-loop--grow-command nil)
-(defvar ergoemacs-command-loop--grow-record nil)
-(defvar ergoemacs-command-loop--grow-keys nil)
-(defvar ergoemacs-command-loop--grow-special nil)
-
-
-(defcustom ergoemacs-max-specpdl-size (* 8 max-specpdl-size)
-  "Maximum `max-specpdl-size' that `ergoemacs-mode' increases to..."
-  :type 'boolean
-  :group 'ergoemacs-mode)
-
-(defcustom ergoemacs-max-lisp-eval-depth (* 8 max-lisp-eval-depth)
-  "Maximum `max-lisp-eval-depth' that `ergoemacs-mode' increases to..."
-  :type 'boolean
-  :group 'ergoemacs-mode)
-
-(defcustom ergoemacs-command-loop-dont-grow-commands
-  '(org-agenda)
-  "List of commands where the command loop will not adjust sizes."
-  :type '(repeat (sexp :tag "Command"))
-  :group 'ergoemacs-mode)
-
-(defun ergoemacs-command-loop--grow-interactive (command &optional record-flag keys)
-  "Call the COMMAND interactively.
-The RECORD-FLAG and KEYS are sent to `ergoemacs--real-call-interactively'.
-
-This will grow `max-lisp-eval-depth' and `max-specpdl-size' if
-needed (and resotre them to the original values)."
-  (setq ergoemacs-command-loop--grow-command nil
-	ergoemacs-command-loop--grow-record nil
-	ergoemacs-command-loop--grow-keys nil
-	ergoemacs-command-loop--grow-special nil)
-  (if (memq command ergoemacs-command-loop-dont-grow-commands)
-      (call-interactively command record-flag keys)
-    (let ((grow-max-lisp-p t)
-	  (orig-max-specpdl-size max-specpdl-size)
-	  (orig-max-lisp-eval-depth max-lisp-eval-depth))
-      (while grow-max-lisp-p
-	(condition-case err
-	    (cond
-	     (ergoemacs-command-loop--grow-command
-	      (command-execute ergoemacs-command-loop--grow-command
-			       ergoemacs-command-loop--grow-record
-			       ergoemacs-command-loop--grow-keys
-			       ergoemacs-command-loop--grow-special)
-	      (setq grow-max-lisp-p nil))
-	     (t
-	      (call-interactively command record-flag keys)
-	      (setq grow-max-lisp-p nil)))
-	  (error
-	   (if (and (consp err)
-		    (eq (car err) 'error)
-		    (stringp (nth 1 err))
-		    (string-match "max-specpdl-size\\|max-lisp-eval-depth"
-				  (nth 1 err))
-		    ergoemacs-comand-loop-grow-max-sizes-p
-		    (<= max-specpdl-size ergoemacs-max-specpdl-size)
-		    (<= max-lisp-eval-depth ergoemacs-max-lisp-eval-depth))
-	       (progn
-		 (setq max-specpdl-size (* 2 max-specpdl-size)
-		       max-lisp-eval-depth (* 2 max-lisp-eval-depth))
-		 (ergoemacs-warn "Increased max-specpdl-size to %s and max-lisp-eval-depth to %s for %s"
-				 max-specpdl-size max-lisp-eval-depth command))
-	     (setq grow-max-lisp-p nil
-		   max-specpdl-size orig-max-specpdl-size
-		   max-lisp-eval-depth orig-max-lisp-eval-depth)
-	     (if (and err (consp err))
-		 (signal (car err) (cdr err))
-	       (signal err "Unknown error"))))))
-      (setq max-specpdl-size orig-max-specpdl-size
-	    max-lisp-eval-depth orig-max-lisp-eval-depth))))
-
-
-(defun ergoemacs-command-loop--call-interactively (command &optional record-flag keys)
-  "Call the COMMAND interactively.  Also handle mouse events (if possible.)
-The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'."
-  (ergoemacs-command-loop--sync-point)
-  (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
-  (cond
-   ((and (eventp last-command-event)
-         (consp last-command-event)
-	 (memq (event-basic-type (car last-command-event))
-		   '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9)))
-    (ergoemacs-command-loop--call-mouse-command command record-flag keys))
-   ((and (symbolp command) (not (fboundp command)))
-    (ergoemacs-command-loop--message "Command `%s' is not found" command))
-   ((and (symbolp command) (not (commandp command)))
-    (ergoemacs-command-loop--message "Command `%s' cannot be called from a key" command))
-   ((and (consp ergoemacs-command-loop-describe-key-functions)
-	 (memq command ergoemacs-command-loop-describe-key-functions))
-    (ergoemacs-specials
-     (ergoemacs-command-loop--grow-interactive command record-flag keys)))
-   (t
-    (ergoemacs-command-loop--grow-interactive command record-flag keys)))
-  )
-
-
-(defun ergoemacs-command-loop-start ()
-  "Start `ergoemacs-command-loop'."
-  (interactive)
-  ;; Should work...
-  (unless ergoemacs-command-loop-start
-    (setq ergoemacs-command-loop-start t))
-  (ergoemacs-command-loop))
 
 (defvar ergoemacs-command-loop--spinner nil)
 (defvar ergoemacs-command-loop--spinner-i nil)
