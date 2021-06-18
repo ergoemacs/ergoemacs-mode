@@ -1150,6 +1150,49 @@ calling any other ergoemacs-set-* function"
                                    describe-copying)
                           ,(if (eq system-type 'darwin) "Help" "?")))))
 
+
+(defun ergoemacs-handle-M-O ()
+  "Handle M-O input.  In a terminal, this can be either arrow
+keys (e.g. M-O A == <up>) or regular M-O keybinding."
+  (interactive)
+  (if (input-pending-p)
+      (let ((second-char (read-char)))
+        (cond
+         ((eq second-char 65) ;; A
+          (execute-kbd-macro (kbd "<up>"))
+          )
+         ((eq second-char 66) ;; B
+          (execute-kbd-macro (kbd "<down>"))
+          )
+         ((eq second-char 67) ;; C
+          (execute-kbd-macro (kbd "<right>"))
+          )
+         ((eq second-char 68) ;; D
+          (execute-kbd-macro (kbd "<left>"))
+          )
+         ((eq second-char 72) ;; H
+          (execute-kbd-macro (kbd "<home>"))
+          )
+         ((eq second-char 70) ;; F
+          (execute-kbd-macro (kbd "<end>"))
+          )
+         (t
+          (beep)
+          )
+         )
+        )
+    (call-interactively ergoemacs-M-O-binding)
+    )
+  )
+
+(defvar ergoemacs-M-O-binding () nil)
+(defun ergoemacs-fix-arrow-keys (keymap)
+  (setq ergoemacs-M-O-binding (lookup-key keymap (kbd "M-O")))
+  (if ergoemacs-M-O-binding
+      (define-key keymap (kbd "M-O") 'ergoemacs-handle-M-O)
+    )
+  )
+
 (ergoemacs-theme standard ()
   "Standard Ergoemacs Theme"
   )
@@ -1180,6 +1223,7 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-set-kill-line ergoemacs-override-keymap)
   (ergoemacs-set-text-transform ergoemacs-override-keymap)
   (ergoemacs-set-select-items ergoemacs-override-keymap)
+  (ergoemacs-fix-arrow-keys ergoemacs-override-keymap)
 
   (ergoemacs-set-remaps)
   (ergoemacs-set-quit)
