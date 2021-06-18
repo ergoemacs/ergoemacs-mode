@@ -624,18 +624,6 @@ When STORE-P is non-nil, save the tables."
 (defvar ergoemacs-mode-after-load-hook nil
   "Hook for running after a library loads.")
 
-(defvar ergoemacs-pre-command-hook nil)
-(defun ergoemacs-pre-command-hook ()
-  "Run `ergoemacs-mode' pre command hooks."
-  (when ergoemacs-mode
-    (run-hooks 'ergoemacs-pre-command-hook)))
-
-(defvar ergoemacs-post-command-hook nil)
-(defun ergoemacs-post-command-hook ()
-  "Run `ergoemacs-mode' post command hooks."
-  (when ergoemacs-mode
-    (run-hooks 'ergoemacs-post-command-hook)))
-
 (defvar ergoemacs-after-load-functions nil)
 (defun ergoemacs-after-load-functions (absoulte-file-name)
   "Run `ergoemacs-mode' after load functions.

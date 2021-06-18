@@ -1097,7 +1097,7 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
   (ergoemacs-menu--filter (lookup-key ergoemacs-keymap [menu-bar]))
   (ergoemacs-map--modify-active t)
   (ergoemacs-component-struct--create-hooks)
-  (add-hook 'ergoemacs-post-command-hook #'ergoemacs-map--modify-active))
+  )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-map--install)
 

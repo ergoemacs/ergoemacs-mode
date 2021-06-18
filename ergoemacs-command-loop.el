@@ -609,23 +609,6 @@ is the :full command loop."
      t)
    (not (memq major-mode ergoemacs-command-loop--excluded-major-modes))))
 
-(defun ergoemacs-command-loop--start-with-pre-command-hook ()
-  "Start ergoemacs command loop.
-
-This is done by replacing `this-command' with
-`ergoemacs-command-loop-start' and then running `this-command'
-from within the ergoemacs-mode command loop."
-  (when (and (not ergoemacs-command-loop--running-pre-command-hook-p)
-             (ergoemacs-command-loop-full-p)
-             (not unread-command-events)
-             (not (ergoemacs-command-loop-p)))
-    (setq ergoemacs-command-loop-start this-command
-          ergoemacs-command-loop--single-command-keys (this-single-command-keys)
-          this-command 'ergoemacs-command-loop-start)))
-
-(add-hook 'ergoemacs-pre-command-hook #'ergoemacs-command-loop--start-with-pre-command-hook)
-
-
 (defvar ergoemacs-last-command-was-ergoemacs-ignore-p nil
   "Last command was `ergoemacs-ignore'.")
 
