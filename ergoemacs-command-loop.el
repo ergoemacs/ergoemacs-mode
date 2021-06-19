@@ -326,12 +326,12 @@ UNIVERSAL"
                     (and (not universal) "")
                     (or (and (string= ergoemacs-command-loop--read-key-prompt "") "") " ")
                     (and ergoemacs-command-loop-blink-character
-                         (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
+                         (or (and blink-on ergoemacs-command-loop-blink-character)
                              " "))
                     " ")
                    (or
                     (and (not universal) "")
-                    (ergoemacs :unicode-or-alt "▸" ">"))))
+                    "▸")))
       (format
        "%s%s%s %s "
        (cond
@@ -340,13 +340,13 @@ UNIVERSAL"
         (t current-prefix-arg))
        (or (and (not universal) "")
            (and ergoemacs-command-loop-blink-character
-                (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
+                (or (and blink-on ergoemacs-command-loop-blink-character)
                     " "))
            " ")
        (or (and (listp current-prefix-arg)
                 (format "%s" current-prefix-arg))
            "")
-       (ergoemacs :unicode-or-alt "▸" ">"))))
+       "▸")))
 
 (defun ergoemacs-command-loop--combine (current-key next-event)
   "Combine CURRENT-KEY and NEXT-EVENT into a vector."
@@ -414,7 +414,7 @@ This is not done when the event is [ergoemacs-ignore]"
 		      ((not (stringp prompt)))
 		      ((not (string= "" ergoemacs-command-loop--read-key-prompt)) prompt)
 		      ((or (string= prompt " ")
-			   (string-match-p prompt (concat " *" (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-") " *")))
+			   (string-match-p prompt (concat " *" ergoemacs-command-loop-blink-character " *")))
 		       nil)
 		      (ergoemacs-command-loop--universal prompt)
 		      (ergoemacs-command-loop--echo-keystrokes-complete prompt)
@@ -487,7 +487,7 @@ KEYS is the keys information"
          (or (and (string= ergoemacs-command-loop--read-key-prompt "") "") " ")
          (or (and universal "")
              (and ergoemacs-command-loop-blink-character
-                  (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
+                  (or (and blink-on ergoemacs-command-loop-blink-character)
                       " "))
              " ")
          trans

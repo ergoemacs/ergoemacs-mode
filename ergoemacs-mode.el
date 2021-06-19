@@ -838,7 +838,7 @@ Valid values are:
   "Options for `ergoemacs-command-loop'."
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-command-loop-blink-character (ergoemacs :unicode-or-alt "•" "·" "-")
+(defcustom ergoemacs-command-loop-blink-character "-"
   "Blink character."
   :type '(choice
           (string :tag "Cursor")
