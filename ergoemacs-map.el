@@ -69,15 +69,11 @@
 
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 
-(declare-function ergoemacs-component-struct--create-hooks "ergoemacs-component")
 (declare-function ergoemacs-component-struct--get "ergoemacs-component")
 (declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-component")
 (declare-function ergoemacs-component-struct--lookup-list "ergoemacs-component")
 (declare-function ergoemacs-component-struct--minor-mode-map-alist "ergoemacs-component")
-(declare-function ergoemacs-component-struct--rm-hooks "ergoemacs-component")
 (declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
-
-(declare-function ergoemacs-command-loop--minibuffer-supported-p "ergoemacs-command-loop")
 
 (declare-function ergoemacs-theme--get-version "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")

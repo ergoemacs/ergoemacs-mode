@@ -522,57 +522,7 @@ This sequence is compatible with `listify-key-sequence'."
                  input))
     input))
 
-(defun ergoemacs-command-loop-p ()
-  "Determine if `ergoemacs-mode' is running its command loop.
-This is done by looking at the current `backtrace' and making
-sure that `ergoemacs-command-loop--internal' hasn't been called."
-  (eq (symbol-function 'this-command-keys) #'ergoemacs-command-loop--this-command-keys))
-
-(defvar ergoemacs-command-loop--running-pre-command-hook-p nil
-  "Variable to tell if ergoemacs-command loop is running the `pre-command-hook'.")
-
-(defvar ergoemacs-command-loop--excluded-variables
-  '(defining-kbd-macro executing-kbd-macro)
-  "List of variables stopping the command loop.
-
-While these variables are non-nil, the `ergoemacs-command-loop'
-will stop and not be started agin.")
-
-(defvar ergoemacs-command-loop--excluded-major-modes
-  '(calc-mode calc-trail-mode calc-edit-mode)
-  "List of major modes where the command loop is incompatible.")
-
-
 (defvar ergoemacs-command-loop--minibuffer-unsupported-p nil)
-(defun ergoemacs-command-loop--minibuffer-supported-p (&optional command)
-  "Determine if the current minibuffer supports the full command loop.
-When COMMAND is non-nil, set
-`ergoemacs-command-loop--minibuffer-unsupported-p' to the
-appropriate value based on the COMMAND."
-  (if (not command)
-      (or (not (minibufferp))
-	  (not ergoemacs-command-loop--minibuffer-unsupported-p))
-    (when (or (and command (symbolp command) (string-match-p "^\\(calc\\|math\\)" (symbol-name command)))
-	      (and (stringp command) (string-match-p "^[^:]*:\\(calc\\|math\\)" command))) 
-      (ergoemacs-save-buffer-state
-       (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t)))
-    (ergoemacs-command-loop--minibuffer-supported-p)))
-
-(defun ergoemacs-command-loop-full-p (&optional type)
-  "Determines if the full command loop should be run.
-
-
-TYPE is the type of command loop to check for.  By default this
-is the :full command loop."
-  (and
-   (eq ergoemacs-command-loop-type (or type :full))
-   (ergoemacs-command-loop--minibuffer-supported-p)
-   (catch 'excluded-variables
-     (dolist (var ergoemacs-command-loop--excluded-variables)
-       (when (and var (ergoemacs-sv var))
-         (throw 'excluded-variables nil)))
-     t)
-   (not (memq major-mode ergoemacs-command-loop--excluded-major-modes))))
 
 (defvar ergoemacs-last-command-was-ergoemacs-ignore-p nil
   "Last command was `ergoemacs-ignore'.")

@@ -871,27 +871,6 @@ OBJ is the current object being modified, passed to
       (ergoemacs-save-buffer-state
        (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt))))))))
 
-(defvar ergoemacs-component-struct--create-hooks nil)
-(defun ergoemacs-component-struct--create-hooks (&optional obj)
-  "Gets a list of hooks that need to be defined eor OBJ."
-  (dolist (hook (ergoemacs-component-struct--hooks obj))
-    (eval `(progn
-             (defun ,(intern (concat "ergoemacs--" (symbol-name hook))) ()
-               ,(format "`ergoemacs-mode' hook for `%s'" (symbol-name hook))
-               (ergoemacs-component-struct--composed-hook ',hook))
-             ;; (push )
-             (push ',hook ergoemacs-component-struct--create-hooks)
-             (add-hook ',hook #',(intern (concat "ergoemacs--" (symbol-name hook))))))))
-
-(defun ergoemacs-component-struct--rm-hooks ()
-  "Remove hooks.
-
-These hooks are those created with
-`ergoemacs-component-struct--create-hooks'."
-  (dolist (hook ergoemacs-component-struct--create-hooks)
-    (remove-hook hook (intern (concat "ergoemacs--" (symbol-name hook)))))
-  (setq ergoemacs-component-struct--create-hooks nil))
-
 (defun ergoemacs-component-struct--translated-list (obj list &optional layout)
   "Base on OBJ translation, Translate LIST using LAYOUT."
   (let ((cur-layout (or layout ergoemacs-keyboard-layout))
