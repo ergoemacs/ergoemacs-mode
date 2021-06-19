@@ -272,8 +272,6 @@ The PROCESS is the process where the clean environment is run."
         (ergoemacs-load (or ergoemacs-run-clean
                             " --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (require 'elp) (setq debug-on-error t) (elp-instrument-package (symbol-name 'ergoemacs-)) (ergoemacs-mode 1) (run-with-idle-timer 0.1 nil 'elp-results))\""))
         cmd process rm-batch)
-    (when ergoemacs-keyboard-layout
-      (setenv "ERGOEMACS_KEYBOARD_LAYOUT" ergoemacs-keyboard-layout))
     (cond
      ((with-current-buffer (get-buffer-create "*ergoemacs-clean*")
         (not ergoemacs-terminal))

@@ -111,9 +111,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
                                ergoemacs-variant
                              (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
                                  ergoemacs-theme
-                               (if (getenv "ERGOEMACS_THEME")
-                                   (getenv "ERGOEMACS_THEME")
-                                 nil)))
+                                 nil))
   "Ergoemacs Keyboard Layout Themes."
   :type '(choice
           (const :tag "Standard" :value nil)
@@ -140,9 +138,8 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defvar ergoemacs-map--breadcrumb ""
   "Breadcrumb that is used to figure out what map is being modified.")
 
-(defcustom ergoemacs-keyboard-layout (or (getenv "ERGOEMACS_KEYBOARD_LAYOUT") "us")
-  (concat "Specifies which keyboard layout to use.
-  This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.")
+(defcustom ergoemacs-keyboard-layout "us"
+  (concat "Specifies which keyboard layout to use.")
   :type 'sexp
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
@@ -721,9 +718,8 @@ not be useful.  However instead of using
 (autoload 'ergoemacs-theme "ergoemacs-macros")
 (autoload 'ergoemacs "ergoemacs-macros")
 
-(defcustom ergoemacs-keyboard-layout (or (getenv "ERGOEMACS_KEYBOARD_LAYOUT") "us")
+(defcustom ergoemacs-keyboard-layout "us"
   (concat "Specifies which keyboard layout to use.
-This is a mirror of the environment variable ERGOEMACS_KEYBOARD_LAYOUT.
 
 Valid values are:
 " (ergoemacs-layouts--custom-documentation)
