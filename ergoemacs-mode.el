@@ -668,8 +668,9 @@ after initializing ergoemacs-mode.
 
 (defun ergoemacs-setup-override-keymap ()
   "Setup `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
-  (setq ergoemacs-override-alist `((ergoemacs-mode . ,(ergoemacs ergoemacs-override-keymap))))
-  (add-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
+  (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-override-keymap)))
+  (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
+  )
 
 (defun ergoemacs-remove-override-keymap ()
   "Remove `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."

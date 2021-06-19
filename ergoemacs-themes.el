@@ -1191,10 +1191,6 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
     )
   )
 
-(ergoemacs-theme standard ()
-  "Standard Ergoemacs Theme"
-  )
-
 (defvar ergoemacs-override-alist)
 (defvar ergoemacs-override-keymap)
 
