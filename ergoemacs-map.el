@@ -1067,8 +1067,6 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
     `("ErgoEmacs" . ,(ergoemacs-theme--menu)))
   )
 
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-map--install)
-
 (defvar ergoemacs-mode)
 
 (defvar ergoemacs-map-undefined-remaps

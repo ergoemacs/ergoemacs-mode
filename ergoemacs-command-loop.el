@@ -201,9 +201,6 @@ with this function."
             (throw 'found-quit t)))
         nil))))
 
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--setup-quit-key)
-(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--redefine-quit-key)
-
 (dolist (arg '((next-key-is-alt (meta))
                (next-key-is-meta (meta))
                (next-key-is-ctl (control))

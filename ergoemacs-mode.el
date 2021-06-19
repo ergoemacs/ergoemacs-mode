@@ -288,24 +288,31 @@ The `execute-extended-command' is now \\[execute-extended-command].
     ;; Turn on
     (if ergoemacs-mode
         (progn
+          ;; Save frame parameters
           (setq ergoemacs-mode--default-frame-alist nil)
           (dolist (elt (reverse default-frame-alist))
             (push elt ergoemacs-mode--default-frame-alist))
+
+          ;; Setup the global keys that can be overriden
           (ergoemacs-install-standard-theme)
-          (run-hooks 'ergoemacs-mode-startup-hook)
-          (setq ergoemacs-require--ini-p t)
+          (ergoemacs-command-loop--setup-quit-key)
+          ;; Make the ErgoEmacs menu
+          (ergoemacs-map--install)
+          ;; Setup the main keys
           (ergoemacs-setup-override-keymap)                       
+          (setq ergoemacs-require--ini-p t)
+
           (if refresh-p
               (message "Ergoemacs-mode keys refreshed (%s)" ergoemacs-keyboard-layout)
             (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout)
             )
           )
       ;; Turn off
+      ;; Restore frame parameters
       (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
-      (unless (assoc 'cursor-type ergoemacs-mode--default-frame-alist)
-        (modify-all-frames-parameters (list (cons 'cursor-type 'box))))
       (setq ergoemacs-mode--default-frame-alist nil)
-      (run-hooks 'ergoemacs-mode-shutdown-hook)
+
+      (ergoemacs-command-loop--redefine-quit-key)
       (unless refresh-p
         (message "Ergoemacs-mode turned OFF.")
         )
@@ -608,12 +615,6 @@ When STORE-P is non-nil, save the tables."
 
 
 (require 'cus-edit)
-
-(defvar ergoemacs-mode-startup-hook nil
-  "Hook for starting `ergoemacs-mode'.")
-
-(defvar ergoemacs-mode-shutdown-hook nil
-  "Hook for shutting down `ergoemacs-mode'.")
 
 (defvar ergoemacs-mode-intialize-hook nil
   "Hook for initializing `ergoemacs-mode'.")
