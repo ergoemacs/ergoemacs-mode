@@ -277,13 +277,6 @@ The `execute-extended-command' is now \\[execute-extended-command].
   (setq ergoemacs-mode--start-p t)
   (setq ergoemacs-map--hashkey nil)
 
-  ;; (ergoemacs-install-standard-theme)
-  
-  (unless ergoemacs-require--ini-p
-    (setq ergoemacs-require--ini-p :ini)
-    (when ergoemacs-require
-      (dolist (elt ergoemacs-require)
-        (apply #'ergoemacs-require elt))))
   (let ((refresh-p ergoemacs-component-struct--refresh-variables))
     ;; Turn on
     (if ergoemacs-mode
