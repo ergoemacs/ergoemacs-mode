@@ -218,70 +218,6 @@ When AT-END is non-nil, append a $ to the regular expression."
         (and (member option options-off)
              (member (list option 'on) ergoemacs-theme-options)))))
 
-
-(defun ergoemacs-theme--menu-options ()
-  "Gets the options menu for THEME."
-  (let ((plist (ergoemacs-gethash "standard" ergoemacs-theme-hash))
-        (menu-list '())
-        (menu-pre '())
-        (options-on '())
-        (options-off '())
-        (menu-options '())
-        (options-list '())
-        (options-alist '())
-        (i 0))
-    (setq options-on (plist-get plist ':optional-on)
-          options-off (plist-get plist ':optional-off)
-          menu-list (plist-get plist ':options-menu))
-    (if (= 0 (length (append options-on options-off))) nil
-      (dolist (elt (reverse menu-list))
-        (let ((menu-name (nth 0 elt))
-              (menu-items (nth 1 elt))
-              desc
-              (ret '()))
-          (dolist (option (reverse menu-items))
-            (when (memq option (append options-on options-off))
-              (setq desc (ergoemacs-component-struct--component-description (symbol-name option)))
-              (push option menu-options)
-              (push
-               `(,option
-                 menu-item ,desc
-                 (lambda()
-                   (interactive)
-                   (ergoemacs-theme-toggle-option ',option)
-                   (customize-mark-as-set 'ergoemacs-theme-options)
-                   (ergoemacs-mode-reset))
-                 :button (:toggle . (ergoemacs-theme-option-enabled-p ',option)))
-               ret)))
-          (unless (eq ret '())
-            (setq ret
-                  `(,(intern (format "options-menu-%s" i))
-                    menu-item ,menu-name
-                    (keymap ,@ret)))
-            (setq i (+ i 1))
-            (push ret menu-pre))))
-      (dolist (option (append options-on options-off))
-        (unless (member option menu-options)
-          (let ((desc (ergoemacs-component-struct--component-description (symbol-name option))))
-            (push desc options-list)
-            (push (list desc option) options-alist))))
-      `(ergoemacs-theme-options
-        menu-item "Options"
-        (keymap
-         ,@menu-pre
-         ,@(mapcar
-            (lambda(desc)
-              (let ((option (car (cdr (assoc desc options-alist)))))
-                `(,option
-                  menu-item ,desc
-                  (lambda()
-                    (interactive)
-                    (ergoemacs-theme-toggle-option ',option)
-                    (customize-mark-as-set 'ergoemacs-theme-options)
-                    (ergoemacs-mode-reset))
-                  :button (:toggle . (ergoemacs-theme-option-enabled-p ',option)))))
-            (sort options-list 'string<)))))))
-
 (defun ergoemacs-theme--get-version ()
   "Get the current version for the current theme."
   (let ((theme-ver (assoc (ergoemacs :current-theme) ergoemacs-theme-version)))
@@ -292,7 +228,6 @@ When AT-END is non-nil, append a $ to the regular expression."
   "Define menus for current THEME."
   `(keymap
     ,(ergoemacs-layouts--menu)
-    ,(ergoemacs-theme--menu-options)
     (c-v
      menu-item "Paste behavior"
      (keymap
