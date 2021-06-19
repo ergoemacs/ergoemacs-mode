@@ -615,17 +615,6 @@ When STORE-P is non-nil, save the tables."
 (defvar ergoemacs-mode-init-hook nil
   "Hook for running after Emacs loads.")
 
-(defvar ergoemacs-mode-after-load-hook nil
-  "Hook for running after a library loads.")
-
-(defvar ergoemacs-after-load-functions nil)
-(defun ergoemacs-after-load-functions (absoulte-file-name)
-  "Run `ergoemacs-mode' after load functions.
-
-ABSOULTE-FILE-NAME is the file name that will be passed to the
-variable `ergoemacs-after-load-functions'."
-  (run-hook-with-args 'ergoemacs-after-load-functions absoulte-file-name))
-
 (defvar ergoemacs-mode-reset nil
   "Does `ergoemacs-mode' need to be reset?")
 
@@ -660,8 +649,6 @@ transpose words instead of running completion, call
 
 after initializing ergoemacs-mode.
 ")
-
-(ergoemacs :label ergoemacs-override-keymap)
 
 (defvar ergoemacs-override-alist nil
   "ErgoEmacs override keymaps.")
@@ -953,10 +940,6 @@ also perform `outline-next-visible-heading'"
   "Modify Transient maps that are not bound to anything."
   :type 'boolean
   :group 'ergoemacs-mode)
-
-(defun ergoemacs-mode-after-startup-run-load-hooks (&rest _ignore)
-  "Run `ergoemacs-mode-after-load-hook' after loading Emacs."
-  (run-hooks 'ergoemacs-mode-after-load-hook))
 
 (defvar ergoemacs-mode-started-p nil)
 

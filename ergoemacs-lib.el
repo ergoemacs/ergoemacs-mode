@@ -220,7 +220,6 @@ KEEP can change remove to nil."
 (defvar ergoemacs-require--ini-p nil)
 (defun ergoemacs-require--ini-p ()
   (setq ergoemacs-require--ini-p t))
-(add-hook 'ergoemacs-mode-after-startup-run-load-hooks #'ergoemacs-require--ini-p)
 
 (defun ergoemacs-require (option &optional theme type remove)
   "Requires an OPTION on ergoemacs themes.

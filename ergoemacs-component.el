@@ -761,17 +761,6 @@ LAYOUT is the current keyboard layout.  Defaults to
      (ergoemacs-component-struct--minor-mode-map-alist-hash obj))
     ret))
 
-(defun ergoemacs-component-struct--add-unbound (&rest _ignore)
-  "Add recently bound variables to `minor-mode-map-alist'."
-  (let (new)
-    (dolist (elt ergoemacs-component-struct--unbound-maps)
-      (if (boundp (car elt))
-          (push elt minor-mode-map-alist)
-        (push elt new)))
-    (setq ergoemacs-component-struct--unbound-maps new)))
-
-(add-hook 'ergoemacs-mode-after-load-hook 'ergoemacs-component-struct--add-unbound)
-
 (defun ergoemacs-component-struct--hooks (&optional obj ret)
   "Gets a list of hooks that need to be defined eor OBJ.
 
