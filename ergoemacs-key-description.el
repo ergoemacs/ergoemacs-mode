@@ -49,7 +49,6 @@
 (require 'help-mode)
 
 (defvar ergoemacs-use-unicode-symbols)
-(defvar ergoemacs-display-unicode-characters)
 (defvar ergoemacs-display-capitalize-keys)
 (defvar ergoemacs-display-key-use-face-p)
 (defvar ergoemacs-display-small-symbols-for-key-modifiers)
@@ -116,8 +115,7 @@
   "Return CHAR if it can be displayed, otherwise use ALT-CHAR.
 This assumes `ergoemacs-display-unicode-characters' is non-nil.  When
 `ergoemacs-display-unicode-characters' is nil display ALT-CHAR"
-  (if (and ergoemacs-display-unicode-characters
-           (ergoemacs-key-description--display-char-p char))
+  (if (ergoemacs-key-description--display-char-p char)
       char
     alt-char))
 

@@ -751,13 +751,6 @@ Valid values are:
   "Display Options for `ergoemacs-mode'."
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-display-unicode-characters t
-  "Use unicode characters when available."
-  :type 'boolean
-  :set #'ergoemacs-set-default
-  :initialize #'custom-initialize-default
-  :group 'ergoemacs-display)
-
 (defcustom ergoemacs-display-ergoemacs-key-descriptions t
   "Use ergoemacs key descriptions (Alt+)."
   :type 'boolean
