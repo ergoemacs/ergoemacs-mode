@@ -846,7 +846,6 @@ Tests Issue #372."
        (ergoemacs-test-major-mode)
        (when (not (current-local-map))
          (use-local-map ergoemacs-test-major-mode-map))
-       (ergoemacs-map--modify-active)
        (should (eq (key-binding (kbd "M-r")) 'other-window))))))
 
 (ert-deftest ergoemacs-test-dired-sort-files ()
