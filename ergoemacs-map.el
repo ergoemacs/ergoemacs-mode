@@ -1062,62 +1062,14 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
 (defun ergoemacs-map--install ()
   "Install `ergoemacs-mode' into the appropriate keymaps."
   (interactive)
-  (ergoemacs-map--hashkey)
   (ergoemacs-mode-line)
   (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
     `("ErgoEmacs" . ,(ergoemacs-theme--menu)))
-
-  (let ((x (assq 'ergoemacs-mode minor-mode-map-alist)))
-    (while x
-      (setq minor-mode-map-alist (delq x minor-mode-map-alist))
-      ;; Multiple menus sometimes happen because of multiple
-      ;; ergoemacs-mode variables in minor-mode-map-alist
-      (setq x (assq 'ergoemacs-mode minor-mode-map-alist)))
-    (push (cons 'ergoemacs-mode ergoemacs-menu-keymap) minor-mode-map-alist))
-  
-  (setq ergoemacs-map-- (make-hash-table :test 'equal)
-        ergoemacs-map--lookup-hash (make-hash-table :test 'equal)
-        ergoemacs-keymap (ergoemacs)
-        ergoemacs-map--alist (make-hash-table)
-        ergoemacs-map--alists (make-hash-table)
-        ergoemacs-map--alist-t (make-hash-table)
-        ergoemacs-map--alist-t-o (make-hash-table)
-        ergoemacs-map--quit-map (make-sparse-keymap)
-        ergoemacs-saved-global-map global-map
-        global-map ergoemacs-keymap)
-  (use-global-map global-map)
-  ;; Setup the quit map
-  (dolist (key (where-is-internal 'keyboard-quit))
-    (when (= 1 (length key))
-      (define-key ergoemacs-map--quit-map key 'keyboard-quit)))
-  (ergoemacs ergoemacs-map--quit-map :label '(ergoemacs-quit))
-  
-  ;; Put `ergoemacs-mode' style key shortcuts instead of emacs
-  ;; style shortcuts (They need to place the correct shortucts)
-  (ergoemacs-menu--filter (lookup-key ergoemacs-keymap [menu-bar]))
-  (ergoemacs-map--modify-active t)
-  (ergoemacs-component-struct--create-hooks)
   )
 
 (add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-map--install)
 
 (defvar ergoemacs-mode)
-(defun ergoemacs-map--remove ()
-  "Remove `ergoemacs-mode' keybindings."
-  (interactive)
-  ;; Restore menu-bar
-  ;; Not needed; Global map isn't modified...
-  (let (ergoemacs-mode)
-    (setq ergoemacs-map--alist (make-hash-table)
-          ergoemacs-map--alists (make-hash-table)
-          global-map (ergoemacs :revert-global-map)
-          ergoemacs-saved-global-map  nil)
-    (use-global-map global-map)
-    (ergoemacs-map--modify-active t)
-    (ergoemacs-component-struct--rm-hooks)
-    (dolist (map ergoemacs-map--modified-maps)
-      (ergoemacs :spinner '("rm ⌨→%s" "rm ergoemacs→%s" "rm ergoemacs->%s") map)
-      (set map (ergoemacs (ergoemacs-sv map) :revert-original)))))
 
 (defvar ergoemacs-map-undefined-remaps
   '((kill-buffer . ergoemacs-close-current-buffer))
@@ -1139,8 +1091,6 @@ runs the same command, tell the user."
       (message "%s is disabled! Use %s for %s instead." key (ergoemacs-key-description (where-is-internal old-key ergoemacs-keymap t)) old-key))
      (t
       (message "%s is disabled!" key)))))
-
-(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-map--remove)
 
 (autoload 'ergoemacs (expand-file-name "ergoemacs-macros.el" ergoemacs-dir) nil t)
 (provide 'ergoemacs-map)

@@ -830,7 +830,6 @@ Part of addressing Issue #147."
       (ergoemacs-test-major-mode)
       (when (not (current-local-map))
         (use-local-map ergoemacs-test-major-mode-map))
-      (ergoemacs-map--modify-active)
       (should (eq (key-binding (kbd "C-w")) 'ergoemacs-close-current-buffer))
       ;; The user-defined C-w should not affect kill-region remaps.
       (should (not (eq (key-binding [ergoemacs-remap kill-region]) 'ergoemacs-close-current-buffer))))))
