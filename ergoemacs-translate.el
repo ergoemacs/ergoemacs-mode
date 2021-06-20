@@ -1105,23 +1105,14 @@ If :type is :quail use the 180 length string that
            ((string-match "[a-zA-Z0-9]" char)
             char)
            (t
+            ;; Insert fancy characters as is and hope that the font
+            ;; will work.
             (setq ret (format "&#x%04X;"
                                (encode-char
                                 (with-temp-buffer
                                   (insert char)
                                   (char-before)) 'unicode))
-                  font (ergoemacs-key-description--display-char-p char))
-            (when font
-              (setq font (or (font-get font :name)
-                             (font-get font :family)))
-              (when (and font (symbolp font))
-                (setq font (symbol-name font)))
-              (setq default-font (or (font-get default-font :name)
-                                     (font-get default-font :family)))
-              (when (and default-font (symbolp default-font))
-                (setq default-font (symbol-name default-font)))
-              (unless (string= font default-font)
-                (setq ret (format "<text style=\"font-family: '%s'\">%s</text>" font ret))))
+                  )
             ret)))
       (while (< i (length char))
         (setq ret (concat ret (ergoemacs-translate--svg-quote (substring char i (+ i 1))))
