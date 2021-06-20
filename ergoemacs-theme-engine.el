@@ -314,12 +314,7 @@ should insert the face name."
 (define-button-type 'ergoemacs-theme-help
   :supertype 'help-xref
   'help-function #'ergoemacs-theme-describe
-  'help-echo (purecopy "mouse-2, RET: describe this ergoemacs theme"))
-
-(define-button-type 'ergoemacs-theme-def
-  :supertype 'help-xref
-  'help-function #'ergoemacs-theme-find-definition
-  'help-echo (purecopy "mouse-2, RET: find this ergoemacs theme's definition"))
+  'help-echo (purecopy "mouse-2, RET: describe ergoemacs keybindings"))
 
 (defvar ergoemacs-theme--svg-list nil)
 
@@ -338,138 +333,80 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
   (interactive (list (ergoemacs-theme-at-point)))
   (ergoemacs-component-find-1 theme 'ergoemacs-theme 'switch-to-buffer))
 
-(defun ergoemacs-theme-describe (theme)
+(defun ergoemacs-theme-describe ()
   "Display the full documentation of THEME (a symbol or string)."
   (interactive (ergoemacs-component--prompt t))
-  (let* ((theme (and theme
-                     (or (and (stringp theme) theme)
-                         (and (symbolp theme) (symbol-name theme)))))
-         (plist (ergoemacs-gethash (or theme "") ergoemacs-theme-hash))
-         (file (plist-get plist :file))
-         (el-file (and (stringp file) (concat (file-name-sans-extension file) ".el")))
-         (old-theme ergoemacs-theme)
-
-	 (key (concat theme "-" ergoemacs-keyboard-layout "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2))))
-         required-p
+  (let* (required-p
          svg png tmp)
-    (if (not plist)
-        (message "You did not specify a valid ergoemacs theme %s" theme)
-      (if current-prefix-arg
-	  (setq svg (ergoemacs-theme--svg theme nil t)
-                 png (ergoemacs-theme--png theme nil t))
-	(setq svg (ergoemacs-theme--svg theme)
-	      png (ergoemacs-theme--png theme)))
-      (help-setup-xref (list #'ergoemacs-theme-describe (or theme ""))
-                       (called-interactively-p 'interactive))
-      (with-help-window (help-buffer)
-        (with-current-buffer standard-output
-          (insert (or theme ""))
-          ;; Use " is " instead of a colon so that
-          ;; it is easier to get out the function name using forward-sexp.
-          (insert " is an `ergoemacs-mode' theme")
-          (when (and el-file (file-readable-p el-file))
-            (insert " defined in `")
-            (insert (file-name-nondirectory el-file))
-            (insert "'.")
-            (save-excursion
-              (when (re-search-backward "`\\(.*\\)'" nil t)
-                (help-xref-button 1 'ergoemacs-theme-def theme))))
-          (insert "\n\n")
-          (insert "Documentation:\n")
-          (insert (plist-get plist :description))
-          (insert "\n\n")
-          (insert "Diagram:\n")
-          (cond
-           ((and (image-type-available-p 'png)
-                 (car png)
-                 (file-exists-p (car png)))
-            
-            (insert-image (create-image (car png)))
-            (insert "\n"))
-           ((and (car svg)
-                 (file-exists-p (car svg)) (image-type-available-p 'svg))
-            (insert-image (create-image (car svg)))
-            (insert "\n")))
-          (if (and (car png) (file-exists-p (car png)))
-              (insert "[svg] [png]")
-            (insert "[svg]"))
-          (beginning-of-line)
-          (if (looking-at "\\(\\[svg\\]\\) \\(\\[png\\]\\)")
-              (progn
-                (help-xref-button 1 'help-url (car svg))
-                (help-xref-button 2 'help-url (car png)))
-            (if (looking-at "\\(\\[svg\\]\\)")
-                (help-xref-button 1 'help-url (car svg))))
-          (goto-char (point-max))
-	  (when ergoemacs-theme--svg-list
-	    (insert "\n")
-	    (dolist (elt ergoemacs-theme--svg-list)
-	      (when (string= key (nth 0 elt))
-		(insert (ergoemacs-key-description (nth 1 elt)) ":\n")
-                (cond
-                 ((and (image-type-available-p 'png)
-                       (nth 2 elt)
-                       (file-exists-p (replace-regexp-in-string "[.]svg\\'" ".png" (nth 2 elt))))
-                  (insert-image (create-image (replace-regexp-in-string "[.]svg\\'" ".png" (nth 2 elt))))
-                  (insert "\n"))
-                 ((and (image-type-available-p 'svg)
-                       (nth 2 elt)
-                       (file-exists-p (nth 2 elt)))
-                  (insert-image (create-image (nth 2 elt)))
-                  (insert "\n")))
-                (when (file-exists-p (nth 2 elt))
-                  (insert "[svg]")
-                  (when (looking-back "\\(\\[svg\\]\\)" nil)
-                    (help-xref-button 1 'help-url (nth 2 elt))))
-                (when (file-exists-p (replace-regexp-in-string "[.]svg\\'" ".png" (nth 2 elt)))
-                  (insert " [png]")
-                  (when (looking-back "\\(\\[png\\]\\)" nil)
-                    (help-xref-button 1 'help-url (replace-regexp-in-string "[.]svg\\'" ".png" (nth 2 elt)))))
-                (insert "\n\n"))))
-          (insert "\n\n")
-          (when (setq tmp (plist-get plist :based-on))
-            (when (eq (car tmp) 'quote)
-              (setq tmp (car (cdr tmp))))
-            (insert (format "This theme is based on: %s\n\n" tmp))
-            (when (looking-back "on: \\(.*\\)\n\n" nil)
-              (help-xref-button 1 'ergoemacs-theme-help (match-string 1))))
-
-          (when (member theme (ergoemacs-gethash "silent-themes" ergoemacs-theme-hash))
-            (insert (format "This theme does not appear in menus because of the :silent option.\n\n")))
-
-          (setq required-p t)
-          (dolist (elt '((:components . "Applied Components (from `ergoemacs-require')")
-                         (:components . "Theme Required Components")
-                         (:optional-on . "Optional Components (enabled by default)")
-                         (:optional-off . "Optional Components (disabled by default)")))
-            (when (setq tmp (plist-get plist (car elt)))
-              (insert (cdr elt))
-              (princ ":\n")
-              (dolist (comp tmp)
-                (when (or (and (eq (car elt) :components)
-                               (or (and required-p (memq comp (mapcar (lambda(x) (car x)) ergoemacs-require)))
-                                   (and (not required-p) (not (memq comp (mapcar (lambda(x) (car x)) ergoemacs-require))))))
-                          (not (eq (car elt) :components)))
-                  (insert (format " - %s -- " comp))
-                  (when (looking-back "- \\(.*\\) -- " nil)
-                    (help-xref-button 1 'ergoemacs-component-help (match-string 1)))
-                  (insert (format "%s (currently %s)\n"
-                                  (ergoemacs-component-struct--component-description comp)
-                                  (or (and (ergoemacs-theme-option-enabled-p comp)
-                                           "enabled") "disabled")))
-                  ))
-              (insert "\n"))
-            (setq required-p nil))
+    (if current-prefix-arg
+	(setq svg (ergoemacs-theme--svg nil t)
+              png (ergoemacs-theme--png nil t))
+      (setq svg (ergoemacs-theme--svg)
+	    png (ergoemacs-theme--png)))
+    (help-setup-xref (list #'ergoemacs-theme-describe)
+                     (called-interactively-p 'interactive))
+    (with-help-window (help-buffer)
+      (with-current-buffer standard-output
+        (insert "Ergoemacs Documentation:\n")
+        (insert "Diagram:\n")
+        (cond
+         ((and (image-type-available-p 'png)
+               (car png)
+               (file-exists-p (car png)))
           
-          (insert "\n\n")
-          (if (equal (format "%s" old-theme) (format "%s" theme))
-              (ergoemacs-key-description--keymap ergoemacs-keymap t)
-            (unwind-protect
-                (progn
-                  (ergoemacs-mode-reset)
-                  (ergoemacs-key-description--keymap ergoemacs-keymap t))
-              (ergoemacs-mode-reset)))
-          (buffer-string))))))
+          (insert-image (create-image (car png)))
+          (insert "\n"))
+         ((and (car svg)
+               (file-exists-p (car svg)) (image-type-available-p 'svg))
+          (insert-image (create-image (car svg)))
+          (insert "\n")))
+        (if (and (car png) (file-exists-p (car png)))
+            (insert "[svg] [png]")
+          (insert "[svg]"))
+        (beginning-of-line)
+        (if (looking-at "\\(\\[svg\\]\\) \\(\\[png\\]\\)")
+            (progn
+              (help-xref-button 1 'help-url (car svg))
+              (help-xref-button 2 'help-url (car png)))
+          (if (looking-at "\\(\\[svg\\]\\)")
+              (help-xref-button 1 'help-url (car svg))))
+        (goto-char (point-max))
+	(when ergoemacs-theme--svg-list
+	  (insert "\n")
+	  (dolist (elt ergoemacs-theme--svg-list)
+	    (when (string= key (nth 0 elt))
+	      (insert (ergoemacs-key-description (nth 1 elt)) ":\n")
+              (cond
+               ((and (image-type-available-p 'png)
+                     (nth 2 elt)
+                     (file-exists-p (replace-regexp-in-string "[.]svg\\'" ".png" (nth 2 elt))))
+                (insert-image (create-image (replace-regexp-in-string "[.]svg\\'" ".png" (nth 2 elt))))
+                (insert "\n"))
+               ((and (image-type-available-p 'svg)
+                     (nth 2 elt)
+                     (file-exists-p (nth 2 elt)))
+                (insert-image (create-image (nth 2 elt)))
+                (insert "\n")))
+              (when (file-exists-p (nth 2 elt))
+                (insert "[svg]")
+                (when (looking-back "\\(\\[svg\\]\\)" nil)
+                  (help-xref-button 1 'help-url (nth 2 elt))))
+              (when (file-exists-p (replace-regexp-in-string "[.]svg\\'" ".png" (nth 2 elt)))
+                (insert " [png]")
+                (when (looking-back "\\(\\[png\\]\\)" nil)
+                  (help-xref-button 1 'help-url (replace-regexp-in-string "[.]svg\\'" ".png" (nth 2 elt)))))
+              (insert "\n\n"))))
+        (insert "\n\n")
+
+        (setq required-p t)
+        
+        (insert "\n\n")
+        (ergoemacs-key-description--keymap ergoemacs-keymap t)
+        (buffer-string)
+        )
+      )
+    )
+  )
 
 (defvar ergoemacs-theme-create-bash-functions
   '((backward-char)
@@ -692,7 +629,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
       ret)
      (t ""))))
 
-(defun ergoemacs-theme--svg-elt (elt theme layout lay)
+(defun ergoemacs-theme--svg-elt (elt layout lay)
   "Handle ELT"
   (ergoemacs-translate--svg-quote
    (let (key binding no-push-p)
@@ -717,7 +654,12 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
            (setq no-push-p t))
          (when ergoemacs-theme--svg-prefix
            (setq key (vconcat ergoemacs-theme--svg-prefix key)))
-         (setq binding (lookup-key ergoemacs-keymap key))
+         ;; (setq binding (lookup-key ergoemacs-keymap key))
+         (setq binding (or
+                        (lookup-key ergoemacs-override-keymap key)
+                        (lookup-key (current-global-map) key)
+                        )
+               )
          (when (integerp binding)
            (setq binding nil))
          (or (and binding
@@ -725,6 +667,16 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                   (or (and (not no-push-p) (push key ergoemacs-theme--svg-prefixes))
                       no-push-p)
                   "⌨")
+             ;; Handle the M-O binding specially.
+             (and (eq binding 'ergoemacs-handle-M-O)
+                  (or
+                   (progn
+                     (setq key (assoc ergoemacs-M-O-binding ergoemacs-function-short-names))
+                     (nth 1 key)
+                     )
+                   ""
+                   )
+                  )
              (and binding
                   (setq key (assoc binding ergoemacs-function-short-names))
                   (nth 1 key))
@@ -732,7 +684,8 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                   (ergoemacs-theme--svg-elt-nonabbrev binding))
              "")))
       ((memq elt '(meta control))
-       (concat (ergoemacs-key-description--modifier elt) (format " - Emacs %s" elt)))
+       (concat (ergoemacs-key-description--modifier elt) (format " - Emacs %s" elt))
+       )
       ((memq elt '(meta-shift control-shift))
        (setq elt (intern (replace-regexp-in-string "-shift" "" (symbol-name elt))))
        (concat (ergoemacs-key-description--modifier elt)
@@ -743,33 +696,46 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
            "Key without any modifiers"
          "▤ Menu/Apps"))
       ((eq elt 'title)
-       (concat theme " (" lay ")"
-               (or (and ergoemacs-theme--svg-prefix (concat " for " (ergoemacs-key-description ergoemacs-theme--svg-prefix)))
-                    "")))
+       (concat lay
+               (or (and ergoemacs-theme--svg-prefix
+                        (concat " for "
+                                (ergoemacs-key-description ergoemacs-theme--svg-prefix)))
+                   ""
+                   )
+               )
+       )
       (t (setq key (format "%s" elt))
          (when (<= 10 (length key))
-           (setq key (concat (substring key 0 10) "…")))
-         key)))))
+           (setq key (concat (substring key 0 10) "…"))
+           )
+         key
+         )
+      )
+     )
+   )
+  )
 
-(defun ergoemacs-theme--svg (&optional theme layout full-p reread)
+(defun ergoemacs-theme--svg (&optional layout full-p reread)
   "Creates SVG based THEME and  LAYOUT"
   (save-excursion
     (let* ((lay (or layout ergoemacs-keyboard-layout))
-           (theme (or theme ergoemacs-theme))
-           (layout (symbol-value (ergoemacs :layout  lay)))
+           (layout (symbol-value (ergoemacs :layout lay)))
            (file-dir (expand-file-name "bindings" (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-           (file-name (expand-file-name (concat theme "-" lay "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir))
+           (file-name (expand-file-name (concat lay "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir))
            (reread reread)
-           (old-theme ergoemacs-theme)
            (old-layout ergoemacs-keyboard-layout)
            pt ret)
-      (if (and file-name (file-exists-p file-name) (not reread) (or (not full-p) ergoemacs-theme--svg-list))
+      (if (and file-name
+               (file-exists-p file-name)
+               (not reread)
+               (or (not full-p)
+                   ergoemacs-theme--svg-list)
+               )
           (progn
-            (setq ret (file-expand-wildcards (expand-file-name (concat theme "-" lay "-*-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir)))
+            (setq ret (file-expand-wildcards (expand-file-name (concat lay "-*-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir)))
             (push file-name ret)
             ret)
-        (unless (and (equal theme old-theme)
-                     (equal lay old-layout))
+        (unless (equal lay old-layout)
           (setq ergoemacs-keyboard-layout lay)
           (ergoemacs-mode-reset))
         (unwind-protect
@@ -849,9 +815,13 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                        ((string-match-p "^F" (match-string 2))
                         (push (list (match-string 2) 'apps) ergoemacs-theme--svg))
                        (t
-                        (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))))
-                     (t (push nil ergoemacs-theme--svg)))
-                    (setq pt (match-end 0)))
+                        (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))
+                       )
+                      )
+                     (t (push nil ergoemacs-theme--svg))
+                     )
+                    (setq pt (match-end 0))
+                    )
                   (push (buffer-substring pt (point-max)) ergoemacs-theme--svg))
                 (setq ergoemacs-theme--svg (reverse ergoemacs-theme--svg)))
               (setq ergoemacs-theme--svg-prefixes nil
@@ -862,7 +832,11 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                    ((stringp w)
                     (insert w))
                    (t
-                    (insert ">" (ergoemacs-theme--svg-elt w theme layout lay) "<")))))
+                    (insert ">" (ergoemacs-theme--svg-elt w layout lay) "<")
+                    )
+                   )
+                  )
+                )
               (push file-name ret)
               (unless full-p
                 (setq ergoemacs-theme--svg-prefixes nil))
@@ -871,7 +845,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                       file-name (expand-file-name (concat ergoemacs-theme "-" lay "-"
                                                           (replace-regexp-in-string "[^A-Za-z0-9-]+" "_" (key-description ergoemacs-theme--svg-prefix))
                                                           "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)) ".svg") file-dir))
- 		(push (list (concat ergoemacs-theme "-" lay "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)))
+ 		(push (list (concat lay "-" (symbol-name (ergoemacs-map--hashkey ergoemacs--start-emacs-state-2)))
 			    ergoemacs-theme--svg-prefix file-name) ergoemacs-theme--svg-list)
                 (ergoemacs :spinner '("%s→%s" "%s->%s") (ergoemacs-key-description ergoemacs-theme--svg-prefix) file-name)
                 (with-temp-file file-name
@@ -880,13 +854,16 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                      ((stringp w)
                       (insert w))
                      (t
-                      (insert ">" (ergoemacs-theme--svg-elt w theme layout lay) "<")))))
+                      (insert ">" (ergoemacs-theme--svg-elt w layout lay) "<")))))
                 (push file-name ret)))
-          (unless (and (equal theme old-theme)
-                       (equal lay old-layout))
+          (unless (equal lay old-layout)
             (setq ergoemacs-keyboard-layout old-layout)
             (ergoemacs-mode-reset)))
-        ret))))
+        ret
+        )
+      )
+    )
+  )
 
 (defvar ergoemacs-theme--png nil)
 (defvar ergoemacs-theme--png-last nil)
@@ -915,10 +892,10 @@ to png files."
 		ergoemacs-theme--png-last (nth 2 png-info))
 	  (set-process-sentinel process 'ergoemacs-theme--png--process))))))
 
-(defun ergoemacs-theme--png (&optional theme layout full-p reread)
+(defun ergoemacs-theme--png (&optional layout full-p reread)
   "Get png file for layout, or create one.
 Requires `ergoemacs-inkscape' to be specified."
-  (let* ((svg-files (ergoemacs-theme--svg theme layout full-p reread))
+  (let* ((svg-files (ergoemacs-theme--svg layout full-p reread))
          png-file ret)
     (dolist (svg-file svg-files)
       (setq png-file (concat (file-name-sans-extension svg-file) ".png"))
