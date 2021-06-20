@@ -663,27 +663,33 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                )
          (when (integerp binding)
            (setq binding nil))
-         (or (and binding
-                  (ergoemacs-keymapp binding)
-                  (or (and (not no-push-p) (push key ergoemacs-theme--svg-prefixes))
-                      no-push-p)
-                  "⌨")
-             ;; Handle the M-O binding specially.
-             (and (eq binding 'ergoemacs-handle-M-O)
-                  (or
-                   (progn
-                     (setq key (assoc ergoemacs-M-O-binding ergoemacs-function-short-names))
-                     (nth 1 key)
-                     )
-                   ""
-                   )
+         (or ;; Prefix keys (e.g. C-x, C-h)
+          (and binding
+               (ergoemacs-keymapp binding)
+               (or (and (not no-push-p) (push key ergoemacs-theme--svg-prefixes))
+                   no-push-p)
+               "Prefix Key")
+          ;; Handle the M-O binding specially.
+          (and (eq binding 'ergoemacs-handle-M-O)
+               (or
+                (progn
+                  (setq key (assoc ergoemacs-M-O-binding ergoemacs-function-short-names))
+                  (nth 1 key)
                   )
-             (and binding
-                  (setq key (assoc binding ergoemacs-function-short-names))
-                  (nth 1 key))
-             (and binding
-                  (ergoemacs-theme--svg-elt-nonabbrev binding))
-             "")))
+                ""
+                )
+               )
+          ;; Regular bindings
+          (and binding
+               (setq key (assoc binding ergoemacs-function-short-names))
+               (nth 1 key))
+          ;; Unknown binding
+          (and binding
+               (ergoemacs-theme--svg-elt-nonabbrev binding))
+          ""
+          )
+         )
+       )
       ((memq elt '(meta control))
        (concat (ergoemacs-key-description--modifier elt) (format " - Emacs %s" elt))
        )
