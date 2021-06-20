@@ -654,9 +654,10 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
            (setq no-push-p t))
          (when ergoemacs-theme--svg-prefix
            (setq key (vconcat ergoemacs-theme--svg-prefix key)))
-         ;; (setq binding (lookup-key ergoemacs-keymap key))
          (setq binding (or
                         (lookup-key ergoemacs-override-keymap key)
+                        ;; TODO: Use only the ergoemacs global map,
+                        ;; not the regular map?
                         (lookup-key (current-global-map) key)
                         )
                )
