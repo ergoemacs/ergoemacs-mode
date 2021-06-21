@@ -334,15 +334,12 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
   (ergoemacs-component-find-1 theme 'ergoemacs-theme 'switch-to-buffer))
 
 (defun ergoemacs-theme-describe ()
-  "Display the full documentation of THEME (a symbol or string)."
-  (interactive (ergoemacs-component--prompt t))
+  "Display the full documentation for Ergoemacs."
+  (interactive)
   (let* (required-p
          svg png tmp)
-    (if current-prefix-arg
-	(setq svg (ergoemacs-theme--svg nil t)
-              png (ergoemacs-theme--png nil t))
-      (setq svg (ergoemacs-theme--svg)
-	    png (ergoemacs-theme--png)))
+    (setq svg (ergoemacs-theme--svg)
+	  png (ergoemacs-theme--png))
     (help-setup-xref (list #'ergoemacs-theme-describe)
                      (called-interactively-p 'interactive))
     (with-help-window (help-buffer)
@@ -863,6 +860,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                 (push file-name ret)))
           (unless (equal lay old-layout)
             (setq ergoemacs-keyboard-layout old-layout)
+            ;; TODO: Is this OK?
             (ergoemacs-mode-reset)))
         ret
         )
