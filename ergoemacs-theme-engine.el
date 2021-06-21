@@ -906,7 +906,7 @@ Requires `ergoemacs-inkscape' to be specified."
         (if (and ergoemacs-inkscape (file-readable-p ergoemacs-inkscape))
             (progn
               (push (list (format "%s->%s" (file-name-nondirectory svg-file) (file-name-nondirectory png-file))
-                          (format "%s -z -f \"%s\" -e \"%s\"" ergoemacs-inkscape svg-file png-file)
+                          (format "%s \"%s\" -o \"%s\"" ergoemacs-inkscape svg-file png-file)
 			  png-file) ergoemacs-theme--png)
               (push png-file ret))
           (message "Need inkscape and to specify inkscape location with `ergoemacs-inkscape'.")
