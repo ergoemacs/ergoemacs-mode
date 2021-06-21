@@ -546,7 +546,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
         (ido-write-file "save as")
         (indent-for-tab-command "↹tab")
         (indent-region "indent-region")  ;; Already in CUA
-        (insert-parentheses "()")
+        (insert-parentheses "insert ()")
         (isearch-backward "← isearch")
         (isearch-backward-regexp "← reg isearch")
         (isearch-forward "→ isearch")
