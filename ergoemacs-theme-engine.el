@@ -654,7 +654,10 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
       ((and (listp elt) (or (integerp (car elt))
                             (stringp (car elt))))
        (if (stringp (car elt))
-           (setq key "f#")
+           (if (string= (car elt) "SPC")
+               (setq key " ")
+             (setq key "f#")
+             )
          (setq key (nth (car elt) layout)))
        (if (string= key "") ""
          (if (string= key "f#")
@@ -665,7 +668,8 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
          (when (equal key [27])
            (setq no-push-p t))
          (when ergoemacs-theme--svg-prefix
-           (setq key (vconcat ergoemacs-theme--svg-prefix key)))
+           (setq key (vconcat ergoemacs-theme--svg-prefix key))
+           )
          (setq binding (or
                         (lookup-key ergoemacs-override-keymap key)
                         ;; TODO: Use only the ergoemacs global map,
@@ -784,7 +788,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                        ((string= "" (match-string 2))
                         (push 'meta ergoemacs-theme--svg))
                        ((string= "-SPC" (match-string 2))
-                        (push (list 32 'meta) ergoemacs-theme--svg))
+                        (push (list "SPC" 'meta) ergoemacs-theme--svg))
                        ((string-match-p "^F" (match-string 2))
                         (push (list (match-string 2) 'meta) ergoemacs-theme--svg))
                        (t
@@ -794,7 +798,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                        ((string= "" (match-string 2))
                         (push 'meta-shift ergoemacs-theme--svg))
                        ((string= "-SPC" (match-string 2))
-                        (push (list 32 'meta 'shift) ergoemacs-theme--svg))
+                        (push (list "SPC" 'meta 'shift) ergoemacs-theme--svg))
                        ((string-match-p "^F" (match-string 2))
                         (push (list (match-string 2) 'meta 'shift) ergoemacs-theme--svg))
                        (t
@@ -804,7 +808,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                        ((string= "" (match-string 2))
                         (push 'control-shift ergoemacs-theme--svg))
                        ((string= "-SPC" (match-string 2))
-                        (push (list 32 'control 'shift) ergoemacs-theme--svg))
+                        (push (list "SPC" 'control 'shift) ergoemacs-theme--svg))
                        ((string-match-p "^F" (match-string 2))
                         (push (list (match-string 2) 'control 'shift) ergoemacs-theme--svg))
                        (t
@@ -814,7 +818,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                        ((string= "" (match-string 2))
                         (push 'control ergoemacs-theme--svg))
                        ((string= "-SPC" (match-string 2))
-                        (push (list 32 'control) ergoemacs-theme--svg))
+                        (push (list "SPC" 'control) ergoemacs-theme--svg))
                        ((string-match-p "^F" (match-string 2))
                         (push (list (match-string 2) 'control) ergoemacs-theme--svg))
                        (t
