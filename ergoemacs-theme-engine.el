@@ -660,11 +660,7 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
          (if (string= key "f#")
              (setq key (aref (read-kbd-macro (concat "<" (downcase (car elt)) ">")) 0))
            (setq key (string-to-char key)))
-         (if (eq (nth 1 elt) 'apps)
-             (if ergoemacs-theme--svg-prefix
-                 (setq key (vector key))
-               (setq key (vconcat (or (and (eq system-type 'windows-nt) [apps]) [menu]) (vector key))))
-           (setq key (vector (event-convert-list (append (cdr elt) (list key))))))
+         (setq key (vector (event-convert-list (append (cdr elt) (list key)))))
          (setq no-push-p nil)
          (when (equal key [27])
            (setq no-push-p t))
@@ -714,11 +710,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
        (concat (ergoemacs-key-description--modifier elt)
                (ergoemacs-key-description--modifier 'shift)
                (format " == %s shift" elt)))
-      ((eq elt 'apps)
-       (if ergoemacs-theme--svg-prefix
-           "Key without any modifiers"
-         ""))
-         ;; ""))
       ((eq elt 'title)
        (concat lay
                (or (and ergoemacs-theme--svg-prefix
@@ -784,8 +775,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                       (push (list (string-to-number (match-string 2)) 'meta) ergoemacs-theme--svg))
                      ((and (string= "C" (match-string 1)))
                       (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))
-                     ((and (string= "A" (match-string 1)))
-                      (push (list (string-to-number (match-string 2)) 'apps) ergoemacs-theme--svg))
                      ((string= "title" (match-string 1))
                       (push 'title ergoemacs-theme--svg))
                      ((string= "N" (match-string 1))
@@ -830,18 +819,6 @@ See also `find-function-recenter-line' and `find-function-after-hook'."
                         (push (list (match-string 2) 'control) ergoemacs-theme--svg))
                        (t
                         (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))))
-                     ((string= "AA" (match-string 1))
-                      (cond
-                       ((string= "" (match-string 2))
-                        (push 'apps ergoemacs-theme--svg))
-                       ((string= "-SPC" (match-string 2))
-                        (push (list 32 'apps) ergoemacs-theme--svg))
-                       ((string-match-p "^F" (match-string 2))
-                        (push (list (match-string 2) 'apps) ergoemacs-theme--svg))
-                       (t
-                        (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))
-                       )
-                      )
                      (t (push nil ergoemacs-theme--svg))
                      )
                     (setq pt (match-end 0))

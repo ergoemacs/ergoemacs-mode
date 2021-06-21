@@ -194,30 +194,6 @@ KEY-SEQ must be a vector or string.  If there is no need to change the sequence,
           (push event seq))))
       (and found (vconcat seq)))))
 
-(defun ergoemacs-translate--swap-apps (key &optional what with)
-  "In KEY, swap apps key with menu key.
-Optionally specify WHAT you want to replace WITH.
-
-If no changes have been done, return nil."
-  (let ((seq (reverse (append key ())))
-        (what (or what 'apps))
-        (with (or with 'menu))
-        found-p
-        ret)
-    (dolist (e seq)
-      (cond
-       ((eq e what)
-        (push with ret)
-        (setq found-p t))
-       (t (push e ret))))
-    (if found-p
-        (vconcat ret)
-      nil)))
-
-(defun ergoemacs-translate--swap-menu (key)
-  "In KEY swap menu key with apps key."
-  (ergoemacs-translate--swap-apps key 'menu 'apps))
-
 (defun ergoemacs-translate--to-vector (key)
   "Translates KEY to vector format.
 
@@ -244,8 +220,6 @@ If no chanegs are performed, return nil."
 (defvar ergoemacs-translate--apply-funs
   '(ergoemacs-translate--escape-to-meta
     ergoemacs-translate--meta-to-escape
-    ergoemacs-translate--swap-apps
-    ergoemacs-translate--swap-menu
     ergoemacs-translate--to-string
     ergoemacs-translate--to-vector
     )
@@ -372,11 +346,6 @@ MODIFIERS is the precalculated modifiers from
            new-modifiers
            new-event
            (translation-hash (ergoemacs-translate--get-hash layout-to layout-from)))
-      (cond
-       ((and (eq system-type 'windows-nt) (eq basic 'menu))
-        (setq basic 'apps))
-       ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
-        (setq basic 'menu)))
       (if (memq 'ergoemacs-control modifiers)
           (setq new-event basic
                 new-modifiers modifiers)
@@ -523,10 +492,6 @@ make the translation."
              (not just-first-p))
         (setq translated-event
               (ergoemacs-translate--event-layout event layout-to layout-from basic modifiers)))
-       ((and (eq system-type 'windows-nt) (eq basic 'menu))
-        (setq translated-event (ergoemacs-translate--event-convert-list (append modifiers '(apps)))))
-       ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
-        (setq translated-event (ergoemacs-translate--event-convert-list (append modifiers '(menu)))))
        (t (setq translated-event event)))
       (setq untranslated (vconcat untranslated (list event))
             ret (vconcat ret (list translated-event))))
