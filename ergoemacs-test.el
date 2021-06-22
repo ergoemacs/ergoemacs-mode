@@ -66,7 +66,6 @@
 (declare-function ergoemacs-paste "ergoemacs-functions")
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
-(declare-function ergoemacs-map--modify-active "ergoemacs-map")
 
 (declare-function ergoemacs-translate--event-mods "ergoemacs-translate")
 (declare-function ergoemacs-translate--quail-to-ergoemacs "ergoemacs-translate")
@@ -489,7 +488,6 @@ ergoemacs-mode.el:949:;;; ergoemacs-mode.el ends here
 Grep finished (matches found) at Fri Aug 22 08:30:37
 ")
      (grep-mode)
-     ;; (ergoemacs-map--modify-active)
      (goto-char (point-min))
      (execute-kbd-macro macro)
      (should (string= (buffer-substring (point) (+ 16 (point)))
@@ -527,7 +525,6 @@ Grep finished (matches found) at Fri Aug 22 08:30:37
        (delete-region (point-min) (point-max))
        (insert ergoemacs-test-lorem-ipsum)
        (org-mode)
-       (ergoemacs-map--modify-active)
        (should (eq (key-binding (kbd "<M-right>")) 'ergoemacs-org-metaright))
        (should (eq (key-binding (kbd "<M-left>")) 'ergoemacs-org-metaleft))
        (should (eq (key-binding (kbd "<M-up>")) 'ergoemacs-org-metaup))
@@ -871,7 +868,6 @@ Tests Issue #372."
                                (define-key dired-mode-map "|" 'dired-sort-menu-toggle-reverse)
                                ))
   (dired ergoemacs-dir)
-  (ergoemacs-map--modify-active)
   (should (equal (key-binding (kbd "s s")) '(lambda () "sort by Size" (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso")))))
   (should (equal (key-binding (kbd "s .")) '(lambda () "sort by eXtension" (interactive) (dired-sort-other (concat dired-listing-switches "X")))))
   (should (equal (key-binding (kbd "s t")) '(lambda () "sort by Time" (interactive) (dired-sort-other (concat dired-listing-switches "t")))))
