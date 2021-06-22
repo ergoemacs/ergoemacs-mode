@@ -1005,6 +1005,8 @@ calling any other ergoemacs-set-* function"
                           (help-for-help menu-item "Help for Help..."
                                          help-for-help
                                          :help "Emacs main help command")
+                          (key-bindings menu-item "Global Key Bindings"
+                                        ergoemacs-describe-current-theme)
                           (separator-1 menu-item  "--")
                           (apropos menu-item "Apropos (Find matching)"
                                    (keymap
@@ -1063,8 +1065,6 @@ calling any other ergoemacs-set-* function"
                                      (curr-syntax menu-item "Current Syntax Table"
                                                   describe-syntax
                                                   :help "Describe the syntax specifications in the current syntax table")))
-                          (key-bindings menu-item "Key Bindings"
-                                        ergoemacs-describe-current-theme)
                           (learn-more menu-item "Learn More"
                                       (keymap
                                        (emacs menu-item"Emacs"
