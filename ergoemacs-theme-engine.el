@@ -69,7 +69,6 @@
 (declare-function ergoemacs-save "ergoemacs-lib")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
 (declare-function ergoemacs-component-struct--component-description "ergoemacs-component")
-(declare-function ergoemacs-layouts--menu "ergoemacs-layouts")
 (declare-function ergoemacs-component-at-point "ergoemacs-component")
 (declare-function ergoemacs-component-find-1 "ergoemacs-component")
 (declare-function ergoemacs-component--prompt "ergoemacs-component")
@@ -223,72 +222,6 @@ When AT-END is non-nil, append a $ to the regular expression."
   (let ((theme-ver (assoc (ergoemacs :current-theme) ergoemacs-theme-version)))
     (if (not theme-ver) nil
       (car (cdr theme-ver)))))
-
-(defun ergoemacs-theme--menu ()
-  "Define menus for current THEME."
-  `(keymap
-    ,(ergoemacs-layouts--menu)
-    (c-v
-     menu-item "Paste behavior"
-     (keymap
-      (c-v-multiple
-       menu-item "Repeating Paste pastes multiple times"
-       (lambda()
-         (interactive)
-         (ergoemacs-save 'ergoemacs-smart-paste nil))
-       :button (:radio . (eq ergoemacs-smart-paste 'nil)))
-      (c-v-cycle
-       menu-item "Repeating Paste cycles through previous pastes"
-       (lambda()
-         (interactive)
-         (ergoemacs-save 'ergoemacs-smart-paste t))
-       :button (:radio . (eq ergoemacs-smart-paste 't)))
-      (c-v-kill-ring
-       menu-item "Repeating Paste starts browse-kill-ring"
-       (lambda()
-         (interactive)
-         (ergoemacs-save 'ergoemacs-smart-paste 'browse-kill-ring))
-       :enable (condition-case err (interactive-form 'browse-kill-ring)
-                 (error nil))
-       :button (:radio . (eq ergoemacs-smart-paste 'browse-kill-ring)))))
-    (ergoemacs-sep-bash "--")
-    (ergoemacs-bash
-     menu-item "Make Bash aware of ergoemacs keys"
-     (lambda () (interactive)
-       (call-interactively 'ergoemacs-theme-create-bash)))
-    (ergoemacs-ahk
-     menu-item "Make Windows aware of ergoemacs keys (Requires Autohotkey)"
-     (lambda () (interactive)
-       (call-interactively 'ergoemacs-gen-ahk)))
-    (ergoemacs-sep-menu "--")
-    (ergoemacs-cheat
-     menu-item "Generate/Open Key binding Cheat Sheet"
-     ergoemacs-describe-current-theme)
-
-    (ergoemacs-save
-     menu-item "Save Settings for Future Sessions"
-     (lambda ()
-       (interactive)
-       (ergoemacs-exit-customize-save-customized)))
-
-    (ergoemacs-reset-cache
-     menu-item "Reset ergoemacs-mode cache"
-     (lambda ()
-       (interactive)
-       (ergoemacs-mode-clear-cache)))
-    
-    (ergoemacs-customize
-     menu-item "Customize ErgoEmacs"
-     (lambda ()
-       (interactive)
-       (customize-group 'ergoemacs-mode)))
-    (ergoemacs-mode-web-page
-     menu-item "Ergoemacs-mode web-page"
-     (lambda() (interactive)
-       (browse-url ergoemacs-mode-web-page-url)))
-    (ergoemacs-mode-exit
-     menu-item "Exit ergoemacs-mode"
-     (lambda() (interactive) (ergoemacs-mode -1)))))
 
 (defun ergoemacs-theme-at-point ()
   "Get the `ergoemacs-theme' defined at or before point.

@@ -405,30 +405,6 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
                 `(const :tag ,elt :value ,elt))
               (sort (ergoemacs-layouts--list t) 'string<))))
 
-(defun ergoemacs-layouts--menu ()
-  "Gets the keymap entry for ergoemacs-layouts."
-  `(ergoemacs-keyboard-layout
-    menu-item "Keyboard Layouts"
-    (keymap
-     ,@(mapcar
-        (lambda(lay)
-          (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
-                 (alias (condition-case nil
-                            (indirect-variable variable)
-                          (error variable)))
-                 (is-alias nil)
-                 (doc nil))
-            (setq doc (or (documentation-property variable 'variable-documentation)
-                          (progn
-                            (setq is-alias t)
-                            (documentation-property alias 'variable-documentation))))
-            `(,variable
-              menu-item ,(concat lay " - " doc)
-              (lambda() (interactive)
-                (ergoemacs-set-layout ,lay))
-              :button (:radio . (string= ergoemacs-keyboard-layout ,lay)))))
-        (sort (ergoemacs-layouts--list) 'string<)))))
-
 (defun ergoemacs-layouts--custom-documentation (&optional lays ini)
   "Get a documentation list of all known layouts.
 

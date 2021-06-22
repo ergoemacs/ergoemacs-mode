@@ -49,7 +49,6 @@
 (defvar ergoemacs-map--cache-save)
 (defvar ergoemacs-map--hash)
 (defvar ergoemacs-map-properties--plist-hash)
-(defvar ergoemacs-menu-keymap)
 (defvar ergoemacs-mode)
 (defvar ergoemacs-modify-transient-maps)
 (defvar ergoemacs-saved-global-map)
@@ -77,7 +76,6 @@
 
 (declare-function ergoemacs-theme--get-version "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
-(declare-function ergoemacs-theme--menu "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 
@@ -1059,8 +1057,6 @@ When INI is non-nil, add conditional maps to `minor-mode-map-alist'."
   "Install `ergoemacs-mode' into the appropriate keymaps."
   (interactive)
   (ergoemacs-mode-line)
-  (define-key ergoemacs-menu-keymap [menu-bar ergoemacs-mode]
-    `("ErgoEmacs" . ,(ergoemacs-theme--menu)))
   )
 
 (defvar ergoemacs-mode)

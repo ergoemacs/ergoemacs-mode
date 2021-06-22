@@ -129,9 +129,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defvar ergoemacs-saved-global-map nil
   "Saved global map.")
 
-(defvar ergoemacs-menu-keymap (make-sparse-keymap)
-  "ErgoEmacs minor-mode menu keymap.")
-
 (defvar ergoemacs-global-changed-keymap (make-sparse-keymap)
   "This keymap shows the global keys that were changed before `ergoemacs-mode' loaded.")
 
@@ -270,7 +267,6 @@ The `execute-extended-command' is now \\[execute-extended-command].
   :lighter " ErgoEmacs"
   :global t
   :group 'ergoemacs-mode
-  :keymap ergoemacs-menu-keymap
   (setq ergoemacs-mode--start-p t)
   (setq ergoemacs-map--hashkey nil)
 

@@ -984,7 +984,7 @@ calling any other ergoemacs-set-* function"
 (defun ergoemacs-set-menu-bar-help ()
   "Help menu"
   (global-set-key [menu-bar help-menu]
-                  (cons (if (eq system-type 'darwin) "Help" "?")
+                  (cons "Help"
                         `(keymap
                           ;; Adapted from Menu-bar+
                           (whoops menu-item "Whoops!?"
@@ -1048,11 +1048,7 @@ calling any other ergoemacs-set-* function"
                                      (coding menu-item "Coding System..."
                                              describe-coding-system)
                                      (separator-ergoemacs-describe "--")
-                                     (theme-component menu-item "Ergoemacs Component"
-                                                      describe-ergoemacs-component)
-                                     (theme menu-item "Ergoemacs Theme"
-                                            describe-ergoemacs-theme)
-                                     (layout menu-item "Ergoemacs Layout"
+                                     (layout menu-item "Keyboard Layout"
                                             describe-ergoemacs-layout)
                                      (separator-curr-modes menu-item "--")
                                      (curr-major-mode menu-item "Current Major Mode"
@@ -1067,6 +1063,8 @@ calling any other ergoemacs-set-* function"
                                      (curr-syntax menu-item "Current Syntax Table"
                                                   describe-syntax
                                                   :help "Describe the syntax specifications in the current syntax table")))
+                          (key-bindings menu-item "Key Bindings"
+                                        ergoemacs-describe-current-theme)
                           (learn-more menu-item "Learn More"
                                       (keymap
                                        (emacs menu-item"Emacs"
