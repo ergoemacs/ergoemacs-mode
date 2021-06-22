@@ -69,8 +69,6 @@
 (declare-function ergoemacs-map-properties--key-lessp "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--key-hash "ergoemacs-map-properties")
 
-(declare-function ergoemacs-map--cache-- "ergoemacs-map")
-
 (declare-function ergoemacs-component--help-link "ergoemacs-component")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
