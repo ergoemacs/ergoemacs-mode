@@ -922,30 +922,6 @@ OBJECT is the `ergoemacs-component-struct' object being changed."
 
 (defvar ergoemacs-component-struct--refresh-variables nil)
 
-(defun ergoemacs-component-find-no-select (component &optional type)
-  "Find COMPONENT of TYPE.
-
-TYPE can be 'ergoemacs-theme, if not it defaults to a single component."
-  (let* ((comp (or (and (eq type 'ergoemacs-theme)
-                        (ergoemacs-gethash (format "%s" (or component "standard")) ergoemacs-theme-hash))
-                   (ergoemacs-component-struct--lookup-hash (or component ""))))
-         (plist (and comp (or (and (eq type 'ergoemacs-theme) comp)
-                              (ergoemacs-component-struct-plist comp))))
-         (file (and comp (plist-get plist :file)))
-         (el-file (and file (concat (file-name-sans-extension file) ".el")))
-         (name (plist-get plist :name))
-         (sym (intern name))
-         loc)
-    (if (not comp)
-        (message "Invalid %s %s" (or (and (eq type 'ergoemacs-theme) "theme")
-                                     "component") component)
-      (setq loc (find-function-search-for-symbol sym (or type 'ergoemacs-component) el-file))
-      (when (and (eq type 'ergoemacs-component) (not (cdr loc)) (< 6 (length name)))
-        (setq sym (intern (substring name 0 -6))
-              loc (find-function-search-for-symbol
-                   sym (or type 'ergoemacs-component) el-file)))
-      loc)))
-
 (defun ergoemacs-component-at-point (&optional theme-instead)
   "Get the `ergoemacs-component' defined at or before point.
 
