@@ -429,13 +429,11 @@ file."
            (concat "\"" lay "\" (" doc ")" (if is-alias ", alias" "")))))
      lays "\n")))
 
-(defvar ergoemacs-layouts--no-aliases nil)
 (defvar ergoemacs-layouts--aliases nil)
 
 (defun ergoemacs-layouts--reset ()
   "Reset Layout information."
   (interactive)
-  (setq ergoemacs-layouts--no-aliases nil)
   (setq ergoemacs-layouts--aliases nil))
 
 (defun ergoemacs-layouts--list (&optional aliases ob)
@@ -444,9 +442,6 @@ file."
 When ALIASES is non-nil, list aliases and actuval variables.
 
 OB is the object array."
-  (if (and ergoemacs-layouts--no-aliases
-           (not aliases))
-      ergoemacs-layouts--no-aliases
     (if (and ergoemacs-layouts--aliases
              aliases)
         ergoemacs-layouts--aliases
@@ -464,8 +459,8 @@ OB is the object array."
          ob)
         (if aliases
             (setq ergoemacs-layouts--aliases nil)
-          (setq ergoemacs-layouts--no-aliases nil))
-        ret))))
+          )
+        ret)))
 
 (defun ergoemacs-layout (layout)
   "Set the ergoemacs layout to LAYOUT."

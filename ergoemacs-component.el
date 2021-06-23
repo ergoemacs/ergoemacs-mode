@@ -87,8 +87,6 @@
 
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 (declare-function ergoemacs-layout--regexp "ergoemacs-layouts")
-(declare-function ergoemacs-layouts--list "ergoemacs-layouts")
-
 
 ;; ergoemacs-translate
 
