@@ -526,8 +526,6 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
   (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail))
 
 
-(defalias 'ergoemacs-layout 'ergoemacs-set-layout)
-
 (define-button-type 'ergoemacs-layout-help
   :supertype 'help-xref
   'help-function #'ergoemacs-layout-describe
