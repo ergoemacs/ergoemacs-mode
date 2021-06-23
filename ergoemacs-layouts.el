@@ -388,7 +388,6 @@
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
 (declare-function ergoemacs-translate--svg-layout "ergoemacs-translate")
 (declare-function ergoemacs-translate--png-layout "ergoemacs-translate")
-(declare-function ergoemacs-component--prompt "ergoemacs-component")
 (declare-function quail-insert-kbd-layout "quail")
 
 (defun ergoemacs-layouts--current (&optional layout)
@@ -543,11 +542,26 @@ expression matching the base layout."
              (base f2)
              (t f1)) (regexp-opt (ergoemacs-layouts--list) t))))
 
+(defun ergoemacs-layout--prompt ()
+  "Prompt for component or theme (when THEME-INSTEAD is non-nil)."
+  (let ((c ergoemacs-keyboard-layout)
+        (enable-recursive-minibuffers t)
+        val)
+    (setq val (completing-read (if (or (symbolp c) (stringp c))
+                                   (format
+                                    "Describe ergoemacs layout (default %s): "
+                                    c)
+                                 "Describe ergoemacs layout: ")
+                               ergoemacs-layouts--list
+                               nil t nil nil
+                               (format "%s" c)))
+    (list (or (and (equal val "") (format "%s" c)) val))))
+
 (defun ergoemacs-layout-describe (&optional layout)
   "Display the full documentation of an `ergoemacs-mode' LAYOUT.
 
 LAYOUT can be either a symbol or string."
-  (interactive (ergoemacs-component--prompt :layout))
+  (interactive (ergoemacs-layout--prompt))
   (let* ((layout (or (and layout
                           (or (and (stringp layout) layout)
                               (and (symbolp layout) (symbol-name layout))))

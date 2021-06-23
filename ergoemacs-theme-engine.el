@@ -71,7 +71,6 @@
 (declare-function ergoemacs-component-struct--component-description "ergoemacs-component")
 (declare-function ergoemacs-component-at-point "ergoemacs-component")
 (declare-function ergoemacs-component-find-1 "ergoemacs-component")
-(declare-function ergoemacs-component--prompt "ergoemacs-component")
 (declare-function ergoemacs-require "ergoemacs-lib")
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 (declare-function ergoemacs-key-description "ergoemacs-key-description")

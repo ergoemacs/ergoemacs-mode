@@ -43,7 +43,6 @@
 
 (declare-function ergoemacs-mode-line "ergoemacs-mode")
 
-(declare-function ergoemacs-layout--regexp "ergoemacs-layouts")
 (declare-function ergoemacs-layouts--list "ergoemacs-layouts")
 
 (declare-function ergoemacs-map-properties--movement-p "ergoemacs-map-properties")

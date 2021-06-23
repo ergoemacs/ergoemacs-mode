@@ -1165,50 +1165,6 @@ Return 0 if there is no such symbol.  Based on
                   (and (ergoemacs-gethash (symbol-name sym) hash-table) sym)))))
           0))))
 
-(defun ergoemacs-component--prompt (&optional theme-instead)
-  "Prompt for component or theme (when THEME-INSTEAD is non-nil)."
-  (let ((c (or (and (eq theme-instead :layout) ergoemacs-keyboard-layout)
-               (ergoemacs-component-at-point theme-instead)))
-        (enable-recursive-minibuffers t)
-        val)
-    (setq val (completing-read (if (or (symbolp c) (stringp c))
-                                   (format
-                                    "Describe ergoemacs %s (default %s): "
-                                    (or (and (eq theme-instead :layout) "layout")
-                                        (and theme-instead "theme") "component")
-                                    c)
-                                 (format
-                                  "Describe ergoemacs %s: "
-                                  (or (and (eq theme-instead :layout) "layout")
-                                      (and theme-instead "theme") "component")))
-                               (or (and (eq theme-instead :layout) (ergoemacs-layouts--list))
-                                   (and theme-instead ergoemacs-theme-hash)
-                                   ergoemacs-component-hash)
-                               nil
-                               ;; (lambda (vv)
-                               ;;   (or (get vv 'variable-documentation)
-                               ;;       (and (boundp vv) (not (keywordp vv)))))
-                               t nil nil
-                               (format "%s" c)))
-    (list (or (and (equal val "") (format "%s" c)) val))))
-
-(defun ergoemacs-component-cached-p (component)
-  "Determine if COMPONENT is cached instead of loaded."
-  (let* ((component (and component
-                         (or (and (stringp component) component)
-                             (and (symbolp component) (symbol-name component)))))
-         (comp (ergoemacs-component-struct--lookup-hash (or component "")))
-         (plist (ergoemacs-component-struct-plist comp))
-         (file (plist-get plist :file))
-         (el-file (and file (concat (file-name-sans-extension file) ".el")))
-         (elc-file (and file (concat (file-name-sans-extension file) ".elc"))))
-    (when file
-      (catch 'loaded
-	(dolist (load load-history)
-	  (when (or (string= elc-file (car load))
-		    (string= el-file (car load)))
-	    (throw 'loaded nil))) t))))
-
 (provide 'ergoemacs-component)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-component.el ends here

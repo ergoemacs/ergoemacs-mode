@@ -447,7 +447,7 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
     ret))
 
 (defun ergoemacs-key-description--setup-xrefs ()
-  "Setup cross refecnes in help buffer."
+  "Setup cross refences in help buffer."
   (ergoemacs-component--help-link))
 
 (add-hook 'temp-buffer-show-hook 'ergoemacs-key-description--setup-xrefs)
