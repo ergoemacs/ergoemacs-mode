@@ -35,8 +35,6 @@
   (require 'ergoemacs-macros))
 
 
-(declare-function ergoemacs-warn "ergoemacs-lib")
-
 (declare-function guide-key/close-guide-buffer "guide-key")
 (declare-function guide-key/popup-function "guide-key")
 

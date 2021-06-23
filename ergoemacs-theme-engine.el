@@ -73,7 +73,6 @@
 (declare-function ergoemacs-component-find-1 "ergoemacs-component")
 (declare-function ergoemacs-component--prompt "ergoemacs-component")
 (declare-function ergoemacs-require "ergoemacs-lib")
-(declare-function ergoemacs-command-loop--message "ergoemacs-command-loop")
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 (declare-function ergoemacs-key-description--keymap "ergoemacs-key-description")
@@ -817,7 +816,7 @@ to png files."
 	     process)
 	(if (not png-info)
 	    (progn
-	      (ergoemacs-command-loop--message "Done creating png files.")
+	      (message "Done creating png files.")
 	      ;; FIXME: Update images...
 	      )
 	  
@@ -842,7 +841,7 @@ Requires `ergoemacs-inkscape' to be specified."
                           (format "%s \"%s\" -o \"%s\"" ergoemacs-inkscape svg-file png-file)
 			  png-file) ergoemacs-theme--png)
               (push png-file ret))
-          (message "Need inkscape and to specify inkscape location with `ergoemacs-inkscape'.")
+          (message "Need inkscape to generate png.  Specify inkscape location with `ergoemacs-inkscape'.")
           nil)))
     (ergoemacs-theme--png--process)
     ret))
