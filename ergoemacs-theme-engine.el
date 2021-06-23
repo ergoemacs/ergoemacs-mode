@@ -70,7 +70,6 @@
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
 (declare-function ergoemacs-component-struct--component-description "ergoemacs-component")
 (declare-function ergoemacs-component-at-point "ergoemacs-component")
-(declare-function ergoemacs-component-find-1 "ergoemacs-component")
 (declare-function ergoemacs-require "ergoemacs-lib")
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
@@ -248,21 +247,6 @@ should insert the face name."
   'help-echo (purecopy "mouse-2, RET: describe ergoemacs keybindings"))
 
 (defvar ergoemacs-theme--svg-list nil)
-
-(defun ergoemacs-theme-find-definition (theme)
-  "Find the definition of THEME.  THEME defaults to the name near point.
-
-Finds the `ergoemacs-mode' containing the definition of the component
-near point (selected by `ergoemacs-theme-at-point') in a buffer and
-places point before the definition.
-
-Set mark before moving, if the buffer already existed.
-
-The library where FACE is defined is searched for in
-`find-function-source-path', if non-nil, otherwise in `load-path'.
-See also `find-function-recenter-line' and `find-function-after-hook'."
-  (interactive (list (ergoemacs-theme-at-point)))
-  (ergoemacs-component-find-1 theme 'ergoemacs-theme 'switch-to-buffer))
 
 (defun ergoemacs-theme-describe ()
   "Display the full documentation for Ergoemacs."

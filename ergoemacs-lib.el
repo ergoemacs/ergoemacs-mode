@@ -63,9 +63,6 @@
 (declare-function ergoemacs-translate--ahk-ini "ergoemacs-translate")
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
 
-(declare-function ergoemacs-component-find-definition "ergoemacs-component")
-(declare-function ergoemacs-component-find-1 "ergoemacs-component")
-
 (defun ergoemacs-setcdr (var val &optional default)
   "Use `setcdr' on VAL to VAL.
 If VAL is a symbol, use `ergoemacs-sv' to determine the value.

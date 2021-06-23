@@ -446,12 +446,6 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
       (setq ret (cons 'ergoemacs-component-help (nth 1 ret)))))
     ret))
 
-(defun ergoemacs-key-description--setup-xrefs ()
-  "Setup cross refences in help buffer."
-  (ergoemacs-component--help-link))
-
-(add-hook 'temp-buffer-show-hook 'ergoemacs-key-description--setup-xrefs)
-
 (defun ergoemacs-key-description--keymap-item (&optional elt keymap help)
   "Get keymap description for ELT based on KEYMAP.
 
