@@ -35,7 +35,6 @@
 (declare-function ergoemacs-translate--keymap "ergoemacs-translate")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
 
-(defvar ergoemacs-translate--parent-map)
 (defvar ergoemacs-map--)
 (defvar ergoemacs-layout-us)
 (defvar ergoemacs-keyboard-layout)
@@ -45,10 +44,6 @@
 (defvar ergoemacs-mode)
 (defvar dired-sort-map)
 (defvar dired-mode-map)
-(defvar cl-struct-ergoemacs-component-struct-tags)
-
-(declare-function ergoemacs-key-description "ergoemacs-key-description")
-
 
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
@@ -56,8 +51,6 @@
 (declare-function ergoemacs-mode "ergoemacs-mode")
 
 (declare-function ergoemacs-command-loop--mouse-command-drop-first "ergoemacs-command-loop")
-
-(declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-compononent")
 
 (declare-function ergoemacs-copy-line-or-region "ergoemacs-functions")
 (declare-function ergoemacs-cut-line-or-region "ergoemacs-functions")
@@ -67,11 +60,8 @@
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
-(declare-function ergoemacs-translate--event-mods "ergoemacs-translate")
 (declare-function ergoemacs-translate--quail-to-ergoemacs "ergoemacs-translate")
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
-(declare-function ergoemacs-translate--get "ergoemacs-translate")
-(declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")
 
 (require 'ert)
 (require 'elp)
@@ -87,13 +77,6 @@ nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
 reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est laborum.")
-
-(defun ergoemacs-test-require-input ()
-  "Run tests that require input."
-  (interactive)
-  (elp-instrument-package "ergoemacs-")
-  (ert '(and "ergoemacs-" (tag :require-input)))
-  (call-interactively 'elp-results))
 
 (defun ergoemacs-test-fast ()
   "Fast test of ergoemacs-mode (doesn't include keyboard startup issues)."
@@ -114,13 +97,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (interactive)
   (elp-instrument-package "ergoemacs-")
   (ert '(and "ergoemacs-" (tag :map-keymap)))
-  (call-interactively 'elp-results))
-
-(defun ergoemacs-test-copy ()
-  "Copy/Paste test for ergoemacs-mode."
-  (interactive)
-  (elp-instrument-package "ergoemacs-")
-  (ert '(and "ergoemacs-" (tag :copy)))
   (call-interactively 'elp-results))
 
 (defun ergoemacs-test-calc ()
@@ -165,7 +141,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
   (let ((ret t)
         (test))
     (elp-instrument-package "ergoemacs-")
-    (ert '(and "^ergoemacs-test-" (not (tag :require-input))))
+    (ert "^ergoemacs-test-")
     (call-interactively 'elp-results)))
 
 ;; Test isearch
