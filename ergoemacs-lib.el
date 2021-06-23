@@ -30,7 +30,6 @@
 (eval-when-compile
   (require 'ergoemacs-macros))
 
-(defvar powerline-default-separator-dir)
 (defvar mode-icons-show-mode-name)
 (defvar mode-icons-read-only-space)
 (defvar mode-icons-cached-mode-name)
@@ -51,9 +50,6 @@
 (declare-function ergoemacs-next-user-buffer "ergoemacs-functions")
 (declare-function ergoemacs-previous-emacs-buffer "ergoemacs-functions")
 (declare-function ergoemacs-previous-user-buffer "ergoemacs-functions")
-
-(declare-function powerline-current-separator "powerline")
-(declare-function powerline-selected-window-active "powerline")
 
 (declare-function mode-icons-get-mode-icon "mode-icons")
 
