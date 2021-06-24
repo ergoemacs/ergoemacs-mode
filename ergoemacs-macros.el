@@ -235,17 +235,6 @@ distinguish from the ASCII equivalents:
            remaining)))
     remaining))
 
-;;;###autoload
-(defmacro ergoemacs-component (&rest body-and-plist)
-  "A component of an ergoemacs-theme.
-
-This places BODY-AND-PLIST in the `ergoemacs-theme-component'
-macro."
-  (declare (doc-string 2)
-           (indent 2))
-  (macroexpand-all `(ergoemacs-theme-component ,@body-and-plist)))
-
-
 (defvar ergoemacs-theme-component-properties
   '(:bind
     :bind-keymap

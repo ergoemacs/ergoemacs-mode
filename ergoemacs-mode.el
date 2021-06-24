@@ -699,7 +699,6 @@ not be useful.  However instead of using
   (dolist (x ergoemacs-aliases)
     (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))))))
 
-(autoload 'ergoemacs-component "ergoemacs-macros")
 (autoload 'ergoemacs "ergoemacs-macros")
 
 (defcustom ergoemacs-keyboard-layout "us"
