@@ -424,8 +424,8 @@ calling any other ergoemacs-set-* function"
 )  
 
 (defun ergoemacs-set-move-buffer (keymap)
-  (ergoemacs-define-key keymap (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
-  (ergoemacs-define-key keymap (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer)
+  (ergoemacs-define-key keymap (kbd "M-n") 'beginning-of-buffer)
+  (ergoemacs-define-key keymap (kbd "M-N") 'end-of-buffer)
 
   (ergoemacs-define-key isearch-mode-map (kbd "M-n") 'isearch-beginning-of-buffer)
   (ergoemacs-define-key isearch-mode-map (kbd "M-N") 'isearch-end-of-buffer)
