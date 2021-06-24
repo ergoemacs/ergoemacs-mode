@@ -560,7 +560,7 @@ Optionally assume that CURRENT-VERSION is active"
        ((not (setq versions (ergoemacs-component-struct-versions comp)))
         comp)
        ((string= "" (setq versions (ergoemacs-component-struct--closest-version
-                                    (or current-version (ergoemacs :current-version))  versions)))
+                                    current-version versions)))
         comp)
        (t
         (ergoemacs-component-struct--lookup-hash (concat (ergoemacs-component-struct-name comp) versions)))))))

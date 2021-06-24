@@ -160,7 +160,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
             (old-type ergoemacs-command-loop-type)
             (old-paste interprogram-paste-function)
             (old-cut interprogram-cut-function)
-            (old-version (ergoemacs :current-version))
+            (old-version nil)
             (macro
              ,(if (plist-get plist :macro)
                   `(edmacro-parse-keys ,(plist-get plist :macro) t)))

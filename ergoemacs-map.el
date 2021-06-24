@@ -125,7 +125,7 @@
 When SYMBOL is a string/symbol generate a hash-key based on the symbol/string."
   (or (and symbol ergoemacs-map--hashkey
            (intern (format "%s-%s" symbol ergoemacs-map--hashkey)))
-      (let* ((val (format "%s" (append (list ergoemacs-keyboard-layout (ergoemacs :current-version)) (ergoemacs-theme-components))))
+      (let* ((val (format "%s" (append (list ergoemacs-keyboard-layout nil) (ergoemacs-theme-components))))
              (md5 (md5 val)))
         (setq ergoemacs-map--hashkey (intern md5)))))
 

@@ -691,8 +691,6 @@ When arg1 can be a property.  The following properties are supported:
      ((and arg1 (symbolp arg1) (eq arg1 :modifier-desc)
            arg2)
       `(mapconcat #'ergoemacs-key-description--modifier ,arg2 ""))
-     ((and arg1 (symbolp arg1) (eq arg1 :current-version))
-      `(ergoemacs-theme--get-version))
      ((and arg1 (symbolp arg1) (eq arg1 :current-theme))
       `(or (and ergoemacs-theme (stringp ergoemacs-theme) ergoemacs-theme)
            (and ergoemacs-theme (symbolp ergoemacs-theme) (symbol-name ergoemacs-theme))
