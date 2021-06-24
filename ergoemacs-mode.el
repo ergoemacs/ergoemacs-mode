@@ -107,20 +107,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :group 'convenience
   :group 'emulations)
 
-(defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
-                               ergoemacs-variant
-                             (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
-                                 ergoemacs-theme
-                                 nil))
-  "Ergoemacs Keyboard Layout Themes."
-  :type '(choice
-          (const :tag "Standard" :value nil)
-          (choice (symbol :tag "Other (symbol)")
-                  (string :tag "Other (string)")))
-  :set 'ergoemacs-set-default
-  :initialize #'custom-initialize-default
-  :group 'ergoemacs-mode)
-
 ;;; ergoemacs-keymap
 
 (defvar ergoemacs-keymap (make-sparse-keymap)
@@ -150,7 +136,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :group 'ergoemacs-mode)
 
 
-(defvar ergoemacs-theme)
 (defcustom ergoemacs-mode-line t
   "Determines when the ergoemacs-mode modeline indicator is shown."
   :type '(choice
@@ -715,7 +700,6 @@ not be useful.  However instead of using
     (eval (macroexpand `(defalias ',(nth 0 x) ',(nth 1 x))))))
 
 (autoload 'ergoemacs-component "ergoemacs-macros")
-(autoload 'ergoemacs-theme "ergoemacs-macros")
 (autoload 'ergoemacs "ergoemacs-macros")
 
 (defcustom ergoemacs-keyboard-layout "us"

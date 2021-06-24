@@ -38,7 +38,6 @@
 (defvar ergoemacs-map--)
 (defvar ergoemacs-layout-us)
 (defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-theme)
 (defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-dir)
 (defvar ergoemacs-mode)

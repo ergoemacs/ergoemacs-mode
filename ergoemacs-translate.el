@@ -62,7 +62,6 @@
 (defvar ergoemacs-translate--hash)
 (defvar ergoemacs-translate--event-hash)
 (defvar ergoemacs-dir)
-(defvar ergoemacs-theme)
 (defvar ergoemacs-inkscape)
 (defvar ergoemacs-command-loop--universal-functions)
 
