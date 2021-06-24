@@ -107,33 +107,6 @@
 
 ;;; Translation between layouts
 
-(cl-defstruct ergoemacs-component-struct
-  "A basic ergoemacs component map structure."
-  (name "default-name")
-  (plist '())
-  (map nil)
-  (maps (make-hash-table))
-  (cond-maps (make-hash-table))
-  (hook-maps (make-hash-table))
-  (hook-plists (make-hash-table))
-  (when-condition nil)
-  (hook nil)
-  (dynamic-keys '())
-  (version nil)
-  (versions '())
-  (undefined '())
-  (unbind '())
-  (variables nil)
-  (just-first-keys nil :read-only t)
-  (variable-modifiers '(meta) :read-only t)
-  (variable-prefixes '([apps] [menu] [27]) :read-only t)
-  (package-name nil)
-  (autoloads nil)
-  (layout "us" :read-only t)
-  (calculated-layouts (make-hash-table :test 'equal))
-  (relative-to 'global-map)
-  (defer nil))
-
 (defvar ergoemacs-component-struct--define-key-current nil)
 
 (defun ergoemacs-component-struct--parse-list (list function &rest args)
