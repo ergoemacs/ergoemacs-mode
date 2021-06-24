@@ -79,8 +79,6 @@
 (declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 
-(declare-function ergoemacs-map-- "ergoemacs-map")
-
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 
 (declare-function ergoemacs-key-description "ergoemacs-key-description")

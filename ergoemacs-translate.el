@@ -83,8 +83,6 @@
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
 
-(declare-function ergoemacs-map-- "ergoemacs-map")
-
 (declare-function ergoemacs-translate--key-description "ergoemacs-translate")
 
 (fset #'ergoemacs-translate--key-description (symbol-function #'key-description))

@@ -61,7 +61,6 @@
 (declare-function cua-set-rectangle-mark "cua-rect")
 (declare-function dired-get-marked-files "dired")
 
-(declare-function ergoemacs-map-- "ergoemacs-map")
 (declare-function ergoemacs-mode "ergoemacs-mode")
 
 (declare-function ergoemacs-theme-describe "ergoemacs-theme-engine")
