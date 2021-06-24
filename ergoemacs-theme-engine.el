@@ -94,7 +94,7 @@
 (defun ergoemacs-theme-components (&optional theme)
   "Get a list of components used for the current theme.
 This respects `ergoemacs-theme-options'."
-  (let* ((theme (or theme (ergoemacs :current-theme)))
+  (let* ((theme "standard")
          (theme-plist (ergoemacs-gethash theme ergoemacs-theme-hash))
          components opt first tmp required)
     (if (not theme)
@@ -193,12 +193,6 @@ When AT-END is non-nil, append a $ to the regular expression."
     (when at-end
       (setq ret (concat ret "$")))
     ret))
-
-(defun ergoemacs-theme--get-version ()
-  "Get the current version for the current theme."
-  (let ((theme-ver (assoc (ergoemacs :current-theme) ergoemacs-theme-version)))
-    (if (not theme-ver) nil
-      (car (cdr theme-ver)))))
 
 (defun ergoemacs-theme-at-point ()
   "Get the `ergoemacs-theme' defined at or before point.

@@ -176,14 +176,18 @@ The TEXT will be what the mode-line is set to be."
                       (if (not (eq 'ergoemacs-mode (nth 0 x)))
                           x
                         `(ergoemacs-mode ,(if (or (not ergoemacs-mode-line) (eq ergoemacs-mode-line 'no-layout)) ""
-                                            (concat
-                                             (if (string= "standard" (ergoemacs :current-theme))
-                                                 " ErgoEmacs"
-                                               (concat " Ergo"
-                                                       (upcase (substring (ergoemacs :current-theme) 0 1))
-                                                       (substring (ergoemacs :current-theme) 1)))
-                                             "[" ergoemacs-keyboard-layout "]")))))
-                    minor-mode-alist)))))
+                                            (concat " ErgoEmacs"
+                                                    "[" ergoemacs-keyboard-layout "]")
+                                            )
+                                         )
+                        )
+                      )
+                    minor-mode-alist
+                    )
+            )
+      )
+    )
+  )
 
 (defconst ergoemacs-font-lock-keywords
   '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\|-timing\\|-package\\|-autoload\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"

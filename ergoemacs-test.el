@@ -156,8 +156,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
           plist (nth 0 kb)
           body (nth 1 kb))
     (macroexpand-all
-     `(let ((old-ergoemacs-theme (ergoemacs :current-theme))
-            (old-type ergoemacs-command-loop-type)
+     `(let ((old-type ergoemacs-command-loop-type)
             (old-paste interprogram-paste-function)
             (old-cut interprogram-cut-function)
             (old-version nil)
@@ -166,8 +165,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
                   `(edmacro-parse-keys ,(plist-get plist :macro) t)))
             (old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
             (reset-ergoemacs nil))
-        (setq ergoemacs-theme ,(plist-get plist ':current-theme)
-              ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us")
+        (setq ergoemacs-keyboard-layout ,(or (plist-get plist ':layout) "us")
               ergoemacs-command-loop-type nil
               interprogram-paste-function nil
               interprogram-cut-function nil
@@ -175,9 +173,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
               ;; Make sure the copy functions don't think the last
               ;; command was a copy.
               last-command 'ergoemacs-test)
-        (unless (and (equal old-ergoemacs-theme ergoemacs-theme)
-                     (equal old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
-                     (equal old-version (ergoemacs :current-vresion)))
+        (unless (equal old-ergoemacs-keyboard-layout ergoemacs-keyboard-layout)
           (setq reset-ergoemacs t)
           (ergoemacs-mode-reset))
         
@@ -187,7 +183,6 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
             (progn
               ,@body)
           (setq ergoemacs-command-loop-type old-type
-                ergoemacs-theme old-ergoemacs-theme
                 ergoemacs-keyboard-layout old-ergoemacs-keyboard-layout
                 interprogram-paste-function old-paste
                 interprogram-cut-function old-cut
@@ -581,7 +576,6 @@ See Issue #138."
           (insert (format "(global-set-key (kbd \"%s\") nil)" delete-def)))
         (insert sk))
       (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
-      (insert "(setq ergoemacs-theme nil)")
       (insert "(setq ergoemacs-keyboard-layout \"us\")")
       (unless ignore-prev-global
         (insert "(setq ergoemacs-ignore-prev-global nil)"))
@@ -630,7 +624,6 @@ See Issue #138."
       (insert "(eval-when-compile (load (expand-file-name \"ergoemacs-macros\")) (require 'cl-lib))"
               (or (and (boundp 'wait-for-me)
                        "(setq debug-on-error t debug-on-quit t)") "")
-	      "(setq ergoemacs-theme nil)"
 	      "(setq ergoemacs-keyboard-layout \"us\")"
               "(ergoemacs-mode 1)\n"
 	      "(global-set-key (kbd \"C-SPC\") 'set-mark-command)\n"
@@ -668,7 +661,6 @@ See Issue #138."
       (insert "(eval-when-compile (require 'ergoemacs-macros) (require 'cl-lib))"
               (or (and (boundp 'wait-for-me)
                        "(setq debug-on-error t debug-on-quit t)") "")
-	      "(setq ergoemacs-theme nil)"
 	      "(setq ergoemacs-keyboard-layout \"us\")"
               "(ergoemacs-mode 1)\n"
 	      "(global-set-key (kbd \"C-SPC\") 'set-mark-command)\n"
@@ -713,7 +705,6 @@ See Issue #138."
     (with-temp-file temp-file
       (insert "(condition-case err (progn ")
       (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
-      (insert "(setq ergoemacs-theme nil)")
       (insert "(setq ergoemacs-keyboard-layout \"us\")")
       (insert "(setq ergoemacs-command-loop-type nil)")
       (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(setq ergoemacs-mode--start-p t)(ergoemacs-mode 1)")
@@ -771,7 +762,6 @@ See Issue #138."
     (with-temp-file temp-file
       (insert "(condition-case err (progn ")
       (insert (format "(add-to-list 'load-path \"%s\")" ergoemacs-dir))
-      (insert "(setq ergoemacs-theme nil)")
       (insert "(setq ergoemacs-keyboard-layout \"us\")")
       (insert "(setq ergoemacs-command-loop-type nil)")
       (insert "(require 'ergoemacs-mode)(require 'ergoemacs-test)(setq ergoemacs-mode--start-p t)(ergoemacs-mode 1)")
