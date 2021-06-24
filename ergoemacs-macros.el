@@ -51,57 +51,6 @@ If SYMBOL is void, return nil"
        (ignore-errors (default-value ,symbol))
      (ignore-errors (symbol-value ,symbol))))
 
-;; This shouldn't be called at run-time; This fixes the byte-compile warning.
-
-(fset 'ergoemacs-theme-component--parse-key-str
-      #'(lambda (str)
-          "Wraps C-i, C-m and C-[ in <>."
-          (cond
-           ((not (stringp str)) str)
-           ((string-match-p "^\\(?:M-\\|S-\\)*C-\\(?:M-\\|S-\\)*[im[]$" str) (concat "<" str ">"))
-           (t str))))
-
-(fset 'ergoemacs-theme-component--parse-key
-      #'(lambda  (item)
-          "Changes `kbd' and `read-kbd-macro' on C-i, C-m, and C-[ to allow calling on GUI."
-          (cond
-           ((not (consp item)) item)
-           ((eq (nth 0 item) 'kbd)
-            (list 'kbd (ergoemacs-theme-component--parse-key-str (nth 1 item))))
-           ((eq (nth 0 item) 'read-kbd-macro)
-            (list 'read-kbd-macro (ergoemacs-theme-component--parse-key-str (nth 1 item)) (nth 2 item)))
-           (t item))))
-
-(fset 'ergoemacs-theme-component--parse-fun
-      #'(lambda (fun)
-          "Determine how FUN should be used with `ergoemacs-component-struct--define-key'."
-          (let (tmp)
-            (or (and (ergoemacs-keymapp (ergoemacs-sv fun)) `(quote ,fun))
-                (ignore-errors
-                  (and (consp fun)
-                       (stringp (nth 0 fun))
-                       (symbolp (nth 1 fun))
-                       (eq (nth 1 fun) :emacs)
-                       (setq tmp (lookup-key global-map (read-kbd-macro (nth 0 fun))))
-                       (commandp tmp)
-                       `(quote ,tmp)))
-                (ignore-errors
-                  (and (consp fun)
-                       (eq 'quote (nth 0 fun))
-                       (consp (nth 1 fun))
-                       (stringp (nth 0 (nth 1 fun)))
-                       (symbolp (nth 1 (nth 1 fun)))
-                       (eq (nth 1 (nth 1 fun)) :emacs)
-                       (setq tmp (lookup-key global-map (read-kbd-macro (nth 0 (nth 1 fun)))))
-                       (commandp tmp)
-                       `(quote ,tmp)))
-                (ignore-errors
-                  (and (consp fun)
-                       (stringp (nth 0 fun))
-                       (symbolp (nth 1 fun))
-                       `(quote ,fun)))
-                fun))))
-
 (defvar ergoemacs-theme-component-properties
   '(:bind
     :bind-keymap
