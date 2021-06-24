@@ -162,14 +162,6 @@ If OFF is non-nil, turn off the options instead."
   (when ergoemacs-mode
     (ergoemacs-mode-reset)))
 
-;;;###autoload
-(defun ergoemacs-theme-toggle-option (option)
-  "Toggle theme OPTION."
-  (if (ergoemacs-theme-option-enabled-p option)
-      (ergoemacs-theme-option-off option)
-    (ergoemacs-theme-option-on option)))
-
-
 (defun ergoemacs-theme--custom-documentation (&optional themes ini)
   "Get list of all known layouts and their documentation.
 
@@ -201,18 +193,6 @@ When AT-END is non-nil, append a $ to the regular expression."
     (when at-end
       (setq ret (concat ret "$")))
     ret))
-
-(defun ergoemacs-theme-option-enabled-p (option)
-  "Determines if OPTION is enabled."
-  (let* ((plist (ergoemacs-gethash (ergoemacs :current-theme) ergoemacs-theme-hash))
-         (options-on (plist-get plist :optional-on))
-         (options-off (plist-get plist :optional-off))
-         (required (plist-get plist :components)))
-    (or (member option required)
-        (and (member option options-on)
-             (not (member (list option 'off) ergoemacs-theme-options)))
-        (and (member option options-off)
-             (member (list option 'on) ergoemacs-theme-options)))))
 
 (defun ergoemacs-theme--get-version ()
   "Get the current version for the current theme."

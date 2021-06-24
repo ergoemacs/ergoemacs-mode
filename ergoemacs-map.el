@@ -73,7 +73,6 @@
 (declare-function ergoemacs-component-struct--minor-mode-map-alist "ergoemacs-component")
 (declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
 
-(declare-function ergoemacs-theme--get-version "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
