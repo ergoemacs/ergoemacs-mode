@@ -366,51 +366,6 @@ Allows the component not to be calculated."
       (ergoemacs-sv def))
      (t def))))
 
-(defun ergoemacs-component-struct--refresh-keys (&optional obj)
-  "Refreshes the keys in OBJ based on any new interactive functions found."
-  (let ((obj (or obj (ergoemacs-theme-components))))
-    (if (consp obj)
-        (dolist (cur-obj (ergoemacs-component-struct--lookup-hash obj))
-          (ergoemacs-component-struct--refresh-keys cur-obj))
-      (let* ((obj (ergoemacs-component-struct--lookup-hash obj))
-             (cur-dynamic (ergoemacs-component-struct-dynamic-keys obj))
-             new-dynamic keymap key global-map-p cur-map
-             fn-lst new-fn-lst new-fn cur-layout)
-        (dolist (cur-lst cur-dynamic)
-          (setq keymap (nth 0 cur-lst)
-                key (nth 1 cur-lst)
-                fn-lst (nth 2 cur-lst)
-                global-map-p (eq keymap 'global-map)
-                cur-map (or (and global-map-p (ergoemacs-component-struct-map obj))
-                            (ergoemacs-gethash keymap (ergoemacs-component-struct-maps obj)))
-                new-fn-lst '())
-          (if (catch 'found-fn
-                (dolist (fn fn-lst)
-                  (if (not (commandp fn t))
-                      (push new-fn-lst fn)
-                    (setq new-fn fn)
-                    (throw 'found-fn nil)))
-                t) (push cur-lst new-dynamic)
-            (when new-fn-lst ;; For later checks
-              (push (list keymap key (reverse new-fn-lst)) new-dynamic))
-            (ergoemacs :define-key cur-map key new-fn)
-            ;; Now fix cached layouts
-            (maphash
-             (lambda(key value)
-               (setq cur-layout (nth 1 key))
-               (when (or (and global-map-p (not (nth 0 key)))
-                         (eq (nth 0 key) keymap))
-                 ;; Update keymap (in place).
-                 (ergoemacs :define-key value
-                            (ergoemacs-translate
-                             key (ergoemacs-component-struct-just-first-keys obj)
-                             (ergoemacs-component-struct-variable-modifiers obj)
-                             (ergoemacs-component-struct-variable-prefixes obj) cur-layout
-                             (ergoemacs-component-struct-layout obj)) new-fn)))
-             (ergoemacs-component-struct-calculated-layouts obj))))
-        ;; Update dynamic/deferred keys
-        (fset (ergoemacs-component-struct-dynamic-keys obj) new-dynamic)))))
-
 (defun ergoemacs-component-struct--ini-map (obj)
   "Initilize keymap in OBJ.
 
