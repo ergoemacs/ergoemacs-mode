@@ -574,14 +574,6 @@ The LAYOUT represents the keybaord layout that will be translated."
                             (< i1 i2)))))
     tmp))
 
-(defun ergoemacs-map--get-global-unbound-keymap (unbind-list)
-  "Create a keymap for UNBIND-LIST to unbind keys."
-  (let ((ret (make-sparse-keymap)))
-    (dolist (key unbind-list)
-      (define-key ret key nil))
-    (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
-    ret))
-
 (defun ergoemacs-map--adjust-remaps-for-overrides (hook-overrides composed-list keymap &optional deferred-p)
   "Use HOOK-OVERRIDES to adjust COMPOSED-LIST and KEYMAP.
 
@@ -614,78 +606,6 @@ keymaps are prepended"
 	  (append composed-list hook-overrides)
 	(append hook-overrides composed-list)))))
 
-(defun ergoemacs-map--unbound-passthrough (hook-overrides hook-deferred unbind-list local-unbind-list)
-  "Create a keymap of the keys that should be visible to Emacs.
-
-- HOOK-OVERRIDES -- overriding keys from hooks.
-
-- HOOK-DEFERRED -- Keys defined in hooks that will can be
-  overriden by `ergoemacs-mode'.
-
-- UNBIND-LIST -- List of unbound keys.
-
-- LOCAL-UNBIND-LIST - List of locally unbound keys."
-  (let ((unbound-passthrough (make-sparse-keymap))
-	tmp tmp3)
-    (when (or hook-overrides hook-deferred)
-      (setq tmp3 (make-composed-keymap (append hook-overrides hook-deferred))
-            tmp (append unbind-list ergoemacs-map--unbound-keys local-unbind-list))
-      (ergoemacs-timing calc-passthrough
-        (ergoemacs-map-keymap
-         (lambda (key item)
-           (unless (or (eq item 'ergoemacs-prefix)
-                       (consp key))
-             (let ((key (vconcat key)))
-               (when (member key tmp)
-                 (define-key unbound-passthrough key item)))))
-         tmp3))
-      (ergoemacs unbound-passthrough :label '(unbound-passthrough)))
-    unbound-passthrough))
-
-(defun ergoemacs-map--unbound-keymap (lookup-key lookup-keymap unbind-list local-unbind-list)
-  "Create unbound keymap.
-
-This is cached with LOOKUP-KEY.
-
-The LOOKUP-KEYMAP is the keymap that will be modified.
-
-The UNBIND-LIST and LOCAL-UNBIND-LIST are the keys that will be
-unbound."
-  (let ((ret (make-sparse-keymap))
-	tmp tmp2 tmp3)
-    (ergoemacs-cache (and lookup-key (intern (format "%s-unbound-keymap" lookup-key)))
-      ;; Remove keys from lookup-keymap
-      (unless lookup-keymap
-	(setq tmp2 nil)
-	(maphash
-	 (lambda(key item)
-	   (dolist (key2 item)
-	     (when (member key2 (append unbind-list ergoemacs-map--unbound-keys local-unbind-list))
-	       (push key tmp2)
-	       (when (setq tmp3 (ergoemacs-translate--escape-to-meta key))
-		 (push tmp3 tmp2))
-	       (when (setq tmp3 (ergoemacs-translate--meta-to-escape key))
-		 (push tmp3 tmp2)))))
-	 ergoemacs-map--lookup-hash)
-	(dolist (key tmp2)
-	  (remhash key ergoemacs-map--lookup-hash)))
-      (dolist (key (append unbind-list ergoemacs-map--unbound-keys local-unbind-list))
-	(unless (equal key [ergoemacs-labeled])
-	  (when (not lookup-keymap)
-	    (remhash key ergoemacs-map--)
-	    (when (setq tmp (ergoemacs-translate--escape-to-meta key))
-	      (remhash key ergoemacs-map--lookup-hash)))
-	  (if (not lookup-keymap)
-	      (define-key ret key nil)
-	    (setq tmp (lookup-key lookup-keymap key))
-	    (if (or (not tmp) (integerp tmp))
-		(define-key ret key nil)
-	      (if (member key local-unbind-list)
-		  (define-key ret key nil)
-		(define-key ret key tmp))))))
-      (ergoemacs ret :label (list (ergoemacs lookup-keymap :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
-      ret)))
-
 (defun ergoemacs-map--set-maps (lookup-keymap final-keymap)
   "Set maps.
 
@@ -712,69 +632,6 @@ FINAL-KEYMAP is the `ergoemacs-mode' modified keymap."
 	      (set mirror final-keymap)
 	      (push mirror ergoemacs-map--modified-maps))))
 	(push map ergoemacs-map--modified-maps)))))
-
-(defun ergoemacs-map--lookup-map (keymap unbind-list)
-  "Change KEYMAP to insert `ergoemacs-mode' keys.
-UNBIND-LIST is the list of keys that `ergoemacs-mode'."
-  (ergoemacs keymap :label)
-  (let* ((lookup-keymap (ergoemacs keymap :original))
-         (use-local-unbind-list-p (ergoemacs lookup-keymap :use-local-unbind-list-p))
-         (only-modify-p (ergoemacs lookup-keymap :only-local-modifications-p))
-         (lookup-key (ergoemacs-map--lookup-keymap-key lookup-keymap))
-         (composed-list (ergoemacs-map--composed-list lookup-keymap only-modify-p use-local-unbind-list-p))
-         (ret (nth 2 composed-list))
-	 (local-unbind-list (nth 1 composed-list))
-	 (composed-list (nth 0 composed-list))
-	 (parent lookup-keymap)
-	 (hook-overrides (ergoemacs lookup-keymap :override-maps))
-	 (hook-deferred (ergoemacs lookup-keymap :deferred-maps))
-	 unbound-passthrough tmp)
-    (setq composed-list (ergoemacs-map--adjust-remaps-for-overrides hook-overrides composed-list ret)
-	  composed-list (ergoemacs-map--adjust-remaps-for-overrides hook-deferred composed-list ret t)
- 	  unbound-passthrough (ergoemacs-map--unbound-passthrough hook-overrides hook-deferred unbind-list local-unbind-list))
-    (cond
-     ((and only-modify-p composed-list)
-      ;; Get the protecting user keys
-      (setq ret (make-composed-keymap composed-list parent)
-            tmp (ergoemacs parent :user))
-      (when tmp
-        (setq ret (make-composed-keymap tmp ret)))
-      ret)
-     ((and only-modify-p (not composed-list))
-      (setq ret parent))
-     (t
-      ;; The keys that will be unbound
-      (setq ret (ergoemacs-map--unbound-keymap lookup-key lookup-keymap unbind-list local-unbind-list))
-      (set-keymap-parent ret (make-composed-keymap composed-list parent))
-      ;; Put the unbound keys that are passed through the
-      ;; `ergoemacs-mode' layer of keys.
-      (unless (ergoemacs unbound-passthrough :empty-p)
-        (setq ret (make-composed-keymap unbound-passthrough ret)))
-      ;; Get the protecting user keys
-      (setq tmp (ergoemacs parent :user))
-      (when tmp
-        (setq ret (make-composed-keymap tmp ret)))
-      ;; Set the overall map values too...
-      (when (ergoemacs lookup-keymap :set-map-p)
-        (dolist (map (ergoemacs lookup-keymap :map-list))
-          (when (eq lookup-keymap overriding-local-map)
-            (setq overriding-local-map ret))
-          (when (eq lookup-keymap overriding-terminal-local-map)
-            (setq overriding-terminal-local-map ret))
-          (when (eq (default-value map) lookup-keymap)
-            (ergoemacs :spinner '("⌨→%s (default)" "ergoemacs→%s (default)" "ergoemacs->%s (default)") map)
-            (set-default map ret))
-          (when (eq (symbol-value map) lookup-keymap)
-            (ergoemacs :spinner '("⌨→%s (local)" "ergoemacs→%s (local)" "ergoemacs->%s (local)") map)
-            (set map ret))
-          (when (setq tmp (assoc map ergoemacs-map--mirrored-maps))
-            (dolist (mirror (cdr tmp))
-              (when (and mirror (boundp mirror))
-                (ergoemacs :spinner '("⌨→%s (mirror %s)" "ergoemacs→%s (mirror %s)" "ergoemacs->%s (mirror %s)") map mirror)
-                (set mirror ret)
-                (push mirror ergoemacs-map--modified-maps))))
-          (push map ergoemacs-map--modified-maps)))))
-    ret))
 
 (defun ergoemacs-map--temporary-map-properties (map)
   "Test if MAP is a transient map that `ergoemacs-mode' does not touch.
