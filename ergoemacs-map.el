@@ -71,7 +71,6 @@
 (declare-function ergoemacs-component-struct--lookup-hash "ergoemacs-component")
 (declare-function ergoemacs-component-struct--lookup-list "ergoemacs-component")
 (declare-function ergoemacs-component-struct--minor-mode-map-alist "ergoemacs-component")
-(declare-function ergoemacs-component-struct--translated-list "ergoemacs-component")
 
 (declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 
@@ -484,24 +483,6 @@ global keymap.  Otherwise, it is relative to LOOKUP-KEYMAP."
        (t
         (error "Cant calculate/lookup keymap")))
       ret)))
-
-(defun ergoemacs-map--get-unbind-list (component-list)
-  "Get the list of unbound keys based on COMPONENT-LIST.
-
-COMPONENT-LIST is a list of `ergoemacs-component-struct' items
-that will be applied.
-
-This is cached based on the current theme & theme options by
-`ergoemacs-cache'."
-  (if (not (consp component-list)) nil
-    (let (unbind-list)
-      (ergoemacs-cache unbind-list
-	(dolist (cur-map component-list)
-	  (setq unbind-list
-		(append unbind-list
-			(ergoemacs-component-struct--translated-list
-			 cur-map (ergoemacs-component-struct-unbind cur-map)))))
-	unbind-list))))
 
 (defun ergoemacs-map--get-undefined-map (component-list)
   "Get a keymap of the ergoemacs-mode unbound keys based on COMPONENT-LIST.

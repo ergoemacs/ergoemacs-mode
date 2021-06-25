@@ -586,21 +586,6 @@ OBJ is the current object being modified, passed to
       (ergoemacs-save-buffer-state
        (set (make-local-variable (car elt)) (make-composed-keymap (cdr elt) (symbol-value (car elt))))))))
 
-(defun ergoemacs-component-struct--translated-list (obj list &optional layout)
-  "Base on OBJ translation, Translate LIST using LAYOUT."
-  (let ((cur-layout (or layout ergoemacs-keyboard-layout))
-        new-list)
-    (dolist (key list)
-      (ergoemacs :apply-key key
-                 (lambda(trans-key)
-                   (push (ergoemacs-translate
-                          trans-key (ergoemacs-component-struct-just-first-keys obj)
-                          (ergoemacs-component-struct-variable-modifiers obj)
-                          (ergoemacs-component-struct-variable-prefixes obj) cur-layout
-                          (ergoemacs-component-struct-layout obj))
-                         new-list))))
-    new-list))
-
 (defvar ergoemacs-component-struct--refresh-variables nil
   "To reset a current theme, the variables are refreshed when this is non-nil.")
 
