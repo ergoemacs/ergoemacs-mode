@@ -279,8 +279,9 @@ When arg1 can be a property.  The following properties are supported:
       `(ergoemacs-map--minor-mode-overriding-map-alist ,arg2))
      ((and (not arg3) (eq arg1 'minor-mode-map-alist))
       `(ergoemacs-map--minor-mode-map-alist ,arg2))
-     (t
-      `(ergoemacs-map-- ,arg1)))))
+     )
+    )
+  )
 
 (defmacro ergoemacs-cache (item &rest body)
   "Either read ITEM's cache or evaluate BODY, cache ITEM and return value."
@@ -295,15 +296,6 @@ When arg1 can be a property.  The following properties are supported:
        `(let ((--hash-key ,item))
           (or (ergoemacs-map--cache-- --hash-key)
               (ergoemacs-map--cache-- --hash-key (progn ,@body)))))))
-
-(defmacro ergoemacs-cache-p (item)
-  "Does ITEM cache exist?"
-  (or (and (symbolp item)
-           (macroexpand-all
-            `(ergoemacs-map-cache--exists-p ',item)))
-      (macroexpand-all
-       `(let ((--hash-key ,item))
-          (ergoemacs-map-cache--exists-p --hash-key)))))
 
 (defmacro ergoemacs-timing (key &rest body)
   "Save the timing using KEY for BODY."

@@ -601,67 +601,6 @@ The LAYOUT represents the keybaord layout that will be translated."
     (ergoemacs ret :label (list (ergoemacs (ergoemacs :global-map) :key-hash) 'ergoemacs-unbound (intern ergoemacs-keyboard-layout)))
     ret))
 
-
-(defun ergoemacs-map--get-global-map (component-list unbind-list layout lookup-key)
-  "Get the global map.
-
-- COMPONENT-LIST is the list of ergoemacs components to apply.
-
-- UNBIND-LIST is the keys that `ergoemacs-mode' has unbound.
-
-- LAYOUT represents the keyboard layout to be calculated
-
-- LOOKUP-KEY represents the symbol to cache the calculated
-  results."
-  ;; The `undefined-key' layer
-  (let (tmp
-	ret
-	menu-bar
-	parent
-	composed-list
-	tmp2)
-    (setq tmp (ergoemacs-cache global-menu
-                (push (ergoemacs-map--get-undefined-map component-list) composed-list)
-                (setq tmp (ergoemacs-map--global-component-keys-lists component-list menu-bar composed-list layout)
-                      menu-bar (elt tmp 0)
-                      composed-list (elt tmp 1))
-                (ergoemacs-map--setup-global-ergoemacs-hash composed-list unbind-list)
-                ;; The real `global-map'
-                (setq tmp (ergoemacs-map--get-global-menu-map menu-bar)
-                      ;; The keys that will be unbound
-                      ret (ergoemacs-map--get-global-unbound-keymap unbind-list))
-                
-                tmp))
-    (setq parent (copy-keymap (ergoemacs :global-map))
-	  composed-list (ergoemacs-cache global-composed-list composed-list)
-	  ret (ergoemacs-cache global-ret ret)
-	  ergoemacs-map-- (ergoemacs-cache ergoemacs-map-- ergoemacs-map--)
-	  ergoemacs-map--lookup-hash (ergoemacs-cache ergoemacs-map--lookup-hash ergoemacs-map--lookup-hash)
-	  ergoemacs-map--undefined-keys (ergoemacs-cache undefined-keys ergoemacs-map--undefined-keys))
-    (define-key parent [menu-bar] tmp)
-    (set-keymap-parent ret (make-composed-keymap composed-list parent))
-    ;; Save hash
-    (puthash lookup-key ret ergoemacs-map--hash)
-    (puthash (ergoemacs-map--hashkey 'ergoemacs-map--lookup-hash) ergoemacs-map--lookup-hash ergoemacs-map--hash)
-    (puthash (ergoemacs-map--hashkey 'ergoemacs-map--undefined-keys) ergoemacs-map--undefined-keys ergoemacs-map--hash)
-    
-    ;; Get the protecting user keys
-    (setq tmp2 (list))
-    (unless ergoemacs-ignore-prev-global
-      (setq tmp (ergoemacs :user-before))
-      (unless (ergoemacs tmp :empty-p)
-	(push tmp tmp2)))
-    (setq tmp (ergoemacs :user-after))
-    (unless (ergoemacs tmp :empty-p)
-      (push tmp tmp2))
-    (setq tmp (ergoemacs parent :user))
-    (when tmp
-      (push tmp tmp2))
-    (push ergoemacs-user-keymap tmp2)
-    (define-key ret [ergoemacs-ignore] 'ergoemacs-command-loop--ignore)
-    (setq ret (make-composed-keymap tmp2 ret))
-    ret))
-
 (defun ergoemacs-map--adjust-remaps-for-overrides (hook-overrides composed-list keymap &optional deferred-p)
   "Use HOOK-OVERRIDES to adjust COMPOSED-LIST and KEYMAP.
 
@@ -855,67 +794,6 @@ UNBIND-LIST is the list of keys that `ergoemacs-mode'."
                 (push mirror ergoemacs-map--modified-maps))))
           (push map ergoemacs-map--modified-maps)))))
     ret))
-
-(defun ergoemacs-map-- (&optional lookup-keymap layout struct-map)
-  "Get map looking up changed keys in LOOKUP-KEYMAP based on LAYOUT.
-
-STRUCT-MAP can be a `ergoemacs-component-struct', or a string/symbol of
-a calculated or uncalcuated component in
-`ergoemacs-component-hash'
-
-STRUCT-MAP can also be a list of `ergoemacs-component-struct' values
-or string/symbols that are in `ergoemacs-component-hash'
-
-If missing, STRUCT-MAP represents the current theme compenents, from
-`ergoemacs-theme-components'
-
-LAYOUT represents the layout that is used.
-
-LOOKUP-KEYMAP represents what should be calculated/looked up.
-
-If LOOKUP-KEYMAP is a keymap, lookup the ergoemacs-mode
-modifications to that keymap."
-  (let* ((cur-layout (or layout ergoemacs-keyboard-layout))
-         lookup-key
-         (struct-map (ergoemacs-component-struct--lookup-hash (or struct-map (ergoemacs-theme-components))))
-         unbind-list
-         ret
-         (lookup-keymap (or (and lookup-keymap (symbolp lookup-keymap)
-				 (ergoemacs-sv lookup-keymap))
-			    lookup-keymap)))
-    (cond
-     ((memq 'add-keymap-witness lookup-keymap) ;; Don't translate complete tranisent maps.
-      lookup-keymap)
-     ((and lookup-keymap (symbolp lookup-keymap) (ergoemacs-gethash lookup-keymap ergoemacs-translation-hash))
-      nil)
-     ((consp (ergoemacs lookup-keymap :map-key)) ;; Ignore already installed.
-      lookup-keymap)
-     ((and lookup-keymap (ergoemacs lookup-keymap :dont-modify-p))
-      lookup-keymap)
-     ((and (consp struct-map) ;; Don't do anything with blank keymaps.
-           lookup-keymap
-	   ;; Blank keymaps are also unlabeled by `ergoemacs-mode', so
-	   ;; make sure to use :empty-p t
-	   (ergoemacs lookup-keymap :empty-p t))
-      lookup-keymap)
-     ((and (consp struct-map)
-           (progn
-             (setq unbind-list (ergoemacs-map--get-unbind-list struct-map)) t))
-      (cond
-       ((not lookup-keymap)
-	(ergoemacs-map--get-global-map struct-map unbind-list cur-layout lookup-key))
-       ;; Now create the keymap for a specified `lookup-keymap'
-       (lookup-keymap
-	(ergoemacs-map--lookup-map lookup-keymap unbind-list))))
-     ;; Component keymap
-     ((setq ret (ergoemacs-map--get-struct-map struct-map cur-layout lookup-keymap))
-      ret)
-     (t
-      (ergoemacs-warn "Component struct-map isn't a proper argument for `ergoemacs-map'")
-      (ergoemacs-warn "\tLookup:%s" lookup-keymap)
-      (ergoemacs-warn "\tLayout:%s" layout)
-      (ergoemacs-warn "\tMap:%s" struct-map)
-      lookup-keymap))))
 
 (defun ergoemacs-map--temporary-map-properties (map)
   "Test if MAP is a transient map that `ergoemacs-mode' does not touch.

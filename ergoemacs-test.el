@@ -57,8 +57,6 @@
 (declare-function ergoemacs-eshell-here "ergoemacs-functions")
 (declare-function ergoemacs-paste "ergoemacs-functions")
 
-(declare-function ergoemacs-map-- "ergoemacs-map")
-
 (declare-function ergoemacs-translate--quail-to-ergoemacs "ergoemacs-translate")
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
 
