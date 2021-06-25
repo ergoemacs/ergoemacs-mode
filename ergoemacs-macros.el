@@ -207,12 +207,6 @@ When arg1 can be a property.  The following properties are supported:
         (arg3 (nth 2 args))
         (arg4 (nth 3 args)))
     (cond
-     ((and arg1 (symbolp arg1) (eq arg1 :reset-prefix))
-      `(prefix-command-preserve-state))
-     ((and arg1 (symbolp arg1) (eq arg1 :set-selection))
-      `(gui-set-selection ,@(cdr args)))
-     ((and arg1 (symbolp arg1) (eq arg1 :set-selection))
-      `(gui-set-selection ,@(cdr args)))
      ((and arg1 (symbolp arg1) (eq arg1 :custom-p) (symbolp arg2))
       (if (fboundp 'custom-variable-p)
           `(custom-variable-p ,arg2)

@@ -557,16 +557,6 @@ Fix this issue."
     (ignore-errors (switch-to-buffer (window-buffer) t t))
     (goto-char (window-point))))
 
-(defun ergoemacs-command-loop--update-primary-selection ()
-  "Update primary clipboard in X based systems."
-  (when (and mouse-drag-copy-region
-	     (eventp last-command-event)
-	     (consp last-command-event)
-	     (memq (event-basic-type (car last-command-event))
-			'(mouse-1))
-	     (region-active-p))
-    (ergoemacs :set-selection 'PRIMARY (buffer-substring-no-properties (region-beginning) (region-end)))))
-
 (defun ergoemacs-command-loop--mouse-command-drop-first (args &optional fn-arg-p)
   "Internal function for processing mouse commands.
 
