@@ -299,6 +299,12 @@ The `execute-extended-command' is now \\[execute-extended-command].
             (ergoemacs-setup-override-keymap))
            (t (ergoemacs-setup-override-keymap)))
           (setq ergoemacs-require--ini-p t)
+          (define-key key-translation-map (kbd "<apps>") (kbd "<menu>"))
+          (global-unset-key (kbd "<apps>"))
+          (global-unset-key (kbd "<menu>"))
+          (define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])
+            'ergoemacs-command-loop--swap-translation)
+
 
           (if refresh-p
               (message "Ergoemacs-mode keys refreshed (%s)" ergoemacs-keyboard-layout)

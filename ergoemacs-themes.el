@@ -1301,6 +1301,34 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
   (ergoemacs-set-menu-bar-search)
   (ergoemacs-set-menu-bar-edit)
   (ergoemacs-set-menu-bar-file)
+  (ergoemacs-define-key ergoemacs-override-keymap
+			(kbd "<menu> f")
+			(lambda ()
+                          (interactive)
+                          (ergoemacs-command-loop "C-x" :ctl-to-alt)))
+
+  (ergoemacs-define-key ergoemacs-override-keymap
+			(kbd "<menu> d")
+			(lambda ()
+                          (interactive)
+                          (ergoemacs-command-loop "C-c" :unchorded-ctl)))
+
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n a") 'org-agenda)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n A") 'org-capture)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n C-a") 'org-capture)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n c") 'calc)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n d") 'dired-jump)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n e") 'eshell)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n p") 'powershell)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n f") 'ergoemacs-open-in-desktop)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n g") 'grep)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n m") 'magit-status)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n o") 'ergoemacs-open-in-external-app)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n r") 'R)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n s") 'shell)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n t") 'org-capture)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n C-t") 'org-agenda)
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n T") 'org-agenda)
   )
 
 (defun ergoemacs-install-standard-theme ()
@@ -1384,5 +1412,83 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
   (define-key calc-mode-map [remap ergoemacs-undo] 'calc-undo)
   )
 (add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
+
+
+(ergoemacs-translation normal ()
+  "Identify transformation"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map [f1] 'ergoemacs-read-key-help)
+            (define-key map (read-kbd-macro "C-h") 'ergoemacs-read-key-help)
+            map))
+
+(ergoemacs-translation ctl-to-alt ()
+  "Ctl <-> Alt translation"
+  :text (lambda() (format "<Ctl%sAlt> " (ergoemacs :unicode-or-alt "↔" " to ")))
+  
+  :meta '(control)
+  :control '(meta)
+  
+  :meta-shift '(control shift)
+  :control-shift '(meta shift)
+  
+  :control-hyper '(meta hyper)
+  :meta-hyper '(control hyper)
+
+  :control-super '(meta super)
+  :meta-super '(control super)
+
+  :meta-shift-hyper '(control shift hyper)
+  :control-shift-hyper '(meta shift hyper)
+
+  :meta-shift-super '(control shift super)
+  :control-shift-super '(meta shift super)
+
+  :meta-super-hyper '(control super hyper)
+  :control-super-hyper '(meta super hyper)
+
+  :meta-super-hyper-shift '(control super hyper shift)
+  :control-super-hyper-shift '(meta super hyper shift)
+  
+  :modal-color "blue"
+  :modal-always t
+  
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map [f1] 'ergoemacs-read-key-help)
+            (define-key map (read-kbd-macro "M-h") 'ergoemacs-read-key-help)
+            (define-key map (if (eq system-type 'windows-nt) [M-apps] [M-menu]) 'ergoemacs-read-key-force-next-key-is-quoted)
+            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-force-next-key-is-ctl)
+            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-force-next-key-is-alt)
+            ;; (define-key map "G" 'ergoemacs-read-key-next-key-is-quoted)
+            ;; (define-key map "g" 'ergoemacs-read-key-next-key-is-alt)
+            map))
+
+(ergoemacs-translation unchorded-ctl ()
+  "Make the Ctl key sticky."
+  :text "<Ctl+>"
+  :unchorded '(control)
+  :shift '(control shift)
+  :meta '()
+  :control '(meta)
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map [f1] 'ergoemacs-read-key-help)
+            (define-key map (read-kbd-macro "SPC") 'ergoemacs-read-key-force-next-key-is-quoted)
+            (define-key map (read-kbd-macro "M-SPC") 'ergoemacs-read-key-force-next-key-is-alt-ctl)
+            (define-key map "g" 'ergoemacs-read-key-force-next-key-is-alt)
+            (define-key map "G" 'ergoemacs-read-key-force-next-key-is-alt-ctl)
+            map))
+
+(ergoemacs-translation unchorded-alt ()
+  "Make the Alt key sticky."
+  :text "<Alt+>"
+  :unchorded '(meta) 
+  :shift '(meta shift)
+  :meta '(meta shift) 
+  :modal-color "red"
+  :keymap-modal (let ((map (make-sparse-keymap)))
+                  (define-key map (read-kbd-macro "<return>") 'ergoemacs-unchorded-alt-modal)
+                  (define-key map (read-kbd-macro "RET") 'ergoemacs-unchorded-alt-modal)
+                  map))
+
+
 
 (provide 'ergoemacs-themes)

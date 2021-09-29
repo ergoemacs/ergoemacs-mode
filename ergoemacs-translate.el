@@ -1,6 +1,6 @@
 ;;; ergoemacs-translate.el --- Keyboard translation functions -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2014  Free Software Foundation, Inc.
+;; Copyright © 2013-2021  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-translate.el
 ;; Description: 
@@ -62,10 +62,12 @@
 (defvar ergoemacs-translate--hash)
 (defvar ergoemacs-translate--event-hash)
 (defvar ergoemacs-dir)
+(defvar ergoemacs-theme)
 (defvar ergoemacs-inkscape)
 (defvar ergoemacs-command-loop--universal-functions)
 
 (declare-function ergoemacs-layouts--list "ergoemacs-layouts")
+(declare-function ergoemacs-theme--list "ergoemacs-theme-engine")
 (declare-function ergoemacs-mode-reset "ergoemacs-mode")
 (declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
 (declare-function ergoemacs-theme--custom-documentation "ergoemacs-theme-engine")
@@ -82,6 +84,10 @@
 (declare-function ergoemacs-map-properties--label-map "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
 
+
+(declare-function ergoemacs-map-- "ergoemacs-map")
+
+(declare-function ergoemacs-command-loop--modal-p "ergoemacs-command-loop")
 
 (declare-function ergoemacs-translate--key-description "ergoemacs-translate")
 
@@ -191,6 +197,30 @@ KEY-SEQ must be a vector or string.  If there is no need to change the sequence,
           (push event seq))))
       (and found (vconcat seq)))))
 
+(defun ergoemacs-translate--swap-apps (key &optional what with)
+  "In KEY, swap apps key with menu key.
+Optionally specify WHAT you want to replace WITH.
+
+If no changes have been done, return nil."
+  (let ((seq (reverse (append key ())))
+        (what (or what 'apps))
+        (with (or with 'menu))
+        found-p
+        ret)
+    (dolist (e seq)
+      (cond
+       ((eq e what)
+        (push with ret)
+        (setq found-p t))
+       (t (push e ret))))
+    (if found-p
+        (vconcat ret)
+      nil)))
+
+(defun ergoemacs-translate--swap-menu (key)
+  "In KEY swap menu key with apps key."
+  (ergoemacs-translate--swap-apps key 'menu 'apps))
+
 (defun ergoemacs-translate--to-vector (key)
   "Translates KEY to vector format.
 
@@ -201,6 +231,43 @@ If no changes are performed, return nil."
       (unless (equal key new-key)
         (setq ret new-key))
       ret)))
+
+(defun ergoemacs-translate--ergoemacs-shift-select (key)
+  "Translate KEY to allow `ergoemacs-mode' shift translation.
+
+This will shift translate Alt+# to Alt+3."
+  (let (modifiers basic)
+    (when (and (vectorp key)
+               ;; only makes sense for single key combinations.
+               (= (length key) 1)
+               ;; Doesn't make sense if shifted...
+               (not (or (memq 'shift (setq modifiers (ergoemacs-translate--event-modifiers (aref key 0))))
+                        (memq 'ergoemacs-shift modifiers)))
+	       ;; Only define if emacs doesn't handle shift selection.
+	       (not (eq (event-convert-list (list 'shift (setq basic (event-basic-type (aref key 0)))))
+			(ergoemacs-translate--event-convert-list (list 'ergoemacs-shift basic)))))
+      (setq ergoemacs-translate--define-key-if-defined-p nil
+            ergoemacs-translate--define-key-replacement-function 'ergoemacs-command-loop--shift-translate)
+      (vector (ergoemacs-translate--event-convert-list (append modifiers (list 'ergoemacs-shift basic)))))))
+
+(defun ergoemacs-translate--ergoemacs-timeout (key)
+  "Translates KEY to allow Shift translation to default to key sequence.
+
+This is done for key sequences like Ctrl+Shift+c which should
+allow the Ctrl+c key sequence to be called when text is
+seleceted (instead of copying the text)."
+  (let (modifiers basic)
+    (when (and (vectorp key)
+	       ;; only makes sense for single key combinations.
+	       (= (length key) 2)
+	       (eq 'ergoemacs-timeout (aref key 1))
+	       ;; Doesn't make sense if shifted...
+	       (not (or (memq 'shift (setq modifiers (ergoemacs-translate--event-modifiers (aref key 0))))
+			(memq 'ergoemacs-shift modifiers))))
+      (setq basic (ergoemacs-translate--event-basic-type (aref key 0))
+	    ergoemacs-translate--define-key-if-defined-p nil
+            ergoemacs-translate--define-key-replacement-function 'ergoemacs-command-loop--shift-timeout)
+      (vector (ergoemacs-translate--event-convert-list (append modifiers (list 'shift basic)))))))
 
 (defun ergoemacs-translate--to-string (key)
   "Translates KEY to string format.
@@ -217,9 +284,12 @@ If no chanegs are performed, return nil."
 (defvar ergoemacs-translate--apply-funs
   '(ergoemacs-translate--escape-to-meta
     ergoemacs-translate--meta-to-escape
+    ergoemacs-translate--swap-apps
+    ergoemacs-translate--swap-menu
     ergoemacs-translate--to-string
     ergoemacs-translate--to-vector
-    )
+    ergoemacs-translate--ergoemacs-timeout
+    ergoemacs-translate--ergoemacs-shift-select)
   "Functions to apply to key.
 
 These functions take a key as an argument and translate it in
@@ -343,6 +413,11 @@ MODIFIERS is the precalculated modifiers from
            new-modifiers
            new-event
            (translation-hash (ergoemacs-translate--get-hash layout-to layout-from)))
+      (cond
+       ((and (eq system-type 'windows-nt) (eq basic 'menu))
+        (setq basic 'apps))
+       ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
+        (setq basic 'menu)))
       (if (memq 'ergoemacs-control modifiers)
           (setq new-event basic
                 new-modifiers modifiers)
@@ -489,6 +564,10 @@ make the translation."
              (not just-first-p))
         (setq translated-event
               (ergoemacs-translate--event-layout event layout-to layout-from basic modifiers)))
+       ((and (eq system-type 'windows-nt) (eq basic 'menu))
+        (setq translated-event (ergoemacs-translate--event-convert-list (append modifiers '(apps)))))
+       ((and (not (eq system-type 'windows-nt)) (eq basic 'apps))
+        (setq translated-event (ergoemacs-translate--event-convert-list (append modifiers '(menu)))))
        (t (setq translated-event event)))
       (setq untranslated (vconcat untranslated (list event))
             ret (vconcat ret (list translated-event))))
@@ -626,6 +705,7 @@ For keys, the list consists of:
   (universal-argument nil)
   (negative-argument nil)
   (digit-argument nil)
+  (modal nil)
   (text "")
   (keymap (make-sparse-keymap))
   (keymap-modal (make-sparse-keymap))
@@ -634,6 +714,62 @@ For keys, the list consists of:
   (key nil)
   (unchorded nil))
 
+(defvar ergoemacs-translate--setup-command-loop-regexp
+  "^\\(?:ergoemacs\\(?:-translate-\\)?\\)-\\(.*?\\)-\\(universal-argument\\|negative-argument\\|digit-argument\\|modal\\)$"
+  "Command loop command match/setup regular expression.")
+
+(defun ergoemacs-translate--setup-command-loop ()
+  "Setup command loop.
+To do anything, `this-command' must match
+`ergoemacs-translate--setup-command-loop-regexp'.  The first
+match is the NAME of the translation, the second match is the
+TYPE of command.  This command will then
+call (ergoemacs-command-loop-TYPE :NAME)."
+  (interactive)
+  (let ((command-str (symbol-name this-command))
+	name type)
+    (save-match-data
+      (when (string-match ergoemacs-translate--setup-command-loop-regexp command-str)
+	(setq name (match-string 1 command-str)
+	      type (match-string 2 command-str))
+	(funcall (intern (concat "ergoemacs-command-loop--" type)) (intern (concat ":" name)))))))
+
+(defun ergoemacs-translate--setup-translation (&optional name)
+  "Setup translation functions and keymaps.
+If NAME is nil, setup all translations.
+When NAME is a symbol, setup the translation function for the symbol."
+  (if (not name)
+      (maphash
+       (lambda(name _item)
+	 (ergoemacs-translate--setup-translation name))
+       ergoemacs-translation-hash)
+    (let ((name-str (and (symbolp name) (substring (symbol-name name) 1))))
+      (eval
+       (macroexpand ; Fixme why?
+	`(progn
+	   (defvar ,(intern (concat "ergoemacs-translate--" name-str "-map")) (make-sparse-keymap)
+	     ,(concat "Ergoemacs local map for translation :"
+		      name-str
+		      " while completing a key sequence."))
+	   (define-obsolete-variable-alias ',(intern (concat "ergoemacs-" name-str "-translation-local-map"))
+             ',(intern (concat "ergoemacs-translate--" name-str "-map"))
+	     "Ergoemacs-v5.16")))
+       t)
+      (ergoemacs-map-properties--label-map (intern (concat "ergoemacs-translate--" name-str "-map")) t)
+      (ergoemacs (symbol-value (intern (concat "ergoemacs-translate--" name-str "-map"))) :only-local-modifications-p t)
+      ;; 
+      (dolist (type '("-universal-argument" "-negative-argument"
+                      "-digit-argument" "-modal"))
+	(fset (intern (concat "ergoemacs-translate--" name-str type))
+	      'ergoemacs-translate--setup-command-loop)
+	(fset (intern (concat "ergoemacs-" name-str type))
+	      'ergoemacs-translate--setup-command-loop)
+	(when (string= type "-universal-argument")
+	  (cl-pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
+	  (cl-pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
+
+(add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--setup-translation)
+
 (defun ergoemacs-translate--create (&rest plist)
   "Create a translation from PLIST and return translation object."
   (let ((plist plist)
@@ -641,6 +777,7 @@ For keys, the list consists of:
         -universal-argument
         -negative-argument
         -digit-argument
+        -modal
         translation
         (local-keymap (or (plist-get plist :keymap) (make-sparse-keymap)))
 	(trans-keymap (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map"))))
@@ -686,6 +823,7 @@ For keys, the list consists of:
            :universal-argument -universal-argument
            :negative-argument -negative-argument
            :digit-argument -digit-argument
+           :modal -modal
            :text (plist-get plist :text)
            :keymap local-keymap
            :keymap-modal (or (plist-get plist :keymap-modal) (make-sparse-keymap))
@@ -720,7 +858,8 @@ If TYPE is unspecified, assume :normal translation"
                               ((eq 'ergoemacs-shift e) 'shift)
                               ((eq 'ergoemacs-control e) 'control)
                               (t e)))
-                           e-mod) #'string<))
+                           e-mod)
+			  #'string<))
          (special-p (memq basic (list ?m ?i ?\[)))
          (ambiguous-p (and special-p (memq 'control e-mod)))
          tmp
@@ -746,7 +885,8 @@ If TYPE is unspecified, assume :normal translation"
                  ((and special-p (display-graphic-p)
                        (memq 'control modifiers))
                   (push 'ergoemacs-gui modifiers)))
-                (throw 'found-mod t))) nil)
+                (throw 'found-mod t)))
+	    nil)
       (if ambiguous-p
           (setq ret (ergoemacs-translate--event-convert-list `(control ,@modifiers ,basic)))
         (setq ret (ergoemacs-translate--event-convert-list `(,@modifiers ,basic)))))
@@ -754,23 +894,18 @@ If TYPE is unspecified, assume :normal translation"
 
 (defun ergoemacs-translate--no-gui (event)
   "Remove any gui elements to the EVENT.
-If there are no gui elements, retun nil."
+If there are no gui elements, return nil."
   (if (vectorp event)
-      (eval `(vector ,@(mapcar (lambda(x) (let ((ret (or (ergoemacs-translate--no-gui x) x)))
-					    (if (symbolp ret)
-						`(quote ,ret)
-					      ret))) event)))
+      (apply #'vector (mapcar (lambda(x) (or (ergoemacs-translate--no-gui x) x)) event))
     (let* ((last-event event)
 	   (last-mod (ergoemacs-translate--event-modifiers last-event))
 	   (last-basic-event (ergoemacs-translate--event-basic-type last-event))
-	   new-mod
-	   new-event)
+	   new-mod)
       (when (memq 'ergoemacs-gui last-mod)
 	(dolist (elt last-mod)
 	  (unless (eq elt 'ergoemacs-gui)
 	    (push elt new-mod)))
-	(setq new-event (ergoemacs-translate--event-convert-list `(,@new-mod ,last-basic-event))))
-      new-event)))
+	(ergoemacs-translate--event-convert-list `(,@new-mod ,last-basic-event))))))
 
 (defvar ergoemacs-translate--parent-map nil
   "Parent map for keymaps when completing a key sequence.")
@@ -810,16 +945,25 @@ If there are no gui elements, retun nil."
 ;; (add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--keymap-reset)
 
 (defun ergoemacs-translate--keymap (&optional translation)
-  "Get the keymap for TRANSLATION."
-  (let* ((translation (or (and (ergoemacs-translation-struct-p translation)
+  "Get the keymap for TRANSLATION.
+This takes into consideration the modal state of `ergoemacs-mode'."
+  (let* ((modal (ergoemacs :modal-p))
+         (translation (or (and (ergoemacs-translation-struct-p translation)
+                               (or (not modal) ;; prefer modal when :normal 
+                                   (not (eq :normal (ergoemacs-translation-struct-key translation))))
                                translation)
+                          modal
                           (ergoemacs-translate--get (or translation :normal))))
-         (key (ergoemacs-translation-struct-key translation))
+         (key (or (and modal (intern (concat ":" (ergoemacs-translation-struct-name translation) "-modal")))
+                  (ergoemacs-translation-struct-key translation)))
          (ret (ergoemacs-gethash key ergoemacs-translate--keymap-hash))
          keymap)
     (unless ret
-      (setq keymap (ergoemacs-translation-struct-keymap translation)
-            ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map)))
+      (if modal
+          (setq keymap (ergoemacs-translation-struct-keymap-modal translation)
+                ret keymap)
+        (setq keymap (ergoemacs-translation-struct-keymap translation)
+              ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map))))
       (puthash key ret ergoemacs-translate--keymap-hash))
     ret))
 
@@ -984,13 +1128,15 @@ If there are no gui elements, retun nil."
           (setq ret (format "%s\n%s=%s" ret f (ergoemacs-translate--ahk-code key))))))
     ret))
 
-(defun ergoemacs-translate--ahk-ini (&optional all-layouts)
+(defun ergoemacs-translate--ahk-ini (&optional all-layouts all-themes)
   "Creates the ini file used with the autohotkey script."
   (let ((layouts (or (and all-layouts (sort (ergoemacs-layouts--list) 'string<))
                      (and (eq (ergoemacs :layout) 'ergoemacs-layout-us) (list "us"))
                      (list "us" ergoemacs-keyboard-layout)))
-        (themes (list "standard"))
+        (themes (or (and all-themes (sort (ergoemacs-theme--list) 'string<))
+                    (list ergoemacs-theme)))
         (original-layout ergoemacs-keyboard-layout)
+        (original-theme ergoemacs-theme)
         ret)
     (unwind-protect
         (setq ret (with-temp-buffer
@@ -1004,13 +1150,15 @@ If there are no gui elements, retun nil."
                     (dolist (lay layouts)
                       (dolist (theme themes)
                         (message "Getting information from %s-%s" lay theme)
-                        (setq ergoemacs-keyboard-layout lay)
+                        (setq ergoemacs-keyboard-layout lay
+                              ergoemacs-theme theme)
                         (ergoemacs-mode-reset)
                         (insert "[" lay "-" theme "]"
                                 (ergoemacs-translate--ahk-functions-ini)
                                 "\n")))
                     (buffer-string)))
-      (setq ergoemacs-keyboard-layout original-layout)
+      (setq ergoemacs-keyboard-layout original-layout
+            ergoemacs-theme original-theme)
       (ergoemacs-mode-reset))
     ret))
 
@@ -1067,14 +1215,23 @@ If :type is :quail use the 180 length string that
            ((string-match "[a-zA-Z0-9]" char)
             char)
            (t
-            ;; Insert fancy characters as is and hope that the font
-            ;; will work.
             (setq ret (format "&#x%04X;"
                                (encode-char
                                 (with-temp-buffer
                                   (insert char)
                                   (char-before)) 'unicode))
-                  )
+                  font (ergoemacs-key-description--display-char-p char))
+            (when font
+              (setq font (or (font-get font :name)
+                             (font-get font :family)))
+              (when (and font (symbolp font))
+                (setq font (symbol-name font)))
+              (setq default-font (or (font-get default-font :name)
+                                     (font-get default-font :family)))
+              (when (and default-font (symbolp default-font))
+                (setq default-font (symbol-name default-font)))
+              (unless (string= font default-font)
+                (setq ret (format "<text style=\"font-family: '%s'\">%s</text>" font ret))))
             ret)))
       (while (< i (length char))
         (setq ret (concat ret (ergoemacs-translate--svg-quote (substring char i (+ i 1))))
