@@ -107,6 +107,23 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :group 'convenience
   :group 'emulations)
 
+
+
+(defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
+                               ergoemacs-variant
+                             (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
+                                 ergoemacs-theme
+                               (if (getenv "ERGOEMACS_THEME")
+                                   (getenv "ERGOEMACS_THEME")
+                                 nil)))
+  "Ergoemacs Keyboard Layout Themes."
+  :type '(choice
+          (const :tag "Standard" :value nil)
+          (choice (symbol :tag "Other (symbol)")
+                  (string :tag "Other (string)")))
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-mode)
+
 ;;; ergoemacs-keymap
 
 (defvar ergoemacs-keymap (make-sparse-keymap)
@@ -269,12 +286,18 @@ The `execute-extended-command' is now \\[execute-extended-command].
             (push elt ergoemacs-mode--default-frame-alist))
 
           ;; Setup the global keys that can be overriden
-          (ergoemacs-install-standard-theme)
+          (cond
+           ((string-equal ergoemacs-theme "reduction")
+            (ergoemacs-install-reduction-theme))
+           (t (ergoemacs-install-standard-theme)))
           (ergoemacs-command-loop--setup-quit-key)
           ;; Make the ErgoEmacs menu
           (ergoemacs-map--install)
           ;; Setup the main keys
-          (ergoemacs-setup-override-keymap)                       
+          (cond
+           ((string-equal ergoemacs-theme "reduction")
+            (ergoemacs-setup-override-keymap))
+           (t (ergoemacs-setup-override-keymap)))
           (setq ergoemacs-require--ini-p t)
 
           (if refresh-p
