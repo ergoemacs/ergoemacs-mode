@@ -107,6 +107,14 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :group 'convenience
   :group 'emulations)
 
+(defcustom ergoemacs-display-key-use-face t
+  "Use a button face for keys."
+  :type 'boolean
+  :set #'ergoemacs-set-default
+  :initialize #'custom-initialize-default
+  :group 'ergoemacs-display)
+
+
 
 
 (defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
@@ -302,8 +310,8 @@ The `execute-extended-command' is now \\[execute-extended-command].
           (define-key key-translation-map (kbd "<apps>") (kbd "<menu>"))
           (global-unset-key (kbd "<apps>"))
           (global-unset-key (kbd "<menu>"))
-          (define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])
-            'ergoemacs-command-loop--swap-translation)
+          (define-key ergoemacs-translate--parent-map [apps] 'ergoemacs-command-loop--swap-translation)
+          (define-key ergoemacs-translate--parent-map [menu] 'ergoemacs-command-loop--swap-translation)
 
 
           (if refresh-p
