@@ -137,6 +137,9 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defvar ergoemacs-keymap (make-sparse-keymap)
   "ErgoEmacs minor mode keymap.  This replaces `global-map'.")
 
+(defvar ergoemacs-translate--parent-map (make-sparse-keymap)
+  "Parent keymap for sparse translation")
+
 (defvar ergoemacs-saved-global-map nil
   "Saved global map.")
 

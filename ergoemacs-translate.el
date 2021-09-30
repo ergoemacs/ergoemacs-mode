@@ -907,7 +907,7 @@ If there are no gui elements, return nil."
 	    (push elt new-mod)))
 	(ergoemacs-translate--event-convert-list `(,@new-mod ,last-basic-event))))))
 
-(defvar ergoemacs-translate--parent-map nil
+(defvar ergoemacs-translate--parent-map (make-sparse-keymap)
   "Parent map for keymaps when completing a key sequence.")
 
 (defun ergoemacs-translate--parent-map ()
@@ -963,7 +963,7 @@ This takes into consideration the modal state of `ergoemacs-mode'."
           (setq keymap (ergoemacs-translation-struct-keymap-modal translation)
                 ret keymap)
         (setq keymap (ergoemacs-translation-struct-keymap translation)
-              ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map))))
+              ret (make-composed-keymap keymap ergoemacs-translate--parent-map)))
       (puthash key ret ergoemacs-translate--keymap-hash))
     ret))
 
