@@ -19,7 +19,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with ErgoEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
-(eval-when-compile 
+;;;Code:
+
+(eval-when-compile
   (require 'cl-lib)
   (require 'ergoemacs-macros))
 
@@ -28,8 +30,8 @@
 (require 'ibuffer)
 
 (defun ergoemacs-global-set-key (key command &optional extra-keys)
-  "Translates KEY from a 'us' layout to the current layout and
-set it as a global binding as COMMAND.
+  "Translates KEY from a 'us' layout to the current layout.
+This also sets the binding as a global binding as COMMAND.
 
 For example, if your layout is 'us', the command
 
@@ -38,8 +40,7 @@ For example, if your layout is 'us', the command
 will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
 'Meta-e' to next-line.
 
-EXTRA-KEYS are untranslated keys that are appended.
-"
+EXTRA-KEYS are untranslated keys that are appended."
   (if extra-keys
       (global-set-key (vconcat (ergoemacs-translate--event-layout
                                 (vconcat (listify-key-sequence key)))
@@ -50,19 +51,18 @@ EXTRA-KEYS are untranslated keys that are appended.
                     command)))
 
 (defun ergoemacs-define-key (map key command &optional extra-keys)
-  "Translates KEY from a 'us' layout to the current layout and
-set it as a global binding as COMMAND.
+  "Translates KEY from a 'us' layout to the current layout.
+
+In this case,  the key is then  defined in the MAP to run COMMAND.
 
 For example, if your layout is 'us', the command
 
-  (ergoemaces-global-set-key (kbd \"M-k\") 'next-line)
+  (ergoemacs-define-key keymap (kbd \"M-k\") 'next-line)
 
 will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
 'Meta-e' to next-line.
 
-EXTRA-KEYS are untranslated keys that are appended.
-
-"
+EXTRA-KEYS are untranslated keys that are appended."
   (if extra-keys
       (define-key map
         (vconcat (ergoemacs-translate--event-layout
@@ -75,8 +75,11 @@ EXTRA-KEYS are untranslated keys that are appended.
       command)))
 
 (defun ergoemacs-unset-keys-in-map (local-map)
-  "Unset all of the keys in a local map that we usually prefer to
-use the ergoemacs keys.  This is only used for isearch-mode-map,
+  "Unset all of the keys in a LOCAL-MAP.
+
+This unsets the keys that we usually prefer to use the ergoemacs keys.
+
+This currently is only used for `isearch-mode-map',
 since that is the only map that manages to evade being overridden
 by the emulation map."
   (ergoemacs-define-key local-map (kbd "M-h") nil)
@@ -165,11 +168,10 @@ by the emulation map."
   (define-key local-map (kbd "C-S-o") nil)
   (define-key local-map (kbd "C-r") nil)
   (define-key local-map (kbd "C-p") nil)
-  (define-key local-map (kbd "C-l") nil)
-)  
+  (define-key local-map (kbd "C-l") nil))
 
 (defun ergoemacs-set-standard-vars ()
-  "Enabled/changed variables/modes"
+  "Enabled/changed variables/modes."
   (setq org-CUA-compatible t
         org-support-shift-select t
         set-mark-command-repeat-pop t
@@ -267,14 +269,14 @@ by the emulation map."
   )
 
 (defun ergoemacs-unset-keys ()
-  "Unset all of the standard keys at once.  Call this before
-calling any other ergoemacs-set-* function"
+  "Unset all of the standard keys at once.
+Call this before calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-x C-f") nil)
   (global-set-key (kbd "C-x C-s") nil)
   (global-set-key (kbd "C-x C-w") nil)
   (global-set-key (kbd "C-x h") nil)
   (global-set-key (kbd "C-x k") nil)
-  (global-set-key (kbd "C-b") nil) 
+  (global-set-key (kbd "C-b") nil)
   (global-set-key (kbd "C-p") nil)
   (global-set-key (kbd "C-n") nil)
   (global-set-key (kbd "C-d") nil)
@@ -320,6 +322,9 @@ calling any other ergoemacs-set-* function"
 
 ;;; Fixed components
 (defun ergoemacs-set-standard-fixed (keymap)
+  "Set the standard keys for KEYMAP.
+
+These keys do not depend on the layout."
   (global-set-key [tool-bar kill-buffer] 'ergoemacs-close-current-buffer)
 
   ;; These keys go into the override map
@@ -358,7 +363,7 @@ calling any other ergoemacs-set-* function"
   (global-set-key (kbd "<S-insert>") 'ergoemacs-paste)
   (global-set-key (kbd "C-v") 'ergoemacs-paste)
 
-  (global-set-key (kbd "<delete>") 'delete-char ) 
+  (global-set-key (kbd "<delete>") 'delete-char)
   (global-set-key (kbd "<home>") 'move-beginning-of-line)
   (global-set-key (kbd "<end>") 'move-end-of-line)
   (global-set-key (kbd "C-SPC") 'set-mark-command)
@@ -372,16 +377,14 @@ calling any other ergoemacs-set-* function"
 
   ;; These go into the isearch-mode-map, which supercedes all other
   ;; maps when in isearch mode.
-  (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward)
-  )
+  (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward))
 
 (defun ergoemacs-set-help (keymap)
-  "Help changes for ergoemacs-mode"
-  (define-key keymap (kbd "C-h '") 'ergoemacs-describe-current-theme)
-  )
+  "Help change for ergoemacs-mode for KEYMAP."
+  (define-key keymap (kbd "C-h '") 'ergoemacs-describe-current-theme))
 
 (defun ergoemacs-set-move-char (keymap)
-  "Movement by Characters & Set Mark"
+  "Movement by Characters & Set Mark for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-j") 'backward-char)
   (ergoemacs-define-key keymap (kbd "M-l") 'forward-char)
   (ergoemacs-define-key keymap (kbd "M-i") 'previous-line)
@@ -402,66 +405,60 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
   (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
 
-  (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
-  )
+  (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char))
 
 (defun ergoemacs-set-move-extra-reduction (keymap)
+  "Extra reduction keys with KEYMAP."
   (global-set-key (kbd "M-.") 'ergoemacs-end-of-line-or-what)
   (global-set-key (kbd "M-m") 'ergoemacs-beginning-of-line-or-what))
 
 
 ;;; Variable Components
 (defun ergoemacs-set-move-word (keymap)
-  "Moving around and deleting words"
+  "Moving around and deleting words with KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-u") 'backward-word)
   (ergoemacs-define-key keymap (kbd "M-o") 'forward-word)
   
   (ergoemacs-define-key keymap (kbd "M-e") 'backward-kill-word)
-  (ergoemacs-define-key keymap (kbd "M-r") 'kill-word)
-  )
+  (ergoemacs-define-key keymap (kbd "M-r") 'kill-word))
 
-;; not in reduction
 (defun ergoemacs-set-move-paragraph (keymap)
-  "Move by Paragraph"
+  "Move by Paragraph for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-U") 'backward-paragraph)
-  (ergoemacs-define-key keymap (kbd "M-O") 'forward-paragraph)
-  )
-;; not in reduction
+  (ergoemacs-define-key keymap (kbd "M-O") 'forward-paragraph))
+
 (defun ergoemacs-set-move-line (keymap)
-  "Move by Line"
+  "Move by Line for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-h") 'move-beginning-of-line)
-  (ergoemacs-define-key keymap (kbd "M-H") 'move-end-of-line)
-  )
-;; not in reduction
+  (ergoemacs-define-key keymap (kbd "M-H") 'move-end-of-line))
+
 (defun ergoemacs-set-move-page (keymap)
-  "Move by Page"
+  "Move by Page by KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-I") 'scroll-down-command)
-  (ergoemacs-define-key keymap (kbd "M-K") 'scroll-up-command)
-)  
-;; Not in reduction
+  (ergoemacs-define-key keymap (kbd "M-K") 'scroll-up-command))
+
 (defun ergoemacs-set-move-buffer (keymap)
+  "Move by buffer in KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-n") 'beginning-of-buffer)
   (ergoemacs-define-key keymap (kbd "M-N") 'end-of-buffer)
 
   (ergoemacs-define-key isearch-mode-map (kbd "M-n") 'isearch-beginning-of-buffer)
-  (ergoemacs-define-key isearch-mode-map (kbd "M-N") 'isearch-end-of-buffer)
-)  
+  (ergoemacs-define-key isearch-mode-map (kbd "M-N") 'isearch-end-of-buffer))
 
 (defun ergoemacs-set-move-bracket (keymap)
-  "Move By Bracket"
+  "Move By Bracket for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-J") 'ergoemacs-backward-open-bracket)
   (ergoemacs-define-key keymap (kbd "M-L") 'ergoemacs-forward-close-bracket)
   (ergoemacs-global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
-  (ergoemacs-global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket)
-  )
+  (ergoemacs-global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket))
 
 (defun ergoemacs-set-move-bracket-reduction (keymap)
+  "Move bracket in the reduction theme for KEYMAP."
   (ergoemacs-global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
-  (ergoemacs-global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket)
-  )
+  (ergoemacs-global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket))
 
 (defun ergoemacs-set-copy (keymap)
-  "Copy, Cut, Paste, Redo and Undo"
+  "Copy, Cut, Paste, Redo and Undo for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-x") 'ergoemacs-cut-line-or-region)
   (ergoemacs-define-key keymap (kbd "M-c") 'ergoemacs-copy-line-or-region)
   (ergoemacs-define-key keymap (kbd "M-v") 'ergoemacs-paste)
@@ -474,28 +471,23 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "M-z") 'ergoemacs-undo)
   (put 'ergoemacs-undo
        :advertised-binding (ergoemacs-translate--event-layout
-                            (vconcat (listify-key-sequence (kbd "M-z")))
-                            )
-       )
+                            (vconcat (listify-key-sequence (kbd "M-z")))))
   (ergoemacs-define-key keymap (kbd "C-S-x") 'execute-extended-command)
 
   ;; Mode specific changes
   (ergoemacs-define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
   (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
   (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
-  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
-  )  
+  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste))
 
 (defun ergoemacs-set-search (keymap)
-  "Search and Replace"
+  "Search and Replace for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-5") 'query-replace)
   (ergoemacs-define-key keymap (kbd "M-%") 'query-replace-regexp)
   (ergoemacs-define-key keymap (kbd "M-;") 'isearch-forward)
   (put 'isearch-forward
        :advertised-binding (ergoemacs-translate--event-layout
-                            (vconcat (listify-key-sequence (kbd "M-;")))
-                            )
-       )
+                            (vconcat (listify-key-sequence (kbd "M-;")))))
   (ergoemacs-define-key keymap (kbd "M-:") 'isearch-backward)
 
   ;; We have to override this in isearch-mode-map because isearch
@@ -534,19 +526,16 @@ calling any other ergoemacs-set-* function"
   ;; global emulation keymap.  So we override isearch-forward so that
   ;; we can exit with the same commands as searching.
   (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
-  (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer)
-  )
+  (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer))
 
 (defun ergoemacs-set-search-reduction (keymap)
-  "Search and Replace"
+  "Search and Replace with KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-5") 'query-replace)
   (ergoemacs-define-key keymap (kbd "M-%") 'query-replace-regexp)
   (ergoemacs-define-key keymap (kbd "M-h") 'isearch-forward)
   (put 'isearch-forward
        :advertised-binding (ergoemacs-translate--event-layout
-                            (vconcat (listify-key-sequence (kbd "M-h")))
-                            )
-       )
+                            (vconcat (listify-key-sequence (kbd "M-h")))))
   (ergoemacs-define-key keymap (kbd "M-y") 'isearch-backward)
 
   ;; We have to override this in isearch-mode-map because isearch
@@ -585,11 +574,10 @@ calling any other ergoemacs-set-* function"
   ;; global emulation keymap.  So we override isearch-forward so that
   ;; we can exit with the same commands as searching.
   (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
-  (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer)
-  )
+  (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer))
 
 (defun ergoemacs-set-switch (keymap)
-  "Window/Frame/Tab Switching"
+  "Window/Frame/Tab Switching for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-s") 'other-window)
   (ergoemacs-define-key keymap (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
   
@@ -606,44 +594,42 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "M-$") 'split-window-right)
 
   (ergoemacs-define-key keymap (kbd "M-0") 'delete-window)
-  (ergoemacs-define-key keymap (kbd "M-)") 'delete-window)
-  )
+  (ergoemacs-define-key keymap (kbd "M-)") 'delete-window))
 
 
 (defun ergoemacs-set-switch-reduction (keymap)
-  "Window/Frame/Tab Switching"
+  "Window/Frame/Tab Switching for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-1") 'switch-to-buffer)
   (ergoemacs-define-key keymap (kbd "M-!") 'ibuffer)
   (ergoemacs-define-key keymap (kbd "M-2") 'other-window)
   (ergoemacs-define-key keymap (kbd "M-3") 'delete-other-windows)
   (ergoemacs-define-key keymap (kbd "M-#") 'delete-window)
   (ergoemacs-define-key keymap (kbd "M-4") 'split-window-below)
-  (ergoemacs-define-key keymap (kbd "M-$") 'split-window-right)
-  )
+  (ergoemacs-define-key keymap (kbd "M-$") 'split-window-right))
+
 (defun ergoemacs-set-execute (keymap)
-  "Execute Commands"
+  "Execute Commands for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-a") 'execute-extended-command)
-  (ergoemacs-define-key keymap (kbd "M-A") 'shell-command)
-  )
+  (ergoemacs-define-key keymap (kbd "M-A") 'shell-command))
 
 (defun ergoemacs-set-execute-reduction (keymap)
+  "Execute reduction key set for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-;") 'execute-extended-command))
 
 ;; not in reduction
 (defun ergoemacs-set-misc (keymap)
-  "Misc Commands"
+  "Misc Commands for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-p") 'recenter-top-bottom)
   (ergoemacs-define-key keymap (kbd "M-B") 'ibuffer)
-  (ergoemacs-define-key keymap (kbd "M-b") 'switch-to-buffer)
-  )
+  (ergoemacs-define-key keymap (kbd "M-b") 'switch-to-buffer))
 
 (defun ergoemacs-set-kill-line (keymap)
-  "Kill Line"
+  "Kill Line for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-g") 'kill-line)
   (ergoemacs-define-key keymap (kbd "M-G") 'ergoemacs-kill-line-backward))
 
 (defun ergoemacs-set-text-transform (keymap)
-  "Text Transformation"
+  "Text Transformation for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-'") 'comment-dwim)
   (ergoemacs-define-key keymap (kbd "M-\"") 'delete-horizontal-space)
   
@@ -660,11 +646,10 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "M-q") 'ergoemacs-compact-uncompact-block)
 
   (ergoemacs-define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
-  (ergoemacs-define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
-  )
+  (ergoemacs-define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold))
 
 (defun ergoemacs-set-select-items (keymap)
-  "Select Items"
+  "Select Items for KEYMAP."
   (ergoemacs-global-set-key (kbd "M-S-SPC") 'mark-paragraph)
   (ergoemacs-define-key keymap (kbd "M-8") 'ergoemacs-extend-selection)
   (ergoemacs-define-key keymap (kbd "M-*") 'ergoemacs-select-text-in-quote)
@@ -674,16 +659,16 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "M-&") 'ergoemacs-select-current-line))
 
 (defun ergoemacs-set-apps (keymap)
-  "Set general apps keymap"
+  "Set general apps KEYMAP."
   (ergoemacs-define-key keymap (kbd "<apps> '") 'ergoemacs-org-edit-src)
   (ergoemacs-define-key keymap (kbd "<apps> 2") 'delete-window)
   (ergoemacs-define-key keymap (kbd "<apps> 3") 'delete-other-windows)
-  (ergoemacs-define-key keymap (kdb "<apps> 4") 'split-window-vertically)
+  (ergoemacs-define-key keymap (kbd "<apps> 4") 'split-window-vertically)
   (ergoemacs-define-key keymap (kbd "<apps> 5") 'query-replace)
   (ergoemacs-define-key keymap (kbd "<apps> <f2>") 'ergoemacs-cut-all)
   (ergoemacs-define-key keymap (kbd "<apps> <f3>") 'ergoemacs-copy-all)
   (ergoemacs-define-key keymap (kbd "<apps> RET") 'execute-extended-command)
-  (ergoemacs-define-key keymap (kbd "<apps> TAB") 'indent-region) "<apps> '"         ergoemacs-org-edit-src
+  (ergoemacs-define-key keymap (kbd "<apps> TAB") 'indent-region)
   (ergoemacs-define-key keymap (kbd "<apps> 2")  'delete-window)
   (ergoemacs-define-key keymap (kbd "<apps> 3")  'delete-other-windows)
   (ergoemacs-define-key keymap (kbd "<apps> 4")  'split-window-vertically)
@@ -695,24 +680,6 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "<apps> TAB")  'indent-region)  ;; Already in CUA)
   (ergoemacs-define-key keymap (kbd "<apps> SPC")  'set-mark-command)
   (ergoemacs-define-key keymap (kbd "<apps> a")  'mark-whole-buffer)
-  ;; (ergoemacs-define-key (kbd "<apps> d"       )  ("C-x" :ctl-to-alt))
-  ;; (ergoemacs-define-key (kbd "<apps> f"       )  ("C-c" :unchorded-ctl))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'help-map)
-  
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'ergoemacs-describe-current-theme (kbd "'"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'describe-function (kbd "1"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'describe-variable (kbd "2"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'describe-key (kbd "3"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'describe-char (kbd "4"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'man (kbd "5"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'ergoemacs-lookup-google (kbd "7"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'ergoemacs-lookup-wikipedia (kbd "8"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'ergoemacs-lookup-word-definition (kbd "9"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'elisp-index-search (kbd "`"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'ergoemacs-where-is-old-binding (kbd "o"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'ergoemacs-clean (kbd "z"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'ergoemacs-clean-library (kbd "C-z"))
-  (ergoemacs-define-key keymap (kbd "<apps> h")  'ergoemacs-clean-nw (kbd "Z"))
   (ergoemacs-define-key keymap (kbd "<apps> m")  (kbd "C-c C-c"))
   (ergoemacs-define-key keymap (kbd "<apps> s")  'save-buffer)
   (ergoemacs-define-key keymap (kbd "<apps> C-s")  'write-file)
@@ -730,23 +697,54 @@ calling any other ergoemacs-set-* function"
   (ergoemacs-define-key keymap (kbd "<apps> a") 'mark-whole-buffer)
   ;; (kbd "<apps> d")         ("C-x" :ctl-to-alt)
   ;; (kbd "<apps> f")         ("C-c" :unchorded-ctl)
-  )
+  
+  (ergoemacs-define-key ergoemacs-override-keymap
+			(kbd "<apps> f")
+			(lambda ()
+                          (interactive)
+                          (ergoemacs-command-loop "C-x" :ctl-to-alt)))
+
+  (ergoemacs-define-key ergoemacs-override-keymap
+			(kbd "<apps> d")
+			(lambda ()
+                          (interactive)
+                          (ergoemacs-command-loop "C-c" :unchorded-ctl)))
+
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "a"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "A"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "C-a"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'calc (kbd "c"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'dired-jump (kbd "d"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'eshell (kbd "e"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'powershell (kbd "p"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'ergoemacs-open-in-desktop (kbd "f"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'grep (kbd "g"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'magit-status (kbd "m"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'ergoemacs-open-in-external-app (kbd "o"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'R (kbd "R"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'shell (kbd "s"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "t"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "C-t"))
+  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "T"))
+  (define-key ergoemacs-translate--parent-map [f2] 'ergoemacs-command-loop--force-universal-argument)
+  (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last)
+  (define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])
+    'ergoemacs-command-loop--swap-translation))
 
 (defun ergoemacs-set-quit ()
-  "Escape exits"
+  "Escape exits."
   (ergoemacs-global-set-key (kbd "<escape>") 'ergoemacs-keyboard-quit))
 
 (defun ergoemacs-set-remaps ()
-  "Remaps for ergoemacs-mode"
+  "Remaps for `ergoemacs-mode'."
   (global-set-key [remap eshell] 'ergoemacs-eshell-here)
   (global-set-key [remap powershell] 'ergoemacs-powershell-here)
   (global-set-key [remap shell] 'ergoemacs-shell-here)
   (global-set-key [remap describe-mode]
-                  'ergoemacs-describe-major-mode)
-  )
+                  'ergoemacs-describe-major-mode))
 
 (defun ergoemacs-set-menu-bar-file ()
-  "File menu"
+  "File menu."
   ;; Modify the existing File menu instead of creating it from
   ;; scratch.  Creating it from scratch somehow breaks the "Open
   ;; Recent" menu.
@@ -809,12 +807,10 @@ calling any other ergoemacs-set-* function"
 
     (require 'recentf)
     (setq recentf-menu-before "Open Containing Folder In")
-    (recentf-mode 1)
-    )
-  )
+    (recentf-mode 1)))
 
 (defun ergoemacs-set-menu-bar-edit ()
-  "Edit menu"
+  "Edit menu."
   (define-key-after (current-global-map) [menu-bar edit]
     (cons "Edit"
           '(keymap
@@ -978,7 +974,7 @@ calling any other ergoemacs-set-* function"
     'file))
 
 (defun ergoemacs-set-menu-bar-search ()
-  "Search menu"
+  "Search menu."
   (define-key-after (current-global-map) [menu-bar search]
     (cons "Search"
           '(keymap
@@ -1055,7 +1051,7 @@ calling any other ergoemacs-set-* function"
     'edit))
 
 (defun ergoemacs-set-menu-bar-view ()
-  "View menu"
+  "View menu."
   (define-key-after (current-global-map) [menu-bar view]
     (cons "View"
           '(keymap
@@ -1110,7 +1106,7 @@ calling any other ergoemacs-set-* function"
     'search))
 
 (defun ergoemacs-set-menu-bar-help ()
-  "Help menu"
+  "Help menu."
   (global-set-key [menu-bar help-menu]
                   (cons "Help"
                         `(keymap
@@ -1276,36 +1272,31 @@ calling any other ergoemacs-set-* function"
 
 
 (defun ergoemacs-handle-M-O ()
-  "Handle M-O input.  In a terminal, this can be either arrow
-keys (e.g. M-O A == <up>) or regular M-O keybinding."
+  "Handle meta+O input.
+In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular meta+O keybinding."
   (interactive)
   (if (input-pending-p)
       (let ((second-char (read-char)))
         (cond
          ((eq second-char 65) ;; A
-          (execute-kbd-macro (kbd "<up>"))
-          )
+          (execute-kbd-macro (kbd "<up>")))
          ((eq second-char 66) ;; B
-          (execute-kbd-macro (kbd "<down>"))
-          )
+          (execute-kbd-macro (kbd "<down>")))
          ((eq second-char 67) ;; C
-          (execute-kbd-macro (kbd "<right>"))
-          )
+          (execute-kbd-macro (kbd "<right>")))
          ((eq second-char 68) ;; D
-          (execute-kbd-macro (kbd "<left>"))
-          )
+          (execute-kbd-macro (kbd "<left>")))
          ((eq second-char 72) ;; H
-          (execute-kbd-macro (kbd "<home>"))
-          )
+          (execute-kbd-macro (kbd "<home>")))
          ((eq second-char 70) ;; F
-          (execute-kbd-macro (kbd "<end>"))
-          )
+          (execute-kbd-macro (kbd "<end>")))
          (t
           (beep))))
     (call-interactively ergoemacs-M-O-binding)))
 
 (defvar ergoemacs-M-O-binding () nil)
 (defun ergoemacs-fix-arrow-keys (keymap)
+  "Fix arrow keys for KEYMAP."
   (setq ergoemacs-M-O-binding (lookup-key keymap (kbd "M-O")))
   (if ergoemacs-M-O-binding
       (define-key keymap (kbd "M-O") 'ergoemacs-handle-M-O)))
@@ -1313,6 +1304,7 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
 (defvar ergoemacs-override-keymap)
 
 (defun ergoemacs-install-reduction-theme ()
+  "Install reduction theme."
   (ergoemacs-unset-keys)
   (ergoemacs-set-standard-vars)
 
@@ -1337,6 +1329,7 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
   (ergoemacs-set-text-transform ergoemacs-override-keymap)
   (ergoemacs-set-select-items ergoemacs-override-keymap)
   (ergoemacs-fix-arrow-keys ergoemacs-override-keymap)
+  (ergoemacs-set-apps ergoemacs-override-keymap)
 
   (ergoemacs-set-remaps)
   (ergoemacs-set-quit)
@@ -1344,39 +1337,7 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
   (ergoemacs-set-menu-bar-view)
   (ergoemacs-set-menu-bar-search)
   (ergoemacs-set-menu-bar-edit)
-  (ergoemacs-set-menu-bar-file)
-  (ergoemacs-define-key ergoemacs-override-keymap
-			(kbd "<menu> f")
-			(lambda ()
-                          (interactive)
-                          (ergoemacs-command-loop "C-x" :ctl-to-alt)))
-
-  (ergoemacs-define-key ergoemacs-override-keymap
-			(kbd "<menu> d")
-			(lambda ()
-                          (interactive)
-                          (ergoemacs-command-loop "C-c" :unchorded-ctl)))
-
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "a"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "A"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "C-a"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'calc (kbd "c"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'dired-jump (kbd "d"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'eshell (kbd "e"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'powershell (kbd "p"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'ergoemacs-open-in-desktop (kbd "f"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'grep (kbd "g"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'magit-status (kbd "m"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'ergoemacs-open-in-external-app (kbd "o"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'R (kbd "R"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'shell (kbd "s"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "t"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "C-t"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "T"))
-  (define-key ergoemacs-translate--parent-map [f2] 'ergoemacs-command-loop--force-universal-argument)
-  (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last)
-  (define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])
-    'ergoemacs-command-loop--swap-translation))
+  (ergoemacs-set-menu-bar-file))
 
 (defun ergoemacs-install-standard-theme ()
   "Install standard ergoemacs-mode theme."
@@ -1414,7 +1375,7 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
 
 
 (defun ergoemacs-install-org-bindings ()
-  "Install the org-mode bindings"
+  "Install the `org-mode' bindings."
   (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
   (define-key org-mode-map (kbd "<M-down>") 'ergoemacs-org-metadown)
   (define-key org-mode-map (kbd "<M-up>") 'ergoemacs-org-metaup)
@@ -1436,28 +1397,32 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
 (add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
 
 (defun ergoemacs-install-log-edit-bindings ()
+  "Install `log-edit' key bindings."
   (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done))
 
 (with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
 
 (defun ergoemacs-install-eshell-bindings ()
+  "Install `eshell' bindings."
   (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol))
 (add-hook 'eshell-post-command-hook #'ergoemacs-install-eshell-bindings)
 
 (defun ergoemacs-install-comint-bindings ()
+  "Install comint key bindings."
   (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol))
 
 (with-eval-after-load 'comint (ergoemacs-install-comint-bindings))
 
 (defun ergoemacs-install-dired-bindings ()
+  "Install `dired-mode-map' bindings."
   (define-key dired-mode-map [remap query-replace] 'dired-do-query-replace-regexp)
   (define-key dired-mode-map [remap query-replace-regexp] 'dired-do-query-replace-regexp))
 (add-hook 'dired-load-hook #'ergoemacs-install-dired-bindings)
 
 (defun ergoemacs-install-calc-bindings ()
+  "Install `calc-mode' bindings."
   (define-key calc-mode-map [remap ergoemacs-undo] 'calc-undo))
 (add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
-
 
 (ergoemacs-translation normal ()
   "Identify transformation"
@@ -1534,6 +1499,5 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
                   (define-key map (read-kbd-macro "RET") 'ergoemacs-unchorded-alt-modal)
                   map))
 
-
-
 (provide 'ergoemacs-themes)
+;;; ergoemacs-themes.el ends here
