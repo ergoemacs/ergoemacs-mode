@@ -190,17 +190,8 @@ The TEXT will be what the mode-line is set to be."
                           x
                         `(ergoemacs-mode ,(if (or (not ergoemacs-mode-line) (eq ergoemacs-mode-line 'no-layout)) ""
                                             (concat " ErgoEmacs"
-                                                    "[" ergoemacs-keyboard-layout "]")
-                                            )
-                                         )
-                        )
-                      )
-                    minor-mode-alist
-                    )
-            )
-      )
-    )
-  )
+                                                    "[" ergoemacs-keyboard-layout "]")))))
+                    minor-mode-alist)))))
 
 (defconst ergoemacs-font-lock-keywords
   '(("(\\(ergoemacs\\(?:-theme-component\\|-theme\\|-component\\|-require\\|-remove\\|-advice\\|-translation\\|-cache\\|-timing\\|-package\\|-autoload\\)\\)\\_>[ \t']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
@@ -360,9 +351,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
 
           (if refresh-p
               (message "Ergoemacs-mode keys refreshed (%s)" ergoemacs-keyboard-layout)
-            (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout)
-            )
-          )
+            (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout)))
       ;; Turn off
       ;; Restore frame parameters
       (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
@@ -375,12 +364,8 @@ The `execute-extended-command' is now \\[execute-extended-command].
       (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
 
       (unless refresh-p
-        (message "Ergoemacs-mode turned OFF.")
-        )
-      )
-    )
-  (setq ergoemacs-mode-started-p t)
-  )
+        (message "Ergoemacs-mode turned OFF."))))
+  (setq ergoemacs-mode-started-p t))
 
 (defvar ergoemacs--gzip (executable-find "gzip")
   "Gzip location.")
