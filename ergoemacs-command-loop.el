@@ -201,7 +201,7 @@ ignore the post-command hooks.")
            (sexp :tag "Translated Type")))
   :group 'ergoemacs-command-loop)
 
-(defcustom ergoemacs-command-loop-blink-character (ergoemacs :unicode-or-alt "•" "·" "-")
+(defcustom ergoemacs-command-loop-blink-character "•"
   "Blink character."
   :type '(choice
           (string :tag "Cursor")
@@ -555,12 +555,12 @@ UNIVERSAL"
                     (and (not universal) "")
                     (or (and (string= ergoemacs-command-loop--read-key-prompt "") "") " ")
                     (and ergoemacs-command-loop-blink-character
-                         (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
+                         (or (and blink-on ergoemacs-command-loop-blink-character)
                              " "))
                     " ")
                    (or
                     (and (not universal) "")
-                    (ergoemacs :unicode-or-alt "▸" ">"))))
+                    "▸")))
       (format
        "%s%s%s %s "
        (cond
@@ -569,13 +569,13 @@ UNIVERSAL"
         (t current-prefix-arg))
        (or (and (not universal) "")
            (and ergoemacs-command-loop-blink-character
-                (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
+                (or (and blink-on ergoemacs-command-loop-blink-character)
                     " "))
            " ")
        (or (and (listp current-prefix-arg)
                 (format "%s" current-prefix-arg))
            "")
-       (ergoemacs :unicode-or-alt "▸" ">"))))
+       "▸")))
 
 (defun ergoemacs-command-loop--ensure-sane-variables ()
   "Make sure that certain variables won't lock up Emacs.
@@ -655,7 +655,7 @@ This is not done when the event is [ergoemacs-ignore]"
 		      ((not (stringp prompt)))
 		      ((not (string= "" ergoemacs-command-loop--read-key-prompt)) prompt)
 		      ((or (string= prompt " ")
-			   (string-match-p prompt (concat " *" (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-") " *")))
+			   (string-match-p prompt (concat " *" ergoemacs-command-loop-blink-character  " *")))
 		       nil)
 		      (ergoemacs-command-loop--universal prompt)
 		      (ergoemacs-command-loop--echo-keystrokes-complete prompt)
@@ -848,7 +848,7 @@ KEYS is the keys information"
          (or (and (string= ergoemacs-command-loop--read-key-prompt "") "") " ")
          (or (and universal "")
              (and ergoemacs-command-loop-blink-character
-                  (or (and blink-on (ergoemacs :unicode-or-alt ergoemacs-command-loop-blink-character "-"))
+                  (or (and blink-on ergoemacs-command-loop-blink-character)
                       " "))
              " ")
          trans
@@ -993,7 +993,7 @@ read."
 					     ;;      (string-match-p "\\<mouse\\>" tmp))
                                              (format "%s%s%s"
                                                      (ergoemacs :modifier-desc (nth 0 elt))
-                                                     (ergoemacs :unicode-or-alt "↔" "<->")
+                                                     "↔"
                                                      (ergoemacs :modifier-desc (nth 1 elt))))
                                            double ", "))
                                      "")
@@ -1002,7 +1002,7 @@ read."
                                   (lambda(elt)
                                     (format "%s%s%s"
                                             (ergoemacs :modifier-desc (nth 0 elt))
-                                            (ergoemacs :unicode-or-alt "→" "->")
+                                            "→"
                                             (ergoemacs :modifier-desc (nth 1 elt))))
                                   trans ", "))) ""))
     (maphash
@@ -1013,8 +1013,8 @@ read."
            (setq tmp (format "%s%s%s"
                              (ergoemacs-key-description local-key)
                              (if (eq (nth 1 item) :force)
-                                 (ergoemacs :unicode-or-alt "⇒" "=>")
-                               (ergoemacs :unicode-or-alt "→" "->"))
+                                 "⇒" 
+                               "→")
                              (ergoemacs :modifier-desc (nth 0 item))))
            (push (elt local-key 0) mod-keys)
            (setq keys (or (and (not keys) tmp)
@@ -2139,7 +2139,7 @@ TRANSLATED-KEY is what the assumed key is actually bound."
              (eq ergoemacs-echo-function :multi-key)))
     (ergoemacs-command-loop--temp-message "%s%s%s%s"
                                      (ergoemacs-key-description key)
-                                     (ergoemacs :unicode-or-alt "→" "->")
+                                     "→"
                                      lookup
                                      (or (and translated-key
                                               (format " (from %s)" (ergoemacs-key-description translated-key)))

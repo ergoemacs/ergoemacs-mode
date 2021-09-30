@@ -1329,6 +1329,10 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n t") 'org-capture)
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n C-t") 'org-agenda)
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n T") 'org-agenda)
+  ;(define-key ergoemacs-translate--parent-map [f2] 'ergoemacs-command-loop--force-universal-argument)
+  ;(define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last))
+  ;(define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])
+  ;  'ergoemacs-command-loop--swap-translation)
   )
 
 (defun ergoemacs-install-standard-theme ()
@@ -1423,7 +1427,7 @@ keys (e.g. M-O A == <up>) or regular M-O keybinding."
 
 (ergoemacs-translation ctl-to-alt ()
   "Ctl <-> Alt translation"
-  :text (lambda() (format "<Ctl%sAlt> " (ergoemacs :unicode-or-alt "↔" " to ")))
+  :text  "<Ctl↔Alt> "
   
   :meta '(control)
   :control '(meta)

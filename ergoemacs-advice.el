@@ -170,6 +170,12 @@ TYPE is the type of translation installed."
   (when (eq 'ergoemacs-command-loop--shift-translate (key-binding (this-single-command-keys)))
     (setq this-command-keys-shift-translated t)))
 
+(ergoemacs-advice read-key (&optional prompt)
+  "Drop single command keys for read-key." ; For compataiblity with emacs 25.5
+  :type :before
+  (setq ergoemacs-command-loop--single-command-keys nil))
+
+
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-advice.el ends here
