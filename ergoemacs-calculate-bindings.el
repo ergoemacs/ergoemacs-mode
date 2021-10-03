@@ -116,8 +116,7 @@ SPACE represents the amount of sacing to add"
     (let* ((command (nth 1 elt))
            (key (nth 0 elt))
            (key-code (read-kbd-macro key))
-           (bind (lookup-key (symbol-value keymap) key-code))
-           ergoemacs-command)
+           (bind (lookup-key (symbol-value keymap) key-code)))
       (when bind
         (dolist (ergoemacs-command (where-is-internal command ergoemacs-override-keymap nil t t))
           (insert (format "%s(ergoemacs-define-key %s (kbd \"%s\") '%s)" space (symbol-name keymap)
@@ -127,6 +126,31 @@ SPACE represents the amount of sacing to add"
 
 (defvar ergoemacs-calculate-bindings-for-both-theme--tmp nil)
 (defun ergoemacs-calculate-bindings-for-both-themes (keymap)
+  "Calculates ergoemacs-style bindings for KEYMAP."
+  (interactive
+   (let ((v (variable-at-point))
+	     (enable-recursive-minibuffers t)
+         (orig-buffer (current-buffer))
+	     val)
+     (setq val (completing-read
+                (if (and (symbolp v) (keymapp (symbol-value v)))
+                    (format
+                     "Calculate egoemacs-mode keybindings for keymap (default %s): " v)
+                  "Calculate ergoemacs-mode keybindings: ")
+                #'help--symbol-completion-table
+                (lambda (vv)
+                  ;; In case the variable only exists in the buffer
+                  ;; the command we switch back to that buffer before
+                  ;; we examine the variable.
+                  (with-current-buffer orig-buffer
+                    (and (boundp vv) (keymapp (symbol-value vv)))))
+                t nil nil
+                (if (and (symbolp v) (keymapp (symbol-value v)))
+                    (symbol-name v))))
+     (list (if (equal val "")
+	           v (intern val)))))
+  (when (stringp v)
+    (error "This funcion requires a keymap"))
   (setq ergoemacs-calculate-bindings-for-both-theme--tmp
         (copy-keymap ergoemacs-override-keymap)
         ergoemacs-override-keymap (make-sparse-keymap))
