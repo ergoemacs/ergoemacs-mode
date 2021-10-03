@@ -74,7 +74,7 @@ EXTRA-KEYS are untranslated keys that are appended."
        (vconcat (listify-key-sequence key)))
       command)))
 
-(defun ergoemacs-unset-keys-in-map (local-map)
+(defun ergoemacs-unset-keys-in-map (local-map-symbol)
   "Unset all of the keys in a LOCAL-MAP.
 
 This unsets the keys that we usually prefer to use the ergoemacs keys.
@@ -82,8 +82,12 @@ This unsets the keys that we usually prefer to use the ergoemacs keys.
 This currently is only used for `isearch-mode-map',
 since that is the only map that manages to evade being overridden
 by the emulation map."
-  (ergoemacs-define-key local-map (kbd "M-h") nil)
-  (ergoemacs-define-key local-map (kbd "M-H") nil)
+  (unless (intern-soft (concat (symbol-name local-map-symbol) "-ergoemacs"))
+    (set (intern (concat (symbol-name local-map-symbol) "-ergoemacs"))
+         (copy-keymap (symbol-value local-map-symbol))))
+  (let ((local-map (symbol-value local-map-symbol)))
+    (ergoemacs-define-key local-map (kbd "M-h") nil)
+    (ergoemacs-define-key local-map (kbd "M-H") nil)
 
   (ergoemacs-define-key local-map (kbd "M-e") nil)
   (ergoemacs-define-key local-map (kbd "M-r") nil)
@@ -168,7 +172,7 @@ by the emulation map."
   (define-key local-map (kbd "C-S-o") nil)
   (define-key local-map (kbd "C-r") nil)
   (define-key local-map (kbd "C-p") nil)
-  (define-key local-map (kbd "C-l") nil))
+  (define-key local-map (kbd "C-l") nil)))
 
 (defun ergoemacs-set-standard-vars ()
   "Enabled/changed variables/modes."
@@ -265,8 +269,7 @@ by the emulation map."
   (add-hook 'kill-buffer-hook 'ergoemacs-save-buffer-to-recently-closed)
   (add-hook 'shell-mode-hook 'ergoemacs-shell-here-hook)
   (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
-  (delete-selection-mode 1)
-  )
+  (delete-selection-mode 1))
 
 (defun ergoemacs-unset-keys ()
   "Unset all of the standard keys at once.
@@ -494,7 +497,6 @@ These keys do not depend on the layout."
   ;;                           (vconcat (listify-key-sequence (kbd "M-;")))
   ;;                           )
   ;;      )
-  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-:") 'isearch-repeat-backward)
   ;; (put 'isearch-repeat-backward
   ;;      :advertised-binding (ergoemacs-translate--event-layout
   ;;                           (vconcat (listify-key-sequence (kbd "M-:")))
@@ -506,7 +508,7 @@ These keys do not depend on the layout."
   ;; Ergoemacs does not have a generic "edit this" function.  So I
   ;; used C-x C-q, since that is used to make uneditable things
   ;; editable.
-  ;; (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
+  ;; 
 
   ;; When editing a search in isearch, it uses the
   ;; minibuffer-local-isearch-map keymap, which gets overridden by the
@@ -729,7 +731,9 @@ These keys do not depend on the layout."
   (global-set-key [remap powershell] 'ergoemacs-powershell-here)
   (global-set-key [remap shell] 'ergoemacs-shell-here)
   (global-set-key [remap describe-mode]
-                  'ergoemacs-describe-major-mode))
+                  'ergoemacs-describe-major-mode)
+  (global-set-key [remap cua-paste] 'ergoemacs-paste)
+  (global-set-key [remap cua-cut-region] 'ergoemacs-cut-line-or-region))
 
 (defun ergoemacs-set-menu-bar-file ()
   "File menu."
@@ -1293,7 +1297,9 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
 (defun ergoemacs-install-isearch-mode ()
   "Installs keys for isearch mode."
-  (ergoemacs-unset-keys-in-map isearch-mode-map)
+  (ergoemacs-unset-keys-in-map 'isearch-mode-map)
+  (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
+  (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)
    ;; Mode specific changes
   ;; (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
 

@@ -290,6 +290,8 @@ variable `ergoemacs-after-load-functions'."
 (defvar ergoemacs-mode--default-frame-alist nil
   "List that saves default frame parameters.")
 
+(defvar isearch-mode-map-ergoemacs nil
+  "This variable saves the variable `isearch-mode-map'.")
 
 (defvar ergoemacs-mode--start-p nil
   "Determines if `ergoemacs-mode' will start.")
@@ -347,7 +349,8 @@ The `execute-extended-command' is now \\[execute-extended-command].
           ;;(global-unset-key (kbd "<menu>"))
           ;;(define-key ergoemacs-translate--parent-map [apps] 'ergoemacs-command-loop--swap-translation)
           ;;(define-key ergoemacs-translate--parent-map [menu] 'ergoemacs-command-loop--swap-translation)
-
+          (when ergoemacs-mode-turn-on-cua-mode
+            (cua-mode 1))
 
           (if refresh-p
               (message "Ergoemacs-mode keys refreshed (%s)" ergoemacs-keyboard-layout)
@@ -362,7 +365,9 @@ The `execute-extended-command' is now \\[execute-extended-command].
       (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
       (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
       (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
-
+      (when ergoemacs-mode-turn-on-cua-mode
+        (cua-mode 0))
+      (setq isearch-mode-map (copy-keymap isearch-mode-map-ergoemacs))
       (unless refresh-p
         (message "Ergoemacs-mode turned OFF."))))
   (setq ergoemacs-mode-started-p t))
@@ -644,6 +649,11 @@ When STORE-P is non-nil, save the tables."
     (fish (">))'>" " >))'>" "  >))'>" "   >))'>" "    >))'>" "   <'((<" "  <'((<" " <'((<")))
   "Spinners for long commands with `ergoemacs-command-loop'."
   :group 'ergoemacs-command-loop)
+
+(defcustom ergoemacs-mode-turn-on-cua-mode t
+  "Turn on cua mode when starting `ergoemacs-mode'."
+  :type 'boolean
+  :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-command-loop-spinner (or (and ergoemacs-use-unicode-symbols 'dots) 'standard)
   "What spinner to use for long commands with `ergoemacs-command-loop'."
