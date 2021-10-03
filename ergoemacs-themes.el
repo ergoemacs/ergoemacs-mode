@@ -112,7 +112,7 @@ by the emulation map."
   (ergoemacs-define-key local-map (kbd "M-l") nil)
   (ergoemacs-define-key local-map (kbd "M-i") nil)
   (ergoemacs-define-key local-map (kbd "M-k") nil)
-  
+
   (ergoemacs-define-key local-map (kbd "M-J") nil)
   (ergoemacs-define-key local-map (kbd "M-L") nil)
   (ergoemacs-define-key local-map (kbd "M-I") nil)
@@ -127,7 +127,7 @@ by the emulation map."
 
   (ergoemacs-define-key local-map (kbd "M-a") nil)
   (ergoemacs-define-key local-map (kbd "M-A") nil)
-  
+
   (ergoemacs-define-key local-map (kbd "M-0") nil)
   (ergoemacs-define-key local-map (kbd "M-)") nil)
   (ergoemacs-define-key local-map (kbd "M-2") nil)
@@ -156,7 +156,7 @@ by the emulation map."
   (ergoemacs-define-key local-map (kbd "M-t") nil)
   (ergoemacs-define-key local-map (kbd "M-T") nil)
   (ergoemacs-define-key local-map (kbd "M-q") nil)
-  
+
   (define-key local-map (kbd "C-w") nil)
   (define-key local-map (kbd "C-n") nil)
   (define-key local-map (kbd "C-S-w") nil)
@@ -291,7 +291,7 @@ Call this before calling any other ergoemacs-set-* function"
   (global-set-key (kbd "C-_") nil)
   (global-set-key (kbd "C-/") nil)
   (global-set-key (kbd "C-x u") nil)
-  
+
   (global-set-key (kbd "C-s") nil)
   (global-set-key (kbd "C-r") nil)
   (global-set-key (kbd "M-%") nil)
@@ -335,7 +335,7 @@ These keys do not depend on the layout."
 
   (define-key keymap (kbd "C-S-n") 'ergoemacs-make-frame-command)
   (define-key keymap (kbd "C-S-w") 'ergoemacs-delete-frame)
-  
+
   (define-key keymap (kbd "C-l") 'goto-line)
   (define-key keymap (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (define-key keymap (kbd "C-o") 'find-file)
@@ -357,7 +357,7 @@ These keys do not depend on the layout."
   (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
   (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
   (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
-  
+
   (global-set-key (kbd "<S-insert>") 'ergoemacs-paste)
   (global-set-key (kbd "C-v") 'ergoemacs-paste)
 
@@ -369,7 +369,7 @@ These keys do not depend on the layout."
 
   (global-set-key (kbd "C-/") 'info)
   (global-set-key (kbd "C-?") 'info)
-  
+
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-external-app)
   (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
 
@@ -390,9 +390,9 @@ These keys do not depend on the layout."
   ;; The regular binding is 'M-s o'
   (ergoemacs-define-key keymap (kbd "C-M-:") 'occur)
   (ergoemacs-define-key keymap (kbd "C-M-;") 'isearch-occur)
-  
+
   (ergoemacs-define-key keymap (kbd "M-SPC") 'set-mark-command)
-  
+
   ;; Delete previous/next char.
   (ergoemacs-define-key keymap (kbd "M-d") 'delete-backward-char)
   (ergoemacs-define-key keymap (kbd "M-f") 'delete-char)
@@ -412,7 +412,7 @@ These keys do not depend on the layout."
   "Moving around and deleting words with KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-u") 'backward-word)
   (ergoemacs-define-key keymap (kbd "M-o") 'forward-word)
-  
+
   (ergoemacs-define-key keymap (kbd "M-e") 'backward-kill-word)
   (ergoemacs-define-key keymap (kbd "M-r") 'kill-word))
 
@@ -454,7 +454,7 @@ These keys do not depend on the layout."
   (ergoemacs-define-key keymap (kbd "M-c") 'ergoemacs-copy-line-or-region)
   (ergoemacs-define-key keymap (kbd "M-v") 'ergoemacs-paste)
   (ergoemacs-define-key keymap (kbd "M-V") 'ergoemacs-paste-cycle)
-  
+
   (ergoemacs-define-key keymap (kbd "M-C") 'ergoemacs-copy-all)
   (ergoemacs-define-key keymap (kbd "M-X") 'ergoemacs-cut-all)
 
@@ -488,7 +488,7 @@ These keys do not depend on the layout."
   (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
   ;; Changing advertised-binding does not work.  Maybe because it is
   ;; only defined within isearch-mode-map?
-  
+
   ;; (put 'isearch-repeat-forward
   ;;      :advertised-binding (ergoemacs-translate--event-layout
   ;;                           (vconcat (listify-key-sequence (kbd "M-;")))
@@ -500,7 +500,7 @@ These keys do not depend on the layout."
   ;;                           (vconcat (listify-key-sequence (kbd "M-:")))
   ;;                           )
   ;;      )
-  
+
   ;; This is an exception to the regular rule that we do not rebind
   ;; control keys.  The regular binding for this in isearch is M-s e.
   ;; Ergoemacs does not have a generic "edit this" function.  So I
@@ -536,7 +536,7 @@ These keys do not depend on the layout."
   ;; (ergoemacs-define-key isearch-mode-map (kbd "M-h") 'isearch-repeat-forward)
   ;; Changing advertised-binding does not work.  Maybe because it is
   ;; only defined within isearch-mode-map?
-  
+
   ;; (put 'isearch-repeat-forward
   ;;      :advertised-binding (ergoemacs-translate--event-layout
   ;;                           (vconcat (listify-key-sequence (kbd "M-;")))
@@ -548,7 +548,7 @@ These keys do not depend on the layout."
   ;;                           (vconcat (listify-key-sequence (kbd "M-:")))
   ;;                           )
   ;;      )
-  
+
   ;; This is an exception to the regular rule that we do not rebind
   ;; control keys.  The regular binding for this in isearch is M-s e.
   ;; Ergoemacs does not have a generic "edit this" function.  So I
@@ -568,16 +568,16 @@ These keys do not depend on the layout."
   "Window/Frame/Tab Switching for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-s") 'other-window)
   (ergoemacs-define-key keymap (kbd "M-S") 'ergoemacs-move-cursor-previous-pane)
-  
+
   (ergoemacs-define-key keymap (kbd "M-~") 'ergoemacs-switch-to-previous-frame)
   (ergoemacs-define-key keymap (kbd "M-`") 'ergoemacs-switch-to-next-frame)
 
   (ergoemacs-define-key keymap (kbd "M-3") 'delete-other-windows)
   (ergoemacs-define-key keymap (kbd "M-#") 'delete-other-windows)
-  
+
   (ergoemacs-define-key keymap (kbd "M-2") 'delete-window)
   (ergoemacs-define-key keymap (kbd "M-@") 'delete-window)
-  
+
   (ergoemacs-define-key keymap (kbd "M-4") 'split-window-below)
   (ergoemacs-define-key keymap (kbd "M-$") 'split-window-right)
 
@@ -620,7 +620,7 @@ These keys do not depend on the layout."
   "Text Transformation for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-'") 'comment-dwim)
   (ergoemacs-define-key keymap (kbd "M-\"") 'delete-horizontal-space)
-  
+
   (ergoemacs-define-key keymap (kbd "M-w") 'ergoemacs-shrink-whitespaces)
 
   (ergoemacs-define-key keymap (kbd "M-?") 'ergoemacs-toggle-camel-case)
@@ -713,6 +713,7 @@ These keys do not depend on the layout."
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "t"))
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "C-t"))
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "T"))
+
   (define-key ergoemacs-translate--parent-map [f2] 'ergoemacs-command-loop--force-universal-argument)
   (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last)
   (define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])
@@ -753,7 +754,7 @@ These keys do not depend on the layout."
                    (open-eshell-here menu-item "Emacs Shell" ergoemacs-eshell-here)
                    (open-shell-here menu-item (if (eq system-type 'windows-nt) "Command Prompt" "Shell") ergoemacs-shell-here)
                    (if (eq system-type 'windows-nt) '(powershell-here menu-item "PowerShell" ergoemacs-powershell-here :enable (fboundp 'powershell))))))
-    
+
     (define-key-after file-menu-map [kill-buffer] '(menu-item "Close" ergoemacs-close-current-buffer)
       'separator-save)
     (define-key file-menu-map [save-buffer] '(menu-item "Save" save-buffer))
@@ -784,7 +785,7 @@ These keys do not depend on the layout."
     (define-key file-menu-map [separator-tab] nil)
     (define-key file-menu-map [separator-print] nil)
     (define-key file-menu-map [Print] nil)
-    
+
     (define-key file-menu-map [separator6] nil)
     (define-key file-menu-map [separator5] nil)
     (define-key file-menu-map [separator4] nil)
@@ -892,7 +893,7 @@ These keys do not depend on the layout."
                               (toggle-camel menu-item "Toggle CamelCase to camel_case"
                                             ergoemacs-toggle-camel-case
                                             :enable (not buffer-read-only))))
-            
+
             (eol-conversion menu-item "EOL Conversion"
                             (keymap
                              (windows menu-item
@@ -950,8 +951,8 @@ These keys do not depend on the layout."
                    (reverse-region menu-item "Reverse" reverse-region
                                    :help "Reverse the order of the selected lines"
                                    :enable (and (not buffer-read-only)  mark-active  (> (region-end) (region-beginning))))))
-            
-            
+
+
             (separator-bookmark menu-item "--")
             (fill menu-item "Fill/Unfill" ergoemacs-compact-uncompact-block
                   :enable (not buffer-read-only)
@@ -981,7 +982,7 @@ These keys do not depend on the layout."
                        (search-forward-regexp menu-item "Forward Regexp..." re-search-forward)
                        (search-backward-regexp menu-item "    Backward..." re-search-backward)
                        "String Search"))
-            
+
             (replace menu-item "Replace"
                      (keymap
                       (query-replace menu-item "Replace String..." query-replace
@@ -1003,7 +1004,7 @@ These keys do not depend on the layout."
             (moccur menu-item "Occurrences in all buffers..." multi-occur
                     :help "Show Lines in all buffers that match a regular expression")
             (separator-go-to menu-item "--" )
-            
+
             (goto menu-item "Go To"
                   (keymap
                    (go-to-line menu-item "Goto Line..." goto-line
@@ -1032,7 +1033,7 @@ These keys do not depend on the layout."
                                   :help "Tell Tags commands which tag table file to use")
                    "Go To")
                   (separator-packages))
-            
+
             (bookmark menu-item "Bookmarks" menu-bar-bookmark-map)
             "Search"))
     'edit))
@@ -1047,15 +1048,15 @@ These keys do not depend on the layout."
                              (zoom-in menu-item "Zoom In" text-scale-increase)
                              (zoom-out menu-item "Zoom Out" text-scale-decrease)
                              (zoom-reset menu-item "Zoom Reset" ergoemacs-text-scale-normal-size)))
-            
+
             (menu-set-font menu-item "Set Default Font..." menu-set-font :visible
                            (display-multi-font-p)
                            :help "Select a default font")
-            
+
             ,(when (fboundp 'customize-themes)
                '(color-theme menu-item "Customize Color Themes" customize-themes
                              :help "Customize Emacs Themes."))
-            
+
             (separator-font-size menu-item "--")
 
             (highlight-current-line menu-item "Highlight Current Line" global-hl-line-mode
@@ -1112,7 +1113,7 @@ These keys do not depend on the layout."
                                     menu-item "Cancel Current Action"
                                     keyboard-quit
                                     :help "Quit any operation in progress")))
-                          
+
                           (help-for-help menu-item "Help for Help..."
                                          help-for-help
                                          :help "Emacs main help command")
@@ -1214,7 +1215,7 @@ These keys do not depend on the layout."
                                                               (lambda() (interactive)
                                                                 (browse-url ergoemacs-xah-emacs-lisp-tutorial-url))
                                                               :help "Read Emacs Lisp Tutorial")
-                                                    
+
                                                     (intro menu-item
                                                            "Intro to Elisp"
                                                            (lambda() (interactive)
@@ -1241,12 +1242,12 @@ These keys do not depend on the layout."
                                        (man-dir menu-item "Unix Man Pages..."
                                                 woman
                                                 :help "Unix Manual entries (with WoMan)")))
-                          
+
                           (separator-3 menu-item "--")
                           (send-bug-report menu-item "Send Emacs Bug Report"
                                            report-emacs-bug
                                            :help "Report an emacs bug.")
-                          
+
                           (emacs-web-page menu-item "Emacs Web Page"
                                           (lambda() (interactive)
                                             (browse-url "http://www.gnu.org/software/emacs/"))
@@ -1335,7 +1336,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
     (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
     (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
     (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete)))
-  
+
 
 (defun ergoemacs-install-reduction-theme ()
   "Install reduction theme."
@@ -1364,7 +1365,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-select-items ergoemacs-override-keymap)
   (ergoemacs-fix-arrow-keys ergoemacs-override-keymap)
   (ergoemacs-set-apps ergoemacs-override-keymap)
-  
+
   (ergoemacs-install-isearch-mode)
 
   (ergoemacs-set-remaps)
@@ -1470,13 +1471,13 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 (ergoemacs-translation ctl-to-alt ()
   "Ctl <-> Alt translation"
   :text  "<Ctl↔Alt> "
-  
+
   :meta '(control)
   :control '(meta)
-  
+
   :meta-shift '(control shift)
   :control-shift '(meta shift)
-  
+
   :control-hyper '(meta hyper)
   :meta-hyper '(control hyper)
 
@@ -1494,10 +1495,10 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
   :meta-super-hyper-shift '(control super hyper shift)
   :control-super-hyper-shift '(meta super hyper shift)
-  
+
   :modal-color "blue"
   :modal-always t
-  
+
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map [f1] 'ergoemacs-read-key-help)
             (define-key map (read-kbd-macro "M-h") 'ergoemacs-read-key-help)
@@ -1526,9 +1527,9 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 (ergoemacs-translation unchorded-alt ()
   "Make the Alt key sticky."
   :text "<Alt+>"
-  :unchorded '(meta) 
+  :unchorded '(meta)
   :shift '(meta shift)
-  :meta '(meta shift) 
+  :meta '(meta shift)
   :modal-color "red"
   :keymap-modal (let ((map (make-sparse-keymap)))
                   (define-key map (read-kbd-macro "<return>") 'ergoemacs-unchorded-alt-modal)
