@@ -316,8 +316,6 @@ Call this before calling any other ergoemacs-set-* function"
   (global-unset-key (kbd "C-l"))
   (global-unset-key (kbd "C-k"))
   (global-unset-key (kbd "M-;"))
-
-  (ergoemacs-unset-keys-in-map isearch-mode-map)
   )
 
 ;;; Fixed components
@@ -375,9 +373,7 @@ These keys do not depend on the layout."
   (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-external-app)
   (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
 
-  ;; These go into the isearch-mode-map, which supercedes all other
-  ;; maps when in isearch mode.
-  (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward))
+  )
 
 (defun ergoemacs-set-help (keymap)
   "Help change for ergoemacs-mode for KEYMAP."
@@ -403,9 +399,7 @@ These keys do not depend on the layout."
 
   (ergoemacs-define-key keymap (kbd "<M-delete>") 'kill-word)
   (ergoemacs-global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
-  (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block)
-
-  (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char))
+  (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block))
 
 (defun ergoemacs-set-move-extra-reduction (keymap)
   "Extra reduction keys with KEYMAP."
@@ -440,10 +434,7 @@ These keys do not depend on the layout."
 (defun ergoemacs-set-move-buffer (keymap)
   "Move by buffer in KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-n") 'beginning-of-buffer)
-  (ergoemacs-define-key keymap (kbd "M-N") 'end-of-buffer)
-
-  (ergoemacs-define-key isearch-mode-map (kbd "M-n") 'isearch-beginning-of-buffer)
-  (ergoemacs-define-key isearch-mode-map (kbd "M-N") 'isearch-end-of-buffer))
+  (ergoemacs-define-key keymap (kbd "M-N") 'end-of-buffer))
 
 (defun ergoemacs-set-move-bracket (keymap)
   "Move By Bracket for KEYMAP."
@@ -474,11 +465,7 @@ These keys do not depend on the layout."
                             (vconcat (listify-key-sequence (kbd "M-z")))))
   (ergoemacs-define-key keymap (kbd "C-S-x") 'execute-extended-command)
 
-  ;; Mode specific changes
-  (ergoemacs-define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
-  (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
-  (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
-  (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste))
+  )
 
 (defun ergoemacs-set-search (keymap)
   "Search and Replace for KEYMAP."
@@ -507,7 +494,7 @@ These keys do not depend on the layout."
   ;;                           (vconcat (listify-key-sequence (kbd "M-;")))
   ;;                           )
   ;;      )
-  (ergoemacs-define-key isearch-mode-map (kbd "M-:") 'isearch-repeat-backward)
+  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-:") 'isearch-repeat-backward)
   ;; (put 'isearch-repeat-backward
   ;;      :advertised-binding (ergoemacs-translate--event-layout
   ;;                           (vconcat (listify-key-sequence (kbd "M-:")))
@@ -519,7 +506,7 @@ These keys do not depend on the layout."
   ;; Ergoemacs does not have a generic "edit this" function.  So I
   ;; used C-x C-q, since that is used to make uneditable things
   ;; editable.
-  (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
+  ;; (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
 
   ;; When editing a search in isearch, it uses the
   ;; minibuffer-local-isearch-map keymap, which gets overridden by the
@@ -546,7 +533,7 @@ These keys do not depend on the layout."
   ;; it ends up breaking commands that exit isearch.  For example,
   ;; trying to go to the beginning of a line will terminate the
   ;; search, but not also go to the beginning of the line.
-  (ergoemacs-define-key isearch-mode-map (kbd "M-h") 'isearch-repeat-forward)
+  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-h") 'isearch-repeat-forward)
   ;; Changing advertised-binding does not work.  Maybe because it is
   ;; only defined within isearch-mode-map?
   
@@ -555,7 +542,7 @@ These keys do not depend on the layout."
   ;;                           (vconcat (listify-key-sequence (kbd "M-;")))
   ;;                           )
   ;;      )
-  (ergoemacs-define-key isearch-mode-map (kbd "M-y") 'isearch-repeat-backward)
+  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-y") 'isearch-repeat-backward)
   ;; (put 'isearch-repeat-backward
   ;;      :advertised-binding (ergoemacs-translate--event-layout
   ;;                           (vconcat (listify-key-sequence (kbd "M-:")))
@@ -567,7 +554,7 @@ These keys do not depend on the layout."
   ;; Ergoemacs does not have a generic "edit this" function.  So I
   ;; used C-x C-q, since that is used to make uneditable things
   ;; editable.
-  (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)
+  ;; (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)
 
   ;; When editing a search in isearch, it uses the
   ;; minibuffer-local-isearch-map keymap, which gets overridden by the
@@ -575,6 +562,7 @@ These keys do not depend on the layout."
   ;; we can exit with the same commands as searching.
   (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
   (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer))
+
 
 (defun ergoemacs-set-switch (keymap)
   "Window/Frame/Tab Switching for KEYMAP."
@@ -645,8 +633,9 @@ These keys do not depend on the layout."
   ;; Hard-wrap/un-hard-wrap paragraph
   (ergoemacs-define-key keymap (kbd "M-q") 'ergoemacs-compact-uncompact-block)
 
-  (ergoemacs-define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
-  (ergoemacs-define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold))
+  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
+  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
+  )
 
 (defun ergoemacs-set-select-items (keymap)
   "Select Items for KEYMAP."
@@ -695,9 +684,7 @@ These keys do not depend on the layout."
   (ergoemacs-define-key keymap (kbd "<apps> r")  'goto-map) ;; Already in CUA)
   (ergoemacs-define-key keymap (kbd "<apps> SPC") 'set-mark-command)
   (ergoemacs-define-key keymap (kbd "<apps> a") 'mark-whole-buffer)
-  ;; (kbd "<apps> d")         ("C-x" :ctl-to-alt)
-  ;; (kbd "<apps> f")         ("C-c" :unchorded-ctl)
-  
+
   (ergoemacs-define-key ergoemacs-override-keymap
 			(kbd "<apps> f")
 			(lambda ()
@@ -1303,6 +1290,53 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
 (defvar ergoemacs-override-keymap)
 
+(defun ergoemacs-install-isearch-mode ()
+  "Installs keys for isearch mode."
+  (ergoemacs-unset-keys-in-map isearch-mode-map)
+   ;; Mode specific changes
+  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
+
+  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
+  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
+  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
+  ;; (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
+  (if (string-equal ergoemacs-theme "reduction")
+      (progn
+        (ergoemacs-define-key isearch-mode-map (kbd "C-M-:") 'isearch-occur)
+        (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
+        (ergoemacs-define-key isearch-mode-map (kbd "DEL") 'isearch-delete-char)
+        (ergoemacs-define-key isearch-mode-map (kbd "<menu> v") 'isearch-yank-kill)
+        (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
+        (ergoemacs-define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)
+        (ergoemacs-define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
+        (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'isearch-yank-pop)
+        (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'isearch-yank-pop)
+        (ergoemacs-define-key isearch-mode-map (kbd "<menu> 5") 'isearch-query-replace)
+        (ergoemacs-define-key isearch-mode-map (kbd "M-5") 'isearch-query-replace)
+        (ergoemacs-define-key isearch-mode-map (kbd "M-h") 'isearch-repeat-forward)
+        (ergoemacs-define-key isearch-mode-map (kbd "C-e") 'isearch-repeat-forward)
+        (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
+        (ergoemacs-define-key isearch-mode-map (kbd "M-y") 'isearch-repeat-backward)
+        (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
+        (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete))
+    (ergoemacs-define-key isearch-mode-map (kbd "M-n") 'isearch-beginning-oef-buffer)
+    (ergoemacs-define-key isearch-mode-map (kbd "M-N") 'isearch-end-of-buffer)
+    (ergoemacs-define-key isearch-mode-map (kbd "C-M-:") 'isearch-occur)
+    (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
+    (ergoemacs-define-key isearch-mode-map (kbd "DEL") 'isearch-delete-char)
+    (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
+    (ergoemacs-define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)
+    (ergoemacs-define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
+    (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'isearch-yank-pop)
+    (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'isearch-yank-pop)
+    (ergoemacs-define-key isearch-mode-map (kbd "M-5") 'isearch-query-replace)
+    (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
+    (ergoemacs-define-key isearch-mode-map (kbd "C-e") 'isearch-repeat-forward)
+    (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
+    (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
+    (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete)))
+  
+
 (defun ergoemacs-install-reduction-theme ()
   "Install reduction theme."
   (ergoemacs-unset-keys)
@@ -1330,6 +1364,8 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-select-items ergoemacs-override-keymap)
   (ergoemacs-fix-arrow-keys ergoemacs-override-keymap)
   (ergoemacs-set-apps ergoemacs-override-keymap)
+  
+  (ergoemacs-install-isearch-mode)
 
   (ergoemacs-set-remaps)
   (ergoemacs-set-quit)
@@ -1364,7 +1400,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-text-transform ergoemacs-override-keymap)
   (ergoemacs-set-select-items ergoemacs-override-keymap)
   (ergoemacs-fix-arrow-keys ergoemacs-override-keymap)
-
+  (ergoemacs-install-isearch-mode)
   (ergoemacs-set-remaps)
   (ergoemacs-set-quit)
   (ergoemacs-set-menu-bar-help)

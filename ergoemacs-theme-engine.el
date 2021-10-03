@@ -357,10 +357,8 @@ should insert the face name."
 ;;;###autoload
 (defalias 'ergoemacs-bash 'ergoemacs-theme-create-bash)
 
-
 (defcustom ergoemacs-function-short-names
-      '(
-        (abort-recursive-edit "abort edit")
+      '((abort-recursive-edit "abort edit")
         (ace-jump-mode "ace jump")
         (backward-char "← char")
         (back-to-indentation "← indent")
@@ -542,8 +540,7 @@ should insert the face name."
        (if (stringp (car elt))
            (if (string= (car elt) "SPC")
                (setq key " ")
-             (setq key "f#")
-             )
+             (setq key "f#"))
          (setq key (nth (car elt) layout)))
        (if (string= key "") ""
          (if (string= key "f#")
@@ -554,14 +551,12 @@ should insert the face name."
          (when (equal key [27])
            (setq no-push-p t))
          (when ergoemacs-theme--svg-prefix
-           (setq key (vconcat ergoemacs-theme--svg-prefix key))
-           )
+           (setq key (vconcat ergoemacs-theme--svg-prefix key)))
          (setq binding (or
                         (lookup-key ergoemacs-override-keymap key)
                         ;; TODO: Use only the ergoemacs global map,
                         ;; not the regular map?
-                        (lookup-key (current-global-map) key)
-                        )
+                        (lookup-key (current-global-map) key))
                )
          (when (integerp binding)
            (setq binding nil))
@@ -576,11 +571,8 @@ should insert the face name."
                (or
                 (progn
                   (setq key (assoc ergoemacs-M-O-binding ergoemacs-function-short-names))
-                  (nth 1 key)
-                  )
-                ""
-                )
-               )
+                  (nth 1 key))
+                ""))
           ;; Regular bindings
           (and binding
                (setq key (assoc binding ergoemacs-function-short-names))
@@ -588,13 +580,9 @@ should insert the face name."
           ;; Unknown binding
           (and binding
                (ergoemacs-theme--svg-elt-nonabbrev binding))
-          ""
-          )
-         )
-       )
+          "")))
       ((memq elt '(meta control))
-       (concat (ergoemacs-key-description--modifier elt) (format " == %s" elt))
-       )
+       (concat (ergoemacs-key-description--modifier elt) (format " == %s" elt)))
       ((memq elt '(meta-shift control-shift))
        (setq elt (intern (replace-regexp-in-string "-shift" "" (symbol-name elt))))
        (concat (ergoemacs-key-description--modifier elt)
@@ -605,20 +593,11 @@ should insert the face name."
                (or (and ergoemacs-theme--svg-prefix
                         (concat " for "
                                 (ergoemacs-key-description ergoemacs-theme--svg-prefix)))
-                   ""
-                   )
-               )
-       )
+                   "")))
       (t (setq key (format "%s" elt))
          (when (<= 10 (length key))
-           (setq key (concat (substring key 0 10) "…"))
-           )
-         key
-         )
-      )
-     )
-   )
-  )
+           (setq key (concat (substring key 0 10) "…")))
+         key)))))
 
 (defun ergoemacs-theme--svg (&optional layout full-p reread)
   "Creates SVG based THEME and  LAYOUT"
@@ -709,10 +688,8 @@ should insert the face name."
                         (push (list (match-string 2) 'control) ergoemacs-theme--svg))
                        (t
                         (push (list (string-to-number (match-string 2)) 'control) ergoemacs-theme--svg))))
-                     (t (push nil ergoemacs-theme--svg))
-                     )
-                    (setq pt (match-end 0))
-                    )
+                     (t (push nil ergoemacs-theme--svg)))
+                    (setq pt (match-end 0)))
                   (push (buffer-substring pt (point-max)) ergoemacs-theme--svg))
                 (setq ergoemacs-theme--svg (reverse ergoemacs-theme--svg)))
               (setq ergoemacs-theme--svg-prefixes nil
@@ -723,11 +700,7 @@ should insert the face name."
                    ((stringp w)
                     (insert w))
                    (t
-                    (insert ">" (ergoemacs-theme--svg-elt w layout lay) "<")
-                    )
-                   )
-                  )
-                )
+                    (insert ">" (ergoemacs-theme--svg-elt w layout lay) "<")))))
               (push file-name ret)
               (unless full-p
                 (setq ergoemacs-theme--svg-prefixes nil))
@@ -751,11 +724,7 @@ should insert the face name."
             (setq ergoemacs-keyboard-layout old-layout)
             ;; TODO: Is this OK?
             (ergoemacs-mode-reset)))
-        ret
-        )
-      )
-    )
-  )
+        ret))))
 
 (defvar ergoemacs-theme--png nil)
 (defvar ergoemacs-theme--png-last nil)
