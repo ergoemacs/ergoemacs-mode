@@ -1275,7 +1275,7 @@ from within the ergoemacs-mode command loop."
           ergoemacs-command-loop--single-command-keys (this-single-command-keys)
           this-command 'ergoemacs-command-loop-start)))
 
-(add-hook 'ergoemacs-pre-command-hook #'ergoemacs-command-loop--start-with-pre-command-hook)
+;;(add-hook 'ergoemacs-pre-command-hook #'ergoemacs-command-loop--start-with-pre-command-hook)
 
 
 (defvar ergoemacs-command-loop--internal-end-command-p nil)
@@ -1299,7 +1299,7 @@ to start with
 					  (ergoemacs-command-loop-start))))
       (push 'ergoemacs-ignore unread-command-events))))
 
-(add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
+;; (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command-loop--start-with-post-command-hook)
 
 (defvar ergoemacs-command-loop--point-motion-last-point nil
   "Record the last point.")
@@ -1859,7 +1859,7 @@ Emacs versions)."
                     unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events)) tmp)
                     ergoemacs-command-loop--first-type first-type
                     ergoemacs-command-loop--history initial-history
-                    ergoemacs-command-loop-start nil)
+                    ergoemacs-command-loop-start  nil)
               (while continue-read
 		(setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
                 (unless (eq ergoemacs-command-loop-type :read-key-sequence)

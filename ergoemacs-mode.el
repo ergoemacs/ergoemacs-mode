@@ -624,7 +624,7 @@ When STORE-P is non-nil, save the tables."
                ergoemacs-theme-engine
                ergoemacs-translate
                ergoemacs-macros
-               ))
+               ergoemacs-calculate-bindings))
   (unless (featurep pkg)
     (ergoemacs-timing (intern (format "load-%s" pkg))
       (load (symbol-name pkg)))))

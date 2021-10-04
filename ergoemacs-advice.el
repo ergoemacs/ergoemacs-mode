@@ -130,22 +130,23 @@ When PERMANENT is non-nil, these replacements are permanent, not temporary."
 
 TYPE is the type of translation installed."
   (let* ((keys (this-single-command-keys))
-	 (type (or type :normal))
-	 (translation (ergoemacs-translate--get type))
-	 (local-keymap (ergoemacs-translate--keymap translation))
-	 (local-key (substring keys -1))
-	 modal-p)
+	     (type (or type :normal))
+	     (translation (ergoemacs-translate--get type))
+	     (local-keymap (ergoemacs-translate--keymap translation))
+	     (local-key (substring keys -1))
+	     modal-p)
     (when (setq modal-p (ergoemacs :modal-p))
       (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
+    ;; This starts the command loop when DEL or MENU is replaced in the proper place.
     (if (lookup-key local-keymap local-key)
-	(let ((i 1)) ;; Setup history
-	  (setq ergoemacs-command-loop--history nil)
-	  (while (<= i (- (length keys) 1))
-	    (push (list (substring keys 0 i) :normal nil
-			current-prefix-arg (aref (substring keys (- i 1) i) 0))
-		  ergoemacs-command-loop--history)
-	    (setq i (+ 1 i)))
-	  (ergoemacs-command-loop--internal keys nil nil nil ergoemacs-command-loop--history))
+	    (let ((i 1)) ;; Setup history
+	      (setq ergoemacs-command-loop--history nil)
+	      (while (<= i (- (length keys) 1))
+	        (push (list (substring keys 0 i) :normal nil
+			            current-prefix-arg (aref (substring keys (- i 1) i) 0))
+		          ergoemacs-command-loop--history)
+	        (setq i (+ 1 i)))
+	      (ergoemacs-command-loop--internal keys nil nil nil ergoemacs-command-loop--history))
       (ding)
       (ergoemacs-command-loop--temp-message "%s does not do anything!"
                                             (ergoemacs-key-description (this-single-command-keys)))
@@ -157,12 +158,12 @@ TYPE is the type of translation installed."
             (when (memq 'down (event-modifiers last-command-event))
               current-prefix-arg)))))
 
-(ergoemacs-advice undefined ()
-  "Allow `ergoemacs-mode' to display keys, and intercept ending <apps> keys."
-  :type :around
-  (if (not ergoemacs-mode)
-      ad-do-it
-    (ergoemacs-mode--undefined-advice)))
+;; (ergoemacs-advice undefined ()
+;;   "Allow `ergoemacs-mode' to display keys, and intercept ending <apps> keys."
+;;   :type :around
+;;   (if (not ergoemacs-mode)
+;;       ad-do-it
+;;     (ergoemacs-mode--undefined-advice)))
 
 (ergoemacs-advice handle-shift-selection ()
   "Allow `ergoemacs-mode' to do shift selection on keys like Alt+# to Alt+3."
