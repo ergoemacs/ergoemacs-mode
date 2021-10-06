@@ -283,54 +283,56 @@ The `execute-extended-command' is now \\[execute-extended-command].
   (setq ergoemacs-mode--start-p t)
   (setq ergoemacs-map--hashkey nil)
   (if ergoemacs-mode
-        (progn
-          ;; Save frame parameters
-          (run-hooks 'ergoemacs-mode-startup-hook)
-          (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-          (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
-          (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
+      (progn
+        (unless isearch-mode-map-ergoemacs
+          (setq isearch-mode-map-ergoemacs (copy-keymap isearch-mode-map)))
+        ;; Save frame parameters
+        (run-hooks 'ergoemacs-mode-startup-hook)
+        (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+        (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
+        (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
 
-          (setq ergoemacs-mode--default-frame-alist nil)
-          (dolist (elt (reverse default-frame-alist))
-            (push elt ergoemacs-mode--default-frame-alist))
+        (setq ergoemacs-mode--default-frame-alist nil)
+        (dolist (elt (reverse default-frame-alist))
+          (push elt ergoemacs-mode--default-frame-alist))
 
-          ;; Setup the global keys that can be overriden
-          (cond
-           ((string-equal ergoemacs-theme "reduction")
-            (ergoemacs-install-reduction-theme))
-           (t (ergoemacs-install-standard-theme)))
-          (ergoemacs-command-loop--setup-quit-key)
-          ;; Make the ErgoEmacs menu
-          (ergoemacs-map--install)
-          ;; Setup the main keys
-          (cond
-           ((string-equal ergoemacs-theme "reduction")
-            (ergoemacs-setup-override-keymap))
-           (t (ergoemacs-setup-override-keymap)))
-          (setq ergoemacs-require--ini-p t)
-          ;;(define-key key-translation-map (kbd "<apps>") (kbd "<menu>"))
-          ;;(global-unset-key (kbd "<apps>"))
-          ;;(global-unset-key (kbd "<menu>"))
-          ;;(define-key ergoemacs-translate--parent-map [apps] 'ergoemacs-command-loop--swap-translation)
-          ;;(define-key ergoemacs-translate--parent-map [menu] 'ergoemacs-command-loop--swap-translation)
-          (when ergoemacs-mode-turn-on-cua-mode
-            (cua-mode 1))
-            (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout))
-      ;; Turn off
-      ;; Restore frame parameters
-      (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
-      (setq ergoemacs-mode--default-frame-alist nil)
+        ;; Setup the global keys that can be overriden
+        (cond
+         ((string-equal ergoemacs-theme "reduction")
+          (ergoemacs-install-reduction-theme))
+         (t (ergoemacs-install-standard-theme)))
+        (ergoemacs-command-loop--setup-quit-key)
+        ;; Make the ErgoEmacs menu
+        (ergoemacs-map--install)
+        ;; Setup the main keys
+        (cond
+         ((string-equal ergoemacs-theme "reduction")
+          (ergoemacs-setup-override-keymap))
+         (t (ergoemacs-setup-override-keymap)))
+        (setq ergoemacs-require--ini-p t)
+        ;;(define-key key-translation-map (kbd "<apps>") (kbd "<menu>"))
+        ;;(global-unset-key (kbd "<apps>"))
+        ;;(global-unset-key (kbd "<menu>"))
+        ;;(define-key ergoemacs-translate--parent-map [apps] 'ergoemacs-command-loop--swap-translation)
+        ;;(define-key ergoemacs-translate--parent-map [menu] 'ergoemacs-command-loop--swap-translation)
+        (when ergoemacs-mode-turn-on-cua-mode
+          (cua-mode 1))
+        (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout))
+    ;; Turn off
+    ;; Restore frame parameters
+    (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
+    (setq ergoemacs-mode--default-frame-alist nil)
 
-      (ergoemacs-command-loop--redefine-quit-key)
-      (run-hooks 'ergoemacs-mode-shutdown-hook)
-      (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
-      (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
-      (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
-      (when ergoemacs-mode-turn-on-cua-mode
-        (cua-mode 0))
-      (setq isearch-mode-map (copy-keymap isearch-mode-map-ergoemacs))
-      (unless refresh-p
-        (message "Ergoemacs-mode turned OFF."))))
+    (ergoemacs-command-loop--redefine-quit-key)
+    (run-hooks 'ergoemacs-mode-shutdown-hook)
+    (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
+    (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
+    (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
+    (when ergoemacs-mode-turn-on-cua-mode
+      (cua-mode 0))
+    (when isearch-mode-map-ergoemacs
+      (setq isearch-mode-map isearch-mode-map-ergoemacs))
+    (message "Ergoemacs-mode turned OFF.")))
 
 (defvar ergoemacs--gzip (executable-find "gzip")
   "Gzip location.")

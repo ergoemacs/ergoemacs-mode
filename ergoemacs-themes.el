@@ -74,7 +74,7 @@ EXTRA-KEYS are untranslated keys that are appended."
        (vconcat (listify-key-sequence key)))
       command)))
 
-(defun ergoemacs-unset-keys-in-map (local-map-symbol)
+(defun ergoemacs-unset-keys-in-map (local-map)
   "Unset all of the keys in a LOCAL-MAP.
 
 This unsets the keys that we usually prefer to use the ergoemacs keys.
@@ -82,12 +82,8 @@ This unsets the keys that we usually prefer to use the ergoemacs keys.
 This currently is only used for `isearch-mode-map',
 since that is the only map that manages to evade being overridden
 by the emulation map."
-  (unless (intern-soft (concat (symbol-name local-map-symbol) "-ergoemacs"))
-    (set (intern (concat (symbol-name local-map-symbol) "-ergoemacs"))
-         (copy-keymap (symbol-value local-map-symbol))))
-  (let ((local-map (symbol-value local-map-symbol)))
-    (ergoemacs-define-key local-map (kbd "M-h") nil)
-    (ergoemacs-define-key local-map (kbd "M-H") nil)
+  (ergoemacs-define-key local-map (kbd "M-h") nil)
+  (ergoemacs-define-key local-map (kbd "M-H") nil)
 
   (ergoemacs-define-key local-map (kbd "M-e") nil)
   (ergoemacs-define-key local-map (kbd "M-r") nil)
@@ -172,7 +168,7 @@ by the emulation map."
   (define-key local-map (kbd "C-S-o") nil)
   (define-key local-map (kbd "C-r") nil)
   (define-key local-map (kbd "C-p") nil)
-  (define-key local-map (kbd "C-l") nil)))
+  (define-key local-map (kbd "C-l") nil))
 
 (defun ergoemacs-set-standard-vars ()
   "Enabled/changed variables/modes."
@@ -483,44 +479,7 @@ These keys do not depend on the layout."
   (put 'isearch-forward
        :advertised-binding (ergoemacs-translate--event-layout
                             (vconcat (listify-key-sequence (kbd "M-;")))))
-  (ergoemacs-define-key keymap (kbd "M-:") 'isearch-backward)
-
-  ;; We have to override this in isearch-mode-map because isearch
-  ;; makes that keymap override everything else, including emulation
-  ;; keymaps.
-  ;;
-  ;; We can not put this logic into a custom isearch-forward, because
-  ;; it ends up breaking commands that exit isearch.  For example,
-  ;; trying to go to the beginning of a line will terminate the
-  ;; search, but not also go to the beginning of the line.
-  (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
-  ;; Changing advertised-binding does not work.  Maybe because it is
-  ;; only defined within isearch-mode-map?
-
-  ;; (put 'isearch-repeat-forward
-  ;;      :advertised-binding (ergoemacs-translate--event-layout
-  ;;                           (vconcat (listify-key-sequence (kbd "M-;")))
-  ;;                           )
-  ;;      )
-  ;; (put 'isearch-repeat-backward
-  ;;      :advertised-binding (ergoemacs-translate--event-layout
-  ;;                           (vconcat (listify-key-sequence (kbd "M-:")))
-  ;;                           )
-  ;;      )
-
-  ;; This is an exception to the regular rule that we do not rebind
-  ;; control keys.  The regular binding for this in isearch is M-s e.
-  ;; Ergoemacs does not have a generic "edit this" function.  So I
-  ;; used C-x C-q, since that is used to make uneditable things
-  ;; editable.
-  ;; 
-
-  ;; When editing a search in isearch, it uses the
-  ;; minibuffer-local-isearch-map keymap, which gets overridden by the
-  ;; global emulation keymap.  So we override isearch-forward so that
-  ;; we can exit with the same commands as searching.
-  (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
-  (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer))
+  (ergoemacs-define-key keymap (kbd "M-:") 'isearch-backward))
 
 (defun ergoemacs-set-search-reduction (keymap)
   "Search and Replace with KEYMAP."
@@ -532,41 +491,6 @@ These keys do not depend on the layout."
                             (vconcat (listify-key-sequence (kbd "M-h")))))
   (ergoemacs-define-key keymap (kbd "M-y") 'isearch-backward)
 
-  ;; We have to override this in isearch-mode-map because isearch
-  ;; makes that keymap override everything else, including emulation
-  ;; keymaps.
-  ;;
-  ;; We can not put this logic into a custom isearch-forward, because
-  ;; it ends up breaking commands that exit isearch.  For example,
-  ;; trying to go to the beginning of a line will terminate the
-  ;; search, but not also go to the beginning of the line.
-  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-h") 'isearch-repeat-forward)
-  ;; Changing advertised-binding does not work.  Maybe because it is
-  ;; only defined within isearch-mode-map?
-
-  ;; (put 'isearch-repeat-forward
-  ;;      :advertised-binding (ergoemacs-translate--event-layout
-  ;;                           (vconcat (listify-key-sequence (kbd "M-;")))
-  ;;                           )
-  ;;      )
-  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-y") 'isearch-repeat-backward)
-  ;; (put 'isearch-repeat-backward
-  ;;      :advertised-binding (ergoemacs-translate--event-layout
-  ;;                           (vconcat (listify-key-sequence (kbd "M-:")))
-  ;;                           )
-  ;;      )
-
-  ;; This is an exception to the regular rule that we do not rebind
-  ;; control keys.  The regular binding for this in isearch is M-s e.
-  ;; Ergoemacs does not have a generic "edit this" function.  So I
-  ;; used C-x C-q, since that is used to make uneditable things
-  ;; editable.
-  ;; (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)
-
-  ;; When editing a search in isearch, it uses the
-  ;; minibuffer-local-isearch-map keymap, which gets overridden by the
-  ;; global emulation keymap.  So we override isearch-forward so that
-  ;; we can exit with the same commands as searching.
   (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
   (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer))
 
@@ -640,8 +564,6 @@ These keys do not depend on the layout."
   ;; Hard-wrap/un-hard-wrap paragraph
   (ergoemacs-define-key keymap (kbd "M-q") 'ergoemacs-compact-uncompact-block)
 
-  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-?") 'isearch-toggle-regexp)
-  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-/") 'isearch-toggle-case-fold)
   )
 
 (defun ergoemacs-set-select-items (keymap)
@@ -1302,16 +1224,10 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
 (defun ergoemacs-install-isearch-mode ()
   "Installs keys for isearch mode."
-  (ergoemacs-unset-keys-in-map 'isearch-mode-map)
+  (ergoemacs-unset-keys-in-map isearch-mode-map)
   (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
   (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)
   ;; Mode specific changes
-  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
-
-  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
-  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'ergoemacs-paste)
-  ;; (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'ergoemacs-paste-cycle)
-  ;; (define-key isearch-mode-map (kbd "C-v") 'ergoemacs-paste)
   (if (string-equal ergoemacs-theme "reduction")
       (progn
         (ergoemacs-define-key isearch-mode-map (kbd "C-M-:") 'isearch-occur)
@@ -1346,7 +1262,9 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
     (ergoemacs-define-key isearch-mode-map (kbd "C-e") 'isearch-repeat-forward)
     (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
     (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
-    (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete)))
+    (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete))
+  (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
+  (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer))
 
 
 (defun ergoemacs-install-reduction-theme ()
