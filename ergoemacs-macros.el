@@ -284,13 +284,6 @@ When arg1 can be a property.  The following properties are supported:
           (or (ergoemacs-map--cache-- --hash-key)
               (ergoemacs-map--cache-- --hash-key (progn ,@body)))))))
 
-(defmacro ergoemacs-timing (key &rest body)
-  "Save the timing using KEY for BODY."
-  (declare (indent 1))
-  (if (listp key)
-      `(ergoemacs-timing-- ,key (lambda() ,@body))
-    `(ergoemacs-timing-- ',key (lambda() ,@body))))
-
 (defmacro ergoemacs-no-specials (&rest body)
   "Revert some `ergoemacs-mode' functions to their C defintions in BODY."
   `(cl-letf (((symbol-function 'read-key-sequence) #'ergoemacs--real-read-key-sequence)

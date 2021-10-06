@@ -60,7 +60,6 @@
 (defvar icicle-search-map)
 
 (declare-function ergoemacs-command-loop--spinner-display "ergoemacs-command-loop")
-(declare-function ergoemacs-timing-- "ergoemacs-mode")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-emacs-exe "ergoemacs-functions")
@@ -322,8 +321,7 @@ When AFTER is non-nil, this is a list of keys that changed after
             (original-global-map (ergoemacs :global-map))
             (before-map (make-sparse-keymap))
             tmp)
-        (ergoemacs-timing before-ergoemacs
-          (unwind-protect
+        (unwind-protect
               (progn
                 (setq ergoemacs-map-keymap--load-autoloads-p nil)
                 (ergoemacs-map-keymap
@@ -358,7 +356,7 @@ When AFTER is non-nil, this is a list of keys that changed after
                                           (lookup-key ergoemacs-map-properties--before-ergoemacs cur-key)))))
 		       (ergoemacs :define-key before-map cur-key tmp)))))
                  original-global-map t))
-            (setq ergoemacs-map-keymap--load-autoloads-p t)))
+            (setq ergoemacs-map-keymap--load-autoloads-p t))
         (if after
             (progn
               (setq ergoemacs-map-properties--after-ergoemacs before-map)
@@ -918,8 +916,7 @@ keymaps without any additional keys are not considered empty.
 Otherwise, erogemacs-mode labeled keymaps without any additional
 keys are considered empty."
   (catch 'found-key
-    (ergoemacs-timing empty-p
-      (ergoemacs-map-keymap
+    (ergoemacs-map-keymap
        (lambda (cur-key item)
          (unless (and (not labeled-is-keymap-p) (equal cur-key [ergoemacs-labeled]))
            (if (consp cur-key)
@@ -927,7 +924,8 @@ keys are considered empty."
              (unless (eq item 'ergoemacs-prefix)
                (when item
                  (throw 'found-key nil))))))
-       keymap)) t))
+       keymap)
+     t))
 
 ;;ergoemacs-map-properties--label
 
@@ -970,19 +968,18 @@ KEYMAP can be an `ergoemacs-map-properties--key-struct' of the keymap as well."
   (let ((where-is-hash (make-hash-table))
         (lookup-hash (make-hash-table :test 'equal))
         keys tmp)
-    (ergoemacs-timing where-is-hash
-      (ergoemacs-map-keymap
-       (lambda (key item)
-         (unless (and (vectorp key) (eq (elt key (- (length key) 1)) 'ergoemacs-labeled))
-           (cond
-            ((and (vectorp key)
-                  (commandp item t))
-             (push key keys)
-             (if (setq tmp (ergoemacs-gethash item where-is-hash))
-                 (push key tmp)
-               (puthash item (list key) where-is-hash))
-             (puthash key item lookup-hash)))))
-       keymap))
+    (ergoemacs-map-keymap
+     (lambda (key item)
+       (unless (and (vectorp key) (eq (elt key (- (length key) 1)) 'ergoemacs-labeled))
+         (cond
+          ((and (vectorp key)
+                (commandp item t))
+           (push key keys)
+           (if (setq tmp (ergoemacs-gethash item where-is-hash))
+               (push key tmp)
+             (puthash item (list key) where-is-hash))
+           (puthash key item lookup-hash)))))
+     keymap)
     (ergoemacs keymap :extract-keys keys)
     (ergoemacs keymap :extract-where-is where-is-hash)
     (ergoemacs keymap :extract-lookup lookup-hash)))
@@ -1043,12 +1040,10 @@ keymap."
         t)
       (cond
        ((eq type :flatten)
-        (ergoemacs-timing flatten-original
-          (ergoemacs-map-keymap nil ret t)))
+        (ergoemacs-map-keymap nil ret t))
        ((eq type :submaps)
         (ergoemacs-setcdr (cdr ret)
-                          (cdr (ergoemacs-timing flatten-setcdr
-                                 (ergoemacs-map-keymap nil ret :setcdr))))
+                          (cdr (ergoemacs-map-keymap nil ret :setcdr)))
         ret)
        (t ret)))))
 

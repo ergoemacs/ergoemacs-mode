@@ -41,7 +41,6 @@
 (defvar ergoemacs-mode-names)
 (defvar ergoemacs-require)
 (defvar ergoemacs-theme-hash)
-(defvar ergoemacs-timing-hash)
 
 (defvar ergoemacs-dir)
 
@@ -327,17 +326,7 @@ to the `warn' function."
 (defvar ergoemacs-mn-len nil)
 (defvar ergoemacs-mx-len nil)
 
-(defcustom ergoemacs-timing-find-regexp
-  (concat"^\\s-*(ergoemacs-timing" find-function-space-re "%s\\(\\s-\\|$\\)")
-  "The regexp used by `ergoemacs-timing-find-no-select' to search for a timing definition.
-Note it must contain a `%s' at the place where `format' should
-insert the face name."
-  :type 'regexp
-  :group 'find-function
-  :version "22.1")
 
-(unless (assoc 'ergoemacs-timing find-function-regexp-alist)
-  (push (cons 'ergoemacs-timing 'ergoemacs-timing-find-regexp) find-function-regexp-alist))
 
 (provide 'ergoemacs-lib)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

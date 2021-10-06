@@ -60,8 +60,6 @@
 (defvar ergoemacs-component-struct--composed-hook-minibuffer)
 
 
-(declare-function ergoemacs-timing-- "ergoemacs-mode")
-
 (declare-function ergoemacs-warn "ergoemacs-lib")
 (declare-function ergoemacs-setcdr "ergoemacs-lib")
 

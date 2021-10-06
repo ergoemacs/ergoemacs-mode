@@ -452,43 +452,6 @@ This is structured by valid keyboard layouts for
 (defvar ergoemacs-map-properties--label-atoms-maps nil
   "Known bound keymaps.")
 
-(defvar ergoemacs-timing-hash nil
-  "Hash table of `ergoemacs-mode' timing.")
-
-(defvar ergoemacs-timing--locations
-  '((remove-local-keymap-map-keymap . "ergoemacs-component.el")
-    (translate-keymap . "ergoemacs-component.el")
-    (describe-keymap . "ergoemacs-key-description.el")
-    (before-ergoemacs . "ergoemacs-map-properties.el")
-    ;; (ergoemacs-map-properties--create-label-function . "ergoemacs-map-properties.el")
-    (empty-p . "ergoemacs-map-properties.el")
-    (where-is-hash . "ergoemacs-map-properties.el")
-    (flatten-original . "ergoemacs-map-properties.el")
-    (lookup-keymap . "ergoemacs-map.el")
-    (calculate-ergoemacs-remap . "ergoemacs-map.el")
-    (calc-remaps . "ergoemacs-map.el")
-    (calc-passthrough . "ergoemacs-map.el")
-    (setup-ergoemacs-hash . "ergoemacs-mode.el"))
-  "Alist of known timing functions.")
-
-(defun ergoemacs-timing-- (key function)
-  "Save timing information for KEY by calling FUNCTION."
-  (let* ((entry-time (current-time))
-         (ret (funcall function))
-         val time file)
-    (if (not ergoemacs-timing-hash)
-        (setq ergoemacs-timing-hash (make-hash-table))
-      (if (not (setq val (gethash key ergoemacs-timing-hash)))
-          (puthash key (vector 1 (setq val (float-time (time-subtract (current-time) entry-time)))
-                               val val (or (and (setq file (assoc key ergoemacs-timing--locations)) (expand-file-name (cdr file) ergoemacs-dir))
-					   load-file-name buffer-file-name)) ergoemacs-timing-hash)
-        (cl-incf (aref val 0))
-        (cl-incf (aref val 1) (setq time (float-time (time-subtract (current-time) entry-time))))
-        (setf (aref val 2) (min time (aref val 2)))
-        (setf (aref val 3) (max time (aref val 3)))
-        (puthash key val ergoemacs-timing-hash)))
-    ret))
-
 (defvar ergoemacs--component-file-mod-time-list nil)
 (defun ergoemacs--emacs-state ()
   "Return MD5 represting current Emacs state."
@@ -546,58 +509,57 @@ REMOVE removes the cache insead of saving it."
 (defun ergoemacs-mode--setup-hash-tables (&optional store-p)
   "Load hash-tables using `persistent-soft' when available.
 When STORE-P is non-nil, save the tables."
-  (ergoemacs-timing setup-hash-tables
-    ;; (when store-p
-    ;;   (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
-    (unless store-p
-      (ergoemacs-mode--setup-hash-tables--setq
-       nil
-       'ergoemacs--last-start-emacs-state nil)
-      ;; Check if system state has expired the cache.
-      (unless (equal ergoemacs--last-start-emacs-state ergoemacs--start-emacs-state)
-        (ergoemacs-mode-clear-cache t)
-        (message "Cache reset before loading.")
-        (setq ergoemacs-map--cache-save t)
-        (setq ergoemacs--last-start-emacs-state ergoemacs--start-emacs-state)
-        (ergoemacs-mode--setup-hash-tables--setq
-         t
-         'ergoemacs--last-start-emacs-state ergoemacs--last-start-emacs-state)
-        (ergoemacs-mode--setup-hash-tables--setq nil 'ergoemacs-require nil)))
+  ;; (when store-p
+  ;;   (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
+  (unless store-p
     (ergoemacs-mode--setup-hash-tables--setq
-     store-p
-     'ergoemacs-require nil
-     'ergoemacs-component-hash (make-hash-table :test 'equal)
-     'ergoemacs-map--hash (make-hash-table :test 'equal)
-     'ergoemacs-map-properties--indirect-keymaps (make-hash-table)
-     'ergoemacs-map-properties--key-struct (make-hash-table)
-     'ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)
-     'ergoemacs-theme-hash (make-hash-table :test 'equal)
-     'ergoemacs-translate--event-hash (make-hash-table)
-     'ergoemacs-translate--hash (make-hash-table)
-     'ergoemacs-translation-hash (make-hash-table)
-     'ergoemacs-breadcrumb-hash (make-hash-table)
-     'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
-     'ergoemacs-map-properties--before-ergoemacs nil
-     'ergoemacs-map-properties--label-atoms-maps nil
-     )
-    (when (and store-p (featurep 'persistent-soft))
-      (persistent-soft-flush (ergoemacs-mode--pcache-repository))
-      (with-temp-buffer
-        (insert-file-contents (concat pcache-directory (ergoemacs-mode--pcache-repository)))
-        (persistent-soft-location-destroy (ergoemacs-mode--pcache-repository))
-        (goto-char (point-min))
-        (while (re-search-forward "+$" nil t)
-          (replace-match ""))
-        (goto-char (point-min))
-        ;; Add utf-8-emacs coding to the top.
-        (insert ";; -*- coding: utf-8-emacs -*-\n")
-        (goto-char (point-max))
-        ;; Update timestamp.
-        (when (re-search-backward ":timestamp +[0-9.]+" nil t)
-          (replace-match (format ":timestamp %s" (float-time (current-time)))))
-        (write-region (point-min) (point-max)
-                      (concat pcache-directory (ergoemacs-mode--pcache-repository))
-                      nil 1)))))
+     nil
+     'ergoemacs--last-start-emacs-state nil)
+    ;; Check if system state has expired the cache.
+    (unless (equal ergoemacs--last-start-emacs-state ergoemacs--start-emacs-state)
+      (ergoemacs-mode-clear-cache t)
+      (message "Cache reset before loading.")
+      (setq ergoemacs-map--cache-save t)
+      (setq ergoemacs--last-start-emacs-state ergoemacs--start-emacs-state)
+      (ergoemacs-mode--setup-hash-tables--setq
+       t
+       'ergoemacs--last-start-emacs-state ergoemacs--last-start-emacs-state)
+      (ergoemacs-mode--setup-hash-tables--setq nil 'ergoemacs-require nil)))
+  (ergoemacs-mode--setup-hash-tables--setq
+   store-p
+   'ergoemacs-require nil
+   'ergoemacs-component-hash (make-hash-table :test 'equal)
+   'ergoemacs-map--hash (make-hash-table :test 'equal)
+   'ergoemacs-map-properties--indirect-keymaps (make-hash-table)
+   'ergoemacs-map-properties--key-struct (make-hash-table)
+   'ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)
+   'ergoemacs-theme-hash (make-hash-table :test 'equal)
+   'ergoemacs-translate--event-hash (make-hash-table)
+   'ergoemacs-translate--hash (make-hash-table)
+   'ergoemacs-translation-hash (make-hash-table)
+   'ergoemacs-breadcrumb-hash (make-hash-table)
+   'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
+   'ergoemacs-map-properties--before-ergoemacs nil
+   'ergoemacs-map-properties--label-atoms-maps nil
+   )
+  (when (and store-p (featurep 'persistent-soft))
+    (persistent-soft-flush (ergoemacs-mode--pcache-repository))
+    (with-temp-buffer
+      (insert-file-contents (concat pcache-directory (ergoemacs-mode--pcache-repository)))
+      (persistent-soft-location-destroy (ergoemacs-mode--pcache-repository))
+      (goto-char (point-min))
+      (while (re-search-forward "+$" nil t)
+        (replace-match ""))
+      (goto-char (point-min))
+      ;; Add utf-8-emacs coding to the top.
+      (insert ";; -*- coding: utf-8-emacs -*-\n")
+      (goto-char (point-max))
+      ;; Update timestamp.
+      (when (re-search-backward ":timestamp +[0-9.]+" nil t)
+        (replace-match (format ":timestamp %s" (float-time (current-time)))))
+      (write-region (point-min) (point-max)
+                    (concat pcache-directory (ergoemacs-mode--pcache-repository))
+                    nil 1))))
 
 (ergoemacs-mode--setup-hash-tables)
 
@@ -616,8 +578,7 @@ When STORE-P is non-nil, save the tables."
                ergoemacs-macros
                ergoemacs-calculate-bindings))
   (unless (featurep pkg)
-    (ergoemacs-timing (intern (format "load-%s" pkg))
-      (load (symbol-name pkg)))))
+    (load (symbol-name pkg))))
 
 (require 'unicode-fonts nil t)
 (defcustom ergoemacs-use-unicode-symbols nil
@@ -973,19 +934,15 @@ also perform `outline-next-visible-heading'"
 
 (if ergoemacs-mode--fast-p
     (provide 'ergoemacs-themes)
-  (ergoemacs-timing ergoemacs-themes
-    (load "ergoemacs-themes")))
+  (load "ergoemacs-themes")
+  )
 
 (when ergoemacs-use-aliases
-  (ergoemacs-timing ergoemacs-load-aliases
-    (ergoemacs-load-aliases)))
+  (ergoemacs-load-aliases))
 
-(ergoemacs-timing ergoemacs-mode-intialize-hook
-  (run-hooks 'ergoemacs-mode-intialize-hook))
+(run-hooks 'ergoemacs-mode-intialize-hook)
 
 (setq ergoemacs--load-time (float-time (time-subtract (current-time) ergoemacs--load-time)))
-(puthash 'ergoemacs-load-time (vector 1 ergoemacs--load-time ergoemacs--load-time ergoemacs--load-time (or load-file-name buffer-file-name))
-         ergoemacs-timing-hash)
 
 (provide 'ergoemacs-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

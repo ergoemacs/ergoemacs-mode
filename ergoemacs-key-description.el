@@ -57,8 +57,6 @@
 (defvar ergoemacs-display-without-brackets nil
   "Display the key without brackets.")
 
-(declare-function ergoemacs-timing-- "ergoemacs-mode")
-
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-basic-type "ergoemacs-translate")
@@ -499,21 +497,20 @@ When HELP is non-nil, insert and add help cross-refences."
   (let ((map (or (and (symbolp map) (symbol-value map))
                  (and (consp map) (eq (car map) 'keymap) map)))
         ret)
-    (ergoemacs-timing describe-keymap
-      (setq ret
-            (ergoemacs-cache (intern (format "describe-keymap-ret%s" (mapconcat (lambda(x) (md5 (format "%s" x))) (ergoemacs  map :key-hash) "_")))
-              (ergoemacs-map-keymap
-               (lambda (cur-key item)
-                 (unless (eq item 'ergoemacs-prefix)
-                   (cond
-                    ((consp cur-key))
-                    ((memq (elt cur-key 0) ergoemacs-describe-keymap--ignore))
-                    ((consp item))
-                    ((not item))
-                    (t
-                     (push (cons cur-key item) ret)))))
-               map)
-              ret)))
+    (setq ret
+          (ergoemacs-cache (intern (format "describe-keymap-ret%s" (mapconcat (lambda(x) (md5 (format "%s" x))) (ergoemacs  map :key-hash) "_")))
+            (ergoemacs-map-keymap
+             (lambda (cur-key item)
+               (unless (eq item 'ergoemacs-prefix)
+                 (cond
+                  ((consp cur-key))
+                  ((memq (elt cur-key 0) ergoemacs-describe-keymap--ignore))
+                  ((consp item))
+                  ((not item))
+                  (t
+                   (push (cons cur-key item) ret)))))
+             map)
+            ret))
     (setq ret (append (list nil t) (sort ret (lambda(e1 e2) (ergoemacs :key-lessp (car e1) (car e2))))))
     (if help
         (insert (ergoemacs-cache (intern (format "describe-keymap-help%s" (mapconcat (lambda(x) (md5 (format "%s" x))) (ergoemacs  map :key-hash) "_")))
