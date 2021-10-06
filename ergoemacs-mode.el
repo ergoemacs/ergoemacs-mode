@@ -135,7 +135,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 ;;; ergoemacs-keymap
 
 (defvar ergoemacs-keymap (make-sparse-keymap)
-  "ErgoEmacs minor mode keymap.  This replaces `global-map'.")
+  "ErgoEmacs minor mode keymap.")
 
 (defvar ergoemacs-translate--parent-map (make-sparse-keymap)
   "Parent keymap for sparse translation")
@@ -717,11 +717,26 @@ after initializing ergoemacs-mode.
 (defvar ergoemacs-override-alist nil
   "ErgoEmacs override keymaps.")
 
+(defvar ergoemacs-mode-mark-active-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "TAB") 'indent-region))
+  "ergoemacs mark active keymap.")
+
+(defvar ergoemacs-undo-tree-remap-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map [remap ergoemacs-redo] 'undo-tree-redo)
+    (define-key map [remap undo] 'undo-tree-undo))
+  "ergoemacs undo-tree remap keymaps")
+
+
 (defun ergoemacs-setup-override-keymap ()
   "Setup `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
-  (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-override-keymap)))
-  (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
-  )
+  (setq ergoemacs-override-alist `((mark-active . ,ergoemacs-mode-mark-active-keymap)
+                                   (undo-tree-mode . ,ergoemacs-undo-tree-remap-keymap)
+                                   (ergoemacs-mode . ,ergoemacs-user-keymap)
+                                   (ergoemacs-mode . ,ergoemacs-override-keymap)
+                                   (ergoemacs-mode . ,ergoemacs-keymap)))
+  (add-hook 'emulation-mode-map-alists ergoemacs-override-alist))
 
 (defun ergoemacs-remove-override-keymap ()
   "Remove `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."

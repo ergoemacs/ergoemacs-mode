@@ -271,55 +271,55 @@ by the emulation map."
   (add-hook 'eshell-post-command-hook 'ergoemacs-shell-here-directory-change-hook)
   (delete-selection-mode 1))
 
-(defun ergoemacs-unset-keys ()
+(defun ergoemacs-unset-keys (keymap)
   "Unset all of the standard keys at once.
 Call this before calling any other ergoemacs-set-* function"
-  (global-set-key (kbd "C-x C-f") nil)
-  (global-set-key (kbd "C-x C-s") nil)
-  (global-set-key (kbd "C-x C-w") nil)
-  (global-set-key (kbd "C-x h") nil)
-  (global-set-key (kbd "C-x k") nil)
-  (global-set-key (kbd "C-b") nil)
-  (global-set-key (kbd "C-p") nil)
-  (global-set-key (kbd "C-n") nil)
-  (global-set-key (kbd "C-d") nil)
-  (global-set-key (kbd "M-b") nil)
-  (global-set-key (kbd "M-f") nil)
-  (global-set-key (kbd "M-d") nil)
+  (define-key keymap (kbd "C-x C-f") nil)
+  (define-key keymap (kbd "C-x C-s") nil)
+  (define-key keymap (kbd "C-x C-w") nil)
+  (define-key keymap (kbd "C-x h") nil)
+  (define-key keymap (kbd "C-x k") nil)
+  (define-key keymap (kbd "C-b") nil)
+  (define-key keymap (kbd "C-p") nil)
+  (define-key keymap (kbd "C-n") nil)
+  (define-key keymap (kbd "C-d") nil)
+  (define-key keymap (kbd "M-b") nil)
+  (define-key keymap (kbd "M-f") nil)
+  (define-key keymap (kbd "M-d") nil)
 
-  (global-set-key (kbd "C-w") nil)
-  (global-set-key (kbd "M-w") nil)
-  (global-set-key (kbd "C-y") nil)
-  (global-set-key (kbd "M-y") nil)
-  (global-set-key (kbd "C-_") nil)
-  (global-set-key (kbd "C-/") nil)
-  (global-set-key (kbd "C-x u") nil)
+  (define-key keymap (kbd "C-w") nil)
+  (define-key keymap (kbd "M-w") nil)
+  (define-key keymap (kbd "C-y") nil)
+  (define-key keymap (kbd "M-y") nil)
+  (define-key keymap (kbd "C-_") nil)
+  (define-key keymap (kbd "C-/") nil)
+  (define-key keymap (kbd "C-x u") nil)
 
-  (global-set-key (kbd "C-s") nil)
-  (global-set-key (kbd "C-r") nil)
-  (global-set-key (kbd "M-%") nil)
-  (global-unset-key (kbd "M-{"))
-  (global-unset-key (kbd "M-}"))
-  (global-unset-key (kbd "C-a"))
-  (global-unset-key (kbd "C-e"))
+  (define-key keymap (kbd "C-s") nil)
+  (define-key keymap (kbd "C-r") nil)
+  (define-key keymap (kbd "M-%") nil)
+  
+  (define-key keymap (kbd "M-{") 'undefined)
+  (define-key keymap (kbd "M-}") 'undefined)
+  (define-key keymap (kbd "C-a") 'undefined)
+  (define-key keymap (kbd "C-e") 'undefined)
 
-  (global-unset-key (kbd "M-v"))
-  (global-unset-key (kbd "C-v"))
+  (define-key keymap (kbd "M-v") 'undefined)
+  (define-key keymap (kbd "C-v") 'undefined)
 
-  (global-unset-key (kbd "M->"))
-  (global-unset-key (kbd "M-<"))
+  (define-key keymap (kbd "M->") 'undefined)
+  (define-key keymap (kbd "M-<") 'undefined)
 
-  (global-unset-key (kbd "C-x 1"))
-  (global-unset-key (kbd "C-x 0"))
-  (global-unset-key (kbd "C-x 3"))
-  (global-unset-key (kbd "C-x 2"))
+  (define-key keymap (kbd "C-x 1") 'undefined)
+  (define-key keymap (kbd "C-x 0") 'undefined)
+  (define-key keymap (kbd "C-x 3") 'undefined)
+  (define-key keymap (kbd "C-x 2") 'undefined)
 
-  (global-unset-key (kbd "M-x"))
-  (global-unset-key (kbd "M-!"))
-  (global-unset-key (kbd "C-l"))
-  (global-unset-key (kbd "C-k"))
-  (global-unset-key (kbd "M-;"))
-  )
+  (define-key keymap (kbd "M-x") 'undefined)
+  (define-key keymap (kbd "M-!") 'undefined)
+  (define-key keymap (kbd "C-l") 'undefined)
+  (define-key keymap (kbd "C-k") 'undefined)
+  (define-key keymap (kbd "M-;") 'undefined))
 
 ;;; Fixed components
 (defun ergoemacs-set-standard-fixed (keymap)
@@ -353,30 +353,31 @@ These keys do not depend on the layout."
 
   ;; These go into the global map, so they can be overridden by a
   ;; local mode map.
-  (global-set-key (kbd "C-f") 'isearch-forward)
-  (global-set-key (kbd "C-a") 'mark-whole-buffer)
-  (global-set-key (kbd "C-z") 'ergoemacs-undo)
+  (define-key keymap (kbd "C-f") 'isearch-forward)
+  (define-key keymap (kbd "C-a") 'mark-whole-buffer)
+  (define-key keymap (kbd "C-z") 'ergoemacs-undo)
+  (define-key keymap (kbd "C-S-z") 'ergoemacs-redo)
+  (define-key keymap (kbd "C-y") 'ergoemacs-redo)
 
-  (global-set-key (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
-  (global-set-key (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
-  (global-set-key (kbd "C-S-v") 'ergoemacs-paste-cycle)
 
-  (global-set-key (kbd "<S-insert>") 'ergoemacs-paste)
-  (global-set-key (kbd "C-v") 'ergoemacs-paste)
+  (define-key keymap (kbd "<S-delete>") 'ergoemacs-cut-line-or-region)
+  (define-key keymap (kbd "<C-insert>") 'ergoemacs-copy-line-or-region)
+  (define-key keymap (kbd "C-S-v") 'ergoemacs-paste-cycle)
 
-  (global-set-key (kbd "<delete>") 'delete-char)
-  (global-set-key (kbd "<home>") 'move-beginning-of-line)
-  (global-set-key (kbd "<end>") 'move-end-of-line)
-  (global-set-key (kbd "C-SPC") 'set-mark-command)
-  (global-set-key (kbd "C-r") 'ergoemacs-revert-buffer)
+  (define-key keymap (kbd "<S-insert>") 'ergoemacs-paste)
+  (define-key keymap (kbd "C-v") 'ergoemacs-paste)
 
-  (global-set-key (kbd "C-/") 'info)
-  (global-set-key (kbd "C-?") 'info)
+  (define-key keymap (kbd "<delete>") 'delete-char)
+  (define-key keymap (kbd "<home>") 'move-beginning-of-line)
+  (define-key keymap (kbd "<end>") 'move-end-of-line)
+  (define-key keymap (kbd "C-SPC") 'set-mark-command)
+  (define-key keymap (kbd "C-r") 'ergoemacs-revert-buffer)
 
-  (global-set-key (kbd "C-S-o") 'ergoemacs-open-in-external-app)
-  (global-set-key (kbd "C-S-t") 'ergoemacs-open-last-closed)
+  (define-key keymap (kbd "C-/") 'info)
+  (define-key keymap (kbd "C-?") 'info)
 
-  )
+  (define-key keymap (kbd "C-S-o") 'ergoemacs-open-in-external-app)
+  (define-key keymap (kbd "C-S-t") 'ergoemacs-open-last-closed))
 
 (defun ergoemacs-set-help (keymap)
   "Help change for ergoemacs-mode for KEYMAP."
@@ -401,13 +402,13 @@ These keys do not depend on the layout."
   (ergoemacs-define-key keymap (kbd "M-f") 'delete-char)
 
   (ergoemacs-define-key keymap (kbd "<M-delete>") 'kill-word)
-  (ergoemacs-global-set-key (kbd "<M-up>") 'ergoemacs-backward-block)
-  (ergoemacs-global-set-key (kbd "<M-down>") 'ergoemacs-forward-block))
+  (ergoemacs-define-key keymap (kbd "<M-up>") 'ergoemacs-backward-block)
+  (ergoemacs-define-key keymap (kbd "<M-down>") 'ergoemacs-forward-block))
 
 (defun ergoemacs-set-move-extra-reduction (keymap)
   "Extra reduction keys with KEYMAP."
-  (global-set-key (kbd "M-.") 'ergoemacs-end-of-line-or-what)
-  (global-set-key (kbd "M-m") 'ergoemacs-beginning-of-line-or-what))
+  (define-key keymap (kbd "M-.") 'ergoemacs-end-of-line-or-what)
+  (define-key keymap (kbd "M-m") 'ergoemacs-beginning-of-line-or-what))
 
 
 ;;; Variable Components
@@ -443,8 +444,8 @@ These keys do not depend on the layout."
   "Move By Bracket for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-J") 'ergoemacs-backward-open-bracket)
   (ergoemacs-define-key keymap (kbd "M-L") 'ergoemacs-forward-close-bracket)
-  (ergoemacs-global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
-  (ergoemacs-global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket))
+  (ergoemacs-define-key keymap (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
+  (ergoemacs-define-key keymap (kbd "<M-right>") 'ergoemacs-forward-close-bracket))
 
 (defun ergoemacs-set-move-bracket-reduction (keymap)
   "Move bracket in the reduction theme for KEYMAP."
@@ -463,6 +464,7 @@ These keys do not depend on the layout."
 
   ;; Undo
   (ergoemacs-define-key keymap (kbd "M-z") 'ergoemacs-undo)
+  (ergoemacs-define-key keymap (kbd "M-S-z") 'ergoemacs-redo)
   (put 'ergoemacs-undo
        :advertised-binding (ergoemacs-translate--event-layout
                             (vconcat (listify-key-sequence (kbd "M-z")))))
@@ -725,15 +727,15 @@ These keys do not depend on the layout."
   "Escape exits."
   (ergoemacs-global-set-key (kbd "<escape>") 'ergoemacs-keyboard-quit))
 
-(defun ergoemacs-set-remaps ()
-  "Remaps for `ergoemacs-mode'."
-  (global-set-key [remap eshell] 'ergoemacs-eshell-here)
-  (global-set-key [remap powershell] 'ergoemacs-powershell-here)
-  (global-set-key [remap shell] 'ergoemacs-shell-here)
-  (global-set-key [remap describe-mode]
+(defun ergoemacs-set-remaps (keymap)
+  "Remaps for `ergoemacs-mode' for KEYMAP."
+  (define-key keymap [remap eshell] 'ergoemacs-eshell-here)
+  (define-key keymap [remap powershell] 'ergoemacs-powershell-here)
+  (define-key keymap [remap shell] 'ergoemacs-shell-here)
+  (define-key keymap [remap describe-mode]
                   'ergoemacs-describe-major-mode)
-  (global-set-key [remap cua-paste] 'ergoemacs-paste)
-  (global-set-key [remap cua-cut-region] 'ergoemacs-cut-line-or-region))
+  (define-key keymap [remap cua-paste] 'ergoemacs-paste)
+  (define-key keymap [remap cua-cut-region] 'ergoemacs-cut-line-or-region))
 
 (defun ergoemacs-set-menu-bar-file ()
   "File menu."
@@ -1300,7 +1302,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-unset-keys-in-map 'isearch-mode-map)
   (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
   (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)
-   ;; Mode specific changes
+  ;; Mode specific changes
   ;; (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
 
   ;; (ergoemacs-define-key isearch-mode-map (kbd "M-c") 'isearch-yank-word-or-char)
@@ -1346,7 +1348,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
 (defun ergoemacs-install-reduction-theme ()
   "Install reduction theme."
-  (ergoemacs-unset-keys)
+  (ergoemacs-unset-keys ergoemacs-override-keymap)
   (ergoemacs-set-standard-vars)
 
   (ergoemacs-set-standard-fixed ergoemacs-override-keymap)
@@ -1374,7 +1376,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
   (ergoemacs-install-isearch-mode)
 
-  (ergoemacs-set-remaps)
+  (ergoemacs-set-remaps ergoemacs-override-keymap)
   (ergoemacs-set-quit)
   (ergoemacs-set-menu-bar-help)
   (ergoemacs-set-menu-bar-view)
@@ -1384,7 +1386,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
 (defun ergoemacs-install-standard-theme ()
   "Install standard ergoemacs-mode theme."
-  (ergoemacs-unset-keys)
+  (ergoemacs-unset-keys ergoemacs-override-keymap)
   (ergoemacs-set-standard-vars)
 
   (ergoemacs-set-standard-fixed ergoemacs-override-keymap)
@@ -1408,7 +1410,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-select-items ergoemacs-override-keymap)
   (ergoemacs-fix-arrow-keys ergoemacs-override-keymap)
   (ergoemacs-install-isearch-mode)
-  (ergoemacs-set-remaps)
+  (ergoemacs-set-remaps ergoemacs-override-keymap)
   (ergoemacs-set-quit)
   (ergoemacs-set-menu-bar-help)
   (ergoemacs-set-menu-bar-view)

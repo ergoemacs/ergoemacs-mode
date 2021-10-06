@@ -158,13 +158,13 @@ TYPE is the type of translation installed."
             (when (memq 'down (event-modifiers last-command-event))
               current-prefix-arg)))))
 
-;; (ergoemacs-advice undefined ()
-;;   "Allow `ergoemacs-mode' to display keys, and intercept ending <apps> keys."
-;;   :type :around
-;;   (if (not ergoemacs-mode)
-;;       ad-do-it
-;;     (ergoemacs-mode--undefined-advice)))
-
+(ergoemacs-advice undefined ()
+  "Allow `ergoemacs-mode' to display keys, and intercept ending <apps> keys."
+  :type :around
+  (if (not ergoemacs-mode)
+      ad-do-it
+    (ergoemacs-mode--undefined-advice)))
+ 
 (ergoemacs-advice handle-shift-selection ()
   "Allow `ergoemacs-mode' to do shift selection on keys like Alt+# to Alt+3."
   :type :before
