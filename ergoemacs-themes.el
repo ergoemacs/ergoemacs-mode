@@ -327,21 +327,24 @@ Call this before calling any other ergoemacs-set-* function"
 
 These keys do not depend on the layout."
   (global-set-key [tool-bar kill-buffer] 'ergoemacs-close-current-buffer)
-
+  
   ;; These keys go into the override map
   (define-key keymap (kbd "C-o") 'find-file)
+  (define-key keymap (kbd "C-S-o") 'ergoemacs-open-in-desktop)
+  
   (define-key keymap (kbd "C-w") 'ergoemacs-close-current-buffer)
 
   (define-key keymap (kbd "C-s") 'save-buffer)
   (define-key keymap (kbd "C-S-s") 'write-file)
   (define-key keymap (kbd "C-p") 'pr-interface)
 
+  (define-key keymap (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (define-key keymap (kbd "C-S-n") 'ergoemacs-make-frame-command)
+  
+  (define-key keymap (kbd "C-w") 'ergoemacs-close-current-buffer)
   (define-key keymap (kbd "C-S-w") 'ergoemacs-delete-frame)
 
   (define-key keymap (kbd "C-l") 'goto-line)
-  (define-key keymap (kbd "C-n") 'ergoemacs-new-empty-buffer)
-  (define-key keymap (kbd "C-o") 'find-file)
   (define-key keymap (kbd "C-p") 'pr-interface)
 
   (define-key keymap (kbd "C-+") 'text-scale-increase)
