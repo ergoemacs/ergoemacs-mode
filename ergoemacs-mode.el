@@ -9,7 +9,7 @@
 ;; Created: August 01 2007
 ;; Keywords: convenience
 ;; Version: 5.16.10.12
-;; Package-Requires: ((emacs "24.1") (undo-tree "0.6.5") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "24.1") (cl-lib "0.5"))
 ;; URL: https://github.com/ergoemacs/ergoemacs-mode
 
 ;; ErgoEmacs is free software: you can redistribute it and/or modify
@@ -49,7 +49,6 @@
 (eval-when-compile
   (require 'ergoemacs-macros))
 
-(require 'undo-tree nil t)
 (provide 'ergoemacs-mode)
 (require 'kmacro)
 
@@ -717,23 +716,9 @@ after initializing ergoemacs-mode.
 (defvar ergoemacs-override-alist nil
   "ErgoEmacs override keymaps.")
 
-(defvar ergoemacs-mode-mark-active-keymap
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "TAB") 'indent-region))
-  "ergoemacs mark active keymap.")
-
-(defvar ergoemacs-undo-tree-remap-keymap
-  (let ((map (make-sparse-keymap)))
-    (define-key map [remap ergoemacs-redo] 'undo-tree-redo)
-    (define-key map [remap undo] 'undo-tree-undo))
-  "ergoemacs undo-tree remap keymaps")
-
-
 (defun ergoemacs-setup-override-keymap ()
   "Setup `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
-  (setq ergoemacs-override-alist `((mark-active . ,ergoemacs-mode-mark-active-keymap)
-                                   (undo-tree-mode . ,ergoemacs-undo-tree-remap-keymap)
-                                   (ergoemacs-mode . ,ergoemacs-user-keymap)
+  (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-user-keymap)
                                    (ergoemacs-mode . ,ergoemacs-override-keymap)
                                    (ergoemacs-mode . ,ergoemacs-keymap)))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist))
@@ -805,14 +790,6 @@ Valid values are:
 " (ergoemacs-layouts--custom-documentation)
 )
   :type (ergoemacs-layouts--customization-type)
-  :set #'ergoemacs-set-default
-  :initialize #'custom-initialize-default
-  :group 'ergoemacs-mode)
-
-
-(defcustom ergoemacs-remap-ignore '(undo-tree-visualize)
-  "Functions to ignore in `ergoemacs-mode' remaps."
-  :type '(repeat (sexp :tag "Function"))
   :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
