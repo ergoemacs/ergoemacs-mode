@@ -1756,99 +1756,6 @@ true; otherwise it is an emacs buffer."
   (interactive)
   (text-scale-increase 0))
 
-;;; helm-mode functions
-
-;;; This comes from https://github.com/emacs-helm/helm/pull/327, but
-;;; was reverted so it is added back here.
-(defcustom ergoemacs-helm-ff-ido-style-backspace t
-  "Use backspace to navigate with `helm-find-files'.
-You will have to restart Emacs or reeval `helm-find-files-map'
-and `helm-read-file-map' for this to take effect."
-  :group 'ergoemacs-mode
-  :type '(choice
-          (const :tag "Do not use ido-style backspace")
-          (const :tag "Use ido-style backspace" t)))
-
-(defun ergoemacs-helm-ff-backspace ()
-  "Call backsapce or `helm-find-files-down-one-level'.
-If sitting at the end of a file directory, backspace goes up one
-level, like in `ido-find-file'. "
-  (interactive)
-  (let (backspace)
-    (looking-back "^.*" nil)
-    (cond
-     ((and ergoemacs-helm-ff-ido-style-backspace
-           (looking-back "[/\\]" nil))
-      (call-interactively
-       (key-binding (kbd "<left>"))))
-     (t
-      (setq backspace (lookup-key
-                       (current-global-map)
-                       (read-kbd-macro "DEL")))
-      (call-interactively backspace)))))
-
-
-;;; This comes from https://github.com/emacs-helm/helm/issues/340
-(defcustom ergoemacs-helm-ido-style-return t
-  "Allows ido-style return in `helm-mode'"
-  :type 'boolean
-  :group 'ergoemacs-mode)
-
-(defun ergoemacs-helm-ff-expand-dir (candidate)
-  "Allows return to expand a directory like in `ido-find-file'.
-This requires `ergoemacs-mode' to be non-nil and
-`ergoemacs-helm-ido-style-return' to be non-nil."
-  (let* ((follow (and (boundp 'helm-follow-mode)
-		      (buffer-local-value
-		       'helm-follow-mode
-		       (get-buffer-create helm-buffer))))
-         (insert-in-minibuffer
-          #'(lambda (fname)
-              (with-selected-window (minibuffer-window)
-                (unless follow
-                  (delete-minibuffer-contents)
-                  (set-text-properties 0 (length fname)
-                                       nil fname)
-                  (insert fname))))))
-    (if (and ergoemacs-helm-ido-style-return ergoemacs-mode
-             (file-directory-p candidate))
-        (progn
-          (when (string= (helm-basename candidate) "..")
-            (setq helm-ff-last-expanded helm-ff-default-directory))
-          (funcall insert-in-minibuffer (file-name-as-directory
-                                         (expand-file-name candidate))))
-      (helm-exit-minibuffer))))
-
-(defun ergoemacs-helm-ff-persistent-expand-dir ()
-  "Makes `eroemacs-helm-ff-expand-dir' the default action for
-expanding helm-files."
-  (interactive)
-  (helm-attrset 'expand-dir 'ergoemacs-helm-ff-expand-dir)
-  (helm-execute-persistent-action 'expand-dir))
-
-
-(defun ergoemacs-helm-ff-dired-dir (candidate)
-  "Determines if a persistent action is called on directories.
-When `ergoemacs-mode' is enabled with
- `ergoemacs-helm-ido-style-return' non-nil then:
-- `helm-execute-persistent-action' is called on files.
-- `helm-exit-minibuffer' is called on directories.
-
-Otherwise `helm-execute-persistent-action' is called.
-"
-  (interactive)
-  (if (and ergoemacs-helm-ido-style-return ergoemacs-mode
-           (file-directory-p candidate))
-      (helm-exit-minibuffer)
-    (helm-execute-persistent-action)))
-
-(defun ergoemacs-helm-ff-execute-dired-dir ()
-  "Allow <M-return> to execute dired on directories in `helm-mode'.
-This requires `ergoemacs-mode' to be enabled with 
-`ergoemacs-helm-ido-style-return' to be non-nil."
-  (interactive)
-  (helm-attrset 'dired-dir 'ergoemacs-helm-ff-dired-dir)
-  (helm-execute-persistent-action 'dired-dir))
 
 ;; (define-key helm-find-files-map (kbd "<M-return>")
 ;;   'ergoemacs-helm-ff-execute-dired-dir)
@@ -2695,7 +2602,7 @@ With a prefix argument like \\[universial-argument] in an
         key-seq2)
     (unwind-protect
         (progn
-          (setq overriding-terminal-local-map (ergoemacs :original  global-map))
+          (setq overriding-terminal-local-map  global-map)
           (setq key-seq (read-key-sequence "Old Emacs Command: ")
                 cmd (key-binding key-seq)
                 overriding-terminal-local-map nil

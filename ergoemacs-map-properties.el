@@ -46,9 +46,7 @@
 (defvar ergoemacs-directories-where-keys-from-hook-are-deferred)
 (defvar ergoemacs-functions-that-always-override-ergoemacs-mode)
 (defvar ergoemacs-hooks-that-always-override-ergoemacs-mode)
-(defvar ergoemacs-ignore-prev-global)
-(defvar ergoemacs-map--breadcrumb)
-(defvar ergoemacs-map-properties--after-ergoemacs)
+ (defvar ergoemacs-map-properties--after-ergoemacs)
 (defvar ergoemacs-map-properties--before-ergoemacs)
 (defvar ergoemacs-map-properties--get-or-generate-map-key)
 (defvar ergoemacs-map-properties--indirect-keymaps)
@@ -277,54 +275,6 @@ When AT-END is non-nil, replace the end of the regular expression
 with this string.  Otherwise, it is assumed to be \"$\".r"
   (concat (regexp-opt (mapcar (lambda(x) (symbol-name x)) ergoemacs-map-properties--label-atoms-maps) 'symbols) (or (and at-end "$") "")))
 
-(defun ergoemacs-map-properties--default-global-gen ()
-  "Generate hash for default Emacs maps."
-  ;; (setq ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal))
-  (ergoemacs global-map :label most-negative-fixnum) ;; Should be `most-negative-fixnum'
-  (push 'global-map ergoemacs-map-properties--label-atoms-maps)
-  (ergoemacs-map-properties--label-atoms)
-  (with-temp-file (ergoemacs-map-properties--default-global-file)
-    (let ((print-level nil)
-          (print-length nil)
-          (where-is-hash (make-hash-table))
-          tmp
-          keys)
-      (goto-char (point-min))
-      (insert ";; -*- coding: utf-8-emacs -*-\n")
-      (insert "(defvar ergoemacs-map-properties--plist-hash)(declare-function ergoemacs-map-properties--label \"ergoemacs-map-properties\")(declare-function ergoemacs-command-loop--spinner-display \"ergoemacs-command-loop\")")
-      (ergoemacs-map-keymap
-       (lambda (key item)
-         (cond
-          ((vectorp key)
-           (push key keys)
-           (if (setq tmp (ergoemacs-gethash item where-is-hash))
-               (push key tmp)
-             (puthash item (list key) where-is-hash)))))
-       global-map)
-      (ergoemacs :label global-map)
-      (ergoemacs :keys global-map) ;; Should calculate :where-is and :lookup from original map
-      
-      (insert "(setq ergoemacs-map-properties--plist-hash '")
-      (prin1 ergoemacs-map-properties--plist-hash (current-buffer))
-      (goto-char (point-max))
-      (insert ")")
-
-      (insert "(setq ergoemacs-breadcrumb-hash '")
-      (prin1 ergoemacs-breadcrumb-hash (current-buffer))
-      (goto-char (point-max))
-      (insert ")")
-      
-      (insert "(setq ergoemacs-map-properties--label-atoms-maps '")
-      (prin1 ergoemacs-map-properties--label-atoms-maps (current-buffer))
-      (goto-char (point-max))
-      (insert ")")
-      
-      (insert "(setq ergoemacs-map-properties--get-or-generate-map-key "
-	      (number-to-string ergoemacs-map-properties--get-or-generate-map-key) ")")
-      (message "global-map-list %s" (ergoemacs global-map :map-list))
-      (message "minibuffer-local-map %s" (ergoemacs minibuffer-local-map :map-list))
-      (message "European: %s" (ergoemacs describe-european-environment-map :map-list))
-      (message "Completed generating default keys file."))))
 
 (defun ergoemacs-map-properties--label-echo (keymap-symbol map id)
   "When KEYMAP-SYMBOL is bound, label MAP to ID.
@@ -337,11 +287,6 @@ Also let the user know that the labeling was performed."
       (if (ergoemacs map :composed-p)
           (ergoemacs-warn "%s was not labeled to %s since it was a composed keymap.")
         (ergoemacs :label (ergoemacs map :original) id)))))
-
-
-(defvar ergoemacs-map-properties--global-submap-p nil
-  "Submap that was found.
-The submap is found by the `ergoemacs-map-properties--global-submap-p' function.")
 
 (defun ergoemacs-map-properties--global-submap-p (key)
   "Determine if KEY is defining a global submap.
@@ -628,30 +573,6 @@ These keymaps are saved in `ergoemacs-map-properties--hook-map-hash'."
 
 (defvar ergoemacs-map-properties--known-maps nil
   "A list of known, but unlabeled maps.")
-
-(defun ergoemacs-map-properties--get-original-global-map ()
-  "Load/Create the default global map information."
-  (if ergoemacs-mode--fast-p
-      (progn
-	(setq ergoemacs-map-properties--known-maps ergoemacs-map-properties--label-atoms-maps)
-	(ergoemacs-map-properties--label-known))
-    (ergoemacs-timing get-original-global-map
-      (if (file-readable-p (ergoemacs-map-properties--default-global-file))
-          (progn
-	    (load (ergoemacs-map-properties--default-global-file))
-	    (setq ergoemacs-map-properties--known-maps ergoemacs-map-properties--label-atoms-maps)
-	    (ergoemacs-map-properties--label-known)
-            (ergoemacs-map-properties--protect-global-map))
-        (if noninteractive
-            (ergoemacs-warn "Could not find global map information")
-          (ergoemacs-timing ergoemacs-create-global
-            (let* ((emacs-exe (ergoemacs-emacs-exe))
-                   (default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
-                   (cmd (format "%s -L %s --batch --load \"ergoemacs-mode\" -Q --eval \"(progn (ergoemacs-map-properties--default-global-gen) (kill-emacs))\"" emacs-exe default-directory)))
-              (message "%s" (shell-command-to-string cmd))
-              (ergoemacs-map-properties--get-original-global-map))))))))
-
-(add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-map-properties--get-original-global-map)
 
 (defun ergoemacs-map-properties--map-fixed-plist (keymap)
   "Determines if this is an `ergoemacs-mode' KEYMAP.

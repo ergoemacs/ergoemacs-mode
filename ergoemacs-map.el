@@ -82,7 +82,6 @@
 (declare-function ergoemacs-map-properties--deferred-maps "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--empty-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--get-or-generate-map-key "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--ignore-global-changes-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--key-hash "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--keymap-value "ergoemacs-map-properties")
@@ -298,8 +297,6 @@ done in `ergoemacs-map--alist'."
     ret))
 
 (defvar ergoemacs-menu-order)
-(defvar ergoemacs-map--undefined-keys nil
-  "List of undefined keys for the global map.")
 
 (defvar ergoemacs-map--cache--last-breadcrumb "")
 
@@ -340,8 +337,6 @@ done in `ergoemacs-map--alist'."
 (defvar ergoemacs-map-- (make-hash-table :test 'equal))
 (defvar ergoemacs-map--lookup-hash (make-hash-table :test 'equal))
 
-(defvar ergoemacs-map--saved-global-map nil)
-(defvar ergoemacs-map--last-global-map nil)
 (defvar ergoemacs-read-from-minibuffer-map nil
   "If non-nil, keymap that is being read by the minibuffer.")
 (defvar ergoemacs-map--quit-map nil

@@ -231,13 +231,6 @@ When arg1 can be a property.  The following properties are supported:
      ((and arg1 (symbolp arg1)
            (memq arg1 ergoemacs--map-properties-list))
       `(,(intern (format "ergoemacs-map-properties--%s" (substring (symbol-name arg1) 1))) ,@(cdr args)))
-
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :global-map))
-      `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map)))
-     ((and arg1 (symbolp arg1)
-           (eq arg1 :revert-global-map))
-      `(ergoemacs-map-properties--original (or ergoemacs-saved-global-map global-map) :setcdr))
      ((and arg1 (symbolp arg1)
            (eq arg1 :layout))
       `(ergoemacs-layouts--current ,arg2))

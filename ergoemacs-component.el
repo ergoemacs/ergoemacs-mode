@@ -48,7 +48,6 @@
 (defvar ergoemacs-map-properties--known-maps)
 (defvar ergoemacs-mode--fast-p)
 (defvar ergoemacs-mode-version)
-(defvar ergoemacs-saved-global-map)
 (defvar ergoemacs-theme-hash)
 (defvar ergoemacs-theme-version)
 (defvar ergoemacs-translate--translation-hash)
@@ -86,16 +85,6 @@
 
 ;; ergoemacs-translate
 
-(defcustom ergoemacs-ignore-prev-global t
-  "If non-nil, the ergoemacs-mode will ignore previously defined global keybindings."
-  :type 'boolean
-  :group 'ergoemacs-mode)
-
-;; for compatability
-;;;###autoload
-(defun ergoemacs-ignore-prev-global ()
-  "Ignore previously defined global keys."
-  (setq ergoemacs-ignore-prev-global t))
 
 (defun ergoemacs-remap (function)
   "Remap the FUNCTION to the appropriate key and then call that function."
@@ -251,7 +240,7 @@ OBJ is an `egoemacs-component-struct' object.
 Returns the map, if it hasn't been initialized, initialize
 with the label, and then return."
   (or (ergoemacs-component-struct-map obj)
-      (let ((map (make-sparse-keymap)))
+      (let ((map (make-sparse-keymap))) 
         (ergoemacs map :label
                    (list (ergoemacs (ergoemacs :global-map) :key-hash)
                          (intern (format "%s%s" (ergoemacs-component-struct-name obj) (or (ergoemacs-component-struct-version obj) "")))

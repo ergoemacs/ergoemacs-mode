@@ -139,12 +139,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defvar ergoemacs-translate--parent-map (make-sparse-keymap)
   "Parent keymap for sparse translation")
 
-(defvar ergoemacs-saved-global-map nil
-  "Saved global map.")
-
-(defvar ergoemacs-global-changed-keymap (make-sparse-keymap)
-  "This keymap shows the global keys that were changed before `ergoemacs-mode' loaded.")
-
 (defvar ergoemacs-map--breadcrumb ""
   "Breadcrumb that is used to figure out what map is being modified.")
 
@@ -462,14 +456,11 @@ This is structured by valid keyboard layouts for
   "Hash table of `ergoemacs-mode' timing.")
 
 (defvar ergoemacs-timing--locations
-  '((remove-global-map-map-keymap . "ergoemacs-component.el")
-    (remove-local-keymap-map-keymap . "ergoemacs-component.el")
+  '((remove-local-keymap-map-keymap . "ergoemacs-component.el")
     (translate-keymap . "ergoemacs-component.el")
     (describe-keymap . "ergoemacs-key-description.el")
     (before-ergoemacs . "ergoemacs-map-properties.el")
-    (get-original-global-map . "ergoemacs-map-properties.el")
     ;; (ergoemacs-map-properties--create-label-function . "ergoemacs-map-properties.el")
-    (ergoemacs-create-global . "ergoemacs-map-properties.el")
     (empty-p . "ergoemacs-map-properties.el")
     (where-is-hash . "ergoemacs-map-properties.el")
     (flatten-original . "ergoemacs-map-properties.el")
@@ -794,15 +785,6 @@ Valid values are:
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
-(defvar ergoemacs-map-properties--global-map-before-ergoemacs (ergoemacs-map-keymap nil global-map)
-  "A single keymap for the keys before `ergoemacs-mode' loads.")
-
-(defcustom ergoemacs-ignore-prev-global t
-  "Ignore global keys that were changed before `ergoemacs-mode' was loaded."
-  :type 'boolean
-  :set #'ergoemacs-set-default
-  :initialize #'custom-initialize-default
-  :group 'ergoemacs-mode)
 
 (defgroup ergoemacs-display nil
   "Display Options for `ergoemacs-mode'."

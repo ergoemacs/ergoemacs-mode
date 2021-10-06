@@ -38,19 +38,16 @@
 (defvar ergoemacs-mode)
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-map--unbound-keys)
-(defvar ergoemacs-saved-global-map)
 (defvar ergoemacs-user-keymap)
 
 (declare-function ergoemacs-map-- "ergoemacs-map")
 
 (declare-function ergoemacs-map-properties--hook-define-key "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--ignore-global-changes-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
 (declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--global-submap-p "ergoemacs-map-properties")
 
 (declare-function ergoemacs-key-description--substitute-command-keys "ergoemacs-key-description")
 
