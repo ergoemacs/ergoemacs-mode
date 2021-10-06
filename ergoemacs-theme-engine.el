@@ -200,21 +200,6 @@ Return 0 if there is no such symbol.  Uses
 `ergoemacs-component-at-point'."
   (ergoemacs-component-at-point t))
 
-(defcustom ergoemacs-theme-find-regexp
-  (concat"^\\s-*(ergoemacs-theme" find-function-space-re "%s\\(\\s-\\|$\\)")
-  "The regexp to search for a component definition.
-
-This is used by `ergoemacs-find-theme'.
-
-Note it must contain a `%s' at the place where `format'
-should insert the face name."
-  :type 'regexp
-  :group 'find-function
-  :version "22.1")
-
-(unless (assoc 'ergoemacs-theme find-function-regexp-alist)
-  (push (cons 'ergoemacs-theme 'ergoemacs-theme-find-regexp) find-function-regexp-alist))
-
 (define-button-type 'ergoemacs-theme-help
   :supertype 'help-xref
   'help-function #'ergoemacs-theme-describe

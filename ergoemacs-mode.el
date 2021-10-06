@@ -57,8 +57,6 @@
 
 (defvar ergoemacs--system (replace-regexp-in-string "[^0-9A-Za-z]+" "-" (concat emacs-version "-" system-configuration)))
 
-(defvar cl-struct-ergoemacs-component-struct-tags)
-(defvar ergoemacs-component-struct--refresh-variables)
 (defvar ergoemacs-keyboard-layout)
 (defvar ergoemacs-map--hashkey)
 (defvar ergoemacs-require--ini-p)
@@ -75,7 +73,6 @@
 
 (declare-function ergoemacs-theme--custom-documentation "ergoemacs-theme-engine")
 (declare-function ergoemacs-theme--customization-type "ergoemacs-theme-engine")
-(declare-function ergoemacs-theme-components "ergoemacs-theme-engine")
 
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
 
@@ -257,29 +254,6 @@ variable `ergoemacs-after-load-functions'."
   (run-hook-with-args 'ergoemacs-after-load-functions absoulte-file-name))
 
 
-(defcustom ergoemacs-theme-options
-  '()
-  "List of theme options."
-  :type '(repeat
-          (list
-           (sexp :tag "Theme Component")
-           (choice
-            (const :tag "Force Off" off)
-            (const :tag "Force On" on)
-            (const :tag "Let theme decide" nil))))
-  :group 'ergoemacs-themes)
-
-(defcustom ergoemacs-theme-version
-  '()
-  "Each themes set version."
-  :type '(repeat
-          (list
-           (string :tag "Theme Component")
-           (choice
-            (const :tag "Latest Version" nil)
-            (string :tag "Version"))))
-  :group 'ergoemacs-theme)
-
 (defvar ergoemacs-mode--default-frame-alist nil
   "List that saves default frame parameters.")
 
@@ -308,10 +282,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
   :group 'ergoemacs-mode
   (setq ergoemacs-mode--start-p t)
   (setq ergoemacs-map--hashkey nil)
-
-  (let ((refresh-p ergoemacs-component-struct--refresh-variables))
-    ;; Turn on
-    (if ergoemacs-mode
+  (if ergoemacs-mode
         (progn
           ;; Save frame parameters
           (run-hooks 'ergoemacs-mode-startup-hook)
@@ -344,10 +315,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
           ;;(define-key ergoemacs-translate--parent-map [menu] 'ergoemacs-command-loop--swap-translation)
           (when ergoemacs-mode-turn-on-cua-mode
             (cua-mode 1))
-
-          (if refresh-p
-              (message "Ergoemacs-mode keys refreshed (%s)" ergoemacs-keyboard-layout)
-            (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout)))
+            (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout))
       ;; Turn off
       ;; Restore frame parameters
       (modify-all-frames-parameters ergoemacs-mode--default-frame-alist)
@@ -363,7 +331,6 @@ The `execute-extended-command' is now \\[execute-extended-command].
       (setq isearch-mode-map (copy-keymap isearch-mode-map-ergoemacs))
       (unless refresh-p
         (message "Ergoemacs-mode turned OFF."))))
-  (setq ergoemacs-mode-started-p t))
 
 (defvar ergoemacs--gzip (executable-find "gzip")
   "Gzip location.")
@@ -565,7 +532,7 @@ When STORE-P is non-nil, save the tables."
 
 (dolist (pkg '(ergoemacs-command-loop
                ergoemacs-advice
-               ergoemacs-component
+               ;ergoemacs-component
                ergoemacs-functions
                ergoemacs-key-description
                ergoemacs-layouts
