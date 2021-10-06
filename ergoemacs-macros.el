@@ -51,28 +51,6 @@ If SYMBOL is void, return nil"
        (ignore-errors (default-value ,symbol))
      (ignore-errors (symbol-value ,symbol))))
 
-(defvar ergoemacs-theme-component-properties
-  '(:bind
-    :bind-keymap
-    :bind*
-    :bind-keymap*
-    :commands
-    :interpreter
-    :defer
-    :demand
-    :package-name
-    :ergoemacs-require
-    :no-load
-    :no-require
-    :just-first-keys
-    :variable-modifiers
-    :variable-prefixes
-    :layout)
-  "List of ergoemacs-theme-component properties.")
-
-(defvar ergoemacs-theme-components--modified-plist nil
-  "Modified plist.")
-
 (fset 'ergoemacs-theme-component--parse-keys-and-body
       #'(lambda (keys-and-body &optional parse-function  skip-first)
           "Split KEYS-AND-BODY into keyword-and-value pairs and the remaining body.
@@ -285,7 +263,7 @@ When arg1 can be a property.  The following properties are supported:
               (ergoemacs-map--cache-- --hash-key (progn ,@body)))))))
 
 (defmacro ergoemacs-no-specials (&rest body)
-  "Revert some `ergoemacs-mode' functions to their C defintions in BODY."
+  "Revert some `ergoemacs-mode' function  s to their C defintions in BODY."
   `(cl-letf (((symbol-function 'read-key-sequence) #'ergoemacs--real-read-key-sequence)
 	     ((symbol-function 'describe-key) #'ergoemacs--real-describe-key))
      ,@body))
