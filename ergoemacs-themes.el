@@ -1369,7 +1369,19 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
    (define-key org-mode-map [remap end-of-line] 'org-end-of-line)
    (define-key org-mode-map [remap forward-paragraph] 'org-forward-paragraph)
    (define-key org-mode-map [remap backward-paragraph] 'org-backward-paragraph)
-   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)))
+   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)
+   (if (string-equal ergoemacs-theme "reduction")
+       (progn
+         (ergoemacs-define-key org-mode-map (kbd "<C-up>") 'org-backward-element)
+         (ergoemacs-define-key org-mode-map (kbd "<C-down>") 'org-forward-element)
+         (ergoemacs-define-key org-mode-map (kbd "<M-up>") 'org-backward-element)
+         (ergoemacs-define-key org-mode-map (kbd "<M-down>") 'org-forward-element))
+     (ergoemacs-define-key org-mode-map (kbd "M-U") 'org-backward-element)
+     (ergoemacs-define-key org-mode-map (kbd "<C-up>") 'org-backward-element)
+     (ergoemacs-define-key org-mode-map (kbd "M-O") 'org-forward-element)
+     (ergoemacs-define-key org-mode-map (kbd "<C-down>") 'org-forward-element)
+     (ergoemacs-define-key org-mode-map (kbd "<M-up>") 'org-backward-element)
+     (ergoemacs-define-key org-mode-map (kbd "<M-down>") 'org-forward-element))))
 
 (add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
 
@@ -1378,7 +1390,13 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   "Install `log-edit' key bindings."
   (ergoemacs-save-key-state
    'log-edit-mode-map
-   (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done)))
+   (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done)
+   (if (string-equal ergoemacs-theme "reduction")
+       (progn
+         (ergoemacs-define-key log-edit-mode-map (kbd "M-m") 'log-edit-beginning-of-line)
+         (ergoemacs-define-key log-edit-mode-map (kbd "<home>") 'log-edit-beginning-of-line))
+     (ergoemacs-define-key log-edit-mode-map (kbd "<home>") 'log-edit-beginning-of-line)
+     (ergoemacs-define-key log-edit-mode-map (kbd "M-h") 'log-edit-beginning-of-line))))
 
 (with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
 
@@ -1387,21 +1405,62 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   "Install `eshell' bindings."
   (ergoemacs-save-key-state
    'eshell-mode-map
-  (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol)))
+   (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol)
+   (if (string-equal ergoemacs-theme "reduction")
+       (progn
+         (ergoemacs-define-key eshell-mode-map (kbd "M-m") 'eshell-bol)
+         (ergoemacs-define-key eshell-mode-map (kbd "<home>") 'eshell-bol)
+         (ergoemacs-define-key eshell-mode-map (kbd "M-t") 'eshell-complete-lisp-symbol))
+     (ergoemacs-define-key eshell-mode-map (kbd "<home>") 'eshell-bol)
+     (ergoemacs-define-key eshell-mode-map (kbd "M-h") 'eshell-bol)
+     (ergoemacs-define-key eshell-mode-map (kbd "M-t") 'eshell-complete-lisp-symbol))))
+
 (add-hook 'eshell-post-command-hook #'ergoemacs-install-eshell-bindings)
 
 (defun ergoemacs-install-comint-bindings ()
   "Install comint key bindings."
   (ergoemacs-save-key-state
    'comint-mode-map
-  (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)))
+   (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)
+   (if (string-equal ergoemacs-theme "reduction")
+       (progn
+         (ergoemacs-define-key comint-mode-map (kbd "<delete>") 'comint-delchar-or-maybe-eof)
+         (ergoemacs-define-key comint-mode-map (kbd "M-f") 'comint-delchar-or-maybe-eof)
+         (ergoemacs-define-key comint-mode-map (kbd "C-g") 'comint-delchar-or-maybe-eof))
+     (ergoemacs-define-key comint-mode-map (kbd "<delete>") 'comint-delchar-or-maybe-eof)
+     (ergoemacs-define-key comint-mode-map (kbd "M-f") 'comint-delchar-or-maybe-eof)
+     (ergoemacs-define-key comint-mode-map (kbd "C-g") 'comint-delchar-or-maybe-eof))))
 
 (with-eval-after-load 'comint (ergoemacs-install-comint-bindings))
 
 (defun ergoemacs-install-dired-bindings ()
   "Install `dired-mode-map' bindings."
-  (define-key dired-mode-map [remap query-replace] 'dired-do-query-replace-regexp)
-  (define-key dired-mode-map [remap query-replace-regexp] 'dired-do-query-replace-regexp))
+  (ergoemacs-save-key-state
+   'dired-mode-map
+   (define-key dired-mode-map [remap query-replace] 'dired-do-query-replace-regexp)
+   (define-key dired-mode-map [remap query-replace-regexp] 'dired-do-query-replace-regexp)
+   (if (string-equal ergoemacs-theme "reduction")
+       (progn
+         (ergoemacs-define-key dired-mode-map (kbd "M-d") 'dired-unmark-backward)
+         (ergoemacs-define-key dired-mode-map (kbd "DEL") 'dired-unmark-backward)
+         (ergoemacs-define-key dired-mode-map (kbd "M-e") 'dired-unmark-all-files)
+         (ergoemacs-define-key dired-mode-map (kbd "<C-backspace>") 'dired-unmark-all-files)
+         (ergoemacs-define-key dired-mode-map (kbd "M-DEL") 'dired-unmark-all-files)
+         (ergoemacs-define-key dired-mode-map (kbd "<C-up>") 'dired-prev-marked-file)
+         (ergoemacs-define-key dired-mode-map (kbd "<C-down>") 'dired-next-marked-file)
+         (ergoemacs-define-key dired-mode-map (kbd "<M-up>") 'dired-prev-marked-file)
+         (ergoemacs-define-key dired-mode-map (kbd "<M-down>") 'dired-next-marked-file))
+     (ergoemacs-define-key dired-mode-map (kbd "M-d") 'dired-unmark-backward)
+     (ergoemacs-define-key dired-mode-map (kbd "DEL") 'dired-unmark-backward)
+     (ergoemacs-define-key dired-mode-map (kbd "M-e") 'dired-unmark-all-files)
+     (ergoemacs-define-key dired-mode-map (kbd "<C-backspace>") 'dired-unmark-all-files)
+     (ergoemacs-define-key dired-mode-map (kbd "M-DEL") 'dired-unmark-all-files)
+     (ergoemacs-define-key dired-mode-map (kbd "M-U") 'dired-prev-marked-file)
+     (ergoemacs-define-key dired-mode-map (kbd "<C-up>") 'dired-prev-marked-file)
+     (ergoemacs-define-key dired-mode-map (kbd "M-O") 'dired-next-marked-file)
+     (ergoemacs-define-key dired-mode-map (kbd "<C-down>") 'dired-next-marked-file)
+     (ergoemacs-define-key dired-mode-map (kbd "<M-up>") 'dired-prev-marked-file)
+     (ergoemacs-define-key dired-mode-map (kbd "<M-down>") 'dired-next-marked-file))))
 (add-hook 'dired-load-hook #'ergoemacs-install-dired-bindings)
 
 (defvar calc-mode-map)
@@ -1409,7 +1468,49 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   "Install `calc-mode' bindings."
   (ergoemacs-save-key-state
    'comint-mode-map
-   (define-key calc-mode-map [remap ergoemacs-undo] 'calc-undo)))
+   (define-key calc-mode-map [remap ergoemacs-undo] 'calc-undo)
+   (if (string-equal ergoemacs-theme "reduction")
+       (progn
+         (ergoemacs-define-key calc-mode-map (kbd "M-d") 'calc-pop)
+         (ergoemacs-define-key calc-mode-map (kbd "DEL") 'calc-pop)
+         (ergoemacs-define-key calc-mode-map (kbd "<delete>") 'calc-pop)
+         (ergoemacs-define-key calc-mode-map (kbd "M-f") 'calc-pop)
+         (ergoemacs-define-key calc-mode-map (kbd "C-g") 'calc-pop)
+         (ergoemacs-define-key calc-mode-map (kbd "M-e") 'calc-pop-above)
+         (ergoemacs-define-key calc-mode-map (kbd "<C-backspace>") 'calc-pop-above)
+         (ergoemacs-define-key calc-mode-map (kbd "M-DEL") 'calc-pop-above)
+         (ergoemacs-define-key calc-mode-map (kbd "<C-insert>") 'calc-copy-region-as-kill)
+         (ergoemacs-define-key calc-mode-map (kbd "<menu> c") 'calc-copy-region-as-kill)
+         (ergoemacs-define-key calc-mode-map (kbd "M-c") 'calc-copy-region-as-kill)
+         (ergoemacs-define-key calc-mode-map (kbd "<S-insert>") 'calc-yank)
+         (ergoemacs-define-key calc-mode-map (kbd "C-v") 'calc-yank)
+         (ergoemacs-define-key calc-mode-map (kbd "<remap> <cua-paste>") 'calc-yank)
+         (ergoemacs-define-key calc-mode-map (kbd "<menu> v") 'calc-yank)
+         (ergoemacs-define-key calc-mode-map (kbd "M-v") 'calc-yank)
+         (ergoemacs-define-key calc-mode-map (kbd "<menu> 5") 'calc-percent)
+         (ergoemacs-define-key calc-mode-map (kbd "M-5") 'calc-percent)
+         (ergoemacs-define-key calc-mode-map (kbd "M-g") 'calc-kill)
+         (ergoemacs-define-key calc-mode-map (kbd "<deleteline>") 'calc-kill)
+         (ergoemacs-define-key calc-mode-map (kbd "M-t") 'calc-roll-up))
+     (ergoemacs-define-key calc-mode-map (kbd "M-d") 'calc-pop)
+     (ergoemacs-define-key calc-mode-map (kbd "DEL") 'calc-pop)
+     (ergoemacs-define-key calc-mode-map (kbd "<delete>") 'calc-pop)
+     (ergoemacs-define-key calc-mode-map (kbd "M-f") 'calc-pop)
+     (ergoemacs-define-key calc-mode-map (kbd "C-g") 'calc-pop)
+     (ergoemacs-define-key calc-mode-map (kbd "M-e") 'calc-pop-above)
+     (ergoemacs-define-key calc-mode-map (kbd "<C-backspace>") 'calc-pop-above)
+     (ergoemacs-define-key calc-mode-map (kbd "M-DEL") 'calc-pop-above)
+     (ergoemacs-define-key calc-mode-map (kbd "<C-insert>") 'calc-copy-region-as-kill)
+     (ergoemacs-define-key calc-mode-map (kbd "M-c") 'calc-copy-region-as-kill)
+     (ergoemacs-define-key calc-mode-map (kbd "<S-insert>") 'calc-yank)
+     (ergoemacs-define-key calc-mode-map (kbd "C-v") 'calc-yank)
+     (ergoemacs-define-key calc-mode-map (kbd "<remap> <cua-paste>") 'calc-yank)
+     (ergoemacs-define-key calc-mode-map (kbd "M-v") 'calc-yank)
+     (ergoemacs-define-key calc-mode-map (kbd "M-5") 'calc-percent)
+     (ergoemacs-define-key calc-mode-map (kbd "M-g") 'calc-kill)
+     (ergoemacs-define-key calc-mode-map (kbd "<deleteline>") 'calc-kill)
+     (ergoemacs-define-key calc-mode-map (kbd "M-t") 'calc-roll-up))))
+
 (add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
 
 (ergoemacs-translation normal ()

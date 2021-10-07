@@ -70,8 +70,6 @@
 
 (declare-function ergoemacs-map--cache-- "ergoemacs-map")
 
-(declare-function ergoemacs-component--help-link "ergoemacs-component")
-
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-advice--real-substitute-command-keys "C")
 
@@ -447,12 +445,6 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
      ((and ret (consp ret) (consp (cdr ret)))
       (setq ret (cons 'ergoemacs-component-help (nth 1 ret)))))
     ret))
-
-(defun ergoemacs-key-description--setup-xrefs ()
-  "Setup cross refecnes in help buffer."
-  (ergoemacs-component--help-link))
-
-(add-hook 'temp-buffer-show-hook 'ergoemacs-key-description--setup-xrefs)
 
 (defun ergoemacs-key-description--keymap-item (&optional elt keymap help)
   "Get keymap description for ELT based on KEYMAP.

@@ -110,17 +110,19 @@
 (declare-function ergoemacs-translate--event-layout "ergoemacs-translate")
 (declare-function help--symbol-completion-table "help-fns")
 
-(defun ergoemacs-calculate-bindings-for-current-binding (keymap space)
+(defun ergoemacs-calculate-bindings-for-current-binding (keymap space cb)
   "Calculate ergoemcs keybindings for a KEYMAP and dislay in another buffer.
-SPACE represents the amount of sacing to add"
+SPACE represents the amount of sacing to add
+CB is the buffer to use  for keymap"
   (dolist (elt ergoemacs-lookup-bindings-list)
     (let* ((command (nth 1 elt))
            (key (nth 0 elt))
            (key-code (read-kbd-macro key))
-           (bind (lookup-key (symbol-value keymap) key-code)))
-      (when bind
+           (bind (with-current-buffer cb
+                   (lookup-key (symbol-value keymap) key-code))))
+      (when (commandp bind)
         (dolist (ergoemacs-command (where-is-internal command ergoemacs-override-keymap nil t t))
-          (insert (format "%s(ergoemacs-define-key %s (kbd \"%s\") '%s)" space (symbol-name keymap)
+          (insert (format "%s(ergoemacs-define-key %s (kbd \"%s\") '%s)" space (symbol-name keymap) 
                    (key-description (ergoemacs-translate--event-layout ergoemacs-command "us" ergoemacs-keyboard-layout))
                    (symbol-name bind))))))))
 
@@ -129,43 +131,47 @@ SPACE represents the amount of sacing to add"
 (defun ergoemacs-calculate-bindings-for-both-themes (keymap)
   "Calculates ergoemacs-style bindings for KEYMAP."
   (interactive
-   (let ((v (variable-at-point))
-	     (enable-recursive-minibuffers t)
-         (orig-buffer (current-buffer))
-	     val)
-     (setq val (completing-read
-                (if (and (symbolp v) (keymapp (symbol-value v)))
-                    (format
-                     "Calculate egoemacs-mode keybindings for keymap (default %s): " v)
-                  "Calculate ergoemacs-mode keybindings: ")
-                #'help--symbol-completion-table
-                (lambda (vv)
-                  ;; In case the variable only exists in the buffer
-                  ;; the command we switch back to that buffer before
-                  ;; we examine the variable.
-                  (with-current-buffer orig-buffer
-                    (and (boundp vv) (keymapp (symbol-value vv)))))
-                t nil nil
-                (if (and (symbolp v) (keymapp (symbol-value v)))
-                    (symbol-name v))))
-     (list (if (equal val "")
-	           v (intern val)))))
-  (when (stringp v)
-    (error "This funcion requires a keymap"))
-  (setq ergoemacs-calculate-bindings-for-both-theme--tmp
-        (copy-keymap ergoemacs-override-keymap)
-        ergoemacs-override-keymap (make-sparse-keymap))
-  (let ((buf (get-buffer-create (format "*ergoemacs keybindings for keymap %s*" keymap))))
-    (with-output-to-temp-buffer buf
-      (with-current-buffer buf
-        (insert "(if (string-equal ergoemacs-theme \"reduction\")\n  (progn")
-        (ergoemacs-install-reduction-theme)
-        (ergoemacs-calculate-bindings-for-current-binding keymap "\n    ")
-        (insert ")")
-        (setq ergoemacs-override-keymap (make-sparse-keymap))
-        (ergoemacs-install-standard-theme)
-        (ergoemacs-calculate-bindings-for-current-binding keymap "\n  ")
-        (insert ")"))))
+   (save-excursion
+     (let* ((v (variable-at-point))
+	        (enable-recursive-minibuffers t)
+            (orig-buffer (current-buffer))
+	        val)
+       (setq val (completing-read
+                  (if (and (symbolp v) (keymapp (symbol-value v)))
+                      (format
+                       "Calculate egoemacs-mode keybindings for keymap (default %s): " v)
+                    "Calculate ergoemacs-mode keybindings: ")
+                  #'help--symbol-completion-table
+                  (lambda (vv)
+                    ;; In case the variable only exists in the buffer
+                    ;; the command we switch back to that buffer before
+                    ;; we examine the variable.
+                    (with-current-buffer orig-buffer
+                      (and (boundp vv) (keymapp (symbol-value vv)))))
+                  t nil nil
+                  (if (and (symbolp v) (keymapp (symbol-value v)))
+                      (symbol-name v))))
+       (list (if (equal val "") v (intern val))))))
+  (let ((cb (current-buffer)))
+    (unless cb
+      (error "Cannot determine the buffer"))
+    (prin1 (type-of keymap))
+    (setq ergoemacs-calculate-bindings-for-both-theme--tmp
+          (copy-keymap ergoemacs-override-keymap)
+          ergoemacs-override-keymap (make-sparse-keymap))
+    (let ((buf (get-buffer-create (format "*ergoemacs keybindings for keymap %s*" (symbol-name keymap)))))
+      (with-output-to-temp-buffer buf
+        (with-current-buffer buf
+          (insert "(ergoemacs-save-key-state '")
+          (insert (symbol-name keymap))
+          (insert " (if (string-equal ergoemacs-theme \"reduction\")\n  (progn")
+          (ergoemacs-install-reduction-theme)
+          (ergoemacs-calculate-bindings-for-current-binding keymap "\n    " cb)
+          (insert ")")
+          (setq ergoemacs-override-keymap (make-sparse-keymap))
+          (ergoemacs-install-standard-theme)
+          (ergoemacs-calculate-bindings-for-current-binding keymap "\n  " cb)
+          (insert "))")))))
  (setq ergoemacs-override-keymap ergoemacs-calculate-bindings-for-both-theme--tmp
        ergoemacs-calculate-bindings-for-both-theme--tmp nil))
 
