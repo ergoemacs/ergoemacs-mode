@@ -174,28 +174,6 @@ The TEXT will be what the mode-line is set to be."
 
 
 
-(defcustom ergoemacs-hooks-that-always-override-ergoemacs-mode '()
-  "List of hooks that when defining keys override `ergoemacs-mode' keys."
-  :type '(repeat
-          (symbol :tag "Hook"))
-  :group 'ergoemacs-mode)
-
-(defcustom ergoemacs-functions-that-always-override-ergoemacs-mode '(lambda)
-  "List of overriding functions run from a hook.
-
-When defining keys these functions override
-`ergoemacs-mode'.  `lambda' is a special undefined function"
-  :type '(repeat
-          (symbol :tag "Function"))
-  :group 'ergoemacs-mode)
-
-(defcustom ergoemacs-directories-where-keys-from-hook-are-deferred '()
-  "Directories where `ergoemacs-mode' defers hooks that gerenate key changes."
-  :type '(repeat
-          (directory :tag "Deferred Directory: "))
-  :group 'ergoemacs-mode)
-
-
 (defvar ergoemacs-mode-startup-hook nil
   "Hook for starting `ergoemacs-mode'.")
 
@@ -397,19 +375,29 @@ transpose words instead of running completion, call
 after initializing ergoemacs-mode.
 ")
 
+(defvar ergoemacs-mark-active-keymap (let ((map (make-sparse-keymap)))
+                                       (define-key map (kbd "TAB") 'indent-region))
+  "The keybinding that is active when the mark is active.")
+
 (defvar ergoemacs-override-alist nil
   "ErgoEmacs override keymaps.")
 
+(defvar ergoemacs-minor-alist nil
+  "ErgoEmacs minor mode keymap.")
+
 (defun ergoemacs-setup-override-keymap ()
-  "Setup `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
+  "Setup `ergoemacs-mode' keymaps."
   (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-user-keymap)
                                    (ergoemacs-mode . ,ergoemacs-override-keymap)
-                                   (ergoemacs-mode . ,ergoemacs-keymap)))
-  (add-hook 'emulation-mode-map-alists ergoemacs-override-alist))
+                                   (ergoemacs-mode . ,ergoemacs-keymap))
+        ergoemacs-minor-alist `((mark-active . ,ergoemacs-mark-active-keymap)))
+  (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
+  (add-hook 'minor-mode-map-alist ergoemacs-minor-alist))
 
 (defun ergoemacs-remove-override-keymap ()
-  "Remove `ergoemacs-mode' overriding keymap `ergoemacs-override-keymap'."
-  (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist))
+  "Remove `ergoemacs-mode' keymaps."
+  (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist)
+  (remove-hook 'minor-mode-map-alist ergoemacs-minor-alist))
 
 
 ;;; Frequently used commands as aliases
