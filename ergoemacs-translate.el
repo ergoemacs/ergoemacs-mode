@@ -777,8 +777,7 @@ When NAME is a symbol, setup the translation function for the symbol."
         -digit-argument
         -modal
         translation
-        (local-keymap (or (plist-get plist :keymap) (make-sparse-keymap)))
-	(trans-keymap (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map"))))
+        (local-keymap (or (plist-get plist :keymap) (make-sparse-keymap))))
     (let (tmp
           cur-trans
           ret)

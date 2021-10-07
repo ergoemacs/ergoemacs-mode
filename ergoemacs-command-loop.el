@@ -1632,9 +1632,7 @@ The RECORD-FLAG and KEYS are sent to `ergoemacs-command-loop--grow-interactive'.
    ((and (symbolp command) (not (commandp command)))
     (ergoemacs-command-loop--message "Command `%s' cannot be called from a key" command))
    ((and (consp ergoemacs-command-loop-describe-key-functions)
-	 (memq command ergoemacs-command-loop-describe-key-functions))
-    (ergoemacs-specials
-     (ergoemacs-command-loop--grow-interactive command record-flag keys)))
+	 (memq command ergoemacs-command-loop-describe-key-functions)))
    (t
     (ergoemacs-command-loop--grow-interactive command record-flag keys)))
   (setq ergoemacs-this-command-keys-shift-translated nil))
@@ -2199,7 +2197,7 @@ pressed the translated key by changing
     ;; Make sure to lookup the keys in the selected buffer
     (ergoemacs-command-loop--sync-point)
     (let ((trials (ergoemacs-translate--trials key))
-        tmp tmp2 ret)
+        tmp ret)
       (setq this-command-keys-shift-translated nil)
     (catch 'found-command
       (dolist (cur-key trials)

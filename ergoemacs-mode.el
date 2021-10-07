@@ -105,7 +105,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defcustom ergoemacs-display-key-use-face t
   "Use a button face for keys."
   :type 'boolean
-  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
@@ -127,14 +126,12 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 (defcustom ergoemacs-keyboard-layout "us"
   (concat "Specifies which keyboard layout to use.")
   :type 'sexp
-  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-keyboard-mirror nil
   "Specifies which keyboard layout to mirror."
   :type 'sexp
-  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
@@ -347,7 +344,7 @@ This is structured by valid keyboard layouts for
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defcustom ergoemacs-command-loop-spinners
+(defvar ergoemacs-command-loop-spinners
   '((standard ("|" "/" "-" "\\"))
     (arrows ("←" "↖" "↑" "↗" "→" "↘" "↓" "↙"))
     (bar-vertical ("▁" "▃" "▄" "▅" "▆" "▇" "█" "▇" "▆" "▅" "▄" "▃"))
@@ -359,8 +356,7 @@ This is structured by valid keyboard layouts for
     (dots ("⣾" "⣽" "⣻" "⢿" "⡿" "⣟" "⣯" "⣷"))
     (dot ("⠁" "⠂" "⠄" "⡀" "⢀" "⠠" "⠐" "⠈"))
     (fish (">))'>" " >))'>" "  >))'>" "   >))'>" "    >))'>" "   <'((<" "  <'((<" " <'((<")))
-  "Spinners for long commands with `ergoemacs-command-loop'."
-  :group 'ergoemacs-command-loop)
+  "Spinners for long commands with `ergoemacs-command-loop'.")
 
 (defcustom ergoemacs-mode-turn-on-cua-mode t
   "Turn on cua mode when starting `ergoemacs-mode'."
@@ -478,7 +474,6 @@ Valid values are:
 " (ergoemacs-layouts--custom-documentation)
 )
   :type (ergoemacs-layouts--customization-type)
-  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
@@ -490,7 +485,6 @@ Valid values are:
 (defcustom ergoemacs-display-ergoemacs-key-descriptions t
   "Use ergoemacs key descriptions (Alt+)."
   :type 'boolean
-  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
@@ -498,14 +492,12 @@ Valid values are:
 (defcustom ergoemacs-display-use-unicode-brackets-around-keys t
   "Use unicode brackets."
   :type 'boolean
-  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
 (defcustom ergoemacs-display-small-symbols-for-key-modifiers nil
   "Use small symbols to represent alt+ ctl+ on windows/linux."
   :type 'boolean
-  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
@@ -516,22 +508,18 @@ Valid values are:
           (const :tag "Don't Capitalize Keys" nil)
           (const :tag "Capitalize Keys with modifiers" with-modifiers)
           (const :tag "Capitalize Keys" t))
-  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
 (defcustom ergoemacs-display-key-use-face-p t
   "Use a button face for keys."
   :type 'boolean
-  :set #'ergoemacs-set-default
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
 (defface ergoemacs-display-key-face
   '((t :inverse-video t :box (:line-width 1 :style released-button) :weight bold))
   "Button Face for an `ergoemacs-mode' pretty key."
-  ;; :set #'ergoemacs-set-default
-  ;; :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
 (defcustom ergoemacs-excluded-major-modes

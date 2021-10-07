@@ -535,7 +535,8 @@ expression matching the base layout."
         (f2 "Base Layout: \\(%s\\)"))
     (format (cond
              (base f2)
-             (t f1)) (regexp-opt (ergoemacs-layouts--list) t))))
+             (t f1))
+            (regexp-opt (ergoemacs-layouts--list) t))))
 
 (defun ergoemacs-layout--prompt ()
   "Prompt for component or theme (when THEME-INSTEAD is non-nil)."
@@ -547,7 +548,7 @@ expression matching the base layout."
                                     "Describe ergoemacs layout (default %s): "
                                     c)
                                  "Describe ergoemacs layout: ")
-                               ergoemacs-layouts--list
+                               (ergoemacs-layouts--list)
                                nil t nil nil
                                (format "%s" c)))
     (list (or (and (equal val "") (format "%s" c)) val))))

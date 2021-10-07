@@ -108,6 +108,7 @@
 (defvar ergoemacs-keyboard-layout)
 
 (declare-function ergoemacs-translate--event-layout "ergoemacs-translate")
+(declare-function help--symbol-completion-table "help-fns")
 
 (defun ergoemacs-calculate-bindings-for-current-binding (keymap space)
   "Calculate ergoemcs keybindings for a KEYMAP and dislay in another buffer.

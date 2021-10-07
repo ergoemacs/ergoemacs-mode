@@ -448,8 +448,8 @@ These keys do not depend on the layout."
 
 (defun ergoemacs-set-move-bracket-reduction (keymap)
   "Move bracket in the reduction theme for KEYMAP."
-  (ergoemacs-global-set-key (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
-  (ergoemacs-global-set-key (kbd "<M-right>") 'ergoemacs-forward-close-bracket))
+  (ergoemacs-define-key keymap (kbd "<M-left>") 'ergoemacs-backward-open-bracket)
+  (ergoemacs-define-key keymap (kbd "<M-right>") 'ergoemacs-forward-close-bracket))
 
 (defun ergoemacs-set-copy (keymap)
   "Copy, Cut, Paste, Redo and Undo for KEYMAP."
@@ -1339,7 +1339,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-menu-bar-edit)
   (ergoemacs-set-menu-bar-file))
 
-
+(defvar org-mode-map )
 (defun ergoemacs-install-org-bindings ()
   "Install the `org-mode' bindings."
   (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
@@ -1362,12 +1362,14 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
 (add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
 
+(defvar log-edit-mode-map)
 (defun ergoemacs-install-log-edit-bindings ()
   "Install `log-edit' key bindings."
   (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done))
 
 (with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
 
+(defvar eshell-mode-map)
 (defun ergoemacs-install-eshell-bindings ()
   "Install `eshell' bindings."
   (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol))
@@ -1385,6 +1387,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (define-key dired-mode-map [remap query-replace-regexp] 'dired-do-query-replace-regexp))
 (add-hook 'dired-load-hook #'ergoemacs-install-dired-bindings)
 
+(defvar calc-mode-map)
 (defun ergoemacs-install-calc-bindings ()
   "Install `calc-mode' bindings."
   (define-key calc-mode-map [remap ergoemacs-undo] 'calc-undo))
