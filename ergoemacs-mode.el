@@ -58,7 +58,6 @@
 (defvar ergoemacs--system (replace-regexp-in-string "[^0-9A-Za-z]+" "-" (concat emacs-version "-" system-configuration)))
 
 (defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-map--hashkey)
 (defvar ergoemacs-require--ini-p)
 (defvar ergoemacs-require)
 (defvar pcache-directory)
@@ -110,16 +109,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
-
-
-
-(defcustom ergoemacs-theme (if (and (boundp 'ergoemacs-variant) ergoemacs-variant)
-                               ergoemacs-variant
-                             (if (and (boundp 'ergoemacs-theme) ergoemacs-theme)
-                                 ergoemacs-theme
-                               (if (getenv "ERGOEMACS_THEME")
-                                   (getenv "ERGOEMACS_THEME")
-                                 nil)))
+(defcustom ergoemacs-theme nil
   "Ergoemacs Keyboard Layout Themes."
   :type '(choice
           (const :tag "Standard" :value nil)
@@ -128,16 +118,11 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
-;;; ergoemacs-keymap
-
 (defvar ergoemacs-keymap (make-sparse-keymap)
   "ErgoEmacs minor mode keymap.")
 
 (defvar ergoemacs-translate--parent-map (make-sparse-keymap)
   "Parent keymap for sparse translation")
-
-(defvar ergoemacs-map--breadcrumb ""
-  "Breadcrumb that is used to figure out what map is being modified.")
 
 (defcustom ergoemacs-keyboard-layout "us"
   (concat "Specifies which keyboard layout to use.")
@@ -214,10 +199,6 @@ When defining keys these functions override
   :group 'ergoemacs-mode)
 
 
-(defgroup ergoemacs-themes nil
-  "Default Ergoemacs Layout"
-  :group 'ergoemacs-mode)
-
 (defvar ergoemacs-mode-startup-hook nil
   "Hook for starting `ergoemacs-mode'.")
 
@@ -260,8 +241,6 @@ variable `ergoemacs-after-load-functions'."
 (defvar isearch-mode-map-ergoemacs nil
   "This variable saves the variable `isearch-mode-map'.")
 
-(defvar ergoemacs-mode--start-p nil
-  "Determines if `ergoemacs-mode' will start.")
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -281,7 +260,6 @@ The `execute-extended-command' is now \\[execute-extended-command].
   :global t
   :group 'ergoemacs-mode
   (setq ergoemacs-mode--start-p t)
-  (setq ergoemacs-map--hashkey nil)
   (if ergoemacs-mode
       (progn
         (unless isearch-mode-map-ergoemacs
@@ -334,203 +312,16 @@ The `execute-extended-command' is now \\[execute-extended-command].
       (setq isearch-mode-map isearch-mode-map-ergoemacs))
     (message "Ergoemacs-mode turned OFF.")))
 
-(defvar ergoemacs--gzip (executable-find "gzip")
-  "Gzip location.")
-
-(defun ergoemacs-mode--pcache-repository ()
-  "Return the `ergoemacs-mode' pcache repository name."
-  (format "ergoemacs-mode-%s%s" ergoemacs--system
-          (or (and ergoemacs--gzip ".gz") "")))
-
-(defvar ergoemacs-mode--fast-p nil
-  "Is `ergoemacs-mode' running from the cache?")
-
-(defun ergoemacs-mode--setup-hash-tables--setq (store-p &rest args)
-  "Setup hash tables.
-STORE-P tells if the hash table should be stored.
-ARGS ar the set arguments."
-  (let (sym val found-p)
-    (dolist (a args)
-      (cond
-       ((and (symbolp a) (not store-p)) ;; Fetch
-        (setq sym a)
-        (when (featurep 'persistent-soft)
-          (setq val (persistent-soft-fetch sym (ergoemacs-mode--pcache-repository)))
-          (when val
-            (setq found-p t)
-            (set sym val)
-            (when (and (eq sym 'ergoemacs-component-hash)
-                       (hash-table-p val))
-              (setq ergoemacs-mode--fast-p t)))))
-       ((symbolp a) ;; Store
-        (setq sym a)
-        (when (featurep 'persistent-soft)
-          (persistent-soft-store sym (symbol-value sym) (ergoemacs-mode--pcache-repository))))
-       ((and (not found-p) (not store-p) (not (symbol-value sym)))
-        ;; Setup empty symbol.
-        ;; (message "Empty %s->%s" sym a)
-        (set sym a)
-        (setq found-p nil))
-       (t
-        (setq found-p nil))))))
-
-(defvar ergoemacs-component-hash nil
-  "Hash of ergoemacs-components.")
-
-(defvar ergoemacs-map--hash nil
-  "Hash of calculated maps.")
-
-(defvar ergoemacs-map-properties--indirect-keymaps nil
-  "Variable listing indirect keymaps.")
-
-(defvar ergoemacs-map-properties--key-struct nil
-  "Key struct hash table.")
-
-(defvar ergoemacs-map-properties--plist-hash nil)
-
-(defvar ergoemacs-theme-hash nil
-  "Hash of `ergoemacs-mode' themes.")
-
-(defvar ergoemacs-translate--event-hash nil
+(defvar ergoemacs-translate--event-hash (make-hash-table)
   "Event modifiers not covered by standard Emacs.")
 
-(defvar ergoemacs-translate--hash nil
+(defvar ergoemacs-translate--hash (make-hash-table)
   "Hash table of keyboard translations.
 This is structured by valid keyboard layouts for
 `ergoemacs-keyboard-layout'.")
 
-(defvar ergoemacs-translation-hash nil
+(defvar ergoemacs-translation-hash (make-hash-table)
   "Hash table of translations, structured by translatin type.")
-
-;; (defvar ergoemacs-map-properties--create-label-function nil)
-
-(defvar ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum)
-
-(defvar ergoemacs-breadcrumb-hash nil
-  "Hash table of map breadcrumbs.")
-
-(defvar ergoemacs-map-properties--before-ergoemacs nil
-  "Keymap describing changes before `ergoemacs-mode' loads.")
-
-(defvar ergoemacs-map-properties--after-ergoemacs nil
-  "Keymap describing changes before `ergoemacs-mode' loads.")
-
-(defvar ergoemacs-require nil
-  "List of required theme components.")
-
-(defvar ergoemacs-map-properties--label-atoms-maps nil
-  "Known bound keymaps.")
-
-(defvar ergoemacs--component-file-mod-time-list nil)
-(defun ergoemacs--emacs-state ()
-  "Return MD5 represting current Emacs state."
-  (let* ((state (format "%s %s %s %s" ergoemacs--system features load-path ergoemacs--component-file-mod-time-list))
-         (md5 (md5 state)))
-    ;; (message "%s->%s" md5 state)
-    md5))
-
-(defvar ergoemacs--start-emacs-state (ergoemacs--emacs-state))
-(defvar ergoemacs--last-start-emacs-state nil)
-
-(defvar ergoemacs--start-emacs-state-2 nil)
-(defvar ergoemacs--last-start-emacs-state-2 nil)
-
-
-(require 'persistent-soft nil t)
-
-(defvar ergoemacs-map--cache-save nil)
-
-(defun ergoemacs-mode-clear-cache (&optional no-message)
-  "Clear the cache for next ergoemacs-mode load.
-NO-MESSAGE doesn't tell anything about clearing the cache."
-  (interactive)
-  (setq ergoemacs-map--cache-save :remove)
-  (ergoemacs-map--cache-save)
-  
-  (let ((extras (expand-file-name "ergoemacs-extras" user-emacs-directory)))
-    (if (not (file-exists-p extras))
-        (make-directory extras t))
-    (dolist (ext '("svg" "png"))
-      (dolist (file (file-expand-wildcards (expand-file-name (concat "*." ext) (expand-file-name "bindings" extras))))
-	(delete-file file)
-	(message "Remove %s, since keys may have changed." file))))
-
-  (unless no-message
-    (message "Clear cache for next startup.")))
-
-(defun ergoemacs-map--cache-save (&optional remove)
-  "Save ergoemacs cache for startup.
-REMOVE removes the cache insead of saving it."
-  (cond
-   ((and (featurep 'persistent-soft)
-         (featurep 'pcache)
-         (or remove (eq ergoemacs-map--cache-save :remove)))
-    (pcache-clear (pcache-repository (ergoemacs-mode--pcache-repository)))
-    (persistent-soft-location-destroy (ergoemacs-mode--pcache-repository)))
-   ((or remove (eq ergoemacs-map--cache-save :remove)))
-   (ergoemacs-map--cache-save
-    (ergoemacs-mode--setup-hash-tables t)
-    (setq ergoemacs-map--cache-save nil))))
-
-(add-hook 'kill-emacs-hook 'ergoemacs-map--cache-save)
-
-
-(defun ergoemacs-mode--setup-hash-tables (&optional store-p)
-  "Load hash-tables using `persistent-soft' when available.
-When STORE-P is non-nil, save the tables."
-  ;; (when store-p
-  ;;   (setq ergoemacs-map-properties--create-label-function (ergoemacs-map-properties--create-label-function)))
-  (unless store-p
-    (ergoemacs-mode--setup-hash-tables--setq
-     nil
-     'ergoemacs--last-start-emacs-state nil)
-    ;; Check if system state has expired the cache.
-    (unless (equal ergoemacs--last-start-emacs-state ergoemacs--start-emacs-state)
-      (ergoemacs-mode-clear-cache t)
-      (message "Cache reset before loading.")
-      (setq ergoemacs-map--cache-save t)
-      (setq ergoemacs--last-start-emacs-state ergoemacs--start-emacs-state)
-      (ergoemacs-mode--setup-hash-tables--setq
-       t
-       'ergoemacs--last-start-emacs-state ergoemacs--last-start-emacs-state)
-      (ergoemacs-mode--setup-hash-tables--setq nil 'ergoemacs-require nil)))
-  (ergoemacs-mode--setup-hash-tables--setq
-   store-p
-   'ergoemacs-require nil
-   'ergoemacs-component-hash (make-hash-table :test 'equal)
-   'ergoemacs-map--hash (make-hash-table :test 'equal)
-   'ergoemacs-map-properties--indirect-keymaps (make-hash-table)
-   'ergoemacs-map-properties--key-struct (make-hash-table)
-   'ergoemacs-map-properties--plist-hash (make-hash-table :test 'equal)
-   'ergoemacs-theme-hash (make-hash-table :test 'equal)
-   'ergoemacs-translate--event-hash (make-hash-table)
-   'ergoemacs-translate--hash (make-hash-table)
-   'ergoemacs-translation-hash (make-hash-table)
-   'ergoemacs-breadcrumb-hash (make-hash-table)
-   'ergoemacs-map-properties--get-or-generate-map-key most-negative-fixnum
-   'ergoemacs-map-properties--before-ergoemacs nil
-   'ergoemacs-map-properties--label-atoms-maps nil
-   )
-  (when (and store-p (featurep 'persistent-soft))
-    (persistent-soft-flush (ergoemacs-mode--pcache-repository))
-    (with-temp-buffer
-      (insert-file-contents (concat pcache-directory (ergoemacs-mode--pcache-repository)))
-      (persistent-soft-location-destroy (ergoemacs-mode--pcache-repository))
-      (goto-char (point-min))
-      (while (re-search-forward "+$" nil t)
-        (replace-match ""))
-      (goto-char (point-min))
-      ;; Add utf-8-emacs coding to the top.
-      (insert ";; -*- coding: utf-8-emacs -*-\n")
-      (goto-char (point-max))
-      ;; Update timestamp.
-      (when (re-search-backward ":timestamp +[0-9.]+" nil t)
-        (replace-match (format ":timestamp %s" (float-time (current-time)))))
-      (write-region (point-min) (point-max)
-                    (concat pcache-directory (ergoemacs-mode--pcache-repository))
-                    nil 1))))
-
-(ergoemacs-mode--setup-hash-tables)
 
 (dolist (pkg '(ergoemacs-command-loop
                ergoemacs-advice
@@ -545,7 +336,8 @@ When STORE-P is non-nil, save the tables."
                ergoemacs-theme-engine
                ergoemacs-translate
                ergoemacs-macros
-               ergoemacs-calculate-bindings))
+               ergoemacs-calculate-bindings
+               ergoemacs-themes))
   (unless (featurep pkg)
     (load (symbol-name pkg))))
 
@@ -598,31 +390,6 @@ When STORE-P is non-nil, save the tables."
 
 (defvar ergoemacs-mode-init-hook nil
   "Hook for running after Emacs loads.")
-
-(defvar ergoemacs-mode-reset nil
-  "Does `ergoemacs-mode' need to be reset?")
-
-;;;###autoload
-(defun ergoemacs-mode-reset ()
-  "Reset `ergoemacs-mode' without toggling unnecessary variables."
-  (when (or ergoemacs-mode--start-p noninteractive)
-    (setq ergoemacs-component-struct--refresh-variables t)
-    (ergoemacs-mode -1)
-    (ergoemacs-mode 1)
-    (setq ergoemacs-mode-reset nil)))
-
-;;;###autoload
-(defun ergoemacs-set-default (symbol new-value)
-  "`ergoemacs-mode' equivalent to `set-default'.
-
-Will reload `ergoemacs-mode' after setting the values.
-
-SYMBOL is the symbol to set, NEW-VALUE is it's value."
-  (set-default symbol new-value)
-  (when (and (or (not (boundp 'ergoemacs-fixed-layout-tmp))
-                 (save-match-data (string-match "ergoemacs-redundant-keys-" (symbol-name symbol))))
-             (boundp 'ergoemacs-mode) ergoemacs-mode)
-    (ergoemacs-mode-reset)))
 
 (defvar ergoemacs-override-keymap (make-sparse-keymap)
   "ErgoEmacs override keymap.  Modify this keymap to change the
@@ -899,18 +666,11 @@ also perform `outline-next-visible-heading'"
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defvar ergoemacs-mode-started-p nil)
-
-(if ergoemacs-mode--fast-p
-    (provide 'ergoemacs-themes)
-  (load "ergoemacs-themes")
-  )
 
 (when ergoemacs-use-aliases
   (ergoemacs-load-aliases))
 
 (run-hooks 'ergoemacs-mode-intialize-hook)
-
 (setq ergoemacs--load-time (float-time (time-subtract (current-time) ergoemacs--load-time)))
 
 (provide 'ergoemacs-mode)
