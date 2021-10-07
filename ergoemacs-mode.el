@@ -55,35 +55,12 @@
 (require 'printing)
 (pr-update-menus)
 
-(defvar ergoemacs--system (replace-regexp-in-string "[^0-9A-Za-z]+" "-" (concat emacs-version "-" system-configuration)))
-
 (defvar ergoemacs-keyboard-layout)
-(defvar ergoemacs-require--ini-p)
-(defvar ergoemacs-require)
-(defvar pcache-directory)
 
 (declare-function ergoemacs-key-description--unicode-char "ergoemacs-key-description")
-
-(declare-function ergoemacs-require "ergoemacs-lib")
-(declare-function ergoemacs-layouts--custom-documentation "ergoemacs-layouts")
-
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
-(declare-function ergoemacs-map-properties--put "ergoemacs-map-properties")
-
-(declare-function ergoemacs-theme--custom-documentation "ergoemacs-theme-engine")
-(declare-function ergoemacs-theme--customization-type "ergoemacs-theme-engine")
-
 (declare-function ergoemacs-translate--meta-to-escape "ergoemacs-translate")
-
 (declare-function ergoemacs-layouts--customization-type "ergoemacs-layouts")
-
-(declare-function persistent-soft-fetch "persistent-soft")
-(declare-function persistent-soft-flush "persistent-soft")
-(declare-function persistent-soft-location-destroy "persistent-flush")
-(declare-function persistent-soft-store "persistent-soft")
-
-(declare-function pcache-clear "pcache")
-(declare-function pcache-repository "pcache")
 
 
 ;; Fundamental ergoemacs functions
@@ -209,7 +186,6 @@ ABSOULTE-FILE-NAME is the file name that will be passed to the
 variable `ergoemacs-after-load-functions'."
   (run-hook-with-args 'ergoemacs-after-load-functions absoulte-file-name))
 
-
 (defvar ergoemacs-mode--default-frame-alist nil
   "List that saves default frame parameters.")
 
@@ -300,7 +276,6 @@ This is structured by valid keyboard layouts for
 
 (dolist (pkg '(ergoemacs-command-loop
                ergoemacs-advice
-               ;ergoemacs-component
                ergoemacs-functions
                ergoemacs-key-description
                ergoemacs-layouts
@@ -509,41 +484,6 @@ Valid values are:
   '((t :inverse-video t :box (:line-width 1 :style released-button) :weight bold))
   "Button Face for an `ergoemacs-mode' pretty key."
   :group 'ergoemacs-display)
-
-(defcustom ergoemacs-excluded-major-modes
-  '(conf-colon-mode
-    conf-xdefaults-mode conf-space-mode conf-javaprop-mode
-    conf-ppd-mode mail-mode
-    ebrowse-tree-mode diff-mode fundamental-mode emacs-lisp-byte-code-mode
-    R-transcript-mode S-transcript-mode XLS-mode tar-mode
-    git-commit-mode git-rebase-mode image-mode
-    archive-mode ses-mode)
-  "List of major modes excluded from ergoemacs' Languages menu."
-  :type '(repeat (symbol :tag "Excluded Major Mode"))
-  :group 'ergoemacs-mode)
-;;; Menu options
-
-(defgroup ergoemacs-menus nil
-  "Options for `ergoemacs-command-loop'."
-  :group 'ergoemacs-mode)
-
-(defcustom ergoemacs-mode-names
-  '((conf-mode "Settings")
-    (ses-mode "Emacs Spreadsheet")
-    (m2-mode "Modula-2")
-    (snmpv2-mode "SNMPv2 MIBs")
-    (snmp-mode "SKMP MIBs"))
-  "Menu name for ergoemacs' Languages menu."
-  :type '(repeat
-          (list
-           (symbol :tag "Major Mode Name")
-           (text :tag "Alternative Description:")))
-  :group 'ergoemacs-menus)
-
-(defcustom ergoemacs-menu-order '(file edit search view languages options buffers help)
-  "Menu order for `ergoemacs-mode' global menus."
-  :type '(repeat (sexp :tag "Menu-bar key"))
-  :group 'ergoemacs-menus)
 
 ;;; Command loop options.
 (defgroup ergoemacs-command-loop nil
