@@ -88,6 +88,12 @@
 
 (declare-function undo-tree-mode "undo-tree")
 
+(declare-function flyspell-auto-correct-previous-word "fylspell")
+(declare-function w32-shell-execute "compat")
+(declare-function w32-long-file-name "compat")
+(declare-function term-paste "term")
+(declare-function calc-yank "calc-yank")
+
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
   "Backward char will edit isearch."
   :type 'boolean
@@ -651,22 +657,12 @@ This behavior can be turned off with
   (interactive)
   (let ((ma (region-active-p)))
     (if current-prefix-arg
-        (let ((pt (point)))
-          ;; (setq prefix-arg current-prefix-arg)
-          (end-of-buffer)
-          (when (= pt (point))
-            (call-interactively 'end-of-buffer)))
+        (call-interactively 'end-of-buffer)
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (bobp))
-        (let ((pt (point)))
-          (end-of-buffer)
-          (when (= pt (point))
-            (call-interactively 'end-of-buffer))))
+        (call-interactively 'end-of-buffer))
        (t
-        (let ((pt (point)))
-          (beginning-of-buffer)
-          (when (= pt (point))
-            (call-interactively 'beginning-of-buffer))))))
+        (call-interactively 'beginning-of-buffer))))
     (when (and (not ma) (region-active-p))
       (deactivate-mark))))
 
@@ -688,22 +684,12 @@ This will not honor `shift-select-mode'."
   (interactive)
   (let ((ma (region-active-p)))
     (if current-prefix-arg
-        (let ((pt (point)))
-          ;; (setq prefix-arg current-prefix-arg)
-          (end-of-buffer)
-          (when (= pt (point))
-            (call-interactively 'end-of-buffer)))
+        (call-interactively 'end-of-buffer)
       (cond
        ((and ergoemacs-repeatable-beginning-or-end-of-buffer (eobp))
-        (let ((pt (point)))
-          (beginning-of-buffer)
-          (when (= pt (point))
-            (call-interactively 'beginning-of-buffer))))
+        (call-interactively 'beginning-of-buffer))
        (t
-        (let ((pt (point)))
-          (end-of-buffer)
-          (when (= pt (point))
-            (call-interactively 'end-of-buffer))))))
+        (call-interactively 'end-of-buffer))))
     (when (and (not ma) (region-active-p))
       (deactivate-mark))))
 

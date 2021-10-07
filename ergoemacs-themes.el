@@ -439,6 +439,11 @@ These keys do not depend on the layout."
   (ergoemacs-define-key keymap (kbd "M-n") 'beginning-of-buffer)
   (ergoemacs-define-key keymap (kbd "M-N") 'end-of-buffer))
 
+(defun ergoemacs-set-move-buffer-reduction (keymap)
+  "Move by buffer in KEYMAP."
+  (ergoemacs-define-key keymap (kbd "M-n") 'ergoemacs-beginning-or-end-of-buffer)
+  (ergoemacs-define-key keymap (kbd "M-N") 'ergoemacs-end-or-beginning-of-buffer))
+
 (defun ergoemacs-set-move-bracket (keymap)
   "Move By Bracket for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-J") 'ergoemacs-backward-open-bracket)
@@ -1275,7 +1280,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-standard-fixed ergoemacs-override-keymap)
   (ergoemacs-set-help ergoemacs-override-keymap)
   (ergoemacs-set-move-char ergoemacs-override-keymap)
-  (ergoemacs-set-move-buffer ergoemacs-override-keymap)
+  (ergoemacs-set-move-buffer-reduction ergoemacs-override-keymap)
   (ergoemacs-set-move-bracket ergoemacs-override-keymap)
   (ergoemacs-set-move-word ergoemacs-override-keymap)
   ;;(ergoemacs-set-move-paragraph ergoemacs-override-keymap)
