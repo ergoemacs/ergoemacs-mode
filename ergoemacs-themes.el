@@ -1229,47 +1229,51 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
 (defun ergoemacs-install-isearch-mode ()
   "Installs keys for isearch mode."
-  (ergoemacs-unset-keys-in-map isearch-mode-map)
-  (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
-  (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)
-  ;; Mode specific changes
-  (if (string-equal ergoemacs-theme "reduction")
-      (progn
-        (ergoemacs-define-key isearch-mode-map (kbd "C-M-:") 'isearch-occur)
-        (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
-        (ergoemacs-define-key isearch-mode-map (kbd "DEL") 'isearch-delete-char)
-        (ergoemacs-define-key isearch-mode-map (kbd "<menu> v") 'isearch-yank-kill)
-        (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
-        (ergoemacs-define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)
-        (ergoemacs-define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
-        (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'isearch-yank-pop)
-        (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'isearch-yank-pop)
-        (ergoemacs-define-key isearch-mode-map (kbd "<menu> 5") 'isearch-query-replace)
-        (ergoemacs-define-key isearch-mode-map (kbd "M-5") 'isearch-query-replace)
-        (ergoemacs-define-key isearch-mode-map (kbd "M-h") 'isearch-repeat-forward)
-        (ergoemacs-define-key isearch-mode-map (kbd "C-e") 'isearch-repeat-forward)
-        (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
-        (ergoemacs-define-key isearch-mode-map (kbd "M-y") 'isearch-repeat-backward)
-        (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
-        (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete))
-    (ergoemacs-define-key isearch-mode-map (kbd "M-n") 'isearch-beginning-oef-buffer)
-    (ergoemacs-define-key isearch-mode-map (kbd "M-N") 'isearch-end-of-buffer)
-    (ergoemacs-define-key isearch-mode-map (kbd "C-M-:") 'isearch-occur)
-    (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
-    (ergoemacs-define-key isearch-mode-map (kbd "DEL") 'isearch-delete-char)
-    (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
-    (ergoemacs-define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)
-    (ergoemacs-define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
-    (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'isearch-yank-pop)
-    (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'isearch-yank-pop)
-    (ergoemacs-define-key isearch-mode-map (kbd "M-5") 'isearch-query-replace)
-    (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
-    (ergoemacs-define-key isearch-mode-map (kbd "C-e") 'isearch-repeat-forward)
-    (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
-    (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
-    (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete))
-  (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
-  (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer))
+  (ergoemacs-save-key-state
+   'isearch-mode-map
+   (ergoemacs-unset-keys-in-map isearch-mode-map)
+   (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
+   (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)
+   ;; Mode specific changes
+   (if (string-equal ergoemacs-theme "reduction")
+       (progn
+         (ergoemacs-define-key isearch-mode-map (kbd "C-M-:") 'isearch-occur)
+         (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
+         (ergoemacs-define-key isearch-mode-map (kbd "DEL") 'isearch-delete-char)
+         (ergoemacs-define-key isearch-mode-map (kbd "<menu> v") 'isearch-yank-kill)
+         (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
+         (ergoemacs-define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)
+         (ergoemacs-define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
+         (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'isearch-yank-pop)
+         (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'isearch-yank-pop)
+         (ergoemacs-define-key isearch-mode-map (kbd "<menu> 5") 'isearch-query-replace)
+         (ergoemacs-define-key isearch-mode-map (kbd "M-5") 'isearch-query-replace)
+         (ergoemacs-define-key isearch-mode-map (kbd "M-h") 'isearch-repeat-forward)
+         (ergoemacs-define-key isearch-mode-map (kbd "C-e") 'isearch-repeat-forward)
+         (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
+         (ergoemacs-define-key isearch-mode-map (kbd "M-y") 'isearch-repeat-backward)
+         (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
+         (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete))
+     (ergoemacs-define-key isearch-mode-map (kbd "M-n") 'isearch-beginning-oef-buffer)
+     (ergoemacs-define-key isearch-mode-map (kbd "M-N") 'isearch-end-of-buffer)
+     (ergoemacs-define-key isearch-mode-map (kbd "C-M-:") 'isearch-occur)
+     (ergoemacs-define-key isearch-mode-map (kbd "M-d") 'isearch-delete-char)
+     (ergoemacs-define-key isearch-mode-map (kbd "DEL") 'isearch-delete-char)
+     (ergoemacs-define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
+     (ergoemacs-define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)
+     (ergoemacs-define-key isearch-mode-map (kbd "<S-insert>") 'isearch-yank-kill)
+     (ergoemacs-define-key isearch-mode-map (kbd "M-V") 'isearch-yank-pop)
+     (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'isearch-yank-pop)
+     (ergoemacs-define-key isearch-mode-map (kbd "M-5") 'isearch-query-replace)
+     (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
+     (ergoemacs-define-key isearch-mode-map (kbd "C-e") 'isearch-repeat-forward)
+     (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
+     (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
+     (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete)))
+  (ergoemacs-save-key-state
+   'minibuffer-local-isearch-map
+   (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
+   (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer)))
 
 
 (defun ergoemacs-install-reduction-theme ()
@@ -1347,42 +1351,50 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 (defvar org-mode-map )
 (defun ergoemacs-install-org-bindings ()
   "Install the `org-mode' bindings."
-  (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
-  (define-key org-mode-map (kbd "<M-down>") 'ergoemacs-org-metadown)
-  (define-key org-mode-map (kbd "<M-up>") 'ergoemacs-org-metaup)
-  (define-key org-mode-map (kbd "<M-left>") 'ergoemacs-org-metaleft)
-  (define-key org-mode-map (kbd "<M-right>") 'ergoemacs-org-metaright)
-  (define-key org-mode-map (kbd "<M-RET>") 'org-insert-item)
+  (ergoemacs-save-key-state
+   'org-mode-map
+   (define-key org-mode-map (kbd "<C-return>") 'ergoemacs-org-insert-heading-respect-content)
+   (define-key org-mode-map (kbd "<M-down>") 'ergoemacs-org-metadown)
+   (define-key org-mode-map (kbd "<M-up>") 'ergoemacs-org-metaup)
+   (define-key org-mode-map (kbd "<M-left>") 'ergoemacs-org-metaleft)
+   (define-key org-mode-map (kbd "<M-right>") 'ergoemacs-org-metaright)
+   (define-key org-mode-map (kbd "<M-RET>") 'org-insert-item)
 
-  ;; How to do bold and italic?  I do not like using Control keys
-  ;; C-i is TAB... This seems to cause issues?
-  ;; (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
-  ;; (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
+   ;; How to do bold and italic?  I do not like using Control keys
+   ;; C-i is TAB... This seems to cause issues?
+   ;; (define-key org-mode-map (kbd "C-b") 'ergoemacs-org-bold)
+   ;; (define-key org-mode-map (kbd "C-i") 'ergoemacs-org-italic)
 
-  (define-key org-mode-map [remap beginning-of-line] 'org-beginning-of-line)
-  (define-key org-mode-map [remap end-of-line] 'org-end-of-line)
-  (define-key org-mode-map [remap forward-paragraph] 'org-forward-paragraph)
-  (define-key org-mode-map [remap backward-paragraph] 'org-backward-paragraph)
-  (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank))
+   (define-key org-mode-map [remap beginning-of-line] 'org-beginning-of-line)
+   (define-key org-mode-map [remap end-of-line] 'org-end-of-line)
+   (define-key org-mode-map [remap forward-paragraph] 'org-forward-paragraph)
+   (define-key org-mode-map [remap backward-paragraph] 'org-backward-paragraph)
+   (define-key org-mode-map [remap ergoemacs-paste] 'ergoemacs-org-yank)))
 
 (add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
 
 (defvar log-edit-mode-map)
 (defun ergoemacs-install-log-edit-bindings ()
   "Install `log-edit' key bindings."
-  (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done))
+  (ergoemacs-save-key-state
+   'log-edit-mode-map
+   (define-key log-edit-mode-map [remap save-buffer] 'log-edit-done)))
 
 (with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
 
 (defvar eshell-mode-map)
 (defun ergoemacs-install-eshell-bindings ()
   "Install `eshell' bindings."
-  (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol))
+  (ergoemacs-save-key-state
+   'eshell-mode-map
+  (define-key eshell-mode-map [remap move-beginning-of-line] 'eshell-bol)))
 (add-hook 'eshell-post-command-hook #'ergoemacs-install-eshell-bindings)
 
 (defun ergoemacs-install-comint-bindings ()
   "Install comint key bindings."
-  (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol))
+  (ergoemacs-save-key-state
+   'comint-mode-map
+  (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)))
 
 (with-eval-after-load 'comint (ergoemacs-install-comint-bindings))
 
@@ -1395,7 +1407,9 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 (defvar calc-mode-map)
 (defun ergoemacs-install-calc-bindings ()
   "Install `calc-mode' bindings."
-  (define-key calc-mode-map [remap ergoemacs-undo] 'calc-undo))
+  (ergoemacs-save-key-state
+   'comint-mode-map
+   (define-key calc-mode-map [remap ergoemacs-undo] 'calc-undo)))
 (add-hook 'calc-load-hook #'ergoemacs-install-calc-bindings)
 
 (ergoemacs-translation normal ()

@@ -365,6 +365,12 @@ When :type is :replace that replaces a function (like `define-key')"
                              `(push ',function ergoemacs-advice--temp-replace-functions))))))))
 
 
+(defmacro ergoemacs-save-key-state (keymap-symbol &rest body)
+  "Save keys in KEYMAP-SYMBOL, eval BODY."
+  `(progn
+     (ergoemacs-mode--save-map ,keymap-symbol)
+     ,@body
+     (ergoemacs-mode--save-map ,keymap-symbol t)))
 
 (provide 'ergoemacs-macros)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

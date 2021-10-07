@@ -189,8 +189,45 @@ variable `ergoemacs-after-load-functions'."
 (defvar ergoemacs-mode--default-frame-alist nil
   "List that saves default frame parameters.")
 
-(defvar isearch-mode-map-ergoemacs nil
-  "This variable saves the variable `isearch-mode-map'.")
+(defvar ergoemacs-mode--save-keymaps-list '()
+  "List of emacs saved to restore if needed.")
+
+(defvar ergoemacs-mode--save-keymaps (make-hash-table)
+  "Saved keymaps for `ergoemacs-mode'")
+
+
+(defun ergoemacs-mode--save-map (symbol-map &optional is-ergoemacs)
+  "Save the keymap SYMBOL-MAP in the hash `ergoemacs-mode--save-keymaps'.
+
+IS-ERGOEMACS is true when the `ergoemacs-mode' keybindings are installed."
+  (let (hash-symbol
+        (map (symbol-value symbol-map)))
+    (if is-ergoemacs
+        (setq hash-symbol (concat (symbol-name symbol-map) "-ergoemacs"))
+      (add-to-list 'ergoemacs-mode--save-keymaps-list symbol-map)
+      (setq hash-symbol (symbol-name symbol-map)))
+    (setq hash-symbol (intern hash-symbol))
+    (unless (gethash hash-symbol ergoemacs-mode--save-keymaps)
+      (puthash hash-symbol (copy-keymap map)
+               ergoemacs-mode--save-keymaps))))
+
+
+
+(defun ergoemacs-mode--get-map (symbol-map &optional is-ergoemacs)
+  "Get the keymap SYMBOL-MAP in the hash `ergoemacs-mode--save-keymaps'.
+
+IS-ERGOEMACS is true when the `ergoemacs-mode' keybindings are installed."
+  (let (hash-symbol)
+    (if is-ergoemacs
+        (setq hash-symbol (concat (symbol-name symbol-map) "-ergoemacs"))
+      (setq hash-symbol (symbol-name symbol-map)))
+    (setq hash-symbol (intern hash-symbol))
+    (gethash hash-symbol ergoemacs-mode--save-keymaps)))
+
+(defun ergoemacs-mode--restore-maps (&optional is-ergoemacs)
+  "Restore normal or ergoemacs keymaps (when IS-ERGOEMACS is non-nil)."
+  (dolist (k ergoemacs-mode--save-keymaps-list)
+    (set k (ergoemacs-mode--get-map k is-ergoemacs))))
 
 ;; ErgoEmacs minor mode
 ;;;###autoload
@@ -213,8 +250,6 @@ The `execute-extended-command' is now \\[execute-extended-command].
   (setq ergoemacs-mode--start-p t)
   (if ergoemacs-mode
       (progn
-        (unless isearch-mode-map-ergoemacs
-          (setq isearch-mode-map-ergoemacs (copy-keymap isearch-mode-map)))
         ;; Save frame parameters
         (run-hooks 'ergoemacs-mode-startup-hook)
         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
@@ -224,7 +259,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
         (setq ergoemacs-mode--default-frame-alist nil)
         (dolist (elt (reverse default-frame-alist))
           (push elt ergoemacs-mode--default-frame-alist))
-
+        (ergoemacs-mode--restore-maps t)
         ;; Setup the global keys that can be overriden
         (cond
          ((string-equal ergoemacs-theme "reduction")
@@ -259,8 +294,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
     (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
     (when ergoemacs-mode-turn-on-cua-mode
       (cua-mode 0))
-    (when isearch-mode-map-ergoemacs
-      (setq isearch-mode-map isearch-mode-map-ergoemacs))
+    (ergoemacs-mode--restore-maps)
     (message "Ergoemacs-mode turned OFF.")))
 
 (defvar ergoemacs-translate--event-hash (make-hash-table)
