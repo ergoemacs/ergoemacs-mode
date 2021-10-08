@@ -178,9 +178,14 @@ The TEXT will be what the mode-line is set to be."
     (run-hooks 'ergoemacs-pre-command-hook)))
 
 (defvar ergoemacs-post-command-hook nil)
+(defvar ergeoemacs-mode-term-raw-mode nil)
 (defun ergoemacs-post-command-hook ()
   "Run `ergoemacs-mode' post command hooks."
   (when ergoemacs-mode
+    (when (and (eq major-mode 'term-mode)
+               (eq (current-local-map) term-raw-map))
+      (setq-local ergoemacs-mode nil)
+      (setq-local ergeoemacs-mode-term-raw-mode t))
     (run-hooks 'ergoemacs-post-command-hook)))
 
 (defvar ergoemacs-after-load-functions nil)
