@@ -24,6 +24,8 @@ TRAVIS_FILE=.travis.yml
          test test-interactive clean edit test-dep-1 test-dep-2 test-dep-3     \
          test-dep-4 test-dep-5 test-dep-6 test-dep-7 test-dep-8 test-dep-9
 
+.DEFAULT_GOAL = compile
+
 24.1 :
 	$(eval EMACS:="c:\Users\fidlema3\EmacsPortable.App\App\emacs-24.1\bin\emacs.exe")
 
@@ -105,12 +107,12 @@ start0:
 	$(EMACS) -Q -L . -L .. -l ergoemacs-mode -l ergoemacs-test --eval "(ergoemacs-mode)"
 
 ert :
-	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
+	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl-lib -l ergoemacs-mode -l ergoemacs-test --eval \
 	    "(progn (setq ergoemacs-command-loop-type nil)                                          \
 	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" $(SELECT) (not (tag :interactive)))))" || exit 1; \
 
 erti :
-	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl -l ergoemacs-mode -l ergoemacs-test --eval \
+	$(EMACS) $(EMACS_BATCH) -L . -L .. -l cl-lib -l ergoemacs-mode -l ergoemacs-test --eval \
 	    "(progn (setq ergoemacs-command-loop-type nil)                                         \
 	      (fset 'ert--print-backtrace 'ignore)  \
 	      (ert-run-tests-batch-and-exit '(and \"$(TESTS)\" $(SELECT) (not (tag :interactive)))))" || exit 1; \

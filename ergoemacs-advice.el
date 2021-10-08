@@ -34,23 +34,12 @@
   (require 'ergoemacs-macros))
 
 (require 'mouse)
+(require 'nadvice)
 
 (defvar ergoemacs-mode)
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-map--unbound-keys)
-(defvar ergoemacs-saved-global-map)
 (defvar ergoemacs-user-keymap)
-
-(declare-function ergoemacs-map-- "ergoemacs-map")
-
-(declare-function ergoemacs-map-properties--hook-define-key "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--ignore-global-changes-p "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--global-submap-p "ergoemacs-map-properties")
 
 (declare-function ergoemacs-key-description--substitute-command-keys "ergoemacs-key-description")
 
@@ -65,290 +54,35 @@
 (declare-function ergoemacs-command-loop--temp-message "ergoemacs-command-loop")
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 
-(defvar ergoemacs-advice--temp-replace-functions nil
-  "List of `ergoemacs-mode' temporary replacement functions.
-
-These replacement functions are are turned on when
-`ergoemacs-mode' is turned on.")
-
-(defvar ergoemacs-advice--permanent-replace-functions nil
-  "List of `ergoemacs-mode' permanent replacement functions.
- 
-These replacement functinos are turned on after `ergoemacs-mode'
-is loaded, but not turned off.")
-
-(defun ergoemacs-advice--enable-replacement (ad &optional disable)
-  "Enable ergoemacs-c advice AD (or optionally DISABLE)."
-  (cond
-   (disable
-    (when (fboundp (intern (concat "ergoemacs-advice--real-" (symbol-name ad))))
-      (defalias ad (intern (concat "ergoemacs-advice--real-" (symbol-name ad)))
-        (documentation (intern (concat "ergoemacs-advice--real-" (symbol-name ad)))))))
-   (t
-    (when (fboundp (intern (concat "ergoemacs-advice--" (symbol-name ad))))
-      (defalias ad (intern (concat "ergoemacs-advice--" (symbol-name ad)))
-        (documentation (intern (concat "ergoemacs-advice--" (symbol-name ad)))))))))
-
-(defun ergoemacs-advice--enable-replacements (&optional disable permanent)
-  "Enable the function replacements.
-
-When DISABLE is non-nil, disable the replacements.
-
-When PERMANENT is non-nil, these replacements are permanent, not temporary."
-  (dolist (ad (or (and permanent ergoemacs-advice--permanent-replace-functions)
-                  ergoemacs-advice--temp-replace-functions))
-    (ergoemacs-advice--enable-replacement ad disable)))
-
-(add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-advice--enable-replacements)
-
-(defun ergoemacs-advice--disable-replacements ()
-  "Disable the function replacements."
-  (ergoemacs-advice--enable-replacements t))
-
-(add-hook 'ergoemacs-mode-shutdown-hook 'ergoemacs-advice--disable-replacements)
-
-(defun ergoemacs-advice--enable-permanent-replacements ()
-  "Enable permanent replacements."
-  (ergoemacs-advice--enable-replacements nil t))
-
-(add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-advice--enable-permanent-replacements)
-
-(defvar ergoemacs--original-local-map nil
-  "Original keymap used with `use-local-map'.")
-
-(ergoemacs-advice use-local-map (keymap)
-  "Load `ergoemacs-mode' is the local keymap.
-
-The original keymap is untouched."
-  :type :before
-  (set (make-local-variable 'ergoemacs--original-local-map) keymap))
-
-;; FIXME for emacs 25
-(ergoemacs-advice substitute-command-keys (string)
+(defun ergoemacs-advice-substitute-command-keys (orig-fun &rest args)
   "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
-  :type :replace
   (if ergoemacs-mode
-      (ergoemacs-key-description--substitute-command-keys string)
-    (ergoemacs-advice--real-substitute-command-keys string)))
+      (ergoemacs-key-description--substitute-command-keys (nth 0 args))
+    (funcall orig-fun args)))
 
-(defvar ergoemacs-run-mode-hooks nil)
-(ergoemacs-advice run-mode-hooks (&rest hooks)
-  "Setup properties for `ergoemacs-map-properties--protect-local' before each function is run."
-  :type :around
-  (unwind-protect
-      (progn
-        (when (and (not ergoemacs-run-mode-hooks)
-		   (fboundp 'ergoemacs-map-properties--modify-run-mode-hooks)
-                   (boundp 'ergoemacs-mode))
-	  (setq ergoemacs-run-mode-hooks t)
-          (ergoemacs-map-properties--modify-run-mode-hooks hooks))
-        ad-do-it
-	(setq ergoemacs-run-mode-hooks nil))
-    (when (and (fboundp 'ergoemacs-map-properties--reset-run-mode-hooks)
-               (boundp 'ergoemacs-mode))
-      (setq ergoemacs-run-mode-hooks t)
-      (ergoemacs-map-properties--reset-run-mode-hooks hooks)
-      (setq ergoemacs-run-mode-hooks nil))))
-
-(ergoemacs-advice run-hooks (&rest hooks)
-  "Setup properties for `ergoemacs-map-properties--protect-local' before each function is run."
-  :type :around
-  (unwind-protect
-      (progn
-        (when (and (fboundp 'ergoemacs-map-properties--modify-run-mode-hooks)
-                   (boundp 'ergoemacs-mode))
-          (ergoemacs-map-properties--modify-run-mode-hooks hooks))
-        ad-do-it)
-    (when (and (fboundp 'ergoemacs-map-properties--reset-run-mode-hooks)
-               (boundp 'ergoemacs-mode))
-      (ergoemacs-map-properties--reset-run-mode-hooks hooks))))
-
-(defvar ergoemacs-define-key-after-p nil
-  "Flag to tell `ergoemacs-mode' to suppress `define-key' advice.")
-
-(defun ergoemacs-define-key-after (keymap key def)
-  "`ergoemacs-mode' modification to `define-key' called after `define-key'.
-
-KEYMAP is the keymap being modified
-KEY is the key that is being defined
-DEF is the key definition
-
-These should be the same as what is used in `define-key'.
-
-To protect from infinite recurion, the flag
-`ergoemacs-define-key-after-p' is set while applying
-`ergoemacs-mode' adjustments.
-
-`ergoemacs-mode' adjusts any globally defined keys so they will
-appear in the `ergoemacs-mode' keymaps.
-
-This advice also appempts to protcet local keymaps when
-`ergoemacs-map-properties--protect-local' is non-nil.  This is
-part of how `ergoemacs-mode' determines that a hook changed a key
-definition."
-  (when (eq keymap global-map) ;; (current-global-map)
-    (ergoemacs :define-key ergoemacs-user-keymap key def)
-    (when (ergoemacs-keymapp ergoemacs-saved-global-map)
-      (ergoemacs :define-key ergoemacs-saved-global-map key def))
-    (cond
-     ((not def)
-      (ergoemacs :apply-key key
-		 (lambda(trans-new-key)
-		   (push trans-new-key ergoemacs-map--unbound-keys))))
-     (def
-      (let (trans-keys
-	    new-lst)
-	(ergoemacs :apply-key key
-		   (lambda(trans-new-key)
-		     (push trans-new-key trans-keys)))
-	(push key trans-keys)
-	(dolist (cur-key ergoemacs-map--unbound-keys)
-	  (unless (member cur-key trans-keys)
-	    (push cur-key new-lst)))
-	(setq ergoemacs-map--unbound-keys new-lst)))))
-    
-  (unless ergoemacs-define-key-after-p
-    (setq ergoemacs-define-key-after-p t)
-    (unwind-protect
-        (progn
-          (when (and (boundp 'ergoemacs-map-properties--protect-local)
-                     ergoemacs-map-properties--protect-local)
-            (ergoemacs-map-properties--hook-define-key keymap key def)))
-      (setq ergoemacs-define-key-after-p nil))))
-
-(ergoemacs-advice define-key (keymap key def)
-  "Protect keymaps when changing keys from a hook."
-  :type :after
-  (ergoemacs-define-key-after keymap key def))
-
-
-(ergoemacs-advice set-temporary-overlay-map (map &optional keep-pred on-exit)
-  "Assume map properties"
-  :type :before
-  (ergoemacs-map--temporary-map-properties map))
-
-(ergoemacs-advice set-transient-map (map &optional keep-pred on-exit)
-  "Assume map properties"
-  :type :before
-  (ergoemacs-map--temporary-map-properties map))
-
-(ergoemacs-advice er/prepare-for-more-expansions ()
-  "Don't let `ergoemacs-mode' modify the transient keymap."
-  :type :around
-  (let ((old ergoemacs-modify-transient-maps))
-    (unwind-protect
-        (progn
-          (setq ergoemacs-modify-transient-maps t)
-          ad-do-it)
-      (setq ergoemacs-modify-transient-maps old))))
-
-(ergoemacs-advice ace-jump-do (re-query-string)
-  "Don't let `ergoemacs-mode' modify the transient keymap."
-  :type :around
-  (let ((old ergoemacs-modify-transient-maps))
-    (unwind-protect
-        (progn
-          (setq ergoemacs-modify-transient-maps t)
-          ad-do-it)
-      (setq ergoemacs-modify-transient-maps old))))
-
-(ergoemacs-advice undo-tree-overridden-undo-bindings-p ()
-  "Use `ergoemacs-mode' remaps to determine if `undo' has been changed."
-  :type :around
-  (if ergoemacs-mode
-      (key-binding [ergoemacs-remap undo])
-    ad-do-it))
-
-
-(ergoemacs-advice read-from-minibuffer (prompt &optional initial-contents keymap read hist default-value inherit-input-method)
-  "Modify keymap to confirm to `ergoemacs-mode'."
-  :type :before
-  (defvar ergoemacs-read-from-minibuffer-map)
-  (if keymap
-      (setq ergoemacs-map--breadcrumb (format "read-from-minibuffer:%s" this-command)
-            ergoemacs-read-from-minibuffer-map keymap)
-    (setq ergoemacs-map--breadcrumb "minibuffer-local-map"
-          ergoemacs-read-from-minibuffer-map minibuffer-local-map)))
-
-(ergoemacs-advice icicle-read-from-minibuffer (prompt &optional initial-contents keymap read hist-m default-value inherit-input-method)
-  "Use `ergoemacs-mode' for `icicle-read-from-minibuffer'"
-  :type :before
-  (defvar ergoemacs-read-from-minibuffer-map)
-  (if keymap
-      (setq ergoemacs-map--breadcrumb (format "icy-read-from-minibuffer:%s" this-command)
-            ergoemacs-read-from-minibuffer-map keymap)
-    (setq ergoemacs-map--breadcrumb "icy-minibuffer-local-map"
-          ergoemacs-read-from-minibuffer-map minibuffer-local-map)))
-
-
-(ergoemacs-advice read-string (prompt &optional initial history default inherit-input-method)
-  "Modify keymap to confirm to `ergoemacs-mode'."
-  :type :before
-  (defvar ergoemacs-read-from-minibuffer-map)
-  (setq ergoemacs-map--breadcrumb "minibuffer-local-map"
-        ergoemacs-read-from-minibuffer-map minibuffer-local-map))
-
-(ergoemacs-advice icicle-read-string (prompt &optional initial history default inherit-input-method)
-  "Modify keymap to confirm to `ergoemacs-mode'."
-  :type :before
-  (defvar ergoemacs-read-from-minibuffer-map)
-  (setq ergoemacs-map--breadcrumb "icy-minibuffer-local-map"
-        ergoemacs-read-from-minibuffer-map minibuffer-local-map))
-
-(ergoemacs-advice read-no-blanks-input (prompt &optional initial inherit-input-method)
-  "Modify keymap to confirm to `ergoemacs-mode'."
-  :type :before
-  (defvar ergoemacs-read-from-minibuffer-map)
-  (setq ergoemacs-map--breadcrumb "minibuffer-local-ns-map"
-        ergoemacs-read-from-minibuffer-map minibuffer-local-ns-map))
-
-(ergoemacs-advice command-execute (cmd &optional record-flag keys special)
-  "Modify ergoemacs command-loop to execute the actual command.
-
-When increasing `max-specpdl-size' and `max-lisp-eval-depth',
-this allows `smex' and `execute-extended-command' to run the
-command selected, instead of rerunning `smex' and
-`execute-extended-command'."
-  :type :before
-  (setq ergoemacs-command-loop--grow-command cmd
-	ergoemacs-command-loop--grow-record record-flag
-	ergoemacs-command-loop--grow-keys keys
-	ergoemacs-command-loop--grow-special special))
-
-(ergoemacs-advice ispell-region (reg-start reg-end &optional recheckp shift)
-  "Clear `unread-command-events' before starting spelling."
-  :type :before
-  (setq unread-command-events nil))
-
-
-(ergoemacs-advice read-key (&optional prompt)
-  "Drop single command keys for read-key." ; For compataiblity with emacs 25.5
-  :type :before
-  (setq ergoemacs-command-loop--single-command-keys nil))
-
-(defvar ergoemacs-command-loop--history)
 
 (defun ergoemacs-mode--undefined-advice (&optional type)
   "Advice for undefined.
 
 TYPE is the type of translation installed."
   (let* ((keys (this-single-command-keys))
-	 (type (or type :normal))
-	 (translation (ergoemacs-translate--get type))
-	 (local-keymap (ergoemacs-translate--keymap translation))
-	 (local-key (substring keys -1))
-	 modal-p)
+	     (type (or type :normal))
+	     (translation (ergoemacs-translate--get type))
+	     (local-keymap (ergoemacs-translate--keymap translation))
+	     (local-key (substring keys -1))
+	     modal-p)
     (when (setq modal-p (ergoemacs :modal-p))
       (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
+    ;; This starts the command loop when DEL or MENU is replaced in the proper place.
     (if (lookup-key local-keymap local-key)
-	(let ((i 1)) ;; Setup history
-	  (setq ergoemacs-command-loop--history nil)
-	  (while (<= i (- (length keys) 1))
-	    (push (list (substring keys 0 i) :normal nil
-			current-prefix-arg (aref (substring keys (- i 1) i) 0))
-		  ergoemacs-command-loop--history)
-	    (setq i (+ 1 i)))
-	  (ergoemacs-command-loop--internal keys nil nil nil ergoemacs-command-loop--history))
+	    (let ((i 1)) ;; Setup history
+	      (setq ergoemacs-command-loop--history nil)
+	      (while (<= i (- (length keys) 1))
+	        (push (list (substring keys 0 i) :normal nil
+			            current-prefix-arg (aref (substring keys (- i 1) i) 0))
+		          ergoemacs-command-loop--history)
+	        (setq i (+ 1 i)))
+	      (ergoemacs-command-loop--internal keys nil nil nil ergoemacs-command-loop--history))
       (ding)
       (ergoemacs-command-loop--temp-message "%s does not do anything!"
                                             (ergoemacs-key-description (this-single-command-keys)))
@@ -360,18 +94,20 @@ TYPE is the type of translation installed."
             (when (memq 'down (event-modifiers last-command-event))
               current-prefix-arg)))))
 
-(ergoemacs-advice undefined ()
+(defun ergoemacs-advice-undefined (orig-fun)
   "Allow `ergoemacs-mode' to display keys, and intercept ending <apps> keys."
-  :type :around
-  (if (not ergoemacs-mode)
-      ad-do-it
-    (ergoemacs-mode--undefined-advice)))
+  (if ergoemacs-mode
+      (ergoemacs-mode--undefined-advice)
+    (call-interactively orig-fun)))
 
-(ergoemacs-advice handle-shift-selection ()
+ (defun ergoemacs-advice-handle-shift-selection ()
   "Allow `ergoemacs-mode' to do shift selection on keys like Alt+# to Alt+3."
-  :type :before
   (when (eq 'ergoemacs-command-loop--shift-translate (key-binding (this-single-command-keys)))
     (setq this-command-keys-shift-translated t)))
+
+(defun ergoemacs-advice-read-key ()
+  "Drop single command keys for read-key." ; For compataiblity with emacs 25.5
+  (setq ergoemacs-command-loop--single-command-keys nil))
 
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
