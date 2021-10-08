@@ -853,47 +853,12 @@ KEYS is the keys information"
          trans
          keys)))
 
-(defvar erogemacs-command--cua-timer nil)
-
-(defvar ergoemacs-command--cua-key-codes
-  (list (nth 0 (listify-key-sequence (kbd "C-c")))
-        (nth 0 (listify-key-sequence (kbd "C-x"))))
-  "Key codes to check against for C-c and C-x")
-
-(defun ergoemacs-command--dispach-cua ()
-  "Dispatches the CUA C-x and C-c."
-  (when (and ergoemacs-mode-cua-mode)
-    (let ((keys (this-single-command-keys)))
-      (when (and (= 1 (length keys))
-                 (memq (aref keys 0) ergoemacs-command--cua-key-codes)
-                 mark-active)
-        (setq unread-command-events (cons 'ergoemacs-timeout unread-command-events))
-        (ergoemacs-command--cua-timer-off)))))
-
 (defvar erogemacs-command--echo-timer nil)
 (defvar ergoemacs-command--blink-on nil)
 (defvar ergoemacs-orig-echo-keystrokes nil)
 
 (defvar ergoemacs-command--timeout-timer nil)
 (defvar ergoemacs-command--timeout-keys nil)
-
-(defvar erogemacs-command--cua-timer nil)
-
-(defun ergoemacs-command--cua-timer-on ()
-  "Turn on the cua timer."
-  (if (and mark-active ergoemacs-mode-cua-mode)
-      (ergoemacs-command--cua-timer-off)
-      (setq erogemacs-command--cua-timer
-            (run-at-time t ergoemacs-command-loop-blink-rate #'ergoemacs-command--dispach-cua))))
-
-(defun ergoemacs-command--cua-timer-off ()
-  "Turn off the  cua timer."
-  (when (timerp erogemacs-command--cua-timer)
-    (cancel-timer erogemacs-command--cua-timer)))
-
-
-(add-hook 'ergoemacs-post-command-hook #'ergoemacs-command--cua-timer-on)
-(add-hook 'ergoemacs-shutdown-hook #'ergoemacs-command--cua-timer-off)
 
 (defvar ergoemacs-this-command-keys-shift-translated nil
   "ergoemacs override of shift translation in command loop.")
