@@ -862,7 +862,7 @@ KEYS is the keys information"
 
 (defun ergoemacs-command--dispach-cua ()
   "Dispatches the CUA C-x and C-c."
-  (when (and (not this-command-keys-shift-translated) ergoemacs-mode-cua-mode)
+  (when (and ergoemacs-mode-cua-mode)
     (let ((keys (this-single-command-keys)))
       (when (and (= 1 (length keys))
                  (memq (aref keys 0) ergoemacs-command--cua-key-codes)
@@ -881,45 +881,16 @@ KEYS is the keys information"
 
 (defun ergoemacs-command--cua-timer-on ()
   "Turn on the cua timer."
-  (if (and mark-active ergoemacs-mode-cua-mode
-           (not (eq erogemacs-command--cua-timer 'shift)))
-      (setq erogemacs-command--cua-timer
-            (run-at-time t ergoemacs-command-loop-blink-rate #'ergoemacs-command--dispach-cua))
-    (unless mark-active
+  (if (and mark-active ergoemacs-mode-cua-mode)
       (ergoemacs-command--cua-timer-off)
-      (setq erogemacs-command--cua-timer nil))))
+      (setq erogemacs-command--cua-timer
+            (run-at-time t ergoemacs-command-loop-blink-rate #'ergoemacs-command--dispach-cua))))
 
 (defun ergoemacs-command--cua-timer-off ()
   "Turn off the  cua timer."
   (when (timerp erogemacs-command--cua-timer)
     (cancel-timer erogemacs-command--cua-timer)))
 
-
-;;;;;;;;;;;;
-;; Taken and modified from cua-base
-(defun ergoemacs-cua--shift-control-prefix (prefix)
-  ;; handle S-C-x and S-C-c by emulating the fast double prefix function.
-  ;; Don't record this command
-  (setq this-command last-command)
-  ;; Restore the prefix arg
-  ;; This should make it so that exchange-point-and-mark gets the prefix when
-  ;; you do C-u S-C-x C-x work (where the C-u is properly passed to the C-x
-  ;; C-x binding after the first S-C-x was rewritten to just C-x).
-  (prefix-command-preserve-state)
-  ;; Activate the cua--prefix-repeat-keymap
-  (setq erogemacs-command--cua-timer 'shift)
-  (ergoemacs-command--cua-timer-off)
-  ;; Repalce key
-  (setq unread-command-events (list prefix)))
-
-(defun ergoemacs-cua--shift-control-c-prefix ()
-  (interactive)
-  (ergoemacs-cua--shift-control-prefix ?\C-c))
-
-(defun ergoemacs-cua--shift-control-x-prefix ()
-  (interactive)
-  (ergoemacs-cua--shift-control-prefix ?\C-x))
-;;;;
 
 (add-hook 'ergoemacs-post-command-hook #'ergoemacs-command--cua-timer-on)
 (add-hook 'ergoemacs-shutdown-hook #'ergoemacs-command--cua-timer-off)

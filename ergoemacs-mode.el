@@ -413,8 +413,6 @@ after initializing ergoemacs-mode.
 (defvar ergoemacs-mark-active-cua-keymap (let ((map (make-sparse-keymap)))
                                            (define-key map (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
                                            (define-key map (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
-                                           (define-key map [(shift control c)] 'ergoemacs-cua--shift-control-c-prefix)
-                                           (define-key map [(shift control x)] 'ergoemacs-cua--shift-control-x-prefix)
                                            map)
   "The keybinding that is active when the mark is active.")
 
