@@ -97,13 +97,13 @@
   "Gets the translation hash."
   (let* ((to (ergoemacs :layout  (or layout-to ergoemacs-keyboard-layout)))
          (from (ergoemacs :layout  (or layout-from "us")))
-         (hash-f (ergoemacs-gethash from ergoemacs-translate--hash (make-hash-table)))
-         (hash-f-t (ergoemacs-gethash to hash-f))
+         (hash-f (gethash from ergoemacs-translate--hash (make-hash-table)))
+         (hash-f-t (gethash to hash-f))
          (i 0)
          hash-t hash-t-f lay-t lay-f r-t r-f)
     (if hash-f-t hash-f-t
       (setq hash-f-t (make-hash-table)
-            hash-t (ergoemacs-gethash to ergoemacs-translate--hash (make-hash-table))
+            hash-t (gethash to ergoemacs-translate--hash (make-hash-table))
             hash-t-f (make-hash-table)
             lay-t (symbol-value to)
             lay-f (symbol-value from))
@@ -332,7 +332,7 @@ This uses `ergoemacs-translate--apply-key'"
 (defun ergoemacs-translate--event-modifier-hash (&optional layout)
   "Gets the event modifier hash for LAYOUT."
   (let* ((layout-symbol (ergoemacs :layout  layout))
-         (hash (ergoemacs-gethash layout-symbol ergoemacs-translate--event-hash)))
+         (hash (gethash layout-symbol ergoemacs-translate--event-hash)))
     (if hash hash
       ;; Not present setup modifier hash
       (setq hash (make-hash-table))
@@ -364,7 +364,7 @@ LAYOUT is the keyboard layout."
     (unless (memq 'shift modifiers)
       ;; Add 'shift for # type events.
       (setq basic (event-basic-type event))
-      (when (ergoemacs-gethash basic (ergoemacs-translate--event-modifier-hash layout))
+      (when (gethash basic (ergoemacs-translate--event-modifier-hash layout))
         (push 'ergoemacs-shift modifiers)))
     ;; Add 'ergoemacs-gui to the modifiers
     (when (and (symbolp event)
@@ -427,8 +427,8 @@ MODIFIERS is the precalculated modifiers from
               (if (not (memq m '(shift ergoemacs-shift)))
                   (push m new-modifiers)
                 (setq new-event (ergoemacs-translate--event-convert-list (list m basic) layout-from))
-                (setq new-event (or (ergoemacs-gethash new-event translation-hash) new-event))))
-          (setq new-event (or (ergoemacs-gethash basic translation-hash) basic)
+                (setq new-event (or (gethash new-event translation-hash) new-event))))
+          (setq new-event (or (gethash basic translation-hash) basic)
                 new-modifiers modifiers)))
       (ergoemacs-translate--event-convert-list (append new-modifiers (list new-event)) layout-to))))
 
@@ -440,7 +440,7 @@ This is different than `event-basic-type' because ?# would return
 This also translates <C-i> to ?i, <C-m> to ?m <C-[> to ?[
 "
   (let* ((basic (event-basic-type event))
-         (new-basic (and basic (ergoemacs-gethash basic (ergoemacs-translate--event-modifier-hash layout)))))
+         (new-basic (and basic (gethash basic (ergoemacs-translate--event-modifier-hash layout)))))
     (or new-basic basic
         (and (symbolp event)
              (setq basic (symbol-name event))
@@ -481,7 +481,7 @@ This is different than `event-convert-list' because:
          ((and cur-list (memq elt '(shift ergoemacs-shift))))
          
          ((and (not cur-list)
-               (setq tmp (ergoemacs-gethash (intern (format "s%s" elt))
+               (setq tmp (gethash (intern (format "s%s" elt))
                                   (ergoemacs-translate--event-modifier-hash layout))))
           ;; Special case.
           (setq new-list (append new-list (list tmp))))
@@ -755,8 +755,6 @@ When NAME is a symbol, setup the translation function for the symbol."
              ',(intern (concat "ergoemacs-translate--" name-str "-map"))
 	     "Ergoemacs-v5.16")))
        t)
-      (ergoemacs-map-properties--label-map (intern (concat "ergoemacs-translate--" name-str "-map")) t)
-      (ergoemacs (symbol-value (intern (concat "ergoemacs-translate--" name-str "-map"))) :only-local-modifications-p t)
       ;; 
       (dolist (type '("-universal-argument" "-negative-argument"
                       "-digit-argument" "-modal"))
@@ -779,13 +777,7 @@ When NAME is a symbol, setup the translation function for the symbol."
         -digit-argument
         -modal
         translation
-        (local-keymap (or (plist-get plist :keymap) (make-sparse-keymap)))
-	(trans-keymap (intern (concat "ergoemacs-translate--" (plist-get plist :name) "-map"))))
-    (when (ergoemacs-keymapp trans-keymap)
-      (set-keymap-parent (setq trans-keymap (symbol-value trans-keymap)) local-keymap)
-      (ergoemacs trans-keymap :only-local-modifications-p t))
-    ;; (ergoemacs :label local-keymap)
-    ;; (ergoemacs local-keymap :only-local-modifications-p t)
+        (local-keymap (or (plist-get plist :keymap) (make-sparse-keymap))))
     (let (tmp
           cur-trans
           ret)
@@ -836,7 +828,7 @@ When NAME is a symbol, setup the translation function for the symbol."
 
 (defun ergoemacs-translate--get (type)
   "Get translation object TYPE."
-  (let ((ret (ergoemacs-gethash type ergoemacs-translation-hash)))
+  (let ((ret (gethash type ergoemacs-translation-hash)))
     (cond
      ((and ret (ergoemacs-translation-struct-p ret))
       ret)
@@ -907,33 +899,11 @@ If there are no gui elements, return nil."
 	    (push elt new-mod)))
 	(ergoemacs-translate--event-convert-list `(,@new-mod ,last-basic-event))))))
 
-(defvar ergoemacs-translate--parent-map nil
+(defvar ergoemacs-translate--parent-map (make-sparse-keymap)
   "Parent map for keymaps when completing a key sequence.")
 
-(defun ergoemacs-translate--parent-map ()
-  (or ergoemacs-translate--parent-map
-      (let ((map (make-sparse-keymap)))
-	(setq ergoemacs-translate--parent-map map)
-        (ergoemacs map :label)
-        (ergoemacs map :only-local-modifications-p t)
-        (ergoemacs map :map-list-hash '(ergoemacs-translate--parent-map))
-        map)))
-
-(add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--parent-map)
-
-
-(defvar ergoemacs-translate--modal-parent-map nil
+(defvar ergoemacs-translate--modal-parent-map (make-sparse-keymap)
   "Parent map for modal `ergoemacs-mode'")
-
-(defun ergoemacs-translate--modal-parent-map ()
-  (or ergoemacs-translate--modal-parent-map
-      (let ((map (make-sparse-keymap)))
-	(setq ergoemacs-translate--modal-parent-map map)
-        (ergoemacs map :label)
-        (ergoemacs map :only-local-modifications-p t)
-        (ergoemacs map :map-list-hash '(ergoemacs-translate--modal-parent-map))
-        map)))
-(add-hook 'ergoemacs-mode-intialize-hook #'ergoemacs-translate--modal-parent-map)
 
 (defvar ergoemacs-translate--keymap-hash (make-hash-table)
   "Translation keymaps")
@@ -956,14 +926,14 @@ This takes into consideration the modal state of `ergoemacs-mode'."
                           (ergoemacs-translate--get (or translation :normal))))
          (key (or (and modal (intern (concat ":" (ergoemacs-translation-struct-name translation) "-modal")))
                   (ergoemacs-translation-struct-key translation)))
-         (ret (ergoemacs-gethash key ergoemacs-translate--keymap-hash))
+         (ret (gethash key ergoemacs-translate--keymap-hash))
          keymap)
     (unless ret
       (if modal
           (setq keymap (ergoemacs-translation-struct-keymap-modal translation)
                 ret keymap)
         (setq keymap (ergoemacs-translation-struct-keymap translation)
-              ret (make-composed-keymap (ergoemacs keymap) (ergoemacs ergoemacs-translate--parent-map))))
+              ret (make-composed-keymap keymap ergoemacs-translate--parent-map)))
       (puthash key ret ergoemacs-translate--keymap-hash))
     ret))
 

@@ -96,7 +96,6 @@
     "" ">"  "W" "X" "C" "V" "B" "N" "?" "." "/" "+" "" "" "")
   "Belgian AZERTY.")
 
-
 (defvar ergoemacs-layout-colemak
   '("" "`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
     "" ""  "q" "w" "f" "p" "g" "j" "l" "u" "y" ";" "[" "]" "\\"
@@ -259,7 +258,6 @@
     "" "|"  ":" "Q" "J" "K" "X" "B" "M" "W" "V" "Z" "" "" "")
   "UK Dvorak layout.")
 
-
 (defvar ergoemacs-layout-it
   '("" "\\" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "'" "¡" ""
     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "è" "+" ""
@@ -321,7 +319,6 @@
     "" "»"  "Y" "Ç" "J" "B" "K" "Q" "V" "G" "F" "Z" "" "" "")
   "PT Nativo layout URL `http://xahlee.info/kbd/pt-nativo_keyboard_layout.html'.")
 
-
 (defvar ergoemacs-layout-sw
   '("" "½" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "+" "’" ""
     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "å" "\"" ""
@@ -371,7 +368,6 @@
   "US Workman layout.  URL `http://www.workmanlayout.com/blog/'.")
 
 (defvaralias 'ergoemacs-layout-jcuken 'ergoemacs-layout-ru)
-
 (defvar ergoemacs-layout-ru
   '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "\\"
     "" ""  "й" "ц" "у" "к" "е" "н" "г" "ш" "щ" "з" "х" "ъ" "" 
@@ -394,7 +390,6 @@
 (declare-function ergoemacs-translate-layout "ergoemacs-translate")
 (declare-function ergoemacs-translate--svg-layout "ergoemacs-translate")
 (declare-function ergoemacs-translate--png-layout "ergoemacs-translate")
-(declare-function ergoemacs-component--prompt "ergoemacs-component")
 (declare-function quail-insert-kbd-layout "quail")
 
 (defun ergoemacs-layouts--current (&optional layout)
@@ -410,30 +405,6 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
               (lambda(elt)
                 `(const :tag ,elt :value ,elt))
               (sort (ergoemacs-layouts--list t) 'string<))))
-
-(defun ergoemacs-layouts--menu ()
-  "Gets the keymap entry for ergoemacs-layouts."
-  `(ergoemacs-keyboard-layout
-    menu-item "Keyboard Layouts"
-    (keymap
-     ,@(mapcar
-        (lambda(lay)
-          (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
-                 (alias (condition-case nil
-                            (indirect-variable variable)
-                          (error variable)))
-                 (is-alias nil)
-                 (doc nil))
-            (setq doc (or (documentation-property variable 'variable-documentation)
-                          (progn
-                            (setq is-alias t)
-                            (documentation-property alias 'variable-documentation))))
-            `(,variable
-              menu-item ,(concat lay " - " doc)
-              (lambda() (interactive)
-                (ergoemacs-set-layout ,lay))
-              :button (:radio . (string= ergoemacs-keyboard-layout ,lay)))))
-        (sort (ergoemacs-layouts--list) 'string<)))))
 
 (defun ergoemacs-layouts--custom-documentation (&optional lays ini)
   "Get a documentation list of all known layouts.
@@ -460,13 +431,11 @@ file."
            (concat "\"" lay "\" (" doc ")" (if is-alias ", alias" "")))))
      lays "\n")))
 
-(defvar ergoemacs-layouts--no-aliases nil)
 (defvar ergoemacs-layouts--aliases nil)
 
 (defun ergoemacs-layouts--reset ()
   "Reset Layout information."
   (interactive)
-  (setq ergoemacs-layouts--no-aliases nil)
   (setq ergoemacs-layouts--aliases nil))
 
 (defun ergoemacs-layouts--list (&optional aliases ob)
@@ -475,9 +444,6 @@ file."
 When ALIASES is non-nil, list aliases and actuval variables.
 
 OB is the object array."
-  (if (and ergoemacs-layouts--no-aliases
-           (not aliases))
-      ergoemacs-layouts--no-aliases
     (if (and ergoemacs-layouts--aliases
              aliases)
         ergoemacs-layouts--aliases
@@ -495,8 +461,8 @@ OB is the object array."
          ob)
         (if aliases
             (setq ergoemacs-layouts--aliases nil)
-          (setq ergoemacs-layouts--no-aliases nil))
-        ret))))
+          )
+        ret)))
 
 (defun ergoemacs-layout (layout)
   "Set the ergoemacs layout to LAYOUT."
@@ -556,8 +522,6 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
   (add-hook 'ergoemacs-init-hook #'ergoemacs-layout--update-quail))
 
 
-(defalias 'ergoemacs-layout 'ergoemacs-set-layout)
-
 (define-button-type 'ergoemacs-layout-help
   :supertype 'help-xref
   'help-function #'ergoemacs-layout-describe
@@ -573,13 +537,29 @@ expression matching the base layout."
         (f2 "Base Layout: \\(%s\\)"))
     (format (cond
              (base f2)
-             (t f1)) (regexp-opt (ergoemacs-layouts--list) t))))
+             (t f1))
+            (regexp-opt (ergoemacs-layouts--list) t))))
+
+(defun ergoemacs-layout--prompt ()
+  "Prompt for component or theme (when THEME-INSTEAD is non-nil)."
+  (let ((c ergoemacs-keyboard-layout)
+        (enable-recursive-minibuffers t)
+        val)
+    (setq val (completing-read (if (or (symbolp c) (stringp c))
+                                   (format
+                                    "Describe ergoemacs layout (default %s): "
+                                    c)
+                                 "Describe ergoemacs layout: ")
+                               (ergoemacs-layouts--list)
+                               nil t nil nil
+                               (format "%s" c)))
+    (list (or (and (equal val "") (format "%s" c)) val))))
 
 (defun ergoemacs-layout-describe (&optional layout)
   "Display the full documentation of an `ergoemacs-mode' LAYOUT.
 
 LAYOUT can be either a symbol or string."
-  (interactive (ergoemacs-component--prompt :layout))
+  (interactive (ergoemacs-layout--prompt))
   (let* ((layout (or (and layout
                           (or (and (stringp layout) layout)
                               (and (symbolp layout) (symbol-name layout))))

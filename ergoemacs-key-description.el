@@ -52,12 +52,10 @@
 (defvar ergoemacs-display-unicode-characters)
 (defvar ergoemacs-display-capitalize-keys)
 (defvar ergoemacs-display-key-use-face)
-(defvar ergoemacs-display-small-symbols-for-key-modifiers)
-(defvar ergoemacs-display-use-unicode-brackets-around-keys)
+(defvar ergoemacs-display-small-symbols-for-key-modifiers nil)
+(defvar ergoemacs-display-use-unicode-brackets-around-keys nil)
 (defvar ergoemacs-display-without-brackets nil
   "Display the key without brackets.")
-
-(declare-function ergoemacs-timing-- "ergoemacs-mode")
 
 (declare-function ergoemacs-translate--escape-to-meta "ergoemacs-translate")
 (declare-function ergoemacs-translate--event-modifiers "ergoemacs-translate")
@@ -71,8 +69,6 @@
 (declare-function ergoemacs-map-properties--key-hash "ergoemacs-map-properties")
 
 (declare-function ergoemacs-map--cache-- "ergoemacs-map")
-
-(declare-function ergoemacs-component--help-link "ergoemacs-component")
 
 (declare-function ergoemacs-map-keymap "ergoemacs-mapkeymap")
 (declare-function ergoemacs-advice--real-substitute-command-keys "C")
@@ -157,33 +153,31 @@ MOD ar the modifiers applied to the key."
      ((eq key 32)
       (setq ret "Space"))
      ((eq key 127)
-      (setq ret (format "%sBackspace" (ergoemacs :unicode-or-alt "←" ""))))
+      (setq ret "←Backspace"))
      ((eq key 'escape)
       (setq ret "Esc"))
      ((eq key 'tab)
-      (setq ret (format "Tab%s"
-                        (ergoemacs :unicode-or-alt "↹" ""))))
+      (setq ret "Tab↹"))
      ((eq key 'return)
-      (setq ret (format "Enter%s"
-                        (ergoemacs :unicode-or-alt "↵" ""))))
+      (setq ret "Enter↵"))
      ((memq key '(apps menu))
-      (setq ret (ergoemacs :unicode-or-alt "▤" "Menu")))
+      (setq ret "▤"))
      ((eq key 'left)
-      (setq ret (ergoemacs :unicode-or-alt "←" "left")))
+      (setq ret "←"))
      ((eq key 'right)
-      (setq ret (ergoemacs :unicode-or-alt "→" "right")))
+      (setq ret "→"))
      ((eq key 'up)
-      (setq ret (ergoemacs :unicode-or-alt "↑" "up")))
+      (setq ret "↑"))
      ((eq key 'down)
-      (setq ret (ergoemacs :unicode-or-alt "↓" "down")))
+      (setq ret "↓"))
      ((eq key 'prior)
       (setq ret "PgUp"))
      ((eq key 'next)
       (setq ret "PgDn"))
      ((eq key 'remap)
-      (setq ret (ergoemacs :unicode-or-alt "➩" "remap")))
+      (setq ret "➩"))
      ((eq key 'ergoemacs-timeout)
-      (setq ret (ergoemacs :unicode-or-alt "⌚" "ergoemacs-timeout")))
+      (setq ret "⌚"))
      ((integerp key)
       (setq ret (or (and (or (and (eq ergoemacs-display-capitalize-keys 'with-modifiers)
                                   mod)
@@ -216,55 +210,47 @@ MOD ar the modifiers applied to the key."
                     (eq mac-command-modifier 'meta))
                (and (boundp 'ns-command-modifier)
                     (eq ns-command-modifier 'meta))))
-      (setq ret (format "%s"
-                        (ergoemacs :unicode-or-alt "⌘" "+"))))
+      (setq ret "⌘"))
      ((and (eq mod 'meta)
            (eq system-type 'darwin)
            (or (and (boundp 'mac-command-modifier)
                     (eq mac-command-modifier 'meta))
                (and (boundp 'ns-command-modifier)
                     (eq ns-command-modifier 'meta))))
-      (setq ret (format "%sCmd+"
-                        (ergoemacs :unicode-or-alt "⌘" "+"))))
+      (setq ret "⌘Cmd+"))
      ((and (eq mod 'meta)
            (eq system-type 'darwin)
            (or (and (boundp 'mac-alternate-modifier)
                     (eq mac-alternate-modifier 'meta))
                (and (boundp 'ns-alternate-modifier)
                     (eq ns-alternate-modifier 'meta))))
-      (setq ret (format "%sOpt+" (ergoemacs :unicode-or-alt "⌥" "+"))))
+      (setq ret "⌥Opt+"))
      ((and (eq mod 'meta) ergoemacs-display-small-symbols-for-key-modifiers
            (eq system-type 'darwin)
            (or (and (boundp 'mac-alternate-modifier)
                     (eq mac-alternate-modifier 'meta))
                (and (boundp 'ns-alternate-modifier)
                     (eq ns-alternate-modifier 'meta))))
-      (setq ret (format "%s" (ergoemacs :unicode-or-alt "⌥" "+"))))
+      (setq ret "⌥"))
      ((and ergoemacs-display-small-symbols-for-key-modifiers (eq mod 'shift))
-      (setq ret (ergoemacs :unicode-or-alt "⇧" "+")))
+      (setq ret "⇧"))
      ((and ergoemacs-display-small-symbols-for-key-modifiers (eq mod 'meta))
-      (setq ret (ergoemacs :unicode-or-alt "♦" "!")))
+      (setq ret "♦"))
      ((and (or (eq system-type 'darwin) ergoemacs-display-small-symbols-for-key-modifiers)
            (memq mod '(control ergoemacs-control)))
       (setq ret "^"))
      ((eq mod 'shift)
-      (setq ret (format "%sShift+"
-                        (ergoemacs :unicode-or-alt "⇧" ""))))
+      (setq ret "⇧Shift+"))
      ((memq mod '(control ergoemacs-control))
-      (setq ret (format "%sCtrl+"
-                        (or (and (eq 'windows-nt system-type)
-                                 (ergoemacs :unicode "✲" ""))
-                            (and (eq 'gnu/linux system-type)
-                                 (ergoemacs :unicode "⎈" ""))
-                            ""))))
+      (setq ret "Ctrl+"))
      ((eq mod 'meta)
       (setq ret "Alt+"))
      ((and (eq mod 'super) ergoemacs-display-small-symbols-for-key-modifiers
            (eq system-type 'windows-nt))
-      (setq ret (ergoemacs :unicode-or-alt "⊞" "#")))
+      (setq ret "⊞"))
      ((and (eq mod 'super)
            (eq system-type 'windows-nt))
-      (setq ret (format "%sWin+" (ergoemacs :unicode-or-alt "⊞" "#"))))
+      (setq ret "⊞Win+"))
      (t
       (setq ret (format "%s+" mod))
       (when ergoemacs-display-key-use-face
@@ -337,13 +323,13 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
 	      (setq mod tmp))
             (setq tmp (format "%s%s%s%s"
                               (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face) "")
-                                  (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs :unicode-or-alt "【" "["))
+                                  (and ergoemacs-display-use-unicode-brackets-around-keys "【")
                                   "[")
                               (mapconcat #'ergoemacs-key-description--modifier
                                          mod "")
                               (ergoemacs-key-description--key ev mod)
                               (or (and (or ergoemacs-display-without-brackets ergoemacs-display-key-use-face) "")
-                                  (and ergoemacs-display-use-unicode-brackets-around-keys (ergoemacs :unicode-or-alt "】" "]"))
+                                  (and ergoemacs-display-use-unicode-brackets-around-keys "】")
                                   "]")))
             (when (and ergoemacs-display-small-symbols-for-key-modifiers ergoemacs-display-key-use-face)
               (add-text-properties 0 (length tmp)
@@ -412,7 +398,7 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
     (ergoemacs-key-description item))
    ((listp item)
     (cond
-     ((eq (car item) 'lambda) (cons nil (ergoemacs :unicode-or-alt "λ" "lambda")))
+     ((eq (car item) 'lambda) (cons nil "λ" ))
      ((eq (car item) 'closure) (cons nil "#<closure>"))
      ((eq (car item) 'keymap) (cons nil "#<keymap>"))
      (t (format "%s" item))))
@@ -420,7 +406,7 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
     (if (ignore-errors (commandp item t))
         (cons 'help-function (format "%s" item))
       (cons nil (format "%s" item))))
-   (t (cons nil (format"#<byte compiled %s>" (ergoemacs :unicode-or-alt "λ" "lambda"))))))
+   (t (cons nil (format"#<byte compiled %s>" "λ")))))
 
 (defun ergoemacs-key-description--keymap-blame (key map)
   "Find the source of KEY in MAP."
@@ -459,12 +445,6 @@ KBD is the keyboard code.  LAYOUT is the layout that is used."
      ((and ret (consp ret) (consp (cdr ret)))
       (setq ret (cons 'ergoemacs-component-help (nth 1 ret)))))
     ret))
-
-(defun ergoemacs-key-description--setup-xrefs ()
-  "Setup cross refecnes in help buffer."
-  (ergoemacs-component--help-link))
-
-(add-hook 'temp-buffer-show-hook 'ergoemacs-key-description--setup-xrefs)
 
 (defun ergoemacs-key-description--keymap-item (&optional elt keymap help)
   "Get keymap description for ELT based on KEYMAP.
@@ -509,21 +489,20 @@ When HELP is non-nil, insert and add help cross-refences."
   (let ((map (or (and (symbolp map) (symbol-value map))
                  (and (consp map) (eq (car map) 'keymap) map)))
         ret)
-    (ergoemacs-timing describe-keymap
-      (setq ret
-            (ergoemacs-cache (intern (format "describe-keymap-ret%s" (mapconcat (lambda(x) (md5 (format "%s" x))) (ergoemacs  map :key-hash) "_")))
-              (ergoemacs-map-keymap
-               (lambda (cur-key item)
-                 (unless (eq item 'ergoemacs-prefix)
-                   (cond
-                    ((consp cur-key))
-                    ((memq (elt cur-key 0) ergoemacs-describe-keymap--ignore))
-                    ((consp item))
-                    ((not item))
-                    (t
-                     (push (cons cur-key item) ret)))))
-               map)
-              ret)))
+    (setq ret
+          (ergoemacs-cache (intern (format "describe-keymap-ret%s" (mapconcat (lambda(x) (md5 (format "%s" x))) (ergoemacs  map :key-hash) "_")))
+            (ergoemacs-map-keymap
+             (lambda (cur-key item)
+               (unless (eq item 'ergoemacs-prefix)
+                 (cond
+                  ((consp cur-key))
+                  ((memq (elt cur-key 0) ergoemacs-describe-keymap--ignore))
+                  ((consp item))
+                  ((not item))
+                  (t
+                   (push (cons cur-key item) ret)))))
+             map)
+            ret))
     (setq ret (append (list nil t) (sort ret (lambda(e1 e2) (ergoemacs :key-lessp (car e1) (car e2))))))
     (if help
         (insert (ergoemacs-cache (intern (format "describe-keymap-help%s" (mapconcat (lambda(x) (md5 (format "%s" x))) (ergoemacs  map :key-hash) "_")))
