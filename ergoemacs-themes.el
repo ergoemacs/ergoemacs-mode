@@ -270,30 +270,30 @@ by the emulation map."
 (defun ergoemacs-unset-keys (keymap)
   "Unset all of the standard keys at once.
 Call this before calling any other ergoemacs-set-* function"
-  (define-key keymap (kbd "C-x C-f") nil)
-  (define-key keymap (kbd "C-x C-s") nil)
-  (define-key keymap (kbd "C-x C-w") nil)
-  (define-key keymap (kbd "C-x h") nil)
-  (define-key keymap (kbd "C-x k") nil)
-  (define-key keymap (kbd "C-b") nil)
-  (define-key keymap (kbd "C-p") nil)
-  (define-key keymap (kbd "C-n") nil)
-  (define-key keymap (kbd "C-d") nil)
-  (define-key keymap (kbd "M-b") nil)
-  (define-key keymap (kbd "M-f") nil)
-  (define-key keymap (kbd "M-d") nil)
+  (define-key keymap (kbd "C-x C-f") 'undefined)
+  (define-key keymap (kbd "C-x C-s") 'undefined)
+  (define-key keymap (kbd "C-x C-w") 'undefined)
+  (define-key keymap (kbd "C-x h") 'undefined)
+  (define-key keymap (kbd "C-x k") 'undefined)
+  (define-key keymap (kbd "C-b") 'undefined)
+  (define-key keymap (kbd "C-p") 'undefined)
+  (define-key keymap (kbd "C-n") 'undefined)
+  (define-key keymap (kbd "C-d") 'undefined)
+  (define-key keymap (kbd "M-b") 'undefined)
+  (define-key keymap (kbd "M-f") 'undefined)
+  (define-key keymap (kbd "M-d") 'undefined)
 
-  (define-key keymap (kbd "C-w") nil)
-  (define-key keymap (kbd "M-w") nil)
-  (define-key keymap (kbd "C-y") nil)
-  (define-key keymap (kbd "M-y") nil)
-  (define-key keymap (kbd "C-_") nil)
-  (define-key keymap (kbd "C-/") nil)
-  (define-key keymap (kbd "C-x u") nil)
+  (define-key keymap (kbd "C-w") 'undefined)
+  (define-key keymap (kbd "M-w") 'undefined)
+  (define-key keymap (kbd "C-y") 'undefined)
+  (define-key keymap (kbd "M-y") 'undefined)
+  (define-key keymap (kbd "C-_") 'undefined)
+  (define-key keymap (kbd "C-/") 'undefined)
+  (define-key keymap (kbd "C-x u") 'undefined)
 
-  (define-key keymap (kbd "C-s") nil)
-  (define-key keymap (kbd "C-r") nil)
-  (define-key keymap (kbd "M-%") nil)
+  (define-key keymap (kbd "C-s") 'undefined)
+  (define-key keymap (kbd "C-r") 'undefined)
+  (define-key keymap (kbd "M-%") 'undefined)
   
   (define-key keymap (kbd "M-{") 'undefined)
   (define-key keymap (kbd "M-}") 'undefined)
@@ -472,9 +472,7 @@ These keys do not depend on the layout."
   (put 'ergoemacs-undo
        :advertised-binding (ergoemacs-translate--event-layout
                             (vconcat (listify-key-sequence (kbd "M-z")))))
-  (ergoemacs-define-key keymap (kbd "C-S-x") 'execute-extended-command)
-
-  )
+  (ergoemacs-define-key keymap (kbd "C-S-x") 'execute-extended-command))
 
 (defun ergoemacs-set-search (keymap)
   "Search and Replace for KEYMAP."
@@ -1276,6 +1274,8 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
    (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer)))
 
 
+
+
 (defun ergoemacs-install-reduction-theme ()
   "Install reduction theme."
   (ergoemacs-unset-keys ergoemacs-override-keymap)
@@ -1384,6 +1384,31 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
      (ergoemacs-define-key org-mode-map (kbd "<M-down>") 'org-forward-element))))
 
 (add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
+
+(defvar compilation-mode-map)
+(defun ergoemacs-install-compilation-minor-mode ()
+  "Install `compilation-minor-mode' bindings.
+This affects modes like `grep-mode' since this is a parent keymap"
+  (ergoemacs-save-key-state
+   'compilation-mode-map
+   (if (string-equal ergoemacs-theme "reduction")
+       (progn
+         (ergoemacs-define-key compilation-mode-map (kbd "M-d") 'scroll-down-command)
+         (ergoemacs-define-key compilation-mode-map (kbd "DEL") 'scroll-down-command)
+         (ergoemacs-define-key compilation-mode-map (kbd "<C-up>") 'compilation-previous-file)
+         (ergoemacs-define-key compilation-mode-map (kbd "<C-down>") 'compilation-next-file)
+         (ergoemacs-define-key compilation-mode-map (kbd "<M-up>") 'compilation-previous-file)
+         (ergoemacs-define-key compilation-mode-map (kbd "<M-down>") 'compilation-next-file))
+     (ergoemacs-define-key compilation-mode-map (kbd "M-d") 'scroll-down-command)
+     (ergoemacs-define-key compilation-mode-map (kbd "DEL") 'scroll-down-command)
+     (ergoemacs-define-key compilation-mode-map (kbd "M-U") 'compilation-previous-file)
+     (ergoemacs-define-key compilation-mode-map (kbd "<C-up>") 'compilation-previous-file)
+     (ergoemacs-define-key compilation-mode-map (kbd "M-O") 'compilation-next-file)
+     (ergoemacs-define-key compilation-mode-map (kbd "<C-down>") 'compilation-next-file)
+     (ergoemacs-define-key compilation-mode-map (kbd "<M-up>") 'compilation-previous-file)
+     (ergoemacs-define-key compilation-mode-map (kbd "<M-down>") 'compilation-next-file))))
+
+(with-eval-after-load 'compile (ergoemacs-install-compilation-minor-mode))
 
 (defvar log-edit-mode-map)
 (defun ergoemacs-install-log-edit-bindings ()
