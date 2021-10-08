@@ -34,20 +34,12 @@
   (require 'ergoemacs-macros))
 
 (require 'mouse)
+(require 'nadvice)
 
 (defvar ergoemacs-mode)
 (defvar ergoemacs-keymap)
 (defvar ergoemacs-map--unbound-keys)
 (defvar ergoemacs-user-keymap)
-
-(declare-function ergoemacs-map-- "ergoemacs-map")
-
-(declare-function ergoemacs-map-properties--hook-define-key "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--installed-p "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--label "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--map-fixed-plist "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--original "ergoemacs-map-properties")
-(declare-function ergoemacs-map-properties--original-user "ergoemacs-map-properties")
 
 (declare-function ergoemacs-key-description--substitute-command-keys "ergoemacs-key-description")
 
@@ -62,64 +54,11 @@
 (declare-function ergoemacs-command-loop--temp-message "ergoemacs-command-loop")
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 
-(defvar ergoemacs-advice--temp-replace-functions nil
-  "List of `ergoemacs-mode' temporary replacement functions.
-
-These replacement functions are are turned on when
-`ergoemacs-mode' is turned on.")
-
-(defvar ergoemacs-advice--permanent-replace-functions nil
-  "List of `ergoemacs-mode' permanent replacement functions.
- 
-These replacement functinos are turned on after `ergoemacs-mode'
-is loaded, but not turned off.")
-
-(defun ergoemacs-advice--enable-replacement (ad &optional disable)
-  "Enable ergoemacs-c advice AD (or optionally DISABLE)."
-  (cond
-   (disable
-    (when (fboundp (intern (concat "ergoemacs-advice--real-" (symbol-name ad))))
-      (defalias ad (intern (concat "ergoemacs-advice--real-" (symbol-name ad)))
-        (documentation (intern (concat "ergoemacs-advice--real-" (symbol-name ad)))))))
-   (t
-    (when (fboundp (intern (concat "ergoemacs-advice--" (symbol-name ad))))
-      (defalias ad (intern (concat "ergoemacs-advice--" (symbol-name ad)))
-        (documentation (intern (concat "ergoemacs-advice--" (symbol-name ad)))))))))
-
-(defun ergoemacs-advice--enable-replacements (&optional disable permanent)
-  "Enable the function replacements.
-
-When DISABLE is non-nil, disable the replacements.
-
-When PERMANENT is non-nil, these replacements are permanent, not temporary."
-  (dolist (ad (or (and permanent ergoemacs-advice--permanent-replace-functions)
-                  ergoemacs-advice--temp-replace-functions))
-    (ergoemacs-advice--enable-replacement ad disable)))
-
-(add-hook 'ergoemacs-mode-startup-hook 'ergoemacs-advice--enable-replacements)
-
-(defun ergoemacs-advice--disable-replacements ()
-  "Disable the function replacements."
-  (ergoemacs-advice--enable-replacements t))
-
-(add-hook 'ergoemacs-mode-shutdown-hook 'ergoemacs-advice--disable-replacements)
-
-(defun ergoemacs-advice--enable-permanent-replacements ()
-  "Enable permanent replacements."
-  (ergoemacs-advice--enable-replacements nil t))
-
-(add-hook 'ergoemacs-mode-intialize-hook 'ergoemacs-advice--enable-permanent-replacements)
-
-(defvar ergoemacs--original-local-map nil
-  "Original keymap used with `use-local-map'.")
-
-;; FIXME for emacs 25
-(ergoemacs-advice substitute-command-keys (string)
+(defun ergoemacs-advice-substitute-command-keys (orig-fun &rest args)
   "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
-  :type :replace
   (if ergoemacs-mode
-      (ergoemacs-key-description--substitute-command-keys string)
-    (ergoemacs-advice--real-substitute-command-keys string)))
+      (ergoemacs-key-description--substitute-command-keys (nth 0 args))
+    (funcall orig-fun args)))
 
 
 (defun ergoemacs-mode--undefined-advice (&optional type)
@@ -155,24 +94,20 @@ TYPE is the type of translation installed."
             (when (memq 'down (event-modifiers last-command-event))
               current-prefix-arg)))))
 
-(ergoemacs-advice undefined ()
+(defun ergoemacs-advice-undefined (orig-fun)
   "Allow `ergoemacs-mode' to display keys, and intercept ending <apps> keys."
-  :type :around
-  (if (not ergoemacs-mode)
-      ad-do-it
-    (ergoemacs-mode--undefined-advice)))
- 
-(ergoemacs-advice handle-shift-selection ()
+  (if ergoemacs-mode
+      (ergoemacs-mode--undefined-advice)
+    (call-interactively orig-fun)))
+
+ (defun ergoemacs-advice-handle-shift-selection ()
   "Allow `ergoemacs-mode' to do shift selection on keys like Alt+# to Alt+3."
-  :type :before
   (when (eq 'ergoemacs-command-loop--shift-translate (key-binding (this-single-command-keys)))
     (setq this-command-keys-shift-translated t)))
 
-(ergoemacs-advice read-key (&optional prompt)
+(defun ergoemacs-advice-read-key ()
   "Drop single command keys for read-key." ; For compataiblity with emacs 25.5
-  :type :before
   (setq ergoemacs-command-loop--single-command-keys nil))
-
 
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

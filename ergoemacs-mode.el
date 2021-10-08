@@ -394,6 +394,8 @@ after initializing ergoemacs-mode.
 (defvar ergoemacs-minor-alist nil
   "ErgoEmacs minor mode keymap.")
 
+(declare-function ergoemacs-advice-undefined "ergoemacs-advice")
+
 (defun ergoemacs-setup-override-keymap ()
   "Setup `ergoemacs-mode' keymaps."
   (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-user-keymap)
@@ -401,12 +403,20 @@ after initializing ergoemacs-mode.
                                    (ergoemacs-mode . ,ergoemacs-keymap))
         ergoemacs-minor-alist `((mark-active . ,ergoemacs-mark-active-keymap)))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
-  (add-hook 'minor-mode-map-alist ergoemacs-minor-alist))
+  (add-hook 'minor-mode-map-alist ergoemacs-minor-alist)
+  (advice-add 'undefined :around #'ergoemacs-advice-undefined)
+  (advice-add 'substitute-command-keys :around #'ergoemacs-advice-substitute-command-keys)
+  (advice-add 'handle-shift-selection :before #'ergoemacs-advice-handle-shift-selection)
+  (advice-add 'read-key :before #'ergoemacs-advice-read-key))
 
 (defun ergoemacs-remove-override-keymap ()
   "Remove `ergoemacs-mode' keymaps."
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist)
-  (remove-hook 'minor-mode-map-alist ergoemacs-minor-alist))
+  (remove-hook 'minor-mode-map-alist ergoemacs-minor-alist)
+  (advice-remove 'undefined #'ergoemacs-advice-undefined)
+  (advice-remove 'substitute-command-keys #'ergoemacs-advice-substitute-command-keys)
+  (advice-remove 'handle-shift-selection #'ergoemacs-advice-handle-shift-selection)
+  (advice-remove 'read-key #'ergoemacs-advice-read-key))
 
 
 ;;; Frequently used commands as aliases
