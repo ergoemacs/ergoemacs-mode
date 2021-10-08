@@ -203,7 +203,8 @@ IS-ERGOEMACS is true when the `ergoemacs-mode' keybindings are installed."
   (let (hash-symbol
         (map (symbol-value symbol-map)))
     (if is-ergoemacs
-        (setq hash-symbol (concat (symbol-name symbol-map) "-ergoemacs"))
+        (setq hash-symbol (concat (symbol-name symbol-map) "-ergoemacs-"
+                                  (or ergoemacs-theme "")))
       (add-to-list 'ergoemacs-mode--save-keymaps-list symbol-map)
       (setq hash-symbol (symbol-name symbol-map)))
     (setq hash-symbol (intern hash-symbol))
@@ -219,7 +220,8 @@ IS-ERGOEMACS is true when the `ergoemacs-mode' keybindings are installed."
 IS-ERGOEMACS is true when the `ergoemacs-mode' keybindings are installed."
   (let (hash-symbol)
     (if is-ergoemacs
-        (setq hash-symbol (concat (symbol-name symbol-map) "-ergoemacs"))
+        (setq hash-symbol (concat (symbol-name symbol-map) "-ergoemacs-"
+                                  (or ergoemacs-theme "")))
       (setq hash-symbol (symbol-name symbol-map)))
     (setq hash-symbol (intern hash-symbol))
     (gethash hash-symbol ergoemacs-mode--save-keymaps)))
