@@ -404,8 +404,15 @@ after initializing ergoemacs-mode.
   "The keybinding that is active when the mark is active.")
 
 
+(defcustom ergoemacs-mode-cua-mode t
+  "Use C-c and C-v for copy paste when mark is active."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+
 (defvar ergoemacs-mark-active-cua-keymap (let ((map (make-sparse-keymap)))
-                                           (define-key map (kbd "C-c") 'indent-region)
+                                           (define-key map (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
+                                           (define-key map (kbd "C-v <ergoemacs-timeout>") 'ergoemacs-paste)
                                            map)
   "The keybinding that is active when the mark is active.")
 
@@ -416,6 +423,9 @@ after initializing ergoemacs-mode.
 (defvar ergoemacs-minor-alist nil
   "ErgoEmacs minor mode keymap.")
 
+(defvar ergoemacs-minor-cua-alist nil
+  "ErgoEmacs cua mode keymap.")
+
 (declare-function ergoemacs-advice-undefined "ergoemacs-advice")
 
 (defun ergoemacs-setup-override-keymap ()
@@ -423,9 +433,12 @@ after initializing ergoemacs-mode.
   (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-user-keymap)
                                    (ergoemacs-mode . ,ergoemacs-override-keymap)
                                    (ergoemacs-mode . ,ergoemacs-keymap))
-        ergoemacs-minor-alist `(mark-active . ,ergoemacs-mark-active-keymap))
+        ergoemacs-minor-alist `(mark-active . ,ergoemacs-mark-active-keymap)
+        ergoemacs-minor-cua-alist `(mark-active . ,ergoemacs-mark-active-cua-keymap))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
   (add-hook 'minor-mode-map-alist ergoemacs-minor-alist)
+  (when ergoemacs-mode-cua-mode
+    (add-hook 'minor-mode-map-alist ergoemacs-minor-cua-alist))
   (advice-add 'undefined :around #'ergoemacs-advice-undefined)
   (advice-add 'handle-shift-selection :before #'ergoemacs-advice-handle-shift-selection)
   (advice-add 'read-key :before #'ergoemacs-advice-read-key))
@@ -434,6 +447,8 @@ after initializing ergoemacs-mode.
   "Remove `ergoemacs-mode' keymaps."
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist)
   (remove-hook 'minor-mode-map-alist ergoemacs-minor-alist)
+  (when ergoemacs-mode-cua-mode
+    (remove-hook 'minor-mode-map-alist ergoemacs-minor-cua-alist))
   (advice-remove 'undefined #'ergoemacs-advice-undefined)
   (advice-remove 'handle-shift-selection #'ergoemacs-advice-handle-shift-selection)
   (advice-remove 'read-key #'ergoemacs-advice-read-key))

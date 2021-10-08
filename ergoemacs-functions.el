@@ -413,6 +413,7 @@ If `narrow-to-region' is in effect, then cut that region only."
   "Copy current line, or current text selection.
 Pass prefix ARG to the respective copy functions."
   (interactive "P")
+  (setq unread-command-events nil)
   (cond
    ;;; cua-copy-rectangle
    ((and (boundp 'cua--rectangle) cua--rectangle cua-mode)
@@ -464,6 +465,7 @@ major-modes like `org-mode'.
 
 The ARG is passed to the respective function for any prefixes."
   (interactive "P")
+  (setq unread-command-events nil)
   (cond
    ((and (boundp 'cua--rectangle) cua--rectangle)
     (cua-cut-rectangle-as-text arg))
