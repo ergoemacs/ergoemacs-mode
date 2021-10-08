@@ -300,8 +300,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
         ;;(global-unset-key (kbd "<menu>"))
         ;;(define-key ergoemacs-translate--parent-map [apps] 'ergoemacs-command-loop--swap-translation)
         ;;(define-key ergoemacs-translate--parent-map [menu] 'ergoemacs-command-loop--swap-translation)
-        (when ergoemacs-mode-turn-on-cua-mode
-          (cua-mode 1))
+        
         (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout))
     ;; Turn off
     ;; Restore frame parameters
@@ -313,8 +312,6 @@ The `execute-extended-command' is now \\[execute-extended-command].
     (remove-hook 'post-command-hook #'ergoemacs-post-command-hook)
     (remove-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
     (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
-    (when ergoemacs-mode-turn-on-cua-mode
-      (cua-mode 0))
     (ergoemacs-mode--restore-maps)
     (define-key global-map [menu-bar] ergoemacs-old-menu)
     (message "Ergoemacs-mode turned OFF.")))
@@ -366,11 +363,6 @@ This is structured by valid keyboard layouts for
     (dot ("⠁" "⠂" "⠄" "⡀" "⢀" "⠠" "⠐" "⠈"))
     (fish (">))'>" " >))'>" "  >))'>" "   >))'>" "    >))'>" "   <'((<" "  <'((<" " <'((<")))
   "Spinners for long commands with `ergoemacs-command-loop'.")
-
-(defcustom ergoemacs-mode-turn-on-cua-mode t
-  "Turn on cua mode when starting `ergoemacs-mode'."
-  :type 'boolean
-  :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-command-loop-spinner (or (and ergoemacs-use-unicode-symbols 'dots) 'standard)
   "What spinner to use for long commands with `ergoemacs-command-loop'."
