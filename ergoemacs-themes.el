@@ -472,8 +472,7 @@ These keys do not depend on the layout."
   (ergoemacs-define-key keymap (kbd "M-S-z") 'ergoemacs-redo)
   (put 'ergoemacs-undo
        :advertised-binding (ergoemacs-translate--event-layout
-                            (vconcat (listify-key-sequence (kbd "M-z")))))
-  (ergoemacs-define-key keymap (kbd "C-S-x") 'execute-extended-command))
+                            (vconcat (listify-key-sequence (kbd "M-z"))))))
 
 (defun ergoemacs-set-search (keymap)
   "Search and Replace for KEYMAP."
