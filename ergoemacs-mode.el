@@ -231,6 +231,9 @@ IS-ERGOEMACS is true when the `ergoemacs-mode' keybindings are installed."
     (setq hash-symbol (intern hash-symbol))
     (gethash hash-symbol ergoemacs-mode--save-keymaps)))
 
+(defvar ergoemacs-old-menu (copy-keymap (lookup-key global-map [menu-bar]))
+  "Old menu.")
+
 (defun ergoemacs-mode--restore-maps (&optional is-ergoemacs)
   "Restore normal or ergoemacs keymaps (when IS-ERGOEMACS is non-nil)."
   (dolist (k ergoemacs-mode--save-keymaps-list)
@@ -302,6 +305,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
     (when ergoemacs-mode-turn-on-cua-mode
       (cua-mode 0))
     (ergoemacs-mode--restore-maps)
+    (define-key global-map [menu-bar] ergoemacs-old-menu)
     (message "Ergoemacs-mode turned OFF.")))
 
 (defvar ergoemacs-translate--event-hash (make-hash-table)
