@@ -85,6 +85,11 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :initialize #'custom-initialize-default
   :group 'ergoemacs-display)
 
+(defun ergoemacs-mode-unbind-emacs-keys t
+  "Unbind emacs keys."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
 (defcustom ergoemacs-theme nil
   "Ergoemacs Keyboard Layout Themes."
   :type '(choice
