@@ -427,7 +427,6 @@ after initializing ergoemacs-mode.
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
   (add-hook 'minor-mode-map-alist ergoemacs-minor-alist)
   (advice-add 'undefined :around #'ergoemacs-advice-undefined)
-  (advice-add 'substitute-command-keys :around #'ergoemacs-advice-substitute-command-keys)
   (advice-add 'handle-shift-selection :before #'ergoemacs-advice-handle-shift-selection)
   (advice-add 'read-key :before #'ergoemacs-advice-read-key))
 
@@ -436,7 +435,6 @@ after initializing ergoemacs-mode.
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist)
   (remove-hook 'minor-mode-map-alist ergoemacs-minor-alist)
   (advice-remove 'undefined #'ergoemacs-advice-undefined)
-  (advice-remove 'substitute-command-keys #'ergoemacs-advice-substitute-command-keys)
   (advice-remove 'handle-shift-selection #'ergoemacs-advice-handle-shift-selection)
   (advice-remove 'read-key #'ergoemacs-advice-read-key))
 
