@@ -108,13 +108,24 @@
 
 ;;;###autoload
 (defun ergoemacs-undo ()
-  "Run `undo'.  If in calc-mode, run `calc-undo'"
+  "Run `undo'. Prefer running undo-fo if present"
   (interactive)
-  (if (eq major-mode 'calc-mode)
-      (calc-undo 1)
-    (undo)
-    )
-  )
+  (cond
+   ((eq major-mode 'calc-mode)
+    (calc-undo 1))
+   ((fboundp 'undo-fu-only-undo)
+    (call-interactively ''undo-fu-only-undo))
+   (t (undo))))
+
+(defun ergoemacs-redo()
+  "Run `redo' when present."
+  (interactive)
+  (cond
+   ((fboundp 'undo-fu-only-redo)
+    (call-interactively ''undo-fu-only-redo))
+   ((fboundp 'undo-redo) ; should be in emacs 28
+    (call-interactively 'undo-redo))
+   (t (message "Redo support not present.  Try `undo-fu'"))))
 
 (defvar ergoemacs-revert-buffer 0)
 (defun ergoemacs-revert-buffer ()
