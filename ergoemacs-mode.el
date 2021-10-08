@@ -403,6 +403,13 @@ after initializing ergoemacs-mode.
                                        map)
   "The keybinding that is active when the mark is active.")
 
+
+(defvar ergoemacs-mark-active-cua-keymap (let ((map (make-sparse-keymap)))
+                                           (define-key map (kbd "C-c") 'indent-region)
+                                           map)
+  "The keybinding that is active when the mark is active.")
+
+
 (defvar ergoemacs-override-alist nil
   "ErgoEmacs override keymaps.")
 
@@ -416,7 +423,7 @@ after initializing ergoemacs-mode.
   (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-user-keymap)
                                    (ergoemacs-mode . ,ergoemacs-override-keymap)
                                    (ergoemacs-mode . ,ergoemacs-keymap))
-        ergoemacs-minor-alist `((mark-active . ,ergoemacs-mark-active-keymap)))
+        ergoemacs-minor-alist `(mark-active . ,ergoemacs-mark-active-keymap))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
   (add-hook 'minor-mode-map-alist ergoemacs-minor-alist)
   (advice-add 'undefined :around #'ergoemacs-advice-undefined)
