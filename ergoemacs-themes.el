@@ -1304,6 +1304,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-apps ergoemacs-override-keymap)
 
   (ergoemacs-install-isearch-mode)
+  (ergoemacs-install-comint-bindings)
 
   (ergoemacs-set-remaps ergoemacs-override-keymap)
   (ergoemacs-set-quit)
@@ -1339,7 +1340,10 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-text-transform ergoemacs-override-keymap)
   (ergoemacs-set-select-items ergoemacs-override-keymap)
   (ergoemacs-fix-arrow-keys ergoemacs-override-keymap)
+  
   (ergoemacs-install-isearch-mode)
+  (ergoemacs-install-comint-bindings)
+
   (ergoemacs-set-remaps ergoemacs-override-keymap)
   (ergoemacs-set-quit)
   (ergoemacs-set-menu-bar-help)
@@ -1443,6 +1447,7 @@ This affects modes like `grep-mode' since this is a parent keymap"
 
 (add-hook 'eshell-post-command-hook #'ergoemacs-install-eshell-bindings)
 
+(require 'comint)
 (defun ergoemacs-install-comint-bindings ()
   "Install comint key bindings."
   (ergoemacs-save-key-state
@@ -1456,8 +1461,6 @@ This affects modes like `grep-mode' since this is a parent keymap"
      (ergoemacs-define-key comint-mode-map (kbd "<delete>") 'comint-delchar-or-maybe-eof)
      (ergoemacs-define-key comint-mode-map (kbd "M-f") 'comint-delchar-or-maybe-eof)
      (ergoemacs-define-key comint-mode-map (kbd "C-g") 'comint-delchar-or-maybe-eof))))
-
-(with-eval-after-load 'comint (ergoemacs-install-comint-bindings))
 
 (defun ergoemacs-install-dired-bindings ()
   "Install `dired-mode-map' bindings."
