@@ -99,12 +99,7 @@ TYPE is the type of translation installed."
   (if ergoemacs-mode
       (ergoemacs-mode--undefined-advice)
     (call-interactively orig-fun)))
-
- (defun ergoemacs-advice-handle-shift-selection ()
-  "Allow `ergoemacs-mode' to do shift selection on keys like Alt+# to Alt+3."
-  (when (eq 'ergoemacs-command-loop--shift-translate (key-binding (this-single-command-keys)))
-    (setq this-command-keys-shift-translated t)))
-
+ 
 (defun ergoemacs-advice-read-key ()
   "Drop single command keys for read-key." ; For compataiblity with emacs 25.5
   (setq ergoemacs-command-loop--single-command-keys nil))
