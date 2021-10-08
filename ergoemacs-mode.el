@@ -399,7 +399,8 @@ after initializing ergoemacs-mode.
 ")
 
 (defvar ergoemacs-mark-active-keymap (let ((map (make-sparse-keymap)))
-                                       (define-key map (kbd "TAB") 'indent-region))
+                                       (define-key map (kbd "TAB") 'indent-region)
+                                       map)
   "The keybinding that is active when the mark is active.")
 
 (defvar ergoemacs-override-alist nil
