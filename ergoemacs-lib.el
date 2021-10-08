@@ -104,6 +104,31 @@ Tries to get the value from `ergoemacs-mode-names'.  If not guess the language n
 (defvar ergoemacs-menu--get-major-modes nil
   "List of major-modes known to `ergoemacs-mode'.")
 
+(defcustom ergoemacs-excluded-major-modes
+  '(conf-colon-mode
+    conf-xdefaults-mode conf-space-mode conf-javaprop-mode
+    conf-ppd-mode mail-mode
+    ebrowse-tree-mode diff-mode fundamental-mode emacs-lisp-byte-code-mode
+    R-transcript-mode S-transcript-mode XLS-mode tar-mode
+    git-commit-mode git-rebase-mode image-mode
+    archive-mode ses-mode)
+  "List of major modes excluded from ergoemacs' Languages menu."
+  :type '(repeat (symbol :tag "Excluded Major Mode"))
+  :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-mode-names
+  '((conf-mode "Settings")
+    (ses-mode "Emacs Spreadsheet")
+    (m2-mode "Modula-2")
+    (snmpv2-mode "SNMPv2 MIBs")
+    (snmp-mode "SKMP MIBs"))
+  "Menu name for ergoemacs' Languages menu."
+  :type '(repeat
+          (list
+           (symbol :tag "Major Mode Name")
+           (text :tag "Alternative Description:")))
+  :group 'ergoemacs-mode)
+
 (defun ergoemacs-menu--get-major-modes ()
   "Gets a list of language modes known to `ergoemacs-mode'.
 This gets all major modes known from the variables:

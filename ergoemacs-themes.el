@@ -1028,6 +1028,13 @@ These keys do not depend on the layout."
                                (:toggle . global-linum-mode))))
     'search))
 
+
+(defun ergoemacs-set-menu-bar-major-modes ()
+  "Major Modes Menu"
+  (define-key-after (current-global-map) [menu-bar major-modes-menu]
+    (cons "Major-Modes"  (ergoemacs-menu--get-major-modes))
+    'view))
+
 (defun ergoemacs-set-menu-bar-help ()
   "Help menu."
   (global-set-key [menu-bar help-menu]
@@ -1311,6 +1318,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-quit)
   (ergoemacs-set-menu-bar-help)
   (ergoemacs-set-menu-bar-view)
+  (ergoemacs-set-menu-bar-major-modes)
   (ergoemacs-set-menu-bar-search)
   (ergoemacs-set-menu-bar-edit)
   (ergoemacs-set-menu-bar-file))
@@ -1347,6 +1355,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-menu-bar-view)
   (ergoemacs-set-menu-bar-search)
   (ergoemacs-set-menu-bar-edit)
+  (ergoemacs-set-menu-bar-major-modes)
   (ergoemacs-set-menu-bar-file))
 
 (defvar org-mode-map )
