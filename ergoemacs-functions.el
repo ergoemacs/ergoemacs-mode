@@ -114,7 +114,7 @@
    ((eq major-mode 'calc-mode)
     (calc-undo 1))
    ((fboundp 'undo-fu-only-undo)
-    (call-interactively ''undo-fu-only-undo))
+    (call-interactively 'undo-fu-only-undo))
    (t (undo))))
 
 (defun ergoemacs-redo()
