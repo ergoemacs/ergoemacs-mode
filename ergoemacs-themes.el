@@ -618,17 +618,8 @@ These keys do not depend on the layout."
   (ergoemacs-define-key keymap (kbd "<apps> SPC") 'set-mark-command)
   (ergoemacs-define-key keymap (kbd "<apps> a") 'mark-whole-buffer)
 
-  (ergoemacs-define-key ergoemacs-override-keymap
-			(kbd "<apps> f")
-			(lambda ()
-                          (interactive)
-                          (ergoemacs-command-loop "C-x" :ctl-to-alt)))
-
-  (ergoemacs-define-key ergoemacs-override-keymap
-			(kbd "<apps> d")
-			(lambda ()
-                          (interactive)
-                          (ergoemacs-command-loop "C-c" :unchorded-ctl)))
+  (ergoemacs-define-key ergoemacs-override-keymap (kbd "<apps> f") 'ergoemacs-command-loop-C-x-ctl-to-alt)
+  (ergoemacs-define-key ergoemacs-override-keymap (kbd "<apps> d") 'ergoemacs-command-loop-C-c-unchorded)
 
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "a"))
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "A"))
@@ -646,7 +637,7 @@ These keys do not depend on the layout."
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "t"))
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "C-t"))
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "T"))
-
+  
   (define-key ergoemacs-translate--parent-map [f2] 'ergoemacs-command-loop--force-universal-argument)
   (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last)
   (define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])

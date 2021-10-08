@@ -74,7 +74,7 @@ TYPE is the type of translation installed."
     (when (setq modal-p (ergoemacs :modal-p))
       (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
     ;; This starts the command loop when DEL or MENU is replaced in the proper place.
-    (if (lookup-key local-keymap local-key)
+    (if (and (not (eq ergoemacs-command-loop-type :emacs)) (lookup-key local-keymap local-key))
 	    (let ((i 1)) ;; Setup history
 	      (setq ergoemacs-command-loop--history nil)
 	      (while (<= i (- (length keys) 1))

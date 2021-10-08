@@ -217,7 +217,8 @@ ignore the post-command hooks.")
   :type '(choice
           (const :tag "Replace emacs command loop (full)" :full)
           ;; (const :tag "Test mode; Don't actually run command " :test)
-          (const :tag "No command loop support" nil))
+          (const :tag "Command Loop when called directly" nil)
+          (const :tag "Emacs" :emacs))
   :group 'ergoemacs-comamnd-loop)
 
 (defcustom ergoemacs-command-loop-hide-shift-translations t
@@ -252,7 +253,6 @@ ignore the post-command hooks.")
 (defvar ergoemacs-mode)
 (defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-keymap)
-(defvar ergoemacs-handle-ctl-c-or-ctl-x 'only-C-c-and-C-x)
 (defvar ergoemacs-ctl-c-or-ctl-x-delay)
 
 
@@ -953,7 +953,6 @@ read."
             modal tmp
             tmp nil))
     
-    ;; (ergoemacs-command-loop--read-key (read-kbd-macro "C-x" t) :unchorded-ctl)
     (when (functionp text)
       (setq text (funcall text)))
 
@@ -2359,6 +2358,40 @@ For instance in QWERTY M-> is shift translated to M-."
     (setq ergoemacs-this-command-keys-shift-translated t
 	  this-command-keys-shift-translated t)
     (ergoemacs-command-loop--call-interactively (key-binding shift-trans))))
+
+
+(defun ergoemacs-command-loop-C-c-unchorded ()
+  "Unchorded C-c."
+  (interactive)
+  (when (eq ergoemacs-command-loop-type :emacs)
+    (error "Unchorded C-c requires ergoemacs command loop"))
+  (let ((i 1)
+        (keys (this-single-command-keys)))
+	(setq ergoemacs-command-loop--history nil)
+	(while (<= i (- (length keys) 1))
+	  (push (list (substring keys 0 i) :normal nil
+			      current-prefix-arg (aref (substring keys (- i 1) i) 0))
+		    ergoemacs-command-loop--history)
+	  (setq i (+ 1 i)))
+	(ergoemacs-command-loop "C-c" :unchorded-ctl nil nil ergoemacs-command-loop--history)))
+
+
+(defun ergoemacs-command-loop-C-x-ctl-to-alt ()
+  "Unchorded C-x."
+  (interactive)
+  (when (eq ergoemacs-command-loop-type :emacs)
+    (error "Unchorded C-x requires ergoemacs command loop"))
+  (let ((i 1)
+        (keys (this-single-command-keys)))
+	(setq ergoemacs-command-loop--history nil)
+	(while (<= i (- (length keys) 1))
+	  (push (list (substring keys 0 i) :normal nil
+			      current-prefix-arg (aref (substring keys (- i 1) i) 0))
+		    ergoemacs-command-loop--history)
+	  (setq i (+ 1 i)))
+	(ergoemacs-command-loop "C-x" :ctl-to-alt nil nil ergoemacs-command-loop--history)))
+
+
 (provide 'ergoemacs-command-loop)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ergoemacs-command-loop.el ends here
