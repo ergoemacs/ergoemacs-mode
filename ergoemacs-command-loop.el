@@ -1748,9 +1748,10 @@ They don't exactly behave like their Emacs equivalents."
   "Timer to startup `ergoemacs-mode' command loop.")
 (defun ergoemacs-command-loop--timer ()
   "Start `ergoemacs-command-loop--internal' if not currently running."
-  (unless (and (ergoemacs-command-loop-full-p)
-               (ergoemacs-command-loop-p))
-    (ergoemacs-command-loop--internal)))
+  (unwind-protect
+      (unless (and (ergoemacs-command-loop-full-p)
+                   (ergoemacs-command-loop-p))
+        (ergoemacs-command-loop--internal))))
 
 (defun ergoemacs-command-loop--install-timer ()
   "Install the `ergoemacs-command-loop--timer'."
