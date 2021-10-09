@@ -2,7 +2,7 @@
 
 ;; Copyright © 2013-2021  Free Software Foundation, Inc.
 
-;; Filename: ergoemacs-translate.el
+;; Filename: ergoemacs-calculate-bindings.el
 ;; Description:
 ;; Author: Matthew L. Fidler
 ;; Maintainer:

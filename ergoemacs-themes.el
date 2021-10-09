@@ -460,7 +460,9 @@ These keys do not depend on the layout."
 (defun ergoemacs-set-copy (keymap)
   "Copy, Cut, Paste, Redo and Undo for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-x") 'ergoemacs-cut-line-or-region)
+  (define-key keymap (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
   (ergoemacs-define-key keymap (kbd "M-c") 'ergoemacs-copy-line-or-region)
+  (define-key keymap (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
   (ergoemacs-define-key keymap (kbd "M-v") 'ergoemacs-paste)
   (ergoemacs-define-key keymap (kbd "M-V") 'ergoemacs-paste-cycle)
 

@@ -327,7 +327,8 @@ This is structured by valid keyboard layouts for
 (defvar ergoemacs-translation-hash (make-hash-table)
   "Hash table of translations, structured by translatin type.")
 
-(dolist (pkg '(ergoemacs-command-loop
+(dolist (pkg '(ergoemacs-cua
+               ergoemacs-command-loop
                ergoemacs-advice
                ergoemacs-functions
                ergoemacs-key-description
@@ -400,6 +401,8 @@ after initializing ergoemacs-mode.
 
 (defvar ergoemacs-mark-active-keymap (let ((map (make-sparse-keymap)))
                                        (define-key map (kbd "TAB") 'indent-region)
+                                       (define-key map [(shift control x)] 'ergoemacs--shift-control-x-prefix)
+                                       (define-key map [(shift control c)] 'ergoemacs--shift-control-c-prefix)
                                        map)
   "The keybinding that is active when the mark is active.")
 
@@ -411,14 +414,24 @@ after initializing ergoemacs-mode.
 
 (declare-function ergoemacs-advice-undefined "ergoemacs-advice")
 
+(defvar ergoemacs--ena-prefix-override-keymap)
+(defvar ergoemacs--prefix-override-keymap)
+(defvar ergoemacs--ena-prefix-repeat-keymap)
+(defvar ergoemacs--prefix-repeat-keymap)
+(defvar ergoemacs--ena-region-keymap)
+
+  ;; Enable shifted fallbacks for C-x and C-c when region is active
+
 (defun ergoemacs-setup-override-keymap ()
   "Setup `ergoemacs-mode' keymaps."
-  (setq ergoemacs-override-alist `((ergoemacs-mode . ,ergoemacs-user-keymap)
+  (setq ergoemacs-override-alist `((ergoemacs--ena-prefix-override-keymap . ,ergoemacs--prefix-override-keymap)
+                                   (ergoemacs--ena-prefix-repeat-keymap .   ,ergoemacs--prefix-repeat-keymap)
+                                   (ergoemacs--ena-region-keymap . ,ergoemacs-mark-active-keymap)
+                                   (ergoemacs-mode . ,ergoemacs-user-keymap)
                                    (ergoemacs-mode . ,ergoemacs-override-keymap)
                                    (ergoemacs-mode . ,ergoemacs-keymap))
         ergoemacs-minor-alist `(mark-active . ,ergoemacs-mark-active-keymap))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
-  (add-hook 'minor-mode-map-alist ergoemacs-minor-alist)
   (advice-add 'undefined :around #'ergoemacs-advice-undefined)
   (advice-add 'read-key :before #'ergoemacs-advice-read-key))
 
