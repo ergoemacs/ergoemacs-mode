@@ -5,6 +5,7 @@
 ;; Author: Xah Lee <xah@xahlee.org>
 ;;         David Capello <davidcapello@gmail.com>
 ;;         Matthew L. Fidler <matthew.fidler@gmail.com>
+;;         Kim F. Storm <storm@cua.dk> -- CUA approach for C-x and C-c
 ;; Maintainer: Matthew L. Fidler <matthew.fidler@gmail.com>
 ;; Created: August 01 2007
 ;; Keywords: convenience
