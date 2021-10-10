@@ -410,9 +410,6 @@ after initializing ergoemacs-mode.
 (defvar ergoemacs-override-alist nil
   "ErgoEmacs override keymaps.")
 
-(defvar ergoemacs-minor-alist nil
-  "ErgoEmacs minor mode keymap.")
-
 (declare-function ergoemacs-advice-undefined "ergoemacs-advice")
 
 (defvar ergoemacs--ena-prefix-override-keymap)
@@ -430,8 +427,7 @@ after initializing ergoemacs-mode.
                                    (ergoemacs--ena-region-keymap . ,ergoemacs-mark-active-keymap)
                                    (ergoemacs-mode . ,ergoemacs-user-keymap)
                                    (ergoemacs-mode . ,ergoemacs-override-keymap)
-                                   (ergoemacs-mode . ,ergoemacs-keymap))
-        ergoemacs-minor-alist `(mark-active . ,ergoemacs-mark-active-keymap))
+                                   (ergoemacs-mode . ,ergoemacs-keymap)))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
   (advice-add 'undefined :around #'ergoemacs-advice-undefined)
   (advice-add 'read-key :before #'ergoemacs-advice-read-key))
@@ -439,7 +435,6 @@ after initializing ergoemacs-mode.
 (defun ergoemacs-remove-override-keymap ()
   "Remove `ergoemacs-mode' keymaps."
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist)
-  (remove-hook 'minor-mode-map-alist ergoemacs-minor-alist)
   (advice-remove 'undefined #'ergoemacs-advice-undefined)
   (advice-remove 'read-key #'ergoemacs-advice-read-key))
 
