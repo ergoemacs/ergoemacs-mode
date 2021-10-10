@@ -2066,14 +2066,14 @@ to the `format' like: (format str args)."
 
 (defun ergoemacs-command-loop--temp-message-timer-echo ()
   "Echos `ergoemacs-command-loop--temp-message-timer-str' if minibuffer isn't active."
-  (if (or (minibufferp) isearch-mode)
+  (if (or (minibufferp) isearch-mode (input-pending-p))
       (setq ergoemacs-command-loop--temp-message-timer
-	    (run-with-idle-timer ergoemacs-command-loop--temp-message-timer-secs
-				 nil #'ergoemacs-command-loop--temp-message-timer-echo))
+	        (run-with-idle-timer ergoemacs-command-loop--temp-message-timer-secs
+				                 nil #'ergoemacs-command-loop--temp-message-timer-echo))
     (cancel-timer ergoemacs-command-loop--temp-message-timer)
     (let (message-log-max)
       (with-temp-message ergoemacs-command-loop--temp-message-timer-str
-	(sit-for (or (and (numberp ergoemacs-command-loop-message-sit-for) ergoemacs-command-loop-message-sit-for) 2))))))
+	    (sit-for (or (and (numberp ergoemacs-command-loop-message-sit-for) ergoemacs-command-loop-message-sit-for) 2))))))
 
 (defun ergoemacs-command-loop--temp-message (str &rest args)
   "Message facility for `ergoemacs-mode' command loop.
