@@ -119,6 +119,8 @@ This override is enabled for active regions before the copy and paste are enable
   "Buffer-local variable that may disable the CUA keymappings.")
 (make-variable-buffer-local 'ergoemacs-inhibit-cua-keys)
 
+(defvar ergeoemacs-mode-term-raw-mode)
+
 (defun ergoemacs--select-keymaps ()
   "Setup conditions for selecting the proper keymaps in `ergoemacs--keymap-alist'."
   ;; The prefix override (when mark-active) operates in three substates:
@@ -126,10 +128,11 @@ This override is enabled for active regions before the copy and paste are enable
   ;; [2] Immediately after using a prefix key
   ;; [3] A fraction of a second later
   (setq ergoemacs--ena-region-keymap ; Determines if the ergion is active
-        (and (region-active-p) (not deactivate-mark))
+        (and (not ergeoemacs-mode-term-raw-mode) (region-active-p) (not deactivate-mark))
         ;; Enable Override -- This is the first state where the keys are intercepted; cua state [1]
         ergoemacs--ena-prefix-override-keymap
         (and ergoemacs--ena-region-keymap
+             (not ergeoemacs-mode-term-raw-mode)
              ergoemacs-enable-cua-keys
 	         (not ergoemacs-inhibit-cua-keys)
 	         (or (eq ergoemacs-enable-cua-keys t)
@@ -139,6 +142,7 @@ This override is enabled for active regions before the copy and paste are enable
         ;; Enable The repeat layer.  This is the layer that the keys are intercepted; cua state [2]
         ergoemacs--ena-prefix-repeat-keymap
         (and ergoemacs--ena-region-keymap
+             (not ergeoemacs-mode-term-raw-mode)
 	         (or (timerp ergoemacs--prefix-override-timer)
 		         (eq ergoemacs--prefix-override-timer 'shift))))
   ;; In ergoemacs-mode the corresponding `cua--ena-cua-keys-keymap' and `cua--ena-global-mark-keymap' are not needed or used

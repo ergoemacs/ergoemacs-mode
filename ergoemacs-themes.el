@@ -351,8 +351,6 @@ These keys do not depend on the layout."
   (define-key keymap (kbd "C-0") 'ergoemacs-text-scale-normal-size)
   (define-key keymap (kbd "C-)") 'ergoemacs-text-scale-normal-size)
 
-  ;; These go into the global map, so they can be overridden by a
-  ;; local mode map.
   (define-key keymap (kbd "C-f") 'isearch-forward)
   (define-key keymap (kbd "C-a") 'mark-whole-buffer)
   (define-key keymap (kbd "C-z") 'ergoemacs-undo)
@@ -377,7 +375,10 @@ These keys do not depend on the layout."
   (define-key keymap (kbd "C-?") 'info)
 
   (define-key keymap (kbd "C-S-o") 'ergoemacs-open-in-external-app)
-  (define-key keymap (kbd "C-S-t") 'ergoemacs-open-last-closed))
+  (define-key keymap (kbd "C-S-t") 'ergoemacs-open-last-closed)
+  
+  (define-key keymap (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
+  (define-key keymap (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region))
 
 (defun ergoemacs-set-move-char (keymap)
   "Movement by Characters & Set Mark for KEYMAP."
@@ -456,9 +457,7 @@ These keys do not depend on the layout."
 (defun ergoemacs-set-copy (keymap)
   "Copy, Cut, Paste, Redo and Undo for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-x") 'ergoemacs-cut-line-or-region)
-  (define-key keymap (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
   (ergoemacs-define-key keymap (kbd "M-c") 'ergoemacs-copy-line-or-region)
-  (define-key keymap (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
   (ergoemacs-define-key keymap (kbd "M-v") 'ergoemacs-paste)
   (ergoemacs-define-key keymap (kbd "M-V") 'ergoemacs-paste-cycle)
 
@@ -1278,26 +1277,28 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-standard-vars)
 
   (ergoemacs-set-standard-fixed ergoemacs-override-keymap)
-  (ergoemacs-set-move-char ergoemacs-override-keymap)
-  (ergoemacs-set-move-buffer-reduction ergoemacs-override-keymap)
-  (ergoemacs-set-move-bracket ergoemacs-override-keymap)
-  (ergoemacs-set-move-word ergoemacs-override-keymap)
-  ;;(ergoemacs-set-move-paragraph ergoemacs-override-keymap)
-  ;;(ergoemacs-set-move-line ergoemacs-override-keymap)
-  ;;(ergoemacs-set-move-page ergoemacs-override-keymap)
-  ;;(ergoemacs-set-move-buffer ergoemacs-override-keymap)
-  (ergoemacs-set-move-bracket-reduction ergoemacs-override-keymap)
-  (ergoemacs-set-copy ergoemacs-override-keymap)
-  (ergoemacs-set-search-reduction ergoemacs-override-keymap)
-  (ergoemacs-set-switch-reduction ergoemacs-override-keymap)
-  (ergoemacs-set-execute-reduction ergoemacs-override-keymap)
-  ;;(ergoemacs-set-misc ergoemacs-override-keymap)
-  (ergoemacs-set-move-extra-reduction ergoemacs-override-keymap)
-  (ergoemacs-set-kill-line ergoemacs-override-keymap)
-  (ergoemacs-set-text-transform ergoemacs-override-keymap)
-  (ergoemacs-set-select-items ergoemacs-override-keymap)
-  (ergoemacs-fix-arrow-keys ergoemacs-override-keymap)
-  (ergoemacs-set-apps ergoemacs-override-keymap)
+
+  (dolist (map (list ergoemacs-override-keymap ergoemacs-mode-term-raw-keymap))
+    (ergoemacs-set-move-char map)
+    (ergoemacs-set-move-buffer-reduction map)
+    (ergoemacs-set-move-bracket map)
+    (ergoemacs-set-move-word map)
+    (ergoemacs-set-move-bracket-reduction map)
+    
+    (ergoemacs-set-copy map)
+    (ergoemacs-set-search-reduction map)
+    (ergoemacs-set-switch-reduction map)
+  
+    (ergoemacs-set-execute-reduction map)
+    (ergoemacs-set-move-extra-reduction map)
+    (ergoemacs-set-kill-line map)
+    
+    (ergoemacs-set-text-transform map)
+    (ergoemacs-set-select-items map)
+    
+    (ergoemacs-fix-arrow-keys map)
+    (ergoemacs-set-apps map))
+  
 
   (ergoemacs-install-isearch-mode)
   (ergoemacs-install-comint-bindings)
@@ -1316,25 +1317,28 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-unset-keys ergoemacs-override-keymap)
   (ergoemacs-set-standard-vars)
 
+
+
   (ergoemacs-set-standard-fixed ergoemacs-override-keymap)
-  (ergoemacs-set-move-char ergoemacs-override-keymap)
-  (ergoemacs-set-move-buffer ergoemacs-override-keymap)
-  (ergoemacs-set-move-bracket ergoemacs-override-keymap)
-  (ergoemacs-set-move-word ergoemacs-override-keymap)
-  (ergoemacs-set-move-paragraph ergoemacs-override-keymap)
-  (ergoemacs-set-move-line ergoemacs-override-keymap)
-  (ergoemacs-set-move-page ergoemacs-override-keymap)
-  (ergoemacs-set-move-buffer ergoemacs-override-keymap)
-  (ergoemacs-set-move-bracket ergoemacs-override-keymap)
-  (ergoemacs-set-copy ergoemacs-override-keymap)
-  (ergoemacs-set-search ergoemacs-override-keymap)
-  (ergoemacs-set-switch ergoemacs-override-keymap)
-  (ergoemacs-set-execute ergoemacs-override-keymap)
-  (ergoemacs-set-misc ergoemacs-override-keymap)
-  (ergoemacs-set-kill-line ergoemacs-override-keymap)
-  (ergoemacs-set-text-transform ergoemacs-override-keymap)
-  (ergoemacs-set-select-items ergoemacs-override-keymap)
-  (ergoemacs-fix-arrow-keys ergoemacs-override-keymap)
+  (dolist (map (list ergoemacs-override-keymap ergoemacs-mode-term-raw-keymap))
+    (ergoemacs-set-move-char map)
+    (ergoemacs-set-move-buffer map)
+    (ergoemacs-set-move-bracket map)
+    (ergoemacs-set-move-word map)
+    (ergoemacs-set-move-paragraph map)
+    (ergoemacs-set-move-line map)
+    (ergoemacs-set-move-page map)
+    (ergoemacs-set-move-buffer map)
+    (ergoemacs-set-move-bracket map)
+    (ergoemacs-set-copy map)
+    (ergoemacs-set-search map)
+    (ergoemacs-set-switch map)
+    (ergoemacs-set-execute map)
+    (ergoemacs-set-misc map)
+    (ergoemacs-set-kill-line map)
+    (ergoemacs-set-text-transform map)
+    (ergoemacs-set-select-items map)
+    (ergoemacs-fix-arrow-keys map))
   
   (ergoemacs-install-isearch-mode)
   (ergoemacs-install-comint-bindings)

@@ -420,9 +420,12 @@ after initializing ergoemacs-mode.
 
   ;; Enable shifted fallbacks for C-x and C-c when region is active
 
+(defvar ergoemacs-mode-term-raw-keymap (make-sparse-keymap)
+  "This is the `ergoemacs-mode' terminal raw keymap.  Only Meta/alt keys are applied.")
 (defun ergoemacs-setup-override-keymap ()
   "Setup `ergoemacs-mode' keymaps."
-  (setq ergoemacs-override-alist `((ergoemacs--ena-prefix-override-keymap . ,ergoemacs--prefix-override-keymap)
+  (setq ergoemacs-override-alist `((ergeoemacs-mode-term-raw-mode . ,ergoemacs-mode-term-raw-keymap)
+                                   (ergoemacs--ena-prefix-override-keymap . ,ergoemacs--prefix-override-keymap)
                                    (ergoemacs--ena-prefix-repeat-keymap .   ,ergoemacs--prefix-repeat-keymap)
                                    (ergoemacs--ena-region-keymap . ,ergoemacs-mark-active-keymap)
                                    (ergoemacs-mode . ,ergoemacs-user-keymap)
