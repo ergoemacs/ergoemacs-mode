@@ -379,10 +379,6 @@ These keys do not depend on the layout."
   (define-key keymap (kbd "C-S-o") 'ergoemacs-open-in-external-app)
   (define-key keymap (kbd "C-S-t") 'ergoemacs-open-last-closed))
 
-(defun ergoemacs-set-help (keymap)
-  "Help change for ergoemacs-mode for KEYMAP."
-  (define-key keymap (kbd "C-h '") 'ergoemacs-describe-current-theme))
-
 (defun ergoemacs-set-move-char (keymap)
   "Movement by Characters & Set Mark for KEYMAP."
   (ergoemacs-define-key keymap (kbd "M-j") 'backward-char)
@@ -1282,7 +1278,6 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-standard-vars)
 
   (ergoemacs-set-standard-fixed ergoemacs-override-keymap)
-  (ergoemacs-set-help ergoemacs-override-keymap)
   (ergoemacs-set-move-char ergoemacs-override-keymap)
   (ergoemacs-set-move-buffer-reduction ergoemacs-override-keymap)
   (ergoemacs-set-move-bracket ergoemacs-override-keymap)
@@ -1322,7 +1317,6 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-standard-vars)
 
   (ergoemacs-set-standard-fixed ergoemacs-override-keymap)
-  (ergoemacs-set-help ergoemacs-override-keymap)
   (ergoemacs-set-move-char ergoemacs-override-keymap)
   (ergoemacs-set-move-buffer ergoemacs-override-keymap)
   (ergoemacs-set-move-bracket ergoemacs-override-keymap)
