@@ -253,7 +253,6 @@ ignore the post-command hooks.")
 (defvar ergoemacs-mode)
 (defvar ergoemacs-command-loop-type)
 (defvar ergoemacs-keymap)
-(defvar ergoemacs-ctl-c-or-ctl-x-delay)
 
 
 (defun ergoemacs-command-loop--modal-show ()
@@ -731,18 +730,13 @@ inconjunction with `input-method-function' to translate keys if
     (while (and current-test-key
                 (ergoemacs-keymapp test-ret))
       ;; The translation needs more keys...
-      (if timeout-key
-	  (setq next-key (with-timeout (ergoemacs-ctl-c-or-ctl-x-delay
-					(progn
-					  (setq ergoemacs-command-loop--decode-event-timeout-p t)
-					  nil))
-			   (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key)))
-	(setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key)))
+      
+	  (setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key))
       (when next-key ;; Since a key was read, save it to be read later.
         (push last-command-event new-ergoemacs-input))
       (if next-key
           (setq current-test-key (ergoemacs :combine current-test-key next-key)
-		timeout-key (key-binding (vconcat current-test-key [ergoemacs-timeout]))
+		        timeout-key (key-binding (vconcat current-test-key [ergoemacs-timeout]))
                 test-ret (lookup-key keymap current-test-key))
         (setq current-test-key nil)))
     ;; Change strings to emacs keys.
@@ -1754,8 +1748,8 @@ They don't exactly behave like their Emacs equivalents."
     (cancel-timer ergoemacs-command-loop--timer)
     (setq ergoemacs-command-loop--timer nil)))
 
-(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--install-timer)
-(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--remove-timer)
+;(add-hook 'ergoemacs-mode-startup-hook #'ergoemacs-command-loop--install-timer)
+;(add-hook 'ergoemacs-mode-shutdown-hook #'ergoemacs-command-loop--remove-timer)
 
 (defun ergoemacs-command-loop--ignore (&rest _ignore)
   "Do nothing and return nil.
