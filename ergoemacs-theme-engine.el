@@ -127,15 +127,8 @@
                   (setq ret (concat ret "\n\"\\"
                                     (replace-regexp-in-string "M-" "e" key-string t)
                                     "\": "
-                                    (symbol-name (nth 0 cmds))
-                                    )
-                        )
-                )
-              )
-            )
-          )
-        t)
-      )
+                                    (symbol-name (nth 0 cmds))))))))
+        t))
     (with-temp-file "~/.inputrc"
       (insert ret)
       (insert "\n"))
