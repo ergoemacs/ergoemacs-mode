@@ -118,7 +118,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
-
 (defcustom ergoemacs-mode-line t
   "Determines when the ergoemacs-mode modeline indicator is shown."
   :type '(choice
@@ -154,6 +153,9 @@ The TEXT will be what the mode-line is set to be."
      (2 font-lock-constant-face nil t))))
 
 (font-lock-add-keywords 'emacs-lisp-mode ergoemacs-font-lock-keywords)
+
+(defvar ergoemacs--temporary-disable nil
+  "Variable for temporarily disabling `ergoemacs-mode'")
 
 
 

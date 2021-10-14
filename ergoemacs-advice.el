@@ -96,7 +96,7 @@ TYPE is the type of translation installed."
 
 (defun ergoemacs-advice-undefined (orig-fun)
   "Allow `ergoemacs-mode' to display keys, and intercept ending <apps> keys."
-  (if ergoemacs-mode
+  (if (and ergoemacs-mode (not ergoemacs--temporary-disable))
       (ergoemacs-mode--undefined-advice)
     (call-interactively orig-fun)))
  

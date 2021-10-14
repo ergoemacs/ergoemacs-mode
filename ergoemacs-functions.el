@@ -95,12 +95,37 @@
 (declare-function w32-long-file-name "compat")
 (declare-function term-paste "term")
 (declare-function calc-yank "calc-yank")
+(defvar ergoemacs-temporary-disable)
 
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
   "Backward char will edit isearch."
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defun ergoemacs--send-emacs-key (key)
+  "This replays the events from the intial key press.
+
+REPEAT is the flag that tells it if is repeated environmennt."
+  ;; Don't record this command
+  (setq ergoemacs--temporary-disable t
+        this-command last-command)
+  ;; Restore the prefix arg
+  (prefix-command-preserve-state)
+  ;; Push the key back on the event queue
+  (setq unread-command-events (list (cons 'no-record key))))
+
+(defun ergoemacs-kill-line (&optional arg)
+  "Kill the rest of the (visual) line.
+
+This is often `kill-visual-line' or `kill-line'. 
+
+The ARG was is used in the above functions, and is called by 
+temporarily turning off `ergoemacs-mode' and then sending the 
+emacs defualt kill line control k key to the `unread-command-events'"
+  (interactive "P")
+  (ergoemacs--send-emacs-key ?\C-k))
+
+    
 
 (defvar ergoemacs-delete-functions
   '(delete-backward-char delete-char kill-word backward-kill-word)
