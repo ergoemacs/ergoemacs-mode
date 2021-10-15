@@ -102,22 +102,32 @@
   :type 'boolean
   :group 'ergoemacs-mode)
 
-(defun ergoemacs--send-emacs-key (key)
+(defun ergoemacs--send-emacs-key (key &optional key2 key3)
   "This replays the events from the intial key press.
 
-REPEAT is the flag that tells it if is repeated environmennt."
+KEY is the first key in the sequence.
+KEY2 is the optional second key in the sequence.
+KEY3 is the optional third key in the sequence."
   ;; Don't record this command
   (setq ergoemacs--temporary-disable t
         this-command last-command)
   ;; Restore the prefix arg
   (prefix-command-preserve-state)
   ;; Push the key back on the event queue
-  (setq unread-command-events (list (cons 'no-record key))))
+  (when key3
+    (setq unread-command-events (cons (cons 'no-record key3)
+                                      unread-command-events)))
+  (when key2
+    (setq unread-command-events (cons (cons 'no-record key2)
+                                      unread-command-events)))
+  (setq unread-command-events (cons (cons 'no-record key)
+                                    unread-command-events)))
 
-
-
+(defun ergoemacs-kill-line ()
+  "Ergoemacs replacement for `kill-line' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-k))
     
-
 (defvar ergoemacs-delete-functions
   '(delete-backward-char delete-char kill-word backward-kill-word)
   "Defines deletion functions that ergoemacs is aware of.")
@@ -1122,18 +1132,6 @@ Subsequent calls expands the selection to larger semantic unit."
       (mark-sexp -1))))
 
 ;;; TEXT TRANSFORMATION RELATED
-
-(defun ergoemacs-kill-line (&optional arg)
-  "Kill the rest of the (visual) line.
-
-This is often `kill-visual-line' or `kill-line'. 
-
-The ARG was is used in the above functions, and is called by 
-temporarily turning off `ergoemacs-mode' and then sending the 
-emacs defualt kill line control k key to the `unread-command-events'"
-  (interactive "P")
-  (ergoemacs--send-emacs-key ?\C-k))
-
 (defun ergoemacs-kill-line-backward (&optional number)
   "Kill text between the beginning of the line to the cursor position.
 If there's no text, delete the previous line ending."

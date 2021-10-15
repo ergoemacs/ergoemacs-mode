@@ -544,7 +544,7 @@ These keys do not depend on the layout."
 
 (defun ergoemacs-set-kill-line (keymap)
   "Kill Line for KEYMAP."
-  (ergoemacs-define-key keymap (kbd "M-g") 'ergoemacs-kill-line)
+  (ergoemacs-define-key keymap (kbd "M-g") 'kill-line)
   (ergoemacs-define-key keymap (kbd "M-G") 'ergoemacs-kill-line-backward))
 
 (defun ergoemacs-set-text-transform (keymap)

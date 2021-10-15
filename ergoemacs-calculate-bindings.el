@@ -95,7 +95,7 @@
     ("C-x b" switch-to-buffer)
     ("C-x C-b" ibuffer)
     ("C-x C-b" execute-extended-command)
-    ("C-k" ergoemacs-kill-line)
+    ("C-k" kill-line)
     ("M-TAB" ergoemacs-call-keyword-completion))
   "Ergoemacs short command names."
   :group 'ergoemacs-themes

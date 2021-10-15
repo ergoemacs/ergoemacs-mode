@@ -126,6 +126,16 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 	  (const :tag "Never Show Mode Line" nil))
   :group 'ergoemacs-mode)
 
+(defcustom ergoemacs-mode-send-emacs-keys t
+  "When t, send corresponding Emacs keys for `ergoemacs-mode' commands."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defvar ergoemacs--send-emacs-keys-map (let ((map (make-sparse-keymap)))
+                                         (define-key map [remap kill-line] 'ergoemacs-kill-line)
+                                         map)
+  "This defines the remaps for the `ergoemacs-mode-send-emacs-keys' commands.")
+
 (defun ergoemacs-mode-line (&optional text)
   "Set ergoemacs-mode-line.
 
@@ -182,6 +192,7 @@ The TEXT will be what the mode-line is set to be."
 
 (defvar ergoemacs-post-command-hook nil)
 (defvar ergeoemacs-mode-term-raw-mode nil)
+(defvar ergoemacs-mode-regular nil)
 (defun ergoemacs-post-command-hook ()
   "Run `ergoemacs-mode' post command hooks."
   (when ergoemacs-mode
@@ -253,6 +264,7 @@ IS-ERGOEMACS is true when the `ergoemacs-mode' keybindings are installed."
   (dolist (k ergoemacs-mode--save-keymaps-list)
     (set k (ergoemacs-mode--get-map k is-ergoemacs))))
 
+
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -279,7 +291,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
         (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
         (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
-
+        (setq ergoemacs-mode-regular t)
         (setq ergoemacs-mode--default-frame-alist nil)
         (dolist (elt (reverse default-frame-alist))
           (push elt ergoemacs-mode--default-frame-alist))
@@ -317,6 +329,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
     (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
     (ergoemacs-mode--restore-maps)
     (define-key global-map [menu-bar] ergoemacs-old-menu)
+    (setq ergoemacs-mode-regular nil)
     (message "Ergoemacs-mode turned OFF.")))
 
 (defvar ergoemacs-translate--event-hash (make-hash-table)
@@ -430,9 +443,10 @@ after initializing ergoemacs-mode.
                                    (ergoemacs--ena-prefix-override-keymap . ,ergoemacs--prefix-override-keymap)
                                    (ergoemacs--ena-prefix-repeat-keymap .   ,ergoemacs--prefix-repeat-keymap)
                                    (ergoemacs--ena-region-keymap . ,ergoemacs-mark-active-keymap)
-                                   (ergoemacs-mode . ,ergoemacs-user-keymap)
-                                   (ergoemacs-mode . ,ergoemacs-override-keymap)
-                                   (ergoemacs-mode . ,ergoemacs-keymap)))
+                                   (ergoemacs-mode-regular . ,ergoemacs-user-keymap)
+                                   (ergoemacs-mode-regular . ,ergoemacs-override-keymap)
+                                   (ergoemacs-mode-regular . ,ergoemacs-keymap)
+                                   (ergoemacs-mode-send-emacs-keys . ,ergoemacs--send-emacs-keys-map)))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
   (advice-add 'undefined :around #'ergoemacs-advice-undefined)
   (advice-add 'read-key :before #'ergoemacs-advice-read-key))

@@ -120,21 +120,25 @@ This override is enabled for active regions before the copy and paste are enable
 (defvar ergeoemacs-mode-term-raw-mode)
 (defvar ergoemacs-mode)
 (defvar ergoemacs--temporary-disable)
-
+(defvar ergoemacs-mode-regular)
+(defvar ergoemacs-mode-send-emacs-keys)
 (defun ergoemacs--select-keymaps ()
   "Setup conditions for selecting the proper keymaps in `ergoemacs--keymap-alist'."
   (when ergoemacs--temporary-disable
     ;; The temporary disable commands set `ergoemacs--temporary-disable' to t
     ;; The first time when the keys are put on the `unread-command-events', `ergoemacs-mode' is disabled
     ;; The second command is executed, and `ergoemacs-mode' is turned back on and `ergoemacs--temporary-disable' is to nil
-    (if ergoemacs-mode
+    (if ergoemacs-mode-regular
         (progn
           (setq ergoemacs--ena-region-keymap nil
               ergoemacs--ena-prefix-override-keymap nil
               ergoemacs--ena-prefix-repeat-keymap nil
-              ergoemacs-mode nil))
+              ergoemacs-mode-regular nil
+              ergoemacs-mode-send-emacs-keys nil))
       (setq ergoemacs--temporary-disable nil
-            ergoemacs-mode t)))
+            ergoemacs-mode-regular t
+            ;; This assumes that `ergoemacs--tempoary-disable' is only called on the remap keys layer
+            ergoemacs-mode-send-emacs-keys t)))
   (when ergoemacs-mode
     ;; The prefix override (when mark-active) operates in three substates:
     ;; [1] Before using a prefix key
@@ -263,9 +267,10 @@ Pass prefix ARG to the respective copy functions."
 
 (defun ergoemacs--cua-post-command-handler ()
   "Post command hook for `ergoemacs-mode' based cua keys."
-  (condition-case nil
+  (when ergoemacs-mode
+    (condition-case nil
       (ergoemacs--cua-post-command-handler-1)
-    (error nil)))
+    (error nil))))
 
 (add-hook 'post-command-hook #'ergoemacs--cua-post-command-handler)
 (add-hook 'pre-command-hook  #'ergoemacs--cua-pre-command-handler)
