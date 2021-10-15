@@ -132,11 +132,9 @@ This override is enabled for active regions before the copy and paste are enable
           (setq ergoemacs--ena-region-keymap nil
               ergoemacs--ena-prefix-override-keymap nil
               ergoemacs--ena-prefix-repeat-keymap nil
-              ergoemacs-mode nil)
-          (message "disable ergoemacs again"))
+              ergoemacs-mode nil))
       (setq ergoemacs--temporary-disable nil
-            ergoemacs-mode t))
-    (message "enable ergoemacs again"))
+            ergoemacs-mode t)))
   (when ergoemacs-mode
     ;; The prefix override (when mark-active) operates in three substates:
     ;; [1] Before using a prefix key

@@ -114,16 +114,7 @@ REPEAT is the flag that tells it if is repeated environmennt."
   ;; Push the key back on the event queue
   (setq unread-command-events (list (cons 'no-record key))))
 
-(defun ergoemacs-kill-line (&optional arg)
-  "Kill the rest of the (visual) line.
 
-This is often `kill-visual-line' or `kill-line'. 
-
-The ARG was is used in the above functions, and is called by 
-temporarily turning off `ergoemacs-mode' and then sending the 
-emacs defualt kill line control k key to the `unread-command-events'"
-  (interactive "P")
-  (ergoemacs--send-emacs-key ?\C-k))
 
     
 
@@ -1132,14 +1123,26 @@ Subsequent calls expands the selection to larger semantic unit."
 
 ;;; TEXT TRANSFORMATION RELATED
 
+(defun ergoemacs-kill-line (&optional arg)
+  "Kill the rest of the (visual) line.
+
+This is often `kill-visual-line' or `kill-line'. 
+
+The ARG was is used in the above functions, and is called by 
+temporarily turning off `ergoemacs-mode' and then sending the 
+emacs defualt kill line control k key to the `unread-command-events'"
+  (interactive "P")
+  (ergoemacs--send-emacs-key ?\C-k))
+
 (defun ergoemacs-kill-line-backward (&optional number)
   "Kill text between the beginning of the line to the cursor position.
 If there's no text, delete the previous line ending."
   (interactive "p")
-  (if (and (= number 1) (looking-back "\n" nil))
-      (delete-char -1)
-    (setq current-prefix-arg (- 1 number))
-    (kill-line)))
+  (save-match-data
+    (if (looking-back "\n" nil) 
+        (delete-char -1)
+      (setq current-prefix-arg '(0))
+      (ergoemacs--send-emacs-key ?\C-k))))
 
 (defun ergoemacs-move-cursor-previous-pane (&optional number)
   "Move cursor to the previous pane."
