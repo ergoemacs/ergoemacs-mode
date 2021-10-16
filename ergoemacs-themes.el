@@ -378,7 +378,9 @@ These keys do not depend on the layout."
   (define-key keymap (kbd "C-S-t") 'ergoemacs-open-last-closed)
   
   (define-key keymap (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
-  (define-key keymap (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region))
+  (define-key keymap (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
+
+  (define-key keymap (kbd "C-h '") 'ergoemacs-describe-current-theme))
 
 (defun ergoemacs-set-move-char (keymap)
   "Movement by Characters & Set Mark for KEYMAP."
@@ -1277,7 +1279,6 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   (ergoemacs-set-standard-vars)
 
   (ergoemacs-set-standard-fixed ergoemacs-override-keymap)
-
   (dolist (map (list ergoemacs-override-keymap ergoemacs-mode-term-raw-keymap))
     (ergoemacs-set-move-char map)
     (ergoemacs-set-move-buffer-reduction map)
