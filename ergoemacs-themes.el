@@ -607,7 +607,7 @@ These keys do not depend on the layout."
   (ergoemacs-define-key keymap (kbd "<apps> x")  'ergoemacs-cut-line-or-region)
   (ergoemacs-define-key keymap (kbd "<apps> c")  'ergoemacs-copy-line-or-region)
   (ergoemacs-define-key keymap (kbd "<apps> v")  'ergoemacs-paste)
-  (ergoemacs-define-key keymap (kbd "<apps> b")  '(redo undo-tree-redo ergoemacs-redo))
+  (ergoemacs-define-key keymap (kbd "<apps> b")  'ergoemacs-redo)
   (ergoemacs-define-key keymap (kbd "<apps> t")  'switch-to-buffer)
   (ergoemacs-define-key keymap (kbd "<apps> z")  'undo)
   (ergoemacs-define-key keymap (kbd "<apps> r")  'goto-map) ;; Already in CUA)
