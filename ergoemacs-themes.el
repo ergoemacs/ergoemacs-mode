@@ -481,7 +481,9 @@ These keys do not depend on the layout."
   (put 'isearch-forward
        :advertised-binding (ergoemacs-translate--event-layout
                             (vconcat (listify-key-sequence (kbd "M-;")))))
-  (ergoemacs-define-key keymap (kbd "M-:") 'isearch-backward))
+  (ergoemacs-define-key keymap (kbd "M-:") 'isearch-backward)
+  (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
+  (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer))
 
 (defun ergoemacs-set-search-reduction (keymap)
   "Search and Replace with KEYMAP."
