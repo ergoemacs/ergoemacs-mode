@@ -431,7 +431,7 @@
                (ergoemacs-key-description--modifier 'shift)
                (format " == %s shift" elt)))
       ((eq elt 'title)
-       (concat lay
+       (concat lay (or (and ergoemacs-theme (concat " (" ergoemacs-theme ")")) "")
                (or (and ergoemacs-theme--svg-prefix
                         (concat " for "
                                 (ergoemacs-key-description ergoemacs-theme--svg-prefix)))
