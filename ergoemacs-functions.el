@@ -127,6 +127,11 @@ KEY3 is the optional third key in the sequence."
   "Ergoemacs replacement for `kill-line' using `ergoemacs--send-emacs-key'."
   (interactive)
   (ergoemacs--send-emacs-key ?\C-k))
+
+(defun ergoemacs-mark-whole-buffer ()
+  "Ergoemacs replacement for `mark-whole-buffer' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?h))
     
 (defvar ergoemacs-delete-functions
   '(delete-backward-char delete-char kill-word backward-kill-word)

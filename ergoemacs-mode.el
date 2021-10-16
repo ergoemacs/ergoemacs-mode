@@ -133,6 +133,7 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 
 (defvar ergoemacs--send-emacs-keys-map (let ((map (make-sparse-keymap)))
                                          (define-key map [remap kill-line] 'ergoemacs-kill-line)
+                                         (define-key map [remap mark-whole-buffer] 'ergoemacs-mark-whole-buffer)
                                          map)
   "This defines the remaps for the `ergoemacs-mode-send-emacs-keys' commands.")
 
