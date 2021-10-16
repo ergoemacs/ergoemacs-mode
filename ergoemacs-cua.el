@@ -113,21 +113,38 @@ This is also used to select the region keymaps.")
 
 This override is enabled for active regions before the copy and paste are enabled.")
 
-
-
 (defvar ergoemacs-inhibit-cua-keys nil
   "Buffer-local variable that may disable the CUA keymappings.")
 (make-variable-buffer-local 'ergoemacs-inhibit-cua-keys)
 
 (defvar ergeoemacs-mode-term-raw-mode)
-
+(defvar ergoemacs-mode)
+(defvar ergoemacs--temporary-disable)
+(defvar ergoemacs-mode-regular)
+(defvar ergoemacs-mode-send-emacs-keys)
 (defun ergoemacs--select-keymaps ()
   "Setup conditions for selecting the proper keymaps in `ergoemacs--keymap-alist'."
-  ;; The prefix override (when mark-active) operates in three substates:
-  ;; [1] Before using a prefix key
-  ;; [2] Immediately after using a prefix key
-  ;; [3] A fraction of a second later
-  (setq ergoemacs--ena-region-keymap ; Determines if the ergion is active
+  (when ergoemacs--temporary-disable
+    ;; The temporary disable commands set `ergoemacs--temporary-disable' to t
+    ;; The first time when the keys are put on the `unread-command-events', `ergoemacs-mode' is disabled
+    ;; The second command is executed, and `ergoemacs-mode' is turned back on and `ergoemacs--temporary-disable' is to nil
+    (if ergoemacs-mode-regular
+        (progn
+          (setq ergoemacs--ena-region-keymap nil
+              ergoemacs--ena-prefix-override-keymap nil
+              ergoemacs--ena-prefix-repeat-keymap nil
+              ergoemacs-mode-regular nil
+              ergoemacs-mode-send-emacs-keys nil))
+      (setq ergoemacs--temporary-disable nil
+            ergoemacs-mode-regular t
+            ;; This assumes that `ergoemacs--tempoary-disable' is only called on the remap keys layer
+            ergoemacs-mode-send-emacs-keys t)))
+  (when ergoemacs-mode
+    ;; The prefix override (when mark-active) operates in three substates:
+    ;; [1] Before using a prefix key
+    ;; [2] Immediately after using a prefix key
+    ;; [3] A fraction of a second later
+    (setq ergoemacs--ena-region-keymap ; Determines if the ergion is active
         (and (not ergeoemacs-mode-term-raw-mode) (region-active-p) (not deactivate-mark))
         ;; Enable Override -- This is the first state where the keys are intercepted; cua state [1]
         ergoemacs--ena-prefix-override-keymap
@@ -144,10 +161,7 @@ This override is enabled for active regions before the copy and paste are enable
         (and ergoemacs--ena-region-keymap
              (not ergeoemacs-mode-term-raw-mode)
 	         (or (timerp ergoemacs--prefix-override-timer)
-		         (eq ergoemacs--prefix-override-timer 'shift))))
-  ;; In ergoemacs-mode the corresponding `cua--ena-cua-keys-keymap' and `cua--ena-global-mark-keymap' are not needed or used
-  (message "r: %s po: %s pr: %s")
-  )
+		         (eq ergoemacs--prefix-override-timer 'shift))))))
 
 (defun ergoemacs--prefix-override-timeout ()
   "This is whap happens on the `ergoemacs-mode' timeout for C-c and C-v are supplied."
@@ -255,8 +269,8 @@ Pass prefix ARG to the respective copy functions."
   "Post command hook for `ergoemacs-mode' based cua keys."
   (when ergoemacs-mode
     (condition-case nil
-        (ergoemacs--cua-post-command-handler-1)
-      (error nil))))
+      (ergoemacs--cua-post-command-handler-1)
+    (error nil))))
 
 (add-hook 'post-command-hook #'ergoemacs--cua-post-command-handler)
 (add-hook 'pre-command-hook  #'ergoemacs--cua-pre-command-handler)

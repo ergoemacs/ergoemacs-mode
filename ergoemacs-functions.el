@@ -95,12 +95,217 @@
 (declare-function w32-long-file-name "compat")
 (declare-function term-paste "term")
 (declare-function calc-yank "calc-yank")
+(defvar ergoemacs-temporary-disable)
 
 (defcustom ergoemacs-isearch-backward-char-to-edit nil
   "Backward char will edit isearch."
   :type 'boolean
   :group 'ergoemacs-mode)
 
+(defun ergoemacs--send-emacs-key (key &optional key2 key3)
+  "This replays the events from the intial key press.
+
+KEY is the first key in the sequence.
+KEY2 is the optional second key in the sequence.
+KEY3 is the optional third key in the sequence."
+  ;; Don't record this command
+  (setq ergoemacs--temporary-disable t
+        this-command last-command)
+  ;; Restore the prefix arg
+  (prefix-command-preserve-state)
+  ;; Push the key back on the event queue
+  (when key3
+    (setq unread-command-events (cons (cons 'no-record key3)
+                                      unread-command-events)))
+  (when key2
+    (setq unread-command-events (cons (cons 'no-record key2)
+                                      unread-command-events)))
+  (setq unread-command-events (cons (cons 'no-record key)
+                                    unread-command-events)))
+
+(defun ergoemacs-kill-line ()
+  "Ergoemacs replacement for `kill-line' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-k))
+
+(defun ergoemacs-mark-whole-buffer ()
+  "Ergoemacs replacement for `mark-whole-buffer' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?h))
+
+(defun ergoemacs-find-file ()
+  "Ergoemacs replacement for `find-file' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?\C-f))
+
+(defun ergoemacs-save-buffer ()
+  "Ergoemacs replacement for `save-buffer' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?\C-s))
+
+(defun ergoemacs-write-file ()
+  "Ergoemacs replacement for `write-file' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?\C-w))
+
+(defun ergoemacs-goto-line ()
+  "Ergoemacs replacement for `write-file' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-g ?\M-g))
+
+(defun ergoemacs-delete-char ()
+  "Ergoemacs replacement for `delete-char' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-d))
+
+(defun ergoemacs-move-beginning-of-line ()
+  "Ergoemacs replacement for `move-beginning-of-line' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key ?\C-\S-a)
+    (ergoemacs--send-emacs-key ?\C-a)))
+
+(defun ergoemacs-move-end-of-line ()
+  "Ergoemacs replacement for `move-end-of-line' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key ?\C-\S-e)
+    (ergoemacs--send-emacs-key ?\C-e)))
+
+(defun ergoemacs-set-mark-command ()
+  "Ergoemacs replacement for `set-mark-command' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-\ ))
+
+(defun ergoemacs-delete-backward-char ()
+  "Ergoemacs replacement for `delete-backward-char' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  ;; 127 = DEL
+  (ergoemacs--send-emacs-key 127))
+
+(defun ergoemacs-delete-char ()
+  "Ergoemacs replacement for `delete-char' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-d))
+
+(defun ergoemacs-kill-word ()
+  "Ergoemacs replacement for `kill-word' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-d))
+
+(defun ergoemacs-backward-word ()
+  "Ergoemacs replacement for `backward-word' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key ?\M-\S-b)
+    (ergoemacs--send-emacs-key ?\M-b)))
+
+(defun ergoemacs-backward-kill-word ()
+  "Ergoemacs replacement for `backward-kill-word' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key 'C-backspace))
+
+(defun ergoemacs-forward-word ()
+  "Ergoemacs replacement for `forward-word' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key ?\M-\S-f)
+    (ergoemacs--send-emacs-key ?\M-f)))
+
+(defun ergoemacs-backward-paragraph ()
+  "Ergoemacs replacement for `backward-paragraph' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-\{))
+
+(defun ergoemacs-forward-paragraph ()
+  "Ergoemacs replacement for `forward-paragraph' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-\}))
+
+(defun ergoemacs-scroll-down-command ()
+  "Ergoemacs replacement for `scroll-down-command' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-v))
+
+(defun ergoemacs-scroll-up-command ()
+  "Ergoemacs replacement for `scroll-up-command' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-v))
+
+(defun ergoemacs-beginning-of-buffer ()
+  "Ergoemacs replacement for `beginning-of-buffer' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-\<))
+
+(defun ergoemacs-end-of-buffer ()
+  "Ergoemacs replacement for `end-of-buffer' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-\>))
+
+(defun ergoemacs-query-replace ()
+  "Ergoemacs replacement for `query-replace' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-\%))
+
+(defun ergoemacs-query-replace-regexp ()
+  "Ergoemacs replacement for `query-replace-regexp' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-\M-\%))
+
+(defun ergoemacs-other-window ()
+  "Ergoemacs replacement for `other-window' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?o))
+
+(defun ergoemacs-delete-other-windows ()
+  "Ergoemacs replacement for `delete-other-windows' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?1))
+
+(defun ergoemacs-delete-window ()
+  "Ergoemacs replacement for `delete-window' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?0))
+
+(defun ergoemacs-split-window-below ()
+  "Ergoemacs replacement for `split-window-below' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?2))
+
+(defun ergoemacs-split-window-right ()
+  "Ergoemacs replacement for `split-window-right' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?3))
+
+(defun ergoemacs-switch-to-buffer ()
+  "Ergoemacs replacement for `switch-to-buffer' using  `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-x ?b))
+
+(defun ergoemacs-shell-command ()
+  "Ergoemacs replacement for `shell-command' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-\!))
+
+(defun ergoemacs-recenter-top-bottom ()
+  "Ergoemacs replacement for `recenter-top-bottom' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\C-l))
+
+(defun ergoemacs-comment-dwim ()
+  "Ergoemacs replacement for `comment-dwim' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-\;))
+
+(defun ergoemacs-delete-horizontal-space ()
+  "Ergoemacs replacement for `delete-horizontal-space' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-\\))
+
+(defun ergoemacs-mark-paragraph ()
+  "Ergoemacs replacement for `mark-paragraph' using `ergoemacs--send-emacs-key'."
+  (interactive)
+  (ergoemacs--send-emacs-key ?\M-\S-\ ))
 
 (defvar ergoemacs-delete-functions
   '(delete-backward-char delete-char kill-word backward-kill-word)
@@ -1106,15 +1311,15 @@ Subsequent calls expands the selection to larger semantic unit."
       (mark-sexp -1))))
 
 ;;; TEXT TRANSFORMATION RELATED
-
 (defun ergoemacs-kill-line-backward (&optional number)
   "Kill text between the beginning of the line to the cursor position.
 If there's no text, delete the previous line ending."
   (interactive "p")
-  (if (and (= number 1) (looking-back "\n" nil))
-      (delete-char -1)
-    (setq current-prefix-arg (- 1 number))
-    (kill-line)))
+  (save-match-data
+    (if (looking-back "\n" nil) 
+        (delete-char -1)
+      (setq current-prefix-arg '(0))
+      (ergoemacs--send-emacs-key ?\C-k))))
 
 (defun ergoemacs-move-cursor-previous-pane (&optional number)
   "Move cursor to the previous pane."

@@ -118,7 +118,6 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
   :initialize #'custom-initialize-default
   :group 'ergoemacs-mode)
 
-
 (defcustom ergoemacs-mode-line t
   "Determines when the ergoemacs-mode modeline indicator is shown."
   :type '(choice
@@ -126,6 +125,50 @@ Added beginning-of-buffer Alt+n (QWERTY notation) and end-of-buffer Alt+Shift+n"
 	  (const :tag "Do not show layout" no-layout)
 	  (const :tag "Never Show Mode Line" nil))
   :group 'ergoemacs-mode)
+
+(defcustom ergoemacs-mode-send-emacs-keys t
+  "When t, send corresponding Emacs keys for `ergoemacs-mode' commands."
+  :type 'boolean
+  :group 'ergoemacs-mode)
+
+(defvar ergoemacs--send-emacs-keys-map (let ((map (make-sparse-keymap)))
+                                         (define-key map [remap kill-line] 'ergoemacs-kill-line)
+                                         (define-key map [remap mark-whole-buffer] 'ergoemacs-mark-whole-buffer)
+                                         (define-key map [remap find-file] 'ergoemacs-find-file)
+                                         (define-key map [remap save-buffer] 'ergoemacs-save-buffer)
+                                         (define-key map [remap write-file] 'ergoemacs-write-file)
+                                         (define-key map [remap goto-line] 'ergoemacs-goto-line)
+                                         (define-key map [remap delete-char] 'ergoemacs-delete-char)
+                                         (define-key map [remap move-beginning-of-line] 'ergoemacs-move-beginning-of-line)
+                                         (define-key map [remap move-end-of-line] 'ergoemacs-move-end-of-line)
+                                         (define-key map [remap set-mark-command] 'ergoemacs-set-mark-command)
+                                         (define-key map [remap delete-backward-char] 'ergoemacs-delete-backward-char)
+                                         (define-key map [remap delete-char] 'ergoemacs-delete-char)
+                                         (define-key map [remap kill-word] 'ergoemacs-kill-word)
+                                         (define-key map [remap backward-kill-word] 'ergoemacs-backward-kill-word)
+                                         (define-key map [remap backward-word] 'ergoemacs-backward-word)
+                                         (define-key map [remap forward-word] 'ergoemacs-forward-word)
+                                         (define-key map [remap backward-paragraph] 'ergoemacs-backward-paragraph)
+                                         (define-key map [remap forward-paragraph] 'ergoemacs-forward-paragraph)
+                                         (define-key map [remap scroll-down-command] 'ergoemacs-scroll-down-command)
+                                         (define-key map [remap scroll-up-command] 'ergoemacs-scroll-up-command)
+                                         (define-key map [remap end-of-buffer] 'ergoemacs-end-of-buffer)
+                                         (define-key map [remap beginning-of-buffer] 'ergoemacs-beginning-of-buffer)
+                                         (define-key map [remap query-replace] 'ergoemacs-query-replace)
+                                         (define-key map [remap query-replace-regexp] 'ergoemacs-query-replace-regexp)
+                                         (define-key map [remap other-window] 'ergoemacs-other-window)
+                                         (define-key map [remap delete-other-windows] 'ergoemacs-delete-other-windows)
+                                         (define-key map [remap delete-window] 'ergoemacs-delete-window)
+                                         (define-key map [remap split-window-below] 'ergoemacs-split-window-below)
+                                         (define-key map [remap split-window-right] 'ergoemacs-split-window-right)
+                                         (define-key map [remap switch-to-buffer] 'ergoemacs-switch-to-buffer)
+                                         (define-key map [remap recenter-top-bottom] 'ergoemacs-recenter-top-bottom)
+                                         (define-key map [remap shell-command] 'ergoemacs-shell-command)
+                                         (define-key map [remap comment-dwim] 'ergoemacs-comment-dwim)
+                                         (define-key map [remap delete-horizontal-space] 'ergoemacs-delete-horizontal-space)
+                                         (define-key map [remap mark-paragraph] 'ergoemacs-mark-paragraph)
+                                         map)
+  "This defines the remaps for the `ergoemacs-mode-send-emacs-keys' commands.")
 
 (defun ergoemacs-mode-line (&optional text)
   "Set ergoemacs-mode-line.
@@ -155,6 +198,9 @@ The TEXT will be what the mode-line is set to be."
 
 (font-lock-add-keywords 'emacs-lisp-mode ergoemacs-font-lock-keywords)
 
+(defvar ergoemacs--temporary-disable nil
+  "Variable for temporarily disabling `ergoemacs-mode'")
+
 
 
 (defvar ergoemacs-mode-startup-hook nil
@@ -180,6 +226,7 @@ The TEXT will be what the mode-line is set to be."
 
 (defvar ergoemacs-post-command-hook nil)
 (defvar ergeoemacs-mode-term-raw-mode nil)
+(defvar ergoemacs-mode-regular nil)
 (defun ergoemacs-post-command-hook ()
   "Run `ergoemacs-mode' post command hooks."
   (when ergoemacs-mode
@@ -251,6 +298,7 @@ IS-ERGOEMACS is true when the `ergoemacs-mode' keybindings are installed."
   (dolist (k ergoemacs-mode--save-keymaps-list)
     (set k (ergoemacs-mode--get-map k is-ergoemacs))))
 
+
 ;; ErgoEmacs minor mode
 ;;;###autoload
 (define-minor-mode ergoemacs-mode
@@ -277,7 +325,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
         (add-hook 'pre-command-hook #'ergoemacs-pre-command-hook)
         (add-hook 'post-command-hook #'ergoemacs-post-command-hook)
         (add-hook 'after-load-functions #'ergoemacs-after-load-functions)
-
+        (setq ergoemacs-mode-regular t)
         (setq ergoemacs-mode--default-frame-alist nil)
         (dolist (elt (reverse default-frame-alist))
           (push elt ergoemacs-mode--default-frame-alist))
@@ -315,6 +363,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
     (remove-hook 'after-load-functions #'ergoemacs-after-load-functions)
     (ergoemacs-mode--restore-maps)
     (define-key global-map [menu-bar] ergoemacs-old-menu)
+    (setq ergoemacs-mode-regular nil)
     (message "Ergoemacs-mode turned OFF.")))
 
 (defvar ergoemacs-translate--event-hash (make-hash-table)
@@ -428,9 +477,10 @@ after initializing ergoemacs-mode.
                                    (ergoemacs--ena-prefix-override-keymap . ,ergoemacs--prefix-override-keymap)
                                    (ergoemacs--ena-prefix-repeat-keymap .   ,ergoemacs--prefix-repeat-keymap)
                                    (ergoemacs--ena-region-keymap . ,ergoemacs-mark-active-keymap)
-                                   (ergoemacs-mode . ,ergoemacs-user-keymap)
-                                   (ergoemacs-mode . ,ergoemacs-override-keymap)
-                                   (ergoemacs-mode . ,ergoemacs-keymap)))
+                                   (ergoemacs-mode-regular . ,ergoemacs-user-keymap)
+                                   (ergoemacs-mode-regular . ,ergoemacs-override-keymap)
+                                   (ergoemacs-mode-regular . ,ergoemacs-keymap)
+                                   (ergoemacs-mode-send-emacs-keys . ,ergoemacs--send-emacs-keys-map)))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
   (advice-add 'undefined :around #'ergoemacs-advice-undefined)
   (advice-add 'read-key :before #'ergoemacs-advice-read-key))
