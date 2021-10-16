@@ -292,11 +292,53 @@
 (defvar ergoemacs-theme--svg-prefixes nil)
 (defvar ergoemacs-theme--svg-prefix nil)
 
+(defvar ergoemacs--emacs-command-emulation-list
+  '((kill-line ?\C-k)
+    (mark-whole-buffer ?\C-x ?h)
+    (find-file ?\C-x ?\C-f)
+    (save-buffer ?\C-x ?\C-s)
+    (write-file ?\C-x ?\C-w)
+    (goto-line ?\M-g ?\M-g)
+    (delete-char ?\C-d)
+    (move-beginning-of-line ?\C-a)
+    (move-end-of-line ?\C-e)
+    (set-mark-command ?\C-\ )
+    (delete-backward-char 127)
+    (delete-char ?\C-d)
+    (kill-word ?\M-d)
+    (backward-word ?\M-b)
+    (backward-kill-word C-backspace)
+    (forward-word ?\M-f)
+    (backward-paragraph ?\M-\{)
+    (forward-paragraph ?\M-\})
+    (scroll-down-command ?\M-v)
+    (scroll-up-command ?\C-v)
+    (beginning-of-buffer ?\M-\<)
+    (end-of-buffer ?\M-\>)
+    (query-replace ?\M-\%)
+    (query-replace-regexp ?\C-\M-\%)
+    (other-window ?\C-x ?o)
+    (delete-other-windows ?\C-x ?1)
+    (delete-window ?\C-x ?0)
+    (split-window-below ?\C-x ?2)
+    (split-window-right ?\C-x ?3)
+    (switch-to-buffer ?\C-x ?b)
+    (shell-command ?\M-\!)
+    (recenter-top-bottom ?\C-l)
+    (comment-dwim ?\M-\;)
+    (delete-horizontal-space ?\M-\\)
+    (mark-paragraph ?\M-\S-\ ))
+  "List of commands/keys that `ergoemacs-mode' replaces and send general emacs keys.")
+
+(defvar ergoemacs--emacs-command-emulation-map nil
+  "Keymap to describe the emacs-command-emulations")
+
 (defun ergoemacs-theme-describe ()
   "Display the full documentation for Ergoemacs."
   (interactive)
   (let* (required-p
-         svg png tmp)
+         svg png tmp map
+         (cb (current-buffer)))
     (setq svg (ergoemacs-theme--svg)
 	  png (ergoemacs-theme--png))
     (help-setup-xref (list #'ergoemacs-theme-describe)
@@ -352,7 +394,32 @@
               (insert "\n\n"))))
         (insert "\n\n")
         (setq required-p t)
-        (insert "\n\n")
+        (when ergoemacs-mode-send-emacs-keys
+          (setq ergoemacs--emacs-command-emulation-map (make-sparse-keymap))
+          (dolist (elt ergoemacs--emacs-command-emulation-list)
+            (let* (; Turn of ergoemacs-mode keys for tranlsation
+                   (ergoemacs-mode-regular nil)
+                   (ergeoemacs-mode-term-raw-mode nil)
+                   (ergoemacs--ena-prefix-override-keymap nil)
+                   (ergoemacs--ena-prefix-repeat-keymap  nil)
+                   (ergoemacs--ena-region-keymap nil)
+                   (ergoemacs-mode-send-emacs-keys nil)
+                   ;; Get the emacs key
+                   (emacs-key (vconcat (cdr elt)))
+                   ;; Get Currently bound command
+                   (emacs-command (with-current-buffer cb (key-binding emacs-key t t)))
+                   ;; Get the ergoemacs-mode keys
+                   (command (car elt))
+                   (keys (where-is-internal command ergoemacs-override-keymap nil t t))
+                   first-elt)
+              (when keys
+                (dolist (k keys)
+                  (setq first-elt (aref k 0))
+                  (unless (and (numberp first-elt) (= first-elt 27))
+                    (message "do")
+                    (define-key ergoemacs--emacs-command-emulation-map k command))))))
+          (insert "Commands that ergoemacs keys run in current buffer\n\n")
+          (insert (substitute-command-keys "\\{ergoemacs--emacs-command-emulation-map}")))
         (buffer-string)))))
 
 (defun ergoemacs-theme--svg-elt-nonabbrev (what)

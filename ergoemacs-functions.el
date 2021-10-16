@@ -149,7 +149,7 @@ KEY3 is the optional third key in the sequence."
   (ergoemacs--send-emacs-key ?\C-x ?\C-w))
 
 (defun ergoemacs-goto-line ()
-  "Ergoemacs replacement for `write-file' using `ergoemacs--send-emacs-key'."
+  "Ergoemacs replacement for `goto-line' using `ergoemacs--send-emacs-key'."
   (interactive)
   (ergoemacs--send-emacs-key ?\M-g ?\M-g))
 
