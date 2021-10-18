@@ -327,7 +327,7 @@ KEY3 is the optional third key in the sequence."
   (interactive)
   (cond
    ((fboundp 'undo-fu-only-redo)
-    (call-interactively ''undo-fu-only-redo))
+    (call-interactively 'undo-fu-only-redo))
    ((fboundp 'undo-redo) ; should be in emacs 28
     (call-interactively 'undo-redo))
    (t (message "Redo support not present.  Try `undo-fu'"))))
