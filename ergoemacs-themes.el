@@ -1263,6 +1263,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
      (ergoemacs-define-key isearch-mode-map (kbd "C-S-v") 'isearch-yank-pop)
      (ergoemacs-define-key isearch-mode-map (kbd "M-5") 'isearch-query-replace)
      (ergoemacs-define-key isearch-mode-map (kbd "M-;") 'isearch-repeat-forward)
+     (ergoemacs-define-key isearch-mode-map (kbd "M-:") 'isearch-repeat-backward)
      (ergoemacs-define-key isearch-mode-map (kbd "C-e") 'isearch-repeat-forward)
      (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
      (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
