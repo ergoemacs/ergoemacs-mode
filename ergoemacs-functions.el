@@ -195,7 +195,7 @@ KEY3 is the optional third key in the sequence."
 
 (defun ergoemacs-backward-word ()
   "Ergoemacs replacement for `backward-word' using  `ergoemacs--send-emacs-key'."
-  (interactive)
+  (interactive "^")
   (if this-command-keys-shift-translated
       (ergoemacs--send-emacs-key ?\M-\S-b)
     (ergoemacs--send-emacs-key ?\M-b)))
@@ -207,40 +207,52 @@ KEY3 is the optional third key in the sequence."
 
 (defun ergoemacs-forward-word ()
   "Ergoemacs replacement for `forward-word' using  `ergoemacs--send-emacs-key'."
-  (interactive)
+  (interactive "^")
   (if this-command-keys-shift-translated
       (ergoemacs--send-emacs-key ?\M-\S-f)
     (ergoemacs--send-emacs-key ?\M-f)))
 
 (defun ergoemacs-backward-paragraph ()
   "Ergoemacs replacement for `backward-paragraph' using  `ergoemacs--send-emacs-key'."
-  (interactive)
-  (ergoemacs--send-emacs-key ?\M-\{))
+  (interactive "^")
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key 'C-S-up)
+    (ergoemacs--send-emacs-key ?\M-\{)))
 
 (defun ergoemacs-forward-paragraph ()
   "Ergoemacs replacement for `forward-paragraph' using  `ergoemacs--send-emacs-key'."
-  (interactive)
-  (ergoemacs--send-emacs-key ?\M-\}))
+  (interactive "^")
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key 'C-S-down)
+    (ergoemacs--send-emacs-key ?\M-\})))
 
 (defun ergoemacs-scroll-down-command ()
   "Ergoemacs replacement for `scroll-down-command' using  `ergoemacs--send-emacs-key'."
-  (interactive)
-  (ergoemacs--send-emacs-key ?\M-v))
+  (interactive "^")
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key ?\M-\S-v)
+    (ergoemacs--send-emacs-key ?\M-v)))
 
 (defun ergoemacs-scroll-up-command ()
   "Ergoemacs replacement for `scroll-up-command' using  `ergoemacs--send-emacs-key'."
-  (interactive)
-  (ergoemacs--send-emacs-key ?\C-v))
+  (interactive "^")
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key ?\C-\S-v)
+    (ergoemacs--send-emacs-key ?\C-v)))
 
 (defun ergoemacs-beginning-of-buffer ()
   "Ergoemacs replacement for `beginning-of-buffer' using  `ergoemacs--send-emacs-key'."
-  (interactive)
-  (ergoemacs--send-emacs-key ?\M-\<))
+  (interactive "^")
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key 'C-S-home)
+    (ergoemacs--send-emacs-key ?\M-\<)))
 
 (defun ergoemacs-end-of-buffer ()
   "Ergoemacs replacement for `end-of-buffer' using  `ergoemacs--send-emacs-key'."
-  (interactive)
-  (ergoemacs--send-emacs-key ?\M-\>))
+  (interactive "^")
+  (if this-command-keys-shift-translated
+      (ergoemacs--send-emacs-key 'C-S-end)
+    (ergoemacs--send-emacs-key ?\M-\>)))
 
 (defun ergoemacs-query-replace ()
   "Ergoemacs replacement for `query-replace' using  `ergoemacs--send-emacs-key'."
