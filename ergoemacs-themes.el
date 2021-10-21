@@ -1213,14 +1213,15 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
           (execute-kbd-macro (kbd "<end>")))
          (t
           (beep))))
-    (call-interactively ergoemacs-M-O-binding)))
+    (call-interactively (key-binding [ergoemacs-meta-O]))))
 
-(defvar ergoemacs-M-O-binding () nil)
 (defun ergoemacs-fix-arrow-keys (keymap)
   "Fix arrow keys for KEYMAP."
-  (setq ergoemacs-M-O-binding (lookup-key keymap (kbd "M-O")))
-  (if ergoemacs-M-O-binding
-      (define-key keymap (kbd "M-O") 'ergoemacs-handle-M-O)))
+  (let (ergoemacs-M-O-binding)
+    (when ergoemacs-M-O-binding
+      (setq ergoemacs-M-O-binding (lookup-key keymap (kbd "M-O")))
+      (define-key keymap (kbd "M-O") 'ergoemacs-handle-M-O)
+      (define-key keymap [ergoemacs-meta-O] ergoemacs-M-O-binding))))
 
 (defvar ergoemacs-override-keymap)
 
