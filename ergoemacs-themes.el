@@ -1268,14 +1268,12 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
      (ergoemacs-define-key isearch-mode-map (kbd "C-e") 'isearch-repeat-forward)
      (ergoemacs-define-key isearch-mode-map (kbd "C-M-d") 'isearch-repeat-forward)
      (ergoemacs-define-key isearch-mode-map (kbd "C-M-s") 'isearch-repeat-backward)
-     (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete)))
+     (ergoemacs-define-key isearch-mode-map (kbd "M-t") 'isearch-complete))
+   (ergoemacs-fix-arrow-keys isearch-mode-map))
   (ergoemacs-save-key-state
    'minibuffer-local-isearch-map
    (define-key minibuffer-local-isearch-map [remap isearch-forward] 'isearch-forward-exit-minibuffer)
    (define-key minibuffer-local-isearch-map [remap isearch-backward] 'isearch-reverse-exit-minibuffer)))
-
-
-
 
 (defun ergoemacs-install-reduction-theme ()
   "Install reduction theme."
@@ -1394,30 +1392,6 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 
 (add-hook 'org-load-hook #'ergoemacs-install-org-bindings)
 
-(defvar compilation-mode-map)
-(defun ergoemacs-install-compilation-minor-mode ()
-  "Install `compilation-minor-mode' bindings.
-This affects modes like `grep-mode' since this is a parent keymap"
-  (ergoemacs-save-key-state
-   'compilation-mode-map
-   (if (string-equal ergoemacs-theme "reduction")
-       (progn
-         (ergoemacs-define-key compilation-mode-map (kbd "M-d") 'scroll-down-command)
-         (ergoemacs-define-key compilation-mode-map (kbd "DEL") 'scroll-down-command)
-         (ergoemacs-define-key compilation-mode-map (kbd "<C-up>") 'compilation-previous-file)
-         (ergoemacs-define-key compilation-mode-map (kbd "<C-down>") 'compilation-next-file)
-         (ergoemacs-define-key compilation-mode-map (kbd "<M-up>") 'compilation-previous-file)
-         (ergoemacs-define-key compilation-mode-map (kbd "<M-down>") 'compilation-next-file))
-     (ergoemacs-define-key compilation-mode-map (kbd "M-d") 'scroll-down-command)
-     (ergoemacs-define-key compilation-mode-map (kbd "DEL") 'scroll-down-command)
-     (ergoemacs-define-key compilation-mode-map (kbd "M-U") 'compilation-previous-file)
-     (ergoemacs-define-key compilation-mode-map (kbd "<C-up>") 'compilation-previous-file)
-     (ergoemacs-define-key compilation-mode-map (kbd "M-O") 'compilation-next-file)
-     (ergoemacs-define-key compilation-mode-map (kbd "<C-down>") 'compilation-next-file)
-     (ergoemacs-define-key compilation-mode-map (kbd "<M-up>") 'compilation-previous-file)
-     (ergoemacs-define-key compilation-mode-map (kbd "<M-down>") 'compilation-next-file))))
-
-(with-eval-after-load 'compile (ergoemacs-install-compilation-minor-mode))
 
 (defvar log-edit-mode-map)
 (defun ergoemacs-install-log-edit-bindings ()
