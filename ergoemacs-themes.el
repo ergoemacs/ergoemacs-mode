@@ -655,7 +655,8 @@ These keys do not depend on the layout."
   (define-key keymap [remap describe-mode]
                   'ergoemacs-describe-major-mode)
   (define-key keymap [remap cua-paste] 'ergoemacs-paste)
-  (define-key keymap [remap cua-cut-region] 'ergoemacs-cut-line-or-region))
+  (define-key keymap [remap cua-cut-region] 'ergoemacs-cut-line-or-region)
+  (define-key keymap [remap describe-bindings] 'ergoemacs-describe-bindings))
 
 (defun ergoemacs-set-menu-bar-file ()
   "File menu."
@@ -1319,8 +1320,6 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   "Install standard ergoemacs-mode theme."
   (ergoemacs-unset-keys ergoemacs-override-keymap)
   (ergoemacs-set-standard-vars)
-
-
 
   (ergoemacs-set-standard-fixed ergoemacs-override-keymap)
   (dolist (map (list ergoemacs-override-keymap ergoemacs-mode-term-raw-keymap))
