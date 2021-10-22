@@ -266,8 +266,7 @@
         (vr/query-replace "rep reg")
         (write-file "save as")
         (xref-pop-marker-stack "xref pop")
-        (xref-find-definitions "xref find")        
-        )
+        (xref-find-definitions "xref find"))
   "Ergoemacs short command names."
   :group 'ergoemacs-themes
   :type '(repeat :tag "Command abbreviation"
@@ -291,7 +290,7 @@
 (defvar ergoemacs-theme--svg nil)
 (defvar ergoemacs-theme--svg-prefixes nil)
 (defvar ergoemacs-theme--svg-prefix nil)
-
+(defvar ergoemacs-current-emacs-command-emulation-list nil)
 (defvar ergoemacs--emacs-command-emulation-list
   '((kill-line ?\C-k)
     (mark-whole-buffer ?\C-x ?h)
@@ -330,8 +329,11 @@
     (mark-paragraph ?\M-\S-\ ))
   "List of commands/keys that `ergoemacs-mode' replaces and send general emacs keys.")
 
-(defvar ergoemacs--emacs-command-emulation-map nil
-  "Keymap to describe the emacs-command-emulations")
+(defvar ergoemacs--emacs-command-emulation-map (make-sparse-keymap)
+  "Keymap to describe the emacs-command-emulations.")
+
+(defvar ergoemacs-override-alist--describe-bindings nil)
+(defvar ergoemacs-override--describe-bindings t)
 
 (defun ergoemacs-describe-translations--now (buffer)
   "Describe translations in BUFFER."
@@ -347,8 +349,7 @@
             ergoemacs-mode-send-emacs-keys nil)
       (unwind-protect
           (dolist (elt ergoemacs--emacs-command-emulation-list)
-            (let* (
-                   ;; Get the emacs key
+            (let* (;; Get the emacs key
                    (emacs-key (vconcat (cdr elt)))
                    ;; Get Currently bound command
                    (emacs-command (key-binding emacs-key t t))
@@ -391,6 +392,64 @@ or a buffer name."
         (insert (ergoemacs-describe-translations--now buffer))
         (insert "\n\n"))
       (describe-buffer-bindings buffer prefix))))
+
+(defvar ergoemacs-command-loop--read-key-prompt)
+
+(defun ergoemacs-describe-key (&optional key-list buffer)
+  "Display documentation of the function invoked by KEY-LIST.
+KEY-LIST can be any kind of a key sequence; it can include keyboard events,
+mouse events, and/or menu events.  When calling from a program,
+pass KEY-LIST as a list of elements (SEQ . RAW-SEQ) where SEQ is
+a key-sequence and RAW-SEQ is its untranslated form.
+
+While reading KEY-LIST interactively, this command temporarily enables
+menu items or tool-bar buttons that are disabled to allow getting help
+on them.
+
+BUFFER is the buffer in which to lookup those keys; it defaults to the
+current buffer."
+  (interactive
+   (progn
+     (setq ergoemacs-command-loop--read-key-prompt
+           "Describe the following Key, mouse-click, or menu item: ")
+     (unwind-protect
+         (list (help--read-key-sequence))
+       (setq ergoemacs-command-loop--read-key-prompt ""))))
+  (when (arrayp key-list)
+    ;; Compatibility with old calling convention.
+    (setq key-list (con
+                    s (list key-list) (if up-event (list up-event))))
+    (when buffer
+      (let ((raw (if (numberp buffer) (this-single-command-raw-keys) buffer)))
+        (setf (cdar (last key-list)) raw)))
+    (setq buffer nil))
+  (when ergoemacs-mode-send-emacs-keys
+    (ergoemacs-describe-translations--now (or buffer (current-buffer))))
+  (remove-hook 'emulation-mode-map-alists ergoemacs-override-alist)
+  (setq ergoemacs-override-alist
+        `((ergoemacs-mode-send-emacs-keys . ,ergoemacs--emacs-command-emulation-map)
+          (ergeoemacs-mode-term-raw-mode . ,ergoemacs-mode-term-raw-keymap)
+          (ergoemacs--ena-prefix-override-keymap . ,ergoemacs--prefix-override-keymap)
+          (ergoemacs--ena-prefix-repeat-keymap .   ,ergoemacs--prefix-repeat-keymap)
+          (ergoemacs--ena-region-keymap . ,ergoemacs-mark-active-keymap)
+          (ergoemacs-mode-regular . ,ergoemacs-user-keymap)
+          (ergoemacs-mode-regular . ,ergoemacs-override-keymap)
+          (ergoemacs-mode-regular . ,ergoemacs-keymap)
+          (ergoemacs-mode-send-emacs-keys . ,ergoemacs--send-emacs-keys-map)))
+  (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
+  (unwind-protect
+      (describe-key key-list buffer)
+    (remove-hook 'emulation-mode-map-alists ergoemacs-override-alist)
+    (setq ergoemacs-override-alist
+          `((ergeoemacs-mode-term-raw-mode . ,ergoemacs-mode-term-raw-keymap)
+            (ergoemacs--ena-prefix-override-keymap . ,ergoemacs--prefix-override-keymap)
+            (ergoemacs--ena-prefix-repeat-keymap .   ,ergoemacs--prefix-repeat-keymap)
+            (ergoemacs--ena-region-keymap . ,ergoemacs-mark-active-keymap)
+            (ergoemacs-mode-regular . ,ergoemacs-user-keymap)
+            (ergoemacs-mode-regular . ,ergoemacs-override-keymap)
+            (ergoemacs-mode-regular . ,ergoemacs-keymap)
+            (ergoemacs-mode-send-emacs-keys . ,ergoemacs--send-emacs-keys-map)))
+    (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)))
 
 (defun ergoemacs-theme-describe ()
   "Display the full documentation for Ergoemacs."

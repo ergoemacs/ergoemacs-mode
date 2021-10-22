@@ -656,7 +656,8 @@ These keys do not depend on the layout."
                   'ergoemacs-describe-major-mode)
   (define-key keymap [remap cua-paste] 'ergoemacs-paste)
   (define-key keymap [remap cua-cut-region] 'ergoemacs-cut-line-or-region)
-  (define-key keymap [remap describe-bindings] 'ergoemacs-describe-bindings))
+  (define-key keymap [remap describe-bindings] 'ergoemacs-describe-bindings)
+  (define-key keymap [remap describe-key] 'ergoemacs-describe-key))
 
 (defun ergoemacs-set-menu-bar-file ()
   "File menu."
