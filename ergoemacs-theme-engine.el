@@ -333,40 +333,41 @@
 (defvar ergoemacs--emacs-command-emulation-map nil
   "Keymap to describe the emacs-command-emulations")
 
-(defun ergoemacs-describe-translations--now ()
-  "Describe translations in current buffer."
-  (setq ergoemacs--emacs-command-emulation-map (make-sparse-keymap))
-  (when ergoemacs-mode-send-emacs-keys
-    ;; Turn of ergoemacs-mode keys for tranlsation
-    (setq ergoemacs-mode-regular nil
-          ergeoemacs-mode-term-raw-mode nil
-          ergoemacs--ena-prefix-override-keymap nil
-          ergoemacs--ena-prefix-repeat-keymap  nil
-          ergoemacs--ena-region-keymap nil
-          ergoemacs-mode-send-emacs-keys nil)
-    (unwind-protect
-        (dolist (elt ergoemacs--emacs-command-emulation-list)
-          (let* (
-                 ;; Get the emacs key
-                 (emacs-key (vconcat (cdr elt)))
-                 ;; Get Currently bound command
-                 (emacs-command (key-binding emacs-key t t))
-                 ;; Get the ergoemacs-mode keys
-                 (command (car elt))
-                 (keys (where-is-internal command ergoemacs-override-keymap nil t t))
-                 first-elt)
-            (when keys
-              (dolist (k keys)
-                (setq first-elt (aref k 0))
-                (unless (and (numberp first-elt) (= first-elt 27))
-                  (define-key ergoemacs--emacs-command-emulation-map k emacs-command))))))
-      (setq ergoemacs-mode-regular t
+(defun ergoemacs-describe-translations--now (buffer)
+  "Describe translations in BUFFER."
+  (with-current-buffer buffer
+    (setq ergoemacs--emacs-command-emulation-map (make-sparse-keymap))
+    (when ergoemacs-mode-send-emacs-keys
+      ;; Turn of ergoemacs-mode keys for tranlsation
+      (setq ergoemacs-mode-regular nil
             ergeoemacs-mode-term-raw-mode nil
             ergoemacs--ena-prefix-override-keymap nil
             ergoemacs--ena-prefix-repeat-keymap  nil
             ergoemacs--ena-region-keymap nil
-            ergoemacs-mode-send-emacs-keys t))
-    (substitute-command-keys "\\{ergoemacs--emacs-command-emulation-map}")))
+            ergoemacs-mode-send-emacs-keys nil)
+      (unwind-protect
+          (dolist (elt ergoemacs--emacs-command-emulation-list)
+            (let* (
+                   ;; Get the emacs key
+                   (emacs-key (vconcat (cdr elt)))
+                   ;; Get Currently bound command
+                   (emacs-command (key-binding emacs-key t t))
+                   ;; Get the ergoemacs-mode keys
+                   (command (car elt))
+                   (keys (where-is-internal command ergoemacs-override-keymap nil t t))
+                   first-elt)
+              (when keys
+                (dolist (k keys)
+                  (setq first-elt (aref k 0))
+                  (unless (and (numberp first-elt) (= first-elt 27))
+                    (define-key ergoemacs--emacs-command-emulation-map k emacs-command))))))
+        (setq ergoemacs-mode-regular t
+              ergeoemacs-mode-term-raw-mode nil
+              ergoemacs--ena-prefix-override-keymap nil
+              ergoemacs--ena-prefix-repeat-keymap  nil
+              ergoemacs--ena-region-keymap nil
+              ergoemacs-mode-send-emacs-keys t))
+      (substitute-command-keys "\\{ergoemacs--emacs-command-emulation-map}"))))
 
 (defun ergoemacs-describe-bindings (&optional prefix buffer)
   "Display a buffer showing a list of all defined keys, and their definitions.
@@ -386,8 +387,8 @@ or a buffer name."
     ;; the current buffer.
     (with-current-buffer (help-buffer)
       (when ergoemacs-mode-send-emacs-keys
-        (insert "Ergoemacs-mode translation in this buffer\n")
-        (insert (ergoemacs-describe-translations--now))
+        (insert "Ergoemacs-mode translation in this buffer:\n")
+        (insert (ergoemacs-describe-translations--now buffer))
         (insert "\n\n"))
       (describe-buffer-bindings buffer prefix))))
 
