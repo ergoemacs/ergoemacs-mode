@@ -1456,6 +1456,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 (defvar calc-mode-map)
 (defun ergoemacs-install-calc-bindings ()
   "Install `calc-mode' bindings."
+  ;; These are above `ergoemacs-mode'
   (ergoemacs-save-key-state
    'comint-mode-map
    (define-key calc-mode-map [remap ergoemacs-undo] 'calc-undo)

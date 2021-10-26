@@ -99,10 +99,18 @@ TYPE is the type of translation installed."
   (if (and ergoemacs-mode (not ergoemacs--temporary-disable))
       (ergoemacs-mode--undefined-advice)
     (call-interactively orig-fun)))
- 
-(defun ergoemacs-advice-read-key ()
-  "Drop single command keys for read-key." ; For compataiblity with emacs 25.5
-  (setq ergoemacs-command-loop--single-command-keys nil))
+
+(defun ergoemacs-read-key (orig-fun &rest args)
+  "Allow `ergoemacs-mode' to add put prompt into original keys."
+  (if (not (and ergoemacs-mode (not ergoemacs--temporary-disable)))
+      (apply orig-fun args)
+    (if (not (= 1 (length args)))
+        (apply orig-fun args)
+      (setq ergoemacs-command-loop--read-key-prompt
+            (nth 0 args))
+      (unwind-protect
+          (apply orig-fun args)
+        (setq ergoemacs-command-loop--read-key-prompt "")))))
 
 (provide 'ergoemacs-advice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
