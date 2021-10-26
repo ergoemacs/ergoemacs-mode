@@ -1306,7 +1306,6 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
   
 
   (ergoemacs-install-isearch-mode)
-  (ergoemacs-install-comint-bindings)
 
   (ergoemacs-set-remaps ergoemacs-override-keymap)
   (ergoemacs-set-quit)
@@ -1344,7 +1343,6 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
     (ergoemacs-fix-arrow-keys map))
   
   (ergoemacs-install-isearch-mode)
-  (ergoemacs-install-comint-bindings)
 
   (ergoemacs-set-remaps ergoemacs-override-keymap)
   (ergoemacs-set-quit)
@@ -1424,21 +1422,6 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
      (ergoemacs-define-key eshell-mode-map (kbd "M-t") 'eshell-complete-lisp-symbol))))
 
 (add-hook 'eshell-post-command-hook #'ergoemacs-install-eshell-bindings)
-
-(require 'comint)
-(defun ergoemacs-install-comint-bindings ()
-  "Install comint key bindings."
-  (ergoemacs-save-key-state
-   'comint-mode-map
-   (define-key comint-mode-map [remap move-beginning-of-line] 'comint-bol)
-   (if (string-equal ergoemacs-theme "reduction")
-       (progn
-         (ergoemacs-define-key comint-mode-map (kbd "<delete>") 'comint-delchar-or-maybe-eof)
-         (ergoemacs-define-key comint-mode-map (kbd "M-f") 'comint-delchar-or-maybe-eof)
-         (ergoemacs-define-key comint-mode-map (kbd "C-g") 'comint-delchar-or-maybe-eof))
-     (ergoemacs-define-key comint-mode-map (kbd "<delete>") 'comint-delchar-or-maybe-eof)
-     (ergoemacs-define-key comint-mode-map (kbd "M-f") 'comint-delchar-or-maybe-eof)
-     (ergoemacs-define-key comint-mode-map (kbd "C-g") 'comint-delchar-or-maybe-eof))))
 
 (defun ergoemacs-install-dired-bindings ()
   "Install `dired-mode-map' bindings."
