@@ -1340,7 +1340,8 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
     (ergoemacs-set-kill-line map)
     (ergoemacs-set-text-transform map)
     (ergoemacs-set-select-items map)
-    (ergoemacs-fix-arrow-keys map))
+    (ergoemacs-fix-arrow-keys map)
+    (ergoemacs-set-apps map))
   
   (ergoemacs-install-isearch-mode)
 
