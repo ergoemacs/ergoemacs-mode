@@ -618,8 +618,8 @@ These keys do not depend on the layout."
   (ergoemacs-define-key keymap (kbd "<apps> SPC") 'set-mark-command)
   (ergoemacs-define-key keymap (kbd "<apps> a") 'mark-whole-buffer)
 
-  (ergoemacs-define-key ergoemacs-override-keymap (kbd "<apps> f") 'ergoemacs-command-loop-C-x-ctl-to-alt)
-  (ergoemacs-define-key ergoemacs-override-keymap (kbd "<apps> d") 'ergoemacs-command-loop-C-c-unchorded)
+  (ergoemacs-define-key ergoemacs-override-keymap (kbd "<apps> d") 'ergoemacs-command-loop-C-x-ctl-to-alt)
+  (ergoemacs-define-key ergoemacs-override-keymap (kbd "<apps> f") 'ergoemacs-command-loop-C-c-unchorded)
 
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "a"))
   (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "A"))
