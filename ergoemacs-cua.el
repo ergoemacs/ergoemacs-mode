@@ -122,46 +122,57 @@ This override is enabled for active regions before the copy and paste are enable
 (defvar ergoemacs--temporary-disable)
 (defvar ergoemacs-mode-regular)
 (defvar ergoemacs-mode-send-emacs-keys)
+(defvar ergoemacs-send-keys-term)
+(defvar term-raw-map)
 (defun ergoemacs--select-keymaps ()
   "Setup conditions for selecting the proper keymaps in `ergoemacs--keymap-alist'."
-  (when ergoemacs--temporary-disable
-    ;; The temporary disable commands set `ergoemacs--temporary-disable' to t
-    ;; The first time when the keys are put on the `unread-command-events', `ergoemacs-mode' is disabled
-    ;; The second command is executed, and `ergoemacs-mode' is turned back on and `ergoemacs--temporary-disable' is to nil
-    (if ergoemacs-mode-regular
-        (progn
-          (setq ergoemacs--ena-region-keymap nil
-              ergoemacs--ena-prefix-override-keymap nil
-              ergoemacs--ena-prefix-repeat-keymap nil
-              ergoemacs-mode-regular nil
-              ergoemacs-mode-send-emacs-keys nil))
-      (setq ergoemacs--temporary-disable nil
+  (if (and (eq major-mode 'term-mode)
+           (eq (current-local-map) term-raw-map))
+      (setq ergoemacs-mode-regular nil
+            ergoemacs-mode-send-emacs-keys nil
+            ergeoemacs-mode-term-raw-mode t)
+    (when ergeoemacs-mode-term-raw-mode
+      (setq ergeoemacs-mode-term-raw-mode nil
             ergoemacs-mode-regular t
-            ;; This assumes that `ergoemacs--tempoary-disable' is only called on the remap keys layer
-            ergoemacs-mode-send-emacs-keys t)))
-  (when ergoemacs-mode
-    ;; The prefix override (when mark-active) operates in three substates:
-    ;; [1] Before using a prefix key
-    ;; [2] Immediately after using a prefix key
-    ;; [3] A fraction of a second later
-    (setq ergoemacs--ena-region-keymap ; Determines if the ergion is active
-        (and (not ergeoemacs-mode-term-raw-mode) (region-active-p) (not deactivate-mark))
-        ;; Enable Override -- This is the first state where the keys are intercepted; cua state [1]
-        ergoemacs--ena-prefix-override-keymap
-        (and ergoemacs--ena-region-keymap
-             (not ergeoemacs-mode-term-raw-mode)
-             ergoemacs-enable-cua-keys
-	         (not ergoemacs-inhibit-cua-keys)
-	         (or (eq ergoemacs-enable-cua-keys t)
-		         (region-active-p))
-	         (not executing-kbd-macro)
-	         (not ergoemacs--prefix-override-timer))
-        ;; Enable The repeat layer.  This is the layer that the keys are intercepted; cua state [2]
-        ergoemacs--ena-prefix-repeat-keymap
-        (and ergoemacs--ena-region-keymap
-             (not ergeoemacs-mode-term-raw-mode)
-	         (or (timerp ergoemacs--prefix-override-timer)
-		         (eq ergoemacs--prefix-override-timer 'shift))))))
+            ergoemacs-mode-send-emacs-keys ergoemacs-send-keys-term))
+    (when ergoemacs--temporary-disable
+      ;; The temporary disable commands set `ergoemacs--temporary-disable' to t
+      ;; The first time when the keys are put on the `unread-command-events', `ergoemacs-mode' is disabled
+      ;; The second command is executed, and `ergoemacs-mode' is turned back on and `ergoemacs--temporary-disable' is to nil
+      (if ergoemacs-mode-regular
+          (progn
+            (setq ergoemacs--ena-region-keymap nil
+                  ergoemacs--ena-prefix-override-keymap nil
+                  ergoemacs--ena-prefix-repeat-keymap nil
+                  ergoemacs-mode-regular nil
+                  ergoemacs-mode-send-emacs-keys nil))
+        (setq ergoemacs--temporary-disable nil
+              ergoemacs-mode-regular t
+              ;; This assumes that `ergoemacs--tempoary-disable' is only called on the remap keys layer
+              ergoemacs-mode-send-emacs-keys t)))
+    (when ergoemacs-mode
+      ;; The prefix override (when mark-active) operates in three substates:
+      ;; [1] Before using a prefix key
+      ;; [2] Immediately after using a prefix key
+      ;; [3] A fraction of a second later
+      (setq ergoemacs--ena-region-keymap ; Determines if the ergion is active
+            (and (not ergeoemacs-mode-term-raw-mode) (region-active-p) (not deactivate-mark))
+            ;; Enable Override -- This is the first state where the keys are intercepted; cua state [1]
+            ergoemacs--ena-prefix-override-keymap
+            (and ergoemacs--ena-region-keymap
+                 (not ergeoemacs-mode-term-raw-mode)
+                 ergoemacs-enable-cua-keys
+	             (not ergoemacs-inhibit-cua-keys)
+	             (or (eq ergoemacs-enable-cua-keys t)
+		             (region-active-p))
+	             (not executing-kbd-macro)
+	             (not ergoemacs--prefix-override-timer))
+            ;; Enable The repeat layer.  This is the layer that the keys are intercepted; cua state [2]
+            ergoemacs--ena-prefix-repeat-keymap
+            (and ergoemacs--ena-region-keymap
+                 (not ergeoemacs-mode-term-raw-mode)
+	             (or (timerp ergoemacs--prefix-override-timer)
+		             (eq ergoemacs--prefix-override-timer 'shift)))))))
 
 (defun ergoemacs--prefix-override-timeout ()
   "This is whap happens on the `ergoemacs-mode' timeout for C-c and C-v are supplied."

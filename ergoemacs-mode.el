@@ -232,20 +232,7 @@ The TEXT will be what the mode-line is set to be."
 (defun ergoemacs-post-command-hook ()
   "Run `ergoemacs-mode' post command hooks."
   (when ergoemacs-mode
-    (if (and (eq major-mode 'term-mode)
-               (eq (current-local-map) term-raw-map))
-        (setq-local ergoemacs-mode-regular nil
-                    ergoemacs-send-keys-term ergoemacs-mode-send-emacs-keys
-                    ergoemacs-mode-send-emacs-keys nil
-                    ergeoemacs-mode-term-raw-mode t)
-      (run-hooks 'ergoemacs-post-command-hook)))
-  (when ergeoemacs-mode-term-raw-mode
-    (when (and (eq major-mode 'term-mode)
-               (not (eq (current-local-map) term-raw-map)))
-      (setq-local ergoemacs-mode-regular t
-                  ergoemacs-mode-send-emacs-keys ergoemacs-send-keys-term
-                  ergeoemacs-mode-term-raw-mode nil)
-      (run-hooks 'ergoemacs-post-command-hook))))
+    (run-hooks 'ergoemacs-post-command-hook)))
 
 (defvar ergoemacs-after-load-functions nil)
 (defun ergoemacs-after-load-functions (absoulte-file-name)
@@ -348,7 +335,8 @@ The `execute-extended-command' is now \\[execute-extended-command].
          ((string-equal ergoemacs-theme "reduction")
           (ergoemacs-setup-override-keymap))
          (t (ergoemacs-setup-override-keymap)))
-        (setq ergoemacs-require--ini-p t)
+        (setq ergoemacs-require--ini-p t
+              ergoemacs-send-keys-term  ergoemacs-mode-send-emacs-keys)
         
         (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout))
     ;; Turn off
