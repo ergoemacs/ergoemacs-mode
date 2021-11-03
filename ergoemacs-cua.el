@@ -134,7 +134,8 @@ This override is enabled for active regions before the copy and paste are enable
     (when ergeoemacs-mode-term-raw-mode
       (setq ergeoemacs-mode-term-raw-mode nil
             ergoemacs-mode-regular t
-            ergoemacs-mode-send-emacs-keys ergoemacs-send-keys-term))
+            ergoemacs-mode-send-emacs-keys ergoemacs-send-keys-term
+            ergoemacs--temporary-disable nil))
     (when ergoemacs--temporary-disable
       ;; The temporary disable commands set `ergoemacs--temporary-disable' to t
       ;; The first time when the keys are put on the `unread-command-events', `ergoemacs-mode' is disabled
