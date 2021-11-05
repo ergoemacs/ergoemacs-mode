@@ -380,7 +380,9 @@ These keys do not depend on the layout."
   (define-key keymap (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
   (define-key keymap (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
 
-  (define-key keymap (kbd "C-h '") 'ergoemacs-describe-current-theme))
+  (define-key keymap (kbd "C-h '") 'ergoemacs-describe-current-theme)
+  (when (eq system-type 'windows-nt)
+    (define-key keymap (kbd "<M-f4>") 'kill-emacs)))
 
 (defun ergoemacs-set-move-char (keymap)
   "Movement by Characters & Set Mark for KEYMAP."
