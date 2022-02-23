@@ -4,7 +4,7 @@
 
 #  Ergoemacs Keybindings 
 
- Xah Lee, David Capello, Kin Storm, Walter Landry and Matthew Fidler
+ Xah Lee, David Capello, Kim Storm, Walter Landry and Matthew Fidler
 
 ## Library Information
 
