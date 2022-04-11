@@ -1236,6 +1236,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
    (ergoemacs-unset-keys-in-map isearch-mode-map)
    (define-key isearch-mode-map (kbd "C-x C-q") 'isearch-edit-string)
    (define-key isearch-mode-map (kbd "<f2>") 'isearch-edit-string)
+   (define-key isearch-mode-map (kbd "C-f") 'isearch-repeat-forward)
    ;; Mode specific changes
    (if (string-equal ergoemacs-theme "reduction")
        (progn
