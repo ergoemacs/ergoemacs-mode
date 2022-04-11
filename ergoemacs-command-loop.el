@@ -830,6 +830,7 @@ UNCHORDED is this a unchorded key?
 TRANS translation information.
 
 KEYS is the keys information"
+
   (format
    "%s" (concat
          ergoemacs-command-loop--read-key-prompt
@@ -844,7 +845,7 @@ KEYS is the keys information"
                   (or (and blink-on ergoemacs-command-loop-blink-character)
                       " "))
              " ")
-         trans
+         ;trans
          keys)))
 
 (defvar erogemacs-command--echo-timer nil)
@@ -2303,7 +2304,7 @@ For instance in QWERTY M-> is shift translated to M-."
           
           ;; These are stored in `ergoemacs-command-loop--execute-modify-command-list'
 
-	  (ergoemacs-command-loop--execute-modify-command-list command)
+	        (ergoemacs-command-loop--execute-modify-command-list command)
           
           ;; Handle Shift Selection
           (ergoemacs-command-loop--execute-handle-shift-selection this-command)
