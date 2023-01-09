@@ -223,9 +223,9 @@ REPEAT is the flag that tells it if is repeated environmennt."
     
     ;; Push the key back on the event queue
     (if (version< emacs-version "26.2")
-        (setq unread-command-events (cons (cons 'no-record key)
-                                          unread-command-events))
-      (setq unread-command-events (cons key unread-command-events)))))
+        (setq unread-command-events (cons key unread-command-events))
+      (setq unread-command-events (cons (cons 'no-record key)
+                                        unread-command-events)))))
 
 
 (defun ergoemacs--prefix-override-handler ()

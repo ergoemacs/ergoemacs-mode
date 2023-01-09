@@ -115,13 +115,22 @@ KEY3 is the optional third key in the sequence."
   (ergoemacs-prefix-command-preserve-state)
   ;; Push the key back on the event queue
   (when key3
-    (setq unread-command-events (cons (cons 'no-record key3)
-                                      unread-command-events)))
+    (if (version< emacs-version "26.2")
+        (setq unread-command-events (cons key3
+                                          unread-command-events))
+      (setq unread-command-events (cons (cons 'no-record key3)
+                                        unread-command-events))))
   (when key2
-    (setq unread-command-events (cons (cons 'no-record key2)
-                                      unread-command-events)))
-  (setq unread-command-events (cons (cons 'no-record key)
-                                    unread-command-events)))
+    (if (version< emacs-version "26.2")
+        (setq unread-command-events (cons key2
+                                          unread-command-events))
+      (setq unread-command-events (cons (cons 'no-record key2)
+                                        unread-command-events))))
+  (if (version< emacs-version "26.2")
+      (setq unread-command-events (cons key
+                                        unread-command-events))
+    (setq unread-command-events (cons (cons 'no-record key)
+                                      unread-command-events))))
 
 (defun ergoemacs-kill-line ()
   "Ergoemacs replacement for `kill-line' using `ergoemacs--send-emacs-key'."
