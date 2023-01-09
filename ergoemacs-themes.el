@@ -1408,7 +1408,11 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
      (ergoemacs-define-key log-edit-mode-map (kbd "<home>") 'log-edit-beginning-of-line)
      (ergoemacs-define-key log-edit-mode-map (kbd "M-h") 'log-edit-beginning-of-line))))
 
-(with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
+(if (fboundp 'with-eval-after-load)
+    (with-eval-after-load 'log-edit (ergoemacs-install-log-edit-bindings))
+  (require 'log-edit)
+  (ergoemacs-install-log-edit-bindings))
+
 
 (defvar eshell-mode-map)
 (defun ergoemacs-install-eshell-bindings ()
