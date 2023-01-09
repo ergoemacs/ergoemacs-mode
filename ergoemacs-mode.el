@@ -10,7 +10,7 @@
 ;; Created: August 01 2007
 ;; Keywords: convenience
 ;; Version: 5.16.10.12
-;; Package-Requires: ((emacs "24.1") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "24.1") (cl-lib "0.5") ("nadvice"))
 ;; URL: https://github.com/ergoemacs/ergoemacs-mode
 
 ;; ErgoEmacs is free software: you can redistribute it and/or modify
