@@ -186,7 +186,7 @@ This override is enabled for active regions before the copy and paste are enable
       (setq overriding-terminal-local-map nil))
     (ergoemacs--select-keymaps)))
 
-(defun ergoemacs-prefix-command-preserve-state (arg)
+(defun ergoemacs-prefix-command-preserve-state ()
   "Compatibility layer for `prefix-command-preserve-state'."
   (if (fboundp 'prefix-command-preserve-state)
       (prefix-command-preserve-state)
