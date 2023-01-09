@@ -55,7 +55,7 @@
 (declare-function ergoemacs-key-description "ergoemacs-key-description")
 
 (defun ergoemacs-advice-substitute-command-keys (orig-fun &rest args)
-  "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled"
+  "Use `ergoemacs-substitute-command-keys' when `ergoemacs-mode' is enabled."
   (if ergoemacs-mode
       (ergoemacs-key-description--substitute-command-keys (nth 0 args))
     (funcall orig-fun args)))
