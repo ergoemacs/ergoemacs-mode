@@ -460,8 +460,9 @@ after initializing ergoemacs-mode.
 (defvar ergoemacs-mode-term-raw-keymap (make-sparse-keymap)
   "This is the `ergoemacs-mode' terminal raw keymap.  Only Meta/alt keys are applied.")
 
-(defvar ergoemacs-use-advice nil
-  )
+(defvar ergoemacs-use-advice (version> emacs-version "26.0")
+  "Use ergoemacs-mode advice for pretty keys.")
+
 (defun ergoemacs-setup-override-keymap ()
   "Setup `ergoemacs-mode' keymaps."
   (setq ergoemacs-override-alist
