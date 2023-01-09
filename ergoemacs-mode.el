@@ -471,10 +471,8 @@ after initializing ergoemacs-mode.
           (ergoemacs-mode-regular . ,ergoemacs-keymap)
           (ergoemacs-mode-send-emacs-keys . ,ergoemacs--send-emacs-keys-map)))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
-  (unwind-protect
-      (progn
-        (advice-add 'undefined :around #'ergoemacs-advice-undefined)
-        (advice-add 'read-key :around #'ergoemacs-read-key))))
+  (advice-add 'undefined :around #'ergoemacs-advice-undefined)
+  (advice-add 'read-key :around #'ergoemacs-read-key))
 
 (defun ergoemacs-remove-override-keymap ()
   "Remove `ergoemacs-mode' keymaps."
