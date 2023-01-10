@@ -471,14 +471,16 @@ after initializing ergoemacs-mode.
           (ergoemacs-mode-regular . ,ergoemacs-keymap)
           (ergoemacs-mode-send-emacs-keys . ,ergoemacs--send-emacs-keys-map)))
   (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
-  (advice-add 'undefined :around #'ergoemacs-advice-undefined)
-  (advice-add 'read-key :around #'ergoemacs-read-key))
+  (when (version<= "24.4" emacs-version)
+    (advice-add 'undefined :around #'ergoemacs-advice-undefined)
+    (advice-add 'read-key :around #'ergoemacs-read-key)))
 
 (defun ergoemacs-remove-override-keymap ()
   "Remove `ergoemacs-mode' keymaps."
   (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist)
-  (advice-remove 'undefined #'ergoemacs-advice-undefined)
-  (advice-remove 'read-key #'ergoemacs-read-key))
+  (when (version<= "24.4" emacs-version)
+    (advice-remove 'undefined #'ergoemacs-advice-undefined)
+    (advice-remove 'read-key #'ergoemacs-read-key)))
 
 
 ;;; Frequently used commands as aliases
