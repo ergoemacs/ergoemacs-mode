@@ -1222,10 +1222,9 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
 (defun ergoemacs-fix-arrow-keys (keymap)
   "Fix arrow keys for KEYMAP."
   (let (ergoemacs-M-O-binding)
-    (when ergoemacs-M-O-binding
-      (setq ergoemacs-M-O-binding (lookup-key keymap (kbd "M-O")))
-      (define-key keymap (kbd "M-O") 'ergoemacs-handle-M-O)
-      (define-key keymap [ergoemacs-meta-O] ergoemacs-M-O-binding))))
+    (setq ergoemacs-M-O-binding (lookup-key keymap (kbd "M-O")))
+    (define-key keymap (kbd "M-O") 'ergoemacs-handle-M-O)
+    (define-key keymap [ergoemacs-meta-O] ergoemacs-M-O-binding)))
 
 (defvar ergoemacs-override-keymap)
 
