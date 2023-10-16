@@ -1,6 +1,6 @@
 ;;; ergoemacs-cua.el --- Keyboard keybinding translation -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2021  Free Software Foundation, Inc.
+;; Copyright © 2013-2023  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-cua.el
 ;; Description:
@@ -61,21 +61,22 @@
 
 (defvar ergoemacs--prefix-override-keymap
   (let ((map (make-sparse-keymap)))
-    (define-key map [(control x)] 'ergoemacs--prefix-override-handler)
-    (define-key map [(control c)] 'ergoemacs--prefix-override-handler)
+    (define-key map [(control x)] #'ergoemacs--prefix-override-handler)
+    (define-key map [(control c)] #'ergoemacs--prefix-override-handler)
     map)
   "Prefix override keymap.")
 
 (defvar ergoemacs--ena-prefix-repeat-keymap nil
-  "Variable that states that `ergoemacs-mode' is in the repeat phase, immediately after using the prefix key.")
+  "Non-nil if `ergoemacs-mode' is in the repeat phase,
+I.e. immediately after using the prefix key.")
 
 (defvar ergoemacs--prefix-repeat-keymap
   (let ((map (make-sparse-keymap)))
-    (define-key map [(control x) (control x)] 'ergoemacs--prefix-repeat-handler)
-    (define-key map [(control c) (control c)] 'ergoemacs--prefix-repeat-handler)
+    (define-key map [(control x) (control x)] #'ergoemacs--prefix-repeat-handler)
+    (define-key map [(control c) (control c)] #'ergoemacs--prefix-repeat-handler)
     (dolist (key '(up down left right home end next prior))
-      (define-key map (vector '(control x) key) 'ergoemacs--prefix-cut-handler)
-      (define-key map (vector '(control c) key) 'ergoemacs--prefix-copy-handler)))
+      (define-key map (vector '(control x) key) #'ergoemacs--prefix-cut-handler)
+      (define-key map (vector '(control c) key) #'ergoemacs--prefix-copy-handler)))
   "Prefix repeat keymap.")
 
 
@@ -109,7 +110,7 @@ enabled."
 This is also used to select the region keymaps.")
 
 (defvar ergoemacs--ena-prefix-override-keymap nil
-  "Variable that tels the `ergoemacs-mode' of the overide step is active.
+  "Non-nil if `ergoemacs-mode's override step is active.
 
 This override is enabled for active regions before the copy and paste are enabled.")
 

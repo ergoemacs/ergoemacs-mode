@@ -1,6 +1,6 @@
 ;;; ergoemacs-functions.el --- miscellaneous functions for ErgoEmacs -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2021 Free Software Foundation, Inc.
+;; Copyright © 2013-2023 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Authors: Xah Lee, Matthew Fidler, Drew Adams, Ting-Yu Lin, David
@@ -161,11 +161,6 @@ KEY3 is the optional third key in the sequence."
   "Ergoemacs replacement for `goto-line' using `ergoemacs--send-emacs-key'."
   (interactive)
   (ergoemacs--send-emacs-key ?\M-g ?\M-g))
-
-(defun ergoemacs-delete-char ()
-  "Ergoemacs replacement for `delete-char' using `ergoemacs--send-emacs-key'."
-  (interactive)
-  (ergoemacs--send-emacs-key ?\C-d))
 
 (defun ergoemacs-move-beginning-of-line ()
   "Ergoemacs replacement for `move-beginning-of-line' using `ergoemacs--send-emacs-key'."
@@ -484,7 +479,7 @@ When TERMINAL is non-nil, run in a terminal instead of GUI."
       (kill-buffer buf)))
   (switch-to-buffer-other-window (get-buffer-create "*ergoemacs-clean*"))
   (let ((inhibit-read-only t))
-    (ergoemacs-save-buffer-state
+    (with-silent-modifications
      (set (make-local-variable 'ergoemacs-terminal) terminal))
     (setq default-directory (expand-file-name (file-name-directory (locate-library "ergoemacs-mode"))))
     (delete-region (point-min) (point-max))
@@ -502,7 +497,7 @@ When TERMINAL is non-nil, run in a terminal instead of GUI."
                (process (start-process-shell-command "ergoemacs-byte-compile"
                                                      "*ergoemacs-clean*"
                                                      (format "%s -L %s -Q --batch -f batch-byte-compile ergoemacs-*.el" emacs-exe default-directory))))
-          (set-process-sentinel process 'ergoemacs-run-clean))
+          (set-process-sentinel process #'ergoemacs-run-clean))
       (ergoemacs-run-clean nil nil))))
 
 (defvar ergoemacs-run-clean nil
@@ -515,7 +510,7 @@ The PROCESS is the process where the clean environment is run."
         (inhibit-read-only t)
         (ergoemacs-load (or ergoemacs-run-clean
                             " --load=\"ergoemacs-mode\" --load=\"ergoemacs-test\"  --eval \"(progn (require 'elp) (setq debug-on-error t) (elp-instrument-package (symbol-name 'ergoemacs-)) (ergoemacs-mode 1) (run-with-idle-timer 0.1 nil 'elp-results))\""))
-        cmd process rm-batch)
+        cmd process)
     (cond
      ((with-current-buffer (get-buffer-create "*ergoemacs-clean*")
         (not ergoemacs-terminal))
@@ -528,7 +523,7 @@ The PROCESS is the process where the clean environment is run."
                         emacs-exe
                         (expand-file-name (file-name-directory (locate-library "ergoemacs-mode")))
                         ergoemacs-load))
-      (ergoemacs-save-buffer-state
+      (with-silent-modifications
        (set (make-local-variable 'ergoemacs-batch-file)
 	    (make-temp-file "ergoemacs-clean" nil ".bat")))
       (with-temp-file ergoemacs-batch-file
@@ -543,17 +538,11 @@ The PROCESS is the process where the clean environment is run."
       (goto-char (point-max))
       (insert "Command\n" cmd "\n\n"))
     (with-current-buffer (get-buffer-create "*ergoemacs-clean*")
-      (unless (eq major-mode 'compilation-mode)
+      (unless (derived-mode-p 'compilation-mode)
         (compilation-mode)))
-    (if (not rm-batch)
-        (setq process (start-process-shell-command "ergoemacs-run-clean"
-                                                   "*ergoemacs-clean*"
-                                                   cmd))
-      (setq process (start-process
-                     "ergoemacs-run-clean" "*ergoemacs-clean*"
-                     (executable-find "cmd")
-                     (file-name-nondirectory ergoemacs-batch-file)))
-      (set-process-sentinel process 'ergoemacs-run-clean-rm-batch))))
+    (start-process-shell-command "ergoemacs-run-clean"
+                                 "*ergoemacs-clean*"
+                                 cmd)))
 
 (defun ergoemacs-run-clean-rm-batch ()
   "Remove temporary batch file."
@@ -854,9 +843,9 @@ followed by the beginning of indentation (if
 (defcustom ergoemacs-use-beginning-or-end-of-line-only 'on-repeat 
   "Allow `ergoemacs-beginning-of-line-or-what' and `ergoemacs-end-of-line-or-what' to only go to the beginning/end of a line."
   :type '(choice
-          (const t :tag "Only go to the beginning or end of a line")
-          (const nil :tag "Goto beginning/end of block whenever at beginning/end of line")
-          (const on-repeat :tag "Goto beginning/end of block when at beginining/end of line and have already pressed the key."))
+          (const :tag "Only go to the beginning or end of a line" t)
+          (const :tag "Goto beginning/end of block whenever at beginning/end of line" nil)
+          (const :tag "Goto beginning/end of block when at beginining/end of line and have already pressed the key." on-repeat))
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-beginning-or-end-of-line-and-what 'block
@@ -867,10 +856,10 @@ When 'page use `scroll-down-command' or `scroll-up-command'
 When 'block use `ergoemacs-backward-block' or `ergoemacs-forward-block'
 When 'nil don't use a repeatable command."
   :type '(choice
-          (const buffer :tag "Goto beginning/end of buffer")
-          (const page :tag "Page Up")
-          (const block :tag "Goto beginning/end of block")
-          (const nil :tag "Do nothing on repeat at beginning/end of line"))
+          (const :tag "Goto beginning/end of buffer" buffer)
+          (const :tag "Page Up" page)
+          (const :tag "Goto beginning/end of block" block)
+          (const :tag "Do nothing on repeat at beginning/end of line" nil))
   :group 'ergoemacs-mode)
 
 (defcustom ergoemacs-beginning-or-end-of-line-prefix-scrolls-other-window t
@@ -1039,7 +1028,8 @@ the prefix arguments of `beginning-of-buffer',
            (ignore-errors
              (setq this-command 'scroll-other-window-down)
              (scroll-other-window-down)
-             t)) nil
+             t))
+      nil
     (if (and ergoemacs-beginning-or-end-of-line-and-what
              (or (not ergoemacs-use-beginning-or-end-of-line-only)
                  (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
@@ -1049,7 +1039,7 @@ the prefix arguments of `beginning-of-buffer',
           (cond
            ((eq ergoemacs-beginning-or-end-of-line-and-what 'buffer)
             (let ((pt (point)))
-              (beginning-of-buffer)
+              (goto-char (point-min))
               (when (= pt (point))
                 (call-interactively 'beginning-of-buffer)))
             (setq this-command 'beginning-of-buffer))
@@ -1068,7 +1058,7 @@ the prefix arguments of `beginning-of-buffer',
         (let ((line-move-visual nil))
           (forward-line (- N 1))))
       (let (pts tmp)
-        (push (point-at-bol) pts)
+        (push (line-beginning-position) pts)
         (save-excursion
           ;; (setq prefix-arg nil)
           (setq current-prefix-arg nil)
@@ -1093,13 +1083,13 @@ the prefix arguments of `beginning-of-buffer',
             (when (not (eolp))
               (forward-char 1))
             (save-excursion
-              (while (re-search-backward (format "%s" comment-start-skip) (point-at-bol) t))
-              (while (re-search-forward (format "\\=%s" comment-start-skip) (point-at-eol) t))
+              (while (re-search-backward (format "%s" comment-start-skip) (line-beginning-position) t))
+              (while (re-search-forward (format "\\=%s" comment-start-skip) (line-end-position) t))
               (push (point) pts)
-              (when (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
-                (while (re-search-backward (format "%s\\=" comment-start-skip) (point-at-bol) t)
-                  (skip-chars-backward " \t" (point-at-bol)))
-                (skip-chars-backward " \t" (point-at-bol))
+              (when (re-search-backward (format "%s\\=" comment-start-skip) (line-beginning-position) t)
+                (while (re-search-backward (format "%s\\=" comment-start-skip) (line-beginning-position) t)
+                  (skip-chars-backward " \t" (line-beginning-position)))
+                (skip-chars-backward " \t" (line-beginning-position))
                 (push (point) pts)))))
         (cond
          ((not pts)
@@ -1108,7 +1098,7 @@ the prefix arguments of `beginning-of-buffer',
             (when (= pt (point))
               (call-interactively 'move-beginning-of-line))))
          (t
-          (setq pts (sort pts '<))
+          (setq pts (sort pts #'<))
           (dolist (x pts)
             (save-excursion
               (goto-char x)
@@ -1183,7 +1173,8 @@ the prefix arguments of `end-of-buffer',
            (ignore-errors
              (setq this-command 'scroll-other-window)
              (scroll-other-window)
-             t)) nil
+             t))
+      nil
     (if (and ergoemacs-beginning-or-end-of-line-and-what
              (or (not ergoemacs-use-beginning-or-end-of-line-only)
                  (and (eq 'on-repeat ergoemacs-use-beginning-or-end-of-line-only)
@@ -1240,13 +1231,13 @@ the prefix arguments of `end-of-buffer',
         (when ergoemacs-end-of-comment-line
           (save-excursion
             ;; See http://www.emacswiki.org/emacs/EndOfLineNoComments
-            (goto-char (point-at-bol))
-            (when (re-search-forward (format "%s" comment-start-skip) (point-at-eol) t)
+            (goto-char (line-beginning-position))
+            (when (re-search-forward (format "%s" comment-start-skip) (line-end-position) t)
               (goto-char (match-beginning 0)))
-            (skip-syntax-backward " " (point-at-bol))
+            (skip-syntax-backward " " (line-beginning-position))
             (push (point) pts)))
         (when pts
-          (setq pts (sort pts '<))
+          (setq pts (sort pts #'<))
           (dolist (x pts)
             (unless (<= x (point))
               (push x tmp)))
@@ -1332,7 +1323,7 @@ Subsequent calls expands the selection to larger semantic unit."
       (mark-sexp -1))))
 
 ;;; TEXT TRANSFORMATION RELATED
-(defun ergoemacs-kill-line-backward (&optional number)
+(defun ergoemacs-kill-line-backward (&optional _number)
   "Kill text between the beginning of the line to the cursor position.
 If there's no text, delete the previous line ending."
   (interactive "p")
@@ -1528,10 +1519,11 @@ Based on the value of `major-mode' and
 
 (defun ergoemacs-camelize-method (s &optional char)
   "Convert under_score string S to CamelCase string."
-  (mapconcat 'identity (ergoemacs-mapcar-head
-                        #'downcase
-                        '(lambda (word) (capitalize (downcase word)))
-                        (split-string s (or char "_"))) ""))
+  (mapconcat #'identity (ergoemacs-mapcar-head
+                         #'downcase
+                         (lambda (word) (capitalize (downcase word)))
+                         (split-string s (or char "_")))
+             ""))
 
 (defun ergoemacs-camel-bounds (camel-case-chars)
   "Return the camel-case bounds.
@@ -1781,7 +1773,7 @@ binding."
 (defcustom ergoemacs-maximum-number-of-file-to-open 5
   "Maximum number of files to open.
 If less than or equal to zero, there is no limit."
-  :type 'integerp
+  :type 'integer
   :group 'ergoemacs-mode)
 (defun ergoemacs-open-in-external-app (&optional file)
   "Open the current file or dired marked files in external app.
@@ -2184,7 +2176,7 @@ When in `browse-kill-ring-mode', cycle backward through the key ring.
   "Run `yank' or `yank-pop' if this command is repeated.
 This is `yank' if `ergoemacs-smart-paste' is nil.
 This is `yank-pop' if `ergoemacs-smart-paste' is t and last command is a yank.
-This is `browse-kill-ring' if `ergoemacs-smart-paste' equals 'browse-kill-ring and last command is a yank.
+This is `browse-kill-ring' if `ergoemacs-smart-paste' equals `browse-kill-ring' and last command is a yank.
 
 When in `browse-kill-ring-mode', cycle forward through the key ring.
 
@@ -2341,9 +2333,11 @@ ARG is the prefix argument for either command." direction direction direction)
 
 (defun ergoemacs-camelize (s &optional char)
   "Convert under_score string S to CamelCase string."
-  (mapconcat 'identity (mapcar
+  (mapconcat #'identity (mapcar
+                         ;; FIXME: Is this different from just `capitalize'?
                         (lambda (word) (capitalize (downcase word)))
-                        (split-string s (or char "_"))) ""))
+                        (split-string s (or char "_")))
+             ""))
 
 
 
@@ -2545,17 +2539,17 @@ Sends shell prompt string to process, then turns on
       (require 'dirtrack)
       (cond
        ((string-match "cmd\\(proxy\\)?.exe" shell)
-        (ergoemacs-save-buffer-state
+        (with-silent-modifications
 	 (set (make-local-variable 'dirtrack-list) (list "^\\([a-zA-Z]:.*\\)>" 1)))
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))
        ((string-match "powershell.exe" shell)
-        (ergoemacs-save-buffer-state
+        (with-silent-modifications
 	 (set (make-local-variable 'dirtrack-list) (list "^PS \\([a-zA-Z]:.*\\)>" 1)))
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))
        (t ;; Assume basic abc@host:dir structure
-        (ergoemacs-save-buffer-state
+        (with-silent-modifications
 	 (set (make-local-variable 'dirtrack-list) (list "^\\(?:.*?@\\)?\\(?:.*?:\\)?\\(?:[^ ]* \\)? *\\(.*\\) *\\([$#]\\|\\]\\)" 1)))
         (shell-dirtrack-mode -1)
         (dirtrack-mode 1))))))

@@ -1,6 +1,6 @@
-;;; ergoemacs-layouts.el --- keyboard layouts for ErgoEmacs -* lexical-binding: t -*-
+;;; ergoemacs-layouts.el --- keyboard layouts for ErgoEmacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013-2021 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -415,7 +415,7 @@ If LAYOUT is unspecified, use `ergoemacs-keyboard-layout'."
     ,@(mapcar
               (lambda(elt)
                 `(const :tag ,elt :value ,elt))
-              (sort (ergoemacs-layouts--list t) 'string<))))
+              (sort (ergoemacs-layouts--list t) #'string<))))
 
 (defun ergoemacs-layouts--custom-documentation (&optional lays ini)
   "Get a documentation list of all known layouts.
@@ -424,7 +424,7 @@ LAYS is the layouts being processed.
 
 If INI is non-nil, create information about the autohotkey ini
 file."
-  (let ((lays (or lays (sort (ergoemacs-layouts--list t) 'string<))))
+  (let ((lays (or lays (sort (ergoemacs-layouts--list t) #'string<))))
     (mapconcat
      (lambda(lay)
        (let* ((variable (intern (concat "ergoemacs-layout-" lay)))
@@ -543,8 +543,7 @@ Otherwise, `ergoemacs-mode' will try to adjust based on your layout."
 
 when BASE is non-nil, the regular expression shows the regular
 expression matching the base layout."
-  (let ((reg (regexp-opt (ergoemacs-layouts--list t) t))
-        (f1 "[\"`']\\(%s\\)[\"`']")
+  (let ((f1 "[\"`']\\(%s\\)[\"`']")
         (f2 "Base Layout: \\(%s\\)"))
     (format (cond
              (base f2)
@@ -578,14 +577,10 @@ LAYOUT can be either a symbol or string."
          (s (intern (concat "ergoemacs-layout-" layout)))
          (sv (and (boundp s) (symbol-value s)))
          (el-file (find-lisp-object-file-name s 'defvar))
-         (alias (condition-case nil
-                    (indirect-variable s)
-                  (error s)))
          (doc (or (documentation-property
                    s 'variable-documentation)
                   (documentation-property
                    s 'variable-documentation)))
-         pt
          png svg)
     (unless (featurep 'quail)
       (require 'quail))
@@ -653,7 +648,7 @@ LAYOUT can be either a symbol or string."
           ;; Return the text we displayed.
           (buffer-string))))))
 
-(defalias 'describe-ergoemacs-layout 'ergoemacs-layout-describe)
+(defalias 'describe-ergoemacs-layout #'ergoemacs-layout-describe)
 
 (provide 'ergoemacs-layouts)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

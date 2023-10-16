@@ -1,6 +1,6 @@
-;;; ergoemacs-test.el --- tests for ErgoEmacs issues
+;;; ergoemacs-test.el --- tests for ErgoEmacs issues  -*- lexical-binding: t; -*-
 
-;; Copyright © 2013-2021 Free Software Foundation, Inc.
+;; Copyright © 2013-2023 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -27,6 +27,10 @@
 ;; 
 
 ;;; Code:
+
+(require 'ergoemacs-functions)
+(require 'ergoemacs-command-loop)
+(require 'ergoemacs-translate)
 
 (eval-when-compile 
   (require 'cl-lib)
@@ -135,8 +139,9 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.")
 (defun ergoemacs-test ()
   "Test ergoemacs issues."
   (interactive)
-  (let ((ret t)
-        (test))
+  (let (;; (ret t)
+        ;; (test)
+        )
     (elp-instrument-package "ergoemacs-")
     (ert "^ergoemacs-test-")
     (call-interactively 'elp-results)))
@@ -174,16 +179,16 @@ not using cua or cutting line. I think kill-region is what is meant."
       (goto-char (point-max))
       (call-interactively 'ergoemacs-beginning-of-line-or-what)
       (should (string= "Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol))))
+                       (buffer-substring (point) (line-end-position))))
       (call-interactively 'ergoemacs-beginning-of-line-or-what)
       (should (string= " ; Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol))))
+                       (buffer-substring (point) (line-end-position))))
       (call-interactively 'ergoemacs-beginning-of-line-or-what)
       (should (string= "(ergoemacs-mode 1)) ; Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol))))
+                       (buffer-substring (point) (line-end-position))))
       (call-interactively 'ergoemacs-beginning-of-line-or-what)
       (should (string= "  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol)))))))
+                       (buffer-substring (point) (line-end-position)))))))
 
 
 (ert-deftest ergoemacs-test-function-eol-or-what ()
@@ -198,9 +203,9 @@ not using cua or cutting line. I think kill-region is what is meant."
       
       (call-interactively 'ergoemacs-end-of-line-or-what)
       (should (string= " ; Turn on ergoemacs-mode"
-                       (buffer-substring (point) (point-at-eol))))
+                       (buffer-substring (point) (line-end-position))))
       (call-interactively 'ergoemacs-end-of-line-or-what)
-      (should (= (point) (point-at-eol))))))
+      (should (= (point) (line-end-position))))))
 
 (ert-deftest ergoemacs-test-function-unbind-commands-active ()
   "Make sure the unbound keys work"
@@ -243,7 +248,7 @@ See Issue #138."
          (w-file (expand-file-name "global-test" ergoemacs-dir))
          (temp-file (make-temp-file "ergoemacs-test" nil ".el")))
     (setq sk
-          (format "(%s '(lambda() (interactive) (with-temp-file \"%s\" (insert \"Ok\"))))"
+          (format "(%s (lambda() (interactive) (with-temp-file \"%s\" (insert \"Ok\"))))"
                   (cond
                    ((eq ergoemacs 'define-key)
                     (format "define-key global-map (kbd \"%s\") " test-key))
@@ -346,16 +351,15 @@ See Issue #138."
   "Major mode for testing some issues with `ergoemacs-mode'.
 \\{ergoemacs-test-major-mode-map}")
 
-(define-key ergoemacs-test-major-mode-map (kbd "C-s") 'search-forward)
-(define-key ergoemacs-test-major-mode-map (kbd "<f6>") 'search-forward)
-(define-key ergoemacs-test-major-mode-map (kbd "M-s a") 'isearch-forward)
-(define-key ergoemacs-test-major-mode-map (kbd "M-s b") 'isearch-backward)
+(define-key ergoemacs-test-major-mode-map (kbd "C-s") #'search-forward)
+(define-key ergoemacs-test-major-mode-map (kbd "<f6>") #'search-forward)
+(define-key ergoemacs-test-major-mode-map (kbd "M-s a") #'isearch-forward)
+(define-key ergoemacs-test-major-mode-map (kbd "M-s b") #'isearch-backward)
 
-(let ((ergoemacs-is-user-defined-map-change-p t))
+;; (let ((ergoemacs-is-user-defined-map-change-p t))
   (add-hook 'ergoemacs-test-major-mode-hook
-            '(lambda()
-               (interactive)
-               (define-key ergoemacs-test-major-mode-map (kbd "C-w") 'ergoemacs-close-current-buffer))))
+            (lambda()
+              (define-key ergoemacs-test-major-mode-map (kbd "C-w") #'ergoemacs-close-current-buffer))) ;; )
 
 (ert-deftest ergoemacs-test-issue-349 ()
   "Unbind <f6>"
@@ -388,10 +392,12 @@ See Issue #138."
     (when (file-exists-p w-file)
       (delete-file w-file))))
 
+(defvar ergoemacs-use-function-remapping)
+
 (ert-deftest ergoemacs-test-ignore-ctl-w ()
   "Keep user-defined C-w in major-mode `ergoemacs-test-major-mode'.
 Part of addressing Issue #147."
-  (let (ret
+  (let (;; ret
         (ergoemacs-use-function-remapping t))
     (with-temp-buffer
       (ergoemacs-test-major-mode)
@@ -401,55 +407,48 @@ Part of addressing Issue #147."
       ;; The user-defined C-w should not affect kill-region remaps.
       (should (not (eq (key-binding [ergoemacs-remap kill-region]) 'ergoemacs-close-current-buffer))))))
 
+
+(require 'dired)
+
+(defvar ergoemacs-test--dired-sort-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "s"
+      (lambda () "sort by Size"
+        (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso"))))
+    (define-key map "."
+      (lambda () "sort by eXtension"
+        (interactive) (dired-sort-other (concat dired-listing-switches "X"))))
+    (define-key map "t"
+      (lambda () "sort by Time"
+        (interactive) (dired-sort-other (concat dired-listing-switches "t"))))
+    (define-key map "n"
+      (lambda () "sort by Name"
+        (interactive) (dired-sort-other (concat dired-listing-switches ""))))
+    map))
+
+
+(defun ergoemacs-test--dired-hook ()
+  (define-key dired-mode-map "s" ergoemacs-test--dired-sort-map)
+  ;; Use "|", not "r".
+  (define-key dired-mode-map "|" #'dired-sort-menu-toggle-reverse)
+  )
+
 (ert-deftest ergoemacs-test-dired-sort-files ()
   "Test Issue #340"
-  (add-hook 'dired-mode-hook (lambda ()
-                               (interactive)
-                               (make-local-variable  'dired-sort-map)
-                               (setq dired-sort-map (make-sparse-keymap))
-                               (define-key dired-mode-map "s" dired-sort-map)
-                               (define-key dired-sort-map "s"
-                                 '(lambda () "sort by Size"
-                                    (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso"))))
-                               (define-key dired-sort-map "."
-                                 '(lambda () "sort by eXtension"
-                                    (interactive) (dired-sort-other (concat dired-listing-switches "X"))))
-                               (define-key dired-sort-map "t"
-                                 '(lambda () "sort by Time"
-                                    (interactive) (dired-sort-other (concat dired-listing-switches "t"))))
-                               (define-key dired-sort-map "n"
-                                 '(lambda () "sort by Name"
-                                    (interactive) (dired-sort-other (concat dired-listing-switches ""))))
-                               ;; Use "|", not "r".
-                               (define-key dired-mode-map "|" 'dired-sort-menu-toggle-reverse)
-                               ))
+  (add-hook 'dired-mode-hook #'ergoemacs-test--dired-hook)
   (dired ergoemacs-dir)
-  (should (equal (key-binding (kbd "s s")) '(lambda () "sort by Size" (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso")))))
-  (should (equal (key-binding (kbd "s .")) '(lambda () "sort by eXtension" (interactive) (dired-sort-other (concat dired-listing-switches "X")))))
-  (should (equal (key-binding (kbd "s t")) '(lambda () "sort by Time" (interactive) (dired-sort-other (concat dired-listing-switches "t")))))
-  (should (equal (key-binding (kbd "s n")) '(lambda () "sort by Name" (interactive) (dired-sort-other (concat dired-listing-switches "")))))
-  (should (equal (key-binding (kbd "|")) 'dired-sort-menu-toggle-reverse))
+  (should (equal (key-binding (kbd "s s"))
+                 (lookup-key "s" ergoemacs-test--dired-sort-map)))
+  (should (equal (key-binding (kbd "s ."))
+                 (lookup-key "." ergoemacs-test--dired-sort-map)))
+  (should (equal (key-binding (kbd "s t"))
+                 (lookup-key "t" ergoemacs-test--dired-sort-map)))
+  (should (equal (key-binding (kbd "s n"))
+                 (lookup-key "n" ergoemacs-test--dired-sort-map)))
+  (should (equal (key-binding (kbd "|")) #'dired-sort-menu-toggle-reverse))
   (kill-buffer (current-buffer))
-  (remove-hook 'dired-mode-hook (lambda ()
-    (interactive)
-    (make-local-variable  'dired-sort-map)
-    (setq dired-sort-map (make-sparse-keymap))
-    (define-key dired-mode-map "s" dired-sort-map)
-    (define-key dired-sort-map "s"
-      '(lambda () "sort by Size"
-         (interactive) (dired-sort-other (concat dired-listing-switches "-AlS --si --time-style long-iso"))))
-    (define-key dired-sort-map "."
-      '(lambda () "sort by eXtension"
-         (interactive) (dired-sort-other (concat dired-listing-switches "X"))))
-    (define-key dired-sort-map "t"
-      '(lambda () "sort by Time"
-         (interactive) (dired-sort-other (concat dired-listing-switches "t"))))
-    (define-key dired-sort-map "n"
-      '(lambda () "sort by Name"
-         (interactive) (dired-sort-other (concat dired-listing-switches ""))))
-    ;; Use "|", not "r".
-    (define-key dired-mode-map "|" 'dired-sort-menu-toggle-reverse)
-    )))
+  ;; FIXME: This does not restore `dired-mode-map'!
+  (remove-hook 'dired-mode-hook #'ergoemacs-test--dired-hook))
 
 
 (ert-deftest ergoemacs-test-quail-translations ()

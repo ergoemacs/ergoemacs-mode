@@ -1,6 +1,6 @@
 ;;; ergoemacs-themes.el --- ErgoEmacs keybindings and themes -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2021 Free Software Foundation, Inc.
+;; Copyright © 2013-2023 Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Authors: Matthew L. Fidler, Xah Lee, Drew Adams
@@ -30,15 +30,15 @@
 (require 'ibuffer)
 
 (defun ergoemacs-global-set-key (key command &optional extra-keys)
-  "Translates KEY from a 'us' layout to the current layout.
+  "Translates KEY from a `us' layout to the current layout.
 This also sets the binding as a global binding as COMMAND.
 
-For example, if your layout is 'us', the command
+For example, if your layout is `us', the command
 
-  (ergoemaces-global-set-key (kbd \"M-k\") 'next-line)
+  (ergoemacs-global-set-key (kbd \"M-k\") #\\='next-line)
 
-will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
-'Meta-e' to next-line.
+will bind `Meta-k' to next-line.  If your layout is `colemak', it will bind
+`Meta-e' to next-line.
 
 EXTRA-KEYS are untranslated keys that are appended."
   (if extra-keys
@@ -51,16 +51,16 @@ EXTRA-KEYS are untranslated keys that are appended."
                     command)))
 
 (defun ergoemacs-define-key (map key command &optional extra-keys)
-  "Translates KEY from a 'us' layout to the current layout.
+  "Translates KEY from a `us' layout to the current layout.
 
 In this case,  the key is then  defined in the MAP to run COMMAND.
 
-For example, if your layout is 'us', the command
+For example, if your layout is `us', the command
 
-  (ergoemacs-define-key keymap (kbd \"M-k\") 'next-line)
+  (ergoemacs-define-key keymap (kbd \"M-k\") #\\='next-line)
 
-will bind 'Meta-k' to next-line.  If your layout is 'colemak', it will bind
-'Meta-e' to next-line.
+will bind `Meta-k' to next-line.  If your layout is `colemak', it will bind
+`Meta-e' to next-line.
 
 EXTRA-KEYS are untranslated keys that are appended."
   (if extra-keys

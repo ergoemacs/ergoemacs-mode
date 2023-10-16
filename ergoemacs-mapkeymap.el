@@ -136,7 +136,7 @@ them to be masked when mapping over the keymap."
                            (make-keymap))))
         composed-list
         parent
-        calc-parent-p
+        ;; calc-parent-p
         prefix-map
         tmp)
     (when (not prefix)
@@ -164,9 +164,9 @@ them to be masked when mapping over the keymap."
              (when function
                (funcall function key 'ergoemacs-prefix))
              (ergoemacs-map-keymap--map-submap item function original key flat-keymap nil-keys)
-             (unless calc-parent-p
+             ;; (unless calc-parent-p
                (setq composed-list (ergoemacs :composed-list keymap)
-                     parent (keymap-parent keymap)))
+                     parent (keymap-parent keymap)) ;;)
              (if composed-list
                  (dolist (map composed-list)
                    (when (and (ergoemacs-keymapp map)
