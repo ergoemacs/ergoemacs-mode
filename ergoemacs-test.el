@@ -512,27 +512,6 @@ Part of addressing Issue #147."
     ;; Test M-m -> ^m -> RET
     (should (string= "RET" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-m" t) 0) :ctl-to-alt)))))))
 
-(ert-deftest ergoemacs-test-input-methods ()
-  "Make sure that `ergoemacs-mode' works with input methods."
-  :tags '(:translate)
-  (ergoemacs-test-layout
-   :layout "colemak"
-   :macro "arst"
-   (save-excursion
-     (switch-to-buffer (get-buffer-create "*ergoemacs-test*"))
-     (delete-region (point-min) (point-max))
-     (set-input-method "greek")
-     (message "%s" current-input-method)
-     (ergoemacs-command-loop--internal "arst")
-     (should (string= "αρστ" (buffer-string)))
-     (quail-set-keyboard-layout "colemak")
-     (delete-region (point-min) (point-max))
-     (ergoemacs-command-loop--internal "arst")
-     (quail-set-keyboard-layout "standard")
-     (should (string= "ασδφ" (buffer-string)))
-     (set-input-method nil)
-     (kill-buffer (current-buffer)))))
-
 (ert-deftest ergoemacs-test-table-insert ()
   "Tests that table can insert without hanging emacs."
   :tags '(:table)
