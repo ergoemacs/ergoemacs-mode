@@ -20,11 +20,11 @@
 
 ;;; Commentary:
 
-;; 
+;;
 
 ;; Todo:
 
-;; 
+;;
 
 ;;; Code:
 
@@ -32,7 +32,7 @@
 (require 'ergoemacs-command-loop)
 (require 'ergoemacs-translate)
 
-(eval-when-compile 
+(eval-when-compile
   (require 'cl-lib)
   (require 'ergoemacs-macros))
 
@@ -174,7 +174,7 @@ not using cua or cutting line. I think kill-region is what is meant."
   (let ((ergoemacs-end-of-comment-line t)
         (ergoemacs-back-to-indentation t))
     (with-temp-buffer
-      (emacs-lisp-mode) ; Turn on ergoemacs-mode 
+      (emacs-lisp-mode) ; Turn on ergoemacs-mode
       (insert "(progn\n  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode")
       (goto-char (point-max))
       (call-interactively 'ergoemacs-beginning-of-line-or-what)
@@ -200,7 +200,7 @@ not using cua or cutting line. I think kill-region is what is meant."
       (insert "(progn\n  (ergoemacs-mode 1)) ; Turn on ergoemacs-mode")
       (goto-char (point-max))
       (beginning-of-line)
-      
+
       (call-interactively 'ergoemacs-end-of-line-or-what)
       (should (string= " ; Turn on ergoemacs-mode"
                        (buffer-substring (point) (line-end-position))))
@@ -438,13 +438,13 @@ Part of addressing Issue #147."
   (add-hook 'dired-mode-hook #'ergoemacs-test--dired-hook)
   (dired ergoemacs-dir)
   (should (equal (key-binding (kbd "s s"))
-                 (lookup-key "s" ergoemacs-test--dired-sort-map)))
+                 (lookup-key ergoemacs-test--dired-sort-map "s")))
   (should (equal (key-binding (kbd "s ."))
                  (lookup-key "." ergoemacs-test--dired-sort-map)))
   (should (equal (key-binding (kbd "s t"))
-                 (lookup-key "t" ergoemacs-test--dired-sort-map)))
+                 (lookup-key ergoemacs-test--dired-sort-map "t")))
   (should (equal (key-binding (kbd "s n"))
-                 (lookup-key "n" ergoemacs-test--dired-sort-map)))
+                 (lookup-key ergoemacs-test--dired-sort-map "n")))
   (should (equal (key-binding (kbd "|")) #'dired-sort-menu-toggle-reverse))
   (kill-buffer (current-buffer))
   ;; FIXME: This does not restore `dired-mode-map'!
@@ -466,9 +466,9 @@ Part of addressing Issue #147."
 
   ;; DEL = ^?, doesn't seem to have the issues that RET, ESC, and TAB has.
   (should (string= "DEL" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "DEL" t) 0) :ctl-to-alt)))))
-  
+
   (should (string= "C-DEL" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-DEL" t) 0) :ctl-to-alt)))))
-  
+
   (should (string= "M-DEL" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-DEL" t) 0) :ctl-to-alt)))))
 
   ;; RET = ^M
@@ -489,26 +489,26 @@ Part of addressing Issue #147."
   (should (string= "TAB" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "TAB" t) 0) :ctl-to-alt)))))
 
   (should (string= "C-TAB" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-TAB" t) 0) :ctl-to-alt)))))
-  
+
   (should (string= (key-description (kbd "M-TAB")) (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "C-TAB" t) 0) :ctl-to-alt)))))
 
   (cl-letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) t)))
     ;; Test M-i -> ^i -> TAB
     (should (string= "<C-i>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
-    
+
     ;; Test M-[ -> ^[ -> ESC
     (should (string= "<C-[>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-[" t) 0) :ctl-to-alt)))))
-    
+
     ;; Test M-m -> ^m -> RET
     (should (string= "<C-m>" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-m" t) 0) :ctl-to-alt))))))
 
   (cl-letf (((symbol-function 'display-graphic-p) (lambda(&rest _ignore) nil)))
     ;; Test M-i -> ^i -> TAB
     (should (string= "TAB" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-i" t) 0) :ctl-to-alt)))))
-    
+
     ;; Test M-[ -> ^[ -> ESC
     (should (string= "ESC" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-[" t) 0) :ctl-to-alt)))))
-    
+
     ;; Test M-m -> ^m -> RET
     (should (string= "RET" (key-description (vector (ergoemacs-translate--event-mods (elt (read-kbd-macro "M-m" t) 0) :ctl-to-alt)))))))
 
@@ -557,7 +557,7 @@ Part of addressing Issue #147."
   (should (equal 'arg (ergoemacs-command-loop--mouse-command-drop-first '(&rest arg) :rest)))
 
   (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&rest arg) :drop-rest)))
-  
+
   (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg) t)))
   (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg))))
   (should (equal nil (ergoemacs-command-loop--mouse-command-drop-first '(&optional arg) :rest)))
