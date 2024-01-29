@@ -1,6 +1,6 @@
 ;;; ergoemacs-macros.el --- Macros for ergoemacs-mode -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2021  Free Software Foundation, Inc.
+;; Copyright © 2013-2023  Free Software Foundation, Inc.
 
 ;; Maintainer: Matthew L. Fidler
 ;; Keywords: convenience
@@ -101,44 +101,8 @@ additional parsing routines defined by PARSE-FUNCTION."
             (list plist remaining))))
 
 ;;;###autoload
-(defmacro ergoemacs-save-buffer-state (&rest body)
-  "Eval BODY,
-then restore the buffer state under the assumption that no significant
-modification has been made in BODY.  A change is considered
-significant if it affects the buffer text in any way that isn't
-completely restored again.  Changes in text properties like `face' or
-`syntax-table' are considered insignificant.  This macro allows text
-properties to be changed, even in a read-only buffer.
-
-This macro should be placed around all calculations which set
-\"insignificant\" text properties in a buffer, even when the buffer is
-known to be writeable.  That way, these text properties remain set
-even if the user undoes the command which set them.
-
-This macro should ALWAYS be placed around \"temporary\" internal buffer
-changes \(like adding a newline to calculate a text-property then
-deleting it again\), so that the user never sees them on his
-`buffer-undo-list'.  
-
-However, any user-visible changes to the buffer \(like auto-newlines\)
-must not be within a `ergoemacs-save-buffer-state', since the user then
-wouldn't be able to undo them.
-
-The return value is the value of the last form in BODY.
-
-This was stole/modified from `c-save-buffer-state'"
-  `(let* ((modified (buffer-modified-p)) (buffer-undo-list t)
-          (inhibit-read-only t) (inhibit-point-motion-hooks t)
-          before-change-functions after-change-functions
-          deactivate-mark
-          buffer-file-name buffer-file-truename ; Prevent primitives checking
-                                        ; for file modification
-          )
-     (unwind-protect
-         (progn ,@body)
-       (and (not modified)
-            (buffer-modified-p)
-            (set-buffer-modified-p nil)))))
+(define-obsolete-function-alias 'ergoemacs-save-buffer-state
+  #'with-silent-modifications "2023")
 
 (defvar ergoemacs--map-properties-list
   '(
@@ -305,64 +269,13 @@ This also creates functions:
 - ergoemacs-translate--NAME-modal"
   (declare (doc-string 2)
            (indent 2))
-  (let ((kb (make-symbol "kb")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body body-and-plist))
+  (let ((kb (ergoemacs-theme-component--parse-keys-and-body body-and-plist)))
     
-    `(progn (puthash ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
-                     (lambda() ,(plist-get (nth 0 kb) ':description)
-                       (ergoemacs-translate--create :key ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
-                                                    ,@(nth 0 kb))) ergoemacs-translation-hash))))
-
-(defmacro ergoemacs-advice (function args &rest body-and-plist)
-  "Defines an `ergoemacs-mode' advice.
-
-The structure is (ergoemacs-advice function args tags body-and-plist)
-
-When the tag :type equals :replace, the advice replaces the function.
-
-When :type is :replace that replaces a function (like `define-key')"
-  (declare (doc-string 2)
-           (indent 2))
-  (let ((kb (make-symbol "kb")))
-    (setq kb (ergoemacs-theme-component--parse-keys-and-body `(nil nil ,@body-and-plist)))
-    (cond
-     ((eq (plist-get (nth 0 kb) :type) :around)
-      ;; FIXME: use `nadvice' for emacs 24.4+
-      (macroexpand-all `(progn
-                          (defadvice ,function (around ,(intern (format "ergoemacs-advice--%s" (symbol-name function))) ,args activate)
-                            ,(plist-get (nth 0 kb) :description)
-                            ,@(nth 1 kb)))))
-     ((eq (plist-get (nth 0 kb) :type) :after)
-      ;; FIXME: use `nadvice' for emacs 24.4+
-      (macroexpand-all
-       `(progn
-          (defadvice ,function (after ,(intern (format "ergoemacs-advice--after-%s" (symbol-name function))) ,args activate)
-            ,(plist-get (nth 0 kb) :description)
-            ,@(nth 1 kb)))))
-     ((eq (plist-get (nth 0 kb) :type) :before)
-      ;; FIXME: use `nadvice' for emacs 24.4+
-      (macroexpand-all `(progn
-                          (defadvice ,function (before ,(intern (format "ergoemacs-advice--%s" (symbol-name function))) ,args activate)
-                            ,(plist-get (nth 0 kb) :description)
-                            ,@(nth 1 kb)))))
-     ((eq (plist-get (nth 0 kb) :type) :replace)
-      (macroexpand-all `(progn
-                          (defalias ',(intern (format "ergoemacs-advice--real-%s" (symbol-name function)))
-                            (symbol-function ',function) (concat ,(format "ARGS=%s\n\n" args) (documentation ',function)
-                                                                 ,(format "\n\n`ergoemacs-mode' preserved the real `%s' in this function."
-                                                                          (symbol-name function))))
-                          (defun ,(intern (format "ergoemacs-advice--%s--" function)) ,args
-                            ,(format "%s\n\n%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
-                                     (documentation function)
-                                     (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function))
-                            ,@(nth 1 kb))
-                          ;; Hack to make sure the documentation is in the function...
-                          (defalias ',(intern (format "ergoemacs-advice--%s" function)) ',(intern (format "ergoemacs-advice--%s--" function))
-                            ,(format "ARGS=%s\n\n%s\n\n%s\n\n`ergoemacs-mode' replacement function for `%s'.\nOriginal function is preserved in `ergoemacs-advice--real-%s'"
-                                     args (documentation function) (plist-get (nth 0 kb) :description) (symbol-name function) (symbol-name function)))
-                          ,(if (plist-get (nth 0 kb) :always)
-                               `(push ',function ergoemacs-advice--permanent-replace-functions)
-                             `(push ',function ergoemacs-advice--temp-replace-functions))))))))
+    `(puthash ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
+              (lambda() ,(plist-get (nth 0 kb) ':description)
+                (ergoemacs-translate--create :key ,(intern (concat ":" (plist-get (nth 0 kb) ':name)))
+                                             ,@(nth 0 kb)))
+              ergoemacs-translation-hash)))
 
 
 (defmacro ergoemacs-save-key-state (keymap-symbol &rest body)

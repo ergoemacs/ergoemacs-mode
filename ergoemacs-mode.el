@@ -1,6 +1,6 @@
 ;;; ergoemacs-mode.el --- Emacs mode based on common modern interface and ergonomics. -*- lexical-binding: t -*-
 
-;; Copyright © 2007-2010, 2012-2021  Free Software Foundation, Inc.
+;; Copyright © 2007-2023  Free Software Foundation, Inc.
 
 ;; Author: Xah Lee <xah@xahlee.org>
 ;;         David Capello <davidcapello@gmail.com>
@@ -305,10 +305,10 @@ Home page URL `http://ergoemacs.github.io/'
 
 The `execute-extended-command' is now \\[execute-extended-command].
 "
-  nil
   :lighter " ErgoEmacs"
   :global t
   :group 'ergoemacs-mode
+  ;; FIXME: This var is only ever set: never used!
   (setq ergoemacs-mode--start-p t)
   (if ergoemacs-mode
       (progn
@@ -335,7 +335,7 @@ The `execute-extended-command' is now \\[execute-extended-command].
          ((string-equal ergoemacs-theme "reduction")
           (ergoemacs-setup-override-keymap))
          (t (ergoemacs-setup-override-keymap)))
-        (setq ergoemacs-require--ini-p t
+        (setq ergoemacs-require--ini-p t ;FIXME: Unused?
               ergoemacs-send-keys-term  ergoemacs-mode-send-emacs-keys)
         
         (message "Ergoemacs-mode turned ON (%s)." ergoemacs-keyboard-layout))
@@ -432,13 +432,12 @@ This is structured by valid keyboard layouts for
 basic ergoemacs functionality.  For example, if you want M-t to
 transpose words instead of running completion, call
 
-  (ergoemacs-define-key ergoemacs-override-keymap (kbd \"M-t\") 'transpose-words)
+  (ergoemacs-define-key ergoemacs-override-keymap (kbd \"M-t\") #\\='transpose-words)
 
-after initializing ergoemacs-mode.
-")
+after initializing ergoemacs-mode.")
 
 (defvar ergoemacs-mark-active-keymap (let ((map (make-sparse-keymap)))
-                                       (define-key map (kbd "TAB") 'indent-region)
+                                       (define-key map (kbd "TAB") #'indent-region)
                                        (define-key map [(shift control x)] 'ergoemacs--shift-control-x-prefix)
                                        (define-key map [(shift control c)] 'ergoemacs--shift-control-c-prefix)
                                        map)
@@ -470,13 +469,14 @@ after initializing ergoemacs-mode.
           (ergoemacs-mode-regular . ,ergoemacs-override-keymap)
           (ergoemacs-mode-regular . ,ergoemacs-keymap)
           (ergoemacs-mode-send-emacs-keys . ,ergoemacs--send-emacs-keys-map)))
-  (add-hook 'emulation-mode-map-alists ergoemacs-override-alist)
+  (add-to-list 'emulation-mode-map-alists ergoemacs-override-alist)
   (advice-add 'undefined :around #'ergoemacs-advice-undefined)
   (advice-add 'read-key :around #'ergoemacs-read-key))
 
 (defun ergoemacs-remove-override-keymap ()
   "Remove `ergoemacs-mode' keymaps."
-  (remove-hook 'emulation-mode-map-alists 'ergoemacs-override-alist)
+  (setq emulation-mode-map-alists
+        (delq ergoemacs-override-alist emulation-mode-map-alists))
   (advice-remove 'undefined #'ergoemacs-advice-undefined)
   (advice-remove 'read-key #'ergoemacs-read-key))
 

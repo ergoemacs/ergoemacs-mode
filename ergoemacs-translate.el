@@ -1,6 +1,6 @@
 ;;; ergoemacs-translate.el --- Keyboard translation functions -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2021  Free Software Foundation, Inc.
+;; Copyright © 2013-2023  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-translate.el
 ;; Description: 
@@ -122,7 +122,7 @@
       hash-f-t)))
 
 (defun ergoemacs-translate--emacs-shift (key-seq &optional modifier prefix)
-  "Uses emacs style shift-translation: M-Q becomes M-q.
+  "Uses Emacs style shift-translation: M-Q becomes M-q.
 
 KEY-SEQ must be a vector.  If there is no need to shift-translate
 the key sequence return nil.
@@ -131,7 +131,7 @@ Optionally you can change how this function behaves.
 
 Instead of translating the shifted key to the unshifted key, you
 can remove another modifier.  For example if you wanted to
-convert C-M-a to C-a, you could use 'meta as the MODIFIER
+convert C-M-a to C-a, you could use `meta' as the MODIFIER
 argument to remove the M- modifier.
 
 The PREFIX argument can add a key before the key where the
@@ -247,7 +247,7 @@ This will shift translate Alt+# to Alt+3."
 	       (not (eq (event-convert-list (list 'shift (setq basic (event-basic-type (aref key 0)))))
 			(ergoemacs-translate--event-convert-list (list 'ergoemacs-shift basic)))))
       (setq ergoemacs-translate--define-key-if-defined-p nil
-            ergoemacs-translate--define-key-replacement-function 'ergoemacs-command-loop--shift-translate)
+            ergoemacs-translate--define-key-replacement-function #'ergoemacs-command-loop--shift-translate)
       (vector (ergoemacs-translate--event-convert-list (append modifiers (list 'ergoemacs-shift basic)))))))
 
 (defun ergoemacs-translate--ergoemacs-timeout (key)
@@ -266,7 +266,7 @@ seleceted (instead of copying the text)."
 			(memq 'ergoemacs-shift modifiers))))
       (setq basic (ergoemacs-translate--event-basic-type (aref key 0))
 	    ergoemacs-translate--define-key-if-defined-p nil
-            ergoemacs-translate--define-key-replacement-function 'ergoemacs-command-loop--shift-timeout)
+            ergoemacs-translate--define-key-replacement-function #'ergoemacs-command-loop--shift-timeout)
       (vector (ergoemacs-translate--event-convert-list (append modifiers (list 'shift basic)))))))
 
 (defun ergoemacs-translate--to-string (key)
@@ -355,8 +355,8 @@ This uses `ergoemacs-translate--apply-key'"
 (defun ergoemacs-translate--event-modifiers (event &optional layout)
   "Return a list of symbols representing the modifier keys in event EVENT.
 This is different than `event-modifiers' in two ways:
-- Symbol keys like # will return 'ergoemacs-shift for a QWERTY keyboard.
-- Special keys like C-RET will return 'ergoemacs-control
+- Symbol keys like # will return `ergoemacs-shift' for a QWERTY keyboard.
+- Special keys like C-RET will return `ergoemacs-control'
 LAYOUT is the keyboard layout."
   (let ((modifiers (event-modifiers event))
 	tmp 
@@ -407,7 +407,7 @@ MODIFIERS is the precalculated modifiers from
 `ergoemacs-translate--event-modifiers'."
   (if (vectorp event)
       (progn
-        (apply 'vector (mapcar (lambda(x) (ergoemacs-translate--event-layout x layout-to layout-from basic modifiers)) event)))
+        (apply #'vector (mapcar (lambda(x) (ergoemacs-translate--event-layout x layout-to layout-from basic modifiers)) event)))
     (let* ((basic (or basic (ergoemacs-translate--event-basic-type event layout-from)))
            (modifiers (or modifiers (ergoemacs-translate--event-modifiers event layout-from)))
            new-modifiers
@@ -450,9 +450,9 @@ This also translates <C-i> to ?i, <C-m> to ?m <C-[> to ?[
 (defun ergoemacs-translate--event-convert-list (list &optional layout)
    "Convert the event description LIST to an event type.
 This is different than `event-convert-list' because:
- -  '(shift ?3) or '(ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT.
- -  '(ergoemacs-control control ?m) produces C-RET
- -  '(ergoemacs-gui control ?m) produces <C-m>. this applies for ?i and ?[ as well.
+ -  (shift ?3) or (ergoemacs-shift ?3) produces ?# on a QWERTY LAYOUT.
+ -  (ergoemacs-control control ?m) produces C-RET
+ -  (ergoemacs-gui control ?m) produces <C-m>. this applies for ?i and ?[ as well.
  - Mouse events allow click modifiers"
   (let ((cur-list list)
         elt
@@ -759,9 +759,9 @@ When NAME is a symbol, setup the translation function for the symbol."
       (dolist (type '("-universal-argument" "-negative-argument"
                       "-digit-argument" "-modal"))
 	(fset (intern (concat "ergoemacs-translate--" name-str type))
-	      'ergoemacs-translate--setup-command-loop)
+	      #'ergoemacs-translate--setup-command-loop)
 	(fset (intern (concat "ergoemacs-" name-str type))
-	      'ergoemacs-translate--setup-command-loop)
+	      #'ergoemacs-translate--setup-command-loop)
 	(when (string= type "-universal-argument")
 	  (cl-pushnew (intern (concat "ergoemacs-" name-str type)) ergoemacs-command-loop--universal-functions)
 	  (cl-pushnew (intern (concat "ergoemacs-translate--" name-str type)) ergoemacs-command-loop--universal-functions))))))
@@ -1100,10 +1100,10 @@ This takes into consideration the modal state of `ergoemacs-mode'."
 
 (defun ergoemacs-translate--ahk-ini (&optional all-layouts all-themes)
   "Creates the ini file used with the autohotkey script."
-  (let ((layouts (or (and all-layouts (sort (ergoemacs-layouts--list) 'string<))
+  (let ((layouts (or (and all-layouts (sort (ergoemacs-layouts--list) #'string<))
                      (and (eq (ergoemacs :layout) 'ergoemacs-layout-us) (list "us"))
                      (list "us" ergoemacs-keyboard-layout)))
-        (themes (or (and all-themes (sort (ergoemacs-theme--list) 'string<))
+        (themes (or (and all-themes (sort (ergoemacs-theme--list) #'string<))
                     (list ergoemacs-theme)))
         (original-layout ergoemacs-keyboard-layout)
         (original-theme ergoemacs-theme)

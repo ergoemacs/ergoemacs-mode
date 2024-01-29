@@ -1,6 +1,6 @@
 ;;; ergoemacs-theme-engine.el --- Ergoemacs map interface -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2021  Free Software Foundation, Inc.
+;; Copyright © 2013-2023  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-theme-engine.el
 ;; Description:
@@ -135,7 +135,7 @@
     (message "Wrote current ergoemacs bindings to ~/.inputrc")))
 
 ;;;###autoload
-(defalias 'ergoemacs-bash 'ergoemacs-theme-create-bash)
+(defalias 'ergoemacs-bash #'ergoemacs-theme-create-bash)
 
 (defcustom ergoemacs-function-short-names
       '((abort-recursive-edit "abort edit")
@@ -417,8 +417,7 @@ current buffer."
        (setq ergoemacs-command-loop--read-key-prompt ""))))
   (when (arrayp key-list)
     ;; Compatibility with old calling convention.
-    (setq key-list (con
-                    s (list key-list) (if up-event (list up-event))))
+    (setq key-list (cons (list key-list) (if up-event (list up-event))))
     (when buffer
       (let ((raw (if (numberp buffer) (this-single-command-raw-keys) buffer)))
         (setf (cdar (last key-list)) raw)))
@@ -753,7 +752,7 @@ to png files."
 			 "ergoemacs-png-convert" "*ergoemacs-theme-png-convert*"
 			 (nth 1 png-info))
 		ergoemacs-theme--png-last (nth 2 png-info))
-	  (set-process-sentinel process 'ergoemacs-theme--png--process))))))
+	  (set-process-sentinel process #'ergoemacs-theme--png--process))))))
 
 (defun ergoemacs-theme--png (&optional layout full-p reread)
   "Get png file for layout, or create one.

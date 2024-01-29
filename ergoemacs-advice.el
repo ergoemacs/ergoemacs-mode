@@ -1,6 +1,6 @@
 ;;; ergoemacs-advice.el --- Ergoemacs advices -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2021  Free Software Foundation, Inc.
+;; Copyright © 2013-2023  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-advice.el
 ;; Description:
@@ -35,6 +35,7 @@
 
 (require 'mouse)
 (require 'nadvice)
+(require 'ergoemacs-command-loop)
 
 (defvar ergoemacs-mode)
 (defvar ergoemacs-keymap)
@@ -94,6 +95,7 @@ TYPE is the type of translation installed."
             (when (memq 'down (event-modifiers last-command-event))
               current-prefix-arg)))))
 
+(defvar ergoemacs--temporary-disable)
 (defun ergoemacs-advice-undefined (orig-fun)
   "Allow `ergoemacs-mode' to display keys, and intercept ending <apps> keys."
   (if (and ergoemacs-mode (not ergoemacs--temporary-disable))

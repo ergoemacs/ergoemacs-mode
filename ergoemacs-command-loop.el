@@ -1,5 +1,5 @@
 ;;; ergoemacs-command-loop.el --- Keyboard translation functions -*- lexical-binding: t -*-
-;; Copyright © 2013-2021  Free Software Foundation, Inc.
+;; Copyright © 2013-2023  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-command-loop.el
 ;; Description: 
@@ -170,7 +170,7 @@ ignore the post-command hooks.")
 
 (defun ergoemacs-command-loop--execute-modify-command-list (command)
   "Set variables in `ergoemacs-command-loop--execute-modify-command-list' to COMMAND."
-  (ergoemacs-save-buffer-state
+  (with-silent-modifications
    (dolist (var ergoemacs-command-loop--execute-modify-command-list)
      (set var command))))
 
@@ -259,7 +259,7 @@ ignore the post-command hooks.")
   "Show modal translation.
 Returns the mode-line text."
   (let (tmp color text)
-    (ergoemacs-save-buffer-state
+    (with-silent-modifications
      (cond
       ((setq tmp (ergoemacs :modal-p))
        (setq color (ergoemacs-translation-struct-modal-color tmp))
@@ -346,7 +346,7 @@ with this function."
     (when (> 1 (length new-key))
       (error "Will not set a key sequence to the Emacs key sequence"))
     (setf (nth 3 cur-input) new-key)
-    (and (ignore-errors (apply 'set-input-mode cur-input))
+    (and (ignore-errors (apply #'set-input-mode cur-input))
          (message "Redefined Emacs quit key to %s"
                   (ergoemacs-key-description (or key [7])))
          t)))
@@ -394,9 +394,9 @@ This is called through `ergoemacs-command-loop'"
     (setq ergoemacs-command-loop--universal t
           ergoemacs-command-loop--exit :ignore-post-command-hook))))
 
-(defalias 'ergoemacs-read-key--universal-argument 'ergoemacs-command-loop--universal-argument)
+(defalias 'ergoemacs-read-key--universal-argument #'ergoemacs-command-loop--universal-argument)
 
-(defalias 'ergoemacs-universal-argument 'ergoemacs-command-loop--universal-argument)
+(defalias 'ergoemacs-universal-argument #'ergoemacs-command-loop--universal-argument)
 
 (defun ergoemacs-command-loop--digit-argument (&optional type)
   "Ergoemacs digit argument.
@@ -413,7 +413,7 @@ Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
     (setq current-prefix-arg digit))
   (ergoemacs-command-loop nil type nil t))
 
-(defalias 'ergoemacs-digit-argument 'ergoemacs-command-loop--digit-argument)
+(defalias 'ergoemacs-digit-argument #'ergoemacs-command-loop--digit-argument)
 
 (defun ergoemacs-command-loop--negative-argument (&optional type)
   "Ergoemacs negative argument.
@@ -425,7 +425,7 @@ Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
   (setq current-prefix-arg '-)
   (ergoemacs-command-loop nil type nil t))
 
-(defalias 'ergoemacs-negative-argument 'ergoemacs-command-loop--negative-argument)
+(defalias 'ergoemacs-negative-argument #'ergoemacs-command-loop--negative-argument)
 
 (dolist (arg '((next-key-is-alt (meta))
                (next-key-is-meta (meta))
@@ -439,20 +439,21 @@ Ergoemacs-mode sets up: :ctl-to-alt :unchorded :normal."
   (eval (macroexpand-all    ;FIXME: Why macroexpand-all?
          `(progn
             (defun ,(intern (concat "ergoemacs-command-loop--" (symbol-name (nth 0 arg)))) ()
-              ,(format "Ergoemacs function to allow %s to be the emacs modifiers" (nth 1 arg))
+              ,(format "Ergoemacs function to allow %s to be the Emacs modifiers" (nth 1 arg))
               (interactive)
               (message "Dummy Function for %s" (ergoemacs :modifier-desc ,(nth 1 arg))))
             (defalias ',(intern (concat "ergoemacs-read-key-" (symbol-name (nth 0 arg)))) ',(intern (concat "ergoemacs-command-loop--" (symbol-name (nth 0 arg)))))
             (puthash ',(intern (concat "ergoemacs-command-loop--" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) nil) ergoemacs-command-loop--next-key-hash)
             (puthash ',(intern (concat "ergoemacs-read-key-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) nil) ergoemacs-command-loop--next-key-hash)
             (defun ,(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))) ()
-              ,(format "Ergoemacs function to allow %s to be the emacs modifiers" (nth 1 arg))
+              ,(format "Ergoemacs function to allow %s to be the Emacs modifiers" (nth 1 arg))
               (interactive)
               (message "Dummy Function for %s" (ergoemacs :modifier-desc ,(nth 1 arg))))
             (defalias ',(intern (concat "ergoemacs-read-key-force-" (symbol-name (nth 0 arg)))) ',(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))))
             (puthash ',(intern (concat "ergoemacs-command-loop--force-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) :force) ergoemacs-command-loop--next-key-hash)
             (puthash ',(intern (concat "ergoemacs-read-key-force-" (symbol-name (nth 0 arg)))) '(,(nth 1 arg) :force) ergoemacs-command-loop--next-key-hash)
-	    t))))
+	    t))
+	t))
 
 (defvar ergoemacs-last-command-event nil
   "`ergoemacs-mode' command loop last read command.")
@@ -474,7 +475,7 @@ Uses the `ergoemacs-command-loop--history' variable/function."
     ;; Nothing to undo, exit the command loop.
     (setq ergoemacs-command-loop--exit t)))
 
-(defalias 'ergoemacs-read-key-undo-last 'ergoemacs-command-loop--undo-last)
+(defalias 'ergoemacs-read-key-undo-last #'ergoemacs-command-loop--undo-last)
 
 (defun ergoemacs-command-loop--force-undo-last ()
   "Function to undo the last key-press.
@@ -482,10 +483,10 @@ Uses the `ergoemacs-command-loop--history' variable/function."
 Unlike `ergoemacs-command-loop--undo-last', this ignores any bindings like \\[backward-kill-sentence]
 This is actually a dummy function.  The actual work is done in `ergoemacs-command-loop'"
   (interactive)
-  (call-interactively 'ergoemacs-command-loop--undo-last))
+  (call-interactively #'ergoemacs-command-loop--undo-last))
 (put 'ergoemacs-command-loop--force-undo-last :ergoemacs-local :force)
 
-(defalias 'ergoemacs-read-key-force-undo-last 'ergoemacs-command-loop--force-undo-last)
+(defalias 'ergoemacs-read-key-force-undo-last #'ergoemacs-command-loop--force-undo-last)
 (put 'ergoemacs-read-key-force-undo-last :ergoemacs-local :force)
 
 (defun ergoemacs-command-loop--swap-translation ()
@@ -499,7 +500,7 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
               (nth 1 next-swap)
             :normal))))
 
-(defalias 'ergoemacs-read-key-swap 'ergoemacs-command-loop--swap-translation)
+(defalias 'ergoemacs-read-key-swap #'ergoemacs-command-loop--swap-translation)
 
 (defun ergoemacs-command-loop--help ()
   "Show help for the current sequence KEY."
@@ -534,7 +535,7 @@ Uses the `ergoemacs-command-loop-swap-translation' variable."
               (describe-buffer-bindings cb key)))
           (setq ergoemacs-command-loop--exit t))))))
 
-(defalias 'ergoemacs-read-key-help 'ergoemacs-command-loop--help)
+(defalias 'ergoemacs-read-key-help #'ergoemacs-command-loop--help)
 
 ;; Command Loop
 
@@ -725,18 +726,18 @@ inconjunction with `input-method-function' to translate keys if
 						     (list (ergoemacs-translate--event-basic-type event))))))
 			       (vector event)))
          (test-ret (lookup-key keymap current-test-key))
-	 (timeout-key (key-binding (vconcat current-test-key [ergoemacs-timeout])))
+	 ;; (timeout-key (key-binding (vconcat current-test-key [ergoemacs-timeout])))
          next-key)
     (while (and current-test-key
                 (ergoemacs-keymapp test-ret))
       ;; The translation needs more keys...
       
-	  (setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key))
+     (setq next-key (ergoemacs-command-loop--history nil ergoemacs-command-loop--decode-event-delay current-key))
       (when next-key ;; Since a key was read, save it to be read later.
         (push last-command-event new-ergoemacs-input))
       (if next-key
           (setq current-test-key (ergoemacs :combine current-test-key next-key)
-		        timeout-key (key-binding (vconcat current-test-key [ergoemacs-timeout]))
+		;; timeout-key (key-binding (vconcat current-test-key [ergoemacs-timeout]))
                 test-ret (lookup-key keymap current-test-key))
         (setq current-test-key nil)))
     ;; Change strings to emacs keys.
@@ -814,7 +815,7 @@ return nil."
 	(setq binding (key-binding (ergoemacs :combine current-key input) t))))
     input))
 
-(defun ergoemacs-command-loop--key-msg (blink-on universal text current-key unchorded trans keys)
+(defun ergoemacs-command-loop--key-msg (blink-on universal text current-key unchorded _trans keys)
   "Key message.
 
 BLINK-ON is the flag for if the blink is on
@@ -1224,7 +1225,7 @@ appropriate value based on the COMMAND."
 	  (not ergoemacs-command-loop--minibuffer-unsupported-p))
     (when (or (and command (symbolp command) (string-match-p "^\\(calc\\|math\\)" (symbol-name command)))
 	      (and (stringp command) (string-match-p "^[^:]*:\\(calc\\|math\\)" command))) 
-      (ergoemacs-save-buffer-state
+      (with-silent-modifications
        (set (make-local-variable 'ergoemacs-command-loop--minibuffer-unsupported-p) t)))
     (ergoemacs-command-loop--minibuffer-supported-p)))
 
@@ -1288,9 +1289,9 @@ to start with
   "Record the last point.")
 
 (defun ergoemacs-command-loop--point-motion-hooks ()
-  "Emlulate Emacs' command-loop portion of the point-motion hooks.
+  "Emulate Emacs' command-loop portion of the point-motion hooks.
 The properties `point-entered' and `point-left' are handled by C internals."
-  (unless (or disable-point-adjustment global-disable-point-adjustment inhibit-point-motion-hooks)
+  (unless (or disable-point-adjustment global-disable-point-adjustment)
     ;; Only the adjustment of the point in fishy areas is done in the
     ;; command loop.
     (let* ((props '(intangible composition display invisible))
@@ -1309,7 +1310,7 @@ The properties `point-entered' and `point-left' are handled by C internals."
 	(setq last-point cur-point
 	      cur-point (point)))))
   (setq disable-point-adjustment nil)
-  (ergoemacs-save-buffer-state
+  (with-silent-modifications
    (set (make-local-variable 'ergoemacs-command-loop--point-motion-last-point) (point))))
 
 (defun ergoemacs-command-loop--sync-point ()
@@ -1677,14 +1678,12 @@ instead of `format'."
 	 ((and (eq string :start) ergoemacs-mode-started-p))
 	 ((and (eq string :start) (not ergoemacs-mode-started-p))
 	  (setq ergoemacs-message-level :max)
-	  (unwind-protect
-	      (apply #'ergoemacs-command-loop--spinner-display args))
+	  (apply #'ergoemacs-command-loop--spinner-display args)
 	  (setq ergoemacs-message-level :start))
 	 ((and (eq string :new)
 	       (memq ergoemacs-message-level '(:new)))
 	  (setq ergoemacs-command-loop--spinner-display :new)
-	  (unwind-protect
-	      (apply #'ergoemacs-command-loop--spinner-display args))
+	  (apply #'ergoemacs-command-loop--spinner-display args)
 	  (setq ergoemacs-command-loop--spinner-display :max)))
       (when (eq ergoemacs-message-level ergoemacs-command-loop--spinner-display)      
 	(let* ((string (or (and (listp string)
@@ -1733,10 +1732,9 @@ They don't exactly behave like their Emacs equivalents."
   "Timer to startup `ergoemacs-mode' command loop.")
 (defun ergoemacs-command-loop--timer ()
   "Start `ergoemacs-command-loop--internal' if not currently running."
-  (unwind-protect
-      (unless (and (ergoemacs-command-loop-full-p)
-                   (ergoemacs-command-loop-p))
-        (ergoemacs-command-loop--internal))))
+  (unless (and (ergoemacs-command-loop-full-p)
+               (ergoemacs-command-loop-p))
+    (ergoemacs-command-loop--internal)))
 
 (defun ergoemacs-command-loop--install-timer ()
   "Install the `ergoemacs-command-loop--timer'."
@@ -1824,166 +1822,160 @@ Emacs versions)."
              (local-keymap (ergoemacs-translate--keymap translation))
              modal-p
              tmp command)
-        (unwind-protect
-            (progn
-	      ;; Set these to nil when entering the command loop;
-	      ;;
-	      ;; For some reason `inhibit-point-motion-hooks' on emacs
-	      ;; 25.1 is t when the command loop is entered.
-	      ;;
-	      ;; To allow the point motion hooks to work as
-	      ;; advertised, set these on starting the command loop.
-	      (setq inhibit-point-motion-hooks      nil
-		    disable-point-adjustment        nil
-		    global-disable-point-adjustment nil)
-              ;; Setup initial unread command events, first type and history
-              (setq tmp (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
-                    unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events)) tmp)
-                    ergoemacs-command-loop--first-type first-type
-                    ergoemacs-command-loop--history initial-history
-                    ergoemacs-command-loop-start  nil)
-              (while continue-read
-		(setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
-                (unless (eq ergoemacs-command-loop-type :read-key-sequence)
-                  (setq inhibit-quit t))
-                (while continue-read
-		  (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
-                  ;; Read key
-                  (setq ergoemacs-command-loop--single-command-keys current-key
-                        ergoemacs-command-loop--current-type type
-                        ergoemacs-command-loop--universal universal
-                        raw-key (ergoemacs-command-loop--read-key
-                                 current-key
-                                 (or (and unread-command-events :normal) type)
-                                 (and (not unread-command-events) universal))
-                        ergoemacs-command-loop--single-command-keys nil
-                        universal-argument-num-events 0
-                        last-current-key current-key
-                        current-key (nth 1 raw-key)
-                        raw-key (nth 0 raw-key)
-                        continue-read nil)
-		  (when (setq modal-p (ergoemacs :modal-p))
-		    (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
-                  (cond
-                   ;; Handle quit commands
-                   ((and last-current-key
-                         (or (lookup-key ergoemacs-map--quit-map raw-key)
-                             (and (equal raw-key [27])
-                                  (lookup-key ergoemacs-map--quit-map [escape]))))
-                    (ergoemacs-command-loop--message
-                     "Key sequence %s aborted by %s"
-                     (ergoemacs-key-description last-current-key)
-                     (ergoemacs-key-description raw-key))
-                    (setq quit-flag t
-			  ergoemacs-this-command-keys-shift-translated nil))
-                   ;; Handle local commands.
-                   ((and (or modal-p
-                             (not (equal current-key raw-key)))
-                         (setq command (lookup-key local-keymap raw-key))
-                         (not (ergoemacs-keymapp command)) ;; Ignore locally
-                         ;; Already handled by `ergoemacs-command-loop--read-key'
-                         (not (ergoemacs-gethash command ergoemacs-command-loop--next-key-hash))
-                         ;; If a command has :ergoemacs-local property of :force, don't
-                         ;; worry about looking up a key, just run the function.
-                         (or modal-p
-                             (and (symbolp command) (eq (get command :ergoemacs-local) :force))
-                             (not (key-binding current-key t))))
-                    (pop ergoemacs-command-loop--history) ;; Don't recored local events
-                    (setq ergoemacs-command-loop--single-command-keys last-current-key
-                          universal-argument-num-events 0
-                          ergoemacs-command-loop--current-type type
-                          ergoemacs-command-loop--universal universal
-                          ergoemacs-command-loop--exit nil)
+	;; Set these to nil when entering the command loop;
+	;;
+	;; To allow the point motion hooks to work as
+	;; advertised, set these on starting the command loop.
+	(setq disable-point-adjustment        nil
+	      global-disable-point-adjustment nil)
+        ;; Setup initial unread command events, first type and history
+        (setq tmp (ergoemacs-command-loop--listify-key-sequence key initial-key-type)
+              unread-command-events (or (and unread-command-events tmp (append tmp unread-command-events)) tmp)
+              ergoemacs-command-loop--first-type first-type
+              ergoemacs-command-loop--history initial-history
+              ergoemacs-command-loop-start  nil)
+        (while continue-read
+	  (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
+          (unless (eq ergoemacs-command-loop-type :read-key-sequence)
+            (setq inhibit-quit t))
+          (while continue-read
+	    (setq ergoemacs-last-command-was-ergoemacs-ignore-p nil)
+            ;; Read key
+            (setq ergoemacs-command-loop--single-command-keys current-key
+                  ergoemacs-command-loop--current-type type
+                  ergoemacs-command-loop--universal universal
+                  raw-key (ergoemacs-command-loop--read-key
+                           current-key
+                           (or (and unread-command-events :normal) type)
+                           (and (not unread-command-events) universal))
+                  ergoemacs-command-loop--single-command-keys nil
+                  universal-argument-num-events 0
+                  last-current-key current-key
+                  current-key (nth 1 raw-key)
+                  raw-key (nth 0 raw-key)
+                  continue-read nil)
+	    (when (setq modal-p (ergoemacs :modal-p))
+	      (setq local-keymap (ergoemacs-translation-struct-keymap-modal modal-p)))
+            (cond
+             ;; Handle quit commands
+             ((and last-current-key
+                   (or (lookup-key ergoemacs-map--quit-map raw-key)
+                       (and (equal raw-key [27])
+                            (lookup-key ergoemacs-map--quit-map [escape]))))
+              (ergoemacs-command-loop--message
+               "Key sequence %s aborted by %s"
+               (ergoemacs-key-description last-current-key)
+               (ergoemacs-key-description raw-key))
+              (setq quit-flag t
+		    ergoemacs-this-command-keys-shift-translated nil))
+             ;; Handle local commands.
+             ((and (or modal-p
+                       (not (equal current-key raw-key)))
+                   (setq command (lookup-key local-keymap raw-key))
+                   (not (ergoemacs-keymapp command)) ;; Ignore locally
+                   ;; Already handled by `ergoemacs-command-loop--read-key'
+                   (not (ergoemacs-gethash command ergoemacs-command-loop--next-key-hash))
+                   ;; If a command has :ergoemacs-local property of :force, don't
+                   ;; worry about looking up a key, just run the function.
+                   (or modal-p
+                       (and (symbolp command) (eq (get command :ergoemacs-local) :force))
+                       (not (key-binding current-key t))))
+              (pop ergoemacs-command-loop--history) ;; Don't recored local events
+              (setq ergoemacs-command-loop--single-command-keys last-current-key
+                    universal-argument-num-events 0
+                    ergoemacs-command-loop--current-type type
+                    ergoemacs-command-loop--universal universal
+                    ergoemacs-command-loop--exit nil)
                     
-                    (unless (eq ergoemacs-command-loop-type :test)
-                      (setq tmp this-command
-                            this-command command)
-                      (ergoemacs-command-loop--call-interactively this-command)
-                      (setq command this-command
-                            this-command tmp))
-                    ;; If the command changed anything, fix it here.
-                    (unless (equal type ergoemacs-command-loop--current-type)
-                      (setq type ergoemacs-command-loop--current-type
-                            translation (ergoemacs-translate--get type)
-                            local-keymap (ergoemacs-translate--keymap translation)))
-                    
-                    (setq current-key ergoemacs-command-loop--single-command-keys
-                          universal ergoemacs-command-loop--universal
-                          ergoemacs-command-loop--single-command-keys nil
-                          continue-read (not ergoemacs-command-loop--exit)))
-                   ;; Handle any keys that are bound in some translatable way.
-                   ((setq command (ergoemacs-command-loop--key-lookup current-key))
-                    ;; Setup external indicators of how the loop currently behaves.
-                    (setq ergoemacs-command-loop--single-command-keys current-key
-                          universal-argument-num-events 0
-                          ergoemacs-command-loop--current-type type
-                          ergoemacs-command-loop--universal nil
-                          ergoemacs-command-loop--exit t)
-                    (if (setq continue-read (and (not (and (consp (aref current-key 0))
-							   (memq (event-basic-type (car (aref current-key 0)))
-								 '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9))))
-						 (ergoemacs-keymapp command)))
-                        (setq universal nil)
-                      (unless (memq ergoemacs-command-loop-type '(:test :read-key-sequence))
-                        (with-local-quit
-                          (ergoemacs-command-loop--execute command)))
-                      
-                      (when quit-flag
-                        (ergoemacs-command-loop--message "Quit!"))
-                      
-                      ;; Change any information (if needed)
-                      (unless (equal type ergoemacs-command-loop--current-type)
-                        (setq type ergoemacs-command-loop--current-type
-                              translation (ergoemacs-translate--get type)
-                              local-keymap (ergoemacs-translate--keymap translation)))
-
-                      (when (eq ergoemacs-command-loop-type :read-key-sequence)
-                        (setq ergoemacs-command-loop--exit t
-                              continue-read nil
-                              command current-key))
-                      
-                      (setq current-key ergoemacs-command-loop--single-command-keys 
-                            universal ergoemacs-command-loop--universal
-                            ergoemacs-command-loop--single-command-keys nil
-                            continue-read (not ergoemacs-command-loop--exit)
-                            current-prefix-arg (if ergoemacs-command-loop--universal current-prefix-arg prefix-arg))
-                      
-                      (when (and (not continue-read)
-                                 (eq ergoemacs-command-loop--exit :ignore-post-command-hook))
-                        (setq continue-read t)))
-                    
-                    (when (or (not ergoemacs-command-loop--exit)
-                              (and (not continue-read) (setq continue-read unread-command-events)))
-                      (ergoemacs-command-loop--internal-end-command)))
-                   (quit-flag
-                    (ergoemacs-command-loop--message "Quit!")
-                    (setq quit-flag nil
-                          type :normal
-                          first-type :normal
-                          raw-key nil
-                          current-key nil
-                          translation (ergoemacs-translate--get type)
-                          local-keymap (ergoemacs-translate--keymap translation)
-                          ergoemacs-command-loop--first-type first-type
-                          ergoemacs-command-loop--history nil))
-		   ((consp (aref current-key 0))) ;; don't complain about mouse keys
-                   (t ;; Command not found exit.
-                    (ergoemacs-command-loop--message "Key %s doesn't do anything." (ergoemacs-key-description current-key)))))
-                (unless quit-flag
-                  (ergoemacs-command-loop--internal-end-command))
-                (setq quit-flag nil
-                      type :normal
-                      continue-read (or unread-command-events (and from-start-p (ergoemacs-command-loop-full-p)))
-                      first-type :normal
-                      raw-key nil
-                      current-key nil
+              (unless (eq ergoemacs-command-loop-type :test)
+                (setq tmp this-command
+                      this-command command)
+                (ergoemacs-command-loop--call-interactively this-command)
+                (setq command this-command
+                      this-command tmp))
+              ;; If the command changed anything, fix it here.
+              (unless (equal type ergoemacs-command-loop--current-type)
+                (setq type ergoemacs-command-loop--current-type
                       translation (ergoemacs-translate--get type)
-                      local-keymap (ergoemacs-translate--keymap translation)
-                      ergoemacs-command-loop--first-type first-type
-                      ergoemacs-command-loop--history nil)
-                (when (or (not ergoemacs-mode) (eq :read-key-sequence ergoemacs-command-loop-type))
-                  (setq continue-read nil)))
-              (setq inhibit-quit nil)))
+                      local-keymap (ergoemacs-translate--keymap translation)))
+                    
+              (setq current-key ergoemacs-command-loop--single-command-keys
+                    universal ergoemacs-command-loop--universal
+                    ergoemacs-command-loop--single-command-keys nil
+                    continue-read (not ergoemacs-command-loop--exit)))
+             ;; Handle any keys that are bound in some translatable way.
+             ((setq command (ergoemacs-command-loop--key-lookup current-key))
+              ;; Setup external indicators of how the loop currently behaves.
+              (setq ergoemacs-command-loop--single-command-keys current-key
+                    universal-argument-num-events 0
+                    ergoemacs-command-loop--current-type type
+                    ergoemacs-command-loop--universal nil
+                    ergoemacs-command-loop--exit t)
+              (if (setq continue-read (and (not (and (consp (aref current-key 0))
+						     (memq (event-basic-type (car (aref current-key 0)))
+							   '(mouse-1 mouse-2 mouse-3 mouse-4 mouse-5 mouse-6 mouse-7 mouse-8 mouse-9))))
+					   (ergoemacs-keymapp command)))
+                  (setq universal nil)
+                (unless (memq ergoemacs-command-loop-type '(:test :read-key-sequence))
+                  (with-local-quit
+                    (ergoemacs-command-loop--execute command)))
+                      
+                (when quit-flag
+                  (ergoemacs-command-loop--message "Quit!"))
+                      
+                ;; Change any information (if needed)
+                (unless (equal type ergoemacs-command-loop--current-type)
+                  (setq type ergoemacs-command-loop--current-type
+                        translation (ergoemacs-translate--get type)
+                        local-keymap (ergoemacs-translate--keymap translation)))
+
+                (when (eq ergoemacs-command-loop-type :read-key-sequence)
+                  (setq ergoemacs-command-loop--exit t
+                        continue-read nil
+                        command current-key))
+                      
+                (setq current-key ergoemacs-command-loop--single-command-keys
+                      universal ergoemacs-command-loop--universal
+                      ergoemacs-command-loop--single-command-keys nil
+                      continue-read (not ergoemacs-command-loop--exit)
+                      current-prefix-arg (if ergoemacs-command-loop--universal current-prefix-arg prefix-arg))
+                      
+                (when (and (not continue-read)
+                           (eq ergoemacs-command-loop--exit :ignore-post-command-hook))
+                  (setq continue-read t)))
+                    
+              (when (or (not ergoemacs-command-loop--exit)
+                        (and (not continue-read) (setq continue-read unread-command-events)))
+                (ergoemacs-command-loop--internal-end-command)))
+             (quit-flag
+              (ergoemacs-command-loop--message "Quit!")
+              (setq quit-flag nil
+                    type :normal
+                    first-type :normal
+                    raw-key nil
+                    current-key nil
+                    translation (ergoemacs-translate--get type)
+                    local-keymap (ergoemacs-translate--keymap translation)
+                    ergoemacs-command-loop--first-type first-type
+                    ergoemacs-command-loop--history nil))
+	     ((consp (aref current-key 0))) ;; don't complain about mouse keys
+             (t                             ;; Command not found exit.
+              (ergoemacs-command-loop--message "Key %s doesn't do anything." (ergoemacs-key-description current-key)))))
+          (unless quit-flag
+            (ergoemacs-command-loop--internal-end-command))
+          (setq quit-flag nil
+                type :normal
+                continue-read (or unread-command-events (and from-start-p (ergoemacs-command-loop-full-p)))
+                first-type :normal
+                raw-key nil
+                current-key nil
+                translation (ergoemacs-translate--get type)
+                local-keymap (ergoemacs-translate--keymap translation)
+                ergoemacs-command-loop--first-type first-type
+                ergoemacs-command-loop--history nil)
+          (when (or (not ergoemacs-mode) (eq :read-key-sequence ergoemacs-command-loop-type))
+            (setq continue-read nil)))
+        (setq inhibit-quit nil)
         command))))
 
 (defcustom ergoemacs-message-in-mode-line t
@@ -2270,62 +2262,61 @@ For instance in QWERTY M-> is shift translated to M-."
 ;; (3) execute command
 (defun ergoemacs-command-loop--execute (command &optional keys)
   "Execute COMMAND pretending that KEYS were pressed."
-  (unwind-protect
-      (let ((keys (or keys ergoemacs-command-loop--single-command-keys)))
-        ;; (ergoemacs-command-loop--spinner)
+  (let ((keys (or keys ergoemacs-command-loop--single-command-keys)))
+    ;; (ergoemacs-command-loop--spinner)
+    (cond
+     ((or (stringp command) (vectorp command))
+      ;; If the command is a keyboard macro (string/vector) then execute
+      ;; it by adding it to `unread-command-events'
+      (let ((tmp (prefix-numeric-value current-prefix-arg)))
         (cond
-         ((or (stringp command) (vectorp command))
-          ;; If the command is a keyboard macro (string/vector) then execute
-          ;; it by adding it to `unread-command-events'
-          (let ((tmp (prefix-numeric-value current-prefix-arg)))
-            (cond
-             ((<= tmp 0) ;; Unsure what to do here.
-              (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command)) tmp))
-             (t
-              (dotimes (_i tmp unread-command-events)
-                (setq unread-command-events
-                      (append (listify-key-sequence command)
-                              unread-command-events))))))
-          (setq ergoemacs-command-loop--single-command-keys nil))
+         ((<= tmp 0) ;; Unsure what to do here.
+          (ergoemacs-command-loop--message "The %s keyboard macro was not run %s times" (ergoemacs-key-description (vconcat command)) tmp))
          (t
-          ;; This should be a regular command.
+          (dotimes (_i tmp unread-command-events)
+            (setq unread-command-events
+                  (append (listify-key-sequence command)
+                          unread-command-events))))))
+      (setq ergoemacs-command-loop--single-command-keys nil))
+     (t
+      ;; This should be a regular command.
           
-          ;; Remove counting of `this-command' in `keyfreq-mode'
-          ;; Shouldn't be needed any more...
-          ;; (ergoemacs-command-loop--execute-rm-keyfreq this-command)
+      ;; Remove counting of `this-command' in `keyfreq-mode'
+      ;; Shouldn't be needed any more...
+      ;; (ergoemacs-command-loop--execute-rm-keyfreq this-command)
           
-          ;; This command execute should modify the following variables:
-          ;; - `last-repeatable-command'
-          ;; - `this-command'
-          ;; - `this-original-command'
+      ;; This command execute should modify the following variables:
+      ;; - `last-repeatable-command'
+      ;; - `this-command'
+      ;; - `this-original-command'
           
-          ;; In addition, other minor modes may store the command, so these
-          ;; should be modified as well.
+      ;; In addition, other minor modes may store the command, so these
+      ;; should be modified as well.
           
-          ;; These are stored in `ergoemacs-command-loop--execute-modify-command-list'
+      ;; These are stored in `ergoemacs-command-loop--execute-modify-command-list'
 
-	        (ergoemacs-command-loop--execute-modify-command-list command)
+      (ergoemacs-command-loop--execute-modify-command-list command)
           
-          ;; Handle Shift Selection
-          (ergoemacs-command-loop--execute-handle-shift-selection this-command)
-          (when keys
-            (setq ergoemacs-command-loop--single-command-keys keys)
+      ;; Handle Shift Selection
+      (ergoemacs-command-loop--execute-handle-shift-selection this-command)
+      (when keys
+        (setq ergoemacs-command-loop--single-command-keys keys)
             
-            ;; Modify the output for these functions when `keys' is not nil.
+        ;; Modify the output for these functions when `keys' is not nil.
             
-            ;; Assume this is a nonmenu event if it isn't a mouse event
-            (unless (consp last-command-event)
-              (setq last-nonmenu-event last-command-event)))
-          (unwind-protect
-              (progn
-                (setq ergoemacs-command-loop--running-pre-command-hook-p t)
-                (run-hooks 'pre-command-hook))
-            (setq ergoemacs-command-loop--running-pre-command-hook-p nil))
-          (unwind-protect
-              (ergoemacs-command-loop--call-interactively this-command t)
-            (setq ergoemacs-command-loop--single-command-keys nil)))))
-    ;; (ergoemacs-command-loop--spinner-end)
-    ))
+        ;; Assume this is a nonmenu event if it isn't a mouse event
+        (unless (consp last-command-event)
+          (setq last-nonmenu-event last-command-event)))
+      (unwind-protect
+          (progn
+            (setq ergoemacs-command-loop--running-pre-command-hook-p t)
+            (run-hooks 'pre-command-hook))
+        (setq ergoemacs-command-loop--running-pre-command-hook-p nil))
+      (unwind-protect
+          (ergoemacs-command-loop--call-interactively this-command t)
+        (setq ergoemacs-command-loop--single-command-keys nil)))))
+  ;; (ergoemacs-command-loop--spinner-end)
+  )
 (defun ergoemacs-command-loop--shift-timeout ()
   "This is the shift-timeout function for a key."
   (interactive)

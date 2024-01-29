@@ -1,6 +1,6 @@
 ;;; ergoemacs-debug.el --- Ergoemacs map interface -*- lexical-binding: t -*-
 
-;; Copyright © 2013-2021  Free Software Foundation, Inc.
+;; Copyright © 2013-2023  Free Software Foundation, Inc.
 
 ;; Filename: ergoemacs-debug.el
 ;; Description:
@@ -58,7 +58,7 @@
   "Ergoemacs debugging heading."
   (ergoemacs-debug (concat "** "
                            (condition-case err
-                               (apply 'format arg)
+                               (apply #'format arg)
                              (error (format "Bad format string: %s (%s)" arg err)))))
   (ergoemacs-debug "Time Since Start ergoemacs-mode: %1f sec" (- (float-time) ergoemacs-debug-heading-start-time))
   (ergoemacs-debug "Time Since Last Heading: %1f sec" (- (float-time) ergoemacs-debug-heading-last-time))
@@ -79,7 +79,7 @@
           (format "%s\n%s"
                   ergoemacs-debug
                   (condition-case err
-                      (apply 'format arg)
+                      (apply #'format arg)
                     (error (format "Bad Format String: %s (%s)" arg err)))))))
 
 (defun ergoemacs-debug-clear ()
