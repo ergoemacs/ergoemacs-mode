@@ -440,7 +440,7 @@ Part of addressing Issue #147."
   (should (equal (key-binding (kbd "s s"))
                  (lookup-key ergoemacs-test--dired-sort-map "s")))
   (should (equal (key-binding (kbd "s ."))
-                 (lookup-key "." ergoemacs-test--dired-sort-map)))
+                 (lookup-key ergoemacs-test--dired-sort-map ".")))
   (should (equal (key-binding (kbd "s t"))
                  (lookup-key ergoemacs-test--dired-sort-map "t")))
   (should (equal (key-binding (kbd "s n"))
