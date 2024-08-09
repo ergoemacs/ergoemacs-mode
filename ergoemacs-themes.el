@@ -295,7 +295,7 @@ Call this before calling any other ergoemacs-set-* function"
     (define-key keymap (kbd "C-s") 'undefined)
     (define-key keymap (kbd "C-r") 'undefined)
     (define-key keymap (kbd "M-%") 'undefined)
-    
+
     (define-key keymap (kbd "M-{") 'undefined)
     (define-key keymap (kbd "M-}") 'undefined)
     (define-key keymap (kbd "C-a") 'undefined)
@@ -324,11 +324,11 @@ Call this before calling any other ergoemacs-set-* function"
 
 These keys do not depend on the layout."
   (global-set-key [tool-bar kill-buffer] 'ergoemacs-close-current-buffer)
-  
+
   ;; These keys go into the override map
   (define-key keymap (kbd "C-o") 'find-file)
   (define-key keymap (kbd "C-S-o") 'ergoemacs-open-in-desktop)
-  
+
   (define-key keymap (kbd "C-w") 'ergoemacs-close-current-buffer)
 
   (define-key keymap (kbd "C-s") 'save-buffer)
@@ -337,7 +337,7 @@ These keys do not depend on the layout."
 
   (define-key keymap (kbd "C-n") 'ergoemacs-new-empty-buffer)
   (define-key keymap (kbd "C-S-n") 'ergoemacs-make-frame-command)
-  
+
   (define-key keymap (kbd "C-w") 'ergoemacs-close-current-buffer)
   (define-key keymap (kbd "C-S-w") 'ergoemacs-delete-frame)
 
@@ -376,7 +376,7 @@ These keys do not depend on the layout."
 
   (define-key keymap (kbd "C-S-o") 'ergoemacs-open-in-external-app)
   (define-key keymap (kbd "C-S-t") 'ergoemacs-open-last-closed)
-  
+
   (define-key keymap (kbd "C-x <ergoemacs-timeout>") 'ergoemacs-cut-line-or-region)
   (define-key keymap (kbd "C-c <ergoemacs-timeout>") 'ergoemacs-copy-line-or-region)
 
@@ -623,23 +623,23 @@ These keys do not depend on the layout."
   (ergoemacs-define-key ergoemacs-override-keymap (kbd "<apps> d") 'ergoemacs-command-loop-C-x-ctl-to-alt)
   (ergoemacs-define-key ergoemacs-override-keymap (kbd "<apps> f") 'ergoemacs-command-loop-C-c-unchorded)
 
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "a"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "A"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "C-a"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'calc (kbd "c"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'dired-jump (kbd "d"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'eshell (kbd "e"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'powershell (kbd "p"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'ergoemacs-open-in-desktop (kbd "f"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'grep (kbd "g"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'magit-status (kbd "m"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'ergoemacs-open-in-external-app (kbd "o"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'R (kbd "R"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'shell (kbd "s"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "t"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "C-t"))
-  (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "T"))
-  
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "a"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "A"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "C-a"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'calc (kbd "c"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'dired-jump (kbd "d"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'eshell (kbd "e"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'powershell (kbd "p"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'ergoemacs-open-in-desktop (kbd "f"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'grep (kbd "g"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'magit-status (kbd "m"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'ergoemacs-open-in-external-app (kbd "o"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'R (kbd "R"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'shell (kbd "s"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-capture (kbd "t"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "C-t"))
+  ;; (ergoemacs-define-key	ergoemacs-override-keymap (kbd "<menu> n") 'org-agenda (kbd "T"))
+
   (define-key ergoemacs-translate--parent-map [f2] 'ergoemacs-command-loop--force-universal-argument)
   (define-key ergoemacs-translate--parent-map (kbd "DEL") 'ergoemacs-command-loop--force-undo-last)
   (define-key ergoemacs-translate--parent-map  (if (eq system-type 'windows-nt) [apps] [menu])
@@ -1291,21 +1291,21 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
     (ergoemacs-set-move-bracket map)
     (ergoemacs-set-move-word map)
     (ergoemacs-set-move-bracket-reduction map)
-    
+
     (ergoemacs-set-copy map)
     (ergoemacs-set-search-reduction map)
     (ergoemacs-set-switch-reduction map)
-  
+
     (ergoemacs-set-execute-reduction map)
     (ergoemacs-set-move-extra-reduction map)
     (ergoemacs-set-kill-line map)
-    
+
     (ergoemacs-set-text-transform map)
     (ergoemacs-set-select-items map)
-    
+
     (ergoemacs-fix-arrow-keys map)
     (ergoemacs-set-apps map))
-  
+
 
   (ergoemacs-install-isearch-mode)
 
@@ -1344,7 +1344,7 @@ In a terminal, this can be either arrow keys (e.g. meta+O A == <up>) or regular 
     (ergoemacs-set-select-items map)
     (ergoemacs-fix-arrow-keys map)
     (ergoemacs-set-apps map))
-  
+
   (ergoemacs-install-isearch-mode)
 
   (ergoemacs-set-remaps ergoemacs-override-keymap)
