@@ -59,6 +59,16 @@ term-mode instead of `org-capture`, you can define the key as follows:
  (define-key ergoemacs-user-keymap (kbd "C-p") 'undefined)
  ```
 
+ This will unbind the printing interface.
+
+If you want to truly drop the `ergoemacs-mode` key and use `emacs`'s default you can also remove them from the `ergoemacs-mode` by:
+
+ ```lisp
+ (define-key ergoemacs-override-keymap (kbd "C-p") nil)
+ ```
+
+ This will have `C-p` be previous line, like it is in emacs.
+
  ## How `ergoemacs-mode' works the "magic"
 
  `ergoemacs-mode` binds all of its keys in the
