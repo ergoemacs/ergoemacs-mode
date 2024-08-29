@@ -2,7 +2,7 @@
 [![MELPA](http://melpa.org/packages/ergoemacs-mode-badge.svg)](http://melpa.org/#/ergoemacs-mode)
 [![Build Status](https://secure.travis-ci.org/ergoemacs/ergoemacs-mode.png)](http://travis-ci.org/ergoemacs/ergoemacs-mode)
 
-#  Ergoemacs Keybindings 
+#  Ergoemacs Keybindings
 
  Xah Lee, David Capello, Kim Storm, Walter Landry and Matthew Fidler
 
@@ -39,7 +39,7 @@ If you wanted this to respect the keyboard layout for some reason, you can use:
 
 This defines the Alt+i key on QWERTY and Alt+u on colemak.
 
-You can also define keys that are partially layout dependent and partially fixed. 
+You can also define keys that are partially layout dependent and partially fixed.
 
 For example if you wanted the ergoemacs-mode key `<menu> n t` to start
 term-mode instead of `org-capture`, you can define the key as follows:
@@ -49,13 +49,22 @@ term-mode instead of `org-capture`, you can define the key as follows:
 ```
 
  In QWERTY, this key would be `<menu> n t`, in Colemak, this key would be `<menu> k t`
- 
+
+
+ ## Unbinding keys in `ergoemacs-mode`
+
+ To unbind keys in `ergoemacs-mode` you can use code like:
+
+ ```lisp
+ (define-key ergoemacs-user-keymap (kbd "C-p") 'undefined)
+ ```
+
  ## How `ergoemacs-mode' works the "magic"
- 
+
  `ergoemacs-mode` binds all of its keys in the
  `emulation-mode-map-alist`.  As a reference, Emacs looks up keys from
  the active keymap following the lisp-like pseudo-code below:
- 
+
  ```lisp
  (or (if overriding-terminal-local-map
          (find-in overriding-terminal-local-map)
@@ -70,7 +79,7 @@ term-mode instead of `org-capture`, you can define the key as follows:
            (find-in (current-local-map))))
      (find-in (current-global-map)))
  ```
-This means that `ergoemacs-mode` overrides: 
+This means that `ergoemacs-mode` overrides:
 - keybindings from minor modes
 - keybindings from major modes (which are contained in the `current-local-map`)
 
@@ -78,9 +87,10 @@ While this seems useful, many major and minor modes make meaningful
 changes in Emacs keybindings.  For example `gnus` binds the default
 key of `kill-line`, that is `C-k` to `gnus-summary-kill-same-subject`
 and sometimes other functions depending on what part of `gnus` you are
-in.  The corresponding key in `ergoemacs-mode` in the "us" layout is `M-g`.  
-If you make changes to the gnus keymap to bind `M-g` to `gnus-summary-kill-same-subject`, 
-Emacs still overrides this key with whatever `ergoemacs-mode` has defined in the `gnus` keymap.  
+in.  The corresponding key in `ergoemacs-mode` in the "us" layout is `M-g`.
+If you make changes to the gnus keymap to bind `M-g` to
+`gnus-summary-kill-same-subject`, Emacs still overrides this key with
+whatever `ergoemacs-mode` has defined in the `gnus` keymap.
 
 To overcome this there `ergoemacs-mode` does the following:
 
@@ -90,6 +100,6 @@ To overcome this there `ergoemacs-mode` does the following:
 - Emacs then carries out the correct command by processing the unread keys
 - `ergoemacs-mode` re-enables the keybindings
 
-It will also keep the shift selection active by sending shifted keys if necessary. 
+It will also keep the shift selection active by sending shifted keys if necessary.
 
 If you think this is too much magic, you can turn this off with the variable `ergoemacs-mode-send-emacs-keys`
